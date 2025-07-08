@@ -4,17 +4,13 @@
   "description": "",
   "main": "dashboard_filter.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "babel dashboard_filter.js --out-file ../assets/custom/dashboard_filter.js",
-    "build:all": "babel *.js --out-dir ../assets/custom",
-    "watch": "babel dashboard_filter.js --watch --out-file ../assets/custom/dashboard_filter.js"
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@babel/cli": "^7.23.0",
-    "@babel/core": "^7.23.0",
-    "@babel/preset-react": "^7.23.0"
+    "babel-cli": "^6.26.0",
+    "babel-preset-react-app": "^3.1.2"
   }
 }

@@ -27,11 +27,8 @@ class DashboardFilter extends React.Component {
       selectedSection: "",
 
       pbncs: [],
-      weekly_sales: [],
       upos: [],
-      weekly_outages: [],
       tds: [],
-      weekly_faults_maintenance: [],
       current_month: "",
       maintenance: [],
       inspections: [],
@@ -47,62 +44,7 @@ class DashboardFilter extends React.Component {
       selectedDistrict: "",
       selectedSection: "",
 
-      authUser: {},
-
-      // Metric cards data (will be loaded from API)
-      metrics: {
-        energy_sold: {
-          value: "0",
-          unit: "GWh",
-          target: "0",
-          target_unit: "GWh",
-          progress: 0
-        },
-        growth: {
-          value: "0",
-          unit: "Clients",
-          target: "0",
-          target_unit: "Clients",
-          progress: 0
-        },
-        revenue_usd: {
-          value: "0",
-          unit: "USD",
-          target: "0",
-          target_unit: "USD",
-          progress: 0
-        },
-        revenue_zwl: {
-          value: "0",
-          unit: "ZWL",
-          target: "0",
-          target_unit: "ZWL",
-          progress: 0
-        },
-        faults: {
-          value: "0",
-          unit: "Complaints",
-          target: "0",
-          target_unit: "",
-          progress: 0
-        },
-        maintenance: {
-          value: "0",
-          unit: "Maintained",
-          target: "0",
-          target_unit: "",
-          progress: 0
-        }
-      },
-
-      // User permissions
-      canEdit: false,
-      userRoles: [],
-
-      // Editing state
-      editingCell: null, // {table: 'weekly_sales', row: 0, field: 'zwl'} or {type: 'metric', field: 'energy_sold_value'}
-      editingValue: "",
-      originalValue: ""
+      authUser: {}
     };
     this.inspectionPieChartRef = React.createRef();
     this.inspectionBarChartRef = React.createRef();
@@ -125,36 +67,7 @@ class DashboardFilter extends React.Component {
     });
     this.getRegions();
     this.getDashboardData();
-    this.getUserPermissions();
   }
-
-  getUserPermissions = () => {
-    fetch(`${BASE_URL}/dashboards/user_permissions`)
-      .then((response) => response.json())
-      .then((data) => {
-        console.log("User permissions data: ", data);
-        console.log("canEdit value:", data.canEdit);
-        console.log("userRoles:", data.userRoles);
-        this.setState({
-          canEdit: data.canEdit || false,
-          userRoles: data.userRoles || [],
-          authUser: data.user || {}
-        });
-        console.log("State after setting permissions:", {
-          canEdit: data.canEdit || false,
-          userRoles: data.userRoles || [],
-          authUser: data.user || {}
-        });
-      })
-      .catch((error) => {
-        console.error("Error loading user permissions:", error);
-        this.setState({
-          canEdit: false,
-          userRoles: [],
-          authUser: {}
-        });
-      });
-  };
 
   onFilterSelectCenters(name_, event) {
     let { name, value } = event.target
@@ -251,12 +164,9 @@ class DashboardFilter extends React.Component {
               maintenance_locations: maintenance_locations_,
               maintenance_count: maintenance_count_,
               mnt: mtn_,
-              pbncs: data.pbncs || [],
-              weekly_sales: data.weekly_sales || [],
-              upos: data.upos || [],
-              weekly_outages: data.weekly_outages || [],
-              tds: data.tds || [],
-              weekly_faults_maintenance: data.weekly_faults_maintenance || [],
+              pbncs: data.pbncs,
+              upos: data.upos,
+              tds: data.tds,
           });
 
           this.initComponents();
@@ -641,6 +551,7 @@ class DashboardFilter extends React.Component {
 
   // get service branch
   getRegions = () => {
+
     fetch(`${BASE_URL}/dashboards/regions`)
       .then((response) => response.json())
       .then((data) => {
@@ -654,16 +565,10 @@ class DashboardFilter extends React.Component {
           districts: data.districts,
           sections: data.sections,
           depots: data.depots,
-          pbncs: data.pbncs || [],
-          weekly_sales: data.weekly_sales || [],
-          upos: data.upos || [],
-          weekly_outages: data.weekly_outages || [],
-          tds: data.tds || [],
-          weekly_faults_maintenance: data.weekly_faults_maintenance || [],
+          pbncs: data.pbncs,
+          upos: data.upos,
+          tds: data.tds,
         });
-      })
-      .catch((error) => {
-        console.error("Error loading regions data:", error);
       });
   };
 
@@ -679,31 +584,18 @@ class DashboardFilter extends React.Component {
         let maintenance_count_ = JSON.parse(data.maintenance_count)
         let mtn_ = data.mtn
 
-        // Update metrics if provided
-        let updatedMetrics = this.state.metrics;
-        if (data.metrics) {
-          updatedMetrics = { ...this.state.metrics, ...data.metrics };
-        }
-
         this.setState({
             inspection_locations: inspection_locations_,
             inspections_count: inspections_count_,
             maintenance_locations: maintenance_locations_,
             maintenance_count: maintenance_count_,
             mnt: mtn_,
-            metrics: updatedMetrics,
-            pbncs: data.pbncs || [],
-            weekly_sales: data.weekly_sales || [],
-            upos: data.upos || [],
-            weekly_outages: data.weekly_outages || [],
-            tds: data.tds || [],
-            weekly_faults_maintenance: data.weekly_faults_maintenance || [],
+            pbncs: data.pbncs,
+            upos: data.upos,
+            tds: data.tds,
         });
 
         this.initComponents();
-      })
-      .catch((error) => {
-        console.error("Error loading dashboard data:", error);
       })
   }
 
@@ -732,276 +624,11 @@ class DashboardFilter extends React.Component {
     });
   };
 
-  // Helper function to calculate progress percentage
-  calculateProgress = (value, target) => {
-    const numValue = parseFloat(value) || 0;
-    const numTarget = parseFloat(target) || 0;
-    if (numTarget <= 0) return 0;
-    const progress = Math.round((numValue / numTarget) * 100);
-    return Math.min(progress, 100); // Cap at 100%
-  };
-
-  // Helper function to get progress bar color based on percentage
-  getProgressColor = (progress) => {
-    if (progress >= 90) return 'bg-green-600'; // Excellent - Green
-    if (progress >= 75) return 'bg-blue-600';  // Good - Blue
-    if (progress >= 50) return 'bg-yellow-600'; // Fair - Yellow
-    if (progress >= 25) return 'bg-orange-600'; // Poor - Orange
-    return 'bg-red-600'; // Very Poor - Red
-  };
-
-  // Editing functionality
-  startEdit = (table, rowIndex, field, currentValue) => {
-    this.setState({
-      editingCell: { table, row: rowIndex, field },
-      editingValue: currentValue,
-      originalValue: currentValue
-    });
-  };
-
-  cancelEdit = () => {
-    this.setState({
-      editingCell: null,
-      editingValue: "",
-      originalValue: ""
-    });
-  };
-
-  handleEditChange = (event) => {
-    this.setState({
-      editingValue: event.target.value
-    });
-  };
-
-  saveEdit = () => {
-    const { editingCell, editingValue } = this.state;
-    if (!editingCell) return;
-
-    if (editingCell.type === 'metric') {
-      // Handle metric editing
-      const { field } = editingCell;
-      const fieldParts = field.split('_');
-      const property = fieldParts.pop();
-      const metricKey = fieldParts.join('_');
-      
-      let valueToSave = editingValue;
-      if (property === 'value' || property === 'target' || property === 'progress') {
-        valueToSave = property === 'progress' ? parseFloat(editingValue) || 0 : editingValue;
-      }
-
-      const updatedMetrics = {
-        ...this.state.metrics,
-        [metricKey]: {
-          ...this.state.metrics[metricKey],
-          [property]: valueToSave
-        }
-      };
-
-      // Auto-calculate progress when value or target changes
-      if (property === 'value' || property === 'target') {
-        const value = property === 'value' ? parseFloat(valueToSave) : parseFloat(updatedMetrics[metricKey].value);
-        const target = property === 'target' ? parseFloat(valueToSave) : parseFloat(updatedMetrics[metricKey].target);
-        if (target > 0) {
-          updatedMetrics[metricKey].progress = Math.round((value / target) * 100);
-        }
-      }
-
-      this.setState({
-        metrics: updatedMetrics,
-        editingCell: null,
-        editingValue: "",
-        originalValue: ""
-      });
-
-      this.saveChangesToServer('metrics', metricKey, property, valueToSave);
-      console.log(`Saved metrics.${metricKey}.${property} = ${valueToSave}`);
-    } else {
-      // Handle table editing
-      const { table, row, field } = editingCell;
-      const updatedData = [...this.state[table]];
-      
-      // Convert numeric fields appropriately
-      let valueToSave = editingValue;
-      if (field === 'outages' || field === 'resolved' || field === 'pending' || 
-          field === 'faults' || field === 'maintenance' || field === 'completed') {
-        valueToSave = parseInt(editingValue) || 0;
-      }
-      
-      updatedData[row][field] = valueToSave;
-
-      this.setState({
-        [table]: updatedData,
-        editingCell: null,
-        editingValue: "",
-        originalValue: ""
-      });
-
-      this.saveChangesToServer(table, row, field, valueToSave);
-      console.log(`Saved ${table}[${row}].${field} = ${valueToSave}`);
-    }
-  };
-
-  saveChangesToServer = (table, row, field, value) => {
-    fetch(`${BASE_URL}/dashboards/save_dashboard_data`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-CSRFToken": this.getCookie("csrftoken"),
-      },
-      body: JSON.stringify({
-        table: table,
-        row: row,
-        field: field,
-        value: value,
-        timestamp: new Date().toISOString()
-      }),
-    })
-    .then((response) => response.json())
-    .then((data) => {
-      if (data.success) {
-        console.log("Changes saved successfully");
-      } else {
-        console.error("Failed to save changes:", data.error);
-        // Optionally revert the changes on failure
-      }
-    })
-    .catch((error) => {
-      console.error("Error saving changes:", error);
-      // Optionally revert the changes on error
-    });
-  };
-
-  renderEditableCell = (table, rowIndex, field, value, className = "") => {
-    const { editingCell, editingValue, canEdit } = this.state;
-    const isEditing = editingCell && 
-                     editingCell.table === table && 
-                     editingCell.row === rowIndex && 
-                     editingCell.field === field;
-
-    if (isEditing && canEdit) {
-      return (
-        <td className={`p-1 border border-gray-300 ${className}`}>
-          <div className="flex items-center gap-1">
-            <input
-              type="text"
-              value={editingValue}
-              onChange={this.handleEditChange}
-              className="w-full text-xs p-1 border rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
-              autoFocus
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') this.saveEdit();
-                if (e.key === 'Escape') this.cancelEdit();
-              }}
-            />
-            <button
-              onClick={this.saveEdit}
-              className="text-green-600 hover:text-green-800 text-xs px-1"
-              title="Save"
-            >
-              ✓
-            </button>
-            <button
-              onClick={this.cancelEdit}
-              className="text-red-600 hover:text-red-800 text-xs px-1"
-              title="Cancel"
-            >
-              ✗
-            </button>
-          </div>
-        </td>
-      );
-    }
-
-    return (
-      <td 
-        className={`p-2 border border-gray-300 ${canEdit ? 'cursor-pointer hover:bg-gray-50' : ''} ${className}`}
-        onClick={canEdit ? () => this.startEdit(table, rowIndex, field, value) : undefined}
-        title={canEdit ? "Click to edit" : ""}
-      >
-        {value}
-      </td>
-    );
-  };
-
-  renderEditableMetric = (metricKey, property, value, className = "") => {
-    const { editingCell, editingValue, canEdit } = this.state;
-    const fieldId = `${metricKey}_${property}`;
-    const isEditing = editingCell && 
-                     editingCell.type === 'metric' && 
-                     editingCell.field === fieldId;
-
-    if (isEditing && canEdit) {
-      return (
-        <div className={`inline-flex items-center gap-1 ${className}`}>
-          <input
-            type="text"
-            value={editingValue}
-            onChange={this.handleEditChange}
-            className="w-20 text-xs p-1 border rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
-            autoFocus
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') this.saveEdit();
-              if (e.key === 'Escape') this.cancelEdit();
-            }}
-          />
-          <button
-            onClick={this.saveEdit}
-            className="text-green-600 hover:text-green-800 text-xs"
-            title="Save"
-          >
-            ✓
-          </button>
-          <button
-            onClick={this.cancelEdit}
-            className="text-red-600 hover:text-red-800 text-xs"
-            title="Cancel"
-          >
-            ✗
-          </button>
-        </div>
-      );
-    }
-
-    return (
-      <span 
-        className={`${canEdit ? 'cursor-pointer hover:bg-gray-100' : ''} px-1 py-0.5 rounded ${className}`}
-        onClick={canEdit ? () => this.setState({
-          editingCell: { type: 'metric', field: fieldId },
-          editingValue: value.toString(),
-          originalValue: value.toString()
-        }) : undefined}
-        title={canEdit ? "Click to edit" : ""}
-      >
-        {value}
-      </span>
-    );
-  };
-
   render() {
 
 
     return (
       <div>
-        <div className="grid grid-cols-1 gap-4 mb-3">
-          <div className={`w-auto bg-gradient-to-r ${this.state.canEdit ? 'from-green-50 to-green-100 border-l-4 border-green-400' : 'from-blue-50 to-blue-100 border-l-4 border-blue-400'} p-3 rounded`}>
-            <div className="flex items-center">
-              <div className={`${this.state.canEdit ? 'text-green-800' : 'text-blue-800'} mr-2`}>
-                {this.state.canEdit ? '✏️' : 'ℹ️'}
-              </div>
-              <div className={`text-sm ${this.state.canEdit ? 'text-green-800' : 'text-blue-800'}`}>
-                {this.state.canEdit ? (
-                  <>
-                    <strong>Edit Mode Enabled:</strong> You have permissions to edit dashboard data. Click on any metric values, progress bars, targets in the cards above or data cells in the tables below to edit. Press Enter to save or Escape to cancel.
-                  </>
-                ) : (
-                  <>
-                    <strong>View Only Mode:</strong> You have read-only access to this dashboard. Contact your administrator if you need editing permissions.
-                  </>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
         <div className="grid grid-cols-1 gap-4">
           <div className="w-auto bg-white drop-shadow-md shadow shadow-gulf-blue-300 text-gulf-blue-950 rounded px-4 py-4">
             <div className="flex justify-around">
@@ -1071,7 +698,7 @@ class DashboardFilter extends React.Component {
             <div className="sm:flex lg:items-center lg:justify-between">
               <div className="min-w-0 flex-1">
                 <div className="text-center text-lg font-bold text-gulf-blue-950 sm:truncate sm:tracking-tight">
-                  ENERGY SOLD
+                  REVENUE ASSURANCE
                 </div>
                 <div className="mt-2">
                   <a href="#">
@@ -1083,27 +710,19 @@ class DashboardFilter extends React.Component {
                               <div className="col-8">
                                 <div className="numbers">
                                   <p className="text-xs mb-0 text-capitalize font-weight-bold">
-                                    Energy Sold (GWh)
+                                    Points Visited
                                   </p>
-                                  <h6 className="font-weight-bolder mb-0">
-                                    {this.renderEditableMetric('energy_sold', 'value', this.state.metrics.energy_sold.value)} {this.state.metrics.energy_sold.unit}
-                                  </h6>
+                                  <h6 className="font-weight-bolder mb-0">600</h6>
                                 </div>
 
                                 <div className="overflow-hidden bg-blue-50 h-1.5 rounded-full w-full">
                                   <span
-                                    className={`h-full w-full block rounded-full transition-all duration-300 ${this.state.canEdit ? 'cursor-pointer' : ''} ${this.getProgressColor(this.calculateProgress(this.state.metrics.energy_sold.value, this.state.metrics.energy_sold.target))}`}
-                                    style={{width: `${this.calculateProgress(this.state.metrics.energy_sold.value, this.state.metrics.energy_sold.target)}%`}}
-                                    title={`Progress: ${this.calculateProgress(this.state.metrics.energy_sold.value, this.state.metrics.energy_sold.target)}% (${this.state.metrics.energy_sold.value}/${this.state.metrics.energy_sold.target})${this.state.canEdit ? ' - Click to edit' : ''}`}
-                                    onClick={this.state.canEdit ? () => this.setState({
-                                      editingCell: { type: 'metric', field: 'energy_sold_progress' },
-                                      editingValue: this.calculateProgress(this.state.metrics.energy_sold.value, this.state.metrics.energy_sold.target).toString(),
-                                      originalValue: this.calculateProgress(this.state.metrics.energy_sold.value, this.state.metrics.energy_sold.target).toString()
-                                    }) : undefined}
+                                    className="h-full bg-gulf-blue-900 w-full block rounded-full"
+                                    style={{width: "60%"}}
                                   ></span>
                                 </div>
                                 <p className="text-xs text-muted mt-2 mb-0">
-                                  Monthly Target: {this.renderEditableMetric('energy_sold', 'target', this.state.metrics.energy_sold.target)} {this.state.metrics.energy_sold.target_unit}
+                                  Monthly Target:1000
                                 </p>
                               </div>
                             </div>
@@ -1132,27 +751,19 @@ class DashboardFilter extends React.Component {
                               <div className="col-8">
                                 <div className="numbers">
                                   <p className="text-xs mb-0 text-capitalize font-weight-bold">
-                                    Client Connected
+                                    Connected
                                   </p>
-                                  <h6 className="font-weight-bolder mb-0">
-                                    {this.renderEditableMetric('growth', 'value', this.state.metrics.growth.value)}
-                                  </h6>
+                                  <h6 className="font-weight-bolder mb-0">900</h6>
                                 </div>
 
                                 <div className="overflow-hidden bg-jade-50 h-1.5 rounded-full w-full">
                                   <span
-                                    className={`h-full w-full block rounded-full transition-all duration-300 ${this.state.canEdit ? 'cursor-pointer' : ''} ${this.getProgressColor(this.calculateProgress(this.state.metrics.growth.value, this.state.metrics.growth.target))}`}
-                                    style={{width: `${this.calculateProgress(this.state.metrics.growth.value, this.state.metrics.growth.target)}%`}}
-                                    title={`Progress: ${this.calculateProgress(this.state.metrics.growth.value, this.state.metrics.growth.target)}% (${this.state.metrics.growth.value}/${this.state.metrics.growth.target})${this.state.canEdit ? ' - Click to edit' : ''}`}
-                                    onClick={this.state.canEdit ? () => this.setState({
-                                      editingCell: { type: 'metric', field: 'growth_progress' },
-                                      editingValue: this.calculateProgress(this.state.metrics.growth.value, this.state.metrics.growth.target).toString(),
-                                      originalValue: this.calculateProgress(this.state.metrics.growth.value, this.state.metrics.growth.target).toString()
-                                    }) : undefined}
+                                    className="h-full bg-jade-900 w-full block rounded-full"
+                                    style={{width: "90%"}}
                                   ></span>
                                 </div>
                                 <p className="text-xs text-muted mt-2 mb-0">
-                                  YTD Target: {this.renderEditableMetric('growth', 'target', this.state.metrics.growth.target)} {this.state.metrics.growth.target_unit}
+                                  YTD Target:1000
                                 </p>
                               </div>
                             </div>
@@ -1169,7 +780,7 @@ class DashboardFilter extends React.Component {
             <div className="sm:flex lg:items-center lg:justify-between">
               <div className="min-w-0 flex-1">
                 <div className="text-center text-lg font-bold text-royal-heath-950 sm:truncate sm:tracking-tight">
-                  REVENUE COLLECTION
+                  INSPECTIONS
                 </div>
                 <div className="mt-2">
                   <a href="#">
@@ -1181,33 +792,19 @@ class DashboardFilter extends React.Component {
                               <div className="col-8">
                                 <div className="numbers">
                                   <p className="text-xs mb-0 text-capitalize font-weight-bold">
-                                    Revenue Collected
+                                    Inspected
                                   </p>
-                                  <h6 className="font-weight-bolder mb-0">
-                                    {this.state.metrics.revenue_usd.unit} {this.renderEditableMetric('revenue_usd', 'value', this.state.metrics.revenue_usd.value)}
-                                  </h6>
-                                  <h6 className="font-weight-bolder mb-0">
-                                    {this.state.metrics.revenue_zwl.unit} {this.renderEditableMetric('revenue_zwl', 'value', this.state.metrics.revenue_zwl.value)}
-                                  </h6>
+                                  <h6 className="font-weight-bolder mb-0">100</h6>
                                 </div>
 
                                 <div className="overflow-hidden bg-royal-heath-50 h-1.5 rounded-full w-full">
                                   <span
-                                    className={`h-full w-full block rounded-full transition-all duration-300 ${this.state.canEdit ? 'cursor-pointer' : ''} ${this.getProgressColor(Math.round((this.calculateProgress(this.state.metrics.revenue_usd.value, this.state.metrics.revenue_usd.target) + this.calculateProgress(this.state.metrics.revenue_zwl.value, this.state.metrics.revenue_zwl.target)) / 2))}`}
-                                    style={{width: `${Math.round((this.calculateProgress(this.state.metrics.revenue_usd.value, this.state.metrics.revenue_usd.target) + this.calculateProgress(this.state.metrics.revenue_zwl.value, this.state.metrics.revenue_zwl.target)) / 2)}%`}}
-                                    title={`Combined Progress: ${Math.round((this.calculateProgress(this.state.metrics.revenue_usd.value, this.state.metrics.revenue_usd.target) + this.calculateProgress(this.state.metrics.revenue_zwl.value, this.state.metrics.revenue_zwl.target)) / 2)}% | USD: ${this.calculateProgress(this.state.metrics.revenue_usd.value, this.state.metrics.revenue_usd.target)}% | ZWL: ${this.calculateProgress(this.state.metrics.revenue_zwl.value, this.state.metrics.revenue_zwl.target)}%${this.state.canEdit ? ' - Click to edit' : ''}`}
-                                    onClick={this.state.canEdit ? () => this.setState({
-                                      editingCell: { type: 'metric', field: 'revenue_combined_progress' },
-                                      editingValue: Math.round((this.calculateProgress(this.state.metrics.revenue_usd.value, this.state.metrics.revenue_usd.target) + this.calculateProgress(this.state.metrics.revenue_zwl.value, this.state.metrics.revenue_zwl.target)) / 2).toString(),
-                                      originalValue: Math.round((this.calculateProgress(this.state.metrics.revenue_usd.value, this.state.metrics.revenue_usd.target) + this.calculateProgress(this.state.metrics.revenue_zwl.value, this.state.metrics.revenue_zwl.target)) / 2).toString()
-                                    }) : undefined}
+                                    className="h-full bg-royal-heath-900 w-full block rounded-full"
+                                    style={{width: "10%"}}
                                   ></span>
                                 </div>
                                 <p className="text-xs text-muted mt-2 mb-0">
-                                  YTD Target: {this.state.metrics.revenue_usd.unit} {this.renderEditableMetric('revenue_usd', 'target', this.state.metrics.revenue_usd.target)}
-                                </p>
-                                <p className="text-xs text-muted mt-2 mb-0">
-                                  YTD Target: {this.state.metrics.revenue_zwl.unit} {this.renderEditableMetric('revenue_zwl', 'target', this.state.metrics.revenue_zwl.target)}
+                                  YTD Target:1000
                                 </p>
                               </div>
                             </div>
@@ -1236,27 +833,19 @@ class DashboardFilter extends React.Component {
                               <div className="col-8">
                                 <div className="numbers">
                                   <p className="text-xs mb-0 text-capitalize font-weight-bold">
-                                    Compliants Received
+                                    Unresolved
                                   </p>
-                                  <h6 className="font-weight-bolder mb-0">
-                                    {this.renderEditableMetric('faults', 'value', this.state.metrics.faults.value)}
-                                  </h6>
+                                  <h6 className="font-weight-bolder mb-0">700</h6>
                                 </div>
 
                                 <div className="overflow-hidden bg-gulf-blue-50 h-1.5 rounded-full w-full">
                                   <span
-                                    className={`h-full w-full block rounded-full transition-all duration-300 ${this.state.canEdit ? 'cursor-pointer' : ''} ${this.getProgressColor(this.calculateProgress(this.state.metrics.faults.value, this.state.metrics.faults.target))}`}
-                                    style={{width: `${this.calculateProgress(this.state.metrics.faults.value, this.state.metrics.faults.target)}%`}}
-                                    title={`Progress: ${this.calculateProgress(this.state.metrics.faults.value, this.state.metrics.faults.target)}% (${this.state.metrics.faults.value}/${this.state.metrics.faults.target})${this.state.canEdit ? ' - Click to edit' : ''}`}
-                                    onClick={this.state.canEdit ? () => this.setState({
-                                      editingCell: { type: 'metric', field: 'faults_progress' },
-                                      editingValue: this.calculateProgress(this.state.metrics.faults.value, this.state.metrics.faults.target).toString(),
-                                      originalValue: this.calculateProgress(this.state.metrics.faults.value, this.state.metrics.faults.target).toString()
-                                    }) : undefined}
+                                    className="h-full bg-gulf-blue-900 w-full block rounded-full"
+                                    style={{width: "70%"}}
                                   ></span>
                                 </div>
                                 <p className="text-xs text-muted mt-2 mb-0">
-                                  YTD Target: {this.renderEditableMetric('faults', 'target', this.state.metrics.faults.target)}
+                                  YTD Target:1000
                                 </p>
                               </div>
                             </div>
@@ -1287,25 +876,17 @@ class DashboardFilter extends React.Component {
                                   <p className="text-xs mb-0 text-capitalize font-weight-bold">
                                     Maintained
                                   </p>
-                                  <h6 className="font-weight-bolder mb-0">
-                                    {this.renderEditableMetric('maintenance', 'value', this.state.metrics.maintenance.value)}
-                                  </h6>
+                                  <h6 className="font-weight-bolder mb-0">950</h6>
                                 </div>
 
                                 <div className="overflow-hidden bg-jade-50 h-1.5 rounded-full w-full">
                                   <span
-                                    className={`h-full w-full block rounded-full transition-all duration-300 ${this.state.canEdit ? 'cursor-pointer' : ''} ${this.getProgressColor(this.calculateProgress(this.state.metrics.maintenance.value, this.state.metrics.maintenance.target))}`}
-                                    style={{width: `${this.calculateProgress(this.state.metrics.maintenance.value, this.state.metrics.maintenance.target)}%`}}
-                                    title={`Progress: ${this.calculateProgress(this.state.metrics.maintenance.value, this.state.metrics.maintenance.target)}% (${this.state.metrics.maintenance.value}/${this.state.metrics.maintenance.target})${this.state.canEdit ? ' - Click to edit' : ''}`}
-                                    onClick={this.state.canEdit ? () => this.setState({
-                                      editingCell: { type: 'metric', field: 'maintenance_progress' },
-                                      editingValue: this.calculateProgress(this.state.metrics.maintenance.value, this.state.metrics.maintenance.target).toString(),
-                                      originalValue: this.calculateProgress(this.state.metrics.maintenance.value, this.state.metrics.maintenance.target).toString()
-                                    }) : undefined}
+                                    className="h-full bg-jade-900 w-full block rounded-full"
+                                    style={{width: "95%"}}
                                   ></span>
                                 </div>
                                 <p className="text-xs text-muted mt-2 mb-0">
-                                  YTD Target: {this.renderEditableMetric('maintenance', 'target', this.state.metrics.maintenance.target)}
+                                  YTD Target:1000
                                 </p>
                               </div>
                             </div>
@@ -1319,144 +900,33 @@ class DashboardFilter extends React.Component {
             </div>
           </div>
         </div>
-        <div className="grid grid-cols-4 gap-4 mt-10">
-          <div className="w-auto bg-gradient-to-b from-gulf-blue-100 to-gulf-blue-200 drop-shadow-lg shadow-lg shadow-gulf-blue-400 text-gray-900 rounded-lg px-3 py-3 border border-gulf-blue-300">
+        <div className="grid grid-cols-5 gap-4 mt-10">
+          <div className="w-auto bg-gulf-blue-200 drop-shadow-md shadow shadow-gulf-blue-300 text-gray-900 rounded px-2 py-2">
             <div className="sm:flex lg:items-center lg:justify-between">
               <div className="min-w-0 flex-1">
-                <div className="text-center text-xl font-bold text-gulf-blue-900 sm:truncate sm:tracking-tight mb-2 bg-white rounded-lg py-2 px-3 shadow-sm border border-gulf-blue-300">
-                  📊 Weekly Sales
+                <div className="text-center text-lg font-bold sm:truncate sm:tracking-tight">
+                  Top PBNC Customers
                 </div>
                 <div style={{height: "14rem"}} className="mt-2 h-20 overflow-auto">
                   <a href="#">
-                    <table className="table-auto w-full text-sm border-collapse">
-                      <thead className="bg-gulf-blue-600 text-white">
-                        <tr className="bg-gulf-blue-600 transition-colors">
-                          <th className="text-left p-2 font-bold border border-gulf-blue-600">Week</th>
-                          <th className="text-left p-2 font-bold border border-gulf-blue-600">ZWL</th>
-                          <th className="text-left p-2 font-bold border border-gulf-blue-600">USD</th>
-                        </tr>
-                      </thead>
-                      <tbody className="bg-white">
-                        {this.state.weekly_sales
-                          ? this.state.weekly_sales.map((sale, index) => (
-                              <tr key={index} className="hover:bg-gulf-blue-100 transition-colors">
-                                <td className="p-2 font-semibold text-gulf-blue-900 border border-gray-300">{sale.week}</td>
-                                {this.renderEditableCell('weekly_sales', index, 'zwl', sale.zwl, 'text-gray-800 font-medium')}
-                                {this.renderEditableCell('weekly_sales', index, 'usd', sale.usd, 'text-gray-800 font-medium')}
-                              </tr>
-                            ))
-                          : null}
-                      </tbody>
-                    </table>
-                  </a>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div className="w-auto bg-gradient-to-b from-red-100 to-red-200 drop-shadow-lg shadow-lg shadow-red-400 text-gray-900 rounded-lg px-3 py-3 border border-red-300">
-            <div className="sm:flex lg:items-center lg:justify-between">
-              <div className="min-w-0 flex-1">
-                <div className="text-center text-xl font-bold text-red-900 sm:truncate sm:tracking-tight mb-2 bg-white rounded-lg py-2 px-3 shadow-sm border border-red-300">
-                  ⚡ Weekly Power Outages
-                </div>
-                <div style={{height: "14rem"}} className="mt-2 h-20 overflow-auto">
-                  <a href="#">
-                    <table className="table-auto w-full text-sm border-collapse">
-                      <thead className="bg-red-600 text-white">
+                    <table className="table-auto">
+                      <thead>
                         <tr>
-                          <th className="text-left p-2 font-bold border border-red-600">Week</th>
-                          <th className="text-left p-2 font-bold border border-red-600">Total</th>
-                          <th className="text-left p-2 font-bold border border-red-600">Resolved</th>
-                          <th className="text-left p-2 font-bold border border-red-600">Pending</th>
+                          <th></th>
+                          <th></th>
+                          <th></th>
                         </tr>
                       </thead>
-                      <tbody className="bg-white">
-                        {this.state.weekly_outages
-                          ? this.state.weekly_outages.map((outage, index) => (
-                              <tr key={index} className="hover:bg-red-50 transition-colors">
-                                <td className="p-2 font-semibold text-red-900 border border-gray-300">{outage.week}</td>
-                                {this.renderEditableCell('weekly_outages', index, 'outages', outage.outages, 'text-gray-800 font-medium')}
-                                {this.renderEditableCell('weekly_outages', index, 'resolved', outage.resolved, 'text-green-700 font-medium')}
-                                {this.renderEditableCell('weekly_outages', index, 'pending', outage.pending, 'text-red-700 font-medium')}
-                              </tr>
-                            ))
-                          : null}
-                      </tbody>
-                    </table>
-                  </a>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div className="w-auto bg-gradient-to-b from-orange-100 to-orange-200 drop-shadow-lg shadow-lg shadow-orange-400 text-gray-900 rounded-lg px-3 py-3 border border-orange-300">
-            <div className="sm:flex lg:items-center lg:justify-between">
-              <div className="min-w-0 flex-1">
-                <div className="text-center text-xl font-bold text-orange-900 sm:truncate sm:tracking-tight mb-2 bg-white rounded-lg py-2 px-3 shadow-sm border border-orange-300">
-                  🔧 Weekly Faults and Maintenance
-                </div>
-                <div style={{height: "14rem"}} className="mt-2 h-20 overflow-auto">
-                  <a href="#">
-                    <table className="table-auto w-full text-sm border-collapse">
-                      <thead className="bg-gulf-blue-600 text-white">
-                        <tr>
-                          <th className="text-left p-2 font-bold border border-gulf-blue-600">Week</th>
-                          <th className="text-left p-2 font-bold border border-gulf-blue-600">Faults</th>
-                          <th className="text-left p-2 font-bold border border-orange-600">Maintenance</th>
-                          <th className="text-left p-2 font-bold border border-orange-600">Completed</th>
-                          <th className="text-left p-2 font-bold border border-orange-600">Pending</th>
-                        </tr>
-                      </thead>
-                      <tbody className="bg-white">
-                        {this.state.weekly_faults_maintenance
-                          ? this.state.weekly_faults_maintenance.map((item, index) => (
-                              <tr key={index} className="hover:bg-orange-50 transition-colors">
-                                <td className="p-2 font-semibold text-orange-900 border border-gray-300">{item.week}</td>
-                                {this.renderEditableCell('weekly_faults_maintenance', index, 'faults', item.faults, 'text-red-700 font-medium')}
-                                {this.renderEditableCell('weekly_faults_maintenance', index, 'maintenance', item.maintenance, 'text-blue-700 font-medium')}
-                                {this.renderEditableCell('weekly_faults_maintenance', index, 'completed', item.completed, 'text-green-700 font-medium')}
-                                {this.renderEditableCell('weekly_faults_maintenance', index, 'pending', item.pending, 'text-red-700 font-medium')}
-                              </tr>
-                            ))
-                          : null}
-                      </tbody>
-                    </table>
-                  </a>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div className="w-auto bg-gradient-to-b from-purple-100 to-purple-200 drop-shadow-lg shadow-lg shadow-purple-400 text-gray-900 rounded-lg px-3 py-3 border border-purple-300">
-            <div className="sm:flex lg:items-center lg:justify-between">
-              <div className="min-w-0 flex-1">
-                <div className="text-center text-xl font-bold text-purple-900 sm:truncate sm:tracking-tight mb-2 bg-white rounded-lg py-2 px-3 shadow-sm border border-purple-300">
-                  💰 Top Debtors
-                </div>
-                <div style={{height: "14rem"}} className="mt-2 h-20 overflow-auto">
-                  <a href="#">
-                    <table className="table-auto w-full text-sm border-collapse">
-                      <thead className="bg-purple-600 text-white">
-                        <tr>
-                          <th className="text-left p-2 font-bold border border-purple-600">#</th>
-                          <th className="text-left p-2 font-bold border border-purple-600">Customer</th>
-                          <th className="text-left p-2 font-bold border border-purple-600">Amount</th>
-                        </tr>
-                      </thead>
-                      <tbody className="bg-white">
-                        {this.state.tds && this.state.tds.length > 0
-                          ? this.state.tds.map((td, index) => (
-                              <tr key={index} className="hover:bg-purple-50 transition-colors">
-                                <td className="p-2 font-semibold text-purple-900 border border-gray-300">{index + 1}</td>
-                                {this.renderEditableCell('tds', index, 'name', td.name, 'text-gray-800 font-medium')}
-                                {this.renderEditableCell('tds', index, 'amount', td.amount, 'text-red-700 font-medium')}
-                              </tr>
-                            ))
-                          : (
+                      <tbody>
+                        {this.state.pbncs
+                          ? this.state.pbncs.map((pbnc, index) => (
                               <tr>
-                                <td colSpan="3" className="p-2 text-center text-gray-500 border border-gray-300">
-                                  No debt data available
-                                </td>
+                                <td>{index + 1}</td>
+                                <td>{pbnc.name}</td>
+                                <td>{pbnc.amount}</td>
                               </tr>
-                            )}
+                            ))
+                          : null}
                       </tbody>
                     </table>
                   </a>
@@ -1464,9 +934,100 @@ class DashboardFilter extends React.Component {
               </div>
             </div>
           </div>
-
+          <div className="w-auto bg-royal-heath-200 drop-shadow-md shadow shadow-royal-heath-300 text-gray-900 rounded px-2 py-2">
+            <div className="sm:flex lg:items-center lg:justify-between">
+              <div className="min-w-0 flex-1">
+                <div className="text-center text-lg font-bold sm:truncate sm:tracking-tight">
+                  Unresolved Power Outages
+                </div>
+                <div style={{height: "14rem"}} className="mt-2 h-20 overflow-auto">
+                  <a href="#">
+                    <table className="table-auto">
+                      <thead>
+                        <tr>
+                          <th></th>
+                          <th></th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {this.state.upos
+                          ? this.state.upos.map((upo, index) => (
+                              <tr>
+                                <td>{index + 1}</td>
+                                <td>{upo.description}</td>
+                              </tr>
+                            ))
+                          : null}
+                      </tbody>
+                    </table>
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="w-auto bg-citron-200 drop-shadow-md shadow shadow-citron-300 text-gray-900 rounded px-2 py-2">
+            <div className="sm:flex lg:items-center lg:justify-between">
+              <div className="min-w-0 flex-1">
+                <div className="text-center text-lg font-bold text-gulf-blue-950 sm:truncate sm:tracking-tight">
+                  Inspection breakdown
+                </div>
+                <div style={{height: "14rem"}} className="mt-2 h-20 overflow-auto">
+                  <a href="#">
+                    <canvas id="Inspection" ref={this.inspectionPieChartRef}></canvas>
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="w-auto bg-gulf-blue-200 drop-shadow-md shadow shadow-gulf-blue-300 text-gulf-blue-900 rounded px-2 py-2">
+            <div className="sm:flex lg:items-center lg:justify-between">
+              <div className="min-w-0 flex-1">
+                <div className="text-center text-lg font-bold text-gulf-blue-950 sm:truncate sm:tracking-tight">
+                  Top Debtors
+                </div>
+                <div style={{height: "14rem"}} className="mt-2 h-20 overflow-auto">
+                  <a href="#">
+                    <table className="table-auto">
+                      <thead>
+                        <tr>
+                          <th></th>
+                          <th></th>
+                          <th></th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {this.state.tds
+                          ? this.state.tds.map((td, index) => (
+                              <tr>
+                                <td>{(index + 1)}</td>
+                                <td>{td.name}</td>
+                                <td>{td.amount}</td>
+                              </tr>
+                            ))
+                          : null}
+                      </tbody>
+                    </table>
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="w-auto bg-citron-200 drop-shadow-md shadow shadow-citron-300 text-gray-900 rounded px-2 py-2">
+            <div className="sm:flex lg:items-center lg:justify-between">
+              <div className="min-w-0 flex-1">
+                <div className="text-center text-lg font-bold text-gulf-blue-950 sm:truncate sm:tracking-tight">
+                  Maintenance breakdown
+                </div>
+                <div style={{height: "14rem"}} className="mt-2 h-20 overflow-auto">
+                  <a href="#">
+                    <canvas id="Maintenance" ref={this.mmtPieChartRef}></canvas>
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-        {/* <div className="grid grid-cols-2 mt-4 gap-4">
+        <div className="grid grid-cols-2 mt-4 gap-4">
           <div className="w-auto bg-gulf-blue-200 shadow shadow-gulf-blue-300 text-gulf-blue-700 rounded px-2 py-2">
             <div className="sm:flex lg:items-center lg:justify-between">
               <div className="min-w-0 flex-1">
@@ -1557,7 +1118,7 @@ class DashboardFilter extends React.Component {
               </div>
             </div>
           </div>
-        </div> */}
+        </div>
       </div>
     );
   }

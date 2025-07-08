@@ -24,13 +24,6 @@ ChartJS.register(
   PointElement
 );
 
-interface IVirtualPowerStats {
-  dsm_initiative: string;
-  initiative_type: string;
-  initiative_value: number;
-  demand_curtailed: number;
-}
-
 interface DsmInitiative {
   initiative: string;
   installations: string;
@@ -65,7 +58,7 @@ const initiatives: DsmInitiative[] = [
   },
 ];
 
-const DsmInitiativesOverview: React.FC<{ virtualPowerStats: IVirtualPowerStats[] }> = ({ virtualPowerStats }) => {
+const DsmInitiativesOverview: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
 
   const chartData = {
@@ -73,7 +66,7 @@ const DsmInitiativesOverview: React.FC<{ virtualPowerStats: IVirtualPowerStats[]
     datasets: [
       {
         label: "Number of Installations/Audits/Policies",
-        data: virtualPowerStats.map((item) => item.initiative_value),
+        data: initiatives.map((item) => item.installations),
         backgroundColor: "rgba(16, 185, 129, 0.7)",
         borderColor: "rgb(16, 185, 129)",
         borderWidth: 1,
@@ -81,7 +74,7 @@ const DsmInitiativesOverview: React.FC<{ virtualPowerStats: IVirtualPowerStats[]
       },
       {
         label: "Demand Curtailed (KW)",
-        data: virtualPowerStats.map((item) => item.demand_curtailed),
+        data: initiatives.map((item) => item.demandCurtailed),
         type: "line" as const,
         borderColor: "rgb(59, 130, 246)",
         backgroundColor: "rgba(59, 130, 246, 0.7)",
@@ -171,16 +164,16 @@ const DsmInitiativesOverview: React.FC<{ virtualPowerStats: IVirtualPowerStats[]
             </tr>
           </thead>
           <tbody>
-            {virtualPowerStats.map((item, index) => (
+            {initiatives.map((item, index) => (
               <tr key={index}>
                 <td className="py-2 px-4 border-b border-b-gray-50">
-                  {item.dsm_initiative}
+                  {item.initiative}
                 </td>
                 <td className="py-2 px-4 border-b border-b-gray-50 text-right">
-                  {item.initiative_value.toLocaleString()}
+                  {item.installations.toLocaleString()}
                 </td>
                 <td className="py-2 px-4 border-b border-b-gray-50 text-right">
-                  {item.demand_curtailed.toLocaleString()}
+                  {item.demandCurtailed.toLocaleString()}
                 </td>
               </tr>
             ))}
