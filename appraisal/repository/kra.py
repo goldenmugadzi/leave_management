@@ -44,7 +44,7 @@ class KRARepository:
     
     def retrieve_by_id(self, kra_id: int):
         try:
-            qr = KeyResultArea.objects.fetch(id=kra_id)
+            qr = KeyResultArea.objects.filter(id=kra_id)
             if not qr.exists():
                 return None
             

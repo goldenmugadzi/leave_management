@@ -68,7 +68,7 @@ class KRATemplateView(TemplateView):
         context.update(self.get_all_kra())        
         return context
 
-class KRAUpdateView(SuccessMessageMixin, UpdateView):
+class KRAUpdateDetailView(SuccessMessageMixin, UpdateView):
     model = KeyResultArea
     form_class = KraCreateForm
     template_name = 'appraisal/kra/create_update.html'
@@ -76,8 +76,8 @@ class KRAUpdateView(SuccessMessageMixin, UpdateView):
     context_object_name = "kra_form"
     
     def get_object(self, queryset=None):
-        
-        return super().get_object(queryset)
+        repo = KRARepository()
+        return repo.retrieve_by_id(kra_id=self.kwargs.get("kra_id"))
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -90,34 +90,43 @@ class KRAUpdateView(SuccessMessageMixin, UpdateView):
             Processes the form when valid, builds a payload, and performs additional actions.
         """
         try:
-            payload = build_payload(request=self.request, form=form)
+            # Build payload
+            payload_deserialize_strategy = PayloadDeserializationStrategyContext(strategy=KraDeserializationStrategy())
+            payload = payload_deserialize_strategy.deserialize_payload(request_object=self.request, form_object=form)
             
+            # Call the service to create KRA
             repo = KRARepository()
-            service_handler = KRAService(kra_repo=repo)
-            
-            kra_object = service_handler.update_use_case(kra_object=self.get_object(), quarter_obj=form.cleaned_data.get('quarter'), data=payload)
+
+            kra_object = repo.update(kra_object=self.get_object(), data=payload, updated_by=self.request.user)
             form.instance = kra_object
         except ValidationError:
-            return self.form_invalid(form)
+            # Errors are already handled in build_payload
+            return super().form_invalid(form)
         except Exception as e:
             messages.error(self.request, f"An unexpected error occurred: {e}")
-            return self.form_invalid(form)
+            return super().form_invalid(form)
 
         return super().form_valid(form)
 
-    def form_invalid(self, form):
-        """
-        Handles invalid form submission and adds appropriate messages.
-        """
-        messages.error(self.request, "There was an error updating the Key Result Area. Please correct the errors below.")
-        return super().form_invalid(form)
+    def get(self, request, *args, **kwargs):
+        try:
+            self.object = self.get_object()
+            
+            if self.object is None:
+                logger.warning(f"KRAUpdateDetailView for kra_id: {self.kwargs.get('kra_id')}, doesn`t exists")
+                return redirect("server_error_view")
+        except Exception as e:
+            logger.error(f"KRAUpdateDetailView for kra_id: {self.kwargs.get('kra_id')}, failed with error: {e}")
+            return redirect("server_error_view")
+        context = self.get_context_data(**kwargs)
+        return self.render_to_response(context)
 
     def get_success_url(self) -> str:
         """
         Redirects to the index page after successful update.
         """
-        kra_obj_id = self.kwargs.get("pk")
-        return reverse('kra_update', kwargs={"pk": kra_obj_id})
+        kra_obj_id = self.kwargs.get("kra_id")
+        return reverse('kra_update_detail', kwargs={"kra_id": kra_obj_id})
     
 class KRADetailView(TemplateView):
     template_name = "appraisal/kra/detail.html"
