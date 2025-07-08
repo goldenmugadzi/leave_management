@@ -18,9 +18,8 @@ class KraDeserializationStrategy:
     def deserialize(self, form_object: BaseModelForm)->BaseModel:
         
         data = {
-            "name": form_object.cleaned_data.get("name"),
-            "description": form_object.cleaned_data.get("description"),
-            "weight": form_object.cleaned_data.get("weight"),
+            "key_result_area_description": form_object.cleaned_data.get("key_result_area_description"),
+            "goal_description": form_object.cleaned_data.get("goal_description")
         }
         return KRAType(**data)
 

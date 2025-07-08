@@ -1,26 +1,21 @@
 from typing import Any, Dict, List
-from django.urls import reverse
+from django.urls import reverse, reverse_lazy
 from django.views.generic import TemplateView
 from django.views.generic.edit import CreateView, UpdateView
 from django.contrib.messages.views import SuccessMessageMixin
 from django.contrib import messages
 from django.shortcuts import get_object_or_404, redirect
-from django.http import Http404
-from django.http import JsonResponse, HttpResponse
-from ...models import KeyResultArea, Activity, Appraisal, AppraisalKra
-from ...forms import YearQuarterForm, KraCreateForm
+from django.http import JsonResponse
+from ...models import KeyResultArea, AppraisalKra
+from ...forms import KraCreateForm
 from ...repository.kra import KRARepository, TargetScoreRepository, KRAOutComeRepository
-from ...repository.appraisal import AppraisalRepository
 from ...services.kra import KRAService
-from .helper import build_payload
-from ...helpers.getters.approval import ApprovalStagesHandler
-from datetime import datetime
+from .helper import PayloadDeserializationStrategyContext, KraDeserializationStrategy
 from pydantic import ValidationError
-from approve.forms import ApprovalForm
-from approve.models import Step, Approval
 
-from ...helpers.types.kra import KraRolesType
 from loguru import logger
+
+
 class KRACreateView(CreateView):
     """View for creating new Kra"""
     model = KeyResultArea
@@ -28,45 +23,35 @@ class KRACreateView(CreateView):
     template_name = 'appraisal/kra/create_update.html'
     success_message = 'Key Result Area created successfully'
     context_object_name = "kra_form"
+    success_url = reverse_lazy('kra_index')
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context[self.context_object_name] = context.get("form")
-        context["appraisal_id"] = self.kwargs.get("appraisal_id")
         return context
-    
-    def get_appraisal_object(self):
-        repo = AppraisalRepository()
-        qr = repo.get_appraisal_by_pk(appraisal_id=self.kwargs.get("appraisal_id"))
-        
-        if qr.exists():
-            return qr.first()
-        raise Http404("Appraisal not found")
-    
+
     def form_valid(self, form):
         try:
             # Build payload
-            payload = build_payload(request=self.request, form=form)
+            payload_deserialize_strategy = PayloadDeserializationStrategyContext(strategy=KraDeserializationStrategy())
+            payload = payload_deserialize_strategy.deserialize_payload(request_object=self.request, form_object=form)
             
             # Call the service to create KRA
             repo = KRARepository()
-            service_handler = KRAService(kra_repo=repo)
-            appraisee_designation_obj = self.get_appraisal_object().user.designation
-            kra_object = service_handler.create_use_case(appraisee_designation=appraisee_designation_obj, data=payload)
+            kra_object = repo.create(creator=self.request.user, data=payload)
+            
+            if kra_object is None:
+                messages.error(self.request, "KRA with this description already exists")
+                return super().form_invalid(form)
             form.instance = kra_object
         except ValidationError:
             # Errors are already handled in build_payload
-            return self.form_invalid(form)
+            return super().form_invalid(form)
         except Exception as e:
             logger.error(f"Failed to create kra with error: {e}")
             messages.error(self.request, f"An unexpected error occurred, please try again")
-            return self.form_invalid(form)
-        
-        if self.request.POST.get("kra_popup"):
-            # JSON response that inject JavaScript to close the popup and refresh the parent
-            js_injector = "<script>opener.refreshKraDropdown(); window.close();</script>"
-            return HttpResponse(js_injector)
-        return self.form_valid(form)
+            return super().form_invalid(form)
+        return super().form_valid(form)
 
 
 class KRATemplateView(TemplateView):

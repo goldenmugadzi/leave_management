@@ -9,7 +9,7 @@ User = get_user_model()
 class KeyResultArea(TimeStamp):
     created_by = models.ForeignKey(User, on_delete=models.RESTRICT, related_name="kra_creator", null=True)
     updated_by = models.ForeignKey(User, on_delete=models.RESTRICT, related_name="kra_creator_updater", null=True)
-    key_result_area_description = models.CharField(max_length=500)
+    key_result_area_description = models.CharField(max_length=500, unique=True)
     goal_description = models.CharField(max_length=500)
     
     def __str__(self):

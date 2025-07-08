@@ -1,5 +1,6 @@
-from typing import List
+from typing import List, Optional
 from django.core.exceptions import ObjectDoesNotExist
+from django.db import IntegrityError
 from django.db.models.query import QuerySet
 from django.core.files.uploadedfile import UploadedFile
 from django.core.files.storage import default_storage
@@ -10,26 +11,34 @@ from it.users.models import UserProfile, Application, Roles, Designations
 from loguru import logger
 
 class KRARepository:
-    def create(self, data: KRAType, creator: UserProfile)->KeyResultArea:
+    def create(self, data: KRAType, creator: UserProfile) -> Optional[KeyResultArea]:
         """
             Creates a new KeyResultArea (KRA) record in the database.
 
             Args:
-                creator: UserProfile object
-                data (KRAType): The data object containing the name, description, and weight of the KRA.
+                creator (UserProfile): The user creating the KRA.
+                data (KRAType): The data object containing the key result area description and goal description.
 
             Returns:
-                KeyResultArea: The newly created KRA object.
+                KeyResultArea: The newly created KRA object on success.
+                None: If a KRA with the same key_result_area_description already exists.
 
             Raises:
-                Exception: If the creation operation fails.
+                Exception: If any other unexpected error occurs during creation.
         """
-
         try:
-            return KeyResultArea.objects.create(key_result_area_description=data.key_result_area_description, goal_description=data.goal_description, created_by=creator)
+            return KeyResultArea.objects.create(
+                key_result_area_description=data.key_result_area_description,
+                goal_description=data.goal_description,
+                created_by=creator
+            )
+        except IntegrityError as e:
+            # Unique constraint violation: KRA already exists
+            logger.warning("KRA Create Repo failed, KRA with 'key_result_area_description' already exists")
+            return None
         except Exception as e:
             raise Exception(f"KRA Create Repo failed with error: {e}")
-
+    
     def fetch_all(self):
         return KeyResultArea.objects.all()
     
