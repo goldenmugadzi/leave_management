@@ -52,13 +52,13 @@ class KRARepository:
         except Exception as e:
             raise Exception(f"KRA retrieve_by_id Repo with pk: {kra_id}, failed with error: {e}")
 
-    def update(self, kra_object: KeyResultArea, data: KRAType) -> KeyResultArea:
+    def update(self, kra_object: KeyResultArea, data: KRAType, updated_by: UserProfile) -> KeyResultArea:
         """
             Updates the fields of a KeyResultArea object and saves the changes to the database.
 
             Args:
                 kra_object (KeyResultArea): The KRA object to be updated.
-                creator: UserProfile object
+                updated_by: UserProfile object
                 data (KRAType): The data object containing the name, description, and weight of the KRA.
 
             Returns:
@@ -77,6 +77,10 @@ class KRARepository:
 
             if kra_object.goal_description != data.goal_description:
                 kra_object.goal_description = data.goal_description
+                updated = True
+                
+            if kra_object.updated_by != updated_by:
+                kra_object.updated_by = updated_by
                 updated = True
 
             # Save only if changes were made
