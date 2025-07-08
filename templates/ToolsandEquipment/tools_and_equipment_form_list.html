@@ -47,7 +47,7 @@
             </tr>
           </thead>
           <tbody>
-            {% for token in tokens %}
+            {% for token in cinstructions %}
               <tr class="h-1">
                 <td><a class="text-blue-500" href="{% url 'tokens:token' token.id %}">{{ token.id|default_if_none:'' }}</a></td>
                 <td>{{ token.reason|default_if_none:'' }}</td>

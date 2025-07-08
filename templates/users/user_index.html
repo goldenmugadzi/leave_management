@@ -16,32 +16,12 @@
   >
     <div class="flex justify-between items-center mb-5">
       <span class="text-lg font-semibold">Users</span>
-      <div class="flex justify-evenly items-center">
-        <select id="region_filter" class="m-2 py-2 px-4 rounded text-gulf-blue-900">
-          <option value="">All Regions</option>
-          {% for region in regions %}
-            <option value="{{ region.id }}">{{ region.region }}</option>
-          {% endfor %}
-        </select>
-        <a
-          href="/users/user/create"
-          class="m-2 bg-gulf-blue-600 hover:bg-gulf-blue-800 text-white font-bold py-2 px-4 rounded"
+      <a
+        href="/users/user/create"
+        class="bg-gulf-blue-600 hover:bg-gulf-blue-800 text-white font-bold py-2 px-4 rounded"
         >
-          Create User
-        </a>
-        <a
-          id="active_users"
-          class="m-2 bg-gulf-blue-600 hover:bg-gulf-blue-800 text-white font-bold py-2 px-4 rounded"
-        >
-          Active Users
-        </a>
-        <a
-          id="inactive_users"
-          class="m-2 bg-gulf-blue-600 hover:bg-gulf-blue-800 text-white font-bold py-2 px-4 rounded"
-        >
-          Inactive Users
-        </a>
-      </div>
+        Create User
+      </a>
     </div>
     <table id="users_index" class="display" style="width: 100%">
       <thead>
@@ -85,7 +65,7 @@
 <script>
 
   $(document).ready(function () {
-    var table = $("#users_index").DataTable({
+    $("#users_index").DataTable({
       "processing": true,
       "serverSide": true,
       "ajax": {
@@ -116,18 +96,7 @@
           orderable: false,
           searchable: false,
           render: function (data, type, row, meta) {
-            let block_button = row.active ? `<a type="button" class="btn btn-danger" href='/users/deactivate_user?i=${row.id}' >
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M22 10.5h-6m-2.25-4.125a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0ZM4 19.235v-.11a6.375 6.375 0 0 1 12.75 0v.109A12.318 12.318 0 0 1 10.374 21c-2.331 0-4.512-.645-6.374-1.766Z" />
-            </svg>
-            </a>` : `<a type="button" class="btn btn-success" href='/users/activate_user?i=${row.id}' >
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M18 7.5v3m0 0v3m0-3h3m-3 0h-3m-2.25-4.125a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0ZM3 19.235v-.11a6.375 6.375 0 0 1 12.75 0v.109A12.318 12.318 0 0 1 9.374 21c-2.331 0-4.512-.645-6.374-1.766Z" />
-              </svg>
-            </a>`;
-
             return `
-            <div class="flex justify-evenly items-center">
               <a type="button" class="btn btn-info" href='/users/user/update?i=${row.id}' >
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
@@ -137,23 +106,11 @@
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 10.5V6.75a4.5 4.5 0 119 0v3.75M3.75 21.75h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H3.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
                 </svg>                
-              </a>
-              ${block_button}
-            </div>
-              `;
+              </a>`;
           },
         }
       ],
       order: [[5, 'desc']]
-    });
-    $("#active_users").on("click", function () {
-      table.ajax.url("/users/datatables?active=True").load();
-    });
-    $("#inactive_users").on("click", function () {
-      table.ajax.url("/users/datatables?active=False").load();
-    });
-    $("#region_filter").on("change", function () {
-      table.ajax.url("/users/datatables?region=" + $(this).val()).load();
     });
   });
 </script>
