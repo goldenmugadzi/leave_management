@@ -109,17 +109,15 @@ def intiate(request, app):
     process.save()
     return process
 
-
-def intiate_high_value(request, app):
+def gql_initiate_approval_process(app):
     """
-    Create a process for high-value workflows
-    This is identical to intiate() but kept separate for clarity
+    This function is used to initiate a process for a given application.
+    It creates a new Process object associated with the specified application.
     """
     app = Workflow.objects.get(name__iexact=app)
     process = Process.objects.create(workflow=app)
     process.save()
     return process
-
 
 def approve_step(request, process_id):
     """
@@ -176,7 +174,7 @@ def approve_step(request, process_id):
                         "pettycash:pettycash_detail",
                         process.pettycash_set.last().petty_id,
                     )
-                elif process.workflow.name == "ace" or process.workflow.name == "big_ace":
+                elif process.workflow.name == "ace":
                     print(process.ace2_set.last().Ace_id2, "Please")
                     messages.success(request, "ace actioned successfully")
                     return redirect("Ace:ace_detail", process.ace2_set.last().Ace_id2)

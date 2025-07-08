@@ -7,12 +7,7 @@ import json
 from datetime import datetime
 from django.db.models import Sum
 
-from django.contrib.auth.tokens import default_token_generator
-from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
-from django.utils.encoding import force_bytes, force_str
-from django.template.loader import render_to_string
-
-from it.users.views import ms_exhange_reset_password_html, ms_exhange_send, ms_exhange_send_html
+from it.users.views import ms_exhange_send
 from .models import *
 from it.users.models import *
 from finance.purchase_request.models import ProcurementPlanReference, PurchaseRequest, PrItem, Attachment, \
@@ -1145,47 +1140,19 @@ def getUserFMGMRoles(user):
     return fm_role, gm_role, procurement_role
 
 
-def notify_user(user_, msg, notification_type, url, id, request):
-    try:
-        Notification.objects.create(
-            user=user_,
-            message=msg,
-            notification_type=notification_type,
-            notification_id=id,
-            url=url,
-            created_at=datetime.now(),
-        )
-        print("notification ","email ", user_.email, "msg ", msg, "notification_type ", notification_type, "url ", url, "id ", id)
-        
-        if "direct_purchase" in url:
-            app_base = "direct_purchase/comperative_schedule/"+id
-        elif "comperative_schedule" in url:
-            app_base = "comperative_schedule/comperative_schedule/"+id
-        else:
-            app_base = url
-        
-        email_template_name = 'registration/email.html'
-        # {urlsafe_base64_encode(force_bytes(user.pk))}/{default_token_generator.make_token(user)}
-        c = {
-            "email": user_.email if user_.email else "",
-            "message": msg,
-            "type": notification_type,
-            "redirect_app_base": app_base,
-            "id": id,
-            "domain": request.META['HTTP_HOST'],
-            "site_name": "Zetdc Business Excellence",
-            "uid": urlsafe_base64_encode(force_bytes(user_.pk)),
-            "user": user_,
-            "token": default_token_generator.make_token(user_),
-            "protocol": 'https' if request.is_secure() else 'http',
-        }
-        email = render_to_string(email_template_name, c, request=request)
-        ms_exhange_reset_password_html(subject=notification_type,to_recipients=[user_.email], cc_recipients=[],template=email,
-                                        kwargs={"kwargs": c})
-        return True
-    except Exception as e:
-        print("error: ", str(e))
-        return False
+def notify_user(user_, msg, notification_type, url, id):
+    Notification.objects.create(
+        user=user_,
+        message=msg,
+        notification_type=notification_type,
+        notification_id=id,
+        url=url,
+        created_at=datetime.now(),
+    )
+
+    # ms_exhange_send(subject=notification_type, body=msg, to_recipients=[user_.email], cc_recipients=[])
+    return True
+
 
 def notification_update(user, id):
     notification = Notification.objects.filter(user=user, notification_id=id).first()
@@ -1193,6 +1160,7 @@ def notification_update(user, id):
         notification.is_read = True
         notification.save()
     return True
+
 
 @login_required
 def get_comperative_schedules(request):
@@ -1311,26 +1279,76 @@ def get_pending_fm_approval(request):
 
 def get_your_schedules(user_id, search_value=None, column_name=None, region=None):
     
-    try:   
-        cs = ComparativeSchedules.objects.filter(
-            region=region,
-            created_by_id=user_id,
-            cancelled=False
-        ).all()
-
-        # Filter based on search value
-        if search_value:
-            cs = cs.filter(
-                Q(cs_id__icontains=search_value) |
-                Q(scope_of_work__icontains=search_value)
+    try:
+        # Example usage
+        cs_all = ComparativeSchedules.objects.filter(
+        region=region,
+                cancelled=False,  # Only get items from non-cancelled CS
+                csapproval__approval='Approved').all()
+        
+        for css in cs_all:
+            css_ = css.select_related(
+                'item_id',
+                'sup_id',
+                'cs_id'
+            ).values(
+                'cs_id__cs_id',  # CS reference number
+                'item_id__item_name',
+                'item_id__quantity',
+                'item_id__unit_of_measurement',
+                'sup_id__supplier_name',
+                'unit_price',
+                'quoted_qty',
+                'total',
+                'quote_date',
+                'cs_id__currency__currency'
             )
-        if column_name:
-            cs = cs.order_by(column_name)
 
-        return cs
+            for item in css_:
+                print(f"""
+                CS Ref: {item['cs_id__cs_id']}
+                Item: {item['item_id__item_name']}
+                Quantity: {item['quoted_qty']} {item['item_id__unit_of_measurement']}
+                Unit Price: {item['unit_price']} {item['cs_id__currency__currency']}
+                Total: {item['total']} {item['cs_id__currency__currency']}
+                Supplier: {item['sup_id__supplier_name']}
+                Quote Date: {item['quote_date']}
+                """)
+                
+            try:
+                writer = csv.writer(response)
+                writer.writerow(['CS ID', 'PR ID', 'PR Number', 'PR Date', 'Scope of Work', 'Closing Date', 'Closing Time', 'Advert', 'PR Number', 'PR Date', 'CS Opened', 'TAC Date', 'Created By', 'Committee Approval', 'GM Approval', 'FM Approval', 'Section', 'Region', 'Created At'])
+                for item in css_:
+                    try:
+                        writer.writerow([item['cs_id__cs_id'], item['item_id__item_name'], item['quoted_qty'], item['item_id__unit_of_measurement'], item['unit_price'], item['total'], item['cs_id__currency__currency'], item['sup_id__supplier_name'], item['quote_date']])
+                        
+                    except Exception as ex:
+                        print("For Writting to CSV: ", ex)
+            except Exception as ex:
+                print("Error Writting to CSV: ", ex)
+        
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename="rfq.csv"'
+        return response
     except Exception as ex:
-        print("Error: ", ex)
-        return []
+        print("Error: ", ex)    
+    
+    cs = ComparativeSchedules.objects.filter(
+        region=region,
+        created_by_id=user_id,
+        cancelled=False
+    ).all()
+
+    # Filter based on search value
+    if search_value:
+        cs = cs.filter(
+            Q(cs_id__icontains=search_value) |
+            Q(scope_of_work__icontains=search_value)
+        )
+    if column_name:
+        cs = cs.order_by(column_name)
+
+    return cs
 
 
 def get_pending_committee_table(user_id, search_value=None, column_name=None, region=None):
@@ -1576,6 +1594,7 @@ def get_csv_export(request):
 def add_details(cs):
     cs_list = []
     committee_reject_reason = ""
+
     for c in cs:
         committee_approval = ""
         gm_approval = None
@@ -1704,13 +1723,14 @@ def datatable_data(request, view):
 
     # Total number of records before filtering
     total = len(data)
+    print("total: ", total)
     # Pagination
     paginator = Paginator(data, length)
     page_number = start // length + 1
     page_obj = paginator.get_page(page_number)
 
     # Prepare response
-    print("adding details: ", page_obj.object_list)
+    print("adding details")
     data = add_details(page_obj.object_list)
     return JsonResponse({
         'draw': draw,
@@ -2824,7 +2844,7 @@ def save_cs_committee(request):
                     )
                     msg = "You have been added to the committee for RFQ " + cs_query.cs_id
                     url = "/comperative_schedule/comperative_schedule/" + cs_query.cs_id
-                    notify_user(member_profile, msg, "RFQ", url, cs_query.cs_id, request)
+                    notify_user(member_profile, msg, "RFQ", url, cs_query.cs_id)
                     committee_query.save()
 
         return JsonResponse({
@@ -2910,7 +2930,7 @@ def approve_cs_committee(request):
             msg = "Comperative Schedule is ready for your approval " + cs_query.cs_id
             url = "/comperative_schedule/comperative_schedule/" + cs_query.cs_id
             for user_ in fm_users:
-                notify_user(user_, msg, "RFQ", url, cs_query.cs_id, request)
+                notify_user(user_, msg, "RFQ", url, cs_query.cs_id)
 
         return JsonResponse({
             "message": "Committee member approved successfully",
@@ -3000,7 +3020,7 @@ def approve_cs(request):
                 gm_users = UserProfile.objects.filter(roles=gm_role, region=cs_query.region).all()
                 for user_ in gm_users:
                     notify_user(user_, "Comperative Schedule is ready for your approval " + cs_query.cs_id, "RFQ",
-                                "/comperative_schedule/comperative_schedule/" + cs_query.cs_id, cs_query.cs_id, request)
+                                "/comperative_schedule/comperative_schedule/" + cs_query.cs_id, cs_query.cs_id)
 
             return JsonResponse({
                 "message": "FM approval saved successfully",

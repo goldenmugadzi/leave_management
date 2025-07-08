@@ -1922,47 +1922,39 @@ def save_cs_ranking(request):
     
 @login_required
 def save_cs_committee(request):
-
-    try:
-        cs_id = request.POST.get("cs_id", "")
-        json_data = json.loads(request.POST.get("committee", "{}"))
-        committee = json_data.get("committee", [])
-        cs_query = DirectPurchase.objects.filter(cs_id=cs_id).first()
-        if not cs_query:
-            return JsonResponse({
-                "message": "Comparative Schedule not found",
-                "success": False,
-                }, safe=False)
-        
-        # check if committee exists
-        for member in committee:
-            # check if member exists
-            # get member user profile
-            member_profile = UserProfile.objects.filter(username=member['memberUserName']).first()
-            if member_profile:
-                committee_query = DPCommittee.objects.filter(cs_id=cs_query, user=member_profile).first()
-                if not committee_query:
-                    committee_query = DPCommittee(
-                        cs_id = cs_query,
-                        user = member_profile,
-                        committee_name = member['memberUserName'],
-                        committee_position = member['memberPosition']
-                    )
-                    msg = "You have been added to the committee for Direct Purchase " + cs_query.cs_id
-                    url = "/direct_purchase/comperative_schedule/" + cs_query.cs_id
-                    notify_user(member_profile, msg, "Direct Purchase", url, cs_query.cs_id, request)
-                committee_query.save()
-            
+    cs_id = request.POST.get("cs_id", "")
+    json_data = json.loads(request.POST.get("committee", "{}"))
+    committee = json_data.get("committee", [])
+    cs_query = DirectPurchase.objects.filter(cs_id=cs_id).first()
+    if not cs_query:
         return JsonResponse({
-            "message": "Committee saved successfully",
-            "success": True,
-        })
-    except Exception as ex:
-        print("Error: ", ex)
-        return JsonResponse({
-            "message": "Committee saved successfully",
+            "message": "Comparative Schedule not found",
             "success": False,
-        })
+            }, safe=False)
+    
+    # check if committee exists
+    for member in committee:
+        # check if member exists
+        # get member user profile
+        member_profile = UserProfile.objects.filter(username=member['memberUserName']).first()
+        if member_profile:
+            committee_query = DPCommittee.objects.filter(cs_id=cs_query, user=member_profile).first()
+            if not committee_query:
+                committee_query = DPCommittee(
+                    cs_id = cs_query,
+                    user = member_profile,
+                    committee_name = member['memberUserName'],
+                    committee_position = member['memberPosition']
+                )
+                msg = "You have been added to the committee for Direct Purchase " + cs_query.cs_id
+                url = "/direct_purchase/comperative_schedule/" + cs_query.cs_id
+                notify_user(member_profile, msg, "Direct Purchase", url, cs_query.cs_id)
+            committee_query.save()
+        
+    return JsonResponse({
+        "message": "Committee saved successfully",
+        "success": True,
+    })
 
 @login_required
 def delete_cs_committee_member(request):
@@ -2031,7 +2023,7 @@ def approve_cs_committee(request):
             print("fm user: ", fm_user.username, fm_user.id)
             msg = cs_query.cs_id + " Direct Purchase is ready for your approval "
             url = "/direct_purchase/comperative_schedule/" + cs_query.cs_id
-            notify_user(fm_user, msg, "Direct Purchase", url, cs_query.cs_id, request)
+            notify_user(fm_user, msg, "Direct Purchase", url, cs_query.cs_id)
 
         return JsonResponse({
             "message": "Committee member approved successfully",
@@ -2122,7 +2114,7 @@ def approve_cs(request):
                 print("gm role: ", gm_role)
                 gm_user = UserProfile.objects.filter(region=cs_query.region, roles=gm_role).first()
                 print("gm user: ", gm_user.username, gm_user.id)
-                notify_user(gm_user, "Direct Purchase is ready for your approval " + cs_query.cs_id, "Direct Purchase", "/direct_purchase/comperative_schedule/" + cs_query.cs_id, cs_query.cs_id, request)
+                notify_user(gm_user, "Direct Purchase is ready for your approval " + cs_query.cs_id, "Direct Purchase", "/direct_purchase/comperative_schedule/" + cs_query.cs_id, cs_query.cs_id)
         
         
             return JsonResponse({

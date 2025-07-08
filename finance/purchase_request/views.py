@@ -262,26 +262,18 @@ def view_all_purchase_requests(request):
         purchase_requests = PurchaseRequest.objects.filter(Q(cost_center__name__icontains=search_term) | Q(section__section__icontains=search_term) | Q(requested_by__last_name__icontains=search_term) | Q(scope_of_work__icontains=search_term) | Q(id=search_term) | Q(pr_no__icontains=search_term)| Q(created_at__icontains=search_term)  )
         return render(request, 'finance/purchase_request/view_all_purchase_requests.html', {'purchase_requests': purchase_requests.order_by('-id') })
    
-    try: 
-        user_region = request.user.region
-        cost_center= request.user.cost_center
-        if not cost_center:
-            cost_center = CostCenter.objects.filter(Q(code= user_region.code) | Q(name="CC" + user_region.name))
+    try: cost_center= request.user.cost_center
     except:
-        messages.warning(request, 'Please contact the system administrators to assign you a cost center !')
-    
-    try:
-        print(len(cost_center.get_all_ancestors()))
-        if len(cost_center.get_all_ancestors())>2:
-            region = cost_center.get_region()
-        else:
-            region = cost_center
-        cost_centers = region.get_decendance()
-        purchase_requests = PurchaseRequest.objects.filter(Q(requested_by__cost_center__in = cost_centers)|Q(cost_center__in = cost_centers)).order_by("-created_at")
-    except Exception as e:
-        print("error: ", str(e))
-        purchase_requests = PurchaseRequest.objects.filter(region=user_region).order_by("-created_at")
-        
+        if not cost_center:
+            cost_center = CostCenter.objects.filter(code= request.user.region.code)
+            messages.warning(request, 'Please contact the system administrators to assign you a cost center !')
+    print(len(cost_center.get_all_ancestors()))
+    if len(cost_center.get_all_ancestors())>2:
+        region = cost_center.get_region()
+    else:
+        region = cost_center
+    cost_centers = region.get_decendance()
+    purchase_requests = PurchaseRequest.objects.filter(Q(requested_by__cost_center__in = cost_centers)|Q(cost_center__in = cost_centers)).order_by("-created_at")
     return render(request, 'finance/purchase_request/view_all_purchase_requests.html', {'purchase_requests': purchase_requests})
 
 @login_required

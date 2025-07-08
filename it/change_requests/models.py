@@ -12,8 +12,6 @@ class NewProfile(models.Model):
     section = models.ForeignKey(Sections, on_delete=models.DO_NOTHING, blank=True, null=True)
     cost_center = models.ForeignKey(CostCenter, on_delete=models.DO_NOTHING, blank=True, null=True)
     district = models.ForeignKey(Districts, on_delete=models.DO_NOTHING, blank=True, null=True)
-    roles_to_action = models.CharField(max_length=300, null=True, blank=True, default=None)
-    roles_actions = models.CharField(max_length=300, null=True, blank=True, default=None)
     roles = models.ManyToManyField(Roles, blank=True, null=True)
     region = models.ForeignKey(Regions, on_delete=models.DO_NOTHING, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -27,8 +25,6 @@ class NewProfile(models.Model):
 class ProfileChange(models.Model):
     user = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
     application = models.CharField(max_length=100, null=True, blank=True, default=None)
-    roles_to_action = models.CharField(max_length=300, null=True, blank=True, default=None)
-    roles_actions = models.CharField(max_length=300, null=True, blank=True, default=None)
     role_to_assign = models.ManyToManyField(Roles, related_name='role_to_assign', null=True, blank=True, default=None)
     role_to_remove = models.ManyToManyField(Roles, related_name='role_to_remove', null=True, blank=True, default=None)
     change_date = models.DateTimeField()
