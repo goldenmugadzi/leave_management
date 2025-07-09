@@ -150,4 +150,58 @@ class TestKRAOutcomesCreateRepo(TestCase):
 
                 self.assertIn(f"KRAOutComeRepository Create Repo failed with error: {exception_desc}", str(context.exception))
 
-  
+class TestKRAOutcomesUpdateRepo(TestCase):
+    def setUp(self):
+        self.kra_outcome_repo = KRAOutComeRepository()
+        self.mock_kra_outcome_obj = Mock(spec=KeyResultAreaOutCome)
+        self.outcome_description = "Outcome description"       
+
+    def test_update_called_once_for_new_changes(self):
+        mock_kra_outcome_obj = self.mock_kra_outcome_obj
+        mock_kra_outcome_obj.outcome_description = self.outcome_description
+        changed_outcome_desc = "Changed description"   
+             
+        # mock save() explicitly
+        mock_kra_outcome_obj.save = Mock()
+        
+        self.kra_outcome_repo.update(kra_outcome_object=mock_kra_outcome_obj, outcome_description=changed_outcome_desc)
+        mock_kra_outcome_obj.save.assert_called_once()
+    
+    def test_update_not_called_for_no_changes(self):
+        mock_kra_outcome_obj = self.mock_kra_outcome_obj
+        mock_kra_outcome_obj.outcome_description = self.outcome_description
+ 
+        # mock save() explicitly
+        mock_kra_outcome_obj.save = Mock()
+        
+        self.kra_outcome_repo.update(kra_outcome_object=mock_kra_outcome_obj, outcome_description=self.outcome_description)
+        mock_kra_outcome_obj.save.assert_not_called()
+        
+    def test_update_successful(self):
+        mock_kra_outcome_obj = self.mock_kra_outcome_obj
+        mock_kra_outcome_obj.outcome_description = self.outcome_description
+        changed_outcome_desc = "Changed description"   
+        
+        # mock save() explicitly
+        mock_kra_outcome_obj.save = Mock()
+        
+        got = self.kra_outcome_repo.update(kra_outcome_object=mock_kra_outcome_obj, outcome_description=changed_outcome_desc)
+        self.assertEqual(got, mock_kra_outcome_obj)
+        
+    def test_update_raises_exception(self):
+        mock_kra_outcome_obj = self.mock_kra_outcome_obj
+        mock_kra_outcome_obj.outcome_description = self.outcome_description
+        mock_kra_outcome_obj.id = 1
+        changed_outcome_desc = "Changed description"   
+        exception_desc = "Database error"   
+        
+        # mock save() explicitly
+        mock_kra_outcome_obj.save = Mock()
+        mock_kra_outcome_obj.save.side_effect = Exception(exception_desc)
+        
+        with self.assertRaises(Exception) as context:
+            self.kra_outcome_repo.update(kra_outcome_object=mock_kra_outcome_obj, outcome_description=changed_outcome_desc)
+        
+        self.assertIn(f"KRAOutComeRepository with object pk: 1 update Repo failed with error: {exception_desc}", str(context.exception))
+        
+        

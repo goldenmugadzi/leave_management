@@ -128,11 +128,10 @@ class KRAOutComeRepository:
 
             Args:
                 kra_outcome_object (KeyResultArea): The KRA object to be updated.
-                creator: UserProfile object
-                data (KRAType): The data object containing the name, description, and weight of the KRA.
+                outcome_description (str): description of the KRA outcome.
 
             Returns:
-                KeyResultArea: The updated KRA object.
+                KeyResultArea: The updated KRA outcome object.
 
             Raises:
                 KRAUpdateError: If the update operation fails.
