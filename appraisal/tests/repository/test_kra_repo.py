@@ -1,8 +1,8 @@
 from unittest import TestCase
 from unittest.mock import Mock, patch
-from ...models.kra import KeyResultArea
+from ...models.kra import KeyResultArea, KeyResultAreaOutCome
 from it.users.models import UserProfile
-from ...repository.kra import KRARepository
+from ...repository.kra import KRARepository, KRAOutComeRepository
 from ...helpers.types.kra import KRAType
 
 class TestKRARepositoryCreateRepo(TestCase):
@@ -116,5 +116,38 @@ class TestKRARepositoryUpdateRepo(TestCase):
         self.assertIn(f"KRA update Repo failed with error: {exception_desc}", str(context.exception))
         
         
-    
+class TestKRAOutcomesCreateRepo(TestCase):
+    def setUp(self):
+        self.kra_outcome_repo = KRAOutComeRepository()
+        self.mock_kra_object = Mock(spec=KeyResultArea)
+        self.outcome_description = "Outcome description"
         
+    def test_create_called_once(self):
+        mock_kra_object = self.mock_kra_object
+        
+        with patch('appraisal.repository.kra.KeyResultAreaOutCome.objects.create') as mock_create_orm:
+            self.kra_outcome_repo.create(outcome_description=self.outcome_description, kra_obj=mock_kra_object)
+        mock_create_orm.assert_called_once_with(key_result_area=mock_kra_object,
+                                                outcome_description=self.outcome_description)
+        
+    def test_create_success(self):
+        mock_kra_object = self.mock_kra_object
+        mock_kra_outcome = Mock(spec=KeyResultAreaOutCome)
+        
+        with patch('appraisal.repository.kra.KeyResultAreaOutCome.objects.create') as mock_create_orm:
+            mock_create_orm.return_value = mock_kra_outcome
+            got = self.kra_outcome_repo.create(outcome_description=self.outcome_description, kra_obj=mock_kra_object)
+            self.assertEqual(got, mock_kra_outcome)
+            
+    def test_create_raises_exception(self):
+        mock_kra_object = self.mock_kra_object
+        exception_desc = "Database error"
+        
+        with patch('appraisal.repository.kra.KeyResultAreaOutCome.objects.create') as mock_create_orm:
+            with self.assertRaises(Exception) as context:
+                mock_create_orm.side_effect = Exception(exception_desc)
+                self.kra_outcome_repo.create(outcome_description=self.outcome_description, kra_obj=mock_kra_object)
+
+                self.assertIn(f"KRAOutComeRepository Create Repo failed with error: {exception_desc}", str(context.exception))
+
+  
