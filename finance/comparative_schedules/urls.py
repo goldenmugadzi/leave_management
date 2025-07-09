@@ -9,11 +9,16 @@ urlpatterns = [
     path('save_buyers_notes', save_buyers_notes, name='save_buyers_notes'),
     path('cancel_schedule/<str:cs_id>', cancel_schedule, name='cancel_schedule'),
     path('create_comperative_schedule/', create_comperative_schedule, name='create_comperative_schedule'),
-    path('create_schedule/', create, name='create_schedule'),
+    # path('create_schedule/', create, name='create_schedule'),
     path('add_supplier/<str:tender_id>', cs_add_supplier, name='add_supplier'),
     path('compliance/<str:tender_id>', cs_compliance_table, name="tender_compliance"),
 
-    path('create_data/<str:pr_id>', get_create_data, name='get_create_data'),
+    path('create_data/<str:pr_id>/', get_create_data, name='get_create_data'),
+    # New focused APIs
+    path('api/pr-basic/<str:pr_id>/', api_get_pr_basic, name='api_get_pr_basic'),
+    path('api/pr-items/<str:pr_id>/', api_get_pr_items, name='api_get_pr_items'),
+    path('api/pr-attachments/<str:pr_id>/', api_get_pr_attachments, name='api_get_pr_attachments'),
+    path('api/reference-data/', api_get_reference_data, name='api_get_reference_data'),
     path('save', save_comparative_schedule, name='save_schedule'),
     path('update', update_comparative_schedule, name='update_schedule'),
     

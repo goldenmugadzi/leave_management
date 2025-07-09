@@ -2,6 +2,7 @@ import React from 'react'
 import ReactDOM from 'react-dom/client'
 import App from './App.tsx'
 import DSM from './pages/dsm_dashbaords/Dsm.tsx'
+import { getBaseUrl } from './config/apiEndpoints.ts'
 import './index.css'// Get the current page's pathname
 
 let dsm_dashboard_element: HTMLElement | null = null;
@@ -33,27 +34,9 @@ try {
     const path: string = window.location.pathname;
     console.log("path: ", path);
 
-    // Determine the element ID based on the current page
-    let BASE_URL: string = '';
-    let url: string | null = '';
-    switch (true) {
-        case path.includes('/direct_purchase/'):
-            url = element?.getAttribute("data-baseurl")?? null;
-            BASE_URL = url+'/direct_purchase';
-            break;
-        case path.includes('/restricted_bidding/'):
-                url = element?.getAttribute("data-baseurl")?? null;
-                BASE_URL = url+'/restricted_bidding';
-                break;
-        case path.includes('/comperative_schedule/'):
-            url = element?.getAttribute("data-baseurl")?? null;
-            BASE_URL = url+'/comperative_schedule';
-            break;
-        // Add more cases as needed for different pages
-        default:
-            console.error("No matching path found");
-            break;
-    }
+    // Get base URL using centralized configuration
+    const url = element?.getAttribute("data-baseurl") ?? '';
+    const BASE_URL = getBaseUrl(url, path);
 
     // Safely attempt to select the element and use it
     let username: string| null = '';
