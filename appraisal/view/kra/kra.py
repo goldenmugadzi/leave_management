@@ -6,11 +6,11 @@ from django.contrib.messages.views import SuccessMessageMixin
 from django.contrib import messages
 from django.shortcuts import get_object_or_404, redirect
 from django.http import JsonResponse
-from ...models import KeyResultArea, AppraisalKra
-from ...forms import KraCreateForm
+from ...models import KeyResultArea, AppraisalKra, KeyResultAreaOutCome
+from ...forms import KraCreateForm, KraOutComeCreateForm
 from ...repository.kra import KRARepository, TargetScoreRepository, KRAOutComeRepository
 from ...services.kra import KRAService
-from .helper import PayloadDeserializationStrategyContext, KraDeserializationStrategy
+from .helper import PayloadDeserializationStrategyContext, KraDeserializationStrategy, KraOutComeDeserializationStrategy
 from pydantic import ValidationError
 
 from loguru import logger
@@ -28,6 +28,7 @@ class KRACreateView(CreateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context[self.context_object_name] = context.get("form")
+        context["is_create"] = True
         return context
 
     def form_valid(self, form):
@@ -79,26 +80,81 @@ class KRAUpdateDetailView(SuccessMessageMixin, UpdateView):
         repo = KRARepository()
         return repo.retrieve_by_id(kra_id=self.kwargs.get("kra_id"))
     
+    def get_kra_outcome_form(self, post_request=None):
+        if post_request is None:
+            return KraOutComeCreateForm()
+        return KraOutComeCreateForm(post_request)
+
+    def get_all_kra_outcomes(self):
+        repo = KRAOutComeRepository()
+        return repo.fetch_by_kra_id(kra_id=self.kwargs.get("kra_id"))
+    
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context[self.context_object_name] = context.get("form")
+        context["kra_outcome_form"] = self.get_kra_outcome_form()
+        context["kra_outcomes_qr"] = self.get_all_kra_outcomes()
+        context["is_create"] = False
         return context
+    
+    def handle_kra_form_update(self, form):
+        # Build payload
+        payload_deserialize_strategy = PayloadDeserializationStrategyContext(strategy=KraDeserializationStrategy())
+        payload = payload_deserialize_strategy.deserialize_payload(request_object=self.request, form_object=form)
+        
+        # Call the service to create KRA
+        repo = KRARepository()
+        return repo.update(kra_object=self.get_object(), data=payload, updated_by=self.request.user)
 
+    def handle_kra_outcome_form_update(self, form):
+         # Build payload
+        payload_deserialize_strategy = PayloadDeserializationStrategyContext(strategy=KraOutComeDeserializationStrategy())
+        payload = payload_deserialize_strategy.deserialize_payload(request_object=self.request, form_object=form)
+
+        repo = KRAOutComeRepository()
+        kra_outcome_obj = repo.create(outcome_description=payload.outcome_description,
+                           kra_obj=self.get_object()
+                           )
+        messages.success(request=self.request, message="Outcome successfully created.")
+        return kra_outcome_obj
+    
+    def is_kra_request_form(self)->bool:
+        """Handler that checks if the POST request is from kra form or kra outcome form
+
+        Returns:
+            bool: True if kra form and False if kra outcome
+        """
+        if "kra_request" in self.request.POST:
+            return True
+        return False
+    
+    
+    def post(self, request, *args, **kwargs):
+        """
+            Handle POST requests: instantiate a form instance with the passed
+            POST variables and then check if it's valid.
+        """
+        self.object = self.get_object() 
+        
+        if self.is_kra_request_form():
+            form = self.get_form()
+        else:
+            form = self.get_kra_outcome_form(request.POST)
+        if form.is_valid():
+            return self.form_valid(form)
+        else:
+            return self.form_invalid(form)
 
     def form_valid(self, form):
         """
             Processes the form when valid, builds a payload, and performs additional actions.
         """
         try:
-            # Build payload
-            payload_deserialize_strategy = PayloadDeserializationStrategyContext(strategy=KraDeserializationStrategy())
-            payload = payload_deserialize_strategy.deserialize_payload(request_object=self.request, form_object=form)
-            
-            # Call the service to create KRA
-            repo = KRARepository()
-
-            kra_object = repo.update(kra_object=self.get_object(), data=payload, updated_by=self.request.user)
-            form.instance = kra_object
+            if self.is_kra_request_form():
+                object = self.handle_kra_form_update(form=form)
+            else:
+                object = self.handle_kra_outcome_form_update(form=form)
+            form.instance = object
         except ValidationError:
             # Errors are already handled in build_payload
             return super().form_invalid(form)
@@ -111,7 +167,7 @@ class KRAUpdateDetailView(SuccessMessageMixin, UpdateView):
     def get(self, request, *args, **kwargs):
         try:
             self.object = self.get_object()
-            
+            self.get_all_kra_outcomes()
             if self.object is None:
                 logger.warning(f"KRAUpdateDetailView for kra_id: {self.kwargs.get('kra_id')}, doesn`t exists")
                 return redirect("server_error_view")
@@ -167,8 +223,6 @@ class KRAOutComeTemplateView(TemplateView):
     def get_kra_obj(self):
         repo = KRARepository()
         return repo.retrieve_by_id(kra_id=self.kwargs.get("kra_id"))
-        
-        
     
     def get(self, request, *args, **kwargs):
         try:
@@ -186,6 +240,44 @@ class KRAOutComeTemplateView(TemplateView):
         context =  super().get_context_data(**kwargs)
         context.update(self.get_all_kra_outcomes())        
         return context
+    
+class KRAOutComeUpdateView(CreateView):
+    """View for creating new Kra"""
+    model = KeyResultAreaOutCome
+    form_class = KraOutComeCreateForm
+    template_name = 'appraisal/kra/outcomes/create_update.html'
+    success_message = 'OutCome created successfully'
+    context_object_name = "kra_outcome_form"
+    success_url = reverse_lazy('kra_index')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context[self.context_object_name] = context.get("form")
+        return context
+
+    def form_valid(self, form):
+        try:
+            # Build payload
+            payload_deserialize_strategy = PayloadDeserializationStrategyContext(strategy=KraDeserializationStrategy())
+            payload = payload_deserialize_strategy.deserialize_payload(request_object=self.request, form_object=form)
+            
+            # Call the service to create KRA
+            repo = KRARepository()
+            kra_object = repo.create(creator=self.request.user, data=payload)
+            
+            if kra_object is None:
+                messages.error(self.request, "KRA with this description already exists")
+                return super().form_invalid(form)
+            form.instance = kra_object
+        except ValidationError:
+            # Errors are already handled in build_payload
+            return super().form_invalid(form)
+        except Exception as e:
+            logger.error(f"Failed to create kra with error: {e}")
+            messages.error(self.request, f"An unexpected error occurred, please try again")
+            return super().form_invalid(form)
+        return super().form_valid(form)
+
 
  
 def kra_list_api(request, appraisal_id):

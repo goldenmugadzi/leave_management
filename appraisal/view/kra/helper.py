@@ -2,7 +2,7 @@ from typing import Protocol
 from django.forms import BaseModelForm
 from django.contrib import messages
 from django.http import HttpRequest
-from ...helpers.types.kra import KRAType, TargetScoreType, ActivityType, PerformanceDimensionType
+from ...helpers.types.kra import KRAType, TargetScoreType, ActivityType, PerformanceDimensionType, KRAOutComeType
 from ...models import TargetScore
 from pydantic import ValidationError, BaseModel
 from loguru import logger
@@ -22,7 +22,14 @@ class KraDeserializationStrategy:
             "goal_description": form_object.cleaned_data.get("goal_description")
         }
         return KRAType(**data)
-
+    
+class KraOutComeDeserializationStrategy:
+    def deserialize(self, form_object: BaseModelForm)->BaseModel:
+        
+        data = {
+            "outcome_description": form_object.cleaned_data.get("outcome_description")
+        }
+        return KRAOutComeType(**data)
 class KraActivityDeserializationStrategy:
     def deserialize(self, form_object: BaseModelForm)->BaseModel:
         

@@ -2,7 +2,8 @@ from django.contrib import admin
 from .models import (Appraisal, Experience, AppraisalExperience,
     PerformanceProgressWeakness, PerformanceProgressReview,
     PerformanceProgressStrength, Competency, JobCompetency, InterventionStrategy, TrainingAndDevelopment,
-    KeyResultArea, Activity, YearQuarter, AppraisalKra, TargetScore, AppraisalWorkflow, AppraisalKraReviewerStatus, PerformanceDimension, ScoreDocument
+    KeyResultArea, Activity, YearQuarter, AppraisalKra, TargetScore, AppraisalWorkflow, AppraisalKraReviewerStatus, PerformanceDimension, ScoreDocument,
+    KeyResultAreaOutCome, DepartmentObjective, DepartmentOutput, OutPutPerformanceDimension
 )
 
 # Register your models here.
@@ -29,3 +30,8 @@ admin.site.register(AppraisalWorkflow)
 admin.site.register(AppraisalKraReviewerStatus)
 admin.site.register(PerformanceDimension)
 admin.site.register(ScoreDocument)
+admin.site.register(KeyResultAreaOutCome)
+admin.site.register(DepartmentObjective)
+admin.site.register(DepartmentOutput)
+admin.site.register(OutPutPerformanceDimension)
+

@@ -118,7 +118,7 @@ class KRAOutComeRepository:
     
     def fetch_by_kra_id(self, kra_id: int):
         try:
-            return KeyResultAreaOutCome.objects.fetch(key_result_area__id=kra_id)
+            return KeyResultAreaOutCome.objects.filter(key_result_area__id=kra_id)
         except Exception as e:
             raise Exception(f"KRAOutComeRepository fetch_by_kra_id with pk: {kra_id}, failed with error: {e}")
 

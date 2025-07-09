@@ -7,6 +7,9 @@ class KRAType(BaseModel):
     key_result_area_description: str = Field(..., description="The KRA description.")
     goal_description: str = Field(..., description="The goal description.")
 
+class KRAOutComeType(BaseModel):
+    outcome_description: str = Field(..., description="The outcome description.")
+
 
 APPRAISER_CONFIRMATION_STATUS = {status[1] for status in APPRAISAL_KRA_REVIEWER_STATUS_CHOICES}
 

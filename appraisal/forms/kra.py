@@ -1,5 +1,5 @@
 from django import forms
-from ..models import YearQuarter, KeyResultArea, Activity, TargetScore, AppraisalKra, AppraisalKraReviewerStatus, PerformanceDimension, ScoreDocument
+from ..models import YearQuarter, KeyResultArea, Activity, TargetScore, AppraisalKra, AppraisalKraReviewerStatus, PerformanceDimension, ScoreDocument, KeyResultAreaOutCome
 from ..helpers.types.kra import RoleFilterChoices
 from it.users.models import UserProfile
 from datetime import datetime
@@ -16,7 +16,7 @@ class KraCreateForm(forms.ModelForm):
         exclude = ["id", "created_date", "updated", "created_by", "updated_by"]
 class KraOutComeCreateForm(forms.ModelForm):
     class Meta:
-        model = KeyResultArea
+        model = KeyResultAreaOutCome
         exclude = ["id", "created_date", "updated", "key_result_area"]
           
 class ActivityCreateForm(forms.ModelForm):
