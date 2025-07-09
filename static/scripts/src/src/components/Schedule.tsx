@@ -56,6 +56,19 @@ const getCookie = (name: string) => {
   return cookieValue;
 };
 
+// Helper function to format date
+const formatDisplayDate = (dateString: string) => {
+  if (!dateString) return '';
+  
+  // If it includes 'T', it's a datetime string, extract just the date part
+  if (dateString.includes('T')) {
+    return dateString.split('T')[0];
+  }
+  
+  // If it's already just a date, return as is
+  return dateString;
+};
+
 // Helper function for fetch with retry
 const fetchWithRetry = async (url: string, options: RequestInit, retries = 3, delay = 1000) => {
   try {
@@ -76,6 +89,7 @@ const fetchWithRetry = async (url: string, options: RequestInit, retries = 3, de
 // Tab configuration
 const TAB_CONFIG = [
   { id: 'details', label: 'Details', icon: '📄' },
+  { id: 'pr-items', label: 'PR Items', icon: '📦' },
   { id: 'bids', label: 'Supplier Bids', icon: '💰' },
   { id: 'committee', label: 'Committee', icon: '👥' },
   { id: 'compliance', label: 'Compliance', icon: '✅' },
@@ -107,6 +121,7 @@ export default function Schedule({
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [loadingOperation, setLoadingOperation] = useState<string>("");
   const [csId, setCsId] = useState<string>("");
+  const [storedPrId, setStoredPrId] = useState<string>(""); // Store PR ID from CS data
   const [creator, setCreator] = useState<string>("");
   const [createdAt, setCreatedAt] = useState<string>("");
   const [suppliers, setSuppliers] = useState<ISupplier[]>([]);
@@ -117,17 +132,18 @@ export default function Schedule({
   // Additional state variables from ScheduleRef.tsx
   // const [requesterRole] = useState<string>(""); // For future role-based features
   const [  ,setCsOwner] = useState<string>("");
-  const [procRef] = useState<string>("");
-  const [currency] = useState<ICurrency>();
+  const [procRef, setProcRef] = useState<string>("");
+  const [currency, setCurrency] = useState<ICurrency>();
   const [currencies, setCurrencies] = useState<ICurrency[]>([]);
-  const [procPlan] = useState<IProcPlan>();
+  const [procPlan, setProcPlan] = useState<IProcPlan>();
   const [procPlans, setProcPlans] = useState<IProcPlan[]>([]);
   const [quantity] = useState<string>("");
+  const [advert, setAdvert] = useState<File>();
+  const [existingAdvert, setExistingAdvert] = useState<string>(""); // Base64 encoded existing advert
   
   // Simple usage to satisfy linter - will be used properly in dropdowns later
   const currenciesCount = currencies.length;
   const procPlansCount = procPlans.length;
-  const [advert] = useState<File>();
   // const [bids] = useState<IBid[]>([]); // Used by lazy-loaded BidManager
   // const [rankings, setRankings] = useState<IRank[]>([]);
   const [username, setUsername] = useState<string>("");
@@ -216,13 +232,32 @@ export default function Schedule({
       fetchCS(cs_id);
     } else if (pr_id) {
       setUsername(username_ ?? "");
+      // Set creator and created_at for new schedule (will be updated with full name after users are loaded)
+      setCreator(username_ ?? "");
+      setCreatedAt(new Date().toISOString());
       onFetchPR(pr_id);
     } else {
       setUsername(username_ ?? "");
+      // Set creator and created_at for new schedule (will be updated with full name after users are loaded)
+      setCreator(username_ ?? "");
+      setCreatedAt(new Date().toISOString());
     }
     
     fetchUsers();
   }, [csid, prid, username_]);
+  
+  // Update creator name with full name once users are loaded (for new schedules)
+  useEffect(() => {
+    if (users.length > 0 && creator === username && username) {
+      const currentUser = users.find(user => user.username === username);
+      if (currentUser) {
+        const displayName = `${currentUser.first_name} ${currentUser.last_name}`.trim();
+        if (displayName && displayName !== username) {
+          setCreator(displayName);
+        }
+      }
+    }
+  }, [users, creator, username]);
   
   // Fetch CS data - optimized
   const fetchCS = useCallback(async (cs_id: string) => {
@@ -231,32 +266,127 @@ export default function Schedule({
     
     try {
       const data = await fetchWithRetry(buildApiUrl(base_url, getApiEndpoints().CS_DETAILS(cs_id)), defaultRequestOptions);
-      
+      console.log("CS Basic Data:", data);
+      // Data is now returned as normal JSON, no double encoding
+      const parsedData = data;
       // Extract basic metadata
-      setCreator(data.creator || '');
-      setCreatedAt(data.created_at || '');
+      setCreator(parsedData.creator || '');
+      setCreatedAt(parsedData.created_at || '');
       
-      // Extract PR data if available
-      if (data.pr_data) {
-        setPrData({
-          pr_number: data.pr_data.pr_number || '',
-          pr_date: data.pr_data.pr_date || '',
-          reference_date: data.pr_data.reference_date || '',
-          procurement_plan_description: data.pr_data.procurement_plan?.description || '',
-          procurement_plan_id: data.pr_data.procurement_plan?.id || '',
-          currency: data.pr_data.currency || '',
-          closing_date: data.pr_data.closing_date || '',
-          closing_time: data.pr_data.closing_time || '',
-          cs_opened_date: data.pr_data.cs_opened_date || '',
-          scope_of_work: data.pr_data.scope_of_work || '',
-          tac_date: data.pr_data.tac_date || '',
-          region: data.pr_data.region || '',
-          show_site_visit: data.pr_data.show_site_visit || false,
-          show_samples_required: data.pr_data.show_samples_required || false,
-          internal_notes: data.pr_data.internal_notes || '',
-          items: data.pr_data.items || []
+      // Set CS ID from response
+      setCsId(parsedData.cs_id || cs_id);
+      
+      // Set PR ID from response (needed for item updates)
+      if (parsedData.pr_id) {
+        setStoredPrId(parsedData.pr_id.toString());
+      }
+      
+      // Set reference data from response (now included in lightweight response)
+      if (parsedData.users) {
+        setUsers(parsedData.users);
+      }
+      if (parsedData.suppliers) {
+        setSuppliers(parsedData.suppliers);
+      }
+      if (parsedData.proc_plans) {
+        setProcPlans(parsedData.proc_plans);
+      }
+      if (parsedData.currencies) {
+        setCurrencies(parsedData.currencies);
+      }
+      
+      // Set currency and proc plan if available
+      if (parsedData.currency) {
+        setCurrency(parsedData.currency);
+      }
+      if (parsedData.proc_plan) {
+        setProcPlan(parsedData.proc_plan);
+        setProcRef(parsedData.proc_plan.proc_ref || '');
+      }
+      
+      // Set existing advert if available
+      if (parsedData.advert) {
+        setExistingAdvert(parsedData.advert);
+      }
+      
+      // Extract PR/CS data - backend returns all fields at root level
+      setPrData({
+        pr_number: parsedData.pr_number || '',
+        pr_date: parsedData.pr_date || '',
+        reference_date: parsedData.ref_date || '',
+        procurement_plan_description: parsedData.proc_plan?.description || '',
+        procurement_plan_id: parsedData.proc_plan?.id || '',
+        currency: parsedData.currency?.currency || '',
+        closing_date: parsedData.closing_date || '',
+        closing_time: parsedData.closing_time || '',
+        cs_opened_date: parsedData.cs_opened || '',
+        scope_of_work: parsedData.scope_of_work || '',
+        tac_date: parsedData.tac_date || '',
+        region: parsedData.region || '',
+        show_site_visit: parsedData.show_site_visit || false,
+        show_samples_required: parsedData.show_samples_required || false,
+        internal_notes: parsedData.additional_notes || '',
+        items: []
+      });
+      
+      // Process items from both cs_items (included in CS) and pr_items (available from PR)
+      const allItems: Array<{
+        id: string;
+        name: string;
+        quantity: number;
+        unit: string;
+        status: string;
+        included: boolean;
+      }> = [];
+      
+      // Add CS items (already included in this schedule)
+      if (parsedData.cs_items && Array.isArray(parsedData.cs_items)) {
+        parsedData.cs_items.forEach((item: {
+          id: number;
+          item_required: string;
+          quantity: number;
+          unit_of_measurement: string;
+        }) => {
+          allItems.push({
+            id: item.id?.toString() || '',
+            name: item.item_required || '',
+            quantity: item.quantity || 0,
+            unit: item.unit_of_measurement || '',
+            status: 'included_in_cs',
+            included: true
+          });
         });
       }
+      
+      // Add PR items (available items from original PR)
+      if (parsedData.pr_items && Array.isArray(parsedData.pr_items)) {
+        parsedData.pr_items.forEach((item: {
+          id: number;
+          item_required: string;
+          quantity: number;
+          unit_of_measurement: string;
+          ordered?: boolean;
+        }) => {
+          // Check if this item is already in cs_items to avoid duplicates
+          const existsInCS = allItems.some(csItem => csItem.id === item.id?.toString());
+          if (!existsInCS) {
+            allItems.push({
+              id: item.id?.toString() || '',
+              name: item.item_required || '',
+              quantity: item.quantity || 0,
+              unit: item.unit_of_measurement || '',
+              status: item.ordered ? 'used_in_other_schedule' : 'available',
+              included: false
+            });
+          }
+        });
+      }
+      
+      // Update prData with processed items
+      setPrData(prev => ({
+        ...prev,
+        items: allItems
+      }));
       
     } catch (error) {
       console.error("Error fetching CS:", error);
@@ -275,29 +405,34 @@ export default function Schedule({
     try {
           // Step 1: Fetch basic PR info immediately (fast load)
     console.log('🚀 Fetching PR basic info...');
-    const prResponse = await api.fetchPR(pr_id);
-    console.log("prResponse basic: ", prResponse);
+    const prBasicResponse = await api.fetchPR(pr_id);
+    console.log("prResponse basic: ", prBasicResponse);
       // Populate PR data from response based on actual get_create_data response structure
-      if (prResponse && prResponse.success) {
+      if (prBasicResponse && prBasicResponse.success) {
         // Set basic PR data immediately (fast UI update)
         setPrData({
-          pr_number: prResponse.pr_id || '',
-          pr_date: prResponse.pr_date || '',
-          reference_date: prResponse.pr_date || '', // Use pr_date as reference if no separate field
-          procurement_plan_description: prResponse.proc_plan?.description || '',
-          procurement_plan_id: prResponse.proc_plan?.id || '',
+          pr_number: prBasicResponse.pr_id || '',
+          pr_date: prBasicResponse.pr_date || '',
+          reference_date: prBasicResponse.pr_date || '', // Use pr_date as reference if no separate field
+          procurement_plan_description: prBasicResponse.proc_plan?.description || '',
+          procurement_plan_id: prBasicResponse.proc_plan?.id || '',
           currency: '', // Will be populated from currencies list
           closing_date: '',
           closing_time: '',
           cs_opened_date: '',
-          scope_of_work: prResponse.scope_of_work || '',
+          scope_of_work: prBasicResponse.scope_of_work || '',
           tac_date: '',
           region: '', // Will need to be set separately
           show_site_visit: false,
           show_samples_required: false,
           internal_notes: '',
           items: [] // Will be loaded in background
-                });
+        });
+        
+        // Set procPlan state for validation
+        if (prBasicResponse.proc_plan) {
+          setProcPlan(prBasicResponse.proc_plan);
+        }
 
         // Step 2: Start background loading (non-blocking)
         console.log('🔄 Starting background data loading...');
@@ -333,13 +468,15 @@ export default function Schedule({
                   quantity: number;
                   unit_of_measurement: string;
                   ordered: boolean;
+                  status: string;
+                  included: boolean;
                 }) => ({
                   id: item.id.toString(),
                   name: item.item_required,
                   quantity: item.quantity,
                   unit: item.unit_of_measurement,
-                  status: item.ordered ? 'ordered' : 'available',
-                  included: !item.ordered // Include non-ordered items by default
+                  status: item.status || (item.ordered ? 'used_in_other_schedule' : 'available'),
+                  included: item.included !== undefined ? item.included : !item.ordered
                 })) || []
               }));
             }
@@ -382,39 +519,153 @@ export default function Schedule({
     }
   }, [base_url, defaultRequestOptions, users.length]);
   
-  // Fetch suppliers - only when needed
-  const fetchSuppliers = useCallback(async () => {
-    if (suppliers.length > 0) return; // Don't refetch if already loaded
-    
-    setLoadingOperation("Loading suppliers");
-    try {
-      const data = await fetchWithRetry(buildApiUrl(base_url, getApiEndpoints().SUPPLIERS), defaultRequestOptions);
-      
-      if (Array.isArray(data)) {
-        setSuppliers(data);
-      }
-    } catch (error) {
-      console.error("Error fetching suppliers:", error);
-    } finally {
-      setLoadingOperation("");
-    }
-  }, [base_url, defaultRequestOptions, suppliers.length]);
+  // Note: Suppliers are now loaded as part of CS basic data, no separate fetch needed
   
   // Load tab data when tab becomes active
   const loadTabData = useCallback(async (tabId: TabId) => {
-    if (loadedTabs.has(tabId)) return;
-    
-    switch (tabId) {
-      case 'bids':
-        await fetchSuppliers();
-        break;
-      case 'committee':
-        await fetchUsers();
-        break;
+    // For PR items tab, always reload when CS ID exists to ensure complete data
+    if (loadedTabs.has(tabId) && !(tabId === 'pr-items' && csId)) {
+      return;
     }
+    if (!csId && tabId !== 'pr-items') return;
     
-    setLoadedTabs(prev => new Set([...prev, tabId]));
-  }, [loadedTabs, fetchSuppliers, fetchUsers]);
+    setLoadingOperation(`Loading ${tabId} data`);
+    
+    try {
+      switch (tabId) {
+        case 'bids': {
+          // Load bids data using optimized endpoint
+          console.log('Loading bids data...');
+          const bidsData = await fetchWithRetry(
+            buildApiUrl(base_url, getApiEndpoints().CS_BIDS_DATA(csId)), 
+            defaultRequestOptions
+          );
+          console.log('Bids data loaded:', bidsData);
+          break;
+        }
+          
+        case 'committee': {
+          // Load committee data using optimized endpoint
+          console.log('Loading committee data...');
+          const committeeData = await fetchWithRetry(
+            buildApiUrl(base_url, getApiEndpoints().CS_COMMITTEE_DATA(csId)), 
+            defaultRequestOptions
+          );
+          console.log('Committee data loaded:', committeeData);
+          break;
+        }
+          
+        case 'compliance': {
+          // Load compliance data using optimized endpoint
+          console.log('Loading compliance data...');
+          const complianceData = await fetchWithRetry(
+            buildApiUrl(base_url, getApiEndpoints().CS_COMPLIANCE_DATA(csId)), 
+            defaultRequestOptions
+          );
+          console.log('Compliance data loaded:', complianceData);
+          break;
+        }
+          
+        case 'approval': {
+          // Load approval data using optimized endpoint
+          console.log('Loading approval data...');
+          const approvalData = await fetchWithRetry(
+            buildApiUrl(base_url, getApiEndpoints().CS_APPROVALS_DATA(csId)), 
+            defaultRequestOptions
+          );
+          console.log('Approval data loaded:', approvalData);
+          break;
+        }
+          
+        case 'pr-items': {
+          // Load PR items data for the CS
+          console.log('Loading PR items data...');
+          setLoadingOperation("Loading PR items data");
+          
+          if (csId) {
+            // For existing CS, use CS-specific endpoint that returns ALL PR items with their status
+            // Always fetch for existing CS to ensure we have complete data
+            console.log('Fetching PR items for existing CS:', csId);
+            try {
+              const itemsResponse = await fetchWithRetry(
+                buildApiUrl(base_url, getApiEndpoints().CS_PR_ITEMS_MANAGEMENT(csId)), 
+                defaultRequestOptions
+              );
+              
+              if (itemsResponse && itemsResponse.success) {
+                console.log('✅ CS PR items loaded:', itemsResponse.pr_items?.length || 0, 'items');
+                setPrData(prev => ({
+                  ...prev,
+                  items: itemsResponse.pr_items?.map((item: {
+                    id: number;
+                    item_required: string;
+                    quantity: number;
+                    unit_of_measurement: string;
+                    status: string;
+                    included: boolean;
+                  }) => ({
+                    id: item.id.toString(),
+                    name: item.item_required,
+                    quantity: item.quantity,
+                    unit: item.unit_of_measurement,
+                    status: item.status,
+                    included: item.included
+                  })) || []
+                }));
+              } else {
+                console.warn('Failed to load CS PR items:', itemsResponse);
+              }
+            } catch (error) {
+              console.error('Error loading CS PR items:', error);
+            }
+          } else {
+            // For new CS (no CS ID yet), use regular PR items endpoint
+            const effectivePrId = prid || storedPrId;
+            if (effectivePrId && prData.items.length === 0) {
+              console.log('Fetching PR items for new CS, PR ID:', effectivePrId);
+              const itemsResponse = await api.fetchPRItems(effectivePrId, 1, 50);
+              if (itemsResponse && itemsResponse.success) {
+                console.log('✅ PR items loaded:', itemsResponse.pr_items?.length || 0, 'items');
+                setPrData(prev => ({
+                  ...prev,
+                  items: itemsResponse.pr_items?.map((item: {
+                    id: number;
+                    item_required: string;
+                    quantity: number;
+                    unit_of_measurement: string;
+                    ordered: boolean;
+                    status: string;
+                    included: boolean;
+                  }) => ({
+                    id: item.id.toString(),
+                    name: item.item_required,
+                    quantity: item.quantity,
+                    unit: item.unit_of_measurement,
+                    status: item.status || (item.ordered ? 'used_in_other_schedule' : 'available'),
+                    included: item.included !== undefined ? item.included : !item.ordered
+                  })) || []
+                }));
+              } else {
+                console.warn('Failed to load PR items:', itemsResponse);
+              }
+            } else if (!effectivePrId) {
+              console.warn('No PR ID available to load items');
+            } else {
+              console.log('PR items already loaded:', prData.items.length, 'items');
+            }
+          }
+          setLoadingOperation('');
+          break;
+        }
+      }
+      
+      setLoadedTabs(prev => new Set([...prev, tabId]));
+    } catch (error) {
+      console.error(`Error loading ${tabId} data:`, error);
+    } finally {
+      setLoadingOperation('');
+    }
+  }, [loadedTabs, csId, base_url, defaultRequestOptions, prid, storedPrId, prData.items.length, api]);
   
   // Handle tab change
   const handleTabChange = useCallback(async (tabId: TabId) => {
@@ -969,7 +1220,7 @@ export default function Schedule({
     
   //   switch (name) {
   //     case 'advert':
-  //       setAdvert(file);
+        // setAdvert(file);
   //       break;
   //     default:
   //       console.warn(`Unknown file input: ${name}`);
@@ -1040,34 +1291,148 @@ export default function Schedule({
     }));
   }, []);
 
+  // Handle select all/deselect all items - only affects available items
+  const handleSelectAllItems = useCallback((selectAll: boolean) => {
+    setPrData(prev => ({
+      ...prev,
+      items: prev.items.map(item => ({
+        ...item,
+        // Only skip items used in other schedules - allow toggling current schedule items
+        included: item.status === 'used_in_other_schedule' ? item.included : selectAll
+      }))
+    }));
+  }, []);
+
+  // Check if all available items are selected
+  const allItemsSelected = useMemo(() => {
+    const availableItems = prData.items.filter(item => item.status !== 'used_in_other_schedule');
+    return availableItems.length > 0 && availableItems.every(item => item.included);
+  }, [prData.items]);
+
+  // Handle updating selected items
+  const handleUpdateSelectedItems = useCallback(async () => {
+    const effectivePrId = prid || storedPrId; // Use prop prid or stored PR ID from CS data
+    
+    console.log("Update Items Debug:", {
+      csId: csId,
+      prid: prid, 
+      storedPrId: storedPrId,
+      effectivePrId: effectivePrId
+    });
+    
+    if (!csId || !effectivePrId) {
+      onOpenResponse("Error", "CS ID and PR ID are required to update items", false);
+      return;
+    }
+
+    setIsLoading(true);
+    setLoadingOperation("Updating selected items");
+
+    try {
+      // Send all items that need to be updated - newly selected available items and existing items being removed
+      const itemsToUpdate = prData.items.filter(item => 
+        // Include newly selected available items
+        (item.included && (item.status === 'available' || !item.status)) ||
+        // Include items currently in schedule (whether selected or deselected for removal)
+        item.status === 'included_in_cs'
+      );
+      
+              if (itemsToUpdate.length === 0) {
+          onOpenResponse("Info", "No items to update", false);
+          return;
+        }
+        
+        const formData = new FormData();
+        formData.append("cs_id", csId);
+        formData.append("pr_id", effectivePrId!); // Non-null assertion since we checked above
+        formData.append("json_data", JSON.stringify({
+          cs_items: itemsToUpdate.map((item: { id: string; name: string; quantity: number; unit: string; included: boolean; status: string }) => ({
+          id: item.id,
+          item_required: item.name,
+          quantity: item.quantity,
+          unit_of_measurement: item.unit,
+          included: item.included
+        }))
+      }));
+      formData.append("csrfmiddlewaretoken", csrfToken);
+
+      const requestOptions = {
+        method: "POST",
+        headers: {
+          "X-CSRFToken": csrfToken,
+        },
+        body: formData,
+      };
+
+      const data = await fetchWithRetry(buildApiUrl(base_url, getApiEndpoints().CS_UPDATE_ITEMS()), requestOptions);
+      
+      if (data.success) {
+        onOpenResponse("Success", "Selected items updated successfully", true);
+        // Refresh PR items to reflect the changes
+        api.fetchPRItems(effectivePrId!, 1, 50) // Non-null assertion since we checked above
+          .then(itemsResponse => {
+            if (itemsResponse && itemsResponse.success) {
+              setPrData(prev => ({
+                ...prev,
+                items: itemsResponse.pr_items?.map((item: {
+                  id: number;
+                  item_required: string;
+                  quantity: number;
+                  unit_of_measurement: string;
+                  ordered: boolean;
+                  status: string;
+                  included: boolean;
+                }) => ({
+                  id: item.id.toString(),
+                  name: item.item_required,
+                  quantity: item.quantity,
+                  unit: item.unit_of_measurement,
+                  status: item.status || (item.ordered ? 'used_in_other_schedule' : 'available'),
+                  included: item.included !== undefined ? item.included : !item.ordered
+                })) || []
+              }));
+            }
+          });
+      } else {
+        onOpenResponse("Error", data.message || "Failed to update items", false);
+      }
+    } catch (error) {
+      console.error("Error updating items:", error);
+      onOpenResponse("Error", "Failed to update selected items", false);
+    } finally {
+      setIsLoading(false);
+      setLoadingOperation("");
+    }
+  }, [csId, prid, storedPrId, prData.items, csrfToken, base_url, api]);
+
   // === FORM HANDLING FUNCTIONS ===
   
   // Handle dropdown selections
-  // const onSelectChange = useCallback((name: string, event: React.ChangeEvent<HTMLSelectElement>) => {
-  //   const { value } = event.target;
+  const onSelectChange = useCallback((name: string, event: React.ChangeEvent<HTMLSelectElement>) => {
+    const { value } = event.target;
     
-      //   switch (name) {
-    //     case 'currency': {
-    //       const selectedCurrency = currencies.find(c => c.id.toString() === value);
-    //       setCurrency(selectedCurrency);
-    //       break;
-  //     }
-  //     case 'procPlan': {
-  //       const selectedProcPlan = procPlans.find(p => p.id.toString() === value);
-  //       setProcPlan(selectedProcPlan);
-  //       setProcRef(selectedProcPlan?.proc_ref || '');
-  //       break;
-  //     }
-  //     case 'showSiteVisit':
-  //       updatePrData('show_site_visit', value === 'yes');
-  //       break;
-  //     case 'showSamples':
-  //       updatePrData('show_samples_required', value === 'yes');
-  //       break;
-  //     default:
-  //       console.warn(`Unknown select: ${name}`);
-  //   }
-  // }, [currencies, procPlans, updatePrData]);
+    switch (name) {
+      case 'currency': {
+        const selectedCurrency = currencies.find(c => c.id.toString() === value);
+        setCurrency(selectedCurrency);
+        break;
+      }
+      case 'procPlan': {
+        const selectedProcPlan = procPlans.find(p => p.id.toString() === value);
+        setProcPlan(selectedProcPlan);
+        setProcRef(selectedProcPlan?.proc_ref || '');
+        break;
+      }
+      case 'showSiteVisit':
+        updatePrData('show_site_visit', value === 'yes');
+        break;
+      case 'showSamples':
+        updatePrData('show_samples_required', value === 'yes');
+        break;
+      default:
+        console.warn(`Unknown select: ${name}`);
+    }
+  }, [currencies, procPlans, updatePrData]);
 
 
 
@@ -1082,12 +1447,14 @@ export default function Schedule({
 
     setIsLoading(true);
     setLoadingOperation("Saving schedule details");
+    console.log("prData", prData);
     
     try {
       const formData = new FormData();
       formData.append("proc_ref", procRef);
       formData.append("scope_of_work", prData.scope_of_work);
       formData.append("currency", JSON.stringify(currency?.id));
+      formData.append("proc_plan_id", prData.procurement_plan_id || "");
       formData.append("pr_number", prData.pr_number);
       formData.append("quantity", quantity);
       formData.append("pr_date", prData.pr_date);
@@ -1097,6 +1464,8 @@ export default function Schedule({
       formData.append("date_tender_opened", prData.cs_opened_date);
       formData.append("username", username);
       formData.append("tender_adjudication_committee_date", prData.tac_date);
+
+      console.log("formData", formData);
       
       if (advert) {
         formData.append("advert", advert);
@@ -1117,6 +1486,20 @@ export default function Schedule({
       if (data.success) {
         setCsId(data.cs_id);
         setCsOwner(data.cs_owner);
+        
+        // Update creator and created_at if not already set (for new schedules)
+        if (!creator) {
+          // Try to find the user's full name from the users list, otherwise use username
+          const currentUser = users.find(user => user.username === username);
+          const displayName = currentUser ? 
+            `${currentUser.first_name} ${currentUser.last_name}`.trim() || username : 
+            username;
+          setCreator(displayName);
+        }
+        if (!createdAt) {
+          setCreatedAt(new Date().toISOString());
+        }
+        
         onOpenResponse("Success", "Comparative Schedule saved successfully", true);
         await refreshAllData(); // Cascading update
       } else {
@@ -1187,10 +1570,12 @@ export default function Schedule({
                   <label className="block text-sm font-medium text-gray-700 mb-1">Created by</label>
                   <div className="text-sm text-gray-900 bg-gray-50 p-2 rounded border">{creator}</div>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Created at</label>
-                  <div className="text-sm text-gray-900 bg-gray-50 p-2 rounded border">{createdAt}</div>
-                </div>
+                                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Created at</label>
+                    <div className="text-sm text-gray-900 bg-gray-50 p-2 rounded border">
+                      {formatDisplayDate(createdAt)}
+                    </div>
+                  </div>
               </div>
             </div>
 
@@ -1231,7 +1616,7 @@ export default function Schedule({
                     <label className="block text-sm font-medium text-gray-700 mb-1">Procurement Plan</label>
                     <select className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                       {prData?.procurement_plan_description && (
-                        <option value={prData.procurement_plan_id}>{prData.procurement_plan_description}</option>
+                        <option value={prData.procurement_plan_id} selected>{prData.procurement_plan_description}</option>
                       )}
                       <option value="">Select Procurement Plan</option>
                       {procPlans.map((plan) => (
@@ -1243,7 +1628,15 @@ export default function Schedule({
                 <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Currency</label>
-                    <select className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                    <select 
+                      className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      onChange={(e) => onSelectChange("currency", e)}
+                      value={currency?.id || ""}
+                    >
+                      {/* <option value="">Select Currency</option> */}
+                      {currency && (
+                        <option value={currency.id} selected>{currency.currency}</option>
+                      )}
                       <option value="">Select Currency</option>
                       {currencies.map((currency) => (
                         <option key={currency.id} value={currency.id}>{currency.currency}</option>
@@ -1314,105 +1707,98 @@ export default function Schedule({
                     <label className="block text-sm font-medium text-gray-700 mb-1">Region</label>
                     <div className="text-sm text-gray-900 bg-gray-50 p-2 rounded border">Eastern Region</div>
                   </div>
-                  <div className="flex items-center space-x-4">
-                    <label className="flex items-center">
-                      <input type="checkbox" className="mr-2 h-4 w-4 text-blue-600 border-gray-300 rounded" />
-                      <span className="text-sm text-gray-700">Show Site Visit Requirement</span>
-                    </label>
-                  </div>
-                  <div className="flex items-center space-x-4">
-                    <label className="flex items-center">
-                      <input type="checkbox" className="mr-2 h-4 w-4 text-blue-600 border-gray-300 rounded" />
-                      <span className="text-sm text-gray-700">Show Samples Required</span>
-                    </label>
-                  </div>
+
                 </div>
                 <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">Advertisement Document</label>
                     <div className="border-2 border-dashed border-gray-300 rounded-lg p-4">
-                      <div className="text-center">
-                        <svg className="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
-                          <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
-                        <div className="mt-2">
-                          <label htmlFor="advert-upload" className="cursor-pointer">
-                            <span className="text-sm text-blue-600 hover:text-blue-500">Upload advertisement</span>
-                            <input id="advert-upload" type="file" className="sr-only" accept=".pdf,.doc,.docx,.jpg,.jpeg,.png" />
-                          </label>
-                          <p className="text-xs text-gray-500">PDF, DOC, or image up to 10MB</p>
+                      {advert ? (
+                        <div className="text-center">
+                          <svg className="mx-auto h-12 w-12 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          <div className="mt-2">
+                            <p className="text-sm text-green-600 font-medium">{advert.name}</p>
+                            <p className="text-xs text-gray-500">{(advert.size / 1024 / 1024).toFixed(2)} MB</p>
+                            <button
+                              type="button"
+                              onClick={() => setAdvert(undefined)}
+                              className="mt-2 text-sm text-red-600 hover:text-red-500"
+                            >
+                              Remove file
+                            </button>
+                          </div>
                         </div>
-                      </div>
+                      ) : existingAdvert ? (
+                        <div className="text-center">
+                          <svg className="mx-auto h-12 w-12 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                          </svg>
+                          <div className="mt-2">
+                            <p className="text-sm text-blue-600 font-medium">Existing Advertisement Document</p>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const link = document.createElement('a');
+                                link.href = `data:application/octet-stream;base64,${existingAdvert}`;
+                                link.download = 'advertisement.pdf';
+                                link.click();
+                              }}
+                              className="mt-2 text-sm text-blue-600 hover:text-blue-500 underline"
+                            >
+                              Download Current Document
+                            </button>
+                            <div className="mt-2">
+                              <label htmlFor="advert-upload-replace" className="cursor-pointer">
+                                <span className="text-sm text-gray-600 hover:text-gray-500">Replace with new file</span>
+                                <input 
+                                  id="advert-upload-replace" 
+                                  type="file" 
+                                  className="sr-only" 
+                                  accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                                  onChange={(e) => {
+                                    const file = e.target.files?.[0];
+                                    if (file) {
+                                      setAdvert(file);
+                                      setExistingAdvert(''); // Clear existing when new file is selected
+                                    }
+                                  }}
+                                />
+                              </label>
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="text-center">
+                          <svg className="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                            <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                          <div className="mt-2">
+                            <label htmlFor="advert-upload" className="cursor-pointer">
+                              <span className="text-sm text-blue-600 hover:text-blue-500">Upload advertisement</span>
+                              <input 
+                                id="advert-upload" 
+                                type="file" 
+                                className="sr-only" 
+                                accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                                onChange={(e) => {
+                                  const file = e.target.files?.[0];
+                                  if (file) setAdvert(file);
+                                }}
+                              />
+                            </label>
+                            <p className="text-xs text-gray-500">PDF, DOC, or image up to 10MB</p>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Purchase Request Items */}
-            <div className="bg-white p-6 rounded-lg shadow-sm border">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4 border-b pb-2">Purchase Request Items</h3>
-              <div className="overflow-x-auto">
-                <table className="min-w-full divide-y divide-gray-200">
-                  <thead className="bg-gray-50">
-                    <tr>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                        <input type="checkbox" className="h-4 w-4 text-blue-600 border-gray-300 rounded" />
-                      </th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Item Required</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quantity</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Unit of Measurement</th>
-                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-gray-200">
-                    {prData.items.map((item) => (
-                      <tr key={item.id}>
-                        <td className="px-4 py-3 whitespace-nowrap">
-                          <input 
-                            type="checkbox" 
-                            className="h-4 w-4 text-blue-600 border-gray-300 rounded" 
-                            checked={item.included}
-                            onChange={() => updateItemSelection(item.id, !item.included)}
-                          />
-                        </td>
-                        <td className="px-4 py-3 text-sm text-gray-900">{item.name}</td>
-                        <td className="px-4 py-3 text-sm text-gray-900">{item.quantity}</td>
-                        <td className="px-4 py-3 text-sm text-gray-900">{item.unit}</td>
-                        <td className="px-4 py-3 whitespace-nowrap">
-                          <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
-                            {item.included ? "Included" : "Available"}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              <div className="mt-4 flex justify-between items-center">
-                <div className="text-sm text-gray-500">
-                  Select items to include in this comparative schedule
-                </div>
-                <button className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors">
-                  Update Selected Items
-                </button>
-              </div>
-            </div>
 
-            {/* Additional Notes */}
-            <div className="bg-white p-6 rounded-lg shadow-sm border">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4 border-b pb-2">Additional Notes</h3>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Internal Notes</label>
-                <textarea 
-                  rows={3}
-                  className="w-full p-3 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Add any additional notes or special instructions..."
-                  value={prData.internal_notes}
-                  onChange={(e) => updatePrData('internal_notes', e.target.value)}
-                ></textarea>
-              </div>
-            </div>
 
             {/* Action Buttons */}
             <div className="bg-white p-6 rounded-lg shadow-sm border">
@@ -1447,6 +1833,191 @@ export default function Schedule({
               </div>
             </div>
           </div>
+        );
+      case 'pr-items':
+        return (
+          <Suspense fallback={<SectionLoader />}>
+            <div className="space-y-6">
+              {!csId ? (
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
+                  <div className="flex items-center">
+                    <svg className="w-6 h-6 text-yellow-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                    </svg>
+                    <div>
+                      <h3 className="text-lg font-medium text-yellow-800">Schedule Details Required</h3>
+                      <p className="text-yellow-700 mt-1">Please save the schedule details first before managing PR items.</p>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  {/* Purchase Request Items */}
+                  <div className="bg-white p-6 rounded-lg shadow-sm border">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4 border-b pb-2">Purchase Request Items</h3>
+                    
+                    {isLoading && loadingOperation === "Loading PR items data" ? (
+                      <div className="flex items-center justify-center py-8">
+                        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-600 mr-3"></div>
+                        <span className="text-gray-600">Loading PR items...</span>
+                      </div>
+                    ) : prData.items.length === 0 ? (
+                      <div className="text-center py-8">
+                        <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V9a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                        </svg>
+                        <h3 className="mt-2 text-sm font-medium text-gray-900">No PR items found</h3>
+                        <p className="mt-1 text-sm text-gray-500">
+                          {!(prid || storedPrId) 
+                            ? "Please load PR data from the Details tab first." 
+                            : "This purchase request has no items to display."
+                          }
+                        </p>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="overflow-x-auto">
+                          <table className="min-w-full divide-y divide-gray-200">
+                            <thead className="bg-gray-50">
+                              <tr>
+                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                  <input 
+                                    type="checkbox" 
+                                    className="h-4 w-4 text-blue-600 border-gray-300 rounded" 
+                                    checked={allItemsSelected}
+                                    onChange={(e) => handleSelectAllItems(e.target.checked)}
+                                    title={allItemsSelected ? "Deselect all items" : "Select all items"}
+                                  />
+                                </th>
+                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Item Required</th>
+                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quantity</th>
+                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Unit of Measurement</th>
+                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                              </tr>
+                            </thead>
+                            <tbody className="bg-white divide-y divide-gray-200">
+                              {prData.items.map((item) => (
+                                                          <tr key={item.id} className={
+                              item.status === 'included_in_cs' ? 'bg-blue-50' : 
+                              item.status === 'used_in_other_schedule' ? 'bg-gray-50' : ''
+                            }>
+                                <td className="px-4 py-3 whitespace-nowrap">
+                                  <input 
+                                    type="checkbox" 
+                                    className="h-4 w-4 text-blue-600 border-gray-300 rounded" 
+                                    checked={item.included}
+                                    disabled={item.status === 'used_in_other_schedule'}
+                                    onChange={() => updateItemSelection(item.id, !item.included)}
+                                                                      title={
+                                    item.status === 'used_in_other_schedule' 
+                                      ? 'This item is already used in another schedule and cannot be modified' 
+                                      : item.status === 'included_in_cs'
+                                      ? 'This item is currently used in this schedule (can be removed if no bids exist)'
+                                      : 'Click to include/exclude this item from the schedule'
+                                  }
+                                  />
+                                </td>
+                                <td className="px-4 py-3 text-sm text-gray-900">
+                                  {item.name}
+                                  {item.status === 'included_in_cs' && (
+                                    <span className="ml-2 text-xs text-green-600">(Used in this schedule)</span>
+                                  )}
+                                  {item.status === 'used_in_other_schedule' && (
+                                    <span className="ml-2 text-xs text-gray-500">(Used in other schedule)</span>
+                                  )}
+                                </td>
+                                <td className="px-4 py-3 text-sm text-gray-900">{item.quantity}</td>
+                                <td className="px-4 py-3 text-sm text-gray-900">{item.unit}</td>
+                                <td className="px-4 py-3 whitespace-nowrap">
+                                                                  {item.status === 'included_in_cs' ? (
+                                  <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                                    In Schedule (Editable)
+                                  </span>
+                                ) : item.status === 'used_in_other_schedule' ? (
+                                  <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-600">
+                                    Used Elsewhere (Locked)
+                                  </span>
+                                ) : (
+                                  <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                                    item.included 
+                                      ? "bg-green-100 text-green-800" 
+                                      : "bg-yellow-100 text-yellow-800"
+                                  }`}>
+                                    {item.included ? "Selected" : "Available"}
+                                  </span>
+                                )}
+                                </td>
+                              </tr>
+                            ))}
+                            </tbody>
+                          </table>
+                        </div>
+                        <div className="mt-4 flex justify-between items-center">
+                          <div className="text-sm text-gray-500">
+                            Select items to include in this comparative schedule. Items already in this schedule can be removed unless bids exist.
+                                                      <div className="text-xs text-gray-400 mt-1 space-y-1">
+                            {prData.items.some(item => item.status === 'included_in_cs') && (
+                              <div className="flex items-center">
+                                <div className="w-3 h-3 bg-blue-100 rounded mr-2"></div>
+                                <span>Blue background: Items in this schedule (can be edited)</span>
+                              </div>
+                            )}
+                            {prData.items.some(item => item.status === 'used_in_other_schedule') && (
+                              <div className="flex items-center">
+                                <div className="w-3 h-3 bg-gray-100 rounded mr-2"></div>
+                                <span>Gray background: Items used in other schedules (locked)</span>
+                              </div>
+                            )}
+                            {prData.items.some(item => item.status === 'available' || (!item.status)) && (
+                              <div className="flex items-center">
+                                <div className="w-3 h-3 bg-white border border-gray-300 rounded mr-2"></div>
+                                <span>White background: Available items that can be selected</span>
+                              </div>
+                            )}
+                          </div>
+                          </div>
+                          <button 
+                            onClick={handleUpdateSelectedItems}
+                            disabled={!csId || isLoading || prData.items.filter(item => item.included && (item.status === 'available' || item.status === 'included_in_cs' || !item.status)).length === 0}
+                            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center"
+                          >
+                            {isLoading ? (
+                              <>
+                                <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white mr-2"></div>
+                                Updating...
+                              </>
+                            ) : (
+                              <>
+                                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                </svg>
+                                Update Selected Items
+                              </>
+                            )}
+                          </button>
+                        </div>
+                      </>
+                    )}
+                  </div>
+
+                  {/* Additional Notes */}
+                  <div className="bg-white p-6 rounded-lg shadow-sm border">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4 border-b pb-2">Additional Notes</h3>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Internal Notes</label>
+                      <textarea 
+                        rows={3}
+                        className="w-full p-3 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="Add any additional notes or special instructions..."
+                        value={prData.internal_notes}
+                        onChange={(e) => updatePrData('internal_notes', e.target.value)}
+                      ></textarea>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </Suspense>
         );
       case 'bids':
         return (
@@ -1510,11 +2081,11 @@ export default function Schedule({
       <div className="px-4 py-5 sm:px-6">
           <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-semibold text-gray-900">Comparative Schedule</h1>
-          {csId && (
+          {(csId || creator || createdAt) && (
             <div className="text-sm text-gray-500">
-              <p>CS ID: {csId}</p>
-              <p>Created by: {creator}</p>
-              <p>Created at: {createdAt}</p>
+              {csId && <p>CS ID: {csId}</p>}
+              {creator && <p>Created by: {creator}</p>}
+              {createdAt && <p>Created at: {formatDisplayDate(createdAt)}</p>}
             </div>
           )}
         </div>

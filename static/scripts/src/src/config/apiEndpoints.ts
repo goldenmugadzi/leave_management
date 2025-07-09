@@ -60,6 +60,18 @@ export const setCurrentModule = (module: string): void => {
 export const getBaseUrl = (baseUrl: string, path?: string): string => {
   const currentPath = path || (typeof window !== 'undefined' ? window.location.pathname : '');
   
+  // If baseUrl already contains the module path, don't add it again
+  if (baseUrl.includes('/direct_purchase')) {
+    return baseUrl;
+  }
+  if (baseUrl.includes('/restricted_bidding')) {
+    return baseUrl;
+  }
+  if (baseUrl.includes('/comperative_schedule')) {
+    return baseUrl;
+  }
+  
+  // Otherwise, determine module and append it
   switch (true) {
     case currentPath.includes('/direct_purchase/'):
       return `${baseUrl}/${API_MODULES.DIRECT_PURCHASE}`;
@@ -96,6 +108,7 @@ export const API_ENDPOINTS = {
     // Schedule APIs
     CS_SAVE: `/save`,
     CS_UPDATE: () => `/update`,
+    CS_UPDATE_ITEMS: () => `/update_pritem_ordered`,
     CS_BIDS_API: (cs_id: string) => `/api_cs_bids/${cs_id}`,
     CS_COMPLIANCE_API: (cs_id: string) => `/api_cs_compliance/${cs_id}`,
     CS_COMMITTEE_API: (cs_id: string) => `/api_cs_committee/${cs_id}`,
@@ -122,9 +135,11 @@ export const API_ENDPOINTS = {
     CS_APPROVAL: (cs_id: string) => `/cs/${cs_id}/approval/`,
     
     // Tab-specific APIs (for optimized loading)
-    CS_BIDS_DATA: (cs_id: string) => `/api/cs_bids/${cs_id}/`,
-    CS_COMMITTEE_DATA: (cs_id: string) => `/api/cs_committee/${cs_id}/`,
-    CS_COMPLIANCE_DATA: (cs_id: string) => `/api/cs_compliance/${cs_id}/`,
+    CS_BIDS_DATA: (cs_id: string) => `/api/cs-bids/${cs_id}/`,
+    CS_COMMITTEE_DATA: (cs_id: string) => `/api/cs-committee/${cs_id}/`,
+    CS_COMPLIANCE_DATA: (cs_id: string) => `/api/cs-compliance/${cs_id}/`,
+    CS_APPROVALS_DATA: (cs_id: string) => `/api/cs-approvals/${cs_id}/`,
+    CS_PR_ITEMS_MANAGEMENT: (cs_id: string) => `/api/cs-pr-items-management/${cs_id}/`,
 } as const;
 
 // Dynamic API endpoints function (for backward compatibility)
