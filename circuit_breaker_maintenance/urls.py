@@ -7,8 +7,8 @@ urlpatterns = [
     # Circuit Breaker URLs
     path('circuit-breakers/', views.circuit_breaker_list, name='circuit_breaker_list'),
     path('circuit-breakers/create/', views.circuit_breaker_create, name='circuit_breaker_create'),
-    # path('circuit-breakers/quick-create/', views.circuit_breaker_quick_create, name='circuit_breaker_quick_create'),
-    # path('circuit-breakers/bulk-import/', views.circuit_breaker_bulk_import, name='circuit_breaker_bulk_import'),
+    path('circuit-breakers/quick-create/', views.circuit_breaker_quick_create, name='circuit_breaker_quick_create'),  # Uncomment this
+    path('circuit-breakers/bulk-import/', views.circuit_breaker_bulk_import, name='circuit_breaker_bulk_import'),  # And this
     # path('circuit-breakers/bulk-status-change/', views.circuit_breaker_bulk_status_change, name='circuit_breaker_bulk_status_change'),
     # path('circuit-breakers/status-report/', views.circuit_breaker_status_report, name='circuit_breaker_status_report'),
     path('circuit-breakers/<int:pk>/', views.circuit_breaker_detail, name='circuit_breaker_detail'),

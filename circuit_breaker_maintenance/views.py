@@ -8,10 +8,22 @@ from django.utils import timezone
 from django.db import transaction
 from django.core.exceptions import ValidationError
 from .models import CircuitBreaker, MaintenanceRecord
-from .forms import CircuitBreakerForm, CircuitBreakerBulkImportForm, QuickCircuitBreakerForm
+from .forms import (
+    CircuitBreakerForm, 
+    CircuitBreakerBulkImportForm, 
+    QuickCircuitBreakerForm, 
+    MaintenanceRecordForm, 
+    MaintenanceRecordQuickForm
+)
 import csv
 import pandas as pd
 from io import StringIO
+import logging
+import traceback
+from django.db import IntegrityError
+
+# Add this at the top with other imports
+logger = logging.getLogger(__name__)
 
 @login_required
 def circuit_breaker_list(request):
@@ -41,10 +53,10 @@ def circuit_breaker_list(request):
             Q(sub_station__icontains=search_query)
         )
     
-    # Annotate with maintenance count
+    # Annotate with maintenance count and add explicit ordering
     circuit_breakers = circuit_breakers.annotate(
         maintenance_count=Count('maintenancerecord')
-    ).select_related()
+    ).select_related().order_by('sub_station', 'breaker_number')  # Add this ordering
     
     # Get unique substations for filter dropdown
     substations = CircuitBreaker.objects.values_list('sub_station', flat=True).distinct().order_by('sub_station')
@@ -690,50 +702,275 @@ def maintenance_record_detail(request, pk):
 def maintenance_record_create(request):
     """Create a new maintenance record"""
     circuit_breaker_id = request.GET.get('circuit_breaker')
-    initial_data = {}
+    quick_mode = request.GET.get('quick', False)
     
+    # Choose form based on mode
+    FormClass = MaintenanceRecordQuickForm if quick_mode else MaintenanceRecordForm
+    
+    if request.method == 'POST':
+        form = FormClass(
+            request.POST, 
+            user=request.user, 
+            circuit_breaker_id=circuit_breaker_id
+        )
+        
+        if form.is_valid():
+            try:
+                with transaction.atomic():
+                    maintenance_record = form.save()
+                    
+                    # Success message
+                    messages.success(
+                        request,
+                        f'Maintenance record "{maintenance_record.report_no}" created successfully!'
+                    )
+                    
+                    # Redirect based on user preference
+                    if 'save_and_add_another' in request.POST:
+                        redirect_url = request.path
+                        if circuit_breaker_id:
+                            redirect_url += f'?circuit_breaker={circuit_breaker_id}'
+                        return redirect(redirect_url)
+                    elif 'save_and_view_cb' in request.POST:
+                        return redirect('circuit_breaker_maintenance:circuit_breaker_detail', 
+                                      pk=maintenance_record.circuit_breaker.pk)
+                    else:
+                        return redirect('circuit_breaker_maintenance:record_detail', 
+                                      pk=maintenance_record.pk)
+                        
+            except ValidationError as e:
+                logger.error(f"Validation error creating maintenance record: {e}")
+                if hasattr(e, 'message_dict'):
+                    for field, errors in e.message_dict.items():
+                        for error in errors:
+                            messages.error(request, f"Validation error in {field}: {error}")
+                elif hasattr(e, 'messages'):
+                    for error in e.messages:
+                        messages.error(request, f"Validation error: {error}")
+                else:
+                    messages.error(request, f'Validation error creating maintenance record: {str(e)}')
+                    
+            except IntegrityError as e:
+                logger.error(f"Database integrity error creating maintenance record: {e}")
+                error_msg = str(e)
+                if 'UNIQUE constraint failed' in error_msg:
+                    if 'report_no' in error_msg:
+                        messages.error(request, 'Error: A maintenance record with this report number already exists. Please use a different report number.')
+                    else:
+                        messages.error(request, 'Error: This record conflicts with existing data. Please check for duplicate values.')
+                elif 'NOT NULL constraint failed' in error_msg:
+                    field_name = error_msg.split('.')[-1] if '.' in error_msg else 'unknown field'
+                    messages.error(request, f'Error: Required field "{field_name}" cannot be empty.')
+                else:
+                    messages.error(request, f'Database error creating maintenance record: {error_msg}')
+                    
+            except Exception as e:
+                logger.error(f"Unexpected error creating maintenance record: {e}")
+                logger.error(f"Traceback: {traceback.format_exc()}")
+                
+                # Provide detailed error information
+                error_type = type(e).__name__
+                error_msg = str(e)
+                
+                # Check for common Django model errors
+                if 'ForeignKey' in error_msg:
+                    messages.error(request, f'Error: Invalid circuit breaker reference. Please select a valid circuit breaker.')
+                elif 'DateField' in error_msg:
+                    messages.error(request, f'Error: Invalid date format. Please enter dates in the correct format (YYYY-MM-DD).')
+                elif 'CharField' in error_msg and 'max_length' in error_msg:
+                    messages.error(request, f'Error: One or more text fields exceed the maximum allowed length.')
+                elif 'JSONField' in error_msg:
+                    messages.error(request, f'Error: Invalid JSON data in technical fields. Please check the format of your JSON data.')
+                else:
+                    messages.error(request, f'Error creating maintenance record ({error_type}): {error_msg}')
+                
+                # Additional debugging info for developers (only in debug mode)
+                if hasattr(request, 'user') and request.user.is_superuser:
+                    messages.warning(request, f'Debug info: {traceback.format_exc()[:500]}...')
+        else:
+            # Enhanced form error handling
+            messages.error(request, 'Please correct the errors below:')
+            
+            # Display field-specific errors
+            for field, errors in form.errors.items():
+                field_name = form.fields[field].label if field in form.fields else field
+                for error in errors:
+                    if field == '__all__':
+                        messages.error(request, f'Form error: {error}')
+                    else:
+                        messages.error(request, f'Error in "{field_name}": {error}')
+            
+            # Display non-field errors
+            if form.non_field_errors():
+                for error in form.non_field_errors():
+                    messages.error(request, f'Form error: {error}')
+    else:
+        form = FormClass(
+            user=request.user,
+            circuit_breaker_id=circuit_breaker_id
+        )
+    
+    # Get circuit breaker info for context
+    circuit_breaker = None
     if circuit_breaker_id:
         try:
             circuit_breaker = CircuitBreaker.objects.get(pk=circuit_breaker_id)
-            initial_data['circuit_breaker'] = circuit_breaker
         except CircuitBreaker.DoesNotExist:
-            pass
+            messages.warning(request, f'Circuit breaker with ID {circuit_breaker_id} not found.')
     
-    if request.method == 'POST':
-        # You'll need to create a MaintenanceRecordForm
-        # form = MaintenanceRecordForm(request.POST)
-        # For now, let's create a simple placeholder
-        messages.info(request, 'Maintenance record creation form will be implemented here.')
-        return redirect('circuit_breaker_maintenance:record_list')
-    else:
-        # form = MaintenanceRecordForm(initial=initial_data)
-        pass
+    # Get recent maintenance records for reference
+    recent_records = MaintenanceRecord.objects.select_related('circuit_breaker').order_by('-date')[:5]
     
     context = {
+        'form': form,
         'action': 'Create',
+        'circuit_breaker': circuit_breaker,
         'circuit_breaker_id': circuit_breaker_id,
+        'quick_mode': quick_mode,
+        'recent_records': recent_records,
+        'active_circuit_breakers': CircuitBreaker.objects.filter(is_active=True).count(),
     }
     
     return render(request, 'circuit_breaker_maintenance/maintenance_record_form.html', context)
+
 
 @login_required
 def maintenance_record_edit(request, pk):
     """Edit an existing maintenance record"""
     record = get_object_or_404(MaintenanceRecord, pk=pk)
     
-    if request.method == 'POST':
-        # You'll need to create a MaintenanceRecordForm
-        # form = MaintenanceRecordForm(request.POST, instance=record)
-        # For now, let's create a simple placeholder
-        messages.info(request, 'Maintenance record editing form will be implemented here.')
+    # Check if record can be edited
+    if record.status in ['approved', 'completed'] and not request.user.is_superuser:
+        messages.warning(
+            request, 
+            'This maintenance record cannot be edited as it has been completed/approved. '
+            'Contact an administrator if changes are needed.'
+        )
         return redirect('circuit_breaker_maintenance:record_detail', pk=record.pk)
+    
+    if request.method == 'POST':
+        form = MaintenanceRecordForm(
+            request.POST, 
+            instance=record,
+            user=request.user
+        )
+        
+        if form.is_valid():
+            try:
+                with transaction.atomic():
+                    # Store original values for comparison
+                    original_status = record.status
+                    original_priority = record.priority
+                    original_circuit_breaker = record.circuit_breaker.breaker_number
+                    
+                    updated_record = form.save()
+                    
+                    # Log significant changes
+                    changes = []
+                    if original_status != updated_record.status:
+                        changes.append(f"Status: {original_status} → {updated_record.status}")
+                    if original_priority != updated_record.priority:
+                        changes.append(f"Priority: {original_priority} → {updated_record.priority}")
+                    if original_circuit_breaker != updated_record.circuit_breaker.breaker_number:
+                        changes.append(f"Circuit Breaker: {original_circuit_breaker} → {updated_record.circuit_breaker.breaker_number}")
+                    
+                    if changes:
+                        change_log = "; ".join(changes)
+                        messages.success(
+                            request,
+                            f'Maintenance record updated successfully! Changes: {change_log}'
+                        )
+                    else:
+                        messages.success(request, 'Maintenance record updated successfully!')
+                    
+                    # Redirect based on user preference
+                    if 'save_and_continue' in request.POST:
+                        return redirect('circuit_breaker_maintenance:record_edit', pk=updated_record.pk)
+                    else:
+                        return redirect('circuit_breaker_maintenance:record_detail', pk=updated_record.pk)
+                        
+            except ValidationError as e:
+                logger.error(f"Validation error updating maintenance record {pk}: {e}")
+                if hasattr(e, 'message_dict'):
+                    for field, errors in e.message_dict.items():
+                        for error in errors:
+                            messages.error(request, f"Validation error in {field}: {error}")
+                elif hasattr(e, 'messages'):
+                    for error in e.messages:
+                        messages.error(request, f"Validation error: {error}")
+                else:
+                    messages.error(request, f'Validation error updating maintenance record: {str(e)}')
+                    
+            except IntegrityError as e:
+                logger.error(f"Database integrity error updating maintenance record {pk}: {e}")
+                error_msg = str(e)
+                if 'UNIQUE constraint failed' in error_msg:
+                    if 'report_no' in error_msg:
+                        messages.error(request, 'Error: A maintenance record with this report number already exists. Please use a different report number.')
+                    else:
+                        messages.error(request, 'Error: This record conflicts with existing data. Please check for duplicate values.')
+                elif 'NOT NULL constraint failed' in error_msg:
+                    field_name = error_msg.split('.')[-1] if '.' in error_msg else 'unknown field'
+                    messages.error(request, f'Error: Required field "{field_name}" cannot be empty.')
+                else:
+                    messages.error(request, f'Database error updating maintenance record: {error_msg}')
+                    
+            except Exception as e:
+                logger.error(f"Unexpected error updating maintenance record {pk}: {e}")
+                logger.error(f"Traceback: {traceback.format_exc()}")
+                
+                # Provide detailed error information
+                error_type = type(e).__name__
+                error_msg = str(e)
+                
+                # Check for common Django model errors
+                if 'ForeignKey' in error_msg:
+                    messages.error(request, f'Error: Invalid circuit breaker reference. Please select a valid circuit breaker.')
+                elif 'DateField' in error_msg:
+                    messages.error(request, f'Error: Invalid date format. Please enter dates in the correct format (YYYY-MM-DD).')
+                elif 'CharField' in error_msg and 'max_length' in error_msg:
+                    messages.error(request, f'Error: One or more text fields exceed the maximum allowed length.')
+                elif 'JSONField' in error_msg:
+                    messages.error(request, f'Error: Invalid JSON data in technical fields. Please check the format of your JSON data.')
+                elif 'PermissionDenied' in error_type:
+                    messages.error(request, f'Error: You do not have permission to make this change.')
+                else:
+                    messages.error(request, f'Error updating maintenance record ({error_type}): {error_msg}')
+                
+                # Additional debugging info for developers (only for superusers)
+                if hasattr(request, 'user') and request.user.is_superuser:
+                    messages.warning(request, f'Debug info: {traceback.format_exc()[:500]}...')
+        else:
+            # Enhanced form error handling
+            messages.error(request, 'Please correct the errors below:')
+            
+            # Display field-specific errors
+            for field, errors in form.errors.items():
+                field_name = form.fields[field].label if field in form.fields else field
+                for error in errors:
+                    if field == '__all__':
+                        messages.error(request, f'Form error: {error}')
+                    else:
+                        messages.error(request, f'Error in "{field_name}": {error}')
+            
+            # Display non-field errors
+            if form.non_field_errors():
+                for error in form.non_field_errors():
+                    messages.error(request, f'Form error: {error}')
     else:
-        # form = MaintenanceRecordForm(instance=record)
-        pass
+        form = MaintenanceRecordForm(instance=record, user=request.user)
+    
+    # Get record history for context
+    related_records = MaintenanceRecord.objects.filter(
+        circuit_breaker=record.circuit_breaker
+    ).exclude(pk=record.pk).order_by('-date')[:5]
     
     context = {
+        'form': form,
         'record': record,
         'action': 'Edit',
+        'related_records': related_records,
+        'can_edit': record.status in ['draft', 'in_progress'] or request.user.is_superuser,
     }
     
     return render(request, 'circuit_breaker_maintenance/maintenance_record_form.html', context)

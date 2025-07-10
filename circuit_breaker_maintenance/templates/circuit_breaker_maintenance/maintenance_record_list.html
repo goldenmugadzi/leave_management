@@ -5,152 +5,872 @@
 
 {% block extra_css %}
 <style>
-    .maintenance-card {
-        transition: all 0.3s ease;
-        border-left: 4px solid transparent;
+    :root {
+        --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        --success-gradient: linear-gradient(135deg, #56ab2f 0%, #a8e6cf 100%);
+        --warning-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        --info-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        --danger-gradient: linear-gradient(135deg, #fc466b 0%, #3f5efb 100%);
+        --dark-gradient: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+        --light-gradient: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        --card-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+        --card-shadow-hover: 0 20px 40px rgba(0, 0, 0, 0.15);
+        --border-radius: 15px;
+        --transition: all 0.3s cubic-bezier(0.4, 0.0, 0.2, 1);
+        --section-spacing: 2.5rem;
+        --component-spacing: 1.5rem;
+        --element-spacing: 1rem;
     }
-    
-    .maintenance-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+
+    body {
+        background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+        font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        min-height: 100vh;
     }
-    
-    .maintenance-card.status-draft {
-        border-left-color: #6c757d;
+
+    /* Page Container with proper spacing */
+    .maintenance-container {
+        padding: var(--section-spacing) 1rem;
+        max-width: 1400px;
+        margin: 0 auto;
     }
-    
-    .maintenance-card.status-in-progress {
-        border-left-color: #ffc107;
-    }
-    
-    .maintenance-card.status-completed {
-        border-left-color: #198754;
-    }
-    
-    .maintenance-card.status-approved {
-        border-left-color: #0d6efd;
-    }
-    
-    .maintenance-card.status-rejected {
-        border-left-color: #dc3545;
-    }
-    
-    .filter-card {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+
+    /* Hero Section with enhanced visual hierarchy */
+    .maintenance-hero {
+        background: var(--primary-gradient);
         color: white;
+        border-radius: var(--border-radius);
+        padding: 3rem;
+        margin-bottom: var(--section-spacing);
+        position: relative;
+        overflow: hidden;
+        box-shadow: var(--card-shadow);
+        border: 3px solid rgba(255, 255, 255, 0.1);
     }
-    
-    .filter-card .form-control {
-        border: none;
-        border-radius: 8px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+
+    .maintenance-hero::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 200%;
+        height: 200%;
+        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="1.5" fill="white" opacity="0.1"/></svg>') repeat;
+        animation: float 30s linear infinite;
     }
-    
-    .filter-card .form-control:focus {
-        box-shadow: 0 0 0 0.2rem rgba(255,255,255,0.25);
+
+    .maintenance-hero::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        height: 5px;
+        background: linear-gradient(90deg, #ffffff40, #ffffff80, #ffffff40);
     }
-    
-    .stats-card {
-        background: linear-gradient(45deg, #f093fb 0%, #f5576c 100%);
-        border: none;
-        color: white;
+
+    @keyframes float {
+        0% { transform: translate(-50%, -50%) rotate(0deg); }
+        100% { transform: translate(-50%, -50%) rotate(360deg); }
     }
-    
-    .priority-critical { border-left: 4px solid #dc3545; }
-    .priority-high { border-left: 4px solid #fd7e14; }
-    .priority-medium { border-left: 4px solid #0dcaf0; }
-    .priority-low { border-left: 4px solid #6c757d; }
-    
-    .table-hover tbody tr:hover {
-        background-color: rgba(0,123,255,.075);
-        transform: scale(1.01);
-        transition: all 0.2s ease;
+
+    .maintenance-hero h1 {
+        font-size: 3rem;
+        font-weight: 800;
+        margin-bottom: 1rem;
+        text-shadow: 0 4px 8px rgba(0,0,0,0.3);
+        letter-spacing: -0.5px;
     }
-    
-    .badge-glow {
-        box-shadow: 0 0 10px rgba(var(--bs-badge-color), 0.5);
+
+    .maintenance-hero p {
+        font-size: 1.2rem;
+        opacity: 0.95;
+        margin-bottom: 0;
+        font-weight: 400;
     }
-    
-    .btn-modern {
-        border-radius: 20px;
-        padding: 8px 20px;
-        font-weight: 500;
-        transition: all 0.3s ease;
+
+    /* Statistics Section with clear visual separation */
+    .stats-section {
+        margin-bottom: var(--section-spacing);
+        padding: var(--component-spacing) 0;
+        background: rgba(255, 255, 255, 0.3);
+        border-radius: var(--border-radius);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(255, 255, 255, 0.4);
     }
-    
-    .btn-modern:hover {
-        transform: translateY(-1px);
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+
+    .stats-overview {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: var(--component-spacing);
+        padding: 0 var(--component-spacing);
     }
-    
-    .search-box {
+
+    .stat-card {
+        background: white;
+        border-radius: var(--border-radius);
+        padding: 2rem;
+        text-align: center;
+        box-shadow: var(--card-shadow);
+        transition: var(--transition);
+        border-left: 6px solid;
+        border-top: 2px solid rgba(0,0,0,0.05);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 4px;
+        background: var(--primary-gradient);
+        transform: scaleX(0);
+        transition: var(--transition);
+    }
+
+    .stat-card:hover::before {
+        transform: scaleX(1);
+    }
+
+    .stat-card:hover {
+        transform: translateY(-8px) scale(1.02);
+        box-shadow: var(--card-shadow-hover);
+    }
+
+    .stat-card.total { 
+        border-left-color: #0d6efd; 
+        background: linear-gradient(135deg, #ffffff 0%, #f0f7ff 100%);
+    }
+    .stat-card.draft { 
+        border-left-color: #6c757d; 
+        background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    }
+    .stat-card.active { 
+        border-left-color: #ffc107; 
+        background: linear-gradient(135deg, #ffffff 0%, #fffbf0 100%);
+    }
+    .stat-card.completed { 
+        border-left-color: #198754; 
+        background: linear-gradient(135deg, #ffffff 0%, #f0fff4 100%);
+    }
+    .stat-card.overdue { 
+        border-left-color: #dc3545; 
+        background: linear-gradient(135deg, #ffffff 0%, #fff5f5 100%);
+    }
+
+    .stat-number {
+        font-size: 3.5rem;
+        font-weight: 900;
+        margin-bottom: var(--element-spacing);
+        line-height: 1;
+        background: var(--primary-gradient);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .stat-label {
+        color: #495057;
+        font-size: 0.95rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1.2px;
+        margin-top: var(--element-spacing);
+    }
+
+    .stat-icon {
+        font-size: 2.5rem;
+        margin-bottom: var(--component-spacing);
+        opacity: 0.8;
+        padding: 1rem;
+        background: rgba(102, 126, 234, 0.1);
+        border-radius: 50%;
+        width: 80px;
+        height: 80px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto var(--component-spacing);
+    }
+
+    /* Filters Section with distinct background */
+    .filters-section {
+        margin-bottom: var(--section-spacing);
+        background: white;
+        border-radius: var(--border-radius);
+        overflow: hidden;
+        box-shadow: var(--card-shadow);
+        border: 2px solid #f1f5f9;
+    }
+
+    .filters-header {
+        background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+        padding: var(--component-spacing) 2rem;
+        border-bottom: 2px solid #e2e8f0;
+    }
+
+    .filters-header h3 {
+        margin: 0;
+        color: #334155;
+        font-weight: 700;
+        font-size: 1.2rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .filters-panel {
+        padding: 2rem;
         position: relative;
     }
-    
-    .search-box::before {
+
+    .filter-group {
+        margin-bottom: var(--component-spacing);
+    }
+
+    .filter-label {
+        font-weight: 700;
+        color: #374151;
+        margin-bottom: 0.75rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .filter-control {
+        border: 2px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 1rem 1.25rem;
+        transition: var(--transition);
+        background: #ffffff;
+        width: 100%;
+        font-size: 0.95rem;
+        font-weight: 500;
+    }
+
+    .filter-control:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.15);
+        outline: none;
+        background: #fafbff;
+    }
+
+    .search-wrapper {
+        position: relative;
+    }
+
+    .search-wrapper::before {
         content: '\f002';
         font-family: 'Font Awesome 5 Free';
         font-weight: 900;
         position: absolute;
-        left: 12px;
+        left: 20px;
         top: 50%;
         transform: translateY(-50%);
-        color: #6c757d;
+        color: #9ca3af;
+        z-index: 2;
+        font-size: 1.1rem;
+    }
+
+    .search-wrapper input {
+        padding-left: 3.5rem;
+        background: #f9fafb;
+    }
+
+    /* Content Section with clear spacing */
+    .content-section {
+        margin-bottom: var(--section-spacing);
+    }
+
+    .content-header {
+        background: white;
+        padding: var(--component-spacing) 2rem;
+        border-radius: var(--border-radius) var(--border-radius) 0 0;
+        border: 2px solid #f1f5f9;
+        border-bottom: none;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: var(--element-spacing);
+    }
+
+    .view-toggle {
+        display: flex;
+        background: #f8fafc;
+        border-radius: 30px;
+        padding: 6px;
+        box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+        border: 2px solid #e2e8f0;
+    }
+
+    .view-toggle button {
+        padding: 12px 24px;
+        border: none;
+        background: transparent;
+        border-radius: 24px;
+        transition: var(--transition);
+        color: #64748b;
+        font-weight: 600;
+        font-size: 0.9rem;
+    }
+
+    .view-toggle button.active {
+        background: var(--primary-gradient);
+        color: white;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        transform: scale(1.05);
+    }
+
+    .content-meta {
+        display: flex;
+        align-items: center;
+        gap: var(--component-spacing);
+        color: #64748b;
+        font-weight: 500;
+    }
+
+    /* Main Content Area */
+    .content-body {
+        background: white;
+        border: 2px solid #f1f5f9;
+        border-top: none;
+        border-radius: 0 0 var(--border-radius) var(--border-radius);
+        min-height: 400px;
+        position: relative;
+    }
+
+    .maintenance-grid {
+        display: grid;
+        gap: var(--component-spacing);
+        padding: 2rem;
+    }
+
+    .maintenance-card {
+        background: white;
+        border-radius: var(--border-radius);
+        padding: 2rem;
+        box-shadow: var(--card-shadow);
+        transition: var(--transition);
+        border: 2px solid #f1f5f9;
+        border-left: 6px solid transparent;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .maintenance-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.02) 0%, rgba(118, 75, 162, 0.02) 100%);
+        opacity: 0;
+        transition: var(--transition);
         z-index: 1;
     }
-    
-    .search-box input {
-        padding-left: 40px;
+
+    .maintenance-card:hover::before {
+        opacity: 1;
     }
-    
-    .empty-state {
-        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-        border-radius: 15px;
-        padding: 60px 20px;
+
+    .maintenance-card:hover {
+        transform: translateY(-8px) scale(1.02);
+        box-shadow: var(--card-shadow-hover);
+        border-color: #e2e8f0;
     }
-    
-    .page-header {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        color: white;
-        border-radius: 15px;
-        padding: 30px;
-        margin-bottom: 30px;
+
+    .maintenance-card.status-draft { 
+        border-left-color: #6c757d; 
+        background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
     }
-    
-    .maintenance-status-icon {
-        width: 12px;
-        height: 12px;
+    .maintenance-card.status-in_progress { 
+        border-left-color: #ffc107; 
+        background: linear-gradient(135deg, #ffffff 0%, #fffbf0 100%);
+    }
+    .maintenance-card.status-completed { 
+        border-left-color: #198754; 
+        background: linear-gradient(135deg, #ffffff 0%, #f0fff4 100%);
+    }
+    .maintenance-card.status-approved { 
+        border-left-color: #0d6efd; 
+        background: linear-gradient(135deg, #ffffff 0%, #f0f7ff 100%);
+    }
+    .maintenance-card.status-rejected { 
+        border-left-color: #dc3545; 
+        background: linear-gradient(135deg, #ffffff 0%, #fff5f5 100%);
+    }
+
+    .card-header-custom {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: var(--component-spacing);
+        padding-bottom: var(--element-spacing);
+        border-bottom: 2px solid #f8fafc;
+        position: relative;
+        z-index: 2;
+    }
+
+    .record-title {
+        font-size: 1.3rem;
+        font-weight: 800;
+        color: #1e293b;
+        margin-bottom: 0.5rem;
+        letter-spacing: -0.25px;
+    }
+
+    .record-subtitle {
+        color: #64748b;
+        font-size: 0.95rem;
+        font-weight: 600;
+    }
+
+    .status-badge {
+        padding: 8px 16px;
+        border-radius: 25px;
+        font-size: 0.8rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.75px;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+
+    .status-badge::before {
+        content: '';
+        width: 10px;
+        height: 10px;
         border-radius: 50%;
-        display: inline-block;
-        margin-right: 8px;
+        background: currentColor;
+        box-shadow: 0 0 6px currentColor;
     }
-    
-    .status-draft .maintenance-status-icon { background-color: #6c757d; }
-    .status-in-progress .maintenance-status-icon { background-color: #ffc107; }
-    .status-completed .maintenance-status-icon { background-color: #198754; }
-    .status-approved .maintenance-status-icon { background-color: #0d6efd; }
-    .status-rejected .maintenance-status-icon { background-color: #dc3545; }
+
+    .priority-badge {
+        padding: 6px 14px;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+
+    .card-details {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: var(--component-spacing);
+        margin-bottom: var(--component-spacing);
+        padding: var(--element-spacing);
+        background: rgba(248, 250, 252, 0.5);
+        border-radius: 12px;
+        position: relative;
+        z-index: 2;
+    }
+
+    .detail-item {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        color: #475569;
+        font-size: 0.9rem;
+        font-weight: 500;
+        padding: 0.5rem;
+        border-radius: 8px;
+        transition: var(--transition);
+    }
+
+    .detail-item:hover {
+        background: rgba(102, 126, 234, 0.05);
+        color: #334155;
+    }
+
+    .detail-icon {
+        width: 20px;
+        text-align: center;
+        opacity: 0.8;
+        font-size: 1rem;
+    }
+
+    .card-actions {
+        display: flex;
+        gap: var(--element-spacing);
+        justify-content: flex-end;
+        border-top: 2px solid #f1f5f9;
+        padding-top: var(--component-spacing);
+        margin-top: var(--component-spacing);
+        position: relative;
+        z-index: 2;
+    }
+
+    /* Table View Styling */
+    .table-view {
+        background: white;
+        border-radius: var(--border-radius);
+        overflow: hidden;
+        box-shadow: var(--card-shadow);
+        border: 2px solid #f1f5f9;
+        margin: 2rem 0;
+    }
+
+    .table-modern {
+        margin: 0;
+    }
+
+    .table-modern thead th {
+        background: var(--dark-gradient);
+        color: white;
+        border: none;
+        padding: 1.5rem 1rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.75px;
+        font-size: 0.85rem;
+        border-bottom: 3px solid #667eea;
+    }
+
+    .table-modern tbody tr {
+        transition: var(--transition);
+        border: none;
+    }
+
+    .table-modern tbody tr:nth-child(even) {
+        background: rgba(248, 250, 252, 0.5);
+    }
+
+    .table-modern tbody tr:hover {
+        background: rgba(102, 126, 234, 0.08);
+        transform: scale(1.01);
+    }
+
+    .table-modern tbody td {
+        padding: 1.5rem 1rem;
+        border-top: 1px solid #e2e8f0;
+        vertical-align: middle;
+        font-weight: 500;
+    }
+
+    /* Empty State */
+    .empty-state {
+        background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+        border-radius: var(--border-radius);
+        padding: 4rem 2rem;
+        text-align: center;
+        box-shadow: var(--card-shadow);
+        margin: 2rem;
+        border: 2px solid #f1f5f9;
+    }
+
+    .empty-icon {
+        font-size: 6rem;
+        color: #cbd5e1;
+        margin-bottom: var(--section-spacing);
+        background: rgba(203, 213, 225, 0.1);
+        width: 150px;
+        height: 150px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto var(--section-spacing);
+    }
+
+    /* Pagination */
+    .pagination-section {
+        margin-top: var(--section-spacing);
+        padding: var(--component-spacing) 0;
+        background: rgba(255, 255, 255, 0.6);
+        border-radius: var(--border-radius);
+        backdrop-filter: blur(10px);
+    }
+
+    .pagination-modern .page-link {
+        border: 2px solid #e2e8f0;
+        border-radius: 12px;
+        margin: 0 0.25rem;
+        padding: 1rem 1.25rem;
+        color: #64748b;
+        transition: var(--transition);
+        font-weight: 600;
+        background: white;
+    }
+
+    .pagination-modern .page-link:hover {
+        background: var(--primary-gradient);
+        color: white;
+        transform: translateY(-3px);
+        border-color: transparent;
+        box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+    }
+
+    .pagination-modern .page-item.active .page-link {
+        background: var(--primary-gradient);
+        color: white;
+        border-color: transparent;
+        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        transform: scale(1.1);
+    }
+
+    /* Enhanced Buttons */
+    .btn-modern {
+        border-radius: 30px;
+        padding: 14px 28px;
+        font-weight: 700;
+        transition: var(--transition);
+        border: 2px solid transparent;
+        text-transform: uppercase;
+        letter-spacing: 0.75px;
+        position: relative;
+        overflow: hidden;
+        font-size: 0.9rem;
+    }
+
+    .btn-modern::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+        transition: var(--transition);
+    }
+
+    .btn-modern:hover::before {
+        left: 100%;
+    }
+
+    .btn-modern:hover {
+        transform: translateY(-3px) scale(1.05);
+        box-shadow: 0 12px 30px rgba(0,0,0,0.2);
+    }
+
+    .btn-gradient-primary {
+        background: var(--primary-gradient);
+        color: white;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    }
+
+    .btn-gradient-success {
+        background: var(--success-gradient);
+        color: white;
+        box-shadow: 0 4px 15px rgba(86, 171, 47, 0.3);
+    }
+
+    .action-btn {
+        padding: 10px 16px;
+        border-radius: 10px;
+        border: 2px solid #e2e8f0;
+        background: white;
+        color: #64748b;
+        transition: var(--transition);
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+
+    .action-btn:hover {
+        background: #f8fafc;
+        color: #374151;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    /* Filter Chips */
+    .filter-chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--element-spacing);
+        margin-top: var(--component-spacing);
+        padding-top: var(--component-spacing);
+        border-top: 2px solid #f1f5f9;
+    }
+
+    .filter-chip {
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+        color: #667eea;
+        padding: 8px 16px;
+        border-radius: 25px;
+        font-size: 0.8rem;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-weight: 600;
+        border: 2px solid rgba(102, 126, 234, 0.2);
+        transition: var(--transition);
+    }
+
+    .filter-chip:hover {
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.15) 0%, rgba(118, 75, 162, 0.15) 100%);
+        transform: scale(1.05);
+    }
+
+    .filter-chip .remove {
+        cursor: pointer;
+        font-weight: bold;
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        background: rgba(220, 53, 69, 0.1);
+        color: #dc3545;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: var(--transition);
+    }
+
+    .filter-chip .remove:hover {
+        background: #dc3545;
+        color: white;
+    }
+
+    /* Floating Action Button */
+    .quick-actions {
+        position: fixed;
+        bottom: 40px;
+        right: 40px;
+        z-index: 1000;
+    }
+
+    .fab {
+        width: 70px;
+        height: 70px;
+        border-radius: 50%;
+        background: var(--primary-gradient);
+        color: white;
+        border: 3px solid white;
+        box-shadow: 0 12px 30px rgba(102, 126, 234, 0.4);
+        transition: var(--transition);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.75rem;
+    }
+
+    .fab:hover {
+        transform: scale(1.15) rotate(90deg);
+        box-shadow: 0 20px 40px rgba(102, 126, 234, 0.5);
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .maintenance-container {
+            padding: var(--component-spacing) 0.5rem;
+        }
+
+        .maintenance-hero {
+            padding: 2rem 1.5rem;
+            text-align: center;
+        }
+
+        .maintenance-hero h1 {
+            font-size: 2.2rem;
+        }
+
+        .stats-overview {
+            grid-template-columns: repeat(2, 1fr);
+            gap: var(--element-spacing);
+            padding: 0 var(--element-spacing);
+        }
+
+        .filters-panel {
+            padding: var(--component-spacing);
+        }
+
+        .quick-actions {
+            bottom: 20px;
+            right: 20px;
+        }
+
+        .fab {
+            width: 60px;
+            height: 60px;
+            font-size: 1.5rem;
+        }
+
+        .maintenance-grid {
+            grid-template-columns: 1fr;
+            padding: var(--component-spacing);
+        }
+
+        .content-header {
+            padding: var(--component-spacing);
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .content-meta {
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        :root {
+            --section-spacing: 1.5rem;
+            --component-spacing: 1rem;
+            --element-spacing: 0.75rem;
+        }
+    }
+
+    /* Loading and Animation States */
+    .loading-skeleton {
+        background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+        background-size: 200% 100%;
+        animation: loading 1.5s infinite;
+        border-radius: 8px;
+        height: 20px;
+    }
+
+    @keyframes loading {
+        0% { background-position: 200% 0; }
+        100% { background-position: -200% 0; }
+    }
+
+    /* Status and Priority Colors */
+    .status-draft { background: rgba(108, 117, 125, 0.15); color: #495057; }
+    .status-in_progress { background: rgba(255, 193, 7, 0.15); color: #664d03; }
+    .status-completed { background: rgba(25, 135, 84, 0.15); color: #0a3622; }
+    .status-approved { background: rgba(13, 110, 253, 0.15); color: #052c65; }
+    .status-rejected { background: rgba(220, 53, 69, 0.15); color: #58151c; }
+
+    .priority-critical { background: rgba(220, 53, 69, 0.15); color: #58151c; }
+    .priority-high { background: rgba(253, 126, 20, 0.15); color: #7c2d12; }
+    .priority-medium { background: rgba(13, 202, 240, 0.15); color: #0c4a6e; }
+    .priority-low { background: rgba(108, 117, 125, 0.15); color: #343a40; }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="container-fluid">
-    <!-- Page Header -->
-    <div class="page-header">
-        <div class="row align-items-center">
+<div class="maintenance-container">
+    <!-- Enhanced Hero Section with clear visual hierarchy -->
+    <div class="maintenance-hero">
+        <div class="row align-items-center position-relative">
             <div class="col-md-8">
-                <h2 class="mb-0">
+                <h1>
                     <i class="fas fa-clipboard-list me-3"></i>
-                    SF6 Circuit Breaker Maintenance Records
-                </h2>
-                <p class="mb-0 mt-2 opacity-75">Manage and track all maintenance activities</p>
+                    Maintenance Records
+                </h1>
+                <p>Comprehensive tracking and management of SF6 circuit breaker maintenance activities</p>
             </div>
-            <div class="col-md-4 text-end">
-                <div class="btn-group">
-                    <a href="{% url 'circuit_breaker_maintenance:record_create' %}" class="btn btn-light btn-modern">
+            <div class="col-md-4 text-md-end">
+                <div class="d-flex flex-column gap-3">
+                    <a href="{% url 'circuit_breaker_maintenance:record_create' %}" class="btn btn-modern btn-gradient-success">
                         <i class="fas fa-plus me-2"></i>New Record
                     </a>
-                    <a href="{% url 'circuit_breaker_maintenance:circuit_breaker_list' %}" class="btn btn-outline-light btn-modern">
+                    <a href="{% url 'circuit_breaker_maintenance:circuit_breaker_list' %}" class="btn btn-modern btn-outline-light">
                         <i class="fas fa-bolt me-2"></i>Circuit Breakers
                     </a>
                 </div>
@@ -158,337 +878,568 @@
         </div>
     </div>
 
-    <!-- Filters Card -->
-    <div class="card filter-card mb-4">
-        <div class="card-body">
-            <form method="get">
-                <div class="row align-items-end">
-                    <div class="col-md-3 mb-3">
-                        <label for="circuit_breaker" class="form-label fw-bold">
-                            <i class="fas fa-bolt me-1"></i>Circuit Breaker
-                        </label>
-                        <input type="text" 
-                               id="circuit_breaker" 
-                               name="circuit_breaker" 
-                               class="form-control" 
-                               value="{{ current_circuit_breaker|default:'' }}"
-                               placeholder="Search by breaker number..."
-                               list="circuit_breakers">
-                        <datalist id="circuit_breakers">
-                            {% for breaker in circuit_breakers %}
-                                <option value="{{ breaker }}">
-                            {% endfor %}
-                        </datalist>
-                    </div>
-                    
-                    <div class="col-md-2 mb-3">
-                        <label for="status" class="form-label fw-bold">
-                            <i class="fas fa-flag me-1"></i>Status
-                        </label>
-                        <select id="status" name="status" class="form-control">
-                            <option value="">All Status</option>
-                            {% for value, label in status_choices %}
-                                <option value="{{ value }}" {% if current_status == value %}selected{% endif %}>{{ label }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    
-                    <div class="col-md-2 mb-3">
-                        <label for="priority" class="form-label fw-bold">
-                            <i class="fas fa-exclamation-triangle me-1"></i>Priority
-                        </label>
-                        <select id="priority" name="priority" class="form-control">
-                            <option value="">All Priority</option>
-                            {% for value, label in priority_choices %}
-                                <option value="{{ value }}" {% if current_priority == value %}selected{% endif %}>{{ label }}</option>
-                            {% endfor %}
-                        </select>
-                    </div>
-                    
-                    <div class="col-md-3 mb-3">
-                        <label for="search" class="form-label fw-bold">
-                            <i class="fas fa-search me-1"></i>Search
-                        </label>
-                        <div class="search-box">
+    <!-- Enhanced Statistics Section with distinct visual area -->
+    <div class="stats-section">
+        <div class="stats-overview">
+            <div class="stat-card total">
+                <div class="stat-icon">
+                    <i class="fas fa-clipboard-list text-primary"></i>
+                </div>
+                <div class="stat-number">{{ total_count }}</div>
+                <div class="stat-label">Total Records</div>
+            </div>
+            <div class="stat-card draft">
+                <div class="stat-icon">
+                    <i class="fas fa-edit text-secondary"></i>
+                </div>
+                <div class="stat-number">{{ page_obj|length }}</div>
+                <div class="stat-label">Current View</div>
+            </div>
+            <div class="stat-card active">
+                <div class="stat-icon">
+                    <i class="fas fa-clock text-warning"></i>
+                </div>
+                <div class="stat-number">
+                    {% with active_count=page_obj.object_list|length %}
+                        {% for record in page_obj %}
+                            {% if record.status == 'in_progress' %}{{ forloop.counter0|add:1 }}{% endif %}
+                        {% endfor %}
+                    {% endwith %}
+                </div>
+                <div class="stat-label">In Progress</div>
+            </div>
+            <div class="stat-card completed">
+                <div class="stat-icon">
+                    <i class="fas fa-check-circle text-success"></i>
+                </div>
+                <div class="stat-number">
+                    {% for record in page_obj %}
+                        {% if record.status == 'completed' %}{{ forloop.counter0|add:1 }}{% endif %}
+                    {% endfor %}
+                </div>
+                <div class="stat-label">Completed</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Enhanced Filters Section with clear boundaries -->
+    <div class="filters-section">
+        <div class="filters-header">
+            <h3>
+                <i class="fas fa-filter me-2"></i>
+                Filter & Search Records
+            </h3>
+        </div>
+        <div class="filters-panel">
+            <form method="get" id="filterForm">
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="filter-group">
+                            <label class="filter-label">
+                                <i class="fas fa-bolt"></i>
+                                Circuit Breaker
+                            </label>
                             <input type="text" 
-                                   id="search" 
-                                   name="search" 
-                                   class="form-control" 
-                                   value="{{ search_query|default:'' }}"
-                                   placeholder="Search records...">
+                                   name="circuit_breaker" 
+                                   class="filter-control" 
+                                   value="{{ current_circuit_breaker|default:'' }}"
+                                   placeholder="Search by breaker number..."
+                                   list="circuit_breakers">
+                            <datalist id="circuit_breakers">
+                                {% for breaker in circuit_breakers %}
+                                    <option value="{{ breaker }}">
+                                {% endfor %}
+                            </datalist>
                         </div>
                     </div>
                     
-                    <div class="col-md-2 mb-3">
-                        <button type="submit" class="btn btn-light btn-modern me-2">
-                            <i class="fas fa-filter me-1"></i>Filter
-                        </button>
-                        <a href="{% url 'circuit_breaker_maintenance:record_list' %}" class="btn btn-outline-light btn-modern">
-                            <i class="fas fa-times me-1"></i>Clear
-                        </a>
+                    <div class="col-md-2">
+                        <div class="filter-group">
+                            <label class="filter-label">
+                                <i class="fas fa-flag"></i>
+                                Status
+                            </label>
+                            <select name="status" class="filter-control">
+                                <option value="">All Status</option>
+                                {% for value, label in status_choices %}
+                                    <option value="{{ value }}" {% if current_status == value %}selected{% endif %}>{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-2">
+                        <div class="filter-group">
+                            <label class="filter-label">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                Priority
+                            </label>
+                            <select name="priority" class="filter-control">
+                                <option value="">All Priority</option>
+                                {% for value, label in priority_choices %}
+                                    <option value="{{ value }}" {% if current_priority == value %}selected{% endif %}>{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-3">
+                        <div class="filter-group">
+                            <label class="filter-label">
+                                <i class="fas fa-search"></i>
+                                Search
+                            </label>
+                            <div class="search-wrapper">
+                                <input type="text" 
+                                       name="search" 
+                                       class="filter-control" 
+                                       value="{{ search_query|default:'' }}"
+                                       placeholder="Search records...">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-2">
+                        <div class="filter-group">
+                            <label class="filter-label">&nbsp;</label>
+                            <div class="d-flex gap-2">
+                                <button type="submit" class="btn btn-modern btn-gradient-primary flex-grow-1">
+                                    <i class="fas fa-filter me-1"></i> Apply
+                                </button>
+                                <a href="{% url 'circuit_breaker_maintenance:record_list' %}" class="btn btn-modern btn-outline-secondary">
+                                    <i class="fas fa-times"></i>
+                                </a>
+                            </div>
+                        </div>
                     </div>
                 </div>
+                
+                <!-- Active Filters Chips with enhanced styling -->
+                {% if current_circuit_breaker or current_status or current_priority or search_query %}
+                <div class="filter-chips">
+                    {% if current_circuit_breaker %}
+                        <div class="filter-chip">
+                            <i class="fas fa-bolt me-1"></i>
+                            Circuit Breaker: {{ current_circuit_breaker }}
+                            <span class="remove" onclick="removeFilter('circuit_breaker')">&times;</span>
+                        </div>
+                    {% endif %}
+                    {% if current_status %}
+                        <div class="filter-chip">
+                            <i class="fas fa-flag me-1"></i>
+                            Status: {{ current_status|title }}
+                            <span class="remove" onclick="removeFilter('status')">&times;</span>
+                        </div>
+                    {% endif %}
+                    {% if current_priority %}
+                        <div class="filter-chip">
+                            <i class="fas fa-exclamation-triangle me-1"></i>
+                            Priority: {{ current_priority|title }}
+                            <span class="remove" onclick="removeFilter('priority')">&times;</span>
+                        </div>
+                    {% endif %}
+                    {% if search_query %}
+                        <div class="filter-chip">
+                            <i class="fas fa-search me-1"></i>
+                            Search: "{{ search_query }}"
+                            <span class="remove" onclick="removeFilter('search')">&times;</span>
+                        </div>
+                    {% endif %}
+                </div>
+                {% endif %}
             </form>
         </div>
     </div>
 
-    <!-- Results Summary -->
-    <div class="row mb-4">
-        <div class="col-md-8">
-            <div class="card stats-card">
-                <div class="card-body">
-                    <div class="d-flex align-items-center">
-                        <div class="flex-grow-1">
-                            <h5 class="mb-0">
-                                <i class="fas fa-chart-bar me-2"></i>
-                                Showing {{ page_obj.start_index }}-{{ page_obj.end_index }} of {{ total_count }} records
-                            </h5>
-                            {% if current_circuit_breaker or current_status or current_priority or search_query %}
-                                <small class="opacity-75">Filtered results</small>
-                            {% endif %}
-                        </div>
-                        <div class="text-end">
-                            <i class="fas fa-clipboard-list fa-3x opacity-25"></i>
-                        </div>
-                    </div>
+    <!-- Content Section with clear header and body separation -->
+    <div class="content-section">
+        <div class="content-header">
+            <div class="view-toggle">
+                <button type="button" class="active" onclick="switchView('grid')">
+                    <i class="fas fa-th-large me-2"></i> Grid View
+                </button>
+                <button type="button" onclick="switchView('table')">
+                    <i class="fas fa-table me-2"></i> Table View
+                </button>
+            </div>
+            
+            <div class="content-meta">
+                <span class="badge bg-primary">
+                    <i class="fas fa-list me-1"></i>
+                    Showing {{ page_obj.start_index }}-{{ page_obj.end_index }} of {{ total_count }} records
+                </span>
+                <div class="dropdown">
+                    <button class="btn btn-outline-secondary dropdown-toggle btn-sm" type="button" data-bs-toggle="dropdown">
+                        <i class="fas fa-sort me-1"></i> Sort Options
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="?sort=date"><i class="fas fa-calendar-alt me-2"></i>Date (Newest)</a></li>
+                        <li><a class="dropdown-item" href="?sort=-date"><i class="fas fa-calendar me-2"></i>Date (Oldest)</a></li>
+                        <li><a class="dropdown-item" href="?sort=status"><i class="fas fa-flag me-2"></i>Status</a></li>
+                        <li><a class="dropdown-item" href="?sort=priority"><i class="fas fa-exclamation-triangle me-2"></i>Priority</a></li>
+                    </ul>
                 </div>
             </div>
         </div>
-        <div class="col-md-4">
-            <div class="card">
-                <div class="card-body text-center">
-                    <h6 class="text-muted mb-2">Quick Actions</h6>
-                    <div class="btn-group-vertical w-100">
-                        <a href="{% url 'circuit_breaker_maintenance:record_create' %}" class="btn btn-outline-primary btn-sm">
-                            <i class="fas fa-plus me-1"></i>New Maintenance
-                        </a>
-                        <a href="#" class="btn btn-outline-info btn-sm">
-                            <i class="fas fa-download me-1"></i>Export Data
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
 
-    <!-- Maintenance Records -->
-    <div class="card maintenance-card">
-        <div class="card-header bg-white">
-            <h5 class="mb-0">
-                <i class="fas fa-list me-2 text-primary"></i>
-                Maintenance Records
-            </h5>
-        </div>
-        <div class="card-body p-0">
-            {% if page_obj %}
-                <div class="table-responsive">
-                    <table class="table table-hover mb-0">
-                        <thead class="table-dark">
-                            <tr>
-                                <th class="border-0">
-                                    <i class="fas fa-hashtag me-1"></i>Report No.
-                                </th>
-                                <th class="border-0">
-                                    <i class="fas fa-bolt me-1"></i>Circuit Breaker
-                                </th>
-                                <th class="border-0">
-                                    <i class="fas fa-building me-1"></i>Substation
-                                </th>
-                                <th class="border-0">
-                                    <i class="fas fa-calendar me-1"></i>Date
-                                </th>
-                                <th class="border-0">
-                                    <i class="fas fa-flag me-1"></i>Status
-                                </th>
-                                <th class="border-0">
-                                    <i class="fas fa-exclamation-triangle me-1"></i>Priority
-                                </th>
-                                <th class="border-0">
-                                    <i class="fas fa-clock me-1"></i>Next Due
-                                </th>
-                                <th class="border-0">
-                                    <i class="fas fa-cog me-1"></i>Actions
-                                </th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for record in page_obj %}
-                            <tr class="status-{{ record.status }}">
-                                <td class="fw-bold">
-                                    <span class="maintenance-status-icon"></span>
-                                    <a href="{% url 'circuit_breaker_maintenance:record_detail' record.pk %}" 
-                                       class="text-decoration-none">
+        <div class="content-body">
+            <!-- Grid View (Default) with enhanced spacing -->
+            <div id="gridView" class="maintenance-grid">
+                {% if page_obj %}
+                    {% for record in page_obj %}
+                    <div class="maintenance-card status-{{ record.status }}">
+                        <div class="card-header-custom">
+                            <div>
+                                <div class="record-title">
+                                    <a href="{% url 'circuit_breaker_maintenance:record_detail' record.pk %}" class="text-decoration-none">
                                         {{ record.report_no }}
                                     </a>
-                                </td>
-                                <td>
-                                    <a href="{% url 'circuit_breaker_maintenance:circuit_breaker_detail' record.circuit_breaker.pk %}" 
-                                       class="text-decoration-none">
-                                        <span class="badge bg-light text-dark">
-                                            <i class="fas fa-bolt me-1"></i>
-                                            {{ record.circuit_breaker.breaker_number }}
-                                        </span>
+                                </div>
+                                <div class="record-subtitle">
+                                    <a href="{% url 'circuit_breaker_maintenance:circuit_breaker_detail' record.circuit_breaker.pk %}" class="text-decoration-none">
+                                        <i class="fas fa-bolt me-1"></i>{{ record.circuit_breaker.breaker_number }}
                                     </a>
-                                </td>
-                                <td>
-                                    <i class="fas fa-map-marker-alt me-1 text-muted"></i>
-                                    {{ record.circuit_breaker.sub_station }}
-                                </td>
-                                <td>
-                                    <i class="fas fa-calendar-alt me-1 text-muted"></i>
-                                    {{ record.date|date:"d M Y" }}
-                                </td>
-                                <td>
-                                    <span class="badge badge-glow bg-{% if record.status == 'completed' %}success{% elif record.status == 'in_progress' %}warning{% elif record.status == 'approved' %}primary{% elif record.status == 'rejected' %}danger{% else %}secondary{% endif %}">
-                                        {{ record.get_status_display }}
-                                    </span>
-                                </td>
-                                <td>
-                                    <span class="badge badge-glow bg-{% if record.priority == 'critical' %}danger{% elif record.priority == 'high' %}warning{% elif record.priority == 'medium' %}info{% else %}secondary{% endif %}">
-                                        {% if record.priority == 'critical' %}<i class="fas fa-fire me-1"></i>
-                                        {% elif record.priority == 'high' %}<i class="fas fa-exclamation-triangle me-1"></i>
-                                        {% elif record.priority == 'medium' %}<i class="fas fa-minus me-1"></i>
-                                        {% else %}<i class="fas fa-arrow-down me-1"></i>{% endif %}
-                                        {{ record.get_priority_display }}
-                                    </span>
-                                </td>
-                                <td>
-                                    {% if record.next_maintenance_due %}
-                                        <div class="d-flex align-items-center">
-                                            <i class="fas fa-calendar-check me-1 text-muted"></i>
-                                            {{ record.next_maintenance_due|date:"d M Y" }}
-                                            {% if record.is_overdue %}
-                                                <span class="badge bg-danger ms-2 badge-glow">
-                                                    <i class="fas fa-exclamation me-1"></i>Overdue
-                                                </span>
-                                            {% elif record.days_until_due <= 30 %}
-                                                <span class="badge bg-warning ms-2 badge-glow">
-                                                    <i class="fas fa-clock me-1"></i>Due Soon
-                                                </span>
-                                            {% endif %}
-                                        </div>
-                                    {% else %}
-                                        <span class="text-muted">
-                                            <i class="fas fa-question-circle me-1"></i>Not set
-                                        </span>
+                                </div>
+                            </div>
+                            <div class="d-flex flex-column gap-2 align-items-end">
+                                <span class="status-badge status-{{ record.status }}">
+                                    {{ record.get_status_display }}
+                                </span>
+                                <span class="priority-badge priority-{{ record.priority }}">
+                                    {% if record.priority == 'critical' %}<i class="fas fa-fire"></i>
+                                    {% elif record.priority == 'high' %}<i class="fas fa-exclamation-triangle"></i>
+                                    {% elif record.priority == 'medium' %}<i class="fas fa-minus"></i>
+                                    {% else %}<i class="fas fa-arrow-down"></i>{% endif %}
+                                    {{ record.get_priority_display }}
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <div class="card-details">
+                            <div class="detail-item">
+                                <i class="fas fa-building detail-icon"></i>
+                                <span>{{ record.circuit_breaker.sub_station }}</span>
+                            </div>
+                            <div class="detail-item">
+                                <i class="fas fa-calendar detail-icon"></i>
+                                <span>{{ record.date|date:"d M Y" }}</span>
+                            </div>
+                            <div class="detail-item">
+                                <i class="fas fa-clock detail-icon"></i>
+                                {% if record.next_maintenance_due %}
+                                    <span>Due: {{ record.next_maintenance_due|date:"d M Y" }}</span>
+                                    {% if record.is_overdue %}
+                                        <span class="badge bg-danger ms-1">Overdue</span>
+                                    {% elif record.days_until_due <= 30 %}
+                                        <span class="badge bg-warning ms-1">Due Soon</span>
                                     {% endif %}
-                                </td>
-                                <td>
-                                    <div class="btn-group btn-group-sm">
-                                        <a href="{% url 'circuit_breaker_maintenance:record_detail' record.pk %}" 
-                                           class="btn btn-outline-primary" 
-                                           title="View Details"
-                                           data-bs-toggle="tooltip">
-                                            <i class="fas fa-eye"></i>
-                                        </a>
-                                        {% if record.status in 'draft,in_progress' %}
-                                        <a href="{% url 'circuit_breaker_maintenance:record_edit' record.pk %}" 
-                                           class="btn btn-outline-secondary" 
-                                           title="Edit Record"
-                                           data-bs-toggle="tooltip">
-                                            <i class="fas fa-edit"></i>
-                                        </a>
-                                        {% endif %}
-                                        <button class="btn btn-outline-info" 
-                                                title="More Options"
-                                                data-bs-toggle="tooltip">
-                                            <i class="fas fa-ellipsis-v"></i>
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            {% else %}
-                <div class="empty-state text-center">
-                    <i class="fas fa-clipboard-list fa-5x text-muted mb-4"></i>
-                    <h4 class="text-muted">No Maintenance Records Found</h4>
-                    {% if current_circuit_breaker or current_status or current_priority or search_query %}
-                        <p class="text-muted mb-4">Try adjusting your filters to see more results</p>
-                        <a href="{% url 'circuit_breaker_maintenance:record_list' %}" class="btn btn-primary btn-modern">
-                            <i class="fas fa-times me-2"></i>Clear Filters
-                        </a>
-                    {% else %}
-                        <p class="text-muted mb-4">Get started by creating your first maintenance record</p>
-                        <a href="{% url 'circuit_breaker_maintenance:record_create' %}" class="btn btn-primary btn-modern">
-                            <i class="fas fa-plus me-2"></i>Create First Record
-                        </a>
-                    {% endif %}
-                </div>
-            {% endif %}
+                                {% else %}
+                                    <span class="text-muted">Next due not set</span>
+                                {% endif %}
+                            </div>
+                            <div class="detail-item">
+                                <i class="fas fa-user detail-icon"></i>
+                                <span>{{ record.maintenance_carried_out_by|default:"Not assigned" }}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="card-actions">
+                            <a href="{% url 'circuit_breaker_maintenance:record_detail' record.pk %}" 
+                               class="action-btn primary">
+                                <i class="fas fa-eye"></i> View
+                            </a>
+                            {% if record.status in 'draft,in_progress' %}
+                            <a href="{% url 'circuit_breaker_maintenance:record_edit' record.pk %}" 
+                               class="action-btn warning">
+                                <i class="fas fa-edit"></i> Edit
+                            </a>
+                            {% endif %}
+                            <div class="dropdown">
+                                <button class="action-btn" type="button" data-bs-toggle="dropdown">
+                                    <i class="fas fa-ellipsis-v"></i> More
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li><a class="dropdown-item" href="#"><i class="fas fa-download me-2"></i>Export</a></li>
+                                    <li><a class="dropdown-item" href="#"><i class="fas fa-copy me-2"></i>Duplicate</a></li>
+                                    {% if record.status == 'draft' %}
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item text-danger" href="#"><i class="fas fa-trash me-2"></i>Delete</a></li>
+                                    {% endif %}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="empty-state">
+                        <div class="empty-icon">
+                            <i class="fas fa-clipboard-list"></i>
+                        </div>
+                        <h3 class="text-muted mb-4">No Maintenance Records Found</h3>
+                        {% if current_circuit_breaker or current_status or current_priority or search_query %}
+                            <p class="text-muted mb-4">Try adjusting your filters to see more results</p>
+                            <a href="{% url 'circuit_breaker_maintenance:record_list' %}" class="btn btn-modern btn-gradient_primary">
+                                <i class="fas fa-times me-2"></i>Clear All Filters
+                            </a>
+                        {% else %}
+                            <p class="text-muted mb-4">Get started by creating your first maintenance record</p>
+                            <a href="{% url 'circuit_breaker_maintenance:record_create' %}" class="btn btn-modern btn-gradient-success">
+                                <i class="fas fa-plus me-2"></i>Create First Record
+                            </a>
+                        {% endif %}
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Table View with enhanced styling -->
+            <div id="tableView" class="table-view" style="display: none;">
+                {% if page_obj %}
+                <table class="table table-modern">
+                    <thead>
+                        <tr>
+                            <th><i class="fas fa-hashtag me-2"></i>Report No.</th>
+                            <th><i class="fas fa-bolt me-2"></i>Circuit Breaker</th>
+                            <th><i class="fas fa-building me-2"></i>Substation</th>
+                            <th><i class="fas fa-calendar me-2"></i>Date</th>
+                            <th><i class="fas fa-flag me-2"></i>Status</th>
+                            <th><i class="fas fa-exclamation-triangle me-2"></i>Priority</th>
+                            <th><i class="fas fa-clock me-2"></i>Next Due</th>
+                            <th><i class="fas fa-cog me-2"></i>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for record in page_obj %}
+                        <tr>
+                            <td class="fw-bold">
+                                <a href="{% url 'circuit_breaker_maintenance:record_detail' record.pk %}" class="text-decoration-none">
+                                    {{ record.report_no }}
+                                </a>
+                            </td>
+                            <td>
+                                <a href="{% url 'circuit_breaker_maintenance:circuit_breaker_detail' record.circuit_breaker.pk %}" class="text-decoration-none">
+                                    <span class="badge bg-light text-dark">
+                                        <i class="fas fa-bolt me-1"></i>{{ record.circuit_breaker.breaker_number }}
+                                    </span>
+                                </a>
+                            </td>
+                            <td>{{ record.circuit_breaker.sub_station }}</td>
+                            <td>{{ record.date|date:"d M Y" }}</td>
+                            <td>
+                                <span class="status-badge status-{{ record.status }}">
+                                    {{ record.get_status_display }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="priority-badge priority-{{ record.priority }}">
+                                    {{ record.get_priority_display }}
+                                </span>
+                            </td>
+                            <td>
+                                {% if record.next_maintenance_due %}
+                                    {{ record.next_maintenance_due|date:"d M Y" }}
+                                    {% if record.is_overdue %}
+                                        <span class="badge bg-danger ms-1">Overdue</span>
+                                    {% elif record.days_until_due <= 30 %}
+                                        <span class="badge bg-warning ms-1">Due Soon</span>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="text-muted">Not set</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="btn-group btn-group-sm">
+                                    <a href="{% url 'circuit_breaker_maintenance:record_detail' record.pk %}" 
+                                       class="btn btn-outline-primary" title="View Details">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    {% if record.status in 'draft,in_progress' %}
+                                    <a href="{% url 'circuit_breaker_maintenance:record_edit' record.pk %}" 
+                                       class="btn btn-outline-secondary" title="Edit Record">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% endif %}
+            </div>
         </div>
     </div>
 
-    <!-- Pagination -->
+    <!-- Enhanced Pagination with distinct section -->
     {% if page_obj.has_other_pages %}
-    <div class="card mt-4">
-        <div class="card-body">
-            <nav aria-label="Maintenance records pagination">
-                <ul class="pagination justify-content-center mb-0">
-                    {% if page_obj.has_previous %}
+    <div class="pagination-section">
+        <nav aria-label="Maintenance records pagination" class="pagination-modern">
+            <ul class="pagination justify-content-center">
+                {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?{% if current_circuit_breaker %}circuit_breaker={{ current_circuit_breaker }}&{% endif %}{% if current_status %}status={{ current_status }}&{% endif %}{% if current_priority %}priority={{ current_priority }}&{% endif %}{% if search_query %}search={{ search_query }}&{% endif %}page={{ page_obj.previous_page_number }}">
+                            <i class="fas fa-chevron-left me-2"></i>Previous
+                        </a>
+                    </li>
+                {% endif %}
+                
+                {% for num in page_obj.paginator.page_range %}
+                    {% if page_obj.number == num %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ num }}</span>
+                        </li>
+                    {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
                         <li class="page-item">
-                            <a class="page-link" href="?{% if current_circuit_breaker %}circuit_breaker={{ current_circuit_breaker }}&{% endif %}{% if current_status %}status={{ current_status }}&{% endif %}{% if current_priority %}priority={{ current_priority }}&{% endif %}{% if search_query %}search={{ search_query }}&{% endif %}page={{ page_obj.previous_page_number }}">
-                                <i class="fas fa-chevron-left me-1"></i>Previous
-                            </a>
+                            <a class="page-link" href="?{% if current_circuit_breaker %}circuit_breaker={{ current_circuit_breaker }}&{% endif %}{% if current_status %}status={{ current_status }}&{% endif %}{% if current_priority %}priority={{ current_priority }}&{% endif %}{% if search_query %}search={{ search_query }}&{% endif %}page={{ num }}">{{ num }}</a>
                         </li>
                     {% endif %}
-                    
-                    {% for num in page_obj.paginator.page_range %}
-                        {% if page_obj.number == num %}
-                            <li class="page-item active">
-                                <span class="page-link">{{ num }}</span>
-                            </li>
-                        {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
-                            <li class="page-item">
-                                <a class="page-link" href="?{% if current_circuit_breaker %}circuit_breaker={{ current_circuit_breaker }}&{% endif %}{% if current_status %}status={{ current_status }}&{% endif %}{% if current_priority %}priority={{ current_priority }}&{% endif %}{% if search_query %}search={{ search_query }}&{% endif %}page={{ num }}">{{ num }}</a>
-                            </li>
-                        {% endif %}
-                    {% endfor %}
-                    
-                    {% if page_obj.has_next %}
-                        <li class="page-item">
-                            <a class="page-link" href="?{% if current_circuit_breaker %}circuit_breaker={{ current_circuit_breaker }}&{% endif %}{% if current_status %}status={{ current_status }}&{% endif %}{% if current_priority %}priority={{ current_priority }}&{% endif %}{% if search_query %}search={{ search_query }}&{% endif %}page={{ page_obj.next_page_number }}">
-                                Next<i class="fas fa-chevron-right ms-1"></i>
-                            </a>
-                        </li>
-                    {% endif %}
-                </ul>
-            </nav>
-        </div>
+                {% endfor %}
+                
+                {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?{% if current_circuit_breaker %}circuit_breaker={{ current_circuit_breaker }}&{% endif %}{% if current_status %}status={{ current_status }}&{% endif %}{% if current_priority %}priority={{ current_priority }}&{% endif %}{% if search_query %}search={{ search_query }}&{% endif %}page={{ page_obj.next_page_number }}">
+                            Next<i class="fas fa-chevron-right ms-2"></i>
+                        </a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
     </div>
     {% endif %}
+</div>
+
+<!-- Enhanced Floating Action Button -->
+<div class="quick-actions">
+    <button class="fab" onclick="location.href='{% url 'circuit_breaker_maintenance:record_create' %}'" title="Create New Maintenance Record">
+        <i class="fas fa-plus"></i>
+    </button>
 </div>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // Initialize tooltips
-    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[title]'));
     var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
         return new bootstrap.Tooltip(tooltipTriggerEl);
     });
     
     // Auto-submit form when filters change
-    const statusSelect = document.getElementById('status');
-    const prioritySelect = document.getElementById('priority');
+    const statusSelect = document.querySelector('select[name="status"]');
+    const prioritySelect = document.querySelector('select[name="priority"]');
     
-    statusSelect.addEventListener('change', function() {
-        document.querySelector('form').submit();
-    });
+    if (statusSelect) {
+        statusSelect.addEventListener('change', function() {
+            document.getElementById('filterForm').submit();
+        });
+    }
     
-    prioritySelect.addEventListener('change', function() {
-        document.querySelector('form').submit();
-    });
+    if (prioritySelect) {
+        prioritySelect.addEventListener('change', function() {
+            document.getElementById('filterForm').submit();
+        });
+    }
     
     // Add loading states to buttons
     document.querySelectorAll('.btn-modern').forEach(btn => {
         btn.addEventListener('click', function() {
             if (!this.href || this.href.includes('#')) return;
             
-            this.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>' + this.textContent.trim();
+            const originalText = this.innerHTML;
+            this.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Loading...';
+            
+            setTimeout(() => {
+                this.innerHTML = originalText;
+            }, 2000);
         });
     });
+    
+    // Animate cards on scroll
+    const observerOptions = {
+        threshold: 0.1,
+        rootMargin: '0px 0px -50px 0px'
+    };
+    
+    const observer = new IntersectionObserver(function(entries) {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.style.opacity = '1';
+                entry.target.style.transform = 'translateY(0)';
+            }
+        });
+    }, observerOptions);
+    
+    document.querySelectorAll('.maintenance-card').forEach(card => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(20px)';
+        card.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+        observer.observe(card);
+    });
+});
+
+function switchView(viewType) {
+    const gridView = document.getElementById('gridView');
+    const tableView = document.getElementById('tableView');
+    const buttons = document.querySelectorAll('.view-toggle button');
+    
+    buttons.forEach(btn => btn.classList.remove('active'));
+    
+    if (viewType === 'grid') {
+        gridView.style.display = 'grid';
+        tableView.style.display = 'none';
+        buttons[0].classList.add('active');
+    } else {
+        gridView.style.display = 'none';
+        tableView.style.display = 'block';
+        buttons[1].classList.add('active');
+    }
+    
+    // Store preference
+    localStorage.setItem('maintenanceViewPreference', viewType);
+}
+
+function removeFilter(filterName) {
+    const form = document.getElementById('filterForm');
+    const input = form.querySelector(`[name="${filterName}"]`);
+    if (input) {
+        input.value = '';
+        form.submit();
+    }
+}
+
+// Load saved view preference
+window.addEventListener('load', function() {
+    const savedView = localStorage.getItem('maintenanceViewPreference');
+    if (savedView) {
+        switchView(savedView);
+    }
+});
+
+// Real-time search with debouncing
+let searchTimeout;
+const searchInput = document.querySelector('input[name="search"]');
+if (searchInput) {
+    searchInput.addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            // Could implement live search here
+        }, 500);
+    });
+}
+
+// Keyboard shortcuts
+document.addEventListener('keydown', function(e) {
+    if (e.ctrlKey || e.metaKey) {
+        switch(e.key) {
+            case 'k':
+                e.preventDefault();
+                const searchField = document.querySelector('input[name="search"]');
+                if (searchField) searchField.focus();
+                break;
+            case 'n':
+                e.preventDefault();
+                location.href = '{% url "circuit_breaker_maintenance:record_create" %}';
+                break;
+        }
+    }
 });
 </script>
 {% endblock %}
