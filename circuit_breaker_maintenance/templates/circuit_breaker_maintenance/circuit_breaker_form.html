@@ -1,0 +1,200 @@
+{% extends 'base.html' %}
+{% load widget_tweaks %}
+
+{% block title %}{{ action }} Circuit Breaker{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="fas fa-bolt"></i> {{ action }} Circuit Breaker
+                    </h3>
+                    <div class="card-tools">
+                        <a href="{% url 'circuit_breaker_maintenance:circuit_breaker_list' %}" class="btn btn-sm btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Back to List
+                        </a>
+                    </div>
+                </div>
+                
+                <form method="post" novalidate>
+                    {% csrf_token %}
+                    <div class="card-body">
+                        <div class="row">
+                            <!-- Basic Information -->
+                            <div class="col-md-6">
+                                <h5 class="text-primary border-bottom pb-2">Basic Information</h5>
+                                
+                                <div class="mb-3">
+                                    <label for="{{ form.breaker_number.id_for_label }}" class="form-label">
+                                        {{ form.breaker_number.label }}
+                                    </label>
+                                    {{ form.breaker_number|add_class:"form-control" }}
+                                    {% if form.breaker_number.errors %}
+                                        <div class="text-danger small">{{ form.breaker_number.errors.0 }}</div>
+                                    {% endif %}
+                                    {% if form.breaker_number.help_text %}
+                                        <div class="form-text">{{ form.breaker_number.help_text }}</div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="{{ form.sub_station.id_for_label }}" class="form-label">
+                                        {{ form.sub_station.label }}
+                                    </label>
+                                    {{ form.sub_station|add_class:"form-control" }}
+                                    <datalist id="substations">
+                                        {% for substation in existing_substations %}
+                                            <option value="{{ substation }}">
+                                        {% endfor %}
+                                    </datalist>
+                                    {% if form.sub_station.errors %}
+                                        <div class="text-danger small">{{ form.sub_station.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="{{ form.make_type.id_for_label }}" class="form-label">
+                                        {{ form.make_type.label }}
+                                    </label>
+                                    {{ form.make_type|add_class:"form-control" }}
+                                    <datalist id="make_types">
+                                        {% for make in existing_makes %}
+                                            <option value="{{ make }}">
+                                        {% endfor %}
+                                    </datalist>
+                                    {% if form.make_type.errors %}
+                                        <div class="text-danger small">{{ form.make_type.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            <!-- Technical Specifications -->
+                            <div class="col-md-6">
+                                <h5 class="text-primary border-bottom pb-2">Technical Specifications</h5>
+                                
+                                <div class="mb-3">
+                                    <label for="{{ form.voltage_capacity.id_for_label }}" class="form-label">
+                                        {{ form.voltage_capacity.label }}
+                                    </label>
+                                    {{ form.voltage_capacity|add_class:"form-control" }}
+                                    {% if form.voltage_capacity.errors %}
+                                        <div class="text-danger small">{{ form.voltage_capacity.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="{{ form.serial_number.id_for_label }}" class="form-label">
+                                        {{ form.serial_number.label }}
+                                    </label>
+                                    {{ form.serial_number|add_class:"form-control" }}
+                                    {% if form.serial_number.errors %}
+                                        <div class="text-danger small">{{ form.serial_number.errors.0 }}</div>
+                                    {% endif %}
+                                    {% if form.serial_number.help_text %}
+                                        <div class="form-text">{{ form.serial_number.help_text }}</div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="{{ form.installation_date.id_for_label }}" class="form-label">
+                                        {{ form.installation_date.label }}
+                                    </label>
+                                    {{ form.installation_date|add_class:"form-control" }}
+                                    {% if form.installation_date.errors %}
+                                        <div class="text-danger small">{{ form.installation_date.errors.0 }}</div>
+                                    {% endif %}
+                                    {% if form.installation_date.help_text %}
+                                        <div class="form-text">{{ form.installation_date.help_text }}</div>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="form-check mb-3">
+                                    {{ form.is_active|add_class:"form-check-input" }}
+                                    <label class="form-check-label" for="{{ form.is_active.id_for_label }}">
+                                        {{ form.is_active.label }}
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card-footer">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="btn-group">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-save"></i> Save
+                                    </button>
+                                    <button type="submit" name="save_and_add_another" class="btn btn-outline-primary">
+                                        <i class="fas fa-plus"></i> Save & Add Another
+                                    </button>
+                                    <button type="submit" name="save_and_create_maintenance" class="btn btn-outline-success">
+                                        <i class="fas fa-tools"></i> Save & Create Maintenance
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="col-md-6 text-end">
+                                <a href="{% url 'circuit_breaker_maintenance:circuit_breaker_list' %}" class="btn btn-secondary">
+                                    <i class="fas fa-times"></i> Cancel
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            
+            <!-- Quick Tips -->
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h6 class="card-title"><i class="fas fa-lightbulb text-warning"></i> Quick Tips</h6>
+                </div>
+                <div class="card-body">
+                    <ul class="mb-0">
+                        <li>Breaker numbers should follow your organization's naming convention</li>
+                        <li>Serial numbers must be unique across all circuit breakers</li>
+                        <li>Use the auto-complete suggestions for consistent data entry</li>
+                        <li>Installation date helps track equipment age and maintenance schedules</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-uppercase breaker number
+    const breakerNumberInput = document.getElementById('{{ form.breaker_number.id_for_label }}');
+    if (breakerNumberInput) {
+        breakerNumberInput.addEventListener('input', function() {
+            this.value = this.value.toUpperCase();
+        });
+    }
+    
+    // Form validation feedback
+    const form = document.querySelector('form');
+    form.addEventListener('submit', function(e) {
+        const requiredFields = form.querySelectorAll('[required]');
+        let isValid = true;
+        
+        requiredFields.forEach(field => {
+            if (!field.value.trim()) {
+                field.classList.add('is-invalid');
+                isValid = false;
+            } else {
+                field.classList.remove('is-invalid');
+                field.classList.add('is-valid');
+            }
+        });
+        
+        if (!isValid) {
+            e.preventDefault();
+            alert('Please fill in all required fields.');
+        }
+    });
+});
+</script>
+{% endblock %}

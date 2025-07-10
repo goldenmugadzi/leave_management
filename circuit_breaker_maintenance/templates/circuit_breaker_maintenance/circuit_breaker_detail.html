@@ -1,0 +1,320 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}{{ circuit_breaker.breaker_number }} - Circuit Breaker Details{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <!-- Header with actions -->
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h3 class="card-title">
+                        <i class="fas fa-bolt"></i> {{ circuit_breaker.breaker_number }}
+                        {% if not circuit_breaker.is_active %}
+                            <span class="badge bg-secondary ms-2">Inactive</span>
+                        {% endif %}
+                    </h3>
+                    <div class="btn-group">
+                        <a href="{% url 'circuit_breaker_maintenance:circuit_breaker_edit' circuit_breaker.pk %}" 
+                           class="btn btn-primary">
+                            <i class="fas fa-edit"></i> Edit Details
+                        </a>
+                        <a href="{% url 'circuit_breaker_maintenance:record_create' %}?circuit_breaker={{ circuit_breaker.pk }}" 
+                           class="btn btn-success">
+                            <i class="fas fa-plus"></i> New Maintenance
+                        </a>
+                        <div class="btn-group">
+                            <button type="button" class="btn btn-outline-secondary dropdown-toggle" 
+                                    data-bs-toggle="dropdown">
+                                <i class="fas fa-cog"></i> More Actions
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li>
+                                    <button class="dropdown-item" onclick="toggleStatus({{ circuit_breaker.pk }})">
+                                        <i class="fas fa-power-off"></i> 
+                                        {% if circuit_breaker.is_active %}Deactivate{% else %}Activate{% endif %}
+                                    </button>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <a class="dropdown-item" href="{% url 'circuit_breaker_maintenance:circuit_breaker_history' circuit_breaker.pk %}">
+                                        <i class="fas fa-history"></i> View Full History
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="#" onclick="exportData()">
+                                        <i class="fas fa-download"></i> Export Data
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                        <a href="{% url 'circuit_breaker_maintenance:circuit_breaker_list' %}" 
+                           class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Back to List
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <!-- Circuit Breaker Information -->
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title">Circuit Breaker Information</h5>
+                </div>
+                <div class="card-body">
+                    <dl class="row">
+                        <dt class="col-sm-4">Breaker Number:</dt>
+                        <dd class="col-sm-8">
+                            <strong>{{ circuit_breaker.breaker_number }}</strong>
+                        </dd>
+                        
+                        <dt class="col-sm-4">Substation:</dt>
+                        <dd class="col-sm-8">{{ circuit_breaker.sub_station }}</dd>
+                        
+                        <dt class="col-sm-4">Make/Type:</dt>
+                        <dd class="col-sm-8">{{ circuit_breaker.make_type }}</dd>
+                        
+                        <dt class="col-sm-4">Voltage Capacity:</dt>
+                        <dd class="col-sm-8">
+                            <span class="badge bg-info">{{ circuit_breaker.voltage_capacity }}</span>
+                        </dd>
+                        
+                        <dt class="col-sm-4">Serial Number:</dt>
+                        <dd class="col-sm-8">{{ circuit_breaker.serial_number }}</dd>
+                        
+                        <dt class="col-sm-4">Installation Date:</dt>
+                        <dd class="col-sm-8">
+                            {% if circuit_breaker.installation_date %}
+                                {{ circuit_breaker.installation_date|date:"d M Y" }}
+                                <small class="text-muted">
+                                    ({{ circuit_breaker.installation_date|timesince }} ago)
+                                </small>
+                            {% else %}
+                                <span class="text-muted">Not specified</span>
+                            {% endif %}
+                        </dd>
+                        
+                        <dt class="col-sm-4">Status:</dt>
+                        <dd class="col-sm-8">
+                            {% if circuit_breaker.is_active %}
+                                <span class="badge bg-success">Active</span>
+                            {% else %}
+                                <span class="badge bg-secondary">Inactive</span>
+                            {% endif %}
+                        </dd>
+                        
+                        <dt class="col-sm-4">Created:</dt>
+                        <dd class="col-sm-8">{{ circuit_breaker.created_at|date:"d M Y H:i" }}</dd>
+                        
+                        <dt class="col-sm-4">Last Updated:</dt>
+                        <dd class="col-sm-8">{{ circuit_breaker.updated_at|date:"d M Y H:i" }}</dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Maintenance Summary -->
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title">Maintenance Summary</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-6 col-md-3 mb-3">
+                            <div class="border rounded p-2">
+                                <h4 class="text-primary mb-0">{{ total_maintenance }}</h4>
+                                <small class="text-muted">Total Records</small>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-3 mb-3">
+                            <div class="border rounded p-2">
+                                <h4 class="text-warning mb-0">{{ active_maintenance }}</h4>
+                                <small class="text-muted">Active</small>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-3 mb-3">
+                            <div class="border rounded p-2">
+                                <h4 class="text-success mb-0">{{ completed_maintenance }}</h4>
+                                <small class="text-muted">Completed</small>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-3 mb-3">
+                            <div class="border rounded p-2">
+                                <h4 class="text-danger mb-0">{{ overdue_maintenance }}</h4>
+                                <small class="text-muted">Overdue</small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {% if next_maintenance %}
+                    <div class="alert alert-info">
+                        <strong>Next Maintenance Due:</strong> 
+                        {{ next_maintenance.next_maintenance_due|date:"d M Y" }}
+                        {% if next_maintenance.days_until_due < 30 %}
+                            <span class="badge bg-warning ms-2">Due Soon</span>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Recent Maintenance Records -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="card-title">Recent Maintenance Records</h5>
+                    <a href="{% url 'circuit_breaker_maintenance:circuit_breaker_history' circuit_breaker.pk %}" 
+                       class="btn btn-sm btn-outline-primary">
+                        View All History
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% if maintenance_records %}
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Report No.</th>
+                                        <th>Date</th>
+                                        <th>Status</th>
+                                        <th>Priority</th>
+                                        <th>Next Due</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for record in maintenance_records %}
+                                    <tr>
+                                        <td>
+                                            <a href="{% url 'circuit_breaker_maintenance:record_detail' record.pk %}">
+                                                {{ record.report_no }}
+                                            </a>
+                                        </td>
+                                        <td>{{ record.date|date:"d M Y" }}</td>
+                                        <td>
+                                            <span class="badge bg-{% if record.status == 'completed' %}success{% elif record.status == 'in_progress' %}warning{% elif record.status == 'approved' %}primary{% else %}secondary{% endif %}">
+                                                {{ record.get_status_display }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-{% if record.priority == 'critical' %}danger{% elif record.priority == 'high' %}warning{% elif record.priority == 'medium' %}info{% else %}secondary{% endif %}">
+                                                {{ record.get_priority_display }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            {% if record.next_maintenance_due %}
+                                                {{ record.next_maintenance_due|date:"d M Y" }}
+                                                {% if record.is_overdue %}
+                                                    <span class="badge bg-danger ms-1">Overdue</span>
+                                                {% endif %}
+                                            {% else %}
+                                                <span class="text-muted">Not set</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm">
+                                                <a href="{% url 'circuit_breaker_maintenance:record_detail' record.pk %}" 
+                                                   class="btn btn-outline-primary" title="View">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                                {% if record.status in 'draft,in_progress' %}
+                                                <a href="{% url 'circuit_breaker_maintenance:record_edit' record.pk %}" 
+                                                   class="btn btn-outline-secondary" title="Edit">
+                                                    <i class="fas fa-edit"></i>
+                                                </a>
+                                                {% endif %}
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div class="text-center text-muted py-4">
+                            <i class="fas fa-tools fa-3x mb-3 text-muted"></i>
+                            <p>No maintenance records found for this circuit breaker.</p>
+                            <a href="{% url 'circuit_breaker_maintenance:record_create' %}?circuit_breaker={{ circuit_breaker.pk }}" 
+                               class="btn btn-primary">
+                                <i class="fas fa-plus"></i> Create First Maintenance Record
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Status Toggle Modal -->
+<div class="modal fade" id="statusModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Confirm Status Change</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p id="statusModalMessage"></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="confirmStatusChange">Confirm</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function toggleStatus(circuitBreakerId) {
+    const isActive = {{ circuit_breaker.is_active|yesno:"true,false" }};
+    const action = isActive ? 'deactivate' : 'activate';
+    
+    document.getElementById('statusModalMessage').textContent = 
+        `Are you sure you want to ${action} this circuit breaker?`;
+    
+    document.getElementById('confirmStatusChange').onclick = function() {
+        fetch(`/circuit-breaker-maintenance/circuit-breakers/${circuitBreakerId}/toggle-status/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert(data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while updating the status.');
+        });
+        
+        const modal = bootstrap.Modal.getInstance(document.getElementById('statusModal'));
+        modal.hide();
+    };
+    
+    const modal = new bootstrap.Modal(document.getElementById('statusModal'));
+    modal.show();
+}
+
+function exportData() {
+    // Implement export functionality
+    alert('Export functionality would be implemented here.');
+}
+</script>
+{% endblock %}

@@ -1,0 +1,60 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ action }} Maintenance Record{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="fas fa-clipboard-check"></i> {{ action }} Maintenance Record
+                        {% if record %}
+                            - {{ record.report_no }}
+                        {% endif %}
+                    </h3>
+                    <div class="card-tools">
+                        <a href="{% if record %}{% url 'circuit_breaker_maintenance:record_detail' record.pk %}{% else %}{% url 'circuit_breaker_maintenance:record_list' %}{% endif %}" 
+                           class="btn btn-sm btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Back
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>Note:</strong> The maintenance record form is under development. 
+                        You can currently view and list records, but full form functionality will be available soon.
+                    </div>
+                    
+                    {% if circuit_breaker_id %}
+                    <div class="alert alert-success">
+                        <i class="fas fa-bolt"></i>
+                        Creating maintenance record for circuit breaker ID: {{ circuit_breaker_id }}
+                    </div>
+                    {% endif %}
+                    
+                    <div class="text-center py-5">
+                        <i class="fas fa-tools fa-4x text-muted mb-3"></i>
+                        <h4>Maintenance Record Form</h4>
+                        <p class="text-muted">Coming soon - comprehensive maintenance record creation and editing</p>
+                        
+                        <div class="mt-4">
+                            <a href="{% url 'circuit_breaker_maintenance:record_list' %}" class="btn btn-primary">
+                                <i class="fas fa-list"></i> View All Records
+                            </a>
+                            {% if circuit_breaker_id %}
+                            <a href="{% url 'circuit_breaker_maintenance:circuit_breaker_detail' circuit_breaker_id %}" class="btn btn-info">
+                                <i class="fas fa-bolt"></i> View Circuit Breaker
+                            </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
