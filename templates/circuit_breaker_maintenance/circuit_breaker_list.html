@@ -1,0 +1,204 @@
+\circuit_breaker_maintenance\templates\circuit_breaker_maintenance\circuit_breaker_list.html
+{% extends 'admin.html' %}
+{% load humanize %}
+
+{% block title %}Circuit Breakers{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h3 class="card-title">Circuit Breakers</h3>
+                    <a href="{% url 'circuit_breaker_maintenance:circuit_breaker_create' %}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Add New Circuit Breaker
+                    </a>
+                </div>
+                
+                <div class="card-body">
+                    <!-- Filters -->
+                    <form method="get" class="mb-4">
+                        <div class="row">
+                            <div class="col-md-3">
+                                <label for="substation" class="form-label">Substation</label>
+                                <input type="text" 
+                                       id="substation" 
+                                       name="substation" 
+                                       class="form-control" 
+                                       value="{{ current_substation|default:'' }}"
+                                       placeholder="Filter by substation..."
+                                       list="substations">
+                                <datalist id="substations">
+                                    {% for substation in substations %}
+                                        <option value="{{ substation }}">
+                                    {% endfor %}
+                                </datalist>
+                            </div>
+                            
+                            <div class="col-md-2">
+                                <label for="status" class="form-label">Status</label>
+                                <select id="status" name="status" class="form-control">
+                                    <option value="">All Status</option>
+                                    <option value="active" {% if current_status == 'active' %}selected{% endif %}>Active</option>
+                                    <option value="inactive" {% if current_status == 'inactive' %}selected{% endif %}>Inactive</option>
+                                </select>
+                            </div>
+                            
+                            <div class="col-md-4">
+                                <label for="search" class="form-label">Search</label>
+                                <input type="text" 
+                                       id="search" 
+                                       name="search" 
+                                       class="form-control" 
+                                       value="{{ search_query|default:'' }}"
+                                       placeholder="Search breaker number, make, serial...">
+                            </div>
+                            
+                            <div class="col-md-3 d-flex align-items-end">
+                                <button type="submit" class="btn btn-primary me-2">Filter</button>
+                                <a href="{% url 'circuit_breaker_maintenance:circuit_breaker_list' %}" class="btn btn-secondary">Clear</a>
+                            </div>
+                        </div>
+                    </form>
+                    
+                    <!-- Results Summary -->
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <small class="text-muted">
+                                Showing {{ page_obj.start_index }}-{{ page_obj.end_index }} of {{ total_count }} circuit breakers
+                                {% if current_substation or current_status or search_query %}
+                                    (filtered)
+                                {% endif %}
+                            </small>
+                        </div>
+                    </div>
+                    
+                    <!-- Circuit Breakers Table -->
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Breaker No.</th>
+                                    <th>Substation</th>
+                                    <th>Make/Type</th>
+                                    <th>Voltage</th>
+                                    <th>Serial Number</th>
+                                    <th>Status</th>
+                                    <th>Maintenance Records</th>
+                                    <th>Installation Date</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for breaker in page_obj %}
+                                <tr>
+                                    <td>
+                                        <a href="{% url 'circuit_breaker_maintenance:circuit_breaker_detail' breaker.pk %}" 
+                                           class="text-decoration-none">
+                                            <strong>{{ breaker.breaker_number }}</strong>
+                                        </a>
+                                    </td>
+                                    <td>{{ breaker.sub_station }}</td>
+                                    <td>{{ breaker.make_type }}</td>
+                                    <td>{{ breaker.voltage_capacity }}</td>
+                                    <td>{{ breaker.serial_number }}</td>
+                                    <td>
+                                        {% if breaker.is_active %}
+                                            <span class="badge bg-success">Active</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">Inactive</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-info">{{ breaker.maintenance_count }}</span>
+                                    </td>
+                                    <td>
+                                        {% if breaker.installation_date %}
+                                            {{ breaker.installation_date|date:"d M Y" }}
+                                        {% else %}
+                                            <span class="text-muted">Not set</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <a href="{% url 'circuit_breaker_maintenance:circuit_breaker_detail' breaker.pk %}" 
+                                               class="btn btn-outline-primary" title="View Details">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <a href="{% url 'circuit_breaker_maintenance:circuit_breaker_edit' breaker.pk %}" 
+                                               class="btn btn-outline-secondary" title="Edit">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="9" class="text-center text-muted py-4">
+                                        No circuit breakers found
+                                        {% if current_substation or current_status or search_query %}
+                                            matching your filters
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Pagination -->
+                    {% if page_obj.has_other_pages %}
+                    <nav aria-label="Circuit breakers pagination">
+                        <ul class="pagination justify-content-center">
+                            {% if page_obj.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?{% if current_substation %}substation={{ current_substation }}&{% endif %}{% if current_status %}status={{ current_status }}&{% endif %}{% if search_query %}search={{ search_query }}&{% endif %}page={{ page_obj.previous_page_number }}">Previous</a>
+                                </li>
+                            {% endif %}
+                            
+                            {% for num in page_obj.paginator.page_range %}
+                                {% if page_obj.number == num %}
+                                    <li class="page-item active">
+                                        <span class="page-link">{{ num }}</span>
+                                    </li>
+                                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?{% if current_substation %}substation={{ current_substation }}&{% endif %}{% if current_status %}status={{ current_status }}&{% endif %}{% if search_query %}search={{ search_query }}&{% endif %}page={{ num }}">{{ num }}</a>
+                                    </li>
+                                {% endif %}
+                            {% endfor %}
+                            
+                            {% if page_obj.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?{% if current_substation %}substation={{ current_substation }}&{% endif %}{% if current_status %}status={{ current_status }}&{% endif %}{% if search_query %}search={{ search_query }}&{% endif %}page={{ page_obj.next_page_number }}">Next</a>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Auto-submit form when filters change
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form');
+    const substationInput = document.getElementById('substation');
+    const statusSelect = document.getElementById('status');
+    
+    // Auto-submit on status change
+    statusSelect.addEventListener('change', function() {
+        form.submit();
+    });
+    
+    // Auto-submit on substation selection from datalist
+    substationInput.addEventListener('input', function() {
+        // Optional: auto-submit after typing stops
+    });
+});
+</script>
+{% endblock %}

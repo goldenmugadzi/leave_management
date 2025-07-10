@@ -70,9 +70,8 @@ urlpatterns = [
     path('commercial/', include('comm_files.urls')),
     path('', include('Transport.urls')),
     path('', include('safety.urls')),
- 
-      
+    # Fixed: Use the correct path prefix
+    path('circuit-breaker-maintenance/', include('circuit_breaker_maintenance.urls')),
 
-
-] 
+]
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

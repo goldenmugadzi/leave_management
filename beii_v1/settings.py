@@ -102,6 +102,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.humanize',
+    'django.contrib.postgres',  # Add this line for JSONField support
     'rest_framework',
     'rest_framework_simplejwt',
     'clearcache',
@@ -140,6 +141,7 @@ INSTALLED_APPS = [
     'django_prometheus',
     'api.ops_maintenance.safety_operations',
     'fault_locator',
+    'circuit_breaker_maintenance',  # Add your app here
     'django_select2',
 ]
 

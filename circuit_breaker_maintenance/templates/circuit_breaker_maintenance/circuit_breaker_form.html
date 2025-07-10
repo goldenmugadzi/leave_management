@@ -1,4 +1,4 @@
-{% extends 'base.html' %}
+{% extends 'admin_layout.html' %}
 {% load widget_tweaks %}
 
 {% block title %}{{ action }} Circuit Breaker{% endblock %}
@@ -7,13 +7,31 @@
 <div class="container-fluid">
     <div class="row justify-content-center">
         <div class="col-lg-8">
+            {% if circuit_breaker and has_active_maintenance %}
+            <div class="alert alert-warning">
+                <i class="fas fa-exclamation-triangle"></i>
+                <strong>Warning:</strong> This circuit breaker has active maintenance records. 
+                Some changes may be restricted.
+            </div>
+            {% endif %}
+            
             <div class="card">
                 <div class="card-header">
                     <h3 class="card-title">
                         <i class="fas fa-bolt"></i> {{ action }} Circuit Breaker
+                        {% if circuit_breaker %}
+                            - {{ circuit_breaker.breaker_number }}
+                        {% endif %}
                     </h3>
                     <div class="card-tools">
-                        <a href="{% url 'circuit_breaker_maintenance:circuit_breaker_list' %}" class="btn btn-sm btn-secondary">
+                        {% if circuit_breaker %}
+                            <a href="{% url 'circuit_breaker_maintenance:circuit_breaker_detail' circuit_breaker.pk %}" 
+                               class="btn btn-sm btn-info">
+                                <i class="fas fa-eye"></i> View Details
+                            </a>
+                        {% endif %}
+                        <a href="{% url 'circuit_breaker_maintenance:circuit_breaker_list' %}" 
+                           class="btn btn-sm btn-secondary">
                             <i class="fas fa-arrow-left"></i> Back to List
                         </a>
                     </div>
@@ -30,6 +48,9 @@
                                 <div class="mb-3">
                                     <label for="{{ form.breaker_number.id_for_label }}" class="form-label">
                                         {{ form.breaker_number.label }}
+                                        {% if circuit_breaker and has_active_maintenance %}
+                                            <small class="text-warning">(Limited editing due to active maintenance)</small>
+                                        {% endif %}
                                     </label>
                                     {{ form.breaker_number|add_class:"form-control" }}
                                     {% if form.breaker_number.errors %}
@@ -115,10 +136,57 @@
                                     {{ form.is_active|add_class:"form-check-input" }}
                                     <label class="form-check-label" for="{{ form.is_active.id_for_label }}">
                                         {{ form.is_active.label }}
+                                        {% if has_active_maintenance %}
+                                            <small class="text-warning">(Cannot deactivate with active maintenance)</small>
+                                        {% endif %}
                                     </label>
                                 </div>
                             </div>
                         </div>
+                        
+                        {% if circuit_breaker and maintenance_history %}
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <h5 class="text-secondary border-bottom pb-2">Recent Maintenance History</h5>
+                                <div class="table-responsive">
+                                    <table class="table table-sm table-striped">
+                                        <thead>
+                                            <tr>
+                                                <th>Report No.</th>
+                                                <th>Date</th>
+                                                <th>Status</th>
+                                                <th>Next Due</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for record in maintenance_history %}
+                                            <tr>
+                                                <td>
+                                                    <a href="{% url 'circuit_breaker_maintenance:record_detail' record.pk %}">
+                                                        {{ record.report_no }}
+                                                    </a>
+                                                </td>
+                                                <td>{{ record.date|date:"d M Y" }}</td>
+                                                <td>
+                                                    <span class="badge bg-{% if record.status == 'completed' %}success{% elif record.status == 'in_progress' %}warning{% else %}secondary{% endif %} badge-sm">
+                                                        {{ record.get_status_display }}
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    {% if record.next_maintenance_due %}
+                                                        {{ record.next_maintenance_due|date:"d M Y" }}
+                                                    {% else %}
+                                                        <span class="text-muted">Not set</span>
+                                                    {% endif %}
+                                                </td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
                     </div>
                     
                     <div class="card-footer">
@@ -126,18 +194,25 @@
                             <div class="col-md-6">
                                 <div class="btn-group">
                                     <button type="submit" class="btn btn-primary">
-                                        <i class="fas fa-save"></i> Save
+                                        <i class="fas fa-save"></i> Save Changes
                                     </button>
-                                    <button type="submit" name="save_and_add_another" class="btn btn-outline-primary">
-                                        <i class="fas fa-plus"></i> Save & Add Another
+                                    {% if action == 'Edit' %}
+                                    <button type="submit" name="save_and_continue" class="btn btn-outline-primary">
+                                        <i class="fas fa-save"></i> Save & Continue Editing
                                     </button>
                                     <button type="submit" name="save_and_create_maintenance" class="btn btn-outline-success">
                                         <i class="fas fa-tools"></i> Save & Create Maintenance
                                     </button>
+                                    {% else %}
+                                    <button type="submit" name="save_and_add_another" class="btn btn-outline-primary">
+                                        <i class="fas fa-plus"></i> Save & Add Another
+                                    </button>
+                                    {% endif %}
                                 </div>
                             </div>
                             <div class="col-md-6 text-end">
-                                <a href="{% url 'circuit_breaker_maintenance:circuit_breaker_list' %}" class="btn btn-secondary">
+                                <a href="{% if circuit_breaker %}{% url 'circuit_breaker_maintenance:circuit_breaker_detail' circuit_breaker.pk %}{% else %}{% url 'circuit_breaker_maintenance:circuit_breaker_list' %}{% endif %}" 
+                                   class="btn btn-secondary">
                                     <i class="fas fa-times"></i> Cancel
                                 </a>
                             </div>
@@ -146,26 +221,41 @@
                 </form>
             </div>
             
-            <!-- Quick Tips -->
+            <!-- Edit-specific tips -->
+            {% if action == 'Edit' %}
             <div class="card mt-3">
                 <div class="card-header">
-                    <h6 class="card-title"><i class="fas fa-lightbulb text-warning"></i> Quick Tips</h6>
+                    <h6 class="card-title"><i class="fas fa-info-circle text-info"></i> Edit Guidelines</h6>
                 </div>
                 <div class="card-body">
                     <ul class="mb-0">
-                        <li>Breaker numbers should follow your organization's naming convention</li>
-                        <li>Serial numbers must be unique across all circuit breakers</li>
-                        <li>Use the auto-complete suggestions for consistent data entry</li>
-                        <li>Installation date helps track equipment age and maintenance schedules</li>
+                        <li>Changes to critical fields may require supervisor approval</li>
+                        <li>Circuit breaker cannot be deactivated if there are active maintenance records</li>
+                        <li>Serial number changes will update all related maintenance records</li>
+                        <li>Installation date changes may affect maintenance scheduling</li>
                     </ul>
                 </div>
             </div>
+            {% endif %}
         </div>
     </div>
 </div>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Disable is_active checkbox if there's active maintenance and trying to deactivate
+    {% if has_active_maintenance %}
+    const isActiveCheckbox = document.getElementById('{{ form.is_active.id_for_label }}');
+    const originalState = isActiveCheckbox.checked;
+    
+    isActiveCheckbox.addEventListener('change', function() {
+        if (originalState && !this.checked) {
+            this.checked = true;
+            alert('Cannot deactivate circuit breaker with active maintenance records.');
+        }
+    });
+    {% endif %}
+    
     // Auto-uppercase breaker number
     const breakerNumberInput = document.getElementById('{{ form.breaker_number.id_for_label }}');
     if (breakerNumberInput) {
