@@ -1,0 +1,26 @@
+{% for item in fault_data %}
+  <div class="fault-card urgency-{{ item.urgency }}">
+    <div class="fault-header">
+      <h4>{{ item.fault.description }}</h4>
+      <span class="priority-badge priority-{{ item.fault.priority }}">
+        {{ item.fault.get_priority_display }}
+      </span>
+    </div>
+    
+    <div class="fault-info">
+      <span class="location">📍 {{ item.fault.depot.depot }}</span>
+      <span class="time">⏰ {{ item.time_elapsed|timesince }} ago</span>
+      {% if item.current_assignment %}
+        <span class="team">👥 {{ item.current_assignment.team.name }}</span>
+      {% endif %}
+    </div>
+    
+    {% if item.next_action %}
+      <div class="fault-actions">
+        <a href="{{ item.next_action.url }}" class="btn {{ item.next_action.class }}">
+          {{ item.next_action.text }}
+        </a>
+      </div>
+    {% endif %}
+  </div>
+{% endfor %}
