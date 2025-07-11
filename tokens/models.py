@@ -59,7 +59,7 @@ class CLEARCREDIT(models.Model):
 
 class TAMPERTOKEN(models.Model):
     token = models.ForeignKey(Token, on_delete=models.CASCADE)
-    is_for = models.CharField(max_length=25,     blank=True, null=True,help_text=" Why?" ,choices=[('Fauty Maintanance', 'Fauty Maintanance'),('Recovered Meter', 'Recovered Meter'),("Reconnection","Reconnection" ),])
+    is_for = models.CharField(max_length=25,blank=True,null=True,help_text="Why?",choices=[('Fault Maintenance', 'Fault Maintenance'),('Recovered Meter', 'Recovered Meter'),('Reconnection', 'Reconnection'),])
     def __str__(self):
         token = getattr(self, 'token', None)
         meter = getattr(token, 'meter', None) if token else None
