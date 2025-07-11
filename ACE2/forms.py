@@ -271,7 +271,7 @@ class AceReportForm(forms.ModelForm):
                    'capital_sanctioned',
                    'present_tariff', 'present_fmc', 'capital_contribution', 'materials', 'connection_fee', 'labour',
                    'transport'
-            , 'classification', 'currency', 'amount', 'allocation_code_of_expenditure', 'section'
+            , 'classification', 'currency', 'amount', 'allocation_code_of_expenditure', 'section','usd_equivalent'
                    # include the project items
                    ]
 

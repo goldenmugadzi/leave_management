@@ -2258,3 +2258,102 @@ def transactions_for_budget_excel_export(request, budget_id):
     
     wb.save(response)
     return response
+
+@login_required
+def ace_report_detail_csv(request, report_id2=None):
+    """Export ACE report to CSV format"""
+    if report_id2:
+        report = get_object_or_404(AceReport, report_id2=report_id2)
+        # Only filter by budget if a specific budget is selected
+        if report.budget_id:
+            aces = Ace2.objects.filter(
+                region=report.region,
+                budget_id=report.budget_id,
+                date_created__range=[report.start_date, report.end_date]
+            )
+        else:
+            aces = Ace2.objects.filter(
+                region=report.region,
+                date_created__range=[report.start_date, report.end_date]
+            )
+        
+        filename = f"ace_report_{report.report_id2}.csv"
+    else:
+        # Get parameters from GET request for all budgets report
+        start_date = parse_date(request.GET.get('start_date'))
+        end_date = parse_date(request.GET.get('end_date'))
+        region_id = request.GET.get('region')
+        
+        # Handle filters - build query based on provided parameters
+        ace_filter = {}
+        
+        # Add date range filter if dates are provided
+        if start_date and end_date:
+            ace_filter['date_created__range'] = [start_date, end_date]
+        elif start_date:
+            ace_filter['date_created__gte'] = start_date
+        elif end_date:
+            ace_filter['date_created__lte'] = end_date
+        
+        # Add region filter if region is provided and not empty
+        if region_id and region_id.strip():
+            try:
+                region = get_object_or_404(Regions, id=int(region_id))
+                ace_filter['region'] = region
+            except (ValueError, TypeError):
+                pass  # Skip invalid region IDs
+        
+        aces = Ace2.objects.filter(**ace_filter)
+        
+        filename = f"ace_report_{start_date or 'all'}_to_{end_date or 'all'}.csv"
+    
+    # Create CSV response
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    
+    writer = csv.writer(response)
+    
+    # Write header row
+    writer.writerow([
+        'ACE ID',
+        'Details of Expenditure',
+        'Requested By',
+        'Section',
+        'Date Created',
+        'Budget',
+        'Amount',
+        'Transaction Status',
+        'Approval Status',
+        'Actioned By'
+    ])
+    
+    # Write data rows
+    for ace in aces:
+        # Get transaction info
+        transaction = Transactions.objects.filter(Ace_id2=ace).first()
+        
+        # Get approval info
+        latest_approval = ace.process.approval_set.last() if ace.process and ace.process.approval_set.exists() else None
+        approval_status = latest_approval.approved if latest_approval else ''
+        actioned_by = latest_approval.user.get_full_name() if latest_approval and latest_approval.user else ''
+        
+        # Get section name safely
+        try:
+            section_name = ace.section.section if ace.section else ''
+        except:
+            section_name = ''
+        
+        writer.writerow([
+            ace.Ace_id2,
+            ace.details_of_expenditure,
+            ace.requested_by.get_full_name() if ace.requested_by else '',
+            section_name,
+            ace.date_created.strftime('%Y-%m-%d') if ace.date_created else '',
+            ace.budget_id.budget_name if ace.budget_id else '',
+            ace.amount,
+            transaction.approval_status if transaction else '',
+            approval_status,
+            actioned_by
+        ])
+    
+    return response
