@@ -297,6 +297,55 @@ def send_notification(request, url, app, obj,id):
 
         messages.info(request, f" Please inform your EXPECTED APPROVER to contact system administrator for approval authorisation of ({notification_type.upper()}) for ({ str(obj.cost_center).upper() })")
         return 0
+def gql_send_notification(obj):
+    responsibilities = approvers(obj)
+    recipients = []
+    recipient_emails = []
+    if responsibilities is None:
+        return "This process was completed successfully", []
+    elif not responsibilities:
+        return f"No approvers for the next step. Please inform your EXPECTED APPROVER to contact system administrator for approval authorisation of ({str(obj.cost_center).upper()})", []
+    domain_name = config('be_url')
+    cc_recipients = []
+    cc_recipients_names = []
+    redirect_url = f"{domain_name}/graphql"  # Adjust as needed for your frontend
+    message = "We kindly request that you review and take necessary action regarding this"
+
+    hour = datetime.now().hour
+    greetings = {(0, 4): "Good night!", (5, 11): "Good morning!", (12, 16): "Good afternoon!", (17, 20): "Good evening!", (21, 23): "Good night!"}
+    subject = next((msg for (start, end), msg in greetings.items() if start <= hour <= end), "Hello!")
+
+    notification_type = obj.__class__.__name__.lower()
+    notification_id = getattr(obj, 'id', None)
+
+    for responsibility in responsibilities:
+        if responsibility.user.email and is_valid_email(responsibility.user.email):
+            recipients.append(responsibility.user)
+            recipient_emails.append(responsibility.user.email)
+            cc_recipients.append(responsibility.user.email)
+            cc_recipients_names.append(responsibility.user.get_full_name())
+    try:
+        user = recipients[0]
+        Notification.objects.create(
+            user=user,
+            message=message,
+            url=redirect_url,
+            notification_type=notification_type,
+            notification_id=notification_id
+        )
+        response = ms_exhange_send_html(
+            subject=subject,
+            to_recipients=[user.email],
+            cc_recipients=cc_recipients,
+            template='email/email_template.html',
+            kwargs={"kwargs": {"redirect_url": redirect_url, "type": notification_type, "user_fullname": user.get_full_name(), "message": message}}
+        )
+        if response.status_code == 200:
+            return f"Email notification successfully sent to {', '.join(recipient_emails)}"
+        else:
+            return f"Error sending email to {user.get_full_name()}"
+    except Exception as e:
+        return f"Error: {str(e)}. Please inform your EXPECTED APPROVER to contact system administrator for approval authorisation of ({obj.process.workflow.name.upper()}) for ({str(obj.cost_center).upper()})"
 
 def notify(request,subject,user,message,redirect_url,url,notification_type,notification_id,cc_recipients,cc_recipients_names):
       # Create the notification

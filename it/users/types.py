@@ -2,7 +2,7 @@ from graphene_django.types import DjangoObjectType
 import graphene
 from .models import (
     UserProfile, Regions, Districts, Sections, Depots, Application, Roles,
-    Designations, CostCenter, Notification, Supplier, Responsibilities
+    Designations, CostCenter, Notification, Supplier, Responsibilities,
 )
 
 class UserProfileType(DjangoObjectType):

@@ -1,6 +1,6 @@
 from graphene import ObjectType, Field, List, ID, Int, InputObjectType,String,Mutation
 from graphql_jwt.decorators import login_required
-from approve.views import gql_initiate_approval_process
+from approve.views import gql_initiate_approval_process, gql_send_notification
 from .models import (
     Meter, Customer, Token, CostCenter, REIMBURSEMENT, CLEARCREDIT, TAMPERTOKEN,
     FaultMaintanance, RecoveredMeter, Reconnection, OldToken, FaultMeter
@@ -122,6 +122,8 @@ class CreateToken(Mutation):
         recoveredMeterPhoto = Upload(required=False)
 
     token = Field(TokenType)
+    recipients = List(String)
+    message = String()
 
     @login_required
     def mutate(self, info, input, recoveredMeterPhoto=None, faultPhoto=None, faultMaintPhoto=None, reconnectionInvoice=None, reconnectionProof=None, oldToken=None, clearReceipt=None):
@@ -255,9 +257,8 @@ class CreateToken(Mutation):
                 amount=input.clearAmount,
                 receipt=clearReceipt
             )
-        # send_notification(request, "tokens:token", app, token, token.id)
-        
-        return CreateToken(token=token)
+        response_message = gql_send_notification(token)
+        return CreateToken(token=token, message=response_message)
 
 class Mutation(ObjectType):
     create_token = CreateToken.Field()
