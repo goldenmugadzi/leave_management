@@ -1579,8 +1579,15 @@ def view_all_transactions(request):
 def transactions_for_budget(request, budget_id):
     user_id = request.user.id
     user_profile = UserProfile.objects.filter(id=user_id).first()
-    region = Regions.objects.filter(id=user_profile.region.id).first()
+    # region = Regions.objects.filter(id=user_profile.region.id).first()
     transactions = Transactions.objects.filter(budget_id=budget_id)
+    if not transactions:
+        messages.error(request, 'No transactions found for this budget.')
+        return redirect('Ace:list_budgets')
+    else:
+        messages.success(request, 'Transactions found for this budget.')
+        print("transactions:", transactions)
+    
     return render(request, 'finance/ace2/view_all_transactions.html', {'transactions': transactions})
 
 
@@ -2057,3 +2064,197 @@ def monthly_usage_dashboard(request):
         'current_year': current_year,
     }
     return render(request, 'finance/ace2/monthly_usage_dashboard.html', context)
+
+@login_required
+def transactions_excel_export(request):
+    """Export all transactions in the user's region to Excel (excluding rejected ACEs)"""
+    user_id = request.user.id
+    user_profile = UserProfile.objects.filter(id=user_id).first()
+    region = Regions.objects.filter(id=user_profile.region.id).first()
+    
+    # Use select_related to avoid DoesNotExist errors and exclude rejected transactions
+    transactions = Transactions.objects.filter(
+        region=region
+    ).exclude(
+        approval_status__icontains='rejected'
+    ).select_related(
+        'Ace_id2', 'Ace_id2__requested_by', 'virament', 'section', 'region', 'budget'
+    )
+    
+    response = HttpResponse(content_type='application/ms-excel')
+    response['Content-Disposition'] = 'attachment; filename="transactions_report.xlsx"'
+    
+    wb = Workbook()
+    ws = wb.active
+    
+    # Add header row
+    ws.append([
+        'Transaction ID',
+        'ACE ID',
+        'Virament ID',
+        'Details',
+        'Amount',
+        'Requested By',
+        'Date Created',
+        'Section',
+        'Section Code',
+        'Region',
+        'Budget',
+        'Approval Status'
+    ])
+    
+    # Add data rows
+    for transaction in transactions:
+        # Skip if ACE is rejected (additional check)
+        if transaction.Ace_id2 and transaction.Ace_id2.process:
+            if transaction.Ace_id2.process.approval_set.filter(approved="Rejected").exists():
+                continue
+                
+        # Safe access to related objects
+        try:
+            section_name = transaction.section.section if transaction.section else ''
+        except:
+            section_name = ''
+            
+        try:
+            section_code = transaction.section.code if transaction.section else ''
+        except:
+            section_code = ''
+            
+        try:
+            region_name = transaction.region.region if transaction.region else ''
+        except:
+            region_name = ''
+            
+        try:
+            budget_name = transaction.budget.budget_name if transaction.budget else ''
+        except:
+            budget_name = ''
+            
+        try:
+            requested_by = transaction.Ace_id2.requested_by.get_full_name() if transaction.Ace_id2 and transaction.Ace_id2.requested_by else ''
+        except:
+            requested_by = ''
+            
+        try:
+            date_created = transaction.Ace_id2.date_created.strftime('%Y-%m-%d') if transaction.Ace_id2 and transaction.Ace_id2.date_created else ''
+        except:
+            date_created = ''
+        
+        ws.append([
+            transaction.transaction_id,
+            transaction.Ace_id2.Ace_id2 if transaction.Ace_id2 else '',
+            transaction.virament.virament_id if transaction.virament else '',
+            transaction.details_of_expenditure or '',
+            transaction.amount or 0,
+            requested_by,
+            date_created,
+            section_name,
+            section_code,
+            region_name,
+            budget_name,
+            transaction.approval_status or ''
+        ])
+    
+    wb.save(response)
+    return response
+
+
+@login_required
+def transactions_for_budget_excel_export(request, budget_id):
+    """Export transactions for a specific budget to Excel (excluding rejected ACEs)"""
+    user_id = request.user.id
+    user_profile = UserProfile.objects.filter(id=user_id).first()
+    
+    # Use select_related to avoid DoesNotExist errors and exclude rejected transactions
+    transactions = Transactions.objects.filter(
+        budget_id=budget_id
+    ).exclude(
+        approval_status__icontains='rejected'
+    ).select_related(
+        'Ace_id2', 'Ace_id2__requested_by', 'virament', 'section', 'region', 'budget'
+    )
+    
+    # Get budget name for filename
+    budget = get_object_or_404(AssetBudget, pk=budget_id)
+    # Clean filename to avoid invalid characters
+    clean_budget_name = "".join(c for c in budget.budget_name if c.isalnum() or c in (' ', '-', '_')).rstrip()
+    filename = f"transactions_budget_{clean_budget_name.replace(' ', '_')}.xlsx"
+    
+    response = HttpResponse(content_type='application/ms-excel')
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    
+    wb = Workbook()
+    ws = wb.active
+    
+    # Add header row
+    ws.append([
+        'Transaction ID',
+        'ACE ID',
+        'Virament ID',
+        'Details',
+        'Amount',
+        'Requested By',
+        'Date Created',
+        'Section',
+        'Section Code',
+        'Region',
+        'Budget',
+        'Approval Status'
+    ])
+    
+    # Add data rows
+    for transaction in transactions:
+        # Skip if ACE is rejected (additional check)
+        if transaction.Ace_id2 and transaction.Ace_id2.process:
+            if transaction.Ace_id2.process.approval_set.filter(approved="Rejected").exists():
+                continue
+                
+        # Safe access to related objects
+        try:
+            section_name = transaction.section.section if transaction.section else ''
+        except:
+            section_name = ''
+            
+        try:
+            section_code = transaction.section.code if transaction.section else ''
+        except:
+            section_code = ''
+            
+        try:
+            region_name = transaction.region.region if transaction.region else ''
+        except:
+            region_name = ''
+            
+        try:
+            budget_name = transaction.budget.budget_name if transaction.budget else ''
+        except:
+            budget_name = ''
+            
+        try:
+            requested_by = transaction.Ace_id2.requested_by.get_full_name() if transaction.Ace_id2 and transaction.Ace_id2.requested_by else ''
+        except:
+            requested_by = ''
+            
+        try:
+            date_created = transaction.Ace_id2.date_created.strftime('%Y-%m-%d') if transaction.Ace_id2 and transaction.Ace_id2.date_created else ''
+        except:
+            date_created = ''
+        
+        ws.append([
+            transaction.transaction_id,
+            transaction.Ace_id2.Ace_id2 if transaction.Ace_id2 else '',
+            transaction.virament.virament_id if transaction.virament else '',
+            transaction.details_of_expenditure or '',
+            transaction.amount or 0,
+            requested_by,
+            date_created,
+            section_name,
+            section_code,
+            region_name,
+            budget_name,
+            transaction.approval_status or ''
+        ])
+    
+    wb.save(response)
+    return response
