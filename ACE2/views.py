@@ -464,6 +464,11 @@ def create_Ace(request):
                         ace_sh = UserProfile.objects.filter(username=ace_sh).first()
                         notify_user(ace_sh, msg, "ACE", url, ace.Ace_id2, request)
 
+                    else:
+                        print("no ace section head found")
+                        sweetify.error(request, "No section head found for this section contact It")
+                        messages.error(request, "No section head found for this section contact It")
+
 
                     if str(ace.classification) == "Project":
                         # the idea is that if its ace of type project there need to be added other project details
