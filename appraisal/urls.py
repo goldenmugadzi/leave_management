@@ -36,7 +36,9 @@ from .view import (AppraisalCreateView,
                    PerformanceDimensionTemplateUpdateView,
                    ScoreDocumentCreateView,
                    ScoreDocumentUpdateView,
-                   target_score_supporting_docs_view
+                   target_score_supporting_docs_view,
+                   DepartmentObjectiveTemplateView,
+                   DepartmentObjectiveCreateView
                    )
 
 urlpatterns = [
@@ -62,6 +64,10 @@ urlpatterns = [
     path('qualification/<int:user_id>/', UserQualificationTemplateView.as_view(), name='list_qualification'),
     path('qualification/<int:appraisal_id>', UserQualificationCreateView.as_view(), name='create_qualification'),
     path('qualification/<int:qualification_id>/view', UserQualificationUpdateView.as_view(), name='update_qualification'),
+    
+    # ======================== Departmental workplan =========================
+    path('departmental-workplan/list', DepartmentObjectiveTemplateView.as_view(), name='departmental_workplan_index'),
+    path('departmental-workplan/create', DepartmentObjectiveCreateView.as_view(), name='departmental_objective_create'),
     
     
     # ================== KRA urls =================================

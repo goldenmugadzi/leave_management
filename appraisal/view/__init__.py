@@ -8,3 +8,4 @@ from .kra.activity import KraActivityIndexTemplateView, KraActivityCreateView, K
 from .kra.targets import TargetScoreUpdateView, ScoreDocumentCreateView, ScoreDocumentUpdateView, target_score_supporting_docs_view
 from .qualification import UserQualificationTemplateView, UserQualificationCreateView, UserQualificationUpdateView
 from .kra.reviewer_status import AppraisalKraReviewerStatusUpdateView
+from .departmental_workplan.department_objectives import DepartmentObjectiveTemplateView, DepartmentObjectiveCreateView
