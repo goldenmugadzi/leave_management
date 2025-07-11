@@ -122,7 +122,6 @@ class CreateToken(Mutation):
         recoveredMeterPhoto = Upload(required=False)
 
     token = Field(TokenType)
-    recipients = List(String)
     message = String()
 
     @login_required
@@ -133,10 +132,15 @@ class CreateToken(Mutation):
         except CostCenter.DoesNotExist:
             raise Exception(f"CostCenter with id {input.selectedCostCenter} does not exist")
         meter, _ = Meter.objects.get_or_create(number=input.meterNumber)
-        customer, _ = Customer.objects.get_or_create(
-            name=input.customerName,
-            defaults={"contact_number": input.customerContactNumber, "address": input.customerAddress}
-        )
+        customers = Customer.objects.filter(name=input.customerName)
+        if customers.exists():
+            customer = customers.first()
+        else:
+            customer = Customer.objects.create(
+                name=input.customerName,
+                contact_number=input.customerContactNumber,
+                address=input.customerAddress
+            )
         process = gql_initiate_approval_process(input.type)
         token = Token.objects.create(
             type=input.type,
