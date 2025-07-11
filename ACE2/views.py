@@ -358,7 +358,16 @@ def create_Ace(request):
                     user_profile = UserProfile.objects.filter(id=user_id).first()
 
                     user_designation = Designations.objects.filter(id=user_profile.designation.id).first()
+                    if not user_designation:
+                        sweetify.error(request, "Please get your designation from It")
+                        messages.error(request, 'Please get your designation from It')
+                        return render(request, 'finance/ace2/create_ace.html', {'form': form, 'formset': formset})
+                    
                     user_region = Regions.objects.filter(id=user_profile.region.id).first()
+                    if not user_region:
+                        sweetify.error(request, "Please get region from It")
+                        messages.error(request, 'Please get region from It')
+                        return render(request, 'finance/ace2/create_ace.html', {'form': form, 'formset': formset})
                     designation = user_designation
                     # print(designation)
                     region = user_region
