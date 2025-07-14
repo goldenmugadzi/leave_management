@@ -1,124 +1,149 @@
 {% extends "admin_layout.html" %}
 
 {% block content %}
-<div class="dashboard-container p-6">
-  <div class="header mb-6">
-    <h1 class="text-2xl font-bold text-gray-800">Fault Locator Dashboard</h1>
-    <p class="text-gray-600">Welcome, {{ user.get_full_name }} ({{ user_role }})</p>
+<div class="dashboard-container p-6 bg-gray-50 min-h-screen">
+  <!-- Header -->
+  <div class="header mb-8">
+    <h1 class="text-3xl font-bold text-gray-800">Fault Locator Dashboard</h1>
+    <p class="text-gray-600">
+      Welcome, <strong>{{ user.get_full_name }}</strong>. 
+      Your role: 
+      {% if is_senior_foreperson %}
+        <span class="font-semibold text-purple-600">Senior Foreperson</span>
+      {% elif is_depot_foreperson %}
+        <span class="font-semibold text-blue-600">Depot Foreperson</span>
+      {% elif user_profile.fault_locator_teams.exists %}
+        <span class="font-semibold text-green-600">Team Member</span>
+      {% elif can_create_device %}
+        <span class="font-semibold text-gray-600">System Administrator</span>
+      {% else %}
+        <span class="font-semibold text-gray-600">User</span>
+      {% endif %}
+    </p>
   </div>
 
-  <!-- Quick Stats -->
-  <div class="stats-grid grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-    <div class="stat-card bg-white rounded-lg shadow p-4">
-      <div class="flex items-center">
-        <div class="text-3xl text-red-500">🔥</div>
-        <div class="ml-3">
-          <p class="text-sm text-gray-600">Active Faults</p>
-          <p class="text-2xl font-bold">{{ stats.active_faults }}</p>
+  <!-- Accessible Functions -->
+  <div class="accessible-functions mb-8">
+    <h2 class="text-2xl font-semibold text-gray-700 mb-4">Your Tools & Functions</h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+      {% for func in accessible_functions %}
+      <a href="{% url func.url_name %}" 
+         class="function-card bg-white rounded-lg shadow-md p-6 flex flex-col items-start hover:shadow-lg hover:-translate-y-1 transition-all duration-300">
+        <div class="icon-container text-4xl mb-4">{{ func.icon }}</div>
+        <h3 class="text-lg font-bold text-gray-800 mb-2">{{ func.title }}</h3>
+        <p class="text-sm text-gray-600 flex-grow">{{ func.description }}</p>
+        <div class="mt-4 text-blue-600 font-semibold">
+          Go to {{ func.title }} &rarr;
         </div>
-      </div>
-    </div>
-    
-    <div class="stat-card bg-white rounded-lg shadow p-4">
-      <div class="flex items-center">
-        <div class="text-3xl text-yellow-500">⏳</div>
-        <div class="ml-3">
-          <p class="text-sm text-gray-600">My Assignments</p>
-          <p class="text-2xl font-bold">{{ stats.my_assignments }}</p>
-        </div>
-      </div>
-    </div>
-    
-    <div class="stat-card bg-white rounded-lg shadow p-4">
-      <div class="flex items-center">
-        <div class="text-3xl text-green-500">✅</div>
-        <div class="ml-3">
-          <p class="text-sm text-gray-600">Completed Today</p>
-          <p class="text-2xl font-bold">{{ stats.completed_today }}</p>
-        </div>
-      </div>
-    </div>
-    
-    <div class="stat-card bg-white rounded-lg shadow p-4">
-      <div class="flex items-center">
-        <div class="text-3xl text-blue-500">👥</div>
-        <div class="ml-3">
-          <p class="text-sm text-gray-600">Teams Active</p>
-          <p class="text-2xl font-bold">{{ stats.active_teams }}</p>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Action Cards -->
-  <div class="action-grid grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-    {% if user_role == 'Team Member' or user_role == 'Depot Foreperson' %}
-    <div class="action-card bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg shadow-lg p-6 text-white">
-      <h3 class="text-xl font-bold mb-2">📱 Field Updates</h3>
-      <p class="mb-4">Quick updates from the field</p>
-      <a href="{% url 'simple_fault_list' %}" 
-         class="inline-block px-6 py-3 bg-white text-blue-600 rounded-lg font-semibold hover:bg-gray-100 transition">
-        View My Faults
       </a>
-    </div>
-    {% endif %}
-
-    {% if user_role == 'Senior Foreperson' or user_role == 'Depot Foreperson' %}
-    <div class="action-card bg-gradient-to-br from-green-500 to-green-600 rounded-lg shadow-lg p-6 text-white">
-      <h3 class="text-xl font-bold mb-2">📋 Manage Faults</h3>
-      <p class="mb-4">Create and assign fault reports</p>
-      <a href="{% url 'quick_fault_report' %}" 
-         class="inline-block px-6 py-3 bg-white text-green-600 rounded-lg font-semibold hover:bg-gray-100 transition">
-        Quick Report
-      </a>
-    </div>
-    {% endif %}
-
-    <div class="action-card bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg shadow-lg p-6 text-white">
-      <h3 class="text-xl font-bold mb-2">📊 View Reports</h3>
-      <p class="mb-4">Check fault status and history</p>
-      <a href="{% url 'fault_list' %}" 
-         class="inline-block px-6 py-3 bg-white text-purple-600 rounded-lg font-semibold hover:bg-gray-100 transition">
-        All Faults
-      </a>
-    </div>
-
-    {% if user_role == 'Senior Foreperson' or user_role == 'IT Personnel' %}
-    <div class="action-card bg-gradient-to-br from-red-500 to-red-600 rounded-lg shadow-lg p-6 text-white">
-      <h3 class="text-xl font-bold mb-2">⚙️ System Admin</h3>
-      <p class="mb-4">Manage teams and devices</p>
-      <a href="{% url 'team_list' %}" 
-         class="inline-block px-6 py-3 bg-white text-red-600 rounded-lg font-semibold hover:bg-gray-100 transition">
-        Manage Teams
-      </a>
-    </div>
-    {% endif %}
-  </div>
-
-  <!-- Recent Activity -->
-  {% if recent_faults %}
-  <div class="recent-activity mt-8">
-    <h2 class="text-xl font-bold text-gray-800 mb-4">Recent Activity</h2>
-    <div class="bg-white rounded-lg shadow overflow-hidden">
-      {% for fault in recent_faults %}
-      <div class="border-b border-gray-200 p-4 hover:bg-gray-50">
-        <div class="flex justify-between items-start">
-          <div>
-            <h4 class="font-semibold text-gray-800">{{ fault.description }}</h4>
-            <p class="text-sm text-gray-600">{{ fault.depot.depot }} - {{ fault.device.serial_number }}</p>
-            <p class="text-xs text-gray-500">{{ fault.created_at|timesince }} ago</p>
-          </div>
-          <span class="px-2 py-1 text-xs rounded-full
-                       {% if fault.status == 'ACTIVE' %}bg-red-100 text-red-800
-                       {% elif fault.status == 'RESOLVED' %}bg-green-100 text-green-800
-                       {% else %}bg-yellow-100 text-yellow-800{% endif %}">
-            {{ fault.get_status_display }}
-          </span>
-        </div>
+      {% empty %}
+      <div class="col-span-full text-center py-12 bg-white rounded-lg shadow-md">
+        <p class="text-gray-600">You do not have any specific functions assigned in the Fault Locator system.</p>
+        <p class="text-sm text-gray-500 mt-2">Please contact an administrator if you believe this is an error.</p>
       </div>
       {% endfor %}
     </div>
   </div>
-  {% endif %}
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <!-- Left Column: My Actions & Quick Stats -->
+    <div class="lg:col-span-2 space-y-8">
+      <!-- My Actions -->
+      <div class="my-actions">
+        <h2 class="text-2xl font-semibold text-gray-700 mb-4">Immediate Actions</h2>
+        <div class="space-y-4">
+          {% for action in my_actions %}
+          <div class="action-item bg-white rounded-lg shadow-md p-4 flex items-center justify-between">
+            <div class="flex items-center">
+              <div class="action-icon mr-4">
+                {% if action.type == 'field_work' %}
+                  <span class="text-3xl">🛠️</span>
+                {% elif action.type == 'management' %}
+                  <span class="text-3xl">👉</span>
+                {% elif action.type == 'monitoring' %}
+                  <span class="text-3xl">👀</span>
+                {% elif action.type == 'deployment' %}
+                  <span class="text-3xl">🚀</span>
+                {% else %}
+                  <span class="text-3xl">🔔</span>
+                {% endif %}
+              </div>
+              <div>
+                <h3 class="font-semibold text-gray-800">{{ action.title }}</h3>
+                <p class="text-sm text-gray-600">{{ action.description }}</p>
+              </div>
+            </div>
+            <a href="{{ action.url }}" 
+               class="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition text-sm">
+              Take Action
+            </a>
+          </div>
+          {% empty %}
+          <div class="text-center py-8 bg-white rounded-lg shadow-md">
+            <p class="text-gray-600">✅ No immediate actions required. Well done!</p>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Quick Stats -->
+      <div class="quick-stats">
+        <h2 class="text-2xl font-semibold text-gray-700 mb-4">Quick Statistics</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {% for key, value in quick_stats.items %}
+          <div class="stat-card bg-white rounded-lg shadow-md p-4">
+            <p class="text-sm text-gray-600 capitalize">{{ key }}</p>
+            <p class="text-2xl font-bold text-gray-800">{{ value }}</p>
+          </div>
+          {% empty %}
+          <div class="col-span-full text-center py-8 bg-white rounded-lg shadow-md">
+            <p class="text-gray-600">No statistics available for your role.</p>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column: Recent Activity -->
+    <div class="recent-activity">
+      <h2 class="text-2xl font-semibold text-gray-700 mb-4">Recent Activity</h2>
+      <div class="bg-white rounded-lg shadow-md overflow-hidden">
+        <div class="activity-list">
+          {% for activity in recent_activity %}
+          <div class="activity-item border-b border-gray-200 p-4 hover:bg-gray-50 transition">
+            <div class="flex justify-between items-start">
+              <div>
+                <p class="text-sm text-gray-800">{{ activity.description }}</p>
+                <p class="text-xs text-gray-500">{{ activity.location }} - {{ activity.time|timesince }} ago</p>
+              </div>
+              <span class="px-2 py-1 text-xs rounded-full font-medium
+                           {% if activity.priority == 'Critical' %}bg-red-100 text-red-800
+                           {% elif activity.priority == 'High' %}bg-yellow-100 text-yellow-800
+                           {% else %}bg-gray-100 text-gray-800{% endif %}">
+                {{ activity.priority }}
+              </span>
+            </div>
+          </div>
+          {% empty %}
+          <div class="text-center py-12">
+            <p class="text-gray-600">No recent activity to display.</p>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
+
+<style>
+  .function-card .icon-container {
+    background-color: #f3f4f6;
+    border-radius: 50%;
+    width: 64px;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+</style>
 {% endblock %}

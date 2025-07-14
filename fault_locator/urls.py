@@ -1,10 +1,15 @@
 from django.urls import path
 from . import views
+from . import role_views
 
 urlpatterns = [
     # Dashboard and home
     path('', views.fault_locator_dashboard, name='fault_locator_home'),
     path('dashboard/', views.fault_locator_dashboard, name='fault_locator_dashboard'),
+    
+    # New Role-Based Dashboard
+    path('role-dashboard/', role_views.role_based_dashboard, name='role_based_dashboard'),
+    path('assign-role/', role_views.assign_role, name='assign_role'),
     
     # Simplified mobile-friendly views (these exist)
     path('simple-faults/', views.simple_fault_list, name='simple_fault_list'),
@@ -21,15 +26,27 @@ urlpatterns = [
     # Notifications
     path('notify-unassigned/', views.notify_unassigned_faults, name='notify_unassigned_faults'),
     
-    # Temporary redirects for missing views - redirect to working alternatives
-    path('devices/', views.fault_locator_dashboard, name='device_list'),  # Redirect to dashboard until device_list is created
-    path('faults/', views.simple_fault_list, name='fault_list'),  # Use simple_fault_list instead
+    # Device Management
+    path('devices/', views.device_list, name='device_list'),
+    path('devices/create/', views.create_device, name='create_device'),
+    path('devices/<int:device_id>/', views.device_detail, name='device_detail'),
+    path('devices/<int:device_id>/edit/', views.edit_device, name='edit_device'),
+    path('devices/<int:device_id>/unassign/', views.unassign_device, name='unassign_device'),
+    path('assign-device-to-team/', views.assign_device_to_team, name='assign_device_to_team'),
     
-    # Note: These views need to be implemented:
-    # - device_list, device_detail, create_device
-    # - fault_detail, update_fault_status, create_fault
-    # - create_team, add_team_member, edit_team, remove_team_member
-    # - assign_device_to_team, unassign_device, return_device
-    # - deploy_team_to_depot, recall_team_from_depot
-    # - usage_report
+    # Team Management
+    path('teams/create/', views.create_team, name='create_team'),
+    path('teams/<int:team_id>/edit/', views.edit_team, name='edit_team'),
+    path('teams/<int:team_id>/delete/', views.delete_team, name='delete_team'),
+    
+    # Team Deployment
+    path('teams/deploy/', views.deploy_team, name='deploy_team'),
+    path('teams/<int:team_id>/deploy/', views.deploy_team, name='deploy_team_specific'),
+    path('teams/<int:team_id>/recall/', views.recall_team, name='recall_team'),
+    
+    # Advanced Fault Assignment
+    path('advanced-assign/', views.advanced_fault_assignment, name='advanced_fault_assignment'),
+    
+    # Fallback for fault list
+    path('faults/', views.simple_fault_list, name='fault_list'),  # Use simple_fault_list instead
 ]

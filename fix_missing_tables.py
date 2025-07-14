@@ -25,7 +25,7 @@ def create_missing_tables():
         `assigned_at` datetime(6) NOT NULL,
         `is_active` tinyint(1) NOT NULL DEFAULT 1,
         `assigned_by_id` bigint DEFAULT NULL,
-        `depot_id` int DEFAULT NULL,
+        `depot_id` bigint DEFAULT NULL,
         `user_id` bigint NOT NULL,
         PRIMARY KEY (`id`),
         UNIQUE KEY `fault_locator_faultlocato_user_id_role_depot_id_15a5e2c7_uniq` (`user_id`,`role`,`depot_id`),
@@ -46,7 +46,7 @@ def create_missing_tables():
         `deployment_notes` longtext NOT NULL,
         `recall_notes` longtext NOT NULL,
         `deployed_by_id` bigint NOT NULL,
-        `depot_id` int NOT NULL,
+        `depot_id` bigint NOT NULL,
         `recalled_by_id` bigint DEFAULT NULL,
         `team_id` bigint NOT NULL,
         PRIMARY KEY (`id`),
@@ -62,15 +62,25 @@ def create_missing_tables():
     """
     
     try:
-        print("Creating FaultLocatorRole table...")
-        cursor.execute(role_table_sql)
-        print("✓ FaultLocatorRole table created successfully")
+        # Check if FaultLocatorRole table exists
+        cursor.execute("SHOW TABLES LIKE 'fault_locator_faultlocatorrole'")
+        if not cursor.fetchone():
+            print("Creating FaultLocatorRole table...")
+            cursor.execute(role_table_sql)
+            print("✓ FaultLocatorRole table created successfully")
+        else:
+            print("✓ FaultLocatorRole table already exists")
         
-        print("Creating TeamDeployment table...")
-        cursor.execute(deployment_table_sql)
-        print("✓ TeamDeployment table created successfully")
+        # Check if TeamDeployment table exists
+        cursor.execute("SHOW TABLES LIKE 'fault_locator_teamdeployment'")
+        if not cursor.fetchone():
+            print("Creating TeamDeployment table...")
+            cursor.execute(deployment_table_sql)
+            print("✓ TeamDeployment table created successfully")
+        else:
+            print("✓ TeamDeployment table already exists")
         
-        print("All missing tables created successfully!")
+        print("All missing tables processed successfully!")
         
     except Exception as e:
         print(f"Error creating tables: {e}")

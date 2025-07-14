@@ -1,5 +1,5 @@
 from django import forms
-from .models import Fault, FaultLocatorDevice, FaultLocatorTeam, FaultLocatorDeviceAssignment, FaultAssignment, TeamDeployment
+from .models import Fault, FaultLocatorDevice, FaultLocatorTeam, FaultLocatorDeviceAssignment, FaultAssignment, TeamDeployment, FaultLocatorRole
 from it.users.models import UserProfile, Depots
 from django_select2.forms import Select2MultipleWidget
 
@@ -68,7 +68,7 @@ class AssignFaultForm(forms.ModelForm):
 class TeamDeploymentForm(forms.ModelForm):
     class Meta:
         model = TeamDeployment
-        fields = ['team', 'depot', 'notes']
+        fields = ['team', 'depot', 'deployment_notes']
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -85,10 +85,12 @@ class TeamDeploymentForm(forms.ModelForm):
         self.fields['depot'].widget.attrs.update({
             'class': 'form-select'
         })
-        self.fields['notes'].widget.attrs.update({
+        self.fields['deployment_notes'].widget.attrs.update({
             'class': 'form-control',
-            'rows': 3
+            'rows': 3,
+            'placeholder': 'Enter deployment instructions...'
         })
+        self.fields['deployment_notes'].label = 'Deployment Notes'
 
 class SeniorForepersonDeviceAssignmentForm(forms.ModelForm):
     class Meta:
@@ -129,6 +131,137 @@ class FaultPriorityForm(forms.ModelForm):
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.fields['priority'].widget.attrs.update({
+            'class': 'form-select'
+        })
+
+class FaultLocatorRoleForm(forms.ModelForm):
+    """Form for assigning fault locator roles to users"""
+    class Meta:
+        model = FaultLocatorRole
+        fields = ['user', 'role', 'depot']
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        
+        # Filter active users
+        self.fields['user'].queryset = UserProfile.objects.filter(is_active=True).order_by('last_name', 'first_name')
+        
+        # Add CSS classes
+        self.fields['user'].widget.attrs.update({
+            'class': 'form-select'
+        })
+        self.fields['role'].widget.attrs.update({
+            'class': 'form-select'
+        })
+        self.fields['depot'].widget.attrs.update({
+            'class': 'form-select'
+        })
+        
+        # Make depot optional for certain roles
+        self.fields['depot'].required = False
+        
+        # Add help text
+        self.fields['depot'].help_text = "Required only for depot foreperson role"
+    
+    def clean(self):
+        cleaned_data = super().clean()
+        role = cleaned_data.get('role')
+        depot = cleaned_data.get('depot')
+        
+        # Depot is required for depot foreperson
+        if role == 'depot_foreperson' and not depot:
+            raise forms.ValidationError("Depot is required for depot foreperson role")
+        
+        # Depot should not be set for senior foreman
+        if role == 'senior_foreman' and depot:
+            cleaned_data['depot'] = None
+        
+        return cleaned_data
+
+class TeamLeaderAssignmentForm(forms.ModelForm):
+    """Form for assigning team leaders"""
+    team_leader = forms.ModelChoiceField(
+        queryset=UserProfile.objects.filter(is_active=True),
+        required=False,
+        label="Team Leader",
+        help_text="Select a user to be the team leader"
+    )
+    
+    class Meta:
+        model = FaultLocatorTeam
+        fields = ['team_leader']
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        
+        self.fields['team_leader'].widget.attrs.update({
+            'class': 'form-select'
+        })
+
+class FaultStatusUpdateForm(forms.ModelForm):
+    """Form for team leaders to update fault status"""
+    class Meta:
+        model = Fault
+        fields = ['status', 'team_leader_notes', 'location_details']
+    
+    def __init__(self, *args, **kwargs):
+        user_role = kwargs.pop('user_role', None)
+        super().__init__(*args, **kwargs)
+        
+        # Limit status choices based on user role
+        if user_role == 'team_leader':
+            self.fields['status'].choices = [
+                ('assigned', 'In Progress'),
+                ('located', 'Fault Located'),
+            ]
+        elif user_role == 'depot_foreperson':
+            self.fields['status'].choices = [
+                ('assigned', 'In Progress'),
+                ('located', 'Fault Located'),
+                ('verified', 'Verified'),
+                ('closed', 'Closed'),
+            ]
+        
+        # Add CSS classes and placeholders
+        self.fields['status'].widget.attrs.update({
+            'class': 'form-select'
+        })
+        self.fields['team_leader_notes'].widget.attrs.update({
+            'class': 'form-control',
+            'rows': 3,
+            'placeholder': 'Add notes about fault location work...'
+        })
+        self.fields['location_details'].widget.attrs.update({
+            'class': 'form-control',
+            'rows': 4,
+            'placeholder': 'Provide detailed location information...'
+        })
+
+class QuickFaultReportForm(forms.ModelForm):
+    """Simplified form for quick fault reporting"""
+    class Meta:
+        model = Fault
+        fields = ['description', 'depot', 'priority']
+    
+    def __init__(self, *args, **kwargs):
+        user_depot = kwargs.pop('user_depot', None)
+        super().__init__(*args, **kwargs)
+        
+        # If user has a specific depot, pre-select it
+        if user_depot:
+            self.fields['depot'].initial = user_depot
+            self.fields['depot'].queryset = Depots.objects.filter(id=user_depot.id)
+        
+        # Add CSS classes
+        self.fields['description'].widget.attrs.update({
+            'class': 'form-control',
+            'placeholder': 'Describe the fault...',
+            'rows': 3
+        })
+        self.fields['depot'].widget.attrs.update({
+            'class': 'form-select'
+        })
         self.fields['priority'].widget.attrs.update({
             'class': 'form-select'
         })

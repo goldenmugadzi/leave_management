@@ -278,10 +278,14 @@ def fault_locator_dashboard(request):
     user_profile = UserProfile.objects.filter(id=request.user.id).first()
     
     # Determine user role and permissions
-    is_senior = is_senior_foreperson(user_profile)
+    user_role = get_user_fault_locator_role(user_profile)
+    is_senior = is_senior_foreman(user_profile)
     is_depot_fp = is_depot_foreperson(user_profile, user_profile.depot if user_profile and hasattr(user_profile, 'depot') and user_profile.depot else None)
-    can_create = can_create_device(user_profile)
-    
+    can_manage_devices = can_manage_devices(user_profile)
+    user_teams = user_profile.fault_locator_teams.all() if user_profile else []
+    is_team_member = user_teams.exists()
+    is_team_lead = is_team_leader(user_profile)
+
     # Get user's depot if applicable
     user_depot = None
     if user_profile and hasattr(user_profile, 'depot') and user_profile.depot:
@@ -290,15 +294,89 @@ def fault_locator_dashboard(request):
     # Initialize context
     context = {
         'user_profile': user_profile,
-        'is_senior_foreperson': is_senior,
+        'is_senior_foreman': is_senior,
         'is_depot_foreperson': is_depot_fp,
-        'can_create_device': can_create,
+        'can_manage_devices': can_manage_devices,
         'user_depot': user_depot,
         'my_actions': [],
         'quick_stats': {},
         'recent_activity': [],
+        'accessible_functions': [],
     }
     
+    # ACCESSIBLE FUNCTIONS - What can this user do in the system?
+    accessible_functions = {}
+
+    # Senior Foreperson & IT/Admin Functions
+    if is_senior or can_manage_devices:
+        accessible_functions['device_list'] = {
+            'title': 'Device Management',
+            'description': 'View, create, edit, and assign all fault locator devices.',
+            'url_name': 'device_list',
+            'icon': '📱'
+        }
+        accessible_functions['team_overview'] = {
+            'title': 'Team Management',
+            'description': 'Create, edit, and manage fault locator teams and their members.',
+            'url_name': 'team_overview',
+            'icon': '👥'
+        }
+
+    if is_senior:
+        accessible_functions['deploy_team'] = {
+            'title': 'Deploy Teams',
+            'description': 'Deploy available teams to various depot locations.',
+            'url_name': 'deploy_team',
+            'icon': '🚀'
+        }
+        accessible_functions['advanced_fault_assignment'] = {
+            'title': 'Advanced Fault Assignment',
+            'description': 'Bulk-assign faults to teams with advanced filtering.',
+            'url_name': 'advanced_fault_assignment',
+            'icon': '⚙️'
+        }
+        accessible_functions['simple_fault_list_senior'] = {
+            'title': 'View All Faults',
+            'description': 'Monitor all faults across all depots and statuses.',
+            'url_name': 'simple_fault_list',
+            'icon': '🔥'
+        }
+
+    # Depot Foreperson Functions
+    if is_depot_fp:
+        if not is_senior: # Avoid duplication for senior FPs who are also depot FPs
+            accessible_functions['simple_fault_list_depot'] = {
+                'title': 'Depot Faults',
+                'description': 'View and manage all faults reported at your depot.',
+                'url_name': 'simple_fault_list',
+                'icon': '🔥'
+            }
+        accessible_functions['assign_faults'] = {
+            'title': 'Assign Faults',
+            'description': 'Assign pending faults at your depot to available teams.',
+            'url_name': 'advanced_fault_assignment',
+            'icon': '👉'
+        }
+
+    # Team Member Functions
+    if is_team_member:
+        accessible_functions['my_work'] = {
+            'title': 'My Work',
+            'description': 'View your current fault assignments and update their status.',
+            'url_name': 'my_work',
+            'icon': '🛠️'
+        }
+
+    # General Functions for most users
+    accessible_functions['quick_fault_report'] = {
+        'title': 'Report a Fault',
+        'description': 'Quickly report a new fault in the system.',
+        'url_name': 'quick_fault_report',
+        'icon': '📝'
+    }
+    
+    context['accessible_functions'] = list(accessible_functions.values())
+
     # MY ACTIONS - What can I do right now?
     my_actions = []
     
@@ -393,30 +471,30 @@ def fault_locator_dashboard(request):
     if is_senior:
         # System-wide stats for senior forepersons
         context['quick_stats'] = {
-            'total_faults': Fault.objects.count(),
-            'active_faults': Fault.objects.filter(status__in=['requested', 'assigned']).count(),
-            'teams_deployed': TeamDeployment.objects.filter(recalled_at__isnull=True).count(),
-            'devices_active': FaultLocatorDeviceAssignment.objects.count(),
+            'Total Faults': Fault.objects.count(),
+            'Active Faults': Fault.objects.filter(status__in=['requested', 'assigned']).count(),
+            'Teams Deployed': TeamDeployment.objects.filter(recalled_at__isnull=True).count(),
+            'Devices Active': FaultLocatorDeviceAssignment.objects.count(),
         }
     elif is_depot_fp and user_depot:
         # Depot-specific stats
         context['quick_stats'] = {
-            'my_depot_faults': Fault.objects.filter(depot=user_depot).count(),
-            'pending_assignment': Fault.objects.filter(depot=user_depot, status='requested').count(),
-            'in_progress': Fault.objects.filter(depot=user_depot, status='assigned').count(),
-            'teams_at_depot': FaultLocatorTeam.objects.filter(current_depot=user_depot).count(),
+            'My Depot Faults': Fault.objects.filter(depot=user_depot).count(),
+            'Pending Assignment': Fault.objects.filter(depot=user_depot, status='requested').count(),
+            'In Progress': Fault.objects.filter(depot=user_depot, status='assigned').count(),
+            'Teams at Depot': FaultLocatorTeam.objects.filter(current_depot=user_depot).count(),
         }
     elif user_teams.exists():
         # Team member stats
         my_team = user_teams.first()
         context['quick_stats'] = {
-            'my_team': my_team.name,
-            'current_assignments': FaultAssignment.objects.filter(team=my_team, located_at__isnull=True).count(),
-            'completed_today': FaultAssignment.objects.filter(
+            'My Team': my_team.name,
+            'Current Assignments': FaultAssignment.objects.filter(team=my_team, located_at__isnull=True).count(),
+            'Completed Today': FaultAssignment.objects.filter(
                 team=my_team,
                 located_at__date=timezone.now().date()
             ).count(),
-            'team_location': my_team.current_depot.depot if my_team.current_depot else 'Not Deployed',
+            'Team Location': my_team.current_depot.depot if my_team.current_depot else 'Not Deployed',
         }
     
     # RECENT ACTIVITY - Last 5 relevant activities
@@ -479,7 +557,7 @@ def simple_fault_list(request):
         depot = Depots.objects.filter(code=user_profile.depot).first()
         if depot:
             faults = faults.filter(depot=depot)
-    elif not is_senior_foreperson(user_profile):
+    elif not is_senior_foreman(user_profile):
         if user_profile and hasattr(user_profile, 'depot') and user_profile.depot:
             depot = Depots.objects.filter(code=user_profile.depot).first()
             if depot:
@@ -520,7 +598,7 @@ def simple_fault_list(request):
         
         # Determine next action
         next_action = None
-        can_assign = is_senior_foreperson(user_profile) or is_depot_foreperson(user_profile, fault.depot)
+        can_assign = is_senior_foreman(user_profile) or is_depot_foreperson(user_profile, fault.depot)
         
         if fault.status == 'requested' and can_assign:
             next_action = {
@@ -570,7 +648,7 @@ def simple_fault_list(request):
         'search_query': search_query,
         'status_options': status_options,
         'priority_options': priority_options,
-        'is_senior_foreperson': is_senior_foreperson(user_profile),
+        'is_senior_foreman': is_senior_foreman(user_profile),
         'is_depot_foreperson': is_depot_foreperson(user_profile, user_profile.depot if user_profile and hasattr(user_profile, 'depot') and user_profile.depot else None),
         'total_count': len(fault_data),
     }
@@ -630,7 +708,7 @@ def quick_fault_report(request):
     # Pre-select user's depot
     if user_profile and hasattr(user_profile, 'depot') and user_profile.depot:
         user_depot = Depots.objects.filter(code=user_profile.depot).first()
-        if not is_senior_foreperson(user_profile):
+        if not is_senior_foreman(user_profile):
             available_depots = [user_depot] if user_depot else []
     
     context = {
@@ -648,7 +726,7 @@ def simple_assign_fault(request, fault_id=None):
     user_profile = UserProfile.objects.filter(id=request.user.id).first()
     
     # Check permissions
-    if not (is_senior_foreperson(user_profile) or is_depot_foreperson(user_profile, user_profile.depot if user_profile and hasattr(user_profile, 'depot') and user_profile.depot else None)):
+    if not (is_senior_foreman(user_profile) or is_depot_foreperson(user_profile, user_profile.depot if user_profile and hasattr(user_profile, 'depot') and user_profile.depot else None)):
         messages.error(request, "You don't have permission to assign faults")
         return redirect('simple_fault_list')
     
@@ -755,7 +833,7 @@ def simple_assign_fault(request, fault_id=None):
         'selected_fault': fault,
         'available_faults': available_faults,
         'team_data': team_data,
-        'is_senior_foreperson': is_senior_foreperson(user_profile),
+        'is_senior_foreman': is_senior_foreman(user_profile),
     }
     
     return render(request, "fault_locator/simple_assign_fault.html", context)
@@ -777,7 +855,7 @@ def field_update(request, fault_id):
     if current_assignment and user_teams:
         can_update = any(team.id == current_assignment.team.id for team in user_teams)
     
-    can_update = can_update or is_senior_foreperson(user_profile)
+    can_update = can_update or is_senior_foreman(user_profile)
     
     if not can_update:
         messages.error(request, "You don't have permission to update this fault")
@@ -853,7 +931,7 @@ def team_overview(request):
     )
     
     # Role-based filtering
-    if not is_senior_foreperson(user_profile):
+    if not is_senior_foreman(user_profile):
         if user_profile and hasattr(user_profile, 'depot') and user_profile.depot:
             depot = get_user_depot(user_profile)
             if depot:
@@ -872,7 +950,7 @@ def team_overview(request):
             if team.current_depot:
                 status = 'deployed'
                 status_class = 'text-green-600'
-                if is_senior_foreperson(user_profile):
+                if is_senior_foreman(user_profile):
                     actions.append({
                         'text': 'Recall',
                         'url': f'/fault_locator/teams/{team.id}/recall/',
@@ -881,14 +959,14 @@ def team_overview(request):
             else:
                 status = 'available'
                 status_class = 'text-blue-600'
-                if is_senior_foreperson(user_profile):
+                if is_senior_foreman(user_profile):
                     actions.append({
                         'text': 'Deploy',
                         'url': f'/fault_locator/teams/{team.id}/deploy/',
                         'class': 'btn-primary btn-sm'
                     })
         else:
-            if can_create_device(user_profile):
+            if can_manage_devices(user_profile):
                 actions.append({
                     'text': 'Assign Device',
                     'url': f'/fault_locator/assign-device-to-team/?team_id={team.id}',
@@ -896,7 +974,7 @@ def team_overview(request):
                 })
         
         # Add manage action for authorized users
-        if is_senior_foreperson(user_profile) or can_create_device(user_profile):
+        if is_senior_foreman(user_profile) or can_manage_devices(user_profile):
             actions.append({
                 'text': 'Manage',
                 'url': f'/fault_locator/teams/{team.id}/edit/',
@@ -915,8 +993,8 @@ def team_overview(request):
     context = {
         'team_data': team_data,
         'user_profile': user_profile,
-        'is_senior_foreperson': is_senior_foreperson(user_profile),
-        'can_create_team': is_senior_foreperson(user_profile) or can_create_device(user_profile),
+        'is_senior_foreman': is_senior_foreman(user_profile),
+        'can_create_team': is_senior_foreman(user_profile) or can_manage_devices(user_profile),
         'total_teams': len(team_data),
     }
     
@@ -981,89 +1059,835 @@ def my_work(request):
     
     return render(request, "fault_locator/my_work.html", context)
 
-# Keep existing utility functions
-def can_create_device(user_profile):
-    """Check if user has permission to create devices"""
+# DEVICE MANAGEMENT VIEWS
+
+@login_required
+def device_list(request):
+    """List all fault locator devices with management options"""
+    user_profile = UserProfile.objects.filter(id=request.user.id).first()
+    
+    # Check permissions
+    if not can_manage_devices(user_profile):
+        messages.error(request, "You don't have permission to manage devices")
+        return redirect('fault_locator_dashboard')
+    
+    # Get all devices with assignment status
+    devices = FaultLocatorDevice.objects.all().order_by('serial_number')
+    
+    device_data = []
+    for device in devices:
+        assignment = FaultLocatorDeviceAssignment.objects.filter(device=device).first()
+        current_fault = None
+        
+        if assignment:
+            current_fault = FaultAssignment.objects.filter(
+                device=device, 
+                located_at__isnull=True
+            ).first()
+        
+        device_data.append({
+            'device': device,
+            'assignment': assignment,
+            'team': assignment.team if assignment else None,
+            'current_fault': current_fault,
+            'status': 'in_use' if current_fault else ('assigned' if assignment else 'available'),
+        })
+    
+    context = {
+        'device_data': device_data,
+        'user_profile': user_profile,
+        'is_senior_foreman': is_senior_foreman(user_profile),
+        'total_devices': len(device_data),
+    }
+    
+    return render(request, "fault_locator/device_list.html", context)
+
+@login_required
+def create_device(request):
+    """Create a new fault locator device"""
+    user_profile = UserProfile.objects.filter(id=request.user.id).first()
+    
+    # Check permissions
+    if not can_manage_devices(user_profile):
+        messages.error(request, "You don't have permission to create devices")
+        return redirect('fault_locator_dashboard')
+    
+    if request.method == "POST":
+        form = FaultLocatorDeviceForm(request.POST)
+        if form.is_valid():
+            device = form.save()
+            messages.success(request, f"Device '{device.serial_number}' created successfully!")
+            return redirect('device_list')
+    else:
+        form = FaultLocatorDeviceForm()
+    
+    context = {
+        'form': form,
+        'user_profile': user_profile,
+        'page_title': 'Create New Device',
+    }
+    
+    return render(request, "fault_locator/create_device.html", context)
+
+@login_required
+def edit_device(request, device_id):
+    """Edit an existing fault locator device"""
+    user_profile = UserProfile.objects.filter(id=request.user.id).first()
+    
+    # Check permissions
+    if not can_manage_devices(user_profile):
+        messages.error(request, "You don't have permission to edit devices")
+        return redirect('fault_locator_dashboard')
+    
+    device = get_object_or_404(FaultLocatorDevice, id=device_id)
+    
+    if request.method == "POST":
+        form = FaultLocatorDeviceForm(request.POST, instance=device)
+        if form.is_valid():
+            device = form.save()
+            messages.success(request, f"Device '{device.serial_number}' updated successfully!")
+            return redirect('device_list')
+    else:
+        form = FaultLocatorDeviceForm(instance=device)
+    
+    # Check if device is currently in use
+    current_assignment = FaultLocatorDeviceAssignment.objects.filter(device=device).first()
+    active_fault = FaultAssignment.objects.filter(device=device, located_at__isnull=True).first()
+    
+    context = {
+        'form': form,
+        'device': device,
+        'current_assignment': current_assignment,
+        'active_fault': active_fault,
+        'user_profile': user_profile,
+        'page_title': f'Edit Device: {device.serial_number}',
+        'can_delete': not current_assignment and not active_fault,
+    }
+    
+    return render(request, "fault_locator/edit_device.html", context)
+
+@login_required
+def device_detail(request, device_id):
+    """View detailed information about a device"""
+    device = get_object_or_404(FaultLocatorDevice, id=device_id)
+    user_profile = UserProfile.objects.filter(id=request.user.id).first()
+    
+    # Get device assignment history
+    assignment = FaultLocatorDeviceAssignment.objects.filter(device=device).first()
+    
+    # Get fault history for this device
+    fault_history = FaultAssignment.objects.filter(device=device).select_related(
+        'fault', 'team'
+    ).order_by('-assigned_at')[:10]
+    
+    # Get current active fault
+    current_fault = FaultAssignment.objects.filter(
+        device=device, 
+        located_at__isnull=True
+    ).first()
+    
+    context = {
+        'device': device,
+        'assignment': assignment,
+        'current_fault': current_fault,
+        'fault_history': fault_history,
+        'user_profile': user_profile,
+        'can_edit': can_manage_devices(user_profile),
+    }
+    
+    return render(request, "fault_locator/device_detail.html", context)
+
+@login_required
+def assign_device_to_team(request):
+    """Assign a device to a team"""
+    user_profile = UserProfile.objects.filter(id=request.user.id).first()
+    
+    # Check permissions
+    if not can_manage_devices(user_profile):
+        messages.error(request, "You don't have permission to assign devices")
+        return redirect('fault_locator_dashboard')
+    
+    team_id = request.GET.get('team_id')
+    
+    if request.method == "POST":
+        form = SeniorForepersonDeviceAssignmentForm(request.POST, user=user_profile)
+        if form.is_valid():
+            assignment = form.save()
+            
+            # Notify team members
+            team = assignment.team
+            for member in team.members.all():
+                if member.email:
+                    message = f"Your team '{team.name}' has been assigned device '{assignment.device.serial_number}'"
+                    url = f"/fault_locator/teams/{team.id}/"
+                    notify_fault_locator_user(
+                        user=member,
+                        message=message,
+                        notification_type="Device Assignment",
+                        url=url,
+                        fault_or_team_id=team.id,
+                        request=request
+                    )
+            
+            messages.success(request, f"Device '{assignment.device.serial_number}' assigned to team '{team.name}'")
+            return redirect('team_overview')
+    else:
+        initial_data = {}
+        if team_id:
+            initial_data['team'] = team_id
+        form = SeniorForepersonDeviceAssignmentForm(initial=initial_data, user=user_profile)
+    
+    context = {
+        'form': form,
+        'user_profile': user_profile,
+        'page_title': 'Assign Device to Team',
+    }
+    
+    return render(request, "fault_locator/assign_device_to_team.html", context)
+
+@login_required
+def unassign_device(request, device_id):
+    """Remove device assignment from team"""
+    user_profile = UserProfile.objects.filter(id=request.user.id).first()
+    
+    # Check permissions
+    if not can_manage_devices(user_profile):
+        messages.error(request, "You don't have permission to unassign devices")
+        return redirect('fault_locator_dashboard')
+    
+    device = get_object_or_404(FaultLocatorDevice, id=device_id)
+    assignment = FaultLocatorDeviceAssignment.objects.filter(device=device).first()
+    
+    if not assignment:
+        messages.error(request, "Device is not currently assigned to any team")
+        return redirect('device_list')
+    
+    # Check if device is being used for active fault
+    active_fault = FaultAssignment.objects.filter(device=device, located_at__isnull=True).first()
+    if active_fault:
+        messages.error(request, f"Cannot unassign device - it's currently being used for fault: {active_fault.fault.description}")
+        return redirect('device_list')
+    
+    if request.method == "POST":
+        team = assignment.team
+        assignment.delete()
+        
+        # Notify team members
+        for member in team.members.all():
+            if member.email:
+                message = f"Device '{device.serial_number}' has been removed from your team '{team.name}'"
+                url = f"/fault_locator/teams/{team.id}/"
+                notify_fault_locator_user(
+                    user=member,
+                    message=message,
+                    notification_type="Device Removal",
+                    url=url,
+                    fault_or_team_id=team.id,
+                    request=request
+                )
+        
+        messages.success(request, f"Device '{device.serial_number}' unassigned from team '{team.name}'")
+        return redirect('device_list')
+    
+    context = {
+        'device': device,
+        'assignment': assignment,
+        'user_profile': user_profile,
+    }
+    
+    return render(request, "fault_locator/unassign_device.html", context)
+
+# TEAM MANAGEMENT VIEWS
+
+@login_required
+def create_team(request):
+    """Create a new fault locator team"""
+    user_profile = UserProfile.objects.filter(id=request.user.id).first()
+    
+    # Check permissions
+    if not (is_senior_foreman(user_profile) or can_manage_devices(user_profile)):
+        messages.error(request, "You don't have permission to create teams")
+        return redirect('fault_locator_dashboard')
+    
+    if request.method == "POST":
+        form = FaultLocatorTeamForm(request.POST)
+        if form.is_valid():
+            team = form.save()
+            
+            # Notify team members
+            for member in team.members.all():
+                if member.email:
+                    message = f"You have been added to fault locator team '{team.name}'"
+                    url = f"/fault_locator/teams/{team.id}/"
+                    notify_fault_locator_user(
+                        user=member,
+                        message=message,
+                        notification_type="Team Assignment",
+                        url=url,
+                        fault_or_team_id=team.id,
+                        request=request
+                    )
+            
+            messages.success(request, f"Team '{team.name}' created successfully with {team.members.count()} members!")
+            return redirect('team_overview')
+    else:
+        form = FaultLocatorTeamForm()
+    
+    context = {
+        'form': form,
+        'user_profile': user_profile,
+        'page_title': 'Create New Team',
+    }
+    
+    return render(request, "fault_locator/create_team.html", context)
+
+@login_required
+def edit_team(request, team_id):
+    """Edit an existing fault locator team"""
+    user_profile = UserProfile.objects.filter(id=request.user.id).first()
+    
+    # Check permissions
+    if not (is_senior_foreman(user_profile) or can_manage_devices(user_profile)):
+        messages.error(request, "You don't have permission to edit teams")
+        return redirect('fault_locator_dashboard')
+    
+    team = get_object_or_404(FaultLocatorTeam, id=team_id)
+    
+    if request.method == "POST":
+        # Handle name change
+        if 'update_name' in request.POST:
+            name_form = FaultLocatorTeamNameForm(request.POST, instance=team)
+            if name_form.is_valid():
+                team = name_form.save()
+                messages.success(request, f"Team name updated to '{team.name}'")
+                return redirect('edit_team', team_id=team.id)
+        
+        # Handle member addition
+        elif 'add_member' in request.POST:
+            add_form = AddTeamMemberForm(request.POST)
+            if add_form.is_valid():
+                member = add_form.cleaned_data['member']
+                if member not in team.members.all():
+                    team.members.add(member)
+                    
+                    # Notify new member
+                    if member.email:
+                        message = f"You have been added to fault locator team '{team.name}'"
+                        url = f"/fault_locator/teams/{team.id}/"
+                        notify_fault_locator_user(
+                            user=member,
+                            message=message,
+                            notification_type="Team Assignment",
+                            url=url,
+                            fault_or_team_id=team.id,
+                            request=request
+                        )
+                    
+                    messages.success(request, f"{member.get_full_name()} added to team")
+                else:
+                    messages.warning(request, f"{member.get_full_name()} is already in this team")
+                return redirect('edit_team', team_id=team.id)
+        
+        # Handle member removal
+        elif 'remove_member' in request.POST:
+            member_id = request.POST.get('member_id')
+            if member_id:
+                member = get_object_or_404(UserProfile, id=member_id)
+                team.members.remove(member)
+                
+                # Notify removed member
+                if member.email:
+                    message = f"You have been removed from fault locator team '{team.name}'"
+                    url = "/fault_locator/"
+                    notify_fault_locator_user(
+                        user=member,
+                        message=message,
+                        notification_type="Team Removal",
+                        url=url,
+                        fault_or_team_id=team.id,
+                        request=request
+                    )
+                
+                messages.success(request, f"{member.get_full_name()} removed from team")
+                return redirect('edit_team', team_id=team.id)
+    
+    # Initialize forms
+    name_form = FaultLocatorTeamNameForm(instance=team)
+    add_form = AddTeamMemberForm()
+    
+    # Get device assignment
+    device_assignment = FaultLocatorDeviceAssignment.objects.filter(team=team).first()
+    
+    # Get current assignments
+    current_assignments = FaultAssignment.objects.filter(
+        team=team, 
+        located_at__isnull=True
+    ).select_related('fault')
+    
+    context = {
+        'team': team,
+        'name_form': name_form,
+        'add_form': add_form,
+        'device_assignment': device_assignment,
+        'current_assignments': current_assignments,
+        'user_profile': user_profile,
+        'can_delete': not current_assignments.exists() and not device_assignment,
+        'page_title': f'Edit Team: {team.name}',
+    }
+    
+    return render(request, "fault_locator/edit_team.html", context)
+
+@login_required
+def delete_team(request, team_id):
+    """Delete a fault locator team"""
+    user_profile = UserProfile.objects.filter(id=request.user.id).first()
+    
+    # Check permissions
+    if not is_senior_foreman(user_profile):
+        messages.error(request, "Only senior forepersons can delete teams")
+        return redirect('fault_locator_dashboard')
+    
+    team = get_object_or_404(FaultLocatorTeam, id=team_id)
+    
+    # Check if team has active assignments or device
+    device_assignment = FaultLocatorDeviceAssignment.objects.filter(team=team).first()
+    active_faults = FaultAssignment.objects.filter(team=team, located_at__isnull=True).exists()
+    
+    if device_assignment or active_faults:
+        messages.error(request, "Cannot delete team - it has active assignments or assigned devices")
+        return redirect('edit_team', team_id=team.id)
+    
+    if request.method == "POST":
+        team_name = team.name
+        
+        # Notify team members
+        for member in team.members.all():
+            if member.email:
+                message = f"Fault locator team '{team_name}' has been dissolved"
+                url = "/fault_locator/"
+                notify_fault_locator_user(
+                    user=member,
+                    message=message,
+                    notification_type="Team Dissolution",
+                    url=url,
+                    fault_or_team_id=team.id,
+                    request=request
+                )
+        
+        team.delete()
+        messages.success(request, f"Team '{team_name}' deleted successfully")
+        return redirect('team_overview')
+    
+    context = {
+        'team': team,
+        'user_profile': user_profile,
+    }
+    
+    return render(request, "fault_locator/delete_team.html", context)
+
+# TEAM DEPLOYMENT VIEWS
+
+@login_required
+def deploy_team(request, team_id=None):
+    """Deploy a team to a depot"""
+    user_profile = UserProfile.objects.filter(id=request.user.id).first()
+    
+    # Check permissions
+    if not is_senior_foreman(user_profile):
+        messages.error(request, "Only senior forepersons can deploy teams")
+        return redirect('fault_locator_dashboard')
+    
+    team = None
+    if team_id:
+        team = get_object_or_404(FaultLocatorTeam, id=team_id)
+        
+        # Check if team already deployed
+        if team.current_depot:
+            messages.warning(request, f"Team '{team.name}' is already deployed to {team.current_depot.depot}")
+            return redirect('team_overview')
+        
+        # Check if team has a device
+        device_assignment = FaultLocatorDeviceAssignment.objects.filter(team=team).first()
+        if not device_assignment:
+            messages.error(request, f"Team '{team.name}' must have a device assigned before deployment")
+            return redirect('team_overview')
+    
+    if request.method == "POST":
+        form = TeamDeploymentForm(request.POST)
+        if form.is_valid():
+            deployment = form.save(commit=False)
+            deployment.deployed_by = user_profile
+            deployment.save()
+            
+            # Update team's current depot
+            team = deployment.team
+            team.current_depot = deployment.depot
+            team.assigned_at = deployment.deployed_at
+            team.assigned_by = user_profile
+            team.save()
+            
+            # Send notifications
+            notify_team_deployment(deployment, request)
+            
+            messages.success(request, f"Team '{team.name}' deployed to {deployment.depot.depot}")
+            return redirect('team_overview')
+    else:
+        initial_data = {}
+        if team:
+            initial_data['team'] = team
+        form = TeamDeploymentForm(initial=initial_data)
+    
+    context = {
+        'form': form,
+        'selected_team': team,
+        'user_profile': user_profile,
+        'page_title': 'Deploy Team to Depot',
+    }
+    
+    return render(request, "fault_locator/deploy_team.html", context)
+
+@login_required
+def recall_team(request, team_id):
+    """Recall a team from depot deployment"""
+    user_profile = UserProfile.objects.filter(id=request.user.id).first()
+    
+    # Check permissions
+    if not is_senior_foreman(user_profile):
+        messages.error(request, "Only senior forepersons can recall teams")
+        return redirect('fault_locator_dashboard')
+    
+    team = get_object_or_404(FaultLocatorTeam, id=team_id)
+    
+    if not team.current_depot:
+        messages.warning(request, f"Team '{team.name}' is not currently deployed")
+        return redirect('team_overview')
+    
+    # Check for active assignments
+    active_assignments = FaultAssignment.objects.filter(team=team, located_at__isnull=True)
+    
+    if request.method == "POST":
+        if active_assignments.exists() and not request.POST.get('force_recall'):
+            messages.error(request, "Team has active fault assignments. Use force recall if necessary.")
+            return redirect('recall_team', team_id=team.id)
+        
+        # Find current deployment
+        current_deployment = TeamDeployment.objects.filter(
+            team=team,
+            recalled_at__isnull=True
+        ).first()
+        
+        if current_deployment:
+            current_deployment.recalled_at = timezone.now()
+            current_deployment.save()
+        
+        # Update team status
+        depot_name = team.current_depot.depot
+        team.current_depot = None
+        team.assigned_at = None
+        team.assigned_by = None
+        team.save()
+        
+        # Notify team members
+        for member in team.members.all():
+            if member.email:
+                message = f"Your team '{team.name}' has been recalled from {depot_name}"
+                url = f"/fault_locator/teams/{team.id}/"
+                notify_fault_locator_user(
+                    user=member,
+                    message=message,
+                    notification_type="Team Recall",
+                    url=url,
+                    fault_or_team_id=team.id,
+                    request=request
+                )
+        
+        messages.success(request, f"Team '{team.name}' recalled from {depot_name}")
+        return redirect('team_overview')
+    
+    context = {
+        'team': team,
+        'active_assignments': active_assignments,
+        'user_profile': user_profile,
+    }
+    
+    return render(request, "fault_locator/recall_team.html", context)
+
+# ADVANCED FAULT ASSIGNMENT
+
+@login_required
+def advanced_fault_assignment(request):
+    """Advanced fault assignment with bulk operations and filtering"""
+    user_profile = UserProfile.objects.filter(id=request.user.id).first()
+    
+    # Check permissions
+    if not (is_senior_foreman(user_profile) or is_depot_foreperson(user_profile, user_profile.depot if user_profile and hasattr(user_profile, 'depot') and user_profile.depot else None)):
+        messages.error(request, "You don't have permission to assign faults")
+        return redirect('fault_locator_dashboard')
+    
+    # Get unassigned faults
+    unassigned_faults = Fault.objects.filter(status='requested').select_related('depot')
+    
+    # Role-based filtering
+    if is_depot_foreperson(user_profile, user_profile.depot if user_profile and hasattr(user_profile, 'depot') and user_profile.depot else None) and not is_senior_foreman(user_profile):
+        user_depot = Depots.objects.filter(code=user_profile.depot).first()
+        if user_depot:
+            unassigned_faults = unassigned_faults.filter(depot=user_depot)
+    
+    # Apply filters
+    depot_filter = request.GET.get('depot')
+    priority_filter = request.GET.get('priority')
+    
+    if depot_filter:
+        unassigned_faults = unassigned_faults.filter(depot_id=depot_filter)
+    
+    if priority_filter:
+        unassigned_faults = unassigned_faults.filter(priority=priority_filter)
+    
+    # Get available teams with devices
+    available_teams = FaultLocatorTeam.objects.filter(
+        faultlocatordeviceassignment__isnull=False
+    ).prefetch_related('members', 'faultlocatordeviceassignment_set__device')
+    
+    # Add team availability info
+    team_data = []
+    for team in available_teams:
+        device = team.faultlocatordeviceassignment_set.first().device
+        current_assignments_count = FaultAssignment.objects.filter(
+            team=team, 
+            located_at__isnull=True
+        ).count()
+        
+        status = 'available'
+        if current_assignments_count > 0:
+            status = f'{current_assignments_count} active'
+        elif not team.current_depot:
+            status = 'not deployed'
+        
+        team_data.append({
+            'team': team,
+            'device': device,
+            'status': status,
+            'current_assignments': current_assignments_count,
+            'location': team.current_depot.depot if team.current_depot else 'Base',
+            'can_assign': True,  # Can assign even if busy for urgent faults
+        })
+    
+    # Handle bulk assignment
+    if request.method == "POST":
+        fault_ids = request.POST.getlist('fault_ids')
+        team_id = request.POST.get('team_id')
+        
+        if not fault_ids or not team_id:
+            messages.error(request, "Please select faults and a team")
+            return redirect('advanced_fault_assignment')
+        
+        team = get_object_or_404(FaultLocatorTeam, id=team_id)
+        device_assignment = FaultLocatorDeviceAssignment.objects.filter(team=team).first()
+        
+        if not device_assignment:
+            messages.error(request, f"Team '{team.name}' doesn't have a device assigned")
+            return redirect('advanced_fault_assignment')
+        
+        assigned_count = 0
+        for fault_id in fault_ids:
+            fault = get_object_or_404(Fault, id=fault_id)
+            
+            # Check if fault is already assigned
+            existing_assignment = FaultAssignment.objects.filter(fault=fault, located_at__isnull=True).first()
+            if existing_assignment:
+                continue
+            
+            # Create assignment
+            fault_assignment = FaultAssignment.objects.create(
+                fault=fault,
+                team=team,
+                device=device_assignment.device
+            )
+            
+            # Update fault status
+            fault.status = 'assigned'
+            fault.save()
+            
+            # Send notifications
+            notify_fault_assignment(fault_assignment, request)
+            assigned_count += 1
+        
+        if assigned_count > 0:
+            messages.success(request, f"{assigned_count} fault(s) assigned to team '{team.name}'")
+        else:
+            messages.warning(request, "No faults were assigned (they may already be assigned)")
+        
+        return redirect('advanced_fault_assignment')
+    
+    # Get filter options
+    depot_options = Depots.objects.all()
+    if is_depot_foreperson(user_profile, user_profile.depot if user_profile and hasattr(user_profile, 'depot') and user_profile.depot else None) and not is_senior_foreman(user_profile):
+        user_depot = Depots.objects.filter(code=user_profile.depot).first()
+        if user_depot:
+            depot_options = [user_depot]
+    
+    context = {
+        'unassigned_faults': unassigned_faults,
+        'team_data': team_data,
+        'depot_options': depot_options,
+        'priority_options': Fault._meta.get_field('priority').choices,
+        'depot_filter': depot_filter,
+        'priority_filter': priority_filter,
+        'user_profile': user_profile,
+        'is_senior_foreman': is_senior_foreman(user_profile),
+        'total_unassigned': unassigned_faults.count(),
+    }
+    
+    return render(request, "fault_locator/advanced_fault_assignment.html", context)
+
+# ROLE-BASED PERMISSION FUNCTIONS
+
+def get_user_fault_locator_role(user_profile):
+    """Get the user's primary fault locator role"""
+    if not user_profile:
+        return None
+    
+    # Check for explicit role assignment first
+    role_assignment = FaultLocatorRole.objects.filter(
+        user=user_profile, 
+        is_active=True
+    ).first()
+    
+    if role_assignment:
+        return role_assignment.role
+    
+    # Fallback to designation-based role detection
+    if is_senior_foreman(user_profile):
+        return 'senior_foreman'
+    elif is_depot_foreperson_by_designation(user_profile):
+        return 'depot_foreperson'
+    
+    # Check if user is a team leader
+    if FaultLocatorTeam.objects.filter(team_leader=user_profile).exists():
+        return 'team_leader'
+    
+    # Check if user is a team member
+    if user_profile.fault_locator_teams.exists():
+        return 'team_member'
+    
+    return None
+
+def is_senior_foreman(user_profile):
+    """Check if user is a senior foreman - can delegate machines to depots"""
+    if not user_profile or not hasattr(user_profile, 'designation') or not user_profile.designation:
+        return False
+    
+    try:
+        designation_desc = str(user_profile.designation.description).lower()
+        return 'senior' in designation_desc and ('foreman' in designation_desc or 'foreperson' in designation_desc)
+    except Exception:
+        return False
+
+def is_depot_foreperson_by_designation(user_profile):
+    """Check if user is depot foreperson by designation"""
+    if not user_profile or not hasattr(user_profile, 'designation') or not user_profile.designation:
+        return False
+    
+    try:
+        designation_desc = str(user_profile.designation.description).lower()
+        return ('foreperson' in designation_desc or 'foreman' in designation_desc) and 'senior' not in designation_desc
+    except Exception:
+        return False
+
+def is_depot_foreperson(user_profile, depot_code=None):
+    """Check if user is foreperson for specific depot or their assigned depot"""
     if not user_profile:
         return False
     
-    # Senior forepersons can create devices
-    if is_senior_foreperson(user_profile):
+    # Check by designation first
+    if not is_depot_foreperson_by_designation(user_profile):
+        return False
+    
+    # If depot_code is provided, check if user is assigned to that depot
+    if depot_code:
+        if hasattr(user_profile, 'depot') and user_profile.depot:
+            if isinstance(depot_code, str):
+                return user_profile.depot.code == depot_code
+            else:
+                return user_profile.depot == depot_code
+    
+    # If no specific depot, just check if they are a foreperson
+    return True
+
+def can_assign_faults(user_profile, depot=None):
+    """Check if user can assign faults at given depot"""
+    if is_senior_foreman(user_profile):
         return True
     
-    # IT personnel can create devices
+    if depot and is_depot_foreperson(user_profile):
+        if hasattr(user_profile, 'depot') and user_profile.depot:
+            return user_profile.depot == depot or user_profile.depot.code == depot.code
+    
+    return False
+
+def can_deploy_teams(user_profile):
+    """Check if user can deploy teams to depots"""
+    return is_senior_foreman(user_profile)
+
+def can_manage_devices(user_profile):
+    """Check if user can manage fault locator devices"""
+    # Senior foremen can manage all devices
+    if is_senior_foreman(user_profile):
+        return True
+    
+    # IT personnel can manage devices
     if hasattr(user_profile, 'section') and user_profile.section:
         try:
-            # Try different possible field names for section
-            section_name = ""
-            if hasattr(user_profile.section, 'section'):
-                section_name = str(user_profile.section.section).lower()
-            elif hasattr(user_profile.section, 'name'):
-                section_name = str(user_profile.section.name).lower()
-            elif hasattr(user_profile.section, 'description'):
-                section_name = str(user_profile.section.description).lower()
-            else:
-                section_name = str(user_profile.section).lower()
-            
+            section_name = str(user_profile.section.section).lower()
             if 'it' in section_name or 'information technology' in section_name:
                 return True
         except Exception:
-            # If any error occurs, just skip this check
-            pass
-    
-    # Administrators can create devices  
-    if hasattr(user_profile, 'designation') and user_profile.designation:
-        try:
-            designation_desc = str(user_profile.designation.description).lower()
-            if 'administrator' in designation_desc or 'manager' in designation_desc:
-                return True
-        except Exception:
-            # If any error occurs, just skip this check
             pass
     
     return False
 
-def is_senior_foreperson(user_profile):
-    """Check if user profile belongs to a senior foreperson"""
-    if not user_profile or not hasattr(user_profile, 'designation') or not user_profile.designation:
-        return False
-    
-    try:
-        designation_desc = str(user_profile.designation.description).lower()
-        return 'senior' in designation_desc and 'foreperson' in designation_desc
-    except Exception:
-        return False
+def can_create_teams(user_profile):
+    """Check if user can create and manage teams"""
+    return is_senior_foreman(user_profile) or can_manage_devices(user_profile)
 
-def is_foreperson(user_profile):
-    """Check if user profile belongs to any foreperson (senior or depot)"""
-    if not user_profile or not hasattr(user_profile, 'designation') or not user_profile.designation:
+def is_team_leader(user_profile):
+    """Check if user is a team leader"""
+    if not user_profile:
         return False
-    
-    try:
-        designation_desc = str(user_profile.designation.description).lower()
-        return 'foreperson' in designation_desc
-    except Exception:
-        return False
+    return FaultLocatorTeam.objects.filter(team_leader=user_profile).exists()
 
-def is_depot_foreperson(user_profile, depot):
-    """Check if user profile is foreperson for specific depot"""
-    if not user_profile or not hasattr(user_profile, 'designation') or not user_profile.designation:
-        return False
+def get_user_team(user_profile):
+    """Get the team where user is leader or member"""
+    if not user_profile:
+        return None
     
-    try:
-        designation_desc = str(user_profile.designation.description).lower()
-        is_foreperson_role = 'foreperson' in designation_desc and 'senior' not in designation_desc
-        
-        # Check if user's depot matches the specified depot
-        if depot and hasattr(user_profile, 'depot') and user_profile.depot:
-            if isinstance(depot, str):
-                return is_foreperson_role and user_profile.depot == depot
-            else:
-                return is_foreperson_role and user_profile.depot == depot.code
-        
-        return is_foreperson_role
-    except Exception:
-        return False
+    # Check if user is team leader
+    team_as_leader = FaultLocatorTeam.objects.filter(team_leader=user_profile).first()
+    if team_as_leader:
+        return team_as_leader
+    
+    # Check if user is team member
+    return user_profile.fault_locator_teams.first()
+
+def can_report_fault_status(user_profile, fault):
+    """Check if user can report on fault status"""
+    # Team leaders can report for their assignments
+    if is_team_leader(user_profile):
+        assignment = FaultAssignment.objects.filter(
+            fault=fault, 
+            team__team_leader=user_profile,
+            located_at__isnull=True
+        ).first()
+        if assignment:
+            return True
+    
+    # Forepersons can also report at their depot
+    if is_depot_foreperson(user_profile):
+        if hasattr(user_profile, 'depot') and user_profile.depot:
+            return fault.depot == user_profile.depot
+    
+    # Senior foremen can report on any fault
+    return is_senior_foreman(user_profile)
 
 def get_user_depot(user_profile):
     """Get the depot object for a user profile"""
@@ -1071,13 +1895,24 @@ def get_user_depot(user_profile):
         return None
     
     try:
-        from it.users.models import Depots
-        return Depots.objects.filter(code=user_profile.depot).first()
+        # Handle both direct depot object and depot code
+        if hasattr(user_profile.depot, 'depot'):
+            return user_profile.depot
+        else:
+            return Depots.objects.filter(code=user_profile.depot).first()
     except Exception:
         return None
 
+# Keep existing utility functions for backward compatibility
+def can_manage_devices(user_profile):
+    """Legacy function - check if user has permission to create devices"""
+    return can_manage_devices(user_profile)
+
+def is_foreperson(user_profile):
+    """Legacy function - check if user profile belongs to any foreperson"""
+    return is_depot_foreperson_by_designation(user_profile) or is_senior_foreman(user_profile)
+
 def has_fault_locator_permissions(user_profile):
     """Check if user has any fault locator system permissions"""
-    return (is_senior_foreperson(user_profile) or 
-            is_foreperson(user_profile) or 
-            can_create_device(user_profile))
+    role = get_user_fault_locator_role(user_profile)
+    return role is not None

@@ -2,25 +2,115 @@
 {% load static %}
 
 {% block content %}
-<div class="content-wrapper">
-  <div class="bg-gulf-blue-100 shadow-lg rounded-lg p-6 max-w-2xl mx-auto">
-    <h3 class="text-center font-bold mb-4">Create Device</h3>
-    <form method="post">
-      {% csrf_token %}
-      <div class="mb-4">
-        <label for="id_serial_number" class="block text-sm font-medium text-gray-700">Serial Number</label>
-        {{ form.serial_number }}
+<div class="create-device-container p-6">
+  <div class="max-w-2xl mx-auto">
+    <!-- Header -->
+    <div class="header mb-6 text-center">
+      <h1 class="text-2xl font-bold text-gray-800 mb-2">{{ page_title }}</h1>
+      <p class="text-gray-600">Add a new fault locator device to the system</p>
+    </div>
+
+    <!-- Form Card -->
+    <div class="form-card bg-white rounded-lg shadow-lg p-6">
+      <form method="post" class="space-y-6">
+        {% csrf_token %}
+        
+        <!-- Form Errors -->
+        {% if form.errors %}
+        <div class="alert-error bg-red-50 border border-red-200 rounded-lg p-4">
+          <div class="flex">
+            <div class="text-red-400">⚠️</div>
+            <div class="ml-3">
+              <h3 class="text-sm font-medium text-red-800">Please correct the following errors:</h3>
+              <div class="mt-2 text-sm text-red-700">
+                {% for field, errors in form.errors.items %}
+                  {% for error in errors %}
+                    <p>{{ field|title }}: {{ error }}</p>
+                  {% endfor %}
+                {% endfor %}
+              </div>
+            </div>
+          </div>
+        </div>
+        {% endif %}
+        
+        <!-- Serial Number Field -->
+        <div class="form-group">
+          <label for="{{ form.serial_number.id_for_label }}" 
+                 class="block text-sm font-medium text-gray-700 mb-1">
+            Serial Number <span class="text-red-500">*</span>
+          </label>
+          {{ form.serial_number }}
+          {% if form.serial_number.help_text %}
+          <p class="text-xs text-gray-500 mt-1">{{ form.serial_number.help_text }}</p>
+          {% endif %}
+        </div>
+        
+        <!-- Description Field -->
+        <div class="form-group">
+          <label for="{{ form.description.id_for_label }}" 
+                 class="block text-sm font-medium text-gray-700 mb-1">
+            Description
+          </label>
+          {{ form.description }}
+          {% if form.description.help_text %}
+          <p class="text-xs text-gray-500 mt-1">{{ form.description.help_text }}</p>
+          {% endif %}
+        </div>
+        
+        <!-- Action Buttons -->
+        <div class="form-actions flex justify-between pt-6">
+          <a href="{% url 'device_list' %}" 
+             class="px-6 py-2 bg-gray-600 text-white rounded-lg font-medium hover:bg-gray-700 transition">
+            ← Cancel
+          </a>
+          <button type="submit" 
+                  class="px-6 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition">
+            ✅ Create Device
+          </button>
+        </div>
+      </form>
+    </div>
+    
+    <!-- Help Text -->
+    <div class="help-text mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+      <div class="flex">
+        <div class="text-blue-400">💡</div>
+        <div class="ml-3">
+          <h3 class="text-sm font-medium text-blue-800">Device Creation Tips</h3>
+          <ul class="mt-2 text-sm text-blue-700 space-y-1">
+            <li>• Use a unique serial number that's easy to identify in the field</li>
+            <li>• Include device model or type in the description</li>
+            <li>• After creation, you can assign the device to a team</li>
+          </ul>
+        </div>
       </div>
-      <div class="mb-4">
-        <label for="id_description" class="block text-sm font-medium text-gray-700">Description</label>
-        {{ form.description }}
-      </div>
-      <div class="flex justify-center">
-        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-          Create Device
-        </button>
-      </div>
-    </form>
+    </div>
   </div>
 </div>
+
+<style>
+/* Form styling */
+.form-group input,
+.form-group textarea {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  background-color: #ffffff;
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.form-group input.is-invalid,
+.form-group textarea.is-invalid {
+  border-color: #ef4444;
+}
+</style>
 {% endblock %}

@@ -2,49 +2,510 @@
 {% load static %}
 
 {% block content %}
-<div class="content-wrapper">
-  <div class="bg-gulf-blue-100 shadow-lg rounded-lg p-6 max-w-4xl mx-auto">
-    <div class="flex justify-between items-center mb-4">
-      <h3 class="font-bold text-lg">Fault Locator Devices</h3>
-      <a href="{% url 'create_device' %}" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
-        + Add Device
-      </a>
+<div class="device-list-container min-h-screen bg-gradient-to-br from-indigo-50 via-white to-cyan-50 p-6">
+  <div class="header mb-8 glass-card rounded-2xl p-6 backdrop-blur-sm bg-white/30 border border-white/20 shadow-xl">
+    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+      <div class="text-animate-fade-in">
+        <h1 class="text-3xl font-bold bg-gradient-to-r from-indigo-600 to-blue-600 bg-clip-text text-transparent">
+          Device Management
+        </h1>
+        <p class="text-gray-600 mt-2">Manage fault locator devices and assignments with modern precision</p>
+      </div>
+      <div class="action-buttons flex flex-col md:flex-row gap-3 w-full md:w-auto">
+        <a href="{% url 'create_device' %}"
+           class="group relative overflow-hidden px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-medium transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-blue-500/25 text-center border border-white/20"
+           aria-label="Add New Device" title="Add New Device">
+          <span class="relative z-10 flex items-center justify-center gap-2">
+            <span class="animate-pulse">➕</span> Add New Device
+          </span>
+          <div class="absolute inset-0 bg-gradient-to-r from-blue-700 to-indigo-700 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+        </a>
+        <a href="{% url 'fault_locator_dashboard' %}"
+           class="group relative overflow-hidden px-6 py-3 bg-gradient-to-r from-gray-600 to-gray-700 text-white rounded-xl font-medium transition-all duration-300 hover:scale-105 hover:shadow-lg hover:shadow-gray-500/25 text-center border border-white/20"
+           aria-label="Back to Dashboard" title="Back to Dashboard">
+          <span class="relative z-10 flex items-center justify-center gap-2">
+            <span class="transition-transform group-hover:-translate-x-1">←</span> Back to Dashboard
+          </span>
+          <div class="absolute inset-0 bg-gradient-to-r from-gray-700 to-gray-800 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+        </a>
+      </div>
     </div>
-    <table class="min-w-full bg-white rounded shadow">
-      <thead>
-        <tr>
-          <th class="py-2 px-4 border-b">Serial Number</th>
-          <th class="py-2 px-4 border-b">Description</th>
-          <th class="py-2 px-4 border-b">Status</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for device in devices %}
-        <tr class="hover:bg-gray-100">
-          <td class="py-2 px-4 border-b">
-            <a href="{% url 'device_detail' device.id %}" class="text-blue-700 underline">
-              {{ device.serial_number }}
-            </a>
-          </td>
-          <td class="py-2 px-4 border-b">{{ device.description }}</td>
-          <td class="py-2 px-4 border-b">
-            {% with assignment=device.faultlocatordeviceassignment_set.first %}
-              {% if assignment %}
-                <span class="inline-block bg-blue-100 text-blue-800 rounded px-2 py-0.5">Assigned to: {{ assignment.team.name }}</span>
-                <a href="{% url 'unassign_device' device.id %}" class="ml-2 inline-block px-2 py-0.5 bg-red-100 text-red-700 rounded hover:bg-red-200 transition text-xs font-semibold">Unassign</a>
-              {% else %}
-                <span class="inline-block bg-gray-100 text-gray-500 rounded px-2 py-0.5">Unassigned</span>
-              {% endif %}
+  </div>
+
+  <!-- Advanced Search/Filter Bar with Glassmorphism -->
+  <form method="get" class="mb-8 glass-card rounded-2xl p-6 backdrop-blur-md bg-white/40 border border-white/30 shadow-xl">
+    <div class="flex flex-col lg:flex-row gap-4 items-center">
+      <div class="flex-1 relative group">
+        <label for="search" class="sr-only">Search by Serial Number</label>
+        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+          <svg class="h-5 w-5 text-gray-400 group-focus-within:text-blue-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+        </div>
+        <input type="text" id="search" name="search" placeholder="Search by serial number..." value="{{ request.GET.search }}"
+               class="w-full pl-10 pr-4 py-3 border border-white/30 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white/50 backdrop-blur-sm transition-all duration-300 focus:bg-white/70"
+               aria-label="Search by Serial Number">
+      </div>
+      <div class="relative">
+        <label for="status" class="sr-only">Status</label>
+        <select id="status" name="status" 
+                class="pl-4 pr-10 py-3 border border-white/30 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white/50 backdrop-blur-sm transition-all duration-300 focus:bg-white/70 appearance-none cursor-pointer"
+                aria-label="Filter by Status">
+          <option value="">All Statuses</option>
+          <option value="available" {% if request.GET.status == 'available' %}selected{% endif %}>Available</option>
+          <option value="assigned" {% if request.GET.status == 'assigned' %}selected{% endif %}>Assigned</option>
+          <option value="in_use" {% if request.GET.status == 'in_use' %}selected{% endif %}>In Use</option>
+        </select>
+        <div class="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+          <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+          </svg>
+        </div>
+      </div>
+      <button type="submit" 
+              class="group relative overflow-hidden px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl hover:scale-105 transition-all duration-300 font-medium shadow-lg hover:shadow-purple-500/25" 
+              aria-label="Apply Filters">
+        <span class="relative z-10 flex items-center gap-2">
+          <span class="group-hover:rotate-12 transition-transform duration-300">🔍</span> Filter
+        </span>
+        <div class="absolute inset-0 bg-gradient-to-r from-indigo-700 to-purple-700 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+      </button>
+    </div>
+  </form>
+
+  <!-- Floating Animated Stats Cards -->
+  <div class="stats-grid grid grid-cols-2 md:grid-cols-4 gap-6 mb-8">
+    <div class="stat-card group floating-card glass-card p-6 rounded-2xl backdrop-blur-md bg-gradient-to-br from-blue-500/20 to-indigo-500/20 border border-white/30 shadow-xl hover:shadow-2xl transition-all duration-500 hover:-translate-y-2">
+      <div class="flex items-center">
+        <div class="text-4xl group-hover:scale-110 transition-transform duration-300">📱</div>
+        <div class="ml-4">
+          <p class="text-sm text-gray-600 font-medium">Total Devices</p>
+          <p class="text-3xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent counter-animate">{{ total_devices }}</p>
+        </div>
+      </div>
+      <div class="absolute inset-0 rounded-2xl bg-gradient-to-br from-blue-400/10 to-indigo-400/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+    </div>
+    
+    <div class="stat-card group floating-card glass-card p-6 rounded-2xl backdrop-blur-md bg-gradient-to-br from-green-500/20 to-emerald-500/20 border border-white/30 shadow-xl hover:shadow-2xl transition-all duration-500 hover:-translate-y-2">
+      <div class="flex items-center">
+        <div class="text-4xl group-hover:scale-110 transition-transform duration-300">✅</div>
+        <div class="ml-4">
+          <p class="text-sm text-gray-600 font-medium">Available</p>
+          <p class="text-3xl font-bold bg-gradient-to-r from-green-600 to-emerald-600 bg-clip-text text-transparent counter-animate">
+            {% with available=0 %}
+            {% for data in device_data %}{% if data.status == 'available' %}{% widthratio forloop.counter 1 1 as available %}{% endif %}{% endfor %}
+            {{ available }}
             {% endwith %}
-          </td>
-        </tr>
-        {% empty %}
-        <tr>
-          <td colspan="3" class="py-4 text-center text-gray-500">No devices found.</td>
-        </tr>
+          </p>
+        </div>
+      </div>
+      <div class="absolute inset-0 rounded-2xl bg-gradient-to-br from-green-400/10 to-emerald-400/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+    </div>
+    
+    <div class="stat-card group floating-card glass-card p-6 rounded-2xl backdrop-blur-md bg-gradient-to-br from-yellow-500/20 to-orange-500/20 border border-white/30 shadow-xl hover:shadow-2xl transition-all duration-500 hover:-translate-y-2">
+      <div class="flex items-center">
+        <div class="text-4xl group-hover:scale-110 transition-transform duration-300">👥</div>
+        <div class="ml-4">
+          <p class="text-sm text-gray-600 font-medium">Assigned</p>
+          <p class="text-3xl font-bold bg-gradient-to-r from-yellow-600 to-orange-600 bg-clip-text text-transparent counter-animate">
+            {% with assigned=0 %}
+            {% for data in device_data %}{% if data.status == 'assigned' %}{% widthratio forloop.counter 1 1 as assigned %}{% endif %}{% endfor %}
+            {{ assigned }}
+            {% endwith %}
+          </p>
+        </div>
+      </div>
+      <div class="absolute inset-0 rounded-2xl bg-gradient-to-br from-yellow-400/10 to-orange-400/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+    </div>
+    
+    <div class="stat-card group floating-card glass-card p-6 rounded-2xl backdrop-blur-md bg-gradient-to-br from-red-500/20 to-pink-500/20 border border-white/30 shadow-xl hover:shadow-2xl transition-all duration-500 hover:-translate-y-2">
+      <div class="flex items-center">
+        <div class="text-4xl group-hover:scale-110 transition-transform duration-300">🔥</div>
+        <div class="ml-4">
+          <p class="text-sm text-gray-600 font-medium">In Use</p>
+          <p class="text-3xl font-bold bg-gradient-to-r from-red-600 to-pink-600 bg-clip-text text-transparent counter-animate">
+            {% with inuse=0 %}
+            {% for data in device_data %}{% if data.status == 'in_use' %}{% widthratio forloop.counter 1 1 as inuse %}{% endif %}{% endfor %}
+            {{ inuse }}
+            {% endwith %}
+          </p>
+        </div>
+      </div>
+      <div class="absolute inset-0 rounded-2xl bg-gradient-to-br from-red-400/10 to-pink-400/10 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+    </div>
+  </div>
+
+  <!-- Modern Device List with Morphing Cards -->
+  <div class="device-list glass-card rounded-2xl backdrop-blur-md bg-white/40 border border-white/30 shadow-2xl overflow-hidden">
+    <div class="device-list-header bg-gradient-to-r from-indigo-600/90 to-purple-600/90 backdrop-blur-sm px-6 py-4 border-b border-white/20">
+      <div class="flex items-center justify-between">
+        <h2 class="text-xl font-bold text-white">Device Inventory</h2>
+        <div class="flex items-center gap-2">
+          <div class="animate-pulse w-2 h-2 bg-green-400 rounded-full"></div>
+          <span class="text-white/90 text-sm font-medium">{{ device_data|length }} devices online</span>
+        </div>
+      </div>
+    </div>
+    
+    {% if device_data %}
+      <div class="device-table divide-y divide-white/10">
+        {% for data in device_data %}
+        <div class="device-row group relative overflow-hidden hover:bg-white/20 transition-all duration-500 hover:scale-[1.02] hover:shadow-lg border-l-4 border-transparent hover:border-gradient-to-b hover:from-blue-500 hover:to-purple-500">
+          <div class="flex flex-col lg:flex-row lg:items-center justify-between p-6 relative z-10">
+            <div class="device-info flex-1 mb-4 lg:mb-0">
+              <div class="flex flex-wrap items-center mb-3 gap-3">
+                <h3 class="text-xl font-bold text-gray-800 group-hover:text-indigo-700 transition-colors duration-300">
+                  {{ data.device.serial_number }}
+                </h3>
+                <div class="relative">
+                  <span class="px-3 py-1 text-xs rounded-full font-bold uppercase tracking-wider shadow-lg transform group-hover:scale-110 transition-all duration-300
+                               {% if data.status == 'available' %}bg-gradient-to-r from-green-400 to-emerald-500 text-white
+                               {% elif data.status == 'assigned' %}bg-gradient-to-r from-yellow-400 to-orange-500 text-white
+                               {% elif data.status == 'in_use' %}bg-gradient-to-r from-red-400 to-pink-500 text-white
+                               {% else %}bg-gradient-to-r from-gray-400 to-gray-500 text-white{% endif %}"
+                        aria-label="Device Status" title="Device Status">
+                    {% if data.status == 'available' %}🟢 Available
+                    {% elif data.status == 'assigned' %}🟡 Assigned
+                    {% elif data.status == 'in_use' %}🔴 In Use
+                    {% else %}⚪ Unknown{% endif %}
+                  </span>
+                  <div class="absolute inset-0 rounded-full bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                </div>
+              </div>
+              
+              {% if data.device.description %}
+              <p class="text-sm text-gray-600 mb-2 group-hover:text-gray-700 transition-colors">{{ data.device.description }}</p>
+              {% endif %}
+              
+              {% if data.team %}
+              <div class="flex items-center gap-2 text-sm text-gray-600 group-hover:text-gray-700 transition-colors">
+                <span class="animate-pulse">👥</span> 
+                <strong>Team:</strong> {{ data.team.name }}
+                {% if data.team.current_depot %}
+                  <span class="mx-2">•</span>
+                  <span class="animate-pulse">📍</span> 
+                  <strong>Location:</strong> {{ data.team.current_depot.depot }}
+                {% endif %}
+              </div>
+              {% endif %}
+              
+              {% if data.current_fault %}
+              <div class="flex items-center gap-2 text-sm text-red-600 font-medium mt-2 animate-pulse">
+                <span>🔥</span> 
+                <strong>Active Fault:</strong> {{ data.current_fault.fault.description }}
+              </div>
+              {% endif %}
+            </div>
+            
+            <div class="device-actions flex flex-wrap gap-2">
+              <a href="{% url 'device_detail' data.device.id %}"
+                 class="group/btn relative overflow-hidden px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-lg text-sm font-medium transition-all duration-300 hover:scale-105 hover:shadow-lg shadow-blue-500/25"
+                 aria-label="View Device Details" title="View Device Details">
+                <span class="relative z-10">👁️ View</span>
+                <div class="absolute inset-0 bg-gradient-to-r from-blue-600 to-indigo-700 opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300"></div>
+              </a>
+              
+              {% if can_edit %}
+              <a href="{% url 'edit_device' data.device.id %}"
+                 class="group/btn relative overflow-hidden px-4 py-2 bg-gradient-to-r from-gray-500 to-gray-600 text-white rounded-lg text-sm font-medium transition-all duration-300 hover:scale-105 hover:shadow-lg shadow-gray-500/25"
+                 aria-label="Edit Device" title="Edit Device">
+                <span class="relative z-10">✏️ Edit</span>
+                <div class="absolute inset-0 bg-gradient-to-r from-gray-600 to-gray-700 opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300"></div>
+              </a>
+              
+              {% if data.status == 'available' %}
+              <a href="{% url 'assign_device_to_team' %}?device_id={{ data.device.id }}"
+                 class="group/btn relative overflow-hidden px-4 py-2 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-lg text-sm font-medium transition-all duration-300 hover:scale-105 hover:shadow-lg shadow-green-500/25"
+                 aria-label="Assign Device to Team" title="Assign Device to Team">
+                <span class="relative z-10">➕ Assign</span>
+                <div class="absolute inset-0 bg-gradient-to-r from-green-600 to-emerald-700 opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300"></div>
+              </a>
+              {% elif data.status == 'assigned' %}
+              <a href="{% url 'unassign_device' data.device.id %}"
+                 class="group/btn relative overflow-hidden px-4 py-2 bg-gradient-to-r from-yellow-500 to-orange-600 text-white rounded-lg text-sm font-medium transition-all duration-300 hover:scale-105 hover:shadow-lg shadow-yellow-500/25"
+                 aria-label="Unassign Device" title="Unassign Device">
+                <span class="relative z-10">➖ Unassign</span>
+                <div class="absolute inset-0 bg-gradient-to-r from-yellow-600 to-orange-700 opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300"></div>
+              </a>
+              {% endif %}
+              {% endif %}
+            </div>
+          </div>
+          
+          <!-- Animated background gradient on hover -->
+          <div class="absolute inset-0 bg-gradient-to-r from-blue-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+          
+          <!-- Shimmer effect -->
+          <div class="absolute inset-0 -skew-x-12 bg-gradient-to-r from-transparent via-white/10 to-transparent opacity-0 group-hover:opacity-100 group-hover:animate-shimmer transition-opacity duration-300"></div>
+        </div>
         {% endfor %}
-      </tbody>
-    </table>
+      </div>
+    {% else %}
+      <div class="empty-state text-center py-16">
+        <div class="relative inline-block">
+          <div class="text-8xl mb-6 animate-bounce">📱</div>
+          <div class="absolute -top-2 -right-2 w-6 h-6 bg-red-500 rounded-full animate-ping"></div>
+        </div>
+        <h2 class="text-2xl font-bold text-gray-800 mb-3">No Devices Found</h2>
+        <p class="text-gray-600 mb-6 max-w-md mx-auto">Transform your fault management by creating your first cutting-edge locator device.</p>
+        <a href="{% url 'create_device' %}"
+           class="group relative overflow-hidden inline-block px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-xl font-bold transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-blue-500/30"
+           aria-label="Add First Device" title="Add First Device">
+          <span class="relative z-10 flex items-center gap-3">
+            <span class="group-hover:rotate-12 transition-transform duration-300">➕</span> 
+            Add First Device
+          </span>
+          <div class="absolute inset-0 bg-gradient-to-r from-blue-700 to-indigo-700 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+        </a>
+      </div>
+    {% endif %}
   </div>
 </div>
+
+<!-- Advanced CSS Loading Spinner with Morphing Animations -->
+<div id="loadingSpinner" class="hidden fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50">
+  <div class="relative">
+    <!-- Outer rotating ring -->
+    <div class="w-20 h-20 border-4 border-transparent border-t-blue-500 border-r-purple-500 rounded-full animate-spin"></div>
+    <!-- Inner pulsing circle -->
+    <div class="absolute inset-2 bg-gradient-to-br from-blue-400 to-purple-600 rounded-full animate-pulse opacity-75"></div>
+    <!-- Center dot -->
+    <div class="absolute inset-1/2 w-2 h-2 bg-white rounded-full transform -translate-x-1/2 -translate-y-1/2 animate-ping"></div>
+  </div>
+</div>
+
+<style>
+  /* Advanced CSS Concepts Implementation */
+  
+  /* Glassmorphism Effect */
+  .glass-card {
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    background: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+  }
+  
+  /* Floating Animation */
+  .floating-card {
+    animation: float 6s ease-in-out infinite;
+  }
+  
+  @keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+  }
+  
+  /* Counter Animation */
+  .counter-animate {
+    animation: countUp 2s ease-out forwards;
+  }
+  
+  @keyframes countUp {
+    from { opacity: 0; transform: scale(0.5); }
+    to { opacity: 1; transform: scale(1); }
+  }
+  
+  /* Text Fade In Animation */
+  .text-animate-fade-in {
+    animation: fadeInUp 1s ease-out forwards;
+  }
+  
+  @keyframes fadeInUp {
+    from { 
+      opacity: 0; 
+      transform: translateY(30px); 
+    }
+    to { 
+      opacity: 1; 
+      transform: translateY(0); 
+    }
+  }
+  
+  /* Shimmer Effect */
+  @keyframes shimmer {
+    0% { transform: translateX(-100%) skew(-12deg); }
+    100% { transform: translateX(200%) skew(-12deg); }
+  }
+  
+  .animate-shimmer {
+    animation: shimmer 1.5s ease-in-out;
+  }
+  
+  /* Advanced Hover Effects */
+  .device-row:focus-within {
+    outline: 2px solid #3b82f6;
+    outline-offset: 2px;
+    border-radius: 1rem;
+  }
+  
+  .device-actions a:focus {
+    outline: 2px solid #3b82f6;
+    outline-offset: 2px;
+  }
+  
+  /* Gradient Border Animation */
+  .hover\:border-gradient-to-b:hover {
+    border-image: linear-gradient(to bottom, #3b82f6, #8b5cf6) 1;
+  }
+  
+  /* Custom Scrollbar */
+  .device-list::-webkit-scrollbar {
+    width: 8px;
+  }
+  
+  .device-list::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+  }
+  
+  .device-list::-webkit-scrollbar-thumb {
+    background: linear-gradient(to bottom, #3b82f6, #8b5cf6);
+    border-radius: 10px;
+  }
+  
+  .device-list::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(to bottom, #2563eb, #7c3aed);
+  }
+  
+  /* Advanced Button Morphing */
+  .group\/btn:hover {
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  }
+  
+  /* Responsive Grid with CSS Grid Advanced Features */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+  }
+  
+  /* Advanced Pseudo-element Animations */
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s;
+  }
+  
+  .stat-card:hover::before {
+    left: 100%;
+  }
+  
+  /* CSS Variables for Dynamic Theming */
+  :root {
+    --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --success-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --warning-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    --danger-gradient: linear-gradient(135deg, #fc466b 0%, #3f5efb 100%);
+  }
+  
+  /* Advanced Clip-path Animations */
+  .clip-path-animate {
+    clip-path: polygon(0 0, 100% 0, 100% 85%, 0 100%);
+    transition: clip-path 0.3s ease;
+  }
+  
+  .clip-path-animate:hover {
+    clip-path: polygon(0 0, 100% 0, 100% 100%, 0 85%);
+  }
+  
+  /* CSS Masking for Advanced Effects */
+  .masked-gradient {
+    mask: linear-gradient(45deg, transparent 30%, white 70%);
+    -webkit-mask: linear-gradient(45deg, transparent 30%, white 70%);
+  }
+  
+  /* Advanced Filter Effects */
+  .filter-effects:hover {
+    filter: 
+      drop-shadow(0 20px 25px rgba(0, 0, 0, 0.15))
+      hue-rotate(15deg)
+      saturate(1.2)
+      brightness(1.1);
+  }
+  
+  /* CSS Container Queries Support */
+  @container (min-width: 768px) {
+    .device-row {
+      flex-direction: row;
+      align-items: center;
+    }
+  }
+  
+  /* Advanced CSS Logical Properties */
+  .logical-spacing {
+    padding-inline: 1rem;
+    margin-block: 0.5rem;
+    border-inline-start: 4px solid transparent;
+  }
+  
+  /* Modern CSS Nesting (when supported) */
+  .modern-card {
+    transition: all 0.3s ease;
+    
+    &:hover {
+      transform: translateY(-8px) scale(1.02);
+      
+      .card-content {
+        opacity: 0.9;
+      }
+      
+      .card-actions {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+  }
+  
+  /* CSS Scroll Snapping */
+  .scroll-snap-container {
+    scroll-snap-type: y mandatory;
+  }
+  
+  .scroll-snap-item {
+    scroll-snap-align: start;
+  }
+  
+  /* Advanced CSS Grid Areas */
+  .device-grid {
+    display: grid;
+    grid-template-areas: 
+      "info info actions"
+      "details details actions";
+    grid-template-columns: 1fr 1fr auto;
+    gap: 1rem;
+  }
+  
+  .device-info { grid-area: info; }
+  .device-details { grid-area: details; }
+  .device-actions { grid-area: actions; }
+  
+  /* CSS Custom Properties with Calc() */
+  .dynamic-sizing {
+    --base-size: 1rem;
+    --scale-factor: 1.5;
+    font-size: calc(var(--base-size) * var(--scale-factor));
+    padding: calc(var(--base-size) * 0.5) calc(var(--base-size) * 1);
+  }
+  
+  /* Modern CSS Color Functions */
+  .modern-colors {
+    background: oklch(70% 0.2 180);
+    border-color: oklch(60% 0.15 180);
+    color: oklch(30% 0.1 180);
+  }
+  
+  /* CSS View Transitions API Support */
+  @supports (view-transition-name: auto) {
+    .view-transition {
+      view-transition-name: device-card;
+    }
+  }
+</style>
 {% endblock %}

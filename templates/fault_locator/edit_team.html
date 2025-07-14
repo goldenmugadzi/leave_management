@@ -1,87 +1,555 @@
-<!-- filepath: d:\b\templates\fault_locator\edit_team.html -->
 {% extends "admin_layout.html" %}
-{% block content %}
-<div class="flex justify-center items-center min-h-[60vh]">
-  <div class="bg-white shadow-xl rounded-lg p-8 w-full max-w-lg">
-    <h2 class="font-bold text-2xl mb-6 text-gulf-blue-900 flex items-center gap-2">
-      <svg class="w-6 h-6 text-gulf-blue-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4"></path></svg>
-      Edit Team: <span class="ml-2">{{ team.name }}</span>
-    </h2>
 
-    <div class="mb-6">
-      <div class="flex items-center justify-between mb-2">
-        <h3 class="text-lg font-semibold text-gulf-blue-800">Current Members</h3>
-        <button id="showAddMember" type="button" class="inline-flex items-center px-3 py-1 bg-gulf-blue-500 text-white rounded hover:bg-gulf-blue-700 transition text-sm font-medium">
-          <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4"></path></svg>
-          Add Member
-        </button>
-      </div>
-      <div class="flex flex-wrap gap-2">
-        {% for member in team.members.all %}
-          <span class="inline-flex items-center bg-gulf-blue-200 text-gulf-blue-900 rounded-full px-3 py-1 text-sm font-medium">
-            {{ member }}
-            <a href="{% url 'remove_team_member' team.id member.id %}" class="ml-2 text-red-500 hover:text-red-700" title="Remove">
-              &times;
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-violet-50 via-white to-cyan-50 p-6">
+  <div class="max-w-7xl mx-auto">
+    
+    <!-- Floating Header with Advanced Glassmorphism -->
+    <div class="glass-header mb-8 p-8 rounded-3xl backdrop-blur-xl bg-white/30 border border-white/20 shadow-2xl relative overflow-hidden">
+      <div class="absolute inset-0 bg-gradient-to-r from-violet-500/10 via-purple-500/10 to-indigo-500/10 animate-gradient-shift"></div>
+      <div class="relative z-10">
+        <div class="flex flex-col lg:flex-row justify-between items-center gap-6">
+          <div class="text-center lg:text-left">
+            <div class="flex items-center gap-4 mb-4">
+              <div class="team-avatar w-16 h-16 bg-gradient-to-br from-violet-500 to-purple-600 rounded-2xl flex items-center justify-center text-white text-2xl font-bold shadow-xl animate-pulse">
+                {{ team.name|first }}
+              </div>
+              <div>
+                <h1 class="text-4xl font-black bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent mb-2">
+                  Edit Team: {{ team.name }}
+                </h1>
+                <p class="text-gray-600 text-lg">Advanced team management and configuration</p>
+              </div>
+            </div>
+          </div>
+          
+          <div class="flex gap-4">
+            <a href="{% url 'team_list' %}" 
+               class="group relative overflow-hidden px-6 py-3 bg-gradient-to-r from-slate-600 to-gray-700 text-white rounded-2xl font-bold shadow-2xl hover:shadow-slate-500/25 transition-all duration-500 hover:scale-110">
+              <span class="relative z-10 flex items-center gap-3">
+                <span class="group-hover:-translate-x-2 transition-transform duration-300">←</span>
+                Back to Teams
+              </span>
+              <div class="absolute inset-0 bg-gradient-to-r from-slate-700 to-gray-800 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
             </a>
-          </span>
-        {% empty %}
-          <span class="text-gray-400">No members in this team.</span>
-        {% endfor %}
+            
+            {% if can_delete %}
+            <a href="{% url 'delete_team' team.id %}" 
+               class="group relative overflow-hidden px-6 py-3 bg-gradient-to-r from-red-600 to-pink-600 text-white rounded-2xl font-bold shadow-2xl hover:shadow-red-500/25 transition-all duration-500 hover:scale-110">
+              <span class="relative z-10 flex items-center gap-3">
+                <span class="group-hover:rotate-180 transition-transform duration-500">🗑️</span>
+                Delete Team
+              </span>
+              <div class="absolute inset-0 bg-gradient-to-r from-red-700 to-pink-700 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            </a>
+            {% endif %}
+          </div>
+        </div>
       </div>
     </div>
 
-    <form method="post" class="space-y-5">
-      {% csrf_token %}
-      {% for field in form %}
-        <div>
-          <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">{{ field.label }}</label>
-          {{ field }}
-          {% if field.help_text %}
-            <p class="text-xs text-gray-400 mt-1">{{ field.help_text }}</p>
-          {% endif %}
-          {% for error in field.errors %}
-            <p class="text-xs text-red-500 mt-1">{{ error }}</p>
-          {% endfor %}
+    <!-- Advanced Grid Layout with Morphing Cards -->
+    <div class="grid grid-cols-1 xl:grid-cols-3 gap-8">
+      
+      <!-- Left Column: Team Information & Device -->
+      <div class="space-y-8">
+        
+        <!-- Team Name Card with Advanced Styling -->
+        <div class="team-card group relative overflow-hidden rounded-3xl backdrop-blur-lg bg-gradient-to-br from-white/60 to-white/30 border border-white/30 shadow-2xl hover:shadow-3xl transition-all duration-700 hover:-translate-y-2 hover:scale-105">
+          <div class="absolute inset-0 opacity-0 group-hover:opacity-10 transition-opacity duration-700">
+            <div class="absolute inset-0 bg-gradient-to-br from-violet-400 via-purple-400 to-indigo-400"></div>
+          </div>
+          
+          <div class="relative z-10 p-8">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-3">
+              <span class="text-violet-600 animate-pulse">📝</span>
+              Team Information
+            </h2>
+            
+            <form method="post" class="space-y-6">
+              {% csrf_token %}
+              <input type="hidden" name="update_name" value="1">
+              
+              <div class="form-group relative">
+                <label for="{{ name_form.name.id_for_label }}" 
+                       class="block text-sm font-bold text-gray-700 mb-3 uppercase tracking-wider">
+                  Team Name
+                </label>
+                <div class="relative group/input">
+                  {{ name_form.name.as_widget }}
+                  <div class="absolute inset-0 rounded-2xl bg-gradient-to-r from-violet-500/20 to-purple-500/20 opacity-0 group-focus-within/input:opacity-100 transition-all duration-500 -z-10 blur-xl"></div>
+                </div>
+              </div>
+              
+              <button type="submit" 
+                      class="group relative overflow-hidden w-full px-6 py-4 bg-gradient-to-r from-violet-600 to-purple-600 text-white rounded-2xl font-bold shadow-2xl hover:shadow-violet-500/30 transition-all duration-500 hover:scale-105">
+                <span class="relative z-10 flex items-center justify-center gap-3">
+                  <span class="group-hover:rotate-180 transition-transform duration-500">💫</span>
+                  Update Name
+                </span>
+                <div class="absolute inset-0 bg-gradient-to-r from-violet-700 to-purple-700 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+              </button>
+            </form>
+          </div>
+          
+          <!-- Shimmer Effect -->
+          <div class="absolute inset-0 -skew-x-12 bg-gradient-to-r from-transparent via-white/20 to-transparent opacity-0 group-hover:opacity-100 group-hover:animate-shimmer transition-opacity duration-300"></div>
         </div>
-      {% endfor %}
-      <div class="flex gap-4 mt-6">
-        <button type="submit" class="px-6 py-2 bg-gulf-blue-600 text-white rounded hover:bg-gulf-blue-700 focus:ring-2 focus:ring-gulf-blue-400 transition">Save Changes</button>
-        <a href="{% url 'team_list' %}" class="px-6 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 transition">Cancel</a>
+
+        <!-- Device Assignment Card with Advanced Visual Feedback -->
+        <div class="device-card group relative overflow-hidden rounded-3xl backdrop-blur-lg bg-gradient-to-br from-white/60 to-white/30 border border-white/30 shadow-2xl hover:shadow-3xl transition-all duration-700 hover:-translate-y-2 hover:scale-105">
+          <div class="relative z-10 p-8">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-3">
+              <span class="text-emerald-600 animate-pulse">📱</span>
+              Device Assignment
+            </h2>
+            
+            {% if device_assignment %}
+            <div class="device-assigned p-6 bg-gradient-to-r from-emerald-50 to-green-50 border border-emerald-200 rounded-2xl relative overflow-hidden">
+              <div class="absolute inset-0 bg-gradient-to-r from-emerald-400/10 to-green-400/10 animate-pulse"></div>
+              <div class="relative z-10">
+                <div class="flex items-center justify-between mb-4">
+                  <div class="flex items-center gap-4">
+                    <div class="device-icon w-12 h-12 bg-gradient-to-br from-emerald-500 to-green-600 rounded-xl flex items-center justify-center text-white text-xl shadow-lg">
+                      📱
+                    </div>
+                    <div>
+                      <h3 class="text-xl font-bold text-emerald-800">{{ device_assignment.device.serial_number }}</h3>
+                      <p class="text-emerald-600">
+                        {% if device_assignment.device.description %}
+                          {{ device_assignment.device.description }}
+                        {% else %}
+                          Fault locator device
+                        {% endif %}
+                      </p>
+                    </div>
+                  </div>
+                  <div class="status-indicator px-4 py-2 bg-gradient-to-r from-emerald-400 to-green-500 text-white rounded-full text-xs font-bold uppercase tracking-wide animate-pulse">
+                    ✅ Active
+                  </div>
+                </div>
+                <div class="metadata text-sm text-emerald-600 mb-4">
+                  <p>📅 Assigned: {{ device_assignment.assigned_at|date:"M d, Y H:i" }}</p>
+                </div>
+                <a href="{% url 'unassign_device' device_assignment.device.id %}" 
+                   class="group/action relative overflow-hidden inline-block px-6 py-3 bg-gradient-to-r from-amber-500 to-yellow-600 text-white rounded-xl font-medium transition-all duration-300 hover:scale-105 hover:shadow-lg">
+                  <span class="relative z-10 flex items-center gap-2">
+                    <span class="group-hover/action:rotate-12 transition-transform duration-300">🔄</span>
+                    Unassign Device
+                  </span>
+                  <div class="absolute inset-0 bg-gradient-to-r from-amber-600 to-yellow-700 opacity-0 group-hover/action:opacity-100 transition-opacity duration-300"></div>
+                </a>
+              </div>
+            </div>
+            {% else %}
+            <div class="device-unassigned p-6 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-2xl relative overflow-hidden">
+              <div class="absolute inset-0 bg-gradient-to-r from-amber-400/10 to-orange-400/10 animate-pulse"></div>
+              <div class="relative z-10 text-center">
+                <div class="mb-6">
+                  <div class="text-6xl mb-4 animate-bounce">⚠️</div>
+                  <h3 class="text-xl font-bold text-amber-800 mb-2">No Device Assigned</h3>
+                  <p class="text-amber-600 mb-6">This team needs a device before deployment or fault assignment.</p>
+                </div>
+                <a href="{% url 'assign_device_to_team' %}?team_id={{ team.id }}" 
+                   class="group/action relative overflow-hidden inline-block px-8 py-4 bg-gradient-to-r from-amber-500 to-orange-600 text-white rounded-2xl font-bold transition-all duration-500 hover:scale-110 hover:shadow-2xl">
+                  <span class="relative z-10 flex items-center gap-3">
+                    <span class="group-hover/action:rotate-180 transition-transform duration-500">🔧</span>
+                    Assign Device
+                  </span>
+                  <div class="absolute inset-0 bg-gradient-to-r from-amber-600 to-orange-700 opacity-0 group-hover/action:opacity-100 transition-opacity duration-300"></div>
+                </a>
+              </div>
+            </div>
+            {% endif %}
+          </div>
+        </div>
       </div>
-    </form>
+
+      <!-- Middle Column: Team Members -->
+      <div class="members-section">
+        <div class="members-card group relative overflow-hidden rounded-3xl backdrop-blur-lg bg-gradient-to-br from-white/60 to-white/30 border border-white/30 shadow-2xl hover:shadow-3xl transition-all duration-700">
+          <div class="relative z-10 p-8">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-3">
+              <span class="text-blue-600 animate-pulse">👥</span>
+              Team Members
+              <span class="px-3 py-1 bg-gradient-to-r from-blue-100 to-indigo-100 text-blue-800 rounded-full text-sm font-bold">
+                {{ team.members.count }}
+              </span>
+            </h2>
+            
+            <!-- Add Member Form with Advanced Styling -->
+            <div class="add-member-section mb-8 p-6 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-2xl relative overflow-hidden">
+              <div class="absolute inset-0 bg-gradient-to-r from-blue-400/5 to-indigo-400/5"></div>
+              <div class="relative z-10">
+                <h3 class="text-lg font-bold text-blue-800 mb-4 flex items-center gap-2">
+                  <span>➕</span>
+                  Add New Member
+                </h3>
+                <form method="post" class="flex gap-4">
+                  {% csrf_token %}
+                  <input type="hidden" name="add_member" value="1">
+                  
+                  <div class="flex-1 relative group/select">
+                    {{ add_form.member.as_widget }}
+                    <div class="absolute inset-0 rounded-xl bg-gradient-to-r from-blue-500/20 to-indigo-500/20 opacity-0 group-focus-within/select:opacity-100 transition-all duration-500 -z-10 blur-xl"></div>
+                  </div>
+                  
+                  <button type="submit" 
+                          class="group/btn relative overflow-hidden px-6 py-3 bg-gradient-to-r from-emerald-600 to-green-600 text-white rounded-xl font-bold shadow-xl hover:shadow-emerald-500/30 transition-all duration-300 hover:scale-105">
+                    <span class="relative z-10 flex items-center gap-2">
+                      <span class="group-hover/btn:rotate-180 transition-transform duration-300">➕</span>
+                      Add
+                    </span>
+                    <div class="absolute inset-0 bg-gradient-to-r from-emerald-700 to-green-700 opacity-0 group-hover/btn:opacity-100 transition-opacity duration-300"></div>
+                  </button>
+                </form>
+              </div>
+            </div>
+            
+            <!-- Current Members with Advanced Grid -->
+            <div class="current-members">
+              <h3 class="text-lg font-bold text-gray-800 mb-4">Current Members</h3>
+              
+              {% if team.members.all %}
+              <div class="members-grid space-y-4">
+                {% for member in team.members.all %}
+                <div class="member-card group/member relative overflow-hidden p-4 bg-gradient-to-r from-slate-50 to-gray-50 border border-slate-200 rounded-xl hover:scale-105 transition-all duration-300 hover:shadow-lg">
+                  <div class="absolute inset-0 bg-gradient-to-r from-slate-100/50 to-gray-100/50 opacity-0 group-hover/member:opacity-100 transition-opacity duration-300"></div>
+                  <div class="relative z-10 flex items-center justify-between">
+                    <div class="member-info flex items-center gap-4">
+                      <div class="member-avatar w-12 h-12 bg-gradient-to-br from-slate-500 to-gray-600 rounded-xl flex items-center justify-center text-white font-bold shadow-lg">
+                        {{ member.get_full_name|first }}
+                      </div>
+                      <div>
+                        <h4 class="font-bold text-gray-800">{{ member.get_full_name }}</h4>
+                        <p class="text-sm text-gray-600">
+                          {{ member.username }}
+                          {% if member.designation %}
+                            • {{ member.designation.description }}
+                          {% endif %}
+                        </p>
+                        {% if member.depot %}
+                        <p class="text-xs text-gray-500 flex items-center gap-1">
+                          <span>📍</span>
+                          {{ member.depot.depot }}
+                        </p>
+                        {% endif %}
+                      </div>
+                    </div>
+                    
+                    <form method="post" class="inline">
+                      {% csrf_token %}
+                      <input type="hidden" name="remove_member" value="1">
+                      <input type="hidden" name="member_id" value="{{ member.id }}">
+                      <button type="submit" 
+                              onclick="return confirm('Are you sure you want to remove {{ member.get_full_name }} from this team?')"
+                              class="group/remove relative overflow-hidden px-4 py-2 bg-gradient-to-r from-red-500 to-pink-600 text-white rounded-lg font-medium transition-all duration-300 hover:scale-105 hover:shadow-lg">
+                        <span class="relative z-10 flex items-center gap-2">
+                          <span class="group-hover/remove:rotate-180 transition-transform duration-300">❌</span>
+                          Remove
+                        </span>
+                        <div class="absolute inset-0 bg-gradient-to-r from-red-600 to-pink-700 opacity-0 group-hover/remove:opacity-100 transition-opacity duration-300"></div>
+                      </button>
+                    </form>
+                  </div>
+                </div>
+                {% endfor %}
+              </div>
+              {% else %}
+              <div class="no-members p-8 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 rounded-2xl text-center relative overflow-hidden">
+                <div class="absolute inset-0 bg-gradient-to-r from-amber-400/10 to-orange-400/10 animate-pulse"></div>
+                <div class="relative z-10">
+                  <div class="text-6xl mb-4 animate-bounce">👥</div>
+                  <h3 class="text-xl font-bold text-amber-800 mb-2">No Team Members</h3>
+                  <p class="text-amber-600">Add some team members to get started.</p>
+                </div>
+              </div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Column: Actions & Assignments -->
+      <div class="space-y-8">
+        
+        <!-- Active Assignments -->
+        <div class="assignments-card group relative overflow-hidden rounded-3xl backdrop-blur-lg bg-gradient-to-br from-white/60 to-white/30 border border-white/30 shadow-2xl hover:shadow-3xl transition-all duration-700">
+          <div class="relative z-10 p-8">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-3">
+              <span class="text-red-600 animate-pulse">🔥</span>
+              Active Assignments
+            </h2>
+            
+            {% if current_assignments %}
+            <div class="assignments-list space-y-4">
+              {% for assignment in current_assignments %}
+              <div class="assignment-card group/assignment relative overflow-hidden p-4 bg-gradient-to-r from-red-50 to-pink-50 border border-red-200 rounded-xl hover:scale-105 transition-all duration-300">
+                <div class="absolute inset-0 bg-gradient-to-r from-red-100/50 to-pink-100/50 opacity-0 group-hover/assignment:opacity-100 transition-opacity duration-300"></div>
+                <div class="relative z-10">
+                  <div class="flex items-center justify-between mb-3">
+                    <h3 class="font-bold text-red-800 flex items-center gap-2">
+                      <span>🔥</span>
+                      {{ assignment.fault.description }}
+                    </h3>
+                    <div class="status-badge px-3 py-1 bg-gradient-to-r from-red-400 to-pink-500 text-white rounded-full text-xs font-bold animate-pulse">
+                      ACTIVE
+                    </div>
+                  </div>
+                  <p class="text-sm text-red-600 mb-2 flex items-center gap-2">
+                    <span>📍</span>
+                    {{ assignment.fault.depot.depot }}
+                  </p>
+                  <p class="text-xs text-red-500 mb-4">
+                    Started: {{ assignment.assigned_at|date:"M d, Y H:i" }}
+                  </p>
+                  <a href="{% url 'field_update' assignment.fault.id %}" 
+                     class="group/update relative overflow-hidden inline-block px-4 py-2 bg-gradient-to-r from-red-500 to-pink-600 text-white rounded-lg font-medium transition-all duration-300 hover:scale-105">
+                    <span class="relative z-10 flex items-center gap-2">
+                      <span class="group-hover/update:rotate-12 transition-transform duration-300">📝</span>
+                      Update Status
+                    </span>
+                    <div class="absolute inset-0 bg-gradient-to-r from-red-600 to-pink-700 opacity-0 group-hover/update:opacity-100 transition-opacity duration-300"></div>
+                  </a>
+                </div>
+              </div>
+              {% endfor %}
+            </div>
+            {% else %}
+            <div class="no-assignments p-6 bg-gradient-to-r from-emerald-50 to-green-50 border border-emerald-200 rounded-2xl text-center relative overflow-hidden">
+              <div class="absolute inset-0 bg-gradient-to-r from-emerald-400/10 to-green-400/10 animate-pulse"></div>
+              <div class="relative z-10">
+                <div class="text-5xl mb-4 animate-bounce">✅</div>
+                <h3 class="text-xl font-bold text-emerald-800 mb-2">No Active Assignments</h3>
+                <p class="text-emerald-600">This team is available for new fault assignments.</p>
+              </div>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Team Actions -->
+        <div class="actions-card group relative overflow-hidden rounded-3xl backdrop-blur-lg bg-gradient-to-br from-white/60 to-white/30 border border-white/30 shadow-2xl hover:shadow-3xl transition-all duration-700">
+          <div class="relative z-10 p-8">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6 flex items-center gap-3">
+              <span class="text-purple-600 animate-pulse">⚡</span>
+              Team Actions
+            </h2>
+            
+            <div class="actions-grid space-y-4">
+              {% if team.current_depot %}
+              <!-- Team is deployed -->
+              <div class="action-item p-6 bg-gradient-to-r from-purple-50 to-indigo-50 border border-purple-200 rounded-2xl relative overflow-hidden">
+                <div class="absolute inset-0 bg-gradient-to-r from-purple-400/10 to-indigo-400/10 animate-pulse"></div>
+                <div class="relative z-10">
+                  <div class="flex items-center gap-4 mb-4">
+                    <div class="icon-container w-12 h-12 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-xl flex items-center justify-center text-white text-xl shadow-lg">
+                      📍
+                    </div>
+                    <div>
+                      <h3 class="text-xl font-bold text-purple-800">Currently Deployed</h3>
+                      <p class="text-purple-600">{{ team.current_depot.depot }}</p>
+                    </div>
+                  </div>
+                  <a href="{% url 'recall_team' team.id %}" 
+                     class="group/recall relative overflow-hidden inline-block px-6 py-3 bg-gradient-to-r from-purple-500 to-indigo-600 text-white rounded-xl font-bold transition-all duration-300 hover:scale-105 hover:shadow-lg">
+                    <span class="relative z-10 flex items-center gap-3">
+                      <span class="group-hover/recall:rotate-180 transition-transform duration-500">🔄</span>
+                      Recall Team
+                    </span>
+                    <div class="absolute inset-0 bg-gradient-to-r from-purple-600 to-indigo-700 opacity-0 group-hover/recall:opacity-100 transition-opacity duration-300"></div>
+                  </a>
+                </div>
+              </div>
+              {% else %}
+              <!-- Team is available for deployment -->
+              {% if device_assignment %}
+              <div class="action-item p-6 bg-gradient-to-r from-emerald-50 to-green-50 border border-emerald-200 rounded-2xl relative overflow-hidden">
+                <div class="absolute inset-0 bg-gradient-to-r from-emerald-400/10 to-green-400/10 animate-pulse"></div>
+                <div class="relative z-10">
+                  <div class="flex items-center gap-4 mb-4">
+                    <div class="icon-container w-12 h-12 bg-gradient-to-br from-emerald-500 to-green-600 rounded-xl flex items-center justify-center text-white text-xl shadow-lg">
+                      🚀
+                    </div>
+                    <div>
+                      <h3 class="text-xl font-bold text-emerald-800">Ready for Deployment</h3>
+                      <p class="text-emerald-600">Team has device and can be deployed</p>
+                    </div>
+                  </div>
+                  <a href="{% url 'deploy_team_specific' team.id %}" 
+                     class="group/deploy relative overflow-hidden inline-block px-6 py-3 bg-gradient-to-r from-emerald-500 to-green-600 text-white rounded-xl font-bold transition-all duration-300 hover:scale-105 hover:shadow-lg">
+                    <span class="relative z-10 flex items-center gap-3">
+                      <span class="group-hover/deploy:translate-x-2 transition-transform duration-300">🚀</span>
+                      Deploy Team
+                    </span>
+                    <div class="absolute inset-0 bg-gradient-to-r from-emerald-600 to-green-700 opacity-0 group-hover/deploy:opacity-100 transition-opacity duration-300"></div>
+                  </a>
+                </div>
+              </div>
+              {% endif %}
+              {% endif %}
+              
+              <!-- Assignment Actions -->
+              <div class="action-item p-6 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-2xl relative overflow-hidden">
+                <div class="absolute inset-0 bg-gradient-to-r from-blue-400/10 to-indigo-400/10"></div>
+                <div class="relative z-10">
+                  <div class="flex items-center gap-4 mb-4">
+                    <div class="icon-container w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center text-white text-xl shadow-lg">
+                      📋
+                    </div>
+                    <div>
+                      <h3 class="text-xl font-bold text-blue-800">Fault Assignment</h3>
+                      <p class="text-blue-600">Assign faults to this team</p>
+                    </div>
+                  </div>
+                  <div class="actions-buttons flex gap-3">
+                    <a href="{% url 'simple_assign_fault' %}?team_id={{ team.id }}" 
+                       class="group/quick flex-1 relative overflow-hidden px-4 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-xl font-medium text-center transition-all duration-300 hover:scale-105">
+                      <span class="relative z-10 flex items-center justify-center gap-2">
+                        <span class="group-hover/quick:scale-125 transition-transform duration-300">⚡</span>
+                        Quick Assign
+                      </span>
+                      <div class="absolute inset-0 bg-gradient-to-r from-blue-600 to-indigo-700 opacity-0 group-hover/quick:opacity-100 transition-opacity duration-300"></div>
+                    </a>
+                    <a href="{% url 'advanced_fault_assignment' %}" 
+                       class="group/advanced flex-1 relative overflow-hidden px-4 py-3 bg-gradient-to-r from-indigo-500 to-purple-600 text-white rounded-xl font-medium text-center transition-all duration-300 hover:scale-105">
+                      <span class="relative z-10 flex items-center justify-center gap-2">
+                        <span class="group-hover/advanced:rotate-12 transition-transform duration-300">🎯</span>
+                        Advanced
+                      </span>
+                      <div class="absolute inset-0 bg-gradient-to-r from-indigo-600 to-purple-700 opacity-0 group-hover/advanced:opacity-100 transition-opacity duration-300"></div>
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 
-<!-- Add Member Modal (hidden by default) -->
-<div id="addMemberModal" class="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50 hidden">
-  <div class="bg-white rounded-lg shadow-lg p-6 w-full max-w-sm">
-    <h4 class="font-bold text-lg mb-4">Add Member</h4>
-    <form method="post" action="{% url 'add_team_member' team.id %}">
-      {% csrf_token %}
-      <div class="mb-4">
-        <label for="id_member" class="block text-sm font-medium text-gray-700 mb-1">Select User</label>
-        <select name="member" id="id_member" class="block w-full rounded border-gray-300">
-          {% for user in users %}
-            <option value="{{ user.id }}">{{ user }}</option>
-          {% endfor %}
-        </select>
-      </div>
-      <div class="flex gap-2">
-        <button type="submit" class="px-4 py-1 bg-gulf-blue-600 text-white rounded hover:bg-gulf-blue-700">Add</button>
-        <button type="button" id="closeAddMember" class="px-4 py-1 bg-gray-200 text-gray-700 rounded hover:bg-gray-300">Cancel</button>
-      </div>
-    </form>
-  </div>
-</div>
-{% endblock %}
-
-{% block extra_js %}
-<script>
-  document.getElementById('showAddMember').onclick = function() {
-    document.getElementById('addMemberModal').classList.remove('hidden');
-  };
-  document.getElementById('closeAddMember').onclick = function() {
-    document.getElementById('addMemberModal').classList.add('hidden');
-  };
-</script>
+<style>
+  /* Advanced Form Input Styling */
+  input[type="text"], select {
+    width: 100%;
+    padding: 1rem 1.5rem;
+    border: 2px solid rgba(139, 92, 246, 0.2);
+    border-radius: 1rem;
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(10px);
+    font-size: 1rem;
+    font-weight: 500;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    outline: none;
+  }
+  
+  input[type="text"]:focus, select:focus {
+    border-color: rgba(139, 92, 246, 0.6);
+    background: rgba(255, 255, 255, 0.95);
+    transform: translateY(-2px);
+    box-shadow: 
+      0 10px 25px rgba(139, 92, 246, 0.15),
+      0 0 0 4px rgba(139, 92, 246, 0.1);
+  }
+  
+  /* Advanced Glassmorphism */
+  .glass-header {
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    background: rgba(255, 255, 255, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+  }
+  
+  /* Advanced Animation Keyframes */
+  @keyframes gradient-shift {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+  }
+  
+  @keyframes shimmer {
+    0% { transform: translateX(-100%) skewX(-15deg); }
+    100% { transform: translateX(200%) skewX(-15deg); }
+  }
+  
+  .animate-gradient-shift {
+    background-size: 200% 200%;
+    animation: gradient-shift 6s ease infinite;
+  }
+  
+  .animate-shimmer {
+    animation: shimmer 2s ease-in-out;
+  }
+  
+  /* Advanced 3D Transform Effects */
+  .team-card, .device-card, .members-card, .assignments-card, .actions-card {
+    transform-style: preserve-3d;
+    perspective: 1000px;
+  }
+  
+  .team-card:hover, .device-card:hover, .members-card:hover, .assignments-card:hover, .actions-card:hover {
+    transform: translateY(-8px) rotateX(2deg) rotateY(1deg) scale(1.02);
+  }
+  
+  /* Advanced CSS Grid with Container Queries */
+  @container (max-width: 1200px) {
+    .grid {
+      grid-template-columns: 1fr;
+    }
+  }
+  
+  @container (min-width: 1201px) {
+    .grid {
+      grid-template-columns: 1fr 1.2fr 1fr;
+    }
+  }
+  
+  /* Advanced Pseudo-element Effects */
+  .member-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.1) 50%, transparent 70%);
+    transform: translateX(-100%);
+    transition: transform 0.6s;
+  }
+  
+  .member-card:hover::before {
+    transform: translateX(100%);
+  }
+  
+  /* Modern CSS Features */
+  @supports (backdrop-filter: blur(20px)) {
+    .glass-header, .team-card, .device-card, .members-card, .assignments-card, .actions-card {
+      background: rgba(255, 255, 255, 0.15);
+    }
+  }
+  
+  @supports not (backdrop-filter: blur(20px)) {
+    .glass-header, .team-card, .device-card, .members-card, .assignments-card, .actions-card {
+      background: rgba(255, 255, 255, 0.9);
+    }
+  }
+  
+  /* Advanced Media Queries */
+  @media (prefers-reduced-motion: reduce) {
+    * {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+  
+  @media (prefers-color-scheme: dark) {
+    .glass-header, .team-card, .device-card, .members-card, .assignments-card, .actions-card {
+      background: rgba(0, 0, 0, 0.3);
+      border-color: rgba(255, 255, 255, 0.1);
+    }
+  }
+</style>
 {% endblock %}
