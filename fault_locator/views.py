@@ -281,7 +281,7 @@ def fault_locator_dashboard(request):
     user_role = get_user_fault_locator_role(user_profile)
     is_senior = is_senior_foreman(user_profile)
     is_depot_fp = is_depot_foreperson(user_profile, user_profile.depot if user_profile and hasattr(user_profile, 'depot') and user_profile.depot else None)
-    can_manage_devices = can_manage_devices(user_profile)
+    user_can_manage_devices = can_manage_devices(user_profile)
     user_teams = user_profile.fault_locator_teams.all() if user_profile else []
     is_team_member = user_teams.exists()
     is_team_lead = is_team_leader(user_profile)
@@ -296,7 +296,7 @@ def fault_locator_dashboard(request):
         'user_profile': user_profile,
         'is_senior_foreman': is_senior,
         'is_depot_foreperson': is_depot_fp,
-        'can_manage_devices': can_manage_devices,
+        'can_manage_devices': user_can_manage_devices,
         'user_depot': user_depot,
         'my_actions': [],
         'quick_stats': {},
@@ -308,7 +308,7 @@ def fault_locator_dashboard(request):
     accessible_functions = {}
 
     # Senior Foreperson & IT/Admin Functions
-    if is_senior or can_manage_devices:
+    if is_senior or user_can_manage_devices:
         accessible_functions['device_list'] = {
             'title': 'Device Management',
             'description': 'View, create, edit, and assign all fault locator devices.',
@@ -1904,10 +1904,6 @@ def get_user_depot(user_profile):
         return None
 
 # Keep existing utility functions for backward compatibility
-def can_manage_devices(user_profile):
-    """Legacy function - check if user has permission to create devices"""
-    return can_manage_devices(user_profile)
-
 def is_foreperson(user_profile):
     """Legacy function - check if user profile belongs to any foreperson"""
     return is_depot_foreperson_by_designation(user_profile) or is_senior_foreman(user_profile)

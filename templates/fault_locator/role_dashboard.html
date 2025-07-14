@@ -1,165 +1,167 @@
-{% extends "base.html" %}
+{% extends "admin_layout.html" %}
 {% load static %}
 
-{% block title %}Fault Locator - {{ role_display }} Dashboard{% endblock %}
-
 {% block content %}
-<div class="container-fluid px-4">
-    <!-- Header Section -->
-    <div class="row mb-4">
-        <div class="col-12">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <h1 class="h3 mb-0 text-gray-800">
-                        <i class="fas fa-tools text-primary me-2"></i>
+<div class="min-h-screen bg-gradient-to-br from-gulf-blue-50 via-white to-jade-50 p-6">
+    <div class="max-w-7xl mx-auto">
+        <!-- Header Section -->
+        <div class="glass-header mb-8 p-6 rounded-3xl backdrop-blur-xl bg-white/30 border border-white/20 shadow-2xl">
+            <div class="flex flex-col lg:flex-row items-center justify-between gap-6">
+                <div class="text-center lg:text-left">
+                    <h1 class="text-4xl font-black bg-gradient-to-r from-gulf-blue-600 via-tory-blue-primary to-gulf-blue-900 bg-clip-text text-transparent mb-2 animate-fade-in">
+                        <i class="fas fa-tools text-gulf-blue-600 mr-3"></i>
                         Fault Locator System
                     </h1>
-                    <p class="text-muted mb-0">{{ role_display }} Dashboard - {{ user_profile.get_full_name }}</p>
+                    <p class="text-nepal-600 text-lg">{{ role_display }} Dashboard - {{ user_profile.get_full_name }}</p>
                 </div>
-                <div class="text-end">
-                    <span class="badge bg-primary fs-6">{{ user_role|upper }}</span>
+                <div class="text-center lg:text-right">
+                    <span class="inline-flex items-center px-4 py-2 rounded-full text-sm font-bold bg-gradient-to-r from-gulf-blue-600 to-tory-blue-primary text-white shadow-lg">
+                        {{ user_role|upper }}
+                    </span>
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- Error Message -->
-    {% if error %}
-    <div class="row">
-        <div class="col-12">
-            <div class="alert alert-danger" role="alert">
-                <i class="fas fa-exclamation-triangle me-2"></i>
-                {{ error }}
+        <!-- Error Message -->
+        {% if error %}
+        <div class="mb-6">
+            <div class="glass-card p-4 rounded-2xl backdrop-blur-xl bg-scarlet-red-50/80 border border-scarlet-red-200/50 shadow-lg">
+                <div class="flex items-center gap-3">
+                    <i class="fas fa-exclamation-triangle text-scarlet-red-600"></i>
+                    <span class="text-scarlet-red-800 font-medium">{{ error }}</span>
+                </div>
             </div>
         </div>
-    </div>
-    {% endif %}
+        {% endif %}
+        {% endif %}
 
-    <!-- Primary Actions Section -->
-    {% if primary_actions %}
-    <div class="row mb-4">
-        <div class="col-12">
-            <h4 class="mb-3">
-                <i class="fas fa-bolt text-warning me-2"></i>
+        <!-- Primary Actions Section -->
+        {% if primary_actions %}
+        <div class="mb-8">
+            <h4 class="text-2xl font-bold text-nepal-800 mb-6 flex items-center gap-3">
+                <i class="fas fa-bolt text-lemon-primary"></i>
                 Quick Actions
             </h4>
-            <div class="row g-3">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {% for action in primary_actions %}
-                <div class="col-md-4">
-                    <div class="card h-100 border-0 shadow-sm action-card priority-{{ action.priority|default:'medium' }}">
-                        <div class="card-body text-center">
-                            <div class="action-icon mb-3">
-                                {{ action.icon }}
-                            </div>
-                            <h5 class="card-title">{{ action.title }}</h5>
-                            <p class="card-text text-muted">{{ action.description }}</p>
-                            <a href="{{ action.url }}" class="btn btn-primary btn-sm">
-                                Take Action
-                            </a>
+                <div class="glass-card group relative overflow-hidden rounded-3xl backdrop-blur-xl bg-white/40 border border-white/30 shadow-2xl hover:shadow-3xl transition-all duration-500 hover:scale-105 hover:bg-white/50 priority-{{ action.priority|default:'medium' }}">
+                    <div class="p-6 text-center">
+                        <div class="action-icon mb-4 text-4xl">
+                            {{ action.icon }}
                         </div>
+                        <h5 class="text-xl font-bold text-nepal-800 mb-3 group-hover:text-gulf-blue-600 transition-colors duration-300">{{ action.title }}</h5>
+                        <p class="text-nepal-600 mb-4">{{ action.description }}</p>
+                        <a href="{{ action.url }}" class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-gulf-blue-600 to-tory-blue-primary text-white rounded-xl font-medium hover:shadow-lg transition-all duration-300 hover:scale-105">
+                            Take Action
+                        </a>
                     </div>
+                    <div class="absolute inset-0 bg-gradient-to-br from-gulf-blue-600/10 to-tory-blue-primary/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-3xl pointer-events-none"></div>
                 </div>
                 {% endfor %}
             </div>
         </div>
-    </div>
-    {% endif %}
+        {% endif %}
 
-    <!-- Statistics Section -->
-    {% if stats %}
-    <div class="row mb-4">
-        <div class="col-12">
-            <h4 class="mb-3">
-                <i class="fas fa-chart-line text-info me-2"></i>
+        <!-- Statistics Section -->
+        {% if stats %}
+        <div class="mb-8">
+            <h4 class="text-2xl font-bold text-nepal-800 mb-6 flex items-center gap-3">
+                <i class="fas fa-chart-line text-jade-600"></i>
                 Statistics
             </h4>
-            <div class="row g-3">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 {% for key, value in stats.items %}
-                <div class="col-md-3 col-sm-6">
-                    <div class="card border-0 shadow-sm">
-                        <div class="card-body text-center">
-                            <h3 class="text-primary mb-1">{{ value }}</h3>
-                            <p class="text-muted mb-0 small">{{ key|title }}</p>
-                        </div>
-                    </div>
+                <div class="glass-card p-6 rounded-3xl backdrop-blur-xl bg-white/40 border border-white/30 shadow-2xl hover:shadow-3xl transition-all duration-500 hover:scale-105 text-center">
+                    <h3 class="text-3xl font-bold text-gulf-blue-600 mb-2">{{ value }}</h3>
+                    <p class="text-nepal-600 text-sm uppercase tracking-wide">{{ key|title }}</p>
                 </div>
                 {% endfor %}
             </div>
         </div>
-    </div>
-    {% endif %}
+        {% endif %}
 
-    <!-- Role-Specific Content -->
-    {% if user_role == 'senior_foreman' %}
-        {% include 'fault_locator/dashboard/senior_foreman.html' %}
-    {% elif user_role == 'depot_foreperson' %}
-        {% include 'fault_locator/dashboard/depot_foreperson.html' %}
-    {% elif user_role == 'team_leader' %}
-        {% include 'fault_locator/dashboard/team_leader.html' %}
-    {% elif user_role == 'team_member' %}
-        {% include 'fault_locator/dashboard/team_member.html' %}
-    {% endif %}
+        <!-- Role-Specific Content -->
+        {% if user_role == 'senior_foreman' %}
+            {% include 'fault_locator/dashboard/senior_foreman.html' %}
+        {% elif user_role == 'depot_foreperson' %}
+            {% include 'fault_locator/dashboard/depot_foreperson.html' %}
+        {% elif user_role == 'team_leader' %}
+            {% include 'fault_locator/dashboard/team_leader.html' %}
+        {% elif user_role == 'team_member' %}
+            {% include 'fault_locator/dashboard/team_member.html' %}
+        {% endif %}
 
-    <!-- Recent Activity Section -->
-    {% if recent_deployments or my_assignments or completed_today %}
-    <div class="row">
-        <div class="col-12">
-            <h4 class="mb-3">
-                <i class="fas fa-clock text-secondary me-2"></i>
+        <!-- Recent Activity Section -->
+        {% if recent_deployments or my_assignments or completed_today %}
+        <div class="mt-8">
+            <h4 class="text-2xl font-bold text-nepal-800 mb-6 flex items-center gap-3">
+                <i class="fas fa-clock text-nepal-500"></i>
                 Recent Activity
             </h4>
-            <div class="card border-0 shadow-sm">
-                <div class="card-body">
-                    {% if recent_deployments %}
-                        <h6 class="text-muted mb-3">Recent Deployments</h6>
-                        {% for deployment in recent_deployments %}
-                        <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
-                            <div>
-                                <strong>{{ deployment.team.name }}</strong> deployed to 
-                                <span class="text-primary">{{ deployment.depot.depot }}</span>
-                            </div>
-                            <small class="text-muted">{{ deployment.deployed_at|date:"M d, H:i" }}</small>
+            <div class="glass-card p-6 rounded-3xl backdrop-blur-xl bg-white/40 border border-white/30 shadow-2xl">
+                {% if recent_deployments %}
+                    <h6 class="text-lg font-semibold text-nepal-700 mb-4">Recent Deployments</h6>
+                    {% for deployment in recent_deployments %}
+                    <div class="flex justify-between items-center py-3 border-b border-nepal-200/50 last:border-b-0">
+                        <div>
+                            <strong class="text-nepal-800">{{ deployment.team.name }}</strong> deployed to 
+                            <span class="text-gulf-blue-600 font-medium">{{ deployment.depot.depot }}</span>
                         </div>
-                        {% endfor %}
-                    {% endif %}
+                        <small class="text-nepal-500">{{ deployment.deployed_at|date:"M d, H:i" }}</small>
+                    </div>
+                    {% endfor %}
+                {% endif %}
 
-                    {% if my_assignments %}
-                        <h6 class="text-muted mb-3 {% if recent_deployments %}mt-4{% endif %}">My Recent Assignments</h6>
-                        {% for assignment in my_assignments %}
-                        <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
-                            <div>
-                                <strong>{{ assignment.fault.description|truncatechars:50 }}</strong><br>
-                                <small class="text-muted">{{ assignment.fault.depot.depot }}</small>
-                            </div>
-                            <small class="text-muted">{{ assignment.assigned_at|date:"M d, H:i" }}</small>
+                {% if my_assignments %}
+                    <h6 class="text-lg font-semibold text-nepal-700 mb-4 {% if recent_deployments %}mt-6{% endif %}">My Recent Assignments</h6>
+                    {% for assignment in my_assignments %}
+                    <div class="flex justify-between items-center py-3 border-b border-nepal-200/50 last:border-b-0">
+                        <div>
+                            <strong class="text-nepal-800">{{ assignment.fault.description|truncatechars:50 }}</strong><br>
+                            <small class="text-nepal-500">{{ assignment.fault.depot.depot }}</small>
                         </div>
-                        {% endfor %}
-                    {% endif %}
+                        <small class="text-nepal-500">{{ assignment.assigned_at|date:"M d, H:i" }}</small>
+                    </div>
+                    {% endfor %}
+                {% endif %}
 
-                    {% if completed_today %}
-                        <h6 class="text-muted mb-3 {% if my_assignments or recent_deployments %}mt-4{% endif %}">Completed Today</h6>
-                        {% for assignment in completed_today %}
-                        <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
-                            <div>
-                                <strong>{{ assignment.fault.description|truncatechars:50 }}</strong><br>
-                                <small class="text-success">✅ Completed</small>
-                            </div>
-                            <small class="text-muted">{{ assignment.located_at|date:"H:i" }}</small>
+                {% if completed_today %}
+                    <h6 class="text-lg font-semibold text-nepal-700 mb-4 {% if my_assignments or recent_deployments %}mt-6{% endif %}">Completed Today</h6>
+                    {% for assignment in completed_today %}
+                    <div class="flex justify-between items-center py-3 border-b border-nepal-200/50 last:border-b-0">
+                        <div>
+                            <strong class="text-nepal-800">{{ assignment.fault.description|truncatechars:50 }}</strong><br>
+                            <small class="text-jade-600">✅ Completed</small>
                         </div>
-                        {% endfor %}
-                    {% endif %}
+                        <small class="text-nepal-500">{{ assignment.located_at|date:"H:i" }}</small>
+                    </div>
+                    {% endfor %}
+                {% endif %}
 
-                    {% if not recent_deployments and not my_assignments and not completed_today %}
-                    <p class="text-muted text-center mb-0">No recent activity</p>
-                    {% endif %}
-                </div>
+                {% if not recent_deployments and not my_assignments and not completed_today %}
+                <p class="text-nepal-500 text-center mb-0">No recent activity</p>
+                {% endif %}
             </div>
         </div>
+        {% endif %}
     </div>
-    {% endif %}
 </div>
 
 <style>
+.glass-header, .glass-card {
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+.animate-fade-in {
+  animation: fadeIn 1s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
 .action-card {
     transition: transform 0.2s, box-shadow 0.2s;
     cursor: pointer;

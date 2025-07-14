@@ -1,31 +1,31 @@
 {% extends "admin_layout.html" %}
 
 {% block content %}
-<div class="min-h-screen bg-gradient-to-br from-violet-50 via-white to-cyan-50 p-6">
+<div class="min-h-screen bg-gradient-to-br from-gulf-blue-50 via-white to-jade-50 p-6">
   <div class="max-w-7xl mx-auto">
     
     <!-- Floating Header with Glassmorphism -->
     <div class="glass-header mb-8 p-6 rounded-3xl backdrop-blur-xl bg-white/30 border border-white/20 shadow-2xl">
       <div class="flex flex-col lg:flex-row items-center justify-between gap-6">
         <div class="text-center lg:text-left">
-          <h1 class="text-4xl font-black bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent mb-2 animate-fade-in">
+          <h1 class="text-4xl font-black bg-gradient-to-r from-gulf-blue-600 via-tory-blue-primary to-gulf-blue-900 bg-clip-text text-transparent mb-2 animate-fade-in">
             Team Overview
           </h1>
-          <p class="text-gray-600 text-lg">Manage and monitor fault locator teams</p>
-          <div class="mt-2 text-sm text-gray-500">
-            Total Teams: <span class="font-bold text-violet-600">{{ total_teams }}</span>
+          <p class="text-nepal-600 text-lg">Manage and monitor fault locator teams</p>
+          <div class="mt-2 text-sm text-nepal-500">
+            Total Teams: <span class="font-bold text-gulf-blue-600">{{ total_teams }}</span>
           </div>
         </div>
         
         {% if can_create_team %}
         <div class="flex gap-4">
           <a href="{% url 'create_team' %}" 
-             class="group relative overflow-hidden px-8 py-4 bg-gradient-to-r from-violet-600 to-purple-600 text-white rounded-2xl font-bold shadow-2xl hover:shadow-violet-500/25 transition-all duration-500 hover:scale-110">
+             class="group relative overflow-hidden px-8 py-4 bg-gradient-to-r from-gulf-blue-600 to-tory-blue-primary text-white rounded-2xl font-bold shadow-2xl hover:shadow-gulf-blue-500/25 transition-all duration-500 hover:scale-110">
             <span class="relative z-10 flex items-center gap-3">
               <span class="group-hover:rotate-180 transition-transform duration-500">⚡</span>
               Create New Team
             </span>
-            <div class="absolute inset-0 bg-gradient-to-r from-purple-600 to-violet-600 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+            <div class="absolute inset-0 bg-gradient-to-r from-tory-blue-primary to-gulf-blue-600 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
           </a>
         </div>
         {% endif %}
@@ -53,11 +53,11 @@
         <div class="p-6">
           <!-- Team Header -->
           <div class="mb-4">
-            <h3 class="text-xl font-bold text-gray-800 mb-2 group-hover:text-violet-600 transition-colors duration-300">
+            <h3 class="text-xl font-bold text-nepal-800 mb-2 group-hover:text-gulf-blue-600 transition-colors duration-300">
               {{ item.team.name }}
             </h3>
-            <div class="flex items-center gap-2 text-sm text-gray-600">
-              <span class="w-2 h-2 bg-gradient-to-r from-violet-500 to-purple-500 rounded-full"></span>
+            <div class="flex items-center gap-2 text-sm text-nepal-600">
+              <span class="w-2 h-2 bg-gradient-to-r from-gulf-blue-500 to-tory-blue-primary rounded-full"></span>
               <span>{{ item.location }}</span>
             </div>
           </div>
@@ -65,41 +65,41 @@
           <!-- Team Stats -->
           <div class="grid grid-cols-2 gap-4 mb-4">
             <div class="text-center p-3 rounded-xl bg-white/50 backdrop-blur-sm border border-white/30">
-              <div class="text-2xl font-bold text-violet-600">{{ item.team.member_count }}</div>
-              <div class="text-xs text-gray-600 uppercase tracking-wide">Members</div>
+              <div class="text-2xl font-bold text-gulf-blue-600">{{ item.team.member_count }}</div>
+              <div class="text-xs text-nepal-600 uppercase tracking-wide">Members</div>
             </div>
             <div class="text-center p-3 rounded-xl bg-white/50 backdrop-blur-sm border border-white/30">
-              <div class="text-2xl font-bold text-orange-600">{{ item.team.active_assignments }}</div>
-              <div class="text-xs text-gray-600 uppercase tracking-wide">Active Tasks</div>
+              <div class="text-2xl font-bold text-pomegranate-primary">{{ item.team.active_assignments }}</div>
+              <div class="text-xs text-nepal-600 uppercase tracking-wide">Active Tasks</div>
             </div>
           </div>
 
           <!-- Team Leader -->
           {% if item.team.team_leader %}
-          <div class="mb-4 p-3 rounded-xl bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200/50">
-            <div class="text-xs text-blue-600 uppercase tracking-wide mb-1">Team Leader</div>
-            <div class="font-semibold text-blue-800">{{ item.team.team_leader.get_full_name }}</div>
+          <div class="mb-4 p-3 rounded-xl bg-gradient-to-r from-gulf-blue-50 to-tory-blue-50 border border-gulf-blue-200/50">
+            <div class="text-xs text-gulf-blue-600 uppercase tracking-wide mb-1">Team Leader</div>
+            <div class="font-semibold text-gulf-blue-800">{{ item.team.team_leader.get_full_name }}</div>
           </div>
           {% else %}
-          <div class="mb-4 p-3 rounded-xl bg-gradient-to-r from-gray-50 to-gray-100 border border-gray-200/50">
-            <div class="text-xs text-gray-500 uppercase tracking-wide mb-1">Team Leader</div>
-            <div class="text-gray-600 italic">No leader assigned</div>
+          <div class="mb-4 p-3 rounded-xl bg-gradient-to-r from-nepal-50 to-nepal-100 border border-nepal-200/50">
+            <div class="text-xs text-nepal-500 uppercase tracking-wide mb-1">Team Leader</div>
+            <div class="text-nepal-600 italic">No leader assigned</div>
           </div>
           {% endif %}
 
           <!-- Device Assignment -->
           {% if item.device %}
-          <div class="mb-4 p-3 rounded-xl bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200/50">
-            <div class="text-xs text-green-600 uppercase tracking-wide mb-1">Assigned Device</div>
-            <div class="font-semibold text-green-800">{{ item.device.serial_number }}</div>
+          <div class="mb-4 p-3 rounded-xl bg-gradient-to-r from-jade-50 to-apple-50 border border-jade-200/50">
+            <div class="text-xs text-jade-600 uppercase tracking-wide mb-1">Assigned Device</div>
+            <div class="font-semibold text-jade-800">{{ item.device.serial_number }}</div>
             {% if item.device.description %}
-            <div class="text-sm text-green-600">{{ item.device.description }}</div>
+            <div class="text-sm text-jade-600">{{ item.device.description }}</div>
             {% endif %}
           </div>
           {% else %}
-          <div class="mb-4 p-3 rounded-xl bg-gradient-to-r from-orange-50 to-amber-50 border border-orange-200/50">
-            <div class="text-xs text-orange-600 uppercase tracking-wide mb-1">Device Status</div>
-            <div class="text-orange-800 italic">No device assigned</div>
+          <div class="mb-4 p-3 rounded-xl bg-gradient-to-r from-lemon-50 to-citron-50 border border-lemon-200/50">
+            <div class="text-xs text-lemon-700 uppercase tracking-wide mb-1">Device Status</div>
+            <div class="text-lemon-800 italic">No device assigned</div>
           </div>
           {% endif %}
 
@@ -117,7 +117,7 @@
         </div>
 
         <!-- Hover Effects -->
-        <div class="absolute inset-0 bg-gradient-to-br from-violet-600/10 to-purple-600/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-3xl pointer-events-none"></div>
+        <div class="absolute inset-0 bg-gradient-to-br from-gulf-blue-600/10 to-tory-blue-primary/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-3xl pointer-events-none"></div>
       </div>
       {% empty %}
       
@@ -125,11 +125,11 @@
       <div class="col-span-full flex flex-col items-center justify-center py-16">
         <div class="glass-card p-8 rounded-3xl backdrop-blur-xl bg-white/40 border border-white/30 text-center max-w-md">
           <div class="text-6xl mb-4 animate-bounce">👥</div>
-          <h3 class="text-xl font-bold text-gray-800 mb-2">No Teams Found</h3>
-          <p class="text-gray-600 mb-6">Create your first fault locator team to get started.</p>
+          <h3 class="text-xl font-bold text-nepal-800 mb-2">No Teams Found</h3>
+          <p class="text-nepal-600 mb-6">Create your first fault locator team to get started.</p>
           {% if can_create_team %}
           <a href="{% url 'create_team' %}" 
-             class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-violet-600 to-purple-600 text-white rounded-xl font-medium hover:shadow-lg transition-all duration-300 hover:scale-105">
+             class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-gulf-blue-600 to-tory-blue-primary text-white rounded-xl font-medium hover:shadow-lg transition-all duration-300 hover:scale-105">
             <span class="mr-2">⚡</span>
             Create Team
           </a>
@@ -143,32 +143,32 @@
     <!-- Quick Actions Bar -->
     {% if is_senior_foreman %}
     <div class="mt-8 glass-card p-6 rounded-3xl backdrop-blur-xl bg-white/40 border border-white/30">
-      <h3 class="text-lg font-bold text-gray-800 mb-4">Quick Actions</h3>
+      <h3 class="text-lg font-bold text-nepal-800 mb-4">Quick Actions</h3>
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
         <a href="{% url 'device_list' %}" 
            class="flex items-center gap-3 p-4 rounded-xl bg-white/50 hover:bg-white/70 border border-white/30 transition-all duration-300 hover:scale-105">
-          <div class="w-10 h-10 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-xl flex items-center justify-center text-white font-bold">📱</div>
+          <div class="w-10 h-10 bg-gradient-to-r from-gulf-blue-500 to-tory-blue-primary rounded-xl flex items-center justify-center text-white font-bold">📱</div>
           <div>
-            <div class="font-semibold text-gray-800">Manage Devices</div>
-            <div class="text-sm text-gray-600">View and assign devices</div>
+            <div class="font-semibold text-nepal-800">Manage Devices</div>
+            <div class="text-sm text-nepal-600">View and assign devices</div>
           </div>
         </a>
         
         <a href="{% url 'fault_list' %}" 
            class="flex items-center gap-3 p-4 rounded-xl bg-white/50 hover:bg-white/70 border border-white/30 transition-all duration-300 hover:scale-105">
-          <div class="w-10 h-10 bg-gradient-to-r from-orange-500 to-red-500 rounded-xl flex items-center justify-center text-white font-bold">⚡</div>
+          <div class="w-10 h-10 bg-gradient-to-r from-pomegranate-primary to-scarlet-red-primary rounded-xl flex items-center justify-center text-white font-bold">⚡</div>
           <div>
-            <div class="font-semibold text-gray-800">View Faults</div>
-            <div class="text-sm text-gray-600">Monitor fault assignments</div>
+            <div class="font-semibold text-nepal-800">View Faults</div>
+            <div class="text-sm text-nepal-600">Monitor fault assignments</div>
           </div>
         </a>
         
         <a href="{% url 'fault_locator_dashboard' %}" 
            class="flex items-center gap-3 p-4 rounded-xl bg-white/50 hover:bg-white/70 border border-white/30 transition-all duration-300 hover:scale-105">
-          <div class="w-10 h-10 bg-gradient-to-r from-violet-500 to-purple-500 rounded-xl flex items-center justify-center text-white font-bold">📊</div>
+          <div class="w-10 h-10 bg-gradient-to-r from-royal-heath-500 to-violet-eggplant-600 rounded-xl flex items-center justify-center text-white font-bold">📊</div>
           <div>
-            <div class="font-semibold text-gray-800">Dashboard</div>
-            <div class="text-sm text-gray-600">Overview and reports</div>
+            <div class="font-semibold text-nepal-800">Dashboard</div>
+            <div class="text-sm text-nepal-600">Overview and reports</div>
           </div>
         </a>
       </div>
@@ -193,19 +193,19 @@
 }
 
 .btn-primary {
-  @apply bg-blue-600 text-white border-blue-600 hover:bg-blue-700 hover:border-blue-700;
+  @apply bg-gulf-blue-600 text-white border-gulf-blue-600 hover:bg-gulf-blue-700 hover:border-gulf-blue-700;
 }
 
 .btn-warning {
-  @apply bg-yellow-500 text-white border-yellow-500 hover:bg-yellow-600 hover:border-yellow-600;
+  @apply bg-lemon-primary text-white border-lemon-primary hover:bg-lemon-600 hover:border-lemon-600;
 }
 
 .btn-success {
-  @apply bg-green-600 text-white border-green-600 hover:bg-green-700 hover:border-green-700;
+  @apply bg-jade-600 text-white border-jade-600 hover:bg-jade-700 hover:border-jade-700;
 }
 
 .btn-outline-secondary {
-  @apply bg-transparent text-gray-600 border-gray-300 hover:bg-gray-100 hover:border-gray-400;
+  @apply bg-transparent text-nepal-600 border-nepal-300 hover:bg-nepal-100 hover:border-nepal-400;
 }
 
 .btn-sm {

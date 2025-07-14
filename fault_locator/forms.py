@@ -18,7 +18,15 @@ class FaultLocatorTeamForm(forms.ModelForm):
         model = FaultLocatorTeam
         fields = ['name', 'members']
         widgets = {
-            'members': Select2MultipleWidget(attrs={'style': 'width: 100%;'}),
+            'name': forms.TextInput(attrs={
+                'class': 'w-full p-3 sm:p-4 border-2 border-nepal-200 rounded-lg sm:rounded-xl bg-white/80 backdrop-blur-sm text-nepal-800 text-sm sm:text-base focus:border-gulf-blue-400 focus:ring-gulf-blue-400 focus:ring-opacity-50 transition-all duration-300',
+                'placeholder': 'e.g., Alpha Team, North District Crew'
+            }),
+            'members': Select2MultipleWidget(attrs={
+                'class': 'w-full',
+                'data-placeholder': 'Select team members',
+                'data-theme': 'bootstrap-5'
+            }),
         }
 
 class FaultLocatorTeamNameForm(forms.ModelForm):
