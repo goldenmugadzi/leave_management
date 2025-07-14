@@ -1596,6 +1596,7 @@ def ace_reports(request):
     user_id = request.user.id
     user_profile = UserProfile.objects.filter(id=user_id).first()
     ace_report_form = AceReportForm(user=user_profile)
+    current_year = timezone.now().year
 
     if request.method == 'POST':
         ace_report_form = AceReportForm(request.POST)
@@ -1605,6 +1606,13 @@ def ace_reports(request):
             region = ace_report_form.cleaned_data['region']
             budget = ace_report_form.cleaned_data['budget_id']
 
+            # Get budget summary data for graphical display
+            budget_summary = []
+            total_allocated = 0
+            total_utilized = 0
+            total_pending = 0
+            total_available = 0
+            
             if budget:  # Specific budget selected
                 report = ace_report_form.save(commit=False)
                 report.start_date = start_date
@@ -1612,22 +1620,174 @@ def ace_reports(request):
                 report.region = region
                 report.budget_id = budget
                 report.save()
+                
                 # Filter ACEs for this budget
                 aces = Ace2.objects.filter(
                     date_created__range=[start_date, end_date],
                     region=region,
                     budget_id=budget
                 )
-                return render(request, 'finance/ace2/ace_reports.html', {'aces': aces, 'report': report})
+                
+                # Get ACE count and average amount for this budget
+                ace_count = aces.count()
+                total_ace_amount = aces.aggregate(total=Sum('amount'))['total'] or 0
+                avg_ace_amount = total_ace_amount / ace_count if ace_count > 0 else 0
+                
+                # Single budget summary
+                utilization_percentage = (budget.withdrawn / budget.allocated * 100) if budget.allocated > 0 else 0
+                pending_percentage = (budget.to_be_withdrawn / budget.allocated * 100) if budget.allocated > 0 else 0
+                available_percentage = (budget.balance / budget.allocated * 100) if budget.allocated > 0 else 0
+                total_commitment_percentage = utilization_percentage + pending_percentage
+                
+                budget_summary.append({
+                    'budget': budget,
+                    'allocated': budget.allocated,
+                    'withdrawn': budget.withdrawn,
+                    'to_be_withdrawn': budget.to_be_withdrawn,
+                    'balance': budget.balance,
+                    'utilization_percentage': utilization_percentage,
+                    'pending_percentage': pending_percentage,
+                    'available_percentage': available_percentage,
+                    'total_commitment_percentage': total_commitment_percentage,
+                    'total_committed': budget.withdrawn + budget.to_be_withdrawn,
+                    'ace_count': ace_count,
+                    'avg_ace_amount': avg_ace_amount,
+                    'health_status': 'good' if budget.balance > (budget.allocated * 0.3) else 'warning' if budget.balance > (budget.allocated * 0.1) else 'critical'
+                })
+                
+                # Calculate totals
+                total_allocated = budget.allocated or 0
+                total_utilized = budget.withdrawn or 0
+                total_pending = budget.to_be_withdrawn or 0
+                total_available = budget.balance or 0
+                
+                return render(request, 'finance/ace2/ace_reports.html', {
+                    'aces': aces, 
+                    'report': report,
+                    'budget_summary': budget_summary,
+                    'current_year': current_year,
+                    'total_allocated': total_allocated,
+                    'total_utilized': total_utilized,
+                    'total_pending': total_pending,
+                    'total_available': total_available,
+                })
             else:  # All Budgets selected
                 # Do NOT save the report, just filter ACEs for all budgets
                 aces = Ace2.objects.filter(
                     date_created__range=[start_date, end_date],
                     region=region
                 )
-                return render(request, 'finance/ace2/ace_reports.html', {'aces': aces, 'report': None})
+                
+                # Multiple budgets summary for current year only
+                budgets = AssetBudget.objects.filter(region=region, period=current_year).order_by('-allocated')
+                for budget_item in budgets:
+                    if budget_item.allocated > 0:  # Only include budgets with allocation
+                        # Get ACE count and average amount for this budget
+                        budget_aces = aces.filter(budget_id=budget_item)
+                        ace_count = budget_aces.count()
+                        total_ace_amount = budget_aces.aggregate(total=Sum('amount'))['total'] or 0
+                        avg_ace_amount = total_ace_amount / ace_count if ace_count > 0 else 0
+                        
+                        # Calculate percentages
+                        utilization_percentage = (budget_item.withdrawn / budget_item.allocated * 100) if budget_item.allocated > 0 else 0
+                        pending_percentage = (budget_item.to_be_withdrawn / budget_item.allocated * 100) if budget_item.allocated > 0 else 0
+                        available_percentage = (budget_item.balance / budget_item.allocated * 100) if budget_item.allocated > 0 else 0
+                        total_commitment_percentage = utilization_percentage + pending_percentage
+                        
+                        budget_summary.append({
+                            'budget': budget_item,
+                            'allocated': budget_item.allocated,
+                            'withdrawn': budget_item.withdrawn,
+                            'to_be_withdrawn': budget_item.to_be_withdrawn,
+                            'balance': budget_item.balance,
+                            'utilization_percentage': utilization_percentage,
+                            'pending_percentage': pending_percentage,
+                            'available_percentage': available_percentage,
+                            'total_commitment_percentage': total_commitment_percentage,
+                            'total_committed': budget_item.withdrawn + budget_item.to_be_withdrawn,
+                            'ace_count': ace_count,
+                            'avg_ace_amount': avg_ace_amount,
+                            'health_status': 'good' if budget_item.balance > (budget_item.allocated * 0.3) else 'warning' if budget_item.balance > (budget_item.allocated * 0.1) else 'critical'
+                        })
+                        
+                        # Add to totals
+                        total_allocated += budget_item.allocated or 0
+                        total_utilized += budget_item.withdrawn or 0
+                        total_pending += budget_item.to_be_withdrawn or 0
+                        total_available += budget_item.balance or 0
+                
+                return render(request, 'finance/ace2/ace_reports.html', {
+                    'aces': aces, 
+                    'report': None,
+                    'budget_summary': budget_summary,
+                    'current_year': current_year,
+                    'total_allocated': total_allocated,
+                    'total_utilized': total_utilized,
+                    'total_pending': total_pending,
+                    'total_available': total_available,
+                    'start_date': start_date,
+                    'end_date': end_date,
+                    'region': region
+                })
+    
+    # Default view - show current year budget summary for user's region
+    region = user_profile.region
+    budgets = AssetBudget.objects.filter(region=region, period=current_year).order_by('-allocated')
+    budget_summary = []
+    total_allocated = 0
+    total_utilized = 0
+    total_pending = 0
+    total_available = 0
+    
+    for budget_item in budgets:
+        if budget_item.allocated > 0:  # Only include budgets with allocation
+            # Get ACE count and average amount for this budget (current year)
+            budget_aces = Ace2.objects.filter(
+                budget_id=budget_item,
+                date_created__year=current_year
+            )
+            ace_count = budget_aces.count()
+            total_ace_amount = budget_aces.aggregate(total=Sum('amount'))['total'] or 0
+            avg_ace_amount = total_ace_amount / ace_count if ace_count > 0 else 0
+            
+            # Calculate percentages
+            utilization_percentage = (budget_item.withdrawn / budget_item.allocated * 100) if budget_item.allocated > 0 else 0
+            pending_percentage = (budget_item.to_be_withdrawn / budget_item.allocated * 100) if budget_item.allocated > 0 else 0
+            available_percentage = (budget_item.balance / budget_item.allocated * 100) if budget_item.allocated > 0 else 0
+            total_commitment_percentage = utilization_percentage + pending_percentage
+            
+            budget_summary.append({
+                'budget': budget_item,
+                'allocated': budget_item.allocated,
+                'withdrawn': budget_item.withdrawn,
+                'to_be_withdrawn': budget_item.to_be_withdrawn,
+                'balance': budget_item.balance,
+                'utilization_percentage': utilization_percentage,
+                'pending_percentage': pending_percentage,
+                'available_percentage': available_percentage,
+                'total_commitment_percentage': total_commitment_percentage,
+                'total_committed': budget_item.withdrawn + budget_item.to_be_withdrawn,
+                'ace_count': ace_count,
+                'avg_ace_amount': avg_ace_amount,
+                'health_status': 'good' if budget_item.balance > (budget_item.allocated * 0.3) else 'warning' if budget_item.balance > (budget_item.allocated * 0.1) else 'critical'
+            })
+            
+            # Add to totals
+            total_allocated += budget_item.allocated or 0
+            total_utilized += budget_item.withdrawn or 0
+            total_pending += budget_item.to_be_withdrawn or 0
+            total_available += budget_item.balance or 0
 
-    return render(request, 'finance/ace2/ace_create_reports.html', {'ace_report_form': ace_report_form})
+    return render(request, 'finance/ace2/ace_create_reports.html', {
+        'ace_report_form': ace_report_form,
+        'budget_summary': budget_summary,
+        'current_year': current_year,
+        'total_allocated': total_allocated,
+        'total_utilized': total_utilized,
+        'total_pending': total_pending,
+        'total_available': total_available,
+        'default_view': True
+    })
 
 
 @login_required
@@ -1695,8 +1855,8 @@ def ace_report_detail_excel(request, report_id2):
     print("report end date", report.end_date)
     print("report region", report.region)
     print('region obj', region_obj)
-    print("report budget", budget.budget_id)
-    if budget and region_obj:
+    print("report budget", report.budget_id.budget_id if report.budget_id else 'All budgets')
+    if report.budget_id and region_obj:
 
         response = HttpResponse(content_type='application/ms-excel')
         response['Content-Disposition'] = 'attachment; filename="ace_report.xlsx"'

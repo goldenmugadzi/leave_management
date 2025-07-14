@@ -1,4 +1,141 @@
 {% extends "admin_layout.html" %}{% load static %}
+{% load humanize %}{% load custom_tags %}
+
+{% block styles %}
+<style>
+  /* Budget visualization styles */
+  .budget-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    margin-bottom: 1rem;
+    border: 1px solid #e5e7eb;
+    transition: all 0.3s ease;
+  }
+  
+  .budget-card:hover {
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    transform: translateY(-2px);
+  }
+  
+  .progress-bar {
+    width: 100%;
+    height: 24px;
+    background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+    border-radius: 12px;
+    overflow: hidden;
+    position: relative;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.06);
+  }
+  
+  .progress-fill {
+    height: 100%;
+    transition: width 0.8s ease-in-out;
+    position: absolute;
+    top: 0;
+    border-radius: 12px;
+  }
+  
+  .progress-withdrawn {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    z-index: 2;
+  }
+  
+  .progress-pending {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    z-index: 1;
+  }
+  
+  .metric-card {
+    text-align: center;
+    padding: 1rem;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    border: 1px solid #e2e8f0;
+    transition: all 0.3s ease;
+  }
+  
+  .metric-card:hover {
+    background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  }
+  
+  .budget-overview {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+  }
+  
+  .summary-metrics {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  
+  .quick-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 1rem;
+  }
+  
+  .quick-actions a {
+    padding: 0.25rem 0.5rem;
+    border-radius: 6px;
+    text-decoration: none;
+    font-size: 0.875rem;
+    transition: all 0.2s ease;
+    border: 1px solid currentColor;
+  }
+  
+  .quick-actions a:hover {
+    background-color: currentColor;
+    color: white;
+  }
+  
+  @media (max-width: 768px) {
+    .budget-overview {
+      grid-template-columns: 1fr;
+    }
+    
+    .summary-metrics {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+  
+  /* Health indicator pulsing animation */
+  .health-critical {
+    animation: pulse 2s infinite;
+  }
+  
+  @keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.7; }
+    100% { opacity: 1; }
+  }
+  
+  /* Additional visual enhancements */
+  .budget-card .progress-bar::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    transform: translateX(-100%);
+    animation: shimmer 2s infinite;
+  }
+  
+  @keyframes shimmer {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+  }
+</style>
+{% endblock %}
 
 {% block content %}
 <head>
@@ -6,81 +143,187 @@
 </head>
 <script src="{% static 'assets/precalc.js' %}"></script>
 
-<div class="m-auto mt-5">
-  <form class="row rounded py-4 border bg-gulf-blue-100 p-3 m-auto container" method="POST" action="" enctype="multipart/form-data">
-    {% csrf_token %}
-    <div class="m-auto container justify-content-stretch align-content-stretch">
-      <div class="mx-10 my-3 d-flex col-span-4">
-        {% for field in ace_report_form %}
-          <div class="rounded row py-2 my-3">
-            {% if field.is_hidden %}
-              {{ field }}
-            {% else %}
-              <div class="gap-4 m-auto grid grid-cols-3">
-                {{ field.label_tag }}
-                {# Special handling for budget_id to add "All Budgets" option #}
-                {% if field.name == "budget_id" %}
-                  <select name="{{ field.name }}" id="id_{{ field.name }}" class="form-control">
-                    <option value="">All Budgets</option>
-                    {% for opt in field.field.queryset %}
-                      <option value="{{ opt.pk }}" {% if field.value|stringformat:"s" == opt.pk|stringformat:"s" %}selected{% endif %}>
-                        {{ opt }}
-                      </option>
-                    {% endfor %}
-                  </select>
-                {% else %}
-                  {{ field }}
-                {% endif %}
-                <div class="text-red-500">
-                  {{ field.errors }}
-                </div>
-              </div>
-            {% endif %}
-          </div>
-        {% endfor %}
+<div class="container mx-auto mt-5">
+  
+  <!-- Budget Overview Dashboard -->
+  {% if budget_summary %}
+  <div class="bg-gulf-blue-100 shadow-lg rounded-lg p-6 mb-6">
+    <h3 class="text-2xl font-bold mb-4 text-center">Current Year Budget Overview ({{ current_year }})</h3>
+    
+    <!-- Overall Summary Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+      <div class="bg-blue-50 rounded-lg p-4 text-center">
+        <div class="text-2xl font-bold text-blue-600">${{ total_allocated|floatformat:0|intcomma }}</div>
+        <div class="text-sm text-gray-600">Total Allocated</div>
+      </div>
+      <div class="bg-green-50 rounded-lg p-4 text-center">
+        <div class="text-2xl font-bold text-green-600">${{ total_utilized|floatformat:0|intcomma }}</div>
+        <div class="text-sm text-gray-600">Total Utilized</div>
+      </div>
+      <div class="bg-yellow-50 rounded-lg p-4 text-center">
+        <div class="text-2xl font-bold text-yellow-600">${{ total_pending|floatformat:0|intcomma }}</div>
+        <div class="text-sm text-gray-600">Total Pending</div>
+      </div>
+      <div class="bg-gray-50 rounded-lg p-4 text-center">
+        <div class="text-2xl font-bold text-gray-600">${{ total_available|floatformat:0|intcomma }}</div>
+        <div class="text-sm text-gray-600">Total Available</div>
       </div>
     </div>
-    <div class="m-10 justify-content-stretch align-content-stretch">
-      {{ formset.management_form }}
-      {% for form in formset %}
-        {% for field in form %}
-          <div class="rounded row py-2 my-3">
-            {% if field.is_hidden %}
-              {{ field }}
-            {% else %}
-              {% if field.name == "quotation_file" %}
-                <div class="rounded row py-2 my-3">
-                  <div class="gap-4 m-auto grid grid-cols-3">
-                    <label for="id_section">Attachments:</label>
-                    <div class="text-red-500">
-                      <input name="attachments" type="file" multiple class="block w-full rounded-md border-0 py-1.5 mb-3 flex justify-center items-align-center text-gray-900 shadow-sm ring-1 ring-inset form-control-file">
-                    </div>
-                  </div>
-                </div>
+    
+    <!-- Individual Budget Cards -->
+    <div class="budget-overview">
+      {% for budget_data in budget_summary %}
+      <div class="budget-card">
+        <div class="flex justify-between items-start mb-3">
+          <h4 class="font-semibold text-lg">{{ budget_data.budget.budget_name }}</h4>
+          <span class="px-3 py-1 rounded-full text-sm font-medium
+            {% if budget_data.health_status == 'good' %}bg-green-100 text-green-800
+            {% elif budget_data.health_status == 'warning' %}bg-yellow-100 text-yellow-800
+            {% else %}bg-red-100 text-red-800 health-critical{% endif %}">
+            {% if budget_data.health_status == 'good' %}✓ Healthy
+            {% elif budget_data.health_status == 'warning' %}⚠ Monitor
+            {% else %}⚠ Critical{% endif %}
+          </span>
+        </div>
+        
+        <!-- Summary Metrics -->
+        <div class="summary-metrics">
+          <div class="metric-card">
+            <div class="text-2xl font-bold text-blue-600">${{ budget_data.allocated|floatformat:0|intcomma }}</div>
+            <div class="text-sm text-gray-600">Allocated</div>
+          </div>
+          <div class="metric-card">
+            <div class="text-2xl font-bold text-green-600">${{ budget_data.withdrawn|floatformat:0|intcomma }}</div>
+            <div class="text-sm text-gray-600">Withdrawn</div>
+          </div>
+          <div class="metric-card">
+            <div class="text-2xl font-bold text-yellow-600">${{ budget_data.to_be_withdrawn|floatformat:0|intcomma }}</div>
+            <div class="text-sm text-gray-600">Pending</div>
+          </div>
+          <div class="metric-card">
+            <div class="text-2xl font-bold text-gray-600">${{ budget_data.balance|floatformat:0|intcomma }}</div>
+            <div class="text-sm text-gray-600">Available</div>
+          </div>
+        </div>
+        
+        <!-- Enhanced Progress Bar -->
+        <div class="mb-3">
+          <div class="flex justify-between text-sm mb-1">
+            <span>Budget Utilization</span>
+            <span>{{ budget_data.utilization_percentage|floatformat:1 }}% + {{ budget_data.pending_percentage|floatformat:1 }}% = {{ budget_data.total_commitment_percentage|floatformat:1 }}%</span>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill progress-withdrawn" style="width: {{ budget_data.utilization_percentage }}%"></div>
+            <div class="progress-fill progress-pending" style="width: {{ budget_data.pending_percentage }}%; margin-left: {{ budget_data.utilization_percentage }}%"></div>
+          </div>
+          <div class="flex justify-between text-xs mt-1 text-gray-600">
+            <span>{{ budget_data.utilization_percentage|floatformat:1 }}% Used</span>
+            <span>{{ budget_data.pending_percentage|floatformat:1 }}% Pending</span>
+            <span>{{ budget_data.available_percentage|floatformat:1 }}% Available</span>
+          </div>
+        </div>
+        
+        <!-- Detailed Status Info -->
+        <div class="text-sm text-gray-600 space-y-1">
+          <div class="flex justify-between">
+            <span>Total Committed:</span>
+            <span class="font-semibold">${{ budget_data.total_committed|floatformat:0|intcomma }}</span>
+          </div>
+          <div class="flex justify-between">
+            <span>ACE Count:</span>
+            <span class="font-semibold">{{ budget_data.ace_count }} items</span>
+          </div>
+          <div class="flex justify-between">
+            <span>Avg. ACE Amount:</span>
+            <span class="font-semibold">${{ budget_data.avg_ace_amount|floatformat:0|intcomma }}</span>
+          </div>
+        </div>
+        
+        <!-- Quick Actions -->
+        <div class="quick-actions">
+          <a href="/ace/transactions_for_budget/{{ budget_data.budget.budget_id }}" class="text-blue-600 hover:text-blue-800">View Transactions</a>
+          <a href="/ace/asset_budget_report/{{ budget_data.budget.budget_id }}" class="text-green-600 hover:text-green-800">Detailed Report</a>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+  
+  <!-- Report Generation Form -->
+  <div class="bg-gulf-blue-100 shadow-lg rounded-lg p-6">
+    <h3 class="text-xl font-bold mb-4 text-center">Generate Custom ACE Report</h3>
+    
+    <form class="row rounded py-4 border bg-white p-3 m-auto container" method="POST" action="" enctype="multipart/form-data">
+      {% csrf_token %}
+      <div class="m-auto container justify-content-stretch align-content-stretch">
+        <div class="mx-10 my-3 d-flex col-span-4">
+          {% for field in ace_report_form %}
+            <div class="rounded row py-2 my-3">
+              {% if field.is_hidden %}
+                {{ field }}
               {% else %}
                 <div class="gap-4 m-auto grid grid-cols-3">
                   {{ field.label_tag }}
-                  {{ field }}
+                  {# Special handling for budget_id to add "All Budgets" option #}
+                  {% if field.name == "budget_id" %}
+                    <select name="{{ field.name }}" id="id_{{ field.name }}" class="form-control">
+                      <option value="">All Budgets</option>
+                      {% for opt in field.field.queryset %}
+                        <option value="{{ opt.pk }}" {% if field.value|stringformat:"s" == opt.pk|stringformat:"s" %}selected{% endif %}>
+                          {{ opt }}
+                        </option>
+                      {% endfor %}
+                    </select>
+                  {% else %}
+                    {{ field }}
+                  {% endif %}
                   <div class="text-red-500">
                     {{ field.errors }}
                   </div>
                 </div>
               {% endif %}
-            {% endif %}
-          </div>
-        {% endfor %}
-      {% endfor %}
-    </div>
-    <br>
-    <div class="m-auto justify-content-stretch text-center align-content-stretch">
-      <a class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded" href="/dashboard">Back</a>
-      <input class="bg-gulf-blue-600 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded" type="submit" value="Submit">
-    </div>
-  </form>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+      <br>
+      <div class="m-auto justify-content-stretch text-center align-content-stretch">
+        <a class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded" href="/dashboard">Back</a>
+        <input class="bg-gulf-blue-600 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded" type="submit" value="Generate Report">
+      </div>
+    </form>
+  </div>
 </div>
 {% endblock %}
 
 {% block scripts %}
-{#    <script src="{% static 'assets/classification.js' %}"></script>#}
-{#    <script src="{% static 'assets/precalc.js' %}"></script>#}
+<script src="https://code.jquery.com/jquery-3.7.0.js"></script>
+<script>
+  $(document).ready(function () {
+    // Animate progress bars on page load
+    $('.progress-fill').each(function() {
+      const $this = $(this);
+      const targetWidth = $this.css('width');
+      
+      // Reset width to 0 initially
+      $this.css('width', '0%');
+      
+      // Animate to target width
+      setTimeout(() => {
+        $this.css('width', targetWidth);
+      }, 100);
+    });
+    
+    // Add hover effects for budget cards
+    $('.budget-card').hover(
+      function() {
+        $(this).find('.metric-card').addClass('shadow-sm');
+      },
+      function() {
+        $(this).find('.metric-card').removeClass('shadow-sm');
+      }
+    );
+  });
+</script>
 {% endblock %}
