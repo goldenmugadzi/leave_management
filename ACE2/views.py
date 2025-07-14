@@ -2517,3 +2517,129 @@ def ace_report_detail_csv(request, report_id2=None):
         ])
     
     return response
+
+@login_required
+def export_current_year_csv(request):
+    """Export current year ACE data for user's region to CSV"""
+    user_id = request.user.id
+    user_profile = UserProfile.objects.filter(id=user_id).first()
+    current_year = timezone.now().year
+    
+    # Get user's region
+    region = user_profile.region
+    
+    # Filter ACEs for current year and user's region
+    aces = Ace2.objects.filter(
+        date_created__year=current_year,
+        region=region
+    ).order_by('-date_created')
+    
+    # Create CSV response
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = f'attachment; filename="ace_report_{current_year}_{region.region}.csv"'
+    
+    writer = csv.writer(response)
+    
+    # Write header row
+    writer.writerow([
+        'ACE ID',
+        'Details of Expenditure',
+        'Requested By',
+        'Section',
+        'Date Created',
+        'Budget',
+        'Amount',
+        'Transaction Status',
+        'Approval Status',
+        'Actioned By'
+    ])
+    
+    # Write data rows
+    for ace in aces:
+        # Get transaction info
+        transaction = Transactions.objects.filter(Ace_id2=ace).first()
+        
+        # Get approval info
+        latest_approval = ace.process.approval_set.last() if ace.process and ace.process.approval_set.exists() else None
+        approval_status = latest_approval.approved if latest_approval else ''
+        actioned_by = latest_approval.user.get_full_name() if latest_approval and latest_approval.user else ''
+        
+        # Get section name safely
+        try:
+            section_name = ace.section.section if ace.section else ''
+        except:
+            section_name = ''
+        
+        writer.writerow([
+            ace.Ace_id2,
+            ace.details_of_expenditure,
+            ace.requested_by.get_full_name() if ace.requested_by else '',
+            section_name,
+            ace.date_created.strftime('%Y-%m-%d') if ace.date_created else '',
+            ace.budget_id.budget_name if ace.budget_id else '',
+            ace.amount,
+            transaction.approval_status if transaction else '',
+            approval_status,
+            actioned_by
+        ])
+    
+    return response
+
+@login_required
+def export_current_year_pdf(request):
+    """Export current year ACE data for user's region to PDF"""
+    user_id = request.user.id
+    user_profile = UserProfile.objects.filter(id=user_id).first()
+    current_year = timezone.now().year
+    
+    # Get user's region
+    region = user_profile.region
+    
+    # Filter ACEs for current year and user's region
+    aces = Ace2.objects.filter(
+        date_created__year=current_year,
+        region=region
+    ).order_by('-date_created')
+    
+    # Get budget summary for context
+    budgets = AssetBudget.objects.filter(region=region, period=current_year).order_by('-allocated')
+    budget_summary = []
+    
+    for budget_item in budgets:
+        if budget_item.allocated > 0:
+            budget_aces = aces.filter(budget_id=budget_item)
+            ace_count = budget_aces.count()
+            total_ace_amount = budget_aces.aggregate(total=Sum('amount'))['total'] or 0
+            avg_ace_amount = total_ace_amount / ace_count if ace_count > 0 else 0
+            
+            utilization_percentage = (budget_item.withdrawn / budget_item.allocated * 100) if budget_item.allocated > 0 else 0
+            pending_percentage = (budget_item.to_be_withdrawn / budget_item.allocated * 100) if budget_item.allocated > 0 else 0
+            available_percentage = (budget_item.balance / budget_item.allocated * 100) if budget_item.allocated > 0 else 0
+            total_commitment_percentage = utilization_percentage + pending_percentage
+            
+            budget_summary.append({
+                'budget': budget_item,
+                'allocated': budget_item.allocated,
+                'withdrawn': budget_item.withdrawn,
+                'to_be_withdrawn': budget_item.to_be_withdrawn,
+                'balance': budget_item.balance,
+                'utilization_percentage': utilization_percentage,
+                'pending_percentage': pending_percentage,
+                'available_percentage': available_percentage,
+                'total_commitment_percentage': total_commitment_percentage,
+                'total_committed': budget_item.withdrawn + budget_item.to_be_withdrawn,
+                'ace_count': ace_count,
+                'avg_ace_amount': avg_ace_amount,
+                'health_status': 'good' if budget_item.balance > (budget_item.allocated * 0.3) else 'warning' if budget_item.balance > (budget_item.allocated * 0.1) else 'critical'
+            })
+    
+    template = loader.get_template('finance/ace2/ace_reports.html')
+    context = {
+        'aces': aces,
+        'budget_summary': budget_summary,
+        'current_year': current_year,
+        'request': request
+    }
+    html = template.render(context, request)
+    pdf = HTML(string=html).write_pdf()
+    return HttpResponse(pdf, content_type='application/pdf')

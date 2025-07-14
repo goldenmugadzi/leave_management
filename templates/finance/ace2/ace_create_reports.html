@@ -241,8 +241,8 @@
         
         <!-- Quick Actions -->
         <div class="quick-actions">
-          <a href="/ace/transactions_for_budget/{{ budget_data.budget.budget_id }}" class="text-blue-600 hover:text-blue-800">View Transactions</a>
-          <a href="/ace/asset_budget_report/{{ budget_data.budget.budget_id }}" class="text-green-600 hover:text-green-800">Detailed Report</a>
+          <a href="{% url 'Ace:transactions_for_budget' budget_data.budget.budget_id %}" class="text-blue-600 hover:text-blue-800">View Transactions</a>
+          <a href="{% url 'Ace:asset_budget_report' budget_data.budget.budget_id %}" class="text-green-600 hover:text-green-800">Detailed Report</a>
         </div>
       </div>
       {% endfor %}

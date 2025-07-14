@@ -278,8 +278,8 @@
             
             <!-- Quick Actions -->
             <div class="mt-3 flex gap-2">
-              <a href="/ace/transactions_for_budget/{{ budget_data.budget.budget_id }}" class="text-blue-600 hover:text-blue-800 text-sm">View Transactions</a>
-              <a href="/ace/asset_budget_report/{{ budget_data.budget.budget_id }}" class="text-green-600 hover:text-green-800 text-sm">Detailed Report</a>
+              <a href="{% url 'Ace:transactions_for_budget' budget_data.budget.budget_id %}" class="text-blue-600 hover:text-blue-800 text-sm">View Transactions</a>
+              <a href="{% url 'Ace:asset_budget_report' budget_data.budget.budget_id %}" class="text-green-600 hover:text-green-800 text-sm">Detailed Report</a>
             </div>
           </div>
           {% endfor %}
@@ -293,8 +293,13 @@
             <a href="/ace/print_report_csv/{{ report.report_id2 }}" class="bg-green-500 hover:bg-green-900 inline-block rounded-full mx-3 text-white py-2 px-4 rounded">CSV report</a>
             <a href="/ace/print_report_pdf/{{ report.report_id2 }}" class="bg-yellow-500 hover:bg-red-900 inline-block rounded-full mx-3 text-white py-2 px-4 rounded">PDF report</a>
         {% else %}
-            <a href="/ace/print_report_csv/?start_date={{ start_date }}&end_date={{ end_date }}&region={{ region.id }}&all_budgets=1" class="bg-green-500 hover:bg-green-900 inline-block rounded-full mx-3 text-white py-2 px-4 rounded">CSV report</a>
-            <a href="/ace/print_report_pdf/?start_date={{ start_date }}&end_date={{ end_date }}&region={{ region.id }}&all_budgets=1" class="bg-yellow-500 hover:bg-red-900 inline-block rounded-full mx-3 text-white py-2 px-4 rounded">PDF report</a>
+            {% if start_date and end_date and region %}
+                <a href="/ace/print_report_csv/?start_date={{ start_date }}&end_date={{ end_date }}&region={{ region.id }}&all_budgets=1" class="bg-green-500 hover:bg-green-900 inline-block rounded-full mx-3 text-white py-2 px-4 rounded">CSV report</a>
+                <a href="/ace/print_report_pdf/?start_date={{ start_date }}&end_date={{ end_date }}&region={{ region.id }}&all_budgets=1" class="bg-yellow-500 hover:bg-red-900 inline-block rounded-full mx-3 text-white py-2 px-4 rounded">PDF report</a>
+            {% else %}
+                <a href="{% url 'Ace:export_current_year_csv' %}" class="bg-green-500 hover:bg-green-900 inline-block rounded-full mx-3 text-white py-2 px-4 rounded">CSV report (Current Year)</a>
+                <a href="{% url 'Ace:export_current_year_pdf' %}" class="bg-yellow-500 hover:bg-red-900 inline-block rounded-full mx-3 text-white py-2 px-4 rounded">PDF report (Current Year)</a>
+            {% endif %}
         {% endif %}
       </div>
       
