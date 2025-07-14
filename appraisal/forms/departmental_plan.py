@@ -12,3 +12,8 @@ class DepartmentObjectiveCreateForm(forms.ModelForm):
         model = DepartmentObjective
         fields = ["key_result_area", "cost_center", "objective_description"]
     
+class DepartmentObjectiveUpdateForm(forms.ModelForm):
+    class Meta:
+        model = DepartmentObjective
+        fields = ["key_result_area", "objective_description"]
+    

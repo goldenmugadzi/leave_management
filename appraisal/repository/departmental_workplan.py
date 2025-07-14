@@ -43,3 +43,13 @@ class DepartmentalObjectiveRepository:
             return qr
         except Exception as e:
             raise Exception(f"DepartmentalObjectiveRepository fetch_by_cost_center_year with cost_center pk: {cost_center_id}, failed with error: {e}")
+    
+    def get_by_id(self, dept_objective_id: int)->DepartmentObjective|None:
+        try:
+            qr = DepartmentObjective.objects.filter(id=dept_objective_id)
+            
+            if not qr.exists():
+                return None
+            return qr.first()
+        except Exception as e:
+            raise Exception(f"DepartmentalObjectiveRepository get_by_id with departmental objective pk: {dept_objective_id}, failed with error: {e}")
