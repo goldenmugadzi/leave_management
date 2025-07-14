@@ -1,0 +1,134 @@
+<!-- Depot Foreperson Dashboard Content -->
+<div class="row mb-4">
+    <div class="col-md-6">
+        <h4 class="mb-3">
+            <i class="fas fa-clipboard-list text-primary me-2"></i>
+            Pending Faults at {{ user_depot.depot }}
+        </h4>
+        
+        {% if pending_faults %}
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                {% for fault in pending_faults %}
+                <div class="d-flex justify-content-between align-items-center py-2 {% if not forloop.last %}border-bottom{% endif %}">
+                    <div>
+                        <strong>{{ fault.description|truncatechars:40 }}</strong><br>
+                        <small class="text-muted">
+                            {{ fault.reported_at|date:"M d, H:i" }} - 
+                            <span class="badge bg-{{ fault.priority|yesno:'danger,warning,info,secondary' }}">
+                                {{ fault.get_priority_display }}
+                            </span>
+                        </small>
+                    </div>
+                    <a href="{% url 'assign_fault' %}?fault_id={{ fault.id }}" class="btn btn-primary btn-sm">
+                        Assign
+                    </a>
+                </div>
+                {% endfor %}
+                
+                {% if pending_faults.count > 10 %}
+                <div class="text-center pt-3">
+                    <a href="{% url 'simple_fault_list' %}?status=requested" class="btn btn-outline-primary btn-sm">
+                        View All {{ pending_faults.count }} Pending Faults
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% else %}
+        <div class="card border-0 shadow-sm">
+            <div class="card-body text-center py-4">
+                <i class="fas fa-check-circle text-success mb-3" style="font-size: 3rem;"></i>
+                <h5>No Pending Faults!</h5>
+                <p class="text-muted">All faults at your depot have been assigned.</p>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="col-md-6">
+        <h4 class="mb-3">
+            <i class="fas fa-cogs text-warning me-2"></i>
+            Active Work
+        </h4>
+        
+        {% if active_faults %}
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                {% for fault in active_faults %}
+                <div class="d-flex justify-content-between align-items-center py-2 {% if not forloop.last %}border-bottom{% endif %}">
+                    <div>
+                        <strong>{{ fault.description|truncatechars:40 }}</strong><br>
+                        <small class="text-muted">
+                            {% with assignment=fault.faultassignment_set.first %}
+                                {% if assignment %}
+                                    Team: {{ assignment.team.name }} | 
+                                    Device: {{ assignment.device.serial_number }}
+                                {% endif %}
+                            {% endwith %}
+                        </small>
+                    </div>
+                    <a href="{% url 'field_update' fault.id %}" class="btn btn-outline-secondary btn-sm">
+                        Monitor
+                    </a>
+                </div>
+                {% endfor %}
+                
+                {% if active_faults.count > 10 %}
+                <div class="text-center pt-3">
+                    <a href="{% url 'simple_fault_list' %}?status=assigned" class="btn btn-outline-warning btn-sm">
+                        View All {{ active_faults.count }} Active Faults
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        {% else %}
+        <div class="card border-0 shadow-sm">
+            <div class="card-body text-center py-4">
+                <i class="fas fa-pause-circle text-muted mb-3" style="font-size: 3rem;"></i>
+                <h5>No Active Work</h5>
+                <p class="text-muted">No teams are currently working on faults at your depot.</p>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Teams at Depot -->
+{% if teams_at_depot %}
+<div class="row">
+    <div class="col-12">
+        <h4 class="mb-3">
+            <i class="fas fa-users text-success me-2"></i>
+            Teams at {{ user_depot.depot }}
+        </h4>
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <div class="row">
+                    {% for team in teams_at_depot %}
+                    <div class="col-md-4 mb-3">
+                        <div class="card border-light">
+                            <div class="card-body">
+                                <h6 class="card-title">{{ team.name }}</h6>
+                                <p class="card-text small text-muted">
+                                    <strong>Leader:</strong> {{ team.get_team_leader_name }}<br>
+                                    <strong>Members:</strong> {{ team.members.count }}<br>
+                                    {% with device=team.faultlocatordeviceassignment_set.first %}
+                                        {% if device %}
+                                            <strong>Device:</strong> {{ device.device.serial_number }}
+                                        {% else %}
+                                            <span class="text-warning">No device assigned</span>
+                                        {% endif %}
+                                    {% endwith %}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}

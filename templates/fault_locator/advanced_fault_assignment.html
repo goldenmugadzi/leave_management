@@ -1,0 +1,334 @@
+{% extends "admin_layout.html" %}
+{% load static %}
+
+{% block content %}
+<div class="advanced-assignment-container p-6">
+  <div class="header mb-6">
+    <div class="flex justify-between items-center">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-800">Advanced Fault Assignment</h1>
+        <p class="text-gray-600">Assign multiple faults to teams with filtering and bulk operations</p>
+      </div>
+      <div class="action-buttons space-x-2">
+        <a href="{% url 'simple_assign_fault' %}" 
+           class="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition">
+          Simple Assignment
+        </a>
+        <a href="{% url 'fault_locator_dashboard' %}" 
+           class="px-4 py-2 bg-gray-600 text-white rounded-lg font-medium hover:bg-gray-700 transition">
+          ← Dashboard
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stats Bar -->
+  <div class="stats-bar bg-white rounded-lg shadow p-4 mb-6">
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div class="stat-item text-center">
+        <div class="text-2xl font-bold text-red-600">{{ total_unassigned }}</div>
+        <div class="text-sm text-gray-600">Unassigned Faults</div>
+      </div>
+      <div class="stat-item text-center">
+        <div class="text-2xl font-bold text-blue-600">{{ team_data|length }}</div>
+        <div class="text-sm text-gray-600">Available Teams</div>
+      </div>
+      <div class="stat-item text-center">
+        <div class="text-2xl font-bold text-yellow-600" id="selectedCount">0</div>
+        <div class="text-sm text-gray-600">Selected Faults</div>
+      </div>
+      <div class="stat-item text-center">
+        <div class="text-2xl font-bold text-green-600" id="readyToAssign">No</div>
+        <div class="text-sm text-gray-600">Ready to Assign</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Faults Section -->
+    <div class="faults-section lg:col-span-2">
+      <div class="faults-card bg-white rounded-lg shadow">
+        <!-- Filters -->
+        <div class="filters-header bg-gray-50 px-6 py-4 border-b">
+          <h2 class="text-lg font-semibold text-gray-800 mb-3">Unassigned Faults</h2>
+          <form method="get" class="flex flex-wrap gap-3">
+            <div class="filter-group">
+              <label class="block text-xs font-medium text-gray-700 mb-1">Depot</label>
+              <select name="depot" class="text-sm border border-gray-300 rounded px-3 py-1">
+                <option value="">All Depots</option>
+                {% for depot in depot_options %}
+                <option value="{{ depot.id }}" {% if depot_filter == depot.id|stringformat:"s" %}selected{% endif %}>
+                  {{ depot.depot }}
+                </option>
+                {% endfor %}
+              </select>
+            </div>
+            
+            <div class="filter-group">
+              <label class="block text-xs font-medium text-gray-700 mb-1">Priority</label>
+              <select name="priority" class="text-sm border border-gray-300 rounded px-3 py-1">
+                <option value="">All Priorities</option>
+                {% for value, label in priority_options %}
+                <option value="{{ value }}" {% if priority_filter == value|stringformat:"s" %}selected{% endif %}>
+                  {{ label }}
+                </option>
+                {% endfor %}
+              </select>
+            </div>
+            
+            <div class="filter-actions flex items-end">
+              <button type="submit" class="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700 transition">
+                Filter
+              </button>
+              <a href="{% url 'advanced_fault_assignment' %}" 
+                 class="ml-2 px-3 py-1 bg-gray-600 text-white rounded text-sm hover:bg-gray-700 transition">
+                Clear
+              </a>
+            </div>
+          </form>
+        </div>
+
+        <!-- Bulk Actions -->
+        <div class="bulk-actions px-6 py-3 border-b bg-blue-50 hidden" id="bulkActions">
+          <div class="flex items-center justify-between">
+            <span class="text-sm font-medium text-blue-800">
+              <span id="selectedCountText">0</span> faults selected
+            </span>
+            <div class="flex space-x-2">
+              <button onclick="selectAll()" class="text-sm text-blue-600 hover:text-blue-800">Select All</button>
+              <button onclick="clearSelection()" class="text-sm text-blue-600 hover:text-blue-800">Clear</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Faults List -->
+        <div class="faults-list max-h-96 overflow-y-auto">
+          {% if unassigned_faults %}
+            <form method="post" id="assignmentForm">
+              {% csrf_token %}
+              <input type="hidden" name="team_id" id="selectedTeamId">
+              
+              {% for fault in unassigned_faults %}
+              <div class="fault-item border-b border-gray-200 p-4 hover:bg-gray-50">
+                <div class="flex items-start space-x-3">
+                  <input type="checkbox" name="fault_ids" value="{{ fault.id }}" 
+                         class="fault-checkbox mt-1 h-4 w-4 text-blue-600 border-gray-300 rounded"
+                         onchange="updateSelection()">
+                  
+                  <div class="fault-content flex-1">
+                    <div class="fault-header flex items-center justify-between mb-2">
+                      <h3 class="font-medium text-gray-800">{{ fault.description }}</h3>
+                      <span class="px-2 py-1 text-xs rounded-full
+                                   {% if fault.priority == 4 %}bg-red-100 text-red-800
+                                   {% elif fault.priority == 3 %}bg-orange-100 text-orange-800
+                                   {% elif fault.priority == 2 %}bg-yellow-100 text-yellow-800
+                                   {% else %}bg-green-100 text-green-800{% endif %}">
+                        {{ fault.get_priority_display }}
+                      </span>
+                    </div>
+                    
+                    <div class="fault-details text-sm text-gray-600">
+                      <p>📍 <strong>Location:</strong> {{ fault.depot.depot }}</p>
+                      <p>🕐 <strong>Reported:</strong> {{ fault.reported_at|date:"M d, Y H:i" }}</p>
+                      {% if fault.prioritized_by %}
+                      <p>⚡ <strong>Prioritized by:</strong> {{ fault.prioritized_by.get_full_name }}</p>
+                      {% endif %}
+                    </div>
+                  </div>
+                </div>
+              </div>
+              {% endfor %}
+            </form>
+          {% else %}
+            <div class="empty-state text-center py-12">
+              <div class="text-6xl mb-4">✅</div>
+              <h2 class="text-xl font-semibold text-gray-800 mb-2">No Unassigned Faults</h2>
+              <p class="text-gray-600">All faults have been assigned to teams!</p>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Teams Section -->
+    <div class="teams-section">
+      <div class="teams-card bg-white rounded-lg shadow">
+        <div class="teams-header bg-gray-50 px-6 py-4 border-b">
+          <h2 class="text-lg font-semibold text-gray-800">Available Teams</h2>
+          <p class="text-sm text-gray-600">Select a team to assign selected faults</p>
+        </div>
+
+        <div class="teams-list max-h-96 overflow-y-auto">
+          {% if team_data %}
+            {% for data in team_data %}
+            <div class="team-item border-b border-gray-200 p-4 hover:bg-gray-50 cursor-pointer"
+                 onclick="selectTeam({{ data.team.id }}, '{{ data.team.name|escapejs }}', this)">
+              
+              <div class="team-header mb-2">
+                <div class="flex items-center justify-between">
+                  <h3 class="font-medium text-gray-800">{{ data.team.name }}</h3>
+                  <span class="px-2 py-1 text-xs rounded-full
+                               {% if 'active' in data.status %}bg-yellow-100 text-yellow-800
+                               {% elif data.status == 'available' %}bg-green-100 text-green-800
+                               {% else %}bg-gray-100 text-gray-800{% endif %}">
+                    {{ data.status|title }}
+                  </span>
+                </div>
+              </div>
+              
+              <div class="team-details text-sm text-gray-600">
+                <p>🔧 <strong>Device:</strong> {{ data.device.serial_number }}</p>
+                <p>👥 <strong>Members:</strong> {{ data.team.members.count }}</p>
+                <p>📍 <strong>Location:</strong> {{ data.location }}</p>
+                {% if data.current_assignments > 0 %}
+                <p>⚡ <strong>Current assignments:</strong> {{ data.current_assignments }}</p>
+                {% endif %}
+              </div>
+              
+              <div class="team-members mt-2">
+                <p class="text-xs text-gray-500">
+                  <strong>Team:</strong>
+                  {% for member in data.team.members.all %}
+                    {{ member.get_full_name }}{% if not forloop.last %}, {% endif %}
+                  {% endfor %}
+                </p>
+              </div>
+            </div>
+            {% endfor %}
+          {% else %}
+            <div class="empty-state text-center py-8">
+              <div class="text-4xl mb-2">👥</div>
+              <p class="text-gray-600">No teams with devices available</p>
+            </div>
+          {% endif %}
+        </div>
+
+        <!-- Assignment Button -->
+        <div class="assignment-action p-4 border-t bg-gray-50">
+          <button type="button" onclick="submitAssignment()" 
+                  id="assignButton"
+                  class="w-full px-4 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition disabled:bg-gray-400 disabled:cursor-not-allowed"
+                  disabled>
+            Assign Selected Faults
+          </button>
+          
+          <div id="assignmentSummary" class="mt-2 text-sm text-gray-600 text-center hidden">
+            Assign <span id="faultCount">0</span> fault(s) to <span id="teamName">no team</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let selectedTeamId = null;
+let selectedTeamName = null;
+
+function updateSelection() {
+  const checkboxes = document.querySelectorAll('.fault-checkbox:checked');
+  const count = checkboxes.length;
+  
+  // Update counters
+  document.getElementById('selectedCount').textContent = count;
+  document.getElementById('selectedCountText').textContent = count;
+  document.getElementById('faultCount').textContent = count;
+  
+  // Show/hide bulk actions
+  const bulkActions = document.getElementById('bulkActions');
+  if (count > 0) {
+    bulkActions.classList.remove('hidden');
+    document.getElementById('readyToAssign').textContent = selectedTeamId ? 'Yes' : 'No';
+  } else {
+    bulkActions.classList.add('hidden');
+    document.getElementById('readyToAssign').textContent = 'No';
+  }
+  
+  // Update assignment button
+  updateAssignButton();
+}
+
+function selectAll() {
+  const checkboxes = document.querySelectorAll('.fault-checkbox');
+  checkboxes.forEach(cb => cb.checked = true);
+  updateSelection();
+}
+
+function clearSelection() {
+  const checkboxes = document.querySelectorAll('.fault-checkbox');
+  checkboxes.forEach(cb => cb.checked = false);
+  updateSelection();
+}
+
+function selectTeam(teamId, teamName, element) {
+  // Remove previous selection
+  document.querySelectorAll('.team-item').forEach(item => {
+    item.classList.remove('bg-blue-100', 'border-blue-300');
+  });
+  
+  // Highlight selected team
+  element.classList.add('bg-blue-100', 'border-blue-300');
+  
+  // Store selection
+  selectedTeamId = teamId;
+  selectedTeamName = teamName;
+  
+  // Update form and UI
+  document.getElementById('selectedTeamId').value = teamId;
+  document.getElementById('teamName').textContent = teamName;
+  document.getElementById('assignmentSummary').classList.remove('hidden');
+  
+  updateAssignButton();
+  updateSelection();
+}
+
+function updateAssignButton() {
+  const selectedFaults = document.querySelectorAll('.fault-checkbox:checked').length;
+  const button = document.getElementById('assignButton');
+  
+  if (selectedFaults > 0 && selectedTeamId) {
+    button.disabled = false;
+    button.textContent = `Assign ${selectedFaults} Fault(s) to ${selectedTeamName}`;
+  } else {
+    button.disabled = true;
+    button.textContent = 'Select faults and team to assign';
+  }
+}
+
+function submitAssignment() {
+  const selectedFaults = document.querySelectorAll('.fault-checkbox:checked').length;
+  
+  if (selectedFaults === 0) {
+    alert('Please select at least one fault to assign.');
+    return;
+  }
+  
+  if (!selectedTeamId) {
+    alert('Please select a team for assignment.');
+    return;
+  }
+  
+  // Confirm assignment
+  const confirmMsg = `Are you sure you want to assign ${selectedFaults} fault(s) to team "${selectedTeamName}"?`;
+  if (confirm(confirmMsg)) {
+    document.getElementById('assignmentForm').submit();
+  }
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+  updateSelection();
+});
+</script>
+
+<style>
+.team-item.selected {
+  background-color: #dbeafe;
+  border-color: #3b82f6;
+}
+
+.fault-checkbox:checked + .fault-content {
+  background-color: #f0f9ff;
+}
+</style>
+{% endblock %}

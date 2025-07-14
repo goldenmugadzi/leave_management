@@ -1,0 +1,203 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Fault Locator - {{ role_display }} Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid px-4">
+    <!-- Header Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h3 mb-0 text-gray-800">
+                        <i class="fas fa-tools text-primary me-2"></i>
+                        Fault Locator System
+                    </h1>
+                    <p class="text-muted mb-0">{{ role_display }} Dashboard - {{ user_profile.get_full_name }}</p>
+                </div>
+                <div class="text-end">
+                    <span class="badge bg-primary fs-6">{{ user_role|upper }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Error Message -->
+    {% if error %}
+    <div class="row">
+        <div class="col-12">
+            <div class="alert alert-danger" role="alert">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                {{ error }}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Primary Actions Section -->
+    {% if primary_actions %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <h4 class="mb-3">
+                <i class="fas fa-bolt text-warning me-2"></i>
+                Quick Actions
+            </h4>
+            <div class="row g-3">
+                {% for action in primary_actions %}
+                <div class="col-md-4">
+                    <div class="card h-100 border-0 shadow-sm action-card priority-{{ action.priority|default:'medium' }}">
+                        <div class="card-body text-center">
+                            <div class="action-icon mb-3">
+                                {{ action.icon }}
+                            </div>
+                            <h5 class="card-title">{{ action.title }}</h5>
+                            <p class="card-text text-muted">{{ action.description }}</p>
+                            <a href="{{ action.url }}" class="btn btn-primary btn-sm">
+                                Take Action
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Statistics Section -->
+    {% if stats %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <h4 class="mb-3">
+                <i class="fas fa-chart-line text-info me-2"></i>
+                Statistics
+            </h4>
+            <div class="row g-3">
+                {% for key, value in stats.items %}
+                <div class="col-md-3 col-sm-6">
+                    <div class="card border-0 shadow-sm">
+                        <div class="card-body text-center">
+                            <h3 class="text-primary mb-1">{{ value }}</h3>
+                            <p class="text-muted mb-0 small">{{ key|title }}</p>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Role-Specific Content -->
+    {% if user_role == 'senior_foreman' %}
+        {% include 'fault_locator/dashboard/senior_foreman.html' %}
+    {% elif user_role == 'depot_foreperson' %}
+        {% include 'fault_locator/dashboard/depot_foreperson.html' %}
+    {% elif user_role == 'team_leader' %}
+        {% include 'fault_locator/dashboard/team_leader.html' %}
+    {% elif user_role == 'team_member' %}
+        {% include 'fault_locator/dashboard/team_member.html' %}
+    {% endif %}
+
+    <!-- Recent Activity Section -->
+    {% if recent_deployments or my_assignments or completed_today %}
+    <div class="row">
+        <div class="col-12">
+            <h4 class="mb-3">
+                <i class="fas fa-clock text-secondary me-2"></i>
+                Recent Activity
+            </h4>
+            <div class="card border-0 shadow-sm">
+                <div class="card-body">
+                    {% if recent_deployments %}
+                        <h6 class="text-muted mb-3">Recent Deployments</h6>
+                        {% for deployment in recent_deployments %}
+                        <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                            <div>
+                                <strong>{{ deployment.team.name }}</strong> deployed to 
+                                <span class="text-primary">{{ deployment.depot.depot }}</span>
+                            </div>
+                            <small class="text-muted">{{ deployment.deployed_at|date:"M d, H:i" }}</small>
+                        </div>
+                        {% endfor %}
+                    {% endif %}
+
+                    {% if my_assignments %}
+                        <h6 class="text-muted mb-3 {% if recent_deployments %}mt-4{% endif %}">My Recent Assignments</h6>
+                        {% for assignment in my_assignments %}
+                        <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                            <div>
+                                <strong>{{ assignment.fault.description|truncatechars:50 }}</strong><br>
+                                <small class="text-muted">{{ assignment.fault.depot.depot }}</small>
+                            </div>
+                            <small class="text-muted">{{ assignment.assigned_at|date:"M d, H:i" }}</small>
+                        </div>
+                        {% endfor %}
+                    {% endif %}
+
+                    {% if completed_today %}
+                        <h6 class="text-muted mb-3 {% if my_assignments or recent_deployments %}mt-4{% endif %}">Completed Today</h6>
+                        {% for assignment in completed_today %}
+                        <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                            <div>
+                                <strong>{{ assignment.fault.description|truncatechars:50 }}</strong><br>
+                                <small class="text-success">✅ Completed</small>
+                            </div>
+                            <small class="text-muted">{{ assignment.located_at|date:"H:i" }}</small>
+                        </div>
+                        {% endfor %}
+                    {% endif %}
+
+                    {% if not recent_deployments and not my_assignments and not completed_today %}
+                    <p class="text-muted text-center mb-0">No recent activity</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+.action-card {
+    transition: transform 0.2s, box-shadow 0.2s;
+    cursor: pointer;
+}
+
+.action-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15) !important;
+}
+
+.action-icon {
+    font-size: 2.5rem;
+}
+
+.priority-critical {
+    border-left: 4px solid #dc3545 !important;
+}
+
+.priority-high {
+    border-left: 4px solid #fd7e14 !important;
+}
+
+.priority-medium {
+    border-left: 4px solid #ffc107 !important;
+}
+
+.priority-low {
+    border-left: 4px solid #6c757d !important;
+}
+
+@media (max-width: 768px) {
+    .container-fluid {
+        padding: 1rem !important;
+    }
+    
+    .action-card {
+        margin-bottom: 1rem;
+    }
+}
+</style>
+{% endblock %}

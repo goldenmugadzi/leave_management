@@ -1,0 +1,307 @@
+{% extends "admin_layout.html" %}
+{% load static %}
+
+{% block content %}
+<div class="recall-team-container p-6">
+  <div class="max-w-4xl mx-auto">
+    <!-- Header -->
+    <div class="header mb-6">
+      <div class="flex justify-between items-center">
+        <div>
+          <h1 class="text-2xl font-bold text-gray-800">{{ page_title }}</h1>
+          <p class="text-gray-600">Recall deployed fault locator teams from field locations</p>
+        </div>
+        <div class="action-buttons space-x-2">
+          <a href="{% url 'team_overview' %}" 
+             class="px-4 py-2 bg-gray-600 text-white rounded-lg font-medium hover:bg-gray-700 transition">
+            ← Back to Teams
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <!-- Recall Form -->
+      <div class="form-section">
+        <div class="form-card bg-white rounded-lg shadow-lg p-6">
+          <h2 class="text-lg font-semibold text-gray-800 mb-4">Recall Details</h2>
+          
+          <form method="post" class="space-y-6">
+            {% csrf_token %}
+            
+            <!-- Form Errors -->
+            {% if form.errors %}
+            <div class="alert-error bg-red-50 border border-red-200 rounded-lg p-4">
+              <div class="flex">
+                <div class="text-red-400">⚠️</div>
+                <div class="ml-3">
+                  <h3 class="text-sm font-medium text-red-800">Please correct the following errors:</h3>
+                  <div class="mt-2 text-sm text-red-700">
+                    {% for field, errors in form.errors.items %}
+                      {% for error in errors %}
+                        <p>{{ field|title }}: {{ error }}</p>
+                      {% endfor %}
+                    {% endfor %}
+                  </div>
+                </div>
+              </div>
+            </div>
+            {% endif %}
+            
+            <!-- Deployment Selection -->
+            <div class="form-group">
+              <label for="{{ form.deployment.id_for_label }}" 
+                     class="block text-sm font-medium text-gray-700 mb-1">
+                Select Deployment to Recall <span class="text-red-500">*</span>
+              </label>
+              {{ form.deployment }}
+              <p class="text-xs text-gray-500 mt-1">
+                Only active deployments are shown.
+              </p>
+            </div>
+            
+            <!-- Recall Reason -->
+            <div class="form-group">
+              <label for="{{ form.recall_reason.id_for_label }}" 
+                     class="block text-sm font-medium text-gray-700 mb-1">
+                Reason for Recall <span class="text-red-500">*</span>
+              </label>
+              {{ form.recall_reason }}
+              <p class="text-xs text-gray-500 mt-1">
+                Select the primary reason for recalling this team.
+              </p>
+            </div>
+            
+            <!-- Notes -->
+            <div class="form-group">
+              <label for="{{ form.notes.id_for_label }}" 
+                     class="block text-sm font-medium text-gray-700 mb-1">
+                Recall Notes
+              </label>
+              {{ form.notes }}
+              <p class="text-xs text-gray-500 mt-1">
+                Optional notes about the recall (next assignment, issues encountered, etc.).
+              </p>
+            </div>
+            
+            <!-- Action Buttons -->
+            <div class="form-actions flex justify-between pt-6">
+              <a href="{% url 'team_overview' %}" 
+                 class="px-6 py-2 bg-gray-600 text-white rounded-lg font-medium hover:bg-gray-700 transition">
+                Cancel
+              </a>
+              <button type="submit" 
+                      class="px-6 py-2 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition">
+                📞 Recall Team
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Selected Deployment Info -->
+      <div class="info-section">
+        {% if selected_deployment %}
+        <div class="deployment-info-card bg-white rounded-lg shadow-lg p-6 mb-6">
+          <h2 class="text-lg font-semibold text-gray-800 mb-4">Deployment Information</h2>
+          
+          <div class="deployment-details space-y-3">
+            <div class="detail-item">
+              <h3 class="font-medium text-gray-800">👥 {{ selected_deployment.team.name }}</h3>
+              <p class="text-sm text-gray-600">{{ selected_deployment.team.members.count }} members</p>
+            </div>
+            
+            <div class="detail-item">
+              <h4 class="text-sm font-medium text-gray-700">Current Location:</h4>
+              <p class="text-sm text-gray-600">📍 {{ selected_deployment.depot.name }}</p>
+            </div>
+            
+            <div class="detail-item">
+              <h4 class="text-sm font-medium text-gray-700">Deployed On:</h4>
+              <p class="text-sm text-gray-600">📅 {{ selected_deployment.deployed_date|date:"M d, Y H:i" }}</p>
+            </div>
+            
+            <div class="detail-item">
+              <h4 class="text-sm font-medium text-gray-700">Duration:</h4>
+              <p class="text-sm text-gray-600">⏱️ {{ selected_deployment.duration_days }} days</p>
+            </div>
+            
+            <div class="detail-item">
+              <h4 class="text-sm font-medium text-gray-700">Team Members:</h4>
+              <div class="mt-1">
+                {% for member in selected_deployment.team.members.all %}
+                  <span class="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded mr-1 mb-1">
+                    {{ member.get_full_name }}
+                  </span>
+                {% endfor %}
+              </div>
+            </div>
+            
+            {% with device_assignment=selected_deployment.team.faultlocatordeviceassignment_set.first %}
+            {% if device_assignment %}
+            <div class="detail-item">
+              <h4 class="text-sm font-medium text-gray-700">Assigned Device:</h4>
+              <p class="text-sm text-gray-600">
+                📱 {{ device_assignment.device.serial_number }}
+                {% if device_assignment.device.description %}
+                  - {{ device_assignment.device.description }}
+                {% endif %}
+              </p>
+            </div>
+            {% endif %}
+            {% endwith %}
+            
+            {% if selected_deployment.notes %}
+            <div class="detail-item">
+              <h4 class="text-sm font-medium text-gray-700">Deployment Notes:</h4>
+              <p class="text-sm text-gray-600">{{ selected_deployment.notes }}</p>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+        
+        <!-- Active Assignments -->
+        <div class="assignments-card bg-yellow-50 border border-yellow-200 rounded-lg p-6 mb-6">
+          <h2 class="text-lg font-semibold text-yellow-800 mb-4">⚠️ Active Assignments</h2>
+          
+          {% with active_assignments=selected_deployment.team.faultassignment_set.filter:status__in:'assigned,in_progress' %}
+          {% if active_assignments %}
+          <div class="assignments-warning">
+            <p class="text-sm text-yellow-700 mb-3">
+              This team has {{ active_assignments.count }} active fault assignment(s):
+            </p>
+            
+            <div class="assignments-list space-y-2">
+              {% for assignment in active_assignments %}
+              <div class="assignment-item bg-white rounded px-3 py-2">
+                <div class="flex justify-between items-center">
+                  <div>
+                    <span class="font-medium text-gray-800">{{ assignment.fault.title }}</span>
+                    <span class="text-sm text-gray-600">({{ assignment.fault.fault_code }})</span>
+                  </div>
+                  <span class="text-xs px-2 py-1 rounded 
+                    {% if assignment.status == 'assigned' %}bg-blue-100 text-blue-800
+                    {% elif assignment.status == 'in_progress' %}bg-orange-100 text-orange-800
+                    {% endif %}">
+                    {{ assignment.get_status_display }}
+                  </span>
+                </div>
+              </div>
+              {% endfor %}
+            </div>
+            
+            <div class="mt-4 p-3 bg-yellow-100 rounded-lg">
+              <p class="text-sm text-yellow-800">
+                <strong>Note:</strong> Recalling this team will automatically reassign these faults 
+                to other available teams or mark them as unassigned if no suitable teams are available.
+              </p>
+            </div>
+          </div>
+          {% else %}
+          <p class="text-sm text-green-700">
+            ✅ No active assignments. Team can be safely recalled.
+          </p>
+          {% endif %}
+          {% endwith %}
+        </div>
+        {% endif %}
+        
+        <!-- Recall Guidelines -->
+        <div class="guidelines-card bg-red-50 border border-red-200 rounded-lg p-6">
+          <h2 class="text-lg font-semibold text-red-800 mb-4">Recall Guidelines</h2>
+          
+          <div class="guidelines-list space-y-3">
+            <div class="guideline-item flex items-start">
+              <div class="text-red-500 mr-2">📋</div>
+              <div>
+                <h4 class="text-sm font-medium text-red-800">Assignment Handling</h4>
+                <p class="text-sm text-red-600">Active fault assignments will be automatically reassigned</p>
+              </div>
+            </div>
+            
+            <div class="guideline-item flex items-start">
+              <div class="text-red-500 mr-2">📞</div>
+              <div>
+                <h4 class="text-sm font-medium text-red-800">Notifications</h4>
+                <p class="text-sm text-red-600">Team members and depot foreperson will be notified</p>
+              </div>
+            </div>
+            
+            <div class="guideline-item flex items-start">
+              <div class="text-red-500 mr-2">🔧</div>
+              <div>
+                <h4 class="text-sm font-medium text-red-800">Device Return</h4>
+                <p class="text-sm text-red-600">Team will return assigned fault locator devices</p>
+              </div>
+            </div>
+            
+            <div class="guideline-item flex items-start">
+              <div class="text-red-500 mr-2">📊</div>
+              <div>
+                <h4 class="text-sm font-medium text-red-800">Reporting</h4>
+                <p class="text-sm text-red-600">Deployment completion report will be generated</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Active Deployments Summary -->
+        <div class="active-deployments-card bg-blue-50 border border-blue-200 rounded-lg p-6 mt-6">
+          <h2 class="text-lg font-semibold text-blue-800 mb-4">Active Deployments</h2>
+          
+          <div class="deployments-summary">
+            <p class="text-sm text-blue-700 mb-3">
+              Currently deployed teams:
+            </p>
+            
+            <div class="deployments-list space-y-2">
+              {% for deployment in form.deployment.field.queryset %}
+              <div class="deployment-item flex items-center justify-between bg-white rounded px-3 py-2">
+                <div>
+                  <span class="font-medium text-gray-800">{{ deployment.team.name }}</span>
+                  <span class="text-sm text-gray-600">@ {{ deployment.depot.name }}</span>
+                </div>
+                <div class="text-xs text-gray-500">
+                  {{ deployment.duration_days }} days
+                </div>
+              </div>
+              {% empty %}
+              <p class="text-sm text-gray-600">
+                No teams currently deployed.
+              </p>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+/* Form styling */
+.form-group input,
+.form-group select,
+.form-group textarea {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  background-color: #ffffff;
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.form-group textarea {
+  min-height: 80px;
+  resize: vertical;
+}
+</style>
+{% endblock %}

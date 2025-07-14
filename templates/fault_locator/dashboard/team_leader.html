@@ -1,0 +1,158 @@
+<!-- Team Leader Dashboard Content -->
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h4 class="mb-3">
+            <i class="fas fa-tasks text-primary me-2"></i>
+            Current Assignments for {{ my_team.name }}
+        </h4>
+        
+        {% if current_assignments %}
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                {% for assignment in current_assignments %}
+                <div class="card mb-3 {% if assignment.fault.priority >= 3 %}border-danger{% elif assignment.fault.priority == 2 %}border-warning{% endif %}">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="flex-grow-1">
+                                <h6 class="card-title">
+                                    {{ assignment.fault.description }}
+                                    <span class="badge bg-{{ assignment.fault.priority|yesno:'danger,warning,info,secondary' }} ms-2">
+                                        {{ assignment.fault.get_priority_display }}
+                                    </span>
+                                </h6>
+                                <p class="card-text small text-muted">
+                                    <i class="fas fa-map-marker-alt me-1"></i>{{ assignment.fault.depot.depot }}<br>
+                                    <i class="fas fa-clock me-1"></i>Assigned: {{ assignment.assigned_at|date:"M d, H:i" }}<br>
+                                    <i class="fas fa-mobile-alt me-1"></i>Device: {{ assignment.device.serial_number }}
+                                </p>
+                                {% if assignment.work_notes %}
+                                <div class="alert alert-light py-2 mt-2">
+                                    <small><strong>Progress Notes:</strong> {{ assignment.work_notes }}</small>
+                                </div>
+                                {% endif %}
+                            </div>
+                            <div class="text-end">
+                                <a href="{% url 'field_update' assignment.fault.id %}" class="btn btn-success btn-sm mb-2">
+                                    <i class="fas fa-map-marked-alt me-1"></i>
+                                    Report Located
+                                </a><br>
+                                <a href="#" class="btn btn-outline-secondary btn-sm" onclick="updateProgress({{ assignment.fault.id }})">
+                                    <i class="fas fa-edit me-1"></i>
+                                    Update Progress
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% else %}
+        <div class="card border-0 shadow-sm">
+            <div class="card-body text-center py-5">
+                <i class="fas fa-check-circle text-success mb-3" style="font-size: 4rem;"></i>
+                <h4>No Active Assignments</h4>
+                <p class="text-muted">Your team is not currently assigned to any faults.</p>
+                <p class="small text-muted">Check with your depot foreperson for new assignments.</p>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="col-md-4">
+        <h4 class="mb-3">
+            <i class="fas fa-info-circle text-info me-2"></i>
+            Team Information
+        </h4>
+        
+        <div class="card border-0 shadow-sm mb-3">
+            <div class="card-body">
+                <h6 class="card-title">{{ my_team.name }}</h6>
+                <div class="mb-3">
+                    <small class="text-muted d-block">Current Location</small>
+                    <span class="badge bg-primary">
+                        <i class="fas fa-map-marker-alt me-1"></i>
+                        {{ stats.team_location }}
+                    </span>
+                </div>
+                
+                {% if team_device %}
+                <div class="mb-3">
+                    <small class="text-muted d-block">Assigned Device</small>
+                    <strong>{{ team_device.device.serial_number }}</strong><br>
+                    <small class="text-muted">{{ team_device.device.description|default:"Fault locator device" }}</small>
+                </div>
+                {% endif %}
+                
+                <div class="mb-3">
+                    <small class="text-muted d-block">Team Members ({{ stats.team_members }})</small>
+                    {% for member in my_team.members.all %}
+                        <span class="badge bg-light text-dark me-1 mb-1">{{ member.get_full_name }}</span>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        {% if urgent_assignments %}
+        <div class="card border-danger shadow-sm">
+            <div class="card-header bg-danger text-white">
+                <h6 class="mb-0">🚨 Urgent Attention Required</h6>
+            </div>
+            <div class="card-body">
+                {% for assignment in urgent_assignments %}
+                <div class="mb-2 pb-2 {% if not forloop.last %}border-bottom{% endif %}">
+                    <strong class="text-danger">{{ assignment.fault.description|truncatechars:30 }}</strong><br>
+                    <small class="text-muted">
+                        {% if assignment.fault.priority >= 3 %}
+                            High Priority
+                        {% else %}
+                            Overdue ({{ assignment.assigned_at|timesince }} ago)
+                        {% endif %}
+                    </small>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Today's Completed Work -->
+{% if completed_today %}
+<div class="row">
+    <div class="col-12">
+        <h4 class="mb-3">
+            <i class="fas fa-trophy text-warning me-2"></i>
+            Today's Achievements ({{ completed_today.count }})
+        </h4>
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                <div class="row">
+                    {% for assignment in completed_today %}
+                    <div class="col-md-6 mb-2">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-check-circle text-success me-2"></i>
+                            <div>
+                                <strong>{{ assignment.fault.description|truncatechars:40 }}</strong><br>
+                                <small class="text-muted">{{ assignment.fault.depot.depot }} - {{ assignment.located_at|date:"H:i" }}</small>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<script>
+function updateProgress(faultId) {
+    // Simple progress update functionality
+    const notes = prompt("Add progress notes:");
+    if (notes) {
+        // In a real implementation, this would be an AJAX call
+        alert("Progress notes saved: " + notes);
+    }
+}
+</script>

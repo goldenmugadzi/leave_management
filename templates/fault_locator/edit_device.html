@@ -1,0 +1,239 @@
+{% extends "admin_layout.html" %}
+{% load static %}
+
+{% block content %}
+<div class="edit-device-container p-6">
+  <div class="max-w-4xl mx-auto">
+    <!-- Header -->
+    <div class="header mb-6">
+      <div class="flex justify-between items-start">
+        <div>
+          <h1 class="text-2xl font-bold text-gray-800 mb-2">{{ page_title }}</h1>
+          <p class="text-gray-600">Modify device information and manage assignments</p>
+        </div>
+        <div class="flex space-x-2">
+          <a href="{% url 'device_detail' device.id %}" 
+             class="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition">
+            👁️ View Details
+          </a>
+          <a href="{% url 'device_list' %}" 
+             class="px-4 py-2 bg-gray-600 text-white rounded-lg font-medium hover:bg-gray-700 transition">
+            ← Back to List
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <!-- Edit Form -->
+      <div class="form-section">
+        <div class="form-card bg-white rounded-lg shadow-lg p-6">
+          <h2 class="text-lg font-semibold text-gray-800 mb-4">Device Information</h2>
+          
+          <form method="post" class="space-y-6">
+            {% csrf_token %}
+            
+            <!-- Form Errors -->
+            {% if form.errors %}
+            <div class="alert-error bg-red-50 border border-red-200 rounded-lg p-4">
+              <div class="flex">
+                <div class="text-red-400">⚠️</div>
+                <div class="ml-3">
+                  <h3 class="text-sm font-medium text-red-800">Please correct the following errors:</h3>
+                  <div class="mt-2 text-sm text-red-700">
+                    {% for field, errors in form.errors.items %}
+                      {% for error in errors %}
+                        <p>{{ field|title }}: {{ error }}</p>
+                      {% endfor %}
+                    {% endfor %}
+                  </div>
+                </div>
+              </div>
+            </div>
+            {% endif %}
+            
+            <!-- Serial Number Field -->
+            <div class="form-group">
+              <label for="{{ form.serial_number.id_for_label }}" 
+                     class="block text-sm font-medium text-gray-700 mb-1">
+                Serial Number <span class="text-red-500">*</span>
+              </label>
+              {{ form.serial_number }}
+            </div>
+            
+            <!-- Description Field -->
+            <div class="form-group">
+              <label for="{{ form.description.id_for_label }}" 
+                     class="block text-sm font-medium text-gray-700 mb-1">
+                Description
+              </label>
+              {{ form.description }}
+            </div>
+            
+            <!-- Action Buttons -->
+            <div class="form-actions flex justify-between pt-4">
+              <div class="flex space-x-2">
+                {% if can_delete %}
+                <button type="button" onclick="confirmDelete()" 
+                        class="px-4 py-2 bg-red-600 text-white rounded-lg font-medium hover:bg-red-700 transition">
+                  🗑️ Delete Device
+                </button>
+                {% endif %}
+              </div>
+              <button type="submit" 
+                      class="px-6 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition">
+                ✅ Update Device
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Device Status -->
+      <div class="status-section">
+        <div class="status-card bg-white rounded-lg shadow-lg p-6">
+          <h2 class="text-lg font-semibold text-gray-800 mb-4">Current Status</h2>
+          
+          <!-- Assignment Status -->
+          <div class="status-item mb-4">
+            <h3 class="text-sm font-medium text-gray-700 mb-2">Assignment</h3>
+            {% if current_assignment %}
+            <div class="flex items-center justify-between bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+              <div>
+                <p class="text-sm font-medium text-yellow-800">
+                  👥 Assigned to: <strong>{{ current_assignment.team.name }}</strong>
+                </p>
+                <p class="text-xs text-yellow-600">
+                  Since: {{ current_assignment.assigned_at|date:"M d, Y H:i" }}
+                </p>
+              </div>
+              <a href="{% url 'unassign_device' device.id %}" 
+                 class="px-3 py-1 bg-yellow-100 text-yellow-700 rounded text-sm font-medium hover:bg-yellow-200 transition">
+                Unassign
+              </a>
+            </div>
+            {% else %}
+            <div class="bg-green-50 border border-green-200 rounded-lg p-3">
+              <p class="text-sm font-medium text-green-800">✅ Available for assignment</p>
+              <a href="{% url 'assign_device_to_team' %}?device_id={{ device.id }}" 
+                 class="inline-block mt-2 px-3 py-1 bg-green-100 text-green-700 rounded text-sm font-medium hover:bg-green-200 transition">
+                Assign to Team
+              </a>
+            </div>
+            {% endif %}
+          </div>
+          
+          <!-- Active Fault -->
+          <div class="status-item mb-4">
+            <h3 class="text-sm font-medium text-gray-700 mb-2">Current Usage</h3>
+            {% if active_fault %}
+            <div class="bg-red-50 border border-red-200 rounded-lg p-3">
+              <p class="text-sm font-medium text-red-800">
+                🔥 <strong>In Use:</strong> {{ active_fault.fault.description }}
+              </p>
+              <p class="text-xs text-red-600">
+                📍 Location: {{ active_fault.fault.depot.depot }}
+              </p>
+              <p class="text-xs text-red-600">
+                🕐 Since: {{ active_fault.assigned_at|date:"M d, Y H:i" }}
+              </p>
+            </div>
+            {% else %}
+            <div class="bg-blue-50 border border-blue-200 rounded-lg p-3">
+              <p class="text-sm font-medium text-blue-800">💤 Not currently in use</p>
+            </div>
+            {% endif %}
+          </div>
+          
+          <!-- Team Location -->
+          {% if current_assignment and current_assignment.team.current_depot %}
+          <div class="status-item">
+            <h3 class="text-sm font-medium text-gray-700 mb-2">Team Location</h3>
+            <div class="bg-purple-50 border border-purple-200 rounded-lg p-3">
+              <p class="text-sm font-medium text-purple-800">
+                📍 <strong>Deployed to:</strong> {{ current_assignment.team.current_depot.depot }}
+              </p>
+              <p class="text-xs text-purple-600">
+                Team: {{ current_assignment.team.name }}
+              </p>
+            </div>
+          </div>
+          {% endif %}
+        </div>
+        
+        <!-- Usage Notes -->
+        {% if not can_delete %}
+        <div class="warning-card bg-yellow-50 border border-yellow-200 rounded-lg p-4 mt-4">
+          <div class="flex">
+            <div class="text-yellow-400">⚠️</div>
+            <div class="ml-3">
+              <h3 class="text-sm font-medium text-yellow-800">Cannot Delete Device</h3>
+              <p class="mt-1 text-sm text-yellow-700">
+                This device cannot be deleted because it's currently assigned to a team or being used for an active fault.
+                Please unassign the device first.
+              </p>
+            </div>
+          </div>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+{% if can_delete %}
+<div id="deleteModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden flex items-center justify-center z-50">
+  <div class="bg-white rounded-lg p-6 max-w-md mx-auto">
+    <h3 class="text-lg font-semibold text-gray-800 mb-4">Confirm Delete</h3>
+    <p class="text-gray-600 mb-6">
+      Are you sure you want to delete device <strong>{{ device.serial_number }}</strong>? 
+      This action cannot be undone.
+    </p>
+    <div class="flex justify-end space-x-2">
+      <button onclick="closeDeleteModal()" 
+              class="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition">
+        Cancel
+      </button>
+      <form method="post" action="{% url 'delete_device' device.id %}" class="inline">
+        {% csrf_token %}
+        <button type="submit" 
+                class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition">
+          Delete Device
+        </button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<style>
+/* Form styling */
+.form-group input,
+.form-group textarea {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  background-color: #ffffff;
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+</style>
+
+<script>
+function confirmDelete() {
+  document.getElementById('deleteModal').classList.remove('hidden');
+}
+
+function closeDeleteModal() {
+  document.getElementById('deleteModal').classList.add('hidden');
+}
+</script>
+{% endblock %}

@@ -1,0 +1,121 @@
+<!-- Team Member Dashboard Content -->
+<div class="row">
+    <div class="col-md-8">
+        <h4 class="mb-3">
+            <i class="fas fa-hard-hat text-primary me-2"></i>
+            Current Work for {{ my_team.name }}
+        </h4>
+        
+        {% if current_assignments %}
+        <div class="card border-0 shadow-sm">
+            <div class="card-body">
+                {% for assignment in current_assignments %}
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <h6 class="card-title">
+                            {{ assignment.fault.description }}
+                            <span class="badge bg-{{ assignment.fault.priority|yesno:'danger,warning,info,secondary' }} ms-2">
+                                {{ assignment.fault.get_priority_display }}
+                            </span>
+                        </h6>
+                        <p class="card-text small text-muted">
+                            <i class="fas fa-map-marker-alt me-1"></i>{{ assignment.fault.depot.depot }}<br>
+                            <i class="fas fa-clock me-1"></i>Started: {{ assignment.assigned_at|date:"M d, H:i" }}<br>
+                            <i class="fas fa-mobile-alt me-1"></i>Using: {{ assignment.device.serial_number }}
+                        </p>
+                        
+                        {% if assignment.work_notes %}
+                        <div class="alert alert-info py-2">
+                            <small><strong>Current Status:</strong> {{ assignment.work_notes }}</small>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="text-muted small">
+                            <i class="fas fa-user me-1"></i>
+                            Contact your team leader <strong>{{ team_leader.get_full_name }}</strong> for instructions.
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% else %}
+        <div class="card border-0 shadow-sm">
+            <div class="card-body text-center py-5">
+                <i class="fas fa-coffee text-muted mb-3" style="font-size: 4rem;"></i>
+                <h4>No Active Work</h4>
+                <p class="text-muted">Your team is not currently assigned to any faults.</p>
+                <p class="small text-muted">Standby for instructions from your team leader or depot foreperson.</p>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="col-md-4">
+        <h4 class="mb-3">
+            <i class="fas fa-users text-success me-2"></i>
+            Team Details
+        </h4>
+        
+        <div class="card border-0 shadow-sm mb-3">
+            <div class="card-body">
+                <h6 class="card-title">{{ stats.team_name }}</h6>
+                
+                <div class="mb-3">
+                    <small class="text-muted d-block">Team Leader</small>
+                    <strong>{{ stats.team_leader }}</strong>
+                </div>
+                
+                <div class="mb-3">
+                    <small class="text-muted d-block">Current Location</small>
+                    <span class="badge bg-primary">
+                        <i class="fas fa-map-marker-alt me-1"></i>
+                        {{ stats.current_location }}
+                    </span>
+                </div>
+                
+                <div class="mb-3">
+                    <small class="text-muted d-block">Assigned Device</small>
+                    <strong>{{ stats.device }}</strong>
+                </div>
+                
+                <div class="mb-3">
+                    <small class="text-muted d-block">Active Work</small>
+                    <span class="badge bg-{% if stats.active_work > 0 %}warning{% else %}success{% endif %}">
+                        {{ stats.active_work }} assignment{{ stats.active_work|pluralize }}
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-light">
+                <h6 class="mb-0">
+                    <i class="fas fa-phone me-2"></i>
+                    Emergency Contacts
+                </h6>
+            </div>
+            <div class="card-body">
+                {% if team_leader %}
+                <div class="mb-2">
+                    <strong>Team Leader:</strong><br>
+                    <small class="text-muted">{{ team_leader.get_full_name }}</small><br>
+                    {% if team_leader.email %}
+                    <a href="mailto:{{ team_leader.email }}" class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-envelope me-1"></i>Email
+                    </a>
+                    {% endif %}
+                </div>
+                {% endif %}
+                
+                <div class="mb-2">
+                    <strong>Depot Control:</strong><br>
+                    <small class="text-muted">{{ stats.current_location }}</small><br>
+                    <a href="tel:+1234567890" class="btn btn-outline-secondary btn-sm">
+                        <i class="fas fa-phone me-1"></i>Call
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
