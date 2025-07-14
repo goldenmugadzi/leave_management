@@ -47,6 +47,8 @@
          <thead class="bg-blue-800 text-white">
            <tr>
                 <th class="px-6 py-3 text-left text-md font-semibold">Objectives Description</th>
+                <th class="px-6 py-3 text-left text-md font-semibold">KRA Description</th>
+                <th class="px-6 py-3 text-left text-md font-semibold">Created by</th>
                 <th></th>
            </tr>
          </thead>
@@ -54,6 +56,8 @@
             {% for departmental_objective_obj in departmental_objectives_qr %}
                 <tr class="hover:bg-blue-100">
                         <td class="px-6 py-4 text-md text-blue-900 truncate max-w-xs">{{departmental_objective_obj.objective_description}}</td>
+                        <td class="px-6 py-4 text-md text-blue-900 truncate max-w-xs">{{departmental_objective_obj.key_result_area}}</td>
+                        <td class="px-6 py-4 text-md text-blue-900 truncate max-w-xs">{{departmental_objective_obj.created_by}}</td>
                         <td>
                             <div class="flex gap-2 justify-center">
                             <a 
