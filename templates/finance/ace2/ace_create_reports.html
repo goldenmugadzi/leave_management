@@ -291,6 +291,7 @@
       <div class="m-auto justify-content-stretch text-center align-content-stretch">
         <a class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded" href="/dashboard">Back</a>
         <input class="bg-gulf-blue-600 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded" type="submit" value="Generate Report">
+        <button type="button" id="download-csv-btn" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded" onclick="downloadCSV()">Download CSV</button>
       </div>
     </form>
   </div>
@@ -325,5 +326,39 @@
       }
     );
   });
+
+  function downloadCSV() {
+    // Get form data
+    const startDate = document.querySelector('input[name="start_date"]').value;
+    const endDate = document.querySelector('input[name="end_date"]').value;
+    const regionSelect = document.querySelector('select[name="region"]');
+    const budgetSelect = document.querySelector('select[name="budget_id"]');
+    
+    // Validate that dates are provided
+    if (!startDate || !endDate) {
+      alert('Please select both start and end dates before downloading CSV.');
+      return;
+    }
+    
+    // Build CSV download URL
+    let csvUrl = '/ace/print_report_csv/?start_date=' + encodeURIComponent(startDate) + 
+                 '&end_date=' + encodeURIComponent(endDate);
+    
+    // Add region if selected
+    if (regionSelect && regionSelect.value) {
+      csvUrl += '&region=' + encodeURIComponent(regionSelect.value);
+    }
+    
+    // Add budget if selected (and not "All Budgets")
+    if (budgetSelect && budgetSelect.value && budgetSelect.value !== "") {
+      csvUrl += '&budget_id=' + encodeURIComponent(budgetSelect.value);
+    } else {
+      // When no budget is selected or "All Budgets" is selected, add all_budgets parameter
+      csvUrl += '&all_budgets=1';
+    }
+    
+    // Open CSV download
+    window.open(csvUrl, '_blank');
+  }
 </script>
 {% endblock %}

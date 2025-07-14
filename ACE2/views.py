@@ -2443,6 +2443,8 @@ def ace_report_detail_csv(request, report_id2=None):
         start_date = parse_date(request.GET.get('start_date'))
         end_date = parse_date(request.GET.get('end_date'))
         region_id = request.GET.get('region')
+        budget_id = request.GET.get('budget_id')
+        all_budgets = request.GET.get('all_budgets')
         
         # Handle filters - build query based on provided parameters
         ace_filter = {}
@@ -2463,9 +2465,23 @@ def ace_report_detail_csv(request, report_id2=None):
             except (ValueError, TypeError):
                 pass  # Skip invalid region IDs
         
+        # Add budget filter only if a specific budget is provided and all_budgets is not set
+        if budget_id and budget_id.strip() and not all_budgets:
+            try:
+                from .models import AssetBudget
+                budget = get_object_or_404(AssetBudget, budget_id=int(budget_id))
+                ace_filter['budget_id'] = budget
+            except (ValueError, TypeError):
+                pass  # Skip invalid budget IDs
+        # If all_budgets=1 or no budget_id specified, don't add budget filter (includes all budgets)
+        
         aces = Ace2.objects.filter(**ace_filter)
         
-        filename = f"ace_report_{start_date or 'all'}_to_{end_date or 'all'}.csv"
+        # Generate descriptive filename
+        if all_budgets or not budget_id:
+            filename = f"ace_report_all_budgets_{start_date or 'all'}_to_{end_date or 'all'}.csv"
+        else:
+            filename = f"ace_report_budget_{budget_id}_{start_date or 'all'}_to_{end_date or 'all'}.csv"
     
     # Create CSV response
     response = HttpResponse(content_type='text/csv')
