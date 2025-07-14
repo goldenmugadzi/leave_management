@@ -1,7 +1,7 @@
 from django.db.models.query import QuerySet
 from it.users.models import UserProfile, CostCenter
-from ..models import KeyResultArea, DepartmentObjective
-
+from ..models import KeyResultArea, DepartmentObjective, DepartmentOutput
+from ..helpers.types.dept_workplan import DepartmentalOutTypes
 
 class DepartmentalObjectiveRepository:
     def create(self, creator: UserProfile, key_result_area: KeyResultArea, cost_center: CostCenter, department_objective_desc: str)->DepartmentObjective:
@@ -53,3 +53,46 @@ class DepartmentalObjectiveRepository:
             return qr.first()
         except Exception as e:
             raise Exception(f"DepartmentalObjectiveRepository get_by_id with departmental objective pk: {dept_objective_id}, failed with error: {e}")
+
+class DepartmentalOutRepository:
+    
+    def create(self, creator: UserProfile, departmental_objective_obj: DepartmentObjective, data: DepartmentalOutTypes)->DepartmentOutput:
+        try:
+            return DepartmentOutput.objects.create(
+                created_by=creator,
+                department_objective=departmental_objective_obj,
+                output_description=data.output_description,
+                weight=data.weight
+            )
+        except Exception as e:
+            raise Exception(f"DepartmentalOutRepository Create Repo failed with error: {e}")
+        
+    def update(self, updater: UserProfile, department_output_obj: DepartmentOutput, department_objective_obj: DepartmentObjective, data: DepartmentalOutTypes)->DepartmentOutput:
+        
+        is_updated = False
+        
+        try:
+            
+            if department_output_obj.updated_by != updater:
+                department_output_obj.updated_by = updater
+                is_updated = True
+                
+            if department_output_obj.department_objective != department_objective_obj:
+                department_output_obj.department_objective = department_objective_obj
+                is_updated = True
+                
+            if department_output_obj.output_description != data.output_description:
+                department_output_obj.output_description = data.output_description
+                is_updated = True
+                
+            if department_output_obj.weight != data.weight:
+                department_output_obj.weight = data.weight
+                is_updated = True
+            
+            if is_updated:
+                department_output_obj.save()
+
+            return department_output_obj
+        except Exception as e:
+            raise Exception(f"DepartmentalOutRepository Update Repo for department out obj pk: {department_output_obj.id}, failed with error: {e}")
+ 
