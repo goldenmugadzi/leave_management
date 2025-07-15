@@ -4,18 +4,53 @@
 {% block content %}
 <div class="content-wrapper">
   <div class="bg-gulf-blue-100 shadow-lg rounded-lg p-6 max-w-2xl mx-auto">
-    <h3 class="text-center font-bold mb-4">Create Fault</h3>
-    <form method="post">
+    <h3 class="text-center font-bold mb-4 text-gray-800">Create Fault</h3>
+    
+    {% if messages %}
+      <div class="mb-4">
+        {% for message in messages %}
+          <div class="alert alert-{{ message.tags }} bg-{{ message.tags }}-50 border border-{{ message.tags }}-200 text-{{ message.tags }}-700 px-4 py-3 rounded mb-3">
+            {{ message }}
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+    
+    <form method="post" class="space-y-6">
       {% csrf_token %}
+      
       <div class="mb-4">
-        <label for="id_description" class="block text-sm font-medium text-gray-700">Description</label>
+        <label for="{{ form.description.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+          {{ form.description.label }}
+        </label>
         {{ form.description }}
+        {% if form.description.errors %}
+          <div class="mt-1 text-sm text-red-600">
+            {% for error in form.description.errors %}
+              <p>{{ error }}</p>
+            {% endfor %}
+          </div>
+        {% endif %}
       </div>
+      
       <div class="mb-4">
-        <label for="id_depot" class="block text-sm font-medium text-gray-700">Depot</label>
+        <label for="{{ form.depot.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+          {{ form.depot.label }}
+        </label>
         {{ form.depot }}
+        {% if form.depot.errors %}
+          <div class="mt-1 text-sm text-red-600">
+            {% for error in form.depot.errors %}
+              <p>{{ error }}</p>
+            {% endfor %}
+          </div>
+        {% endif %}
       </div>
-      <div class="flex justify-center">
+      
+      <div class="flex justify-center space-x-4">
+        <a href="{% url 'simple_fault_list' %}" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded">
+          Cancel
+        </a>
         <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
           Create Fault
         </button>

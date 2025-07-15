@@ -686,6 +686,7 @@ def quick_fault_report(request):
             description=description,
             depot=depot,
             priority=priority,
+            reported_by=user_profile,
         )
         
         # Send notifications for high priority faults
@@ -702,14 +703,15 @@ def quick_fault_report(request):
             return redirect('simple_fault_list')
     
     # GET request - show form
-    available_depots = Depots.objects.all()
+    available_depots = Depots.objects.all().order_by('depot')
     user_depot = None
     
     # Pre-select user's depot
     if user_profile and hasattr(user_profile, 'depot') and user_profile.depot:
         user_depot = Depots.objects.filter(code=user_profile.depot).first()
-        if not is_senior_foreman(user_profile):
-            available_depots = [user_depot] if user_depot else []
+        # For non-senior foremen, show only their depot if they have one
+        if not is_senior_foreman(user_profile) and user_depot:
+            available_depots = Depots.objects.filter(id=user_depot.id)
     
     context = {
         'user_profile': user_profile,
@@ -719,6 +721,47 @@ def quick_fault_report(request):
     }
     
     return render(request, "fault_locator/quick_fault_report.html", context)
+
+@login_required
+def create_fault(request):
+    """Create a new fault using the FaultForm"""
+    user_profile = UserProfile.objects.filter(id=request.user.id).first()
+    
+    if request.method == "POST":
+        form = FaultForm(request.POST)
+        if form.is_valid():
+            fault = form.save(commit=False)
+            fault.reported_by = user_profile
+            fault.save()
+            
+            # Send notifications for high priority faults
+            if fault.priority >= 3:
+                notify_high_priority_fault(fault, request)
+            
+            messages.success(request, f"Fault reported successfully! Reference: FL-{fault.id}")
+            
+            # Redirect based on user role
+            if is_depot_foreperson(user_profile, fault.depot):
+                messages.info(request, "As depot foreperson, you can now assign this fault to a team")
+                return redirect('simple_assign_fault', fault_id=fault.id)
+            else:
+                return redirect('simple_fault_list')
+    else:
+        form = FaultForm()
+        
+        # Pre-select user's depot if they have one
+        if user_profile and hasattr(user_profile, 'depot') and user_profile.depot:
+            user_depot = Depots.objects.filter(code=user_profile.depot).first()
+            if user_depot:
+                form.fields['depot'].initial = user_depot
+    
+    context = {
+        'form': form,
+        'user_profile': user_profile,
+        'page_title': 'Create New Fault',
+    }
+    
+    return render(request, "fault_locator/create_fault.html", context)
 
 @login_required
 def simple_assign_fault(request, fault_id=None):

@@ -7,13 +7,23 @@
     <p class="text-gray-600">Report a new fault quickly and efficiently</p>
   </div>
 
+  {% if messages %}
+    <div class="mb-4">
+      {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} bg-{{ message.tags }}-50 border border-{{ message.tags }}-200 text-{{ message.tags }}-700 px-4 py-3 rounded mb-3">
+          {{ message }}
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
   <form method="post" class="bg-white rounded-lg shadow-md p-6">
     {% csrf_token %}
     
     <div class="form-grid space-y-6">
       <div class="form-group">
         <label class="block text-sm font-medium text-gray-700 mb-2">
-          📝 Fault Description *
+          Fault Description *
         </label>
         <textarea name="description" rows="3" required
                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -22,52 +32,29 @@
 
       <div class="form-group">
         <label class="block text-sm font-medium text-gray-700 mb-2">
-          📍 Location/Depot *
+          Location/Depot *
         </label>
         <select name="depot" required
                 class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
           <option value="">Select Depot...</option>
-          {% for depot in depots %}
-          <option value="{{ depot.id }}">{{ depot.depot }}</option>
+          {% for depot in available_depots %}
+          <option value="{{ depot.id }}" {% if user_depot and depot.id == user_depot.id %}selected{% endif %}>{{ depot.depot }}</option>
+          {% empty %}
+          <option value="" disabled>No depots available</option>
           {% endfor %}
         </select>
       </div>
 
       <div class="form-group">
         <label class="block text-sm font-medium text-gray-700 mb-2">
-          🔧 Device Serial Number
-        </label>
-        <select name="device"
-                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-          <option value="">Select Device (if known)...</option>
-          {% for device in devices %}
-          <option value="{{ device.id }}">{{ device.serial_number }} - {{ device.device_type }}</option>
-          {% endfor %}
-        </select>
-      </div>
-
-      <div class="form-group">
-        <label class="block text-sm font-medium text-gray-700 mb-2">
-          ⚡ Priority Level
+          Priority Level
         </label>
         <select name="priority"
                 class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-          <option value="LOW">🟢 Low Priority</option>
-          <option value="MEDIUM" selected>🟡 Medium Priority</option>
-          <option value="HIGH">🔴 High Priority</option>
-          <option value="CRITICAL">🚨 Critical</option>
-        </select>
-      </div>
-
-      <div class="form-group">
-        <label class="block text-sm font-medium text-gray-700 mb-2">
-          👥 Assign to Team
-        </label>
-        <select name="team"
-                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-          <option value="">Auto-assign based on location</option>
-          {% for team in teams %}
-          <option value="{{ team.id }}">{{ team.name }}</option>
+          {% for value, label in priority_choices %}
+          <option value="{{ value }}" {% if value == 2 %}selected{% endif %}>{{ label }}</option>
+          {% empty %}
+          <option value="" disabled>No priority choices available</option>
           {% endfor %}
         </select>
       </div>
@@ -76,7 +63,7 @@
     <div class="form-actions flex space-x-4 mt-8">
       <button type="submit" 
               class="flex-1 py-3 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 transition">
-        🚨 Report Fault
+        Report Fault
       </button>
       
       <a href="{% url 'fault_locator_dashboard' %}" 

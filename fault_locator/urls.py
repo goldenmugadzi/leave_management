@@ -14,6 +14,7 @@ urlpatterns = [
     # Simplified mobile-friendly views (these exist)
     path('simple-faults/', views.simple_fault_list, name='simple_fault_list'),
     path('quick-report/', views.quick_fault_report, name='quick_fault_report'),
+    path('create-fault/', views.create_fault, name='create_fault'),
     path('field-update/<int:fault_id>/', views.field_update, name='field_update'),
     path('simple-assign/<int:fault_id>/', views.simple_assign_fault, name='simple_assign_fault'),
     path('simple-assign/', views.simple_assign_fault, name='assign_fault'),
