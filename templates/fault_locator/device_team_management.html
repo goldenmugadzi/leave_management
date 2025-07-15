@@ -1,0 +1,443 @@
+{% extends "admin_layout.html" %}
+
+{% block content %}
+<div class="device-team-management">
+  <!-- Header -->
+  <div class="flex justify-between items-center mb-6">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-800">Device Team Management</h1>
+      <p class="text-gray-600">Assign devices to teams and track utilization</p>
+    </div>
+    <div class="flex space-x-2">
+      <a href="{% url 'senior_foreman_dashboard' %}" 
+         class="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700 transition">
+        ← Back to Dashboard
+      </a>
+      <a href="{% url 'assign_device_to_team' %}" 
+         class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition">
+        Assign Device
+      </a>
+    </div>
+  </div>
+
+  <!-- Device Assignment Overview -->
+  <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+    <div class="bg-white rounded-lg shadow-md p-6">
+      <h3 class="text-lg font-semibold text-gray-800 mb-2">Total Devices</h3>
+      <p class="text-3xl font-bold text-blue-600">{{ devices|length }}</p>
+      <p class="text-sm text-gray-500">In inventory</p>
+    </div>
+    
+    <div class="bg-white rounded-lg shadow-md p-6">
+      <h3 class="text-lg font-semibold text-gray-800 mb-2">Assigned</h3>
+      <p class="text-3xl font-bold text-green-600">
+        {% for device in devices %}{% if device.assignment_count > 0 %}{{ forloop.counter0|add:"1" }}{% endif %}{% endfor %}
+      </p>
+      <p class="text-sm text-gray-500">Devices in use</p>
+    </div>
+    
+    <div class="bg-white rounded-lg shadow-md p-6">
+      <h3 class="text-lg font-semibold text-gray-800 mb-2">Available</h3>
+      <p class="text-3xl font-bold text-orange-600">
+        {% for device in devices %}{% if device.assignment_count == 0 %}{{ forloop.counter0|add:"1" }}{% endif %}{% endfor %}
+      </p>
+      <p class="text-sm text-gray-500">Ready for assignment</p>
+    </div>
+    
+    <div class="bg-white rounded-lg shadow-md p-6">
+      <h3 class="text-lg font-semibold text-gray-800 mb-2">Active Work</h3>
+      <p class="text-3xl font-bold text-red-600">
+        {% for device in devices %}{% if device.active_faults > 0 %}{{ forloop.counter0|add:"1" }}{% endif %}{% endfor %}
+      </p>
+      <p class="text-sm text-gray-500">Devices on faults</p>
+    </div>
+  </div>
+
+  <!-- Devices and Teams -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+    <!-- Devices List -->
+    <div class="bg-white rounded-lg shadow-md p-6">
+      <h3 class="text-lg font-semibold text-gray-800 mb-4">Devices Status</h3>
+      <div class="space-y-3 max-h-96 overflow-y-auto">
+        {% for device in devices %}
+        <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+          <div class="flex-1">
+            <h4 class="font-medium text-gray-800">{{ device.serial_number }}</h4>
+            <div class="text-sm text-gray-600">
+              <p>{{ device.description|default:"No description" }}</p>
+              {% if device.assignment_count > 0 %}
+              {% for assignment in device.faultlocatordeviceassignment_set.all %}
+              <p class="text-blue-600 font-medium">📱 Assigned to {{ assignment.team.name }}</p>
+              {% endfor %}
+              {% else %}
+              <p class="text-gray-500">🔓 Available</p>
+              {% endif %}
+            </div>
+          </div>
+          <div class="flex flex-col items-end space-y-1">
+            {% if device.assignment_count > 0 %}
+            <button onclick="unassignDevice({{ device.id }}, '{{ device.serial_number }}')" 
+                    class="bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700 transition">
+              Unassign
+            </button>
+            {% else %}
+            <button onclick="assignDevice({{ device.id }}, '{{ device.serial_number }}')" 
+                    class="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700 transition">
+              Assign
+            </button>
+            {% endif %}
+            {% if device.active_faults > 0 %}
+            <span class="text-xs text-red-600 font-medium">
+              {{ device.active_faults }} active
+            </span>
+            {% endif %}
+          </div>
+        </div>
+        {% empty %}
+        <p class="text-gray-500 text-center py-8">No devices available</p>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Teams Status -->
+    <div class="bg-white rounded-lg shadow-md p-6">
+      <h3 class="text-lg font-semibold text-gray-800 mb-4">Teams Status</h3>
+      <div class="space-y-3 max-h-96 overflow-y-auto">
+        {% for team in teams %}
+        <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+          <div class="flex-1">
+            <h4 class="font-medium text-gray-800">{{ team.name }}</h4>
+            <div class="text-sm text-gray-600">
+              <p>{{ team.member_count }} members</p>
+              {% if team.device_count > 0 %}
+              {% for assignment in team.faultlocatordeviceassignment_set.all %}
+              <p class="text-green-600 font-medium">📱 {{ assignment.device.serial_number }}</p>
+              {% endfor %}
+              {% else %}
+              <p class="text-red-600">⚠️ No device assigned</p>
+              {% endif %}
+            </div>
+          </div>
+          <div class="text-right">
+            {% if team.device_count > 0 %}
+            <span class="inline-block bg-green-100 text-green-800 text-xs px-2 py-1 rounded">
+              Device Ready
+            </span>
+            {% else %}
+            <span class="inline-block bg-red-100 text-red-800 text-xs px-2 py-1 rounded">
+              Needs Device
+            </span>
+            {% endif %}
+            {% if team.current_depot %}
+            <div class="text-xs text-blue-600 mt-1">
+              @ {{ team.current_depot.depot }}
+            </div>
+            {% endif %}
+          </div>
+        </div>
+        {% empty %}
+        <p class="text-gray-500 text-center py-8">No teams available</p>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Device Assignment Matrix -->
+  <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+    <h3 class="text-lg font-semibold text-gray-800 mb-4">Device Assignment Matrix</h3>
+    <div class="overflow-x-auto">
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+          <tr>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Device
+            </th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Status
+            </th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Assigned Team
+            </th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Current Location
+            </th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Active Faults
+            </th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Actions
+            </th>
+          </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200">
+          {% for device in devices %}
+          <tr>
+            <td class="px-6 py-4 whitespace-nowrap">
+              <div class="text-sm font-medium text-gray-900">{{ device.serial_number }}</div>
+              <div class="text-sm text-gray-500">{{ device.description|default:"No description" }}</div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              {% if device.assignment_count > 0 %}
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                Assigned
+              </span>
+              {% else %}
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                Available
+              </span>
+              {% endif %}
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+              {% if device.assignment_count > 0 %}
+              {% for assignment in device.faultlocatordeviceassignment_set.all %}
+              {{ assignment.team.name }}
+              {% endfor %}
+              {% else %}
+              <span class="text-gray-500">-</span>
+              {% endif %}
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+              {% if device.assignment_count > 0 %}
+              {% for assignment in device.faultlocatordeviceassignment_set.all %}
+              {% if assignment.team.current_depot %}
+              {{ assignment.team.current_depot.depot }}
+              {% else %}
+              Base
+              {% endif %}
+              {% endfor %}
+              {% else %}
+              <span class="text-gray-500">-</span>
+              {% endif %}
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+              {% if device.active_faults > 0 %}
+              <span class="text-red-600 font-medium">{{ device.active_faults }}</span>
+              {% else %}
+              <span class="text-gray-500">0</span>
+              {% endif %}
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+              {% if device.assignment_count > 0 %}
+              <button onclick="unassignDevice({{ device.id }}, '{{ device.serial_number }}')" 
+                      class="text-red-600 hover:text-red-900">
+                Unassign
+              </button>
+              {% else %}
+              <button onclick="assignDevice({{ device.id }}, '{{ device.serial_number }}')" 
+                      class="text-green-600 hover:text-green-900">
+                Assign
+              </button>
+              {% endif %}
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="6" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">
+              No devices available
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Recent Assignment History -->
+  <div class="bg-white rounded-lg shadow-md p-6">
+    <h3 class="text-lg font-semibold text-gray-800 mb-4">Recent Assignment History</h3>
+    <div class="overflow-x-auto">
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+          <tr>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Device
+            </th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Team
+            </th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Assigned At
+            </th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Assigned By
+            </th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Status
+            </th>
+          </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200">
+          {% for assignment in recent_assignments %}
+          <tr>
+            <td class="px-6 py-4 whitespace-nowrap">
+              <div class="text-sm font-medium text-gray-900">{{ assignment.device.serial_number }}</div>
+              <div class="text-sm text-gray-500">{{ assignment.device.description|default:"No description" }}</div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              <div class="text-sm text-gray-900">{{ assignment.team.name }}</div>
+              <div class="text-sm text-gray-500">{{ assignment.team.members.count }} members</div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+              {{ assignment.assigned_at|date:"M d, Y H:i" }}
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+              {{ assignment.assigned_by.get_full_name }}
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                Active
+              </span>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="5" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">
+              No assignment history available
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Assign Device Modal -->
+<div id="assignModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden z-50">
+  <div class="flex items-center justify-center min-h-screen">
+    <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+      <h3 class="text-lg font-semibold mb-4">Assign Device</h3>
+      <div id="assignContent">
+        <div class="space-y-4">
+          <p id="assignDeviceName"></p>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Select Team</label>
+            <select id="teamSelect" class="w-full p-2 border rounded-md">
+              <option value="">Select team...</option>
+              {% for team in teams %}
+              {% if team.device_count == 0 %}
+              <option value="{{ team.id }}">{{ team.name }} ({{ team.member_count }} members)</option>
+              {% endif %}
+              {% endfor %}
+            </select>
+          </div>
+          <div class="bg-blue-50 border border-blue-200 rounded-md p-3">
+            <p class="text-sm text-blue-800">
+              💡 Only teams without devices are shown. Teams with devices must first have their current device unassigned.
+            </p>
+          </div>
+        </div>
+      </div>
+      <div class="flex justify-end space-x-2 mt-6">
+        <button onclick="closeAssignModal()" 
+                class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400">
+          Cancel
+        </button>
+        <button id="confirmAssign" 
+                class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">
+          Assign Device
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Unassign Device Modal -->
+<div id="unassignModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden z-50">
+  <div class="flex items-center justify-center min-h-screen">
+    <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+      <h3 class="text-lg font-semibold mb-4">Unassign Device</h3>
+      <div id="unassignContent">
+        <div class="space-y-4">
+          <p id="unassignDeviceName"></p>
+          <div class="bg-yellow-50 border border-yellow-200 rounded-md p-3">
+            <p class="text-sm text-yellow-800">
+              ⚠️ This will remove the device from its current team. 
+              Make sure the device is not being used for active fault assignments.
+            </p>
+          </div>
+        </div>
+      </div>
+      <div class="flex justify-end space-x-2 mt-6">
+        <button onclick="closeUnassignModal()" 
+                class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400">
+          Cancel
+        </button>
+        <button id="confirmUnassign" 
+                class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700">
+          Unassign Device
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let selectedDeviceId = null;
+
+function assignDevice(deviceId, deviceName) {
+  selectedDeviceId = deviceId;
+  document.getElementById('assignDeviceName').textContent = `Assign device "${deviceName}" to team:`;
+  document.getElementById('assignModal').classList.remove('hidden');
+}
+
+function unassignDevice(deviceId, deviceName) {
+  selectedDeviceId = deviceId;
+  document.getElementById('unassignDeviceName').textContent = `Unassign device "${deviceName}" from its current team?`;
+  document.getElementById('unassignModal').classList.remove('hidden');
+}
+
+function closeAssignModal() {
+  document.getElementById('assignModal').classList.add('hidden');
+  selectedDeviceId = null;
+}
+
+function closeUnassignModal() {
+  document.getElementById('unassignModal').classList.add('hidden');
+  selectedDeviceId = null;
+}
+
+// Assign device confirmation
+document.getElementById('confirmAssign').onclick = function() {
+  const teamId = document.getElementById('teamSelect').value;
+  
+  if (!teamId) {
+    alert('Please select a team');
+    return;
+  }
+  
+  fetch('{% url "quick_assign_device" %}', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': '{{ csrf_token }}'
+    },
+    body: JSON.stringify({
+      device_id: selectedDeviceId,
+      team_id: teamId
+    })
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      alert(data.message);
+      location.reload();
+    } else {
+      alert('Error: ' + data.message);
+    }
+  })
+  .catch(error => {
+    console.error('Error:', error);
+    alert('An error occurred. Please try again.');
+  });
+  
+  closeAssignModal();
+};
+
+// Unassign device confirmation
+document.getElementById('confirmUnassign').onclick = function() {
+  window.location.href = `{% url 'unassign_device' 0 %}`.replace('0', selectedDeviceId);
+  closeUnassignModal();
+};
+</script>
+{% endblock %}
