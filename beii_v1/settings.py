@@ -121,6 +121,7 @@ INSTALLED_APPS = [
     'Transport',
     'Hardware_Faults',
     'Asset_Register',
+    'asset_transfer',
     'widget_tweaks',
     'safety.apps.SafetyConfig',
     'meetings',

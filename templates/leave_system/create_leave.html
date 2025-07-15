@@ -24,10 +24,32 @@
  <div class="content-wrapper">
   
   <div class="bg-gulf-blue-100 shadow shadow-gulf-blue-300 text-gulf-blue-900 rounded px-2 py-2">
+
+    <!-- DASHBOARD: Place this above the form -->
+    <div class="mb-6 p-4 bg-blue-400 rounded shadow flex flex-col md:flex-row gap-6 items-center justify-between">
+      <div>
+        <div class="text-sm text-gray-500">Username</div>
+        <div class="font-bold text-gray-900">{{ user_info.full_name }}</div>
+      </div>
+      <div>
+        <div class="text-sm text-gray-500">Position</div>
+        <div class="font-bold text-gray-900">{{ user_info.designation }}</div>
+      </div>
+      <div>
+        <div class="text-sm text-gray-500">Department</div>
+        <div class="font-bold text-gray-900">{{ user_info.section }}</div>
+      </div>
+      <div>
+        <div class="text-sm text-gray-500">EcNumber</div>
+        <div class="font-bold text-gray-900">{{ user_info.ecnumber }}</div>
+      </div>
+    </div>
+    <!-- END DASHBOARD -->
+
     <form method="post">
       {% csrf_token %}
       <h1 class="text-base font-semibold leading-7 text-gulf-blue-900">
-        leave Application Form
+        Leave Application Form
       </h1>
       <p class="mt-1 text-sm leading-6 text-gulf-blue-900">
         Fill all required fields.
@@ -53,7 +75,6 @@
         </div>
       </div>
     </form>
-        </div>
-      </div>
+  </div>
+</div>
       {% endblock %}
-      

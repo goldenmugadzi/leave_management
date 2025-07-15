@@ -66,6 +66,7 @@ urlpatterns = [
     path('', include('safety.urls')),
     path('', include('meetings.urls')),
     path('', include('leave_management.urls')),
+    path('', include('asset_transfer.urls')),
       
 
 

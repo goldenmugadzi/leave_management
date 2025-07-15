@@ -9,6 +9,7 @@ def create_meeting(request):
     if request.method == 'POST':
         form = MeetingsForm(request.POST)
         if form.is_valid():
+            print('form.employees_invited',form.employees_invited)
             leave = form.save(commit=False)
             leave.user = request.user  
             leave.save()
@@ -40,9 +41,11 @@ def meetings_datatable(request):
 
     data = []
     for meeting in qs:
+        employees = list(meeting.employees_invited.all())
+        employees_str = ", ".join([str(user) for user in employees]) if employees else "None"
         data.append({
             "id": meeting.id,
-            "employees_invited": str(meeting.employees_invited) if meeting.employees_invited else "",
+            "employees_invited": employees_str,
             "department": str(meeting.department) if meeting.department else "",
             "regions": str(meeting.regions) if meeting.regions else "",
             "type_of_meeting": meeting.type_of_meeting,
