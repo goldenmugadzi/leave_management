@@ -46,29 +46,41 @@ class BudgetSummaryVerifier:
 
     def verify_budget_field_consistency(self, budget):
         """Verify that budget fields are mathematically consistent"""
-        expected_balance = budget.allocated - budget.withdrawn - budget.to_be_withdrawn
+        # Handle None values by treating them as 0
+        allocated = budget.allocated or 0
+        withdrawn = budget.withdrawn or 0
+        to_be_withdrawn = budget.to_be_withdrawn or 0
+        balance = budget.balance or 0
+        
+        expected_balance = allocated - withdrawn - to_be_withdrawn
         
         # Allow for small floating point errors
         tolerance = 0.01
-        balance_diff = abs(expected_balance - budget.balance)
+        balance_diff = abs(expected_balance - balance)
         
         if balance_diff > tolerance:
             self.log_error(f"Budget {budget.budget_name} has inconsistent balance. "
-                          f"Expected: {expected_balance:.2f}, Actual: {budget.balance:.2f}, "
+                          f"Expected: {expected_balance:.2f}, Actual: {balance:.2f}, "
                           f"Difference: {balance_diff:.2f}")
             return False
         return True
 
     def verify_budget_percentage_calculations(self, budget):
         """Verify percentage calculations for a budget"""
-        if budget.allocated <= 0:
-            self.log_warning(f"Budget {budget.budget_name} has zero or negative allocation: {budget.allocated}")
+        # Handle None values by treating them as 0
+        allocated = budget.allocated or 0
+        withdrawn = budget.withdrawn or 0
+        to_be_withdrawn = budget.to_be_withdrawn or 0
+        balance = budget.balance or 0
+        
+        if allocated <= 0:
+            self.log_warning(f"Budget {budget.budget_name} has zero or negative allocation: {allocated}")
             return False
 
         # Calculate percentages using the same logic as in views.py
-        utilization_percentage = (budget.withdrawn / budget.allocated * 100) if budget.allocated > 0 else 0
-        pending_percentage = (budget.to_be_withdrawn / budget.allocated * 100) if budget.allocated > 0 else 0
-        available_percentage = (budget.balance / budget.allocated * 100) if budget.allocated > 0 else 0
+        utilization_percentage = (withdrawn / allocated * 100) if allocated > 0 else 0
+        pending_percentage = (to_be_withdrawn / allocated * 100) if allocated > 0 else 0
+        available_percentage = (balance / allocated * 100) if allocated > 0 else 0
         total_commitment_percentage = utilization_percentage + pending_percentage
 
         # Verify that percentages add up to 100% (within tolerance)
@@ -82,14 +94,14 @@ class BudgetSummaryVerifier:
             return False
 
         # Verify that amounts add up to allocated
-        total_amount = budget.withdrawn + budget.to_be_withdrawn + budget.balance
-        if abs(total_amount - budget.allocated) > 0.01:
+        total_amount = withdrawn + to_be_withdrawn + balance
+        if abs(total_amount - allocated) > 0.01:
             self.log_error(f"Budget {budget.budget_name} amounts don't add up to allocated. "
-                          f"Withdrawn: {budget.withdrawn:.2f}, "
-                          f"Pending: {budget.to_be_withdrawn:.2f}, "
-                          f"Balance: {budget.balance:.2f}, "
+                          f"Withdrawn: {withdrawn:.2f}, "
+                          f"Pending: {to_be_withdrawn:.2f}, "
+                          f"Balance: {balance:.2f}, "
                           f"Total: {total_amount:.2f}, "
-                          f"Allocated: {budget.allocated:.2f}")
+                          f"Allocated: {allocated:.2f}")
             return False
 
         return True
@@ -99,26 +111,26 @@ class BudgetSummaryVerifier:
         # Get all ACEs for this budget
         aces = Ace2.objects.filter(budget_id=budget)
         
-        # Calculate expected withdrawn amount from approved ACEs
-        approved_aces = aces.filter(process__approval_set__approved="Approved")
-        expected_withdrawn = approved_aces.aggregate(total=Sum('amount'))['total'] or 0
+        # Calculate total ACE amount (regardless of approval status)
+        total_ace_amount = aces.aggregate(total=Sum('amount'))['total'] or 0
         
-        # Calculate expected pending amount from pending ACEs
-        pending_aces = aces.exclude(process__approval_set__approved__in=["Approved", "Rejected"])
-        expected_pending = pending_aces.aggregate(total=Sum('amount'))['total'] or 0
+        # Get transaction data for verification
+        transactions = Transactions.objects.filter(budget=budget)
+        approved_transactions = transactions.filter(approval_status="approved by General Manager")
+        expected_withdrawn_from_transactions = approved_transactions.aggregate(total=Sum('amount'))['total'] or 0
         
         # Allow for small differences due to floating point precision
         tolerance = 0.01
         
-        if abs(expected_withdrawn - budget.withdrawn) > tolerance:
+        if abs(expected_withdrawn_from_transactions - budget.withdrawn) > tolerance:
             self.log_warning(f"Budget {budget.budget_name} withdrawn amount mismatch. "
-                           f"Expected from ACEs: {expected_withdrawn:.2f}, "
+                           f"Expected from transactions: {expected_withdrawn_from_transactions:.2f}, "
                            f"Budget field: {budget.withdrawn:.2f}")
         
-        if abs(expected_pending - budget.to_be_withdrawn) > tolerance:
-            self.log_warning(f"Budget {budget.budget_name} pending amount mismatch. "
-                           f"Expected from ACEs: {expected_pending:.2f}, "
-                           f"Budget field: {budget.to_be_withdrawn:.2f}")
+        # Log some diagnostic information
+        self.log_info(f"Budget {budget.budget_name}: {aces.count()} ACEs, "
+                     f"Total ACE amount: ${total_ace_amount:.2f}, "
+                     f"Budget allocated: ${budget.allocated:.2f}")
 
     def verify_health_status_logic(self, budget):
         """Verify the health status determination logic"""

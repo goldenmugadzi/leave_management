@@ -2137,16 +2137,206 @@ def notify_pending_gm_approvals(request):
 def asset_budget_report(request, budget_id):
     budget = get_object_or_404(AssetBudget, pk=budget_id)
     # All ACEs that used this budget
-    aces = Ace2.objects.filter(budget_id=budget)
+    aces = Ace2.objects.filter(budget_id=budget).order_by('-date_created')
     # Total amount used by ACEs
     total_used = aces.aggregate(total=models.Sum('amount'))['total'] or 0
-    # Other features
+    
+    # Calculate budget statistics
+    allocated = budget.allocated or 0
+    withdrawn = budget.withdrawn or 0
+    awaiting_sanctioning = budget.awaiting_sanctioning or 0
+    balance = budget.balance or 0
+    
+    # Calculate utilization rate
+    utilization_rate = (withdrawn / allocated * 100) if allocated > 0 else 0
+    
+    # Get ACE status counts
+    approved_count = 0
+    pending_count = 0
+    rejected_count = 0
+    unknown_count = 0
+    
+    for ace in aces:
+        if ace.process and ace.process.approval_set.last():
+            status = ace.process.approval_set.last().approved
+            if status == "Approved":
+                approved_count += 1
+            elif status == "Rejected":
+                rejected_count += 1
+            else:
+                pending_count += 1
+        else:
+            unknown_count += 1
+    
+    # Get monthly usage data (last 6 months)
+    from datetime import datetime, timedelta
+    from django.db.models import Sum, Count
+    from django.db.models.functions import TruncMonth
+    
+    end_date = datetime.now()
+    start_date = end_date - timedelta(days=180)  # 6 months ago
+    
+    monthly_usage = aces.filter(
+        date_created__gte=start_date,
+        date_created__lte=end_date
+    ).annotate(
+        month=TruncMonth('date_created')
+    ).values('month').annotate(
+        total_amount=Sum('amount'),
+        ace_count=Count('id')
+    ).order_by('month')
+    
+    # Format monthly data for chart
+    monthly_data = {
+        'labels': [],
+        'amounts': [],
+        'counts': []
+    }
+    
+    for item in monthly_usage:
+        monthly_data['labels'].append(item['month'].strftime('%b %Y'))
+        monthly_data['amounts'].append(float(item['total_amount'] or 0))
+        monthly_data['counts'].append(item['ace_count'])
+    
+    # Calculate additional metrics
+    avg_ace_amount = total_used / aces.count() if aces.count() > 0 else 0
+    
     context = {
         'budget': budget,
         'aces': aces,
         'total_used': total_used,
+        'allocated': allocated,
+        'withdrawn': withdrawn,
+        'awaiting_sanctioning': awaiting_sanctioning,
+        'balance': balance,
+        'utilization_rate': round(utilization_rate, 2),
+        'approved_count': approved_count,
+        'pending_count': pending_count,
+        'rejected_count': rejected_count,
+        'unknown_count': unknown_count,
+        'monthly_data': monthly_data,
+        'avg_ace_amount': avg_ace_amount,
+        'total_aces': aces.count(),
     }
     return render(request, 'finance/ace2/asset_budget_report.html', context)
+
+
+@login_required
+def asset_budget_report_pdf(request, budget_id):
+    """Export asset budget report to PDF"""
+    budget = get_object_or_404(AssetBudget, pk=budget_id)
+    aces = Ace2.objects.filter(budget_id=budget).order_by('-date_created')
+    total_used = aces.aggregate(total=models.Sum('amount'))['total'] or 0
+    
+    # Calculate utilization rate
+    utilization_rate = (budget.withdrawn / budget.allocated * 100) if budget.allocated > 0 else 0
+    
+    template = loader.get_template('finance/ace2/asset_budget_report_pdf.html')
+    context = {
+        'budget': budget,
+        'aces': aces,
+        'total_used': total_used,
+        'utilization_rate': round(utilization_rate, 2),
+        'request': request
+    }
+    html = template.render(context, request)
+    
+    from weasyprint import HTML
+    pdf = HTML(string=html).write_pdf()
+    
+    response = HttpResponse(pdf, content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="asset_budget_report_{budget.budget_id}.pdf"'
+    return response
+
+
+@login_required
+def asset_budget_report_excel(request, budget_id):
+    """Export asset budget report to Excel"""
+    budget = get_object_or_404(AssetBudget, pk=budget_id)
+    aces = Ace2.objects.filter(budget_id=budget).order_by('-date_created')
+    total_used = aces.aggregate(total=models.Sum('amount'))['total'] or 0
+    
+    from openpyxl import Workbook
+    from openpyxl.styles import Font, Alignment, PatternFill
+    from openpyxl.utils import get_column_letter
+    
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Asset Budget Report"
+    
+    # Header styling
+    header_font = Font(bold=True, size=12)
+    header_fill = PatternFill(start_color="366092", end_color="366092", fill_type="solid")
+    center_alignment = Alignment(horizontal="center", vertical="center")
+    
+    # Budget Summary Section
+    ws.merge_cells('A1:H1')
+    ws['A1'] = f"Asset Budget Report - {budget.budget_name}"
+    ws['A1'].font = Font(bold=True, size=16)
+    ws['A1'].alignment = center_alignment
+    
+    ws['A3'] = "Budget Summary"
+    ws['A3'].font = header_font
+    
+    ws['A4'] = "Allocated"
+    ws['B4'] = float(budget.allocated or 0)
+    ws['A5'] = "Withdrawn"
+    ws['B5'] = float(budget.withdrawn or 0)
+    ws['A6'] = "Balance"
+    ws['B6'] = float(budget.balance or 0)
+    ws['A7'] = "Awaiting Sanctioning"
+    ws['B7'] = float(budget.awaiting_sanctioning or 0)
+    ws['A8'] = "Total Used by ACEs"
+    ws['B8'] = float(total_used)
+    ws['A9'] = "Utilization Rate (%)"
+    ws['B9'] = round((budget.withdrawn / budget.allocated * 100) if budget.allocated > 0 else 0, 2)
+    
+    # ACE Details Section
+    ws['A12'] = "ACE Details"
+    ws['A12'].font = header_font
+    
+    # Headers
+    headers = ['ACE ID', 'Details', 'Amount', 'Requested By', 'Date Created', 'Status', 'Section', 'Region']
+    for col_num, header in enumerate(headers, 1):
+        cell = ws.cell(row=13, column=col_num, value=header)
+        cell.font = header_font
+        cell.fill = header_fill
+        cell.alignment = center_alignment
+    
+    # Data rows
+    for row_num, ace in enumerate(aces, 14):
+        ws.cell(row=row_num, column=1, value=ace.Ace_id2)
+        ws.cell(row=row_num, column=2, value=ace.details_of_expenditure)
+        ws.cell(row=row_num, column=3, value=float(ace.amount or 0))
+        ws.cell(row=row_num, column=4, value=ace.requested_by.get_full_name())
+        ws.cell(row=row_num, column=5, value=ace.date_created.strftime('%Y-%m-%d'))
+        
+        # Status
+        status = "-"
+        if ace.process and ace.process.approval_set.last():
+            status = ace.process.approval_set.last().approved
+        ws.cell(row=row_num, column=6, value=status)
+        
+        ws.cell(row=row_num, column=7, value=str(ace.section) if ace.section else "")
+        ws.cell(row=row_num, column=8, value=str(ace.region) if ace.region else "")
+    
+    # Auto-adjust column widths
+    for col in ws.columns:
+        max_length = 0
+        column = col[0].column_letter
+        for cell in col:
+            try:
+                if len(str(cell.value)) > max_length:
+                    max_length = len(str(cell.value))
+            except:
+                pass
+        adjusted_width = min(max_length + 2, 50)
+        ws.column_dimensions[column].width = adjusted_width
+    
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = f'attachment; filename="asset_budget_report_{budget.budget_id}.xlsx"'
+    wb.save(response)
+    return response
 
 
 

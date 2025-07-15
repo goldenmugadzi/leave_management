@@ -36,6 +36,8 @@ urlpatterns = [
     path('export_current_year_pdf/', views.export_current_year_pdf, name='export_current_year_pdf'),
     path('my_actioned_items/', views.my_actioned_items, name='my_actioned_items'),
     path('asset_budget_report/<int:budget_id>/', views.asset_budget_report, name='asset_budget_report'),
+    path('asset_budget_report_pdf/<int:budget_id>/', views.asset_budget_report_pdf, name='asset_budget_report_pdf'),
+    path('asset_budget_report_excel/<int:budget_id>/', views.asset_budget_report_excel, name='asset_budget_report_excel'),
     path('download_quotation/<int:quotation_id>/', views.download_ace_quotation, name='download_ace_quotation'),
     path('monthly_usage_dashboard/', views.monthly_usage_dashboard, name='monthly_usage_dashboard'),
     
