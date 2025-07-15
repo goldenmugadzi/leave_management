@@ -396,22 +396,36 @@ class QuickFaultReportForm(forms.ModelForm):
         fields = ['description', 'depot', 'priority']
     
     def __init__(self, *args, **kwargs):
+        user_region = kwargs.pop('user_region', None)
         user_depot = kwargs.pop('user_depot', None)
         super().__init__(*args, **kwargs)
+        
+        # Apply regional filtering for depots
+        depot_queryset = Depots.objects.all()
+        if user_region:
+            depot_queryset = depot_queryset.filter(region=user_region)
         
         # If user has a specific depot, pre-select it
         if user_depot:
             self.fields['depot'].initial = user_depot
-            self.fields['depot'].queryset = Depots.objects.filter(id=user_depot.id)
+            # For non-senior users, restrict to their depot only
+            if not user_region:  # If no region filtering, means it's restricted to user's depot
+                depot_queryset = depot_queryset.filter(id=user_depot.id)
+        
+        self.fields['depot'].queryset = depot_queryset.order_by('depot')
+        
+        # Use Select2 widget for searchable depot selection
+        self.fields['depot'].widget = forms.Select(attrs={
+            'class': 'form-select depot-select',
+            'data-placeholder': 'Search and select depot...',
+            'data-allow-clear': 'true'
+        })
         
         # Add CSS classes
         self.fields['description'].widget.attrs.update({
             'class': 'form-control',
             'placeholder': 'Describe the fault...',
             'rows': 3
-        })
-        self.fields['depot'].widget.attrs.update({
-            'class': 'form-select'
         })
         self.fields['priority'].widget.attrs.update({
             'class': 'form-select'

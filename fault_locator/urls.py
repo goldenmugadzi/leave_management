@@ -58,4 +58,7 @@ urlpatterns = [
     
     # Fallback for fault list
     path('faults/', views.simple_fault_list, name='fault_list'),  # Use simple_fault_list instead
+    
+    # Individual fault detail/update view
+    path('faults/<int:fault_id>/', views.field_update, name='fault_detail'),
 ]

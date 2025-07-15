@@ -11,7 +11,7 @@ from decouple import config
 
 from it.users.helpers import DEPOTS
 from .models import *
-from .forms import FaultForm, FaultLocatorDeviceForm, FaultLocatorTeamForm, FaultLocatorTeamNameForm, AddTeamMemberForm, AssignDeviceToTeamForm, AssignFaultForm, TeamDeploymentForm, SeniorForepersonDeviceAssignmentForm
+from .forms import FaultForm, FaultLocatorDeviceForm, FaultLocatorTeamForm, FaultLocatorTeamNameForm, AddTeamMemberForm, AssignDeviceToTeamForm, AssignFaultForm, TeamDeploymentForm, SeniorForepersonDeviceAssignmentForm, QuickFaultReportForm
 from it.users.models import UserProfile, Notification
 from it.users.views import ms_exhange_send_html
 from .central_roles import (
@@ -843,62 +843,61 @@ def quick_fault_report(request):
     user_profile = UserProfile.objects.filter(id=request.user.id).first()
     
     if request.method == "POST":
-        # Simple form processing
-        description = request.POST.get('description', '').strip()
-        priority = int(request.POST.get('priority', 2))
-        depot_id = request.POST.get('depot')
+        # Determine form parameters based on user role and region
+        form_kwargs = {}
+        if user_profile and user_profile.region:
+            form_kwargs['user_region'] = user_profile.region
         
-        if not description:
-            messages.error(request, "Please describe the fault")
-            return redirect('quick_fault_report')
+        # Pre-fill user depot for non-senior users
+        user_depot = None
+        if user_profile and hasattr(user_profile, 'depot') and user_profile.depot:
+            user_depot = Depots.objects.filter(code=user_profile.depot).first()
+            # For non-senior foremen, restrict to their depot only
+            if not is_senior_foreman(user_profile) and user_depot:
+                form_kwargs['user_depot'] = user_depot
         
-        # Get depot
-        depot = None
-        if depot_id:
-            depot = get_object_or_404(Depots, id=depot_id)
-        elif user_profile and hasattr(user_profile, 'depot') and user_profile.depot:
-            depot = Depots.objects.filter(code=user_profile.depot).first()
-        
-        if not depot:
-            messages.error(request, "Please select a depot")
-            return redirect('quick_fault_report')
-        
-        # Create fault
-        fault = Fault.objects.create(
-            description=description,
-            depot=depot,
-            priority=priority,
-            reported_by=user_profile,
-        )
-        
-        # Send notifications for high priority faults
-        if fault.priority >= 3:
-            notify_high_priority_fault(fault, request)
-        
-        messages.success(request, f"Fault reported successfully! Reference: FL-{fault.id}")
-        
-        # Redirect based on user role
-        if is_depot_foreperson(user_profile, depot):
-            messages.info(request, "As depot foreperson, you can now assign this fault to a team")
-            return redirect('simple_assign_fault', fault_id=fault.id)
+        form = QuickFaultReportForm(request.POST, **form_kwargs)
+        if form.is_valid():
+            fault = form.save(commit=False)
+            fault.reported_by = user_profile
+            fault.save()
+            
+            # Send notifications for high priority faults
+            if fault.priority >= 3:
+                notify_high_priority_fault(fault, request)
+            
+            messages.success(request, f"Fault reported successfully! Reference: FL-{fault.id}")
+            
+            # Redirect based on user role
+            if is_depot_foreperson(user_profile, fault.depot):
+                messages.info(request, "As depot foreperson, you can now assign this fault to a team")
+                return redirect('simple_assign_fault', fault_id=fault.id)
+            else:
+                return redirect('simple_fault_list')
         else:
-            return redirect('simple_fault_list')
-    
-    # GET request - show form
-    available_depots = Depots.objects.all().order_by('depot')
-    user_depot = None
-    
-    # Pre-select user's depot
-    if user_profile and hasattr(user_profile, 'depot') and user_profile.depot:
-        user_depot = Depots.objects.filter(code=user_profile.depot).first()
-        # For non-senior foremen, show only their depot if they have one
-        if not is_senior_foreman(user_profile) and user_depot:
-            available_depots = Depots.objects.filter(id=user_depot.id)
+            # Form has errors, it will be displayed with errors
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f"{field.title()}: {error}")
+    else:
+        # GET request - show form
+        form_kwargs = {}
+        if user_profile and user_profile.region:
+            form_kwargs['user_region'] = user_profile.region
+        
+        # Pre-fill user depot for non-senior users
+        user_depot = None
+        if user_profile and hasattr(user_profile, 'depot') and user_profile.depot:
+            user_depot = Depots.objects.filter(code=user_profile.depot).first()
+            # For non-senior foremen, restrict to their depot only
+            if not is_senior_foreman(user_profile) and user_depot:
+                form_kwargs['user_depot'] = user_depot
+        
+        form = QuickFaultReportForm(**form_kwargs)
     
     context = {
+        'form': form,
         'user_profile': user_profile,
-        'available_depots': available_depots,
-        'user_depot': user_depot,
         'priority_choices': Fault._meta.get_field('priority').choices,
     }
     
