@@ -12,28 +12,30 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'beii_v1.settings')
 django.setup()
 
 from django.test import RequestFactory, TestCase
-from django.contrib.auth.models import User
-from it.users.models import UserProfile
+from django.contrib.auth import get_user_model
+from it.users.models import UserProfile, Designations
 from fault_locator.models import *
 from fault_locator.senior_foreman_views import *
 
+User = get_user_model()
+
 def test_senior_foreman_dashboard():
     """Test that the Senior Foreman dashboard loads correctly"""
+    
+    # Get or create a designation
+    designation = Designations.objects.first()
+    if not designation:
+        designation = Designations.objects.create(description='Senior Foreman')
     
     # Create a test user
     user = User.objects.create_user(
         username='test_senior',
         email='test@example.com',
-        password='testpass123'
-    )
-    
-    # Create user profile
-    user_profile = UserProfile.objects.create(
-        user=user,
+        password='testpass123',
         first_name='Test',
         last_name='Senior',
         depot='A',
-        designation_id=1  # Assuming designation exists
+        designation=designation
     )
     
     # Create request factory
@@ -55,20 +57,20 @@ def test_senior_foreman_dashboard():
 def test_team_depot_management():
     """Test team depot management view"""
     
+    # Get or create a designation
+    designation = Designations.objects.first()
+    if not designation:
+        designation = Designations.objects.create(description='Senior Foreman')
+    
     # Create a test user
     user = User.objects.create_user(
         username='test_senior2',
         email='test2@example.com',
-        password='testpass123'
-    )
-    
-    # Create user profile
-    user_profile = UserProfile.objects.create(
-        user=user,
+        password='testpass123',
         first_name='Test',
         last_name='Senior2',
         depot='A',
-        designation_id=1  # Assuming designation exists
+        designation=designation
     )
     
     # Create request factory
@@ -90,20 +92,20 @@ def test_team_depot_management():
 def test_device_team_management():
     """Test device team management view"""
     
+    # Get or create a designation
+    designation = Designations.objects.first()
+    if not designation:
+        designation = Designations.objects.create(description='Senior Foreman')
+    
     # Create a test user
     user = User.objects.create_user(
         username='test_senior3',
         email='test3@example.com',
-        password='testpass123'
-    )
-    
-    # Create user profile
-    user_profile = UserProfile.objects.create(
-        user=user,
+        password='testpass123',
         first_name='Test',
         last_name='Senior3',
         depot='A',
-        designation_id=1  # Assuming designation exists
+        designation=designation
     )
     
     # Create request factory
@@ -125,20 +127,20 @@ def test_device_team_management():
 def test_performance_monitoring():
     """Test performance monitoring view"""
     
+    # Get or create a designation
+    designation = Designations.objects.first()
+    if not designation:
+        designation = Designations.objects.create(description='Senior Foreman')
+    
     # Create a test user
     user = User.objects.create_user(
         username='test_senior4',
         email='test4@example.com',
-        password='testpass123'
-    )
-    
-    # Create user profile
-    user_profile = UserProfile.objects.create(
-        user=user,
+        password='testpass123',
         first_name='Test',
         last_name='Senior4',
         depot='A',
-        designation_id=1  # Assuming designation exists
+        designation=designation
     )
     
     # Create request factory

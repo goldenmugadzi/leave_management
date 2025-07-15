@@ -505,6 +505,12 @@ def fault_locator_dashboard(request):
         }
 
     if is_senior:
+        accessible_functions['senior_foreman_dashboard'] = {
+            'title': 'Senior Foreman Dashboard',
+            'description': 'Complete management interface for team deployment, device assignment, and performance monitoring.',
+            'url_name': 'senior_foreman_dashboard',
+            'icon': '📊'
+        }
         accessible_functions['deploy_team'] = {
             'title': 'Deploy Teams',
             'description': 'Deploy available teams to various depot locations.',

@@ -2,6 +2,7 @@ from django.urls import path
 from . import views
 from . import role_views
 from . import central_role_views
+from . import senior_foreman_views
 
 urlpatterns = [
     # Dashboard and home
@@ -11,6 +12,17 @@ urlpatterns = [
     # New Role-Based Dashboard
     path('role-dashboard/', role_views.role_based_dashboard, name='role_based_dashboard'),
     path('assign-role/', role_views.assign_role, name='assign_role'),
+    
+    # Senior Foreman Management
+    path('senior-dashboard/', senior_foreman_views.senior_foreman_dashboard, name='senior_foreman_dashboard'),
+    path('team-depot-management/', senior_foreman_views.team_depot_management, name='team_depot_management'),
+    path('device-team-management/', senior_foreman_views.device_team_management, name='device_team_management'),
+    path('performance-monitoring/', senior_foreman_views.performance_monitoring, name='performance_monitoring'),
+    
+    # Senior Foreman AJAX endpoints
+    path('ajax/quick-deploy-team/', senior_foreman_views.quick_deploy_team, name='quick_deploy_team'),
+    path('ajax/quick-assign-device/', senior_foreman_views.quick_assign_device, name='quick_assign_device'),
+    path('ajax/quick-recall-team/', senior_foreman_views.quick_recall_team, name='quick_recall_team'),
     
     # Central Role Management
     path('manage-roles/', central_role_views.manage_fault_locator_roles, name='manage_fault_locator_roles'),

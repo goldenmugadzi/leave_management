@@ -120,10 +120,8 @@ class AssignDeviceToTeamForm(forms.ModelForm):
         assigned_devices = FaultLocatorDeviceAssignment.objects.values_list('device_id', flat=True)
         device_queryset = FaultLocatorDevice.objects.exclude(id__in=assigned_devices)
         
-        # Apply regional filtering for devices if user_region is provided
-        if user_region:
-            # Filter devices by region (assuming FaultLocatorDevice has a region field)
-            device_queryset = device_queryset.filter(region=user_region)
+        # Devices are equipment that can be used anywhere, so no regional filtering needed
+        # All available devices can be assigned to teams
         
         self.fields['device'].queryset = device_queryset
         
@@ -133,11 +131,14 @@ class AssignDeviceToTeamForm(forms.ModelForm):
             users_in_region = UserProfile.objects.filter(
                 region=user_region,
                 is_active=True
-            ).values_list('user_id', flat=True)
+            ).values_list('id', flat=True)
             
             self.fields['team'].queryset = FaultLocatorTeam.objects.filter(
                 members__in=users_in_region
             ).distinct()
+        else:
+            # Show all teams if no region specified
+            self.fields['team'].queryset = FaultLocatorTeam.objects.all()
 
     def clean_device(self):
         device = self.cleaned_data['device']
@@ -235,10 +236,8 @@ class SeniorForepersonDeviceAssignmentForm(forms.ModelForm):
         assigned_devices = FaultLocatorDeviceAssignment.objects.values_list('device_id', flat=True)
         device_queryset = FaultLocatorDevice.objects.exclude(id__in=assigned_devices)
         
-        # Apply regional filtering for devices if user has a region
-        if user and user.region:
-            # Filter devices by region (assuming FaultLocatorDevice has a region field)
-            device_queryset = device_queryset.filter(region=user.region)
+        # Devices are equipment that can be used anywhere, so no regional filtering needed
+        # All available devices can be assigned to teams
         
         self.fields['device'].queryset = device_queryset
         
@@ -252,13 +251,16 @@ class SeniorForepersonDeviceAssignmentForm(forms.ModelForm):
                 users_in_region = UserProfile.objects.filter(
                     region=user.region,
                     is_active=True
-                ).values_list('user_id', flat=True)
+                ).values_list('id', flat=True)
                 
                 team_queryset = team_queryset.filter(
                     members__in=users_in_region
                 ).distinct()
             
             self.fields['team'].queryset = team_queryset
+        else:
+            # For non-senior forepersons, show all teams (can be restricted later if needed)
+            self.fields['team'].queryset = FaultLocatorTeam.objects.all()
         
         self.fields['device'].widget.attrs.update({
             'class': 'form-select'
