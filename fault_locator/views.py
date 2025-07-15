@@ -1149,7 +1149,7 @@ def team_overview(request):
     """SIMPLIFIED: Clean team overview with action buttons"""
     user_profile = UserProfile.objects.filter(id=request.user.id).first()
     
-    # Get teams based on user role
+    # Get teams based on user role with optimized queries
     teams = FaultLocatorTeam.objects.select_related(
         'team_leader', 
         'current_depot', 
@@ -1213,29 +1213,61 @@ def team_overview(request):
                 'class': 'btn-outline-secondary btn-sm'
             })
         
-        # Get actual member count to fix annotation issues
+        # Get actual member count to ensure accuracy
         actual_member_count = team.members.count()
         
-        # Get actual active assignments count
+        # Get actual active assignments count to ensure accuracy
         actual_active_assignments = FaultAssignment.objects.filter(
             team=team,
             located_at__isnull=True
         ).count()
         
-        # Get team leader display name
-        team_leader_name = team.team_leader.get_full_name() if team.team_leader else None
+        # Get team leader display name with fallback
+        team_leader_name = None
+        if team.team_leader:
+            leader_name = team.team_leader.get_full_name()
+            if leader_name and leader_name.strip():
+                team_leader_name = leader_name.strip()
+            else:
+                team_leader_name = team.team_leader.username or f"User {team.team_leader.id}"
         
-        # Get members with proper display names
+        # Get members with proper display names and email handling
         team_members = []
         for member in team.members.all():
+            # Handle member name
             member_name = member.get_full_name()
             if not member_name or member_name.strip() == '':
                 member_name = member.username or f"User {member.id}"
+            else:
+                member_name = member_name.strip()
+            
+            # Handle member email
+            member_email = 'No email'
+            if member.email:
+                # Fix "nan" display and other issues
+                email_str = str(member.email).strip()
+                if email_str and email_str.lower() != 'nan' and email_str != 'None':
+                    member_email = email_str
+            
             team_members.append({
                 'name': member_name,
-                'email': member.email or 'No email',
+                'email': member_email,
                 'id': member.id
             })
+        
+        # Enhanced deployment info
+        deployment_info = {
+            'assigned_at': team.assigned_at,
+            'assigned_by': team.assigned_by.get_full_name() if team.assigned_by else None,
+            'depot_name': team.current_depot.depot if team.current_depot else None,
+            'depot_code': team.current_depot.code if team.current_depot else None,
+        }
+        
+        # Add deployment status text
+        if team.current_depot:
+            deployment_info['status_text'] = f'Deployed to {team.current_depot.depot}'
+        else:
+            deployment_info['status_text'] = 'Not deployed'
         
         team_data.append({
             'team': team,
@@ -1248,12 +1280,12 @@ def team_overview(request):
             'actual_active_assignments': actual_active_assignments,
             'team_leader_name': team_leader_name,
             'team_members': team_members,
-            'deployment_info': {
-                'assigned_at': team.assigned_at,
-                'assigned_by': team.assigned_by.get_full_name() if team.assigned_by else None,
-                'depot_name': team.current_depot.depot if team.current_depot else None,
-                'depot_code': team.current_depot.code if team.current_depot else None,
-            }
+            'deployment_info': deployment_info,
+            # Add some additional computed fields for better display
+            'has_device': device_assignment is not None,
+            'is_deployed': team.current_depot is not None,
+            'can_be_deployed': device_assignment is not None and team.current_depot is None,
+            'device_serial': device_assignment.device.serial_number if device_assignment else None,
         })
     
     context = {
@@ -1262,6 +1294,15 @@ def team_overview(request):
         'is_senior_foreman': is_senior_foreman(user_profile),
         'can_create_team': is_senior_foreman(user_profile) or can_manage_devices(user_profile),
         'total_teams': len(team_data),
+        # Add some summary statistics
+        'summary_stats': {
+            'total_teams': len(team_data),
+            'deployed_teams': sum(1 for item in team_data if item['is_deployed']),
+            'teams_with_devices': sum(1 for item in team_data if item['has_device']),
+            'available_for_deployment': sum(1 for item in team_data if item['can_be_deployed']),
+            'total_members': sum(item['actual_member_count'] for item in team_data),
+            'active_assignments': sum(item['actual_active_assignments'] for item in team_data),
+        }
     }
     
     return render(request, "fault_locator/team_overview.html", context)

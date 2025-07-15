@@ -12,8 +12,23 @@
             Team Overview
           </h1>
           <p class="text-nepal-600 text-lg">Manage and monitor fault locator teams</p>
-          <div class="mt-2 text-sm text-nepal-500">
-            Total Teams: <span class="font-bold text-gulf-blue-600">{{ total_teams }}</span>
+          <div class="mt-4 grid grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
+            <div class="text-center">
+              <div class="font-bold text-gulf-blue-600 text-lg">{{ summary_stats.total_teams }}</div>
+              <div class="text-nepal-500">Total Teams</div>
+            </div>
+            <div class="text-center">
+              <div class="font-bold text-jade-600 text-lg">{{ summary_stats.deployed_teams }}</div>
+              <div class="text-nepal-500">Deployed</div>
+            </div>
+            <div class="text-center">
+              <div class="font-bold text-tory-blue-600 text-lg">{{ summary_stats.teams_with_devices }}</div>
+              <div class="text-nepal-500">With Devices</div>
+            </div>
+            <div class="text-center">
+              <div class="font-bold text-pomegranate-primary text-lg">{{ summary_stats.active_assignments }}</div>
+              <div class="text-nepal-500">Active Tasks</div>
+            </div>
           </div>
         </div>
         
@@ -81,9 +96,9 @@
             <div class="font-semibold text-gulf-blue-800">{{ item.team_leader_name }}</div>
           </div>
           {% else %}
-          <div class="mb-4 p-3 rounded-xl bg-gradient-to-r from-nepal-50 to-nepal-100 border border-nepal-200/50">
-            <div class="text-xs text-nepal-500 uppercase tracking-wide mb-1">Team Leader</div>
-            <div class="text-nepal-600 italic">No leader assigned</div>
+          <div class="mb-4 p-3 rounded-xl bg-gradient-to-r from-lemon-50 to-citron-50 border border-lemon-200/50">
+            <div class="text-xs text-lemon-700 uppercase tracking-wide mb-1">Team Leader</div>
+            <div class="text-lemon-800 italic">No leader assigned</div>
           </div>
           {% endif %}
 
@@ -126,18 +141,20 @@
           {% endif %}
 
           <!-- Device Assignment -->
-          {% if item.device %}
+          {% if item.has_device %}
           <div class="mb-4 p-3 rounded-xl bg-gradient-to-r from-jade-50 to-apple-50 border border-jade-200/50">
             <div class="text-xs text-jade-600 uppercase tracking-wide mb-1">Assigned Device</div>
-            <div class="font-semibold text-jade-800">{{ item.device.serial_number }}</div>
+            <div class="font-semibold text-jade-800">{{ item.device_serial }}</div>
             {% if item.device.description %}
             <div class="text-sm text-jade-600">{{ item.device.description }}</div>
             {% endif %}
+            <div class="text-xs text-jade-500 mt-1">Status: {{ item.device.get_status_display }}</div>
           </div>
           {% else %}
-          <div class="mb-4 p-3 rounded-xl bg-gradient-to-r from-lemon-50 to-citron-50 border border-lemon-200/50">
-            <div class="text-xs text-lemon-700 uppercase tracking-wide mb-1">Device Status</div>
-            <div class="text-lemon-800 italic">No device assigned</div>
+          <div class="mb-4 p-3 rounded-xl bg-gradient-to-r from-pomegranate-50 to-scarlet-red-50 border border-pomegranate-200/50">
+            <div class="text-xs text-pomegranate-600 uppercase tracking-wide mb-1">Device Status</div>
+            <div class="text-pomegranate-800 italic">No device assigned</div>
+            <div class="text-xs text-pomegranate-600 mt-1">Team needs device to be deployed</div>
           </div>
           {% endif %}
 
