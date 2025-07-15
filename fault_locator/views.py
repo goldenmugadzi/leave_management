@@ -974,7 +974,7 @@ def simple_assign_fault(request, fault_id=None):
         
         if not fault_id or not team_id:
             messages.error(request, "Please select both fault and team")
-            return redirect('simple_assign_fault')
+            return redirect('assign_fault')
         
         fault = get_object_or_404(Fault, id=fault_id)
         team = get_object_or_404(FaultLocatorTeam, id=team_id)
@@ -983,7 +983,7 @@ def simple_assign_fault(request, fault_id=None):
         device_assignment = FaultLocatorDeviceAssignment.objects.filter(team=team).first()
         if not device_assignment:
             messages.error(request, f"Team '{team.name}' doesn't have a device assigned")
-            return redirect('simple_assign_fault')
+            return redirect('assign_fault')
         
         # Check if fault is already assigned
         existing_assignment = FaultAssignment.objects.filter(fault=fault, located_at__isnull=True).first()
@@ -1162,12 +1162,15 @@ def team_overview(request):
         active_assignments=Count('faultassignment', filter=Q(faultassignment__located_at__isnull=True), distinct=True)
     )
     
-    # Role-based filtering
+    # Role-based filtering - only apply depot filtering if user is specifically a depot foreperson
     if not is_senior_foreman(user_profile):
+        # Only filter by depot if user is specifically a depot foreperson with a depot
         if user_profile and hasattr(user_profile, 'depot') and user_profile.depot:
             depot = get_user_depot(user_profile)
-            if depot:
+            if depot and is_depot_foreperson(user_profile, depot):
                 teams = teams.filter(current_depot=depot)
+        # If user has no depot or is not a depot foreperson, show all teams
+        # This allows team members and other users to see all teams
     
     # Add extra info for each team
     team_data = []
@@ -1619,7 +1622,7 @@ def create_team(request):
         return redirect('fault_locator_dashboard')
     
     if request.method == "POST":
-        form = FaultLocatorTeamForm(request.POST)
+        form = FaultLocatorTeamForm(request.POST, user_region=user_profile.region)
         if form.is_valid():
             team = form.save()
             
@@ -1640,7 +1643,7 @@ def create_team(request):
             messages.success(request, f"Team '{team.name}' created successfully with {team.members.count()} members!")
             return redirect('team_overview')
     else:
-        form = FaultLocatorTeamForm()
+        form = FaultLocatorTeamForm(user_region=user_profile.region)
     
     context = {
         'form': form,
@@ -1673,7 +1676,7 @@ def edit_team(request, team_id):
         
         # Handle member addition
         elif 'add_member' in request.POST:
-            add_form = AddTeamMemberForm(request.POST)
+            add_form = AddTeamMemberForm(request.POST, user_region=user_profile.region, team=team)
             if add_form.is_valid():
                 member = add_form.cleaned_data['member']
                 if member not in team.members.all():
@@ -1722,7 +1725,7 @@ def edit_team(request, team_id):
     
     # Initialize forms
     name_form = FaultLocatorTeamNameForm(instance=team)
-    add_form = AddTeamMemberForm()
+    add_form = AddTeamMemberForm(user_region=user_profile.region, team=team)
     
     # Get device assignment
     device_assignment = FaultLocatorDeviceAssignment.objects.filter(team=team).first()
@@ -1805,7 +1808,7 @@ def deploy_team(request, team_id=None):
     if not is_senior_foreman(user_profile):
         messages.error(request, "Only senior forepersons can deploy teams")
         return redirect('fault_locator_dashboard')
-    
+
     team = None
     if team_id:
         team = get_object_or_404(FaultLocatorTeam, id=team_id)
@@ -1820,9 +1823,9 @@ def deploy_team(request, team_id=None):
         if not device_assignment:
             messages.error(request, f"Team '{team.name}' must have a device assigned before deployment")
             return redirect('team_overview')
-    
+
     if request.method == "POST":
-        form = TeamDeploymentForm(request.POST)
+        form = TeamDeploymentForm(request.POST, user_region=user_profile.region)
         if form.is_valid():
             deployment = form.save(commit=False)
             deployment.deployed_by = user_profile
@@ -1844,7 +1847,7 @@ def deploy_team(request, team_id=None):
         initial_data = {}
         if team:
             initial_data['team'] = team
-        form = TeamDeploymentForm(initial=initial_data)
+        form = TeamDeploymentForm(initial=initial_data, user_region=user_profile.region)
     
     context = {
         'form': form,
@@ -2219,5 +2222,23 @@ def is_foreperson(user_profile):
 
 def has_fault_locator_permissions(user_profile):
     """Check if user has any fault locator system permissions"""
+    if not user_profile:
+        return False
+    
+    # Check for formal roles first
     role = get_user_fault_locator_role(user_profile)
-    return role is not None
+    if role is not None:
+        return True
+    
+    # Check if user is a team member or team leader
+    from .models import FaultLocatorTeam
+    
+    # Check if user is a team leader
+    if FaultLocatorTeam.objects.filter(team_leader=user_profile).exists():
+        return True
+    
+    # Check if user is a team member
+    if FaultLocatorTeam.objects.filter(members=user_profile).exists():
+        return True
+    
+    return False

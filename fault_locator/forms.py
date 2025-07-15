@@ -35,15 +35,36 @@ class FaultLocatorTeamForm(forms.ModelForm):
         fields = ['name', 'members']
         widgets = {
             'name': forms.TextInput(attrs={
-                'class': 'w-full p-3 sm:p-4 border-2 border-nepal-200 rounded-lg sm:rounded-xl bg-white/80 backdrop-blur-sm text-nepal-800 text-sm sm:text-base focus:border-gulf-blue-400 focus:ring-gulf-blue-400 focus:ring-opacity-50 transition-all duration-300',
+                'class': 'block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200',
                 'placeholder': 'e.g., Alpha Team, North District Crew'
             }),
             'members': Select2MultipleWidget(attrs={
                 'class': 'w-full',
-                'data-placeholder': 'Select team members',
-                'data-theme': 'bootstrap-5'
+                'data-placeholder': 'Search and select team members from your region',
+                'data-theme': 'bootstrap-5',
+                'data-minimum-input-length': '2'
             }),
         }
+    
+    def __init__(self, *args, **kwargs):
+        user_region = kwargs.pop('user_region', None)
+        super().__init__(*args, **kwargs)
+        
+        # Filter members by user's region
+        if user_region:
+            self.fields['members'].queryset = UserProfile.objects.filter(
+                region=user_region,
+                is_active=True
+            ).exclude(
+                username__in=['admin', 'superuser']
+            ).order_by('last_name', 'first_name')
+        else:
+            # Fallback to all active users if no region specified
+            self.fields['members'].queryset = UserProfile.objects.filter(
+                is_active=True
+            ).exclude(
+                username__in=['admin', 'superuser']
+            ).order_by('last_name', 'first_name')
 
 class FaultLocatorTeamNameForm(forms.ModelForm):
     class Meta:
@@ -52,20 +73,39 @@ class FaultLocatorTeamNameForm(forms.ModelForm):
 
 class AddTeamMemberForm(forms.Form):
     member = forms.ModelChoiceField(
-        queryset=UserProfile.objects.all(),
-        label="Add Member"
+        queryset=UserProfile.objects.none(),  # Will be set in __init__
+        label="Add Member",
+        widget=forms.Select(attrs={
+            'class': 'block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200',
+            'data-placeholder': 'Search and select a member from your region...'
+        })
     )
 
     def __init__(self, *args, **kwargs):
+        user_region = kwargs.pop('user_region', None)
+        team = kwargs.pop('team', None)
         super().__init__(*args, **kwargs)
-        # Apply ACE-style classes
-        self.fields['member'].widget.attrs.update({
-            'class': "select2 block w-full rounded-md border-0 py-1.5 text-gray-900 "
-                     "shadow-sm ring-1 ring-inset ring-gray-300 "
-                     "placeholder:text-gray-400 focus:ring-2 focus:ring-inset "
-                     "focus:ring-indigo-600 sm:text-sm sm:leading-6"
-        })
-        self.fields['member'].label_attrs = {'class': 'block text-sm font-medium leading-6 text-gray-900'}
+        
+        # Base queryset - active users from the same region
+        base_queryset = UserProfile.objects.filter(is_active=True).exclude(
+            username__in=['admin', 'superuser']
+        )
+        
+        # Filter by region if provided
+        if user_region:
+            base_queryset = base_queryset.filter(region=user_region)
+        
+        # Exclude current team members if team is provided
+        if team:
+            base_queryset = base_queryset.exclude(
+                id__in=team.members.values_list('id', flat=True)
+            )
+        
+        # Order by name for better UX
+        self.fields['member'].queryset = base_queryset.order_by('last_name', 'first_name')
+        
+        # Set empty label
+        self.fields['member'].empty_label = "Select a member to add..."
 
 class AssignDeviceToTeamForm(forms.ModelForm):
     class Meta:
@@ -73,10 +113,31 @@ class AssignDeviceToTeamForm(forms.ModelForm):
         fields = ['device', 'team']
 
     def __init__(self, *args, **kwargs):
+        user_region = kwargs.pop('user_region', None)
         super().__init__(*args, **kwargs)
+        
         # Only show devices not already assigned
         assigned_devices = FaultLocatorDeviceAssignment.objects.values_list('device_id', flat=True)
-        self.fields['device'].queryset = FaultLocatorDevice.objects.exclude(id__in=assigned_devices)
+        device_queryset = FaultLocatorDevice.objects.exclude(id__in=assigned_devices)
+        
+        # Apply regional filtering for devices if user_region is provided
+        if user_region:
+            # Filter devices by region (assuming FaultLocatorDevice has a region field)
+            device_queryset = device_queryset.filter(region=user_region)
+        
+        self.fields['device'].queryset = device_queryset
+        
+        # Apply regional filtering for teams if user_region is provided
+        if user_region:
+            from it.users.models import UserProfile
+            users_in_region = UserProfile.objects.filter(
+                region=user_region,
+                is_active=True
+            ).values_list('user_id', flat=True)
+            
+            self.fields['team'].queryset = FaultLocatorTeam.objects.filter(
+                members__in=users_in_region
+            ).distinct()
 
     def clean_device(self):
         device = self.cleaned_data['device']
@@ -88,6 +149,28 @@ class AssignFaultForm(forms.ModelForm):
     class Meta:
         model = FaultAssignment
         fields = ['fault', 'team']  # Remove 'device' from the form
+    
+    def __init__(self, *args, **kwargs):
+        user_region = kwargs.pop('user_region', None)
+        super().__init__(*args, **kwargs)
+        
+        # Apply regional filtering for teams if user_region is provided
+        if user_region:
+            from it.users.models import UserProfile
+            users_in_region = UserProfile.objects.filter(
+                region=user_region,
+                is_active=True
+            ).values_list('user_id', flat=True)
+            
+            self.fields['team'].queryset = FaultLocatorTeam.objects.filter(
+                members__in=users_in_region
+            ).distinct()
+        
+        # Apply regional filtering for faults if user_region is provided
+        if user_region:
+            self.fields['fault'].queryset = self.fields['fault'].queryset.filter(
+                depot__region=user_region
+            )
 
 class TeamDeploymentForm(forms.ModelForm):
     class Meta:
@@ -95,13 +178,36 @@ class TeamDeploymentForm(forms.ModelForm):
         fields = ['team', 'depot', 'deployment_notes']
     
     def __init__(self, *args, **kwargs):
+        user_region = kwargs.pop('user_region', None)
         super().__init__(*args, **kwargs)
+        
         # Only show teams that have devices assigned and are not currently deployed
         teams_with_devices = FaultLocatorDeviceAssignment.objects.values_list('team_id', flat=True)
-        self.fields['team'].queryset = FaultLocatorTeam.objects.filter(
+        team_queryset = FaultLocatorTeam.objects.filter(
             id__in=teams_with_devices,
             current_depot__isnull=True
         )
+        
+        # Apply regional filtering if user_region is provided
+        if user_region:
+            # Filter teams by members from the same region
+            from it.users.models import UserProfile
+            users_in_region = UserProfile.objects.filter(
+                region=user_region,
+                is_active=True
+            ).values_list('user_id', flat=True)
+            
+            team_queryset = team_queryset.filter(
+                members__in=users_in_region
+            ).distinct()
+        
+        self.fields['team'].queryset = team_queryset
+        
+        # Filter depots by region if user_region is provided
+        if user_region:
+            self.fields['depot'].queryset = self.fields['depot'].queryset.filter(
+                region=user_region
+            )
         
         self.fields['team'].widget.attrs.update({
             'class': 'form-select'
@@ -127,11 +233,32 @@ class SeniorForepersonDeviceAssignmentForm(forms.ModelForm):
         
         # Only show unassigned devices
         assigned_devices = FaultLocatorDeviceAssignment.objects.values_list('device_id', flat=True)
-        self.fields['device'].queryset = FaultLocatorDevice.objects.exclude(id__in=assigned_devices)
+        device_queryset = FaultLocatorDevice.objects.exclude(id__in=assigned_devices)
         
-        # Show all teams for senior foreperson
+        # Apply regional filtering for devices if user has a region
+        if user and user.region:
+            # Filter devices by region (assuming FaultLocatorDevice has a region field)
+            device_queryset = device_queryset.filter(region=user.region)
+        
+        self.fields['device'].queryset = device_queryset
+        
+        # Show teams based on user permissions and region
         if user and self.is_senior_foreperson(user):
-            self.fields['team'].queryset = FaultLocatorTeam.objects.all()
+            team_queryset = FaultLocatorTeam.objects.all()
+            
+            # Apply regional filtering for teams if user has a region
+            if user.region:
+                from it.users.models import UserProfile
+                users_in_region = UserProfile.objects.filter(
+                    region=user.region,
+                    is_active=True
+                ).values_list('user_id', flat=True)
+                
+                team_queryset = team_queryset.filter(
+                    members__in=users_in_region
+                ).distinct()
+            
+            self.fields['team'].queryset = team_queryset
         
         self.fields['device'].widget.attrs.update({
             'class': 'form-select'

@@ -522,5 +522,23 @@ def is_foreperson(user_profile):
 
 def has_fault_locator_permissions(user_profile):
     """Check if user has any fault locator system permissions"""
+    if not user_profile:
+        return False
+    
+    # Check for formal roles first
     role = get_user_fault_locator_role(user_profile)
-    return role is not None
+    if role is not None:
+        return True
+    
+    # Check if user is a team member or team leader
+    from .models import FaultLocatorTeam
+    
+    # Check if user is a team leader
+    if FaultLocatorTeam.objects.filter(team_leader=user_profile).exists():
+        return True
+    
+    # Check if user is a team member
+    if FaultLocatorTeam.objects.filter(members=user_profile).exists():
+        return True
+    
+    return False

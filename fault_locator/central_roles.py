@@ -210,7 +210,25 @@ def can_report_fault_status(user_profile, fault):
 
 def has_fault_locator_permissions(user_profile):
     """Check if user has any fault locator system permissions"""
-    return FaultLocatorRoleManager.has_any_role(user_profile)
+    if not user_profile:
+        return False
+    
+    # Check for formal roles first
+    if FaultLocatorRoleManager.has_any_role(user_profile):
+        return True
+    
+    # Check if user is a team member or team leader
+    from .models import FaultLocatorTeam
+    
+    # Check if user is a team leader
+    if FaultLocatorTeam.objects.filter(team_leader=user_profile).exists():
+        return True
+    
+    # Check if user is a team member
+    if FaultLocatorTeam.objects.filter(members=user_profile).exists():
+        return True
+    
+    return False
 
 # Role assignment helpers
 def assign_fault_locator_role(user_profile, role_code, assigned_by=None):
