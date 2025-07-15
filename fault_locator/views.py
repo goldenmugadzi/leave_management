@@ -1988,8 +1988,12 @@ def recall_team(request, team_id):
         messages.warning(request, f"Team '{team.name}' is not currently deployed")
         return redirect('team_overview')
     
-    # Check for active assignments
-    active_assignments = FaultAssignment.objects.filter(team=team, located_at__isnull=True)
+    # Check for active assignments (assigned or in_progress)
+    active_assignments = FaultAssignment.objects.filter(
+        team=team,
+        status__in=["assigned", "in_progress"],
+        located_at__isnull=True
+    )
     
     if request.method == "POST":
         if active_assignments.exists() and not request.POST.get('force_recall'):
@@ -2035,7 +2039,6 @@ def recall_team(request, team_id):
         'active_assignments': active_assignments,
         'user_profile': user_profile,
     }
-    
     return render(request, "fault_locator/recall_team.html", context)
 
 @login_required
