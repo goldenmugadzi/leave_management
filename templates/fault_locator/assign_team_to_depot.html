@@ -1,0 +1,192 @@
+{% extends "admin_layout.html" %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-gulf-blue-50 via-white to-jade-50 p-6">
+  <div class="max-w-4xl mx-auto">
+    
+    <!-- Header -->
+    <div class="glass-header mb-8 p-6 rounded-3xl backdrop-blur-xl bg-white/30 border border-white/20 shadow-2xl">
+      <div class="flex items-center justify-between">
+        <div>
+          <h1 class="text-3xl font-black bg-gradient-to-r from-gulf-blue-600 via-tory-blue-primary to-gulf-blue-900 bg-clip-text text-transparent mb-2">
+            {{ page_title }}
+          </h1>
+          <p class="text-nepal-600">Deploy team to a depot for field operations</p>
+        </div>
+        <a href="{% url 'team_overview' %}" 
+           class="px-4 py-2 bg-nepal-500 text-white rounded-xl hover:bg-nepal-600 transition-colors duration-300">
+          ← Back to Teams
+        </a>
+      </div>
+    </div>
+
+    <!-- Team Information Card -->
+    <div class="glass-card mb-6 p-6 rounded-3xl backdrop-blur-xl bg-white/40 border border-white/30 shadow-2xl">
+      <h2 class="text-xl font-bold text-nepal-800 mb-4">Team Information</h2>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Team Details -->
+        <div class="space-y-3">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-gradient-to-r from-gulf-blue-500 to-tory-blue-primary rounded-xl flex items-center justify-center text-white font-bold">
+              👥
+            </div>
+            <div>
+              <div class="text-sm text-nepal-600">Team Name</div>
+              <div class="font-semibold text-nepal-800">{{ team.name }}</div>
+            </div>
+          </div>
+          
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-gradient-to-r from-jade-500 to-apple-600 rounded-xl flex items-center justify-center text-white font-bold">
+              👤
+            </div>
+            <div>
+              <div class="text-sm text-nepal-600">Team Leader</div>
+              <div class="font-semibold text-nepal-800">
+                {% if team.team_leader %}
+                  {{ team.team_leader.get_full_name|default:team.team_leader.username }}
+                {% else %}
+                  No leader assigned
+                {% endif %}
+              </div>
+            </div>
+          </div>
+          
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-gradient-to-r from-tory-blue-500 to-gulf-blue-600 rounded-xl flex items-center justify-center text-white font-bold">
+              🔢
+            </div>
+            <div>
+              <div class="text-sm text-nepal-600">Team Members</div>
+              <div class="font-semibold text-nepal-800">{{ team.members.count }} members</div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Device Information -->
+        <div class="space-y-3">
+          {% if device %}
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-gradient-to-r from-jade-500 to-apple-600 rounded-xl flex items-center justify-center text-white font-bold">
+              📱
+            </div>
+            <div>
+              <div class="text-sm text-nepal-600">Assigned Device</div>
+              <div class="font-semibold text-nepal-800">{{ device.serial_number }}</div>
+            </div>
+          </div>
+          
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-gradient-to-r from-tory-blue-500 to-gulf-blue-600 rounded-xl flex items-center justify-center text-white font-bold">
+              ⚡
+            </div>
+            <div>
+              <div class="text-sm text-nepal-600">Device Status</div>
+              <div class="font-semibold text-nepal-800">{{ device.get_status_display }}</div>
+            </div>
+          </div>
+          
+          {% if device.description %}
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-gradient-to-r from-pomegranate-500 to-scarlet-red-600 rounded-xl flex items-center justify-center text-white font-bold">
+              📝
+            </div>
+            <div>
+              <div class="text-sm text-nepal-600">Description</div>
+              <div class="font-semibold text-nepal-800">{{ device.description }}</div>
+            </div>
+          </div>
+          {% endif %}
+          {% else %}
+          <div class="p-4 bg-gradient-to-r from-pomegranate-50 to-scarlet-red-50 border border-pomegranate-200 rounded-xl">
+            <div class="text-pomegranate-800 font-semibold">⚠️ No Device Assigned</div>
+            <div class="text-sm text-pomegranate-600 mt-1">Team needs a device before deployment</div>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Assignment Form -->
+    <div class="glass-card p-6 rounded-3xl backdrop-blur-xl bg-white/40 border border-white/30 shadow-2xl">
+      <h2 class="text-xl font-bold text-nepal-800 mb-6">Depot Assignment</h2>
+      
+      <form method="post" class="space-y-6">
+        {% csrf_token %}
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <!-- Depot Selection -->
+          <div>
+            <label for="{{ form.depot.id_for_label }}" class="block text-sm font-medium text-nepal-700 mb-2">
+              Select Depot
+            </label>
+            {{ form.depot }}
+            {% if form.depot.errors %}
+              <div class="mt-1 text-sm text-scarlet-red-600">
+                {{ form.depot.errors.0 }}
+              </div>
+            {% endif %}
+          </div>
+          
+          <!-- Deployment Notes -->
+          <div>
+            <label for="{{ form.deployment_notes.id_for_label }}" class="block text-sm font-medium text-nepal-700 mb-2">
+              Deployment Notes
+            </label>
+            {{ form.deployment_notes }}
+            {% if form.deployment_notes.errors %}
+              <div class="mt-1 text-sm text-scarlet-red-600">
+                {{ form.deployment_notes.errors.0 }}
+              </div>
+            {% endif %}
+          </div>
+        </div>
+        
+        <!-- Form Actions -->
+        <div class="flex flex-col sm:flex-row gap-4 pt-6 border-t border-nepal-200">
+          <button type="submit" 
+                  class="flex-1 px-6 py-3 bg-gradient-to-r from-gulf-blue-600 to-tory-blue-primary text-white rounded-xl font-semibold hover:from-gulf-blue-700 hover:to-tory-blue-700 transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl">
+            🚀 Deploy Team
+          </button>
+          
+          <a href="{% url 'team_overview' %}" 
+             class="flex-1 px-6 py-3 bg-gradient-to-r from-nepal-500 to-nepal-600 text-white rounded-xl font-semibold hover:from-nepal-600 hover:to-nepal-700 transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl text-center">
+            Cancel
+          </a>
+        </div>
+      </form>
+    </div>
+    
+    <!-- Instructions -->
+    <div class="mt-6 p-4 bg-gradient-to-r from-jade-50 to-apple-50 border border-jade-200 rounded-xl">
+      <h3 class="font-semibold text-jade-800 mb-2">📋 Deployment Instructions</h3>
+      <ul class="text-sm text-jade-700 space-y-1">
+        <li>• The team will be deployed to the selected depot for field operations</li>
+        <li>• Deployment notes will be visible to team members and depot foreperson</li>
+        <li>• Team can be recalled from the depot at any time by authorized personnel</li>
+        <li>• Deployment history is maintained for audit purposes</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<style>
+.glass-header, .glass-card {
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+.form-select, .form-control {
+  @apply w-full px-4 py-3 border border-nepal-300 rounded-xl focus:ring-2 focus:ring-gulf-blue-500 focus:border-gulf-blue-500 transition-all duration-300;
+}
+
+.form-select {
+  @apply bg-white/80 backdrop-blur-sm;
+}
+
+.form-control {
+  @apply bg-white/80 backdrop-blur-sm resize-none;
+}
+</style>
+{% endblock %}
