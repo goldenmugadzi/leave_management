@@ -2183,7 +2183,7 @@ def asset_budget_report(request, budget_id):
         month=TruncMonth('date_created')
     ).values('month').annotate(
         total_amount=Sum('amount'),
-        ace_count=Count('id')
+        ace_count=Count('Ace_id')
     ).order_by('month')
     
     # Format monthly data for chart

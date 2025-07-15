@@ -6,12 +6,13 @@ Test script to verify the asset_budget_report fix
 import os
 import sys
 import django
-from django.test import RequestFactory
-from django.contrib.auth.models import AnonymousUser
 
 # Setup Django
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'beii_v1.settings')
 django.setup()
+
+from django.test import RequestFactory
+from django.contrib.auth.models import AnonymousUser
 
 from ACE2.models import AssetBudget, Ace2
 from ACE2.views import asset_budget_report
