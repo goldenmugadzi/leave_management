@@ -1856,6 +1856,8 @@ def edit_team(request, team_id):
         'current_assignments': current_assignments,
         'user_profile': user_profile,
         'can_delete': not current_assignments.exists() and not device_assignment,
+        'is_senior_foreman': is_senior_foreman(user_profile),
+        'can_manage_devices': can_manage_devices(user_profile),
         'page_title': f'Edit Team: {team.name}',
     }
     
@@ -1916,8 +1918,8 @@ def deploy_team(request, team_id=None):
     """Deploy a team to a depot"""
     user_profile = UserProfile.objects.filter(id=request.user.id).first()
     
-    # Check permissions
-    if not is_senior_foreman(user_profile):
+    # Check permissions - allow both senior foreman and senior foreperson
+    if not (is_senior_foreman(user_profile) or can_manage_devices(user_profile)):
         messages.error(request, "Only senior forepersons can deploy teams")
         return redirect('fault_locator_dashboard')
 
@@ -1975,8 +1977,8 @@ def recall_team(request, team_id):
     """Recall a team from depot deployment"""
     user_profile = UserProfile.objects.filter(id=request.user.id).first()
     
-    # Check permissions
-    if not is_senior_foreman(user_profile):
+    # Check permissions - allow both senior foreman and senior foreperson
+    if not (is_senior_foreman(user_profile) or can_manage_devices(user_profile)):
         messages.error(request, "Only senior forepersons can recall teams")
         return redirect('fault_locator_dashboard')
     
@@ -2197,13 +2199,16 @@ def get_user_fault_locator_role(user_profile):
     return None
 
 def is_senior_foreman(user_profile):
-    """Check if user is a senior foreman - can delegate machines to depots"""
+    """Check if user is a senior foreman/foreperson - can delegate machines to depots"""
     if not user_profile or not hasattr(user_profile, 'designation') or not user_profile.designation:
         return False
     
     try:
         designation_desc = str(user_profile.designation.description).lower()
-        return 'senior' in designation_desc and ('foreman' in designation_desc or 'foreperson' in designation_desc)
+        # Check for senior + (foreman OR foreperson)
+        has_senior = 'senior' in designation_desc
+        has_foreman_role = ('foreman' in designation_desc or 'foreperson' in designation_desc)
+        return has_senior and has_foreman_role
     except Exception:
         return False
 
