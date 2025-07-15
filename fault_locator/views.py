@@ -2038,6 +2038,21 @@ def recall_team(request, team_id):
     
     return render(request, "fault_locator/recall_team.html", context)
 
+@login_required
+def debug_user(request):
+    """Debug view to show current user permissions"""
+    user_profile = UserProfile.objects.filter(id=request.user.id).first()
+    
+    context = {
+        'user_profile': user_profile,
+        'is_senior_foreman': is_senior_foreman(user_profile),
+        'can_manage_devices': can_manage_devices(user_profile),
+        'can_deploy_teams': can_deploy_teams(user_profile),
+        'can_recall_teams': is_senior_foreman(user_profile) or can_manage_devices(user_profile),
+    }
+    
+    return render(request, "fault_locator/debug_user.html", context)
+
 # ADVANCED FAULT ASSIGNMENT
 
 @login_required

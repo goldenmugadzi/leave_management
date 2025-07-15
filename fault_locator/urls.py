@@ -77,4 +77,7 @@ urlpatterns = [
     
     # Individual fault detail/update view
     path('faults/<int:fault_id>/', views.field_update, name='fault_detail'),
+    
+    # Debug view
+    path('debug-user/', views.debug_user, name='debug_user'),
 ]
