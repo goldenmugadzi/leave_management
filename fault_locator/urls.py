@@ -65,6 +65,10 @@ urlpatterns = [
     path('teams/<int:team_id>/deploy/', views.deploy_team, name='deploy_team_specific'),
     path('teams/<int:team_id>/recall/', views.recall_team, name='recall_team'),
     
+    # Team-Depot Assignment (new)
+    path('teams/<int:team_id>/assign-depot/', views.assign_team_to_depot, name='assign_team_to_depot'),
+    path('teams/<int:team_id>/recall-depot/', views.recall_team_from_depot, name='recall_team_from_depot'),
+    
     # Advanced Fault Assignment
     path('advanced-assign/', views.advanced_fault_assignment, name='advanced_fault_assignment'),
     

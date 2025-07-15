@@ -254,22 +254,22 @@
             <!-- Action Buttons -->
             <div class="action-buttons space-y-3">
               <a href="{% url 'unassign_device' device.id %}" 
-                 class="group/unassign w-full relative overflow-hidden px-6 py-4 bg-gradient-to-r from-amber-500 to-orange-600 text-white rounded-2xl font-bold text-center transition-all duration-300 hover:scale-105 hover:shadow-lg block">
+                 class="group/unassign w-full relative overflow-hidden px-8 py-4 bg-gradient-to-r from-amber-600 to-orange-700 text-white rounded-xl font-bold text-lg hover:from-amber-700 hover:to-orange-800 transition-all duration-300 hover:scale-105 shadow-xl hover:shadow-2xl transform hover:-translate-y-1 border-2 border-amber-500 hover:border-amber-400 ring-2 ring-amber-200 hover:ring-amber-300 text-center block">
                 <span class="relative z-10 flex items-center justify-center gap-3">
                   <span class="group-hover/unassign:rotate-180 transition-transform duration-500">🔄</span>
                   Unassign Device
                 </span>
-                <div class="absolute inset-0 bg-gradient-to-r from-amber-600 to-orange-700 opacity-0 group-hover/unassign:opacity-100 transition-opacity duration-300"></div>
+                <div class="absolute inset-0 bg-gradient-to-r from-amber-700 to-orange-800 opacity-0 group-hover/unassign:opacity-100 transition-opacity duration-300"></div>
               </a>
               
               {% if assignment.fault %}
               <a href="{% url 'field_update' assignment.fault.id %}" 
-                 class="group/update w-full relative overflow-hidden px-6 py-4 bg-gradient-to-r from-blue-500 to-indigo-600 text-white rounded-2xl font-bold text-center transition-all duration-300 hover:scale-105 hover:shadow-lg block">
+                 class="group/update w-full relative overflow-hidden px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-700 text-white rounded-xl font-bold text-lg hover:from-blue-700 hover:to-indigo-800 transition-all duration-300 hover:scale-105 shadow-xl hover:shadow-2xl transform hover:-translate-y-1 border-2 border-blue-500 hover:border-blue-400 ring-2 ring-blue-200 hover:ring-blue-300 text-center block">
                 <span class="relative z-10 flex items-center justify-center gap-3">
                   <span class="group-hover/update:rotate-12 transition-transform duration-300">📝</span>
                   Update Progress
                 </span>
-                <div class="absolute inset-0 bg-gradient-to-r from-blue-600 to-indigo-700 opacity-0 group-hover/update:opacity-100 transition-opacity duration-300"></div>
+                <div class="absolute inset-0 bg-gradient-to-r from-blue-700 to-indigo-800 opacity-0 group-hover/update:opacity-100 transition-opacity duration-300"></div>
               </a>
               {% endif %}
             </div>
@@ -304,13 +304,13 @@
                 </div>
                 
                 <a href="{% url 'assign_device_to_team' %}?device_id={{ device.id }}" 
-                   class="group/assign relative overflow-hidden inline-block px-8 py-4 bg-gradient-to-r from-emerald-600 to-green-600 text-white rounded-2xl font-bold shadow-2xl hover:shadow-emerald-500/30 transition-all duration-500 hover:scale-110">
+                   class="group/assign relative overflow-hidden inline-block px-8 py-4 bg-gradient-to-r from-emerald-600 to-green-700 text-white rounded-xl font-bold text-lg hover:from-emerald-700 hover:to-green-800 transition-all duration-300 hover:scale-105 shadow-xl hover:shadow-2xl transform hover:-translate-y-1 border-2 border-emerald-500 hover:border-emerald-400 ring-2 ring-emerald-200 hover:ring-emerald-300">
                   <span class="relative z-10 flex items-center gap-3">
                     <span class="group-hover/assign:rotate-180 transition-transform duration-500">🔧</span>
                     Assign to Team
                     <span class="group-hover/assign:translate-x-2 transition-transform duration-300">→</span>
                   </span>
-                  <div class="absolute inset-0 bg-gradient-to-r from-emerald-700 to-green-700 opacity-0 group-hover/assign:opacity-100 transition-opacity duration-300"></div>
+                  <div class="absolute inset-0 bg-gradient-to-r from-emerald-700 to-green-800 opacity-0 group-hover/assign:opacity-100 transition-opacity duration-300"></div>
                 </a>
               </div>
             </div>

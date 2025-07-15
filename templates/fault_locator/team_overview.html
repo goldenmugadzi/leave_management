@@ -167,6 +167,26 @@
               {{ action.text }}
             </a>
             {% endfor %}
+            
+            <!-- Add Assign to Depot button for teams with devices but not deployed -->
+            {% if item.has_device and not item.is_deployed and is_senior_foreman %}
+            <a href="{% url 'assign_team_to_depot' item.team.id %}" 
+               class="inline-flex items-center px-4 py-2 btn-primary btn-sm rounded-xl text-sm font-medium transition-all duration-300 hover:shadow-lg hover:scale-105">
+              🏢 Assign to Depot
+            </a>
+            {% endif %}
+            
+            <!-- Add Recall from Depot button for deployed teams -->
+            {% if item.is_deployed and is_senior_foreman %}
+            <form method="post" action="{% url 'recall_team_from_depot' item.team.id %}" class="inline-block">
+              {% csrf_token %}
+              <button type="submit" 
+                      onclick="return confirm('Are you sure you want to recall this team from {{ item.deployment_info.depot_name }}?')"
+                      class="inline-flex items-center px-4 py-2 bg-gradient-to-r from-yellow-600 to-yellow-700 text-white rounded-xl font-bold text-sm hover:from-yellow-700 hover:to-yellow-800 transition-all duration-300 hover:shadow-lg hover:scale-105 transform hover:-translate-y-1 border border-yellow-500 hover:border-yellow-400">
+                📥 Recall from Depot
+              </button>
+            </form>
+            {% endif %}
           </div>
           {% endif %}
         </div>

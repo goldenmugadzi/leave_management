@@ -7,8 +7,8 @@
   <div class="max-w-7xl mx-auto py-6">
     <div class="flex justify-between items-center mb-6">
       <h2 class="text-2xl font-bold text-nepal-900">Fault List</h2>
-      <a href="{% url 'create_fault' %}" class="bg-gradient-to-r from-gulf-blue-600 to-tory-blue-primary hover:from-gulf-blue-700 hover:to-tory-blue-primary text-white px-4 py-2 rounded-lg transition-all">
-        Report New Fault
+      <a href="{% url 'create_fault' %}" class="px-6 py-3 bg-gradient-to-r from-gulf-blue-600 to-tory-blue-primary text-white rounded-xl font-bold text-lg hover:from-gulf-blue-700 hover:to-tory-blue-primary transition-all duration-300 hover:scale-105 shadow-xl hover:shadow-2xl transform hover:-translate-y-1 border-2 border-gulf-blue-500 hover:border-gulf-blue-400 ring-2 ring-gulf-blue-200 hover:ring-gulf-blue-300">
+        📝 Report New Fault
       </a>
     </div>
 
@@ -59,8 +59,8 @@
         </div>
         
         <div class="flex items-end">
-          <button type="submit" class="w-full bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md">
-            Filter
+          <button type="submit" class="w-full px-6 py-3 bg-gradient-to-r from-gray-600 to-gray-700 text-white rounded-xl font-bold text-lg hover:from-gray-700 hover:to-gray-800 transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl transform hover:-translate-y-1">
+            🔍 Filter
           </button>
         </div>
       </form>
@@ -142,12 +142,12 @@
                 {{ fault.reported_at|date:"M d, Y H:i" }}
               </td>
               <td class="px-6 py-4 text-sm font-medium">
-                <a href="{% url 'fault_detail' fault.id %}" class="text-blue-600 hover:text-blue-900">
-                  View
+                <a href="{% url 'fault_detail' fault.id %}" class="inline-block px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-700 text-white rounded-lg font-bold hover:from-blue-700 hover:to-indigo-800 transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl transform hover:-translate-y-1 text-sm">
+                  👁️ View
                 </a>
                 {% if is_depot_foreperson and fault.depot.code == user_profile.depot %}
-                  <a href="{% url 'depot_fault_priority' fault.depot.id %}" class="ml-2 text-green-600 hover:text-green-900">
-                    Prioritize
+                  <a href="{% url 'depot_fault_priority' fault.depot.id %}" class="ml-2 inline-block px-4 py-2 bg-gradient-to-r from-green-600 to-emerald-700 text-white rounded-lg font-bold hover:from-green-700 hover:to-emerald-800 transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl transform hover:-translate-y-1 text-sm">
+                    🔧 Prioritize
                   </a>
                 {% endif %}
               </td>

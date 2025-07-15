@@ -316,6 +316,38 @@ class FaultLocatorRoleForm(forms.ModelForm):
         
         # Add help text
         self.fields['depot'].help_text = "Required only for depot foreperson role"
+
+
+class TeamDepotAssignmentForm(forms.Form):
+    """Simple form for assigning a team to a depot from team overview"""
+    depot = forms.ModelChoiceField(
+        queryset=Depots.objects.all(),
+        empty_label="Select a depot...",
+        widget=forms.Select(attrs={
+            'class': 'form-select',
+            'id': 'depot-select'
+        })
+    )
+    deployment_notes = forms.CharField(
+        required=False,
+        widget=forms.Textarea(attrs={
+            'class': 'form-control',
+            'rows': 3,
+            'placeholder': 'Enter deployment notes (optional)...'
+        })
+    )
+    
+    def __init__(self, *args, **kwargs):
+        user_region = kwargs.pop('user_region', None)
+        super().__init__(*args, **kwargs)
+        
+        # Filter depots by region if user_region is provided
+        if user_region:
+            self.fields['depot'].queryset = self.fields['depot'].queryset.filter(
+                region=user_region
+            )
+        
+        self.fields['depot'].queryset = self.fields['depot'].queryset.order_by('depot')
     
     def clean(self):
         cleaned_data = super().clean()

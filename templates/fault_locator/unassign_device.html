@@ -1,0 +1,214 @@
+{% extends "admin_layout.html" %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-gulf-blue-50 via-white to-jade-50 p-6">
+  <div class="max-w-4xl mx-auto">
+    
+    <!-- Header -->
+    <div class="glass-header mb-8 p-6 rounded-3xl backdrop-blur-xl bg-white/30 border border-white/20 shadow-2xl">
+      <div class="flex items-center justify-between">
+        <div>
+          <h1 class="text-3xl font-black bg-gradient-to-r from-pomegranate-primary via-scarlet-red-primary to-pomegranate-600 bg-clip-text text-transparent mb-2">
+            Unassign Device
+          </h1>
+          <p class="text-nepal-600">Remove device assignment from team</p>
+        </div>
+        <a href="{% url 'device_list' %}" 
+           class="px-4 py-2 bg-nepal-500 text-white rounded-xl hover:bg-nepal-600 transition-colors duration-300">
+          ← Back to Devices
+        </a>
+      </div>
+    </div>
+
+    <!-- Device Information Card -->
+    <div class="glass-card mb-6 p-6 rounded-3xl backdrop-blur-xl bg-white/40 border border-white/30 shadow-2xl">
+      <h2 class="text-xl font-bold text-nepal-800 mb-4">Device Information</h2>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Device Details -->
+        <div class="space-y-3">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-gradient-to-r from-gulf-blue-500 to-tory-blue-primary rounded-xl flex items-center justify-center text-white font-bold">
+              📱
+            </div>
+            <div>
+              <div class="text-sm text-nepal-600">Device Serial Number</div>
+              <div class="font-semibold text-nepal-800">{{ device.serial_number }}</div>
+            </div>
+          </div>
+          
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-gradient-to-r from-tory-blue-500 to-gulf-blue-600 rounded-xl flex items-center justify-center text-white font-bold">
+              ⚡
+            </div>
+            <div>
+              <div class="text-sm text-nepal-600">Device Status</div>
+              <div class="font-semibold text-nepal-800">{{ device.get_status_display }}</div>
+            </div>
+          </div>
+          
+          {% if device.description %}
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-gradient-to-r from-jade-500 to-apple-600 rounded-xl flex items-center justify-center text-white font-bold">
+              📝
+            </div>
+            <div>
+              <div class="text-sm text-nepal-600">Description</div>
+              <div class="font-semibold text-nepal-800">{{ device.description }}</div>
+            </div>
+          </div>
+          {% endif %}
+          
+          {% if device.depot %}
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-gradient-to-r from-royal-heath-500 to-violet-eggplant-600 rounded-xl flex items-center justify-center text-white font-bold">
+              🏢
+            </div>
+            <div>
+              <div class="text-sm text-nepal-600">Depot</div>
+              <div class="font-semibold text-nepal-800">{{ device.depot.depot }}</div>
+            </div>
+          </div>
+          {% endif %}
+        </div>
+        
+        <!-- Current Assignment -->
+        <div class="space-y-3">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-gradient-to-r from-jade-500 to-apple-600 rounded-xl flex items-center justify-center text-white font-bold">
+              👥
+            </div>
+            <div>
+              <div class="text-sm text-nepal-600">Currently Assigned To</div>
+              <div class="font-semibold text-nepal-800">{{ assignment.team.name }}</div>
+            </div>
+          </div>
+          
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-gradient-to-r from-tory-blue-500 to-gulf-blue-600 rounded-xl flex items-center justify-center text-white font-bold">
+              📅
+            </div>
+            <div>
+              <div class="text-sm text-nepal-600">Assigned Date</div>
+              <div class="font-semibold text-nepal-800">{{ assignment.assigned_at|date:"M d, Y H:i" }}</div>
+            </div>
+          </div>
+          
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-gradient-to-r from-royal-heath-500 to-violet-eggplant-600 rounded-xl flex items-center justify-center text-white font-bold">
+              👤
+            </div>
+            <div>
+              <div class="text-sm text-nepal-600">Assigned By</div>
+              <div class="font-semibold text-nepal-800">
+                {% if assignment.assigned_by %}
+                  {{ assignment.assigned_by.get_full_name|default:assignment.assigned_by.username }}
+                {% else %}
+                  Unknown User
+                {% endif %}
+              </div>
+            </div>
+          </div>
+          
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-gradient-to-r from-jade-500 to-apple-600 rounded-xl flex items-center justify-center text-white font-bold">
+              🔢
+            </div>
+            <div>
+              <div class="text-sm text-nepal-600">Team Members</div>
+              <div class="font-semibold text-nepal-800">{{ assignment.team.members.count }} members</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Warning Message -->
+    <div class="glass-card mb-6 p-6 rounded-3xl backdrop-blur-xl bg-gradient-to-r from-lemon-50 to-citron-50 border border-lemon-200 shadow-2xl">
+      <div class="flex items-center gap-4">
+        <div class="w-12 h-12 bg-gradient-to-r from-lemon-500 to-citron-600 rounded-xl flex items-center justify-center text-white font-bold text-xl">
+          ⚠️
+        </div>
+        <div>
+          <h3 class="text-lg font-bold text-lemon-800 mb-1">Confirmation Required</h3>
+          <p class="text-lemon-700">
+            Are you sure you want to unassign this device from team "{{ assignment.team.name }}"?
+          </p>
+          <p class="text-sm text-lemon-600 mt-2">
+            This action will remove the device from the team and notify all team members.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Team Members List -->
+    <div class="glass-card mb-6 p-6 rounded-3xl backdrop-blur-xl bg-white/40 border border-white/30 shadow-2xl">
+      <h3 class="text-lg font-bold text-nepal-800 mb-4">Team Members Who Will Be Notified</h3>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {% for member in assignment.team.members.all %}
+        <div class="flex items-center gap-3 p-3 bg-white/50 rounded-xl border border-white/30">
+          <div class="w-8 h-8 bg-gradient-to-r from-gulf-blue-500 to-tory-blue-primary rounded-lg flex items-center justify-center text-white font-bold text-sm">
+            {{ member.get_full_name.0|default:member.username.0|upper }}
+          </div>
+          <div>
+            <div class="font-semibold text-nepal-800">
+              {{ member.get_full_name|default:member.username }}
+            </div>
+            <div class="text-sm text-nepal-600">
+              {{ member.email|default:"No email" }}
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="glass-card p-6 rounded-3xl backdrop-blur-xl bg-white/40 border border-white/30 shadow-2xl">
+      <div class="flex flex-col sm:flex-row gap-4">
+        <form method="post" class="flex-1">
+          {% csrf_token %}
+          <button type="submit" 
+                  onclick="return confirm('Are you sure you want to unassign this device from {{ assignment.team.name }}? This action cannot be undone.')"
+                  class="w-full px-8 py-4 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-xl font-bold text-lg hover:from-red-700 hover:to-red-800 transition-all duration-300 hover:scale-105 shadow-xl hover:shadow-2xl transform hover:-translate-y-1 border-2 border-red-500 hover:border-red-400 ring-2 ring-red-200 hover:ring-red-300">
+            🗑️ Unassign Device
+          </button>
+        </form>
+        
+        <a href="{% url 'device_list' %}" 
+           class="flex-1 px-8 py-4 bg-gradient-to-r from-gray-600 to-gray-700 text-white rounded-xl font-bold text-lg hover:from-gray-700 hover:to-gray-800 transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl transform hover:-translate-y-1 text-center">
+          ← Cancel
+        </a>
+      </div>
+    </div>
+    
+    <!-- Instructions -->
+    <div class="mt-6 p-4 bg-gradient-to-r from-gulf-blue-50 to-tory-blue-50 border border-gulf-blue-200 rounded-xl">
+      <h3 class="font-semibold text-gulf-blue-800 mb-2">📋 What happens when you unassign?</h3>
+      <ul class="text-sm text-gulf-blue-700 space-y-1">
+        <li>• The device will be removed from the team's assigned devices</li>
+        <li>• All team members will receive a notification about the device removal</li>
+        <li>• The device will become available for assignment to other teams</li>
+        <li>• Any active fault assignments using this device must be completed first</li>
+        <li>• The assignment history will be maintained for audit purposes</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<style>
+.glass-header, .glass-card {
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+.animate-fade-in {
+  animation: fadeIn 1s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+</style>
+{% endblock %}

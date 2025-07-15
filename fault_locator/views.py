@@ -5,13 +5,14 @@ from django.contrib import messages
 from django.db.models import F, ExpressionWrapper, DurationField, Sum, Q, Count
 from django.template.loader import render_to_string
 from django.http import JsonResponse
+from django.views.decorators.http import require_http_methods
 import datetime
 from datetime import timedelta
 from decouple import config
 
 from it.users.helpers import DEPOTS
 from .models import *
-from .forms import FaultForm, FaultLocatorDeviceForm, FaultLocatorTeamForm, FaultLocatorTeamNameForm, AddTeamMemberForm, AssignDeviceToTeamForm, AssignFaultForm, TeamDeploymentForm, SeniorForepersonDeviceAssignmentForm, QuickFaultReportForm
+from .forms import FaultForm, FaultLocatorDeviceForm, FaultLocatorTeamForm, FaultLocatorTeamNameForm, AddTeamMemberForm, AssignDeviceToTeamForm, AssignFaultForm, TeamDeploymentForm, SeniorForepersonDeviceAssignmentForm, QuickFaultReportForm, TeamDepotAssignmentForm
 from it.users.models import UserProfile, Notification
 from it.users.views import ms_exhange_send_html
 from .central_roles import (
@@ -1314,6 +1315,112 @@ def team_overview(request):
     }
     
     return render(request, "fault_locator/team_overview.html", context)
+
+
+@login_required
+@require_http_methods(["GET", "POST"])
+def assign_team_to_depot(request, team_id):
+    """Assign a team to a depot from team overview"""
+    user_profile = UserProfile.objects.filter(id=request.user.id).first()
+    
+    # Check permissions
+    if not (is_senior_foreman(user_profile) or can_manage_devices(user_profile)):
+        messages.error(request, "You don't have permission to assign teams to depots.")
+        return redirect('team_overview')
+    
+    team = get_object_or_404(FaultLocatorTeam, id=team_id)
+    
+    # Check if team has device
+    device_assignment = FaultLocatorDeviceAssignment.objects.filter(team=team).first()
+    if not device_assignment:
+        messages.error(request, f"Team '{team.name}' must have a device assigned before deployment.")
+        return redirect('team_overview')
+    
+    # Check if team is already deployed
+    if team.current_depot:
+        messages.error(request, f"Team '{team.name}' is already deployed to {team.current_depot.depot}.")
+        return redirect('team_overview')
+    
+    # Get user region for filtering depots
+    user_region = user_profile.region if user_profile else None
+    
+    if request.method == 'POST':
+        form = TeamDepotAssignmentForm(request.POST, user_region=user_region)
+        if form.is_valid():
+            depot = form.cleaned_data['depot']
+            deployment_notes = form.cleaned_data.get('deployment_notes', '')
+            
+            try:
+                # Create deployment
+                deployment = TeamDeployment.objects.create(
+                    team=team,
+                    depot=depot,
+                    deployed_by=user_profile,
+                    deployment_notes=deployment_notes
+                )
+                
+                # Update team
+                team.current_depot = depot
+                team.assigned_at = deployment.deployed_at
+                team.assigned_by = user_profile
+                team.save()
+                
+                messages.success(request, f"Team '{team.name}' has been successfully deployed to {depot.depot}.")
+                return redirect('team_overview')
+                
+            except Exception as e:
+                messages.error(request, f"Error deploying team: {str(e)}")
+    else:
+        form = TeamDepotAssignmentForm(user_region=user_region)
+    
+    context = {
+        'form': form,
+        'team': team,
+        'device': device_assignment.device if device_assignment else None,
+        'user_profile': user_profile,
+        'page_title': f'Assign Team "{team.name}" to Depot',
+    }
+    
+    return render(request, 'fault_locator/assign_team_to_depot.html', context)
+
+
+@login_required
+@require_http_methods(["POST"])
+def recall_team_from_depot(request, team_id):
+    """Recall a team from their current depot"""
+    user_profile = UserProfile.objects.filter(id=request.user.id).first()
+    
+    # Check permissions
+    if not (is_senior_foreman(user_profile) or can_manage_devices(user_profile)):
+        messages.error(request, "You don't have permission to recall teams from depots.")
+        return redirect('team_overview')
+    
+    team = get_object_or_404(FaultLocatorTeam, id=team_id)
+    
+    # Check if team is deployed
+    if not team.current_depot:
+        messages.error(request, f"Team '{team.name}' is not currently deployed.")
+        return redirect('team_overview')
+    
+    try:
+        # Store depot name for message
+        depot_name = team.current_depot.depot
+        
+        # Update team deployment
+        team.current_depot = None
+        team.assigned_at = None
+        team.assigned_by = None
+        team.save()
+        
+        # Note: We don't delete the TeamDeployment record as it's historical data
+        # The deployment record remains for audit purposes
+        
+        messages.success(request, f"Team '{team.name}' has been successfully recalled from {depot_name}.")
+        
+    except Exception as e:
+        messages.error(request, f"Error recalling team: {str(e)}")
+    
+    return redirect('team_overview')
 
 @login_required
 def my_work(request):

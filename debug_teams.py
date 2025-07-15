@@ -1,64 +1,48 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 import os
 import sys
 import django
-from django.conf import settings
 
-# Add the project directory to the Python path
+# Add the project directory to the path
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-
-# Set up Django
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'beii_v1.settings')
+
+# Setup Django
 django.setup()
 
-from fault_locator.models import FaultLocatorTeam, FaultLocatorDeviceAssignment, FaultAssignment, Fault
-from it.users.models import UserProfile, Depots
-from django.db.models import Count, Q
+from fault_locator.models import FaultLocatorTeam, FaultLocatorDeviceAssignment
+from it.users.models import UserProfile
+from fault_locator.central_roles import is_senior_foreman
 
 def debug_teams():
-    print("=== DEBUGGING TEAM OVERVIEW ===")
+    print("=== FAULT LOCATOR TEAMS DEBUG ===")
     
-    # Check team overview data
-    teams = FaultLocatorTeam.objects.prefetch_related(
-        'members', 
-        'faultlocatordeviceassignment_set__device'
-    ).annotate(
-        member_count=Count('members', distinct=True),
-        active_assignments=Count('faultassignment', filter=Q(faultassignment__located_at__isnull=True), distinct=True)
-    )
-    
+    # Get all teams
+    teams = FaultLocatorTeam.objects.all()
     print(f"Total teams: {teams.count()}")
-    print()
     
     for team in teams:
-        print(f"Team: {team.name}")
-        print(f"  Annotated member_count: {team.member_count}")
-        print(f"  Actual member count: {team.members.count()}")
-        print(f"  Annotated active_assignments: {team.active_assignments}")
-        
-        actual_active = FaultAssignment.objects.filter(team=team, located_at__isnull=True).count()
-        print(f"  Actual active assignments: {actual_active}")
-        
-        print(f"  Team leader: {team.team_leader.get_full_name() if team.team_leader else 'None'}")
-        print(f"  Current depot: {team.current_depot.depot if team.current_depot else 'None'}")
-        
         device_assignment = team.faultlocatordeviceassignment_set.first()
-        print(f"  Device: {device_assignment.device.serial_number if device_assignment else 'None'}")
-        
-        # Check members
-        members = team.members.all()
-        print(f"  Members ({members.count()}):")
-        for member in members:
-            name = member.get_full_name() if member.get_full_name().strip() else f"User {member.id}"
-            print(f"    - {name} ({member.email or 'no email'})")
-        
-        # Check if there are any mismatches
-        if team.member_count != team.members.count():
-            print(f"  ❌ MEMBER COUNT MISMATCH!")
-        if team.active_assignments != actual_active:
-            print(f"  ❌ ACTIVE ASSIGNMENTS MISMATCH!")
-        
-        print()
+        print(f"\nTeam: {team.name}")
+        print(f"  ID: {team.id}")
+        print(f"  Current Depot: {team.current_depot}")
+        print(f"  Has Device: {device_assignment is not None}")
+        if device_assignment:
+            print(f"  Device: {device_assignment.device.serial_number}")
+        print(f"  Members: {team.members.count()}")
+        print(f"  Leader: {team.team_leader}")
+        print(f"  Can show 'Assign to Depot': {device_assignment is not None and team.current_depot is None}")
+    
+    # Check if there are any senior foremen
+    print("\n=== SENIOR FOREMEN ===")
+    senior_foremen = []
+    for profile in UserProfile.objects.filter(is_active=True):
+        if is_senior_foreman(profile):
+            senior_foremen.append(profile)
+    
+    print(f"Senior foremen count: {len(senior_foremen)}")
+    for foreman in senior_foremen:
+        print(f"  - {foreman.user.get_full_name() or foreman.user.username}")
 
 if __name__ == "__main__":
     debug_teams()
