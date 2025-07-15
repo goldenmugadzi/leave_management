@@ -9,6 +9,7 @@ from .view import (AppraisalCreateView,
                    experience_list_api,
                    kra_list_api,
                    internal_server_error_view,
+                   object_not_found_error_view,
                    PerformancePlanAndAssessmentAppraisalTemplateView,
                    PerformancePlanAndAssessmentTemplateView,
                    PerformanceReviewsApprovalView,
@@ -39,7 +40,10 @@ from .view import (AppraisalCreateView,
                    target_score_supporting_docs_view,
                    DepartmentObjectiveTemplateView,
                    DepartmentObjectiveCreateView,
-                   DepartmentObjectiveDetailUpdateView
+                   DepartmentObjectiveDetailUpdateView,
+                   DepartmentOutputTemplateView,
+                   DepartmentOutputCreateView,
+                   DepartmentOutputDetailUpdateView
                    )
 
 urlpatterns = [
@@ -47,7 +51,8 @@ urlpatterns = [
     path('create/', AppraisalCreateView.as_view(), name='create_appraisal'),
     path('update/<int:pk>', AppraisalUpdateView.as_view(), name='update_appraisal'),
     path('server-error/', internal_server_error_view, name='server_error_view'),
-
+    path('<slug:object_name>/not-found-error', object_not_found_error_view, name='object_not_found_error'),
+    
     # ================= Experience urls ============================
     path('experience/create/', ExperienceCreateView.as_view(), name='create_experience'),
     path('experience/<int:appraisal_id>/', ExperienceListView.as_view(), name='list_experience'),
@@ -70,6 +75,10 @@ urlpatterns = [
     path('departmental-workplan/list', DepartmentObjectiveTemplateView.as_view(), name='departmental_workplan_index'),
     path('departmental-workplan/create', DepartmentObjectiveCreateView.as_view(), name='departmental_objective_create'),
     path('departmental-workplan/<int:departmental_objective_id>', DepartmentObjectiveDetailUpdateView.as_view(), name='departmental_workplan_update_detail'),
+    
+    path('departmental-outputs/<int:departmental_objective_id>/list', DepartmentOutputTemplateView.as_view(), name='departmental_output_index'),
+    path('departmental-outputs/<int:departmental_objective_id>/create', DepartmentOutputCreateView.as_view(), name='departmental_output_create'),
+    path('departmental-outputs/<int:department_output_id>', DepartmentOutputDetailUpdateView.as_view(), name='departmental_output_detail_update'),
     
     
     # ================== KRA urls =================================

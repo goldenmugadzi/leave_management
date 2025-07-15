@@ -12,7 +12,7 @@ from ...services.kra import ActivityService, PerformanceDimensionService
 from ...helpers.getters.approval import ApprovalStagesHandler
 
 from django.http import Http404
-from .helper import build_payload_activity, PerformanceDimensionDeserializationStrategy, PayloadDeserializationStrategyContext
+from ..helper import build_payload_activity, PerformanceDimensionDeserializationStrategy, PayloadDeserializationStrategyContext
 from pydantic import ValidationError
 from loguru import logger
 

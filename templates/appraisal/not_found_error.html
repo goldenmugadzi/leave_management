@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Object Not Found Error</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 flex items-center justify-center h-screen">
+    <div class="text-center p-6 bg-white shadow-lg rounded-lg">
+        <h1 class="text-6xl font-bold text-red-600">404</h1>
+        <h2 class="text-2xl font-semibold mt-4 text-gray-700">
+            Oops! This <span class="uppercase underline">{{ object_name }}</span> is not found.
+        </h2>
+        <p class="mt-2 text-gray-500">For more information, kindly contact the admin</p>
+        <a href="{% url 'appraisal_index' %}" class="mt-6 inline-block px-6 py-3 text-white bg-blue-600 rounded-lg shadow-md hover:bg-blue-700 transition">
+            Go Back Home
+        </a>
+    </div>
+</body>
+</html>

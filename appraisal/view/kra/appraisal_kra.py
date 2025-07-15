@@ -14,7 +14,7 @@ from ...services.kra import AppraisalKraService, ActivityService, KRAService
 from ...repository.kra import KraActivityRepository, PerformanceDimensionRepository
 from ...repository import AppraisalRepository, TargetScoreRepository
 from datetime import datetime
-from .helper import build_payload
+from ..helper import build_payload
 from ...helpers.types.kra import KraRolesType
 from ...helpers.getters.approval import ApprovalStagesHandler
 from pydantic import ValidationError

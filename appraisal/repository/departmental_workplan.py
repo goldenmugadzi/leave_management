@@ -96,3 +96,18 @@ class DepartmentalOutRepository:
         except Exception as e:
             raise Exception(f"DepartmentalOutRepository Update Repo for department out obj pk: {department_output_obj.id}, failed with error: {e}")
  
+    def fetch_by_department_objective_id(self, department_objective_id: int)->QuerySet[DepartmentOutput]:
+        try:
+            return DepartmentOutput.objects.filter(department_objective__id=department_objective_id).select_related("department_objective")
+
+        except Exception as e:
+            raise Exception(f"DepartmentalOutRepository fetch_by_department_objective_id with department objective pk: {department_objective_id}, failed with error: {e}")
+
+    def get_by_id(self, dept_output_id: int)->DepartmentOutput|None:
+        try:
+            qr = DepartmentOutput.objects.filter(id=dept_output_id)
+            if not qr.exists():
+                return None
+            return qr.first()
+        except Exception as e:
+            raise Exception(f"DepartmentalOutRepository get_by_id with department out pk: {dept_output_id}, failed with error: {e}")

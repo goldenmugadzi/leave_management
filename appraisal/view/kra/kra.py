@@ -10,7 +10,7 @@ from ...models import KeyResultArea, AppraisalKra, KeyResultAreaOutCome
 from ...forms import KraCreateForm, KraOutComeCreateForm
 from ...repository.kra import KRARepository, TargetScoreRepository, KRAOutComeRepository
 from ...services.kra import KRAService
-from .helper import PayloadDeserializationStrategyContext, KraDeserializationStrategy, KraOutComeDeserializationStrategy
+from ..helper import PayloadDeserializationStrategyContext, KraDeserializationStrategy, KraOutComeDeserializationStrategy
 from pydantic import ValidationError
 
 from loguru import logger

@@ -241,4 +241,11 @@ class AppraisalTemplateView(TemplateView):
 
 
 def internal_server_error_view(request):
-    return render(request, "appraisal/errors.html", status=500)
+    return render(request, "appraisal/server_errors.html", status=500)
+
+def object_not_found_error_view(request, object_name: str):
+    object_name = object_name.replace("-", " ")
+    context = {
+        "object_name": object_name
+    }
+    return render(request, "appraisal/not_found_error.html", context=context, status=404)

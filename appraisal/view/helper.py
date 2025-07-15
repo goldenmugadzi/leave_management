@@ -2,8 +2,9 @@ from typing import Protocol
 from django.forms import BaseModelForm
 from django.contrib import messages
 from django.http import HttpRequest
-from ...helpers.types.kra import KRAType, TargetScoreType, ActivityType, PerformanceDimensionType, KRAOutComeType
-from ...models import TargetScore
+from ..helpers.types.kra import KRAType, TargetScoreType, ActivityType, PerformanceDimensionType, KRAOutComeType
+from ..helpers.types.dept_workplan import DepartmentalOutTypes
+from ..models import TargetScore
 from pydantic import ValidationError, BaseModel
 from loguru import logger
 
@@ -63,6 +64,13 @@ class PerformanceDimensionDeserializationStrategy:
                 "allowable_variance": form_object.cleaned_data.get("allowable_variance")
         }
         return PerformanceDimensionType(**data)
+class DepartmentOutputDeserializationStrategy:
+    def deserialize(self, form_object: BaseModelForm)->BaseModel:
+        data = {
+                "output_description": form_object.cleaned_data.get("output_description"),
+                "weight": form_object.cleaned_data.get("weight")
+                }
+        return DepartmentalOutTypes(**data)
 
 class PayloadDeserializationStrategyContext:
     def __init__(self, strategy: PayloadDeserializationStrategyInterface):
@@ -84,7 +92,6 @@ class PayloadDeserializationStrategyContext:
         try:
             return self.strategy.deserialize(form_object=form_object)
         except ValidationError as e:
-            # print("========>>>>>>>>>err ", f"{e.errors()[0]}(s): ")
             error_messages = ""
             for error_message in e.errors():
                 msg = f"{error_message['msg']}: '{error_message['loc'][0]}'"

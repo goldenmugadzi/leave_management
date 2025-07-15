@@ -17,7 +17,7 @@ from ...repository.kra import TargetScoreRepository, ScoreDocumentRepository
 from ...services.kra import TargetScoreService
 from ...helpers.setters import set_approval_process
 
-from .helper import build_payload_score
+from ..helper import build_payload_score
 from pydantic import ValidationError
 from loguru import logger
 
