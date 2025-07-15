@@ -6,6 +6,7 @@ from django.db.models import F, ExpressionWrapper, DurationField, Sum, Q, Count
 from django.template.loader import render_to_string
 from django.http import JsonResponse
 import datetime
+from datetime import timedelta
 from decouple import config
 
 from it.users.helpers import DEPOTS
@@ -13,6 +14,31 @@ from .models import *
 from .forms import FaultForm, FaultLocatorDeviceForm, FaultLocatorTeamForm, FaultLocatorTeamNameForm, AddTeamMemberForm, AssignDeviceToTeamForm, AssignFaultForm, TeamDeploymentForm, SeniorForepersonDeviceAssignmentForm
 from it.users.models import UserProfile, Notification
 from it.users.views import ms_exhange_send_html
+from .central_roles import (
+    FaultLocatorRoleManager,
+    is_senior_foreman,
+    is_depot_foreperson,
+    is_team_leader,
+    is_team_member,
+    can_assign_faults,
+    can_deploy_teams,
+    can_manage_devices,
+    can_create_teams,
+    has_fault_locator_permissions
+)
+from .decorators import (
+    fault_locator_access_required,
+    senior_foreman_required,
+    depot_foreperson_required,
+    team_leader_required,
+    team_member_required,
+    device_management_required,
+    team_management_required,
+    fault_assignment_required,
+    team_deployment_required,
+    role_based_access,
+    depot_specific_access
+)
 
 # Notification Functions (keeping existing ones)
 def notify_fault_locator_user(user, message, notification_type, url, fault_or_team_id, request):
@@ -274,11 +300,22 @@ def notify_unassigned_faults(request):
 
 @login_required
 def fault_locator_dashboard(request):
-    """SIMPLIFIED: Main dashboard - role-based and action-oriented"""
+    """ROLE-BASED: Main dashboard - customized per user role with access restrictions"""
     user_profile = UserProfile.objects.filter(id=request.user.id).first()
     
-    # Determine user role and permissions
-    user_role = get_user_fault_locator_role(user_profile)
+    # Check if user has any fault locator permissions
+    if not has_fault_locator_permissions(user_profile):
+        return render(request, 'fault_locator/no_access.html', {
+            'user_profile': user_profile,
+            'message': 'You do not have access to the Fault Locator system. Please contact your administrator.',
+            'contact_info': 'Contact your senior foreman or IT administrator for role assignment.'
+        })
+    
+    # Get user role from central system
+    user_role = FaultLocatorRoleManager.get_user_role(user_profile)
+    user_role_display = FaultLocatorRoleManager.get_user_role_display(user_profile)
+    
+    # Determine user permissions using central roles
     is_senior = is_senior_foreman(user_profile)
     is_depot_fp = is_depot_foreperson(user_profile, user_profile.depot if user_profile and hasattr(user_profile, 'depot') and user_profile.depot else None)
     user_can_manage_devices = can_manage_devices(user_profile)
@@ -289,20 +326,165 @@ def fault_locator_dashboard(request):
     # Get user's depot if applicable
     user_depot = None
     if user_profile and hasattr(user_profile, 'depot') and user_profile.depot:
-        user_depot = Depots.objects.filter(code=user_profile.depot).first()
+        user_depot = user_profile.depot  # depot is already a Depots object, not a code
     
-    # Initialize context
+    # Initialize context with role information
     context = {
         'user_profile': user_profile,
+        'user_role': user_role,
+        'user_role_display': user_role_display,
         'is_senior_foreman': is_senior,
         'is_depot_foreperson': is_depot_fp,
+        'is_team_leader': is_team_lead,
+        'is_team_member': is_team_member,
         'can_manage_devices': user_can_manage_devices,
         'user_depot': user_depot,
         'my_actions': [],
         'quick_stats': {},
         'recent_activity': [],
         'accessible_functions': [],
+        'role_permissions': {
+            'can_assign_faults': can_assign_faults(user_profile),
+            'can_deploy_teams': can_deploy_teams(user_profile),
+            'can_create_teams': can_create_teams(user_profile),
+            'can_manage_devices': user_can_manage_devices,
+            'can_create_faults': True,  # All users can create faults
+            'can_view_faults': True,    # All users can view faults
+            'can_view_reports': True,   # All users can view reports
+        }
     }
+    
+    # Get role-specific statistics
+    stats = {}
+    
+    try:
+        if user_role == 'senior_foreman':
+            # Senior foreman sees all statistics
+            stats.update({
+                'total_open_faults': Fault.objects.filter(status__in=['requested', 'assigned']).count(),
+                'assigned_faults': Fault.objects.filter(status='assigned').count(),
+                'resolved_today': Fault.objects.filter(
+                    status='closed', 
+                    reported_at__date=datetime.datetime.now().date()
+                ).count(),
+                'active_teams': FaultLocatorTeam.objects.filter(current_depot__isnull=False).count(),
+            })
+            
+            # Depot performance statistics
+            from django.db.models import Count, Q
+            depot_stats = []
+            for depot in Depots.objects.all():
+                try:
+                    depot_faults = Fault.objects.filter(depot=depot)
+                    open_faults = depot_faults.filter(status__in=['requested', 'assigned']).count()
+                    total_faults = depot_faults.count()
+                    resolution_rate = 0 if total_faults == 0 else int((depot_faults.filter(status='closed').count() / total_faults) * 100)
+                    
+                    depot_stats.append({
+                        'name': depot.depot,  # Use depot.depot field instead of depot.name
+                        'open_faults': open_faults,
+                        'resolution_rate': resolution_rate
+                    })
+                except Exception as e:
+                    # Skip depot if there's an error
+                    continue
+            stats['depot_stats'] = depot_stats
+            
+        elif user_role == 'depot_foreperson':
+            # Depot foreperson sees depot-specific statistics
+            user_depot = user_profile.depot
+            if user_depot:
+                depot_faults = Fault.objects.filter(depot=user_depot)
+                stats.update({
+                    'depot_open_faults': depot_faults.filter(status__in=['requested', 'assigned']).count(),
+                    'depot_resolved_today': depot_faults.filter(
+                        status='closed', 
+                        reported_at__date=datetime.datetime.now().date()
+                    ).count(),
+                    'user_depot': user_depot,
+                })
+                
+                # My teams statistics
+                my_teams = FaultLocatorTeam.objects.filter(current_depot=user_depot)
+                stats.update({
+                    'my_teams_count': my_teams.count(),
+                    'my_teams': my_teams,
+                })
+                
+                # Team efficiency calculation
+                total_assigned = Fault.objects.filter(depot=user_depot, status='assigned').count()
+                total_resolved = Fault.objects.filter(depot=user_depot, status='closed').count()
+                team_efficiency = 0 if total_assigned == 0 else int((total_resolved / total_assigned) * 100)
+                stats['team_efficiency'] = team_efficiency
+                
+                # Recent depot faults
+                recent_depot_faults = depot_faults.select_related('depot', 'reported_by').order_by('-reported_at')[:10]
+                stats['recent_depot_faults'] = recent_depot_faults
+                
+        elif user_role == 'team_leader':
+            # Team leader sees team-specific statistics
+            user_team = user_profile.fault_locator_teams.first()
+            if user_team:
+                # Get faults assigned to this team through FaultAssignment
+                team_fault_assignments = FaultAssignment.objects.filter(assigned_team=user_team)
+                team_faults = Fault.objects.filter(faultassignment__in=team_fault_assignments)
+                
+                stats.update({
+                    'team_open_faults': team_faults.filter(status__in=['requested', 'assigned']).count(),
+                    'team_completed_today': team_faults.filter(
+                        status='closed', 
+                        reported_at__date=datetime.datetime.now().date()
+                    ).count(),
+                    'team_in_progress': team_faults.filter(status='assigned').count(),
+                    'user_team': user_team,
+                })
+                
+                # Team members
+                team_members = user_team.members.all()
+                stats.update({
+                    'team_members_count': team_members.count(),
+                    'team_members': team_members,
+                })
+                
+                # Current team assignments
+                team_assignments = team_faults.filter(status__in=['requested', 'assigned']).select_related('depot')
+                stats['team_assignments'] = team_assignments
+                
+        elif user_role == 'team_member':
+            # Team member sees personal statistics
+            user_team = user_profile.fault_locator_teams.first()
+            if user_team:
+                # Get faults assigned to this team through FaultAssignment
+                team_fault_assignments = FaultAssignment.objects.filter(assigned_team=user_team)
+                my_faults = Fault.objects.filter(faultassignment__in=team_fault_assignments)
+                
+                stats.update({
+                    'my_assigned_faults': my_faults.filter(status__in=['requested', 'assigned']).count(),
+                    'my_in_progress': my_faults.filter(status='assigned').count(),
+                    'my_completed_today': my_faults.filter(
+                        status='closed', 
+                        reported_at__date=datetime.datetime.now().date()
+                    ).count(),
+                    'my_completed_week': my_faults.filter(
+                        status='closed', 
+                        reported_at__date__gte=datetime.datetime.now().date() - timedelta(days=7)
+                    ).count(),
+                })
+                
+                # My current assignments
+                my_assignments = my_faults.filter(status__in=['requested', 'assigned']).select_related('depot')
+                stats['my_assignments'] = my_assignments
+    
+    except Exception as e:
+        # If there's an error getting statistics, provide empty stats
+        stats = {}
+        # Log the error for debugging
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Error getting dashboard statistics: {e}")
+    
+    # Add stats to context
+    context.update(stats)
     
     # ACCESSIBLE FUNCTIONS - What can this user do in the system?
     accessible_functions = {}
@@ -723,6 +905,7 @@ def quick_fault_report(request):
     return render(request, "fault_locator/quick_fault_report.html", context)
 
 @login_required
+@team_member_required
 def create_fault(request):
     """Create a new fault using the FaultForm"""
     user_profile = UserProfile.objects.filter(id=request.user.id).first()
@@ -764,6 +947,7 @@ def create_fault(request):
     return render(request, "fault_locator/create_fault.html", context)
 
 @login_required
+@fault_assignment_required
 def simple_assign_fault(request, fault_id=None):
     """SIMPLIFIED: Easy fault assignment with available teams"""
     user_profile = UserProfile.objects.filter(id=request.user.id).first()
@@ -882,6 +1066,7 @@ def simple_assign_fault(request, fault_id=None):
     return render(request, "fault_locator/simple_assign_fault.html", context)
 
 @login_required
+@team_leader_required
 def field_update(request, fault_id):
     """SIMPLIFIED: Mobile-friendly field status update"""
     user_profile = UserProfile.objects.filter(id=request.user.id).first()
@@ -965,12 +1150,16 @@ def team_overview(request):
     user_profile = UserProfile.objects.filter(id=request.user.id).first()
     
     # Get teams based on user role
-    teams = FaultLocatorTeam.objects.prefetch_related(
+    teams = FaultLocatorTeam.objects.select_related(
+        'team_leader', 
+        'current_depot', 
+        'assigned_by'
+    ).prefetch_related(
         'members', 
         'faultlocatordeviceassignment_set__device'
     ).annotate(
-        member_count=Count('members'),
-        active_assignments=Count('faultassignment', filter=Q(faultassignment__located_at__isnull=True))
+        member_count=Count('members', distinct=True),
+        active_assignments=Count('faultassignment', filter=Q(faultassignment__located_at__isnull=True), distinct=True)
     )
     
     # Role-based filtering
@@ -1024,6 +1213,30 @@ def team_overview(request):
                 'class': 'btn-outline-secondary btn-sm'
             })
         
+        # Get actual member count to fix annotation issues
+        actual_member_count = team.members.count()
+        
+        # Get actual active assignments count
+        actual_active_assignments = FaultAssignment.objects.filter(
+            team=team,
+            located_at__isnull=True
+        ).count()
+        
+        # Get team leader display name
+        team_leader_name = team.team_leader.get_full_name() if team.team_leader else None
+        
+        # Get members with proper display names
+        team_members = []
+        for member in team.members.all():
+            member_name = member.get_full_name()
+            if not member_name or member_name.strip() == '':
+                member_name = member.username or f"User {member.id}"
+            team_members.append({
+                'name': member_name,
+                'email': member.email or 'No email',
+                'id': member.id
+            })
+        
         team_data.append({
             'team': team,
             'device': device_assignment.device if device_assignment else None,
@@ -1031,6 +1244,16 @@ def team_overview(request):
             'status_class': status_class,
             'location': team.current_depot.depot if team.current_depot else 'Base',
             'actions': actions,
+            'actual_member_count': actual_member_count,
+            'actual_active_assignments': actual_active_assignments,
+            'team_leader_name': team_leader_name,
+            'team_members': team_members,
+            'deployment_info': {
+                'assigned_at': team.assigned_at,
+                'assigned_by': team.assigned_by.get_full_name() if team.assigned_by else None,
+                'depot_name': team.current_depot.depot if team.current_depot else None,
+                'depot_code': team.current_depot.code if team.current_depot else None,
+            }
         })
     
     context = {
@@ -1146,6 +1369,7 @@ def device_list(request):
     return render(request, "fault_locator/device_list.html", context)
 
 @login_required
+@device_management_required
 def create_device(request):
     """Create a new fault locator device"""
     user_profile = UserProfile.objects.filter(id=request.user.id).first()
@@ -1343,6 +1567,7 @@ def unassign_device(request, device_id):
 # TEAM MANAGEMENT VIEWS
 
 @login_required
+@team_management_required
 def create_team(request):
     """Create a new fault locator team"""
     user_profile = UserProfile.objects.filter(id=request.user.id).first()

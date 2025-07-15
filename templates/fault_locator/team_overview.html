@@ -65,25 +65,63 @@
           <!-- Team Stats -->
           <div class="grid grid-cols-2 gap-4 mb-4">
             <div class="text-center p-3 rounded-xl bg-white/50 backdrop-blur-sm border border-white/30">
-              <div class="text-2xl font-bold text-gulf-blue-600">{{ item.team.member_count }}</div>
+              <div class="text-2xl font-bold text-gulf-blue-600">{{ item.actual_member_count }}</div>
               <div class="text-xs text-nepal-600 uppercase tracking-wide">Members</div>
             </div>
             <div class="text-center p-3 rounded-xl bg-white/50 backdrop-blur-sm border border-white/30">
-              <div class="text-2xl font-bold text-pomegranate-primary">{{ item.team.active_assignments }}</div>
+              <div class="text-2xl font-bold text-pomegranate-primary">{{ item.actual_active_assignments }}</div>
               <div class="text-xs text-nepal-600 uppercase tracking-wide">Active Tasks</div>
             </div>
           </div>
 
           <!-- Team Leader -->
-          {% if item.team.team_leader %}
+          {% if item.team_leader_name %}
           <div class="mb-4 p-3 rounded-xl bg-gradient-to-r from-gulf-blue-50 to-tory-blue-50 border border-gulf-blue-200/50">
             <div class="text-xs text-gulf-blue-600 uppercase tracking-wide mb-1">Team Leader</div>
-            <div class="font-semibold text-gulf-blue-800">{{ item.team.team_leader.get_full_name }}</div>
+            <div class="font-semibold text-gulf-blue-800">{{ item.team_leader_name }}</div>
           </div>
           {% else %}
           <div class="mb-4 p-3 rounded-xl bg-gradient-to-r from-nepal-50 to-nepal-100 border border-nepal-200/50">
             <div class="text-xs text-nepal-500 uppercase tracking-wide mb-1">Team Leader</div>
             <div class="text-nepal-600 italic">No leader assigned</div>
+          </div>
+          {% endif %}
+
+          <!-- Team Members -->
+          {% if item.team_members %}
+          <div class="mb-4 p-3 rounded-xl bg-gradient-to-r from-tory-blue-50 to-gulf-blue-50 border border-tory-blue-200/50">
+            <div class="text-xs text-tory-blue-600 uppercase tracking-wide mb-2">Team Members</div>
+            <div class="space-y-1 max-h-32 overflow-y-auto">
+              {% for member in item.team_members %}
+              <div class="flex items-center justify-between text-sm">
+                <span class="font-medium text-tory-blue-800">{{ member.name }}</span>
+                <span class="text-xs text-tory-blue-600">{{ member.email }}</span>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+          {% endif %}
+
+          <!-- Deployment Status -->
+          {% if item.deployment_info.depot_name %}
+          <div class="mb-4 p-3 rounded-xl bg-gradient-to-r from-jade-50 to-apple-50 border border-jade-200/50">
+            <div class="text-xs text-jade-600 uppercase tracking-wide mb-1">Deployment Status</div>
+            <div class="font-semibold text-jade-800">{{ item.deployment_info.depot_name }}</div>
+            {% if item.deployment_info.assigned_at %}
+            <div class="text-xs text-jade-600 mt-1">
+              Deployed: {{ item.deployment_info.assigned_at|date:"M d, Y H:i" }}
+            </div>
+            {% endif %}
+            {% if item.deployment_info.assigned_by %}
+            <div class="text-xs text-jade-600">
+              By: {{ item.deployment_info.assigned_by }}
+            </div>
+            {% endif %}
+          </div>
+          {% else %}
+          <div class="mb-4 p-3 rounded-xl bg-gradient-to-r from-nepal-50 to-nepal-100 border border-nepal-200/50">
+            <div class="text-xs text-nepal-500 uppercase tracking-wide mb-1">Deployment Status</div>
+            <div class="text-nepal-600 italic">Not deployed</div>
           </div>
           {% endif %}
 
