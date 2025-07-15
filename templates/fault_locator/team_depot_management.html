@@ -10,12 +10,12 @@
     </div>
     <div class="flex space-x-2">
       <a href="{% url 'senior_foreman_dashboard' %}" 
-         class="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700 transition">
+         class="px-6 py-3 bg-gradient-to-r from-gray-600 to-gray-700 text-white rounded-xl font-bold text-lg hover:from-gray-700 hover:to-gray-800 transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl transform hover:-translate-y-1">
         ← Back to Dashboard
       </a>
       <a href="{% url 'deploy_team' %}" 
-         class="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 transition">
-        Deploy Team
+         class="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl font-bold text-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl transform hover:-translate-y-1">
+        🚀 Deploy Team
       </a>
     </div>
   </div>
@@ -75,14 +75,14 @@
           <div class="flex space-x-2">
             {% if team.current_depot %}
             <button onclick="recallTeam({{ team.id }}, '{{ team.name }}')" 
-                    class="bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700 transition">
-              Recall
+                    class="px-4 py-2 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-lg font-bold hover:from-red-700 hover:to-red-800 transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl transform hover:-translate-y-1">
+              🔄 Recall
             </button>
             {% else %}
             {% if team.device_count > 0 %}
             <button onclick="deployTeam({{ team.id }}, '{{ team.name }}')" 
-                    class="bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700 transition">
-              Deploy
+                    class="px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg font-bold hover:from-blue-700 hover:to-blue-800 transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl transform hover:-translate-y-1">
+              🚀 Deploy
             </button>
             {% else %}
             <span class="bg-gray-300 text-gray-600 px-3 py-1 rounded text-sm">
@@ -229,12 +229,12 @@
       </div>
       <div class="flex justify-end space-x-2 mt-6">
         <button onclick="closeDeployModal()" 
-                class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400">
+                class="px-6 py-3 bg-gradient-to-r from-gray-600 to-gray-700 text-white rounded-xl font-bold hover:from-gray-700 hover:to-gray-800 transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl transform hover:-translate-y-1">
           Cancel
         </button>
         <button id="confirmDeploy" 
-                class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
-          Deploy Team
+                class="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl font-bold hover:from-blue-700 hover:to-blue-800 transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl transform hover:-translate-y-1">
+          🚀 Deploy Team
         </button>
       </div>
     </div>
@@ -264,12 +264,12 @@
       </div>
       <div class="flex justify-end space-x-2 mt-6">
         <button onclick="closeRecallModal()" 
-                class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400">
+                class="px-6 py-3 bg-gradient-to-r from-gray-600 to-gray-700 text-white rounded-xl font-bold hover:from-gray-700 hover:to-gray-800 transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl transform hover:-translate-y-1">
           Cancel
         </button>
         <button id="confirmRecall" 
-                class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700">
-          Recall Team
+                class="px-6 py-3 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-xl font-bold hover:from-red-700 hover:to-red-800 transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl transform hover:-translate-y-1">
+          🔄 Recall Team
         </button>
       </div>
     </div>
