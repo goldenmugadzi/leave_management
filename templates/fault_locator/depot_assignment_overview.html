@@ -1,0 +1,442 @@
+{% extends 'fault_locator/base_fault_locator.html' %}
+{% load static %}
+
+{% block title %}Depot Assignment Overview{% endblock %}
+
+{% block extra_css %}
+<style>
+    .assignment-card {
+        background: white;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .depot-status {
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.875rem;
+        font-weight: 500;
+    }
+    
+    .status-occupied {
+        background-color: #fee2e2;
+        color: #dc2626;
+    }
+    
+    .status-available {
+        background-color: #dcfce7;
+        color: #16a34a;
+    }
+    
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+    
+    .stat-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 20px;
+        border-radius: 10px;
+        text-align: center;
+    }
+    
+    .stat-number {
+        font-size: 2rem;
+        font-weight: bold;
+        margin-bottom: 5px;
+    }
+    
+    .stat-label {
+        font-size: 0.875rem;
+        opacity: 0.9;
+    }
+    
+    .assignments-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+    }
+    
+    .assignments-table th,
+    .assignments-table td {
+        padding: 12px;
+        text-align: left;
+        border-bottom: 1px solid #e5e7eb;
+    }
+    
+    .assignments-table th {
+        background-color: #f9fafb;
+        font-weight: 600;
+        color: #374151;
+    }
+    
+    .assignments-table tr:hover {
+        background-color: #f9fafb;
+    }
+    
+    .btn {
+        padding: 8px 16px;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 0.875rem;
+        transition: all 0.2s;
+    }
+    
+    .btn-primary {
+        background-color: #3b82f6;
+        color: white;
+    }
+    
+    .btn-primary:hover {
+        background-color: #2563eb;
+    }
+    
+    .btn-danger {
+        background-color: #ef4444;
+        color: white;
+    }
+    
+    .btn-danger:hover {
+        background-color: #dc2626;
+    }
+    
+    .btn-success {
+        background-color: #10b981;
+        color: white;
+    }
+    
+    .btn-success:hover {
+        background-color: #059669;
+    }
+    
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0,0,0,0.5);
+    }
+    
+    .modal-content {
+        background-color: white;
+        margin: 15% auto;
+        padding: 20px;
+        border-radius: 8px;
+        width: 80%;
+        max-width: 500px;
+    }
+    
+    .close {
+        color: #aaa;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+        cursor: pointer;
+    }
+    
+    .close:hover {
+        color: black;
+    }
+    
+    .form-group {
+        margin-bottom: 15px;
+    }
+    
+    .form-group label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: 500;
+    }
+    
+    .form-group select {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #d1d5db;
+        border-radius: 6px;
+        font-size: 14px;
+    }
+    
+    .alert {
+        padding: 12px;
+        margin-bottom: 20px;
+        border-radius: 6px;
+    }
+    
+    .alert-success {
+        background-color: #dcfce7;
+        color: #16a34a;
+        border: 1px solid #bbf7d0;
+    }
+    
+    .alert-error {
+        background-color: #fee2e2;
+        color: #dc2626;
+        border: 1px solid #fecaca;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="h3 mb-0">Depot Assignment Overview</h1>
+                <button class="btn btn-success" onclick="openAssignModal()">
+                    <i class="fas fa-plus"></i> Assign Depot Foreperson
+                </button>
+            </div>
+
+            <!-- Statistics Cards -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-number">{{ summary.total_depots }}</div>
+                    <div class="stat-label">Total Depots</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">{{ summary.occupied_depots }}</div>
+                    <div class="stat-label">Assigned Depots</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">{{ summary.available_depots }}</div>
+                    <div class="stat-label">Available Depots</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">{{ qualified_users|length }}</div>
+                    <div class="stat-label">Qualified Users</div>
+                </div>
+            </div>
+
+            <!-- Assignment Table -->
+            <div class="assignment-card">
+                <h4>Current Depot Assignments</h4>
+                <table class="assignments-table">
+                    <thead>
+                        <tr>
+                            <th>Depot</th>
+                            <th>Region</th>
+                            <th>District</th>
+                            <th>Depot Foreperson</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for assignment in summary.assignments %}
+                        <tr>
+                            <td>{{ assignment.depot.depot }}</td>
+                            <td>{{ assignment.depot.region.region }}</td>
+                            <td>{{ assignment.depot.district.district }}</td>
+                            <td>
+                                {% if assignment.foreperson %}
+                                    <strong>{{ assignment.foreperson.get_full_name }}</strong>
+                                    <br>
+                                    <small class="text-muted">{{ assignment.foreperson.username }}</small>
+                                {% else %}
+                                    <span class="text-muted">Not assigned</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if assignment.status == 'occupied' %}
+                                    <span class="depot-status status-occupied">Assigned</span>
+                                {% else %}
+                                    <span class="depot-status status-available">Available</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if assignment.foreperson %}
+                                    <button class="btn btn-danger btn-sm" 
+                                            onclick="removeDepotForeperson({{ assignment.foreperson.id }}, '{{ assignment.foreperson.get_full_name }}', '{{ assignment.depot.depot }}')">
+                                        <i class="fas fa-times"></i> Remove
+                                    </button>
+                                {% else %}
+                                    <button class="btn btn-primary btn-sm" 
+                                            onclick="assignToDepot({{ assignment.depot.id }}, '{{ assignment.depot.depot }}')">
+                                        <i class="fas fa-plus"></i> Assign
+                                    </button>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Assignment Modal -->
+<div id="assignModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeAssignModal()">&times;</span>
+        <h4>Assign Depot Foreperson</h4>
+        <form id="assignForm">
+            <div class="form-group">
+                <label for="userId">Select User:</label>
+                <select id="userId" name="user_id" required>
+                    <option value="">Choose a qualified user...</option>
+                    {% for user in qualified_users %}
+                        <option value="{{ user.id }}">{{ user.get_full_name }} ({{ user.username }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="depotId">Select Depot:</label>
+                <select id="depotId" name="depot_id" required>
+                    <option value="">Choose an available depot...</option>
+                    {% for depot in available_depots %}
+                        <option value="{{ depot.id }}">{{ depot.depot }} - {{ depot.region.region }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <button type="submit" class="btn btn-primary">Assign Depot Foreperson</button>
+                <button type="button" class="btn btn-secondary" onclick="closeAssignModal()">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Remove Confirmation Modal -->
+<div id="removeModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeRemoveModal()">&times;</span>
+        <h4>Remove Depot Foreperson</h4>
+        <p>Are you sure you want to remove <strong id="removeUserName"></strong> as depot foreperson from <strong id="removeDepotName"></strong>?</p>
+        <p class="text-muted">This action cannot be undone.</p>
+        <div class="form-group">
+            <button type="button" class="btn btn-danger" onclick="confirmRemove()">Remove</button>
+            <button type="button" class="btn btn-secondary" onclick="closeRemoveModal()">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentUserId = null;
+
+// Modal functions
+function openAssignModal() {
+    document.getElementById('assignModal').style.display = 'block';
+}
+
+function closeAssignModal() {
+    document.getElementById('assignModal').style.display = 'none';
+    document.getElementById('assignForm').reset();
+}
+
+function assignToDepot(depotId, depotName) {
+    document.getElementById('depotId').value = depotId;
+    openAssignModal();
+}
+
+function removeDepotForeperson(userId, userName, depotName) {
+    currentUserId = userId;
+    document.getElementById('removeUserName').textContent = userName;
+    document.getElementById('removeDepotName').textContent = depotName;
+    document.getElementById('removeModal').style.display = 'block';
+}
+
+function closeRemoveModal() {
+    document.getElementById('removeModal').style.display = 'none';
+    currentUserId = null;
+}
+
+// Assignment form submission
+document.getElementById('assignForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    
+    fetch('{% url "assign_depot_foreperson_ajax" %}', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showAlert('success', data.message);
+            closeAssignModal();
+            setTimeout(() => location.reload(), 1500);
+        } else {
+            showAlert('error', data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showAlert('error', 'An error occurred while assigning the depot foreperson.');
+    });
+});
+
+// Remove confirmation
+function confirmRemove() {
+    if (!currentUserId) return;
+    
+    const formData = new FormData();
+    formData.append('user_id', currentUserId);
+    formData.append('csrfmiddlewaretoken', document.querySelector('[name=csrfmiddlewaretoken]').value);
+    
+    fetch('{% url "remove_depot_foreperson_ajax" %}', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showAlert('success', data.message);
+            closeRemoveModal();
+            setTimeout(() => location.reload(), 1500);
+        } else {
+            showAlert('error', data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showAlert('error', 'An error occurred while removing the depot foreperson.');
+    });
+}
+
+// Alert function
+function showAlert(type, message) {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type}`;
+    alertDiv.textContent = message;
+    
+    const container = document.querySelector('.container-fluid');
+    container.insertBefore(alertDiv, container.firstChild);
+    
+    setTimeout(() => {
+        alertDiv.remove();
+    }, 5000);
+}
+
+// Close modals when clicking outside
+window.onclick = function(event) {
+    const assignModal = document.getElementById('assignModal');
+    const removeModal = document.getElementById('removeModal');
+    
+    if (event.target === assignModal) {
+        closeAssignModal();
+    }
+    if (event.target === removeModal) {
+        closeRemoveModal();
+    }
+}
+</script>
+
+{% csrf_token %}
+{% endblock %}
