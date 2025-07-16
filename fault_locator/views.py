@@ -1250,11 +1250,21 @@ def team_overview(request):
             actions = []
             
             # Only show permitted actions
+            user_depot = get_user_depot(user_profile)
+            can_interact_with_team = False
+            
+            # Determine if user can interact with this team
+            if is_senior_foreman(user_profile):
+                can_interact_with_team = True
+            elif is_depot_foreperson(user_profile, user_depot):
+                # Depot foreperson can only interact with teams deployed to their depot
+                can_interact_with_team = (team.current_depot == user_depot)
+            
             if device_assignment:
                 if team.current_depot:
                     status = 'deployed'
                     status_class = 'text-green-600'
-                    if is_senior_foreman(user_profile):
+                    if can_interact_with_team:
                         actions.append({
                             'text': 'Recall',
                             'url': f'/fault_locator/teams/{team.id}/recall/',
@@ -1263,7 +1273,7 @@ def team_overview(request):
                 else:
                     status = 'available'
                     status_class = 'text-blue-600'
-                    if is_senior_foreman(user_profile):
+                    if is_senior_foreman(user_profile):  # Only senior foremen can deploy teams
                         actions.append({
                             'text': 'Deploy',
                             'url': f'/fault_locator/teams/{team.id}/deploy/',
@@ -1278,7 +1288,7 @@ def team_overview(request):
                     })
             
             # Add manage action for authorized users
-            if is_senior_foreman(user_profile) or can_manage_devices(user_profile):
+            if can_interact_with_team or can_manage_devices(user_profile):
                 actions.append({
                     'text': 'Manage',
                     'url': f'/fault_locator/teams/{team.id}/edit/',
@@ -1353,6 +1363,7 @@ def team_overview(request):
                 'team_leader_name': team_leader_name,
                 'team_members': team_members,
                 'deployment_info': deployment_info,
+                'can_interact_with_team': can_interact_with_team,
                 # Add some additional computed fields for better display
                 'has_device': device_assignment is not None,
                 'is_deployed': team.current_depot is not None,
@@ -1364,6 +1375,7 @@ def team_overview(request):
             'team_data': team_data,
             'user_profile': user_profile,
             'is_senior_foreman': is_senior_foreman(user_profile),
+            'is_depot_foreperson': is_depot_foreperson(user_profile, user_depot),
             'can_create_team': is_senior_foreman(user_profile) or can_manage_devices(user_profile),
             'total_teams': len(team_data),
             # Add some summary statistics
@@ -2107,6 +2119,14 @@ def edit_team(request, team_id):
                 add_form = AddTeamMemberForm(request.POST, user_region=user_profile.region, team=team)
                 if add_form.is_valid():
                     member = add_form.cleaned_data['member']
+                    
+                    # Check if member can be added to team
+                    can_add, reason = can_user_be_added_to_team(member, team)
+                    
+                    if not can_add:
+                        messages.error(request, f"Cannot add {member.get_full_name()}: {reason}")
+                        return redirect('edit_team', team_id=team.id)
+                    
                     if member not in team.members.all():
                         team.members.add(member)
                         
@@ -2289,13 +2309,21 @@ def recall_team(request, team_id):
     try:
         user_profile = UserProfile.objects.filter(id=request.user.id).first()
         
-        # Check permissions - allow both senior foreman and senior foreperson
-        if not (is_senior_foreman(user_profile) or can_manage_devices(user_profile)):
-            messages.error(request, "Only senior forepersons can recall teams")
+        # Check permissions - allow senior foreman and depot foreperson for their depot
+        user_depot = get_user_depot(user_profile)
+        can_recall_team = False
+        
+        if is_senior_foreman(user_profile) or can_manage_devices(user_profile):
+            can_recall_team = True
+        elif is_depot_foreperson(user_profile, user_depot):
+            # Depot foreperson can only recall teams from their depot
+            team = get_object_or_404(FaultLocatorTeam, id=team_id)
+            can_recall_team = (team.current_depot == user_depot)
+        
+        if not can_recall_team:
+            messages.error(request, "You don't have permission to recall this team")
             return redirect('fault_locator_dashboard')
-    
-
-    
+        
         team = get_object_or_404(FaultLocatorTeam, id=team_id)
         
         if not team.current_depot:
@@ -2767,6 +2795,53 @@ def has_fault_locator_permissions(user_profile):
         return True
     
     return False
+
+def can_user_be_added_to_team(user_profile, team=None):
+    """Check if a user can be added to a team"""
+    if not user_profile:
+        return False, "Invalid user"
+    
+    # Check if user is already in another team
+    existing_teams = user_profile.fault_locator_teams.all()
+    if team:
+        # If editing existing team, exclude the current team from the check
+        existing_teams = existing_teams.exclude(id=team.id)
+    
+    if existing_teams.exists():
+        existing_team = existing_teams.first()
+        return False, f"User is already a member of team '{existing_team.name}'. A person can only be in one team at a time."
+    
+    # Check if user is a team leader of another team
+    led_teams = FaultLocatorTeam.objects.filter(team_leader=user_profile)
+    if team:
+        # If editing existing team, exclude the current team from the check
+        led_teams = led_teams.exclude(id=team.id)
+    
+    if led_teams.exists():
+        led_team = led_teams.first()
+        return False, f"User is the team leader of team '{led_team.name}'. A person can only be in one team at a time."
+    
+    # Check if user is a depot foreperson or senior foreperson
+    if is_depot_foreperson(user_profile):
+        return False, "Depot forepersons cannot be added to teams. They manage teams from their depot."
+    
+    if is_senior_foreman(user_profile):
+        return False, "Senior forepersons cannot be added to teams. They manage teams system-wide."
+    
+    return True, "User can be added to team"
+
+def get_user_current_team(user_profile):
+    """Get the current team a user is part of (either as leader or member)"""
+    if not user_profile:
+        return None
+    
+    # Check if user is team leader
+    team_as_leader = FaultLocatorTeam.objects.filter(team_leader=user_profile).first()
+    if team_as_leader:
+        return team_as_leader
+    
+    # Check if user is team member
+    return user_profile.fault_locator_teams.first()
 
 @login_required
 def change_fault_priority(request, fault_id):

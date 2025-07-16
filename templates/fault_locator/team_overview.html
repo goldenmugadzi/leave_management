@@ -177,7 +177,7 @@
             {% endif %}
             
             <!-- Add Recall from Depot button for deployed teams -->
-            {% if item.is_deployed and is_senior_foreman %}
+            {% if item.is_deployed and item.can_interact_with_team %}
             <form method="post" action="{% url 'recall_team_from_depot' item.team.id %}" class="inline-block">
               {% csrf_token %}
               <button type="submit" 

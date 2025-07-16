@@ -50,21 +50,90 @@ class FaultLocatorTeamForm(forms.ModelForm):
         user_region = kwargs.pop('user_region', None)
         super().__init__(*args, **kwargs)
         
-        # Filter members by user's region
+        # Filter members by user's region and exclude those who can't be added to teams
         if user_region:
-            self.fields['members'].queryset = UserProfile.objects.filter(
+            # Import here to avoid circular imports
+            from .views import is_depot_foreperson, is_senior_foreman
+            
+            # Get base queryset of active users in the region
+            base_queryset = UserProfile.objects.filter(
                 region=user_region,
                 is_active=True
             ).exclude(
                 username__in=['admin', 'superuser']
+            )
+            
+            # Filter out users who are already in teams or are forepersons
+            valid_members = []
+            for user in base_queryset:
+                # Check if user is already in a team
+                if user.fault_locator_teams.exists():
+                    continue
+                
+                # Check if user is a team leader
+                if FaultLocatorTeam.objects.filter(team_leader=user).exists():
+                    continue
+                
+                # Check if user is a depot foreperson or senior foreperson
+                if is_depot_foreperson(user) or is_senior_foreman(user):
+                    continue
+                
+                valid_members.append(user.id)
+            
+            self.fields['members'].queryset = base_queryset.filter(
+                id__in=valid_members
             ).order_by('last_name', 'first_name')
         else:
             # Fallback to all active users if no region specified
-            self.fields['members'].queryset = UserProfile.objects.filter(
+            # Import here to avoid circular imports
+            from .views import is_depot_foreperson, is_senior_foreman
+            
+            base_queryset = UserProfile.objects.filter(
                 is_active=True
             ).exclude(
                 username__in=['admin', 'superuser']
+            )
+            
+            # Filter out users who are already in teams or are forepersons
+            valid_members = []
+            for user in base_queryset:
+                # Check if user is already in a team
+                if user.fault_locator_teams.exists():
+                    continue
+                
+                # Check if user is a team leader
+                if FaultLocatorTeam.objects.filter(team_leader=user).exists():
+                    continue
+                
+                # Check if user is a depot foreperson or senior foreperson
+                if is_depot_foreperson(user) or is_senior_foreman(user):
+                    continue
+                
+                valid_members.append(user.id)
+            
+            self.fields['members'].queryset = base_queryset.filter(
+                id__in=valid_members
             ).order_by('last_name', 'first_name')
+    
+    def clean_members(self):
+        """Validate that selected members can be added to teams"""
+        members = self.cleaned_data.get('members')
+        if not members:
+            return members
+        
+        # Import here to avoid circular imports
+        from .views import can_user_be_added_to_team
+        
+        errors = []
+        for member in members:
+            can_add, reason = can_user_be_added_to_team(member)
+            if not can_add:
+                errors.append(f"{member.get_full_name()}: {reason}")
+        
+        if errors:
+            raise forms.ValidationError("Cannot add the following members: " + "; ".join(errors))
+        
+        return members
 
 class FaultLocatorTeamNameForm(forms.ModelForm):
     class Meta:
@@ -101,8 +170,30 @@ class AddTeamMemberForm(forms.Form):
                 id__in=team.members.values_list('id', flat=True)
             )
         
+        # Filter out users who can't be added to teams
+        # Import here to avoid circular imports
+        from .views import is_depot_foreperson, is_senior_foreman
+        
+        valid_members = []
+        for user in base_queryset:
+            # Check if user is already in another team
+            if user.fault_locator_teams.exists():
+                continue
+            
+            # Check if user is a team leader of another team
+            if FaultLocatorTeam.objects.filter(team_leader=user).exists():
+                continue
+            
+            # Check if user is a depot foreperson or senior foreperson
+            if is_depot_foreperson(user) or is_senior_foreman(user):
+                continue
+            
+            valid_members.append(user.id)
+        
         # Order by name for better UX
-        self.fields['member'].queryset = base_queryset.order_by('last_name', 'first_name')
+        self.fields['member'].queryset = base_queryset.filter(
+            id__in=valid_members
+        ).order_by('last_name', 'first_name')
         
         # Set empty label
         self.fields['member'].empty_label = "Select a member to add..."
@@ -380,11 +471,71 @@ class TeamLeaderAssignmentForm(forms.ModelForm):
         fields = ['team_leader']
     
     def __init__(self, *args, **kwargs):
+        team = kwargs.pop('team', None)
         super().__init__(*args, **kwargs)
+        
+        # Filter out users who can't be team leaders
+        # Import here to avoid circular imports
+        from .views import is_depot_foreperson, is_senior_foreman
+        
+        base_queryset = UserProfile.objects.filter(is_active=True)
+        
+        valid_leaders = []
+        for user in base_queryset:
+            # Check if user is already in another team (as member or leader)
+            if team:
+                # If editing existing team, allow current team leader
+                if user == team.team_leader:
+                    valid_leaders.append(user.id)
+                    continue
+                
+                # Exclude if user is in another team
+                if user.fault_locator_teams.exclude(id=team.id).exists():
+                    continue
+                
+                # Exclude if user is leader of another team
+                if FaultLocatorTeam.objects.filter(team_leader=user).exclude(id=team.id).exists():
+                    continue
+            else:
+                # For new teams, exclude users already in any team
+                if user.fault_locator_teams.exists():
+                    continue
+                
+                # Exclude if user is leader of any team
+                if FaultLocatorTeam.objects.filter(team_leader=user).exists():
+                    continue
+            
+            # Check if user is a depot foreperson or senior foreperson
+            if is_depot_foreperson(user) or is_senior_foreman(user):
+                continue
+            
+            valid_leaders.append(user.id)
+        
+        self.fields['team_leader'].queryset = base_queryset.filter(
+            id__in=valid_leaders
+        ).order_by('last_name', 'first_name')
         
         self.fields['team_leader'].widget.attrs.update({
             'class': 'form-select'
         })
+    
+    def clean_team_leader(self):
+        """Validate that selected team leader can be assigned"""
+        team_leader = self.cleaned_data.get('team_leader')
+        if not team_leader:
+            return team_leader
+        
+        # Import here to avoid circular imports
+        from .views import can_user_be_added_to_team
+        
+        # Get the team instance if editing existing team
+        team = self.instance if self.instance.pk else None
+        
+        can_add, reason = can_user_be_added_to_team(team_leader, team)
+        if not can_add:
+            raise forms.ValidationError(f"Cannot assign {team_leader.get_full_name()} as team leader: {reason}")
+        
+        return team_leader
 
 class FaultStatusUpdateForm(forms.ModelForm):
     """Form for team leaders to update fault status"""
