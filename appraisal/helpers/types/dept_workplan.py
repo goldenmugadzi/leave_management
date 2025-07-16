@@ -35,7 +35,6 @@ class OutputPerformanceDimensionType(BaseModel):
         ..., description="The agreed value of the Target."
     )
 
-
     @field_validator("performance_indicator")
     @classmethod
     def validate_performance_indicator(cls, value: str):
@@ -48,13 +47,12 @@ class OutputPerformanceDimensionType(BaseModel):
     def validate_weight(cls, value: str):
         return percentage_validation(percentage_value=value,  field_name="Weight") 
     
-    
     @field_validator("agreed_target")
     @classmethod
-    def validate_weight(cls, value: str):
+    def validate_agreed_target(cls, value: str):
         return percentage_validation(percentage_value=value,  field_name="Agreed target") 
     
     @field_validator("allowable_variance")
     @classmethod
-    def validate_weight(cls, value: str):
+    def validate_allowable_variance(cls, value: str):
         return percentage_validation(percentage_value=value,  field_name="Allowable variance") 
