@@ -1,6 +1,6 @@
 <!-- Team Member Dashboard Content -->
 <div class="row">
-    <div class="col-md-8">
+    <div class="col-md-6">
         <h4 class="mb-3">
             <i class="fas fa-hard-hat text-primary me-2"></i>
             Current Work
@@ -8,35 +8,66 @@
         
         {% if current_assignments %}
         <div class="card border-0 shadow-sm">
-            <div class="card-body">
-                {% for assignment in current_assignments %}
-                <div class="card mb-3">
-                    <div class="card-body">
-                        <h6 class="card-title">
-                            {{ assignment.fault.description }}
-                            <span class="badge bg-{{ assignment.fault.priority|yesno:'danger,warning,info,secondary' }} ms-2">
-                                {{ assignment.fault.get_priority_display }}
-                            </span>
-                        </h6>
-                        <p class="card-text small text-muted">
-                            <i class="fas fa-map-marker-alt me-1"></i>{{ assignment.fault.depot.depot }}<br>
-                            <i class="fas fa-clock me-1"></i>Started: {{ assignment.assigned_at|date:"M d, H:i" }}<br>
-                            <i class="fas fa-mobile-alt me-1"></i>Using: {{ assignment.device.serial_number }}
-                        </p>
-                        
-                        {% if assignment.work_notes %}
-                        <div class="alert alert-info py-2">
-                            <small><strong>Current Status:</strong> {{ assignment.work_notes }}</small>
-                        </div>
-                        {% endif %}
-                        
-                        <div class="text-muted small">
-                            <i class="fas fa-user me-1"></i>
-                            Contact your team leader for instructions.
-                        </div>
-                    </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0 current-work-table">
+                        <thead class="table-primary">
+                            <tr>
+                                <th scope="col" class="px-4 py-3 fw-semibold">
+                                    <i class="fas fa-briefcase text-primary me-2"></i>
+                                    Work Details
+                                </th>
+                                <th scope="col" class="px-3 py-3 fw-semibold text-center">
+                                    <i class="fas fa-info-circle text-primary me-1"></i>
+                                    Status
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for assignment in current_assignments %}
+                            <tr class="align-middle {% if assignment.fault.priority >= 3 %}priority-high{% elif assignment.fault.priority == 2 %}priority-medium{% else %}priority-low{% endif %}">
+                                <td class="px-4 py-3">
+                                    <div class="d-flex flex-column">
+                                        <span class="fw-bold text-dark mb-1">{{ assignment.fault.description|truncatechars:30 }}</span>
+                                        <small class="text-muted mb-1">
+                                            <i class="fas fa-map-marker-alt me-1"></i>
+                                            {{ assignment.fault.depot.depot }}
+                                        </small>
+                                        <small class="text-muted mb-1">
+                                            <i class="fas fa-clock me-1"></i>
+                                            Started: {{ assignment.assigned_at|date:"M d, H:i" }}
+                                        </small>
+                                        <small class="text-muted">
+                                            <i class="fas fa-mobile-alt me-1"></i>
+                                            Using: {{ assignment.device.serial_number }}
+                                        </small>
+                                    </div>
+                                </td>
+                                <td class="px-3 py-3 text-center">
+                                    <div class="d-flex flex-column align-items-center">
+                                        <span class="badge bg-{% if assignment.fault.priority >= 3 %}danger{% elif assignment.fault.priority == 2 %}warning{% else %}info{% endif %} px-3 py-2 rounded-pill mb-2">
+                                            {{ assignment.fault.get_priority_display }}
+                                        </span>
+                                        {% if assignment.work_notes %}
+                                        <div class="alert alert-info py-2 px-3 mb-0 w-100">
+                                            <small><strong>Status:</strong> {{ assignment.work_notes|truncatechars:25 }}</small>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                            <tr class="table-light">
+                                <td colspan="2" class="px-4 py-3 text-center">
+                                    <div class="text-muted small">
+                                        <i class="fas fa-user me-1"></i>
+                                        Contact your team leader for instructions.
+                                    </div>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
-                {% endfor %}
             </div>
         </div>
         {% else %}
@@ -51,75 +82,361 @@
         {% endif %}
     </div>
 
-    <div class="col-md-4">
+    <div class="col-md-6">
         <h4 class="mb-3">
             <i class="fas fa-info-circle text-success me-2"></i>
             Team Information
         </h4>
         
-        <div class="card border-0 shadow-lg mb-3" style="background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); border-radius: 1rem;">
-            <div class="card-body">
-                <h6 class="card-title fw-bold text-dark mb-3">{{ my_team.name }}</h6>
-                
-                <div class="mb-3">
-                    <small class="text-muted d-block fw-medium">Team Leader</small>
-                    <strong class="text-dark">{{ team_leader.get_full_name }}</strong>
-                </div>
-                
-                <div class="mb-3">
-                    <small class="text-muted d-block fw-medium">Current Location</small>
-                    <span class="badge bg-primary d-inline-flex align-items-center">
-                        <i class="fas fa-map-marker-alt me-1"></i>
-                        {{ stats.current_location }}
-                    </span>
-                </div>
-                
-                <div class="mb-3">
-                    <small class="text-muted d-block fw-medium">Assigned Device</small>
-                    <strong class="text-dark">{{ stats.device }}</strong>
-                </div>
-                
-                <div class="mb-3">
-                    <small class="text-muted d-block fw-medium">Active Work</small>
-                    <span class="badge {% if stats.active_work > 0 %}bg-warning{% else %}bg-success{% endif %} d-inline-flex align-items-center">
-                        {{ stats.active_work }} assignment{{ stats.active_work|pluralize }}
-                    </span>
+        <div class="card border-0 shadow-sm mb-3">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0 team-info-table">
+                        <thead class="table-success">
+                            <tr>
+                                <th scope="col" class="px-4 py-3 fw-semibold">
+                                    <i class="fas fa-users text-success me-2"></i>
+                                    Team: {{ my_team.name }}
+                                </th>
+                                <th scope="col" class="px-3 py-3 fw-semibold text-end">
+                                    <i class="fas fa-info-circle text-success me-1"></i>
+                                    Details
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="align-middle">
+                                <td class="px-4 py-3">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-user-tie text-primary me-2"></i>
+                                        <span class="fw-medium">Team Leader</span>
+                                    </div>
+                                </td>
+                                <td class="px-3 py-3 text-end">
+                                    <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2 rounded-pill">
+                                        {{ team_leader.get_full_name }}
+                                    </span>
+                                </td>
+                            </tr>
+                            
+                            <tr class="align-middle">
+                                <td class="px-4 py-3">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-map-marker-alt text-success me-2"></i>
+                                        <span class="fw-medium">Current Location</span>
+                                    </div>
+                                </td>
+                                <td class="px-3 py-3 text-end">
+                                    <span class="badge bg-success bg-opacity-10 text-success px-3 py-2 rounded-pill">
+                                        <i class="fas fa-building me-1"></i>
+                                        {{ stats.current_location }}
+                                    </span>
+                                </td>
+                            </tr>
+                            
+                            <tr class="align-middle">
+                                <td class="px-4 py-3">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-mobile-alt text-info me-2"></i>
+                                        <span class="fw-medium">Assigned Device</span>
+                                    </div>
+                                </td>
+                                <td class="px-3 py-3 text-end">
+                                    <span class="badge bg-info bg-opacity-10 text-info px-3 py-2 rounded-pill">
+                                        <i class="fas fa-barcode me-1"></i>
+                                        {{ stats.device }}
+                                    </span>
+                                </td>
+                            </tr>
+                            
+                            <tr class="align-middle">
+                                <td class="px-4 py-3">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-tasks text-warning me-2"></i>
+                                        <span class="fw-medium">Active Work</span>
+                                    </div>
+                                </td>
+                                <td class="px-3 py-3 text-end">
+                                    <span class="badge {% if stats.active_work > 0 %}bg-warning{% else %}bg-success{% endif %} bg-opacity-10 text-{% if stats.active_work > 0 %}warning{% else %}success{% endif %} px-3 py-2 rounded-pill">
+                                        <i class="fas fa-clipboard-list me-1"></i>
+                                        {{ stats.active_work }} assignment{{ stats.active_work|pluralize }}
+                                    </span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
 
-        <div class="card border-0 shadow-lg" style="background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); border-radius: 1rem;">
-            <div class="card-header" style="background: rgba(59, 130, 246, 0.1); border-bottom: 1px solid rgba(255, 255, 255, 0.2); border-radius: 1rem 1rem 0 0;">
-                <h6 class="mb-0 fw-bold">
-                    <i class="fas fa-phone text-primary me-2"></i>
-                    Emergency Contacts
-                </h6>
-            </div>
-            <div class="card-body">
-                <div class="mb-3 p-3 rounded-3" style="background: rgba(59, 130, 246, 0.05); border: 1px solid rgba(59, 130, 246, 0.1);">
-                    <div class="d-flex align-items-center mb-2">
-                        <i class="fas fa-user-tie text-primary me-2"></i>
-                        <strong class="text-dark">Team Leader:</strong>
-                    </div>
-                    <div class="text-muted mb-2">{{ team_leader.get_full_name }}</div>
-                    {% if team_leader.email %}
-                    <a href="mailto:{{ team_leader.email }}" class="btn btn-outline-primary btn-sm">
-                        <i class="fas fa-envelope me-1"></i>Email
-                    </a>
-                    {% endif %}
-                </div>
-                
-                <div class="p-3 rounded-3" style="background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.1);">
-                    <div class="d-flex align-items-center mb-2">
-                        <i class="fas fa-building text-success me-2"></i>
-                        <strong class="text-dark">Depot Control:</strong>
-                    </div>
-                    <div class="text-muted mb-2">{{ stats.current_location }}</div>
-                    <a href="tel:+1234567890" class="btn btn-outline-secondary btn-sm">
-                        <i class="fas fa-phone me-1"></i>Call
-                    </a>
+        <div class="card border-0 shadow-sm">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0 emergency-contacts-table">
+                        <thead class="table-warning">
+                            <tr>
+                                <th scope="col" class="px-4 py-3 fw-semibold">
+                                    <i class="fas fa-phone text-warning me-2"></i>
+                                    Emergency Contacts
+                                </th>
+                                <th scope="col" class="px-3 py-3 fw-semibold text-end">
+                                    <i class="fas fa-contact-book text-warning me-1"></i>
+                                    Contact
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="align-middle">
+                                <td class="px-4 py-3">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-user-tie text-primary me-2"></i>
+                                        <span class="fw-medium">Team Leader:</span>
+                                    </div>
+                                    <div class="text-muted mt-1">{{ team_leader.get_full_name }}</div>
+                                </td>
+                                <td class="px-3 py-3 text-end">
+                                    {% if team_leader.email %}
+                                    <a href="mailto:{{ team_leader.email }}" class="btn btn-outline-primary btn-sm">
+                                        <i class="fas fa-envelope me-1"></i>Email
+                                    </a>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            
+                            <tr class="align-middle">
+                                <td class="px-4 py-3">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-building text-success me-2"></i>
+                                        <span class="fw-medium">Depot Control:</span>
+                                    </div>
+                                    <div class="text-muted mt-1">{{ stats.current_location }}</div>
+                                </td>
+                                <td class="px-3 py-3 text-end">
+                                    <a href="tel:+1234567890" class="btn btn-outline-success btn-sm">
+                                        <i class="fas fa-phone me-1"></i>Call
+                                    </a>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+<style>
+/* Enhanced table styling for team member dashboard */
+.table-responsive {
+    border-radius: 0.75rem;
+    overflow: hidden;
+}
+
+.table thead th {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-bottom: 2px solid #dee2e6;
+    color: #495057;
+    font-weight: 600;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.table tbody tr {
+    transition: all 0.2s ease;
+}
+
+.table tbody tr:hover {
+    background-color: rgba(0, 123, 255, 0.05);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.table td {
+    vertical-align: middle;
+    border-top: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.badge {
+    font-size: 0.75rem;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+}
+
+/* Current Work Table Styling */
+.current-work-table {
+    font-size: 0.9rem;
+}
+
+.current-work-table thead th {
+    background: linear-gradient(135deg, #cfe2ff 0%, #9ec5fe 100%);
+    color: #084298;
+    border-bottom: 2px solid #9ec5fe;
+}
+
+.current-work-table tbody tr {
+    transition: all 0.2s ease;
+}
+
+.current-work-table tbody tr:hover {
+    background-color: rgba(13, 110, 253, 0.05);
+    transform: translateY(-1px);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+}
+
+.current-work-table td {
+    border-top: 1px solid rgba(13, 110, 253, 0.1);
+    padding: 1rem 0.75rem;
+}
+
+/* Team Information Table Styling */
+.team-info-table {
+    font-size: 0.9rem;
+}
+
+.team-info-table thead th {
+    background: linear-gradient(135deg, #d1e7dd 0%, #a3d3c2 100%);
+    color: #0f5132;
+    border-bottom: 2px solid #badbcc;
+}
+
+.team-info-table tbody tr {
+    transition: all 0.2s ease;
+}
+
+.team-info-table tbody tr:hover {
+    background-color: rgba(25, 135, 84, 0.05);
+    transform: translateY(-1px);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+}
+
+.team-info-table td {
+    border-top: 1px solid rgba(25, 135, 84, 0.1);
+    padding: 1rem 0.75rem;
+}
+
+/* Emergency Contacts Table Styling */
+.emergency-contacts-table {
+    font-size: 0.9rem;
+}
+
+.emergency-contacts-table thead th {
+    background: linear-gradient(135deg, #fff3cd 0%, #ffecb5 100%);
+    color: #664d03;
+    border-bottom: 2px solid #ffecb5;
+}
+
+.emergency-contacts-table tbody tr {
+    transition: all 0.2s ease;
+}
+
+.emergency-contacts-table tbody tr:hover {
+    background-color: rgba(255, 193, 7, 0.05);
+    transform: translateY(-1px);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+}
+
+.emergency-contacts-table td {
+    border-top: 1px solid rgba(255, 193, 7, 0.1);
+    padding: 1rem 0.75rem;
+}
+
+/* Enhanced badge styling */
+.badge.bg-primary.bg-opacity-10 {
+    background-color: rgba(13, 110, 253, 0.1) !important;
+    border: 1px solid rgba(13, 110, 253, 0.2);
+}
+
+.badge.bg-success.bg-opacity-10 {
+    background-color: rgba(25, 135, 84, 0.1) !important;
+    border: 1px solid rgba(25, 135, 84, 0.2);
+}
+
+.badge.bg-info.bg-opacity-10 {
+    background-color: rgba(13, 202, 240, 0.1) !important;
+    border: 1px solid rgba(13, 202, 240, 0.2);
+}
+
+.badge.bg-warning.bg-opacity-10 {
+    background-color: rgba(255, 193, 7, 0.1) !important;
+    border: 1px solid rgba(255, 193, 7, 0.2);
+}
+
+/* Priority indicators */
+.priority-high {
+    border-left: 4px solid #dc3545;
+}
+
+.priority-medium {
+    border-left: 4px solid #ffc107;
+}
+
+.priority-low {
+    border-left: 4px solid #17a2b8;
+}
+
+/* Table header icons */
+.table thead th i {
+    font-size: 0.9rem;
+    opacity: 0.8;
+}
+
+/* Smooth transitions for all interactive elements */
+.card, .table, .badge, .btn {
+    transition: all 0.3s ease;
+}
+
+/* Table row separators */
+.team-info-table tbody tr:not(:last-child),
+.emergency-contacts-table tbody tr:not(:last-child) {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+/* Enhanced hover effects */
+.team-info-table tbody tr:hover .badge,
+.emergency-contacts-table tbody tr:hover .btn {
+    transform: scale(1.05);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .table-responsive {
+        font-size: 0.875rem;
+    }
+    
+    .badge {
+        font-size: 0.7rem;
+    }
+    
+    .current-work-table,
+    .team-info-table,
+    .emergency-contacts-table {
+        font-size: 0.8rem;
+    }
+    
+    .current-work-table td,
+    .team-info-table td,
+    .emergency-contacts-table td {
+        padding: 0.75rem 0.5rem;
+    }
+    
+    .btn-sm {
+        font-size: 0.75rem;
+        padding: 0.375rem 0.75rem;
+    }
+}
+
+/* Glass effect for cards */
+.card {
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+/* Action buttons styling */
+.btn-outline-primary:hover,
+.btn-outline-success:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+</style>
