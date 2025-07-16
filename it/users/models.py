@@ -218,15 +218,18 @@ class UserProfile(AbstractUser):
 
     def get_user_role_for_application(self, application_name):
         # Filter the user's roles for the specific application
-        application = Application.objects.filter(name=application_name).first()
-        print("application: ", application)
-        if application:
-            user_roles = self.roles.filter(app_id=application.id)
-            print("user_roles: ", user_roles)
-            # Return the roles if any exist
-            if user_roles.exists():
-                return user_roles[0]
-        else:
+        try:
+            application = Application.objects.filter(name=application_name).first()
+            print("application: ", application)
+            if application:
+                user_roles = self.roles.filter(app_id=application.id)
+                print("user_roles: ", user_roles)
+                # Return the roles if any exist
+                if user_roles.exists():
+                    return user_roles[0]
+            return None
+        except Exception as e:
+            print(f"Error in get_user_role_for_application: {e}")
             return None
 
     def cost_centers_for(self, app_names):

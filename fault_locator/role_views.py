@@ -11,13 +11,90 @@ from decouple import config
 from it.users.helpers import DEPOTS
 from .models import *
 from .forms import FaultForm, FaultLocatorDeviceForm, FaultLocatorTeamForm, FaultLocatorTeamNameForm, AddTeamMemberForm, AssignDeviceToTeamForm, AssignFaultForm, TeamDeploymentForm, SeniorForepersonDeviceAssignmentForm
-from it.users.models import UserProfile, Notification
+from it.users.models import UserProfile, Notification, Application, Roles
 from it.users.views import ms_exhange_send_html
+
+# Import central role functions
+from .central_roles import (
+    get_user_fault_locator_role,
+    is_senior_foreman,
+    is_depot_foreperson, 
+    is_team_leader,
+    is_team_member,
+    can_assign_faults,
+    can_deploy_teams,
+    can_manage_devices,
+    can_create_teams,
+    has_fault_locator_permissions
+)
+
+@login_required
+def debug_role_status(request):
+    """Debug view to check role status"""
+    user_profile = UserProfile.objects.filter(id=request.user.id).first()
+    
+    debug_info = {
+        'user_id': request.user.id,
+        'username': request.user.username,
+        'user_profile_exists': user_profile is not None,
+    }
+    
+    if user_profile:
+        debug_info.update({
+            'first_name': user_profile.first_name,
+            'last_name': user_profile.last_name,
+            'depot': str(user_profile.depot) if user_profile.depot else None,
+            'designation': str(user_profile.designation) if user_profile.designation else None,
+            'section': str(user_profile.section) if user_profile.section else None,
+        })
+        
+        # Check central roles
+        try:
+            fault_locator_app = Application.objects.filter(name='fault_locator').first()
+            debug_info['fault_locator_app_exists'] = fault_locator_app is not None
+            
+            if fault_locator_app:
+                debug_info['fault_locator_app_id'] = fault_locator_app.id
+                debug_info['fault_locator_app_fullname'] = fault_locator_app.fullname
+                
+                # Get user's fault locator roles
+                user_fault_locator_roles = user_profile.roles.filter(app_id=fault_locator_app)
+                debug_info['user_fault_locator_roles_count'] = user_fault_locator_roles.count()
+                debug_info['user_fault_locator_roles'] = [
+                    {
+                        'role': role.role,
+                        'name': role.name,
+                        'description': role.description
+                    } for role in user_fault_locator_roles
+                ]
+                
+                # Test central role functions
+                debug_info['central_role_result'] = get_user_fault_locator_role(user_profile)
+                debug_info['central_permissions'] = has_fault_locator_permissions(user_profile)
+                
+            # Get all available fault locator roles
+            all_fault_locator_roles = Roles.objects.filter(application='fault_locator')
+            debug_info['all_fault_locator_roles_count'] = all_fault_locator_roles.count()
+            debug_info['all_fault_locator_roles'] = [
+                {
+                    'role': role.role,
+                    'name': role.name,
+                    'description': role.description
+                } for role in all_fault_locator_roles
+            ]
+                
+        except Exception as e:
+            debug_info['error'] = str(e)
+    
+    return JsonResponse(debug_info, indent=2)
 
 # ROLE-BASED PERMISSION FUNCTIONS
 
-def get_user_fault_locator_role(user_profile):
-    """Get the user's primary fault locator role"""
+# Note: Role checking functions are now imported from central_roles.py
+# This maintains backward compatibility while using the central role system
+
+def get_user_fault_locator_role_legacy(user_profile):
+    """Legacy function - now uses central role system"""
     if not user_profile:
         return None
     
@@ -46,19 +123,8 @@ def get_user_fault_locator_role(user_profile):
     
     return None
 
-def is_senior_foreman(user_profile):
-    """Check if user is a senior foreman - can delegate machines to depots"""
-    if not user_profile or not hasattr(user_profile, 'designation') or not user_profile.designation:
-        return False
-    
-    try:
-        designation_desc = str(user_profile.designation.description).lower()
-        return 'senior' in designation_desc and ('foreman' in designation_desc or 'foreperson' in designation_desc)
-    except Exception:
-        return False
-
 def is_depot_foreperson_by_designation(user_profile):
-    """Check if user is depot foreperson by designation"""
+    """Check if user is depot foreperson by designation (legacy function)"""
     if not user_profile or not hasattr(user_profile, 'designation') or not user_profile.designation:
         return False
     
@@ -67,60 +133,6 @@ def is_depot_foreperson_by_designation(user_profile):
         return ('foreperson' in designation_desc or 'foreman' in designation_desc) and 'senior' not in designation_desc
     except Exception:
         return False
-
-def is_depot_foreperson(user_profile, depot_code=None):
-    """Check if user is foreperson for specific depot or their assigned depot"""
-    if not user_profile:
-        return False
-    
-    # Check by designation first
-    if not is_depot_foreperson_by_designation(user_profile):
-        return False
-    
-    # If depot_code is provided, check if user is assigned to that depot
-    if depot_code:
-        if hasattr(user_profile, 'depot') and user_profile.depot:
-            if isinstance(depot_code, str):
-                return user_profile.depot.code == depot_code
-            else:
-                return user_profile.depot == depot_code
-    
-    # If no specific depot, just check if they are a foreperson
-    return True
-
-def can_assign_faults(user_profile, depot=None):
-    """Check if user can assign faults at given depot"""
-    if is_senior_foreman(user_profile):
-        return True
-    
-    if depot and is_depot_foreperson(user_profile):
-        if hasattr(user_profile, 'depot') and user_profile.depot:
-            return user_profile.depot == depot or user_profile.depot.code == depot.code
-    
-    return False
-
-def can_deploy_teams(user_profile):
-    """Check if user can deploy teams to depots"""
-    return is_senior_foreman(user_profile)
-
-def can_manage_devices(user_profile):
-    """Check if user can manage fault locator devices"""
-    # Senior foremen can manage all devices
-    if is_senior_foreman(user_profile):
-        return True
-    
-    # IT personnel can manage devices
-    if hasattr(user_profile, 'section') and user_profile.section:
-        try:
-            section_name = str(user_profile.section.section).lower()
-            if 'it' in section_name or 'information technology' in section_name:
-                return True
-        except Exception:
-            pass
-    
-    return False
-
-def can_create_teams(user_profile):
     """Check if user can create and manage teams"""
     return is_senior_foreman(user_profile) or can_manage_devices(user_profile)
 
@@ -184,9 +196,25 @@ def role_based_dashboard(request):
     user_role = get_user_fault_locator_role(user_profile)
     
     if not user_role:
+        # Check if user has central fault locator permissions
+        central_has_permissions = has_fault_locator_permissions(user_profile)
+        
+        # Get user's actual roles for debugging
+        central_roles = []
+        if user_profile:
+            try:
+                from it.users.models import Application, Roles
+                fault_locator_app = Application.objects.filter(name='fault_locator').first()
+                if fault_locator_app:
+                    central_roles = list(user_profile.roles.filter(app_id=fault_locator_app))
+            except Exception as e:
+                print(f"Error getting central roles: {e}")
+        
         # User has no fault locator role
         return render(request, 'fault_locator/no_access.html', {
             'user_profile': user_profile,
+            'central_has_permissions': central_has_permissions,
+            'central_roles': central_roles,
             'message': 'You do not have any assigned role in the Fault Locator system. Please contact your administrator.'
         })
     
@@ -267,7 +295,7 @@ def get_senior_foreman_context(user_profile):
             {
                 'title': 'Deploy Team to Depot',
                 'description': f'Deploy {available_teams.count()} available teams',
-                'url': '/fault_locator/deploy-team/',
+                'url': '/fault_locator/teams/deploy/',
                 'icon': '🚀',
                 'priority': 'high' if available_teams.count() > 0 else 'medium'
             },
@@ -388,6 +416,14 @@ def get_depot_foreperson_context(user_profile):
     if not user_depot:
         return {'error': 'No depot assigned to your profile'}
     
+    # Check if this user is formally assigned as depot foreperson
+    depot_foreperson_role = FaultLocatorRole.objects.filter(
+        user=user_profile,
+        role='depot_foreperson',
+        depot=user_depot,
+        is_active=True
+    ).first()
+    
     # Faults at my depot
     my_faults = Fault.objects.filter(depot=user_depot).order_by('-priority', '-reported_at')
     pending_faults = my_faults.filter(status='requested')
@@ -396,31 +432,67 @@ def get_depot_foreperson_context(user_profile):
     # Teams at my depot
     teams_at_depot = FaultLocatorTeam.objects.filter(current_depot=user_depot)
     
+    # Check if this foreperson has been assigned a specific team to lead
+    my_team_as_leader = FaultLocatorTeam.objects.filter(team_leader=user_profile).first()
+    
+    # Check if this foreperson is part of any team as a member
+    my_teams_as_member = user_profile.fault_locator_teams.all()
+    
+    # Get devices assigned to my team(s)
+    my_team_devices = []
+    if my_team_as_leader:
+        team_devices = FaultLocatorDeviceAssignment.objects.filter(
+            team=my_team_as_leader
+        ).select_related('device')
+        my_team_devices.extend(team_devices)
+    
+    for team in my_teams_as_member:
+        team_devices = FaultLocatorDeviceAssignment.objects.filter(
+            team=team
+        ).select_related('device')
+        my_team_devices.extend(team_devices)
+    
+    # Remove duplicates
+    my_team_devices = list(set(my_team_devices))
+    
     # Recent fault assignments I made
     my_assignments = FaultAssignment.objects.filter(
         assigned_by=user_profile,
         assigned_at__gte=timezone.now() - timezone.timedelta(days=7)
     ).select_related('fault', 'team', 'device').order_by('-assigned_at')[:5]
     
+    # Completed assignments today (for template iteration)
+    completed_today = FaultAssignment.objects.filter(
+        fault__depot=user_depot,
+        located_at__date=timezone.now().date()
+    ).select_related('fault', 'team').order_by('-located_at')[:5]
+    
+    # Enhanced stats
     stats = {
         'pending_faults': pending_faults.count(),
         'active_faults': active_faults.count(),
         'teams_available': teams_at_depot.count(),
         'high_priority': my_faults.filter(priority__gte=3, status__in=['requested', 'assigned']).count(),
-        'completed_today': my_faults.filter(
-            status='located',
-            faultassignment__located_at__date=timezone.now().date()
-        ).count(),
+        'completed_today': completed_today.count(),
+        'my_team_devices': len(my_team_devices),
+        'teams_with_devices': teams_at_depot.filter(
+            faultlocatordeviceassignment__isnull=False
+        ).distinct().count(),
     }
     
     return {
         'user_depot': user_depot,
+        'depot_foreperson_role': depot_foreperson_role,
+        'my_team_as_leader': my_team_as_leader,
+        'my_teams_as_member': my_teams_as_member,
+        'my_team_devices': my_team_devices,
         'pending_faults': pending_faults[:10],  # Show top 10
         'active_faults': active_faults[:10],
         'teams_at_depot': teams_at_depot,
         'my_assignments': my_assignments,
+        'completed_today': completed_today,  # Pass as queryset for template iteration
         'stats': stats,
-        'can_assign_faults': can_assign_faults(user_profile, user_depot),
+        'can_assign_faults': can_assign_faults(user_profile),
         'primary_actions': [
             {
                 'title': 'Assign Pending Faults',

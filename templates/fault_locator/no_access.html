@@ -6,16 +6,58 @@
 {% block content %}
 <div class="container-fluid px-4">
     <div class="row justify-content-center">
-        <div class="col-md-8 col-lg-6">
+        <div class="col-md-10 col-lg-8">
             <div class="card border-0 shadow-lg">
-                <div class="card-body text-center py-5">
-                    <div class="mb-4">
+                <div class="card-body py-5">
+                    <div class="text-center mb-4">
                         <i class="fas fa-lock text-muted" style="font-size: 4rem;"></i>
                     </div>
-                    <h3 class="mb-3">Access Restricted</h3>
-                    <p class="text-muted mb-4">{{ message }}</p>
+                    <h3 class="mb-3 text-center">Access Restricted</h3>
+                    <p class="text-muted mb-4 text-center">{{ message }}</p>
                     
-                    <div class="alert alert-info text-start">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="alert alert-info">
+                                <h6 class="alert-heading">
+                                    <i class="fas fa-user me-2"></i>
+                                    Your Profile Information:
+                                </h6>
+                                <ul class="mb-0">
+                                    <li><strong>Username:</strong> {{ user_profile.username }}</li>
+                                    <li><strong>Name:</strong> {{ user_profile.first_name }} {{ user_profile.last_name }}</li>
+                                    <li><strong>Depot:</strong> {{ user_profile.depot|default:"Not assigned" }}</li>
+                                    <li><strong>Designation:</strong> {{ user_profile.designation|default:"Not assigned" }}</li>
+                                    <li><strong>Section:</strong> {{ user_profile.section|default:"Not assigned" }}</li>
+                                </ul>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="alert alert-warning">
+                                <h6 class="alert-heading">
+                                    <i class="fas fa-cog me-2"></i>
+                                    Role Debug Information:
+                                </h6>
+                                <ul class="mb-0">
+                                    <li><strong>Central Permissions:</strong> {{ central_has_permissions|yesno:"Yes,No,Unknown" }}</li>
+                                    <li><strong>Central Roles Found:</strong> {{ central_roles|length }}</li>
+                                    {% if central_roles %}
+                                        <li><strong>Available Roles:</strong>
+                                            <ul>
+                                                {% for role in central_roles %}
+                                                    <li>{{ role.name }} ({{ role.role }})</li>
+                                                {% endfor %}
+                                            </ul>
+                                        </li>
+                                    {% else %}
+                                        <li><strong>No central roles found</strong></li>
+                                    {% endif %}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-info">
                         <h6 class="alert-heading">
                             <i class="fas fa-info-circle me-2"></i>
                             Available Roles in Fault Locator System:
@@ -25,11 +67,28 @@
                             <li><strong>Depot Foreperson:</strong> Assigns faults to teams within their depot</li>
                             <li><strong>Team Leader:</strong> Reports when faults are cleared</li>
                             <li><strong>Team Member:</strong> Assists with fault location work</li>
+                            <li><strong>Fault Reporter:</strong> Can report new faults in the system</li>
                         </ul>
                     </div>
                     
-                    <div class="mt-4">
-                        <a href="/" class="btn btn-primary me-2">
+                    <div class="alert alert-success">
+                        <h6 class="alert-heading">
+                            <i class="fas fa-tasks me-2"></i>
+                            What to do next:
+                        </h6>
+                        <ol class="mb-0">
+                            <li>Contact your system administrator to assign you a Fault Locator role</li>
+                            <li>Ensure your profile has the correct depot and designation assigned</li>
+                            <li>If you believe this is an error, please contact IT support</li>
+                        </ol>
+                    </div>
+                    
+                    <div class="text-center mt-4">
+                        <a href="{% url 'fault_locator:assign_role' %}" class="btn btn-primary me-2">
+                            <i class="fas fa-user-plus me-1"></i>
+                            Request Role Assignment
+                        </a>
+                        <a href="/" class="btn btn-secondary me-2">
                             <i class="fas fa-home me-1"></i>
                             Back to Home
                         </a>

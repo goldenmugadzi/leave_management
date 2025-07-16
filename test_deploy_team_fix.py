@@ -5,20 +5,22 @@ Test script to verify that the deploy team functionality works without RelatedMa
 
 import os
 import sys
-import django
-from django.test import RequestFactory
-from django.contrib.auth.models import AnonymousUser
-from django.contrib.messages.storage.fallback import FallbackStorage
-from django.contrib.sessions.backends.db import SessionStore
 
 # Add the project directory to Python path
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 # Set up Django environment
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'beii_v1.settings')
+
+import django
 django.setup()
 
 # Now import Django modules
+from django.test import RequestFactory
+from django.contrib.auth.models import AnonymousUser
+from django.contrib.messages.storage.fallback import FallbackStorage
+from django.contrib.sessions.backends.db import SessionStore
+
 from it.users.models import UserProfile
 from fault_locator.views import deploy_team
 from fault_locator.central_roles import is_senior_foreman, can_manage_devices

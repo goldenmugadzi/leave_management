@@ -29,9 +29,18 @@ class FaultLocatorRoleManager:
         if not user_profile:
             return None
         
-        # Use the existing method on UserProfile
-        role = user_profile.get_user_role_for_application(cls.APPLICATION_NAME)
-        return role.role if role else None
+        try:
+            # Validate that user_profile is actually a UserProfile instance
+            if not hasattr(user_profile, 'get_user_role_for_application'):
+                print(f"Error: user_profile object {type(user_profile)} does not have get_user_role_for_application method")
+                return None
+                
+            # Use the existing method on UserProfile
+            role = user_profile.get_user_role_for_application(cls.APPLICATION_NAME)
+            return role.role if role else None
+        except Exception as e:
+            print(f"Error getting user role: {e}")
+            return None
     
     @classmethod
     def get_user_role_display(cls, user_profile):
@@ -39,8 +48,12 @@ class FaultLocatorRoleManager:
         if not user_profile:
             return None
         
-        role = user_profile.get_user_role_for_application(cls.APPLICATION_NAME)
-        return role.name if role else None
+        try:
+            role = user_profile.get_user_role_for_application(cls.APPLICATION_NAME)
+            return role.name if role else None
+        except Exception as e:
+            print(f"Error getting user role display: {e}")
+            return None
     
     @classmethod
     def assign_role(cls, user_profile, role_code, assigned_by=None):
@@ -100,8 +113,20 @@ class FaultLocatorRoleManager:
     @classmethod
     def has_role(cls, user_profile, role_code):
         """Check if user has specific fault locator role"""
-        user_role = cls.get_user_role(user_profile)
-        return user_role == role_code
+        try:
+            if not user_profile:
+                return False
+            
+            # Additional safety check
+            if not hasattr(user_profile, 'get_user_role_for_application'):
+                print(f"Error: user_profile object {type(user_profile)} does not have get_user_role_for_application method")
+                return False
+                
+            user_role = cls.get_user_role(user_profile)
+            return user_role == role_code
+        except Exception as e:
+            print(f"Error checking role {role_code}: {e}")
+            return False
     
     @classmethod
     def has_any_role(cls, user_profile):
@@ -146,34 +171,65 @@ def get_user_fault_locator_role(user_profile):
 
 def is_senior_foreman(user_profile):
     """Check if user is a senior foreman using central roles"""
-    return FaultLocatorRoleManager.has_role(user_profile, FaultLocatorRoleManager.SENIOR_FOREMAN)
+    try:
+        if not user_profile:
+            return False
+        return FaultLocatorRoleManager.has_role(user_profile, FaultLocatorRoleManager.SENIOR_FOREMAN)
+    except Exception as e:
+        print(f"Error checking senior foreman role: {e}")
+        return False
 
 def is_depot_foreperson(user_profile, depot_code=None):
     """Check if user is depot foreperson using central roles"""
-    if not FaultLocatorRoleManager.has_role(user_profile, FaultLocatorRoleManager.DEPOT_FOREPERSON):
+    try:
+        if not user_profile:
+            return False
+            
+        if not FaultLocatorRoleManager.has_role(user_profile, FaultLocatorRoleManager.DEPOT_FOREPERSON):
+            return False
+        
+        # If depot_code is provided, check if user is assigned to that depot
+        if depot_code:
+            if hasattr(user_profile, 'depot') and user_profile.depot:
+                if isinstance(depot_code, str):
+                    return user_profile.depot.code == depot_code
+                else:
+                    return user_profile.depot == depot_code
+        
+        return True
+    except Exception as e:
+        print(f"Error checking depot foreperson role: {e}")
         return False
-    
-    # If depot_code is provided, check if user is assigned to that depot
-    if depot_code:
-        if hasattr(user_profile, 'depot') and user_profile.depot:
-            if isinstance(depot_code, str):
-                return user_profile.depot.code == depot_code
-            else:
-                return user_profile.depot == depot_code
-    
-    return True
 
 def is_team_leader(user_profile):
     """Check if user is a team leader using central roles"""
-    return FaultLocatorRoleManager.has_role(user_profile, FaultLocatorRoleManager.TEAM_LEADER)
+    try:
+        if not user_profile:
+            return False
+        return FaultLocatorRoleManager.has_role(user_profile, FaultLocatorRoleManager.TEAM_LEADER)
+    except Exception as e:
+        print(f"Error checking team leader role: {e}")
+        return False
 
 def is_team_member(user_profile):
     """Check if user is a team member using central roles"""
-    return FaultLocatorRoleManager.has_role(user_profile, FaultLocatorRoleManager.TEAM_MEMBER)
+    try:
+        if not user_profile:
+            return False
+        return FaultLocatorRoleManager.has_role(user_profile, FaultLocatorRoleManager.TEAM_MEMBER)
+    except Exception as e:
+        print(f"Error checking team member role: {e}")
+        return False
 
 def is_fault_reporter(user_profile):
     """Check if user can report faults using central roles"""
-    return FaultLocatorRoleManager.has_role(user_profile, FaultLocatorRoleManager.FAULT_REPORTER)
+    try:
+        if not user_profile:
+            return False
+        return FaultLocatorRoleManager.has_role(user_profile, FaultLocatorRoleManager.FAULT_REPORTER)
+    except Exception as e:
+        print(f"Error checking fault reporter role: {e}")
+        return False
 
 def can_assign_faults(user_profile, depot=None):
     """Check if user can assign faults at given depot"""
@@ -192,11 +248,23 @@ def can_deploy_teams(user_profile):
 
 def can_manage_devices(user_profile):
     """Check if user can manage fault locator devices"""
-    return is_senior_foreman(user_profile)
+    try:
+        if not user_profile:
+            return False
+        return is_senior_foreman(user_profile)
+    except Exception as e:
+        print(f"Error checking can_manage_devices: {e}")
+        return False
 
 def can_create_teams(user_profile):
     """Check if user can create and manage teams"""
-    return is_senior_foreman(user_profile)
+    try:
+        if not user_profile:
+            return False
+        return is_senior_foreman(user_profile)
+    except Exception as e:
+        print(f"Error checking can_create_teams: {e}")
+        return False
 
 def can_report_fault_status(user_profile, fault):
     """Check if user can report on fault status"""

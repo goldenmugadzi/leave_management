@@ -2220,9 +2220,160 @@ def delete_team(request, team_id):
         return redirect('team_overview')
 
 @login_required
+def get_depot_priority_information(user_profile):
+    """
+    Get depot priority information to help senior forepersons make informed team deployment decisions.
+    Returns a dictionary with depot analysis including fault count, priority levels, and team availability.
+    """
+    try:
+        # Validate user_profile
+        if not user_profile:
+            return []
+            
+        # Get available depots based on user's region
+        if user_profile and hasattr(user_profile, 'region') and user_profile.region:
+            available_depots = Depots.objects.filter(region=user_profile.region).order_by('depot')
+        else:
+            available_depots = Depots.objects.all().order_by('depot')
+        
+        depot_info = []
+        
+        for depot in available_depots:
+            # Get fault statistics for this depot
+            total_faults = Fault.objects.filter(depot=depot).count()
+            pending_faults = Fault.objects.filter(depot=depot, status='requested').count()
+            in_progress_faults = Fault.objects.filter(depot=depot, status='assigned').count()
+            
+            # Get high priority faults
+            high_priority_faults = Fault.objects.filter(
+                depot=depot, 
+                status__in=['requested', 'assigned'],
+                priority__gte=3
+            ).count()
+            
+            # Get critical faults (priority 4)
+            critical_faults = Fault.objects.filter(
+                depot=depot, 
+                status__in=['requested', 'assigned'],
+                priority=4
+            ).count()
+            
+            # Get teams currently deployed to this depot
+            deployed_teams = FaultLocatorTeam.objects.filter(current_depot=depot)
+            team_count = deployed_teams.count()
+            
+            # Calculate oldest unassigned fault
+            oldest_unassigned = Fault.objects.filter(
+                depot=depot, 
+                status='requested'
+            ).order_by('reported_at').first()
+            
+            # Calculate average resolution time (last 7 days)
+            from datetime import timedelta
+            week_ago = timezone.now() - timedelta(days=7)
+            recent_closed_faults = Fault.objects.filter(
+                depot=depot,
+                status='closed',
+                reported_at__gte=week_ago
+            )
+            
+            # Calculate workload score (higher = more urgent need)
+            workload_score = 0
+            workload_score += pending_faults * 2  # Unassigned faults are urgent
+            workload_score += critical_faults * 5  # Critical faults are very urgent
+            workload_score += high_priority_faults * 3  # High priority faults
+            workload_score += in_progress_faults * 1  # In progress faults
+            
+            # Adjust score based on team availability
+            if team_count == 0:
+                workload_score *= 1.5  # Increase urgency if no teams deployed
+            elif team_count == 1:
+                workload_score *= 1.2  # Slight increase if only one team
+            
+            # Determine priority level
+            if workload_score >= 15:
+                priority_level = 'CRITICAL'
+                priority_class = 'text-red-600 bg-red-50'
+                priority_icon = '🚨'
+            elif workload_score >= 10:
+                priority_level = 'HIGH'
+                priority_class = 'text-orange-600 bg-orange-50'
+                priority_icon = '⚠️'
+            elif workload_score >= 5:
+                priority_level = 'MEDIUM'
+                priority_class = 'text-yellow-600 bg-yellow-50'
+                priority_icon = '⚡'
+            else:
+                priority_level = 'LOW'
+                priority_class = 'text-green-600 bg-green-50'
+                priority_icon = '✅'
+            
+            # Get team details
+            team_details = []
+            for team in deployed_teams:
+                active_assignments = FaultAssignment.objects.filter(
+                    team=team, 
+                    located_at__isnull=True
+                ).count()
+                
+                team_details.append({
+                    'name': team.name,
+                    'members': team.members.count(),
+                    'active_assignments': active_assignments,
+                    'status': 'busy' if active_assignments > 0 else 'available'
+                })
+            
+            # Calculate time since oldest fault
+            oldest_fault_hours = None
+            if oldest_unassigned:
+                time_diff = timezone.now() - oldest_unassigned.reported_at
+                oldest_fault_hours = int(time_diff.total_seconds() / 3600)
+            
+            depot_info.append({
+                'depot': depot,
+                'total_faults': total_faults,
+                'pending_faults': pending_faults,
+                'in_progress_faults': in_progress_faults,
+                'high_priority_faults': high_priority_faults,
+                'critical_faults': critical_faults,
+                'team_count': team_count,
+                'team_details': team_details,
+                'workload_score': workload_score,
+                'priority_level': priority_level,
+                'priority_class': priority_class,
+                'priority_icon': priority_icon,
+                'oldest_fault_hours': oldest_fault_hours,
+                'recent_closed_count': recent_closed_faults.count(),
+                'needs_team': team_count == 0 and (pending_faults > 0 or in_progress_faults > 0),
+                'overwhelmed': team_count > 0 and (pending_faults + in_progress_faults) > (team_count * 3),
+            })
+        
+        # Sort by priority score (highest first)
+        depot_info.sort(key=lambda x: x['workload_score'], reverse=True)
+        
+        return depot_info
+        
+    except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Error getting depot priority information: {e}")
+        return []
+
 def deploy_team(request, team_id=None):
     try:
+        # Check if user is authenticated
+        if not request.user.is_authenticated:
+            messages.error(request, "You must be logged in to deploy teams")
+            return redirect('fault_locator_dashboard')
+            
         user_profile = UserProfile.objects.filter(id=request.user.id).first()
+        if not user_profile:
+            messages.error(request, "User profile not found")
+            return redirect('fault_locator_dashboard')
+        
+        # Debug: Print user profile type and attributes
+        print(f"Deploy team: user_profile type: {type(user_profile)}")
+        print(f"Deploy team: user_profile has get_user_role_for_application: {hasattr(user_profile, 'get_user_role_for_application')}")
         
         # Check permissions - allow both senior foreman and senior foreperson
         if not (is_senior_foreman(user_profile) or can_manage_devices(user_profile)):
@@ -2245,7 +2396,12 @@ def deploy_team(request, team_id=None):
                 return redirect('team_overview')
 
         if request.method == "POST":
-            form = TeamDeploymentForm(request.POST, user_region=user_profile.region)
+            # Get user region safely
+            user_region = None
+            if user_profile and hasattr(user_profile, 'region') and user_profile.region:
+                user_region = user_profile.region
+                
+            form = TeamDeploymentForm(request.POST, user_region=user_region)
             if form.is_valid():
                 deployment = form.save(commit=False)
                 deployment.deployed_by = user_profile
@@ -2267,13 +2423,23 @@ def deploy_team(request, team_id=None):
             initial_data = {}
             if team:
                 initial_data['team'] = team
-            form = TeamDeploymentForm(initial=initial_data, user_region=user_profile.region)
+            
+            # Get user region safely
+            user_region = None
+            if user_profile and hasattr(user_profile, 'region') and user_profile.region:
+                user_region = user_profile.region
+            
+            form = TeamDeploymentForm(initial=initial_data, user_region=user_region)
+        
+        # Get depot priority information to help with decision making
+        depot_priority_info = get_depot_priority_information(user_profile)
         
         context = {
             'form': form,
             'selected_team': team,
             'user_profile': user_profile,
             'page_title': 'Deploy Team to Depot',
+            'depot_priority_info': depot_priority_info,
         }
         
         return render(request, "fault_locator/deploy_team.html", context)

@@ -95,4 +95,5 @@ urlpatterns = [
     
     # Debug view
     path('debug-user/', views.debug_user, name='debug_user'),
+    path('debug-roles/', role_views.debug_role_status, name='debug_role_status'),
 ]
