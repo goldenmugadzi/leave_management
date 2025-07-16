@@ -10,7 +10,8 @@
             <div class="flex justify-between">
                 <div>
                     <h1 class="font-bold">Departmental Outputs</h1>
-                    <p class="text-sm text-muted">Departmental Outputs for objective, {{department_objective}}</p>
+                    <p class="text-sm text-muted">Departmental Objective: <strong>{{department_objective}}</strong></p>
+                    <p class="text-sm text-muted">Designation: <strong>{{designation_obj}}</strong></p>
                 </div>
                 <div>
                     {% include "appraisal/kra/weight_progress.html" with weight_of="Department objective" %} 
@@ -20,10 +21,31 @@
     </div>
 
     <div class="bg-gulf-blue-100 shadow-lg rounded-lg p-6 my-6">
-            <div class="flex justify-end">
-              <a href="{% url 'departmental_output_create' department_objective.id %}"
-                  class="my-2 bg-blue-500 hover:bg-blue-700 inline-block rounded-full text-white py-2 px-4">Create New</a>
+        <div class="flex justify-end items-start gap-4 mb-4">
+            <div>
+                <form method="get" class="flex items-end gap-2">
+                    {% csrf_token %}
+                    
+                    <!-- Designation Field -->
+                    <div class="w-64">
+                        {{ designation_form.designations|as_crispy_field }}
+                    </div>
+                
+                    <!-- Submit Button -->
+                    <button type="submit"
+                            class="bg-blue-500 hover:bg-blue-700 text-white px-4 h-10 mb-3 rounded transition-colors duration-200">
+                        Filter
+                    </button>
+                </form>
+              </div>
+            
+            <div class="mt-10">
+                <a href="{% url 'departmental_output_create' department_objective.id %}" 
+                   class="bg-blue-500 hover:bg-blue-700 text-white py-2 px-4 rounded-full transition-colors duration-200 whitespace-nowrap">
+                  Create New
+                </a>
             </div>
+          </div>
       <div style="max-height: 280px; overflow-y: auto;">
         <table 
         class="w-full border border-blue-800 rounded-lg shadow-lg">

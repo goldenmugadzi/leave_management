@@ -20,6 +20,7 @@ class DepartmentOutput(TimeStamp):
     created_by = models.ForeignKey(User, on_delete=models.RESTRICT, related_name="dept_output_creator", null=True)
     updated_by = models.ForeignKey(User, on_delete=models.RESTRICT, related_name="dept_output_updater", null=True)
     department_objective = models.ForeignKey(DepartmentObjective, on_delete=models.RESTRICT, related_name="dept_objective", null=True, blank=True)
+    designation = models.ForeignKey(Designations, on_delete=models.RESTRICT, related_name="user_designation", null=True, blank=True)
     output_description = models.CharField(max_length=500)
     weight = models.DecimalField(max_digits=5, decimal_places=2, default=0.0)
 
@@ -33,17 +34,11 @@ PERFORMANCE_INDICATOR = [
         ('Cost', 'Cost'),
     ]
 
-class DepartmentOutputAssignedDesignation(TimeStamp):
-    department_output = models.ForeignKey(DepartmentOutput, on_delete=models.RESTRICT, related_name="dept_objective_output", null=True, blank=True)
-    designation = models.ForeignKey(Designations, on_delete=models.RESTRICT, related_name="user_designation", null=True, blank=True)
-    
-    def __str__(self):
-        return f"{self.designation}"
 
 class OutPutPerformanceDimension(TimeStamp):
     created_by = models.ForeignKey(User, on_delete=models.RESTRICT, related_name="dept_perf_dimension_creator", null=True)
     updated_by = models.ForeignKey(User, on_delete=models.RESTRICT, related_name="dept_perf_dimension_updater", null=True)
-    department_output_assigned_designation = models.ForeignKey(DepartmentOutputAssignedDesignation, on_delete=models.RESTRICT, related_name="dept_output_designation", null=True)
+    department_output = models.ForeignKey(DepartmentOutput, on_delete=models.RESTRICT, related_name="dept_output", null=True)
     performance_indicator = models.CharField(max_length=30, choices=PERFORMANCE_INDICATOR, null=True, blank=True)
     description = models.CharField(max_length=500)
     weight = models.DecimalField(max_digits=5, decimal_places=2, default=0.0)

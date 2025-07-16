@@ -1,5 +1,5 @@
 from django.db.models.query import QuerySet
-from it.users.models import UserProfile, CostCenter
+from it.users.models import UserProfile, CostCenter, Designations
 from ..models import KeyResultArea, DepartmentObjective, DepartmentOutput
 from ..helpers.types.dept_workplan import DepartmentalOutTypes
 
@@ -56,10 +56,11 @@ class DepartmentalObjectiveRepository:
 
 class DepartmentalOutRepository:
     
-    def create(self, creator: UserProfile, departmental_objective_obj: DepartmentObjective, data: DepartmentalOutTypes)->DepartmentOutput:
+    def create(self, creator: UserProfile, designation_obj: Designations, departmental_objective_obj: DepartmentObjective, data: DepartmentalOutTypes)->DepartmentOutput:
         try:
             return DepartmentOutput.objects.create(
                 created_by=creator,
+                designation=designation_obj,
                 department_objective=departmental_objective_obj,
                 output_description=data.output_description,
                 weight=data.weight
@@ -67,7 +68,7 @@ class DepartmentalOutRepository:
         except Exception as e:
             raise Exception(f"DepartmentalOutRepository Create Repo failed with error: {e}")
         
-    def update(self, updater: UserProfile, department_output_obj: DepartmentOutput, department_objective_obj: DepartmentObjective, data: DepartmentalOutTypes)->DepartmentOutput:
+    def update(self, updater: UserProfile, designation_obj: Designations, department_output_obj: DepartmentOutput, department_objective_obj: DepartmentObjective, data: DepartmentalOutTypes)->DepartmentOutput:
         
         is_updated = False
         
@@ -75,6 +76,10 @@ class DepartmentalOutRepository:
             
             if department_output_obj.updated_by != updater:
                 department_output_obj.updated_by = updater
+                is_updated = True
+                
+            if department_output_obj.designation != designation_obj:
+                department_output_obj.designation = designation_obj
                 is_updated = True
                 
             if department_output_obj.department_objective != department_objective_obj:
@@ -98,7 +103,14 @@ class DepartmentalOutRepository:
  
     def fetch_by_department_objective_id(self, department_objective_id: int)->QuerySet[DepartmentOutput]:
         try:
-            return DepartmentOutput.objects.filter(department_objective__id=department_objective_id).select_related("department_objective")
+            return DepartmentOutput.objects.filter(department_objective__id=department_objective_id).select_related("department_objective", "designation")
+
+        except Exception as e:
+            raise Exception(f"DepartmentalOutRepository fetch_by_department_objective_id with department objective pk: {department_objective_id}, failed with error: {e}")
+    
+    def fetch_by_department_objective_and_designation_id(self, department_objective_id: int, designation_id: int)->QuerySet[DepartmentOutput]:
+        try:
+            return DepartmentOutput.objects.filter(department_objective__id=department_objective_id, designation__id=designation_id).select_related("department_objective", "designation")
 
         except Exception as e:
             raise Exception(f"DepartmentalOutRepository fetch_by_department_objective_id with department objective pk: {department_objective_id}, failed with error: {e}")
