@@ -68,7 +68,7 @@ class DepartmentalOutRepository:
         except Exception as e:
             raise Exception(f"DepartmentalOutRepository Create Repo failed with error: {e}")
         
-    def update(self, updater: UserProfile, designation_obj: Designations, department_output_obj: DepartmentOutput, department_objective_obj: DepartmentObjective, data: DepartmentalOutTypes)->DepartmentOutput:
+    def update(self, updater: UserProfile, department_output_obj: DepartmentOutput, department_objective_obj: DepartmentObjective, data: DepartmentalOutTypes)->DepartmentOutput:
         
         is_updated = False
         
@@ -76,10 +76,6 @@ class DepartmentalOutRepository:
             
             if department_output_obj.updated_by != updater:
                 department_output_obj.updated_by = updater
-                is_updated = True
-                
-            if department_output_obj.designation != designation_obj:
-                department_output_obj.designation = designation_obj
                 is_updated = True
                 
             if department_output_obj.department_objective != department_objective_obj:

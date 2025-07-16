@@ -104,9 +104,13 @@ class DepartmentOutputCreateView(SuccessMessageMixin, CreateView):
         repo = DepartmentalObjectiveRepository()
         return repo.get_by_id(dept_objective_id=self.kwargs.get("departmental_objective_id"))
     
-    def get_output_weight_progress(self):
-        return get_dept_output_weight_progress(dept_objective_id=self.kwargs.get("departmental_objective_id"))
+    def get_designation_obj(self):
+        return get_designation_by_id(designation_id=self.kwargs.get("designation_id"))
     
+    def get_output_weight_progress(self):
+        return get_dept_output_weight_progress(dept_objective_id=self.kwargs.get("departmental_objective_id"), designation_id=self.kwargs.get("designation_id"))
+    
+        
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context[self.context_object_name] = context.get("form")
@@ -136,12 +140,12 @@ class DepartmentOutputCreateView(SuccessMessageMixin, CreateView):
             dept_output_obj = repo.create(
                                             creator=self.request.user,
                                             designation_obj=form.cleaned_data.get("designation"),
-                                            departmental_objective_obj=form.cleaned_data.get("department_objective"),
+                                            departmental_objective_obj=self.get_designation_obj(),
                                             data=payload
                                         )
             form.instance = dept_output_obj
         except Exception as e:
-            logger.error(f"[DepartmentOutputCreateView] with department objective id: {self.kwargs.get('departmental_objective_id')}, failed with error: {e}")
+            logger.error(f"[DepartmentOutputCreateView] with objective id: {self.kwargs.get('departmental_objective_id')}, failed with error: {e}")
             messages.error(self.request, f"An unexpected error occurred, please try again")
             return self.form_invalid(form)
 
@@ -152,6 +156,10 @@ class DepartmentOutputCreateView(SuccessMessageMixin, CreateView):
         try:
             self.get_output_weight_progress()
             
+            if self.get_designation_obj() is None:
+                logger.warning(f"[DepartmentOutputCreateView] get_designation_obj() with pk: {self.kwargs.get('designation_id')}, not found error")
+                return redirect("object_not_found_error", object_name=slugify("Department objective"))
+
             if self.get_department_objective_obj() is None:
                 logger.warning(f"[DepartmentOutputCreateView] get_department_objective_obj() with department_objective pk: {self.kwargs.get('departmental_objective_id')}, not found error")
                 return redirect("object_not_found_error", object_name=slugify("Department objective"))
@@ -175,7 +183,7 @@ class DepartmentOutputDetailUpdateView(SuccessMessageMixin, UpdateView):
         return repo.get_by_id(dept_output_id=self.kwargs.get("department_output_id"))
         
     def get_output_weight_progress(self):
-        return get_dept_output_weight_progress(dept_objective_id=self.get_object().department_objective.id)
+        return get_dept_output_weight_progress(dept_objective_id=self.get_object().department_objective.id, designation_id=self.kwargs.get('designation_id'))
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -205,7 +213,6 @@ class DepartmentOutputDetailUpdateView(SuccessMessageMixin, UpdateView):
             repo = DepartmentalOutRepository()
             dept_output_obj = repo.update(
                                             updater=self.request.user,
-                                            designation_obj=form.cleaned_data.get("designation"),
                                             department_output_obj=self.get_object(),
                                             department_objective_obj=form.cleaned_data.get("department_objective"),
                                             data=payload
@@ -232,4 +239,4 @@ class DepartmentOutputDetailUpdateView(SuccessMessageMixin, UpdateView):
         return super().get(request, *args, **kwargs)
     
     def get_success_url(self):
-        return reverse('departmental_output_detail_update', kwargs={"department_output_id": self.kwargs.get('department_output_id')})
+        return reverse('departmental_output_detail_update', kwargs={"department_output_id": self.kwargs.get('department_output_id'), "designation_id": self.kwargs.get('designation_id')})

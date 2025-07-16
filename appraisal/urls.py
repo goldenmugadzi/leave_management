@@ -77,8 +77,8 @@ urlpatterns = [
     path('departmental-workplan/<int:departmental_objective_id>', DepartmentObjectiveDetailUpdateView.as_view(), name='departmental_workplan_update_detail'),
     
     path('departmental-outputs/<int:departmental_objective_id>/list', DepartmentOutputTemplateView.as_view(), name='departmental_output_index'),
-    path('departmental-outputs/<int:departmental_objective_id>/create', DepartmentOutputCreateView.as_view(), name='departmental_output_create'),
-    path('departmental-outputs/<int:department_output_id>', DepartmentOutputDetailUpdateView.as_view(), name='departmental_output_detail_update'),
+    path('departmental-outputs/<int:departmental_objective_id>/designation/<int:designation_id>/create', DepartmentOutputCreateView.as_view(), name='departmental_output_create'),
+    path('departmental-outputs/designation/<int:designation_id>/output/<int:department_output_id>', DepartmentOutputDetailUpdateView.as_view(), name='departmental_output_detail_update'),
     
     
     # ================== KRA urls =================================

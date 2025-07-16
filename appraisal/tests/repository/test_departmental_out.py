@@ -63,7 +63,6 @@ class TestDepartmentalOutUpdateRepository(TestCase):
         self.mock_dept_objective_obj = Mock(spec=DepartmentObjective)
         self.mock_updater_user = Mock(spec=UserProfile)
         self.mock_department_output = Mock(spec=DepartmentOutput)
-        self.mock_designation = Mock(spec=Designations)
         
     def mock_dept_output_type(self):
         mock = Mock(spec=DepartmentalOutTypes)
@@ -80,7 +79,6 @@ class TestDepartmentalOutUpdateRepository(TestCase):
         mock_department_output.save = mock_save_orm
         
         self.repo.update(updater=self.mock_updater_user,
-                            designation_obj=self.mock_designation, 
                             department_output_obj=mock_department_output,
                             department_objective_obj=self.mock_dept_objective_obj, 
                             data=mock_data)
@@ -96,7 +94,6 @@ class TestDepartmentalOutUpdateRepository(TestCase):
         mock_department_output.save = mock_save_orm
         
         got = self.repo.update(updater=self.mock_updater_user,
-                            designation_obj=self.mock_designation, 
                             department_output_obj=mock_department_output,
                             department_objective_obj=self.mock_dept_objective_obj, 
                             data=mock_data)
@@ -116,7 +113,6 @@ class TestDepartmentalOutUpdateRepository(TestCase):
         with self.assertRaises(Exception) as context:
             self.repo.update(
                                 updater=self.mock_updater_user, 
-                                designation_obj=self.mock_designation,
                                 department_output_obj=mock_department_output,
                                 department_objective_obj=self.mock_dept_objective_obj, 
                                 data=mock_data

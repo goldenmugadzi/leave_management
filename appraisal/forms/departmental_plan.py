@@ -20,7 +20,7 @@ class DepartmentObjectiveUpdateForm(forms.ModelForm):
 class DepartmentOutputCreateForm(forms.ModelForm):
     class Meta:
         model = DepartmentOutput
-        fields = ["department_objective", "designation", "output_description", "weight"]
+        fields = ["department_objective", "output_description", "weight"]
         
         
 class DesignationFilterForm(forms.Form):

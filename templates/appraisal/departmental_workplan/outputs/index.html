@@ -40,7 +40,7 @@
               </div>
             
             <div class="mt-10">
-                <a href="{% url 'departmental_output_create' department_objective.id %}" 
+                <a href="{% url 'departmental_output_create' departmental_objective_id=department_objective.id designation_id=designation_obj.id %}" 
                    class="bg-blue-500 hover:bg-blue-700 text-white py-2 px-4 rounded-full transition-colors duration-200 whitespace-nowrap">
                   Create New
                 </a>
@@ -66,7 +66,7 @@
                         <td>
                             <div class="flex gap-2 justify-center">
                                 <a 
-                                    href="{% url 'departmental_output_detail_update' departmental_out_obj.id %}" 
+                                    href="{% url 'departmental_output_detail_update' department_output_id=departmental_out_obj.id designation_id=designation_obj.id %}" 
                                     class="rounded-2xl bg-blue-500 block px-4 py-2 text-sm text-white hover:bg-blue-700" 
                                 >
                                     View
