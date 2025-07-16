@@ -86,6 +86,13 @@ urlpatterns = [
     # Fault priority change
     path('faults/<int:fault_id>/change-priority/', views.change_fault_priority, name='change_fault_priority'),
     
+    # Additional convenience URLs for dashboard access
+    path('field-update/', views.simple_fault_list, name='field_update_list'),  # For field updates selection
+    path('my-assignments/', views.my_work, name='my_assignments'),  # Team leader assignments
+    path('team-work/', views.my_work, name='team_work'),  # Team member work view
+    path('contact-leader/', views.team_overview, name='contact_leader'),  # Contact team leader
+    path('request-help/', views.team_overview, name='request_help'),  # Request assistance
+    
     # Debug view
     path('debug-user/', views.debug_user, name='debug_user'),
 ]

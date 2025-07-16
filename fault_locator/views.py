@@ -1965,26 +1965,6 @@ def create_team(request):
         return redirect('team_overview')
 
 @login_required
-def edit_team(request, team_id):
-    try:
-        user_profile = UserProfile.objects.filter(id=request.user.id).first()
-        
-        # Check permissions
-        if not (is_senior_foreman(user_profile) or can_manage_devices(user_profile)):
-            messages.error(request, "You don't have permission to edit teams")
-            return redirect('fault_locator_dashboard')
-        
-        team = get_object_or_404(FaultLocatorTeam, id=team_id)
-        
-        if request.method == "POST":
-            # Handle name change
-            if 'update_name' in request.POST:
-                name_form = FaultLocatorTeamNameForm(request.POST, instance=team)
-                if name_form.is_valid():
-        messages.error(request, "An error occurred assigning the device to team.")
-        return redirect('device_list')
-
-@login_required
 def unassign_device(request, device_id):
     try:
         user_profile = UserProfile.objects.filter(id=request.user.id).first()

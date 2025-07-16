@@ -281,9 +281,102 @@ def get_senior_foreman_context(user_profile):
             {
                 'title': 'Monitor Critical Faults',
                 'description': f'Review {critical_faults.count()} high priority faults',
-                'url': '/fault_locator/faults/?priority=3',
+                'url': '/fault_locator/simple-faults/?priority=3',
                 'icon': '🔥',
                 'priority': 'critical' if critical_faults.count() > 0 else 'low'
+            }
+        ],
+        'secondary_actions': [
+            {
+                'title': 'Team Overview',
+                'description': 'View all teams and their status',
+                'url': '/fault_locator/team-overview/',
+                'icon': '👥',
+                'priority': 'medium'
+            },
+            {
+                'title': 'Device Management',
+                'description': 'Manage fault locator devices',
+                'url': '/fault_locator/devices/',
+                'icon': '🔧',
+                'priority': 'medium'
+            },
+            {
+                'title': 'Create New Team',
+                'description': 'Create and configure new teams',
+                'url': '/fault_locator/teams/create/',
+                'icon': '➕',
+                'priority': 'medium'
+            },
+            {
+                'title': 'Advanced Fault Assignment',
+                'description': 'Bulk assign faults to teams',
+                'url': '/fault_locator/advanced-assign/',
+                'icon': '⚡',
+                'priority': 'medium'
+            },
+            {
+                'title': 'Performance Monitoring',
+                'description': 'View system performance metrics',
+                'url': '/fault_locator/performance-monitoring/',
+                'icon': '📊',
+                'priority': 'medium'
+            },
+            {
+                'title': 'Role Management',
+                'description': 'Manage user roles and permissions',
+                'url': '/fault_locator/manage-roles/',
+                'icon': '👤',
+                'priority': 'medium'
+            },
+            {
+                'title': 'Team-Depot Management',
+                'description': 'Manage team deployments to depots',
+                'url': '/fault_locator/team-depot-management/',
+                'icon': '🏢',
+                'priority': 'medium'
+            },
+            {
+                'title': 'Device-Team Management',
+                'description': 'Manage device assignments to teams',
+                'url': '/fault_locator/device-team-management/',
+                'icon': '📱',
+                'priority': 'medium'
+            },
+            {
+                'title': 'Depot Assignments',
+                'description': 'Manage depot foreperson assignments',
+                'url': '/fault_locator/depot-assignments/',
+                'icon': '🏭',
+                'priority': 'medium'
+            },
+            {
+                'title': 'System Notifications',
+                'description': 'Send notifications for unassigned faults',
+                'url': '/fault_locator/notify-unassigned/',
+                'icon': '📢',
+                'priority': 'low'
+            },
+            {
+                'title': 'Role Assignment History',
+                'description': 'View role assignment history',
+                'url': '/fault_locator/role-history/',
+                'icon': '📜',
+                'priority': 'low'
+            },
+            {
+                'title': 'Legacy Role Migration',
+                'description': 'Migrate legacy roles to new system',
+                'url': '/fault_locator/migrate-legacy-roles/',
+                'icon': '🔄',
+                'priority': 'low'
+            },
+            {
+                'title': 'Senior Foreman Dashboard',
+                'description': 'Access dedicated senior foreman interface',
+                'url': '/fault_locator/senior-dashboard/',
+                'icon': '👨‍💼',
+                'priority': 'medium'
             }
         ]
     }
@@ -332,23 +425,81 @@ def get_depot_foreperson_context(user_profile):
             {
                 'title': 'Assign Pending Faults',
                 'description': f'Assign {pending_faults.count()} pending faults to teams',
-                'url': '/fault_locator/assign-fault/',
+                'url': '/fault_locator/simple-assign/',
                 'icon': '👉',
                 'priority': 'high' if pending_faults.count() > 0 else 'low'
             },
             {
                 'title': 'Report New Fault',
                 'description': 'Report a new fault at your depot',
-                'url': '/fault_locator/report-fault/',
+                'url': '/fault_locator/quick-report/',
                 'icon': '📝',
                 'priority': 'medium'
             },
             {
                 'title': 'Monitor Team Progress',
                 'description': f'Check progress of {active_faults.count()} active faults',
-                'url': f'/fault_locator/faults/?depot={user_depot.id}&status=assigned',
+                'url': '/fault_locator/simple-faults/?status=assigned',
                 'icon': '👁️',
                 'priority': 'medium' if active_faults.count() > 0 else 'low'
+            }
+        ],
+        'secondary_actions': [
+            {
+                'title': 'My Work Overview',
+                'description': 'View your assigned work and progress',
+                'url': '/fault_locator/my-work/',
+                'icon': '🛠️',
+                'priority': 'medium'
+            },
+            {
+                'title': 'All Faults at Depot',
+                'description': 'View all faults at your depot',
+                'url': '/fault_locator/simple-faults/',
+                'icon': '📋',
+                'priority': 'medium'
+            },
+            {
+                'title': 'Create Fault Report',
+                'description': 'Create detailed fault report',
+                'url': '/fault_locator/create-fault/',
+                'icon': '�',
+                'priority': 'medium'
+            },
+            {
+                'title': 'Team Management',
+                'description': 'View teams at your depot',
+                'url': '/fault_locator/team-overview/',
+                'icon': '👥',
+                'priority': 'medium'
+            },
+            {
+                'title': 'Advanced Assignment',
+                'description': 'Use advanced fault assignment features',
+                'url': '/fault_locator/advanced-assign/',
+                'icon': '⚡',
+                'priority': 'medium'
+            },
+            {
+                'title': 'Fault Priority Management',
+                'description': 'Change fault priorities',
+                'url': '/fault_locator/simple-faults/',
+                'icon': '🔥',
+                'priority': 'medium'
+            },
+            {
+                'title': 'Team Deployment',
+                'description': 'Deploy teams to your depot',
+                'url': '/fault_locator/teams/deploy/',
+                'icon': '🚀',
+                'priority': 'medium'
+            },
+            {
+                'title': 'Device Assignment',
+                'description': 'Assign devices to teams',
+                'url': '/fault_locator/assign-device-to-team/',
+                'icon': '📱',
+                'priority': 'medium'
             }
         ]
     }
@@ -401,14 +552,14 @@ def get_team_leader_context(user_profile):
             {
                 'title': 'Report Fault Located',
                 'description': f'Update status for {current_assignments.count()} active assignments',
-                'url': '/fault_locator/my-assignments/',
+                'url': '/fault_locator/my-work/',
                 'icon': '✅',
                 'priority': 'high' if current_assignments.count() > 0 else 'medium'
             },
             {
                 'title': 'Update Work Progress',
                 'description': 'Add progress notes to ongoing work',
-                'url': '/fault_locator/update-progress/',
+                'url': '/fault_locator/my-work/',
                 'icon': '📊',
                 'priority': 'medium'
             },
@@ -418,6 +569,50 @@ def get_team_leader_context(user_profile):
                 'url': '/fault_locator/request-help/',
                 'icon': '🆘',
                 'priority': 'low'
+            }
+        ],
+        'secondary_actions': [
+            {
+                'title': 'Field Updates',
+                'description': 'Update fault status from field',
+                'url': '/fault_locator/field-update/',
+                'icon': '🔄',
+                'priority': 'medium'
+            },
+            {
+                'title': 'Team Overview',
+                'description': 'View your team details and members',
+                'url': '/fault_locator/team-overview/',
+                'icon': '👥',
+                'priority': 'medium'
+            },
+            {
+                'title': 'Simple Fault List',
+                'description': 'View all faults in simple format',
+                'url': '/fault_locator/simple-faults/',
+                'icon': '📋',
+                'priority': 'medium'
+            },
+            {
+                'title': 'Current Assignments',
+                'description': 'View detailed assignment information',
+                'url': '/fault_locator/my-assignments/',
+                'icon': '📝',
+                'priority': 'medium'
+            },
+            {
+                'title': 'Quick Fault Report',
+                'description': 'Quick fault reporting interface',
+                'url': '/fault_locator/quick-report/',
+                'icon': '📝',
+                'priority': 'medium'
+            },
+            {
+                'title': 'Team Management',
+                'description': 'Manage team members and settings',
+                'url': '/fault_locator/teams/',
+                'icon': '⚙️',
+                'priority': 'medium'
             }
         ]
     }
@@ -461,7 +656,7 @@ def get_team_member_context(user_profile):
             {
                 'title': 'View Current Work',
                 'description': f'Check {current_assignments.count()} active assignments',
-                'url': '/fault_locator/team-work/',
+                'url': '/fault_locator/my-work/',
                 'icon': '🛠️',
                 'priority': 'high' if current_assignments.count() > 0 else 'medium'
             },
@@ -470,6 +665,43 @@ def get_team_member_context(user_profile):
                 'description': f'Message {team_leader.get_full_name() if team_leader else "Team Leader"}',
                 'url': '/fault_locator/contact-leader/',
                 'icon': '📞',
+                'priority': 'medium'
+            }
+        ],
+        'secondary_actions': [
+            {
+                'title': 'Team Overview',
+                'description': 'View team details and members',
+                'url': '/fault_locator/team-overview/',
+                'icon': '👥',
+                'priority': 'medium'
+            },
+            {
+                'title': 'Simple Fault List',
+                'description': 'View all faults in simple format',
+                'url': '/fault_locator/simple-faults/',
+                'icon': '📋',
+                'priority': 'medium'
+            },
+            {
+                'title': 'Team Work',
+                'description': 'View your team\'s current work',
+                'url': '/fault_locator/team-work/',
+                'icon': '🔧',
+                'priority': 'medium'
+            },
+            {
+                'title': 'Quick Fault Report',
+                'description': 'Quick fault reporting interface',
+                'url': '/fault_locator/quick-report/',
+                'icon': '📝',
+                'priority': 'medium'
+            },
+            {
+                'title': 'Simple Fault Updates',
+                'description': 'Update fault status from field',
+                'url': '/fault_locator/field-update/',
+                'icon': '📲',
                 'priority': 'medium'
             }
         ]
