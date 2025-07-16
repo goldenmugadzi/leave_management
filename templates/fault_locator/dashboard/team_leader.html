@@ -3,7 +3,7 @@
     <div class="col-md-8">
         <h4 class="mb-3">
             <i class="fas fa-tasks text-primary me-2"></i>
-            Current Assignments for {{ my_team.name }}
+            Current Assignments
         </h4>
         
         {% if current_assignments %}
@@ -60,7 +60,7 @@
     </div>
 
     <div class="col-md-4">
-        <h4 class="mb-3 d-flex align-items-center">
+        <h4 class="mb-3">
             <i class="fas fa-info-circle text-success me-2"></i>
             Team Information
         </h4>
@@ -68,6 +68,7 @@
         <div class="card border-0 shadow-lg mb-3" style="background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); border-radius: 1rem;">
             <div class="card-body">
                 <h6 class="card-title fw-bold text-dark mb-3">{{ my_team.name }}</h6>
+                
                 <div class="mb-3">
                     <small class="text-muted d-block fw-medium">Current Location</small>
                     <span class="badge bg-primary d-inline-flex align-items-center">
@@ -98,7 +99,7 @@
         {% if urgent_assignments %}
         <div class="card border-0 shadow-lg" style="background: rgba(255, 245, 245, 0.9); backdrop-filter: blur(10px); border-radius: 1rem;">
             <div class="card-header text-white" style="background: rgba(220, 38, 38, 0.8); border-radius: 1rem 1rem 0 0;">
-                <h6 class="mb-0 d-flex align-items-center fw-bold">
+                <h6 class="mb-0 fw-bold">
                     <i class="fas fa-exclamation-triangle me-2"></i>
                     Urgent Attention Required
                 </h6>

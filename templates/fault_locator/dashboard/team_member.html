@@ -3,7 +3,7 @@
     <div class="col-md-8">
         <h4 class="mb-3">
             <i class="fas fa-hard-hat text-primary me-2"></i>
-            Current Work for {{ my_team.name }}
+            Current Work
         </h4>
         
         {% if current_assignments %}
@@ -32,7 +32,7 @@
                         
                         <div class="text-muted small">
                             <i class="fas fa-user me-1"></i>
-                            Contact your team leader <strong>{{ team_leader.get_full_name }}</strong> for instructions.
+                            Contact your team leader for instructions.
                         </div>
                     </div>
                 </div>
@@ -52,18 +52,18 @@
     </div>
 
     <div class="col-md-4">
-        <h4 class="mb-3 d-flex align-items-center">
-            <i class="fas fa-users text-success me-2"></i>
-            Team Details
+        <h4 class="mb-3">
+            <i class="fas fa-info-circle text-success me-2"></i>
+            Team Information
         </h4>
         
         <div class="card border-0 shadow-lg mb-3" style="background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); border-radius: 1rem;">
             <div class="card-body">
-                <h6 class="card-title fw-bold text-dark mb-3">{{ stats.team_name }}</h6>
+                <h6 class="card-title fw-bold text-dark mb-3">{{ my_team.name }}</h6>
                 
                 <div class="mb-3">
                     <small class="text-muted d-block fw-medium">Team Leader</small>
-                    <strong class="text-dark">{{ stats.team_leader }}</strong>
+                    <strong class="text-dark">{{ team_leader.get_full_name }}</strong>
                 </div>
                 
                 <div class="mb-3">
@@ -90,13 +90,12 @@
 
         <div class="card border-0 shadow-lg" style="background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); border-radius: 1rem;">
             <div class="card-header" style="background: rgba(59, 130, 246, 0.1); border-bottom: 1px solid rgba(255, 255, 255, 0.2); border-radius: 1rem 1rem 0 0;">
-                <h6 class="mb-0 d-flex align-items-center fw-bold">
+                <h6 class="mb-0 fw-bold">
                     <i class="fas fa-phone text-primary me-2"></i>
                     Emergency Contacts
                 </h6>
             </div>
             <div class="card-body">
-                {% if team_leader %}
                 <div class="mb-3 p-3 rounded-3" style="background: rgba(59, 130, 246, 0.05); border: 1px solid rgba(59, 130, 246, 0.1);">
                     <div class="d-flex align-items-center mb-2">
                         <i class="fas fa-user-tie text-primary me-2"></i>
@@ -109,7 +108,6 @@
                     </a>
                     {% endif %}
                 </div>
-                {% endif %}
                 
                 <div class="p-3 rounded-3" style="background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.1);">
                     <div class="d-flex align-items-center mb-2">
