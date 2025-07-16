@@ -8,43 +8,99 @@
         
         {% if current_assignments %}
         <div class="card border-0 shadow-sm">
-            <div class="card-body">
-                {% for assignment in current_assignments %}
-                <div class="card mb-3 {% if assignment.fault.priority >= 3 %}border-danger{% elif assignment.fault.priority == 2 %}border-warning{% endif %}">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-start">
-                            <div class="flex-grow-1">
-                                <h6 class="card-title">
-                                    {{ assignment.fault.description }}
-                                    <span class="badge bg-{{ assignment.fault.priority|yesno:'danger,warning,info,secondary' }} ms-2">
-                                        {{ assignment.fault.get_priority_display }}
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th scope="col" class="px-4 py-3 fw-semibold">
+                                    <i class="fas fa-exclamation-triangle text-warning me-2"></i>
+                                    Fault Description
+                                </th>
+                                <th scope="col" class="px-3 py-3 fw-semibold">
+                                    <i class="fas fa-map-marker-alt text-primary me-2"></i>
+                                    Location
+                                </th>
+                                <th scope="col" class="px-3 py-3 fw-semibold">
+                                    <i class="fas fa-clock text-info me-2"></i>
+                                    Assigned
+                                </th>
+                                <th scope="col" class="px-3 py-3 fw-semibold">
+                                    <i class="fas fa-mobile-alt text-success me-2"></i>
+                                    Device
+                                </th>
+                                <th scope="col" class="px-3 py-3 fw-semibold text-center">
+                                    <i class="fas fa-cogs text-secondary me-2"></i>
+                                    Actions
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for assignment in current_assignments %}
+                            <tr class="align-middle {% if assignment.fault.priority >= 3 %}table-danger{% elif assignment.fault.priority == 2 %}table-warning{% endif %}">
+                                <td class="px-4 py-3">
+                                    <div class="d-flex flex-column">
+                                        <span class="fw-medium text-dark mb-1">{{ assignment.fault.description }}</span>
+                                        <div class="d-flex align-items-center gap-2">
+                                            <span class="badge bg-{% if assignment.fault.priority >= 3 %}danger{% elif assignment.fault.priority == 2 %}warning{% else %}info{% endif %} px-2 py-1">
+                                                {{ assignment.fault.get_priority_display }}
+                                            </span>
+                                            {% if assignment.work_notes %}
+                                            <span class="badge bg-light text-dark border px-2 py-1" title="Has progress notes">
+                                                <i class="fas fa-sticky-note me-1"></i>Notes
+                                            </span>
+                                            {% endif %}
+                                        </div>
+                                        {% if assignment.work_notes %}
+                                        <div class="mt-2 p-2 bg-light rounded-2 border-start border-primary border-3">
+                                            <small class="text-muted">
+                                                <i class="fas fa-comment-dots me-1"></i>
+                                                <strong>Progress:</strong> {{ assignment.work_notes|truncatechars:50 }}
+                                            </small>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                                <td class="px-3 py-3">
+                                    <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2 rounded-pill">
+                                        <i class="fas fa-building me-1"></i>
+                                        {{ assignment.fault.depot.depot }}
                                     </span>
-                                </h6>
-                                <p class="card-text small text-muted">
-                                    <i class="fas fa-map-marker-alt me-1"></i>{{ assignment.fault.depot.depot }}<br>
-                                    <i class="fas fa-clock me-1"></i>Assigned: {{ assignment.assigned_at|date:"M d, H:i" }}<br>
-                                    <i class="fas fa-mobile-alt me-1"></i>Device: {{ assignment.device.serial_number }}
-                                </p>
-                                {% if assignment.work_notes %}
-                                <div class="alert alert-light py-2 mt-2">
-                                    <small><strong>Progress Notes:</strong> {{ assignment.work_notes }}</small>
-                                </div>
-                                {% endif %}
-                            </div>
-                            <div class="text-end">
-                                <a href="{% url 'field_update' assignment.fault.id %}" class="btn btn-success btn-sm mb-2">
-                                    <i class="fas fa-map-marked-alt me-1"></i>
-                                    Report Located
-                                </a><br>
-                                <a href="#" class="btn btn-outline-secondary btn-sm" onclick="updateProgress({{ assignment.fault.id }})">
-                                    <i class="fas fa-edit me-1"></i>
-                                    Update Progress
-                                </a>
-                            </div>
-                        </div>
-                    </div>
+                                </td>
+                                <td class="px-3 py-3">
+                                    <div class="d-flex flex-column">
+                                        <span class="fw-medium text-dark">{{ assignment.assigned_at|date:"M d" }}</span>
+                                        <small class="text-muted">{{ assignment.assigned_at|date:"H:i" }}</small>
+                                    </div>
+                                </td>
+                                <td class="px-3 py-3">
+                                    <span class="badge bg-success bg-opacity-10 text-success px-3 py-2 rounded-pill">
+                                        <i class="fas fa-barcode me-1"></i>
+                                        {{ assignment.device.serial_number }}
+                                    </span>
+                                </td>
+                                <td class="px-3 py-3 text-center">
+                                    <div class="btn-group-vertical" role="group">
+                                        <a href="{% url 'field_update' assignment.fault.id %}" 
+                                           class="btn btn-success btn-sm px-3 py-2 mb-1"
+                                           title="Report fault as located">
+                                            <i class="fas fa-map-marked-alt me-1"></i>
+                                            Report Located
+                                        </a>
+                                        <button type="button" 
+                                                class="btn btn-outline-secondary btn-sm px-3 py-2" 
+                                                onclick="updateProgress({{ assignment.fault.id }})"
+                                                title="Add progress notes">
+                                            <i class="fas fa-edit me-1"></i>
+                                            Update Progress
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
                 </div>
-                {% endfor %}
             </div>
         </div>
         {% else %}
@@ -65,33 +121,99 @@
             Team Information
         </h4>
         
-        <div class="card border-0 shadow-lg mb-3" style="background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); border-radius: 1rem;">
-            <div class="card-body">
-                <h6 class="card-title fw-bold text-dark mb-3">{{ my_team.name }}</h6>
-                
-                <div class="mb-3">
-                    <small class="text-muted d-block fw-medium">Current Location</small>
-                    <span class="badge bg-primary d-inline-flex align-items-center">
-                        <i class="fas fa-map-marker-alt me-1"></i>
-                        {{ stats.team_location }}
-                    </span>
-                </div>
-                
-                {% if team_device %}
-                <div class="mb-3">
-                    <small class="text-muted d-block fw-medium">Assigned Device</small>
-                    <strong class="text-dark">{{ team_device.device.serial_number }}</strong><br>
-                    <small class="text-muted">{{ team_device.device.description|default:"Fault locator device" }}</small>
-                </div>
-                {% endif %}
-                
-                <div class="mb-3">
-                    <small class="text-muted d-block fw-medium">Team Members ({{ stats.team_members }})</small>
-                    <div class="d-flex flex-wrap gap-1 mt-2">
-                        {% for member in my_team.members.all %}
-                            <span class="badge bg-light text-dark border">{{ member.get_full_name }}</span>
-                        {% endfor %}
-                    </div>
+        <div class="card border-0 shadow-sm mb-3">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0 team-info-table">
+                        <thead class="table-success">
+                            <tr>
+                                <th scope="col" class="px-4 py-3 fw-semibold">
+                                    <i class="fas fa-users text-success me-2"></i>
+                                    Team: {{ my_team.name }}
+                                </th>
+                                <th scope="col" class="px-3 py-3 fw-semibold text-end">
+                                    <i class="fas fa-info-circle text-success me-1"></i>
+                                    Details
+                                </th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="align-middle">
+                                <td class="px-4 py-3">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-map-marker-alt text-primary me-2"></i>
+                                        <span class="fw-medium">Current Location</span>
+                                    </div>
+                                </td>
+                                <td class="px-3 py-3 text-end">
+                                    <span class="badge bg-primary bg-opacity-10 text-primary px-3 py-2 rounded-pill">
+                                        <i class="fas fa-building me-1"></i>
+                                        {{ stats.team_location }}
+                                    </span>
+                                </td>
+                            </tr>
+                            
+                            {% if team_device %}
+                            <tr class="align-middle">
+                                <td class="px-4 py-3">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-mobile-alt text-success me-2"></i>
+                                        <span class="fw-medium">Assigned Device</span>
+                                    </div>
+                                </td>
+                                <td class="px-3 py-3 text-end">
+                                    <div class="d-flex flex-column align-items-end">
+                                        <span class="badge bg-success bg-opacity-10 text-success px-3 py-2 rounded-pill mb-1">
+                                            <i class="fas fa-barcode me-1"></i>
+                                            {{ team_device.device.serial_number }}
+                                        </span>
+                                        <small class="text-muted">{{ team_device.device.description|default:"Fault locator device" }}</small>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endif %}
+                            
+                            <tr class="align-middle">
+                                <td class="px-4 py-3">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-user-friends text-info me-2"></i>
+                                        <span class="fw-medium">Team Members</span>
+                                    </div>
+                                </td>
+                                <td class="px-3 py-3 text-end">
+                                    <div class="d-flex flex-column align-items-end">
+                                        <span class="badge bg-info bg-opacity-10 text-info px-3 py-2 rounded-pill mb-2">
+                                            <i class="fas fa-users me-1"></i>
+                                            {{ stats.team_members }} Members
+                                        </span>
+                                        <div class="d-flex flex-wrap gap-1 justify-content-end">
+                                            {% for member in my_team.members.all %}
+                                                <span class="badge bg-light text-dark border px-2 py-1 mb-1">
+                                                    <i class="fas fa-user me-1"></i>
+                                                    {{ member.get_full_name }}
+                                                </span>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            
+                            <tr class="align-middle">
+                                <td class="px-4 py-3">
+                                    <div class="d-flex align-items-center">
+                                        <i class="fas fa-tasks text-warning me-2"></i>
+                                        <span class="fw-medium">Active Work</span>
+                                    </div>
+                                </td>
+                                <td class="px-3 py-3 text-end">
+                                    <span class="badge bg-warning bg-opacity-10 text-warning px-3 py-2 rounded-pill">
+                                        <i class="fas fa-clipboard-list me-1"></i>
+                                        {{ current_assignments|length }} Assignment{{ current_assignments|length|pluralize }}
+                                    </span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
@@ -162,3 +284,195 @@ function updateProgress(faultId) {
     }
 }
 </script>
+
+<style>
+/* Custom table styling for team leader dashboard */
+.table-responsive {
+    border-radius: 0.75rem;
+    overflow: hidden;
+}
+
+.table thead th {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-bottom: 2px solid #dee2e6;
+    color: #495057;
+    font-weight: 600;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.table tbody tr {
+    transition: all 0.2s ease;
+}
+
+.table tbody tr:hover {
+    background-color: rgba(0, 123, 255, 0.05);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.table-danger {
+    background-color: rgba(220, 53, 69, 0.08);
+    border-left: 4px solid #dc3545;
+}
+
+.table-warning {
+    background-color: rgba(255, 193, 7, 0.08);
+    border-left: 4px solid #ffc107;
+}
+
+.table td {
+    vertical-align: middle;
+    border-top: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.badge {
+    font-size: 0.75rem;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+}
+
+.btn-group-vertical .btn {
+    border-radius: 0.375rem;
+    font-size: 0.8rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.btn-group-vertical .btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.progress-notes {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 0.5rem;
+    padding: 0.75rem;
+    margin-top: 0.5rem;
+    border-left: 3px solid #007bff;
+}
+
+/* Team Information Table Styling */
+.team-info-table {
+    font-size: 0.9rem;
+}
+
+.team-info-table thead th {
+    background: linear-gradient(135deg, #d1e7dd 0%, #a3d3c2 100%);
+    color: #0f5132;
+    border-bottom: 2px solid #badbcc;
+}
+
+.team-info-table tbody tr {
+    transition: all 0.2s ease;
+}
+
+.team-info-table tbody tr:hover {
+    background-color: rgba(25, 135, 84, 0.05);
+    transform: translateY(-1px);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+}
+
+.team-info-table td {
+    border-top: 1px solid rgba(25, 135, 84, 0.1);
+    padding: 1rem 0.75rem;
+}
+
+.team-info-table .badge {
+    font-size: 0.8rem;
+    font-weight: 500;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Enhanced badge styling */
+.badge.bg-primary.bg-opacity-10 {
+    background-color: rgba(13, 110, 253, 0.1) !important;
+    border: 1px solid rgba(13, 110, 253, 0.2);
+}
+
+.badge.bg-success.bg-opacity-10 {
+    background-color: rgba(25, 135, 84, 0.1) !important;
+    border: 1px solid rgba(25, 135, 84, 0.2);
+}
+
+.badge.bg-info.bg-opacity-10 {
+    background-color: rgba(13, 202, 240, 0.1) !important;
+    border: 1px solid rgba(13, 202, 240, 0.2);
+}
+
+.badge.bg-warning.bg-opacity-10 {
+    background-color: rgba(255, 193, 7, 0.1) !important;
+    border: 1px solid rgba(255, 193, 7, 0.2);
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .table-responsive {
+        font-size: 0.875rem;
+    }
+    
+    .btn-group-vertical .btn {
+        font-size: 0.75rem;
+        padding: 0.375rem 0.75rem;
+    }
+    
+    .badge {
+        font-size: 0.7rem;
+    }
+    
+    .team-info-table {
+        font-size: 0.8rem;
+    }
+    
+    .team-info-table td {
+        padding: 0.75rem 0.5rem;
+    }
+}
+
+/* Priority indicators */
+.priority-critical {
+    position: relative;
+}
+
+.priority-critical::before {
+    content: '';
+    position: absolute;
+    left: -4px;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: linear-gradient(to bottom, #dc3545, #c82333);
+    border-radius: 2px;
+}
+
+.priority-high::before {
+    background: linear-gradient(to bottom, #ffc107, #e0a800);
+}
+
+.priority-medium::before {
+    background: linear-gradient(to bottom, #17a2b8, #138496);
+}
+
+/* Table header icons */
+.table thead th i {
+    font-size: 0.9rem;
+    opacity: 0.8;
+}
+
+/* Smooth transitions for all interactive elements */
+.card, .table, .badge, .btn {
+    transition: all 0.3s ease;
+}
+
+/* Table row separators */
+.team-info-table tbody tr:not(:last-child) {
+    border-bottom: 1px solid rgba(25, 135, 84, 0.1);
+}
+
+/* Enhanced hover effects */
+.team-info-table tbody tr:hover .badge {
+    transform: scale(1.05);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+</style>

@@ -1,6 +1,8 @@
 {% extends "admin_layout.html" %}
 {% load static %}
 
+{% block title %}{{ role_display }} Dashboard{% endblock %}
+
 {% block content %}
 <div class="min-h-screen bg-gradient-to-br from-gulf-blue-50 via-white to-jade-50 p-6">
     <div class="max-w-7xl mx-auto">
@@ -23,7 +25,7 @@
         </div>
 
         <!-- Error Message -->
-        {% if error %}
+        {% if error|default:'' %}
         <div class="mb-6">
             <div class="glass-card p-4 rounded-2xl backdrop-blur-xl bg-scarlet-red-50/80 border border-scarlet-red-200/50 shadow-lg">
                 <div class="flex items-center gap-3">
@@ -260,14 +262,14 @@
         {% endif %}
 
         <!-- Recent Activity Section -->
-        {% if recent_deployments or my_assignments or completed_today %}
+        {% if recent_deployments|default:'' or my_assignments|default:'' or completed_today|default:'' %}
         <div class="mt-8">
             <h4 class="text-2xl font-bold text-nepal-800 mb-6 flex items-center gap-3">
                 <i class="fas fa-clock text-nepal-500"></i>
                 Recent Activity
             </h4>
             <div class="glass-card p-6 rounded-3xl backdrop-blur-xl bg-white/40 border border-white/30 shadow-2xl">
-                {% if recent_deployments %}
+                {% if recent_deployments|default:'' %}
                     <h6 class="text-lg font-semibold text-nepal-700 mb-4">Recent Deployments</h6>
                     {% for deployment in recent_deployments %}
                     <div class="flex justify-between items-center py-3 border-b border-nepal-200/50 last:border-b-0">
@@ -280,8 +282,8 @@
                     {% endfor %}
                 {% endif %}
 
-                {% if my_assignments %}
-                    <h6 class="text-lg font-semibold text-nepal-700 mb-4 {% if recent_deployments %}mt-6{% endif %}">My Recent Assignments</h6>
+                {% if my_assignments|default:'' %}
+                    <h6 class="text-lg font-semibold text-nepal-700 mb-4 {% if recent_deployments|default:'' %}mt-6{% endif %}">My Recent Assignments</h6>
                     {% for assignment in my_assignments %}
                     <div class="flex justify-between items-center py-3 border-b border-nepal-200/50 last:border-b-0">
                         <div>
@@ -293,8 +295,8 @@
                     {% endfor %}
                 {% endif %}
 
-                {% if completed_today %}
-                    <h6 class="text-lg font-semibold text-nepal-700 mb-4 {% if my_assignments or recent_deployments %}mt-6{% endif %}">Completed Today</h6>
+                {% if completed_today|default:'' %}
+                    <h6 class="text-lg font-semibold text-nepal-700 mb-4 {% if my_assignments|default:'' or recent_deployments|default:'' %}mt-6{% endif %}">Completed Today</h6>
                     {% for assignment in completed_today %}
                     <div class="flex justify-between items-center py-3 border-b border-nepal-200/50 last:border-b-0">
                         <div>
@@ -306,7 +308,7 @@
                     {% endfor %}
                 {% endif %}
 
-                {% if not recent_deployments and not my_assignments and not completed_today %}
+                {% if not recent_deployments|default:'' and not my_assignments|default:'' and not completed_today|default:'' %}
                 <p class="text-nepal-500 text-center mb-0">No recent activity</p>
                 {% endif %}
             </div>

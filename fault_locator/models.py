@@ -151,7 +151,7 @@ class FaultLocatorDeviceAssignment(models.Model):
     notes = models.TextField(blank=True, help_text="Assignment notes")
 
     def __str__(self):
-        return f"{self.device} → {self.team} ({self.assigned_at:%Y-%m-%d})"
+        return f"{self.device} -> {self.team} ({self.assigned_at:%Y-%m-%d})"
     
     class Meta:
         unique_together = ['device', 'team']  # One device per team, one team per device
