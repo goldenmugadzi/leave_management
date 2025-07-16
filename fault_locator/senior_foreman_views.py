@@ -42,7 +42,7 @@ def senior_foreman_dashboard(request):
     devices_data = get_devices_overview()
     
     # Get depot deployment status
-    depot_status = get_depot_deployment_status()
+    depot_status = get_depot_deployment_status(user_profile)
     
     # Get performance metrics
     performance_data = get_performance_metrics()
@@ -76,10 +76,16 @@ def team_depot_management(request):
         active_assignments=Count('faultassignment', filter=Q(faultassignment__located_at__isnull=True))
     ).prefetch_related('members', 'faultlocatordeviceassignment_set__device')
     
-    # Get all depots with deployment info
-    depots = Depots.objects.annotate(
+    # Get all depots with deployment info (filtered by user's region)
+    depots_query = Depots.objects.annotate(
         deployed_teams=Count('faultlocatorteam', filter=Q(faultlocatorteam__current_depot__isnull=False))
-    ).order_by('depot')
+    )
+    
+    # Filter by user's region if available
+    if user_profile and hasattr(user_profile, 'region') and user_profile.region:
+        depots_query = depots_query.filter(region=user_profile.region)
+    
+    depots = depots_query.order_by('depot')
     
     # Get deployment history
     recent_deployments = TeamDeployment.objects.select_related(
@@ -150,7 +156,7 @@ def performance_monitoring(request):
     team_performance = get_team_performance_data(start_date, end_date)
     
     # Depot Performance
-    depot_performance = get_depot_performance_data(start_date, end_date)
+    depot_performance = get_depot_performance_data(start_date, end_date, user_profile)
     
     # Device Utilization
     device_utilization = get_device_utilization_data(start_date, end_date)
@@ -191,7 +197,13 @@ def quick_deploy_team(request):
             
             user_profile = UserProfile.objects.filter(id=request.user.id).first()
             team = get_object_or_404(FaultLocatorTeam, id=team_id)
-            depot = get_object_or_404(Depots, id=depot_id)
+            
+            # Get depot and validate it's in user's region
+            depot_query = Depots.objects.filter(id=depot_id)
+            if user_profile and hasattr(user_profile, 'region') and user_profile.region:
+                depot_query = depot_query.filter(region=user_profile.region)
+            
+            depot = get_object_or_404(depot_query, id=depot_id)
             
             # Check if team already deployed
             if team.current_depot:
@@ -379,12 +391,18 @@ def get_devices_overview():
     ).prefetch_related('faultlocatordeviceassignment_set__team')
 
 
-def get_depot_deployment_status():
-    """Get depot deployment status"""
-    return Depots.objects.annotate(
+def get_depot_deployment_status(user_profile=None):
+    """Get depot deployment status filtered by user's region"""
+    depots_query = Depots.objects.annotate(
         deployed_teams=Count('faultlocatorteam', filter=Q(faultlocatorteam__current_depot__isnull=False)),
         active_faults=Count('fault', filter=Q(fault__status__in=['requested', 'assigned']))
-    ).order_by('depot')
+    )
+    
+    # Filter by user's region if provided
+    if user_profile and hasattr(user_profile, 'region') and user_profile.region:
+        depots_query = depots_query.filter(region=user_profile.region)
+    
+    return depots_query.order_by('depot')
 
 
 def get_performance_metrics():
@@ -465,9 +483,9 @@ def get_team_performance_data(start_date, end_date):
     return teams
 
 
-def get_depot_performance_data(start_date, end_date):
-    """Get depot performance data for the specified period"""
-    depots = Depots.objects.annotate(
+def get_depot_performance_data(start_date, end_date, user_profile=None):
+    """Get depot performance data for the specified period filtered by user's region"""
+    depots_query = Depots.objects.annotate(
         total_faults=Count('fault', filter=Q(
             fault__reported_at__date__range=[start_date, end_date]
         )),
@@ -475,9 +493,13 @@ def get_depot_performance_data(start_date, end_date):
             fault__reported_at__date__range=[start_date, end_date],
             fault__status='closed'
         ))
-    ).order_by('depot')
+    )
     
-    return depots
+    # Filter by user's region if provided
+    if user_profile and hasattr(user_profile, 'region') and user_profile.region:
+        depots_query = depots_query.filter(region=user_profile.region)
+    
+    return depots_query.order_by('depot')
 
 
 def get_device_utilization_data(start_date, end_date):

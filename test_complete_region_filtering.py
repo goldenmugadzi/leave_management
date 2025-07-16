@@ -15,11 +15,13 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'beii_v1.settings')
 django.setup()
 
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 from django.test import RequestFactory, Client
 from django.contrib.auth import authenticate, login
 from django.urls import reverse
-from fault_locator.models import UserProfile, Depots, Regions
+from fault_locator.models import UserProfile, Depots
+
+User = get_user_model()
 from fault_locator.senior_foreman_views import (
     get_depot_deployment_status, get_depot_performance_data,
     team_depot_management, quick_deploy_team, performance_monitoring
