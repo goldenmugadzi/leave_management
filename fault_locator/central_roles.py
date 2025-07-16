@@ -36,13 +36,19 @@ class FaultLocatorRoleManager:
                 return None
                 
             # Use the existing method on UserProfile
-            role = user_profile.get_user_role_for_application(cls.APPLICATION_NAME)
-            if role:
+            role_obj = user_profile.get_user_role_for_application(cls.APPLICATION_NAME)
+            if role_obj:
                 # The method returns a Role object, so we need to access its role attribute
-                return role.role if hasattr(role, 'role') else None
+                if hasattr(role_obj, 'role'):
+                    return role_obj.role
+                else:
+                    print(f"Warning: Role object {type(role_obj)} does not have 'role' attribute")
+                    return None
             return None
         except Exception as e:
             print(f"Error getting user role: {e}")
+            import traceback
+            traceback.print_exc()
             return None
     
     @classmethod
@@ -52,12 +58,18 @@ class FaultLocatorRoleManager:
             return None
         
         try:
-            role = user_profile.get_user_role_for_application(cls.APPLICATION_NAME)
-            if role:
-                return role.name if hasattr(role, 'name') else None
+            role_obj = user_profile.get_user_role_for_application(cls.APPLICATION_NAME)
+            if role_obj:
+                if hasattr(role_obj, 'name'):
+                    return role_obj.name
+                else:
+                    print(f"Warning: Role object {type(role_obj)} does not have 'name' attribute")
+                    return None
             return None
         except Exception as e:
             print(f"Error getting user role display: {e}")
+            import traceback
+            traceback.print_exc()
             return None
     
     @classmethod

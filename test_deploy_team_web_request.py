@@ -46,8 +46,8 @@ def test_deploy_team_web_request():
     
     # Make the actual request
     try:
-        print("📡 Making GET request to /fault_locator/deploy_team/")
-        response = client.get('/fault_locator/deploy_team/')
+        print("📡 Making GET request to /fault_locator/teams/deploy/")
+        response = client.get('/fault_locator/teams/deploy/')
         
         print(f"✅ Response status: {response.status_code}")
         

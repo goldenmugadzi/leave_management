@@ -2359,13 +2359,24 @@ def get_depot_priority_information(user_profile):
         logger.error(f"Error getting depot priority information: {e}")
         return []
 
+@login_required
 def deploy_team(request, team_id=None):
+    # Force console output to see if view is called
+    import sys
+    sys.stdout.write("🚨 DEPLOY_TEAM VIEW CALLED! 🚨\n")
+    sys.stdout.flush()
+    
     try:
+        # Debug: Print request.user information
+        print(f"Deploy team: request.user type: {type(request.user)}")
+        print(f"Deploy team: request.user has is_authenticated: {hasattr(request.user, 'is_authenticated')}")
+        
         # Check if user is authenticated
-        if not request.user.is_authenticated:
+        if not hasattr(request.user, 'is_authenticated') or not request.user.is_authenticated:
             messages.error(request, "You must be logged in to deploy teams")
             return redirect('fault_locator_dashboard')
             
+        print(f"Deploy team: request.user.id: {request.user.id}")
         user_profile = UserProfile.objects.filter(id=request.user.id).first()
         if not user_profile:
             messages.error(request, "User profile not found")
@@ -2376,7 +2387,24 @@ def deploy_team(request, team_id=None):
         print(f"Deploy team: user_profile has get_user_role_for_application: {hasattr(user_profile, 'get_user_role_for_application')}")
         
         # Check permissions - allow both senior foreman and senior foreperson
-        if not (is_senior_foreman(user_profile) or can_manage_devices(user_profile)):
+        print("Deploy team: Checking permissions...")
+        try:
+            is_senior = is_senior_foreman(user_profile)
+            print(f"Deploy team: is_senior_foreman result: {is_senior}")
+        except Exception as e:
+            print(f"Deploy team: Error in is_senior_foreman: {e}")
+            messages.error(request, "Permission checking error")
+            return redirect('fault_locator_dashboard')
+            
+        try:
+            can_manage = can_manage_devices(user_profile)
+            print(f"Deploy team: can_manage_devices result: {can_manage}")
+        except Exception as e:
+            print(f"Deploy team: Error in can_manage_devices: {e}")
+            messages.error(request, "Permission checking error")
+            return redirect('fault_locator_dashboard')
+            
+        if not (is_senior or can_manage):
             messages.error(request, "Only senior forepersons can deploy teams")
             return redirect('fault_locator_dashboard')
 
