@@ -212,12 +212,23 @@
                     
                     <div class="form-group">
                         <label for="assign-role-code">Role:</label>
-                        <select id="assign-role-code" name="role_code" class="form-control" required>
+                        <select id="assign-role-code" name="role_code" class="form-control" required onchange="toggleDepotSelection()">
                             <option value="">Select Role</option>
                             {% for role_code, role_name in role_choices %}
                                 <option value="{{ role_code }}">{{ role_name }}</option>
                             {% endfor %}
                         </select>
+                    </div>
+                    
+                    <div class="form-group" id="depot-selection" style="display: none;">
+                        <label for="assign-depot-id">Depot:</label>
+                        <select id="assign-depot-id" name="depot_id" class="form-control">
+                            <option value="">Select Depot</option>
+                            {% for depot in available_depots %}
+                                <option value="{{ depot.id }}">{{ depot.depot }} - {{ depot.region.region }}</option>
+                            {% endfor %}
+                        </select>
+                        <small class="form-text text-muted">Required for depot foreperson role. Only available depots are shown.</small>
                     </div>
                     
                     <div class="alert alert-info">
@@ -257,6 +268,16 @@ $('#assignRoleForm').on('submit', function(e) {
         'csrfmiddlewaretoken': $('[name=csrfmiddlewaretoken]').val()
     };
     
+    // Include depot_id if depot foreperson role is selected
+    if ($('#assign-role-code').val() === 'depot_foreperson') {
+        formData['depot_id'] = $('#assign-depot-id').val();
+        
+        if (!formData['depot_id']) {
+            showAlert('danger', 'Please select a depot for the depot foreperson role.');
+            return;
+        }
+    }
+    
     $.ajax({
         url: '{% url "assign_fault_locator_role_ajax" %}',
         type: 'POST',
@@ -266,6 +287,9 @@ $('#assignRoleForm').on('submit', function(e) {
                 // Update the role display in the table
                 var userId = formData.user_id;
                 var roleDisplay = response.new_role_display;
+                if (response.depot) {
+                    roleDisplay += ' (' + response.depot + ')';
+                }
                 $('#current-role-' + userId).html(
                     '<span class="badge badge-info">' + roleDisplay + '</span>'
                 );
@@ -287,6 +311,21 @@ $('#assignRoleForm').on('submit', function(e) {
         }
     });
 });
+
+// Function to toggle depot selection based on role
+function toggleDepotSelection() {
+    var roleCode = $('#assign-role-code').val();
+    var depotSelection = $('#depot-selection');
+    
+    if (roleCode === 'depot_foreperson') {
+        depotSelection.show();
+        $('#assign-depot-id').prop('required', true);
+    } else {
+        depotSelection.hide();
+        $('#assign-depot-id').prop('required', false);
+        $('#assign-depot-id').val('');
+    }
+}
 
 // Remove role function
 function removeRole(userId, userName) {

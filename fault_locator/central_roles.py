@@ -56,6 +56,17 @@ class FaultLocatorRoleManager:
                 app_id=application
             )
             
+            # Special validation for depot foreperson role
+            if role_code == cls.DEPOT_FOREPERSON:
+                from .depot_foreperson_validation import validate_depot_foreperson_assignment
+                
+                if not hasattr(user_profile, 'depot') or not user_profile.depot:
+                    raise ValueError(f"User {user_profile.get_full_name()} must be assigned to a depot before being assigned as depot foreperson")
+                
+                is_valid, error_message = validate_depot_foreperson_assignment(user_profile, user_profile.depot)
+                if not is_valid:
+                    raise ValueError(error_message)
+            
             # Use the existing add_role method
             user_profile.add_role(role, cls.APPLICATION_NAME)
             
@@ -234,6 +245,83 @@ def has_fault_locator_permissions(user_profile):
 def assign_fault_locator_role(user_profile, role_code, assigned_by=None):
     """Assign a fault locator role to a user"""
     return FaultLocatorRoleManager.assign_role(user_profile, role_code, assigned_by)
+
+def assign_depot_foreperson_to_depot(user_profile, depot, assigned_by=None):
+    """
+    Assign a user as depot foreperson to a specific depot.
+    
+    Args:
+        user_profile: UserProfile instance to be assigned as depot foreperson
+        depot: Depot instance where user will be assigned
+        assigned_by: UserProfile instance of the person making the assignment
+    
+    Returns:
+        tuple: (success, error_message)
+    """
+    try:
+        from .depot_foreperson_validation import validate_depot_foreperson_assignment
+        
+        # First validate the assignment
+        is_valid, error_message = validate_depot_foreperson_assignment(user_profile, depot)
+        if not is_valid:
+            return False, error_message
+        
+        # Update user's depot assignment
+        user_profile.depot = depot
+        user_profile.save()
+        
+        # Assign the depot foreperson role
+        success = FaultLocatorRoleManager.assign_role(
+            user_profile, 
+            FaultLocatorRoleManager.DEPOT_FOREPERSON, 
+            assigned_by
+        )
+        
+        if success:
+            return True, f"Successfully assigned {user_profile.get_full_name()} as depot foreperson for {depot.depot}"
+        else:
+            return False, "Failed to assign depot foreperson role"
+            
+    except Exception as e:
+        return False, str(e)
+
+def remove_depot_foreperson_from_depot(user_profile, assigned_by=None):
+    """
+    Remove a user from depot foreperson role and clear depot assignment.
+    
+    Args:
+        user_profile: UserProfile instance to be removed as depot foreperson
+        assigned_by: UserProfile instance of the person making the change
+    
+    Returns:
+        tuple: (success, error_message)
+    """
+    try:
+        from .depot_foreperson_validation import validate_depot_foreperson_removal
+        
+        if not user_profile.depot:
+            return False, f"{user_profile.get_full_name()} is not assigned to any depot"
+        
+        depot = user_profile.depot
+        
+        # Validate the removal
+        is_valid, error_message = validate_depot_foreperson_removal(user_profile, depot)
+        if not is_valid:
+            return False, error_message
+        
+        # Remove the role
+        success = FaultLocatorRoleManager.remove_role(user_profile)
+        
+        if success:
+            # Clear depot assignment
+            user_profile.depot = None
+            user_profile.save()
+            return True, f"Successfully removed {user_profile.get_full_name()} as depot foreperson from {depot.depot}"
+        else:
+            return False, "Failed to remove depot foreperson role"
+            
+    except Exception as e:
+        return False, str(e)
 
 def remove_fault_locator_role(user_profile):
     """Remove fault locator role from user"""
