@@ -6,7 +6,7 @@
             Team Management
         </h4>
         
-        {% if available_teams %}
+        {% if can_deploy_teams and available_teams %}
         <div class="card border-0 shadow-sm mb-3">
             <div class="card-header bg-light">
                 <h6 class="mb-0">Teams Available for Deployment ({{ available_teams.count }})</h6>
@@ -27,7 +27,7 @@
         </div>
         {% endif %}
 
-        {% if deployed_teams %}
+        {% if can_deploy_teams and deployed_teams %}
         <div class="card border-0 shadow-sm">
             <div class="card-header bg-light">
                 <h6 class="mb-0">Currently Deployed Teams ({{ deployed_teams.count }})</h6>
@@ -55,7 +55,7 @@
             Device Management
         </h4>
         
-        {% if unassigned_devices %}
+        {% if can_manage_devices and unassigned_devices %}
         <div class="card border-0 shadow-sm mb-3">
             <div class="card-header bg-light">
                 <h6 class="mb-0">Unassigned Devices ({{ unassigned_devices.count }})</h6>
@@ -67,9 +67,11 @@
                         <strong>{{ device.serial_number }}</strong><br>
                         <small class="text-muted">{{ device.description|default:"No description" }}</small>
                     </div>
+                    {% if can_manage_devices %}
                     <a href="{% url 'assign_device_to_team' %}?device_id={{ device.id }}" class="btn btn-success btn-sm">
                         Assign
                     </a>
+                    {% endif %}
                 </div>
                 {% endfor %}
             </div>
@@ -89,9 +91,11 @@
                         <small class="text-muted">📍 {{ fault.depot.depot }}</small>
                         <span class="badge bg-danger ms-2">{{ fault.get_priority_display }}</span>
                     </div>
+                    {% if can_assign_faults %}
                     <a href="{% url 'assign_fault' %}?fault_id={{ fault.id }}" class="btn btn-danger btn-sm">
                         Assign Now
                     </a>
+                    {% endif %}
                 </div>
                 {% endfor %}
             </div>

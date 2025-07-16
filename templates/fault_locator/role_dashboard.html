@@ -44,19 +44,161 @@
             </h4>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {% for action in primary_actions %}
-                <div class="glass-card group relative overflow-hidden rounded-3xl backdrop-blur-xl bg-white/40 border border-white/30 shadow-2xl hover:shadow-3xl transition-all duration-500 hover:scale-105 hover:bg-white/50 priority-{{ action.priority|default:'medium' }}">
-                    <div class="p-6 text-center">
-                        <div class="action-icon mb-4 text-4xl">
-                            {{ action.icon }}
+                    {% if action.title == 'Deploy Team to Depot' and can_deploy_teams %}
+                        <div class="glass-card group relative overflow-hidden rounded-3xl backdrop-blur-xl bg-white/40 border border-white/30 shadow-2xl hover:shadow-3xl transition-all duration-500 hover:scale-105 hover:bg-white/50 priority-{{ action.priority|default:'medium' }}">
+                            <div class="p-6 text-center">
+                                <div class="action-icon mb-4 text-4xl">
+                                    {{ action.icon }}
+                                </div>
+                                <h5 class="text-xl font-bold text-nepal-800 mb-3 group-hover:text-gulf-blue-600 transition-colors duration-300">{{ action.title }}</h5>
+                                <p class="text-nepal-600 mb-4">{{ action.description }}</p>
+                                <a href="{{ action.url }}" class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-gulf-blue-600 to-tory-blue-primary text-white rounded-xl font-medium hover:shadow-lg transition-all duration-300 hover:scale-105">
+                                    Take Action
+                                </a>
+                            </div>
+                            <div class="absolute inset-0 bg-gradient-to-br from-gulf-blue-600/10 to-tory-blue-primary/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-3xl pointer-events-none"></div>
                         </div>
-                        <h5 class="text-xl font-bold text-nepal-800 mb-3 group-hover:text-gulf-blue-600 transition-colors duration-300">{{ action.title }}</h5>
-                        <p class="text-nepal-600 mb-4">{{ action.description }}</p>
-                        <a href="{{ action.url }}" class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-gulf-blue-600 to-tory-blue-primary text-white rounded-xl font-medium hover:shadow-lg transition-all duration-300 hover:scale-105">
-                            Take Action
-                        </a>
-                    </div>
-                    <div class="absolute inset-0 bg-gradient-to-br from-gulf-blue-600/10 to-tory-blue-primary/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-3xl pointer-events-none"></div>
-                </div>
+                    {% elif action.title == 'Assign Devices to Teams' and can_manage_devices %}
+                        <div class="glass-card group relative overflow-hidden rounded-3xl backdrop-blur-xl bg-white/40 border border-white/30 shadow-2xl hover:shadow-3xl transition-all duration-500 hover:scale-105 hover:bg-white/50 priority-{{ action.priority|default:'medium' }}">
+                            <div class="p-6 text-center">
+                                <div class="action-icon mb-4 text-4xl">
+                                    {{ action.icon }}
+                                </div>
+                                <h5 class="text-xl font-bold text-nepal-800 mb-3 group-hover:text-gulf-blue-600 transition-colors duration-300">{{ action.title }}</h5>
+                                <p class="text-nepal-600 mb-4">{{ action.description }}</p>
+                                <a href="{{ action.url }}" class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-gulf-blue-600 to-tory-blue-primary text-white rounded-xl font-medium hover:shadow-lg transition-all duration-300 hover:scale-105">
+                                    Take Action
+                                </a>
+                            </div>
+                            <div class="absolute inset-0 bg-gradient-to-br from-gulf-blue-600/10 to-tory-blue-primary/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-3xl pointer-events-none"></div>
+                        </div>
+                    {% elif action.title == 'Monitor Critical Faults' and is_senior_foreman %}
+                        <div class="glass-card group relative overflow-hidden rounded-3xl backdrop-blur-xl bg-white/40 border border-white/30 shadow-2xl hover:shadow-3xl transition-all duration-500 hover:scale-105 hover:bg-white/50 priority-{{ action.priority|default:'medium' }}">
+                            <div class="p-6 text-center">
+                                <div class="action-icon mb-4 text-4xl">
+                                    {{ action.icon }}
+                                </div>
+                                <h5 class="text-xl font-bold text-nepal-800 mb-3 group-hover:text-gulf-blue-600 transition-colors duration-300">{{ action.title }}</h5>
+                                <p class="text-nepal-600 mb-4">{{ action.description }}</p>
+                                <a href="{{ action.url }}" class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-gulf-blue-600 to-tory-blue-primary text-white rounded-xl font-medium hover:shadow-lg transition-all duration-300 hover:scale-105">
+                                    Take Action
+                                </a>
+                            </div>
+                            <div class="absolute inset-0 bg-gradient-to-br from-gulf-blue-600/10 to-tory-blue-primary/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-3xl pointer-events-none"></div>
+                        </div>
+                    {% elif action.title == 'Assign Pending Faults' and can_assign_faults %}
+                        <div class="glass-card group relative overflow-hidden rounded-3xl backdrop-blur-xl bg-white/40 border border-white/30 shadow-2xl hover:shadow-3xl transition-all duration-500 hover:scale-105 hover:bg-white/50 priority-{{ action.priority|default:'medium' }}">
+                            <div class="p-6 text-center">
+                                <div class="action-icon mb-4 text-4xl">
+                                    {{ action.icon }}
+                                </div>
+                                <h5 class="text-xl font-bold text-nepal-800 mb-3 group-hover:text-gulf-blue-600 transition-colors duration-300">{{ action.title }}</h5>
+                                <p class="text-nepal-600 mb-4">{{ action.description }}</p>
+                                <a href="{{ action.url }}" class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-gulf-blue-600 to-tory-blue-primary text-white rounded-xl font-medium hover:shadow-lg transition-all duration-300 hover:scale-105">
+                                    Take Action
+                                </a>
+                            </div>
+                            <div class="absolute inset-0 bg-gradient-to-br from-gulf-blue-600/10 to-tory-blue-primary/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-3xl pointer-events-none"></div>
+                        </div>
+                    {% elif action.title == 'Report New Fault' and is_depot_foreperson %}
+                        <div class="glass-card group relative overflow-hidden rounded-3xl backdrop-blur-xl bg-white/40 border border-white/30 shadow-2xl hover:shadow-3xl transition-all duration-500 hover:scale-105 hover:bg-white/50 priority-{{ action.priority|default:'medium' }}">
+                            <div class="p-6 text-center">
+                                <div class="action-icon mb-4 text-4xl">
+                                    {{ action.icon }}
+                                </div>
+                                <h5 class="text-xl font-bold text-nepal-800 mb-3 group-hover:text-gulf-blue-600 transition-colors duration-300">{{ action.title }}</h5>
+                                <p class="text-nepal-600 mb-4">{{ action.description }}</p>
+                                <a href="{{ action.url }}" class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-gulf-blue-600 to-tory-blue-primary text-white rounded-xl font-medium hover:shadow-lg transition-all duration-300 hover:scale-105">
+                                    Take Action
+                                </a>
+                            </div>
+                            <div class="absolute inset-0 bg-gradient-to-br from-gulf-blue-600/10 to-tory-blue-primary/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-3xl pointer-events-none"></div>
+                        </div>
+                    {% elif action.title == 'Monitor Team Progress' and is_depot_foreperson %}
+                        <div class="glass-card group relative overflow-hidden rounded-3xl backdrop-blur-xl bg-white/40 border border-white/30 shadow-2xl hover:shadow-3xl transition-all duration-500 hover:scale-105 hover:bg-white/50 priority-{{ action.priority|default:'medium' }}">
+                            <div class="p-6 text-center">
+                                <div class="action-icon mb-4 text-4xl">
+                                    {{ action.icon }}
+                                </div>
+                                <h5 class="text-xl font-bold text-nepal-800 mb-3 group-hover:text-gulf-blue-600 transition-colors duration-300">{{ action.title }}</h5>
+                                <p class="text-nepal-600 mb-4">{{ action.description }}</p>
+                                <a href="{{ action.url }}" class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-gulf-blue-600 to-tory-blue-primary text-white rounded-xl font-medium hover:shadow-lg transition-all duration-300 hover:scale-105">
+                                    Take Action
+                                </a>
+                            </div>
+                            <div class="absolute inset-0 bg-gradient-to-br from-gulf-blue-600/10 to-tory-blue-primary/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-3xl pointer-events-none"></div>
+                        </div>
+                    {% elif action.title == 'Report Fault Located' and is_team_leader %}
+                        <div class="glass-card group relative overflow-hidden rounded-3xl backdrop-blur-xl bg-white/40 border border-white/30 shadow-2xl hover:shadow-3xl transition-all duration-500 hover:scale-105 hover:bg-white/50 priority-{{ action.priority|default:'medium' }}">
+                            <div class="p-6 text-center">
+                                <div class="action-icon mb-4 text-4xl">
+                                    {{ action.icon }}
+                                </div>
+                                <h5 class="text-xl font-bold text-nepal-800 mb-3 group-hover:text-gulf-blue-600 transition-colors duration-300">{{ action.title }}</h5>
+                                <p class="text-nepal-600 mb-4">{{ action.description }}</p>
+                                <a href="{{ action.url }}" class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-gulf-blue-600 to-tory-blue-primary text-white rounded-xl font-medium hover:shadow-lg transition-all duration-300 hover:scale-105">
+                                    Take Action
+                                </a>
+                            </div>
+                            <div class="absolute inset-0 bg-gradient-to-br from-gulf-blue-600/10 to-tory-blue-primary/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-3xl pointer-events-none"></div>
+                        </div>
+                    {% elif action.title == 'Update Work Progress' and is_team_leader %}
+                        <div class="glass-card group relative overflow-hidden rounded-3xl backdrop-blur-xl bg-white/40 border border-white/30 shadow-2xl hover:shadow-3xl transition-all duration-500 hover:scale-105 hover:bg-white/50 priority-{{ action.priority|default:'medium' }}">
+                            <div class="p-6 text-center">
+                                <div class="action-icon mb-4 text-4xl">
+                                    {{ action.icon }}
+                                </div>
+                                <h5 class="text-xl font-bold text-nepal-800 mb-3 group-hover:text-gulf-blue-600 transition-colors duration-300">{{ action.title }}</h5>
+                                <p class="text-nepal-600 mb-4">{{ action.description }}</p>
+                                <a href="{{ action.url }}" class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-gulf-blue-600 to-tory-blue-primary text-white rounded-xl font-medium hover:shadow-lg transition-all duration-300 hover:scale-105">
+                                    Take Action
+                                </a>
+                            </div>
+                            <div class="absolute inset-0 bg-gradient-to-br from-gulf-blue-600/10 to-tory-blue-primary/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-3xl pointer-events-none"></div>
+                        </div>
+                    {% elif action.title == 'Request Assistance' and is_team_leader %}
+                        <div class="glass-card group relative overflow-hidden rounded-3xl backdrop-blur-xl bg-white/40 border border-white/30 shadow-2xl hover:shadow-3xl transition-all duration-500 hover:scale-105 hover:bg-white/50 priority-{{ action.priority|default:'medium' }}">
+                            <div class="p-6 text-center">
+                                <div class="action-icon mb-4 text-4xl">
+                                    {{ action.icon }}
+                                </div>
+                                <h5 class="text-xl font-bold text-nepal-800 mb-3 group-hover:text-gulf-blue-600 transition-colors duration-300">{{ action.title }}</h5>
+                                <p class="text-nepal-600 mb-4">{{ action.description }}</p>
+                                <a href="{{ action.url }}" class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-gulf-blue-600 to-tory-blue-primary text-white rounded-xl font-medium hover:shadow-lg transition-all duration-300 hover:scale-105">
+                                    Take Action
+                                </a>
+                            </div>
+                            <div class="absolute inset-0 bg-gradient-to-br from-gulf-blue-600/10 to-tory-blue-primary/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-3xl pointer-events-none"></div>
+                        </div>
+                    {% elif action.title == 'View Current Work' and user_role == 'team_member' %}
+                        <div class="glass-card group relative overflow-hidden rounded-3xl backdrop-blur-xl bg-white/40 border border-white/30 shadow-2xl hover:shadow-3xl transition-all duration-500 hover:scale-105 hover:bg-white/50 priority-{{ action.priority|default:'medium' }}">
+                            <div class="p-6 text-center">
+                                <div class="action-icon mb-4 text-4xl">
+                                    {{ action.icon }}
+                                </div>
+                                <h5 class="text-xl font-bold text-nepal-800 mb-3 group-hover:text-gulf-blue-600 transition-colors duration-300">{{ action.title }}</h5>
+                                <p class="text-nepal-600 mb-4">{{ action.description }}</p>
+                                <a href="{{ action.url }}" class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-gulf-blue-600 to-tory-blue-primary text-white rounded-xl font-medium hover:shadow-lg transition-all duration-300 hover:scale-105">
+                                    Take Action
+                                </a>
+                            </div>
+                            <div class="absolute inset-0 bg-gradient-to-br from-gulf-blue-600/10 to-tory-blue-primary/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-3xl pointer-events-none"></div>
+                        </div>
+                    {% elif action.title == 'Contact Team Leader' and user_role == 'team_member' %}
+                        <div class="glass-card group relative overflow-hidden rounded-3xl backdrop-blur-xl bg-white/40 border border-white/30 shadow-2xl hover:shadow-3xl transition-all duration-500 hover:scale-105 hover:bg-white/50 priority-{{ action.priority|default:'medium' }}">
+                            <div class="p-6 text-center">
+                                <div class="action-icon mb-4 text-4xl">
+                                    {{ action.icon }}
+                                </div>
+                                <h5 class="text-xl font-bold text-nepal-800 mb-3 group-hover:text-gulf-blue-600 transition-colors duration-300">{{ action.title }}</h5>
+                                <p class="text-nepal-600 mb-4">{{ action.description }}</p>
+                                <a href="{{ action.url }}" class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-gulf-blue-600 to-tory-blue-primary text-white rounded-xl font-medium hover:shadow-lg transition-all duration-300 hover:scale-105">
+                                    Take Action
+                                </a>
+                            </div>
+                            <div class="absolute inset-0 bg-gradient-to-br from-gulf-blue-600/10 to-tory-blue-primary/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-3xl pointer-events-none"></div>
+                        </div>
+                    {% endif %}
                 {% endfor %}
             </div>
         </div>

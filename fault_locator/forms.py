@@ -183,7 +183,9 @@ class TeamDeploymentForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         
         # Only show teams that have devices assigned and are not currently deployed
-        teams_with_devices = FaultLocatorDeviceAssignment.objects.values_list('team_id', flat=True)
+        teams_with_devices = FaultLocatorDeviceAssignment.objects.select_related('device').filter(
+            device__status__in=['available', 'assigned']  # Only working devices
+        ).values_list('team_id', flat=True)
         team_queryset = FaultLocatorTeam.objects.filter(
             id__in=teams_with_devices,
             current_depot__isnull=True
@@ -196,7 +198,7 @@ class TeamDeploymentForm(forms.ModelForm):
             users_in_region = UserProfile.objects.filter(
                 region=user_region,
                 is_active=True
-            ).values_list('user_id', flat=True)
+            ).values_list('id', flat=True)
             
             team_queryset = team_queryset.filter(
                 members__in=users_in_region

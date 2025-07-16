@@ -5,9 +5,9 @@ from . import central_role_views
 from . import senior_foreman_views
 
 urlpatterns = [
-    # Dashboard and home
-    path('', views.fault_locator_dashboard, name='fault_locator_home'),
-    path('dashboard/', views.fault_locator_dashboard, name='fault_locator_dashboard'),
+    # Dashboard and home - redirect to role-based dashboard
+    path('', role_views.role_based_dashboard, name='fault_locator_home'),
+    path('dashboard/', role_views.role_based_dashboard, name='fault_locator_dashboard'),
     
     # New Role-Based Dashboard
     path('role-dashboard/', role_views.role_based_dashboard, name='role_based_dashboard'),
@@ -77,6 +77,9 @@ urlpatterns = [
     
     # Individual fault detail/update view
     path('faults/<int:fault_id>/', views.field_update, name='fault_detail'),
+    
+    # Fault priority change
+    path('faults/<int:fault_id>/change-priority/', views.change_fault_priority, name='change_fault_priority'),
     
     # Debug view
     path('debug-user/', views.debug_user, name='debug_user'),

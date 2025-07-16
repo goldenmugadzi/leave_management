@@ -20,9 +20,11 @@
                             </span>
                         </small>
                     </div>
+                    {% if can_assign_faults %}
                     <a href="{% url 'assign_fault' %}?fault_id={{ fault.id }}" class="btn btn-primary btn-sm">
                         Assign
                     </a>
+                    {% endif %}
                 </div>
                 {% endfor %}
                 

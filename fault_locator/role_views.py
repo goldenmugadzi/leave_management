@@ -194,6 +194,14 @@ def role_based_dashboard(request):
         'user_profile': user_profile,
         'user_role': user_role,
         'role_display': dict(FaultLocatorRole.ROLE_CHOICES).get(user_role, user_role),
+        # Add permission checks to context
+        'can_deploy_teams': can_deploy_teams(user_profile),
+        'can_manage_devices': can_manage_devices(user_profile),
+        'can_assign_faults': can_assign_faults(user_profile),
+        'can_create_teams': can_create_teams(user_profile),
+        'is_senior_foreman': is_senior_foreman(user_profile),
+        'is_depot_foreperson': is_depot_foreperson(user_profile),
+        'is_team_leader': is_team_leader(user_profile),
     }
     
     # Role-specific context and actions
@@ -319,6 +327,7 @@ def get_depot_foreperson_context(user_profile):
         'teams_at_depot': teams_at_depot,
         'my_assignments': my_assignments,
         'stats': stats,
+        'can_assign_faults': can_assign_faults(user_profile, user_depot),
         'primary_actions': [
             {
                 'title': 'Assign Pending Faults',
