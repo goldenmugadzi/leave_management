@@ -16,7 +16,6 @@ django.setup()
 from fault_locator.models import *
 from django.contrib.auth import get_user_model
 from fault_locator.views import get_user_fault_locator_role
-from fault_locator.models import RoleAssignment
 
 User = get_user_model()
 
@@ -77,12 +76,6 @@ if user:
     is_senior_fm = is_senior_foreman(user)
     print(f"Is depot foreperson: {is_depot_fp}")
     print(f"Is senior foreman: {is_senior_fm}")
-    
-    # Check role assignment history
-    role_assignments = RoleAssignment.objects.filter(user=user)
-    print(f"Role assignments: {role_assignments.count()}")
-    for assignment in role_assignments:
-        print(f"  - Role: {assignment.role.name}, Active: {assignment.is_active}")
     
 else:
     print("❌ User not found!")

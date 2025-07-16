@@ -15,7 +15,7 @@ django.setup()
 
 from fault_locator.models import *
 from django.contrib.auth import get_user_model
-from central_roles.models import Role
+from it.users.models import Roles, Application
 
 User = get_user_model()
 
@@ -35,19 +35,19 @@ current_roles = user.roles.all()
 print(f"Current roles: {list(current_roles.values_list('name', flat=True))}")
 
 # Check if TEAM_LEADER role exists
-team_leader_role = Role.objects.filter(name='TEAM_LEADER').first()
+team_leader_role = Roles.objects.filter(name='TEAM_LEADER').first()
 if not team_leader_role:
     print("❌ TEAM_LEADER role not found in system!")
     # Check what roles exist
-    all_roles = Role.objects.all()
+    all_roles = Roles.objects.all()
     print(f"Available roles: {list(all_roles.values_list('name', flat=True))}")
     
     # Look for similar roles
-    similar_roles = Role.objects.filter(name__icontains='TEAM').values_list('name', flat=True)
+    similar_roles = Roles.objects.filter(name__icontains='TEAM').values_list('name', flat=True)
     print(f"Team-related roles: {list(similar_roles)}")
     
     # Create TEAM_LEADER role if it doesn't exist
-    team_leader_role = Role.objects.create(name='TEAM_LEADER', description='Team Leader for fault locator teams')
+    team_leader_role = Roles.objects.create(name='TEAM_LEADER', description='Team Leader for fault locator teams')
     print(f"✅ Created TEAM_LEADER role")
 
 # Check if user already has TEAM_LEADER role
