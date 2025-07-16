@@ -43,3 +43,7 @@ class OutPutPerformanceDimension(TimeStamp):
     description = models.CharField(max_length=500)
     weight = models.DecimalField(max_digits=5, decimal_places=2, default=0.0)
     allowable_variance = models.DecimalField(max_digits=10, decimal_places=2, default=0.0)
+    agreed_target = models.DecimalField(max_digits=10, decimal_places=2, default=0.0)
+
+    def __str__(self):
+        return f"{self.department_output} - {self.performance_indicator}"
