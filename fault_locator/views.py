@@ -1988,10 +1988,9 @@ def recall_team(request, team_id):
         messages.warning(request, f"Team '{team.name}' is not currently deployed")
         return redirect('team_overview')
     
-    # Check for active assignments (assigned or in_progress)
+    # Check for active assignments (not yet located)
     active_assignments = FaultAssignment.objects.filter(
         team=team,
-        status__in=["assigned", "in_progress"],
         located_at__isnull=True
     )
     
@@ -1999,6 +1998,18 @@ def recall_team(request, team_id):
         if active_assignments.exists() and not request.POST.get('force_recall'):
             messages.error(request, "Team has active fault assignments. Use force recall if necessary.")
             return redirect('recall_team', team_id=team.id)
+        # Handle reassign after faults
+        reassign_after_faults = request.POST.get('reassign_after_faults') == 'on'
+        reassign_depot_id = request.POST.get('reassign_depot')
+        recall_notes = request.POST.get('recall_notes', '')
+        
+        reassign_depot = None
+        if reassign_after_faults and reassign_depot_id:
+            try:
+                from it.users.models import Depots
+                reassign_depot = Depots.objects.get(id=reassign_depot_id)
+            except Depots.DoesNotExist:
+                reassign_depot = None
         
         # Find current deployment
         current_deployment = TeamDeployment.objects.filter(
@@ -2008,15 +2019,22 @@ def recall_team(request, team_id):
         
         if current_deployment:
             current_deployment.recalled_at = timezone.now()
+            current_deployment.recalled_by = user_profile
+            
+            # Store recall notes and reassign intent
+            recall_notes_text = recall_notes
+            if reassign_after_faults and reassign_depot:
+                reassign_info = f"REASSIGN_TO:{reassign_depot.id}:{reassign_depot.depot}"
+                recall_notes_text = f"{recall_notes}\n{reassign_info}" if recall_notes else reassign_info
+            
+            current_deployment.recall_notes = recall_notes_text
             current_deployment.save()
-        
         # Update team status
         depot_name = team.current_depot.depot
         team.current_depot = None
         team.assigned_at = None
         team.assigned_by = None
         team.save()
-        
         # Notify team members
         for member in team.members.all():
             if member.email:
@@ -2030,14 +2048,26 @@ def recall_team(request, team_id):
                     fault_or_team_id=team.id,
                     request=request
                 )
+        # Success message
+        success_message = f"Team '{team.name}' recalled from {depot_name}"
+        if reassign_after_faults and reassign_depot:
+            success_message += f" and will be redeployed to {reassign_depot.depot} after current faults are completed"
         
-        messages.success(request, f"Team '{team.name}' recalled from {depot_name}")
+        messages.success(request, success_message)
         return redirect('team_overview')
+    
+    from it.users.models import Depots
+    
+    # Filter depots by user's region
+    depots = Depots.objects.all().order_by('depot')
+    if user_profile and user_profile.region:
+        depots = depots.filter(region=user_profile.region)
     
     context = {
         'team': team,
         'active_assignments': active_assignments,
         'user_profile': user_profile,
+        'depots': depots,
     }
     return render(request, "fault_locator/recall_team.html", context)
 
