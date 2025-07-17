@@ -1,7 +1,9 @@
+from typing import List
 from django.db.models.query import QuerySet
 from it.users.models import UserProfile, CostCenter, Designations
-from ..models import KeyResultArea, DepartmentObjective, DepartmentOutput
-from ..helpers.types.dept_workplan import DepartmentalOutTypes
+from ..models import KeyResultArea, DepartmentObjective, DepartmentOutput, OutPutPerformanceDimension
+from ..models.departmental_workplan import PERFORMANCE_INDICATOR
+from ..helpers.types.dept_workplan import DepartmentalOutTypes, OutputPerformanceDimensionType
 
 class DepartmentalObjectiveRepository:
     def create(self, creator: UserProfile, key_result_area: KeyResultArea, cost_center: CostCenter, department_objective_desc: str)->DepartmentObjective:
@@ -119,3 +121,61 @@ class DepartmentalOutRepository:
             return qr.first()
         except Exception as e:
             raise Exception(f"DepartmentalOutRepository get_by_id with department out pk: {dept_output_id}, failed with error: {e}")
+
+class OutPutPerformanceDimensionRepository:
+    def create_in_bulk(self, department_output_obj: DepartmentOutput)->bool:
+        try:
+            output_perf_dimension_instances = []
+            
+            for perf_dimension_type in PERFORMANCE_INDICATOR:
+                perf_dimension_obj = OutPutPerformanceDimension(
+                        department_output=department_output_obj,
+                        description="",
+                        performance_indicator=perf_dimension_type[0][0],
+                        allowable_variance=0.0,
+                        agreed_target=0.0,
+                        weight=0.0
+                    )
+                output_perf_dimension_instances.append(perf_dimension_obj)
+            OutPutPerformanceDimension.objects.bulk_create(output_perf_dimension_instances)
+            
+            return True
+        except Exception as e:
+            raise Exception(f"[OutPutPerformanceDimensionRepository] create_in_bulk, failed with error: {e}")
+        
+    def update(self, output_perf_dimension_obj: OutPutPerformanceDimension, data: OutputPerformanceDimensionType)->OutPutPerformanceDimension:
+        try:
+            is_changed = False
+            
+            if output_perf_dimension_obj.performance_indicator != data.performance_indicator:
+                output_perf_dimension_obj.performance_indicator = data.performance_indicator
+                is_changed = True
+                
+            if output_perf_dimension_obj.description != data.description:
+                output_perf_dimension_obj.description = data.description
+                is_changed = True
+            
+                
+            if output_perf_dimension_obj.weight != data.weight:
+                output_perf_dimension_obj.weight = data.weight
+                is_changed = True
+            
+                
+            if output_perf_dimension_obj.allowable_variance != data.allowable_variance:
+                output_perf_dimension_obj.allowable_variance = data.allowable_variance
+                is_changed = True
+            
+                
+            if output_perf_dimension_obj.agreed_target != data.agreed_target:
+                output_perf_dimension_obj.agreed_target = data.agreed_target
+                is_changed = True
+            
+            if is_changed:
+                output_perf_dimension_obj.save()
+            
+            return output_perf_dimension_obj
+        except Exception as e:
+            raise Exception(f"[OutPutPerformanceDimensionRepository] Update Repo for output perf_dimension obj pk: {output_perf_dimension_obj.id}, failed with error: {e}")
+    
+        
+        

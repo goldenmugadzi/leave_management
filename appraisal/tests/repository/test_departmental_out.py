@@ -1,8 +1,8 @@
 from unittest import TestCase
 from unittest.mock import Mock, patch
-from ...repository.departmental_workplan import DepartmentalOutRepository
-from ...helpers.types.dept_workplan import DepartmentalOutTypes
-from ...models.departmental_workplan import DepartmentObjective, DepartmentOutput
+from ...repository.departmental_workplan import DepartmentalOutRepository, OutPutPerformanceDimensionRepository
+from ...helpers.types.dept_workplan import DepartmentalOutTypes, OutputPerformanceDimensionType
+from ...models.departmental_workplan import DepartmentObjective, DepartmentOutput, OutPutPerformanceDimension
 from it.users.models import UserProfile, Designations
 
 class TestDepartmentalOutCreateRepository(TestCase):
@@ -118,3 +118,67 @@ class TestDepartmentalOutUpdateRepository(TestCase):
                                 data=mock_data
                             )
         self.assertIn(f"DepartmentalOutRepository Update Repo for department out obj pk: 1, failed with error: {exception_description}", str(context.exception))
+        
+class TestOutPutPerformanceDimensionUpdateRepository(TestCase):
+    def setUp(self):
+        self.repo = OutPutPerformanceDimensionRepository()
+        self.mock_dept_output_obj = Mock(spec=DepartmentOutput)
+        self.mock_performance_indicator_field = "Timeliness"
+        self.mock_description_field = "Description"
+        self.mock_weight_field = 40.0
+        self.mock_allowable_variance_field = 5.0
+        self.mock_agreed_target_field = 100
+    
+    def mock_output_perf_dimension_data(self):
+        mock = Mock(spec=OutputPerformanceDimensionType)
+        mock.performance_indicator = self.mock_performance_indicator_field
+        mock.description = self.mock_description_field
+        mock.weight = self.mock_weight_field
+        mock.allowable_variance = self.mock_allowable_variance_field
+        mock.agreed_target = self.mock_agreed_target_field
+        return mock
+    
+    def mock_output_perf_dimension_obj(self):
+        mock = Mock(spec=OutPutPerformanceDimension)
+        mock.performance_indicator = self.mock_performance_indicator_field
+        mock.description = self.mock_description_field
+        mock.weight = self.mock_weight_field
+        mock.allowable_variance = self.mock_allowable_variance_field
+        mock.agreed_target = self.mock_agreed_target_field
+        return mock
+        
+    def test_update_save_orm_called_once(self):
+        mock_save_orm = Mock()
+        mock_data = self.mock_output_perf_dimension_data()
+        mock_output_perf_dimension_obj = self.mock_output_perf_dimension_obj()
+        mock_data.performance_indicator = "Quantity"
+        mock_output_perf_dimension_obj.save = mock_save_orm
+        
+        self.repo.update(output_perf_dimension_obj=mock_output_perf_dimension_obj, data=mock_data)
+        mock_output_perf_dimension_obj.save.assert_called_once()
+        
+    def test_update_success(self):
+        mock_save_orm = Mock()
+        mock_data = self.mock_output_perf_dimension_data()
+        mock_output_perf_dimension_obj = self.mock_output_perf_dimension_obj()
+        mock_data.performance_indicator = "Quantity"
+        mock_output_perf_dimension_obj.save = mock_save_orm
+        
+        got = self.repo.update(output_perf_dimension_obj=mock_output_perf_dimension_obj, data=mock_data)
+        self.assertEqual(got, mock_output_perf_dimension_obj)
+        
+    def test_update_save_orm_raise_error(self):
+        mock_save_orm = Mock()
+        mock_data = self.mock_output_perf_dimension_data()
+        mock_output_perf_dimension_obj = self.mock_output_perf_dimension_obj()
+        
+        mock_data.performance_indicator = "Quantity"
+        mock_output_perf_dimension_obj.save = mock_save_orm
+        mock_output_perf_dimension_obj.id = 1
+        database_exception = "Database error"
+        mock_output_perf_dimension_obj.save.side_effect = Exception(database_exception)
+        
+        with self.assertRaises(Exception) as context:
+            self.repo.update(output_perf_dimension_obj=mock_output_perf_dimension_obj, data=mock_data)
+        
+        self.assertIn(f"[OutPutPerformanceDimensionRepository] Update Repo for output perf_dimension obj pk: 1, failed with error: {database_exception}", str(context.exception))
