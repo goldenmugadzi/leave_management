@@ -44,7 +44,8 @@ from .view import (AppraisalCreateView,
                    DepartmentOutputTemplateView,
                    DepartmentOutputCreateView,
                    DepartmentOutputDetailUpdateView,
-                   OutPutPerformanceDimensionTemplateView
+                   OutPutPerformanceDimensionTemplateView,
+                   OutPutPerformanceDimensionDetailUpdateView
                    )
 
 urlpatterns = [
@@ -84,6 +85,7 @@ urlpatterns = [
     
     # ========================== Output Performance Dimension ===========================
     path('departmental-output/<int:department_output_id>/performance-dimension', OutPutPerformanceDimensionTemplateView.as_view(), name='output_perf_dimension_index'),
+    path('departmental-output/performance-dimension/<int:output_performance_dimension_id>', OutPutPerformanceDimensionDetailUpdateView.as_view(), name='output_perf_dimension_detail_update'),
     
     
     # ================== KRA urls =================================

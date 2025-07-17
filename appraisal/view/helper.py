@@ -3,7 +3,7 @@ from django.forms import BaseModelForm
 from django.contrib import messages
 from django.http import HttpRequest
 from ..helpers.types.kra import KRAType, TargetScoreType, ActivityType, PerformanceDimensionType, KRAOutComeType
-from ..helpers.types.dept_workplan import DepartmentalOutTypes
+from ..helpers.types.dept_workplan import DepartmentalOutTypes, OutputPerformanceDimensionType
 from ..models import TargetScore
 from pydantic import ValidationError, BaseModel
 from loguru import logger
@@ -71,6 +71,16 @@ class DepartmentOutputDeserializationStrategy:
                 "weight": form_object.cleaned_data.get("weight")
                 }
         return DepartmentalOutTypes(**data)
+class OutputPerformanceDimensionDeserializationStrategy:
+    def deserialize(self, form_object: BaseModelForm)->BaseModel:
+        data = {
+                "performance_indicator": form_object.cleaned_data.get("performance_indicator"),
+                "description": form_object.cleaned_data.get("description"),
+                "weight": form_object.cleaned_data.get("weight"),
+                "allowable_variance": form_object.cleaned_data.get("allowable_variance"),
+                "agreed_target": form_object.cleaned_data.get("agreed_target")
+                }
+        return OutputPerformanceDimensionType(**data)
 
 class PayloadDeserializationStrategyContext:
     def __init__(self, strategy: PayloadDeserializationStrategyInterface):

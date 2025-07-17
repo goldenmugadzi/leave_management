@@ -6,7 +6,7 @@ from django.views.generic import TemplateView
 from django.urls import reverse, reverse_lazy
 from django.utils.text import slugify
 
-from django.shortcuts import redirect, render, get_object_or_404
+from django.shortcuts import redirect
 from django.contrib.messages.views import SuccessMessageMixin
 from django.contrib import messages
 from ...repository.departmental_workplan import DepartmentalOutRepository, DepartmentalObjectiveRepository

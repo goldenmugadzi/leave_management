@@ -184,3 +184,12 @@ class OutPutPerformanceDimensionRepository:
             
         except Exception as e:
             raise Exception(f"[OutPutPerformanceDimensionRepository] fetch_by_department_output with pk: {department_output_id}, failed with error: {e}")
+
+    def get_by_id(self, output_perf_dimension_id: int)->OutPutPerformanceDimension|None:
+        try:
+            qr = OutPutPerformanceDimension.objects.filter(id=output_perf_dimension_id).select_related("department_output")
+            if not qr.exists():
+                return None
+            return qr.first()
+        except Exception as e:
+            raise Exception(f"[OutPutPerformanceDimensionRepository] output_perf_dimension_id with pk: {output_perf_dimension_id}, failed with error: {e}")
