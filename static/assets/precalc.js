@@ -11,7 +11,7 @@ window.addEventListener("DOMContentLoaded", () => {
             // make budget id integer
             budget_id = parseInt(budget_id)
             console.log(amount, budget_id)
-            fetch(`/ace/balance/${budget_id}`).then(r =>
+            fetch(`/ace/get_budget_balance/${budget_id}`).then(r =>
             r.json().then(data => {
                 console.log(data)
 

@@ -201,10 +201,8 @@ class Transactions(models.Model):
     amount = models.FloatField(blank=True, null=True, max_length=120)
     budget = models.ForeignKey(AssetBudget, on_delete=models.CASCADE)
 
-    # quotation = models.ForeignKey(Ace, on_delete=models.CASCADE)
-
     def __str__(self):
-        return self.transaction_id
+        return str(self.transaction_id)
 
 
 class Quotation(models.Model):
