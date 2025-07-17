@@ -178,4 +178,9 @@ class OutPutPerformanceDimensionRepository:
             raise Exception(f"[OutPutPerformanceDimensionRepository] Update Repo for output perf_dimension obj pk: {output_perf_dimension_obj.id}, failed with error: {e}")
     
         
-        
+    def fetch_by_department_output_id(self, department_output_id: int)->QuerySet[OutPutPerformanceDimension]:
+        try:
+            return OutPutPerformanceDimension.objects.filter(department_output__id=department_output_id).select_related("department_output")
+            
+        except Exception as e:
+            raise Exception(f"[OutPutPerformanceDimensionRepository] fetch_by_department_output with pk: {department_output_id}, failed with error: {e}")

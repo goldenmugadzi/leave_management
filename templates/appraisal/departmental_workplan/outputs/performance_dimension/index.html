@@ -1,0 +1,63 @@
+{% extends "admin_layout.html" %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+<div class="content-wrapper">
+    <div class="grid grid-cols-1">
+        <div class="bg-gulf-blue-100 shadow-lg rounded-lg p-6">
+            <div class="flex justify-between">
+                <div>
+                    <h1 class="font-bold">Performance Dimensions</h1>
+                    <p class="text-sm text-muted">
+                        Departmental Output: <strong>{{ department_out_obj.output_description }}</strong> with weight: <strong>{{ department_out_obj.weight }} %</strong>
+                    </p>
+                </div>
+
+                <div>
+                    {% include "appraisal/kra/weight_progress.html" with weight_of="Departmental Output" %} 
+                </div>
+            </div>
+                
+        </div>
+    </div>
+
+    <div class="bg-gulf-blue-100 shadow-lg rounded-lg p-6 my-6">
+        <div style="max-height: 280px; overflow-y: auto;">
+            <table 
+            class="w-full border border-blue-800 rounded-lg shadow-lg">
+                <thead class="bg-blue-800 text-white">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-md font-semibold">Performance Indicator</th>
+                        <th class="px-6 py-3 text-left text-md font-semibold">Weight</th>
+                        <th class="px-6 py-3 text-left text-md font-semibold">Agreed Target</th>
+                        <th class="px-6 py-3 text-left text-md font-semibold">Allowable Variance</th>
+                        <th></th>
+                    </tr>
+                </thead>
+            <tbody class="divide-y divide-blue-300 bg-blue-50">
+            {% for performance_dimensions_obj in performance_dimensions_qr %}
+                <tr class="hover:bg-blue-100">
+                    <td class="px-6 py-4 text-md text-blue-900 truncate max-w-xs">{{performance_dimensions_obj.performance_indicator}}</td>
+                    <td class="px-6 py-4 text-md text-blue-900">{{performance_dimensions_obj.weight}} %</td>
+                    <td class="px-6 py-4 text-md text-blue-900">{{performance_dimensions_obj.agreed_target}} %</td>
+                    <td class="px-6 py-4 text-md text-blue-900">(+-) {{performance_dimensions_obj.allowable_variance}} %</td>
+                    
+                    <td>
+                        <div class="flex justify-center ml-2">
+                            <a href="#"
+                            class="bg-blue-500 hover:bg-blue-700 inline-block rounded-full text-white py-2 px-4"
+                                >View</a>
+                        </div>
+                        
+                    </td>
+                </tr>
+            {% endfor %}
+         </tbody>
+       </table>
+
+      </div>
+    </div>
+  </div>
+{% endblock %}
+

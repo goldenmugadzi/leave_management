@@ -43,7 +43,8 @@ from .view import (AppraisalCreateView,
                    DepartmentObjectiveDetailUpdateView,
                    DepartmentOutputTemplateView,
                    DepartmentOutputCreateView,
-                   DepartmentOutputDetailUpdateView
+                   DepartmentOutputDetailUpdateView,
+                   OutPutPerformanceDimensionTemplateView
                    )
 
 urlpatterns = [
@@ -71,14 +72,18 @@ urlpatterns = [
     path('qualification/<int:appraisal_id>', UserQualificationCreateView.as_view(), name='create_qualification'),
     path('qualification/<int:qualification_id>/view', UserQualificationUpdateView.as_view(), name='update_qualification'),
     
-    # ======================== Departmental workplan =========================
+    # ======================== Departmental objective workplan =========================
     path('departmental-workplan/list', DepartmentObjectiveTemplateView.as_view(), name='departmental_workplan_index'),
     path('departmental-workplan/create', DepartmentObjectiveCreateView.as_view(), name='departmental_objective_create'),
     path('departmental-workplan/<int:departmental_objective_id>', DepartmentObjectiveDetailUpdateView.as_view(), name='departmental_workplan_update_detail'),
     
+    # ======================== Department outputs =================================
     path('departmental-outputs/<int:departmental_objective_id>/list', DepartmentOutputTemplateView.as_view(), name='departmental_output_index'),
     path('departmental-outputs/<int:departmental_objective_id>/designation/<int:designation_id>/create', DepartmentOutputCreateView.as_view(), name='departmental_output_create'),
     path('departmental-outputs/designation/<int:designation_id>/output/<int:department_output_id>', DepartmentOutputDetailUpdateView.as_view(), name='departmental_output_detail_update'),
+    
+    # ========================== Output Performance Dimension ===========================
+    path('departmental-output/<int:department_output_id>/performance-dimension', OutPutPerformanceDimensionTemplateView.as_view(), name='output_perf_dimension_index'),
     
     
     # ================== KRA urls =================================

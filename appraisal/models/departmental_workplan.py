@@ -25,7 +25,7 @@ class DepartmentOutput(TimeStamp):
     weight = models.DecimalField(max_digits=5, decimal_places=2, default=0.0)
 
     def __str__(self):
-        return f"{self.department_objective}"
+        return f"{self.output_description}"
     
 PERFORMANCE_INDICATOR = [
         ('Quantity', 'Quantity'),
@@ -37,10 +37,10 @@ PERFORMANCE_INDICATOR = [
 
 class OutPutPerformanceDimension(TimeStamp):
     created_by = models.ForeignKey(User, on_delete=models.RESTRICT, related_name="dept_perf_dimension_creator", null=True)
-    updated_by = models.ForeignKey(User, on_delete=models.RESTRICT, related_name="dept_perf_dimension_updater", null=True)
+    updated_by = models.ForeignKey(User, on_delete=models.RESTRICT, related_name="dept_perf_dimension_updater", null=True, blank=True)
     department_output = models.ForeignKey(DepartmentOutput, on_delete=models.RESTRICT, related_name="dept_output", null=True)
     performance_indicator = models.CharField(max_length=30, choices=PERFORMANCE_INDICATOR, null=True, blank=True)
-    description = models.CharField(max_length=500)
+    description = models.CharField(max_length=500, blank=True, null=True)
     weight = models.DecimalField(max_digits=5, decimal_places=2, default=0.0)
     allowable_variance = models.DecimalField(max_digits=10, decimal_places=2, default=0.0)
     agreed_target = models.DecimalField(max_digits=10, decimal_places=2, default=0.0)

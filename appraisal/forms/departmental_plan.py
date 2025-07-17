@@ -1,7 +1,7 @@
 from django import forms
 from it.users.models import CostCenter, Designations, UserProfile
 from ..models.helpers import get_year_choices
-from ..models.departmental_workplan import DepartmentObjective, DepartmentOutput
+from ..models.departmental_workplan import DepartmentObjective, DepartmentOutput, OutPutPerformanceDimension
 
 class CostCenterFilterForm(forms.Form):
     cost_center = forms.ModelChoiceField(queryset=CostCenter.objects.all())
@@ -36,3 +36,8 @@ class DesignationFilterForm(forms.Form):
             cost_center_designations_id = cost_center_users.values_list("designation_id", flat=True).distinct()
             cost_center_designations_qr = Designations.objects.filter(id__in=cost_center_designations_id)
             self.fields['designations'].queryset = cost_center_designations_qr
+
+class OutPutPerformanceDimensionUpdateForm(forms.ModelForm):
+    class Meta:
+        model = OutPutPerformanceDimension
+        fields = ["performance_indicator", "description", "weight", "allowable_variance", "agreed_target"]
