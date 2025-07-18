@@ -83,18 +83,18 @@ APPLICATIONS = [
         "iconUrl": "assets/images/change.png",
         "url": "/change_requests/change_request_index"
     },
-    {
-        "name": "asset_register",
-        "title": "IT Asset Register",
-        "iconUrl": "assets/images/register.png",
-        "url": "/table_asset/"
-    },
-    {
-        "name": "comm_files",
-        "title": "Commercial Files",
-        "iconUrl": "assets/images/customer.png",
-        "url": "/commercial/customers"
-    },
+    # {
+    #     "name": "asset_register",
+    #     "title": "IT Asset Register",
+    #     "iconUrl": "assets/images/register.png",
+    #     "url": "/table_asset/"
+    # },
+    # {
+    #     "name": "comm_files",
+    #     "title": "Commercial Files",
+    #     "iconUrl": "assets/images/customer.png",
+    #     "url": "/commercial/customers"
+    # },
 ]
 
 REPORTS = [
