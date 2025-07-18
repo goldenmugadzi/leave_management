@@ -115,7 +115,7 @@ class Ace2(models.Model):
     ]
 
     CURRENCY_CHOICES = [
-        ('ZIG', 'ZIG'),
+        ('ZWG', 'ZWG'),
         # ('USD', 'USD'),  # Add USD currency
     ]
     
