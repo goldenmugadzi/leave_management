@@ -295,7 +295,7 @@ class UserQualification(TimeStamp):
     """
     user = models.ForeignKey(UserProfile, on_delete=models.PROTECT)
     name = models.CharField(max_length=255, null=False, blank=False)
-    file = models.FileField(upload_to='uploads/appraisal/user_qualification', null=True, default=None)
+    file = models.FileField(upload_to='uploads/appraisal/user_qualification', null=True, blank=True)
     
     def __str__(self) -> str:
         return f"{self.name}"

@@ -9,8 +9,8 @@
             <div class="bg-gray-50 shadow-lg rounded-lg p-6">
                 <div class="flex justify-between">
                     <div>
-                        <h1 class="font-bold text-2xl text-gray-900">My Qualifications and Experiences</h1>
-                        <p class="text-sm text-gray-500">Set and update your qualifications and experiences</p>
+                        <h1 class="font-bold text-2xl text-gray-900">Qualifications and Experiences</h1>
+                        <p class="text-md text-gray-500"><strong>{{user_name}}`s</strong> qualifications and experiences</p>
                     </div>
                 </div>
             </div>
@@ -32,16 +32,88 @@
                     <!-- Qualifications Tab -->
                     <div id="qualifications" class="tab-pane active">
                         <div class="bg-white shadow-xl rounded-lg border-2 border-indigo-400 p-6">
-                            <h3 class="text-lg font-semibold text-gray-900 mb-4">My Qualifications</h3>
-                            
+                            <div class="flex justify-between">
+                                <h3 class="text-lg font-semibold text-gray-900 mb-4">Qualifications</h3>
+                                {% if is_my_qualification_experience %}
+                                    <a href="#"
+                                        class="my-2 bg-blue-500 hover:bg-blue-700 inline-block rounded-full text-white py-2 px-4">
+                                        Create New
+                                    </a>
+                                {% endif %}
+                            </div>
+                            <div class="container mx-auto px-4">
+                                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                    {% for qualification in user_qualification_qr %}
+                                        <div class="bg-white shadow-md rounded-lg border border-indigo-400 p-6 hover:shadow-lg transition-shadow duration-200">
+                                            <h3 class="text-lg font-semibold text-gray-900 mb-3">{{ qualification.name }}</h3>
+                                            <div class="space-y-2">
+                                                <div class="flex justify-between items-center">
+                                                    <span class="text-sm font-medium text-gray-600">Document:</span>
+                                                    <span class="text-sm">
+                                                        {% if qualification.file %}
+                                                            <a href="{{ qualification.file.url }}" target="_blank" class="text-indigo-600 hover:text-indigo-800">View Document</a>
+                                                        {% else %}
+                                                            <span class="text-gray-600">No document uploaded</span>
+                                                        {% endif %}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    {% empty %}
+                                        <div class="bg-white shadow-md rounded-lg border border-indigo-400 p-6 text-center">
+                                            <p class="text-sm text-gray-600">No qualifications added yet.</p>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
                         </div>
                     </div>
     
                     <!-- Experience Tab -->
                     <div id="experience" class="tab-pane hidden">
                         <div class="bg-white shadow-xl rounded-lg border-2 border-indigo-400 p-6">
-                            <h3 class="text-lg font-semibold text-gray-900 mb-4">My Experiences</h3>
-                            
+                            <div class="flex justify-between">
+                                <h3 class="text-lg font-semibold text-gray-900 mb-4">Experiences</h3>
+                                {% if is_my_qualification_experience %}
+                                    <a href="#"
+                                        class="my-2 bg-blue-500 hover:bg-blue-700 inline-block rounded-full text-white py-2 px-4">
+                                        Create New
+                                    </a>
+                                {% endif %}
+                            </div>
+                            <div class="container mx-auto px-4">
+                                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                    {% for experience in user_experiences_qr %}
+                                        <div class="bg-white shadow-md rounded-lg border border-indigo-400 p-6 hover:shadow-lg transition-shadow duration-200">
+                                            <h3 class="text-lg font-semibold text-gray-900 mb-3">{{ experience.name }}</h3>
+                                            <div class="space-y-2">
+                                                <div class="flex justify-between items-center">
+                                                    <span class="text-sm font-medium text-gray-600">From:</span>
+                                                    <span class="text-sm text-gray-800">{{ experience.experience_from|date:"F Y" }}</span>
+                                                </div>
+                                                <div class="flex justify-between items-center">
+                                                    <span class="text-sm font-medium text-gray-600">To:</span>
+                                                    <span class="text-sm text-gray-800">
+                                                        {% if experience.experience_to %}
+                                                            {{ experience.experience_to|date:"F Y" }}
+                                                        {% else %}
+                                                            Present
+                                                        {% endif %}
+                                                    </span>
+                                                </div>
+                                                <div class="flex justify-between items-center">
+                                                    <span class="text-sm font-medium text-gray-600">Duration:</span>
+                                                    <span class="text-sm text-indigo-600">{{ experience.years_of_experience }}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    {% empty %}
+                                        <div class="bg-white shadow-md rounded-lg border border-indigo-400 p-6 text-center">
+                                            <p class="text-sm text-gray-600">No experiences added yet.</p>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>

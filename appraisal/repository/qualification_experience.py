@@ -7,7 +7,7 @@ from django.db.models.query import QuerySet
 from it.users.models import UserQualification, UserProfile, UserExperience
 
 class UserQualificationRepository:
-    def create(self, user_object: UserProfile, name: str, file: UploadedFile) -> UserQualification:
+    def create(self, user_object: UserProfile, name: str, file: UploadedFile=None) -> UserQualification:
         try:
             return UserQualification.objects.create(user=user_object, name=name, file=file)
         except Exception as e:
