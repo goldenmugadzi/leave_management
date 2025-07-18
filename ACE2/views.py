@@ -320,6 +320,27 @@ def create_Ace(request):
             if form.is_valid():
                 ace = form.save(commit=False)
                 
+                # Validate required fields before processing
+                if not ace.details_of_expenditure:
+                    sweetify.error(request, "Details of expenditure is required")
+                    messages.error(request, 'Details of expenditure is required')
+                    return render(request, 'finance/ace2/create_ace.html', {'form': form, 'formset': formset})
+                
+                if not ace.amount or ace.amount <= 0:
+                    sweetify.error(request, "Valid amount is required")
+                    messages.error(request, 'Valid amount is required')
+                    return render(request, 'finance/ace2/create_ace.html', {'form': form, 'formset': formset})
+                
+                if not ace.budget_id:
+                    sweetify.error(request, "Budget selection is required")
+                    messages.error(request, 'Budget selection is required')
+                    return render(request, 'finance/ace2/create_ace.html', {'form': form, 'formset': formset})
+                
+                if not ace.section:
+                    sweetify.error(request, "Section is required")
+                    messages.error(request, 'Section is required')
+                    return render(request, 'finance/ace2/create_ace.html', {'form': form, 'formset': formset})
+                
                 # Determine ACE type and USD equivalent
                 ace_type, zwl_amount = determine_ace_type(ace.amount, ace.currency)
                 ace.ace_type = ace_type
@@ -378,6 +399,11 @@ def create_Ace(request):
                             ace.Ace_id2 = generate_unique_ace_id2(prefix='HV')  # High Value prefix
                         else:
                             ace.Ace_id2 = generate_unique_ace_id2()
+                        
+                        # Validate that the ACE ID was generated successfully
+                        if not ace.Ace_id2:
+                            raise ValueError("Failed to generate ACE ID")
+                            
                     except Exception as e:
                         sweetify.error(request, "Could not generate a unique ACE ID. Please try again.")
                         messages.error(request, "Could not generate a unique ACE ID. Please try again.")
@@ -394,7 +420,30 @@ def create_Ace(request):
                         sweetify.error(request, "Please get region from It")
                         messages.error(request, 'Please get region from It')
                     ace.date_created = date
-                    ace.save()
+                    
+                    # Validate all required fields before saving
+                    if not ace.Ace_id2:
+                        sweetify.error(request, "ACE ID is required")
+                        messages.error(request, "ACE ID is required")
+                        return render(request, 'finance/ace2/create_ace.html', {'form': form, 'formset': formset})
+                    
+                    if not ace.details_of_expenditure:
+                        sweetify.error(request, "Details of expenditure is required")
+                        messages.error(request, "Details of expenditure is required")
+                        return render(request, 'finance/ace2/create_ace.html', {'form': form, 'formset': formset})
+                    
+                    if not ace.amount:
+                        sweetify.error(request, "Amount is required")
+                        messages.error(request, "Amount is required")
+                        return render(request, 'finance/ace2/create_ace.html', {'form': form, 'formset': formset})
+                    
+                    # Try to save with validation
+                    try:
+                        ace.save()
+                    except Exception as e:
+                        sweetify.error(request, f"Error saving ACE: {str(e)}")
+                        messages.error(request, f"Error saving ACE: {str(e)}")
+                        return render(request, 'finance/ace2/create_ace.html', {'form': form, 'formset': formset})
 
                     ace_code = ace.section
                     print(ace_code)
