@@ -45,7 +45,8 @@ from .view import (AppraisalCreateView,
                    DepartmentOutputCreateView,
                    DepartmentOutputDetailUpdateView,
                    OutPutPerformanceDimensionTemplateView,
-                   OutPutPerformanceDimensionDetailUpdateView
+                   OutPutPerformanceDimensionDetailUpdateView, 
+                   QualificationExperienceTemplateView
                    )
 
 urlpatterns = [
@@ -54,6 +55,10 @@ urlpatterns = [
     path('update/<int:pk>', AppraisalUpdateView.as_view(), name='update_appraisal'),
     path('server-error/', internal_server_error_view, name='server_error_view'),
     path('<slug:object_name>/not-found-error', object_not_found_error_view, name='object_not_found_error'),
+    
+    # ================= Qualification Experience url ===================
+    path('qualification-experience/user/<int:user_id>', QualificationExperienceTemplateView.as_view(), name='qualification_experience_index'),
+    
     
     # ================= Experience urls ============================
     path('experience/create/', ExperienceCreateView.as_view(), name='create_experience'),

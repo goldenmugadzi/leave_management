@@ -9,10 +9,9 @@ class Appraisal(TimeStamp):
     """Model that defines all information required for appraisal process.
     The model use an abstract model(TimeStamp) with created_date and updated_date fields.
     """
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    appraiser = models.ForeignKey(User, on_delete=models.CASCADE, related_name="appraiser", null=True)
-    reviewer = models.ForeignKey(User, on_delete=models.CASCADE, related_name="reviewer", null=True)
-    experience = models.ManyToManyField("Experience", through="AppraisalExperience")
+    user = models.ForeignKey(User, on_delete=models.PROTECT)
+    appraiser = models.ForeignKey(User, on_delete=models.PROTECT, related_name="appraiser", null=True)
+    reviewer = models.ForeignKey(User, on_delete=models.PROTECT, related_name="reviewer", null=True)
     is_accepted = models.BooleanField(default=False)
 
     def __str__(self) -> str:

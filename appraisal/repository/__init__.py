@@ -1,4 +1,4 @@
-from .qualification import UserQualificationRepository
+from .qualification_experience import UserQualificationRepository
 from .experience import AppraisalExperienceRepository, ExperienceRepository
 from .appraisal import AppraisalRepository
 from .performance import PerformanceReviewRepository

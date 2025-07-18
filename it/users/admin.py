@@ -46,3 +46,4 @@ class ResponsibilitiesAdmin(admin.ModelAdmin):
     get_app_name.short_description = 'App Name'
     
 admin.site.register(UserQualification)
+admin.site.register(UserExperience)
