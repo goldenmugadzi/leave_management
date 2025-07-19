@@ -2,6 +2,7 @@ from typing import Dict, Any
 from django.core.files.uploadedfile import UploadedFile
 from django.db import IntegrityError
 from django.db.models.query import QuerySet
+from django.core.files.storage import default_storage
 
 
 from it.users.models import UserQualification, UserProfile, UserExperience
@@ -42,6 +43,13 @@ class UserQualificationRepository:
                 qualification_object.name = name
                 changed = True
             if file and (not qualification_object.file or qualification_object.file.name != file.name):
+                
+                existing_file = qualification_object.file.path
+                if not default_storage.exists(existing_file):
+                    raise Exception("Qualification file does not exist")
+                
+                default_storage.delete(existing_file) 
+                
                 qualification_object.file = file
                 changed = True
             if changed:

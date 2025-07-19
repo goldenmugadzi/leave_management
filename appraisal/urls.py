@@ -46,7 +46,11 @@ from .view import (AppraisalCreateView,
                    DepartmentOutputDetailUpdateView,
                    OutPutPerformanceDimensionTemplateView,
                    OutPutPerformanceDimensionDetailUpdateView, 
-                   QualificationExperienceTemplateView
+                   QualificationExperienceTemplateView,
+                   QualificationCreateView,
+                   QualificationUpdateView,
+                   UserExperienceCreateView, 
+                   UserExperienceUpdateView
                    )
 
 urlpatterns = [
@@ -59,6 +63,11 @@ urlpatterns = [
     # ================= Qualification Experience url ===================
     path('qualification-experience/user/<int:user_id>', QualificationExperienceTemplateView.as_view(), name='qualification_experience_index'),
     
+    path('qualification/user/<int:user_id>', QualificationCreateView.as_view(), name='qualification_create'),
+    path('qualification/<int:qualification_id>', QualificationUpdateView.as_view(), name='qualification_update'),
+    
+    path('experience/user/<int:user_id>', UserExperienceCreateView.as_view(), name='experience_create'),
+    path('experience/<int:experience_id>', UserExperienceUpdateView.as_view(), name='user_experience_update'),
     
     # ================= Experience urls ============================
     path('experience/create/', ExperienceCreateView.as_view(), name='create_experience'),
