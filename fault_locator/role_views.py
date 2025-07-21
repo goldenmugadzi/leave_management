@@ -424,8 +424,13 @@ def get_depot_foreperson_context(user_profile):
         is_active=True
     ).first()
     
-    # Faults at my depot
-    my_faults = Fault.objects.filter(depot=user_depot).order_by('-priority', '-reported_at')
+    # Faults at my depot - ordered by priority criteria (Voltage → Clients → Date → Priority)
+    my_faults = Fault.objects.filter(depot=user_depot).order_by(
+        '-voltage',              # Priority 1: Voltage (highest first)
+        '-clients_affected',     # Priority 2: Clients affected (most first)
+        'reported_at',           # Priority 3: Date reported (oldest first) 
+        '-priority'              # Priority 4: Priority level (highest first)
+    )
     pending_faults = my_faults.filter(status='requested')
     active_faults = my_faults.filter(status='assigned')
     

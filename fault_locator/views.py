@@ -802,12 +802,12 @@ def simple_fault_list(request):
                 Q(depot__depot__icontains=search_query)
             )
         
-        # Order by priority: voltage level (descending), clients affected (descending), date reported (newest first), then priority level (highest first)
+        # Order by priority: voltage level (descending), clients affected (descending), date reported (oldest first for urgency), then priority level (highest first)
         faults = faults.order_by(
-            '-voltage',  # Higher voltage first (400kV before 11kV)
-            '-clients_affected',  # More clients affected first  
-            '-reported_at',  # Most recent first
-            '-priority'  # Higher priority first (Critical before Low)
+            '-voltage',              # Higher voltage first (400kV before 11kV)
+            '-clients_affected',     # More clients affected first  
+            'reported_at',           # Oldest first (for urgency - older faults need attention)
+            '-priority'              # Higher priority first (Critical before Low)
         )
         
         # Add extra context for each fault
@@ -2228,7 +2228,7 @@ def delete_team(request, team_id):
 def get_depot_priority_information(user_profile):
     """
     Get depot priority information to help senior forepersons make informed team deployment decisions.
-    Returns a dictionary with depot analysis including fault count, priority levels, and team availability.
+    Uses priority order: 1) Voltage, 2) Clients Affected, 3) Date Reported, 4) Priority Level
     """
     try:
         # Validate user_profile
@@ -2244,74 +2244,110 @@ def get_depot_priority_information(user_profile):
         depot_info = []
         
         for depot in available_depots:
-            # Get fault statistics for this depot
+            # Get active faults (requested + assigned) for this depot
+            active_faults = Fault.objects.filter(
+                depot=depot, 
+                status__in=['requested', 'assigned']
+            ).order_by('-voltage', '-clients_affected', '-reported_at', '-priority')
+            
+            # Priority Analysis based on your requested criteria
+            
+            # 1. VOLTAGE ANALYSIS (Priority 1)
+            high_voltage_faults = active_faults.filter(
+                voltage__in=['400', '220', '132', '66']  # High voltage levels
+            ).count()
+            
+            medium_voltage_faults = active_faults.filter(
+                voltage__in=['33', '22', '11']  # Medium voltage levels  
+            ).count()
+            
+            # Get highest voltage fault for display
+            highest_voltage_fault = active_faults.filter(voltage__isnull=False).first()
+            max_voltage_display = highest_voltage_fault.get_voltage_display() if highest_voltage_fault else "No voltage data"
+            
+            # 2. CLIENT IMPACT ANALYSIS (Priority 2)
+            total_clients_affected = active_faults.aggregate(
+                total=models.Sum('clients_affected')
+            )['total'] or 0
+            
+            high_impact_faults = active_faults.filter(
+                clients_affected__gte=100  # 100+ clients affected
+            ).count()
+            
+            # Get highest client impact fault
+            highest_impact_fault = active_faults.filter(clients_affected__isnull=False).order_by('-clients_affected').first()
+            max_clients_affected = highest_impact_fault.clients_affected if highest_impact_fault else 0
+            
+            # 3. URGENCY ANALYSIS (Priority 3 - Date)
+            from datetime import timedelta
+            now = timezone.now()
+            urgent_faults = active_faults.filter(
+                reported_at__lt=now - timedelta(hours=4)  # Over 4 hours old
+            ).count()
+            
+            very_urgent_faults = active_faults.filter(
+                reported_at__lt=now - timedelta(hours=8)  # Over 8 hours old
+            ).count()
+            
+            # Get oldest unassigned fault
+            oldest_fault = active_faults.filter(status='requested').order_by('reported_at').first()
+            
+            # 4. PRIORITY LEVEL ANALYSIS (Priority 4)
+            critical_faults = active_faults.filter(priority=4).count()
+            high_priority_faults = active_faults.filter(priority=3).count()
+            
+            # COMBINED PRIORITY SCORE CALCULATION
+            # Using your priority order weighting
+            priority_score = 0
+            
+            # Voltage weight (40% of score)
+            voltage_weight = (high_voltage_faults * 10) + (medium_voltage_faults * 5)
+            priority_score += voltage_weight * 0.4
+            
+            # Client impact weight (30% of score)
+            client_weight = min(total_clients_affected / 10, 50)  # Cap at 50 points
+            priority_score += client_weight * 0.3
+            
+            # Urgency weight (20% of score)
+            urgency_weight = (very_urgent_faults * 8) + (urgent_faults * 4)
+            priority_score += urgency_weight * 0.2
+            
+            # Priority level weight (10% of score)
+            priority_weight = (critical_faults * 10) + (high_priority_faults * 5)
+            priority_score += priority_weight * 0.1
+            
+            # Get basic fault statistics
             total_faults = Fault.objects.filter(depot=depot).count()
-            pending_faults = Fault.objects.filter(depot=depot, status='requested').count()
-            in_progress_faults = Fault.objects.filter(depot=depot, status='assigned').count()
-            
-            # Get high priority faults
-            high_priority_faults = Fault.objects.filter(
-                depot=depot, 
-                status__in=['requested', 'assigned'],
-                priority__gte=3
-            ).count()
-            
-            # Get critical faults (priority 4)
-            critical_faults = Fault.objects.filter(
-                depot=depot, 
-                status__in=['requested', 'assigned'],
-                priority=4
-            ).count()
+            pending_faults = active_faults.filter(status='requested').count()
+            in_progress_faults = active_faults.filter(status='assigned').count()
             
             # Get teams currently deployed to this depot
             deployed_teams = FaultLocatorTeam.objects.filter(current_depot=depot)
             team_count = deployed_teams.count()
             
-            # Calculate oldest unassigned fault
-            oldest_unassigned = Fault.objects.filter(
-                depot=depot, 
-                status='requested'
-            ).order_by('reported_at').first()
-            
-            # Calculate average resolution time (last 7 days)
-            from datetime import timedelta
-            week_ago = timezone.now() - timedelta(days=7)
-            recent_closed_faults = Fault.objects.filter(
-                depot=depot,
-                status='closed',
-                reported_at__gte=week_ago
-            )
-            
-            # Calculate workload score (higher = more urgent need)
-            workload_score = 0
-            workload_score += pending_faults * 2  # Unassigned faults are urgent
-            workload_score += critical_faults * 5  # Critical faults are very urgent
-            workload_score += high_priority_faults * 3  # High priority faults
-            workload_score += in_progress_faults * 1  # In progress faults
-            
             # Adjust score based on team availability
-            if team_count == 0:
-                workload_score *= 1.5  # Increase urgency if no teams deployed
-            elif team_count == 1:
-                workload_score *= 1.2  # Slight increase if only one team
+            if team_count == 0 and active_faults.exists():
+                priority_score *= 1.8  # Major increase if no teams and active faults
+            elif team_count == 1 and active_faults.count() > 3:
+                priority_score *= 1.3  # Moderate increase if overwhelmed single team
             
-            # Determine priority level
-            if workload_score >= 15:
-                priority_level = 'CRITICAL'
-                priority_class = 'text-red-600 bg-red-50'
-                priority_icon = '🚨'
-            elif workload_score >= 10:
-                priority_level = 'HIGH'
-                priority_class = 'text-orange-600 bg-orange-50'
-                priority_icon = '⚠️'
-            elif workload_score >= 5:
-                priority_level = 'MEDIUM'
-                priority_class = 'text-yellow-600 bg-yellow-50'
-                priority_icon = '⚡'
+            # Determine deployment recommendation
+            if priority_score >= 30:
+                recommendation = 'URGENT DEPLOYMENT NEEDED'
+                recommendation_class = 'text-red-600 bg-red-50 border-red-200'
+                recommendation_icon = '🚨'
+            elif priority_score >= 20:
+                recommendation = 'HIGH PRIORITY DEPLOYMENT'
+                recommendation_class = 'text-orange-600 bg-orange-50 border-orange-200'
+                recommendation_icon = '⚠️'
+            elif priority_score >= 10:
+                recommendation = 'CONSIDER DEPLOYMENT'
+                recommendation_class = 'text-yellow-600 bg-yellow-50 border-yellow-200'
+                recommendation_icon = '⚡'
             else:
-                priority_level = 'LOW'
-                priority_class = 'text-green-600 bg-green-50'
-                priority_icon = '✅'
+                recommendation = 'LOW PRIORITY'
+                recommendation_class = 'text-green-600 bg-green-50 border-green-200'
+                recommendation_icon = '✅'
             
             # Get team details
             team_details = []
@@ -2329,32 +2365,67 @@ def get_depot_priority_information(user_profile):
                 })
             
             # Calculate time since oldest fault
-            oldest_fault_hours = None
-            if oldest_unassigned:
-                time_diff = timezone.now() - oldest_unassigned.reported_at
+            oldest_fault_hours = 0
+            if oldest_fault:
+                time_diff = timezone.now() - oldest_fault.reported_at
                 oldest_fault_hours = int(time_diff.total_seconds() / 3600)
+            
+            # Calculate recent resolution statistics
+            from datetime import timedelta
+            week_ago = timezone.now() - timedelta(days=7)
+            recent_closed_faults = Fault.objects.filter(
+                depot=depot,
+                status='closed',
+                reported_at__gte=week_ago
+            )
             
             depot_info.append({
                 'depot': depot,
+                'depot_name': depot.depot,
                 'total_faults': total_faults,
                 'pending_faults': pending_faults,
                 'in_progress_faults': in_progress_faults,
-                'high_priority_faults': high_priority_faults,
+                'active_faults_count': active_faults.count(),
+                
+                # Priority Analysis Data (your requested order)
+                'max_voltage_display': max_voltage_display,
+                'high_voltage_count': high_voltage_faults,
+                'medium_voltage_count': medium_voltage_faults,
+                'total_clients_affected': total_clients_affected,
+                'max_clients_affected': max_clients_affected,
+                'high_impact_count': high_impact_faults,
+                'urgent_faults': urgent_faults,
+                'very_urgent_faults': very_urgent_faults,
+                'oldest_fault_hours': oldest_fault_hours,
                 'critical_faults': critical_faults,
+                'high_priority_faults': high_priority_faults,
+                
+                # Scoring and Recommendations
+                'priority_score': round(priority_score, 1),
+                'recommendation': recommendation,
+                'recommendation_class': recommendation_class,
+                'recommendation_icon': recommendation_icon,
+                
+                # Team Information
                 'team_count': team_count,
                 'team_details': team_details,
-                'workload_score': workload_score,
-                'priority_level': priority_level,
-                'priority_class': priority_class,
-                'priority_icon': priority_icon,
-                'oldest_fault_hours': oldest_fault_hours,
+                'deployed_teams': list(deployed_teams.values('name', 'team_leader__first_name', 'team_leader__last_name')),
+                
+                # Performance Data
                 'recent_closed_count': recent_closed_faults.count(),
-                'needs_team': team_count == 0 and (pending_faults > 0 or in_progress_faults > 0),
-                'overwhelmed': team_count > 0 and (pending_faults + in_progress_faults) > (team_count * 3),
+                'oldest_unassigned': oldest_fault,
+                
+                # Additional Context Flags
+                'has_critical_voltage': high_voltage_faults > 0,
+                'has_high_client_impact': high_impact_faults > 0,
+                'has_urgent_timing': urgent_faults > 0,
+                'needs_immediate_attention': priority_score >= 30,
+                'needs_team': team_count == 0 and active_faults.exists(),
+                'overwhelmed': team_count > 0 and active_faults.count() > (team_count * 3),
             })
         
-        # Sort by priority score (highest first)
-        depot_info.sort(key=lambda x: x['workload_score'], reverse=True)
+        # Sort depots by priority score (highest first) to help senior forepersons prioritize
+        depot_info.sort(key=lambda x: x['priority_score'], reverse=True)
         
         return depot_info
         

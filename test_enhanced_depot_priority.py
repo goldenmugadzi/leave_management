@@ -10,13 +10,13 @@ import django
 from datetime import datetime, timedelta
 
 # Setup Django
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'settings')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'beii_v1.settings')
 sys.path.append('.')
 django.setup()
 
 from django.utils import timezone
-from django.contrib.auth.models import User
-from fault_locator.models import UserProfile, Depots, Fault, FaultLocatorTeam
+from it.users.models import UserProfile, Depots, Regions, Roles, Application
+from fault_locator.models import Fault, FaultLocatorTeam
 from fault_locator.views import get_depot_priority_information
 
 def test_enhanced_depot_priority_information():
@@ -27,22 +27,37 @@ def test_enhanced_depot_priority_information():
     print("=" * 60)
     
     # Create test user profile
-    test_user = User.objects.filter(username='test_senior_foreperson').first()
+    test_user = UserProfile.objects.filter(username='test_senior_foreperson').first()
     if not test_user:
-        test_user = User.objects.create_user(
+        # Find a suitable region for testing
+        test_region = Regions.objects.first()
+        
+        # Create or get the senior foreperson role
+        fault_app, created = Application.objects.get_or_create(
+            name='fault_locator',
+            defaults={'fullname': 'Fault Locator Application'}
+        )
+        
+        senior_role, created = Roles.objects.get_or_create(
+            role='senior_foreperson',
+            name='Senior Foreperson', 
+            application='fault_locator',
+            defaults={
+                'description': 'Senior foreperson role for fault locator',
+                'app_id': fault_app
+            }
+        )
+        
+        test_user = UserProfile.objects.create_user(
             username='test_senior_foreperson',
             email='test@example.com',
             first_name='Test',
-            last_name='Senior'
+            last_name='Senior',
+            region=test_region
         )
+        test_user.roles.add(senior_role)
     
-    test_profile = UserProfile.objects.filter(user=test_user).first()
-    if not test_profile:
-        test_profile = UserProfile.objects.create(
-            user=test_user,
-            role='senior_foreperson',
-            region_id=1 if Depots.objects.filter(region_id=1).exists() else None
-        )
+    test_profile = test_user
     
     # Get depot priority information
     depot_info = get_depot_priority_information(test_profile)
