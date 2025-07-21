@@ -247,7 +247,18 @@
                               enctype="multipart/form-data">
                             {% csrf_token %}
                             <div class=" m-auto container  ">
-                                {{ approvalForm.comment }}
+                                <div class="bg-white rounded-lg p-4 mb-4 shadow-inner">
+                                    <h3 class="text-lg font-semibold text-gray-800 mb-2">📝 Review & Comments</h3>
+                                    <div class="space-y-2">
+                                        <label for="{{ approvalForm.comment.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                                            💬 Comments <span class="text-red-500">*</span>
+                                        </label>
+                                        {{ approvalForm.comment }}
+                                        <p class="text-xs text-gray-500 mt-1">
+                                            Please provide comments for your decision. Comments are required for rejections.
+                                        </p>
+                                    </div>
+                                </div>
                                 <div class="m-4 text-center">
                                     <button type="submit"
                                             class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded"
@@ -291,9 +302,15 @@
                                         {% for approval in pettycash.process.approval_set.all %}
                                             {% if step == approval.step %}
                                                 <div class="card-body px-2 arrow bg-gradient-to-r from-gulf-blue-100 to-green-700 ed border rounded container rounded">
-                                                    <div class=" rounded-lg" title="{{ approval.comment }}">
+                                                    <div class=" rounded-lg">
                                                         <p class="font-bold">{{ step |default_if_none:'' }}</p>
                                                         <br>
+                                                        {% if approval.comment %}
+                                                            <div class="mt-2 p-2 bg-white bg-opacity-50 rounded border-l-4 border-blue-500">
+                                                                <p class="text-xs font-medium text-gray-700">💬 Comment:</p>
+                                                                <p class="text-xs text-gray-800 mt-1">{{ approval.comment }}</p>
+                                                            </div>
+                                                        {% endif %}
                                                     </div>
                                                     <div class=" grid grid-cols-2 text-center">
                                                         <span class="inline-block rounded-full text-sm">{{ approval.approved }}</span>
@@ -314,7 +331,7 @@
                                         {% endfor %}
                                     {% else %}
                                         <div class="card-body px-2 arrow bg-gradient-to-r from-gulf-blue-100 to-blue-700 ed border rounded container rounded">
-                                            <div class=" rounded-lg" title="{{ approval.comment }}">
+                                            <div class=" rounded-lg">
                                                 <p class="font-bold">{{ step |default_if_none:'' }}</p>
                                                 <br>
                                                 {% if step.to %}
@@ -342,4 +359,5 @@
 {% endblock %}
 {% block scripts %}
     <script src="{% static 'assets/disbursemodal.js' %}"></script>
+    <script src="{% static 'js/enhanced_comments.js' %}"></script>
 {% endblock %}

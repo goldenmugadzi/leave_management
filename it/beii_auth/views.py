@@ -82,7 +82,19 @@ APPLICATIONS = [
         "title": "Change Requests",
         "iconUrl": "assets/images/change.png",
         "url": "/change_requests/change_request_index"
-    }
+    },
+    # {
+    #     "name": "asset_register",
+    #     "title": "IT Asset Register",
+    #     "iconUrl": "assets/images/register.png",
+    #     "url": "/table_asset/"
+    # },
+    # {
+    #     "name": "comm_files",
+    #     "title": "Commercial Files",
+    #     "iconUrl": "assets/images/customer.png",
+    #     "url": "/commercial/customers"
+    # },
 ]
 
 REPORTS = [
@@ -379,8 +391,8 @@ def business_applications(request):
     else:
         if user.region:
             applications = applications
-            if user.region.region == "WESTERN REGION" or user.region.region == "TRANSMISSION & DISTRIBUTION":
-                applications = [app for app in applications if app['name'] == 'users' or app['name'] == 'non_conformity']
+            # if user.region.region == "WESTERN REGION" or user.region.region == "TRANSMISSION & DISTRIBUTION":
+            #     applications = [app for app in applications if app['name'] == 'users' or app['name'] == 'non_conformity']
                 
         else:
             messages.error(request, "Your region is missing on your account profile, Please contact the administrator")

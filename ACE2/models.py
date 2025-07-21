@@ -115,7 +115,7 @@ class Ace2(models.Model):
     ]
 
     CURRENCY_CHOICES = [
-        ('ZIG', 'ZIG'),
+        ('ZWG', 'ZWG'),
         # ('USD', 'USD'),  # Add USD currency
     ]
     
@@ -170,7 +170,39 @@ class Ace2(models.Model):
     # dummy = models.CharField(null=True, max_length=120, blank=True)
 
     def __str__(self):
-        return self.Ace_id2
+        if self.Ace_id2:
+            return self.Ace_id2
+        elif self.details_of_expenditure:
+            return f"ACE-{self.Ace_id or 'DRAFT'} - {self.details_of_expenditure[:50]}"
+        else:
+            return f"ACE-{self.Ace_id or 'DRAFT'} - No Description"
+    
+    def clean(self):
+        """Validate ACE data before saving"""
+        from django.core.exceptions import ValidationError
+        
+        if not self.Ace_id2:
+            raise ValidationError("ACE ID (Ace_id2) is required")
+        
+        if not self.details_of_expenditure:
+            raise ValidationError("Details of expenditure is required")
+        
+        if not self.amount or self.amount <= 0:
+            raise ValidationError("Amount must be greater than 0")
+        
+        if not self.budget_id:
+            raise ValidationError("Budget is required")
+        
+        if not self.section:
+            raise ValidationError("Section is required")
+        
+        if not self.requested_by:
+            raise ValidationError("Requested by is required")
+    
+    def save(self, *args, **kwargs):
+        """Override save to ensure clean validation"""
+        self.clean()
+        super().save(*args, **kwargs)
 
 
 class Asset_budget_Virament(models.Model):
