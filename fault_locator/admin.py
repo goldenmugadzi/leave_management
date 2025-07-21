@@ -7,14 +7,18 @@ admin.site.register(FaultAssignment)
 
 @admin.register(Fault)
 class FaultAdmin(admin.ModelAdmin):
-    # Priority order: voltage, clients_affected, reported_at, priority, then other details
-    list_display = ['voltage', 'clients_affected', 'reported_at', 'priority', 'description', 'depot', 'backfeed', 'status']
-    list_filter = ['voltage', 'priority', 'status', 'backfeed', 'depot', 'reported_at']
+    # Priority order: VVIP, voltage, clients_affected, reported_at, priority, then other details
+    list_display = ['vvip', 'voltage', 'clients_affected', 'reported_at', 'priority', 'description', 'depot', 'backfeed', 'status']
+    list_filter = ['vvip', 'voltage', 'priority', 'status', 'backfeed', 'depot', 'reported_at']
     search_fields = ['description', 'depot__depot']
     readonly_fields = ['reported_at', 'prioritized_at', 'verified_at']
-    ordering = ['-voltage', '-clients_affected', '-reported_at', '-priority']  # Order by your priorities
+    ordering = ['-vvip', '-voltage', '-clients_affected', '-reported_at', '-priority']  # VVIP first, then other priorities
     
     fieldsets = (
+        ('VVIP Status', {
+            'fields': ('vvip',),
+            'description': 'VVIP status trumps all other priority criteria'
+        }),
         ('Priority Information', {
             'fields': ('voltage', 'clients_affected', 'priority'),
             'description': 'Key priority fields for fault assessment'

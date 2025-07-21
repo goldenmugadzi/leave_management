@@ -802,8 +802,9 @@ def simple_fault_list(request):
                 Q(depot__depot__icontains=search_query)
             )
         
-        # Order by priority: voltage level (descending), clients affected (descending), date reported (oldest first for urgency), then priority level (highest first)
+        # Order by priority: VVIP (descending), voltage level (descending), clients affected (descending), date reported (oldest first for urgency), then priority level (highest first)
         faults = faults.order_by(
+            '-vvip',                 # VVIP faults first (trumps all other criteria)
             '-voltage',              # Higher voltage first (400kV before 11kV)
             '-clients_affected',     # More clients affected first  
             'reported_at',           # Oldest first (for urgency - older faults need attention)
@@ -2248,7 +2249,7 @@ def get_depot_priority_information(user_profile):
             active_faults = Fault.objects.filter(
                 depot=depot, 
                 status__in=['requested', 'assigned']
-            ).order_by('-voltage', '-clients_affected', '-reported_at', '-priority')
+            ).order_by('-vvip', '-voltage', '-clients_affected', '-reported_at', '-priority')
             
             # Priority Analysis based on your requested criteria
             

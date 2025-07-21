@@ -9,7 +9,7 @@ import sys
 import django
 
 # Setup Django
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'myBEII.settings')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'beii_v1.settings')
 sys.path.append('d:\\b')
 
 django.setup()

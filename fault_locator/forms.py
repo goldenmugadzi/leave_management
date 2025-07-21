@@ -6,7 +6,7 @@ from django_select2.forms import Select2MultipleWidget
 class FaultForm(forms.ModelForm):
     class Meta:
         model = Fault
-        fields = ['description', 'depot', 'voltage', 'backfeed', 'clients_affected']
+        fields = ['description', 'depot', 'vvip', 'voltage', 'backfeed', 'clients_affected']
         widgets = {
             'description': forms.Textarea(attrs={
                 'class': 'block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6',
@@ -15,6 +15,9 @@ class FaultForm(forms.ModelForm):
             }),
             'depot': forms.Select(attrs={
                 'class': 'block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6',
+            }),
+            'vvip': forms.CheckboxInput(attrs={
+                'class': 'rounded border-gray-300 text-red-600 shadow-sm focus:ring-red-500',
             }),
             'voltage': forms.Select(attrs={
                 'class': 'block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6',
@@ -36,6 +39,8 @@ class FaultForm(forms.ModelForm):
         self.fields['depot'].empty_label = "Select a depot..."
         
         # Add field labels and help text
+        self.fields['vvip'].label = 'VVIP Fault'
+        self.fields['vvip'].help_text = 'Check if this is a VVIP fault (takes absolute priority over all other faults)'
         self.fields['voltage'].label = 'Voltage Level'
         self.fields['voltage'].help_text = 'Select the voltage level for this fault'
         self.fields['backfeed'].label = 'Backfeed Available'
@@ -599,7 +604,7 @@ class QuickFaultReportForm(forms.ModelForm):
     """Simplified form for quick fault reporting"""
     class Meta:
         model = Fault
-        fields = ['description', 'depot', 'priority', 'voltage', 'backfeed', 'clients_affected']
+        fields = ['description', 'depot', 'vvip', 'priority', 'voltage', 'backfeed', 'clients_affected']
     
     def __init__(self, *args, **kwargs):
         user_region = kwargs.pop('user_region', None)
@@ -633,6 +638,9 @@ class QuickFaultReportForm(forms.ModelForm):
             'placeholder': 'Describe the fault...',
             'rows': 3
         })
+        self.fields['vvip'].widget = forms.CheckboxInput(attrs={
+            'class': 'form-check-input',
+        })
         self.fields['priority'].widget.attrs.update({
             'class': 'form-select'
         })
@@ -649,6 +657,8 @@ class QuickFaultReportForm(forms.ModelForm):
         })
         
         # Add field labels and help text
+        self.fields['vvip'].label = 'VVIP Fault'
+        self.fields['vvip'].help_text = 'Check if this is a VVIP fault (takes absolute priority)'
         self.fields['voltage'].label = 'Voltage Level'
         self.fields['voltage'].help_text = 'Select the voltage level for this fault'
         self.fields['backfeed'].label = 'Backfeed Available'

@@ -424,8 +424,9 @@ def get_depot_foreperson_context(user_profile):
         is_active=True
     ).first()
     
-    # Faults at my depot - ordered by priority criteria (Voltage → Clients → Date → Priority)
+    # Faults at my depot - ordered by priority criteria (VVIP → Voltage → Clients → Date → Priority)
     my_faults = Fault.objects.filter(depot=user_depot).order_by(
+        '-vvip',                 # Priority 0: VVIP status (VVIP first)
         '-voltage',              # Priority 1: Voltage (highest first)
         '-clients_affected',     # Priority 2: Clients affected (most first)
         'reported_at',           # Priority 3: Date reported (oldest first) 

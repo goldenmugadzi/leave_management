@@ -49,33 +49,47 @@
                     Fault Priority Ordering Guide
                 </h6>
                 <div class="row text-center">
-                    <div class="col-md-3">
+                    <div class="col-md-2">
+                        <div class="d-flex align-items-center justify-content-center mb-1">
+                            <span class="badge bg-danger me-2">0</span>
+                            <strong>VVIP Status</strong>
+                        </div>
+                        <small class="text-muted">VVIP trumps all other priority</small>
+                    </div>
+                    <div class="col-md-2">
                         <div class="d-flex align-items-center justify-content-center mb-1">
                             <span class="badge bg-primary me-2">1</span>
                             <strong>Voltage Level</strong>
                         </div>
                         <small class="text-muted">Higher voltage = Higher priority</small>
                     </div>
-                    <div class="col-md-3">
+                    <div class="col-md-2">
                         <div class="d-flex align-items-center justify-content-center mb-1">
                             <span class="badge bg-primary me-2">2</span>
                             <strong>Clients Affected</strong>
                         </div>
                         <small class="text-muted">More clients = Higher priority</small>
                     </div>
-                    <div class="col-md-3">
+                    <div class="col-md-2">
                         <div class="d-flex align-items-center justify-content-center mb-1">
                             <span class="badge bg-primary me-2">3</span>
                             <strong>Date Reported</strong>
                         </div>
                         <small class="text-muted">Older faults = Higher priority</small>
                     </div>
-                    <div class="col-md-3">
+                    <div class="col-md-2">
                         <div class="d-flex align-items-center justify-content-center mb-1">
                             <span class="badge bg-primary me-2">4</span>
                             <strong>Priority Level</strong>
                         </div>
                         <small class="text-muted">P4 Critical > P3 High</small>
+                    </div>
+                    <div class="col-md-2">
+                        <div class="d-flex align-items-center justify-content-center mb-1">
+                            <span class="badge bg-success me-2">5</span>
+                            <strong>Backfeed</strong>
+                        </div>
+                        <small class="text-muted">Secondary consideration</small>
                     </div>
                 </div>
             </div>
@@ -218,6 +232,11 @@
                         <div class="d-flex align-items-center mb-1">
                             <strong>{{ fault.description|truncatechars:40 }}</strong>
                             <!-- Priority Order Indicators -->
+                            {% if fault.vvip %}
+                                <span class="badge bg-danger text-white ms-2 fw-bold">
+                                    <i class="fas fa-star me-1"></i>VVIP
+                                </span>
+                            {% endif %}
                             {% if fault.voltage %}
                                 <span class="badge bg-{% if fault.voltage in '400,220,132,66' %}danger{% elif fault.voltage in '33,22,11' %}warning{% else %}secondary{% endif %} ms-2">
                                     {{ fault.get_voltage_display }}
@@ -290,6 +309,11 @@
                         <div class="d-flex align-items-center mb-1">
                             <strong>{{ fault.description|truncatechars:40 }}</strong>
                             <!-- Priority Order Indicators -->
+                            {% if fault.vvip %}
+                                <span class="badge bg-danger text-white ms-2 fw-bold">
+                                    <i class="fas fa-star me-1"></i>VVIP
+                                </span>
+                            {% endif %}
                             {% if fault.voltage %}
                                 <span class="badge bg-{% if fault.voltage in '400,220,132,66' %}danger{% elif fault.voltage in '33,22,11' %}warning{% else %}secondary{% endif %} ms-2">
                                     {{ fault.get_voltage_display }}

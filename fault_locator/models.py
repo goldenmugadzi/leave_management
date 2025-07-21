@@ -77,6 +77,7 @@ class Fault(models.Model):
     backfeed = models.BooleanField(default=False, help_text="Is backfeed available?")
     clients_affected = models.PositiveIntegerField(null=True, blank=True,
                                                  help_text="Number of clients affected by this fault")
+    vvip = models.BooleanField(default=False, help_text="VVIP fault - takes absolute priority over all other faults")
     
     # Additional fields for role-based workflow
     foreperson_notes = models.TextField(blank=True, help_text="Notes from depot foreperson")
