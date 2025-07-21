@@ -60,6 +60,24 @@ class Fault(models.Model):
                                      null=True, blank=True, related_name='fault_priorities_set')
     prioritized_at = models.DateTimeField(null=True, blank=True)
     
+    # Fault technical details
+    VOLTAGE_CHOICES = [
+        ('0.4', '0.4kV (Low Voltage)'),
+        ('11', '11kV'),
+        ('22', '22kV'),
+        ('33', '33kV'),
+        ('66', '66kV'),
+        ('132', '132kV'),
+        ('220', '220kV'),
+        ('400', '400kV'),
+    ]
+    
+    voltage = models.CharField(max_length=10, choices=VOLTAGE_CHOICES, null=True, blank=True,
+                              help_text="Select voltage level")
+    backfeed = models.BooleanField(default=False, help_text="Is backfeed available?")
+    clients_affected = models.PositiveIntegerField(null=True, blank=True,
+                                                 help_text="Number of clients affected by this fault")
+    
     # Additional fields for role-based workflow
     foreperson_notes = models.TextField(blank=True, help_text="Notes from depot foreperson")
     team_leader_notes = models.TextField(blank=True, help_text="Notes from team leader")

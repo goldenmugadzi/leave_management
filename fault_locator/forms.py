@@ -6,7 +6,7 @@ from django_select2.forms import Select2MultipleWidget
 class FaultForm(forms.ModelForm):
     class Meta:
         model = Fault
-        fields = ['description', 'depot']
+        fields = ['description', 'depot', 'voltage', 'backfeed', 'clients_affected']
         widgets = {
             'description': forms.Textarea(attrs={
                 'class': 'block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6',
@@ -16,6 +16,17 @@ class FaultForm(forms.ModelForm):
             'depot': forms.Select(attrs={
                 'class': 'block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6',
             }),
+            'voltage': forms.Select(attrs={
+                'class': 'block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6',
+            }),
+            'backfeed': forms.CheckboxInput(attrs={
+                'class': 'rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500',
+            }),
+            'clients_affected': forms.NumberInput(attrs={
+                'class': 'block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6',
+                'placeholder': 'Number of clients affected',
+                'min': '0'
+            }),
         }
     
     def __init__(self, *args, **kwargs):
@@ -23,6 +34,14 @@ class FaultForm(forms.ModelForm):
         # Ensure depot field has choices
         self.fields['depot'].queryset = Depots.objects.all().order_by('depot')
         self.fields['depot'].empty_label = "Select a depot..."
+        
+        # Add field labels and help text
+        self.fields['voltage'].label = 'Voltage Level'
+        self.fields['voltage'].help_text = 'Select the voltage level for this fault'
+        self.fields['backfeed'].label = 'Backfeed Available'
+        self.fields['backfeed'].help_text = 'Check if backfeed is available for this fault'
+        self.fields['clients_affected'].label = 'Clients Affected'
+        self.fields['clients_affected'].help_text = 'Number of clients affected by this fault'
 
 class FaultLocatorDeviceForm(forms.ModelForm):
     class Meta:
@@ -580,7 +599,7 @@ class QuickFaultReportForm(forms.ModelForm):
     """Simplified form for quick fault reporting"""
     class Meta:
         model = Fault
-        fields = ['description', 'depot', 'priority']
+        fields = ['description', 'depot', 'priority', 'voltage', 'backfeed', 'clients_affected']
     
     def __init__(self, *args, **kwargs):
         user_region = kwargs.pop('user_region', None)
@@ -617,3 +636,22 @@ class QuickFaultReportForm(forms.ModelForm):
         self.fields['priority'].widget.attrs.update({
             'class': 'form-select'
         })
+        self.fields['voltage'].widget = forms.Select(attrs={
+            'class': 'form-control',
+        })
+        self.fields['backfeed'].widget = forms.CheckboxInput(attrs={
+            'class': 'form-check-input',
+        })
+        self.fields['clients_affected'].widget = forms.NumberInput(attrs={
+            'class': 'form-control',
+            'placeholder': 'Number of clients affected',
+            'min': '0'
+        })
+        
+        # Add field labels and help text
+        self.fields['voltage'].label = 'Voltage Level'
+        self.fields['voltage'].help_text = 'Select the voltage level for this fault'
+        self.fields['backfeed'].label = 'Backfeed Available'
+        self.fields['backfeed'].help_text = 'Check if backfeed is available'
+        self.fields['clients_affected'].label = 'Clients Affected'
+        self.fields['clients_affected'].help_text = 'Number of clients affected'
