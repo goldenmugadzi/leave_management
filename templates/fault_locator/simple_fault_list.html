@@ -41,11 +41,46 @@
         </div>
         
         <div class="fault-details text-sm text-gray-600 mb-4">
+          <!-- Priority 1: Voltage -->
+          {% if fault.voltage %}
+          <p>⚡ <strong>Voltage:</strong> 
+            <span class="inline-flex px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800">
+              {{ fault.get_voltage_display }}
+            </span>
+          </p>
+          {% endif %}
+          
+          <!-- Priority 2: Number of Clients -->
+          {% if fault.clients_affected %}
+          <p>👥 <strong>Clients Affected:</strong> 
+            <span class="inline-flex px-2 py-1 text-xs rounded-full bg-orange-100 text-orange-800">
+              {{ fault.clients_affected }}
+            </span>
+          </p>
+          {% endif %}
+          
+          <!-- Priority 3: Date Reported -->
+          <p>� <strong>Reported:</strong> {{ fault.reported_at|date:"M d, Y H:i" }}</p>
+          
+          <!-- Priority 4: Priority Level -->
+          <p>🔥 <strong>Priority:</strong> 
+            <span class="inline-flex px-2 py-1 text-xs rounded-full
+                         {% if fault.priority == 1 %}bg-blue-100 text-blue-800
+                         {% elif fault.priority == 2 %}bg-green-100 text-green-800
+                         {% elif fault.priority == 3 %}bg-yellow-100 text-yellow-800
+                         {% elif fault.priority == 4 %}bg-red-100 text-red-800{% endif %}">
+              {{ fault.get_priority_display }}
+            </span>
+          </p>
+          
+          <!-- Additional Details -->
           <p>📍 <strong>Location:</strong> {{ fault.depot.depot }}</p>
+          {% if fault.backfeed %}
+          <p>� <strong>Backfeed:</strong> <span class="text-green-600">Available</span></p>
+          {% endif %}
           {% if data.current_assignment and data.current_assignment.device %}
           <p>🔧 <strong>Device:</strong> {{ data.current_assignment.device.serial_number }}</p>
           {% endif %}
-          <p>📅 <strong>Reported:</strong> {{ fault.reported_at|date:"M d, Y H:i" }}</p>
           {% if data.current_assignment and data.current_assignment.team %}
           <p>👥 <strong>Team:</strong> {{ data.current_assignment.team.name }}</p>
           {% endif %}

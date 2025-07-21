@@ -72,22 +72,25 @@
         <thead class="bg-gray-50">
           <tr>
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Fault Details
+              Voltage
             </th>
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Depot
+              Clients Affected
+            </th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Date Reported
             </th>
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               Priority
             </th>
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Description
+            </th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Depot
+            </th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               Status
-            </th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Assigned Team
-            </th>
-            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Reported
             </th>
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               Actions
@@ -97,19 +100,41 @@
         <tbody class="bg-white divide-y divide-gray-200">
           {% for fault in faults %}
             <tr class="hover:bg-gray-50">
+              <!-- Voltage (Priority 1) -->
               <td class="px-6 py-4">
-                <div class="text-sm font-medium text-gray-900">
-                  {{ fault.description|truncatechars:50 }}
-                </div>
-                {% if fault.prioritized_by %}
-                  <div class="text-xs text-gray-500">
-                    Prioritized by {{ fault.prioritized_by.get_full_name }}
-                  </div>
+                {% if fault.voltage %}
+                  <span class="inline-flex px-3 py-1 text-sm font-semibold rounded-full bg-blue-100 text-blue-800">
+                    ⚡ {{ fault.get_voltage_display }}
+                  </span>
+                {% else %}
+                  <span class="text-gray-400 text-sm">Not specified</span>
                 {% endif %}
               </td>
-              <td class="px-6 py-4 text-sm text-gray-900">
-                {{ fault.depot.depot }}
+              
+              <!-- Number of Clients (Priority 2) -->
+              <td class="px-6 py-4">
+                {% if fault.clients_affected %}
+                  <div class="flex items-center">
+                    <span class="inline-flex px-3 py-1 text-sm font-semibold rounded-full bg-orange-100 text-orange-800">
+                      👥 {{ fault.clients_affected }}
+                    </span>
+                  </div>
+                {% else %}
+                  <span class="text-gray-400 text-sm">Unknown</span>
+                {% endif %}
               </td>
+              
+              <!-- Date Reported (Priority 3) -->
+              <td class="px-6 py-4">
+                <div class="text-sm text-gray-900">
+                  📅 {{ fault.reported_at|date:"M d, Y" }}
+                </div>
+                <div class="text-xs text-gray-500">
+                  {{ fault.reported_at|date:"H:i" }}
+                </div>
+              </td>
+              
+              <!-- Priority (Priority 4) -->
               <td class="px-6 py-4">
                 <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full
                   {% if fault.priority == 4 %}bg-red-100 text-red-800
@@ -119,6 +144,28 @@
                   {{ fault.get_priority_display }}
                 </span>
               </td>
+              
+              <!-- Description -->
+              <td class="px-6 py-4">
+                <div class="text-sm font-medium text-gray-900">
+                  {{ fault.description|truncatechars:40 }}
+                </div>
+                {% if fault.backfeed %}
+                  <div class="text-xs text-green-600">🔄 Backfeed Available</div>
+                {% endif %}
+                {% if fault.prioritized_by %}
+                  <div class="text-xs text-gray-500">
+                    Prioritized by {{ fault.prioritized_by.get_full_name }}
+                  </div>
+                {% endif %}
+              </td>
+              
+              <!-- Depot -->
+              <td class="px-6 py-4 text-sm text-gray-900">
+                📍 {{ fault.depot.depot }}
+              </td>
+              
+              <!-- Status -->
               <td class="px-6 py-4">
                 <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full
                   {% if fault.status == 'closed' %}bg-green-100 text-green-800
@@ -127,20 +174,16 @@
                   {% else %}bg-gray-100 text-gray-800{% endif %}">
                   {{ fault.get_status_display }}
                 </span>
-              </td>
-              <td class="px-6 py-4 text-sm text-gray-900">
                 {% with fault.faultassignment_set.all|first as assignment %}
                   {% if assignment %}
-                    {{ assignment.team.name }}
-                    <div class="text-xs text-gray-500">{{ assignment.device.serial_number }}</div>
-                  {% else %}
-                    <span class="text-gray-400">Not assigned</span>
+                    <div class="text-xs text-gray-500 mt-1">
+                      Team: {{ assignment.team.name }}
+                    </div>
                   {% endif %}
                 {% endwith %}
               </td>
-              <td class="px-6 py-4 text-sm text-gray-900">
-                {{ fault.reported_at|date:"M d, Y H:i" }}
-              </td>
+              
+              <!-- Actions -->
               <td class="px-6 py-4 text-sm font-medium">
                 <a href="{% url 'fault_detail' fault.id %}" class="inline-block px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-700 text-white rounded-lg font-bold hover:from-blue-700 hover:to-indigo-800 transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl transform hover:-translate-y-1 text-sm">
                   👁️ View
@@ -154,7 +197,7 @@
             </tr>
           {% empty %}
             <tr>
-              <td colspan="7" class="px-6 py-4 text-center text-gray-500">
+              <td colspan="8" class="px-6 py-4 text-center text-gray-500">
                 No faults found matching your criteria.
               </td>
             </tr>

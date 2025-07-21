@@ -802,8 +802,13 @@ def simple_fault_list(request):
                 Q(depot__depot__icontains=search_query)
             )
         
-        # Order by priority and urgency
-        faults = faults.order_by('-priority', '-reported_at')
+        # Order by priority: voltage level (descending), clients affected (descending), date reported (newest first), then priority level (highest first)
+        faults = faults.order_by(
+            '-voltage',  # Higher voltage first (400kV before 11kV)
+            '-clients_affected',  # More clients affected first  
+            '-reported_at',  # Most recent first
+            '-priority'  # Higher priority first (Critical before Low)
+        )
         
         # Add extra context for each fault
         fault_data = []
