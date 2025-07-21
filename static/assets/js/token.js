@@ -61,7 +61,7 @@ document.getElementById('id_is_for').addEventListener('change', () => {
   document.getElementById('recovered_meter_form').style.display = 'none';
   document.getElementById('old_token_form').style.display = 'none';
   switch (selectedValue) {
-    case 'Fauty Maintanance':
+    case 'Fault Maintenance':
       document.getElementById('fault_maintanance_form').style.display = 'block';
       break;
     case 'Recovered Meter':

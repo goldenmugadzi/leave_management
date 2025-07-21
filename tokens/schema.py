@@ -127,6 +127,8 @@ class CreateToken(Mutation):
     @login_required
     def mutate(self, info, input, recoveredMeterPhoto=None, faultPhoto=None, faultMaintPhoto=None, reconnectionInvoice=None, reconnectionProof=None, oldToken=None, clearReceipt=None):
         user = info.context.user
+        print("Received input:", input)
+
         try:
             cost_center = CostCenter.objects.get(pk=int(input.selectedCostCenter))
         except CostCenter.DoesNotExist:
@@ -163,7 +165,7 @@ class CreateToken(Mutation):
                 app = "temper"
 
                 # Faulty Maintanance case
-                if tamper_token.is_for == "Fauty Maintanance":
+                if tamper_token.is_for == "Fault Maintenance":
                     fault_maintanance_form = FaultMaintananceForm(files={"photo": faultMaintPhoto})
                     if fault_maintanance_form.is_valid():
                         fault_maintanance = fault_maintanance_form.save(commit=False)
@@ -172,7 +174,7 @@ class CreateToken(Mutation):
                     else:
                         tamper_token.delete()
                         token.delete()
-                        raise Exception(f"Fault Maintanance form error: {fault_maintanance_form.errors}")
+                        raise Exception(f"Fault Maintenance form error: {fault_maintanance_form.errors}")
 
                 # Recovered Meter case
                 elif tamper_token.is_for == "Recovered Meter":

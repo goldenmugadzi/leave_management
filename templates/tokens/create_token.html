@@ -38,7 +38,7 @@
       {% for field in old_token_form %} <div class="rounded row text-center py-2 my-3"> {% if field.is_hidden %} {{ field }} {% else %} <div class=" m-auto grid grid-cols-2 pr-5"> <div> {{ field.label }} <div class="text-blue-500">{{ field.help_text }}</div> <div class="text-red-500 text-red-500 ">{{ field.errors }}</div> </div> {{ field }} </div> {% endif %} </div> {% endfor %}
     </div>
     
-    <div id="fault_maintanance_form" class="{% if not tamper_token_form.is_for.value == 'Fauty Maintanance' %}hidden{% endif %}" >
+    <div id="fault_maintanance_form" class="{% if not tamper_token_form.is_for.value == 'Fault Maintenance' %}hidden{% endif %}" >
       {% for field in fault_maintanance_form %} <div class="rounded row text-center py-2 my-3"> {% if field.is_hidden %} {{ field }} {% else %} <div class=" m-auto grid grid-cols-2 pr-5"> <div> {{ field.label }} <div class="text-blue-500">{{ field.help_text }}</div> <div class="text-red-500 text-red-500 ">{{ field.errors }}</div> </div> {{ field }} </div> {% endif %} </div> {% endfor %}
     </div> 
     <div id="reconnection_form" class="{% if not tamper_token_form.is_for.value == 'Reconnection' %}hidden{% endif %}" >

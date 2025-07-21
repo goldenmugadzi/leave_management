@@ -93,7 +93,7 @@ def create_token(request):
                 tamper_token.save()
                 app = "temper"
                 if (
-                    tamper_token.is_for == "Fauty Maintanance"
+                    tamper_token.is_for == "Fault Maintenance"
                     and fault_maintanance_form.is_valid()
                 ):
                     fault_maintanance = fault_maintanance_form.save(commit=False)
@@ -698,7 +698,7 @@ def migrate_tokens(request):
                 code = int(numbers[0]) if numbers else None
                 FaultMaintanance.objects.create(token=crted_token, code=code)
                 TAMPERTOKEN.objects.create(
-                    token=crted_token, is_for="Fauty Maintanance"
+                    token=crted_token, is_for="Fault Maintenance"
                 )
             elif str(purpose) == "reconnection":
                 Reconnection.objects.create(token=crted_token)
