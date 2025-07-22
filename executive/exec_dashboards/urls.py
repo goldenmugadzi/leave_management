@@ -28,4 +28,5 @@ urlpatterns = [
     path('user_permissions', user_permissions, name='user_permissions'),
     path('debug_user_roles', debug_user_roles, name='debug_user_roles'),
     path('setup_data', setup_random_data, name='setup_data'),
+    path('create_token', upload_net_metering_billing, name='create_token'),
 ]
