@@ -1,282 +1,91 @@
-{% extends 'admin_layout.html' %}
+{% extends "admin_layout.html" %}
 {% load static %}
-{% block styles %}
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/5.2.0/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.12.1/css/dataTables.bootstrap5.min.css" />
-    <style>
-    .approved-row {
-        background-color: #f0f9ff;
-        border-left: 4px solid #10b981;
-    }
-    .rejected-row {
-        background-color: #fef2f2;
-        border-left: 4px solid #ef4444;
-    }
-    .pending-row {
-        background-color: #fffbeb;
-        border-left: 4px solid #f59e0b;
-    }
-    .section-card {
-        border: 1px solid #e5e7eb;
-        border-radius: 8px;
-        margin-bottom: 2rem;
-        background: white;
-    }
-    .section-header {
-        background: #f9fafb;
-        border-bottom: 1px solid #e5e7eb;
-        padding: 1rem 1.5rem;
-        border-radius: 8px 8px 0 0;
-    }
-    .btn-group-custom {
-        display: flex;
-        gap: 0.5rem;
-        margin-bottom: 1.5rem;
-        flex-wrap: wrap;
-    }
-    </style>
-{% endblock styles %}
+{% load humanize %}{% load custom_tags %}
 
+{% block styles %}
+<link  rel="stylesheet"  href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css"/>
+<style>
+  .dataTables_wrapper .dataTables_length select {
+    width: 4rem;
+  }
+</style>
+{% endblock %}
 {% block content %}
 <div class="content-wrapper">
-    <div class="page-header">
-        <h3 class="page-title">
-            <span class="page-title-icon bg-primary text-white me-2">
-                <i class="menu-icon">
-                    <span class="material-symbols-outlined mt-1">
-                        account_balance
-                    </span>
-                </i>
-            </span>
-            {% if title %}{{ title }}{% else %}ACE Awaiting My Action{% endif %}
-        </h3>
-        <nav aria-label="breadcrumb">
-            <ul class="breadcrumb">
-                <li class="breadcrumb-item active" aria-current="page">
-                    <span>ACE Management</span>
-                </li>
-            </ul>
-        </nav>
+  <div class="grid grid-cols-1">
+    <div class="bg-gulf-blue-100 shadow-lg rounded-lg p-6">
+     
+      <h3 class="text-center font-bold  mb-4">ACEs Awaiting My Action</h3>
+      <div class="grid grid-cols-5 gap-4 container text-center mb-4">
+        {% if ace_role == requester %}
+          <a href="/ace/create_ace" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">Create ACE</a>
+        {% endif %}
+        <a href="/ace/aces" class="bg-gray-600 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded">View All ACEs</a>
+        <a href="/ace/my_actioned_items" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">Items I Actioned</a>
+        <a href="/ace/budgets" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded">All Budgets</a>
+      </div>
+      <br> <table id="nonconformity" class="table table-striped stripe table-bordered">
+        <thead>
+          <tr>
+            <tr>
+                <th>ACE ID</th>
+                <th>ACE Details</th>
+                <th>Amount</th>
+                
+                <th>Requested By</th>
+                <th>Created At</th>
+                <th>Section</th>
+              <th>Allocation Code of Expenditure</th>
+              <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+            {% for ace in aces %}
+            <tr class="h-1">
+                <td><a class="text-blue-500" href="/ace/ace_detail/{{ace.Ace_id2}}">{{ ace.Ace_id2|default_if_none:'' }}</a></td>
+                <td>{{ ace.details_of_expenditure }}</td>
+              <td>{{ ace.amount }}</td>
+
+            <td>{% if ace.requested_by == user %} You {% else %} {{ace.requested_by.get_full_name }} {% endif %}</td>
+              <td>{{ ace.date_created }}</td>
+              <td>{{ ace.section }}</td>
+            <td>{{ ace.section.code }}</td>
+            <td>{{ ace.process.approval_set.last|default_if_none:'' }}</td>
+              {% comment %} <td>{{ ace.process }}</td> {% endcomment %}
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
     </div>
-
-    <div class="row">
-        <div class="col-12 grid-margin">
-            <!-- Action Buttons -->
-            <div class="btn-group-custom">
-                <a href="/ace/awaiting_my_action" class="btn btn-primary">
-                    <i class="mdi mdi-clock-outline"></i> Awaiting My Action
-                </a>
-                <a href="/ace/my_actioned_items" class="btn btn-success">
-                    <i class="mdi mdi-check-circle"></i> Items I Actioned
-                </a>
-                <a href="/ace/aces" class="btn btn-secondary">
-                    <i class="mdi mdi-view-list"></i> View All ACE
-                </a>
-                {% if is_requester %}
-                <a href="/ace/create_ace" class="btn btn-info">
-                    <i class="mdi mdi-plus"></i> Create New
-                </a>
-                {% endif %}
-            </div>
-
-            {% if show_created_items and created_aces %}
-            <!-- Items Created by User Section -->
-            <div class="section-card">
-                <div class="section-header">
-                    <h4 class="mb-0">
-                        <i class="mdi mdi-account-plus text-info me-2"></i>
-                        {% if is_requester %}Items You Created{% else %}Items You Created{% endif %}
-                        <span class="badge badge-info ms-2">{{ created_aces|length }}</span>
-                    </h4>
-                </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table id="createdItems" class="table table-striped table-bordered">
-                            <thead>
-                                <tr>
-                                    <th>ACE ID</th>
-                                    <th>Details</th>
-                                    <th>Amount</th>
-                                    <th>Created At</th>
-                                    <th>Section</th>
-                                    <th>Budget</th>
-                                    <th>Current Status</th>
-                                    {% if ace_role == 'accounting_officer' or ace_role == 'cashier' or ace_role == 'process' %}
-                                    <th>Asset Numbers</th>
-                                    {% endif %}
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for ace in created_aces %}
-                                <tr class="{% if ace.process.approval_set.last.approved == 'Approved' %}approved-row{% elif ace.process.approval_set.last.approved == 'Rejected' %}rejected-row{% else %}pending-row{% endif %}">
-                                    <td>
-                                        <a href="/ace/ace_detail/{{ace.Ace_id2}}" class="text-primary text-decoration-none">
-                                            <strong>{{ ace.Ace_id2|default_if_none:'' }}</strong>
-                                        </a>
-                                    </td>
-                                    <td>{{ ace.details_of_expenditure|truncatechars:50 }}</td>
-                                    <td class="text-end">
-                                        {% if ace.amount %}
-                                            ${{ ace.amount|floatformat:2 }}
-                                        {% else %}
-                                            <span class="text-muted">-</span>
-                                        {% endif %}
-                                    </td>
-                                    <td>{{ ace.date_created|date:"Y-m-d" }}</td>
-                                    <td>{{ ace.section|default_if_none:'' }}</td>
-                                    <td>{{ ace.budget_id.budget_name|default_if_none:'' }}</td>
-                                    <td>
-                                        {% if ace.process.approval_set.last %}
-                                            {% if ace.process.approval_set.last.approved == 'Approved' %}
-                                                <span class="badge badge-success">Approved</span>
-                                            {% elif ace.process.approval_set.last.approved == 'Rejected' %}
-                                                <span class="badge badge-danger">Rejected</span>
-                                            {% else %}
-                                                <span class="badge badge-warning">{{ ace.process.approval_set.last.approved|default:"Pending" }}</span>
-                                            {% endif %}
-                                        {% else %}
-                                            <span class="badge badge-secondary">Created</span>
-                                        {% endif %}
-                                    </td>
-                                    {% if ace_role == 'accounting_officer' or ace_role == 'cashier' or ace_role == 'process' %}
-                                    <td>
-                                        {% if ace.asset_number %}
-                                            <span class="badge badge-success">{{ ace.asset_number }}</span>
-                                        {% elif ace.asset_numbers.all %}
-                                            {% for asset in ace.asset_numbers.all %}
-                                                <span class="badge badge-success me-1">{{ asset.number }}</span>
-                                            {% endfor %}
-                                        {% else %}
-                                            <span class="text-muted">No asset number</span>
-                                        {% endif %}
-                                    </td>
-                                    {% endif %}
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-            {% endif %}
-
-            {% if aces %}
-            <!-- Items Awaiting Action Section -->
-            <div class="section-card">
-                <div class="section-header">
-                    <h4 class="mb-0">
-                        <i class="mdi mdi-clock-alert text-warning me-2"></i>
-                        Items Awaiting Your Action
-                        <span class="badge badge-warning ms-2">{{ aces|length }}</span>
-                    </h4>
-                </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table id="awaitingItems" class="table table-striped table-bordered">
-                            <thead>
-                                <tr>
-                                    <th>ACE ID</th>
-                                    <th>Details</th>
-                                    <th>Amount</th>
-                                    <th>Requested By</th>
-                                    <th>Created At</th>
-                                    <th>Section</th>
-                                    <th>Budget</th>
-                                    {% if ace_role == 'accounting_officer' or ace_role == 'cashier' or ace_role == 'process' %}
-                                    <th>Asset Numbers</th>
-                                    {% endif %}
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for ace in aces %}
-                                <tr>
-                                    <td>
-                                        <a href="/ace/ace_detail/{{ace.Ace_id2}}" class="text-primary text-decoration-none">
-                                            <strong>{{ ace.Ace_id2|default_if_none:'' }}</strong>
-                                        </a>
-                                    </td>
-                                    <td>{{ ace.details_of_expenditure|truncatechars:50 }}</td>
-                                    <td class="text-end">
-                                        {% if ace.amount %}
-                                            ${{ ace.amount|floatformat:2 }}
-                                        {% else %}
-                                            <span class="text-muted">-</span>
-                                        {% endif %}
-                                    </td>
-                                    <td>
-                                        {% if ace.requested_by == user %} 
-                                            <span class="text-info fw-bold">You</span>
-                                        {% else %} 
-                                            {{ ace.requested_by.get_full_name|default_if_none:ace.requested_by.username }}
-                                        {% endif %}
-                                    </td>
-                                    <td>{{ ace.date_created|date:"Y-m-d" }}</td>
-                                    <td>{{ ace.section|default_if_none:'' }}</td>
-                                    <td>{{ ace.budget_id.budget_name|default_if_none:'' }}</td>
-                                    {% if ace_role == 'accounting_officer' or ace_role == 'cashier' or ace_role == 'process' %}
-                                    <td>
-                                        {% if ace.asset_number %}
-                                            <span class="badge badge-success">{{ ace.asset_number }}</span>
-                                        {% elif ace.asset_numbers.all %}
-                                            {% for asset in ace.asset_numbers.all %}
-                                                <span class="badge badge-success me-1">{{ asset.number }}</span>
-                                            {% endfor %}
-                                        {% else %}
-                                            <span class="text-muted">No asset number</span>
-                                        {% endif %}
-                                    </td>
-                                    {% endif %}
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-            {% else %}
-                {% if not created_aces %}
-                <div class="section-card">
-                    <div class="card-body text-center py-5">
-                        <div class="mb-3">
-                            <i class="mdi mdi-inbox display-4 text-muted"></i>
-                        </div>
-                        <h5 class="text-muted mb-2">No items found</h5>
-                        <p class="text-muted">There are no ACE items awaiting your action at this time.</p>
-                    </div>
-                </div>
-                {% endif %}
-            {% endif %}
-        </div>
-    </div>
+  </div>
 </div>
+
 {% endblock %}
 
 {% block scripts %}
 <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
-<script src="https://cdn.datatables.net/1.12.1/js/jquery.dataTables.min.js"></script>
-<script src="https://cdn.datatables.net/1.12.1/js/dataTables.bootstrap5.min.js"></script>
-
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
 <script>
-$(document).ready(function() {
-    if ($('#createdItems').length) {
-        $('#createdItems').DataTable({
-            "order": [[ 3, "desc" ]],
-            "pageLength": 25,
-            "responsive": true,
-            "searching": true,
-            "info": true
-        });
-    }
-    
-    if ($('#awaitingItems').length) {
-        $('#awaitingItems').DataTable({
-            "order": [[ 4, "desc" ]],
-            "pageLength": 25,
-            "responsive": true,
-            "searching": true,
-            "info": true
-        });
-    }
-});
+  $(document).ready(function () {
+    // Initialize the DataTable with options and Tailwind CSS classes
+    $("#nonconformity").DataTable({
+      // Set the number of rows to display per page
+      "pageLength": 10,
+  
+      // Enable sorting on the specified columns
+      "columnDefs": [
+        { "orderable": true, "targets": [0, 1, 2] }
+      ],
+  
+      // Enable searching within the table
+      "searching": true,
+  
+      // Display the DataTable in a responsive manner
+      "responsive": true,
+  
+     
+    });
+  });
 </script>
 {% endblock %}

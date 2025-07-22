@@ -16,5 +16,4 @@ urlpatterns = [
     path('print_report_csv/<str:report_id>', print_report_excel, name='print_report_csv'),
     path('receipt_manual', receipt_manual, name='receipt_manual'),
     # path('print_report_pdf', print_report_pdf, name='print_report_pdf'),
-    path('my_actioned_items/', my_actioned_items, name='my_actioned_items'),
 ]
