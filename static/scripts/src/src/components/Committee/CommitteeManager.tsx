@@ -1,5 +1,5 @@
-import React, { useState, useCallback } from 'react';
-import Select from 'react-select';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
+import Select, { StylesConfig, InputActionMeta } from 'react-select';
 import { ICommittee, IUser } from '../../types/scheduleTypes';
 import { useScheduleContext } from '../../context/ScheduleContext';
 
@@ -19,6 +19,14 @@ const CommitteeManager: React.FC<CommitteeManagerProps> = ({
 }) => {
   const { committee, setCommittee, username } = useScheduleContext();
   
+  // Log props on every render to debug
+  console.log('🔍 CommitteeManager rendered with:', {
+    usersCount: users?.length || 0,
+    usersData: users?.slice(0, 3), // Show first 3 users for debugging
+    committeeCount: committee?.length || 0,
+    currentUsername: username
+  });
+  
   // State for user justification
   const [justification, setJustification] = useState('');
   const [showJustificationModal, setShowJustificationModal] = useState(false);
@@ -27,47 +35,213 @@ const CommitteeManager: React.FC<CommitteeManagerProps> = ({
   // State for tracking if add committee modal is shown
   const [showAddCommitteeModal, setShowAddCommitteeModal] = useState(false);
   
-  // Convert users to select options
-  const userOptions = users.map(user => ({
-    value: user.username,
-    label: `${user.first_name} ${user.last_name}`
-  }));
+  // State for search term with debouncing
+  const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState('');
   
+  // State for add member modal
+  const [selectedUser, setSelectedUser] = useState<IUserOption | null>(null);
+  const [selectedPosition, setSelectedPosition] = useState<string>("");
+  const positionOptions = [
+    { value: "CHAIRMAN", label: "Chairman" },
+    { value: "USER", label: "User" },
+    { value: "PROCUREMENT ADMIN", label: "Procurement Admin" },
+    { value: "FINANCE", label: "Finance" },
+  ];
+  
+  // Debounce search term
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 300);
+    
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
+  
+  // Memoized user options with search filtering
+  const userOptions = useMemo(() => {
+    if (!users || users.length === 0) {
+      console.log('🔍 No users available');
+      return [];
+    }
+    
+    console.log('🔍 Total users:', users.length);
+    console.log('🔍 Search term:', debouncedSearchTerm);
+    console.log('🔍 Current committee members:', committee.map(m => m.memberUserName));
+    
+    // Debug: Log first few users to see their structure
+    console.log('🔍 First 3 users structure:', users.slice(0, 3).map(user => ({
+      first_name: user.first_name,
+      last_name: user.last_name,
+      username: user.username,
+      types: typeof user.first_name + ' ' + typeof user.last_name + ' ' + typeof user.username
+    })));
+    
+    // Filter users based on search term (if any)
+    let filteredUsers = users;
+    
+    if (debouncedSearchTerm.length >= 1) {
+      console.log('🔍 Starting search with term:', debouncedSearchTerm);
+      
+      filteredUsers = users.filter(user => {
+        // Handle potential null/undefined values
+        const firstName = (user.first_name || '').toLowerCase().trim();
+        const lastName = (user.last_name || '').toLowerCase().trim();
+        const username = (user.username || '').toLowerCase().trim();
+        const fullName = `${firstName} ${lastName}`.trim();
+        const search = debouncedSearchTerm.toLowerCase().trim();
+        
+        // Debug each user during search
+        console.log('🔍 Checking user:', {
+          user: user.username,
+          firstName,
+          lastName,
+          fullName,
+          searchTerm: search,
+          firstNameMatch: firstName.includes(search),
+          lastNameMatch: lastName.includes(search),
+          usernameMatch: username.includes(search),
+          fullNameMatch: fullName.includes(search)
+        });
+        
+        const matches = fullName.includes(search) || 
+                       username.includes(search) ||
+                       firstName.includes(search) ||
+                       lastName.includes(search);
+        
+        if (matches) {
+          console.log('🔍 ✅ Match found:', fullName, username);
+        }
+        return matches;
+      });
+      console.log('🔍 Filtered by search:', filteredUsers.length, 'users');
+    } else {
+      // Show first 50 users if no search
+      filteredUsers = users.slice(0, 50);
+      console.log('🔍 No search term, showing first 50 users');
+    }
+    
+    // Filter out already selected users
+    const availableUsers = filteredUsers.filter(user => 
+      !committee.some(member => member.memberUserName === user.username)
+    );
+    
+    console.log('🔍 Available users after filtering committee:', availableUsers.length);
+    
+    const options = availableUsers.map(user => ({
+      value: user.username,
+      label: `${user.first_name || ''} ${user.last_name || ''}`.trim() + ` (${user.username})`
+    }));
+    
+    console.log('🔍 Final options:', options.length, options.slice(0, 3));
+    return options;
+  }, [users, debouncedSearchTerm, committee]);
+
+  // Custom styles for react-select to handle modal and performance
+  const selectStyles: StylesConfig<IUserOption, false> = useMemo(() => ({
+    control: (provided) => ({
+      ...provided,
+      minHeight: '40px',
+      backgroundColor: 'white',
+      borderColor: '#d1d5db',
+      '&:hover': {
+        borderColor: '#9ca3af'
+      },
+      '&:focus-within': {
+        borderColor: '#3b82f6',
+        boxShadow: '0 0 0 1px #3b82f6'
+      }
+    }),
+    menu: (provided) => ({
+      ...provided,
+      zIndex: 9999,
+      position: 'absolute',
+      maxHeight: '200px',
+    }),
+    menuPortal: (provided) => ({
+      ...provided,
+      zIndex: 9999,
+    }),
+    option: (provided, state) => ({
+      ...provided,
+      backgroundColor: state.isSelected 
+        ? '#3b82f6' 
+        : state.isFocused 
+        ? '#eff6ff' 
+        : 'white',
+      color: state.isSelected ? 'white' : '#1f2937',
+      '&:hover': {
+        backgroundColor: state.isSelected ? '#3b82f6' : '#eff6ff'
+      }
+    }),
+    placeholder: (provided) => ({
+      ...provided,
+      color: '#9ca3af'
+    }),
+    noOptionsMessage: (provided) => ({
+      ...provided,
+      color: '#6b7280',
+      fontSize: '14px'
+    })
+  }), []);
+  
+  // Handle search input change
+  const handleInputChange = useCallback((inputValue: string, actionMeta: InputActionMeta) => {
+    console.log('🔍 Input change:', { inputValue, action: actionMeta.action });
+    if (actionMeta.action === 'input-change') {
+      setSearchTerm(inputValue);
+    }
+    return inputValue;
+  }, []);
+
   // Add committee members modal
   const onAddCommitteeMembers = useCallback(() => {
+    setSearchTerm(''); // Reset search when opening modal
     setShowAddCommitteeModal(true);
   }, []);
   
-  // Handle committee member selection
+  // Handle committee member selection in modal
   const onCommitteeSelect = useCallback((selectedOption: IUserOption | null) => {
-    if (!selectedOption) return;
-    
-    const username = selectedOption.value;
-    const memberName = selectedOption.label;
-    
+    setSelectedUser(selectedOption);
+  }, []);
+
+  // Add committee member from modal
+  const onAddCommitteeMemberModal = useCallback(() => {
+    if (!selectedUser || !selectedPosition) {
+      alert("Please select both a user and a position.");
+      return;
+    }
+    const username = selectedUser.value;
+    const memberName = selectedUser.label.split(' (')[0];
     // Check if member already exists
     const memberExists = committee.some(m => m.memberUserName === username);
     if (memberExists) {
       alert('This member is already in the committee');
       return;
     }
-    
-    // Add new member
+    // Check if position already taken
+    const positionExists = committee.some(m => m.memberPosition === selectedPosition);
+    if (positionExists) {
+      alert('This position is already assigned to another member');
+      return;
+    }
     setCommittee(prev => [
       ...prev,
       {
         memberUserName: username,
         memberName,
-        memberPosition: '',
+        memberPosition: selectedPosition,
         committeeStatus: 'Pending',
         memberApproval: 'Pending',
         committeeJustification: '',
         committeeDate: new Date().toISOString().split('T')[0]
       }
     ]);
-    
     setShowAddCommitteeModal(false);
-  }, [committee, setCommittee]);
+    setSearchTerm("");
+    setSelectedUser(null);
+    setSelectedPosition("");
+  }, [committee, setCommittee, selectedUser, selectedPosition]);
   
   // Handle committee member removal
   const onRemoveCommitteeMember = useCallback((index: number, username_: string) => {
@@ -75,27 +249,6 @@ const CommitteeManager: React.FC<CommitteeManagerProps> = ({
     setCommittee(prev => {
       const updated = [...prev];
       updated.splice(index, 1);
-      return updated;
-    });
-  }, [setCommittee]);
-  
-  // Handle changes to committee members
-  const onCommitteeChange = useCallback((
-    name_: string,
-    event: { target: { name: string; value: string } }
-  ) => {
-    const { name, value } = event.target;
-    
-    setCommittee(prev => {
-      const index = prev.findIndex(member => member.memberUserName === name_);
-      if (index === -1) return prev;
-      
-      const updated = [...prev];
-      updated[index] = {
-        ...updated[index],
-        [name]: value
-      };
-      
       return updated;
     });
   }, [setCommittee]);
@@ -173,6 +326,9 @@ const CommitteeManager: React.FC<CommitteeManagerProps> = ({
 
   return (
     <div className="mt-8">
+      {/* Temporary Debug Panel - Remove after fixing */}
+
+      
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-semibold text-gray-800">Committee Members</h2>
         <button
@@ -220,14 +376,7 @@ const CommitteeManager: React.FC<CommitteeManagerProps> = ({
                     {member.memberName}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    <input
-                      type="text"
-                      name="memberPosition"
-                      value={member.memberPosition || ''}
-                      onChange={(e) => onCommitteeChange(member.memberUserName, e)}
-                      className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md"
-                      placeholder="Position"
-                    />
+                    {member.memberPosition}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getCommitteeClassNames(member.memberApproval || 'Pending')}`}>
@@ -306,12 +455,50 @@ const CommitteeManager: React.FC<CommitteeManagerProps> = ({
                         Select User
                       </label>
                       <div className="mt-1">
-                        <Select
-                          name="memberUserName"
-                          className="block w-full rounded-md border-0 py-2 text-gray-900 sm:max-w-xs sm:text-sm sm:leading-6"
-                          options={userOptions}
-                          onChange={(option) => onCommitteeSelect(option)}
-                        />
+                        {!users || users.length === 0 ? (
+                          <div className="bg-yellow-50 border border-yellow-200 rounded p-3">
+                            <p className="text-yellow-800 text-sm">
+                              {!users ? "Loading users..." : "No users available"}
+                            </p>
+                          </div>
+                        ) : (
+                          <Select
+                            name="memberUserName"
+                            className="block w-full rounded-md border-0 py-2 text-gray-900 sm:max-w-xs sm:text-sm sm:leading-6"
+                            options={userOptions}
+                            value={selectedUser}
+                            onChange={onCommitteeSelect}
+                            onInputChange={handleInputChange}
+                            styles={selectStyles}
+                            placeholder="Search users..."
+                            isClearable
+                            isSearchable
+                            isLoading={!users || users.length === 0}
+                            noOptionsMessage={() => searchTerm.length < 1 ? "Start typing to search users" : `No users found for "${searchTerm}"`}
+                            menuPortalTarget={document.body}
+                            menuPosition="fixed"
+                            loadingMessage={() => "Loading users..."}
+                          />
+                        )}
+                      </div>
+                    </div>
+                    <div className="mt-4">
+                      <label htmlFor="memberPosition" className="block text-sm font-medium text-gray-700">
+                        Select Position
+                      </label>
+                      <div className="mt-1">
+                        <select
+                          id="memberPosition"
+                          name="memberPosition"
+                          className="block w-full rounded-md border-0 text-gray-900 sm:max-w-xs sm:text-sm sm:leading-6 p-2"
+                          value={selectedPosition}
+                          onChange={e => setSelectedPosition(e.target.value)}
+                        >
+                          <option value="">Select Position</option>
+                          {positionOptions.map(opt => (
+                            <option key={opt.value} value={opt.value}>{opt.label}</option>
+                          ))}
+                        </select>
                       </div>
                     </div>
                   </div>
@@ -320,7 +507,14 @@ const CommitteeManager: React.FC<CommitteeManagerProps> = ({
               <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
                 <button
                   type="button"
-                  onClick={() => setShowAddCommitteeModal(false)}
+                  onClick={onAddCommitteeMemberModal}
+                  className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm"
+                >
+                  Add Member
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setShowAddCommitteeModal(false); setSelectedUser(null); setSelectedPosition(""); }}
                   className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
                 >
                   Cancel

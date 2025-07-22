@@ -1,35 +1,8 @@
 {
-  "src/components/Approval/ApprovalWorkflow.tsx": {
-    "file": "ApprovalWorkflow.js",
-    "name": "ApprovalWorkflow",
-    "src": "src/components/Approval/ApprovalWorkflow.tsx",
-    "isDynamicEntry": true,
-    "imports": [
-      "src/main.tsx"
-    ]
-  },
-  "src/components/Bids/BidManager.tsx": {
-    "file": "BidManager.js",
-    "name": "BidManager",
-    "src": "src/components/Bids/BidManager.tsx",
-    "isDynamicEntry": true,
-    "imports": [
-      "src/main.tsx"
-    ]
-  },
   "src/components/Committee/CommitteeManager.tsx": {
     "file": "CommitteeManager.js",
     "name": "CommitteeManager",
     "src": "src/components/Committee/CommitteeManager.tsx",
-    "isDynamicEntry": true,
-    "imports": [
-      "src/main.tsx"
-    ]
-  },
-  "src/components/Compliance/ComplianceChecker.tsx": {
-    "file": "ComplianceChecker.js",
-    "name": "ComplianceChecker",
-    "src": "src/components/Compliance/ComplianceChecker.tsx",
     "isDynamicEntry": true,
     "imports": [
       "src/main.tsx"
@@ -41,10 +14,7 @@
     "src": "src/main.tsx",
     "isEntry": true,
     "dynamicImports": [
-      "src/components/Bids/BidManager.tsx",
-      "src/components/Committee/CommitteeManager.tsx",
-      "src/components/Compliance/ComplianceChecker.tsx",
-      "src/components/Approval/ApprovalWorkflow.tsx"
+      "src/components/Committee/CommitteeManager.tsx"
     ],
     "css": [
       "main.css"

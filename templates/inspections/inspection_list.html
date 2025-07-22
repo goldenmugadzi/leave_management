@@ -1,0 +1,217 @@
+{% extends 'admin_layout.html' %}
+{% load static %}
+
+{% block title %}Inspection Reports{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-title-box">
+                <div class="page-title-right">
+                    <a href="{% url 'inspections:inspection_create' %}" class="btn btn-primary">
+                        <i class="mdi mdi-plus"></i> New Inspection Report
+                    </a>
+                </div>
+                <h4 class="page-title">Inspection Reports</h4>
+                <ol class="breadcrumb m-0">
+                    <li class="breadcrumb-item"><a href="{% url 'inspections:dashboard' %}">Inspections</a></li>
+                    <li class="breadcrumb-item active">Reports</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <!-- Filter Form -->
+                    <form method="get" class="row g-3 mb-3">
+                        <div class="col-md-4">
+                            <input type="text" name="search" class="form-control" placeholder="Search by service number, consumer name, or inspector..." value="{{ request.GET.search }}">
+                        </div>
+                        <div class="col-md-2">
+                            <select name="status" class="form-control">
+                                <option value="">All Statuses</option>
+                                <option value="pass" {% if request.GET.status == 'pass' %}selected{% endif %}>Pass</option>
+                                <option value="fail" {% if request.GET.status == 'fail' %}selected{% endif %}>Fail</option>
+                                <option value="pending" {% if request.GET.status == 'pending' %}selected{% endif %}>Pending</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <select name="installation_type" class="form-control">
+                                <option value="">All Types</option>
+                                <option value="domestic" {% if request.GET.installation_type == 'domestic' %}selected{% endif %}>Domestic</option>
+                                <option value="commercial" {% if request.GET.installation_type == 'commercial' %}selected{% endif %}>Commercial</option>
+                                <option value="industrial" {% if request.GET.installation_type == 'industrial' %}selected{% endif %}>Industrial</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <input type="date" name="date_from" class="form-control" value="{{ request.GET.date_from }}">
+                        </div>
+                        <div class="col-md-2">
+                            <input type="date" name="date_to" class="form-control" value="{{ request.GET.date_to }}">
+                        </div>
+                        <div class="col-md-12">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="mdi mdi-magnify"></i> Search
+                            </button>
+                            <a href="{% url 'inspections:inspection_list' %}" class="btn btn-secondary">
+                                <i class="mdi mdi-refresh"></i> Clear
+                            </a>
+                        </div>
+                    </form>
+
+                    <!-- Reports Table -->
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Service No.</th>
+                                    <th>Consumer Name</th>
+                                    <th>Property</th>
+                                    <th>Type</th>
+                                    <th>Inspector</th>
+                                    <th>Date</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for report in reports %}
+                                <tr>
+                                    <td>
+                                        <a href="{% url 'inspections:inspection_detail' report.pk %}" class="text-decoration-none">
+                                            {{ report.service_no|default:"TBD" }}
+                                        </a>
+                                    </td>
+                                    <td>
+                                        <strong>{{ report.consumer_name|default:"Unknown" }}</strong>
+                                        {% if report.client_application %}
+                                            <br><small class="text-muted">App: {{ report.client_application.application_number }}</small>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <small>{{ report.property_supplied|default:report.client_application.property_address|default:"N/A"|truncatechars:40 }}</small>
+                                    </td>
+                                    <td>
+                                        {% if report.installation_type %}
+                                            <span class="badge badge-light">{{ report.get_installation_type_display }}</span>
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if report.inspector %}
+                                            {{ report.inspector.get_full_name|default:report.inspector.username }}
+                                        {% else %}
+                                            <span class="text-muted">Unassigned</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if report.inspection_date %}
+                                            {{ report.inspection_date|date:"M d, Y" }}
+                                        {% else %}
+                                            <span class="text-muted">Pending</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <span class="badge badge-{% if report.status == 'pass' %}success{% elif report.status == 'fail' %}danger{% else %}warning{% endif %}">
+                                            {{ report.get_status_display }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm" role="group">
+                                            <a href="{% url 'inspections:inspection_detail' report.pk %}" class="btn btn-outline-info" title="View Details">
+                                                <i class="mdi mdi-eye"></i>
+                                            </a>
+                                            <a href="{% url 'inspections:inspection_edit' report.pk %}" class="btn btn-outline-primary" title="Edit">
+                                                <i class="mdi mdi-pencil"></i>
+                                            </a>
+                                            {% if report.client_application %}
+                                                <a href="{% url 'inspections:application_detail' report.client_application.pk %}" class="btn btn-outline-secondary" title="View Application">
+                                                    <i class="mdi mdi-file-document"></i>
+                                                </a>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="8" class="text-center py-4">
+                                        <p class="text-muted">No inspection reports found matching your criteria.</p>
+                                        <a href="{% url 'inspections:inspection_create' %}" class="btn btn-primary">
+                                            Create First Inspection Report
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Pagination -->
+                    {% if page_obj.has_other_pages %}
+                        <nav aria-label="Inspection reports pagination">
+                            <ul class="pagination justify-content-center">
+                                {% if page_obj.has_previous %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page=1{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">First</a>
+                                    </li>
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">Previous</a>
+                                    </li>
+                                {% endif %}
+
+                                <li class="page-item active">
+                                    <span class="page-link">
+                                        Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                                    </span>
+                                </li>
+
+                                {% if page_obj.has_next %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">Next</a>
+                                    </li>
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.search %}&search={{ request.GET.search }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">Last</a>
+                                    </li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+                    {% endif %}
+
+                    <!-- Summary Statistics -->
+                    <div class="row mt-3">
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <h5 class="text-success">{{ reports|length }}</h5>
+                                <p class="text-muted mb-0">Total Reports</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <h5 class="text-success">{{ reports|length }}</h5>
+                                <p class="text-muted mb-0">Pass</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <h5 class="text-danger">0</h5>
+                                <p class="text-muted mb-0">Fail</p>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="text-center">
+                                <h5 class="text-warning">0</h5>
+                                <p class="text-muted mb-0">Pending</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

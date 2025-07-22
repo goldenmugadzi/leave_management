@@ -4143,7 +4143,7 @@ def api_get_pr_items(request, pr_id):
 
     # Get pagination parameters
     page = int(request.GET.get('page', 1))
-    page_size = int(request.GET.get('page_size', 50))  # Default 50 items per page
+    page_size = int(request.GET.get('page_size', 1000))  # Increased default to 1000 items per page
     show_all = request.GET.get('show_all', 'true').lower() == 'true'  # Show all items by default
     
     from django.core.paginator import Paginator
@@ -4549,6 +4549,44 @@ def api_get_cs_approvals_optimized(request, cs_id):
             "success": False,
             "message": f"Error loading approvals: {str(ex)}"
         })
+
+
+@login_required
+@require_http_methods(["GET"])
+def api_get_cs_rankings_optimized(request, cs_id):
+    """Get rankings data for a specific CS - optimized"""
+    try:
+        cs = ComparativeSchedules.objects.prefetch_related(
+            Prefetch('ranking_set', queryset=Ranking.objects.select_related('supplier_id'))
+        ).filter(cs_id=cs_id).first()
+        
+        if not cs:
+            return JsonResponse({"success": False, "message": "CS not found"})
+        
+        rankings = list(cs.ranking_set.all())
+        
+        rankings_list = [
+            {
+                "supplier_name": rank.supplier_id.name if rank.supplier_id else "",
+                "rank": rank.rank,
+                "remarks": rank.remarks,
+                "decision": rank.decision,
+                "total": rank.total,
+                "created_at": rank.created_at,
+            } for rank in rankings
+        ]
+        
+        return JsonResponse({
+            "success": True,
+            "rankings": rankings_list
+        })
+        
+    except Exception as ex:
+        return JsonResponse({
+            "success": False,
+            "message": f"Error loading rankings: {str(ex)}"
+        })
+
 
 @login_required
 @require_http_methods(["GET"])

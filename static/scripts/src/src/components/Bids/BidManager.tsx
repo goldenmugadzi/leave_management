@@ -1,15 +1,187 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import { IBid, ISupplier } from '../../types/scheduleTypes';
 import { useScheduleContext } from '../../context/ScheduleContext';
 
 interface BidManagerProps {
   suppliers: ISupplier[];
+  selectedPrItems: Array<{
+    id: string;
+    name: string;
+    quantity: number;
+    unit: string;
+    status: string;
+    included: boolean;
+  }>;
   onSaveBid: (bid: IBid) => Promise<void>;
   onDeleteBid: (bid_count: number, supplier_name: string) => Promise<void>;
 }
 
+// Searchable Supplier Dropdown Component
+interface SearchableSupplierDropdownProps {
+  suppliers: ISupplier[];
+  selectedSupplierId: string;
+  onSupplierSelect: (supplier: ISupplier | null) => void;
+  placeholder?: string;
+}
+
+const SearchableSupplierDropdown: React.FC<SearchableSupplierDropdownProps> = ({
+  suppliers,
+  selectedSupplierId,
+  onSupplierSelect,
+  placeholder = "Search and select a supplier..."
+}) => {
+  const [searchTerm, setSearchTerm] = useState<string>('');
+  const [isDropdownOpen, setIsDropdownOpen] = useState<boolean>(false);
+  const [displayValue, setDisplayValue] = useState<string>('');
+  const [isSelecting, setIsSelecting] = useState<boolean>(false);
+
+  // Filter suppliers based on search term
+  const filteredSuppliers = useMemo(() => {
+    if (!searchTerm.trim()) return suppliers;
+    
+    const term = searchTerm.toLowerCase();
+    return suppliers.filter(supplier => {
+      const name = (supplier.supplier_name || supplier.name || '').toLowerCase();
+      return name.includes(term);
+    });
+  }, [suppliers, searchTerm]);
+
+  // Update display value when selected supplier changes
+  useEffect(() => {
+    if (selectedSupplierId) {
+      const selectedSupplier = suppliers.find(s => s.id?.toString() === selectedSupplierId);
+      if (selectedSupplier) {
+        const name = selectedSupplier.supplier_name || selectedSupplier.name || '';
+        setDisplayValue(name);
+        setSearchTerm(name);
+      }
+    } else {
+      setDisplayValue('');
+      setSearchTerm('');
+    }
+  }, [selectedSupplierId, suppliers]);
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setSearchTerm(value);
+    setDisplayValue(value);
+    setIsDropdownOpen(true);
+    
+    // Clear selection if input is cleared
+    if (!value.trim()) {
+      onSupplierSelect(null);
+    }
+  };
+
+  const handleSupplierSelect = (supplier: ISupplier) => {
+    setIsSelecting(true);
+    const name = supplier.supplier_name || supplier.name || '';
+    setDisplayValue(name);
+    setSearchTerm(name);
+    setIsDropdownOpen(false);
+    onSupplierSelect(supplier);
+    setIsSelecting(false);
+  };
+
+  const handleInputFocus = () => {
+    setIsDropdownOpen(true);
+  };
+
+  const handleInputBlur = () => {
+    // Don't close if we're in the middle of selecting
+    if (!isSelecting) {
+      // Delay closing to allow clicks on dropdown items
+      setTimeout(() => setIsDropdownOpen(false), 300);
+    }
+  };
+
+  const handleClearSelection = () => {
+    setSearchTerm('');
+    setDisplayValue('');
+    setIsDropdownOpen(false);
+    onSupplierSelect(null);
+  };
+
+  return (
+    <div className="relative">
+      <div className="relative">
+        <input
+          type="text"
+          value={displayValue}
+          onChange={handleInputChange}
+          onFocus={handleInputFocus}
+          onBlur={handleInputBlur}
+          placeholder={placeholder}
+          className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md pr-10"
+        />
+        {selectedSupplierId && (
+          <button
+            type="button"
+            onClick={handleClearSelection}
+            className="absolute inset-y-0 right-0 pr-3 flex items-center"
+          >
+            <svg className="h-4 w-4 text-gray-400 hover:text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        )}
+        {!selectedSupplierId && (
+          <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+            <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </div>
+        )}
+      </div>
+
+      {/* Dropdown */}
+      {isDropdownOpen && (
+        <div className="absolute z-10 mt-1 w-full bg-white shadow-lg max-h-60 rounded-md py-1 text-base ring-1 ring-black ring-opacity-5 overflow-auto focus:outline-none sm:text-sm">
+          {filteredSuppliers.length === 0 ? (
+            <div className="px-3 py-2 text-sm text-gray-500">
+              {searchTerm.trim() ? `No suppliers found matching "${searchTerm}"` : 'No suppliers available'}
+            </div>
+          ) : (
+            filteredSuppliers.map((supplier) => {
+              const name = supplier.supplier_name || supplier.name || '';
+              const isSelected = supplier.id?.toString() === selectedSupplierId;
+              
+              return (
+                                 <div
+                   key={supplier.id}
+                   onMouseDown={(e) => {
+                     e.preventDefault(); // Prevent blur event
+                     handleSupplierSelect(supplier);
+                   }}
+                   className={`cursor-pointer select-none relative py-2 pl-3 pr-9 hover:bg-blue-50 ${
+                     isSelected ? 'bg-blue-100 text-blue-900' : 'text-gray-900'
+                   }`}
+                 >
+                  <div className="flex items-center">
+                    <span className={`block truncate ${isSelected ? 'font-semibold' : 'font-normal'}`}>
+                      {name}
+                    </span>
+                  </div>
+                  {isSelected && (
+                    <span className="absolute inset-y-0 right-0 flex items-center pr-4 text-blue-600">
+                      <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                    </span>
+                  )}
+                </div>
+              );
+            })
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
 const BidManager: React.FC<BidManagerProps> = ({ 
   suppliers,
+  selectedPrItems,
   onSaveBid,
   onDeleteBid
 }) => {
@@ -23,6 +195,23 @@ const BidManager: React.FC<BidManagerProps> = ({
     bid_date: '',
     items: []
   });
+
+  // Helper function to calculate total price
+  const calculateTotalPrice = useCallback((itemName: string) => {
+    const bidItem = currentBid.items?.find(bi => bi.item_required === itemName);
+    if (!bidItem) return 0;
+    
+    const unitPrice = Number(bidItem.unit_price) || 0;
+    const quantity = Number(bidItem.quantity) || 0;
+    console.log(`Calculating for ${itemName}:`, { unitPrice, quantity, bidItem });
+    return unitPrice * quantity;
+  }, [currentBid.items]);
+
+  // Helper function to get current bid item value
+  const getBidItemValue = useCallback((itemName: string, field: 'unit_of_measurement' | 'quantity' | 'unit_price') => {
+    const bidItem = currentBid.items?.find(bi => bi.item_required === itemName);
+    return bidItem?.[field];
+  }, [currentBid.items]);
   
   // State for modals
   const [showAddBidModal, setShowAddBidModal] = useState(false);
@@ -72,21 +261,14 @@ const BidManager: React.FC<BidManagerProps> = ({
     }));
   }, []);
 
-  // Handle supplier selection
-  const onCurrentBidSupplierChange = useCallback((
-    event: React.ChangeEvent<HTMLSelectElement>
-  ) => {
-    const { name, value } = event.target;
-    
-    // Find the supplier name
-    const supplier = suppliers.find(s => s.id?.toString() === value);
-    
+  // Handle supplier selection from searchable dropdown
+  const onSupplierSelect = useCallback((supplier: ISupplier | null) => {
     setCurrentBid(prev => ({
       ...prev,
-      [name]: value,
-      supplier_name: supplier?.supplier_name || supplier?.name || ''
+      supplier: supplier?.id?.toString() || '',
+      supplier_name: supplier ? (supplier.supplier_name || supplier.name || '') : ''
     }));
-  }, [suppliers]);
+  }, []);
 
   // Handle bid document upload
   const onBidDocumentChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
@@ -102,10 +284,9 @@ const BidManager: React.FC<BidManagerProps> = ({
   // Handle changes to bid items
   const onCurrentBidItemChange = useCallback((
     description: string,
-    event: { target: { name: string; value: string } },
-    bid_no: string
+    event: { target: { name: string; value: string } }
   ) => {
-    console.log('bid_no', bid_no, 'description', description, 'event', event);
+    console.log('🔍 BidItemChange:', { description, field: event.target.name, value: event.target.value });
     const { name, value } = event.target;
     
     setCurrentBid(prev => {
@@ -116,16 +297,25 @@ const BidManager: React.FC<BidManagerProps> = ({
       
       if (itemIndex === -1) {
         // Item doesn't exist, create a new one
+        const newItem = {
+          item_required: description,
+          [name]: name === 'quantity' || name === 'unit_price' || name === 'total_price' 
+            ? (parseFloat(value) || 0)
+            : value
+        };
+        
+        // Calculate total price for new item if both values are available
+        if (name === 'unit_price' || name === 'quantity') {
+          const unitPrice = name === 'unit_price' ? (parseFloat(value) || 0) : 0;
+          const quantity = name === 'quantity' ? (parseFloat(value) || 0) : 0;
+          newItem.total_price = unitPrice * quantity;
+        }
+        
         return {
           ...prev,
           items: [
             ...items,
-            {
-              item_required: description,
-              [name]: name === 'quantity' || name === 'unit_price' || name === 'total_price' 
-                ? parseFloat(value) 
-                : value
-            }
+            newItem
           ]
         };
       } else {
@@ -134,27 +324,30 @@ const BidManager: React.FC<BidManagerProps> = ({
         updatedItems[itemIndex] = {
           ...updatedItems[itemIndex],
           [name]: name === 'quantity' || name === 'unit_price' || name === 'total_price' 
-            ? parseFloat(value) 
+            ? (parseFloat(value) || 0)
             : value
         };
         
-        // Calculate total price if unit price and quantity are changed
+        // Always recalculate total price when unit price or quantity changes
         if (name === 'unit_price' || name === 'quantity') {
           const unitPrice = name === 'unit_price' 
-            ? parseFloat(value) 
-            : updatedItems[itemIndex].unit_price || 0;
+            ? (parseFloat(value) || 0)
+            : (updatedItems[itemIndex].unit_price || 0);
             
           const quantity = name === 'quantity' 
-            ? parseFloat(value) 
-            : updatedItems[itemIndex].quantity || 0;
+            ? (parseFloat(value) || 0)
+            : (updatedItems[itemIndex].quantity || 0);
             
           updatedItems[itemIndex].total_price = unitPrice * quantity;
         }
         
-        return {
+        const newState = {
           ...prev,
           items: updatedItems
         };
+        
+        console.log('📊 Updated currentBid state:', newState);
+        return newState;
       }
     });
   }, []);
@@ -173,15 +366,23 @@ const BidManager: React.FC<BidManagerProps> = ({
         return;
       }
       
-      // Check if bid items have required fields
-      if (!currentBid.items || currentBid.items.length === 0) {
-        alert('Please add at least one item to the bid');
+      // Check if any PR items are selected
+      const selectedItems = selectedPrItems.filter(item => item.included);
+      if (selectedItems.length === 0) {
+        alert('Please select PR items in the PR Items tab first');
         return;
       }
       
-      for (const item of currentBid.items || []) {
-        if (!item.unit_price || !item.quantity) {
-          alert('Please enter unit price and quantity for all items');
+      // Check if bid items have required fields for selected PR items
+      if (!currentBid.items || currentBid.items.length === 0) {
+        alert('Please enter pricing information for all items');
+        return;
+      }
+      
+      for (const prItem of selectedItems) {
+        const bidItem = currentBid.items.find(bi => bi.item_required === prItem.name);
+        if (!bidItem || !bidItem.unit_price || !bidItem.quantity) {
+          alert(`Please enter unit price and quantity for "${prItem.name}"`);
           return;
         }
       }
@@ -196,7 +397,7 @@ const BidManager: React.FC<BidManagerProps> = ({
       console.error('Error saving bid:', error);
       alert('Error saving bid');
     }
-  }, [currentBid, onSaveBid]);
+  }, [currentBid, selectedPrItems, onSaveBid]);
 
   // Show delete bid modal
   const onDeleteBidModal = useCallback((
@@ -239,11 +440,28 @@ const BidManager: React.FC<BidManagerProps> = ({
         <button
           type="button"
           onClick={onAddBidModal}
-          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700"
+          disabled={selectedPrItems.filter(item => item.included).length === 0}
+          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+          title={selectedPrItems.filter(item => item.included).length === 0 ? 'Please select PR items first' : 'Add a new bid'}
         >
           Add Bid
         </button>
       </div>
+
+      {/* Warning message when no PR items selected */}
+      {selectedPrItems.filter(item => item.included).length === 0 && (
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
+          <div className="flex items-center">
+            <svg className="w-6 h-6 text-yellow-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+            </svg>
+            <div>
+              <h3 className="text-lg font-medium text-yellow-800">No PR Items Selected</h3>
+              <p className="text-yellow-700 mt-1">Please go to the "PR Items" tab and select the items you want to include in bids before adding supplier bids.</p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Bids Table */}
       <div className="overflow-x-auto">
@@ -342,20 +560,11 @@ const BidManager: React.FC<BidManagerProps> = ({
                           Supplier
                         </label>
                         <div className="mt-1">
-                          <select
-                            id="supplier"
-                            name="supplier"
-                            value={currentBid.supplier}
-                            onChange={(e) => onCurrentBidSupplierChange(e)}
-                            className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md"
-                          >
-                            <option value="">Select a supplier</option>
-                            {suppliers.map((supplier) => (
-                              <option key={supplier.id} value={supplier.id}>
-                                {supplier.supplier_name || supplier.name}
-                              </option>
-                            ))}
-                          </select>
+                                                     <SearchableSupplierDropdown
+                             suppliers={suppliers}
+                             selectedSupplierId={currentBid.supplier || ''}
+                             onSupplierSelect={onSupplierSelect}
+                           />
                         </div>
                       </div>
 
@@ -426,43 +635,59 @@ const BidManager: React.FC<BidManagerProps> = ({
                             </tr>
                           </thead>
                           <tbody className="bg-white divide-y divide-gray-200">
-                            {/* Placeholder for item rows - would need to be populated from PR items or existing bid items */}
-                            {/* Example row: */}
-                            <tr>
-                              <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-900">
-                                Example Item
-                              </td>
-                              <td className="px-3 py-2 whitespace-nowrap text-sm">
-                                <input
-                                  type="text"
-                                  name="unit_of_measurement"
-                                  className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md"
-                                  placeholder="e.g., Each"
-                                  onChange={(e) => onCurrentBidItemChange('Example Item', e, currentBid.bid_count?.toString() || '0')}
-                                />
-                              </td>
-                              <td className="px-3 py-2 whitespace-nowrap text-sm">
-                                <input
-                                  type="number"
-                                  name="quantity"
-                                  className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md"
-                                  placeholder="Qty"
-                                  onChange={(e) => onCurrentBidItemChange('Example Item', e, currentBid.bid_count?.toString() || '0')}
-                                />
-                              </td>
-                              <td className="px-3 py-2 whitespace-nowrap text-sm">
-                                <input
-                                  type="number"
-                                  name="unit_price"
-                                  className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md"
-                                  placeholder="Unit price"
-                                  onChange={(e) => onCurrentBidItemChange('Example Item', e, currentBid.bid_count?.toString() || '0')}
-                                />
-                              </td>
-                              <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-500">
-                                $0.00 {/* Would be calculated */}
-                              </td>
-                            </tr>
+                            {selectedPrItems.filter(item => item.included).length === 0 ? (
+                              <tr>
+                                <td colSpan={5} className="px-3 py-4 text-center text-sm text-gray-500">
+                                  No PR items selected. Please go to the PR Items tab and select items first.
+                                </td>
+                              </tr>
+                            ) : (
+                              selectedPrItems
+                                .filter(item => item.included)
+                                .map((item) => {
+                                  return (
+                                    <tr key={item.id}>
+                                      <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-900">
+                                        {item.name}
+                                      </td>
+                                      <td className="px-3 py-2 whitespace-nowrap text-sm">
+                                        <input
+                                          type="text"
+                                          name="unit_of_measurement"
+                                          value={getBidItemValue(item.name, 'unit_of_measurement') || item.unit}
+                                          className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                                          placeholder="Unit of measurement"
+                                          onChange={(e) => onCurrentBidItemChange(item.name, e)}
+                                        />
+                                      </td>
+                                      <td className="px-3 py-2 whitespace-nowrap text-sm">
+                                        <input
+                                          type="number"
+                                          name="quantity"
+                                          value={getBidItemValue(item.name, 'quantity') ?? item.quantity}
+                                          className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                                          placeholder="Quantity"
+                                          onChange={(e) => onCurrentBidItemChange(item.name, e)}
+                                        />
+                                      </td>
+                                      <td className="px-3 py-2 whitespace-nowrap text-sm">
+                                        <input
+                                          type="number"
+                                          step="0.01"
+                                          name="unit_price"
+                                          value={getBidItemValue(item.name, 'unit_price') || ''}
+                                          className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                                          placeholder="Unit price"
+                                          onChange={(e) => onCurrentBidItemChange(item.name, e)}
+                                        />
+                                      </td>
+                                      <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-500">
+                                        ${calculateTotalPrice(item.name).toFixed(2)}
+                                      </td>
+                                    </tr>
+                                  );
+                                })
+                            )}
                           </tbody>
                         </table>
                       </div>

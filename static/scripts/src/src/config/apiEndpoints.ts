@@ -122,6 +122,7 @@ export const API_ENDPOINTS = {
     
     // Committee APIs
     CS_COMMITTEE: (cs_id: string) => `/cs/${cs_id}/committee/`,
+    CS_SAVE_COMMITTEE: `/save_committee`,
     
     // Compliance APIs
     CS_COMPLIANCE: (cs_id: string) => `/cs/${cs_id}/compliance/`,

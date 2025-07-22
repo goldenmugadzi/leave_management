@@ -35,6 +35,7 @@ urlpatterns = [
     path('api/cs-compliance/<str:cs_id>/', api_get_cs_compliance_optimized, name='api_get_cs_compliance_optimized'),
     path('api/cs-committee/<str:cs_id>/', api_get_cs_committee_optimized, name='api_get_cs_committee_optimized'),
     path('api/cs-approvals/<str:cs_id>/', api_get_cs_approvals_optimized, name='api_get_cs_approvals_optimized'),
+    path('api/cs-rankings/<str:cs_id>/', api_get_cs_rankings_optimized, name='api_get_cs_rankings_optimized'),
     
     path('save', save_comparative_schedule, name='save_schedule'),
     path('update', update_comparative_schedule, name='update_schedule'),
