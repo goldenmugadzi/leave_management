@@ -181,7 +181,9 @@ class Ace2(models.Model):
         """Validate ACE data before saving"""
         from django.core.exceptions import ValidationError
         
-        if not self.Ace_id2:
+        # Skip Ace_id2 validation during creation since it's generated programmatically
+        # Only validate if this is an update (pk exists) and Ace_id2 is still empty
+        if self.pk and not self.Ace_id2:
             raise ValidationError("ACE ID (Ace_id2) is required")
         
         if not self.details_of_expenditure:
@@ -196,7 +198,9 @@ class Ace2(models.Model):
         if not self.section:
             raise ValidationError("Section is required")
         
-        if not self.requested_by:
+        # Only validate requested_by if we have a pk (i.e., during updates)
+        # During creation, this might be set after the form processing
+        if self.pk and not self.requested_by:
             raise ValidationError("Requested by is required")
     
     def save(self, *args, **kwargs):

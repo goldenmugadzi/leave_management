@@ -12,8 +12,13 @@ class QuotationForm(forms.ModelForm):
         model = Quotation
         fields = ['quotation_file']
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Make quotation file optional
+        self.fields['quotation_file'].required = False
 
-QuotationFormSet = formset_factory(QuotationForm, extra=0, min_num=1, validate_min=True)
+
+QuotationFormSet = formset_factory(QuotationForm, extra=1, min_num=0, validate_min=False)
 
 
 class AceForm(forms.ModelForm):

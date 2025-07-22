@@ -7,6 +7,7 @@ import csv
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core import serializers
+from django.core.exceptions import ValidationError
 from django.http import HttpResponse, JsonResponse, HttpResponseNotFound, FileResponse, HttpResponseForbidden
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
@@ -288,33 +289,62 @@ def generate_unique_ace_id2(prefix='ACE'):
 
 @login_required
 def create_Ace(request):
-    print('create ace')
-    global ace_role
-    QuotationFormSet()
-    user_id = request.user.id
-    user_profile = UserProfile.objects.filter(id=user_id).first()
-
-    form = AceForm(user=user_profile)
-    formset = QuotationFormSet()
-    if request.method == 'POST':
-        form = AceForm(request.POST, request.FILES, user=user_profile)
-        formset = QuotationFormSet(request.POST, request.FILES)
+    """
+    Create a new ACE with comprehensive validation and error handling
+    """
+    try:
+        print('create ace')
+        global ace_role
+        QuotationFormSet()
         user_id = request.user.id
         user_profile = UserProfile.objects.filter(id=user_id).first()
 
-        user_groups = user_profile.groups.values_list('name', flat=True)
+        # Validate user profile exists
+        if not user_profile:
+            messages.error(request, "User profile not found. Please contact your administrator to set up your profile.")
+            sweetify.error(request, "User profile not found. Please contact your administrator.")
+            return redirect('/ace2/aces')
 
-        custom_user_roles = {
-            "ace": {},
-        }
+        # Check if user has required roles for ACE creation
+        user_roles = user_profile.roles.all()
+        if not user_roles.exists():
+            messages.error(request, "You don't have any assigned roles. Please contact your administrator to assign appropriate roles.")
+            sweetify.error(request, "No roles assigned to your profile.")
+            return redirect('/ace2/aces')
 
-        roles_ = user_profile.roles.all()
-        for _role in roles_:
-            role = Roles.objects.filter(id=_role.id).first()
-            if role.application == "ace":
-                custom_user_roles["ace"] = role.role
-                ace_role = str(custom_user_roles["ace"])
-                print(ace_role)
+        form = AceForm(user=user_profile)
+        formset = QuotationFormSet()
+        
+        if request.method == 'POST':
+            form = AceForm(request.POST, request.FILES, user=user_profile)
+            formset = QuotationFormSet(request.POST, request.FILES)
+            user_id = request.user.id
+            user_profile = UserProfile.objects.filter(id=user_id).first()
+
+            # Validate user profile exists
+            if not user_profile:
+                messages.error(request, "User profile not found during form processing.")
+                sweetify.error(request, "User profile error.")
+                return redirect('/ace2/aces')
+
+            user_groups = user_profile.groups.values_list('name', flat=True)
+
+            custom_user_roles = {
+                "ace": {},
+            }
+
+            roles_ = user_profile.roles.all()
+            if not roles_.exists():
+                messages.error(request, "No roles assigned. Please contact administrator.")
+                sweetify.error(request, "No roles assigned.")
+                return redirect('/ace2/aces')
+
+            for _role in roles_:
+                role = Roles.objects.filter(id=_role.id).first()
+                if role and role.application == "ace":
+                    custom_user_roles["ace"] = role.role
+                    ace_role = str(custom_user_roles["ace"])
+                    print(ace_role)
 
         if ace_role == "create":
             if form.is_valid():
@@ -373,10 +403,16 @@ def create_Ace(request):
                 print(budget_to_be_withdrawn, 'budget to be withdrawn')
                 print(m_in_tray, 'money in tray')
                 if ace.amount <= budget.balance and budget_to_be_withdrawn <= budget.balance and balance_after_ace > 0 and m_in_tray <= budget.balance:
-                    ace.requested_by = request.user
-                    
                     user_id = request.user.id
                     user_profile = UserProfile.objects.filter(id=user_id).first()
+                    
+                    if not user_profile:
+                        sweetify.error(request, "User profile not found. Please contact your administrator.")
+                        messages.error(request, 'User profile not found. Please contact your administrator.')
+                        return render(request, 'finance/ace2/create_ace.html', {'form': form, 'formset': formset})
+                    
+                    # Set the requested_by field to the UserProfile object, not request.user
+                    ace.requested_by = user_profile
 
                     user_designation = Designations.objects.filter(id=user_profile.designation.id).first()
                     if not user_designation:
@@ -400,11 +436,14 @@ def create_Ace(request):
                         else:
                             ace.Ace_id2 = generate_unique_ace_id2()
                         
+                        print(f"Generated ACE ID: {ace.Ace_id2}")  # Debug logging
+                        
                         # Validate that the ACE ID was generated successfully
                         if not ace.Ace_id2:
                             raise ValueError("Failed to generate ACE ID")
                             
                     except Exception as e:
+                        print(f"ACE ID Generation Error: {str(e)}")  # Debug logging
                         sweetify.error(request, "Could not generate a unique ACE ID. Please try again.")
                         messages.error(request, "Could not generate a unique ACE ID. Please try again.")
                         return render(request, 'finance/ace2/create_ace.html', {'form': form, 'formset': formset})
@@ -419,13 +458,10 @@ def create_Ace(request):
                     else:
                         sweetify.error(request, "Please get region from It")
                         messages.error(request, 'Please get region from It')
-                    ace.date_created = date
+                    ace.date_created = datetime.now().date()
                     
-                    # Validate all required fields before saving
-                    if not ace.Ace_id2:
-                        sweetify.error(request, "ACE ID is required")
-                        messages.error(request, "ACE ID is required")
-                        return render(request, 'finance/ace2/create_ace.html', {'form': form, 'formset': formset})
+                    # ACE ID validation removed since it's generated programmatically above
+                    # The ID generation already has its own error handling
                     
                     if not ace.details_of_expenditure:
                         sweetify.error(request, "Details of expenditure is required")
@@ -439,10 +475,29 @@ def create_Ace(request):
                     
                     # Try to save with validation
                     try:
+                        print(f"About to save ACE with ID: {ace.Ace_id2}")  # Debug logging
+                        print(f"ACE has pk: {hasattr(ace, 'pk')}, pk value: {getattr(ace, 'pk', None)}")  # Debug logging
+                        print(f"ACE requested_by: {ace.requested_by}, type: {type(ace.requested_by)}")  # Debug logging
+                        ace.full_clean()  # This will call the model's clean() method
                         ace.save()
+                        print(f"ACE saved successfully with ID: {ace.Ace_id2}, pk: {ace.pk}")  # Debug logging
+                    except ValidationError as ve:
+                        error_msg = f"Validation error saving ACE: {str(ve)}"
+                        print(error_msg)  # Debug logging
+                        sweetify.error(request, f"Validation error: {str(ve)}")
+                        messages.error(request, f"Validation error: {str(ve)}")
+                        return render(request, 'finance/ace2/create_ace.html', {'form': form, 'formset': formset})
+                    except AttributeError as ae:
+                        error_msg = f"Attribute error during ACE save: {str(ae)}"
+                        print(error_msg)  # Debug logging
+                        sweetify.error(request, f"System error during ACE creation: {str(ae)}")
+                        messages.error(request, f"System error during ACE creation. Please try again or contact support.")
+                        return render(request, 'finance/ace2/create_ace.html', {'form': form, 'formset': formset})
                     except Exception as e:
-                        sweetify.error(request, f"Error saving ACE: {str(e)}")
-                        messages.error(request, f"Error saving ACE: {str(e)}")
+                        error_msg = f"Error saving ACE: {str(e)}"
+                        print(error_msg)  # Debug logging
+                        sweetify.error(request, f"An unexpected error occurred while creating the ACE: {str(e)}. Please try again or contact support.")
+                        messages.error(request, error_msg)
                         return render(request, 'finance/ace2/create_ace.html', {'form': form, 'formset': formset})
 
                     ace_code = ace.section
@@ -453,11 +508,26 @@ def create_Ace(request):
                     # code = section.code
                     # ace.allocation_code_of_expenditure = code
                     ace.save()
+                    
+                    # Handle quotation files from formset
+                    try:
+                        for form in formset:
+                            if form.is_valid() and form.cleaned_data.get('quotation_file'):
+                                quotation = form.save(commit=False)
+                                quotation.ace2 = ace
+                                quotation.save()
+                    except Exception as e:
+                        messages.warning(request, f"ACE created but some attachments failed to save: {str(e)}")
+                        print(f"Quotation save error: {str(e)}")
+                    
+                    # Also handle any additional attachments from direct file upload
                     attachments = request.FILES.getlist('attachments')
                     for attachment in attachments:
-                        attachment = Quotation(quotation_file=attachment,
-                                               ace2=ace)
-                        attachment.save()
+                        try:
+                            quotation_obj = Quotation(quotation_file=attachment, ace2=ace)
+                            quotation_obj.save()
+                        except Exception as e:
+                            print(f"Additional attachment save error: {str(e)}")
 
                     # initialise transaction and budget deductions
                     transaction = Transactions.objects.create(
@@ -527,25 +597,90 @@ def create_Ace(request):
                         url = reverse('Ace:ace_detail', args=[ace.Ace_id2])
                         return redirect(url)
                 else:
-                    messages.error(request, "ace not created")
-                    sweetify.error(request, "not created")
+                    messages.error(request, "ACE not created due to insufficient budget balance.")
+                    sweetify.error(request, "ACE not created - insufficient budget balance.")
                     if balance_after_ace < 0:
-                        messages.error(request, "the ace requires more than the current budget resulting in a "
-                                                "negative balance")
-                        sweetify.error(request, "the ace requires more than the current budget resulting in a "
-                                                "negative balance")
+                        messages.error(request, "The ACE requires more than the current budget balance, which would result in a negative balance.")
+                        sweetify.error(request, "The ACE amount exceeds available budget balance.")
                     return render(request, 'finance/ace2/create_ace.html',
-                                  {'form': form, 'formset': formset, 'error_message': "Insufficient Balance"})
+                                  {'form': form, 'formset': formset, 'error_message': "Insufficient Budget Balance"})
             else:
+                # Form validation failed
+                form_errors = []
+                for field, errors in form.errors.items():
+                    # Skip Ace_id2 errors since this field is generated programmatically
+                    if field == 'Ace_id2':
+                        continue
+                    for error in errors:
+                        field_name = field.replace('_', ' ').title()
+                        # Make field names more user-friendly
+                        if field == 'budget_id':
+                            field_name = 'Budget'
+                        elif field == 'details_of_expenditure':
+                            field_name = 'Details of Expenditure'
+                        form_errors.append(f"{field_name}: {error}")
+                
+                if form_errors:
+                    error_message = "Please correct the following errors: " + "; ".join(form_errors)
+                    messages.error(request, error_message)
+                    sweetify.error(request, "Please correct the form errors and try again.")
+                
+                # Improved quotation formset error handling
+                formset_errors = []
+                if formset.non_form_errors():
+                    for error in formset.non_form_errors():
+                        if "Please submit 1 or more forms" in str(error):
+                            formset_errors.append("At least one quotation file must be uploaded")
+                        else:
+                            formset_errors.append(str(error))
+                
+                for i, form_error in enumerate(formset.errors):
+                    if form_error:
+                        for field, error_list in form_error.items():
+                            if field == 'quotation_file':
+                                formset_errors.append("Quotation file is required")
+                            else:
+                                for error in error_list:
+                                    formset_errors.append(f"Quotation {i+1}: {error}")
+                
+                if formset_errors:
+                    formset_error_message = "Quotation errors: " + "; ".join(formset_errors)
+                    messages.error(request, formset_error_message)
+                    sweetify.error(request, "Please correct the quotation errors.")
+                
                 form = AceForm(user=user_profile)
                 formset = QuotationFormSet()
         else:
-            sweetify.error(request, "You are not allowed to create Ace")
-            messages.error(request, "You are not allowed to create")
-            # url = reverse('/acee/aces')
-            return redirect('/ace/aces')
+            sweetify.error(request, "You are not authorized to create ACE. Please contact your administrator for proper role assignment.")
+            messages.error(request, "You are not authorized to create ACE. Contact your administrator for role assignment.")
+            return redirect('/ace2/aces')
 
-    return render(request, 'finance/ace2/create_ace.html', {'form': form, 'formset': formset})
+        return render(request, 'finance/ace2/create_ace.html', {'form': form, 'formset': formset})
+        
+    except UserProfile.DoesNotExist:
+        messages.error(request, "User profile not found. Please contact your administrator to create your profile.")
+        sweetify.error(request, "User profile not found.")
+        return redirect('/ace2/aces')
+    except Roles.DoesNotExist:
+        messages.error(request, "Role configuration error. Please contact your administrator.")
+        sweetify.error(request, "Role configuration error.")
+        return redirect('/ace2/aces')
+    except AssetBudget.DoesNotExist:
+        messages.error(request, "Selected budget not found. Please choose a valid budget.")
+        sweetify.error(request, "Budget not found.")
+        form = AceForm(user=UserProfile.objects.filter(id=request.user.id).first())
+        return render(request, 'finance/ace2/create_ace.html', {'form': form, 'formset': QuotationFormSet()})
+    except Sections.DoesNotExist:
+        messages.error(request, "Section configuration error. Please contact your administrator.")
+        sweetify.error(request, "Section not found.")
+        form = AceForm(user=UserProfile.objects.filter(id=request.user.id).first())
+        return render(request, 'finance/ace2/create_ace.html', {'form': form, 'formset': QuotationFormSet()})
+    except Exception as e:
+        messages.error(request, f"An unexpected error occurred while creating the ACE: {str(e)}. Please try again or contact support.")
+        sweetify.error(request, "System error occurred. Please try again.")
+        print(f"ACE Creation Error: {str(e)}")  # For debugging
+        form = AceForm(user=UserProfile.objects.filter(id=request.user.id).first())
+        return render(request, 'finance/ace2/create_ace.html', {'form': form, 'formset': QuotationFormSet()})
 
 
 @login_required

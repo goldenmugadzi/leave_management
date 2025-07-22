@@ -139,102 +139,238 @@ def pettyCash_detail(request, petty_id):
 
 @login_required
 def create_pettycash(request):
-    user_id = request.user.id
-    user_profile = UserProfile.objects.filter(id=user_id).first()
-    if request.method == 'POST':
-        form = PettycashForm(request.POST, request.FILES)
-        formset = QuotationFormSet(request.POST, request.FILES)
+    """
+    Create a new PettyCash with comprehensive validation and error handling
+    """
+    try:
         user_id = request.user.id
         user_profile = UserProfile.objects.filter(id=user_id).first()
-
-        user_groups = user_profile.groups.values_list('name', flat=True)
-
-        custom_user_roles = {
-            "pettycash": {},
-        }
-
-        roles_ = user_profile.roles.all()
-        for _role in roles_:
-            role = Roles.objects.filter(id=_role.id).first()
-
-            if role.application == "pettycash":
-                custom_user_roles["pettycash"] = role.role
-        pettycash_role = str(custom_user_roles["pettycash"])
-        print(pettycash_role)
-        if pettycash_role == "create":
-            if form.is_valid() and formset.is_valid():
-                pettycash = form.save(commit=False)
-                pettycash.process = intiate(request, 'pettycash')
-                pettycash.requested_by = request.user
-
-                rand = randrange(1, 1000)
-                rand2 = str(rand)
-                date = datetime.now()
-                date = date.strftime("%Y%m%d")
-
-                petty_id = "PC" + date + rand2
-                pettycash.petty_id = petty_id
-                pettycash.save()
-
-                for quotation_form in formset:
-                    quotation = quotation_form.save(commit=False)
-                    quotation.pettycash = pettycash
-                    quotation.save()
-
-                requester = pettycash.requested_by
-                use = UserProfile.objects.filter(id=requester.id).first()
-                section_created = use.section
-
-                # notify sh
-
-                section_heads = find_pettycash_section_head(section_created)
-                if section_heads:
-                    print(section_heads, " section_heads")
-                    # budget name
-                    # bdg = AssetBudget.objects.filter(budget_id=ace.budget_id).first()
-                    # budget_name = bdg.budget_name
-                    msg = "Your subordinate" + str(use) + "created " + pettycash.petty_id + "for section " + str(
-                        pettycash.section)
-                    url = "/pettycash/pettycash_detail/" + pettycash.petty_id
-                    section_heads = UserProfile.objects.filter(username=section_heads).first()
-                    notify_user(section_heads, msg, "Pettycash", url, pettycash.petty_id)
-                    print("notified", section_heads)
-
-                # for quotation_form in formset:
-                #     quotation = quotation_form.save(commit=False)
-                #     quotation.pettycash2 = pettycash
-                #     quotation.save()
-
-                pettycash_section = pettycash.section
-                pettycash_sh = find_pettycash_section_head( pettycash_section)
-
-                if pettycash_sh:
-                    print(pettycash_sh, "pettycash_sh")
-                    # bdg = AssetBudget.objects.filter(budget_id=ace.budget_id).first()
-                    # budget_name = bdg.budget_name
-                    msg = "user  " + str(use) + "created " + pettycash.petty_id + "for section " + str(
-                        pettycash.section)
-                    url = "/pettycash/pettycash_detail/" + pettycash.petty_id
-
-                    pettycash_sh = UserProfile.objects.filter(username=pettycash_sh).first()
-                    notify_user(pettycash_sh, msg, "ACE", url, pettycash.petty_id)
-                    print("notified", pettycash_sh)
-
-                url = reverse('pettycash:pettycash_detail', args=[pettycash.petty_id])
-                return redirect(url)
-            else:
-                form = PettycashForm(user=user_profile)
-                formset = QuotationFormSet()
-        else:
-            sweetify.error(request, "You are not authorized to create a new pettycash")
-            messages.error(request, "You are not authorized to create a new pettycash")
+        
+        # Validate user profile exists
+        if not user_profile:
+            messages.error(request, "User profile not found. Please contact your administrator to set up your profile.")
+            sweetify.error(request, "User profile not found. Please contact your administrator.")
             return redirect('/pettycash/pettycashs')
 
-    else:
-        form = PettycashForm(user=user_profile)
-        formset = QuotationFormSet()
+        # Check if user has required roles for PettyCash creation
+        user_roles = user_profile.roles.all()
+        if not user_roles.exists():
+            messages.error(request, "You don't have any assigned roles. Please contact your administrator to assign appropriate roles.")
+            sweetify.error(request, "No roles assigned to your profile.")
+            return redirect('/pettycash/pettycashs')
+            
+        if request.method == 'POST':
+            try:
+                form = PettycashForm(request.POST, request.FILES)
+                formset = QuotationFormSet(request.POST, request.FILES)
+                user_id = request.user.id
+                user_profile = UserProfile.objects.filter(id=user_id).first()
 
-    return render(request, 'finance/pettycash/create_pettycash.html', {'form': form, 'formset': formset})
+                # Double-check user profile during POST processing
+                if not user_profile:
+                    messages.error(request, "User profile not found during form processing.")
+                    sweetify.error(request, "User profile error.")
+                    return redirect('/pettycash/pettycashs')
+
+                user_groups = user_profile.groups.values_list('name', flat=True)
+
+                custom_user_roles = {
+                    "pettycash": {},
+                }
+
+                roles_ = user_profile.roles.all()
+                if not roles_.exists():
+                    messages.error(request, "No roles assigned. Please contact administrator.")
+                    sweetify.error(request, "No roles assigned.")
+                    return redirect('/pettycash/pettycashs')
+
+                # Determine user role for pettycash
+                pettycash_role = 'none'
+                for _role in roles_:
+                    role = Roles.objects.filter(id=_role.id).first()
+                    if role and role.application == "pettycash":
+                        custom_user_roles["pettycash"] = role.role
+                        pettycash_role = str(custom_user_roles["pettycash"])
+                        break
+
+                print(f"PettyCash role: {pettycash_role}")
+                
+                if pettycash_role == "create":
+                    # Validate forms
+                    if not form.is_valid():
+                        # Enhanced form validation error messages
+                        form_errors = []
+                        for field, errors in form.errors.items():
+                            for error in errors:
+                                form_errors.append(f"{field.replace('_', ' ').title()}: {error}")
+                        
+                        if form_errors:
+                            error_message = "Please correct the following errors: " + "; ".join(form_errors)
+                            messages.error(request, error_message)
+                            sweetify.error(request, "Please correct the form errors and try again.")
+                        
+                        form = PettycashForm(user=user_profile)
+                        formset = QuotationFormSet()
+                        return render(request, 'finance/pettycash/create_pettycash.html', {'form': form, 'formset': formset})
+                    
+                    if not formset.is_valid():
+                        # Enhanced formset validation error messages
+                        formset_errors = []
+                        for i, form_error in enumerate(formset.errors):
+                            if form_error:
+                                for field, errors in form_error.items():
+                                    for error in errors:
+                                        formset_errors.append(f"Quotation {i+1} - {field.replace('_', ' ').title()}: {error}")
+                        
+                        if formset_errors:
+                            formset_error_message = "Quotation errors: " + "; ".join(formset_errors)
+                            messages.error(request, formset_error_message)
+                            sweetify.error(request, "Please correct the quotation errors.")
+                        
+                        form = PettycashForm(user=user_profile)
+                        formset = QuotationFormSet()
+                        return render(request, 'finance/pettycash/create_pettycash.html', {'form': form, 'formset': formset})
+
+                    # Process the valid form
+                    pettycash = form.save(commit=False)
+                    
+                    # Validate required fields
+                    if not pettycash.details_of_expenditure:
+                        messages.error(request, "Details of expenditure is required.")
+                        sweetify.error(request, "Details of expenditure is required.")
+                        return render(request, 'finance/pettycash/create_pettycash.html', {'form': form, 'formset': formset})
+                    
+                    if not pettycash.amount or pettycash.amount <= 0:
+                        messages.error(request, "Valid amount is required.")
+                        sweetify.error(request, "Valid amount is required.")
+                        return render(request, 'finance/pettycash/create_pettycash.html', {'form': form, 'formset': formset})
+
+                    # Initialize process workflow
+                    try:
+                        pettycash.process = intiate(request, 'pettycash')
+                    except Exception as e:
+                        messages.error(request, f"Error initializing approval workflow: {str(e)}")
+                        sweetify.error(request, "Error setting up approval process.")
+                        return render(request, 'finance/pettycash/create_pettycash.html', {'form': form, 'formset': formset})
+                    
+                    pettycash.requested_by = request.user
+
+                    # Generate unique PettyCash ID
+                    try:
+                        rand = randrange(1, 1000)
+                        rand2 = str(rand)
+                        date = datetime.now()
+                        date = date.strftime("%Y%m%d")
+                        petty_id = "PC" + date + rand2
+                        pettycash.petty_id = petty_id
+                        
+                        # Validate uniqueness
+                        if Pettycash.objects.filter(petty_id=petty_id).exists():
+                            # If ID exists, try a few more times
+                            for attempt in range(5):
+                                rand = randrange(1, 10000)
+                                rand2 = str(rand)
+                                petty_id = "PC" + date + rand2
+                                if not Pettycash.objects.filter(petty_id=petty_id).exists():
+                                    pettycash.petty_id = petty_id
+                                    break
+                            else:
+                                raise ValueError("Could not generate unique PettyCash ID after multiple attempts")
+                                
+                    except Exception as e:
+                        messages.error(request, f"Error generating PettyCash ID: {str(e)}")
+                        sweetify.error(request, "Could not generate unique PettyCash ID. Please try again.")
+                        return render(request, 'finance/pettycash/create_pettycash.html', {'form': form, 'formset': formset})
+                    
+                    # Save the PettyCash
+                    try:
+                        pettycash.save()
+                        messages.success(request, f"PettyCash {pettycash.petty_id} created successfully!")
+                        sweetify.success(request, "PettyCash created successfully!")
+                    except Exception as e:
+                        messages.error(request, f"Error saving PettyCash: {str(e)}")
+                        sweetify.error(request, "Error saving PettyCash. Please try again.")
+                        return render(request, 'finance/pettycash/create_pettycash.html', {'form': form, 'formset': formset})
+
+                    # Save quotations
+                    try:
+                        for quotation_form in formset:
+                            if quotation_form.cleaned_data:  # Only save if there's data
+                                quotation = quotation_form.save(commit=False)
+                                quotation.pettycash = pettycash
+                                quotation.save()
+                    except Exception as e:
+                        messages.warning(request, f"PettyCash created but some attachments failed to save: {str(e)}")
+                        print(f"Quotation save error: {str(e)}")
+
+                    # Notification logic with error handling
+                    try:
+                        requester = pettycash.requested_by
+                        use = UserProfile.objects.filter(id=requester.id).first()
+                        if use and use.section:
+                            section_created = use.section
+
+                            # notify section heads
+                            section_heads = find_pettycash_section_head(section_created)
+                            if section_heads:
+                                print(section_heads, " section_heads")
+                                msg = f"Your subordinate {str(use)} created {pettycash.petty_id} for section {str(pettycash.section)}"
+                                url = f"/pettycash/pettycash_detail/{pettycash.petty_id}"
+                                section_heads_profile = UserProfile.objects.filter(username=section_heads).first()
+                                if section_heads_profile:
+                                    notify_user(section_heads_profile, msg, "PettyCash", url, pettycash.petty_id)
+                                    print("notified", section_heads)
+
+                            pettycash_section = pettycash.section
+                            pettycash_sh = find_pettycash_section_head(pettycash_section)
+
+                            if pettycash_sh:
+                                print(pettycash_sh, "pettycash_sh")
+                                msg = f"User {str(use)} created {pettycash.petty_id} for section {str(pettycash.section)}"
+                                url = f"/pettycash/pettycash_detail/{pettycash.petty_id}"
+                                pettycash_sh_profile = UserProfile.objects.filter(username=pettycash_sh).first()
+                                if pettycash_sh_profile:
+                                    notify_user(pettycash_sh_profile, msg, "PettyCash", url, pettycash.petty_id)
+                                    print("notified", pettycash_sh)
+                    except Exception as e:
+                        print(f"Notification error: {str(e)}")
+                        # Don't fail the creation for notification errors
+
+                    url = reverse('pettycash:pettycash_detail', args=[pettycash.petty_id])
+                    return redirect(url)
+                    
+                else:
+                    sweetify.error(request, "You are not authorized to create a new PettyCash. Please contact your administrator for proper role assignment.")
+                    messages.error(request, "You are not authorized to create a new PettyCash.")
+                    return redirect('/pettycash/pettycashs')
+                    
+            except Exception as e:
+                messages.error(request, f"Error processing PettyCash creation: {str(e)}. Please try again.")
+                sweetify.error(request, "Error processing form. Please try again.")
+                print(f"PettyCash POST processing error: {str(e)}")
+                form = PettycashForm(user=user_profile)
+                formset = QuotationFormSet()
+                return render(request, 'finance/pettycash/create_pettycash.html', {'form': form, 'formset': formset})
+
+        else:
+            form = PettycashForm(user=user_profile)
+            formset = QuotationFormSet()
+
+        return render(request, 'finance/pettycash/create_pettycash.html', {'form': form, 'formset': formset})
+        
+    except UserProfile.DoesNotExist:
+        messages.error(request, "User profile not found. Please contact your administrator to create your profile.")
+        sweetify.error(request, "User profile not found.")
+        return redirect('/pettycash/pettycashs')
+    except Roles.DoesNotExist:
+        messages.error(request, "Role configuration error. Please contact your administrator.")
+        sweetify.error(request, "Role configuration error.")
+        return redirect('/pettycash/pettycashs')
+    except Exception as e:
+        messages.error(request, f"An unexpected error occurred: {str(e)}. Please try again or contact support.")
+        sweetify.error(request, "System error occurred. Please try again.")
+        print(f"PettyCash Creation Error: {str(e)}")  # For debugging
+        return redirect('/pettycash/pettycashs')
 
 
 @login_required
