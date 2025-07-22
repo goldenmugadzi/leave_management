@@ -17,15 +17,9 @@ const CommitteeManager: React.FC<CommitteeManagerProps> = ({
   users,
   onSaveCommittee
 }) => {
-  const { committee, setCommittee, username } = useScheduleContext();
+  const { committee, setCommittee, username, csId } = useScheduleContext();
   
-  // Log props on every render to debug
-  console.log('🔍 CommitteeManager rendered with:', {
-    usersCount: users?.length || 0,
-    usersData: users?.slice(0, 3), // Show first 3 users for debugging
-    committeeCount: committee?.length || 0,
-    currentUsername: username
-  });
+
   
   // State for user justification
   const [justification, setJustification] = useState('');
@@ -57,6 +51,39 @@ const CommitteeManager: React.FC<CommitteeManagerProps> = ({
     
     return () => clearTimeout(timer);
   }, [searchTerm]);
+
+  const getCommitteMembers = useCallback(async () => {
+
+    try {
+      console.log("🔍 CS ID for API call:", csId);
+      
+      if (!csId) {
+        console.error("❌ No CS ID available in context");
+        return;
+      }
+      
+      // Make direct API call to test committee endpoint
+      const response = await fetch(`/comperative_schedule/api/cs-committee/${csId}/`);
+      const data = await response.json();
+      console.log("🔍 Direct API response:", data);
+      
+      if (data.success && data.committee) {
+        console.log("✅ Committee data found:", data.committee.length, "members");
+        // Update the context with the loaded data
+        setCommittee(data.committee);
+      } else {
+        console.log("❌ No committee data in response");
+      }
+    } catch (error) {
+      console.error("❌ Error testing committee API:", error);
+    }
+
+  }, [csId, setCommittee])
+
+  useEffect(() => {
+    // fetch members
+    getCommitteMembers
+  }, [committee, getCommitteMembers])
   
   // Memoized user options with search filtering
   const userOptions = useMemo(() => {
@@ -116,9 +143,9 @@ const CommitteeManager: React.FC<CommitteeManagerProps> = ({
       });
       console.log('🔍 Filtered by search:', filteredUsers.length, 'users');
     } else {
-      // Show first 50 users if no search
-      filteredUsers = users.slice(0, 50);
-      console.log('🔍 No search term, showing first 50 users');
+      // Show all users if no search (remove the 50 user limit)
+      filteredUsers = users;
+      console.log('🔍 No search term, showing all users:', users.length);
     }
     
     // Filter out already selected users
@@ -326,18 +353,59 @@ const CommitteeManager: React.FC<CommitteeManagerProps> = ({
 
   return (
     <div className="mt-8">
-      {/* Temporary Debug Panel - Remove after fixing */}
-
-      
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-semibold text-gray-800">Committee Members</h2>
-        <button
-          type="button"
-          onClick={onAddCommitteeMembers}
-          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700"
-        >
-          Add Committee Member
-        </button>
+        <div className="flex space-x-2">
+          <button
+            type="button"
+            onClick={onAddCommitteeMembers}
+            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700"
+          >
+            Add Committee Member
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              console.log("🔍 Manual refresh - Current committee state:", committee);
+              console.log("🔍 Manual refresh - Context committee:", committee);
+            }}
+            className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50"
+          >
+            Debug State
+          </button>
+          <button
+            type="button"
+            onClick={async () => {
+              console.log("🔍 Manual refresh - Testing committee API directly");
+              try {
+                console.log("🔍 CS ID for API call:", csId);
+                
+                if (!csId) {
+                  console.error("❌ No CS ID available in context");
+                  return;
+                }
+                
+                // Make direct API call to test committee endpoint
+                const response = await fetch(`/comperative_schedule/api/cs-committee/${csId}/`);
+                const data = await response.json();
+                console.log("🔍 Direct API response:", data);
+                
+                if (data.success && data.committee) {
+                  console.log("✅ Committee data found:", data.committee.length, "members");
+                  // Update the context with the loaded data
+                  setCommittee(data.committee);
+                } else {
+                  console.log("❌ No committee data in response");
+                }
+              } catch (error) {
+                console.error("❌ Error testing committee API:", error);
+              }
+            }}
+            className="inline-flex items-center px-4 py-2 border border-green-300 text-sm font-medium rounded-md shadow-sm text-green-700 bg-green-50 hover:bg-green-100"
+          >
+            Test API
+          </button>
+        </div>
       </div>
 
       {/* Committee Members Table */}
