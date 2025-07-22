@@ -552,6 +552,7 @@ def create_Ace(request):
 def ace_awaiting_my_action(request):
     """
     Show ACEs awaiting the user's action, including head office approvers
+    Also shows items created by requester for better visibility
     """
     user_id = request.user.id
     user_profile = UserProfile.objects.filter(id=user_id).first()
@@ -564,10 +565,10 @@ def ace_awaiting_my_action(request):
         if role.application == "ace":
             custom_user_roles["ace"] = role.role
             ace_role = str(custom_user_roles["ace"])
-            print("ace role", ace_role)
             break
     
-    if ace_role in ['fd', 'md']:  # Head office roles
+    # Keep existing head office logic
+    if ace_role in ['fd', 'md']:  
         # Head office users see high-value ACEs from ALL regions
         aces_to_process = []
         
@@ -670,13 +671,6 @@ def ace_awaiting_my_action(request):
         region = Regions.objects.filter(id=user_profile.region.id).first()
         section = Sections.objects.filter(section=user_profile.section).first()
 
-        custom_user_roles = {"ace": {}}
-        roles_ = user_profile.roles.all()
-        for _role in roles_:
-            role = Roles.objects.filter(id=_role.id).first()
-            if role.application == "ace":
-                custom_user_roles["ace"] = role.role
-        ace_role = str(custom_user_roles["ace"])
         requester = "create"
         cashier = "process"
 
@@ -721,15 +715,33 @@ def ace_awaiting_my_action(request):
                 if step:
                     aces_to_process.append(ace)
 
-        # ACEs created by the user (demarcation)
-        created_aces = Ace2.objects.filter(requested_by=request.user, date_created__year__gte=2025, region=region)
+        # ACEs created by the user (enhanced for requesters)
+        created_aces = []
+        if ace_role in ["create", "order", "Requester"]:
+            # For requesters, show all items they created
+            created_aces = Ace2.objects.filter(
+                requested_by=request.user, 
+                date_created__year__gte=2025, 
+                region=region
+            ).order_by('-date_created')
+        else:
+            # For non-requesters, show items they created (if any)
+            created_aces = Ace2.objects.filter(
+                requested_by=request.user, 
+                date_created__year__gte=2025, 
+                region=region
+            ).order_by('-date_created')
 
         return render(request, 'finance/ace2/view_all_aces.html', {
             'aces': aces_to_process,
             'created_aces': created_aces,
             'ace_role': ace_role,
             'requester': requester,
-            'cashier': cashier
+            'cashier': cashier,
+            'show_created_items': True,  # Flag to show created items section
+            'is_requester': ace_role in ["create", "order", "Requester"],
+            'user': request.user,
+            'title': 'ACE Awaiting My Action'
         })
 
 
@@ -1234,7 +1246,7 @@ def upload_aces_csv(request):
                 ace.process = intiate(request, 'ace')
                 transaction = Transactions.objects.create(
                     Ace_id2=ace,
-                    details_of_expenditure=details_of_expenditure,
+                    details_of_expenditure=ace.details_of_expenditure,
                     approval_status="created",
                     region=region,
                     amount=ace_amt,
@@ -1518,6 +1530,12 @@ def virament_detail(request, virament_id):
             transaction.approval_status = "approved by General Manager"
             transaction.save()
             print("transaction: ", str(transaction.approval_status))
+            user = virament_item.requested_by
+            userp = UserProfile.objects.filter(id=user.id).first()
+
+            msg = "Your Virement " + virament_item.virament_id + " has been approved by the General Manager"
+            url = "/ace/virament_detail/" + virament_item.virament_id
+            notify_user(userp, msg, "Virement", url, virament_item.virament_id, request)
 
     # ace_quantity = range(virament_item.quantity)
     approved_steps = virament_item.process.approval_set.all().values_list('step__step', flat=True)
@@ -1844,6 +1862,7 @@ def ace_report_detail_pdf(request, report_id2=None):
     if report_id2:
         report = get_object_or_404(AceReport, report_id2=report_id2)
         # Only filter by budget if a specific budget is selected
+
         if report.budget_id:
             aces = Ace2.objects.filter(
                 date_created__range=[report.start_date, report.end_date],
@@ -2358,7 +2377,7 @@ def asset_budget_report_excel(request, budget_id):
         ws.cell(row=row_num, column=2, value=ace.details_of_expenditure)
         ws.cell(row=row_num, column=3, value=float(ace.amount or 0))
         ws.cell(row=row_num, column=4, value=ace.requested_by.get_full_name())
-        ws.cell(row=row_num, column=5, value=ace.date_created.strftime('%Y-%m-%d'))
+        ws.cell(row=row_num, column=5, value=ace.date_created.strftime('%Y-%m-%d') if ace.date_created else '')
         
         # Status
         status = "-"
@@ -2898,3 +2917,133 @@ def export_current_year_pdf(request):
     html = template.render(context, request)
     pdf = HTML(string=html).write_pdf()
     return HttpResponse(pdf, content_type='application/pdf')
+
+
+@login_required
+def export_ace_report_pdf(request, report_id2):
+    """Export specific ACE report to PDF"""
+    report = get_object_or_404(AceReport, report_id2=report_id2)
+    
+    # Filter ACEs for this report
+    if report.budget_id:
+        aces = Ace2.objects.filter(
+            region=report.region,
+            budget_id=report.budget_id,
+            date_created__range=[report.start_date, report.end_date]
+        )
+    else:
+        aces = Ace2.objects.filter(
+            region=report.region,
+            date_created__range=[report.start_date, report.end_date]
+        )
+    
+    template = loader.get_template('finance/ace2/ace_report_detail.html')
+    context = {
+        'aces': aces,
+        'report': report,
+        'request': request
+    }
+    html = template.render(context, request)
+    pdf = HTML(string=html).write_pdf()
+    
+    response = HttpResponse(pdf, content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="ace_report_detail_{report_id2}.pdf"'
+    return response
+
+@login_required
+def export_ace_report_excel(request, report_id2):
+    """Export specific ACE report to Excel"""
+    report = get_object_or_404(AceReport, report_id2=report_id2)
+    
+    # Filter ACEs for this report
+    if report.budget_id:
+        aces = Ace2.objects.filter(
+            region=report.region,
+            budget_id=report.budget_id,
+            date_created__range=[report.start_date, report.end_date]
+        )
+    else:
+        aces = Ace2.objects.filter(
+            region=report.region,
+            date_created__range=[report.start_date, report.end_date]
+        )
+    
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = f'attachment; filename="ace_report_detail_{report_id2}.xlsx"'
+    
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "ACE Report Detail"
+    
+    # Header styling
+    header_font = Font(bold=True, size=12)
+    header_fill = PatternFill(start_color="366092", end_color="366092", fill_type="solid")
+    center_alignment = Alignment(horizontal="center", vertical="center")
+    
+    # Report Title
+    ws.merge_cells('A1:J1')
+    ws['A1'] = f"ACE Report Detail - {report_id2}"
+    ws['A1'].font = Font(bold=True, size=16)
+    ws['A1'].alignment = center_alignment
+    
+    # Report Summary
+    ws['A3'] = "Report Summary"
+    ws['A3'].font = header_font
+    
+    ws['A4'] = "Start Date"
+    ws['B4'] = report.start_date.strftime('%Y-%m-%d') if report.start_date else ''
+    ws['A5'] = "End Date"
+    ws['B5'] = report.end_date.strftime('%Y-%m-%d') if report.end_date else ''
+    ws['A6'] = "Region"
+    ws['B6'] = report.region.region if report.region else ''
+    ws['A7'] = "Budget"
+    ws['B7'] = report.budget_id.budget_name if report.budget_id else 'All Budgets'
+    ws['A8'] = "Total ACEs"
+    ws['B8'] = aces.count()
+    ws['A9'] = "Total Amount"
+    ws['B9'] = sum(ace.amount for ace in aces)
+    
+    # ACE Details Table
+    ws['A11'] = "ACE Details"
+    ws['A11'].font = header_font
+    
+    # Headers
+    detail_headers = ['ACE ID', 'Details', 'Requested By', 'Date Created', 'Amount', 'Status', 'Section', 'Region']
+    for col_num, header in enumerate(detail_headers, 1):
+        cell = ws.cell(row=12, column=col_num, value=header)
+        cell.font = header_font
+        cell.fill = header_fill
+        cell.alignment = center_alignment
+    
+    # Data rows
+    for row_num, ace in enumerate(aces, 13):
+        ws.cell(row=row_num, column=1, value=ace.Ace_id2)
+        ws.cell(row=row_num, column=2, value=ace.details_of_expenditure)
+        ws.cell(row=row_num, column=3, value=ace.requested_by.get_full_name() if ace.requested_by else '')
+        ws.cell(row=row_num, column=4, value=ace.date_created.strftime('%Y-%m-%d') if ace.date_created else '')
+        ws.cell(row=row_num, column=5, value=float(ace.amount or 0))
+        
+        # Status
+        status = "-"
+        if ace.process and ace.process.approval_set.last():
+            status = ace.process.approval_set.last().approved
+        ws.cell(row=row_num, column=6, value=status)
+        
+        ws.cell(row=row_num, column=7, value=str(ace.section) if ace.section else "")
+        ws.cell(row=row_num, column=8, value=str(ace.region) if ace.region else "")
+    
+    # Auto-adjust column widths
+    for col in ws.columns:
+        max_length = 0
+        column = col[0].column_letter
+        for cell in col:
+            try:
+                if len(str(cell.value)) > max_length:
+                    max_length = len(str(cell.value))
+            except:
+                pass
+        adjusted_width = min(max_length + 2, 50)
+        ws.column_dimensions[column].width = adjusted_width
+    
+    wb.save(response)
+    return response

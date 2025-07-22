@@ -240,124 +240,131 @@ def create_pettycash(request):
 @login_required
 def pettycash_awaiting_my_action(request):
     """
-    for each pettycash.Process in the rfqs,  let current_step = the last pettycash.process.approval if any else 0 and
-    let next_step =current_step+1 then check if  next_step=step.step for rfq.process.workflow.step_set filtered by
-    approver = user.roles.all.
+    Show PettyCash items awaiting user action and items they created (for requesters)
     """
     pettycashs_to_process = []
     user_roles = request.user.roles.all()
 
     user_id = request.user.id
     user_profile = UserProfile.objects.filter(id=user_id).first()
-
     user_groups = user_profile.groups.values_list('name', flat=True)
 
-    custom_user_roles = {
-        "pettycash": {},
-    }
-
+    custom_user_roles = {"pettycash": {}}
     roles_ = user_profile.roles.all()
     for _role in roles_:
         role = Roles.objects.filter(id=_role.id).first()
-
         if role.application == "pettycash":
             custom_user_roles["pettycash"] = role.role
+    
     pettycash_role = str(custom_user_roles["pettycash"])
-    print(pettycash_role)
     requester = 'create'
     current_year = datetime.now(timezone.utc).year
     region = Regions.objects.filter(id=user_profile.region.id).first()
-
-    # Calculate the starting year
     starting_year = current_year
 
+    # Logic for different roles (keeping existing logic)
     if pettycash_role == "approve":
-        for pettycash in Pettycash.objects.filter(region=region, section=request.user.section,
-                                                  date_created__year__gte=starting_year).only('petty_id',
-                                                                                              'date_created').order_by(
-            'old_version', '-date_created', 'petty_id')[:800]:
+        for pettycash in Pettycash.objects.filter(
+            region=region, 
+            section=request.user.section,
+            date_created__year__gte=starting_year
+        ).only('petty_id', 'date_created').order_by('old_version', '-date_created', 'petty_id')[:800]:
             process = pettycash.process
-
+            if process.approval_set.filter(approved="Rejected").exists():
+                continue
             if process.approval_set.exists():
                 last_approval = process.approval_set.last()
                 current_step = last_approval.step.step
             else:
                 current_step = 0
-
             next_step = current_step + 1
-
             workflow = process.workflow
             step = workflow.step_set.filter(step=next_step, approver__in=user_roles).first()
-
             if step:
                 pettycashs_to_process.append(pettycash)
-    elif pettycash_role == requester:
-        for pettycash in Pettycash.objects.filter(section=request.user.section, region=region,
-                                                  date_created__year__gte=starting_year).only('petty_id',
-                                                                                              'date_created').order_by(
-            'old_version', '-date_created', 'petty_id')[:800]:
-            process = pettycash.process
 
+    elif pettycash_role == requester:
+        for pettycash in Pettycash.objects.filter(
+            section=request.user.section, 
+            region=region,
+            date_created__year__gte=starting_year
+        ).only('petty_id', 'date_created').order_by('old_version', '-date_created', 'petty_id')[:800]:
+            process = pettycash.process
+            if process.approval_set.filter(approved="Rejected").exists():
+                continue
             if process.approval_set.exists():
                 last_approval = process.approval_set.last()
                 current_step = last_approval.step.step
             else:
                 current_step = 0
-
             next_step = current_step + 1
-
             workflow = process.workflow
             step = workflow.step_set.filter(step=next_step, approver__in=user_roles).first()
-
             if step:
                 pettycashs_to_process.append(pettycash)
 
     else:
-        print(user_profile.region.id, 'region')
-        print(user_profile.designation.id, 'designation')
+        # Keep existing logic for other roles
         if user_profile.region.id == 4 and user_profile.designation.id == 300:
             sections_to_filter = [416, 415, 414, 413, 412, 411, 410, 407]
-            for pettycash in Pettycash.objects.filter(section__id__in=sections_to_filter).order_by(
-                    '-date_created', 'petty_id')[:1600]:
+            for pettycash in Pettycash.objects.filter(section__id__in=sections_to_filter).order_by('-date_created', 'petty_id')[:1600]:
                 process = pettycash.process
-
+                if process.approval_set.filter(approved="Rejected").exists():
+                    continue
                 if process.approval_set.exists():
                     last_approval = process.approval_set.last()
                     current_step = last_approval.step.step
                 else:
                     current_step = 0
-
                 next_step = current_step + 1
-
                 workflow = process.workflow
                 step = workflow.step_set.filter(step=next_step, approver__in=user_roles).first()
-
                 if step:
                     pettycashs_to_process.append(pettycash)
-                print('phakathi')
         else:
             for pettycash in Pettycash.objects.filter(region=region).order_by('-date_created', 'petty_id')[:1600]:
                 process = pettycash.process
-
+                if process.approval_set.filter(approved="Rejected").exists():
+                    continue
                 if process.approval_set.exists():
                     last_approval = process.approval_set.last()
                     current_step = last_approval.step.step
                 else:
                     current_step = 0
-
                 next_step = current_step + 1
-
                 workflow = process.workflow
                 step = workflow.step_set.filter(step=next_step, approver__in=user_roles).first()
-
                 if step:
                     pettycashs_to_process.append(pettycash)
-                print('outside')
 
-    return render(request, 'finance/pettycash/view_all_pettycashs.html', {'pettycashs': pettycashs_to_process,
-                                                                          'pettycash_role': pettycash_role,
-                                                                          'user_groups': user_groups,
-                                                                          'requester': requester})
+    # Get items created by the user (enhanced for requesters)
+    created_pettycashs = []
+    if pettycash_role == "create":
+        # For requesters, show all items they created
+        created_pettycashs = Pettycash.objects.filter(
+            requested_by=request.user,
+            region=region,
+            date_created__year__gte=starting_year
+        ).order_by('-date_created')[:200]
+    else:
+        # For non-requesters, show items they created (if any)
+        created_pettycashs = Pettycash.objects.filter(
+            requested_by=request.user,
+            region=region,
+            date_created__year__gte=starting_year
+        ).order_by('-date_created')[:200]
+
+    return render(request, 'finance/pettycash/view_all_pettycashs.html', {
+        'pettycashs': pettycashs_to_process,
+        'created_pettycashs': created_pettycashs,
+        'pettycash_role': pettycash_role,
+        'user_groups': user_groups,
+        'requester': requester,
+        'show_created_items': True,  # Flag to show created items section
+        'is_requester': pettycash_role == "create",
+        'user': request.user,
+        'title': 'PettyCash Awaiting My Action'
+    })
 
 
 @login_required
@@ -850,3 +857,47 @@ def receipt_manual(request):
         return redirect('pettycash:pettycash_detail', petty_id=pettycash.petty_id)
     else:
         return render(request, 'finance/pettycash/receipt.html')
+
+
+@login_required
+def my_actioned_items(request):
+    """
+    Show PettyCash items the current user has actioned (approved/rejected), sorted by action date (most recent first).
+    """
+    user_id = request.user.id
+    user_profile = UserProfile.objects.filter(id=user_id).first()
+    region = Regions.objects.filter(id=user_profile.region.id).first()
+    
+    # Get user role
+    custom_user_roles = {"pettycash": {}}
+    roles_ = user_profile.roles.all()
+    for _role in roles_:
+        role = Roles.objects.filter(id=_role.id).first()
+        if role.application == "pettycash":
+            custom_user_roles["pettycash"] = role.role
+            pettycash_role = str(custom_user_roles["pettycash"])
+            break
+    
+    # Get all PettyCash items where the current user has an approval in the process
+    actioned_approvals = []
+    all_pettycashs = Pettycash.objects.filter(region=region)
+    for pettycash in all_pettycashs:
+        process = pettycash.process
+        if process and process.approval_set.exists():
+            approvals = process.approval_set.filter(user=request.user)
+            for approval in approvals:
+                actioned_approvals.append((approval, pettycash))
+    
+    # Sort by approval date (most recent first)
+    actioned_approvals.sort(key=lambda x: x[0].approved_at, reverse=True)
+    actioned_pettycashs = [pettycash for approval, pettycash in actioned_approvals]
+
+    requester = "create"  # Used in template for role checks
+    
+    return render(request, 'finance/pettycash/my_actioned_items.html', {
+        'pettycashs': actioned_pettycashs,
+        'title': 'My Actioned PettyCash Items',
+        'pettycash_role': pettycash_role,
+        'requester': requester,
+        'user': request.user,
+    })
