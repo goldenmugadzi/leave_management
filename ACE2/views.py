@@ -553,19 +553,60 @@ def ace_awaiting_my_action(request):
     """
     Show ACEs awaiting the user's action, including head office approvers
     """
-    user_id = request.user.id
-    user_profile = UserProfile.objects.filter(id=user_id).first()
+    try:
+        user_id = request.user.id
+        user_profile = UserProfile.objects.filter(id=user_id).first()
+        
+        if not user_profile:
+            messages.error(request, "User profile not found. Please contact administrator.")
+            return render(request, 'finance/ace2/view_all_aces.html', {
+                'aces': [],
+                'created_aces': [],
+                'ace_role': 'none',
+                'error_message': 'User profile not found'
+            })
+        
+        # Determine user role with proper exception handling
+        custom_user_roles = {"ace": {}}
+        roles_ = user_profile.roles.all()
+        ace_role = None
+        
+        try:
+            for _role in roles_:
+                role = Roles.objects.filter(id=_role.id).first()
+                if role and role.application == "ace":
+                    custom_user_roles["ace"] = role.role
+                    ace_role = str(custom_user_roles["ace"])
+                    print("ace role", ace_role)
+                    break
+            
+            if ace_role is None:
+                # User has no ACE role assigned
+                messages.warning(request, "You don't have an ACE role assigned. Please contact administrator for access.")
+                return render(request, 'finance/ace2/view_all_aces.html', {
+                    'aces': [],
+                    'created_aces': [],
+                    'ace_role': 'none',
+                    'error_message': 'No ACE role assigned'
+                })
+                
+        except Exception as e:
+            messages.error(request, f"Error determining user role: {str(e)}")
+            return render(request, 'finance/ace2/view_all_aces.html', {
+                'aces': [],
+                'created_aces': [],
+                'ace_role': 'none',
+                'error_message': 'Role determination error'
+            })
     
-    # Determine user role
-    custom_user_roles = {"ace": {}}
-    roles_ = user_profile.roles.all()
-    for _role in roles_:
-        role = Roles.objects.filter(id=_role.id).first()
-        if role.application == "ace":
-            custom_user_roles["ace"] = role.role
-            ace_role = str(custom_user_roles["ace"])
-            print("ace role", ace_role)
-            break
+    except Exception as e:
+        messages.error(request, f"System error: {str(e)}")
+        return render(request, 'finance/ace2/view_all_aces.html', {
+            'aces': [],
+            'created_aces': [],
+            'ace_role': 'none',
+            'error_message': 'System error'
+        })
     
     if ace_role in ['fd', 'md']:  # Head office roles
         # Head office users see high-value ACEs from ALL regions
@@ -735,37 +776,88 @@ def ace_awaiting_my_action(request):
 
 @login_required
 def view_all_aces(request):
-    user_roles = request.user.roles.all()
+    try:
+        user_roles = request.user.roles.all()
+        user_id = request.user.id
+        user_profile = UserProfile.objects.filter(id=user_id).first()
+        
+        if not user_profile:
+            messages.error(request, "User profile not found. Please contact administrator.")
+            return render(request, 'finance/ace2/view_all_aces.html', {
+                'aces': [],
+                'ace_role': 'none',
+                'requester': 'create',
+                'error_message': 'User profile not found'
+            })
+        
+        try:
+            region = Regions.objects.filter(id=user_profile.region.id).first()
+            section = Sections.objects.filter(section=user_profile.section).first()
+        except AttributeError:
+            messages.error(request, "User profile is incomplete. Missing region or section information.")
+            return render(request, 'finance/ace2/view_all_aces.html', {
+                'aces': [],
+                'ace_role': 'none',
+                'requester': 'create',
+                'error_message': 'Incomplete user profile'
+            })
+        
+        print(section, " section")
 
-    user_id = request.user.id
-    user_profile = UserProfile.objects.filter(id=user_id).first()
-    region = Regions.objects.filter(id=user_profile.region.id).first()
-    section = Sections.objects.filter(section=user_profile.section).first()
-    print(section, " section")
+        user_groups = user_profile.groups.values_list('name', flat=True)
 
-    user_groups = user_profile.groups.values_list('name', flat=True)
+        custom_user_roles = {
+            "ace": {},
+        }
 
-    custom_user_roles = {
-        "ace": {},
-    }
+        roles_ = user_profile.roles.all()
+        ace_role = None
+        
+        try:
+            for _role in roles_:
+                role = Roles.objects.filter(id=_role.id).first()
+                if role and role.application == "ace":
+                    custom_user_roles["ace"] = role.role
+                    ace_role = str(custom_user_roles["ace"])
+                    break
+            
+            if ace_role is None:
+                messages.warning(request, "You don't have an ACE role assigned. Please contact administrator for access.")
+                return render(request, 'finance/ace2/view_all_aces.html', {
+                    'aces': [],
+                    'ace_role': 'none',
+                    'requester': 'create',
+                    'error_message': 'No ACE role assigned'
+                })
+                
+        except Exception as e:
+            messages.error(request, f"Error determining user role: {str(e)}")
+            return render(request, 'finance/ace2/view_all_aces.html', {
+                'aces': [],
+                'ace_role': 'none',
+                'requester': 'create',
+                'error_message': 'Role determination error'
+            })
+            
+        requester = "create"
 
-    roles_ = user_profile.roles.all()
-    for _role in roles_:
-        role = Roles.objects.filter(id=_role.id).first()
+        if ace_role == "create":
+            aces = Ace2.objects.filter(region=region).order_by('-date_created')
+        elif ace_role == "pass":
+            aces = Ace2.objects.filter(region=region).order_by('-date_created')
+        else:
+            print('kings')
+            aces = Ace2.objects.filter(region=region).order_by('-date_created')
+            print(aces)
 
-        if role.application == "ace":
-            custom_user_roles["ace"] = role.role
-    ace_role = str(custom_user_roles["ace"])
-    requester = "create"
-
-    if ace_role == "create":
-        aces = Ace2.objects.filter(region=region).order_by('-date_created')
-    elif ace_role == "pass":
-        aces = Ace2.objects.filter(region=region).order_by('-date_created')
-    else:
-        print('kings')
-        aces = Ace2.objects.filter(region=region).order_by('-date_created')
-        print(aces)
+    except Exception as e:
+        messages.error(request, f"System error: {str(e)}")
+        return render(request, 'finance/ace2/view_all_aces.html', {
+            'aces': [],
+            'ace_role': 'none',
+            'requester': 'create',
+            'error_message': f'System error: {str(e)}'
+        })
 
     return render(request, 'finance/ace2/view_all_aces.html', {'aces': aces,
                                                                'requester': requester, 'ace_role': ace_role})
