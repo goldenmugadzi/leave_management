@@ -98,7 +98,7 @@ def Ace_detail(request, Ace_id2):
                     userp = UserProfile.objects.filter(id=user.id).first()
                     msg = f"Your ACE {ace_item.Ace_id2} has been rejected. Allocated funds have been released."
                     url = f"/ace/ace_detail/{ace_item.Ace_id2}"
-                    notify_user(userp, msg, "ACE", url, ace_item.Ace_id2, request)
+                    notify_user(userp, msg, "ACE", url, ace_item.Ace_id2)
                     
                 # Show a message to the current user
                 sweetify.info(request, f"ACE {ace_item.Ace_id2} was rejected. Budget has been adjusted.")
@@ -138,7 +138,7 @@ def Ace_detail(request, Ace_id2):
                             
                             msg = f"Your ACE {ace_item.Ace_id2} has been approved by {approver_role} (Step {current_step}/{total_steps})"
                             url = f"/ace/ace_detail/{ace_item.Ace_id2}"
-                            notify_user(userp, msg, "ACE", url, ace_item.Ace_id2, request)
+                            notify_user(userp, msg, "ACE", url, ace_item.Ace_id2)
                             
                             sweetify.success(request, f"ACE {ace_item.Ace_id2} approved and requester notified")
                     except Exception as e:
@@ -230,7 +230,7 @@ def Ace_detail(request, Ace_id2):
 
             msg = "Your ACE " + ace_item.Ace_id2 + "has been approved by the General Manager"
             url = "/ace/ace_detail/" + ace_item.Ace_id2
-            notify_user(userp, msg, "ACE", url, ace_item.Ace_id2, request)
+            notify_user(userp, msg, "ACE", url, ace_item.Ace_id2)
 
     ace_quantity = range(ace_item.quantity)
     approved_steps = ace_item.process.approval_set.all().values_list('step__step', flat=True)
@@ -256,7 +256,7 @@ def Ace_detail(request, Ace_id2):
         general_manager = find_general_manager(request, ace_item.region)
         if general_manager:
             general_manager = UserProfile.objects.filter(username=general_manager).first()
-            notify_user(general_manager, msg, "ACE", url, ace_item.Ace_id2, request)
+            notify_user(general_manager, msg, "ACE", url, ace_item.Ace_id2)
 
     return render(request, 'finance/ace2/ace_detail.html',
                   {'ace': ace_item, 'approved_steps': approved_steps, 'approvalForm': approvalForm,
@@ -375,17 +375,32 @@ def create_Ace(request):
                 ace_type, zwl_amount = determine_ace_type(ace.amount, ace.currency)
                 ace.ace_type = ace_type
 
-                # Set workflow based on ACE type
+                # Set workflow based on ACE type with comprehensive exception handling
                 if ace_type == 'high_value':
                     try:
-                        ace.process = intiate(request, 'ace_em')  # Use the workflow name created by the management
-                        # command
-                        messages.info(request, f"High-value ACE detected ({zwl_amount:,.2f} ZWL). Extended approval workflow will be used.")
+                        ace.process = intiate(request, 'ace_value')  # Use high-value ACE_VALUE workflow
+                        messages.success(request, f"High-value ACE created ({zwl_amount:,.2f} ZWL). Extended approval workflow will be used.")
+                    except Workflow.DoesNotExist:
+                        messages.error(request, "High-value ACE workflow (ace_value) not configured. Please contact IT administrator.")
+                        sweetify.error(request, "High-value ACE workflow not configured. Contact IT administrator.")
+                        return render(request, 'finance/ace2/create_ace.html', {'form': form, 'formset': formset})
                     except Exception as e:
-                        messages.warning(request, "High-value workflow not available. Using standard workflow.")
-                        ace.process = intiate(request, 'ace')
+                        messages.warning(request, f"High-value workflow unavailable ({str(e)}). Using standard workflow.")
+                        try:
+                            ace.process = intiate(request, 'ace')
+                            messages.info(request, "Standard ACE workflow applied successfully.")
+                        except Exception as std_error:
+                            messages.error(request, f"Critical error: No ACE workflow available. Contact IT administrator. Error: {str(std_error)}")
+                            sweetify.error(request, "Critical error: No ACE workflow available. Contact IT administrator.")
+                            return render(request, 'finance/ace2/create_ace.html', {'form': form, 'formset': formset})
                 else:
-                    ace.process = intiate(request, 'ace')
+                    try:
+                        ace.process = intiate(request, 'ace')
+                        messages.success(request, "Standard ACE workflow applied successfully.")
+                    except Exception as e:
+                        messages.error(request, f"Critical error: ACE workflow unavailable. Contact IT administrator. Error: {str(e)}")
+                        sweetify.error(request, "Critical error: ACE workflow unavailable. Contact IT administrator.")
+                        return render(request, 'finance/ace2/create_ace.html', {'form': form, 'formset': formset})
                 
                 # Continue with existing budget validation logic...
                 budget = AssetBudget.objects.filter(budget_name=ace.budget_id, period=2025).first()
@@ -563,7 +578,7 @@ def create_Ace(request):
                             ace.budget_id)
                         url = "/ace/ace_detail/" + ace.Ace_id2
                         section_heads = UserProfile.objects.filter(username=section_heads).first()
-                        notify_user(section_heads, msg, "ACE", url, ace.Ace_id2, request)
+                        notify_user(section_heads, msg, "ACE", url, ace.Ace_id2)
 
                     # for quotation_form in formset:
                     #     quotation = quotation_form.save(commit=False)
@@ -581,7 +596,7 @@ def create_Ace(request):
                         url = "/ace/ace_detail/" + ace.Ace_id2
 
                         ace_sh = UserProfile.objects.filter(username=ace_sh).first()
-                        notify_user(ace_sh, msg, "ACE", url, ace.Ace_id2, request)
+                        notify_user(ace_sh, msg, "ACE", url, ace.Ace_id2)
 
                     else:
                         print("no ace section head found")
@@ -2394,13 +2409,13 @@ def notify_pending_gm_approvals(request):
                 # Send a summary notification
                 msg = f"You have {count} ACE items awaiting your approval in {region.region}"
                 url = "/ace/awaiting_my_action/"
-                notify_user(gm, msg, "ACE", url, f"gm_summary_{region.id}", request)
+                notify_user(gm, msg, "ACE", url, f"gm_summary_{region.id}")
                 
                 # Optional: Send individual notifications for each item
                 for ace in pending_aces:
                     item_msg = f"ACE {ace.Ace_id2} requires your final approval"
                     item_url = f"/ace/ace_detail/{ace.Ace_id2}"
-                    notify_user(gm, item_msg, "ACE", item_url, ace.Ace_id2, request)
+                    notify_user(gm, item_msg, "ACE", item_url, ace.Ace_id2)
     
     if notification_count > 0:
         sweetify.success(request, f"Sent notifications for {notification_count} pending ACE items to general managers")
