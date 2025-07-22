@@ -354,7 +354,17 @@ def pettycash_awaiting_my_action(request):
                     pettycashs_to_process.append(pettycash)
                 print('outside')
 
+    # Get items created by the user (for requesters)
+    created_pettycashs = []
+    if pettycash_role == requester:
+        created_pettycashs = Pettycash.objects.filter(
+            requested_by=request.user, 
+            region=region,
+            date_created__year__gte=starting_year
+        ).order_by('-date_created')[:200]
+
     return render(request, 'finance/pettycash/view_all_pettycashs.html', {'pettycashs': pettycashs_to_process,
+                                                                          'created_pettycashs': created_pettycashs,
                                                                           'pettycash_role': pettycash_role,
                                                                           'user_groups': user_groups,
                                                                           'requester': requester})

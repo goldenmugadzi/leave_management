@@ -24,6 +24,40 @@
         <a href="/ace/my_actioned_items" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded">Items I Actioned</a>
         <a href="/ace/budgets" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded">All Budgets</a>
       </div>
+
+      {% if ace_role == requester and created_aces %}
+      <!-- Items Created by User Section -->
+      <div class="bg-blue-50 shadow-lg rounded-lg p-6 mb-6">
+        <h4 class="text-center font-bold mb-4">Items You Created</h4>
+        <table id="createdItems" class="table table-striped stripe table-bordered">
+          <thead>
+            <tr>
+              <th>ACE ID</th>
+              <th>ACE Details</th>
+              <th>Amount</th>
+              <th>Created At</th>
+              <th>Section</th>
+              <th>Allocation Code of Expenditure</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for ace in created_aces %}
+            <tr class="h-1">
+              <td><a class="text-blue-500" href="/ace/ace_detail/{{ace.Ace_id2}}">{{ ace.Ace_id2|default_if_none:'' }}</a></td>
+              <td>{{ ace.details_of_expenditure }}</td>
+              <td>{{ ace.amount }}</td>
+              <td>{{ ace.date_created }}</td>
+              <td>{{ ace.section }}</td>
+              <td>{{ ace.section.code }}</td>
+              <td>{{ ace.process.approval_set.last|default_if_none:'' }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% endif %}
+
       <br> <table id="nonconformity" class="table table-striped stripe table-bordered">
         <thead>
           <tr>
@@ -68,7 +102,7 @@
 <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
 <script>
   $(document).ready(function () {
-    // Initialize the DataTable with options and Tailwind CSS classes
+    // Initialize the main DataTable
     $("#nonconformity").DataTable({
       // Set the number of rows to display per page
       "pageLength": 10,
@@ -86,6 +120,18 @@
   
      
     });
+
+    // Initialize the created items DataTable if it exists
+    if ($('#createdItems').length) {
+      $('#createdItems').DataTable({
+        "pageLength": 10,
+        "columnDefs": [
+          { "orderable": true, "targets": [0, 1, 2] }
+        ],
+        "searching": true,
+        "responsive": true,
+      });
+    }
   });
 </script>
 {% endblock %}

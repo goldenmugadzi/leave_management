@@ -15,15 +15,53 @@
   <div class="grid grid-cols-1">
     <div class="bg-gulf-blue-100 shadow-lg rounded-lg p-6">
      
-       <h3 class="text-center font-bold  mb-4">All PETTYCASH</h3>
+       <h3 class="text-center font-bold  mb-4">PettyCash Awaiting My Action</h3>
       <div class=" grid grid-cols-4 container text-center ">
           {% if pettycash_role == requester %}
         <a href="{% url 'pettycash:create_pettycash' %}" class="bg-green-500 hover:bg-blue-700 inline-block rounded-full mx-3 text-white py-2 px-4 rounded">Create New</a>
           {% endif %}
 {#        {% comment %} <a href="{% url 'nonconformity:checklist' %}" class="bg-blue-500 hover:bg-blue-700 inline-block rounded-full mx-3 text-white py-2 px-4 rounded">Create from checklist</a> {% endcomment %}#}
         <a href="{% url 'pettycash:pettycashs_awaiting_my_action' %}" class="bg-blue-500 hover:bg-gray-700 inline-block rounded-full mx-3 text-white py-2 px-4 rounded">Awaiting my action </a>
+        <a href="/pettycash/my_actioned_items/" class="bg-green-500 hover:bg-green-700 inline-block rounded-full mx-3 text-white py-2 px-4 rounded">Items I Actioned</a>
           <a href="/pettycash/pettycashs" class="bg-gray-500 hover:bg-gray-700 inline-block rounded-full mx-3 text-white py-2 px-4 rounded">View Pettycash</a>
       </div>
+
+      {% if pettycash_role == requester and created_pettycashs %}
+      <!-- Items Created by User Section -->
+      <br>
+      <div class="bg-green-50 shadow-lg rounded-lg p-6 mb-6">
+        <h4 class="text-center font-bold mb-4">Items You Created</h4>
+        <table id="createdItems" class="table table-striped stripe table-bordered">
+          <thead>
+            <tr>
+              <th>Pettycash ID</th>
+              <th>Pettycash Details</th>
+              <th>Allocation Code of Expenditure</th>
+              <th>Amount</th>
+              <th>Payment Mode</th>
+              <th>Created At</th>
+              <th>Section</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for pettycash in created_pettycashs %}
+            <tr class="h-1">
+              <td><a class="text-blue-500" href="/pettycash/pettycash_detail/{{pettycash.petty_id}}">{{ pettycash.petty_id|default_if_none:'' }}</a></td>
+              <td>{{ pettycash.details_of_expenditure }}</td>
+              <td>{{ pettycash.section.code }}</td>
+              <td>{{ pettycash.amount }}</td>
+              <td>{{ pettycash.payment_mode }}</td>
+              <td>{{ pettycash.date_created }}</td>
+              <td>{{ pettycash.section }}</td>
+              <td>{{ pettycash.process.approval_set.last|default_if_none:'' }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% endif %}
+
       <br> <table id="nonconformity" class="table table-striped stripe table-bordered">
         <thead>
           <tr>
@@ -68,7 +106,7 @@
 <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
 <script>
   $(document).ready(function () {
-    // Initialize the DataTable with options and Tailwind CSS classes
+    // Initialize the main DataTable
     $("#nonconformity").DataTable({
       // Set the number of rows to display per page
       "pageLength": 10,
@@ -86,6 +124,18 @@
   
      
     });
+
+    // Initialize the created items DataTable if it exists
+    if ($('#createdItems').length) {
+      $('#createdItems').DataTable({
+        "pageLength": 10,
+        "columnDefs": [
+          { "orderable": true, "targets": [0, 1, 2] }
+        ],
+        "searching": true,
+        "responsive": true,
+      });
+    }
   });
 </script>
 {% endblock %}
