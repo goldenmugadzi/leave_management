@@ -129,6 +129,7 @@ INSTALLED_APPS = [
     'graphene_django',
     'graphene_file_upload',
     'safety',
+    'BatteryMaintenance',
 ]
 
 AUTH_USER_MODEL = 'users.UserProfile'
