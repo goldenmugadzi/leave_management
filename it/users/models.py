@@ -94,7 +94,7 @@ class Designations(models.Model):
     region = models.ForeignKey(Regions, on_delete=models.DO_NOTHING, blank=True, null=True)
 
     def __str__(self):
-        return self.identifier
+        return self.description
 
 
 class CostCenter(models.Model):
@@ -178,6 +178,7 @@ class UserProfile(AbstractUser):
     roles = models.ManyToManyField(Roles, blank=True, null=True)
     region = models.ForeignKey(Regions, on_delete=models.DO_NOTHING, blank=True, null=True)
     status = models.CharField(max_length=30, blank=True)
+    email = models.CharField(max_length=50, blank=True)
     last_reset = models.DateField(default=date.today())
     password_expiry_date = models.DateField(null=True, blank=True)
     password_expiry_days = models.IntegerField(default=90)

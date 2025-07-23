@@ -1516,7 +1516,7 @@ def save_cs_committee(request):
                 )
                 msg = "You have been added to the committee for Restricted Bid " + cs_query.cs_id
                 url = "/restricted_bidding/comperative_schedule/" + cs_query.cs_id
-                notify_user(member_profile, msg, "Restricted Bid", url, cs_query.cs_id)
+                notify_user(member_profile, msg, "Restricted Bid", url, cs_query.cs_id, request)
             committee_query.save()
 
     return JsonResponse({
@@ -1593,7 +1593,7 @@ def approve_cs_committee(request):
                 print("fm user: ", fm_user.username, fm_user.id)
                 msg = "Restricted is ready for your approval " + cs_query.cs_id
                 url = "/restricted_bidding/comperative_schedule/" + cs_query.cs_id
-                notify_user(fm_user, msg, "Restricted Bid", url, cs_query.cs_id)
+                notify_user(fm_user, msg, "Restricted Bid", url, cs_query.cs_id, request)
 
             return JsonResponse({
                 "message": "Committee member approved successfully",
@@ -1678,7 +1678,7 @@ def approve_cs(request):
                 gm_user = UserProfile.objects.filter(roles=gm_role).first()
                 print("gm user: ", gm_user.username, gm_user.id)
                 notify_user(gm_user, "Restricted Bid is ready for your approval " + cs_query.cs_id, "Restricted Bid",
-                            "/restricted_bidding/comperative_schedule/" + cs_query.cs_id, cs_query.cs_id)
+                            "/restricted_bidding/comperative_schedule/" + cs_query.cs_id, cs_query.cs_id, request)
 
             return JsonResponse({
                 "message": "FM approval saved successfully",
@@ -1976,3 +1976,39 @@ def cancel_schedule(request, cs_id):
 
     messages.success(request, "Comparative Schedule cancelled successfully")
     return redirect('/restricted_bidding/comperative_schedules')
+
+@login_required 
+def api_get_users(request):
+    """API endpoint to get users for React app"""
+    try:
+        users = UserProfile.objects.all()
+        users_data = []
+        for user in users:
+            users_data.append({
+                'id': user.id,
+                'username': user.username,
+                'first_name': user.first_name,
+                'last_name': user.last_name,
+                'name': f"{user.first_name} {user.last_name}".strip(),
+            })
+        return JsonResponse(users_data, safe=False)
+    except Exception as ex:
+        print("Error fetching users:", ex)
+        return JsonResponse({'error': str(ex)}, status=500)
+
+@login_required 
+def api_get_suppliers(request):
+    """API endpoint to get suppliers for React app"""
+    try:
+        suppliers = Supplier.objects.all()
+        suppliers_data = []
+        for supplier in suppliers:
+            suppliers_data.append({
+                'id': supplier.id,
+                'name': supplier.name,
+                'supplier_name': supplier.name,  # For compatibility
+            })
+        return JsonResponse(suppliers_data, safe=False)
+    except Exception as ex:
+        print("Error fetching suppliers:", ex)
+        return JsonResponse({'error': str(ex)}, status=500)

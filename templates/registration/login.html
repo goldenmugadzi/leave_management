@@ -24,6 +24,9 @@
       href="{% static 'assets/cdn/tailwind.min.css' %}"
       rel="stylesheet"
     />
+    {% if show_captcha and RECAPTCHA_ENABLED %}
+    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+    {% endif %}
     <style>
       /*remove custom style*/
       .circles {
@@ -284,9 +287,17 @@
                       autocomplete="current-password"
                       required
                       class="block w-full rounded-md border-0 py-1.5 text-gulf-blue-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-gulf-blue-500 sm:text-sm sm:leading-6"
+                      {% comment %} onclick="this.type = this.type === 'password' ? 'text' : 'password'"
+                      onfocus="this.type = 'password'" {% endcomment %}
                     />
                   </div>
                 </div>
+
+                {% if show_captcha and RECAPTCHA_ENABLED %}
+                <div class="form-group">
+                    <div class="g-recaptcha" data-sitekey="{{ RECAPTCHA_SITE_KEY }}"></div>
+                </div>
+                {% endif %}
 
                 <div>
                   <button
@@ -306,12 +317,12 @@
                   href="/auth/answer-security-questions"
                 > Answer Security Questions
                 </a>
-                 {% comment %} <span> or reset via </span>
+                 <span> or reset via </span>
                 <a
                   class="font-semibold leading-6 text-indigo-600 hover:text-indigo-500"
-                  href="/auth/change-password/email"
+                  href="/password-reset/"
                 > Email
-                </a> {% endcomment %}
+                </a>
               </p>
             </div>
           </div>
