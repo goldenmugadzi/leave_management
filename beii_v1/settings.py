@@ -128,7 +128,16 @@ INSTALLED_APPS = [
     'competence_building.apps.CompetenceBuildingConfig',
     'graphene_django',
     'graphene_file_upload',
-    'safety',
+    'safety', 
+    'comm_files',
+    'django_prometheus',
+    'api.ops_maintenance.safety_operations',
+    'Transport',
+    'Hardware_Faults',
+    'Asset_Register',
+    'widget_tweaks',
+    'meetings',
+    'leave_management',
 ]
 
 AUTH_USER_MODEL = 'users.UserProfile'
