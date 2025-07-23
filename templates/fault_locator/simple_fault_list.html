@@ -1,0 +1,64 @@
+{% extends "admin_layout.html" %}
+
+{% block content %}
+<div class="simple-fault-list p-4">
+  <div class="header mb-6">
+    <h1 class="text-xl font-bold text-gray-800">My Fault Assignments</h1>
+    <a href="{% url 'fault_locator_dashboard' %}" 
+       class="text-blue-600 hover:text-blue-800">← Back to Dashboard</a>
+  </div>
+
+  {% if faults %}
+    <div class="fault-cards space-y-4">
+      {% for fault in faults %}
+      <div class="fault-card bg-white rounded-lg shadow-md p-4 border-l-4 
+                  {% if fault.status == 'ACTIVE' %}border-red-500
+                  {% elif fault.status == 'IN_PROGRESS' %}border-yellow-500
+                  {% else %}border-green-500{% endif %}">
+        
+        <div class="flex justify-between items-start mb-3">
+          <h3 class="font-semibold text-gray-800">{{ fault.description }}</h3>
+          <span class="px-2 py-1 text-xs rounded-full
+                       {% if fault.status == 'ACTIVE' %}bg-red-100 text-red-800
+                       {% elif fault.status == 'IN_PROGRESS' %}bg-yellow-100 text-yellow-800
+                       {% else %}bg-green-100 text-green-800{% endif %}">
+            {{ fault.get_status_display }}
+          </span>
+        </div>
+        
+        <div class="fault-details text-sm text-gray-600 mb-4">
+          <p>📍 <strong>Location:</strong> {{ fault.depot.depot }}</p>
+          <p>🔧 <strong>Device:</strong> {{ fault.device.serial_number }}</p>
+          <p>📅 <strong>Reported:</strong> {{ fault.created_at|date:"M d, Y" }}</p>
+          {% if fault.assignment.team %}
+          <p>👥 <strong>Team:</strong> {{ fault.assignment.team.name }}</p>
+          {% endif %}
+        </div>
+        
+        {% if fault.status != 'RESOLVED' %}
+        <div class="action-buttons flex space-x-2">
+          <a href="{% url 'field_update' fault.id %}" 
+             class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition">
+            📱 Field Update
+          </a>
+          
+          {% if user_role == 'Senior Foreperson' or user_role == 'Depot Foreperson' %}
+          <a href="{% url 'assign_fault' fault.id %}" 
+             class="px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 transition">
+            👥 Reassign
+          </a>
+          {% endif %}
+        </div>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    <div class="empty-state text-center py-12">
+      <div class="text-6xl mb-4">🎉</div>
+      <h2 class="text-xl font-semibold text-gray-800 mb-2">No Active Faults</h2>
+      <p class="text-gray-600">Great job! You don't have any fault assignments right now.</p>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}
