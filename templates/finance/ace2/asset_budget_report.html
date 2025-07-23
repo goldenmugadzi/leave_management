@@ -1,56 +1,972 @@
 <!-- filepath: d:\b\templates\finance\ace2\asset_budget_report.html -->
 {% extends "admin_layout.html" %}
+{% load static %}
 {% block content %}
-<div class="content-wrapper">
-  <h2 class="font-bold text-xl mb-4">Asset Budget Report</h2>
-  <div class="bg-white rounded shadow p-4 mb-6">
-    <h3 class="font-semibold text-lg mb-2">{{ budget.budget_name }}</h3>
-    <ul>
-      <li><strong>Allocated:</strong> {{ budget.allocated|floatformat:2 }}</li>
-      <li><strong>Withdrawn:</strong> {{ budget.withdrawn|floatformat:2 }}</li>
-      <li><strong>Balance:</strong> {{ budget.balance|floatformat:2 }}</li>
-      <li><strong>Awaiting Sanctioning:</strong> {{ budget.awaiting_sanctioning|floatformat:2 }}</li>
-      <li><strong>Period:</strong> {{ budget.period }}</li>
-      <li><strong>Region:</strong> {{ budget.region }}</li>
-      <li><strong>Created Date:</strong> {{ budget.created_date }}</li>
-      <li><strong>Other Features:</strong> ...</li>
-    </ul>
-    <div class="mt-4">
-      <strong>Total Used by ACEs:</strong> <span class="text-blue-700">{{ total_used|floatformat:2 }}</span>
+
+<style>
+.budget-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 20px;
+    color: white;
+    position: relative;
+    overflow: hidden;
+}
+
+.budget-card::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+    animation: shimmer 3s infinite;
+}
+
+@keyframes shimmer {
+    0% { transform: translateX(-100%) translateY(-100%) rotate(45deg); }
+    100% { transform: translateX(100%) translateY(100%) rotate(45deg); }
+}
+
+.metric-card {
+    transition: all 0.3s ease;
+    border-left: 4px solid #3b82f6;
+}
+
+.metric-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+}
+
+.progress-bar {
+    height: 8px;
+    background: linear-gradient(90deg, #3b82f6 0%, #1d4ed8 100%);
+    border-radius: 4px;
+    transition: width 0.8s ease;
+}
+
+.ace-table {
+    background: white;
+    border-radius: 15px;
+    overflow: hidden;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+}
+
+.status-badge {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.status-approved { background: #dcfce7; color: #16a34a; }
+.status-pending { background: #fef3c7; color: #d97706; }
+.status-rejected { background: #fee2e2; color: #dc2626; }
+.status-unknown { background: #f3f4f6; color: #6b7280; }
+
+.chart-container {
+    position: relative;
+    height: 300px;
+    background: white;
+    border-radius: 15px;
+    padding: 20px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+}
+
+.action-buttons {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+    color: white;
+    padding: 10px 20px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+}
+
+.btn-secondary {
+    background: white;
+    color: #374151;
+    padding: 10px 20px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    border: 2px solid #e5e7eb;
+    transition: all 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-secondary:hover {
+    border-color: #3b82f6;
+    color: #3b82f6;
+}
+
+.header-section {
+    margin-bottom: 30px;
+}
+
+.section-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #1f2937;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.fade-in {
+    animation: fadeIn 0.8s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.sortable {
+    cursor: pointer;
+    user-select: none;
+    transition: all 0.2s ease;
+}
+
+.sortable:hover {
+    background-color: #f3f4f6;
+}
+
+.sortable.asc i {
+    color: #3b82f6;
+}
+
+.sortable.desc i {
+    color: #3b82f6;
+}
+
+.tooltip {
+    position: relative;
+    display: inline-block;
+}
+
+.tooltip .tooltiptext {
+    visibility: hidden;
+    width: 120px;
+    background-color: #555;
+    color: white;
+    text-align: center;
+    border-radius: 6px;
+    padding: 5px 0;
+    position: absolute;
+    z-index: 1;
+    bottom: 125%;
+    left: 50%;
+    margin-left: -60px;
+    opacity: 0;
+    transition: opacity 0.3s;
+    font-size: 12px;
+}
+
+.tooltip:hover .tooltiptext {
+    visibility: visible;
+    opacity: 1;
+}
+
+.loading {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid #3498db;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 15px 20px;
+    border-radius: 8px;
+    color: white;
+    font-weight: 600;
+    z-index: 1000;
+    transform: translateX(100%);
+    transition: transform 0.3s ease;
+}
+
+.notification.success {
+    background-color: #10b981;
+}
+
+.notification.error {
+    background-color: #ef4444;
+}
+
+.notification.show {
+    transform: translateX(0);
+}
+
+.pulse {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.05);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+.highlight {
+    background-color: #fef3c7 !important;
+    animation: highlight 2s ease-in-out;
+}
+
+@keyframes highlight {
+    0% { background-color: #fef3c7; }
+    100% { background-color: transparent; }
+}
+
+.no-results {
+    text-align: center;
+    padding: 40px;
+    color: #9ca3af;
+}
+
+.print-hidden {
+    display: none !important;
+}
+
+@media print {
+    .print-hidden {
+        display: none !important;
+    }
+    
+    .chart-container {
+        page-break-inside: avoid;
+    }
+    
+    .ace-table {
+        page-break-inside: avoid;
+    }
+    
+    .action-buttons {
+        display: none !important;
+    }
+}
+
+@media (max-width: 768px) {
+    .grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .action-buttons {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .btn-primary, .btn-secondary {
+        text-align: center;
+        width: 100%;
+    }
+    
+    .budget-card {
+        padding: 20px;
+    }
+    
+    .budget-card .flex {
+        flex-direction: column;
+        gap: 20px;
+    }
+    
+    .chart-container {
+        height: 250px;
+    }
+    
+    .ace-table {
+        font-size: 12px;
+    }
+    
+    .ace-table th,
+    .ace-table td {
+        padding: 8px 4px;
+    }
+}
+</style>
+
+<div class="content-wrapper p-6 bg-gray-50 min-h-screen">
+    <!-- Header Section -->
+    <div class="header-section fade-in">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-800 mb-2">Asset Budget Report</h1>
+                <p class="text-gray-600">Comprehensive overview of budget utilization and ACE activities</p>
+            </div>
+            <div class="action-buttons">
+                <a href="{% url 'Ace:asset_budget_report_pdf' budget.budget_id %}" class="btn-primary">
+                    <i class="fas fa-download"></i>
+                    Export PDF
+                </a>
+                <a href="{% url 'Ace:asset_budget_report_excel' budget.budget_id %}" class="btn-secondary">
+                    <i class="fas fa-file-excel"></i>
+                    Export Excel
+                </a>
+                <a href="javascript:history.back()" class="btn-secondary">
+                    <i class="fas fa-arrow-left"></i>
+                    Back
+                </a>
+            </div>
+        </div>
     </div>
-  </div>
-  <h4 class="font-semibold text-lg mb-2">ACEs Created Using This Budget</h4>
-  <table class="table table-bordered">
-    <thead>
-      <tr>
-        <th>ACE ID</th>
-        <th>Details</th>
-        <th>Amount</th>
-        <th>Requested By</th>
-        <th>Date Created</th>
-        <th>Status</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for ace in aces %}
-      <tr>
-        <td><a href="{% url 'Ace:ace_detail' ace.Ace_id2 %}">{{ ace.Ace_id2 }}</a></td>
-        <td>{{ ace.details_of_expenditure }}</td>
-        <td>{{ ace.amount|floatformat:2 }}</td>
-        <td>{{ ace.requested_by.get_full_name }}</td>
-        <td>{{ ace.date_created|date:"Y-m-d" }}</td>
-        <td>
-          {% if ace.process and ace.process.approval_set.last %}
-            {{ ace.process.approval_set.last.approved }}
-          {% else %}
-            -
-          {% endif %}
-        </td>
-      </tr>
-      {% empty %}
-      <tr><td colspan="6" class="text-center">No ACEs found for this budget.</td></tr>
-      {% endfor %}
-    </tbody>
-  </table>
+
+    <!-- Budget Overview Card -->
+    <div class="budget-card p-8 mb-8 fade-in">
+        <div class="relative z-10">
+            <div class="flex items-center justify-between mb-6">
+                <div>
+                    <h2 class="text-2xl font-bold mb-2">{{ budget.budget_name }}</h2>
+                    <div class="flex items-center gap-4 text-sm opacity-90">
+                        <span><i class="fas fa-calendar-alt mr-2"></i>{{ budget.period }}</span>
+                        <span><i class="fas fa-map-marker-alt mr-2"></i>{{ budget.region }}</span>
+                        <span><i class="fas fa-clock mr-2"></i>{{ budget.created_date|date:"M d, Y" }}</span>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <div class="text-3xl font-bold">${{ budget.allocated|floatformat:2 }}</div>
+                    <div class="text-sm opacity-90">Total Allocated</div>
+                </div>
+            </div>
+            
+            <!-- Budget Progress Bar -->
+            <div class="mb-4">
+                <div class="flex justify-between text-sm mb-2">
+                    <span>Budget Utilization</span>
+                    <span>{{ budget.withdrawn|floatformat:2 }} / {{ budget.allocated|floatformat:2 }}</span>
+                </div>
+                <div class="w-full bg-white/20 rounded-full h-3">
+                    <div class="progress-bar h-3 rounded-full" style="width: {% widthratio budget.withdrawn budget.allocated 100 %}%"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Metrics Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div class="metric-card bg-white rounded-lg p-6 shadow-sm fade-in">
+            <div class="flex items-center justify-between mb-4">
+                <div class="p-3 bg-blue-100 rounded-full">
+                    <i class="fas fa-wallet text-blue-600 text-xl"></i>
+                </div>
+                <span class="text-sm font-medium text-gray-500">ALLOCATED</span>
+            </div>
+            <div class="text-2xl font-bold text-gray-800">${{ budget.allocated|floatformat:2 }}</div>
+            <div class="text-sm text-gray-600 mt-1">Total budget allocation</div>
+        </div>
+
+        <div class="metric-card bg-white rounded-lg p-6 shadow-sm fade-in">
+            <div class="flex items-center justify-between mb-4">
+                <div class="p-3 bg-green-100 rounded-full">
+                    <i class="fas fa-arrow-down text-green-600 text-xl"></i>
+                </div>
+                <span class="text-sm font-medium text-gray-500">WITHDRAWN</span>
+            </div>
+            <div class="text-2xl font-bold text-gray-800">${{ budget.withdrawn|floatformat:2 }}</div>
+            <div class="text-sm text-gray-600 mt-1">Amount already used</div>
+        </div>
+
+        <div class="metric-card bg-white rounded-lg p-6 shadow-sm fade-in">
+            <div class="flex items-center justify-between mb-4">
+                <div class="p-3 bg-yellow-100 rounded-full">
+                    <i class="fas fa-hourglass-half text-yellow-600 text-xl"></i>
+                </div>
+                <span class="text-sm font-medium text-gray-500">PENDING</span>
+            </div>
+            <div class="text-2xl font-bold text-gray-800">${{ budget.awaiting_sanctioning|floatformat:2 }}</div>
+            <div class="text-sm text-gray-600 mt-1">Awaiting approval</div>
+        </div>
+
+        <div class="metric-card bg-white rounded-lg p-6 shadow-sm fade-in">
+            <div class="flex items-center justify-between mb-4">
+                <div class="p-3 bg-purple-100 rounded-full">
+                    <i class="fas fa-coins text-purple-600 text-xl"></i>
+                </div>
+                <span class="text-sm font-medium text-gray-500">BALANCE</span>
+            </div>
+            <div class="text-2xl font-bold text-gray-800">${{ budget.balance|floatformat:2 }}</div>
+            <div class="text-sm text-gray-600 mt-1">Remaining balance</div>
+        </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <!-- Budget Breakdown Chart -->
+        <div class="chart-container fade-in">
+            <h3 class="text-lg font-semibold mb-4">Budget Breakdown</h3>
+            <canvas id="budgetChart"></canvas>
+        </div>
+
+        <!-- ACE Status Distribution -->
+        <div class="chart-container fade-in">
+            <h3 class="text-lg font-semibold mb-4">ACE Status Distribution</h3>
+            <canvas id="statusChart"></canvas>
+        </div>
+    </div>
+
+    <!-- Monthly Usage Chart -->
+    <div class="chart-container fade-in mb-8">
+        <h3 class="text-lg font-semibold mb-4">Monthly ACE Usage Trend</h3>
+        <canvas id="usageChart"></canvas>
+    </div>
+
+    <!-- ACE Summary Stats -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div class="bg-white rounded-lg p-6 shadow-sm fade-in">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-500">Total ACEs</p>
+                    <p class="text-2xl font-bold text-gray-800">{{ total_aces }}</p>
+                </div>
+                <div class="p-3 bg-blue-100 rounded-full">
+                    <i class="fas fa-file-alt text-blue-600"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg p-6 shadow-sm fade-in">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-500">Total Used</p>
+                    <p class="text-2xl font-bold text-gray-800">${{ total_used|floatformat:2 }}</p>
+                </div>
+                <div class="p-3 bg-green-100 rounded-full">
+                    <i class="fas fa-chart-line text-green-600"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg p-6 shadow-sm fade-in">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-500">Utilization Rate</p>
+                    <p class="text-2xl font-bold text-gray-800">{{ utilization_rate }}%</p>
+                </div>
+                <div class="p-3 bg-purple-100 rounded-full">
+                    <i class="fas fa-percentage text-purple-600"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg p-6 shadow-sm fade-in">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-500">Avg ACE Amount</p>
+                    <p class="text-2xl font-bold text-gray-800">${{ avg_ace_amount|floatformat:2 }}</p>
+                </div>
+                <div class="p-3 bg-orange-100 rounded-full">
+                    <i class="fas fa-calculator text-orange-600"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ACE Details Table -->
+    <div class="ace-table fade-in">
+        <div class="bg-white p-6 rounded-t-lg border-b">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h3 class="section-title">
+                        <i class="fas fa-table text-blue-600"></i>
+                        ACE Details & Transactions
+                    </h3>
+                    <p class="text-gray-600">All ACE requests associated with this budget</p>
+                </div>
+                <div class="flex items-center gap-4">
+                    <div class="relative">
+                        <input type="text" id="searchInput" placeholder="Search ACEs..." 
+                               class="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+                    </div>
+                    <select id="statusFilter" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        <option value="">All Status</option>
+                        <option value="Approved">Approved</option>
+                        <option value="Pending">Pending</option>
+                        <option value="Rejected">Rejected</option>
+                        <option value="Unknown">Unknown</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        
+        <div class="overflow-x-auto">
+            <table class="w-full" id="aceTable">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sortable" data-sort="ace_id">
+                            ACE ID <i class="fas fa-sort ml-1"></i>
+                        </th>
+                        <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sortable" data-sort="description">
+                            Description <i class="fas fa-sort ml-1"></i>
+                        </th>
+                        <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sortable" data-sort="amount">
+                            Amount <i class="fas fa-sort ml-1"></i>
+                        </th>
+                        <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sortable" data-sort="requester">
+                            Requester <i class="fas fa-sort ml-1"></i>
+                        </th>
+                        <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sortable" data-sort="date">
+                            Date <i class="fas fa-sort ml-1"></i>
+                        </th>
+                        <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider sortable" data-sort="status">
+                            Status <i class="fas fa-sort ml-1"></i>
+                        </th>
+                        <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for ace in aces %}
+                    <tr class="hover:bg-gray-50 transition-colors table-row">
+                        <td class="px-6 py-4 whitespace-nowrap ace-id">
+                            <div class="flex items-center">
+                                <div class="p-2 bg-blue-100 rounded-full mr-3">
+                                    <i class="fas fa-file-alt text-blue-600 text-sm"></i>
+                                </div>
+                                <a href="{% url 'Ace:ace_detail' ace.Ace_id2 %}" class="text-blue-600 hover:text-blue-800 font-medium">
+                                    {{ ace.Ace_id2 }}
+                                </a>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 description">
+                            <div class="text-sm text-gray-900">{{ ace.details_of_expenditure|truncatechars:50 }}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap amount" data-amount="{{ ace.amount }}">
+                            <div class="text-sm font-medium text-gray-900">${{ ace.amount|floatformat:2 }}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap requester">
+                            <div class="flex items-center">
+                                <div class="p-2 bg-gray-100 rounded-full mr-3">
+                                    <i class="fas fa-user text-gray-600 text-sm"></i>
+                                </div>
+                                <div class="text-sm text-gray-900">{{ ace.requested_by.get_full_name }}</div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 date" data-date="{{ ace.date_created|date:'Y-m-d' }}">
+                            {{ ace.date_created|date:"M d, Y" }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap status">
+                            {% if ace.process and ace.process.approval_set.last %}
+                                {% if ace.process.approval_set.last.approved == "Approved" %}
+                                    <span class="status-badge status-approved" data-status="Approved">
+                                        <i class="fas fa-check-circle mr-1"></i>Approved
+                                    </span>
+                                {% elif ace.process.approval_set.last.approved == "Rejected" %}
+                                    <span class="status-badge status-rejected" data-status="Rejected">
+                                        <i class="fas fa-times-circle mr-1"></i>Rejected
+                                    </span>
+                                {% else %}
+                                    <span class="status-badge status-pending" data-status="Pending">
+                                        <i class="fas fa-clock mr-1"></i>Pending
+                                    </span>
+                                {% endif %}
+                            {% else %}
+                                <span class="status-badge status-unknown" data-status="Unknown">
+                                    <i class="fas fa-question-circle mr-1"></i>Unknown
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <div class="flex items-center gap-2">
+                                <a href="{% url 'Ace:ace_detail' ace.Ace_id2 %}" class="text-blue-600 hover:text-blue-800 p-2 rounded-full hover:bg-blue-50" title="View Details">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="#" class="text-green-600 hover:text-green-800 p-2 rounded-full hover:bg-green-50" title="Edit">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <a href="#" class="text-purple-600 hover:text-purple-800 p-2 rounded-full hover:bg-purple-50" title="Download">
+                                    <i class="fas fa-download"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="px-6 py-12 text-center">
+                            <div class="flex flex-col items-center">
+                                <div class="p-4 bg-gray-100 rounded-full mb-4">
+                                    <i class="fas fa-inbox text-gray-400 text-2xl"></i>
+                                </div>
+                                <h3 class="text-lg font-medium text-gray-900 mb-2">No ACEs Found</h3>
+                                <p class="text-gray-500">No ACE requests have been created using this budget yet.</p>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Pagination -->
+        <div class="bg-white px-6 py-3 border-t border-gray-200">
+            <div class="flex items-center justify-between">
+                <div class="text-sm text-gray-700">
+                    Showing <span id="entriesStart">1</span> to <span id="entriesEnd">{{ aces|length }}</span> of <span id="totalEntries">{{ aces|length }}</span> results
+                </div>
+                <div class="flex items-center space-x-2">
+                    <button id="prevPage" class="px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50">
+                        Previous
+                    </button>
+                    <div id="pageNumbers" class="flex space-x-1"></div>
+                    <button id="nextPage" class="px-3 py-1 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50">
+                        Next
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Charts initialization
+    initializeCharts();
+    
+    // Table functionality
+    initializeTableFeatures();
+});
+
+function initializeCharts() {
+    // Budget Breakdown Chart
+    const budgetCtx = document.getElementById('budgetChart').getContext('2d');
+    new Chart(budgetCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Withdrawn', 'Awaiting Sanction', 'Available Balance'],
+            datasets: [{
+                data: [
+                    {{ withdrawn|default:0 }},
+                    {{ awaiting_sanctioning|default:0 }},
+                    {{ balance|default:0 }}
+                ],
+                backgroundColor: [
+                    '#3b82f6',
+                    '#f59e0b',
+                    '#10b981'
+                ],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        usePointStyle: true,
+                        padding: 20
+                    }
+                }
+            }
+        }
+    });
+
+    // ACE Status Distribution Chart
+    const statusCtx = document.getElementById('statusChart').getContext('2d');
+    new Chart(statusCtx, {
+        type: 'pie',
+        data: {
+            labels: ['Approved', 'Pending', 'Rejected', 'Unknown'],
+            datasets: [{
+                data: [
+                    {{ approved_count }},
+                    {{ pending_count }},
+                    {{ rejected_count }},
+                    {{ unknown_count }}
+                ],
+                backgroundColor: [
+                    '#10b981',
+                    '#f59e0b',
+                    '#ef4444',
+                    '#6b7280'
+                ],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        usePointStyle: true,
+                        padding: 20
+                    }
+                }
+            }
+        }
+    });
+
+    // Monthly Usage Trend Chart
+    const usageCtx = document.getElementById('usageChart').getContext('2d');
+    new Chart(usageCtx, {
+        type: 'line',
+        data: {
+            labels: {{ monthly_data.labels|safe }},
+            datasets: [{
+                label: 'Monthly Usage ($)',
+                data: {{ monthly_data.amounts|safe }},
+                borderColor: '#3b82f6',
+                backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                fill: true,
+                tension: 0.4,
+                yAxisID: 'y'
+            }, {
+                label: 'ACE Count',
+                data: {{ monthly_data.counts|safe }},
+                borderColor: '#10b981',
+                backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                fill: false,
+                tension: 0.4,
+                yAxisID: 'y1'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'top',
+                    labels: {
+                        usePointStyle: true,
+                        padding: 20
+                    }
+                }
+            },
+            scales: {
+                y: {
+                    type: 'linear',
+                    display: true,
+                    position: 'left',
+                    beginAtZero: true,
+                    grid: {
+                        color: 'rgba(0, 0, 0, 0.05)'
+                    },
+                    title: {
+                        display: true,
+                        text: 'Amount ($)'
+                    }
+                },
+                y1: {
+                    type: 'linear',
+                    display: true,
+                    position: 'right',
+                    beginAtZero: true,
+                    grid: {
+                        drawOnChartArea: false,
+                    },
+                    title: {
+                        display: true,
+                        text: 'ACE Count'
+                    }
+                },
+                x: {
+                    grid: {
+                        display: false
+                    }
+                }
+            }
+        }
+    });
+}
+
+function initializeTableFeatures() {
+    const searchInput = document.getElementById('searchInput');
+    const statusFilter = document.getElementById('statusFilter');
+    const table = document.getElementById('aceTable');
+    const tbody = table.querySelector('tbody');
+    const rows = Array.from(tbody.querySelectorAll('.table-row'));
+    
+    let filteredRows = rows;
+    let currentPage = 1;
+    const rowsPerPage = 10;
+    
+    // Search functionality
+    searchInput.addEventListener('input', function() {
+        filterAndPaginate();
+    });
+    
+    // Status filter
+    statusFilter.addEventListener('change', function() {
+        filterAndPaginate();
+    });
+    
+    // Sorting functionality
+    document.querySelectorAll('.sortable').forEach(header => {
+        header.addEventListener('click', function() {
+            const sortBy = this.getAttribute('data-sort');
+            const isAsc = this.classList.contains('asc');
+            
+            // Remove all sort classes
+            document.querySelectorAll('.sortable').forEach(h => {
+                h.classList.remove('asc', 'desc');
+                h.querySelector('i').className = 'fas fa-sort ml-1';
+            });
+            
+            // Add sort class to current header
+            this.classList.add(isAsc ? 'desc' : 'asc');
+            this.querySelector('i').className = isAsc ? 'fas fa-sort-down ml-1' : 'fas fa-sort-up ml-1';
+            
+            // Sort rows
+            filteredRows.sort((a, b) => {
+                let aVal, bVal;
+                
+                switch(sortBy) {
+                    case 'ace_id':
+                        aVal = a.querySelector('.ace-id a').textContent;
+                        bVal = b.querySelector('.ace-id a').textContent;
+                        break;
+                    case 'description':
+                        aVal = a.querySelector('.description').textContent;
+                        bVal = b.querySelector('.description').textContent;
+                        break;
+                    case 'amount':
+                        aVal = parseFloat(a.querySelector('.amount').getAttribute('data-amount'));
+                        bVal = parseFloat(b.querySelector('.amount').getAttribute('data-amount'));
+                        break;
+                    case 'requester':
+                        aVal = a.querySelector('.requester .text-sm').textContent;
+                        bVal = b.querySelector('.requester .text-sm').textContent;
+                        break;
+                    case 'date':
+                        aVal = new Date(a.querySelector('.date').getAttribute('data-date'));
+                        bVal = new Date(b.querySelector('.date').getAttribute('data-date'));
+                        break;
+                    case 'status':
+                        aVal = a.querySelector('.status span').getAttribute('data-status');
+                        bVal = b.querySelector('.status span').getAttribute('data-status');
+                        break;
+                }
+                
+                if (typeof aVal === 'string') {
+                    return isAsc ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+                } else {
+                    return isAsc ? aVal - bVal : bVal - aVal;
+                }
+            });
+            
+            displayPage(1);
+        });
+    });
+    
+    // Pagination
+    document.getElementById('prevPage').addEventListener('click', function() {
+        if (currentPage > 1) {
+            currentPage--;
+            displayPage(currentPage);
+        }
+    });
+    
+    document.getElementById('nextPage').addEventListener('click', function() {
+        const totalPages = Math.ceil(filteredRows.length / rowsPerPage);
+        if (currentPage < totalPages) {
+            currentPage++;
+            displayPage(currentPage);
+        }
+    });
+    
+    function filterAndPaginate() {
+        const searchTerm = searchInput.value.toLowerCase();
+        const statusValue = statusFilter.value;
+        
+        filteredRows = rows.filter(row => {
+            const aceId = row.querySelector('.ace-id a').textContent.toLowerCase();
+            const description = row.querySelector('.description').textContent.toLowerCase();
+            const requester = row.querySelector('.requester .text-sm').textContent.toLowerCase();
+            const status = row.querySelector('.status span').getAttribute('data-status');
+            
+            const matchesSearch = aceId.includes(searchTerm) || 
+                                description.includes(searchTerm) || 
+                                requester.includes(searchTerm);
+            
+            const matchesStatus = !statusValue || status === statusValue;
+            
+            return matchesSearch && matchesStatus;
+        });
+        
+        currentPage = 1;
+        displayPage(1);
+    }
+    
+    function displayPage(page) {
+        const start = (page - 1) * rowsPerPage;
+        const end = start + rowsPerPage;
+        const totalPages = Math.ceil(filteredRows.length / rowsPerPage);
+        
+        // Hide all rows
+        rows.forEach(row => row.style.display = 'none');
+        
+        // Show rows for current page
+        filteredRows.slice(start, end).forEach(row => row.style.display = '');
+        
+        // Update pagination info
+        document.getElementById('entriesStart').textContent = filteredRows.length > 0 ? start + 1 : 0;
+        document.getElementById('entriesEnd').textContent = Math.min(end, filteredRows.length);
+        document.getElementById('totalEntries').textContent = filteredRows.length;
+        
+        // Update pagination buttons
+        document.getElementById('prevPage').disabled = page === 1;
+        document.getElementById('nextPage').disabled = page === totalPages;
+        
+        // Update page numbers
+        const pageNumbers = document.getElementById('pageNumbers');
+        pageNumbers.innerHTML = '';
+        
+        for (let i = 1; i <= totalPages; i++) {
+            const button = document.createElement('button');
+            button.textContent = i;
+            button.className = `px-3 py-1 border rounded-md text-sm font-medium ${
+                i === page ? 'bg-blue-500 text-white border-blue-500' : 'border-gray-300 text-gray-700 hover:bg-gray-50'
+            }`;
+            button.addEventListener('click', function() {
+                currentPage = i;
+                displayPage(i);
+            });
+            pageNumbers.appendChild(button);
+        }
+        
+        currentPage = page;
+    }
+    
+    // Initial display
+    displayPage(1);
+}
+</script>
+
 {% endblock %}

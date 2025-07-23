@@ -1,0 +1,132 @@
+# Core Django and Web Framework
+asgiref==3.8.1
+Django==5.1.5
+djangorestframework==3.15.2
+djangorestframework-simplejwt==5.3.0
+
+# Database and Storage
+mysqlclient==2.2.4
+mysql-connector-python==9.1.0
+sqlparse==0.5.1
+
+# Django Extensions and Utilities
+django-appconf==1.0.6
+django-clearcache==1.2.1
+django-cors-headers==4.4.0
+django-filter==24.3
+django-graphql-jwt==0.4.0
+django-ipware==7.0.1
+django-mathfilters==1.0.0
+django-prometheus==2.3.1
+django-select2==8.2.1
+django-widget-tweaks==1.5.0
+sweetify==2.3.1
+
+# GraphQL
+graphene==3.3.0
+graphene-django==3.2.2
+graphene-file-upload==1.3.0
+graphql-core==3.2.5
+graphql-relay==3.2.0
+promise==2.3
+
+# Authentication and Security
+PyJWT==2.8.0
+oauthlib==3.2.2
+requests-oauthlib==2.0.0
+cryptography==43.0.1
+cffi==1.16.0
+pycparser==2.21
+pyspnego==0.10.2
+sspilib==0.1.0
+
+# File Processing and Data Handling
+openpyxl==3.1.5
+pandas==2.2.3
+numpy==2.2.6
+pillow==10.4.0
+PyMuPDF==1.24.9
+pytesseract==0.3.13
+tika==3.1.0
+et-xmlfile==2.0.0
+
+# PDF and Document Generation
+weasyprint==62.3
+pydyf==0.10.0
+pyphen==0.14.0
+tinycss2==1.3.0
+tinyhtml5==2.0.0
+webencodings==0.5.1
+zopfli==0.2.2
+
+# Web Scraping and HTTP
+requests==2.31.0
+requests-ntlm==1.2.0
+urllib3==2.2.2
+certifi==2024.8.30
+charset-normalizer==3.3.2
+idna==3.8
+
+# Microsoft Exchange Integration
+exchangelib==5.4.0
+dnspython==2.6.1
+
+# Search and Indexing
+elasticsearch==8.15.0
+elastic-transport==8.15.0
+
+# Monitoring and Logging
+prometheus-client==0.20.0
+
+# Utilities and Tools
+python-dateutil==2.9.0.post0
+python-decouple==3.8
+python-ipware==3.0.0
+pytz==2024.2
+tzdata==2024.2
+tzlocal==5.2
+typing-extensions==4.12.2
+six==1.16.0
+simplejson==3.19.2
+text-unidecode==1.3
+packaging==24.1
+fonttools==4.53.1
+lxml==5.3.0
+cssselect2==0.7.0
+defusedxml==0.7.1
+cached-property==1.5.2
+isodate==0.6.1
+Brotli==1.1.0
+Pygments==2.18.0
+
+# Additional Django Extensions (from legacy section - keeping unique ones)
+django-annoying==0.10.6
+django-anymail==8.4
+django-bootstrap-modal-forms==3.0.4
+django-celery-beat==2.7.0
+django-celery-results==2.5.1
+django-crispy-forms==2.3
+django-elasticsearch-dsl==8.0
+django-jazzmin==2.6.0
+django-timezone-field==7.1
+django-utils-six==2.0
+django-weasyprint==2.2.0
+
+# Additional Processing Libraries
+beautifulsoup4==4.12.3
+celery==5.4.0
+amqp==5.2.0
+billiard==4.2.1
+click==8.1.7
+colorama==0.4.6
+kombu==5.3.5
+vine==5.1.0
+
+# Additional Utilities
+python-crontab==3.2.0
+python-docx==1.1.2
+python-dotenv==1.0.1
+PyYAML==6.0.1
+tabulate==0.9.0
+redis==5.0.1
+gunicorn==20.1.0

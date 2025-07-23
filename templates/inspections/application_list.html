@@ -1,0 +1,194 @@
+{% extends 'admin_layout.html' %}
+{% load static %}
+
+{% block title %}Client Applications{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-title-box">
+                <div class="page-title-right">
+                    <a href="{% url 'inspections:application_create' %}" class="btn btn-primary">
+                        <i class="mdi mdi-plus"></i> New Application
+                    </a>
+                </div>
+                <h4 class="page-title">Client Applications</h4>
+                <ol class="breadcrumb m-0">
+                    <li class="breadcrumb-item"><a href="{% url 'inspections:dashboard' %}">Inspections</a></li>
+                    <li class="breadcrumb-item active">Applications</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <!-- Search Form -->
+                    <form method="get" class="row g-3 mb-3">
+                        <div class="col-md-3">
+                            {{ form.search_query }}
+                        </div>
+                        <div class="col-md-2">
+                            {{ form.application_type }}
+                        </div>
+                        <div class="col-md-2">
+                            {{ form.status }}
+                        </div>
+                        <div class="col-md-2">
+                            {{ form.date_from }}
+                        </div>
+                        <div class="col-md-2">
+                            {{ form.date_to }}
+                        </div>
+                        <div class="col-md-1">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="mdi mdi-magnify"></i>
+                            </button>
+                            <a href="{% url 'inspections:application_list' %}" class="btn btn-secondary">
+                                <i class="mdi mdi-refresh"></i>
+                            </a>
+                        </div>
+                    </form>
+
+                    <!-- Applications Table -->
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Application #</th>
+                                    <th>Customer</th>
+                                    <th>Type</th>
+                                    <th>Property Address</th>
+                                    <th>Priority</th>
+                                    <th>Status</th>
+                                    <th>Submitted</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for application in applications %}
+                                <tr>
+                                    <td>
+                                        <a href="{% url 'inspections:application_detail' application.pk %}" class="text-decoration-none">
+                                            {{ application.application_number }}
+                                        </a>
+                                    </td>
+                                    <td>
+                                        <strong>{{ application.customer_name }}</strong>
+                                        {% if application.customer_phone %}
+                                            <br><small class="text-muted">{{ application.customer_phone }}</small>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <span class="badge badge-light">{{ application.get_application_type_display }}</span>
+                                    </td>
+                                    <td>
+                                        <small>{{ application.property_address|truncatechars:50 }}</small>
+                                    </td>
+                                    <td>
+                                        <span class="badge badge-{% if application.priority == 'urgent' %}danger{% elif application.priority == 'high' %}warning{% elif application.priority == 'normal' %}info{% else %}secondary{% endif %}">
+                                            {{ application.get_priority_display }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="badge badge-{% if application.status == 'completed' %}success{% elif application.status == 'in_progress' %}info{% elif application.status == 'assigned' %}warning{% elif application.status == 'rejected' %}danger{% else %}secondary{% endif %}">
+                                            {{ application.get_status_display }}
+                                        </span>
+                                    </td>
+                                    <td>{{ application.submission_date|date:"M d, Y" }}</td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm" role="group">
+                                            <a href="{% url 'inspections:application_detail' application.pk %}" class="btn btn-outline-info" title="View Details">
+                                                <i class="mdi mdi-eye"></i>
+                                            </a>
+                                            <a href="{% url 'inspections:application_edit' application.pk %}" class="btn btn-outline-primary" title="Edit">
+                                                <i class="mdi mdi-pencil"></i>
+                                            </a>
+                                            {% if application.status == 'submitted' %}
+                                                <button type="button" class="btn btn-outline-success" title="Assign" onclick="assignApplication('{{ application.pk }}')">
+                                                    <i class="mdi mdi-account-plus"></i>
+                                                </button>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="8" class="text-center py-4">
+                                        <p class="text-muted">No applications found matching your criteria.</p>
+                                        <a href="{% url 'inspections:application_create' %}" class="btn btn-primary">
+                                            Create First Application
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Pagination -->
+                    {% if page_obj.has_other_pages %}
+                        <nav aria-label="Applications pagination">
+                            <ul class="pagination justify-content-center">
+                                {% if page_obj.has_previous %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page=1{% if request.GET.search_query %}&search_query={{ request.GET.search_query }}{% endif %}{% if request.GET.application_type %}&application_type={{ request.GET.application_type }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">First</a>
+                                    </li>
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if request.GET.search_query %}&search_query={{ request.GET.search_query }}{% endif %}{% if request.GET.application_type %}&application_type={{ request.GET.application_type }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">Previous</a>
+                                    </li>
+                                {% endif %}
+
+                                <li class="page-item active">
+                                    <span class="page-link">
+                                        Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                                    </span>
+                                </li>
+
+                                {% if page_obj.has_next %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if request.GET.search_query %}&search_query={{ request.GET.search_query }}{% endif %}{% if request.GET.application_type %}&application_type={{ request.GET.application_type }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">Next</a>
+                                    </li>
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if request.GET.search_query %}&search_query={{ request.GET.search_query }}{% endif %}{% if request.GET.application_type %}&application_type={{ request.GET.application_type }}{% endif %}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">Last</a>
+                                    </li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Assignment Modal -->
+<div class="modal fade" id="assignModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Assign Application</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>This will redirect you to the assignment page.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <a href="{% url 'inspections:assignment_create' %}" class="btn btn-primary">Assign</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function assignApplication(applicationId) {
+    // For now, just redirect to assignment create page
+    // In future, could pre-populate the form with this application
+    window.location.href = "{% url 'inspections:assignment_create' %}";
+}
+</script>
+{% endblock %} 

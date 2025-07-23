@@ -16,19 +16,17 @@
     <div class="grid grid-cols-1">
       <div class="bg-gulf-blue-100 shadow-lg rounded-lg p-6">
         <h3 class="text-center  mb-4">Nonconformities</h3>
-        <div class="grid grid-cols-6 container text-center">
+        <div class="grid grid-cols-5 container text-center">
           <a href="{% url 'nonconformity:create_nonconformity' %}"
-             class="bg-green-400 hover:bg-green-300 inline-block border-blue-300 border-2 rounded-full mx-3 text-white py-2 px-4 rounded">Create New</a>
+             class="bg-green-400 hover:bg-green-300 inline-block rounded-full mx-3 text-white py-2 px-4 rounded">Create New</a>
           <a href="{% url 'nonconformity:checklist' %}"
-             class="bg-indigo-400 hover:bg-indigo-300 inline-block border-blue-300 border-2 rounded-full mx-3 text-white py-2 px-4 rounded">Create from checklist</a>
+             class="bg-indigo-400 hover:bg-indigo-300 inline-block rounded-full mx-3 text-white py-2 px-4 rounded">Create from checklist</a>
           <a href="{% url 'nonconformity:i_created' %}"
-             class="bg-yellow-400 hover:bg-yellow-300 inline-block border-blue-300 border-2 rounded-full mx-3 text-white py-2 px-4 rounded">I created</a>
+             class="bg-yellow-400 hover:bg-yellow-300 inline-block rounded-full mx-3 text-white py-2 px-4 rounded">I created</a>
           <a href="{% url 'nonconformity:assigned_to_me' %}"
-             class="bg-red-400 hover:bg-red-300 inline-block border-blue-300 border-2 rounded-full mx-3 text-white py-2 px-4 rounded">For Me</a>
-             <a href="{% url 'nonconformity:nonconformities' %}"
-             class="bg-purple-400 hover:bg-purple-300 inline-block rounded-full border-blue-300 border-2 mx-3 text-white py-2 px-4 rounded">All Nonconformities</a>
-             <a href="{% url 'nonconformity:nonconformity_reports' %}"
-             class="bg-white hover:bg-gray-100 inline-block rounded-full  border-blue-300 border-2 mx-3  py-2 px-4 rounded"> Repots</a>
+             class="bg-red-400 hover:bg-red-300 inline-block rounded-full mx-3 text-white py-2 px-4 rounded">For Me</a>
+          <a href="{% url 'nonconformity:nonconformities' %}"
+             class="bg-purple-400 hover:bg-purple-300 inline-block rounded-full mx-3 text-white py-2 px-4 rounded">All Nonconformities</a>
         </div>
         <br> <table id="nonconformity" class="table table-striped stripe table-bordered">
           <thead>

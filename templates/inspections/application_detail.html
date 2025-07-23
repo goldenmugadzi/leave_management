@@ -1,0 +1,388 @@
+{% extends 'admin_layout.html' %}
+{% load static %}
+
+{% block title %}Application {{ application.application_number }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-title-box">
+                <div class="page-title-right">
+                    <div class="btn-group" role="group">
+                        <a href="{% url 'inspections:application_edit' application.pk %}" class="btn btn-primary">
+                            <i class="mdi mdi-pencil"></i> Edit
+                        </a>
+                        <a href="{% url 'inspections:application_list' %}" class="btn btn-secondary">
+                            <i class="mdi mdi-arrow-left"></i> Back to List
+                        </a>
+                    </div>
+                </div>
+                <h4 class="page-title">Application {{ application.application_number }}</h4>
+                <ol class="breadcrumb m-0">
+                    <li class="breadcrumb-item"><a href="{% url 'inspections:dashboard' %}">Inspections</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'inspections:application_list' %}">Applications</a></li>
+                    <li class="breadcrumb-item active">{{ application.application_number }}</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Application Details -->
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-body">
+                    <!-- Status Header -->
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h4 class="header-title">Application Details</h4>
+                        <div>
+                            <span class="badge badge-{% if application.status == 'completed' %}success{% elif application.status == 'in_progress' %}info{% elif application.status == 'assigned' %}warning{% elif application.status == 'rejected' %}danger{% else %}secondary{% endif %} badge-lg">
+                                {{ application.get_status_display }}
+                            </span>
+                            <span class="badge badge-{% if application.priority == 'urgent' %}danger{% elif application.priority == 'high' %}warning{% elif application.priority == 'normal' %}info{% else %}secondary{% endif %} ms-1">
+                                {{ application.get_priority_display }} Priority
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Application Information -->
+                    <div class="row">
+                        <div class="col-md-6">
+                            <table class="table table-sm table-borderless">
+                                <tr>
+                                    <td class="fw-bold">Application Number:</td>
+                                    <td>{{ application.application_number }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">Application Type:</td>
+                                    <td>{{ application.get_application_type_display }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">Submission Date:</td>
+                                    <td>{{ application.submission_date|date:"F d, Y g:i A" }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">Submitted By:</td>
+                                    <td>
+                                        {% if application.submitted_by %}
+                                            {{ application.submitted_by.get_full_name|default:application.submitted_by.username }}
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <table class="table table-sm table-borderless">
+                                <tr>
+                                    <td class="fw-bold">Service Number:</td>
+                                    <td>{{ application.service_number|default:"-" }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">Property Type:</td>
+                                    <td>{{ application.get_property_type_display|default:"-" }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">Documents Attached:</td>
+                                    <td>
+                                        {% if application.documents_attached %}
+                                            <span class="badge badge-success">Yes</span>
+                                        {% else %}
+                                            <span class="badge badge-secondary">No</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">Last Updated:</td>
+                                    <td>{{ application.updated_at|date:"F d, Y g:i A" }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Customer Information -->
+                    <h5 class="mb-3 text-uppercase bg-light p-2">
+                        <i class="mdi mdi-account me-1"></i> Customer Information
+                    </h5>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <table class="table table-sm table-borderless">
+                                <tr>
+                                    <td class="fw-bold">Name:</td>
+                                    <td>{{ application.customer_name }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">Phone:</td>
+                                    <td>{{ application.customer_phone|default:"-" }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-bold">Email:</td>
+                                    <td>{{ application.customer_email|default:"-" }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <table class="table table-sm table-borderless">
+                                <tr>
+                                    <td class="fw-bold">Address:</td>
+                                    <td>{{ application.customer_address|default:"-" }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Property Information -->
+                    <h5 class="mb-3 text-uppercase bg-light p-2">
+                        <i class="mdi mdi-home me-1"></i> Property Information
+                    </h5>
+                    <div class="mb-3">
+                        <strong>Property Address:</strong><br>
+                        {{ application.property_address }}
+                    </div>
+
+                    <!-- Installation Details -->
+                    {% if application.installation_description or application.contractor_name %}
+                    <h5 class="mb-3 text-uppercase bg-light p-2">
+                        <i class="mdi mdi-wrench me-1"></i> Installation Details
+                    </h5>
+                    {% if application.installation_description %}
+                    <div class="mb-3">
+                        <strong>Installation Description:</strong><br>
+                        {{ application.installation_description }}
+                    </div>
+                    {% endif %}
+                    
+                    {% if application.contractor_name %}
+                    <div class="row">
+                        <div class="col-md-6">
+                            <strong>Contractor:</strong> {{ application.contractor_name }}
+                        </div>
+                        <div class="col-md-6">
+                            <strong>License:</strong> {{ application.contractor_license|default:"-" }}
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% endif %}
+
+                    <!-- Additional Notes -->
+                    {% if application.notes %}
+                    <h5 class="mb-3 text-uppercase bg-light p-2">
+                        <i class="mdi mdi-note-text me-1"></i> Additional Notes
+                    </h5>
+                    <div class="mb-3">
+                        {{ application.notes }}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar - Quick Actions and Timeline -->
+        <div class="col-lg-4">
+            <!-- Quick Actions -->
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="header-title mb-3">Quick Actions</h5>
+                    <div class="d-grid gap-2">
+                        {% if application.status == 'submitted' %}
+                            <a href="{% url 'inspections:assignment_create' %}" class="btn btn-warning">
+                                <i class="mdi mdi-account-plus"></i> Assign to Field Officer
+                            </a>
+                        {% endif %}
+                        
+                        {% if application.status in 'assigned,in_progress' %}
+                            <a href="{% url 'inspections:inspection_create' %}" class="btn btn-info">
+                                <i class="mdi mdi-clipboard-check"></i> Create Inspection Report
+                            </a>
+                        {% endif %}
+                        
+                        <a href="{% url 'inspections:application_edit' application.pk %}" class="btn btn-primary">
+                            <i class="mdi mdi-pencil"></i> Edit Application
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Application Timeline -->
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="header-title mb-3">Timeline</h5>
+                    <div class="timeline-alt">
+                        <div class="timeline-item">
+                            <i class="mdi mdi-file-document bg-info text-white timeline-icon"></i>
+                            <div class="timeline-item-info">
+                                <h6 class="my-0">Application Submitted</h6>
+                                <small class="text-muted">{{ application.submission_date|date:"M d, Y g:i A" }}</small>
+                                {% if application.submitted_by %}
+                                    <p class="text-muted mb-0">by {{ application.submitted_by.get_full_name|default:application.submitted_by.username }}</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        {% for assignment in assignments %}
+                        <div class="timeline-item">
+                            <i class="mdi mdi-account-arrow-right bg-warning text-white timeline-icon"></i>
+                            <div class="timeline-item-info">
+                                <h6 class="my-0">Assigned to {{ assignment.assigned_to.get_full_name|default:assignment.assigned_to.username }}</h6>
+                                <small class="text-muted">{{ assignment.assignment_date|date:"M d, Y g:i A" }}</small>
+                                {% if assignment.assignment_notes %}
+                                    <p class="text-muted mb-0">{{ assignment.assignment_notes }}</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        {% if assignment.accepted_date %}
+                        <div class="timeline-item">
+                            <i class="mdi mdi-check bg-success text-white timeline-icon"></i>
+                            <div class="timeline-item-info">
+                                <h6 class="my-0">Assignment Accepted</h6>
+                                <small class="text-muted">{{ assignment.accepted_date|date:"M d, Y g:i A" }}</small>
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        {% if assignment.completed_date %}
+                        <div class="timeline-item">
+                            <i class="mdi mdi-check-circle bg-success text-white timeline-icon"></i>
+                            <div class="timeline-item-info">
+                                <h6 class="my-0">Assignment Completed</h6>
+                                <small class="text-muted">{{ assignment.completed_date|date:"M d, Y g:i A" }}</small>
+                                {% if assignment.completion_notes %}
+                                    <p class="text-muted mb-0">{{ assignment.completion_notes }}</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Assignments and Inspection Reports -->
+    <div class="row">
+        <!-- Assignments -->
+        {% if assignments %}
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="header-title mb-3">Assignments</h5>
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Assigned To</th>
+                                    <th>Status</th>
+                                    <th>Date</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for assignment in assignments %}
+                                <tr>
+                                    <td>{{ assignment.assigned_to.get_full_name|default:assignment.assigned_to.username }}</td>
+                                    <td>
+                                        <span class="badge badge-{% if assignment.status == 'completed' %}success{% elif assignment.status == 'in_progress' %}info{% elif assignment.status == 'accepted' %}primary{% else %}warning{% endif %}">
+                                            {{ assignment.get_status_display }}
+                                        </span>
+                                    </td>
+                                    <td>{{ assignment.assignment_date|date:"M d, Y" }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Inspection Reports -->
+        {% if inspection_reports %}
+        <div class="col-lg-{% if assignments %}6{% else %}12{% endif %}">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="header-title mb-3">Inspection Reports</h5>
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Inspector</th>
+                                    <th>Date</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for report in inspection_reports %}
+                                <tr>
+                                    <td>{{ report.inspector.get_full_name|default:report.inspector.username }}</td>
+                                    <td>{{ report.inspection_date|date:"M d, Y"|default:"-" }}</td>
+                                    <td>
+                                        <span class="badge badge-{% if report.status == 'pass' %}success{% elif report.status == 'fail' %}danger{% else %}warning{% endif %}">
+                                            {{ report.get_status_display }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <a href="{% url 'inspections:inspection_detail' report.pk %}" class="btn btn-sm btn-outline-info">
+                                            <i class="mdi mdi-eye"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+.timeline-alt {
+    position: relative;
+    padding-left: 30px;
+}
+
+.timeline-alt:before {
+    content: '';
+    position: absolute;
+    left: 12px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: #dee2e6;
+}
+
+.timeline-item {
+    position: relative;
+    margin-bottom: 20px;
+}
+
+.timeline-icon {
+    position: absolute;
+    left: -18px;
+    top: 2px;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+}
+
+.timeline-item-info {
+    margin-left: 15px;
+}
+
+.badge-lg {
+    font-size: 0.9em;
+    padding: 0.5em 0.75em;
+}
+</style>
+{% endblock %} 

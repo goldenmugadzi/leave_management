@@ -11,7 +11,6 @@ urlpatterns = [
     path('show_combined_assets/', views.show_combined_assets, name= "show_combined_assets"),
     path('table_asset/', views.show_asset, name="table_asset"),
     path('tab/', views.tab,name="tab"),
-    path('asset_datatable/', views.show_asset_datatable),
     path('report_datatable/', views.show_report_datatable),
     path('export_csv/', views.export_csv, name='export_csv'),
     path('upload_asset/', views.upload_asset, name='upload_asset'),
@@ -30,6 +29,7 @@ urlpatterns = [
 
     #url for asset state chart data
     path('asset_state_chart_data/', views.asset_state_chart_data, name='asset_state_chart_data'),
+    path('download_asset_template/', views.download_asset_template, name='download_asset_template'),
 
 ]
 

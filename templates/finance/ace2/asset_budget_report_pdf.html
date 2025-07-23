@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Asset Budget Report - {{ budget.budget_name }}</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            color: #333;
+            background: #fff;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #366092;
+            padding-bottom: 20px;
+        }
+        
+        .header h1 {
+            color: #366092;
+            margin: 0;
+            font-size: 24px;
+        }
+        
+        .header p {
+            color: #666;
+            margin: 5px 0;
+        }
+        
+        .budget-summary {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+        
+        .budget-summary h2 {
+            color: #366092;
+            margin-top: 0;
+            margin-bottom: 20px;
+            font-size: 18px;
+        }
+        
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+        
+        .summary-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            background: white;
+            border-radius: 5px;
+            border-left: 4px solid #366092;
+        }
+        
+        .summary-item strong {
+            color: #366092;
+        }
+        
+        .utilization-bar {
+            width: 100%;
+            height: 20px;
+            background: #e9ecef;
+            border-radius: 10px;
+            margin-top: 10px;
+            overflow: hidden;
+        }
+        
+        .utilization-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #366092, #4a90e2);
+            width: {{ utilization_rate }}%;
+            transition: width 0.3s ease;
+        }
+        
+        .section-title {
+            color: #366092;
+            font-size: 18px;
+            margin: 30px 0 15px 0;
+            border-bottom: 1px solid #dee2e6;
+            padding-bottom: 10px;
+        }
+        
+        .ace-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        
+        .ace-table th {
+            background: #366092;
+            color: white;
+            padding: 12px 8px;
+            text-align: left;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .ace-table td {
+            padding: 10px 8px;
+            border-bottom: 1px solid #dee2e6;
+            font-size: 11px;
+        }
+        
+        .ace-table tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+        
+        .status-approved {
+            background: #d4edda;
+            color: #155724;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 600;
+        }
+        
+        .status-pending {
+            background: #fff3cd;
+            color: #856404;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 600;
+        }
+        
+        .status-rejected {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 600;
+        }
+        
+        .footer {
+            margin-top: 30px;
+            text-align: center;
+            font-size: 10px;
+            color: #666;
+            border-top: 1px solid #dee2e6;
+            padding-top: 15px;
+        }
+        
+        @page {
+            size: A4;
+            margin: 1in;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Asset Budget Report</h1>
+        <p><strong>{{ budget.budget_name }}</strong></p>
+        <p>{{ budget.region }} | {{ budget.period }} | Generated: {% now "F j, Y" %}</p>
+    </div>
+    
+    <div class="budget-summary">
+        <h2>Budget Summary</h2>
+        <div class="summary-grid">
+            <div class="summary-item">
+                <span>Total Allocated:</span>
+                <strong>${{ budget.allocated|floatformat:2 }}</strong>
+            </div>
+            <div class="summary-item">
+                <span>Amount Withdrawn:</span>
+                <strong>${{ budget.withdrawn|floatformat:2 }}</strong>
+            </div>
+            <div class="summary-item">
+                <span>Awaiting Sanctioning:</span>
+                <strong>${{ budget.awaiting_sanctioning|floatformat:2 }}</strong>
+            </div>
+            <div class="summary-item">
+                <span>Available Balance:</span>
+                <strong>${{ budget.balance|floatformat:2 }}</strong>
+            </div>
+        </div>
+        
+        <div style="margin-top: 20px;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                <span>Budget Utilization:</span>
+                <span><strong>{{ utilization_rate }}%</strong></span>
+            </div>
+            <div class="utilization-bar">
+                <div class="utilization-fill"></div>
+            </div>
+        </div>
+        
+        <div class="summary-grid" style="margin-top: 20px;">
+            <div class="summary-item">
+                <span>Total ACEs:</span>
+                <strong>{{ aces|length }}</strong>
+            </div>
+            <div class="summary-item">
+                <span>Total Used by ACEs:</span>
+                <strong>${{ total_used|floatformat:2 }}</strong>
+            </div>
+        </div>
+    </div>
+    
+    <h2 class="section-title">ACE Transactions</h2>
+    
+    <table class="ace-table">
+        <thead>
+            <tr>
+                <th>ACE ID</th>
+                <th>Description</th>
+                <th>Amount</th>
+                <th>Requested By</th>
+                <th>Date Created</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for ace in aces %}
+            <tr>
+                <td>{{ ace.Ace_id2 }}</td>
+                <td>{{ ace.details_of_expenditure|truncatechars:40 }}</td>
+                <td>${{ ace.amount|floatformat:2 }}</td>
+                <td>{{ ace.requested_by.get_full_name }}</td>
+                <td>{{ ace.date_created|date:"M d, Y" }}</td>
+                <td>
+                    {% if ace.process and ace.process.approval_set.last %}
+                        {% if ace.process.approval_set.last.approved == "Approved" %}
+                            <span class="status-approved">APPROVED</span>
+                        {% elif ace.process.approval_set.last.approved == "Rejected" %}
+                            <span class="status-rejected">REJECTED</span>
+                        {% else %}
+                            <span class="status-pending">PENDING</span>
+                        {% endif %}
+                    {% else %}
+                        <span class="status-pending">PENDING</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="6" style="text-align: center; padding: 20px; color: #666;">
+                    No ACE transactions found for this budget.
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    
+    <div class="footer">
+        <p>Generated by Business Excellence System | ZETDC</p>
+        <p>Report Date: {% now "F j, Y \a\t g:i A" %}</p>
+    </div>
+</body>
+</html>

@@ -1,83 +1,64 @@
+from django.views.generic import View
 from django.shortcuts import render, redirect
-from .models import SafetyMonthlyReport
-from .forms import SafetyMonthlyReportForm  # You need to create this form
-from django.contrib import messages
-from django.http import JsonResponse
-from django.db.models import Q
+from django.forms import modelform_factory, inlineformset_factory
+from django import forms
+from django.contrib.auth.mixins import LoginRequiredMixin
+from .models import ControllersInstructionForm, Instruction
 
-def safety_table(request):
-    reports = SafetyMonthlyReport.objects.all().order_by('-year', '-month')
-    return render(request, 'safety/safety_table.html', {'reports': reports})
+ControllersInstructionFormForm = modelform_factory(ControllersInstructionForm, exclude=["received_by", "issued_by", "issued_at"])
 
-def safety_report_create(request):
-    if request.method == 'POST':
-        form = SafetyMonthlyReportForm(request.POST)
-        if form.is_valid():
-            form.save()
-            messages.success(request, "Safety report submitted successfully.")
-            return redirect('safety_table')
-    else:
-        form = SafetyMonthlyReportForm()
-    return render(request, 'safety/report_form.html', {'form': form})
-
-def safety_report_data(request):
-    draw = int(request.GET.get('draw', 1))
-    start = int(request.GET.get('start', 0))
-    length = int(request.GET.get('length', 10))
-    search_value = request.GET.get('search[value]', '')
-    department_filter = request.GET.get('department', '')
-
-    qs = SafetyMonthlyReport.objects.all()
-
-    # Filtering by search
-    if search_value:
-        qs = qs.filter(
-            Q(user__first_name__icontains=search_value) |
-            Q(user__last_name__icontains=search_value) |
-            Q(department__section__icontains=search_value)
+class ControllersInstructionFormCreateView(LoginRequiredMixin, View):
+    template_name = 'safety/instruction_form.html'
+    def get(self, request):
+        extra_forms = int(request.GET.get('extra', 1))
+        InstructionFormSet = inlineformset_factory(
+            ControllersInstructionForm, Instruction,
+            fields=['instruction',],
+            extra=extra_forms, can_delete=False
         )
-
-    # Filtering by department
-    if department_filter:
-        qs = qs.filter(department__section__icontains=department_filter)
-
-    total = qs.count()
-
-    # Pagination
-    qs = qs.order_by('-id')[start:start+length]
-
-    data = []
-    for report in qs:
-        data.append({
-            "id": report.id,
-            "user": str(report.user) if report.user else "",
-            "department": str(report.department) if report.department else "",
-            "regions": str(report.regions) if report.regions else "",
-            "date": report.date.strftime('%Y-%m-%d') if report.date else "",
-            "month": report.month,
-            "year": report.year,
-            "work_related_accidents": report.work_related_accidents,
-            "disabling_accidents": report.disabling_accidents,
-            "fatal_accidents": report.fatal_accidents,
-            "man_hours_lost": report.man_hours_lost,
-            "accident_free_days": report.accident_free_days,
-            "motor_vehicle_accidents": report.motor_vehicle_accidents,
-            "property_damaged": report.property_damaged,
-            "number_of_workers": report.number_of_workers,
-            "number_of_days": report.number_of_days,
-            "accident_frequency_rate": report.accident_frequency_rate,
-            "injury_severity_rate": report.injury_severity_rate,
-            "ytd_work_related_accidents": report.ytd_work_related_accidents,
-            "ytd_disabling_accidents": report.ytd_disabling_accidents,
-            "ytd_fatal_accidents": report.ytd_fatal_accidents,
-            "ytd_man_hours_lost": report.ytd_man_hours_lost,
-            "ytd_motor_vehicle_accidents": report.ytd_motor_vehicle_accidents,
-            "ytd_property_damaged": report.ytd_property_damaged,
-        })
-
-    return JsonResponse({
-        "draw": draw,
-        "recordsTotal": total,
-        "recordsFiltered": total,
-        "data": data
-    })
+        form = ControllersInstructionFormForm()
+        formset = InstructionFormSet()
+        # Add CSS classes to form fields
+        for name, field in form.fields.items():
+            field.widget.attrs.update({'class': "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6",})
+            if name in ['district_station', 'issued_by', 'received_by']:
+                field.widget.attrs.update({'class': "select2"})
+        for f in formset.forms:
+            for field in f.fields.values():
+               field.widget.attrs.update({'class': "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6",})
+               if isinstance(field.widget, forms.Textarea):
+                  field.widget.attrs.update({'rows': '3'})
+        
+        return render(request, self.template_name, {'form': form, 'formset': formset, 'extra': extra_forms})
+    def post(self, request):
+        extra_forms = int(request.GET.get('extra', 1))
+        InstructionFormSet = inlineformset_factory(
+            ControllersInstructionForm, Instruction,
+            fields=['instruction', 'received', 'completed'],
+            extra=extra_forms, can_delete=False
+        )
+        form = ControllersInstructionFormForm(request.POST)
+        formset = InstructionFormSet(request.POST)
+        # Add CSS classes to form fields
+        for field in form.fields.values():
+            field.widget.attrs.update({'class': "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6",})
+        for f in formset.forms:
+            for field in f.fields.values():
+               field.widget.attrs.update({'class': "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6",})
+               if isinstance(field.widget, forms.Textarea):
+                  field.widget.attrs.update({'rows': '3'})
+        if form.is_valid() and formset.is_valid():
+            instruction_form = form.save(commit=False)
+            instruction_form.issued_by = request.user 
+            instruction_form.save() 
+            formset.instance = instruction_form
+            formset.save()
+            return redirect('instruction-form-list')  # Change as needed
+        return render(request, self.template_name, {'form': form, 'formset': formset, 'extra': extra_forms})
+    
+class ControllersInstructionFormListView(LoginRequiredMixin, View):
+    template_name = 'safety/instruction_form_list.html'
+    
+    def get(self, request):
+        forms = ControllersInstructionForm.objects.all().order_by('-issued_at')
+        return render(request, self.template_name, {'cinstructions': forms})

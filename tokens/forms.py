@@ -1,6 +1,6 @@
 from django import forms
 from django.utils import timezone
-from .models import Meter, Customer,CostCenter, Token, REIMBURSEMENT, CLEARCREDIT, TAMPERTOKEN, OldToken, FaultMeter, RecoveredMeter, FaultMaintanance, Reconnection, Attachment
+from .models import Meter, Customer,CostCenter, Token, REIMBURSEMENT, CLEARCREDIT, TAMPERTOKEN, OldToken, FaultMeter, RecoveredMeter, FaultMaintanance, Reconnection
 
 class MeterForm(forms.ModelForm):
     class Meta:
@@ -47,19 +47,11 @@ class GenerateTokenForm(forms.ModelForm):
         if not token_photo:
             raise forms.ValidationError('A token photo is required.')
         return token_photo
-class AttachmentForm(forms.ModelForm):
-    class Meta:
-        model = Attachment
-        fields = ['file']
 class TokenForm(forms.ModelForm):
-    # attachments = forms.FileField(widget=forms.ClearableFileInput(attrs={'multiple': True}),required=False)
-    additional_attachments = forms.FileField(
-        required=False,
-    )
     class Meta:
         model = Token
         fields = "__all__"
-        exclude = [ 'meter', 'customer','token_photo' , 'created_by', 'created_at', 'process',]
+        exclude = [ 'meter', 'customer','token_photo' , 'created_by','region', 'created_at', 'process',]
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         for field_name, field in self.fields.items():
@@ -67,7 +59,6 @@ class TokenForm(forms.ModelForm):
             if isinstance(field.widget, forms.Textarea):field.widget.attrs.update({'rows': '3'})
             if field_name == 'cost_center':
                 field.widget.attrs.update({'class': "select2 block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6",})
-
 class TokenFilterForm(forms.Form):
     start_date = forms.DateField(
         required=False,
@@ -120,7 +111,8 @@ class TokenFilterForm(forms.Form):
         if start_date and end_date and start_date > end_date:
             raise forms.ValidationError("Start date cannot be after end date.")
         
-        return cleaned_data 
+        return cleaned_data
+    
     
 
 class ReimbursementForm(forms.ModelForm):

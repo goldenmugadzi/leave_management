@@ -53,7 +53,7 @@
         <tbody>
             {% for ace in context %}
             <tr class="h-1">
-                <td><a class="text-blue-500" href="/ace/transactions_for_budget/{{ace.budget_id}}">{{ ace.budget_id|default_if_none:'' }}</a></td>
+                <td><a class="text-blue-500" href="/ace/transactions/{{ace.budget_id}}">{{ ace.budget_id|default_if_none:'' }}</a></td>
                 <td>{{ ace.section_code }}</td>
                 <td>{{ ace.section}}</td>
                 <td>{{ ace.budget_name }}</td>

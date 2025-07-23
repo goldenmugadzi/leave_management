@@ -1,0 +1,103 @@
+{% extends 'admin_layout.html' %}
+
+{% block styles %}
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css"/>
+  <style>
+    .dataTables_wrapper .dataTables_length select { width: 4rem; }
+    .tab-button {
+      padding: 0.5rem 1rem;
+      border: 2px solid transparent;
+      border-radius: 0.375rem;
+      cursor: pointer;
+      transition: background-color 0.3s, color 0.3s;
+      text-align: center;
+    }
+    .tab-button.active {
+      background-color: #1d4ed8;
+      color: white;
+      border-color: #1d4ed8;
+    }
+    .tab-button:hover {
+      background-color: #2563eb;
+      color: white;
+    }
+  </style>
+{% endblock styles %}
+
+{% block content %}
+<div class="content-wrapper">
+  <div class="bg-white shadow rounded px-4 py-4">
+    <h2 class="text-lg font-bold mb-4">View Accident Reports</h2>
+    <table id="accidentReportsTable" class="display w-full">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Employee</th>
+          <th>Department</th>
+          <th>Region</th>
+          <th>Date</th>
+          <th>Time</th>
+          <th>Cost Center</th>
+          <th>EC Number</th>
+          <th>Type of Accident</th>
+          <th>Nature of Accident</th>
+          <th>Nature of Injury</th>
+          <th>Circumstance</th>
+          <th>Location</th>
+          <th>Pretask Risk Assessment</th>
+          <th>Protective Devices</th>
+          <th>Photographs</th>
+          <th>Short Term Steps</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script>
+$(document).ready(function() {
+    $('#accidentReportsTable').DataTable({
+        processing: true,
+        serverSide: true,
+        ajax: {
+            url: "{% url 'accident_reports_datatable' %}",
+            type: "GET"
+        },
+        columns: [
+            { data: "id" },
+            { data: "employee_involved" },
+            { data: "department" },
+            { data: "regions" },
+            { data: "date" },
+            { data: "time" },
+            { data: "cost_center" },
+            { data: "ec_number" },
+            { data: "type_of_accident" },
+            { data: "nature_of_accident" },
+            { data: "nature_of_injury" },
+            { data: "circumstance_leading_to_accident" },
+            { data: "location_of_accident_giving_line_and_section_number" },
+            { 
+                data: "attach_pretask_risk_assessment",
+                render: function(data) {
+                    return data ? `<a href="${data}" target="_blank">Download</a>` : "";
+                }
+            },
+            { data: "operation_of_protective_devices" },
+            { 
+                data: "attach_photographs",
+                render: function(data) {
+                    return data ? `<a href="${data}" target="_blank">View</a>` : "";
+                }
+            },
+            { data: "steps_taken_on_the_short_term" }
+        ]
+    });
+});
+</script>
+{% endblock scripts %}

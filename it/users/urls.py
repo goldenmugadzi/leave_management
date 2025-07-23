@@ -1,5 +1,4 @@
 from django.urls import path
-
 from . import views
 
 urlpatterns = [
@@ -31,4 +30,9 @@ urlpatterns = [
     path('set_requesters', views.set_requesters, name='set_requesters'),
     path('deactivate_user', views.deactivate_user, name='deactivate_user'),
     path('activate_user', views.activate_user, name='activate_user'),
+    
+    # User reports URLs
+    path('user-reports', views.user_reports, name='user_reports'),
+    path('api/user-reports', views.user_reports_api, name='user_reports_api'),
+    path('export-users-csv', views.export_users_csv, name='export_users_csv'),
 ]

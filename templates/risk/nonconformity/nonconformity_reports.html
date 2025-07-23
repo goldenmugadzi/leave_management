@@ -86,52 +86,45 @@
     });
     const ctx = document.getElementById('nonconformityChart').getContext('2d');
     const nonconformityChart = new Chart(ctx, {
-      type: 'bar',
+      type: 'line',
       data: {
         labels: {{ dates|safe }},  // Dates for the x-axis
         datasets: [
           {
             label: 'Total Nonconformities Created',
             data: {{ created|safe }},
-            backgroundColor: 'rgba(16, 31, 15, 0.6)', // Added opacity for better visualization
             borderColor: 'rgb(16, 31, 15)',
-            fill: true,
-          },
-          {
+            fill: false,
+          }
+          ,{
             label: 'New Nonconformities',
-            data: {{ new|safe }},
-            backgroundColor: 'rgba(0, 0, 255, 0.6)',
-            borderColor: 'rgb(0, 0, 255)',
-            fill: true,
+            data: {{ closed|safe }},
+            borderColor: 'rgb( 0, 0, 255)',
+            fill: false,
           },
           {
             label: 'Nonconformities Accepted',
             data: {{ accepted|safe }},
-            backgroundColor: 'rgba(222, 226, 4, 0.6)',
             borderColor: 'rgb(222, 226, 4)',
-            fill: true,
+            fill: false,
           },
           {
-            label: 'Rejected Nonconformities',
+            label: 'Rejected Nonconformities ',
             data: {{ rejected|safe }},
-            backgroundColor: 'rgba(255, 0, 0, 0.6)',
             borderColor: 'rgb(255, 0, 0)',
-            fill: true,
-          },
-          {
-            label: 'Nonconformities Resolved',
+            fill: false,
+          },{
+            label: ' Nonconformities Resolved',
             data: {{ resolved|safe }},
-            backgroundColor: 'rgba(99, 219, 255, 0.6)',
             borderColor: 'rgb(99, 219, 255)',
-            fill: true,
-          },
-          {
-            label: 'Nonconformities Closed',
+            fill: false,
+          },{
+            label: ' Nonconformities Closed',
             data: {{ closed|safe }},
-            backgroundColor: 'rgba(0, 255, 0, 0.6)',
-            borderColor: 'rgb(0, 255, 0)',
-            fill: true,
+            borderColor: 'rgb(0,255, 0)',
+            fill: false,
           }
+    
         ]
       },
       options: {
@@ -148,12 +141,13 @@
             display: true,
             title: {
               display: true,
-              text: 'Number of Nonconformities'
+              text: 'Number of Tokens'
             }
           }
         }
       }
     });
+    
   });
 
 </script>

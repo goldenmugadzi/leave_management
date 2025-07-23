@@ -49,8 +49,15 @@ def checklist_roles(view_func):
 
 def allowed_roles(allowed_roles, app_names):
     def decorator(view_func):
-        @user_passes_test(lambda user: user.roles.filter(Q(name__in=allowed_roles) and Q(app_id__name__in=app_names)).exists())
-        def wrapper(request, *args, **kwargs):
+        @wraps(view_func)
+        def _wrapped_view(request, *args, **kwargs):
+            # Check if the user has the required roles and app permissions
+            if not request.user.roles.filter(
+                Q(name__in=allowed_roles) & Q(app_id__name__in=app_names)
+            ).exists():
+                messages.error(request, 'You are not authorised to access this page. Please contact the administrator for assistance.')
+                return redirect('/')  # Redirect to home or a specific page
+
             return view_func(request, *args, **kwargs)
-        return wrapper
+        return _wrapped_view
     return decorator

@@ -32,39 +32,7 @@
         {% for token in tokens %}
             <!-- Display token details -->
         {% endfor %}  </div>
-        {% comment %} <form id="search-form" class="  grid grid-cols-5 my -2 " method="post">
-          {% csrf_token %}
-          <input type="text"
-                 id="customer"
-                 class="border  border-gray-300 mx-2 py-1 border-1 rounded"
-                 name="customer"
-                 placeholder="customer">
-          <input type="text"
-                 id="id"
-                 class="border  border-gray-300 mx-2 py-1 border-1 rounded"
-                 name="id"
-                 placeholder="id">
-          <input type="text"
-                 id="search-input"
-                 class="border border-gray-300 mx-2 py-1 border-1 rounded"
-                 name="search_term"
-                 placeholder="Extra filtering keywords here ...">
-          <input type="text"
-                 id="meter_number"
-                 class="border  border-gray-300 mx-2 py-1 border-1 rounded"
-                 name="meter_number"
-                 placeholder="meter number">
-          <div class=" mx-2 py-1">
-            <select name="type" id="" class="rounded">
-              <option value="all">All</option>
-              {% for type in types %}<option value="{{ type }}">{{ type }}</option>{% endfor %}
-            </select>
-            <button type="submit"
-                    class="text-blue-700 border-blue-500 bg-yellow-400 hover:bg-yellow-700 border border-1 ml-1 mx-auto px-3 font-bold rounded-full">
-              <i class="fa fa-search"></i> Search
-            </button>
-          </div>
-        </form> {% endcomment %}
+
         <table id="tokens" class="table table-striped stripe mt-3 table-bordered">
           <thead>
             <tr>
@@ -101,18 +69,7 @@
           {% endif %}
         </div>
         <div class=" container text-center mt-3">
-          {% comment %} <form method="post" >
-           {% csrf_token %}
-            <label for="start_date">Start Date:</label>
-            <input type="date" id="start_date"class="rounded border-blue-500 border-1"  name="start_date" value="{{ start_date |date:'Y-m-d'}}">
-            
-            <label for="end_date">End Date:</label>
-            <input type="date" id="end_date"class="rounded border-blue-500 border-1"  name="end_date" value="{{ end_date |date:'Y-m-d'}}">
-            <label for="cost_center">Cost Center:</label>
-            <input type="text" id="cost_center"class="rounded border-blue-500 border-1"  name="cost_center" value="{{ cost_center}}">
-            
-            <button type="submit" class="bg-green-500 hover:bg-green-700 inline-block rounded-full m-auto text-white py-2 px-4 rounded">Filter</button>
-        </form> {% endcomment %}
+
         </div>
       </div>
     </div>

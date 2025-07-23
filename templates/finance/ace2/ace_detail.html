@@ -105,10 +105,10 @@
                             <p class="font-bold mb-2">Budget:{{ ace.budget_id }}</p>
                         <p class="font-bold mb-2">
                             {% for attachment in ace.quotation_set.all %}
-                                <a href="/ace/download_quotation/{{ attachment.id }}/">
-                                    <button class="hover:text-green-600 text-green-300 font-bold py-2 px-4 rounded">
-                                        {{ attachment.quotation_file.name|basename }}
-                                    </button>
+                                <a href="/ace/attachment/ {{attachment}}"><button class=" hover:text-green-600 text-green-300 font-bold py-2 px-4 rounded"
+                                        href="/ace/attachment/ {{attachment}}">
+                                    {{ attachment.quotation_file.name|basename }}
+                                </button>
                                 </a>
                             {% endfor %}
                         </p>
@@ -300,7 +300,18 @@
                     <form class="row rounded py-4 border bg-gulf-blue-400 rounded-lg p-3 m-auto container" method="POST" action="{% url 'approve:approve' ace.process.id %}" enctype="multipart/form-data">
                          {% csrf_token %}
                         <div class=" m-auto container  ">
-                             {{approvalForm.comment}}
+                            <div class="bg-white rounded-lg p-4 mb-4 shadow-inner">
+                                <h3 class="text-lg font-semibold text-gray-800 mb-2">📝 Review & Comments</h3>
+                                <div class="space-y-2">
+                                    <label for="{{ approvalForm.comment.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                                        💬 Comments <span class="text-red-500">*</span>
+                                    </label>
+                                    {{ approvalForm.comment }}
+                                    <p class="text-xs text-gray-500 mt-1">
+                                        Please provide comments for your decision. Comments are required for rejections.
+                                    </p>
+                                </div>
+                            </div>
 
                                  <div class="m-4 text-center">
                                     <button type="submit" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded" name="approved" value="Rejected">Reject</button>
@@ -322,8 +333,14 @@
                                         {% for approval in ace.process.approval_set.all %}
                                            {% if step == approval.step %}
                                                 <div class="card-body m-auto arrow arrow-step mb-5 bg-gradient-to-r from-gulf-blue-100 to-green-700 ed p-3 border rounded  container rounded shadow-lg">
-                                                    <div class="p-4 rounded-lg" title="Comment : {{ approval.comment }}" >
+                                                    <div class="p-4 rounded-lg">
                                                         <p class="font-bold">{{ step }}</p> <br>
+                                                        {% if approval.comment %}
+                                                            <div class="mt-2 p-3 bg-white bg-opacity-50 rounded-lg border-l-4 border-blue-500">
+                                                                <p class="text-sm font-medium text-gray-700">💬 Comment:</p>
+                                                                <p class="text-sm text-gray-800 mt-1">{{ approval.comment }}</p>
+                                                            </div>
+                                                        {% endif %}
                                                     </div>
                                                     <div class=" grid grid-cols-2 text-center">
                                                         <span class="inline-block rounded-full text-sm"> {{ approval.approved }}</span>
@@ -344,7 +361,7 @@
 
                                         {% else %}
                                             <div class="card-body m-auto arrow arrow-step mb-5 bg-gradient-to-r from-gulf-blue-100 to-blue-500 ed p-3 border rounded  container rounded shadow-lg">
-                                                <div class="p-4 rounded-lg" title="{{ approval.comment }}" >
+                                                <div class="p-4 rounded-lg">
                                                     <p class="font-bold">{{ step }}</p> <br>
                                                     {% if step.to %}
                                                         <span class="inline-block rounded-full text-sm">To {{ step.to|default_if_none:'' }}</span>
@@ -367,5 +384,6 @@
 {% endblock %}
 {% block scripts %}
     <script src="{% static 'assets/ace_add_asset_numbers.js' %}"></script>
+    <script src="{% static 'js/enhanced_comments.js' %}"></script>
 {% endblock %}
 

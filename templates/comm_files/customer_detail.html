@@ -79,6 +79,38 @@
                 <p class="text-sm text-gray-500">Last Updated</p>
                 <p class="font-medium">{{ customer.date_updated|date:"M d, Y" }}</p>
             </div>
+            <div>
+                <p class="text-sm text-gray-500">Region</p>
+                <p class="font-medium">{{ customer.region|default:"Not provided" }}</p>
+            </div>
+            <div>
+                <p class="text-sm text-gray-500">District</p>
+                <p class="font-medium">{{ customer.district|default:"Not provided" }}</p>
+            </div>
+            <div>
+                <p class="text-sm text-gray-500">Depot</p>
+                <p class="font-medium">{{ customer.depot|default:"Not provided" }}</p>
+            </div>
+            <div>
+                <p class="text-sm text-gray-500">Suburb</p>
+                <p class="font-medium">{{ customer.suburb|default:"Not provided" }}</p>
+            </div>
+            <div>
+                <p class="text-sm text-gray-500">Tariff Description</p>
+                <p class="font-medium">{{ customer.tariff_description|default:"Not provided" }}</p>
+            </div>
+            <div>
+                <p class="text-sm text-gray-500">Supply Point Number</p>
+                <p class="font-medium">{{ customer.supply_point_number|default:"Not provided" }}</p>
+            </div>
+            <div>
+                <p class="text-sm text-gray-500">Status</p>
+                <p class="font-medium">{{ customer.get_status_display|default:"Not provided" }}</p>
+            </div>
+            <div>
+                <p class="text-sm text-gray-500">Project Job Reference</p>
+                <p class="font-medium">{{ customer.pjob|default:"Not provided" }}</p>
+            </div>
         </div>
     </div>
 

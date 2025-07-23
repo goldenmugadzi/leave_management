@@ -1,0 +1,806 @@
+{% extends 'admin_layout.html' %}
+{% load static %}
+
+{% block title %}User Reports{% endblock %}
+
+{% block styles %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" />
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css" />
+<link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.2.2/css/buttons.dataTables.min.css" />
+<style>
+  .dataTables_wrapper .dataTables_length select {
+    width: 4rem;
+  }
+  .chart-type-selector {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: 10px;
+  }
+  .chart-type-selector button {
+    margin-left: 5px;
+    padding: 5px 10px;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.375rem;
+    background-color: #f8fafc;
+  }
+  .chart-type-selector button.active {
+    background-color: #4F46E5;
+    color: white;
+  }
+  .tab-buttons {
+    display: flex;
+    margin-bottom: 1rem;
+  }
+  .tab-button {
+    padding: 0.5rem 1rem;
+    margin-right: 0.5rem;
+    border-radius: 0.375rem;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .tab-button.active {
+    background-color: #4F46E5;
+    color: white;
+  }
+</style>
+{% endblock styles %}
+
+{% block content %}
+<div class="content-wrapper">
+  <div class="mb-5">
+    <div class="bg-gulf-blue-100 shadow-gulf-blue-300 text-gulf-blue-900 p-6 shadow-md rounded">
+      <div class="flex justify-between items-center mb-5">
+        <div>
+          <p class="text-lg font-semibold">User Reports Dashboard</p>
+          <p class="mt-1 text-sm">Generate and analyze user data with advanced filtering options</p>
+        </div>
+        <div class="flex justify-end items-center">
+          <a id="all_users" class="bg-gulf-blue-600 hover:bg-gulf-blue-800 text-white font-bold py-2 px-4 rounded m-2">
+            All Users
+          </a>
+          <a id="active_users" class="bg-gulf-blue-600 hover:bg-gulf-blue-800 text-white font-bold py-2 px-4 rounded m-2">
+            Active Users
+          </a>
+          <a id="inactive_users" class="bg-gulf-blue-600 hover:bg-gulf-blue-800 text-white font-bold py-2 px-4 rounded m-2">
+            Inactive Users
+          </a>
+        </div>
+      </div>
+      
+      <div class="mt-8 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3">
+        <div class="flex flex-col">
+          <label for="region-filter" class="text-stone-600 text-sm font-medium">Region</label>
+          <select id="region-filter" class="mt-2 block w-full rounded-md border border-gray-200 px-2 py-2 shadow-sm outline-none focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
+            <option value="">All Regions</option>
+            {% for region in regions %}
+            <option value="{{ region.id }}">{{ region.region }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        
+        <div class="flex flex-col">
+          <label for="district-filter" class="text-stone-600 text-sm font-medium">District</label>
+          <select id="district-filter" class="mt-2 block w-full rounded-md border border-gray-200 px-2 py-2 shadow-sm outline-none focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
+            <option value="">All Districts</option>
+          </select>
+        </div>
+        
+        <div class="flex flex-col">
+          <label for="depot-filter" class="text-stone-600 text-sm font-medium">Depot</label>
+          <select id="depot-filter" class="mt-2 block w-full rounded-md border border-gray-200 px-2 py-2 shadow-sm outline-none focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
+            <option value="">All Depots</option>
+          </select>
+        </div>
+        
+        <div class="flex flex-col">
+          <label for="section-filter" class="text-stone-600 text-sm font-medium">Section</label>
+          <select id="section-filter" class="mt-2 block w-full rounded-md border border-gray-200 px-2 py-2 shadow-sm outline-none focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
+            <option value="">All Sections</option>
+            {% for section in sections %}
+            <option value="{{ section.code }}">{{ section.section }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        
+        <div class="flex flex-col">
+          <label for="role-filter" class="text-stone-600 text-sm font-medium">Role</label>
+          <select id="role-filter" class="mt-2 block w-full rounded-md border border-gray-200 px-2 py-2 shadow-sm outline-none focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
+            <option value="">All Roles</option>
+            {% for role in roles %}
+            <option value="{{ role.id }}">{{ role.role }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        
+        <div class="flex flex-col">
+          <label for="status-filter" class="text-stone-600 text-sm font-medium">Status</label>
+          <select id="status-filter" class="mt-2 block w-full rounded-md border border-gray-200 px-2 py-2 shadow-sm outline-none focus:border-blue-500 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
+            <option value="">All Statuses</option>
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+          </select>
+        </div>
+      </div>
+      
+      <div class="mt-6 grid w-full grid-cols-2 justify-end space-x-4 md:flex">
+        <button id="reset-filters" class="active:scale-95 rounded-lg bg-red-200 px-8 py-2 font-medium text-gray-600 outline-none focus:ring hover:opacity-90">
+          Reset Filter
+        </button>
+        <button id="apply-filters" class="active:scale-95 rounded-lg bg-blue-600 px-8 py-2 font-medium text-white outline-none focus:ring hover:opacity-90">
+          Search
+        </button>
+        <button id="export-csv" class="active:scale-95 rounded-lg bg-green-600 px-8 py-2 font-medium text-white outline-none focus:ring hover:opacity-90 flex items-center">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+          </svg>
+          Export CSV
+        </button>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Charts Section with Tabs -->
+  <div class="mb-5">
+    <div class="bg-gulf-blue-100 shadow-md shadow-gulf-blue-300 text-gulf-blue-900 rounded p-4">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-lg font-semibold">User Analytics</h2>
+        <div class="tab-buttons">
+          <button class="tab-button active" data-tab="distribution">Distribution</button>
+          <button class="tab-button" data-tab="trends">Trends</button>
+          <button class="tab-button" data-tab="comparison">Comparison</button>
+        </div>
+      </div>
+      
+      <!-- Distribution Tab -->
+      <div id="distribution-tab" class="tab-content">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="bg-white p-4 rounded-lg shadow">
+            <div class="flex justify-between items-center mb-4">
+              <h3 class="text-md font-semibold">Users by Region</h3>
+              <div class="chart-type-selector" data-chart="regionChart">
+                <button class="chart-type active" data-type="pie">Pie</button>
+                <button class="chart-type" data-type="bar">Bar</button>
+                <button class="chart-type" data-type="doughnut">Doughnut</button>
+              </div>
+            </div>
+            <canvas id="regionChart" height="250"></canvas>
+          </div>
+          <div class="bg-white p-4 rounded-lg shadow">
+            <div class="flex justify-between items-center mb-4">
+              <h3 class="text-md font-semibold">Users by Role</h3>
+              <div class="chart-type-selector" data-chart="roleChart">
+                <button class="chart-type" data-type="pie">Pie</button>
+                <button class="chart-type active" data-type="bar">Bar</button>
+                <button class="chart-type" data-type="doughnut">Doughnut</button>
+              </div>
+            </div>
+            <canvas id="roleChart" height="250"></canvas>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Trends Tab -->
+      <div id="trends-tab" class="tab-content hidden">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="bg-white p-4 rounded-lg shadow">
+            <h3 class="text-md font-semibold mb-4">User Registration Trend</h3>
+            <canvas id="registrationTrendChart" height="250"></canvas>
+          </div>
+          <div class="bg-white p-4 rounded-lg shadow">
+            <h3 class="text-md font-semibold mb-4">Active vs Inactive Users</h3>
+            <canvas id="activeInactiveChart" height="250"></canvas>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Comparison Tab -->
+      <div id="comparison-tab" class="tab-content hidden">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="bg-white p-4 rounded-lg shadow">
+            <h3 class="text-md font-semibold mb-4">Users by District</h3>
+            <canvas id="districtComparisonChart" height="250"></canvas>
+          </div>
+          <div class="bg-white p-4 rounded-lg shadow">
+            <h3 class="text-md font-semibold mb-4">Users by Section</h3>
+            <canvas id="sectionComparisonChart" height="250"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Data Table Section -->
+  <div class="bg-gulf-blue-100 shadow-md shadow-gulf-blue-300 text-gulf-blue-900 rounded px-2 py-2 mb-5">
+    <table id="users-table" class="display" style="width:100%">
+      <thead>
+        <tr>
+          <th>Username</th>
+          <th>Full Name</th>
+          <th>Email</th>
+          <th>Region</th>
+          <th>District</th>
+          <th>Depot</th>
+          <th>Section</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- User data will be loaded here via DataTables -->
+      </tbody>
+      <tfoot>
+        <tr>
+          <th>Username</th>
+          <th>Full Name</th>
+          <th>Email</th>
+          <th>Region</th>
+          <th>District</th>
+          <th>Depot</th>
+          <th>Section</th>
+          <th>Status</th>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://code.jquery.com/jquery-3.7.0.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<!-- Buttons JS -->
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/buttons/2.2.2/js/dataTables.buttons.min.js"></script>
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/buttons/2.2.2/js/buttons.html5.min.js"></script>
+<script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/buttons/2.2.2/js/buttons.print.min.js"></script>
+<!-- PDFMake (for PDF export) -->
+<script type="text/javascript" charset="utf8" src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.36/pdfmake.min.js"></script>
+<script type="text/javascript" charset="utf8" src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.36/vfs_fonts.js"></script>
+<!-- JSZip (for Excel export) -->
+<script type="text/javascript" charset="utf8" src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
+
+<script>
+  $(document).ready(function() {
+    // Initialize variables
+    let filteredData = [];
+    let regionChart = null;
+    let roleChart = null;
+    let registrationTrendChart = null;
+    let activeInactiveChart = null;
+    let districtComparisonChart = null;
+    let sectionComparisonChart = null;
+    let url = "/users/api/user-reports";
+    
+    // Initialize DataTable
+    var table = $("#users-table").DataTable({
+      processing: true,
+      serverSide: false, // Using client-side processing for now
+      dom: 'Bfrtip',
+      buttons: [
+        {
+          extend: 'csv',
+          text: 'Export to CSV',
+          className: "bg-gulf-blue-400 hover:bg-gulf-blue-800 text-gulf-blue-950 font-bold py-2 px-4 rounded"
+        },
+        {
+          extend: 'excel',
+          text: 'Export to Excel',
+          className: "bg-gulf-blue-400 hover:bg-gulf-blue-800 text-gulf-blue-950 font-bold py-2 px-4 rounded"
+        },
+        {
+          extend: 'pdf',
+          text: 'Export to PDF',
+          className: "bg-gulf-blue-400 hover:bg-gulf-blue-800 text-gulf-blue-950 font-bold py-2 px-4 rounded"
+        },
+        {
+          extend: 'print',
+          text: 'Print Table',
+          className: "bg-gulf-blue-400 hover:bg-gulf-blue-800 text-gulf-blue-950 font-bold py-2 px-4 rounded"
+        }
+      ],
+      lengthMenu: [10, 25, 50, 100],
+      scrollX: true,
+      columns: [
+        { data: "username" },
+        { 
+          data: null,
+          render: function(data, type, row) {
+            return `${row.first_name} ${row.last_name}`;
+          }
+        },
+        { data: "email" },
+        { data: "region" },
+        { data: "district" },
+        { data: "depot" },
+        { data: "section" },
+        { 
+          data: "is_active",
+          render: function(data, type, row) {
+            return `<span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${data ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
+              ${data ? 'Active' : 'Inactive'}
+            </span>`;
+          }
+        }
+      ],
+      order: [[0, "asc"]]
+    });
+    
+    // Fetch initial data
+    fetchUserData();
+    
+    // Event listeners for filter buttons
+    $("#all_users").on("click", function() {
+      url = "/users/api/user-reports";
+      fetchUserData();
+    });
+    
+    $("#active_users").on("click", function() {
+      url = "/users/api/user-reports?status=active";
+      fetchUserData();
+    });
+    
+    $("#inactive_users").on("click", function() {
+      url = "/users/api/user-reports?status=inactive";
+      fetchUserData();
+    });
+    
+    // Event listeners for filter form
+    $("#apply-filters").on("click", function() {
+      fetchUserData();
+    });
+    
+    $("#reset-filters").on("click", function() {
+      $("#region-filter").val('');
+      $("#district-filter").val('');
+      $("#depot-filter").val('');
+      $("#section-filter").val('');
+      $("#role-filter").val('');
+      $("#status-filter").val('');
+      url = "/users/api/user-reports";
+      fetchUserData();
+    });
+    
+    $("#export-csv").on("click", function() {
+      exportToCsv();
+    });
+    
+    // Region filter change event
+    $("#region-filter").on("change", function() {
+      const regionId = this.value;
+      if (regionId) {
+        fetchDistricts(regionId);
+      } else {
+        // Clear district dropdown
+        const districtSelect = document.getElementById("district-filter");
+        if (districtSelect) {
+          districtSelect.innerHTML = '<option value="">All Districts</option>';
+        }
+        
+        // Clear depot dropdown
+        const depotSelect = document.getElementById("depot-filter");
+        if (depotSelect) {
+          depotSelect.innerHTML = '<option value="">All Depots</option>';
+        }
+      }
+    });
+    
+    // District filter change event
+    $("#district-filter").on("change", function() {
+      const districtId = this.value;
+      if (districtId) {
+        fetchDepots(districtId);
+      } else {
+        // Clear depot dropdown
+        const depotSelect = document.getElementById("depot-filter");
+        if (depotSelect) {
+          depotSelect.innerHTML = '<option value="">All Depots</option>';
+        }
+      }
+    });
+    
+    // Tab switching functionality
+    $(".tab-button").on("click", function() {
+      const tabId = $(this).data("tab");
+      $(".tab-button").removeClass("active");
+      $(this).addClass("active");
+      $(".tab-content").addClass("hidden");
+      $(`#${tabId}-tab`).removeClass("hidden");
+    });
+    
+    // Chart type switching functionality
+    $(".chart-type").on("click", function() {
+      const chartContainer = $(this).parent();
+      const chartId = chartContainer.data("chart");
+      const chartType = $(this).data("type");
+      
+      chartContainer.find(".chart-type").removeClass("active");
+      $(this).addClass("active");
+      
+      // Update chart type
+      if (chartId === "regionChart" && regionChart) {
+        updateChartType(regionChart, chartType);
+      } else if (chartId === "roleChart" && roleChart) {
+        updateChartType(roleChart, chartType);
+      }
+    });
+    
+    // Function to update chart type
+    function updateChartType(chart, newType) {
+      const data = chart.data;
+      const options = chart.options;
+      chart.destroy();
+      
+      const ctx = chart.canvas.getContext('2d');
+      if (newType === 'bar') {
+        options.indexAxis = 'x';
+      }
+      
+      return new Chart(ctx, {
+        type: newType,
+        data: data,
+        options: options
+      });
+    }
+    
+    // Function to fetch user data based on filters
+    function fetchUserData() {
+      const region = $("#region-filter").val();
+      const district = $("#district-filter").val();
+      const depot = $("#depot-filter").val();
+      const section = $("#section-filter").val();
+      const role = $("#role-filter").val();
+      const status = $("#status-filter").val();
+      
+      // Prepare query parameters
+      const params = new URLSearchParams();
+      if (region) params.append('region', region);
+      if (district) params.append('district', district);
+      if (depot) params.append('depot', depot);
+      if (section) params.append('section', section);
+      if (role) params.append('role', role);
+      if (status) params.append('status', status);
+      
+      // Show loading state
+      table.clear().draw();
+      $("#users-table tbody").html('<tr><td colspan="8" class="text-center">Loading...</td></tr>');
+      
+      // Fetch data from API
+      fetch(`${url}${params.toString() ? '?' + params.toString() : ''}`, {
+        method: "GET",
+        headers: {
+            "Content-Type": "application/json"
+        }
+      })
+        .then(response => {
+          console.log("response: ", response)
+          if (!response.ok) throw new Error('Network response was not ok');
+          return response.json();
+        })
+        .then(data => {
+          filteredData = data.users || [];
+          
+          // Update DataTable
+          table.clear();
+          table.rows.add(filteredData).draw();
+          
+          // Update charts
+          if (data.charts) {
+            updateCharts(data.charts);
+          }
+        })
+        .catch(error => {
+          console.error('Error fetching user data:', error);
+          $("#users-table tbody").html(
+            '<tr><td colspan="8" class="text-center text-red-500">Error loading data. Please try again.</td></tr>'
+          );
+        });
+    }
+    
+    // Function to update charts
+    function updateCharts(chartData) {
+      // Update distribution charts
+      updateDistributionCharts(chartData);
+      
+      // Update trend charts if data available
+      if (chartData.trends) {
+        updateTrendCharts(chartData.trends);
+      }
+      
+      // Update comparison charts if data available
+      if (chartData.comparison) {
+        updateComparisonCharts(chartData.comparison);
+      }
+    }
+    
+    // Function to update distribution charts
+    function updateDistributionCharts(chartData) {
+      // Destroy existing charts if they exist
+      if (regionChart) regionChart.destroy();
+      if (roleChart) roleChart.destroy();
+      
+      // Get active chart types
+      const regionChartType = $(".chart-type-selector[data-chart='regionChart'] .chart-type.active").data("type") || 'pie';
+      const roleChartType = $(".chart-type-selector[data-chart='roleChart'] .chart-type.active").data("type") || 'bar';
+      
+      // Create region chart
+      const regionCtx = document.getElementById('regionChart').getContext('2d');
+      regionChart = new Chart(regionCtx, {
+        type: regionChartType,
+        data: {
+          labels: chartData.regions.labels,
+          datasets: [{
+            data: chartData.regions.data,
+            backgroundColor: [
+              '#4F46E5', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6',
+              '#EC4899', '#06B6D4', '#84CC16', '#F97316', '#6366F1'
+            ],
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: {
+              position: 'right',
+            },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  const label = context.label || '';
+                  const value = context.raw || 0;
+                  const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                  const percentage = Math.round((value / total) * 100);
+                  return `${label}: ${value} (${percentage}%)`;
+                }
+              }
+            }
+          }
+        }
+      });
+      
+      // Create role chart
+      const roleCtx = document.getElementById('roleChart').getContext('2d');
+      roleChart = new Chart(roleCtx, {
+        type: roleChartType,
+        data: {
+          labels: chartData.roles.labels,
+          datasets: [{
+            label: 'Number of Users',
+            data: chartData.roles.data,
+            backgroundColor: '#4F46E5',
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                precision: 0
+              }
+            }
+          },
+          plugins: {
+            legend: {
+              display: roleChartType !== 'bar',
+            }
+          }
+        }
+      });
+    }
+    
+    // Function to update trend charts
+    function updateTrendCharts(trendData) {
+      // Destroy existing charts if they exist
+      if (registrationTrendChart) registrationTrendChart.destroy();
+      if (activeInactiveChart) activeInactiveChart.destroy();
+      
+      // Create registration trend chart
+      const registrationCtx = document.getElementById('registrationTrendChart').getContext('2d');
+      registrationTrendChart = new Chart(registrationCtx, {
+        type: 'line',
+        data: {
+          labels: trendData.registration.labels,
+          datasets: [{
+            label: 'New Users',
+            data: trendData.registration.data,
+            borderColor: '#4F46E5',
+            backgroundColor: 'rgba(79, 70, 229, 0.1)',
+            borderWidth: 2,
+            fill: true,
+            tension: 0.4
+          }]
+        },
+        options: {
+          responsive: true,
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                precision: 0
+              }
+            }
+          }
+        }
+      });
+      
+      // Create active vs inactive chart
+      const activeInactiveCtx = document.getElementById('activeInactiveChart').getContext('2d');
+      activeInactiveChart = new Chart(activeInactiveCtx, {
+        type: 'pie',
+        data: {
+          labels: ['Active', 'Inactive'],
+          datasets: [{
+            data: [trendData.activeVsInactive.active, trendData.activeVsInactive.inactive],
+            backgroundColor: ['#10B981', '#EF4444'],
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: {
+              position: 'right',
+            },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  const label = context.label || '';
+                  const value = context.raw || 0;
+                  const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                  const percentage = Math.round((value / total) * 100);
+                  return `${label}: ${value} (${percentage}%)`;
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+    
+    // Function to update comparison charts
+    function updateComparisonCharts(comparisonData) {
+      // Destroy existing charts if they exist
+      if (districtComparisonChart) districtComparisonChart.destroy();
+      if (sectionComparisonChart) sectionComparisonChart.destroy();
+      
+      // Create district comparison chart
+      const districtCtx = document.getElementById('districtComparisonChart').getContext('2d');
+      districtComparisonChart = new Chart(districtCtx, {
+        type: 'bar',
+        data: {
+          labels: comparisonData.districts.labels,
+          datasets: [{
+            label: 'Number of Users',
+            data: comparisonData.districts.data,
+            backgroundColor: '#8B5CF6',
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                precision: 0
+              }
+            }
+          }
+        }
+      });
+      
+      // Create section comparison chart
+      const sectionCtx = document.getElementById('sectionComparisonChart').getContext('2d');
+      sectionComparisonChart = new Chart(sectionCtx, {
+        type: 'bar',
+        data: {
+          labels: comparisonData.sections.labels,
+          datasets: [{
+            label: 'Number of Users',
+            data: comparisonData.sections.data,
+            backgroundColor: '#F59E0B',
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                precision: 0
+              }
+            }
+          }
+        }
+      });
+    }
+    
+    // Function to fetch districts based on region
+    function fetchDistricts(regionId) {
+      fetch(`/users/filtered_districts/${regionId}`)
+        .then(response => response.json())
+        .then(data => {
+          const districtSelect = document.getElementById("district-filter");
+          districtSelect.innerHTML = '<option value="">All Districts</option>';
+          
+          data.districts.forEach(district => {
+            const option = document.createElement('option');
+            option.value = district.code;
+            option.textContent = district.district;
+            districtSelect.appendChild(option);
+          });
+        })
+        .catch(error => console.error('Error fetching districts:', error));
+    }
+    
+    // Function to fetch depots based on district
+    function fetchDepots(districtId) {
+      fetch(`/users/filtered_depots/${districtId}`)
+        .then(response => response.json())
+        .then(data => {
+          const depotSelect = document.getElementById("depot-filter");
+          depotSelect.innerHTML = '<option value="">All Depots</option>';
+          
+          data.depots.forEach(depot => {
+            const option = document.createElement('option');
+            option.value = depot.code;
+            option.textContent = depot.depot;
+            depotSelect.appendChild(option);
+          });
+        })
+        .catch(error => console.error('Error fetching depots:', error));
+    }
+    
+    // Function to export data to CSV
+    function exportToCsv() {
+      if (filteredData.length === 0) {
+        alert('No data to export');
+        return;
+      }
+      
+      // Create CSV content
+      const headers = ['Username', 'First Name', 'Last Name', 'Email', 'Region', 'District', 'Depot', 'Section', 'Status'];
+      let csvContent = headers.join(',') + '\n';
+      
+      filteredData.forEach(user => {
+        const row = [
+          user.username,
+          user.first_name,
+          user.last_name,
+          user.email || '',
+          user.region || '',
+          user.district || '',
+          user.depot || '',
+          user.section || '',
+          user.is_active ? 'Active' : 'Inactive'
+        ];
+        
+        // Escape fields that contain commas
+        const escapedRow = row.map(field => {
+          if (field && field.includes(',')) {
+            return `"${field}"`;
+          }
+          return field;
+        });
+        
+        csvContent += escapedRow.join(',') + '\n';
+      });
+      
+      // Create download link
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.setAttribute('href', url);
+      link.setAttribute('download', 'user_report.csv');
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  });
+</script>
+{% endblock scripts %}
