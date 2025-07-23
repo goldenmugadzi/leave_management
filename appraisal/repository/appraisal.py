@@ -36,7 +36,7 @@ class AppraisalRepository:
 
     def fetch_by_user(self, user_object: UserProfile) -> List[Appraisal]:
         return Appraisal.objects.filter(user=user_object)
-        
+    
     def fetch_by_appraiser(self, appraiser_object: UserProfile) -> List[Appraisal]:
         return Appraisal.objects.filter(appraiser=appraiser_object)
     

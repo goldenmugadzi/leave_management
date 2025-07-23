@@ -4,6 +4,7 @@ from django.http import HttpResponse
 from django.views.generic.edit import CreateView, UpdateView
 from django.views.generic import TemplateView
 from django.urls import reverse
+from django.utils.text import slugify
 
 from django.shortcuts import redirect, render
 from django.contrib.messages.views import SuccessMessageMixin
@@ -12,50 +13,65 @@ from django.contrib import messages
 from django.urls import reverse_lazy
 
 from ..models import Appraisal, AppraisalExperience, Experience
-from it.users.models import UserQualification
+from it.users.models import UserQualification, UserProfile
 from ..forms import AppraisalForm, AppraisalExperienceFormset, UserQualificationFormset, AppraisalRoleFilterForm, AppraisalUpdateForm
 from ..helpers.types import AppraisalPayloadType
 from ..helpers.types.kra import RoleFilterChoices
 from ..repository import UserQualificationRepository, AppraisalExperienceRepository, ExperienceRepository, AppraisalRepository
+from ..repository.qualification_experience import UserExperienceRepository
 from ..services import AppraisalService, AppraisalExperienceService
 from ..helpers.types.kra import KraRolesType
 from ..helpers.getters.approval import ApprovalStagesHandler
 
+
 from approve.views import intiate,approve_step
 from approve.forms import ApprovalForm
 from approve.models import Step, Approval
+from datetime import datetime
+from ..helpers.getters.dates import get_assessment_period
 from loguru import logger
+
+def get_user_by_id(user_id: int)->UserProfile:
+    qr = UserProfile.objects.filter(id=user_id)
+    if not qr.exists():
+        return None
+    return qr.first()
+
 class AppraisalCreateView(SuccessMessageMixin, CreateView):
     model = Appraisal
     form_class = AppraisalForm
     success_message = "Appraisal created successfully! Your appraiser will review it shortly and either accept or reject it."
     template_name = 'appraisal/create.html'
+    context_object_name = "appraisal_form"
+    
+    def get_user_object(self):
+        return self.request.user
 
-    def get_initial_forms(self, user_object)->Dict[str,Any]:
-        """Helper method to initialize related forms with initial data."""
-        qualification_initial_object = UserQualificationFormset(self.request.POST or None,
-            queryset=UserQualification.objects.none(),
-            prefix="qualification")
-        appraisal_experience_initial_object = AppraisalExperienceFormset(self.request.POST or None, queryset=AppraisalExperience.objects.none())
-        appraiser_form = self.form_class()
-        return {
-            'qualification_forms': qualification_initial_object,
-            'appraisal_form': appraiser_form,
-            'appraisal_experience_forms': appraisal_experience_initial_object
-        }
-
-    def get_initial_user_data(self, user_object)->Dict[str, any]:
-        """Helper method to set user data"""
-        return {
-            "user": user_object,
-            "qualifications": UserQualification.objects.filter(user=user_object)
-        }
+    def get_current_date_assessment(self):
+        current_date = datetime.now()
+        return get_assessment_period(date_object=current_date)
+    
+    def get_user_experiences(self, user_id: int):
+        repo = UserExperienceRepository()
+        return repo.fetch_by_user_id(user_id=user_id)
+        
+    def get_user_qualification(self, user_id: int):
+        repo = UserQualificationRepository()
+        return repo.fetch_by_user(user_id=user_id)
+        
 
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context =  super().get_context_data(**kwargs)
-        user_object = self.request.user
-        context.update(self.get_initial_forms(user_object=user_object))
-        context.update(self.get_initial_user_data(user_object=user_object))
+        user_object = self.get_user_object()
+        context[self.context_object_name] = context.get("form")
+        
+        context["user_object"] = user_object
+        context["has_no_designation"] = self.get_user_object().designation == None or self.get_user_object().designation == ""
+        context["assessment_period"] = self.get_current_date_assessment()
+        
+        context["user_experiences_qr"] = self.get_user_experiences(user_id=user_object.id)
+        context["user_qualification_qr"] = self.get_user_qualification(user_id=user_object.id)
+
         context["is_update"] = False
         return context
 
@@ -111,6 +127,28 @@ class AppraisalCreateView(SuccessMessageMixin, CreateView):
         # print("=========>>> Structured Payload:", structured_payload)
         # input()
         return super().form_valid(form)
+
+    def get(self, request, *args, **kwargs):
+        self.object = None
+        try:
+            user_object = self.get_user_object()
+            if user_object is None:
+                logger.warning(f"[AppraisalCreateView] get_user_object() with user: {user_object}, not found error")
+                return redirect("object_not_found_error", object_name=slugify("User"))
+
+            if user_object.designation == None or user_object.designation == "":
+                messages.error(
+                        request,
+                        "<strong>Your designation or position</strong> was not found. Please contact IT to set your designation."
+                    )
+            messages.info(
+                request,
+                "<strong>Take Note:</strong> Please ensure your profile is complete — including designation, department, qualifications, and experience — before creating an appraisal. You may add missing details and must set your appraiser as the final step."
+            )
+        except Exception as e:
+            logger.error(f"[AppraisalCreateView] get_user_object() with user: {user_object}, failed with error: {e}")
+            return redirect("server_error_view")
+        return super().get(request, *args, **kwargs)
 
     def get_success_url(self) -> str:
         return reverse('appraisal_index')

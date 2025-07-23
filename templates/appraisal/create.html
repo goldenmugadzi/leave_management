@@ -23,7 +23,7 @@
                 <div>
                     <h1 class="font-bold text-2xl text-gray-900">Personal Details</h1>
                     <p class="text-md text-gray-500">
-                        This section includes essential information about the appraisee, <strong>John Wick</strong>, covering personal data, professional experience, academic qualifications, and the designated appraiser for this evaluation.
+                        This section includes essential information about the appraisee, <strong>{{user_object}}</strong>, covering personal data, professional experience, academic qualifications, and the designated appraiser and reviewer for this evaluation.
                     </p>
                 </div>
             </div>
@@ -44,7 +44,7 @@
                     <button class="tab-button inline-block px-4 py-2 border-2 border-transparent rounded-md text-gray-600 bg-transparent hover:bg-gray-200 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2" data-tab="experiences" aria-selected="false">Experiences</button>
                 </li>
                 <li class="mr-1 border-2 rounded-lg border-2 border-gray-400">
-                    <button class="tab-button inline-block px-4 py-2 border-2 border-transparent rounded-md text-gray-600 bg-transparent hover:bg-gray-200 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2" data-tab="appraisal" aria-selected="false">Appraiser Selection</button>
+                    <button class="tab-button inline-block px-4 py-2 border-2 border-transparent rounded-md text-gray-600 bg-transparent hover:bg-gray-200 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2" data-tab="appraisal" aria-selected="false">Appraiser and Reviewer Selection</button>
                 </li>
             </ul>
         </div>
@@ -57,11 +57,26 @@
             <div class="bg-white shadow-xl rounded-lg border-2 border-indigo-400 p-6">
                 <h3 class="text-lg font-semibold text-gray-900 mb-4">User Information</h3>
                 <div class="grid grid-cols-2 gap-4">
-                    <span><strong>Cost Center:</strong> {{user.cost_center}}</span>
-                    <span><strong>EC Number:</strong> {{user.username}}</span>
-                    <span><strong>Grade:</strong> {{user.grade}}</span>
-                    <span><strong>Current Position:</strong> {{user.designation}}</span>
-                    <span><strong>Section:</strong> {{user.section}}</span>
+                    <span><strong>Name: </strong> {{user_object}}</span>
+                    <span><strong>EC Number:    </strong> {{user_object.username}}</span>
+                    <span><strong>Performance Period:   </strong>{{assessment_period}}</span>
+                    {% if has_no_designation %}
+                        <span>
+                            <strong>Position: </strong>
+                                <span class="px-3 py-1 text-sm font-medium text-white bg-red-500 rounded-full">
+                                    Not Set
+                                </span>
+                        </span>
+                    {% else %}
+                        <span><strong>Position: </strong> {{user_object.designation}}</span>
+                    {% endif %}
+                    
+                    {% if is_update %}
+                        <span><strong>Supervisor:   </strong> {{user_object.grade}}</span>
+                        <span><strong>Reviewer: </strong> {{user_object.designation}}</span>
+                    {% endif %}
+                    <span><strong>Station:  </strong> {{user_object.region}}</span>
+                    <span><strong>Department:   </strong> {{user_object.cost_center}}</span>
                 </div>
             </div>
         </div>
@@ -69,7 +84,13 @@
         <!-- Qualifications Tab -->
         <div id="qualifications" class="tab-pane hidden">
             <div class="bg-white shadow-xl rounded-lg border-2 border-indigo-400 p-6" style="max-height: 300px; overflow-y: auto;">
-                <h3 class="text-lg font-semibold text-gray-900 mb-4">User Qualifications</h3>
+                <div class="flex justify-between">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">User Qualifications</h3>
+                    <a href="{% url 'qualification_experience_index' user_object.id %}"
+                        class="my-2 bg-blue-500 hover:bg-blue-700 inline-block rounded-full text-white py-2 px-4">
+                        Add New Qualification
+                    </a>
+                </div>
                 <div class="container mx-auto px-4">
                     {% include 'appraisal/qualification_experience/experiences/index_element.html' with user_experiences_qr=user_experiences_qr can_update=is_my_qualification_experience %}
                 </div>
@@ -79,7 +100,13 @@
         <!-- Experiences Tab -->
         <div id="experiences" class="tab-pane hidden">
             <div class="bg-white shadow-xl rounded-lg border-2 border-indigo-400 p-6" style="max-height: 300px; overflow-y: auto;">
-                <h3 class="text-lg font-semibold text-gray-900 mb-4">User Experiences</h3>
+                <div class="flex justify-between">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">User Experiences</h3>
+                    <a href="{% url 'qualification_experience_index' user_object.id %}"
+                        class="my-2 bg-blue-500 hover:bg-blue-700 inline-block rounded-full text-white py-2 px-4">
+                        Add New Experience
+                    </a>
+                </div>
                 <div class="container mx-auto px-4">
                     {% include 'appraisal/qualification_experience/qualifications/index_element.html' with user_qualification_qr=user_qualification_qr can_update=is_my_qualification_experience %}
                 </div>
@@ -124,173 +151,6 @@
                 targetPane.classList.remove('hidden');
             });
         });
-    });
-
-    // Refreshes all experience dropdowns in formsets with updated experience options from the server.
-    function refreshExperienceDropdown() {
-        // get all experience dropdowns in formsets
-        const experienceDropdowns = document.querySelectorAll("select[id^='id_appraisal-'][id$='-experience']");
-
-    // Fetch updated list of experiences
-    fetch("{% url 'experience_list_api' %}")
-        .then(response => response.json())
-        .then(data => {
-            // Iterate through each dropdown and update its options
-            experienceDropdowns.forEach(experienceDropdown => {
-                experienceDropdown.innerHTML = ""; // Clear current options
-                
-                // Populate with new options
-                data.forEach((experience, index) => {
-                    const option = document.createElement("option");
-                    option.value = experience.id;
-                    option.textContent = experience.name;
-
-                    // Set the first item as the default
-                    if (index === 0) {
-                        option.selected = true;
-                    }
-
-                    experienceDropdown.appendChild(option);
-                });
-            });
-        })
-        .catch(error => console.error('Error refreshing experience dropdown:', error));
-    }
-
-    // Adds a new experience form to the formset container
-    function addExperienceForm(totalFormCount) {
-        const formContainer = document.querySelector(".experience-forms");
-        const totalFormsInput = document.getElementById("id_appraisal-TOTAL_FORMS");
-
-        // Get the current total form count and increment it
-        let formCount = parseInt(totalFormsInput.value);
-
-        // Clone the template and replace the prefix with the new form count
-        const newFormHtml = document
-            .getElementById("empty-form-template")
-            .innerHTML.replace(/__prefix__/g, formCount);
-        const newForm = document.createElement("div");
-        newForm.classList.add("experience-form");
-        newForm.innerHTML = newFormHtml;
-
-        // Add the new form to the container
-        formContainer.appendChild(newForm);
-
-        // Update the total form count in the hidden input
-        formCount++;
-        totalFormsInput.value = formCount;
-
-        // Call toggleRemoveExperienceButtons to update the visibility of the "Remove" buttons
-        toggleRemoveExperienceButtons();  
-        }
-
-    // Removes an experience form from the formset container and updates total form count
-    function removeExperienceForm(button, totalFormCount) {
-        const totalFormsInput = document.getElementById("id_appraisal-TOTAL_FORMS");
-
-        // Remove the form from the DOM
-        button.closest(".experience-form").remove();
-
-        // Update the total form count
-        let formCount = parseInt(totalFormsInput.value);
-        formCount--;
-        totalFormsInput.value = formCount;
-
-        // Re-index the remaining forms to ensure consistency
-        const forms = document.querySelectorAll(".experience-form");
-        forms.forEach((form, index) => {
-            form.innerHTML = form.innerHTML.replace(/appraisal-\d+-/g, `appraisal-${index}-`);
-        });
-
-        // Call toggleRemoveExperienceButtons to update the visibility of the "Remove" buttons
-        toggleRemoveExperienceButtons();  
-    }
-
-    // addQualificationForm() adds new form to the formset container and updates form count
-    function addQualificationForm(total_form_count){
-        const formContainer = document.querySelector(".qualification-forms");
-        const totalFormCount = document.getElementById("id_qualification-TOTAL_FORMS");
-        let formCount = parseInt(totalFormCount.value);
-        
-        const newFormHtml = document.getElementById("empty-qualification-template").innerHTML.replace(/__prefix__/g, formCount)
-        const newForm = document.createElement("div")
-        newForm.classList.add("qualification-form")
-        newForm.innerHTML = newFormHtml
-
-        formContainer.appendChild(newForm)
-
-        formCount++;
-        totalFormCount.value = formCount
-
-        // Call toggleRemoveQualificationButtons to update the visibility of the "Remove" buttons
-        toggleRemoveQualificationButtons();  
-    }
-
-    // Removes an qualification form from the formset container and updates the total form count
-    function removeQualificationForm(button, total_form_count){
-        const totalFormsInput = document.getElementById('id_qualification-TOTAL_FORMS')
-        
-        button.closest(".qualification-form").remove()
-
-        // Update the total form count
-        let formCount = parseInt(totalFormsInput.value);
-        formCount--;
-        totalFormsInput.value = formCount;
-
-        // Re-index the remaining forms to ensure consistency
-        const forms = document.querySelectorAll(".qualification-form");
-        forms.forEach((form, index) => {
-            form.innerHTML = form.innerHTML.replace(/qualification-\d+-/g, `qualification-${index}-`);
-        });
-
-        // Call toggleRemoveQualificationButtons to update the visibility of the "Remove" buttons
-        toggleRemoveQualificationButtons();  
-    }
-
-    // Function to toggle the visibility of remove buttons
-    function toggleRemoveExperienceButtons() {
-        const totalFormsInput = document.getElementById("id_appraisal-TOTAL_FORMS");
-
-        // Update the total form count
-        let formCount = parseInt(totalFormsInput.value);
-        const removeButtons = document.querySelectorAll(".remove-experience-btn");
-
-        // Check if there is only one form
-        if (formCount === 1) {
-            removeButtons.forEach(button => {
-                button.classList.add("hidden");
-            });
-        } else {
-            removeButtons.forEach(button => {
-                button.classList.remove("hidden");
-            });
-
-        }
-    }
-
-    function toggleRemoveQualificationButtons() {
-        const totalFormsInput = document.getElementById("id_qualification-TOTAL_FORMS");
-
-        // Update the total form count
-        let formCount = parseInt(totalFormsInput.value);
-        const removeButtons = document.querySelectorAll(".remove-qualification-btn");
-
-        // Check if there is only one form
-        if (formCount === 1) {
-            removeButtons.forEach(button => {
-                button.classList.add("hidden");
-            });
-        } else {
-            removeButtons.forEach(button => {
-                button.classList.remove("hidden");
-            });
-        }
-    }
-
-    // Initial setup to hide or show remove buttons on page load
-    document.addEventListener("DOMContentLoaded", () => {
-        toggleRemoveExperienceButtons();
-        toggleRemoveQualificationButtons();
     });
 
 </script>
