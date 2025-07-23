@@ -130,32 +130,51 @@ def create_report(request):
         except Exception as ex:
             print("Error:", ex)
         
-        region = Regions.objects.filter(id=request.POST.get('region')).first()
-        section = Sections.objects.filter(id=request.POST.get('section')).first()
-        created_by = UserProfile.objects.filter(id=user.id).first()
-        new_plans_and_reports_fields = Report(
-            uploaded_by=user if user else "",
-            region=region if region else None,
-            report_period=report_period if report_period else None,
-            report_type=report_type if report_type else None,
-            date_created=datetime.now().strftime("%Y%m%d"),
-            date_updated=datetime.now().strftime("%Y%m%d"),
-            section=section if section else None,
-            file_name=file_name if file_name else "",
-            file_path=file_path,
-            created_by=created_by if created_by else None
-        )
-        new_plans_and_reports_fields.save()       
-        
-        messages.success(request, 'Report created successfully')        
-        if report_period:
-            period = report_period.lower()
-            report = report_type.lower()+'s'
-        else:
-            period = "all"
-            report = report_type.lower()+'s'
+        try:
+            region = Regions.objects.filter(id=request.POST.get('region')).first()
+            
+            # Handle section - for objectives, use section name directly
+            section_name = request.POST.get('section')
+            # if report_type == "Objective":
+            #     # For objectives, try to find or create the section by name
+            #     section, created = Sections.objects.filter(
+            #         section=section_name,
+            #         defaults={'code': section_name.upper(), 'district_id': '', 'region_id': ''}
+            #     )
+            # else:
+            #     # For reports and plans, use the existing logic
+            
+            section = Sections.objects.filter(section=section_name).first()
+                
+            created_by = UserProfile.objects.filter(id=user.id).first()
+            new_plans_and_reports_fields = Report(
+                uploaded_by=user if user else "",
+                region=region if region else None,
+                report_period=report_period if report_period else None,
+                report_type=report_type if report_type else None,
+                date_created=datetime.now().strftime("%Y%m%d"),
+                date_updated=datetime.now().strftime("%Y%m%d"),
+                section=section if section else None,
+                file_name=file_name if file_name else "",
+                file_path=file_path,
+                created_by=created_by if created_by else None
+            )
+            new_plans_and_reports_fields.save()       
+            
+            messages.success(request, 'Report created successfully')        
+            if report_type == "Objective":
+                # For objectives, redirect to the objectives index
+                return redirect('/reports/objectives_index')
+            elif report_period:
+                period = report_period.lower()
+                report = report_type.lower()+'s'
+            else:
+                period = "all"
+                report = report_type.lower()+'s'
 
-        return redirect('/reports/'+report+'/'+period)
+            return redirect('/reports/'+report+'/'+period)
+        except Exception as ex:
+            print("Error:", ex)
     
     sections = Sections.objects.all()
     regions = Regions.objects.all()
@@ -210,7 +229,19 @@ def edit_report(request):
             print("Error:", ex)
         
         region = Regions.objects.filter(id=request.POST.get('region')).first()
-        section = Sections.objects.filter(id=request.POST.get('section')).first()
+        
+        # Handle section - for objectives, use section name directly
+        section_name = request.POST.get('section')
+        if report_type == "Objective":
+            # For objectives, try to find or create the section by name
+            section, created = Sections.objects.get_or_create(
+                section=section_name,
+                defaults={'code': section_name.upper(), 'district_id': '', 'region_id': ''}
+            )
+        else:
+            # For reports and plans, use the existing logic
+            section = Sections.objects.filter(id=request.POST.get('section')).first()
+            
         report_ = Report.objects.filter(id=report_id).first()
 
         if report_:
@@ -230,7 +261,11 @@ def edit_report(request):
 
             report_.save()       
         
-        if report_period:
+        if report_type == "Objective":
+            # For objectives, redirect to the objectives index
+            messages.success(request, 'Objective updated successfully')
+            return redirect('/reports/objectives_index')
+        elif report_period:
             period = report_period.lower()
             report = report_type.lower()+'s'
         else:
@@ -281,6 +316,65 @@ def get_plans(request, period):
     context = json.dumps(files_list, default=str)
     
     return render(request, 'plans_reports/view_reports.html', {'context':context})
+
+@login_required
+def get_objectives(request, section_name):
+    """Get objectives filtered by section name"""
+    # Map URL section names to display names
+    section_mapping = {
+        'commercial': 'COMMERCIAL',
+        'hr': 'HUMAN RESOURCES', 
+        'engineering': 'ENGINEERING',
+        'ict': 'ICT',
+        'risk': 'RISK',
+        'finance': 'FINANCE',
+        'stakeholder-relations': 'STAKEHOLDER RELATIONS',
+        'legal': 'LEGAL',
+        'procurement': 'PROCUREMENT'
+    }
+    
+    display_name = section_mapping.get(section_name, section_name.upper())
+    
+    # Try to find the section in the database, or create a filter based on the display name
+    try:
+        section = Sections.objects.filter(section__iexact=display_name).first()
+        objectives = Report.objects.filter(report_type="Objective", section=section, archived=False).all()
+    except Sections.DoesNotExist:
+        # If section doesn't exist in database, filter by section name string
+        objectives = Report.objects.filter(
+            report_type="Objective", 
+            section__section__iexact=display_name, 
+            archived=False
+        ).all()
+    
+    files_list = []
+    for file in objectives:
+        fullname = file.created_by.first_name + " " + file.created_by.last_name if file.created_by else None
+        new_file = {
+            "id": file.id,
+            "uploaded_by": file.uploaded_by,
+            "region": file.region.region if file.region else "",
+            "report_period": file.report_period,
+            "date_created": file.date_created.strftime("%Y-%m-%d %H:%M") if file.date_created else "",
+            "date_updated": file.date_updated.strftime("%Y-%m-%d %H:%M") if file.date_updated else "",
+            "section": file.section.section if file.section else "",
+            "file_name": file.file_name,
+            "file_path": file.file_path,
+            "created_by": fullname
+        }
+        files_list.append(new_file)
+        
+    context = json.dumps(files_list, default=str)
+    
+    return render(request, 'plans_reports/view_reports.html', {
+        'context': context,
+        'section_name': display_name
+    })
+
+@login_required
+def objectives_index(request):
+    """Display objectives index page with sections as folders"""
+    return render(request, 'plans_reports/objectives_index.html', {})
 
 def save_file(f,file_path):
     if f:
