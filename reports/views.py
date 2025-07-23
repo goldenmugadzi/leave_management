@@ -133,18 +133,15 @@ def create_report(request):
         try:
             region = Regions.objects.filter(id=request.POST.get('region')).first()
             
-            # Handle section - for objectives, use section name directly
-            section_name = request.POST.get('section')
-            # if report_type == "Objective":
-            #     # For objectives, try to find or create the section by name
-            #     section, created = Sections.objects.filter(
-            #         section=section_name,
-            #         defaults={'code': section_name.upper(), 'district_id': '', 'region_id': ''}
-            #     )
-            # else:
-            #     # For reports and plans, use the existing logic
-            
-            section = Sections.objects.filter(section=section_name).first()
+            # Handle section based on report type
+            if report_type == "Objective":
+                # For objectives, use logged in user's section and store section name in report_period
+                section = user.section if user.section else None
+                # Store the section name in report_period field for objectives
+                report_period = request.POST.get('section') if request.POST.get('section') else None
+            else:
+                # For reports and plans, use the existing logic
+                section = Sections.objects.filter(id=request.POST.get('section')).first()
                 
             created_by = UserProfile.objects.filter(id=user.id).first()
             new_plans_and_reports_fields = Report(
@@ -230,14 +227,12 @@ def edit_report(request):
         
         region = Regions.objects.filter(id=request.POST.get('region')).first()
         
-        # Handle section - for objectives, use section name directly
-        section_name = request.POST.get('section')
+        # Handle section based on report type
         if report_type == "Objective":
-            # For objectives, try to find or create the section by name
-            section, created = Sections.objects.get_or_create(
-                section=section_name,
-                defaults={'code': section_name.upper(), 'district_id': '', 'region_id': ''}
-            )
+            # For objectives, use logged in user's section and store section name in report_period
+            section = request.user.section if request.user.section else None
+            # Store the section name in report_period field for objectives
+            report_period = request.POST.get('section') if request.POST.get('section') else None
         else:
             # For reports and plans, use the existing logic
             section = Sections.objects.filter(id=request.POST.get('section')).first()
@@ -319,7 +314,7 @@ def get_plans(request, period):
 
 @login_required
 def get_objectives(request, section_name):
-    """Get objectives filtered by section name"""
+    """Get objectives filtered by section name stored in report_period field"""
     # Map URL section names to display names
     section_mapping = {
         'commercial': 'COMMERCIAL',
@@ -335,17 +330,12 @@ def get_objectives(request, section_name):
     
     display_name = section_mapping.get(section_name, section_name.upper())
     
-    # Try to find the section in the database, or create a filter based on the display name
-    try:
-        section = Sections.objects.filter(section__iexact=display_name).first()
-        objectives = Report.objects.filter(report_type="Objective", section=section, archived=False).all()
-    except Sections.DoesNotExist:
-        # If section doesn't exist in database, filter by section name string
-        objectives = Report.objects.filter(
-            report_type="Objective", 
-            section__section__iexact=display_name, 
-            archived=False
-        ).all()
+    # For objectives, filter by report_period field which contains the section name
+    objectives = Report.objects.filter(
+        report_type="Objective", 
+        report_period=display_name, 
+        archived=False
+    ).all()
     
     files_list = []
     for file in objectives:
@@ -354,7 +344,7 @@ def get_objectives(request, section_name):
             "id": file.id,
             "uploaded_by": file.uploaded_by,
             "region": file.region.region if file.region else "",
-            "report_period": file.report_period,
+            "report_period": file.report_period,  # This contains the section name for objectives
             "date_created": file.date_created.strftime("%Y-%m-%d %H:%M") if file.date_created else "",
             "date_updated": file.date_updated.strftime("%Y-%m-%d %H:%M") if file.date_updated else "",
             "section": file.section.section if file.section else "",
