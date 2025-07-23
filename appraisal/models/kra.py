@@ -3,6 +3,7 @@ from django.contrib.auth import get_user_model
 from helpers.models.timestamp import TimeStamp
 from .helpers import YearQuarter
 from .appraisal import Appraisal
+from .departmental_workplan import DepartmentOutput, OutPutPerformanceDimension
 
 User = get_user_model()
 
@@ -23,53 +24,13 @@ class KeyResultAreaOutCome(TimeStamp):
         return f"{self.key_result_area.key_result_area_description}"
     
 
-class AppraisalKra(TimeStamp):
-    appraisal = models.ForeignKey(Appraisal, on_delete=models.RESTRICT, related_name="appraisal_kra_user_appraisal", null=True, blank=True)
-    quarter = models.ForeignKey(YearQuarter, on_delete=models.RESTRICT)
-    key_result_area = models.ForeignKey(KeyResultArea, on_delete=models.RESTRICT, related_name="key_result_area", null=True, blank=True)
-
-    def __str__(self):
-        return f"{self.appraisal}"
-
-    @property
-    def get_name(self):
-        return self.key_result_area.name
-
-    # @property
-    # def get_weight(self):
-    #     return self.key_result_area.weight
-
-
-PERFORMANCE_INDICATOR = [
-        ('Quantity', 'Quantity'),
-        ('Quality', 'Quality'),
-        ('Timeliness', 'Timeliness'),
-        ('Cost', 'Cost'),
-    ]
-
-class Activity(TimeStamp):
-    appraisal_kra = models.ForeignKey(AppraisalKra, on_delete=models.CASCADE)
-    name = models.CharField(max_length=255, blank=False, null=False)
-    description = models.TextField()
-    weight = models.DecimalField(max_digits=5, decimal_places=2)
-
-    def __str__(self):
-        return f"{self.name}"
-
-    class Meta:
-        verbose_name_plural = "Activities"
-        
-class PerformanceDimension(TimeStamp):
-    activity = models.ForeignKey(Activity, on_delete=models.CASCADE, related_name="performance_indicator_activity")
-    performance_indicator = models.CharField(max_length=30, choices=PERFORMANCE_INDICATOR, null=True, blank=True)
-    description = models.TextField()
-    weight = models.DecimalField(max_digits=5, decimal_places=2)
-    agreed_target = models.DecimalField(max_digits=5, decimal_places=2, default=0.0)
-    allowable_variance = models.DecimalField(max_digits=10, decimal_places=2, default=0.0)
-    is_applicable = models.BooleanField(default=False)
+class AppraisalDepartmentOutput(TimeStamp):
+    appraisal = models.ForeignKey(Appraisal, on_delete=models.RESTRICT, related_name="appraisal_output", null=True, blank=True)
+    department_output = models.ForeignKey(DepartmentOutput, on_delete=models.RESTRICT, related_name="appraisal_output", null=True, blank=True)
+    year_quarter = models.ForeignKey(YearQuarter, on_delete=models.RESTRICT, related_name="quarterly_year")
     
     def __str__(self):
-        return f"{self.activity} - {self.performance_indicator}"
+        return f"{self.appraisal} - {self.year_quarter}"
     
 APPRAISAL_KRA_REVIEWER_STATUS_CHOICES = [
     ("PENDING", "PENDING"),
@@ -77,23 +38,24 @@ APPRAISAL_KRA_REVIEWER_STATUS_CHOICES = [
     ("REJECT", "REJECT"),
 ]
 
-class TargetScore(TimeStamp):
-    performance_dimension = models.OneToOneField(PerformanceDimension, on_delete=models.CASCADE, null=True, blank=True)
+class AppraisalOutPutPerformanceDimensionScore(TimeStamp):
+    appraisal_department_output = models.ForeignKey(AppraisalDepartmentOutput, on_delete=models.RESTRICT, related_name="appraisal_department_output_obj", null=True, blank=True)
+    performance_dimension = models.ForeignKey(OutPutPerformanceDimension, on_delete=models.RESTRICT, related_name="performance_dimension", null=True, blank=True)
     score = models.DecimalField(max_digits=5, decimal_places=2, default=0.0)
     comments = models.TextField(blank=True, null=True)
     is_scored = models.BooleanField(default=False)
     appraiser_confirmation = models.CharField(choices=APPRAISAL_KRA_REVIEWER_STATUS_CHOICES, default=APPRAISAL_KRA_REVIEWER_STATUS_CHOICES[0][0], max_length=10) 
-    
+
     def __str__(self):
-        return f"{self.performance_dimension}"
-    
+        return f"{self.appraisal_department_output} - {self.performance_dimension}"
+
 class ScoreDocument(TimeStamp):
-    target_score = models.ForeignKey(TargetScore, on_delete=models.CASCADE, related_name='documents')
+    performance_dimension_score = models.ForeignKey(AppraisalOutPutPerformanceDimensionScore, on_delete=models.RESTRICT, related_name='performance_dimension_score_obj', null=True, blank=True)
     name = models.CharField(max_length=255, blank=False, null=False)
     documents = models.FileField(upload_to='uploads/appraisal/score_attachments')
 
     def __str__(self):
-        return f"Document for {self.target_score}"
+        return f"Document for {self.performance_dimension_score}"
 
 
 class AppraisalWorkflow(TimeStamp):
@@ -115,12 +77,11 @@ class AppraisalWorkflow(TimeStamp):
         ]
 
 
-
-class AppraisalKraReviewerStatus(TimeStamp):
-    appraisal_kra = models.OneToOneField(AppraisalKra, on_delete=models.RESTRICT)
+class AppraisalDepartmentOutputReviewerStatus(TimeStamp):
+    appraisal_department_output = models.OneToOneField(AppraisalDepartmentOutput, on_delete=models.RESTRICT, related_name="appraisal_department_output_status")
     status = models.CharField(max_length=10, choices=APPRAISAL_KRA_REVIEWER_STATUS_CHOICES, default=APPRAISAL_KRA_REVIEWER_STATUS_CHOICES[0][0])
     comment = models.TextField(null=True, blank=True)
 
     def __str__(self):
-        return f"{self.appraisal_kra}"
+        return f"{self.appraisal_department_output}"
 

@@ -6,9 +6,9 @@ from django.contrib.messages.views import SuccessMessageMixin
 from django.contrib import messages
 from django.shortcuts import get_object_or_404, redirect
 from django.http import JsonResponse
-from ...models import KeyResultArea, AppraisalKra, KeyResultAreaOutCome
+from ...models import KeyResultArea, KeyResultAreaOutCome
 from ...forms import KraCreateForm, KraOutComeCreateForm
-from ...repository.kra import KRARepository, TargetScoreRepository, KRAOutComeRepository
+from ...repository.kra import KRARepository, KRAOutComeRepository
 from ...services.kra import KRAService
 from ..helper import PayloadDeserializationStrategyContext, KraDeserializationStrategy, KraOutComeDeserializationStrategy
 from pydantic import ValidationError
@@ -184,32 +184,6 @@ class KRAUpdateDetailView(SuccessMessageMixin, UpdateView):
         kra_obj_id = self.kwargs.get("kra_id")
         return reverse('kra_update_detail', kwargs={"kra_id": kra_obj_id})
     
-class KRADetailView(TemplateView):
-    template_name = "appraisal/kra/detail.html"
-    
-    def get_object(self):
-        obj = get_object_or_404(AppraisalKra, pk=self.kwargs.get("appraisal_kra_id"))
-        return obj
-    
-    def get_score_objects(self)->List[TargetScoreRepository]:
-        score_repo = TargetScoreRepository()
-        return score_repo.fetch_by_appraisal_kra_id(appraisal_kra_id=self.kwargs.get("appraisal_kra_id"))
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        context["score_objects"] = self.get_score_objects()
-        context["kra_object"] = self.get_object()
-        return context
-    
-    def get(self, request, *args, **kwargs):
-        try:
-            self.get_score_objects()
-        except Exception as e:
-            logger.error(f"KRADetailView for appraisal_kra_id: {self.kwargs.get('appraisal_kra_id')}, failed with error: {e}")
-            return redirect("server_error_view")
-        context = self.get_context_data(**kwargs)
-        return self.render_to_response(context)
-   
 
 class KRAOutComeTemplateView(TemplateView):
     template_name = 'appraisal/kra/outcomes/index.html'

@@ -2,7 +2,7 @@ from pydantic import BaseModel, Field, field_validator
 from decimal import Decimal
 from typing import Literal, Annotated, Optional
 from enum import Enum
-from ...models.kra import PERFORMANCE_INDICATOR, APPRAISAL_KRA_REVIEWER_STATUS_CHOICES
+from ...models.kra import APPRAISAL_KRA_REVIEWER_STATUS_CHOICES
 class KRAType(BaseModel):
     key_result_area_description: str = Field(..., description="The KRA description.")
     goal_description: str = Field(..., description="The goal description.")
@@ -63,9 +63,6 @@ class RoleFilterChoices(Enum):
         return [(choice.value, choice.name.replace("_", " ").title()) for choice in cls]
 
 
-
-VALID_PERFORMANCE_INDICATORS = {choice[1] for choice in PERFORMANCE_INDICATOR}
-
 class ActivityType(BaseModel):
     name: str = Field(..., description="The name of the activity.")
     description: str = Field(..., description="The description of the activity.")
@@ -88,14 +85,6 @@ class PerformanceDimensionType(BaseModel):
         ..., description="The agreed value of the Target."
     )
 
-
-    @field_validator("performance_indicator")
-    @classmethod
-    def validate_performance_indicator(cls, value: str):
-        if value not in VALID_PERFORMANCE_INDICATORS:
-            raise ValueError(f"Invalid performance indicator: {value}")
-        return value   
-    
 class WeightProgressType(BaseModel):
     covered_weight: float
     remaining_weight: float

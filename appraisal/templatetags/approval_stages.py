@@ -1,7 +1,7 @@
 from django import template
 from ..helpers.getters.approval import ApprovalStagesHandler
 from ..helpers.data.approval_stage import ApprovalStageData
-from ..helpers.getters.approval import ApprovalWorkflowQuarterStagesStrategyContext, ScoringStageStrategy, PerformanceReviewStageStrategy, TrainingAndDevelopmentStageStrategy, ReviewStageStrategy
+from ..helpers.getters.approval import ApprovalWorkflowQuarterStagesStrategyContext
 from loguru import logger
 
 register = template.Library()
@@ -36,15 +36,5 @@ def get_stage_data(stage_name: str, appraisal_kra_id: int):
     if not isinstance(stage_name, str) or not isinstance(appraisal_kra_id, int):
         logger.error(f"[get_stage_data()] templatetags, Invalid type for stage_name: {stage_name}, Expected str, got {type(stage_name).__name__} || or appraisal_kra_id: {appraisal_kra_id}, Expects int, got: {type(appraisal_kra_id).__name__}")
         return data
-    match stage_name:
-        
-        case ApprovalStageData.scoring.value:
-            data = ApprovalWorkflowQuarterStagesStrategyContext(strategy=ScoringStageStrategy()).get_stage_quarters_approval(appraisal_kra_id=appraisal_kra_id)
-        case ApprovalStageData.set_performance_progress_review.value:
-            data = ApprovalWorkflowQuarterStagesStrategyContext(strategy=PerformanceReviewStageStrategy()).get_stage_quarters_approval(appraisal_kra_id=appraisal_kra_id)
-        case ApprovalStageData.set_training_and_development_needs.value:
-            data = ApprovalWorkflowQuarterStagesStrategyContext(strategy=TrainingAndDevelopmentStageStrategy()).get_stage_quarters_approval(appraisal_kra_id=appraisal_kra_id)
-        case ApprovalStageData.reviewed.value:
-            data = ApprovalWorkflowQuarterStagesStrategyContext(strategy=TrainingAndDevelopmentStageStrategy()).get_stage_quarters_approval(appraisal_kra_id=appraisal_kra_id)
-        
+    
     return data

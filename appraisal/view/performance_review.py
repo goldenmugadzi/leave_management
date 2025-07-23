@@ -13,7 +13,7 @@ from ..services import (AppraisalService, PerformanceReviewService,
 from ..repository import (AppraisalRepository, UserQualificationRepository, AppraisalExperienceRepository, 
                           ExperienceRepository, PerformanceReviewRepository,
                           TrainingAndDevelopmentRepository)
-from ..helpers.getters import ApprovalStagesHandler, ActivityScoreHandler
+from ..helpers.getters import ApprovalStagesHandler
 
 from ..models import PerformanceProgressReview, AppraisalExperience, TrainingAndDevelopment
 from it.users.models import UserQualification, UserProfile

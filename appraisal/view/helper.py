@@ -4,7 +4,6 @@ from django.contrib import messages
 from django.http import HttpRequest
 from ..helpers.types.kra import KRAType, TargetScoreType, ActivityType, PerformanceDimensionType, KRAOutComeType
 from ..helpers.types.dept_workplan import DepartmentalOutTypes, OutputPerformanceDimensionType
-from ..models import TargetScore
 from pydantic import ValidationError, BaseModel
 from loguru import logger
 

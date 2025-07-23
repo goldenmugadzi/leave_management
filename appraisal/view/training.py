@@ -8,7 +8,7 @@ from django.contrib import messages
 from django.urls import reverse
 
 from ..helpers.types.training import TrainingAndDevelopmentCreateUpdateType
-from ..helpers.getters import ActivityScoreHandler, ApprovalStagesHandler
+from ..helpers.getters import ApprovalStagesHandler
 from it.users.models import UserQualification, UserProfile
 
 from ..forms import InterventionStrategyFormSet, ActionsForm, CompetencyFormSet

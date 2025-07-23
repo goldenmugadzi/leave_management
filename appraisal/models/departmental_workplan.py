@@ -2,14 +2,13 @@ from django.db import models
 from helpers.models.timestamp import TimeStamp
 from django.contrib.auth import get_user_model
 from it.users.models import CostCenter, Designations
-from .kra import KeyResultArea
 
 User = get_user_model()
 
 class DepartmentObjective(TimeStamp):
     created_by = models.ForeignKey(User, on_delete=models.RESTRICT, related_name="dept_objectives_creator", null=True)
     updated_by = models.ForeignKey(User, on_delete=models.RESTRICT, related_name="dept_objectives_updater", null=True)
-    key_result_area = models.ForeignKey(KeyResultArea, on_delete=models.RESTRICT, related_name="dept_key_result_area", null=True, blank=True)
+    key_result_area = models.ForeignKey('appraisal.KeyResultArea', on_delete=models.RESTRICT, related_name="dept_key_result_area", null=True, blank=True)
     cost_center = models.ForeignKey(CostCenter, on_delete=models.RESTRICT, related_name="cost_center_ref", null=True, blank=True)
     objective_description = models.CharField(max_length=500)
     
