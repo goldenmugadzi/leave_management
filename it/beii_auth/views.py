@@ -134,18 +134,18 @@ APPLICATIONS = [
         "iconUrl": "assets/images/customer.png",
         "url": "/commercial/customers"
     },
-    {
-        "name":"fault_locator",
-        "title": "Fault Locator",
-        "iconUrl": "assets/images/fault_locator.png",
-        "url": "/fault_locator/"
-    },
-    {
-        "name": "sanction_for_test",
-        "title": "Sanction For Test",
-        "iconUrl": "assets/images/sanction_for_test.png",
-        "url": "/sanction_for_test/"
-    },
+    # {
+    #     "name":"fault_locator",
+    #     "title": "Fault Locator",
+    #     "iconUrl": "assets/images/fault_locator.png",
+    #     "url": "/fault_locator/"
+    # },
+    # {
+    #     "name": "sanction_for_test",
+    #     "title": "Sanction For Test",
+    #     "iconUrl": "assets/images/sanction_for_test.png",
+    #     "url": "/sanction_for_test/"
+    # },
 ]
 
 REPORTS = [
