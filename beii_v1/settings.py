@@ -138,6 +138,7 @@ INSTALLED_APPS = [
     'widget_tweaks',
     'meetings',
     'leave_management',
+    'sanction_for_test',
 ]
 
 AUTH_USER_MODEL = 'users.UserProfile'

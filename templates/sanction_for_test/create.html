@@ -6,225 +6,226 @@
 {% endblock %}
 
 {% block content %}
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-header">
-                    <h3 class="card-title">
-                        {% if is_edit %}
-                            Edit Sanction For Test Form: {{ sanction_form.form_no }}
-                        {% else %}
-                            Create New Sanction For Test Form
-                        {% endif %}
-                    </h3>
+<div class="content-wrapper">
+  <div class="max-w-4xl mx-auto py-6">
+    <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+      <!-- Header -->
+      <div class="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-4">
+        <h3 class="text-lg font-semibold text-white">
+          {% if is_edit %}
+            <i class="fas fa-edit mr-2"></i>Edit Sanction For Test Form: {{ sanction_form.form_no }}
+          {% else %}
+            <i class="fas fa-plus mr-2"></i>Create New Sanction For Test Form
+          {% endif %}
+        </h3>
+      </div>
+      
+      <form method="post" class="needs-validation" novalidate>
+        {% csrf_token %}
+        
+        <div class="p-6 space-y-6">
+          <!-- Form Information Section (Edit Mode) -->
+          {% if is_edit %}
+            <div class="bg-gray-50 rounded-lg p-4">
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Form Number</label>
+                  <div class="text-lg font-semibold text-gray-900">{{ sanction_form.form_no }}</div>
                 </div>
-                
-                <form method="post" class="needs-validation" novalidate>
-                    {% csrf_token %}
-                    
-                    <div class="card-body">
-                        <!-- Form Information Section -->
-                        {% if is_edit %}
-                            <div class="row mb-4">
-                                <div class="col-md-6">
-                                    <div class="form-group">
-                                        <label class="form-label"><strong>Form Number:</strong></label>
-                                        <p class="form-control-plaintext">{{ sanction_form.form_no }}</p>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="form-group">
-                                        <label class="form-label"><strong>Current Status:</strong></label>
-                                        <p class="form-control-plaintext">
-                                            <span class="badge badge-primary">{{ sanction_form.get_status_display }}</span>
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-                            <hr>
-                        {% endif %}
-
-                        <!-- Status Selection (for new forms or editable forms) -->
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="form-group">
-                                    <label for="{{ form.status.id_for_label }}" class="form-label">
-                                        {{ form.status.label }}
-                                        {% if form.status.field.required %}<span class="text-danger">*</span>{% endif %}
-                                    </label>
-                                    {{ form.status|add_class:"form-control" }}
-                                    {% if form.status.errors %}
-                                        <div class="invalid-feedback d-block">
-                                            {{ form.status.errors.0 }}
-                                        </div>
-                                    {% endif %}
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Section 1.0: ISSUE -->
-                        <div class="card mt-4">
-                            <div class="card-header bg-light">
-                                <h5 class="mb-0">Section 1.0: ISSUE</h5>
-                            </div>
-                            <div class="card-body">
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <div class="form-group">
-                                            <label for="{{ form.work_to_be_carried_out.id_for_label }}" class="form-label">
-                                                {{ form.work_to_be_carried_out.label }}
-                                                {% if form.work_to_be_carried_out.field.required %}<span class="text-danger">*</span>{% endif %}
-                                            </label>
-                                            {{ form.work_to_be_carried_out|add_class:"form-control" }}
-                                            {% if form.work_to_be_carried_out.errors %}
-                                                <div class="invalid-feedback d-block">
-                                                    {{ form.work_to_be_carried_out.errors.0 }}
-                                                </div>
-                                            {% endif %}
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="form-group">
-                                            <label for="{{ form.plant_or_equipment_to_be_tested.id_for_label }}" class="form-label">
-                                                {{ form.plant_or_equipment_to_be_tested.label }}
-                                                {% if form.plant_or_equipment_to_be_tested.field.required %}<span class="text-danger">*</span>{% endif %}
-                                            </label>
-                                            {{ form.plant_or_equipment_to_be_tested|add_class:"form-control" }}
-                                            {% if form.plant_or_equipment_to_be_tested.errors %}
-                                                <div class="invalid-feedback d-block">
-                                                    {{ form.plant_or_equipment_to_be_tested.errors.0 }}
-                                                </div>
-                                            {% endif %}
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <div class="form-group">
-                                            <label for="{{ form.points_of_isolation.id_for_label }}" class="form-label">
-                                                {{ form.points_of_isolation.label }}
-                                            </label>
-                                            {{ form.points_of_isolation|add_class:"form-control" }}
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="form-group">
-                                            <label for="{{ form.nearest_point_live.id_for_label }}" class="form-label">
-                                                {{ form.nearest_point_live.label }}
-                                            </label>
-                                            {{ form.nearest_point_live|add_class:"form-control" }}
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <div class="form-group">
-                                            <label for="{{ form.circuit_main_earth_connected_at.id_for_label }}" class="form-label">
-                                                {{ form.circuit_main_earth_connected_at.label }}
-                                            </label>
-                                            {{ form.circuit_main_earth_connected_at|add_class:"form-control" }}
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="form-group">
-                                            <label for="{{ form.danger_notices.id_for_label }}" class="form-label">
-                                                {{ form.danger_notices.label }}
-                                            </label>
-                                            {{ form.danger_notices|add_class:"form-control" }}
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <div class="form-group">
-                                            <label for="{{ form.caution_notices.id_for_label }}" class="form-label">
-                                                {{ form.caution_notices.label }}
-                                            </label>
-                                            {{ form.caution_notices|add_class:"form-control" }}
-                                        </div>
-                                    </div>
-                                    <div class="col-md-6">
-                                        <div class="form-group">
-                                            <label for="{{ form.special_keys.id_for_label }}" class="form-label">
-                                                {{ form.special_keys.label }}
-                                            </label>
-                                            {{ form.special_keys|add_class:"form-control" }}
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="row">
-                                    <div class="col-12">
-                                        <div class="form-group">
-                                            <label for="{{ form.other_precaution.id_for_label }}" class="form-label">
-                                                {{ form.other_precaution.label }}
-                                            </label>
-                                            {{ form.other_precaution|add_class:"form-control" }}
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Additional Sections for Edit Mode -->
-                        {% if is_edit and sanction_form.status != 'draft' %}
-                            <div class="card mt-4">
-                                <div class="card-header bg-light">
-                                    <h5 class="mb-0">Additional Information</h5>
-                                </div>
-                                <div class="card-body">
-                                    <div class="row">
-                                        <div class="col-md-6">
-                                            <div class="form-group">
-                                                <label for="{{ form.exceptions.id_for_label }}" class="form-label">
-                                                    {{ form.exceptions.label }}
-                                                </label>
-                                                {{ form.exceptions|add_class:"form-control" }}
-                                            </div>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <div class="form-group">
-                                                <label for="{{ form.cancellation_reason.id_for_label }}" class="form-label">
-                                                    {{ form.cancellation_reason.label }}
-                                                </label>
-                                                {{ form.cancellation_reason|add_class:"form-control" }}
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        {% endif %}
-
-                        <!-- Form Validation Errors -->
-                        {% if form.non_field_errors %}
-                            <div class="alert alert-danger mt-3">
-                                {{ form.non_field_errors }}
-                            </div>
-                        {% endif %}
-                    </div>
-
-                    <div class="card-footer">
-                        <div class="row">
-                            <div class="col-12">
-                                <button type="submit" class="btn btn-primary">
-                                    <i class="fas fa-save"></i>
-                                    {% if is_edit %}Update{% else %}Create{% endif %} Form
-                                </button>
-                                <a href="{% if is_edit %}{% url 'sanction_for_test:detail' sanction_form.pk %}{% else %}{% url 'sanction_for_test:list' %}{% endif %}" 
-                                   class="btn btn-secondary">
-                                    <i class="fas fa-times"></i> Cancel
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                </form>
+                <div>
+                  <label class="block text-sm font-medium text-gray-700 mb-1">Current Status</label>
+                  <span class="inline-flex px-3 py-1 text-sm font-semibold rounded-full
+                    {% if sanction_form.status == 'draft' %}bg-gray-100 text-gray-800
+                    {% elif sanction_form.status == 'issued' %}bg-blue-100 text-blue-800
+                    {% elif sanction_form.status == 'received' %}bg-yellow-100 text-yellow-800
+                    {% elif sanction_form.status == 'cleared' %}bg-green-100 text-green-800
+                    {% elif sanction_form.status == 'cancelled' %}bg-red-100 text-red-800
+                    {% elif sanction_form.status == 'completed' %}bg-purple-100 text-purple-800
+                    {% endif %}">
+                    {{ sanction_form.get_status_display }}
+                  </span>
+                </div>
+              </div>
             </div>
+          {% endif %}
+
+          <!-- Status Selection -->
+          <div class="bg-white border border-gray-200 rounded-lg p-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label for="{{ form.status.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                  {{ form.status.label }}
+                  {% if form.status.field.required %}
+                    <span class="text-red-500">*</span>
+                  {% endif %}
+                </label>
+                {{ form.status|add_class:"w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" }}
+                {% if form.status.errors %}
+                  <div class="mt-1 text-sm text-red-600">
+                    {{ form.status.errors.0 }}
+                  </div>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+
+          <!-- Section 1.0: ISSUE -->
+          <div class="bg-white border border-gray-200 rounded-lg overflow-hidden">
+            <div class="bg-blue-50 px-6 py-3 border-b border-gray-200">
+              <h5 class="text-lg font-semibold text-gray-900">
+                <i class="fas fa-clipboard-list mr-2 text-blue-600"></i>Section 1.0: ISSUE
+              </h5>
+            </div>
+            <div class="p-6 space-y-4">
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label for="{{ form.work_to_be_carried_out.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                    {{ form.work_to_be_carried_out.label }}
+                    {% if form.work_to_be_carried_out.field.required %}
+                      <span class="text-red-500">*</span>
+                    {% endif %}
+                  </label>
+                  {{ form.work_to_be_carried_out|add_class:"w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" }}
+                  {% if form.work_to_be_carried_out.errors %}
+                    <div class="mt-1 text-sm text-red-600">
+                      {{ form.work_to_be_carried_out.errors.0 }}
+                    </div>
+                  {% endif %}
+                </div>
+                <div>
+                  <label for="{{ form.plant_or_equipment_to_be_tested.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                    {{ form.plant_or_equipment_to_be_tested.label }}
+                    {% if form.plant_or_equipment_to_be_tested.field.required %}
+                      <span class="text-red-500">*</span>
+                    {% endif %}
+                  </label>
+                  {{ form.plant_or_equipment_to_be_tested|add_class:"w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" }}
+                  {% if form.plant_or_equipment_to_be_tested.errors %}
+                    <div class="mt-1 text-sm text-red-600">
+                      {{ form.plant_or_equipment_to_be_tested.errors.0 }}
+                    </div>
+                  {% endif %}
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label for="{{ form.points_of_isolation.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                    {{ form.points_of_isolation.label }}
+                  </label>
+                  {{ form.points_of_isolation|add_class:"w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" }}
+                </div>
+                <div>
+                  <label for="{{ form.nearest_point_live.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                    {{ form.nearest_point_live.label }}
+                  </label>
+                  {{ form.nearest_point_live|add_class:"w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" }}
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label for="{{ form.circuit_main_earth_connected_at.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                    {{ form.circuit_main_earth_connected_at.label }}
+                  </label>
+                  {{ form.circuit_main_earth_connected_at|add_class:"w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" }}
+                </div>
+                <div>
+                  <label for="{{ form.danger_notices.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                    {{ form.danger_notices.label }}
+                  </label>
+                  {{ form.danger_notices|add_class:"w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" }}
+                </div>
+              </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label for="{{ form.caution_notices.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                    {{ form.caution_notices.label }}
+                  </label>
+                  {{ form.caution_notices|add_class:"w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" }}
+                </div>
+                <div>
+                  <label for="{{ form.special_keys.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                    {{ form.special_keys.label }}
+                  </label>
+                  {{ form.special_keys|add_class:"w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" }}
+                </div>
+              </div>
+
+              <div>
+                <label for="{{ form.other_precaution.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                  {{ form.other_precaution.label }}
+                </label>
+                {{ form.other_precaution|add_class:"w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" }}
+              </div>
+            </div>
+          </div>
+
+          <!-- Additional Sections for Edit Mode -->
+          {% if is_edit and sanction_form.status != 'draft' %}
+            <div class="bg-white border border-gray-200 rounded-lg overflow-hidden">
+              <div class="bg-green-50 px-6 py-3 border-b border-gray-200">
+                <h5 class="text-lg font-semibold text-gray-900">
+                  <i class="fas fa-info-circle mr-2 text-green-600"></i>Additional Information
+                </h5>
+              </div>
+              <div class="p-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label for="{{ form.exceptions.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                      {{ form.exceptions.label }}
+                    </label>
+                    {{ form.exceptions|add_class:"w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" }}
+                  </div>
+                  <div>
+                    <label for="{{ form.cancellation_reason.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                      {{ form.cancellation_reason.label }}
+                    </label>
+                    {{ form.cancellation_reason|add_class:"w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500" }}
+                  </div>
+                </div>
+              </div>
+            </div>
+          {% endif %}
+
+          <!-- Form Validation Errors -->
+          {% if form.non_field_errors %}
+            <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+              <div class="flex">
+                <div class="flex-shrink-0">
+                  <i class="fas fa-exclamation-circle text-red-400"></i>
+                </div>
+                <div class="ml-3">
+                  <h3 class="text-sm font-medium text-red-800">
+                    Please correct the following errors:
+                  </h3>
+                  <div class="mt-2 text-sm text-red-700">
+                    {{ form.non_field_errors }}
+                  </div>
+                </div>
+              </div>
+            </div>
+          {% endif %}
         </div>
+
+        <!-- Footer Actions -->
+        <div class="bg-gray-50 px-6 py-4 border-t border-gray-200">
+          <div class="flex justify-end space-x-3">
+            <a href="{% if is_edit %}{% url 'sanction_for_test:detail' sanction_form.pk %}{% else %}{% url 'sanction_for_test:list' %}{% endif %}" 
+               class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+              <i class="fas fa-times mr-2"></i>Cancel
+            </a>
+            <button type="submit" 
+                    class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+              <i class="fas fa-save mr-2"></i>
+              {% if is_edit %}Update{% else %}Create{% endif %} Form
+            </button>
+          </div>
+        </div>
+      </form>
     </div>
+  </div>
 </div>
 
 <script>

@@ -2,230 +2,232 @@
 {% load static %}
 
 {% block content %}
-<div class="content-wrapper p-4">
-    <div class="row">
-        <div class="col-12">
-            <div class="page-header">
-                <h1 class="page-title">Sanction For Test Reports</h1>
-                <div class="page-breadcrumb">
-                    <nav aria-label="breadcrumb">
-                        <ol class="breadcrumb">
-                            <li class="breadcrumb-item"><a href="{% url 'sanction_for_test:list' %}">Sanction Forms</a></li>
-                            <li class="breadcrumb-item active" aria-current="page">Reports</li>
-                        </ol>
-                    </nav>
-                </div>
-            </div>
-        </div>
+<div class="content-wrapper">
+  <div class="max-w-7xl mx-auto py-6">
+    <div class="flex justify-between items-center mb-6">
+      <h2 class="text-2xl font-bold text-gray-900">Sanction For Test Reports</h2>
+      <a href="{% url 'sanction_for_test:list' %}" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg">
+        <i class="fas fa-list mr-2"></i>View All Forms
+      </a>
     </div>
 
     {% if error %}
-        <div class="alert alert-danger">
-            <strong>Error:</strong> {{ error }}
+      <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+        <div class="flex">
+          <div class="flex-shrink-0">
+            <i class="fas fa-exclamation-circle text-red-400"></i>
+          </div>
+          <div class="ml-3">
+            <h3 class="text-sm font-medium text-red-800">Error</h3>
+            <div class="mt-2 text-sm text-red-700">{{ error }}</div>
+          </div>
         </div>
+      </div>
     {% else %}
-        <!-- Statistics Cards -->
-        <div class="row mb-4">
-            <div class="col-md-3">
-                <div class="card bg-primary text-white">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between">
-                            <div>
-                                <h4 class="card-title">Total Forms</h4>
-                                <h2>{{ total_forms }}</h2>
-                            </div>
-                            <div class="align-self-center">
-                                <i class="fas fa-file-alt fa-2x"></i>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+      <!-- Quick Stats -->
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+        <div class="bg-white rounded-lg shadow-sm p-6">
+          <div class="flex items-center">
+            <div class="text-3xl text-blue-500">
+              <i class="fas fa-file-alt"></i>
             </div>
+            <div class="ml-4">
+              <p class="text-sm text-gray-600">Total Forms</p>
+              <p class="text-2xl font-bold text-gray-900">{{ total_forms }}</p>
+            </div>
+          </div>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow-sm p-6">
+          <div class="flex items-center">
+            <div class="text-3xl text-yellow-500">
+              <i class="fas fa-clock"></i>
+            </div>
+            <div class="ml-4">
+              <p class="text-sm text-gray-600">Pending</p>
+              <p class="text-2xl font-bold text-gray-900">{{ pending_count }}</p>
+            </div>
+          </div>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow-sm p-6">
+          <div class="flex items-center">
+            <div class="text-3xl text-green-500">
+              <i class="fas fa-check-circle"></i>
+            </div>
+            <div class="ml-4">
+              <p class="text-sm text-gray-600">Approved</p>
+              <p class="text-2xl font-bold text-gray-900">{{ approved_count }}</p>
+            </div>
+          </div>
+        </div>
+        
+        <div class="bg-white rounded-lg shadow-sm p-6">
+          <div class="flex items-center">
+            <div class="text-3xl text-red-500">
+              <i class="fas fa-times-circle"></i>
+            </div>
+            <div class="ml-4">
+              <p class="text-sm text-gray-600">Rejected</p>
+              <p class="text-2xl font-bold text-gray-900">{{ rejected_count }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
 
-            <div class="col-md-3">
-                <div class="card bg-warning text-white">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between">
-                            <div>
-                                <h4 class="card-title">Pending</h4>
-                                <h2>{{ pending_count }}</h2>
-                            </div>
-                            <div class="align-self-center">
-                                <i class="fas fa-clock fa-2x"></i>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+      <!-- Additional Statistics -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+          <div class="bg-gradient-to-r from-blue-500 to-blue-600 px-6 py-3">
+            <h5 class="text-lg font-semibold text-white">
+              <i class="fas fa-chart-pie mr-2"></i>Status Breakdown
+            </h5>
+          </div>
+          <div class="p-6">
+            <div class="space-y-3">
+              <div class="flex justify-between items-center">
+                <span class="text-gray-700">Draft:</span>
+                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-800">{{ draft_count }}</span>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-gray-700">Pending:</span>
+                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">{{ pending_count }}</span>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-gray-700">Approved:</span>
+                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">{{ approved_count }}</span>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-gray-700">Rejected:</span>
+                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">{{ rejected_count }}</span>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-gray-700">Completed:</span>
+                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">{{ completed_count }}</span>
+              </div>
             </div>
-
-            <div class="col-md-3">
-                <div class="card bg-success text-white">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between">
-                            <div>
-                                <h4 class="card-title">Approved</h4>
-                                <h2>{{ approved_count }}</h2>
-                            </div>
-                            <div class="align-self-center">
-                                <i class="fas fa-check-circle fa-2x"></i>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-md-3">
-                <div class="card bg-danger text-white">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between">
-                            <div>
-                                <h4 class="card-title">Rejected</h4>
-                                <h2>{{ rejected_count }}</h2>
-                            </div>
-                            <div class="align-self-center">
-                                <i class="fas fa-times-circle fa-2x"></i>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+          </div>
         </div>
 
-        <!-- Additional Statistics -->
-        <div class="row mb-4">
-            <div class="col-md-4">
-                <div class="card">
-                    <div class="card-header">
-                        <h5 class="card-title">Status Breakdown</h5>
-                    </div>
-                    <div class="card-body">
-                        <ul class="list-unstyled">
-                            <li class="d-flex justify-content-between">
-                                <span>Draft:</span>
-                                <span class="badge badge-secondary">{{ draft_count }}</span>
-                            </li>
-                            <li class="d-flex justify-content-between">
-                                <span>Pending:</span>
-                                <span class="badge badge-warning">{{ pending_count }}</span>
-                            </li>
-                            <li class="d-flex justify-content-between">
-                                <span>Approved:</span>
-                                <span class="badge badge-success">{{ approved_count }}</span>
-                            </li>
-                            <li class="d-flex justify-content-between">
-                                <span>Rejected:</span>
-                                <span class="badge badge-danger">{{ rejected_count }}</span>
-                            </li>
-                            <li class="d-flex justify-content-between">
-                                <span>Completed:</span>
-                                <span class="badge badge-info">{{ completed_count }}</span>
-                            </li>
-                        </ul>
-                    </div>
-                </div>
+        <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+          <div class="bg-gradient-to-r from-orange-500 to-orange-600 px-6 py-3">
+            <h5 class="text-lg font-semibold text-white">
+              <i class="fas fa-exclamation-triangle mr-2"></i>Priority Analysis
+            </h5>
+          </div>
+          <div class="p-6">
+            <div class="space-y-3">
+              <div class="flex justify-between items-center">
+                <span class="text-gray-700">High Priority:</span>
+                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">{{ high_priority }}</span>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-gray-700">Critical Priority:</span>
+                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">{{ critical_priority }}</span>
+              </div>
             </div>
-
-            <div class="col-md-4">
-                <div class="card">
-                    <div class="card-header">
-                        <h5 class="card-title">Priority Analysis</h5>
-                    </div>
-                    <div class="card-body">
-                        <ul class="list-unstyled">
-                            <li class="d-flex justify-content-between">
-                                <span>High Priority:</span>
-                                <span class="badge badge-warning">{{ high_priority }}</span>
-                            </li>
-                            <li class="d-flex justify-content-between">
-                                <span>Critical Priority:</span>
-                                <span class="badge badge-danger">{{ critical_priority }}</span>
-                            </li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-md-4">
-                <div class="card">
-                    <div class="card-header">
-                        <h5 class="card-title">Risk Analysis</h5>
-                    </div>
-                    <div class="card-body">
-                        <ul class="list-unstyled">
-                            <li class="d-flex justify-content-between">
-                                <span>High Risk:</span>
-                                <span class="badge badge-warning">{{ high_risk }}</span>
-                            </li>
-                            <li class="d-flex justify-content-between">
-                                <span>Extreme Risk:</span>
-                                <span class="badge badge-danger">{{ extreme_risk }}</span>
-                            </li>
-                            <li class="d-flex justify-content-between">
-                                <span>Recent Forms (30 days):</span>
-                                <span class="badge badge-info">{{ recent_forms }}</span>
-                            </li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
+          </div>
         </div>
 
-        <!-- Recent Forms Table -->
-        <div class="card">
-            <div class="card-header">
-                <h5 class="card-title">Recent Sanction Forms</h5>
+        <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+          <div class="bg-gradient-to-r from-purple-500 to-purple-600 px-6 py-3">
+            <h5 class="text-lg font-semibold text-white">
+              <i class="fas fa-shield-alt mr-2"></i>Risk Analysis
+            </h5>
+          </div>
+          <div class="p-6">
+            <div class="space-y-3">
+              <div class="flex justify-between items-center">
+                <span class="text-gray-700">High Risk:</span>
+                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">{{ high_risk }}</span>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-gray-700">Extreme Risk:</span>
+                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">{{ extreme_risk }}</span>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-gray-700">Recent Forms (30 days):</span>
+                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">{{ recent_forms }}</span>
+              </div>
             </div>
-            <div class="card-body">
-                <div class="table-responsive">
-                    <table class="table table-striped">
-                        <thead>
-                            <tr>
-                                <th>Form No</th>
-                                <th>Status</th>
-                                <th>Priority</th>
-                                <th>Risk Level</th>
-                                <th>Created By</th>
-                                <th>Date Created</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for form in sanction_forms %}
-                            <tr>
-                                <td>{{ form.form_no }}</td>
-                                <td>
-                                    <span class="badge badge-{% if form.status == 'approved' %}success{% elif form.status == 'rejected' %}danger{% elif form.status == 'pending' %}warning{% else %}secondary{% endif %}">
-                                        {{ form.get_status_display }}
-                                    </span>
-                                </td>
-                                <td>
-                                    <span class="badge badge-{% if form.priority == 'critical' %}danger{% elif form.priority == 'high' %}warning{% else %}secondary{% endif %}">
-                                        {{ form.get_priority_display }}
-                                    </span>
-                                </td>
-                                <td>
-                                    <span class="badge badge-{% if form.risk_level == 'extreme' %}danger{% elif form.risk_level == 'high' %}warning{% else %}secondary{% endif %}">
-                                        {{ form.get_risk_level_display }}
-                                    </span>
-                                </td>
-                                <td>{{ form.created_by.get_full_name|default:form.created_by.username }}</td>
-                                <td>{{ form.created_at|date:"Y-m-d H:i" }}</td>
-                                <td>
-                                    <a href="{% url 'sanction_for_test:detail' form.pk %}" class="btn btn-sm btn-outline-primary">
-                                        <i class="fas fa-eye"></i> View
-                                    </a>
-                                </td>
-                            </tr>
-                            {% empty %}
-                            <tr>
-                                <td colspan="7" class="text-center">No sanction forms found.</td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+          </div>
         </div>
+      </div>
+
+      <!-- Recent Forms Table -->
+      <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+        <div class="bg-gradient-to-r from-gray-700 to-gray-800 px-6 py-3">
+          <h5 class="text-lg font-semibold text-white">
+            <i class="fas fa-clock mr-2"></i>Recent Sanction Forms
+          </h5>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+              <tr>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Form No</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Priority</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Risk Level</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created By</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date Created</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+              {% for form in sanction_forms %}
+                <tr class="hover:bg-gray-50">
+                  <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ form.form_no }}</td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full
+                      {% if form.status == 'approved' %}bg-green-100 text-green-800
+                      {% elif form.status == 'rejected' %}bg-red-100 text-red-800
+                      {% elif form.status == 'pending' %}bg-yellow-100 text-yellow-800
+                      {% else %}bg-gray-100 text-gray-800{% endif %}">
+                      {{ form.get_status_display }}
+                    </span>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full
+                      {% if form.priority == 'critical' %}bg-red-100 text-red-800
+                      {% elif form.priority == 'high' %}bg-yellow-100 text-yellow-800
+                      {% else %}bg-gray-100 text-gray-800{% endif %}">
+                      {{ form.get_priority_display }}
+                    </span>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap">
+                    <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full
+                      {% if form.risk_level == 'extreme' %}bg-red-100 text-red-800
+                      {% elif form.risk_level == 'high' %}bg-yellow-100 text-yellow-800
+                      {% else %}bg-gray-100 text-gray-800{% endif %}">
+                      {{ form.get_risk_level_display }}
+                    </span>
+                  </td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ form.created_by.get_full_name|default:form.created_by.username }}</td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ form.created_at|date:"Y-m-d H:i" }}</td>
+                  <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <a href="{% url 'sanction_for_test:detail' form.pk %}" class="text-blue-600 hover:text-blue-900">
+                      <i class="fas fa-eye mr-1"></i>View
+                    </a>
+                  </td>
+                </tr>
+              {% empty %}
+                <tr>
+                  <td colspan="7" class="px-6 py-4 text-center text-gray-500">
+                    <div class="py-8">
+                      <div class="text-gray-400 text-4xl mb-2">
+                        <i class="fas fa-clipboard-list"></i>
+                      </div>
+                      <p>No sanction forms found.</p>
+                    </div>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
     {% endif %}
+  </div>
 </div>
 {% endblock %}

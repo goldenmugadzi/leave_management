@@ -73,6 +73,7 @@ urlpatterns = [
     # path('api/', include('api.urls')),  # Commented out until api.urls exists
     path('', include('meetings.urls')),
     path('', include('leave_management.urls')),
+    path('sanction_for_test/', include('sanction_for_test.urls')),
       
     
     path('api-auth/', include('rest_framework.urls')),
