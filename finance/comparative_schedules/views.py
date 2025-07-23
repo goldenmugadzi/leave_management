@@ -4848,3 +4848,38 @@ def api_update_cs_pr_items(request, cs_id):
             "message": f"Error updating PR items: {str(ex)}",
             "success": False,
         }, status=500)
+
+@login_required 
+@require_http_methods(["GET"])
+def api_get_users_with_roles(request):
+    """API endpoint to get users with their roles for approval table"""
+    try:
+        users = UserProfile.objects.prefetch_related('roles').all()
+        users_data = []
+        
+        for user in users:
+            # Get user's roles for comparative_schedule application
+            user_roles = []
+            for role in user.roles.all():
+                if role.application == 'comparative_schedule':
+                    user_roles.append({
+                        'role': role.role,
+                        'name': role.name,
+                        'description': role.description
+                    })
+            
+            users_data.append({
+                'id': user.id,
+                'username': user.username,
+                'first_name': user.first_name,
+                'last_name': user.last_name,
+                'name': f"{user.first_name} {user.last_name}".strip(),
+                'roles': user_roles,
+                'region': user.region.name if user.region else None,
+                'section': user.section.name if user.section else None
+            })
+        
+        return JsonResponse(users_data, safe=False)
+    except Exception as ex:
+        print("Error fetching users with roles:", ex)
+        return JsonResponse({'error': str(ex)}, status=500)

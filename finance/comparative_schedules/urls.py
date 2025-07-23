@@ -26,6 +26,7 @@ urlpatterns = [
     
     # Individual API endpoints
     path('api/users/', api_get_users, name='api_get_users'),
+    path('api/users-with-roles/', api_get_users_with_roles, name='api_get_users_with_roles'),
     path('api/suppliers/', api_get_suppliers, name='api_get_suppliers'),
     path('api/currencies/', api_get_currencies, name='api_get_currencies'),
     path('api/proc_plans/', api_get_proc_plans, name='api_get_proc_plans'),
