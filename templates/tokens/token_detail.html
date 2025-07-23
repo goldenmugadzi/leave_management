@@ -119,7 +119,7 @@
                                            href="{{ token.recoveredmeter_set.last.picture.url }}">
                                             {{ token.reimbursement_set.last.purpose|default_if_none:'' }} picture
                                         </a>
-                                    {% elif token.tampertoken_set.last.is_for == 'Fauty Maintanance' %}
+                                    {% elif token.tampertoken_set.last.is_for == 'Fault Maintenance' %}
                                         <div class="font-bold text-center ">
                                             {% if  token.faultmaintanance_set.last.photo %}
                                                 <a class="text-blue-900 m-auto shadow-lg mb-2 p-2 border-yellow-500 border border-1 font-bold inline-block text-start rounded-full text-sm"
@@ -127,7 +127,7 @@
                                                     {{ token.tampertoken_set.last.is_for|default_if_none:'' }} Picture
                                                 </a>
                                             {% endif %}
-                                            <p class="font-bold mb-2">Fauty Maintanance</p>
+                                            <p class="font-bold mb-2">Fault Maintenance</p>
                                             <p class="mb-2 font-normal">Fault Code {{ token.faultmaintanance_set.last.code|default_if_none:'' }}</p>
                                         </div>
                                     {% elif token.tampertoken_set.last.is_for == 'Reconnection' %}
@@ -137,7 +137,7 @@
                                                 {{ token.tampertoken_set.last.is_for|default_if_none:'' }} Invoice
                                             </a>
                                             <a class="text-blue-900 m-auto shadow-lg mb-2 p-2 border-yellow-500 border border-1 font-bold inline-block text-end rounded-full text-sm"
-                                               href="{{ token.reconnection_set.last.proof_of_payment.url }}">
+                                               href="{{ token.reconnection_set.last.proof_of_payment.url}}">
                                                 {{ token.tampertoken_set.last.is_for|default_if_none:'' }} Proof of payment
                                             </a>
                                         </div>
@@ -153,34 +153,21 @@
                                         </a>
                                     {% elif token.reimbursement_set.last.purpose == 'Old Token' and token.oldtoken_set.last.old_token %}
                                         <a class="text-blue-900 m-auto shadow-lg mb-2 p-2 border-yellow-500 border border-1 font-bold inline-block text-start rounded-full text-sm"
-                                           href="{{ token.oldtoken_set.last.old_token.url }}">
+                                           href="{{ token.oldtoken_set.last.old_token.url}}">
                                             {{ token.reimbursement_set.last.purpose|default_if_none:'' }} Picture
                                         </a>
                                     {% endif %}
                                 {% elif token.type == 'CLEAR CREDIT' %}
                                     {% if  token.clearcredit_set.last.amount > 0 and token.clearcredit_set.last.receipt %}
                                         <a class="text-blue-900 m-auto shadow-lg mb-2 p-2 border-yellow-500 border border-1 font-bold inline-block text-start rounded-full text-sm"
-                                           href="{{ token.clearcredit_set.last.receipt.url }}">
+                                           href="{{ token.clearcredit_set.last.receipt.url}}">
                                             Pernalty paid : ${{ token.clearcredit_set.last.amount|default_if_none:'' }}
                                         </a>
                                     {% elif token.clearcredit_set.last.amount > 0 %}
                                         <div class="font-bold text-center ">
                                             <p class="font-bold mb-2">Pernalty paid : ${{ token.clearcredit_set.last.amount|default_if_none:'' }}</p>
                                         </div>
-                                    {% endif %}
-                                {% endif %}
-                                <p class="text-center font-bold text-xl">Additional attachments</p>
-                                {% if token.additional_attachments.all %}
-                                <div class="grid grid-cols-3 gap-1">
-                                    {% for attachment in token.additional_attachments.all %}
-                                      <a class="text-blue-900 m-auto shadow-lg mb-2 p-2 border-yellow-500 border border-1 font-bold inline-block text-start rounded-full text-sm"
-                                         href="{{ attachment.file.url }}">
-                                         {{ attachment.file.name|basename }}
-                                      </a>
-                                  {% endfor %}
-                                </div>
-                                {% else %}
-                                  <p class="text-center">No additional attachments</p>
+                                        {% endif %}
                                 {% endif %}
                             </div>
                             <div class="card-body m-2   px-2 rounded">

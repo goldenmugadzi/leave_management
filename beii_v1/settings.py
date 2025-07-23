@@ -18,22 +18,16 @@ SECRET_KEY = 'django-insecure-7per#nouy422m0!hn0!ecb7ltnq#!^#g!2r5&%^5c%v(!ivv&a
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG', default=False, cast=bool)
 
-ALLOWED_HOSTS = [config('HOST'), "127.0.0.1", "172.16.29.32", "172.16.28.32", "172.16.8.99", "businessexcellence.zetdc.co.zw"]
+ALLOWED_HOSTS = ["*"]
+CORS_ALLOW_ALL_ORIGINS = True
 
-CORS_ALLOWED_ORIGINS = [
-    config('BASE_URL'),
-    "https://businessexcellence.zetdc.co.zw",
-    "https://businessexcellence.zetdc.co.zw:3000", 
-    "http://172.16.28.32:9300",
-    config('BASE_URL') + ":" + config('PORT'),
-    config('BASE_URL'),
-    "https://businessexcellence.zetdc.co.zw",
-    "http://172.16.28.32:9300",
-    config('BASE_URL') + ":3000",
-]
+# CORS_ALLOWED_ORIGINS = [
+#     config('BASE_URL') + ":" + config('PORT'),
+#     config('BASE_URL') + ":3000",
+# ]
 
-CSRF_TRUSTED_ORIGINS = [config('BASE_URL'), config('BASE_URL') + ":" + config('PORT'), "http://172.16.28.32:9300", "https://businessexcellence.zetdc.co.zw", "https://businessexcellence.zetdc.co.zw:3000",]
-
+# CORS_ALLOW_ALL_ORIGINS = True
+CSRF_TRUSTED_ORIGINS = [config('BASE_URL'), config('BASE_URL') + ":" + config('PORT')]
 
 CORS_ALLOW_HEADERS = ('content-disposition', 'accept-encoding',
                       'content-type', 'accept', 'origin', 'authorization')
@@ -75,7 +69,7 @@ SIMPLE_JWT = {
     "SLIDING_TOKEN_LIFETIME": timedelta(minutes=10),
     "SLIDING_TOKEN_REFRESH_LIFETIME": timedelta(days=1),
 
-    "TOKEN_OBTAIN_SERIALIZER": "it.users.serializers.MyTokenObtainPairSerializer",
+    "TOKEN_OBTAIN_SERIALIZER": "users.serializers.MyTokenObtainPairSerializer",
     "TOKEN_REFRESH_SERIALIZER": "rest_framework_simplejwt.serializers.TokenRefreshSerializer",
     "TOKEN_VERIFY_SERIALIZER": "rest_framework_simplejwt.serializers.TokenVerifySerializer",
     "TOKEN_BLACKLIST_SERIALIZER": "rest_framework_simplejwt.serializers.TokenBlacklistSerializer",
@@ -125,28 +119,31 @@ INSTALLED_APPS = [
     'finance.Direct_purchases',
     'ACE2',
     'esearch',
-    'Transport',
-    'Hardware_Faults',
-    'Asset_Register',
-    'widget_tweaks',
-    'safety.apps.SafetyConfig',
-    'meetings',
-    'leave_management',
+    'toolsandequipment',
     'reports',
     'sweetify',
     'mathfilters',
     'tokens',
     'commecial.tempertockens',
     'competence_building.apps.CompetenceBuildingConfig',
+    'graphene_django',
+    'graphene_file_upload',
+    'safety', 
     'comm_files',
     'django_prometheus',
     'api.ops_maintenance.safety_operations',
+    'Transport',
+    'Hardware_Faults',
+    'Asset_Register',
+    'widget_tweaks',
+    'meetings',
+    'leave_management',
 ]
 
 AUTH_USER_MODEL = 'users.UserProfile'
 
 MIDDLEWARE = [
-    'django_prometheus.middleware.PrometheusBeforeMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'corsheaders.middleware.CorsMiddleware',
@@ -157,8 +154,7 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'it.beii_auth.inactive_user_middleware.InactiveUserMiddleware',
     'it.beii_auth.session_middleware.LimitConcurrentSessionsMiddleware',
-    'it.beii_auth.session_middleware.SessionErrorSessionMiddleware',
-    'django_prometheus.middleware.PrometheusAfterMiddleware',
+    'it.beii_auth.session_middleware.SessionErrorSessionMiddleware'
 ]
 
 ROOT_URLCONF = 'beii_v1.urls'
@@ -174,29 +170,23 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
-                'it.beii_auth.context_processors.environment_vars',
-                'it.beii_auth.context_processors.captcha_context',
+                'it.beii_auth.context_processors.environment_vars'
             ],
         },
     },
 ]
 
 WSGI_APPLICATION = 'beii_v1.wsgi.application'
+ASGI_APPLICATION = 'beii_v1.wsgi.application'
 SECURE_SSL_REDIRECT = config('SECURE_SSL_REDIRECT', default=False, cast=bool)
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', config('SECURE_PROXY_SSL_HEADER', default='http'))
 CSRF_COOKIE_SECURE = config('CSRF_COOKIE_SECURE', default=False, cast=bool)
 SESSION_COOKIE_SECURE = config('SESSION_COOKIE_SECURE', default=False, cast=bool)
 
-# Set session timeout to 30 minutes (1800 seconds)
-SESSION_COOKIE_AGE = 1800
+# Set session timeout to 10 minutes (600 seconds)
+SESSION_COOKIE_AGE = 600
 SESSION_SAVE_EVERY_REQUEST = True
 SESSION_LIMIT = 2
-
-# Additional session security settings
-SESSION_EXPIRE_AT_BROWSER_CLOSE = False
-SESSION_COOKIE_HTTPONLY = True
-SESSION_COOKIE_SAMESITE = 'Lax'
-SESSION_ENGINE = 'django.contrib.sessions.backends.db'
 # Database
 # https://docs.djangoproject.com/en/4.1/ref/settings/#databases
 
@@ -217,6 +207,21 @@ DATABASES = {
     #     'PORT': config('REMOTE_DB_PORT', default='3306'),
     # }
 }
+
+
+
+GRAPHENE = {
+    'SCHEMA': 'beii_v1.schema.schema',
+    'MIDDLEWARE': [
+        'graphql_jwt.middleware.JSONWebTokenMiddleware',
+    ],
+}
+
+AUTHENTICATION_BACKENDS = [
+    'graphql_jwt.backends.JSONWebTokenBackend',
+    'django.contrib.auth.backends.ModelBackend',
+]
+
 
 # Password validation
 # https://docs.djangoproject.com/en/4.1/ref/settings/#auth-password-validators
@@ -294,12 +299,8 @@ EMAIL_HOST = config("MS_SERVER")
 EMAIL_HOST_USER = config("MS_EMAIL")
 DEFAULT_FROM_EMAIL = config("MS_EMAIL")
 EMAIL_HOST_PASSWORD = config("MS_PASS")
-PASSWORD_RESET_TIMEOUT = 3600  # 1 hour
 
-DATA_UPLOAD_MAX_MEMORY_SIZE = 1024 * 1024 * 500
-
-# Add timeout settings for requests
-REQUEST_TIMEOUT = 300  # 5 minutes
+DATA_UPLOAD_MAX_MEMORY_SIZE = 1024 * 1024 * 30
 
 LANGUAGE_CODE = 'en-us'
 
@@ -308,7 +309,7 @@ USE_I18N = True
 LOGIN_REDIRECT_URL = '/'
 LOGIN_URL = '/accounts/login'
 
-os.environ['TIKA_SERVER_JAR'] = os.path.join(BASE_DIR, 'static', 'tika', 'tika-server-standard-2.9.2.jar')
+os.environ['TIKA_SERVER_JAR'] = os.path.join(BASE_DIR,'static','tika','tika-server-standard-2.9.2.jar')
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 STATIC_URL = '/static/'
@@ -316,8 +317,3 @@ STATICFILES_DIRS = [BASE_DIR / "static", BASE_DIR / "uploads", BASE_DIR / "media
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 LOGIN_REDIRECT_URL = '/dashboards/overview'
-
-# Add RECAPTCHA settings
-RECAPTCHA_PUBLIC_KEY = config('RECAPTCHA_SITE_KEY', default='your_site_key_here')
-RECAPTCHA_PRIVATE_KEY = config('RECAPTCHA_SECRET_KEY', default='your_secret_key_here')
-RECAPTCHA_ENABLED = False  # Set to False to disable reCAPTCHA temporarily

@@ -1,0 +1,894 @@
+{% extends "admin_layout.html" %}
+{% load static %}
+{% load humanize %}
+{% load custom_tags %}
+
+{% block styles %}
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css"/>
+<link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.2/css/buttons.dataTables.min.css"/>
+<link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.dataTables.min.css"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+<style>
+  /* Enhanced Budget Card Design */
+  .budget-card {
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    border-radius: 16px;
+    padding: 1.5rem;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    border: 1px solid #e2e8f0;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .budget-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #3b82f6, #10b981, #f59e0b);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  
+  .budget-card:hover::before {
+    opacity: 1;
+  }
+  
+  .budget-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+  }
+  
+  /* Enhanced Progress Bar */
+  .progress-container {
+    background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+    border-radius: 12px;
+    padding: 8px;
+    margin: 12px 0;
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .progress-bar {
+    width: 100%;
+    height: 28px;
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+    border-radius: 8px;
+    overflow: hidden;
+    position: relative;
+    box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.06);
+  }
+  
+  .progress-fill {
+    height: 100%;
+    transition: width 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+    position: absolute;
+    top: 0;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  }
+  
+  .progress-withdrawn {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    z-index: 3;
+  }
+  
+  .progress-pending {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    z-index: 2;
+  }
+  
+  .progress-available {
+    background: linear-gradient(135deg, #64748b 0%, #475569 100%);
+    z-index: 1;
+  }
+  
+  /* Enhanced Metric Cards */
+  .metric-card {
+    background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+    border-radius: 12px;
+    padding: 1.25rem;
+    border: 1px solid #e2e8f0;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .metric-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--accent-color);
+    transform: translateY(-3px);
+    transition: transform 0.3s ease;
+  }
+  
+  .metric-card:hover::before {
+    transform: translateY(0);
+  }
+  
+  .metric-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 15px 30px -10px rgba(0, 0, 0, 0.1);
+  }
+  
+  .metric-card.allocated { --accent-color: #3b82f6; }
+  .metric-card.withdrawn { --accent-color: #10b981; }
+  .metric-card.pending { --accent-color: #f59e0b; }
+  .metric-card.available { --accent-color: #64748b; }
+  
+  .metric-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    margin-bottom: 0.75rem;
+  }
+  
+  .metric-value {
+    font-size: 1.875rem;
+    font-weight: 700;
+    line-height: 1.1;
+    margin-bottom: 0.25rem;
+  }
+  
+  .metric-label {
+    font-size: 0.875rem;
+    color: #64748b;
+    font-weight: 500;
+  }
+  
+  /* Enhanced Status Indicators */
+  .status-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border-radius: 9999px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+  }
+  
+  .status-good {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+    box-shadow: 0 4px 14px 0 rgba(16, 185, 129, 0.25);
+  }
+  
+  .status-warning {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    color: white;
+    box-shadow: 0 4px 14px 0 rgba(245, 158, 11, 0.25);
+  }
+  
+  .status-critical {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    color: white;
+    box-shadow: 0 4px 14px 0 rgba(239, 68, 68, 0.25);
+    animation: pulse-subtle 3s infinite;
+  }
+  
+  @keyframes pulse-subtle {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+  }
+  
+  /* Enhanced Layout */
+  .report-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 2rem;
+  }
+  
+  .report-header {
+    background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+    color: white;
+    padding: 2rem;
+    border-radius: 20px;
+    margin-bottom: 2rem;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .report-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grid" width="10" height="10" patternUnits="userSpaceOnUse"><path d="M 10 0 L 0 0 0 10" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="1"/></pattern></defs><rect width="100" height="100" fill="url(%23grid)"/></svg>');
+    opacity: 0.1;
+  }
+  
+  .report-title {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    position: relative;
+    z-index: 1;
+  }
+  
+  .report-subtitle {
+    font-size: 1.25rem;
+    opacity: 0.9;
+    position: relative;
+    z-index: 1;
+  }
+  
+  .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+  }
+  
+  .budget-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: 2rem;
+    margin-bottom: 2rem;
+  }
+  
+  .metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  
+  /* Enhanced Action Buttons */
+  .action-buttons {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    margin: 2rem 0;
+    flex-wrap: wrap;
+  }
+  
+  .action-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    border-radius: 12px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border: none;
+    cursor: pointer;
+    font-size: 0.875rem;
+    box-shadow: 0 4px 14px 0 rgba(0, 0, 0, 0.1);
+  }
+  
+  .action-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15);
+  }
+  
+  .btn-csv {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    color: white;
+  }
+  
+  .btn-pdf {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    color: white;
+  }
+  
+  .btn-excel {
+    background: linear-gradient(135deg, #059669 0%, #047857 100%);
+    color: white;
+  }
+  
+  .btn-print {
+    background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);
+    color: white;
+  }
+  
+  /* Enhanced Data Table */
+  .report-table-container {
+    background: white;
+    border-radius: 16px;
+    padding: 1.5rem;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+    margin-top: 2rem;
+  }
+  
+  .report-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  
+  .report-table th {
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    padding: 1rem;
+    text-align: left;
+    font-weight: 600;
+    color: #374151;
+    border-bottom: 2px solid #e2e8f0;
+  }
+  
+  .report-table td {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #f1f5f9;
+  }
+  
+  .report-table tr:hover {
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  }
+  
+  /* Quick Actions */
+  .quick-actions {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 1rem;
+  }
+  
+  .quick-action {
+    padding: 0.375rem 0.75rem;
+    border-radius: 8px;
+    text-decoration: none;
+    font-size: 0.75rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    border: 1px solid currentColor;
+  }
+  
+  .quick-action:hover {
+    background-color: currentColor;
+    color: white;
+    transform: translateY(-1px);
+  }
+  
+  /* Error States */
+  .error-container {
+    background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+    border: 1px solid #fecaca;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin: 1rem 0;
+  }
+  
+  .error-icon {
+    color: #dc2626;
+    margin-right: 0.5rem;
+  }
+  
+  .error-title {
+    color: #dc2626;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+  }
+  
+  .error-message {
+    color: #991b1b;
+    font-size: 0.875rem;
+  }
+  
+  /* Loading States */
+  .loading-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 3rem;
+  }
+  
+  .loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid #e2e8f0;
+    border-top: 4px solid #3b82f6;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+  
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+  
+  /* Responsive Design */
+  @media (max-width: 768px) {
+    .report-container {
+      padding: 1rem;
+    }
+    
+    .report-title {
+      font-size: 2rem;
+    }
+    
+    .budget-grid {
+      grid-template-columns: 1fr;
+    }
+    
+    .summary-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .action-buttons {
+      flex-direction: column;
+      align-items: stretch;
+    }
+    
+    .action-btn {
+      justify-content: center;
+    }
+  }
+  
+  @media (max-width: 480px) {
+    .summary-grid {
+      grid-template-columns: 1fr;
+    }
+    
+    .metrics-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+  
+  /* Print Styles */
+  @media print {
+    .action-buttons,
+    .quick-actions {
+      display: none !important;
+    }
+    
+    .budget-card,
+    .metric-card,
+    .report-table-container {
+      box-shadow: none;
+      border: 1px solid #e2e8f0;
+    }
+    
+    .report-header {
+      background: #f8fafc !important;
+      color: #374151 !important;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="report-container">
+  <!-- Enhanced Report Header -->
+  <div class="report-header">
+    <h1 class="report-title">
+      <i class="fas fa-chart-line mr-3"></i>
+      ACE Budget Reports
+    </h1>
+    <p class="report-subtitle">
+      Comprehensive budget analysis and expenditure tracking for {{ current_year }}
+    </p>
+  </div>
+
+  <!-- Error Handling Display -->
+  {% if messages %}
+    {% for message in messages %}
+      <div class="error-container">
+        <div class="flex items-start">
+          <i class="fas fa-exclamation-triangle error-icon"></i>
+          <div>
+            <div class="error-title">{{ message.tags|title }}</div>
+            <div class="error-message">{{ message }}</div>
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+  {% endif %}
+
+  <!-- Overall Summary Cards -->
+  {% if budget_summary %}
+    <div class="summary-grid">
+      <div class="metric-card allocated">
+        <div class="metric-icon" style="background: rgba(59, 130, 246, 0.1); color: #3b82f6;">
+          <i class="fas fa-wallet"></i>
+        </div>
+        <div class="metric-value" style="color: #3b82f6;">
+          ${{ total_allocated|floatformat:0|intcomma }}
+        </div>
+        <div class="metric-label">Total Allocated</div>
+      </div>
+      
+      <div class="metric-card withdrawn">
+        <div class="metric-icon" style="background: rgba(16, 185, 129, 0.1); color: #10b981;">
+          <i class="fas fa-check-circle"></i>
+        </div>
+        <div class="metric-value" style="color: #10b981;">
+          ${{ total_utilized|floatformat:0|intcomma }}
+        </div>
+        <div class="metric-label">Total Utilized</div>
+      </div>
+      
+      <div class="metric-card pending">
+        <div class="metric-icon" style="background: rgba(245, 158, 11, 0.1); color: #f59e0b;">
+          <i class="fas fa-clock"></i>
+        </div>
+        <div class="metric-value" style="color: #f59e0b;">
+          ${{ total_pending|floatformat:0|intcomma }}
+        </div>
+        <div class="metric-label">Total Pending</div>
+      </div>
+      
+      <div class="metric-card available">
+        <div class="metric-icon" style="background: rgba(100, 116, 139, 0.1); color: #64748b;">
+          <i class="fas fa-piggy-bank"></i>
+        </div>
+        <div class="metric-value" style="color: #64748b;">
+          ${{ total_available|floatformat:0|intcomma }}
+        </div>
+        <div class="metric-label">Total Available</div>
+      </div>
+    </div>
+  {% endif %}
+
+  <!-- Enhanced Budget Cards -->
+  {% if budget_summary %}
+    <div class="budget-grid">
+      {% for budget_data in budget_summary %}
+        <div class="budget-card">
+          <div class="flex justify-between items-start mb-4">
+            <div>
+              <h3 class="text-xl font-bold text-gray-800 mb-1">
+                {{ budget_data.budget.budget_name }}
+              </h3>
+              <p class="text-sm text-gray-600">
+                Budget ID: {{ budget_data.budget.budget_id }}
+              </p>
+            </div>
+            <div class="status-indicator 
+              {% if budget_data.health_status == 'good' %}status-good
+              {% elif budget_data.health_status == 'warning' %}status-warning
+              {% else %}status-critical{% endif %}">
+              {% if budget_data.health_status == 'good' %}
+                <i class="fas fa-check-circle"></i> Healthy
+              {% elif budget_data.health_status == 'warning' %}
+                <i class="fas fa-exclamation-triangle"></i> Monitor
+              {% else %}
+                <i class="fas fa-exclamation-circle"></i> Critical
+              {% endif %}
+            </div>
+          </div>
+          
+          <!-- Budget Metrics -->
+          <div class="metrics-grid">
+            <div class="metric-card allocated">
+              <div class="metric-value" style="color: #3b82f6;">
+                ${{ budget_data.allocated|floatformat:0|intcomma }}
+              </div>
+              <div class="metric-label">Allocated</div>
+            </div>
+            
+            <div class="metric-card withdrawn">
+              <div class="metric-value" style="color: #10b981;">
+                ${{ budget_data.withdrawn|floatformat:0|intcomma }}
+              </div>
+              <div class="metric-label">Withdrawn</div>
+            </div>
+            
+            <div class="metric-card pending">
+              <div class="metric-value" style="color: #f59e0b;">
+                ${{ budget_data.to_be_withdrawn|floatformat:0|intcomma }}
+              </div>
+              <div class="metric-label">Pending</div>
+            </div>
+            
+            <div class="metric-card available">
+              <div class="metric-value" style="color: #64748b;">
+                ${{ budget_data.balance|floatformat:0|intcomma }}
+              </div>
+              <div class="metric-label">Available</div>
+            </div>
+          </div>
+          
+          <!-- Enhanced Progress Bar -->
+          <div class="progress-container">
+            <div class="flex justify-between text-sm mb-2">
+              <span class="font-medium">Budget Utilization</span>
+              <span class="font-semibold">{{ budget_data.total_commitment_percentage|floatformat:1 }}%</span>
+            </div>
+            <div class="progress-bar">
+              <div class="progress-fill progress-withdrawn" 
+                   style="width: {{ budget_data.utilization_percentage }}%">
+                {% if budget_data.utilization_percentage > 10 %}
+                  {{ budget_data.utilization_percentage|floatformat:1 }}%
+                {% endif %}
+              </div>
+              <div class="progress-fill progress-pending" 
+                   style="width: {{ budget_data.pending_percentage }}%; left: {{ budget_data.utilization_percentage }}%">
+                {% if budget_data.pending_percentage > 10 %}
+                  {{ budget_data.pending_percentage|floatformat:1 }}%
+                {% endif %}
+              </div>
+            </div>
+            <div class="flex justify-between text-xs mt-2 text-gray-600">
+              <span><i class="fas fa-circle text-green-500"></i> {{ budget_data.utilization_percentage|floatformat:1 }}% Used</span>
+              <span><i class="fas fa-circle text-yellow-500"></i> {{ budget_data.pending_percentage|floatformat:1 }}% Pending</span>
+              <span><i class="fas fa-circle text-gray-500"></i> {{ budget_data.available_percentage|floatformat:1 }}% Available</span>
+            </div>
+          </div>
+          
+          <!-- Enhanced Status Information -->
+          <div class="bg-gray-50 rounded-lg p-3 mt-3">
+            <div class="grid grid-cols-2 gap-2 text-sm">
+              <div class="flex justify-between">
+                <span class="text-gray-600">Total Committed:</span>
+                <span class="font-semibold">${{ budget_data.total_committed|floatformat:0|intcomma }}</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-600">Remaining:</span>
+                <span class="font-semibold">${{ budget_data.balance|floatformat:0|intcomma }}</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-600">ACE Count:</span>
+                <span class="font-semibold">{{ budget_data.ace_count }} items</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-600">Avg. Amount:</span>
+                <span class="font-semibold">${{ budget_data.avg_ace_amount|floatformat:0|intcomma }}</span>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Enhanced Quick Actions -->
+          <div class="quick-actions">
+            <a href="{% url 'Ace:transactions_for_budget' budget_data.budget.budget_id %}" 
+               class="quick-action text-blue-600 hover:text-blue-800">
+              <i class="fas fa-list-alt mr-1"></i> Transactions
+            </a>
+            <a href="{% url 'Ace:asset_budget_report' budget_data.budget.budget_id %}" 
+               class="quick-action text-green-600 hover:text-green-800">
+              <i class="fas fa-chart-bar mr-1"></i> Detailed Report
+            </a>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <!-- Enhanced Action Buttons -->
+  <div class="action-buttons">
+    {% if report %}
+      <a href="/ace/print_report_csv/{{ report.report_id2 }}" class="action-btn btn-csv">
+        <i class="fas fa-file-csv"></i> Export CSV
+      </a>
+      <a href="/ace/print_report_pdf/{{ report.report_id2 }}" class="action-btn btn-pdf">
+        <i class="fas fa-file-pdf"></i> Export PDF
+      </a>
+    {% else %}
+      {% if start_date and end_date and region %}
+        <a href="/ace/print_report_csv/?start_date={{ start_date }}&end_date={{ end_date }}&region={{ region.id }}&all_budgets=1" 
+           class="action-btn btn-csv">
+          <i class="fas fa-file-csv"></i> Export CSV
+        </a>
+        <a href="/ace/print_report_pdf/?start_date={{ start_date }}&end_date={{ end_date }}&region={{ region.id }}&all_budgets=1" 
+           class="action-btn btn-pdf">
+          <i class="fas fa-file-pdf"></i> Export PDF
+        </a>
+      {% else %}
+        <a href="{% url 'Ace:export_current_year_csv' %}" class="action-btn btn-csv">
+          <i class="fas fa-file-csv"></i> Export CSV (Current Year)
+        </a>
+        <a href="{% url 'Ace:export_current_year_pdf' %}" class="action-btn btn-pdf">
+          <i class="fas fa-file-pdf"></i> Export PDF (Current Year)
+        </a>
+      {% endif %}
+    {% endif %}
+    <button onclick="window.print()" class="action-btn btn-print">
+      <i class="fas fa-print"></i> Print Report
+    </button>
+  </div>
+
+  <!-- Enhanced Data Table -->
+  {% if aces %}
+    <div class="report-table-container">
+      <div class="flex justify-between items-center mb-4">
+        <h2 class="text-xl font-bold text-gray-800">
+          <i class="fas fa-table mr-2"></i>
+          Detailed ACE Records
+        </h2>
+        <div class="text-sm text-gray-600">
+          Showing {{ aces.count }} records
+        </div>
+      </div>
+      
+      <div class="overflow-x-auto">
+        <table id="ace-report-table" class="report-table stripe hover">
+          <thead>
+            <tr>
+              <th><i class="fas fa-hashtag mr-1"></i> ACE ID</th>
+              <th><i class="fas fa-info-circle mr-1"></i> Details</th>
+              <th><i class="fas fa-user mr-1"></i> Requested By</th>
+              <th><i class="fas fa-building mr-1"></i> Section</th>
+              <th><i class="fas fa-calendar mr-1"></i> Date</th>
+              <th><i class="fas fa-wallet mr-1"></i> Budget</th>
+              <th><i class="fas fa-dollar-sign mr-1"></i> Amount</th>
+              <th><i class="fas fa-check-circle mr-1"></i> Status</th>
+              <th><i class="fas fa-user-check mr-1"></i> Approved By</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for ace in aces %}
+              <tr>
+                <td>
+                  <a href="/ace/ace_detail/{{ ace.Ace_id2 }}" 
+                     class="text-blue-600 hover:text-blue-800 font-medium">
+                    {{ ace.Ace_id2|default_if_none:'' }}
+                  </a>
+                </td>
+                <td>
+                  <div class="max-w-xs truncate" title="{{ ace.details_of_expenditure }}">
+                    {{ ace.details_of_expenditure }}
+                  </div>
+                </td>
+                <td>
+                  {% if ace.requested_by == user %}
+                    <span class="font-medium text-blue-600">You</span>
+                  {% else %}
+                    {{ ace.requested_by.get_full_name }}
+                  {% endif %}
+                </td>
+                <td>
+                  {% if ace.section %}
+                    {{ ace.section.section }}
+                  {% else %}
+                    <span class="text-gray-400">N/A</span>
+                  {% endif %}
+                </td>
+                <td>
+                  <span class="text-sm">
+                    {{ ace.date_created|date:"Y-m-d" }}
+                  </span>
+                </td>
+                <td>
+                  <div class="max-w-xs truncate" title="{{ ace.budget_id.budget_name }}">
+                    {{ ace.budget_id.budget_name }}
+                  </div>
+                </td>
+                <td>
+                  <span class="font-medium">
+                    ${{ ace.amount|floatformat:0|intcomma }}
+                  </span>
+                </td>
+                <td>
+                  {% with latest_approval=ace.process.approval_set.last %}
+                    {% if latest_approval %}
+                      <span class="px-2 py-1 rounded-full text-xs font-medium
+                        {% if latest_approval.approved == 'Approved' %}bg-green-100 text-green-800
+                        {% elif latest_approval.approved == 'Rejected' %}bg-red-100 text-red-800
+                        {% else %}bg-yellow-100 text-yellow-800{% endif %}">
+                        {{ latest_approval.approved }}
+                      </span>
+                    {% else %}
+                      <span class="px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                        Pending
+                      </span>
+                    {% endif %}
+                  {% endwith %}
+                </td>
+                <td>
+                  {% with latest_approval=ace.process.approval_set.last %}
+                    {% if latest_approval and latest_approval.user %}
+                      <div class="text-sm">
+                        {{ latest_approval.user.get_full_name }}
+                      </div>
+                    {% else %}
+                      <span class="text-gray-400">N/A</span>
+                    {% endif %}
+                  {% endwith %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  {% else %}
+    <div class="text-center py-12">
+      <i class="fas fa-inbox text-gray-400 text-6xl mb-4"></i>
+      <h3 class="text-xl font-medium text-gray-600 mb-2">No ACE Records Found</h3>
+      <p class="text-gray-500">Try adjusting your search criteria or date range.</p>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://code.jquery.com/jquery-3.7.0.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.2/js/dataTables.buttons.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.2/js/buttons.html5.min.js"></script>
+<script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
+<script>
+  $(document).ready(function() {
+    // Initialize enhanced DataTable
+    $('#ace-report-table').DataTable({
+      responsive: true,
+      pageLength: 25,
+      order: [[4, 'desc']], // Sort by date descending
+      columnDefs: [
+        { targets: [6], type: 'currency' }, // Amount column
+        { targets: [4], type: 'date' }, // Date column
+        { targets: [0, 1, 2, 3, 5, 7, 8], orderable: true }
+      ],
+      dom: '<"flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4"<"mb-2 sm:mb-0"l><"mb-2 sm:mb-0"f>>rtip',
+      language: {
+        search: '<i class="fas fa-search mr-2"></i>',
+        lengthMenu: 'Show _MENU_ records per page',
+        info: 'Showing _START_ to _END_ of _TOTAL_ records',
+        infoEmpty: 'No records available',
+        emptyTable: 'No ACE records found',
+        zeroRecords: 'No matching records found'
+      }
+    });
+    
+    // Animate progress bars on page load
+    setTimeout(() => {
+      $('.progress-fill').each(function() {
+        const $this = $(this);
+        const targetWidth = $this.attr('style').match(/width:\s*([^;]+)/);
+        if (targetWidth) {
+          $this.css('width', '0%');
+          $this.animate({ width: targetWidth[1] }, 1200, 'easeOutCubic');
+        }
+      });
+    }, 300);
+    
+    // Add hover effects for budget cards
+    $('.budget-card').hover(
+      function() {
+        $(this).find('.metric-card').addClass('shadow-lg');
+        $(this).find('.progress-bar').addClass('shadow-inner');
+      },
+      function() {
+        $(this).find('.metric-card').removeClass('shadow-lg');
+        $(this).find('.progress-bar').removeClass('shadow-inner');
+      }
+    );
+    
+    // Add click-to-expand functionality for long text
+    $('.truncate').click(function() {
+      $(this).toggleClass('max-w-xs');
+      if ($(this).hasClass('max-w-xs')) {
+        $(this).removeClass('whitespace-normal').addClass('truncate');
+      } else {
+        $(this).removeClass('truncate').addClass('whitespace-normal');
+      }
+    });
+    
+    // Add loading states for export buttons
+    $('.action-btn').click(function() {
+      const $btn = $(this);
+      const originalText = $btn.html();
+      $btn.prop('disabled', true);
+      $btn.html('<i class="fas fa-spinner fa-spin mr-2"></i>Processing...');
+      
+      setTimeout(() => {
+        $btn.prop('disabled', false);
+        $btn.html(originalText);
+      }, 3000);
+    });
+  });
+  
+  // Add easing function for smooth animations
+  jQuery.easing.easeOutCubic = function(x, t, b, c, d) {
+    return c * (Math.pow(t / d - 1, 3) + 1) + b;
+  };
+</script>
+{% endblock %}

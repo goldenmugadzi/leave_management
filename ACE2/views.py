@@ -7,6 +7,7 @@ import csv
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core import serializers
+from django.core.exceptions import ValidationError
 from django.http import HttpResponse, JsonResponse, HttpResponseNotFound, FileResponse, HttpResponseForbidden
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
@@ -97,7 +98,7 @@ def Ace_detail(request, Ace_id2):
                     userp = UserProfile.objects.filter(id=user.id).first()
                     msg = f"Your ACE {ace_item.Ace_id2} has been rejected. Allocated funds have been released."
                     url = f"/ace/ace_detail/{ace_item.Ace_id2}"
-                    notify_user(userp, msg, "ACE", url, ace_item.Ace_id2, request)
+                    notify_user(userp, msg, "ACE", url, ace_item.Ace_id2)
                     
                 # Show a message to the current user
                 sweetify.info(request, f"ACE {ace_item.Ace_id2} was rejected. Budget has been adjusted.")
@@ -137,7 +138,7 @@ def Ace_detail(request, Ace_id2):
                             
                             msg = f"Your ACE {ace_item.Ace_id2} has been approved by {approver_role} (Step {current_step}/{total_steps})"
                             url = f"/ace/ace_detail/{ace_item.Ace_id2}"
-                            notify_user(userp, msg, "ACE", url, ace_item.Ace_id2, request)
+                            notify_user(userp, msg, "ACE", url, ace_item.Ace_id2)
                             
                             sweetify.success(request, f"ACE {ace_item.Ace_id2} approved and requester notified")
                     except Exception as e:
@@ -229,7 +230,7 @@ def Ace_detail(request, Ace_id2):
 
             msg = "Your ACE " + ace_item.Ace_id2 + "has been approved by the General Manager"
             url = "/ace/ace_detail/" + ace_item.Ace_id2
-            notify_user(userp, msg, "ACE", url, ace_item.Ace_id2, request)
+            notify_user(userp, msg, "ACE", url, ace_item.Ace_id2)
 
     ace_quantity = range(ace_item.quantity)
     approved_steps = ace_item.process.approval_set.all().values_list('step__step', flat=True)
@@ -255,7 +256,7 @@ def Ace_detail(request, Ace_id2):
         general_manager = find_general_manager(request, ace_item.region)
         if general_manager:
             general_manager = UserProfile.objects.filter(username=general_manager).first()
-            notify_user(general_manager, msg, "ACE", url, ace_item.Ace_id2, request)
+            notify_user(general_manager, msg, "ACE", url, ace_item.Ace_id2)
 
     return render(request, 'finance/ace2/ace_detail.html',
                   {'ace': ace_item, 'approved_steps': approved_steps, 'approvalForm': approvalForm,
@@ -288,53 +289,118 @@ def generate_unique_ace_id2(prefix='ACE'):
 
 @login_required
 def create_Ace(request):
-    print('create ace')
-    global ace_role
-    QuotationFormSet()
-    user_id = request.user.id
-    user_profile = UserProfile.objects.filter(id=user_id).first()
-
-    form = AceForm(user=user_profile)
-    formset = QuotationFormSet()
-    if request.method == 'POST':
-        form = AceForm(request.POST, request.FILES, user=user_profile)
-        formset = QuotationFormSet(request.POST, request.FILES)
+    """
+    Create a new ACE with comprehensive validation and error handling
+    """
+    try:
+        print('create ace')
+        global ace_role
+        QuotationFormSet()
         user_id = request.user.id
         user_profile = UserProfile.objects.filter(id=user_id).first()
 
-        user_groups = user_profile.groups.values_list('name', flat=True)
+        # Validate user profile exists
+        if not user_profile:
+            messages.error(request, "User profile not found. Please contact your administrator to set up your profile.")
+            sweetify.error(request, "User profile not found. Please contact your administrator.")
+            return redirect('/ace2/aces')
 
-        custom_user_roles = {
-            "ace": {},
-        }
+        # Check if user has required roles for ACE creation
+        user_roles = user_profile.roles.all()
+        if not user_roles.exists():
+            messages.error(request, "You don't have any assigned roles. Please contact your administrator to assign appropriate roles.")
+            sweetify.error(request, "No roles assigned to your profile.")
+            return redirect('/ace2/aces')
 
-        roles_ = user_profile.roles.all()
-        for _role in roles_:
-            role = Roles.objects.filter(id=_role.id).first()
-            if role.application == "ace":
-                custom_user_roles["ace"] = role.role
-                ace_role = str(custom_user_roles["ace"])
-                print(ace_role)
+        form = AceForm(user=user_profile)
+        formset = QuotationFormSet()
+        
+        if request.method == 'POST':
+            form = AceForm(request.POST, request.FILES, user=user_profile)
+            formset = QuotationFormSet(request.POST, request.FILES)
+            user_id = request.user.id
+            user_profile = UserProfile.objects.filter(id=user_id).first()
+
+            # Validate user profile exists
+            if not user_profile:
+                messages.error(request, "User profile not found during form processing.")
+                sweetify.error(request, "User profile error.")
+                return redirect('/ace2/aces')
+
+            user_groups = user_profile.groups.values_list('name', flat=True)
+
+            custom_user_roles = {
+                "ace": {},
+            }
+
+            roles_ = user_profile.roles.all()
+            if not roles_.exists():
+                messages.error(request, "No roles assigned. Please contact administrator.")
+                sweetify.error(request, "No roles assigned.")
+                return redirect('/ace2/aces')
+
+            for _role in roles_:
+                role = Roles.objects.filter(id=_role.id).first()
+                if role and role.application == "ace":
+                    custom_user_roles["ace"] = role.role
+                    ace_role = str(custom_user_roles["ace"])
+                    print(ace_role)
 
         if ace_role == "create":
             if form.is_valid():
                 ace = form.save(commit=False)
                 
+                # Validate required fields before processing
+                if not ace.details_of_expenditure:
+                    sweetify.error(request, "Details of expenditure is required")
+                    messages.error(request, 'Details of expenditure is required')
+                    return render(request, 'finance/ace2/create_ace.html', {'form': form, 'formset': formset})
+                
+                if not ace.amount or ace.amount <= 0:
+                    sweetify.error(request, "Valid amount is required")
+                    messages.error(request, 'Valid amount is required')
+                    return render(request, 'finance/ace2/create_ace.html', {'form': form, 'formset': formset})
+                
+                if not ace.budget_id:
+                    sweetify.error(request, "Budget selection is required")
+                    messages.error(request, 'Budget selection is required')
+                    return render(request, 'finance/ace2/create_ace.html', {'form': form, 'formset': formset})
+                
+                if not ace.section:
+                    sweetify.error(request, "Section is required")
+                    messages.error(request, 'Section is required')
+                    return render(request, 'finance/ace2/create_ace.html', {'form': form, 'formset': formset})
+                
                 # Determine ACE type and USD equivalent
                 ace_type, zwl_amount = determine_ace_type(ace.amount, ace.currency)
                 ace.ace_type = ace_type
 
-                # Set workflow based on ACE type
+                # Set workflow based on ACE type with comprehensive exception handling
                 if ace_type == 'high_value':
                     try:
-                        ace.process = intiate(request, 'ace_em')  # Use the workflow name created by the management
-                        # command
-                        messages.info(request, f"High-value ACE detected ({zwl_amount:,.2f} ZWL). Extended approval workflow will be used.")
+                        ace.process = intiate(request, 'ace_value')  # Use high-value ACE_VALUE workflow
+                        messages.success(request, f"High-value ACE created ({zwl_amount:,.2f} ZWL). Extended approval workflow will be used.")
+                    except Workflow.DoesNotExist:
+                        messages.error(request, "High-value ACE workflow (ace_value) not configured. Please contact IT administrator.")
+                        sweetify.error(request, "High-value ACE workflow not configured. Contact IT administrator.")
+                        return render(request, 'finance/ace2/create_ace.html', {'form': form, 'formset': formset})
                     except Exception as e:
-                        messages.warning(request, "High-value workflow not available. Using standard workflow.")
-                        ace.process = intiate(request, 'ace')
+                        messages.warning(request, f"High-value workflow unavailable ({str(e)}). Using standard workflow.")
+                        try:
+                            ace.process = intiate(request, 'ace')
+                            messages.info(request, "Standard ACE workflow applied successfully.")
+                        except Exception as std_error:
+                            messages.error(request, f"Critical error: No ACE workflow available. Contact IT administrator. Error: {str(std_error)}")
+                            sweetify.error(request, "Critical error: No ACE workflow available. Contact IT administrator.")
+                            return render(request, 'finance/ace2/create_ace.html', {'form': form, 'formset': formset})
                 else:
-                    ace.process = intiate(request, 'ace')
+                    try:
+                        ace.process = intiate(request, 'ace')
+                        messages.success(request, "Standard ACE workflow applied successfully.")
+                    except Exception as e:
+                        messages.error(request, f"Critical error: ACE workflow unavailable. Contact IT administrator. Error: {str(e)}")
+                        sweetify.error(request, "Critical error: ACE workflow unavailable. Contact IT administrator.")
+                        return render(request, 'finance/ace2/create_ace.html', {'form': form, 'formset': formset})
                 
                 # Continue with existing budget validation logic...
                 budget = AssetBudget.objects.filter(budget_name=ace.budget_id, period=2025).first()
@@ -352,13 +418,28 @@ def create_Ace(request):
                 print(budget_to_be_withdrawn, 'budget to be withdrawn')
                 print(m_in_tray, 'money in tray')
                 if ace.amount <= budget.balance and budget_to_be_withdrawn <= budget.balance and balance_after_ace > 0 and m_in_tray <= budget.balance:
-                    ace.requested_by = request.user
-                    
                     user_id = request.user.id
                     user_profile = UserProfile.objects.filter(id=user_id).first()
+                    
+                    if not user_profile:
+                        sweetify.error(request, "User profile not found. Please contact your administrator.")
+                        messages.error(request, 'User profile not found. Please contact your administrator.')
+                        return render(request, 'finance/ace2/create_ace.html', {'form': form, 'formset': formset})
+                    
+                    # Set the requested_by field to the UserProfile object, not request.user
+                    ace.requested_by = user_profile
 
                     user_designation = Designations.objects.filter(id=user_profile.designation.id).first()
+                    if not user_designation:
+                        sweetify.error(request, "Please get your designation from It")
+                        messages.error(request, 'Please get your designation from It')
+                        return render(request, 'finance/ace2/create_ace.html', {'form': form, 'formset': formset})
+                    
                     user_region = Regions.objects.filter(id=user_profile.region.id).first()
+                    if not user_region:
+                        sweetify.error(request, "Please get region from It")
+                        messages.error(request, 'Please get region from It')
+                        return render(request, 'finance/ace2/create_ace.html', {'form': form, 'formset': formset})
                     designation = user_designation
                     # print(designation)
                     region = user_region
@@ -369,7 +450,15 @@ def create_Ace(request):
                             ace.Ace_id2 = generate_unique_ace_id2(prefix='HV')  # High Value prefix
                         else:
                             ace.Ace_id2 = generate_unique_ace_id2()
+                        
+                        print(f"Generated ACE ID: {ace.Ace_id2}")  # Debug logging
+                        
+                        # Validate that the ACE ID was generated successfully
+                        if not ace.Ace_id2:
+                            raise ValueError("Failed to generate ACE ID")
+                            
                     except Exception as e:
+                        print(f"ACE ID Generation Error: {str(e)}")  # Debug logging
                         sweetify.error(request, "Could not generate a unique ACE ID. Please try again.")
                         messages.error(request, "Could not generate a unique ACE ID. Please try again.")
                         return render(request, 'finance/ace2/create_ace.html', {'form': form, 'formset': formset})
@@ -384,8 +473,47 @@ def create_Ace(request):
                     else:
                         sweetify.error(request, "Please get region from It")
                         messages.error(request, 'Please get region from It')
-                    ace.date_created = date
-                    ace.save()
+                    ace.date_created = datetime.now().date()
+                    
+                    # ACE ID validation removed since it's generated programmatically above
+                    # The ID generation already has its own error handling
+                    
+                    if not ace.details_of_expenditure:
+                        sweetify.error(request, "Details of expenditure is required")
+                        messages.error(request, "Details of expenditure is required")
+                        return render(request, 'finance/ace2/create_ace.html', {'form': form, 'formset': formset})
+                    
+                    if not ace.amount:
+                        sweetify.error(request, "Amount is required")
+                        messages.error(request, "Amount is required")
+                        return render(request, 'finance/ace2/create_ace.html', {'form': form, 'formset': formset})
+                    
+                    # Try to save with validation
+                    try:
+                        print(f"About to save ACE with ID: {ace.Ace_id2}")  # Debug logging
+                        print(f"ACE has pk: {hasattr(ace, 'pk')}, pk value: {getattr(ace, 'pk', None)}")  # Debug logging
+                        print(f"ACE requested_by: {ace.requested_by}, type: {type(ace.requested_by)}")  # Debug logging
+                        ace.full_clean()  # This will call the model's clean() method
+                        ace.save()
+                        print(f"ACE saved successfully with ID: {ace.Ace_id2}, pk: {ace.pk}")  # Debug logging
+                    except ValidationError as ve:
+                        error_msg = f"Validation error saving ACE: {str(ve)}"
+                        print(error_msg)  # Debug logging
+                        sweetify.error(request, f"Validation error: {str(ve)}")
+                        messages.error(request, f"Validation error: {str(ve)}")
+                        return render(request, 'finance/ace2/create_ace.html', {'form': form, 'formset': formset})
+                    except AttributeError as ae:
+                        error_msg = f"Attribute error during ACE save: {str(ae)}"
+                        print(error_msg)  # Debug logging
+                        sweetify.error(request, f"System error during ACE creation: {str(ae)}")
+                        messages.error(request, f"System error during ACE creation. Please try again or contact support.")
+                        return render(request, 'finance/ace2/create_ace.html', {'form': form, 'formset': formset})
+                    except Exception as e:
+                        error_msg = f"Error saving ACE: {str(e)}"
+                        print(error_msg)  # Debug logging
+                        sweetify.error(request, f"An unexpected error occurred while creating the ACE: {str(e)}. Please try again or contact support.")
+                        messages.error(request, error_msg)
+                        return render(request, 'finance/ace2/create_ace.html', {'form': form, 'formset': formset})
 
                     ace_code = ace.section
                     print(ace_code)
@@ -395,11 +523,26 @@ def create_Ace(request):
                     # code = section.code
                     # ace.allocation_code_of_expenditure = code
                     ace.save()
+                    
+                    # Handle quotation files from formset
+                    try:
+                        for form in formset:
+                            if form.is_valid() and form.cleaned_data.get('quotation_file'):
+                                quotation = form.save(commit=False)
+                                quotation.ace2 = ace
+                                quotation.save()
+                    except Exception as e:
+                        messages.warning(request, f"ACE created but some attachments failed to save: {str(e)}")
+                        print(f"Quotation save error: {str(e)}")
+                    
+                    # Also handle any additional attachments from direct file upload
                     attachments = request.FILES.getlist('attachments')
                     for attachment in attachments:
-                        attachment = Quotation(quotation_file=attachment,
-                                               ace2=ace)
-                        attachment.save()
+                        try:
+                            quotation_obj = Quotation(quotation_file=attachment, ace2=ace)
+                            quotation_obj.save()
+                        except Exception as e:
+                            print(f"Additional attachment save error: {str(e)}")
 
                     # initialise transaction and budget deductions
                     transaction = Transactions.objects.create(
@@ -435,7 +578,7 @@ def create_Ace(request):
                             ace.budget_id)
                         url = "/ace/ace_detail/" + ace.Ace_id2
                         section_heads = UserProfile.objects.filter(username=section_heads).first()
-                        notify_user(section_heads, msg, "ACE", url, ace.Ace_id2, request)
+                        notify_user(section_heads, msg, "ACE", url, ace.Ace_id2)
 
                     # for quotation_form in formset:
                     #     quotation = quotation_form.save(commit=False)
@@ -453,7 +596,12 @@ def create_Ace(request):
                         url = "/ace/ace_detail/" + ace.Ace_id2
 
                         ace_sh = UserProfile.objects.filter(username=ace_sh).first()
-                        notify_user(ace_sh, msg, "ACE", url, ace.Ace_id2, request)
+                        notify_user(ace_sh, msg, "ACE", url, ace.Ace_id2)
+
+                    else:
+                        print("no ace section head found")
+                        sweetify.error(request, "No section head found for this section contact It")
+                        messages.error(request, "No section head found for this section contact It")
 
 
                     if str(ace.classification) == "Project":
@@ -464,25 +612,90 @@ def create_Ace(request):
                         url = reverse('Ace:ace_detail', args=[ace.Ace_id2])
                         return redirect(url)
                 else:
-                    messages.error(request, "ace not created")
-                    sweetify.error(request, "not created")
+                    messages.error(request, "ACE not created due to insufficient budget balance.")
+                    sweetify.error(request, "ACE not created - insufficient budget balance.")
                     if balance_after_ace < 0:
-                        messages.error(request, "the ace requires more than the current budget resulting in a "
-                                                "negative balance")
-                        sweetify.error(request, "the ace requires more than the current budget resulting in a "
-                                                "negative balance")
+                        messages.error(request, "The ACE requires more than the current budget balance, which would result in a negative balance.")
+                        sweetify.error(request, "The ACE amount exceeds available budget balance.")
                     return render(request, 'finance/ace2/create_ace.html',
-                                  {'form': form, 'formset': formset, 'error_message': "Insufficient Balance"})
+                                  {'form': form, 'formset': formset, 'error_message': "Insufficient Budget Balance"})
             else:
+                # Form validation failed
+                form_errors = []
+                for field, errors in form.errors.items():
+                    # Skip Ace_id2 errors since this field is generated programmatically
+                    if field == 'Ace_id2':
+                        continue
+                    for error in errors:
+                        field_name = field.replace('_', ' ').title()
+                        # Make field names more user-friendly
+                        if field == 'budget_id':
+                            field_name = 'Budget'
+                        elif field == 'details_of_expenditure':
+                            field_name = 'Details of Expenditure'
+                        form_errors.append(f"{field_name}: {error}")
+                
+                if form_errors:
+                    error_message = "Please correct the following errors: " + "; ".join(form_errors)
+                    messages.error(request, error_message)
+                    sweetify.error(request, "Please correct the form errors and try again.")
+                
+                # Improved quotation formset error handling
+                formset_errors = []
+                if formset.non_form_errors():
+                    for error in formset.non_form_errors():
+                        if "Please submit 1 or more forms" in str(error):
+                            formset_errors.append("At least one quotation file must be uploaded")
+                        else:
+                            formset_errors.append(str(error))
+                
+                for i, form_error in enumerate(formset.errors):
+                    if form_error:
+                        for field, error_list in form_error.items():
+                            if field == 'quotation_file':
+                                formset_errors.append("Quotation file is required")
+                            else:
+                                for error in error_list:
+                                    formset_errors.append(f"Quotation {i+1}: {error}")
+                
+                if formset_errors:
+                    formset_error_message = "Quotation errors: " + "; ".join(formset_errors)
+                    messages.error(request, formset_error_message)
+                    sweetify.error(request, "Please correct the quotation errors.")
+                
                 form = AceForm(user=user_profile)
                 formset = QuotationFormSet()
         else:
-            sweetify.error(request, "You are not allowed to create Ace")
-            messages.error(request, "You are not allowed to create")
-            # url = reverse('/acee/aces')
-            return redirect('/ace/aces')
+            sweetify.error(request, "You are not authorized to create ACE. Please contact your administrator for proper role assignment.")
+            messages.error(request, "You are not authorized to create ACE. Contact your administrator for role assignment.")
+            return redirect('/ace2/aces')
 
-    return render(request, 'finance/ace2/create_ace.html', {'form': form, 'formset': formset})
+        return render(request, 'finance/ace2/create_ace.html', {'form': form, 'formset': formset})
+        
+    except UserProfile.DoesNotExist:
+        messages.error(request, "User profile not found. Please contact your administrator to create your profile.")
+        sweetify.error(request, "User profile not found.")
+        return redirect('/ace2/aces')
+    except Roles.DoesNotExist:
+        messages.error(request, "Role configuration error. Please contact your administrator.")
+        sweetify.error(request, "Role configuration error.")
+        return redirect('/ace2/aces')
+    except AssetBudget.DoesNotExist:
+        messages.error(request, "Selected budget not found. Please choose a valid budget.")
+        sweetify.error(request, "Budget not found.")
+        form = AceForm(user=UserProfile.objects.filter(id=request.user.id).first())
+        return render(request, 'finance/ace2/create_ace.html', {'form': form, 'formset': QuotationFormSet()})
+    except Sections.DoesNotExist:
+        messages.error(request, "Section configuration error. Please contact your administrator.")
+        sweetify.error(request, "Section not found.")
+        form = AceForm(user=UserProfile.objects.filter(id=request.user.id).first())
+        return render(request, 'finance/ace2/create_ace.html', {'form': form, 'formset': QuotationFormSet()})
+    except Exception as e:
+        messages.error(request, f"An unexpected error occurred while creating the ACE: {str(e)}. Please try again or contact support.")
+        sweetify.error(request, "System error occurred. Please try again.")
+        print(f"ACE Creation Error: {str(e)}")  # For debugging
+        form = AceForm(user=UserProfile.objects.filter(id=request.user.id).first())
+        return render(request, 'finance/ace2/create_ace.html', {'form': form, 'formset': QuotationFormSet()})
 
 
 @login_required
@@ -490,19 +703,60 @@ def ace_awaiting_my_action(request):
     """
     Show ACEs awaiting the user's action, including head office approvers
     """
-    user_id = request.user.id
-    user_profile = UserProfile.objects.filter(id=user_id).first()
+    try:
+        user_id = request.user.id
+        user_profile = UserProfile.objects.filter(id=user_id).first()
+        
+        if not user_profile:
+            messages.error(request, "User profile not found. Please contact administrator.")
+            return render(request, 'finance/ace2/view_all_aces.html', {
+                'aces': [],
+                'created_aces': [],
+                'ace_role': 'none',
+                'error_message': 'User profile not found'
+            })
+        
+        # Determine user role with proper exception handling
+        custom_user_roles = {"ace": {}}
+        roles_ = user_profile.roles.all()
+        ace_role = None
+        
+        try:
+            for _role in roles_:
+                role = Roles.objects.filter(id=_role.id).first()
+                if role and role.application == "ace":
+                    custom_user_roles["ace"] = role.role
+                    ace_role = str(custom_user_roles["ace"])
+                    print("ace role", ace_role)
+                    break
+            
+            if ace_role is None:
+                # User has no ACE role assigned
+                messages.warning(request, "You don't have an ACE role assigned. Please contact administrator for access.")
+                return render(request, 'finance/ace2/view_all_aces.html', {
+                    'aces': [],
+                    'created_aces': [],
+                    'ace_role': 'none',
+                    'error_message': 'No ACE role assigned'
+                })
+                
+        except Exception as e:
+            messages.error(request, f"Error determining user role: {str(e)}")
+            return render(request, 'finance/ace2/view_all_aces.html', {
+                'aces': [],
+                'created_aces': [],
+                'ace_role': 'none',
+                'error_message': 'Role determination error'
+            })
     
-    # Determine user role
-    custom_user_roles = {"ace": {}}
-    roles_ = user_profile.roles.all()
-    for _role in roles_:
-        role = Roles.objects.filter(id=_role.id).first()
-        if role.application == "ace":
-            custom_user_roles["ace"] = role.role
-            ace_role = str(custom_user_roles["ace"])
-            print("ace role", ace_role)
-            break
+    except Exception as e:
+        messages.error(request, f"System error: {str(e)}")
+        return render(request, 'finance/ace2/view_all_aces.html', {
+            'aces': [],
+            'created_aces': [],
+            'ace_role': 'none',
+            'error_message': 'System error'
+        })
     
     if ace_role in ['fd', 'md']:  # Head office roles
         # Head office users see high-value ACEs from ALL regions
@@ -672,37 +926,88 @@ def ace_awaiting_my_action(request):
 
 @login_required
 def view_all_aces(request):
-    user_roles = request.user.roles.all()
+    try:
+        user_roles = request.user.roles.all()
+        user_id = request.user.id
+        user_profile = UserProfile.objects.filter(id=user_id).first()
+        
+        if not user_profile:
+            messages.error(request, "User profile not found. Please contact administrator.")
+            return render(request, 'finance/ace2/view_all_aces.html', {
+                'aces': [],
+                'ace_role': 'none',
+                'requester': 'create',
+                'error_message': 'User profile not found'
+            })
+        
+        try:
+            region = Regions.objects.filter(id=user_profile.region.id).first()
+            section = Sections.objects.filter(section=user_profile.section).first()
+        except AttributeError:
+            messages.error(request, "User profile is incomplete. Missing region or section information.")
+            return render(request, 'finance/ace2/view_all_aces.html', {
+                'aces': [],
+                'ace_role': 'none',
+                'requester': 'create',
+                'error_message': 'Incomplete user profile'
+            })
+        
+        print(section, " section")
 
-    user_id = request.user.id
-    user_profile = UserProfile.objects.filter(id=user_id).first()
-    region = Regions.objects.filter(id=user_profile.region.id).first()
-    section = Sections.objects.filter(section=user_profile.section).first()
-    print(section, " section")
+        user_groups = user_profile.groups.values_list('name', flat=True)
 
-    user_groups = user_profile.groups.values_list('name', flat=True)
+        custom_user_roles = {
+            "ace": {},
+        }
 
-    custom_user_roles = {
-        "ace": {},
-    }
+        roles_ = user_profile.roles.all()
+        ace_role = None
+        
+        try:
+            for _role in roles_:
+                role = Roles.objects.filter(id=_role.id).first()
+                if role and role.application == "ace":
+                    custom_user_roles["ace"] = role.role
+                    ace_role = str(custom_user_roles["ace"])
+                    break
+            
+            if ace_role is None:
+                messages.warning(request, "You don't have an ACE role assigned. Please contact administrator for access.")
+                return render(request, 'finance/ace2/view_all_aces.html', {
+                    'aces': [],
+                    'ace_role': 'none',
+                    'requester': 'create',
+                    'error_message': 'No ACE role assigned'
+                })
+                
+        except Exception as e:
+            messages.error(request, f"Error determining user role: {str(e)}")
+            return render(request, 'finance/ace2/view_all_aces.html', {
+                'aces': [],
+                'ace_role': 'none',
+                'requester': 'create',
+                'error_message': 'Role determination error'
+            })
+            
+        requester = "create"
 
-    roles_ = user_profile.roles.all()
-    for _role in roles_:
-        role = Roles.objects.filter(id=_role.id).first()
+        if ace_role == "create":
+            aces = Ace2.objects.filter(region=region).order_by('-date_created')
+        elif ace_role == "pass":
+            aces = Ace2.objects.filter(region=region).order_by('-date_created')
+        else:
+            print('kings')
+            aces = Ace2.objects.filter(region=region).order_by('-date_created')
+            print(aces)
 
-        if role.application == "ace":
-            custom_user_roles["ace"] = role.role
-    ace_role = str(custom_user_roles["ace"])
-    requester = "create"
-
-    if ace_role == "create":
-        aces = Ace2.objects.filter(region=region).order_by('-date_created')
-    elif ace_role == "pass":
-        aces = Ace2.objects.filter(region=region).order_by('-date_created')
-    else:
-        print('kings')
-        aces = Ace2.objects.filter(region=region).order_by('-date_created')
-        print(aces)
+    except Exception as e:
+        messages.error(request, f"System error: {str(e)}")
+        return render(request, 'finance/ace2/view_all_aces.html', {
+            'aces': [],
+            'ace_role': 'none',
+            'requester': 'create',
+            'error_message': f'System error: {str(e)}'
+        })
 
     return render(request, 'finance/ace2/view_all_aces.html', {'aces': aces,
                                                                'requester': requester, 'ace_role': ace_role})
@@ -1565,8 +1870,15 @@ def view_all_transactions(request):
 def transactions_for_budget(request, budget_id):
     user_id = request.user.id
     user_profile = UserProfile.objects.filter(id=user_id).first()
-    region = Regions.objects.filter(id=user_profile.region.id).first()
+    # region = Regions.objects.filter(id=user_profile.region.id).first()
     transactions = Transactions.objects.filter(budget_id=budget_id)
+    if not transactions:
+        messages.error(request, 'No transactions found for this budget.')
+        return redirect('Ace:list_budgets')
+    else:
+        messages.success(request, 'Transactions found for this budget.')
+        print("transactions:", transactions)
+    
     return render(request, 'finance/ace2/view_all_transactions.html', {'transactions': transactions})
 
 
@@ -1575,6 +1887,7 @@ def ace_reports(request):
     user_id = request.user.id
     user_profile = UserProfile.objects.filter(id=user_id).first()
     ace_report_form = AceReportForm(user=user_profile)
+    current_year = timezone.now().year
 
     if request.method == 'POST':
         ace_report_form = AceReportForm(request.POST)
@@ -1584,6 +1897,13 @@ def ace_reports(request):
             region = ace_report_form.cleaned_data['region']
             budget = ace_report_form.cleaned_data['budget_id']
 
+            # Get budget summary data for graphical display
+            budget_summary = []
+            total_allocated = 0
+            total_utilized = 0
+            total_pending = 0
+            total_available = 0
+            
             if budget:  # Specific budget selected
                 report = ace_report_form.save(commit=False)
                 report.start_date = start_date
@@ -1591,22 +1911,174 @@ def ace_reports(request):
                 report.region = region
                 report.budget_id = budget
                 report.save()
+                
                 # Filter ACEs for this budget
                 aces = Ace2.objects.filter(
                     date_created__range=[start_date, end_date],
                     region=region,
                     budget_id=budget
                 )
-                return render(request, 'finance/ace2/ace_reports.html', {'aces': aces, 'report': report})
+                
+                # Get ACE count and average amount for this budget
+                ace_count = aces.count()
+                total_ace_amount = aces.aggregate(total=Sum('amount'))['total'] or 0
+                avg_ace_amount = total_ace_amount / ace_count if ace_count > 0 else 0
+                
+                # Single budget summary
+                utilization_percentage = (budget.withdrawn / budget.allocated * 100) if budget.allocated > 0 else 0
+                pending_percentage = (budget.to_be_withdrawn / budget.allocated * 100) if budget.allocated > 0 else 0
+                available_percentage = (budget.balance / budget.allocated * 100) if budget.allocated > 0 else 0
+                total_commitment_percentage = utilization_percentage + pending_percentage
+                
+                budget_summary.append({
+                    'budget': budget,
+                    'allocated': budget.allocated,
+                    'withdrawn': budget.withdrawn,
+                    'to_be_withdrawn': budget.to_be_withdrawn,
+                    'balance': budget.balance,
+                    'utilization_percentage': utilization_percentage,
+                    'pending_percentage': pending_percentage,
+                    'available_percentage': available_percentage,
+                    'total_commitment_percentage': total_commitment_percentage,
+                    'total_committed': budget.withdrawn + budget.to_be_withdrawn,
+                    'ace_count': ace_count,
+                    'avg_ace_amount': avg_ace_amount,
+                    'health_status': 'good' if budget.balance > (budget.allocated * 0.3) else 'warning' if budget.balance > (budget.allocated * 0.1) else 'critical'
+                })
+                
+                # Calculate totals
+                total_allocated = budget.allocated or 0
+                total_utilized = budget.withdrawn or 0
+                total_pending = budget.to_be_withdrawn or 0
+                total_available = budget.balance or 0
+                
+                return render(request, 'finance/ace2/ace_reports.html', {
+                    'aces': aces, 
+                    'report': report,
+                    'budget_summary': budget_summary,
+                    'current_year': current_year,
+                    'total_allocated': total_allocated,
+                    'total_utilized': total_utilized,
+                    'total_pending': total_pending,
+                    'total_available': total_available,
+                })
             else:  # All Budgets selected
                 # Do NOT save the report, just filter ACEs for all budgets
                 aces = Ace2.objects.filter(
                     date_created__range=[start_date, end_date],
                     region=region
                 )
-                return render(request, 'finance/ace2/ace_reports.html', {'aces': aces, 'report': None})
+                
+                # Multiple budgets summary for current year only
+                budgets = AssetBudget.objects.filter(region=region, period=current_year).order_by('-allocated')
+                for budget_item in budgets:
+                    if budget_item.allocated > 0:  # Only include budgets with allocation
+                        # Get ACE count and average amount for this budget
+                        budget_aces = aces.filter(budget_id=budget_item)
+                        ace_count = budget_aces.count()
+                        total_ace_amount = budget_aces.aggregate(total=Sum('amount'))['total'] or 0
+                        avg_ace_amount = total_ace_amount / ace_count if ace_count > 0 else 0
+                        
+                        # Calculate percentages
+                        utilization_percentage = (budget_item.withdrawn / budget_item.allocated * 100) if budget_item.allocated > 0 else 0
+                        pending_percentage = (budget_item.to_be_withdrawn / budget_item.allocated * 100) if budget_item.allocated > 0 else 0
+                        available_percentage = (budget_item.balance / budget_item.allocated * 100) if budget_item.allocated > 0 else 0
+                        total_commitment_percentage = utilization_percentage + pending_percentage
+                        
+                        budget_summary.append({
+                            'budget': budget_item,
+                            'allocated': budget_item.allocated,
+                            'withdrawn': budget_item.withdrawn,
+                            'to_be_withdrawn': budget_item.to_be_withdrawn,
+                            'balance': budget_item.balance,
+                            'utilization_percentage': utilization_percentage,
+                            'pending_percentage': pending_percentage,
+                            'available_percentage': available_percentage,
+                            'total_commitment_percentage': total_commitment_percentage,
+                            'total_committed': budget_item.withdrawn + budget_item.to_be_withdrawn,
+                            'ace_count': ace_count,
+                            'avg_ace_amount': avg_ace_amount,
+                            'health_status': 'good' if budget_item.balance > (budget_item.allocated * 0.3) else 'warning' if budget_item.balance > (budget_item.allocated * 0.1) else 'critical'
+                        })
+                        
+                        # Add to totals
+                        total_allocated += budget_item.allocated or 0
+                        total_utilized += budget_item.withdrawn or 0
+                        total_pending += budget_item.to_be_withdrawn or 0
+                        total_available += budget_item.balance or 0
+                
+                return render(request, 'finance/ace2/ace_reports.html', {
+                    'aces': aces, 
+                    'report': None,
+                    'budget_summary': budget_summary,
+                    'current_year': current_year,
+                    'total_allocated': total_allocated,
+                    'total_utilized': total_utilized,
+                    'total_pending': total_pending,
+                    'total_available': total_available,
+                    'start_date': start_date,
+                    'end_date': end_date,
+                    'region': region
+                })
+    
+    # Default view - show current year budget summary for user's region
+    region = user_profile.region
+    budgets = AssetBudget.objects.filter(region=region, period=current_year).order_by('-allocated')
+    budget_summary = []
+    total_allocated = 0
+    total_utilized = 0
+    total_pending = 0
+    total_available = 0
+    
+    for budget_item in budgets:
+        if budget_item.allocated > 0:  # Only include budgets with allocation
+            # Get ACE count and average amount for this budget (current year)
+            budget_aces = Ace2.objects.filter(
+                budget_id=budget_item,
+                date_created__year=current_year
+            )
+            ace_count = budget_aces.count()
+            total_ace_amount = budget_aces.aggregate(total=Sum('amount'))['total'] or 0
+            avg_ace_amount = total_ace_amount / ace_count if ace_count > 0 else 0
+            
+            # Calculate percentages
+            utilization_percentage = (budget_item.withdrawn / budget_item.allocated * 100) if budget_item.allocated > 0 else 0
+            pending_percentage = (budget_item.to_be_withdrawn / budget_item.allocated * 100) if budget_item.allocated > 0 else 0
+            available_percentage = (budget_item.balance / budget_item.allocated * 100) if budget_item.allocated > 0 else 0
+            total_commitment_percentage = utilization_percentage + pending_percentage
+            
+            budget_summary.append({
+                'budget': budget_item,
+                'allocated': budget_item.allocated,
+                'withdrawn': budget_item.withdrawn,
+                'to_be_withdrawn': budget_item.to_be_withdrawn,
+                'balance': budget_item.balance,
+                'utilization_percentage': utilization_percentage,
+                'pending_percentage': pending_percentage,
+                'available_percentage': available_percentage,
+                'total_commitment_percentage': total_commitment_percentage,
+                'total_committed': budget_item.withdrawn + budget_item.to_be_withdrawn,
+                'ace_count': ace_count,
+                'avg_ace_amount': avg_ace_amount,
+                'health_status': 'good' if budget_item.balance > (budget_item.allocated * 0.3) else 'warning' if budget_item.balance > (budget_item.allocated * 0.1) else 'critical'
+            })
+            
+            # Add to totals
+            total_allocated += budget_item.allocated or 0
+            total_utilized += budget_item.withdrawn or 0
+            total_pending += budget_item.to_be_withdrawn or 0
+            total_available += budget_item.balance or 0
 
-    return render(request, 'finance/ace2/ace_create_reports.html', {'ace_report_form': ace_report_form})
+    return render(request, 'finance/ace2/ace_create_reports.html', {
+        'ace_report_form': ace_report_form,
+        'budget_summary': budget_summary,
+        'current_year': current_year,
+        'total_allocated': total_allocated,
+        'total_utilized': total_utilized,
+        'total_pending': total_pending,
+        'total_available': total_available,
+        'default_view': True
+    })
 
 
 @login_required
@@ -1674,8 +2146,8 @@ def ace_report_detail_excel(request, report_id2):
     print("report end date", report.end_date)
     print("report region", report.region)
     print('region obj', region_obj)
-    print("report budget", budget.budget_id)
-    if budget and region_obj:
+    print("report budget", report.budget_id.budget_id if report.budget_id else 'All budgets')
+    if report.budget_id and region_obj:
 
         response = HttpResponse(content_type='application/ms-excel')
         response['Content-Disposition'] = 'attachment; filename="ace_report.xlsx"'
@@ -1937,13 +2409,13 @@ def notify_pending_gm_approvals(request):
                 # Send a summary notification
                 msg = f"You have {count} ACE items awaiting your approval in {region.region}"
                 url = "/ace/awaiting_my_action/"
-                notify_user(gm, msg, "ACE", url, f"gm_summary_{region.id}", request)
+                notify_user(gm, msg, "ACE", url, f"gm_summary_{region.id}")
                 
                 # Optional: Send individual notifications for each item
                 for ace in pending_aces:
                     item_msg = f"ACE {ace.Ace_id2} requires your final approval"
                     item_url = f"/ace/ace_detail/{ace.Ace_id2}"
-                    notify_user(gm, item_msg, "ACE", item_url, ace.Ace_id2, request)
+                    notify_user(gm, item_msg, "ACE", item_url, ace.Ace_id2)
     
     if notification_count > 0:
         sweetify.success(request, f"Sent notifications for {notification_count} pending ACE items to general managers")
@@ -1956,16 +2428,206 @@ def notify_pending_gm_approvals(request):
 def asset_budget_report(request, budget_id):
     budget = get_object_or_404(AssetBudget, pk=budget_id)
     # All ACEs that used this budget
-    aces = Ace2.objects.filter(budget_id=budget)
+    aces = Ace2.objects.filter(budget_id=budget).order_by('-date_created')
     # Total amount used by ACEs
     total_used = aces.aggregate(total=models.Sum('amount'))['total'] or 0
-    # Other features
+    
+    # Calculate budget statistics
+    allocated = budget.allocated or 0
+    withdrawn = budget.withdrawn or 0
+    awaiting_sanctioning = budget.awaiting_sanctioning or 0
+    balance = budget.balance or 0
+    
+    # Calculate utilization rate
+    utilization_rate = (withdrawn / allocated * 100) if allocated > 0 else 0
+    
+    # Get ACE status counts
+    approved_count = 0
+    pending_count = 0
+    rejected_count = 0
+    unknown_count = 0
+    
+    for ace in aces:
+        if ace.process and ace.process.approval_set.last():
+            status = ace.process.approval_set.last().approved
+            if status == "Approved":
+                approved_count += 1
+            elif status == "Rejected":
+                rejected_count += 1
+            else:
+                pending_count += 1
+        else:
+            unknown_count += 1
+    
+    # Get monthly usage data (last 6 months)
+    from datetime import datetime, timedelta
+    from django.db.models import Sum, Count
+    from django.db.models.functions import TruncMonth
+    
+    end_date = datetime.now()
+    start_date = end_date - timedelta(days=180)  # 6 months ago
+    
+    monthly_usage = aces.filter(
+        date_created__gte=start_date,
+        date_created__lte=end_date
+    ).annotate(
+        month=TruncMonth('date_created')
+    ).values('month').annotate(
+        total_amount=Sum('amount'),
+        ace_count=Count('Ace_id')
+    ).order_by('month')
+    
+    # Format monthly data for chart
+    monthly_data = {
+        'labels': [],
+        'amounts': [],
+        'counts': []
+    }
+    
+    for item in monthly_usage:
+        monthly_data['labels'].append(item['month'].strftime('%b %Y'))
+        monthly_data['amounts'].append(float(item['total_amount'] or 0))
+        monthly_data['counts'].append(item['ace_count'])
+    
+    # Calculate additional metrics
+    avg_ace_amount = total_used / aces.count() if aces.count() > 0 else 0
+    
     context = {
         'budget': budget,
         'aces': aces,
         'total_used': total_used,
+        'allocated': allocated,
+        'withdrawn': withdrawn,
+        'awaiting_sanctioning': awaiting_sanctioning,
+        'balance': balance,
+        'utilization_rate': round(utilization_rate, 2),
+        'approved_count': approved_count,
+        'pending_count': pending_count,
+        'rejected_count': rejected_count,
+        'unknown_count': unknown_count,
+        'monthly_data': monthly_data,
+        'avg_ace_amount': avg_ace_amount,
+        'total_aces': aces.count(),
     }
     return render(request, 'finance/ace2/asset_budget_report.html', context)
+
+
+@login_required
+def asset_budget_report_pdf(request, budget_id):
+    """Export asset budget report to PDF"""
+    budget = get_object_or_404(AssetBudget, pk=budget_id)
+    aces = Ace2.objects.filter(budget_id=budget).order_by('-date_created')
+    total_used = aces.aggregate(total=models.Sum('amount'))['total'] or 0
+    
+    # Calculate utilization rate
+    utilization_rate = (budget.withdrawn / budget.allocated * 100) if budget.allocated > 0 else 0
+    
+    template = loader.get_template('finance/ace2/asset_budget_report_pdf.html')
+    context = {
+        'budget': budget,
+        'aces': aces,
+        'total_used': total_used,
+        'utilization_rate': round(utilization_rate, 2),
+        'request': request
+    }
+    html = template.render(context, request)
+    
+    from weasyprint import HTML
+    pdf = HTML(string=html).write_pdf()
+    
+    response = HttpResponse(pdf, content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="asset_budget_report_{budget.budget_id}.pdf"'
+    return response
+
+
+@login_required
+def asset_budget_report_excel(request, budget_id):
+    """Export asset budget report to Excel"""
+    budget = get_object_or_404(AssetBudget, pk=budget_id)
+    aces = Ace2.objects.filter(budget_id=budget).order_by('-date_created')
+    total_used = aces.aggregate(total=models.Sum('amount'))['total'] or 0
+    
+    from openpyxl import Workbook
+    from openpyxl.styles import Font, Alignment, PatternFill
+    from openpyxl.utils import get_column_letter
+    
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Asset Budget Report"
+    
+    # Header styling
+    header_font = Font(bold=True, size=12)
+    header_fill = PatternFill(start_color="366092", end_color="366092", fill_type="solid")
+    center_alignment = Alignment(horizontal="center", vertical="center")
+    
+    # Budget Summary Section
+    ws.merge_cells('A1:H1')
+    ws['A1'] = f"Asset Budget Report - {budget.budget_name}"
+    ws['A1'].font = Font(bold=True, size=16)
+    ws['A1'].alignment = center_alignment
+    
+    ws['A3'] = "Budget Summary"
+    ws['A3'].font = header_font
+    
+    ws['A4'] = "Allocated"
+    ws['B4'] = float(budget.allocated or 0)
+    ws['A5'] = "Withdrawn"
+    ws['B5'] = float(budget.withdrawn or 0)
+    ws['A6'] = "Balance"
+    ws['B6'] = float(budget.balance or 0)
+    ws['A7'] = "Awaiting Sanctioning"
+    ws['B7'] = float(budget.awaiting_sanctioning or 0)
+    ws['A8'] = "Total Used by ACEs"
+    ws['B8'] = float(total_used)
+    ws['A9'] = "Utilization Rate (%)"
+    ws['B9'] = round((budget.withdrawn / budget.allocated * 100) if budget.allocated > 0 else 0, 2)
+    
+    # ACE Details Section
+    ws['A12'] = "ACE Details"
+    ws['A12'].font = header_font
+    
+    # Headers
+    headers = ['ACE ID', 'Details', 'Amount', 'Requested By', 'Date Created', 'Status', 'Section', 'Region']
+    for col_num, header in enumerate(headers, 1):
+        cell = ws.cell(row=13, column=col_num, value=header)
+        cell.font = header_font
+        cell.fill = header_fill
+        cell.alignment = center_alignment
+    
+    # Data rows
+    for row_num, ace in enumerate(aces, 14):
+        ws.cell(row=row_num, column=1, value=ace.Ace_id2)
+        ws.cell(row=row_num, column=2, value=ace.details_of_expenditure)
+        ws.cell(row=row_num, column=3, value=float(ace.amount or 0))
+        ws.cell(row=row_num, column=4, value=ace.requested_by.get_full_name())
+        ws.cell(row=row_num, column=5, value=ace.date_created.strftime('%Y-%m-%d'))
+        
+        # Status
+        status = "-"
+        if ace.process and ace.process.approval_set.last():
+            status = ace.process.approval_set.last().approved
+        ws.cell(row=row_num, column=6, value=status)
+        
+        ws.cell(row=row_num, column=7, value=str(ace.section) if ace.section else "")
+        ws.cell(row=row_num, column=8, value=str(ace.region) if ace.region else "")
+    
+    # Auto-adjust column widths
+    for col in ws.columns:
+        max_length = 0
+        column = col[0].column_letter
+        for cell in col:
+            try:
+                if len(str(cell.value)) > max_length:
+                    max_length = len(str(cell.value))
+            except:
+                pass
+        adjusted_width = min(max_length + 2, 50)
+        ws.column_dimensions[column].width = adjusted_width
+    
+    response = HttpResponse(content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+    response['Content-Disposition'] = f'attachment; filename="asset_budget_report_{budget.budget_id}.xlsx"'
+    wb.save(response)
+    return response
 
 
 
@@ -2043,3 +2705,438 @@ def monthly_usage_dashboard(request):
         'current_year': current_year,
     }
     return render(request, 'finance/ace2/monthly_usage_dashboard.html', context)
+
+@login_required
+def transactions_excel_export(request):
+    """Export all transactions in the user's region to Excel (excluding rejected ACEs)"""
+    user_id = request.user.id
+    user_profile = UserProfile.objects.filter(id=user_id).first()
+    region = Regions.objects.filter(id=user_profile.region.id).first()
+    
+    # Use select_related to avoid DoesNotExist errors and exclude rejected transactions
+    transactions = Transactions.objects.filter(
+        region=region
+    ).exclude(
+        approval_status__icontains='rejected'
+    ).select_related(
+        'Ace_id2', 'Ace_id2__requested_by', 'virament', 'section', 'region', 'budget'
+    )
+    
+    response = HttpResponse(content_type='application/ms-excel')
+    response['Content-Disposition'] = 'attachment; filename="transactions_report.xlsx"'
+    
+    wb = Workbook()
+    ws = wb.active
+    
+    # Add header row
+    ws.append([
+        'Transaction ID',
+        'ACE ID',
+        'Virament ID',
+        'Details',
+        'Amount',
+        'Requested By',
+        'Date Created',
+        'Section',
+        'Section Code',
+        'Region',
+        'Budget',
+        'Approval Status'
+    ])
+    
+    # Add data rows
+    for transaction in transactions:
+        # Skip if ACE is rejected (additional check)
+        if transaction.Ace_id2 and transaction.Ace_id2.process:
+            if transaction.Ace_id2.process.approval_set.filter(approved="Rejected").exists():
+                continue
+                
+        # Safe access to related objects
+        try:
+            section_name = transaction.section.section if transaction.section else ''
+        except:
+            section_name = ''
+            
+        try:
+            section_code = transaction.section.code if transaction.section else ''
+        except:
+            section_code = ''
+            
+        try:
+            region_name = transaction.region.region if transaction.region else ''
+        except:
+            region_name = ''
+            
+        try:
+            budget_name = transaction.budget.budget_name if transaction.budget else ''
+        except:
+            budget_name = ''
+            
+        try:
+            requested_by = transaction.Ace_id2.requested_by.get_full_name() if transaction.Ace_id2 and transaction.Ace_id2.requested_by else ''
+        except:
+            requested_by = ''
+            
+        try:
+            date_created = transaction.Ace_id2.date_created.strftime('%Y-%m-%d') if transaction.Ace_id2 and transaction.Ace_id2.date_created else ''
+        except:
+            date_created = ''
+        
+        ws.append([
+            transaction.transaction_id,
+            transaction.Ace_id2.Ace_id2 if transaction.Ace_id2 else '',
+            transaction.virament.virament_id if transaction.virament else '',
+            transaction.details_of_expenditure or '',
+            transaction.amount or 0,
+            requested_by,
+            date_created,
+            section_name,
+            section_code,
+            region_name,
+            budget_name,
+            transaction.approval_status or ''
+        ])
+    
+    wb.save(response)
+    return response
+
+
+@login_required
+def transactions_for_budget_excel_export(request, budget_id):
+    """Export transactions for a specific budget to Excel (excluding rejected ACEs)"""
+    user_id = request.user.id
+    user_profile = UserProfile.objects.filter(id=user_id).first()
+    
+    # Use select_related to avoid DoesNotExist errors and exclude rejected transactions
+    transactions = Transactions.objects.filter(
+        budget_id=budget_id
+    ).exclude(
+        approval_status__icontains='rejected'
+    ).select_related(
+        'Ace_id2', 'Ace_id2__requested_by', 'virament', 'section', 'region', 'budget'
+    )
+    
+    # Get budget name for filename
+    budget = get_object_or_404(AssetBudget, pk=budget_id)
+    # Clean filename to avoid invalid characters
+    clean_budget_name = "".join(c for c in budget.budget_name if c.isalnum() or c in (' ', '-', '_')).rstrip()
+    filename = f"transactions_budget_{clean_budget_name.replace(' ', '_')}.xlsx"
+    
+    response = HttpResponse(content_type='application/ms-excel')
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    
+    wb = Workbook()
+    ws = wb.active
+    
+    # Add header row
+    ws.append([
+        'Transaction ID',
+        'ACE ID',
+        'Virament ID',
+        'Details',
+        'Amount',
+        'Requested By',
+        'Date Created',
+        'Section',
+        'Section Code',
+        'Region',
+        'Budget',
+        'Approval Status'
+    ])
+    
+    # Add data rows
+    for transaction in transactions:
+        # Skip if ACE is rejected (additional check)
+        if transaction.Ace_id2 and transaction.Ace_id2.process:
+            if transaction.Ace_id2.process.approval_set.filter(approved="Rejected").exists():
+                continue
+                
+        # Safe access to related objects
+        try:
+            section_name = transaction.section.section if transaction.section else ''
+        except:
+            section_name = ''
+            
+        try:
+            section_code = transaction.section.code if transaction.section else ''
+        except:
+            section_code = ''
+            
+        try:
+            region_name = transaction.region.region if transaction.region else ''
+        except:
+            region_name = ''
+            
+        try:
+            budget_name = transaction.budget.budget_name if transaction.budget else ''
+        except:
+            budget_name = ''
+            
+        try:
+            requested_by = transaction.Ace_id2.requested_by.get_full_name() if transaction.Ace_id2 and transaction.Ace_id2.requested_by else ''
+        except:
+            requested_by = ''
+            
+        try:
+            date_created = transaction.Ace_id2.date_created.strftime('%Y-%m-%d') if transaction.Ace_id2 and transaction.Ace_id2.date_created else ''
+        except:
+            date_created = ''
+        
+        ws.append([
+            transaction.transaction_id,
+            transaction.Ace_id2.Ace_id2 if transaction.Ace_id2 else '',
+            transaction.virament.virament_id if transaction.virament else '',
+            transaction.details_of_expenditure or '',
+            transaction.amount or 0,
+            requested_by,
+            date_created,
+            section_name,
+            section_code,
+            region_name,
+            budget_name,
+            transaction.approval_status or ''
+        ])
+    
+    wb.save(response)
+    return response
+
+@login_required
+def ace_report_detail_csv(request, report_id2=None):
+    """Export ACE report to CSV format"""
+    if report_id2:
+        report = get_object_or_404(AceReport, report_id2=report_id2)
+        # Only filter by budget if a specific budget is selected
+        if report.budget_id:
+            aces = Ace2.objects.filter(
+                region=report.region,
+                budget_id=report.budget_id,
+                date_created__range=[report.start_date, report.end_date]
+            )
+        else:
+            aces = Ace2.objects.filter(
+                region=report.region,
+                date_created__range=[report.start_date, report.end_date]
+            )
+        
+        filename = f"ace_report_{report.report_id2}.csv"
+    else:
+        # Get parameters from GET request for all budgets report
+        start_date = parse_date(request.GET.get('start_date'))
+        end_date = parse_date(request.GET.get('end_date'))
+        region_id = request.GET.get('region')
+        budget_id = request.GET.get('budget_id')
+        all_budgets = request.GET.get('all_budgets')
+        
+        # Handle filters - build query based on provided parameters
+        ace_filter = {}
+        
+        # Add date range filter if dates are provided
+        if start_date and end_date:
+            ace_filter['date_created__range'] = [start_date, end_date]
+        elif start_date:
+            ace_filter['date_created__gte'] = start_date
+        elif end_date:
+            ace_filter['date_created__lte'] = end_date
+        
+        # Add region filter if region is provided and not empty
+        if region_id and region_id.strip():
+            try:
+                region = get_object_or_404(Regions, id=int(region_id))
+                ace_filter['region'] = region
+            except (ValueError, TypeError):
+                pass  # Skip invalid region IDs
+        
+        # Add budget filter only if a specific budget is provided and all_budgets is not set
+        if budget_id and budget_id.strip() and not all_budgets:
+            try:
+                from .models import AssetBudget
+                budget = get_object_or_404(AssetBudget, budget_id=int(budget_id))
+                ace_filter['budget_id'] = budget
+            except (ValueError, TypeError):
+                pass  # Skip invalid budget IDs
+        # If all_budgets=1 or no budget_id specified, don't add budget filter (includes all budgets)
+        
+        aces = Ace2.objects.filter(**ace_filter)
+        
+        # Generate descriptive filename
+        if all_budgets or not budget_id:
+            filename = f"ace_report_all_budgets_{start_date or 'all'}_to_{end_date or 'all'}.csv"
+        else:
+            filename = f"ace_report_budget_{budget_id}_{start_date or 'all'}_to_{end_date or 'all'}.csv"
+    
+    # Create CSV response
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    
+    writer = csv.writer(response)
+    
+    # Write header row
+    writer.writerow([
+        'ACE ID',
+        'Details of Expenditure',
+        'Requested By',
+        'Section',
+        'Date Created',
+        'Budget',
+        'Amount',
+        'Transaction Status',
+        'Approval Status',
+        'Actioned By'
+    ])
+    
+    # Write data rows
+    for ace in aces:
+        # Get transaction info
+        transaction = Transactions.objects.filter(Ace_id2=ace).first()
+        
+        # Get approval info
+        latest_approval = ace.process.approval_set.last() if ace.process and ace.process.approval_set.exists() else None
+        approval_status = latest_approval.approved if latest_approval else ''
+        actioned_by = latest_approval.user.get_full_name() if latest_approval and latest_approval.user else ''
+        
+        # Get section name safely
+        try:
+            section_name = ace.section.section if ace.section else ''
+        except:
+            section_name = ''
+        
+        writer.writerow([
+            ace.Ace_id2,
+            ace.details_of_expenditure,
+            ace.requested_by.get_full_name() if ace.requested_by else '',
+            section_name,
+            ace.date_created.strftime('%Y-%m-%d') if ace.date_created else '',
+            ace.budget_id.budget_name if ace.budget_id else '',
+            ace.amount,
+            transaction.approval_status if transaction else '',
+            approval_status,
+            actioned_by
+        ])
+    
+    return response
+
+@login_required
+def export_current_year_csv(request):
+    """Export current year ACE data for user's region to CSV"""
+    user_id = request.user.id
+    user_profile = UserProfile.objects.filter(id=user_id).first()
+    current_year = timezone.now().year
+    
+    # Get user's region
+    region = user_profile.region
+    
+    # Filter ACEs for current year and user's region
+    aces = Ace2.objects.filter(
+        date_created__year=current_year,
+        region=region
+    ).order_by('-date_created')
+    
+    # Create CSV response
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = f'attachment; filename="ace_report_{current_year}_{region.region}.csv"'
+    
+    writer = csv.writer(response)
+    
+    # Write header row
+    writer.writerow([
+        'ACE ID',
+        'Details of Expenditure',
+        'Requested By',
+        'Section',
+        'Date Created',
+        'Budget',
+        'Amount',
+        'Transaction Status',
+        'Approval Status',
+        'Actioned By'
+    ])
+    
+    # Write data rows
+    for ace in aces:
+        # Get transaction info
+        transaction = Transactions.objects.filter(Ace_id2=ace).first()
+        
+        # Get approval info
+        latest_approval = ace.process.approval_set.last() if ace.process and ace.process.approval_set.exists() else None
+        approval_status = latest_approval.approved if latest_approval else ''
+        actioned_by = latest_approval.user.get_full_name() if latest_approval and latest_approval.user else ''
+        
+        # Get section name safely
+        try:
+            section_name = ace.section.section if ace.section else ''
+        except:
+            section_name = ''
+        
+        writer.writerow([
+            ace.Ace_id2,
+            ace.details_of_expenditure,
+            ace.requested_by.get_full_name() if ace.requested_by else '',
+            section_name,
+            ace.date_created.strftime('%Y-%m-%d') if ace.date_created else '',
+            ace.budget_id.budget_name if ace.budget_id else '',
+            ace.amount,
+            transaction.approval_status if transaction else '',
+            approval_status,
+            actioned_by
+        ])
+    
+    return response
+
+@login_required
+def export_current_year_pdf(request):
+    """Export current year ACE data for user's region to PDF"""
+    user_id = request.user.id
+    user_profile = UserProfile.objects.filter(id=user_id).first()
+    current_year = timezone.now().year
+    
+    # Get user's region
+    region = user_profile.region
+    
+    # Filter ACEs for current year and user's region
+    aces = Ace2.objects.filter(
+        date_created__year=current_year,
+        region=region
+    ).order_by('-date_created')
+    
+    # Get budget summary for context
+    budgets = AssetBudget.objects.filter(region=region, period=current_year).order_by('-allocated')
+    budget_summary = []
+    
+    for budget_item in budgets:
+        if budget_item.allocated > 0:
+            budget_aces = aces.filter(budget_id=budget_item)
+            ace_count = budget_aces.count()
+            total_ace_amount = budget_aces.aggregate(total=Sum('amount'))['total'] or 0
+            avg_ace_amount = total_ace_amount / ace_count if ace_count > 0 else 0
+            
+            utilization_percentage = (budget_item.withdrawn / budget_item.allocated * 100) if budget_item.allocated > 0 else 0
+            pending_percentage = (budget_item.to_be_withdrawn / budget_item.allocated * 100) if budget_item.allocated > 0 else 0
+            available_percentage = (budget_item.balance / budget_item.allocated * 100) if budget_item.allocated > 0 else 0
+            total_commitment_percentage = utilization_percentage + pending_percentage
+            
+            budget_summary.append({
+                'budget': budget_item,
+                'allocated': budget_item.allocated,
+                'withdrawn': budget_item.withdrawn,
+                'to_be_withdrawn': budget_item.to_be_withdrawn,
+                'balance': budget_item.balance,
+                'utilization_percentage': utilization_percentage,
+                'pending_percentage': pending_percentage,
+                'available_percentage': available_percentage,
+                'total_commitment_percentage': total_commitment_percentage,
+                'total_committed': budget_item.withdrawn + budget_item.to_be_withdrawn,
+                'ace_count': ace_count,
+                'avg_ace_amount': avg_ace_amount,
+                'health_status': 'good' if budget_item.balance > (budget_item.allocated * 0.3) else 'warning' if budget_item.balance > (budget_item.allocated * 0.1) else 'critical'
+            })
+    
+    template = loader.get_template('finance/ace2/ace_reports.html')
+    context = {
+        'aces': aces,
+        'budget_summary': budget_summary,
+        'current_year': current_year,
+        'request': request
+    }
+    html = template.render(context, request)
+    pdf = HTML(string=html).write_pdf()
+    return HttpResponse(pdf, content_type='application/pdf')

@@ -120,7 +120,7 @@ def import_old_rfq(request):
     #             created_by = UserProfile.objects.filter(username=row['created_by']).first()
     #         if created_by == None: 
     #             created_by = UserProfile.objects.filter(username='12345').first()
-    #             print("No User: ", row['created_by'])
+    #             print("No User: ", row['created_by'])M
     #             # print("using No User")
     #         # ace = Ace2.objects.filter(ace=row['ace']).first() if row['ace'] else None
     #         print("created by: ", created_by, datetime.strptime(row['date_created'], "%Y-%m-%d %H:%M:%S"))
