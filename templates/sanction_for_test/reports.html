@@ -1,0 +1,231 @@
+{% extends 'admin_layout.html' %}
+{% load static %}
+
+{% block content %}
+<div class="content-wrapper p-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-header">
+                <h1 class="page-title">Sanction For Test Reports</h1>
+                <div class="page-breadcrumb">
+                    <nav aria-label="breadcrumb">
+                        <ol class="breadcrumb">
+                            <li class="breadcrumb-item"><a href="{% url 'sanction_for_test:list' %}">Sanction Forms</a></li>
+                            <li class="breadcrumb-item active" aria-current="page">Reports</li>
+                        </ol>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% if error %}
+        <div class="alert alert-danger">
+            <strong>Error:</strong> {{ error }}
+        </div>
+    {% else %}
+        <!-- Statistics Cards -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card bg-primary text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h4 class="card-title">Total Forms</h4>
+                                <h2>{{ total_forms }}</h2>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="fas fa-file-alt fa-2x"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <div class="card bg-warning text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h4 class="card-title">Pending</h4>
+                                <h2>{{ pending_count }}</h2>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="fas fa-clock fa-2x"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <div class="card bg-success text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h4 class="card-title">Approved</h4>
+                                <h2>{{ approved_count }}</h2>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="fas fa-check-circle fa-2x"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3">
+                <div class="card bg-danger text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h4 class="card-title">Rejected</h4>
+                                <h2>{{ rejected_count }}</h2>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="fas fa-times-circle fa-2x"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Additional Statistics -->
+        <div class="row mb-4">
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title">Status Breakdown</h5>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-unstyled">
+                            <li class="d-flex justify-content-between">
+                                <span>Draft:</span>
+                                <span class="badge badge-secondary">{{ draft_count }}</span>
+                            </li>
+                            <li class="d-flex justify-content-between">
+                                <span>Pending:</span>
+                                <span class="badge badge-warning">{{ pending_count }}</span>
+                            </li>
+                            <li class="d-flex justify-content-between">
+                                <span>Approved:</span>
+                                <span class="badge badge-success">{{ approved_count }}</span>
+                            </li>
+                            <li class="d-flex justify-content-between">
+                                <span>Rejected:</span>
+                                <span class="badge badge-danger">{{ rejected_count }}</span>
+                            </li>
+                            <li class="d-flex justify-content-between">
+                                <span>Completed:</span>
+                                <span class="badge badge-info">{{ completed_count }}</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title">Priority Analysis</h5>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-unstyled">
+                            <li class="d-flex justify-content-between">
+                                <span>High Priority:</span>
+                                <span class="badge badge-warning">{{ high_priority }}</span>
+                            </li>
+                            <li class="d-flex justify-content-between">
+                                <span>Critical Priority:</span>
+                                <span class="badge badge-danger">{{ critical_priority }}</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title">Risk Analysis</h5>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-unstyled">
+                            <li class="d-flex justify-content-between">
+                                <span>High Risk:</span>
+                                <span class="badge badge-warning">{{ high_risk }}</span>
+                            </li>
+                            <li class="d-flex justify-content-between">
+                                <span>Extreme Risk:</span>
+                                <span class="badge badge-danger">{{ extreme_risk }}</span>
+                            </li>
+                            <li class="d-flex justify-content-between">
+                                <span>Recent Forms (30 days):</span>
+                                <span class="badge badge-info">{{ recent_forms }}</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Forms Table -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title">Recent Sanction Forms</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Form No</th>
+                                <th>Status</th>
+                                <th>Priority</th>
+                                <th>Risk Level</th>
+                                <th>Created By</th>
+                                <th>Date Created</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for form in sanction_forms %}
+                            <tr>
+                                <td>{{ form.form_no }}</td>
+                                <td>
+                                    <span class="badge badge-{% if form.status == 'approved' %}success{% elif form.status == 'rejected' %}danger{% elif form.status == 'pending' %}warning{% else %}secondary{% endif %}">
+                                        {{ form.get_status_display }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="badge badge-{% if form.priority == 'critical' %}danger{% elif form.priority == 'high' %}warning{% else %}secondary{% endif %}">
+                                        {{ form.get_priority_display }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="badge badge-{% if form.risk_level == 'extreme' %}danger{% elif form.risk_level == 'high' %}warning{% else %}secondary{% endif %}">
+                                        {{ form.get_risk_level_display }}
+                                    </span>
+                                </td>
+                                <td>{{ form.created_by.get_full_name|default:form.created_by.username }}</td>
+                                <td>{{ form.created_at|date:"Y-m-d H:i" }}</td>
+                                <td>
+                                    <a href="{% url 'sanction_for_test:detail' form.pk %}" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-eye"></i> View
+                                    </a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="7" class="text-center">No sanction forms found.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,342 @@
+{% extends 'admin_layout.html' %}
+{% load humanize %}
+
+{% block title %}Sanction For Test Form: {{ sanction_form.form_no }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h3 class="card-title">Sanction For Test Form: {{ sanction_form.form_no }}</h3>
+                    <div class="btn-group">
+                        {% if can_edit %}
+                            <a href="{% url 'sanction_for_test:edit' sanction_form.pk %}" class="btn btn-primary btn-sm">
+                                <i class="fas fa-edit"></i> Edit
+                            </a>
+                        {% endif %}
+                        {% if can_delete and sanction_form.status == 'draft' %}
+                            <a href="{% url 'sanction_for_test:delete' sanction_form.pk %}" class="btn btn-danger btn-sm">
+                                <i class="fas fa-trash"></i> Delete
+                            </a>
+                        {% endif %}
+                        <a href="{% url 'sanction_for_test:list' %}" class="btn btn-secondary btn-sm">
+                            <i class="fas fa-list"></i> Back to List
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="card-body">
+                    <!-- Form Header Information -->
+                    <div class="row mb-4">
+                        <div class="col-md-3">
+                            <strong>Form Number:</strong><br>
+                            <span class="text-primary">{{ sanction_form.form_no }}</span>
+                        </div>
+                        <div class="col-md-3">
+                            <strong>Status:</strong><br>
+                            <span class="badge 
+                                {% if sanction_form.status == 'draft' %}badge-secondary
+                                {% elif sanction_form.status == 'issued' %}badge-primary
+                                {% elif sanction_form.status == 'received' %}badge-info
+                                {% elif sanction_form.status == 'cleared' %}badge-success
+                                {% elif sanction_form.status == 'cancelled' %}badge-warning
+                                {% elif sanction_form.status == 'completed' %}badge-dark
+                                {% endif %}">
+                                {{ sanction_form.get_status_display }}
+                            </span>
+                        </div>
+                        <div class="col-md-3">
+                            <strong>Created By:</strong><br>
+                            {{ sanction_form.created_by.get_full_name|default:sanction_form.created_by.username }}
+                        </div>
+                        <div class="col-md-3">
+                            <strong>Date Issued:</strong><br>
+                            {{ sanction_form.date_issued|date:"M d, Y" }}
+                        </div>
+                    </div>
+
+                    <!-- Quick Actions -->
+                    {% if sanction_form.status != 'completed' %}
+                        <div class="card mb-4">
+                            <div class="card-header bg-light">
+                                <h5 class="mb-0">Quick Actions</h5>
+                                <small class="text-muted">Next Required Action: {{ next_action }}</small>
+                            </div>
+                            <div class="card-body">
+                                <form method="post" action="{% url 'sanction_for_test:quick_action' sanction_form.pk %}" class="form-inline">
+                                    {% csrf_token %}
+                                    
+                                    <div class="form-group mr-3">
+                                        <label for="{{ quick_action_form.action.id_for_label }}" class="sr-only">Action</label>
+                                        {{ quick_action_form.action }}
+                                    </div>
+                                    
+                                    <div class="form-group mr-3">
+                                        <label for="{{ quick_action_form.signature_name.id_for_label }}" class="sr-only">Signature Name</label>
+                                        {{ quick_action_form.signature_name }}
+                                    </div>
+                                    
+                                    <div class="form-group mr-3">
+                                        <label for="{{ quick_action_form.comment.id_for_label }}" class="sr-only">Comment</label>
+                                        {{ quick_action_form.comment }}
+                                    </div>
+                                    
+                                    <button type="submit" class="btn btn-success btn-sm">
+                                        <i class="fas fa-check"></i> Execute Action
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                    {% endif %}
+
+                    <!-- Section 1.0: ISSUE -->
+                    <div class="card mb-4">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0">Section 1.0: ISSUE</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <strong>Work to be Carried Out:</strong>
+                                    <p class="text-muted">{{ sanction_form.work_to_be_carried_out|default:"-" }}</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <strong>Plant or Equipment to be Tested:</strong>
+                                    <p class="text-muted">{{ sanction_form.plant_or_equipment_to_be_tested|default:"-" }}</p>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <strong>Points of Isolation:</strong>
+                                    <p class="text-muted">{{ sanction_form.points_of_isolation|default:"-" }}</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <strong>Nearest Point Live:</strong>
+                                    <p class="text-muted">{{ sanction_form.nearest_point_live|default:"-" }}</p>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <strong>Circuit Main Earth Connected At:</strong>
+                                    <p class="text-muted">{{ sanction_form.circuit_main_earth_connected_at|default:"-" }}</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <strong>Danger Notices:</strong>
+                                    <p class="text-muted">{{ sanction_form.danger_notices|default:"-" }}</p>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <strong>Caution Notices:</strong>
+                                    <p class="text-muted">{{ sanction_form.caution_notices|default:"-" }}</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <strong>Special Keys:</strong>
+                                    <p class="text-muted">{{ sanction_form.special_keys|default:"-" }}</p>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-12">
+                                    <strong>Other Precautions:</strong>
+                                    <p class="text-muted">{{ sanction_form.other_precaution|default:"-" }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Section 2.0: DECLARATION BY RESPONSIBLE OFFICIAL -->
+                    <div class="card mb-4">
+                        <div class="card-header bg-info text-white">
+                            <h5 class="mb-0">Section 2.0: DECLARATION BY RESPONSIBLE OFFICIAL</h5>
+                        </div>
+                        <div class="card-body">
+                            {% if sanction_form.declaration_responsible_official_signer %}
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <strong>Primary Signer:</strong>
+                                        <p class="text-muted">{{ sanction_form.declaration_responsible_official_signer.name }}</p>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <strong>Date & Time:</strong>
+                                        <p class="text-muted">
+                                            {{ sanction_form.declaration_responsible_official_signer.date|date:"M d, Y" }}
+                                            {{ sanction_form.declaration_responsible_official_signer.time|time:"H:i" }}
+                                        </p>
+                                    </div>
+                                </div>
+                            {% endif %}
+                            
+                            {% if declaration_entries %}
+                                <h6 class="mt-3">Additional Signatories:</h6>
+                                <div class="table-responsive">
+                                    <table class="table table-sm">
+                                        <thead>
+                                            <tr>
+                                                <th>Name</th>
+                                                <th>Date</th>
+                                                <th>Time</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for entry in declaration_entries %}
+                                                <tr>
+                                                    <td>{{ entry.signature_entry.name }}</td>
+                                                    <td>{{ entry.signature_entry.date|date:"M d, Y" }}</td>
+                                                    <td>{{ entry.signature_entry.time|time:"H:i" }}</td>
+                                                </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            {% endif %}
+                            
+                            {% if not sanction_form.declaration_responsible_official_signer and not declaration_entries %}
+                                <p class="text-muted"><em>No declarations recorded yet.</em></p>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Section 3.0: RECEIPT -->
+                    <div class="card mb-4">
+                        <div class="card-header bg-warning text-dark">
+                            <h5 class="mb-0">Section 3.0: RECEIPT</h5>
+                        </div>
+                        <div class="card-body">
+                            {% if sanction_form.receipt_signer %}
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <strong>Primary Signer:</strong>
+                                        <p class="text-muted">{{ sanction_form.receipt_signer.name }}</p>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <strong>Date & Time:</strong>
+                                        <p class="text-muted">
+                                            {{ sanction_form.receipt_signer.date|date:"M d, Y" }}
+                                            {{ sanction_form.receipt_signer.time|time:"H:i" }}
+                                        </p>
+                                    </div>
+                                </div>
+                            {% else %}
+                                <p class="text-muted"><em>Not yet received.</em></p>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Section 4.0: CLEARANCE -->
+                    <div class="card mb-4">
+                        <div class="card-header bg-success text-white">
+                            <h5 class="mb-0">Section 4.0: CLEARANCE</h5>
+                        </div>
+                        <div class="card-body">
+                            {% if sanction_form.clearance_signer %}
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <strong>Primary Signer:</strong>
+                                        <p class="text-muted">{{ sanction_form.clearance_signer.name }}</p>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <strong>Date & Time:</strong>
+                                        <p class="text-muted">
+                                            {{ sanction_form.clearance_signer.date|date:"M d, Y" }}
+                                            {{ sanction_form.clearance_signer.time|time:"H:i" }}
+                                        </p>
+                                    </div>
+                                </div>
+                                {% if sanction_form.exceptions %}
+                                    <div class="row">
+                                        <div class="col-12">
+                                            <strong>Exceptions:</strong>
+                                            <p class="text-muted">{{ sanction_form.exceptions }}</p>
+                                        </div>
+                                    </div>
+                                {% endif %}
+                            {% else %}
+                                <p class="text-muted"><em>Not yet cleared.</em></p>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Section 5.0: CANCELLATION -->
+                    {% if sanction_form.status == 'cancelled' %}
+                        <div class="card mb-4">
+                            <div class="card-header bg-danger text-white">
+                                <h5 class="mb-0">Section 5.0: CANCELLATION</h5>
+                            </div>
+                            <div class="card-body">
+                                {% if sanction_form.cancellation_controller_signer %}
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <strong>Controller Signer:</strong>
+                                            <p class="text-muted">{{ sanction_form.cancellation_controller_signer.name }}</p>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <strong>Date & Time:</strong>
+                                            <p class="text-muted">
+                                                {{ sanction_form.cancellation_controller_signer.date|date:"M d, Y" }}
+                                                {{ sanction_form.cancellation_controller_signer.time|time:"H:i" }}
+                                            </p>
+                                        </div>
+                                    </div>
+                                {% endif %}
+                                {% if sanction_form.cancellation_reason %}
+                                    <div class="row">
+                                        <div class="col-12">
+                                            <strong>Cancellation Reason:</strong>
+                                            <p class="text-muted">{{ sanction_form.cancellation_reason }}</p>
+                                        </div>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% endif %}
+
+                    <!-- Section 6.0: POST-CANCELLATION DECLARATION -->
+                    {% if sanction_form.post_cancellation_responsible_official_signer %}
+                        <div class="card mb-4">
+                            <div class="card-header bg-dark text-white">
+                                <h5 class="mb-0">Section 6.0: DECLARATION BY RESPONSIBLE OFFICIAL (After Cancellation)</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <strong>Responsible Official:</strong>
+                                        <p class="text-muted">{{ sanction_form.post_cancellation_responsible_official_signer.name }}</p>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <strong>Date & Time:</strong>
+                                        <p class="text-muted">
+                                            {{ sanction_form.post_cancellation_responsible_official_signer.date|date:"M d, Y" }}
+                                            {{ sanction_form.post_cancellation_responsible_official_signer.time|time:"H:i" }}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+
+                    <!-- Audit Trail -->
+                    <div class="card">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0">Audit Trail</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <strong>Created:</strong>
+                                    <p class="text-muted">{{ sanction_form.created_at|date:"M d, Y H:i" }}</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <strong>Last Updated:</strong>
+                                    <p class="text-muted">{{ sanction_form.updated_at|date:"M d, Y H:i" }}</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

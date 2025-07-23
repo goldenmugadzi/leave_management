@@ -1,0 +1,248 @@
+{% extends 'admin_layout.html' %}
+{% load widget_tweaks %}
+
+{% block title %}
+    {% if is_edit %}Edit{% else %}Create{% endif %} Sanction For Test Form
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        {% if is_edit %}
+                            Edit Sanction For Test Form: {{ sanction_form.form_no }}
+                        {% else %}
+                            Create New Sanction For Test Form
+                        {% endif %}
+                    </h3>
+                </div>
+                
+                <form method="post" class="needs-validation" novalidate>
+                    {% csrf_token %}
+                    
+                    <div class="card-body">
+                        <!-- Form Information Section -->
+                        {% if is_edit %}
+                            <div class="row mb-4">
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label class="form-label"><strong>Form Number:</strong></label>
+                                        <p class="form-control-plaintext">{{ sanction_form.form_no }}</p>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label class="form-label"><strong>Current Status:</strong></label>
+                                        <p class="form-control-plaintext">
+                                            <span class="badge badge-primary">{{ sanction_form.get_status_display }}</span>
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                            <hr>
+                        {% endif %}
+
+                        <!-- Status Selection (for new forms or editable forms) -->
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="{{ form.status.id_for_label }}" class="form-label">
+                                        {{ form.status.label }}
+                                        {% if form.status.field.required %}<span class="text-danger">*</span>{% endif %}
+                                    </label>
+                                    {{ form.status|add_class:"form-control" }}
+                                    {% if form.status.errors %}
+                                        <div class="invalid-feedback d-block">
+                                            {{ form.status.errors.0 }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Section 1.0: ISSUE -->
+                        <div class="card mt-4">
+                            <div class="card-header bg-light">
+                                <h5 class="mb-0">Section 1.0: ISSUE</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="{{ form.work_to_be_carried_out.id_for_label }}" class="form-label">
+                                                {{ form.work_to_be_carried_out.label }}
+                                                {% if form.work_to_be_carried_out.field.required %}<span class="text-danger">*</span>{% endif %}
+                                            </label>
+                                            {{ form.work_to_be_carried_out|add_class:"form-control" }}
+                                            {% if form.work_to_be_carried_out.errors %}
+                                                <div class="invalid-feedback d-block">
+                                                    {{ form.work_to_be_carried_out.errors.0 }}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="{{ form.plant_or_equipment_to_be_tested.id_for_label }}" class="form-label">
+                                                {{ form.plant_or_equipment_to_be_tested.label }}
+                                                {% if form.plant_or_equipment_to_be_tested.field.required %}<span class="text-danger">*</span>{% endif %}
+                                            </label>
+                                            {{ form.plant_or_equipment_to_be_tested|add_class:"form-control" }}
+                                            {% if form.plant_or_equipment_to_be_tested.errors %}
+                                                <div class="invalid-feedback d-block">
+                                                    {{ form.plant_or_equipment_to_be_tested.errors.0 }}
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="{{ form.points_of_isolation.id_for_label }}" class="form-label">
+                                                {{ form.points_of_isolation.label }}
+                                            </label>
+                                            {{ form.points_of_isolation|add_class:"form-control" }}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="{{ form.nearest_point_live.id_for_label }}" class="form-label">
+                                                {{ form.nearest_point_live.label }}
+                                            </label>
+                                            {{ form.nearest_point_live|add_class:"form-control" }}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="{{ form.circuit_main_earth_connected_at.id_for_label }}" class="form-label">
+                                                {{ form.circuit_main_earth_connected_at.label }}
+                                            </label>
+                                            {{ form.circuit_main_earth_connected_at|add_class:"form-control" }}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="{{ form.danger_notices.id_for_label }}" class="form-label">
+                                                {{ form.danger_notices.label }}
+                                            </label>
+                                            {{ form.danger_notices|add_class:"form-control" }}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="{{ form.caution_notices.id_for_label }}" class="form-label">
+                                                {{ form.caution_notices.label }}
+                                            </label>
+                                            {{ form.caution_notices|add_class:"form-control" }}
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="{{ form.special_keys.id_for_label }}" class="form-label">
+                                                {{ form.special_keys.label }}
+                                            </label>
+                                            {{ form.special_keys|add_class:"form-control" }}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="row">
+                                    <div class="col-12">
+                                        <div class="form-group">
+                                            <label for="{{ form.other_precaution.id_for_label }}" class="form-label">
+                                                {{ form.other_precaution.label }}
+                                            </label>
+                                            {{ form.other_precaution|add_class:"form-control" }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Additional Sections for Edit Mode -->
+                        {% if is_edit and sanction_form.status != 'draft' %}
+                            <div class="card mt-4">
+                                <div class="card-header bg-light">
+                                    <h5 class="mb-0">Additional Information</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label for="{{ form.exceptions.id_for_label }}" class="form-label">
+                                                    {{ form.exceptions.label }}
+                                                </label>
+                                                {{ form.exceptions|add_class:"form-control" }}
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label for="{{ form.cancellation_reason.id_for_label }}" class="form-label">
+                                                    {{ form.cancellation_reason.label }}
+                                                </label>
+                                                {{ form.cancellation_reason|add_class:"form-control" }}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endif %}
+
+                        <!-- Form Validation Errors -->
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger mt-3">
+                                {{ form.non_field_errors }}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="card-footer">
+                        <div class="row">
+                            <div class="col-12">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save"></i>
+                                    {% if is_edit %}Update{% else %}Create{% endif %} Form
+                                </button>
+                                <a href="{% if is_edit %}{% url 'sanction_for_test:detail' sanction_form.pk %}{% else %}{% url 'sanction_for_test:list' %}{% endif %}" 
+                                   class="btn btn-secondary">
+                                    <i class="fas fa-times"></i> Cancel
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Form validation
+(function() {
+    'use strict';
+    window.addEventListener('load', function() {
+        var forms = document.getElementsByClassName('needs-validation');
+        var validation = Array.prototype.filter.call(forms, function(form) {
+            form.addEventListener('submit', function(event) {
+                if (form.checkValidity() === false) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+                form.classList.add('was-validated');
+            }, false);
+        });
+    }, false);
+})();
+</script>
+{% endblock %}
