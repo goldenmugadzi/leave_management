@@ -78,7 +78,7 @@
               <label
                 for="report_type"
                 class="block text-sm font-medium leading-6 text-gray-900"
-                >Plan or Report</label
+                >Type</label
               >
               <div class="mt-2">
                 <select
@@ -91,12 +91,13 @@
                     <option>Select Type</option>
                     <option value="Report">Report</option>
                     <option value="Plan">Plan</option>
+                    <option value="Objective">Objective</option>
                   </select>
               </div>
             </div>
 
 
-            <div>
+            <div id="period_field">
               <label
                 for="filename"
                 class="block text-sm font-medium leading-6 text-gray-900"
@@ -135,9 +136,16 @@
                     class="block w-full rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
                   >
                     <option>Select Section</option>
-                    {% for section in sections %}
-                      <option value="{{section.id}}">{{section.section}}</option>
-                    {% endfor %}
+                    <option value="COMMERCIAL">COMMERCIAL</option>
+                    <option value="HUMAN RESOURCES">HUMAN RESOURCES</option>
+                    <option value="ENGINEERING">ENGINEERING</option>
+                    <option value="ICT">ICT</option>
+                    <option value="RISK">RISK</option>
+                    <option value="FINANCE">FINANCE</option>
+                    <option value="STAKEHOLDER RELATIONS">STAKEHOLDER RELATIONS</option>
+                    <option value="LEGAL">LEGAL</option>
+                    <option value="PROCUREMENT">PROCUREMENT</option>
+                    <option value="MANAGEMENT">MANAGEMENT</option>
                   </select>
               </div>
             </div>
@@ -209,4 +217,31 @@
     </form>
   </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const reportTypeSelect = document.getElementById('report_type');
+    const periodField = document.getElementById('period_field');
+    const reportPeriodSelect = document.getElementById('report_period');
+    
+    function togglePeriodField() {
+        const selectedType = reportTypeSelect.value;
+        if (selectedType === 'Objective') {
+            periodField.style.display = 'none';
+            reportPeriodSelect.removeAttribute('required');
+            reportPeriodSelect.value = '';
+        } else {
+            periodField.style.display = 'block';
+            reportPeriodSelect.setAttribute('required', 'required');
+        }
+    }
+    
+    // Initial check
+    togglePeriodField();
+    
+    // Listen for changes
+    reportTypeSelect.addEventListener('change', togglePeriodField);
+});
+</script>
+
 {% endblock %}

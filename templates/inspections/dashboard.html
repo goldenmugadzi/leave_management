@@ -1,0 +1,236 @@
+{% extends 'admin_layout.html' %}
+{% load static %}
+
+{% block title %}Inspections Dashboard{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-title-box">
+                <h4 class="page-title">Inspections Dashboard</h4>
+                <ol class="breadcrumb m-0">
+                    <li class="breadcrumb-item"><a href="/">Home</a></li>
+                    <li class="breadcrumb-item active">Inspections</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row">
+        <div class="col-xl-3 col-md-6">
+            <div class="card widget-flat">
+                <div class="card-body">
+                    <div class="float-end">
+                        <i class="mdi mdi-file-document widget-icon bg-primary-lighten text-primary"></i>
+                    </div>
+                    <h5 class="text-muted font-weight-normal mt-0" title="Total Applications">Total Applications</h5>
+                    <h3 class="mt-3 mb-3">{{ total_applications }}</h3>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6">
+            <div class="card widget-flat">
+                <div class="card-body">
+                    <div class="float-end">
+                        <i class="mdi mdi-clock-outline widget-icon bg-warning-lighten text-warning"></i>
+                    </div>
+                    <h5 class="text-muted font-weight-normal mt-0" title="Pending Applications">Pending</h5>
+                    <h3 class="mt-3 mb-3">{{ pending_applications }}</h3>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6">
+            <div class="card widget-flat">
+                <div class="card-body">
+                    <div class="float-end">
+                        <i class="mdi mdi-progress-clock widget-icon bg-info-lighten text-info"></i>
+                    </div>
+                    <h5 class="text-muted font-weight-normal mt-0" title="In Progress">In Progress</h5>
+                    <h3 class="mt-3 mb-3">{{ in_progress }}</h3>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6">
+            <div class="card widget-flat">
+                <div class="card-body">
+                    <div class="float-end">
+                        <i class="mdi mdi-check-circle widget-icon bg-success-lighten text-success"></i>
+                    </div>
+                    <h5 class="text-muted font-weight-normal mt-0" title="Completed">Completed</h5>
+                    <h3 class="mt-3 mb-3">{{ completed }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Recent Applications -->
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h4 class="header-title">Recent Applications</h4>
+                        <a href="{% url 'inspections:application_create' %}" class="btn btn-primary btn-sm">
+                            <i class="mdi mdi-plus"></i> New Application
+                        </a>
+                    </div>
+
+                    {% if recent_applications %}
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Application #</th>
+                                        <th>Customer</th>
+                                        <th>Status</th>
+                                        <th>Date</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for app in recent_applications %}
+                                    <tr>
+                                        <td>
+                                            <a href="{% url 'inspections:application_detail' app.pk %}">
+                                                {{ app.application_number }}
+                                            </a>
+                                        </td>
+                                        <td>{{ app.customer_name }}</td>
+                                        <td>
+                                            <span class="badge badge-{% if app.status == 'completed' %}success{% elif app.status == 'in_progress' %}info{% elif app.status == 'assigned' %}warning{% else %}secondary{% endif %}">
+                                                {{ app.get_status_display }}
+                                            </span>
+                                        </td>
+                                        <td>{{ app.submission_date|date:"M d, Y" }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="text-center">
+                            <a href="{% url 'inspections:application_list' %}" class="btn btn-outline-primary btn-sm">
+                                View All Applications
+                            </a>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <p class="text-muted">No applications yet.</p>
+                            <a href="{% url 'inspections:application_create' %}" class="btn btn-primary">
+                                Create First Application
+                            </a>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- My Assignments -->
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h4 class="header-title">My Assignments</h4>
+                        <a href="{% url 'inspections:assignment_create' %}" class="btn btn-primary btn-sm">
+                            <i class="mdi mdi-account-plus"></i> Assign Task
+                        </a>
+                    </div>
+
+                    {% if my_assignments %}
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Application</th>
+                                        <th>Status</th>
+                                        <th>Due Date</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for assignment in my_assignments %}
+                                    <tr>
+                                        <td>
+                                            <a href="{% url 'inspections:application_detail' assignment.application.pk %}">
+                                                {{ assignment.application.application_number }}
+                                            </a>
+                                        </td>
+                                        <td>
+                                            <span class="badge badge-{% if assignment.status == 'completed' %}success{% elif assignment.status == 'in_progress' %}info{% elif assignment.status == 'accepted' %}primary{% else %}warning{% endif %}">
+                                                {{ assignment.get_status_display }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            {% if assignment.due_date %}
+                                                {{ assignment.due_date|date:"M d" }}
+                                            {% else %}
+                                                -
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if assignment.status == 'assigned' %}
+                                                <form method="post" action="{% url 'inspections:assignment_accept' assignment.pk %}" style="display: inline;">
+                                                    {% csrf_token %}
+                                                    <button type="submit" class="btn btn-success btn-xs">Accept</button>
+                                                </form>
+                                            {% elif assignment.status == 'accepted' %}
+                                                <a href="{% url 'inspections:inspection_create' %}" class="btn btn-info btn-xs">Inspect</a>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="text-center">
+                            <a href="{% url 'inspections:assignment_list' %}" class="btn btn-outline-primary btn-sm">
+                                View All Assignments
+                            </a>
+                        </div>
+                    {% else %}
+                        <div class="text-center py-4">
+                            <p class="text-muted">No assignments for you.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <h4 class="header-title mb-3">Quick Actions</h4>
+                    <div class="row">
+                        <div class="col-md-3">
+                            <a href="{% url 'inspections:application_create' %}" class="btn btn-primary btn-block">
+                                <i class="mdi mdi-file-document-plus"></i> New Application
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="{% url 'inspections:inspection_create' %}" class="btn btn-info btn-block">
+                                <i class="mdi mdi-clipboard-check"></i> New Inspection
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="{% url 'inspections:assignment_create' %}" class="btn btn-warning btn-block">
+                                <i class="mdi mdi-account-arrow-right"></i> Assign Task
+                            </a>
+                        </div>
+                        <div class="col-md-3">
+                            <a href="{% url 'inspections:application_list' %}" class="btn btn-outline-primary btn-block">
+                                <i class="mdi mdi-view-list"></i> View All
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

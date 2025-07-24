@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
 import { IBid, ICompliance, IComplianceRemark, IPrItems, ICommittee } from '../types/scheduleTypes';
+import { API_ENDPOINTS, getApiEndpoints, buildApiUrl } from '../config/apiEndpoints';
 
 // Helper function to get CSRF token
 const getCookie = (name: string) => {
@@ -21,6 +22,7 @@ const getCookie = (name: string) => {
 const fetchWithRetry = async (url: string, options: RequestInit, retries = 3, delay = 1000) => {
   try {
     const response = await fetch(url, options);
+    console.log("response: ", response, JSON.stringify(response));
     if (!response.ok) {
       throw new Error(`HTTP error! Status: ${response.status}`);
     }
@@ -43,7 +45,7 @@ export function useScheduleApi({ base_url, setIsLoading }: UseScheduleApiProps) 
   const [error, setError] = useState<string | null>(null);
 
   /**
-   * Fetch Purchase Requisition data
+   * Fetch Purchase Requisition basic data (focused API)
    */
   const fetchPR = useCallback(async (pr_id: string) => {
     setIsLoading(true);
@@ -59,13 +61,103 @@ export function useScheduleApi({ base_url, setIsLoading }: UseScheduleApiProps) 
       };
       
       const data = await fetchWithRetry(
-        `${base_url}/api/purchase_requisitions/${pr_id}/`,
+                    buildApiUrl(base_url, API_ENDPOINTS.PR_BASIC(pr_id)),
         requestOptions
       );
-      
+      console.log("fetchPR basic data: ", data);
       return data;
     } catch (err) {
       setError(`Failed to fetch PR: ${err instanceof Error ? err.message : String(err)}`);
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  }, [base_url, setIsLoading]);
+
+  /**
+   * Fetch PR Items with pagination (new focused API)
+   */
+  const fetchPRItems = useCallback(async (pr_id: string, page: number = 1, pageSize: number = 50) => {
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      const requestOptions = {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": getCookie("csrftoken") ?? "",
+        },
+      };
+      
+      const data = await fetchWithRetry(
+        buildApiUrl(base_url, `${API_ENDPOINTS.PR_ITEMS(pr_id)}?page=${page}&page_size=${pageSize}`),
+        requestOptions
+      );
+      console.log("fetchPRItems data: ", data);
+      return data;
+    } catch (err) {
+      setError(`Failed to fetch PR items: ${err instanceof Error ? err.message : String(err)}`);
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  }, [base_url, setIsLoading]);
+
+  /**
+   * Fetch PR Attachments (new focused API)
+   */
+  const fetchPRAttachments = useCallback(async (pr_id: string) => {
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      const requestOptions = {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": getCookie("csrftoken") ?? "",
+        },
+      };
+      
+      const data = await fetchWithRetry(
+        buildApiUrl(base_url, API_ENDPOINTS.PR_ATTACHMENTS(pr_id)),
+        requestOptions
+      );
+      console.log("fetchPRAttachments data: ", data);
+      return data;
+    } catch (err) {
+      setError(`Failed to fetch PR attachments: ${err instanceof Error ? err.message : String(err)}`);
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  }, [base_url, setIsLoading]);
+
+  /**
+   * Fetch Reference Data (new focused API)
+   */
+  const fetchReferenceData = useCallback(async () => {
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      const requestOptions = {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": getCookie("csrftoken") ?? "",
+        },
+      };
+      
+      const data = await fetchWithRetry(
+        buildApiUrl(base_url, API_ENDPOINTS.REFERENCE_DATA()),
+        requestOptions
+      );
+      console.log("fetchReferenceData data: ", data);
+      return data;
+    } catch (err) {
+      setError(`Failed to fetch reference data: ${err instanceof Error ? err.message : String(err)}`);
       throw err;
     } finally {
       setIsLoading(false);
@@ -89,7 +181,7 @@ export function useScheduleApi({ base_url, setIsLoading }: UseScheduleApiProps) 
       };
       
       const data = await fetchWithRetry(
-        `${base_url}/api/restricted_bidding/cs/${cs_id}/`,
+        buildApiUrl(base_url, `/cs_data/${cs_id}`),
         requestOptions
       );
       
@@ -122,7 +214,7 @@ export function useScheduleApi({ base_url, setIsLoading }: UseScheduleApiProps) 
       };
       
       const data = await fetchWithRetry(
-        `${base_url}/api/restricted_bidding/cs/${cs_id}/items/`,
+        buildApiUrl(base_url, getApiEndpoints().CS_ITEMS(cs_id)),
         requestOptions
       );
       
@@ -165,7 +257,7 @@ export function useScheduleApi({ base_url, setIsLoading }: UseScheduleApiProps) 
       };
       
       const data = await fetchWithRetry(
-        `${base_url}/api/restricted_bidding/cs/${cs_id}/bids/`,
+        buildApiUrl(base_url, getApiEndpoints().CS_BIDS(cs_id)),
         requestOptions
       );
       
@@ -195,7 +287,7 @@ export function useScheduleApi({ base_url, setIsLoading }: UseScheduleApiProps) 
       };
       
       await fetchWithRetry(
-        `${base_url}/api/restricted_bidding/cs/${cs_id}/bids/${bid_count}/`,
+        buildApiUrl(base_url, getApiEndpoints().CS_BID_DELETE(cs_id, bid_count)),
         requestOptions
       );
       
@@ -335,6 +427,9 @@ export function useScheduleApi({ base_url, setIsLoading }: UseScheduleApiProps) 
 
   return {
     fetchPR,
+    fetchPRItems,
+    fetchPRAttachments,
+    fetchReferenceData,
     fetchCS,
     submitCSItems,
     saveBid,

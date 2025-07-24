@@ -1,0 +1,185 @@
+{% extends 'admin_layout.html' %}
+{% load humanize %}
+
+{% block title %}Circuit Breaker Status Report{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Circuit Breaker Status Report</h3>
+                    <div class="card-tools">
+                        <a href="{% url 'circuit_breaker_maintenance:circuit_breaker_list' %}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Back to List
+                        </a>
+                    </div>
+                </div>
+                
+                <div class="card-body">
+                    <!-- Overall Statistics -->
+                    <div class="row mb-4">
+                        <div class="col-md-3">
+                            <div class="card bg-success text-white">
+                                <div class="card-body text-center">
+                                    <h2>{{ active_count }}</h2>
+                                    <p class="mb-0">Active Circuit Breakers</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-secondary text-white">
+                                <div class="card-body text-center">
+                                    <h2>{{ inactive_count }}</h2>
+                                    <p class="mb-0">Inactive Circuit Breakers</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-primary text-white">
+                                <div class="card-body text-center">
+                                    <h2>{{ total_count }}</h2>
+                                    <p class="mb-0">Total Circuit Breakers</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-info text-white">
+                                <div class="card-body text-center">
+                                    <h2>{% widthratio active_count total_count 100 %}%</h2>
+                                    <p class="mb-0">Active Percentage</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Status by Substation -->
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5>Status by Substation</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-striped">
+                                            <thead>
+                                                <tr>
+                                                    <th>Substation</th>
+                                                    <th>Total</th>
+                                                    <th>Active</th>
+                                                    <th>Inactive</th>
+                                                    <th>Active %</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for stat in substation_stats %}
+                                                <tr>
+                                                    <td>{{ stat.sub_station }}</td>
+                                                    <td>{{ stat.total }}</td>
+                                                    <td>
+                                                        <span class="badge bg-success">{{ stat.active }}</span>
+                                                    </td>
+                                                    <td>
+                                                        <span class="badge bg-secondary">{{ stat.inactive }}</span>
+                                                    </td>
+                                                    <td>
+                                                        {% widthratio stat.active stat.total 100 %}%
+                                                    </td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <!-- Recently Deactivated -->
+                            <div class="card">
+                                <div class="card-header">
+                                    <h6>Recently Deactivated (Last 30 Days)</h6>
+                                </div>
+                                <div class="card-body">
+                                    {% if recently_deactivated %}
+                                        <div class="list-group list-group-flush">
+                                            {% for cb in recently_deactivated %}
+                                            <div class="list-group-item p-2">
+                                                <div class="d-flex justify-content-between">
+                                                    <span>{{ cb.breaker_number }}</span>
+                                                    <small class="text-muted">{{ cb.updated_at|date:"M d" }}</small>
+                                                </div>
+                                                <small class="text-muted">{{ cb.sub_station }}</small>
+                                            </div>
+                                            {% endfor %}
+                                        </div>
+                                    {% else %}
+                                        <p class="text-muted">No recent deactivations</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Alerts and Issues -->
+                    <div class="row mt-4">
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header bg-warning">
+                                    <h6 class="mb-0">Circuit Breakers Without Maintenance Records</h6>
+                                </div>
+                                <div class="card-body">
+                                    {% if no_maintenance %}
+                                        <div class="list-group list-group-flush">
+                                            {% for cb in no_maintenance %}
+                                            <div class="list-group-item p-2">
+                                                <a href="{% url 'circuit_breaker_maintenance:circuit_breaker_detail' cb.pk %}">
+                                                    {{ cb.breaker_number }} - {{ cb.sub_station }}
+                                                </a>
+                                            </div>
+                                            {% endfor %}
+                                        </div>
+                                    {% else %}
+                                        <p class="text-success">All active circuit breakers have maintenance records</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header bg-danger text-white">
+                                    <h6 class="mb-0">Overdue Maintenance (Active CBs)</h6>
+                                </div>
+                                <div class="card-body">
+                                    {% if overdue_maintenance %}
+                                        <div class="list-group list-group-flush">
+                                            {% for record in overdue_maintenance %}
+                                            <div class="list-group-item p-2">
+                                                <div class="d-flex justify-content-between">
+                                                    <a href="{% url 'circuit_breaker_maintenance:circuit_breaker_detail' record.circuit_breaker.pk %}">
+                                                        {{ record.circuit_breaker.breaker_number }}
+                                                    </a>
+                                                    <small class="text-danger">
+                                                        Due: {{ record.next_maintenance_due|date:"M d, Y" }}
+                                                    </small>
+                                                </div>
+                                                <small class="text-muted">{{ record.circuit_breaker.sub_station }}</small>
+                                            </div>
+                                            {% endfor %}
+                                        </div>
+                                    {% else %}
+                                        <p class="text-success">No overdue maintenance for active circuit breakers</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

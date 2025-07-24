@@ -1,0 +1,20 @@
+{% extends "admin_layout.html" %}
+{% load static %}
+
+{% block content %}
+<div class="content-wrapper">
+  <div class="bg-gulf-blue-100 shadow-lg rounded-lg p-6 max-w-xl mx-auto">
+    <h3 class="font-bold text-lg mb-4">Device: {{ device.serial_number }}</h3>
+    <p><strong>Description:</strong> {{ device.description }}</p>
+    <hr class="my-4">
+    {% if assignment %}
+      <p><strong>Currently Assigned To Team:</strong> {{ assignment.team }}</p>
+      <p><strong>For Fault:</strong> {{ assignment.fault }}</p>
+      <p><strong>Assigned At:</strong> {{ assignment.assigned_at }}</p>
+    {% else %}
+      <p class="text-green-700 font-semibold">This device is not currently assigned.</p>
+    {% endif %}
+    <a href="{% url 'device_list' %}" class="text-blue-700 underline mt-4 inline-block">Back to device list</a>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,132 @@
+{% extends 'admin_layout.html' %}
+
+{% block content %}
+<div class="content-wrapper">
+  <div class="max-w-7xl mx-auto py-6">
+    <div class="header mb-6">
+      <h1 class="text-2xl font-bold text-gray-800">Sanction For Test Dashboard</h1>
+      <p class="text-gray-600">Welcome, {{ user.get_full_name }} ({{ user_role|default:"User" }})</p>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+      <div class="bg-white rounded-lg shadow-sm p-6">
+        <div class="flex items-center">
+          <div class="text-3xl text-blue-500">📋</div>
+          <div class="ml-3">
+            <p class="text-sm text-gray-600">Total Forms</p>
+            <p class="text-2xl font-bold">{{ stats.total_forms|default:0 }}</p>
+          </div>
+        </div>
+      </div>
+      
+      <div class="bg-white rounded-lg shadow-sm p-6">
+        <div class="flex items-center">
+          <div class="text-3xl text-yellow-500">⏳</div>
+          <div class="ml-3">
+            <p class="text-sm text-gray-600">My Pending</p>
+            <p class="text-2xl font-bold">{{ stats.my_pending|default:0 }}</p>
+          </div>
+        </div>
+      </div>
+      
+      <div class="bg-white rounded-lg shadow-sm p-6">
+        <div class="flex items-center">
+          <div class="text-3xl text-green-500">✅</div>
+          <div class="ml-3">
+            <p class="text-sm text-gray-600">Completed Today</p>
+            <p class="text-2xl font-bold">{{ stats.completed_today|default:0 }}</p>
+          </div>
+        </div>
+      </div>
+      
+      <div class="bg-white rounded-lg shadow-sm p-6">
+        <div class="flex items-center">
+          <div class="text-3xl text-red-500">🚨</div>
+          <div class="ml-3">
+            <p class="text-sm text-gray-600">Urgent Forms</p>
+            <p class="text-2xl font-bold">{{ stats.urgent_forms|default:0 }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Action Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+      <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg shadow-lg p-6 text-white">
+        <h3 class="text-xl font-bold mb-2">📝 Create New Form</h3>
+        <p class="mb-4">Start a new sanction for test form</p>
+        <a href="{% url 'sanction_for_test:create' %}" 
+           class="inline-block px-6 py-3 bg-white text-blue-600 rounded-lg font-semibold hover:bg-gray-100 transition">
+          Create Form
+        </a>
+      </div>
+
+      <div class="bg-gradient-to-br from-green-500 to-green-600 rounded-lg shadow-lg p-6 text-white">
+        <h3 class="text-xl font-bold mb-2">📋 View All Forms</h3>
+        <p class="mb-4">Browse and manage existing forms</p>
+        <a href="{% url 'sanction_for_test:list' %}" 
+           class="inline-block px-6 py-3 bg-white text-green-600 rounded-lg font-semibold hover:bg-gray-100 transition">
+          View Forms
+        </a>
+      </div>
+
+      <div class="bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg shadow-lg p-6 text-white">
+        <h3 class="text-xl font-bold mb-2">📊 View Reports</h3>
+        <p class="mb-4">Check statistics and analytics</p>
+        <a href="{% url 'sanction_for_test:reports' %}" 
+           class="inline-block px-6 py-3 bg-white text-purple-600 rounded-lg font-semibold hover:bg-gray-100 transition">
+          View Reports
+        </a>
+      </div>
+    </div>
+
+    <!-- Recent Activity -->
+    {% if recent_forms %}
+    <div class="recent-activity">
+      <h2 class="text-xl font-bold text-gray-800 mb-4">Recent Activity</h2>
+      <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+        {% for form in recent_forms %}
+        <div class="border-b border-gray-200 p-4 hover:bg-gray-50">
+          <div class="flex justify-between items-start">
+            <div>
+              <h4 class="font-semibold text-gray-800">{{ form.form_no }}</h4>
+              <p class="text-sm text-gray-600">{{ form.work_to_be_carried_out|truncatechars:80|default:"No description" }}</p>
+              <p class="text-xs text-gray-500">{{ form.created_at|timesince }} ago by {{ form.created_by.get_full_name|default:form.created_by.username }}</p>
+            </div>
+            <div class="flex flex-col items-end">
+              <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full mb-2
+                           {% if form.status == 'draft' %}bg-gray-100 text-gray-800
+                           {% elif form.status == 'issued' %}bg-blue-100 text-blue-800
+                           {% elif form.status == 'received' %}bg-yellow-100 text-yellow-800
+                           {% elif form.status == 'cleared' %}bg-green-100 text-green-800
+                           {% elif form.status == 'cancelled' %}bg-red-100 text-red-800
+                           {% elif form.status == 'completed' %}bg-purple-100 text-purple-800
+                           {% else %}bg-gray-100 text-gray-800{% endif %}">
+                {{ form.get_status_display }}
+              </span>
+              <a href="{% url 'sanction_for_test:detail' form.pk %}" class="text-blue-600 hover:text-blue-800 text-sm">
+                View Details →
+              </a>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% else %}
+    <div class="text-center py-12">
+      <div class="text-gray-400 text-6xl mb-4">
+        <i class="fas fa-clipboard-list"></i>
+      </div>
+      <h3 class="text-lg font-medium text-gray-900 mb-2">No recent activity</h3>
+      <p class="text-gray-500 mb-4">Get started by creating your first sanction form.</p>
+      <a href="{% url 'sanction_for_test:create' %}" 
+         class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
+        <i class="fas fa-plus mr-2"></i>Create Your First Form
+      </a>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,303 @@
+{% extends 'admin_layout.html' %}
+{% load humanize %}
+
+{% block title %}{{ record.report_no }} - Maintenance Record{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <!-- Header -->
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h3 class="card-title">
+                        <i class="fas fa-clipboard-check"></i> Maintenance Record {{ record.report_no }}
+                        <span class="badge bg-{% if record.status == 'completed' %}success{% elif record.status == 'in_progress' %}warning{% elif record.status == 'approved' %}primary{% elif record.status == 'rejected' %}danger{% else %}secondary{% endif %} ms-2">
+                            {{ record.get_status_display }}
+                        </span>
+                    </h3>
+                    <div class="btn-group">
+                        {% if record.status in 'draft,in_progress' %}
+                        <a href="{% url 'circuit_breaker_maintenance:record_edit' record.pk %}" class="btn btn-primary">
+                            <i class="fas fa-edit"></i> Edit Record
+                        </a>
+                        {% endif %}
+                        <a href="{% url 'circuit_breaker_maintenance:circuit_breaker_detail' record.circuit_breaker.pk %}" class="btn btn-info">
+                            <i class="fas fa-bolt"></i> View Circuit Breaker
+                        </a>
+                        <a href="{% url 'circuit_breaker_maintenance:record_list' %}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Back to List
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row">
+        <!-- Basic Information -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Basic Information</h5>
+                </div>
+                <div class="card-body">
+                    <dl class="row">
+                        <dt class="col-sm-5">Report Number:</dt>
+                        <dd class="col-sm-7"><strong>{{ record.report_no }}</strong></dd>
+                        
+                        <dt class="col-sm-5">Circuit Breaker:</dt>
+                        <dd class="col-sm-7">
+                            <a href="{% url 'circuit_breaker_maintenance:circuit_breaker_detail' record.circuit_breaker.pk %}">
+                                {{ record.circuit_breaker.breaker_number }}
+                            </a>
+                        </dd>
+                        
+                        <dt class="col-sm-5">Substation:</dt>
+                        <dd class="col-sm-7">{{ record.circuit_breaker.sub_station }}</dd>
+                        
+                        <dt class="col-sm-5">Date:</dt>
+                        <dd class="col-sm-7">{{ record.date|date:"d M Y" }}</dd>
+                        
+                        <dt class="col-sm-5">Priority:</dt>
+                        <dd class="col-sm-7">
+                            <span class="badge bg-{% if record.priority == 'critical' %}danger{% elif record.priority == 'high' %}warning{% elif record.priority == 'medium' %}info{% else %}secondary{% endif %}">
+                                {{ record.get_priority_display }}
+                            </span>
+                        </dd>
+                        
+                        <dt class="col-sm-5">Next Due:</dt>
+                        <dd class="col-sm-7">
+                            {% if record.next_maintenance_due %}
+                                {{ record.next_maintenance_due|date:"d M Y" }}
+                                {% if record.is_overdue %}
+                                    <span class="badge bg-danger ms-1">Overdue</span>
+                                {% elif record.days_until_due <= 30 %}
+                                    <span class="badge bg-warning ms-1">Due Soon</span>
+                                {% endif %}
+                            {% else %}
+                                <span class="text-muted">Not set</span>
+                            {% endif %}
+                        </dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Work Permits -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Work Permits & Authorization</h5>
+                </div>
+                <div class="card-body">
+                    <dl class="row">
+                        <dt class="col-sm-6">Permit to Work No.:</dt>
+                        <dd class="col-sm-6">{{ record.permit_to_work_number|default:"Not specified" }}</dd>
+                        
+                        <dt class="col-sm-6">Sanction for Test No.:</dt>
+                        <dd class="col-sm-6">{{ record.sanction_for_test_number|default:"Not specified" }}</dd>
+                        
+                        <dt class="col-sm-6">Limitation of Access No.:</dt>
+                        <dd class="col-sm-6">{{ record.limitation_of_access_number|default:"Not specified" }}</dd>
+                        
+                        {% if record.permit_issued_date %}
+                        <dt class="col-sm-6">Permit Issued:</dt>
+                        <dd class="col-sm-6">{{ record.permit_issued_date|date:"d M Y H:i" }}</dd>
+                        {% endif %}
+                        
+                        {% if record.permit_expires_date %}
+                        <dt class="col-sm-6">Permit Expires:</dt>
+                        <dd class="col-sm-6">{{ record.permit_expires_date|date:"d M Y H:i" }}</dd>
+                        {% endif %}
+                    </dl>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Operations Data -->
+    {% if record.operations_since_last_oh or record.operations_counter_last_oh or record.operations_counter_to_date %}
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Operations Data</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="text-center">
+                                <h4 class="text-primary">{{ record.operations_since_last_oh|default:"N/A" }}</h4>
+                                <small class="text-muted">Operations Since Last O/H</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="text-center">
+                                <h4 class="text-info">{{ record.operations_counter_last_oh|default:"N/A" }}</h4>
+                                <small class="text-muted">Counter at Last O/H</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="text-center">
+                                <h4 class="text-success">{{ record.operations_counter_to_date|default:"N/A" }}</h4>
+                                <small class="text-muted">Counter To Date</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Environmental Conditions -->
+    {% if record.weather_conditions or record.ambient_temperature or record.humidity %}
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Environmental Conditions</h5>
+                </div>
+                <div class="card-body">
+                    <dl class="row">
+                        {% if record.weather_conditions %}
+                        <dt class="col-sm-5">Weather:</dt>
+                        <dd class="col-sm-7">{{ record.weather_conditions }}</dd>
+                        {% endif %}
+                        
+                        {% if record.ambient_temperature %}
+                        <dt class="col-sm-5">Temperature:</dt>
+                        <dd class="col-sm-7">{{ record.ambient_temperature }}°C</dd>
+                        {% endif %}
+                        
+                        {% if record.humidity %}
+                        <dt class="col-sm-5">Humidity:</dt>
+                        <dd class="col-sm-7">{{ record.humidity }}%</dd>
+                        {% endif %}
+                    </dl>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Personnel -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Personnel</h5>
+                </div>
+                <div class="card-body">
+                    <dl class="row">
+                        {% if record.maintenance_carried_out_by %}
+                        <dt class="col-sm-6">Maintenance By:</dt>
+                        <dd class="col-sm-6">{{ record.maintenance_carried_out_by }}</dd>
+                        {% endif %}
+                        
+                        {% if record.protection_test_carried_out_by %}
+                        <dt class="col-sm-6">Protection Test By:</dt>
+                        <dd class="col-sm-6">{{ record.protection_test_carried_out_by }}</dd>
+                        {% endif %}
+                        
+                        {% if record.checked_by %}
+                        <dt class="col-sm-6">Checked By:</dt>
+                        <dd class="col-sm-6">{{ record.checked_by }}{% if record.checked_by_role %} ({{ record.checked_by_role }}){% endif %}</dd>
+                        {% endif %}
+                        
+                        {% if record.approved_by %}
+                        <dt class="col-sm-6">Approved By:</dt>
+                        <dd class="col-sm-6">{{ record.approved_by }}{% if record.approved_by_role %} ({{ record.approved_by_role }}){% endif %}</dd>
+                        {% endif %}
+                    </dl>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Remarks and Recommendations -->
+    {% if record.remarks or record.recommendations %}
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Remarks & Recommendations</h5>
+                </div>
+                <div class="card-body">
+                    {% if record.remarks %}
+                    <div class="mb-3">
+                        <h6>Remarks:</h6>
+                        <p class="border-start border-4 border-primary ps-3">{{ record.remarks|linebreaks }}</p>
+                    </div>
+                    {% endif %}
+                    
+                    {% if record.recommendations %}
+                    <div>
+                        <h6>Recommendations:</h6>
+                        <p class="border-start border-4 border-warning ps-3">{{ record.recommendations|linebreaks }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Attachments -->
+    {% if attachments %}
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5>Attachments</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for attachment in attachments %}
+                        <div class="col-md-3 mb-3">
+                            <div class="card">
+                                <div class="card-body text-center">
+                                    <i class="fas fa-{% if attachment.file_type == 'photo' %}image{% elif attachment.file_type == 'test_report' %}file-alt{% elif attachment.file_type == 'certificate' %}certificate{% elif attachment.file_type == 'drawing' %}drafting-compass{% else %}file{% endif %} fa-2x text-primary mb-2"></i>
+                                    <h6 class="card-title">{{ attachment.get_file_type_display }}</h6>
+                                    <p class="card-text small">{{ attachment.description|default:"No description" }}</p>
+                                    <a href="{{ attachment.file.url }}" class="btn btn-sm btn-outline-primary" target="_blank">
+                                        <i class="fas fa-download"></i> Download
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Audit Information -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h6>Audit Information</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <small class="text-muted">
+                                Created: {{ record.created_at|date:"d M Y H:i" }}
+                                {% if record.created_by %}by {{ record.created_by }}{% endif %}
+                            </small>
+                        </div>
+                        <div class="col-md-6 text-end">
+                            <small class="text-muted">
+                                Last Updated: {{ record.updated_at|date:"d M Y H:i" }}
+                                {% if record.updated_by %}by {{ record.updated_by }}{% endif %}
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

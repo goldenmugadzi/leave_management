@@ -57,6 +57,25 @@ urlpatterns = [
     path('restricted_bidding/', include('finance.ristricted_bidding.urls')),
     path('direct_purchase/', include('finance.direct_purchase.urls')),
     path('reports/', include('reports.urls')),
+    
+    path('', include('Hardware_Faults.urls')),
+    path('', include('Asset_Register.urls')),
+
+    # Add the comm_files app URLs
+    path('commercial/', include('comm_files.urls')),
+    path('', include('Transport.urls')),
+    # path('', include('safety.urls')),
+    # path('meetings/', include('meetings.urls')),
+    path('search/', include('esearch.urls')),
+    path('temp_tokens/', include('commecial.tempertockens.urls')),
+    path('competence_building/', include('competence_building.urls')),
+    path('comm_files/', include('comm_files.urls')),
+    # path('api/', include('api.urls')),  # Commented out until api.urls exists
+    path('', include('meetings.urls')),
+    path('', include('leave_management.urls')),
+    path('sanction_for_test/', include('sanction_for_test.urls')),
+      
+    
     path('api-auth/', include('rest_framework.urls')),
     path("gql/", csrf_exempt(FileUploadGraphQLView.as_view(graphiql=True))),  # <-- wrap with csrf_exempt
     path('api/auth/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),

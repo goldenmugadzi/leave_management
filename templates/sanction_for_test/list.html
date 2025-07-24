@@ -1,0 +1,174 @@
+{% extends 'admin_layout.html' %}
+{% load humanize %}
+
+{% block title %}Sanction For Test Forms{% endblock %}
+
+{% block content %}
+<div class="content-wrapper">
+  <div class="max-w-7xl mx-auto py-6">
+    <div class="flex justify-between items-center mb-6">
+      <h2 class="text-2xl font-bold text-gray-900">Sanction For Test Forms</h2>
+      <a href="{% url 'sanction_for_test:create' %}" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg">
+        <i class="fas fa-plus mr-2"></i>Create New Form
+      </a>
+    </div>
+
+    <!-- Filters -->
+    <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+      <form method="get" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Search</label>
+          <input type="text" name="search" value="{{ search_query }}" 
+                 class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                 placeholder="Search forms...">
+        </div>
+        
+        <div>
+          <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+          <select name="status" class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+            <option value="">All Statuses</option>
+            {% for status_code, status_display in status_choices %}
+              <option value="{{ status_code }}" {% if current_status == status_code %}selected{% endif %}>
+                {{ status_display }}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+        
+        <div class="flex items-end">
+          <button type="submit" class="w-full bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md">
+            Filter
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Forms Table -->
+    <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+      {% if forms %}
+        <table class="min-w-full divide-y divide-gray-200">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Form Details
+              </th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Status
+              </th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Work Description
+              </th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Created By
+              </th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Date Issued
+              </th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Actions
+              </th>
+            </tr>
+          </thead>
+          <tbody class="bg-white divide-y divide-gray-200">
+            {% for form in forms %}
+              <tr class="hover:bg-gray-50">
+                <td class="px-6 py-4">
+                  <div class="text-sm font-medium text-gray-900">
+                    <a href="{% url 'sanction_for_test:detail' form.pk %}" class="text-blue-600 hover:text-blue-900">
+                      {{ form.form_no }}
+                    </a>
+                  </div>
+                </td>
+                <td class="px-6 py-4">
+                  <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full
+                    {% if form.status == 'draft' %}bg-gray-100 text-gray-800
+                    {% elif form.status == 'issued' %}bg-blue-100 text-blue-800
+                    {% elif form.status == 'received' %}bg-yellow-100 text-yellow-800
+                    {% elif form.status == 'cleared' %}bg-green-100 text-green-800
+                    {% elif form.status == 'cancelled' %}bg-red-100 text-red-800
+                    {% elif form.status == 'completed' %}bg-purple-100 text-purple-800
+                    {% else %}bg-gray-100 text-gray-800{% endif %}">
+                    {{ form.get_status_display }}
+                  </span>
+                </td>
+                <td class="px-6 py-4">
+                  <div class="text-sm text-gray-900">
+                    {{ form.work_to_be_carried_out|truncatechars:50|default:"-" }}
+                  </div>
+                </td>
+                <td class="px-6 py-4 text-sm text-gray-900">
+                  {{ form.created_by.get_full_name|default:form.created_by.username }}
+                </td>
+                <td class="px-6 py-4 text-sm text-gray-900">
+                  {{ form.date_issued|date:"M d, Y" }}
+                </td>
+                <td class="px-6 py-4 text-sm font-medium">
+                  <div class="flex space-x-2">
+                    <a href="{% url 'sanction_for_test:detail' form.pk %}" 
+                       class="text-blue-600 hover:text-blue-900" title="View Details">
+                      <i class="fas fa-eye"></i>
+                    </a>
+                    {% if form.is_editable %}
+                      <a href="{% url 'sanction_for_test:edit' form.pk %}" 
+                         class="text-green-600 hover:text-green-900" title="Edit">
+                        <i class="fas fa-edit"></i>
+                      </a>
+                    {% endif %}
+                  </div>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <div class="text-center py-12">
+          <div class="text-gray-400 text-6xl mb-4">
+            <i class="fas fa-clipboard-list"></i>
+          </div>
+          <h3 class="text-lg font-medium text-gray-900 mb-2">No sanction forms found</h3>
+          <p class="text-gray-500">
+            {% if current_status or search_query %}
+              <a href="{% url 'sanction_for_test:list' %}" class="text-blue-600 hover:text-blue-900">Clear filters</a>
+            {% else %}
+              Get started by creating your first sanction form.
+            {% endif %}
+          </p>
+        </div>
+      {% endif %}
+    </div>
+
+    <!-- Pagination -->
+    {% if forms.has_other_pages %}
+      <div class="flex justify-center mt-6">
+        <nav class="flex rounded-md shadow-sm">
+          {% if forms.has_previous %}
+            <a href="?page=1{% if current_status %}&status={{ current_status }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}" 
+               class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+              First
+            </a>
+            <a href="?page={{ forms.previous_page_number }}{% if current_status %}&status={{ current_status }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}" 
+               class="relative inline-flex items-center px-2 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+              Previous
+            </a>
+          {% endif %}
+
+          <span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-blue-50 text-sm font-medium text-blue-600">
+            Page {{ forms.number }} of {{ forms.paginator.num_pages }}
+          </span>
+
+          {% if forms.has_next %}
+            <a href="?page={{ forms.next_page_number }}{% if current_status %}&status={{ current_status }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}" 
+               class="relative inline-flex items-center px-2 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+              Next
+            </a>
+            <a href="?page={{ forms.paginator.num_pages }}{% if current_status %}&status={{ current_status }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}" 
+               class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+              Last
+            </a>
+          {% endif %}
+        </nav>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

@@ -3,6 +3,7 @@
 from datetime import timedelta
 import json
 import csv
+import traceback
 from django.contrib.auth import login
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
@@ -32,12 +33,189 @@ from decouple import config
 from django.forms import inlineformset_factory
 from .forms import ResponsibilitiesForm
 from django.template.loader import get_template
+import logging
+import traceback
+from django.db.models import Count
 from django.http import HttpResponse
-import csv
+from rest_framework.response import Response
 
 BASE_URL = "http://" + config('HOST') + ":" + config('PORT')
 APP_NAME = "users"
 
+@login_required(login_url='/accounts/login')
+def user_reports(request):
+    """View function for user reports page"""
+    user_title = request.user.get_full_name()
+    user_groups = list(request.user.groups.values_list('name', flat=True))
+    
+    # Get all regions, sections, and roles for filters
+    regions = Regions.objects.all()
+    sections = Sections.objects.all()
+    roles = Roles.objects.filter(application='users')
+    
+    return render(
+        request,
+        'users/user_reports.html',
+        {
+            "user_title": user_title,
+            "user_groups": user_groups,
+            "regions": regions,
+            "sections": sections,
+            "roles": roles,
+        }
+    )
+
+@login_required(login_url='/accounts/login')
+@api_view(['GET'])
+def user_reports_api(request):
+    
+    try:
+        """API endpoint for user reports data"""
+        # Get filter parameters
+        region_id = request.GET.get('region', '')
+        district_id = request.GET.get('district', '')
+        depot_id = request.GET.get('depot', '')
+        section_id = request.GET.get('section', '')
+        role_id = request.GET.get('role', '')
+    
+        # Base query
+        users_query = UserProfile.objects.filter(is_superuser=False)
+    
+        # Apply filters
+        if region_id:
+            users_query = users_query.filter(region=region_id)
+        if section_id:
+            users_query = users_query.filter(section=section_id)
+        if role_id:
+            users_query = users_query.filter(userprofile__roles__id=role_id)
+    
+        # Get user data with related information
+        users_data = []
+        for user in users_query:
+            profile = UserProfile.objects.filter(username=user.username).first()
+            if profile:
+                region = Regions.objects.filter(id=profile.region.id).first() if profile.region else None
+                district = Districts.objects.filter(code=profile.district.id).first() if profile.district else None
+                depot = Depots.objects.filter(id=profile.depot.id).first() if profile.depot else None
+                section = Sections.objects.filter(id=profile.section.id).first() if profile.section else None
+            
+                users_data.append({
+                    'id': user.id,
+                    'username': user.username,
+                    'first_name': user.first_name,
+                    'last_name': user.last_name,
+                    'email': user.email,
+                    'is_active': user.is_active,
+                    'region': region.region if region else None,
+                    'district': district.district if district else None,
+                    'depot': depot.depot if depot else None,
+                    'section': section.section if section else None,
+                })
+    
+        # Generate chart data
+        chart_data = {
+            'regions': get_region_chart_data(),
+            'roles': get_role_chart_data(),
+        }
+    
+        return Response({
+            'users': users_data,
+            'charts': chart_data,
+        })
+    except Exception as ex:
+        traceback.print_exc()
+        print("error : " + str(ex))
+        return Response({'error': str(ex)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+def get_region_chart_data():
+    """Generate data for region chart"""
+    regions_data = UserProfile.objects.values('region').annotate(count=Count('region'))
+    labels = []
+    data = []
+    
+    for item in regions_data:
+        region_id = item['region']
+        if region_id:
+            region = Regions.objects.filter(id=region_id).first()
+            if region:
+                labels.append(region.region)
+                data.append(item['count'])
+    
+    return {
+        'labels': labels,
+        'data': data,
+    }
+
+def get_role_chart_data():
+    """Generate data for role chart"""
+    roles = Roles.objects.filter(application='users')
+    labels = []
+    data = []
+    
+    for role in roles:
+        count = UserProfile.objects.filter(roles=role).count()
+        labels.append(role.role)
+        data.append(count)
+    
+    return {
+        'labels': labels,
+        'data': data,
+    }
+
+@login_required(login_url='/accounts/login')
+def export_users_csv(request):
+    """Export users data as CSV"""
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="user_report.csv"'
+    
+    # Create CSV writer
+    writer = csv.writer(response)
+    writer.writerow(['Username', 'First Name', 'Last Name', 'Email', 'Region', 'District', 'Depot', 'Section', 'Status'])
+    
+    # Get filter parameters
+    region_id = request.GET.get('region', '')
+    district_id = request.GET.get('district', '')
+    depot_id = request.GET.get('depot', '')
+    section_id = request.GET.get('section', '')
+    role_id = request.GET.get('role', '')
+    
+    # Base query
+    users_query = User.objects.filter(is_superuser=False)
+    
+    # Apply filters
+    if region_id:
+        users_query = users_query.filter(userprofile__region=region_id)
+    if district_id:
+        users_query = users_query.filter(userprofile__district=district_id)
+    if depot_id:
+        users_query = users_query.filter(userprofile__depot=depot_id)
+    if section_id:
+        users_query = users_query.filter(userprofile__section=section_id)
+    if role_id:
+        users_query = users_query.filter(userprofile__roles__id=role_id)
+    
+    # Write data rows
+    for user in users_query:
+        profile = UserProfile.objects.filter(user=user).first()
+        if profile:
+            region = Regions.objects.filter(id=profile.region).first() if profile.region else None
+            district = Districts.objects.filter(code=profile.district).first() if profile.district else None
+            depot = Depots.objects.filter(code=profile.depot).first() if profile.depot else None
+            section = Sections.objects.filter(code=profile.section).first() if profile.section else None
+            
+            writer.writerow([
+                user.username,
+                user.first_name,
+                user.last_name,
+                user.email,
+                region.region if region else '',
+                district.district if district else '',
+                depot.depot if depot else '',
+                section.section if section else '',
+                'Active' if user.is_active else 'Inactive',
+            ])
+    
+    return response
 
 def getUserFMGMRoles(user):
     print("user: ", user.username, user.id)
@@ -56,22 +234,6 @@ def getUserFMGMRoles(user):
 
     return fm_role, gm_role, procurement_role
 
-def users_never_logged_in(request):
-    # Query for users who have never logged in
-    users = UserProfile.objects.filter(last_login__isnull=True)
-
-    # Create a CSV response
-    response = HttpResponse(content_type='text/csv')
-    response['Content-Disposition'] = 'attachment; filename="users_never_logged_in.csv"'
-
-    writer = csv.writer(response)
-    writer.writerow(['Username','Firstname','Lastname', 'Region','Designation','Section' 'Email'])
-
-    for user in users:
-        writer.writerow([user.username,user.first_name,user.last_name,user.region,user.designation,user.section, user.email])
-
-    return response
-
 def user_centers(request):
     users = UserProfile.objects.all()
     for user in users:
@@ -82,29 +244,57 @@ def user_centers(request):
             user.save()
     return JsonResponse({"status": "success", "message": "Centers added successfully"})
 
-
 def get_exchange_account():
-    from decouple import config as cnf
-    print(cnf)
-    credentials = Credentials(
-        username=cnf('MS_EMAIL'),
-        password=cnf('MS_PASS')
-    )
-    print("Credentials: ", credentials)
-    config = Configuration(
-        server=cnf('MS_SERVER'),
-        credentials=credentials,
-    )
-    print("Config: ", config)
-    account = Account(
-        primary_smtp_address=cnf('MS_PRIMARY_SMTP_ADDRESS'),
-        config=config,
-        autodiscover=False,
-        access_type='delegate'
-    )
-    print("Successfully connected to Exchange server.")
-    return account
-
+    logger = logging.getLogger('security')
+    try:
+        from decouple import config as cnf
+        logger.info("Attempting to connect to Exchange server")
+        
+        # Log environment variable availability (just presence, not values for security)
+        has_email = bool(cnf('MS_EMAIL', default=''))
+        has_pass = bool(cnf('MS_PASS', default=''))
+        has_server = bool(cnf('MS_SERVER', default=''))
+        has_smtp = bool(cnf('MS_PRIMARY_SMTP_ADDRESS', default=''))
+        
+        logger.info(f"Exchange config variables present: Email: {has_email}, Password: {has_pass}, Server: {has_server}, SMTP: {has_smtp}")
+        
+        if not (has_email and has_pass and has_server and has_smtp):
+            logger.error("Missing Exchange server configuration variables")
+            return None
+            
+        credentials = Credentials(
+            username=cnf('MS_EMAIL'),
+            password=cnf('MS_PASS')
+        )
+        logger.info("Exchange credentials created")
+        
+        config = Configuration(
+            server=cnf('MS_SERVER'),
+            credentials=credentials,
+        )
+        logger.info("Exchange configuration created")
+        
+        account = Account(
+            primary_smtp_address=cnf('MS_PRIMARY_SMTP_ADDRESS'),
+            config=config,
+            autodiscover=False,
+            access_type='delegate'
+        )
+        
+        # Test the connection by accessing the inbox
+        try:
+            _ = account.inbox
+            logger.info("Successfully connected to Exchange server and verified inbox access")
+            return account
+        except Exception as e:
+            logger.error(f"Failed to verify inbox access: {str(e)}")
+            return None
+            
+    except Exception as ex:
+        error_message = str(ex)
+        logger.error(f"Error creating Exchange account: {error_message}", exc_info=True)
+        print("Error connecting to Exchange server: ", error_message)
+        return None
 
 @login_required
 def ms_exhange_test(request, template, kwargs):
@@ -121,39 +311,115 @@ def ms_exhange_test(request, template, kwargs):
     message.send()
     return JsonResponse({"status": "success", "message": "Email sent successfully"})
 
-
 def ms_exhange_send(subject, body, to_recipients, cc_recipients):
-    account = get_exchange_account()
-    message = Message(
-        account=account,
-        folder=account.sent,
-        subject=subject,
-        body=body,
-        to_recipients=[Mailbox(email_address=recipient) for recipient in to_recipients],
-        cc_recipients=[Mailbox(email_address=recipient) for recipient in cc_recipients]
-    )
-    message.send()
-    return JsonResponse({"status": "success", "message": "Email sent successfully"})
-
+    try:
+        account = get_exchange_account()
+        message = Message(
+            account=account,
+            folder=account.sent,
+            subject=subject,
+            body=body,
+            to_recipients=[Mailbox(email_address=recipient) for recipient in to_recipients],
+            cc_recipients=[Mailbox(email_address=recipient) for recipient in cc_recipients]
+        )
+        message.send()
+        return JsonResponse({"status": "success", "message": "Email sent successfully"})
+    except Exception as ex:
+        print("Error: ", ex)
+        return JsonResponse({"status": "error", "message": "An error occurred while sending the email: " + str(ex)})
 
 def ms_exhange_send_html(subject, to_recipients, cc_recipients, template, kwargs):
-    account = get_exchange_account()
-    message_body = get_template(f"{template}").render(kwargs["kwargs"])
-    message = Message(
-        account=account,
-        folder=account.sent,
-        subject=subject,
-        body=HTMLBody(message_body),
-        to_recipients=[Mailbox(email_address=recipient) for recipient in to_recipients],
-        cc_recipients=[Mailbox(email_address=recipient) for recipient in cc_recipients]
-    )
+    try:
+        account = get_exchange_account()
+        message_body = get_template(f"{template}").render(kwargs["kwargs"])
+        message = Message(
+            account=account,
+            folder=account.sent,
+            subject=subject,
+            body=HTMLBody(message_body),
+            to_recipients=[Mailbox(email_address=recipient) for recipient in to_recipients],
+            cc_recipients=[Mailbox(email_address=recipient) for recipient in cc_recipients]
+        )
 
-    message.send()
-    return JsonResponse({"status": "success", "message": "Email sent successfully"})
+        message.send()
+        return JsonResponse({"status": "success", "message": "Email sent successfully"})
+    except Exception as ex:
+        print("Error: ", ex)
+        return JsonResponse({"status": "error", "message": "An error occurred while sending the email: " + str(ex)})
+
+def ms_exhange_reset_password_html(subject, to_recipients, cc_recipients, template, kwargs):
+    try:
+        # Log connection attempt
+        logger = logging.getLogger('security')
+        logger.info(f"Attempting to send password reset email to: {to_recipients}")
+        
+        account = get_exchange_account()
+        if account is None:
+            logger.error("Failed to get Exchange account")
+            return JsonResponse({"status": "error", "message": "Failed to connect to email server"})
+        
+        # Log success of obtaining account
+        logger.info("Successfully got Exchange account")
+        
+        message = Message(
+            account=account,
+            folder=account.sent,
+            subject=subject,
+            body=HTMLBody(template),
+            to_recipients=[Mailbox(email_address=recipient) for recipient in to_recipients],
+            cc_recipients=[Mailbox(email_address=recipient) for recipient in cc_recipients]
+        )
+        
+        # Log message creation success
+        logger.info("Message object created, attempting to send")
+        
+        message.send()
+        logger.info(f"Email sent successfully to {to_recipients}")
+        return JsonResponse({"status": "success", "message": "Email sent successfully"})
+    except Exception as ex:
+        error_message = str(ex)
+        if logger:
+            logger.error(f"Error sending email: {error_message}", exc_info=True)
+        print("Error: ", error_message)
+        return JsonResponse({"status": "error", "message": "An error occurred while sending the email: " + error_message})
+
+@login_required
+@allowed_roles(['Administrator'], ['users'])
+def deactivate_user(request):
+    if request.method == "GET":
+        try:
+            user = UserProfile.objects.get(id=request.GET['i'])
+            user.is_active = False
+            user.save()
+            messages.success(request, "User deactivated successfully")
+            return redirect('/users/users-index')
+        except Exception as ex:
+            print("Error: ", ex)
+            messages.error(request, "An error occurred while deactivating the user: " + str(ex))
+            return redirect('/users/users-index')
+    else:
+        return redirect('/users/users-index')
+    
+@login_required
+@allowed_roles(['Administrator'], ['users'])
+def activate_user(request):
+    if request.method == "GET":
+        try:    
+            user = UserProfile.objects.get(id=request.GET['i'])
+            user.is_active = True
+            user.save()
+            messages.success(request, "User activated successfully")
+            return redirect('/users/users-index')
+        except Exception as ex:
+            print("Error: ", ex)
+            messages.error(request, "An error occurred while activating the user: " + str(ex))
+            return redirect('/users/users-index')
+    else:
+        return redirect('/users/users-index')
 
 
 @login_required
-# @allowed_roles(['Administrator'], ['users'])
+@allowed_roles(['Administrator'], ['users'])
 def add_centers(request):
     for region in REGIONS:
         _region = Regions(
@@ -172,7 +438,7 @@ def add_centers(request):
         _district.save()
 
     for depot in DEPOTS:
-        district_id = Districts.objects.filter(code=depot['district_code']).first()
+        district_id = District.objects.filter(code=depot['district_code']).first()
         region_id = Regions.objects.filter(code=depot['parent_code']).first()
         _depot = Depots(
             depot=depot['name'],
@@ -225,7 +491,7 @@ def add_centers(request):
 
 
 @login_required
-# @allowed_roles(['Administrator'], ['users'])
+@allowed_roles(['Administrator'], ['users'])
 def add_user(request):
     if request.method == "GET":
 
@@ -244,7 +510,6 @@ def add_user(request):
         user_designations = Designations.objects.all()
         sections = Sections.objects.all()
         cost_centers = CostCenter.objects.all()
-        districts = Districts.objects.all()
         regions = Regions.objects.all()
 
         return render(
@@ -257,7 +522,6 @@ def add_user(request):
                 "user_designations": user_designations,
                 "cost_centers": cost_centers,
                 "sections": sections,
-                "districts": districts,
                 "regions": regions,
                 "user_title": user_title,
                 "user_groups": user_groups,
@@ -271,8 +535,6 @@ def add_user(request):
             designation_ = request.POST['designation']
             email = request.POST['email']
             section_ = request.POST['section']
-            depots_ = request.POST['depot']
-            district_ = request.POST['district']
             cost_center = request.POST['cost_center']
             region_ = request.POST['region']
             password1 = request.POST['password1']
@@ -280,15 +542,11 @@ def add_user(request):
 
             region = None
             cost_center_ = None
-            district = None
-            depot = None
             section = None
             designation = None
             try:
                 region = Regions.objects.filter(id=region_).first() if region_ else None
                 cost_center_ = CostCenter.objects.filter(id=cost_center).first() if cost_center else None
-                district = Districts.objects.filter(code=district_).first() if district_ else None
-                depot = Depots.objects.filter(code=depots_).first() if depots_ else None
                 section = Sections.objects.filter(code=section_).first() if section_ else None
                 designation = Designations.objects.filter(id=designation_).first() if designation_ else None
             except Exception as ex:
@@ -304,8 +562,6 @@ def add_user(request):
                     designation=designation,
                     cost_center=cost_center_,
                     section=section,
-                    depot=depot,
-                    district=district,
                     region=region,
                     status="active"
                 )
@@ -342,7 +598,6 @@ def add_user(request):
 
         return redirect("/users/users-index")
 
-
 @login_required
 @allowed_roles(['Administrator'], ['users'])
 def get_user_records(request):
@@ -350,83 +605,92 @@ def get_user_records(request):
     user_title = request.user.get_full_name()
     l = request.user.groups.values_list('name', flat=True)  # QuerySet Object
     user_groups = list(l)
-
+    regions = Regions.objects.all()
     return render(
         request,
         user_page,
         {
             "title": "All Records",
             "user_title": user_title,
-            "user_groups": user_groups
+            "user_groups": user_groups,
+            "regions": regions
         })
-
 
 def datatable_data(request):
     draw = int(request.GET.get('draw', default=1))
     start = int(request.GET.get('start', default=0))
     length = int(request.GET.get('length', default=10))
     search_value = request.GET.get('search[value]', default='')
+    active = request.GET.get('active', default=True)
+    region = request.GET.get('region', default='')
+    print("active: ", active)
     user = request.user
 
-    if user.region:
-        # Fetch your data from the model
-        records = UserProfile.objects.order_by('-id').all()
-        # Filter based on search value
-        if search_value:
-            records = records.filter(
-                Q(username__icontains=search_value) |
-                Q(first_name__icontains=search_value) |
-                Q(last_name__icontains=search_value) |
-                Q(email__icontains=search_value)
-            )
+    try:
+        if user.region:
+            if region:
+                records = UserProfile.objects.filter(is_active=active, region=region).order_by('-id').all()
+            else:
+                records = UserProfile.objects.filter(is_active=active).order_by('-id').all()
+            # Filter based on search value
+            if search_value:
+                records = records.filter(
+                    Q(username__icontains=search_value) |
+                    Q(first_name__icontains=search_value) |
+                    Q(last_name__icontains=search_value) |
+                    Q(email__icontains=search_value)
+                )
 
-        # Total number of records before filtering
-        total = records.count()
+            # Total number of records before filtering
+            total = records.count()
 
-        # Sorting
-        order_column = request.GET.get('order[0][column]')
-        order = request.GET.get('order[0][dir]')
-        if order_column:
-            column_name = request.GET.get(f'columns[{order_column}][data]')
-            if order == 'desc':
-                column_name = f'-{column_name}'
-            records = records.order_by(column_name)
+            # Sorting
+            order_column = request.GET.get('order[0][column]')
+            order = request.GET.get('order[0][dir]')
+            if order_column:
+                column_name = request.GET.get(f'columns[{order_column}][data]')
+                if order == 'desc':
+                    column_name = f'-{column_name}'
+                records = records.order_by(column_name)
 
-        # Pagination
-        paginator = Paginator(records, length)
-        page_number = start // length + 1
-        page_obj = paginator.get_page(page_number)
+            # Pagination
+            paginator = Paginator(records, length)
+            page_number = start // length + 1
+            page_obj = paginator.get_page(page_number)
 
-        # Prepare response
-        data = []
-        for obj in page_obj:
-            try:
-                cost_center_name = obj.cost_center.name
-            except Exception as ex:
-                print("Cost Center Error: ", ex)
-                cost_center_name = None
+            # Prepare response
+            data = []
+            for obj in page_obj:
+                try:
+                    cost_center_name = obj.cost_center.name
+                except Exception as ex:
+                    print("Cost Center Error: ", ex)
+                    cost_center_name = None
 
-            data.append({
-                "id": obj.pk,
-                "username": obj.username,
-                "first_name": obj.first_name,
-                "last_name": obj.last_name,
-                "email": obj.email,
-                "cost_center": cost_center_name,
-                "region": obj.region.region if obj.region else None,
-                "date_joined": obj.date_joined.date()
-            })
+                data.append({
+                    "id": obj.pk,
+                    "username": obj.username,
+                    "first_name": obj.first_name,
+                    "last_name": obj.last_name,
+                    "email": obj.email,
+                    "cost_center": cost_center_name,
+                    "region": obj.region.region if obj.region else None,
+                    "active": obj.is_active,
+                    "date_joined": obj.date_joined.date()
+                })
 
-        return JsonResponse({
-            'draw': draw,
-            'recordsTotal': total,
-            'recordsFiltered': total,
-            'data': data
-        })
-
+            return JsonResponse({
+                'draw': draw,
+                'recordsTotal': total,
+                'recordsFiltered': total,
+                'data': data
+                })
+    except Exception as ex:
+        print("Error: ", ex)
+        return JsonResponse({"status": "error", "message": "An error occurred while fetching the users"})
 
 @login_required
-# @allowed_roles(['Administrator'], ['users'])
+#@allowed_roles(['Administrator'], ['users'])
 def update_user(request):
     if request.method == "GET":
         user_profile = UserProfile.objects.get(id=request.GET['i'])
@@ -438,22 +702,22 @@ def update_user(request):
         region = None
         cost_center = None
         user_designation = None
-        cost_centers_ = CostCenter.objects.all()
-
+        # cost_centers_ = CostCenter.objects.filter(Q(code=user_profile.region.code) | Q(code="CC" + user_profile.region.code)).all()
+        cost_centers_ = []
         try:
             section = user_profile.section
             depot = user_profile.depot
             district = user_profile.district
             region = user_profile.region
             cost_center = user_profile.cost_center
-            cost_centers_ = CostCenter.objects.all()
+            cost_centers_ = CostCenter.objects.filter(Q(parent=region.code) | Q(parent="CC" + region.code)).all()
 
             user_designation = user_profile.designation
         except Exception as ex:
             print("Error: ", ex)
         if not cost_center:
             try:
-                cost_center = CostCenter.objects.filter(code=region.code).first()
+                cost_center = CostCenter.objects.filter(Q(code=region.code) | Q(code="CC" + region.code)).first()
             except:
                 pass
         if not cost_center:
@@ -510,6 +774,7 @@ def update_user(request):
             cost_centers = []
         """for every application, initialize the responsibility formset for the user to be assigned roles and cost centers"""
 
+        print("cost_centers: ", cost_centers)
         return render(
             request,
             "users/user_update.html",
@@ -533,17 +798,15 @@ def update_user(request):
 
             user_profile = UserProfile.objects.filter(id=request.POST['user_id']).first()
             region = request.POST.get('region')
-            district = request.POST.get('district')
-            depot = request.POST.get('depot')
+            # district = request.POST.get('district')
+            # depot = request.POST.get('depot')
             section = request.POST.get('section')
             designation = request.POST.get('designation')
             cost_center = request.POST.get('cost_center')
 
-            region_, district_, depot_, section_, designation_, cost_center_ = None, None, None, None, None, None
+            region_, section_, designation_, cost_center_ = None, None, None, None
             try:
                 region_ = Regions.objects.filter(id=region).first() if region else None
-                district_ = Districts.objects.filter(id=district).first() if district else None
-                depot_ = Depots.objects.filter(id=depot).first() if depot else None
                 section_ = Sections.objects.filter(id=section).first() if section else None
                 designation_ = Designations.objects.filter(id=designation).first() if designation else None
                 cost_center_ = CostCenter.objects.filter(id=cost_center).first() if cost_center else None
@@ -556,8 +819,6 @@ def update_user(request):
                 'username': request.POST['username'],
                 'email': request.POST['email'],
                 'region': region_,
-                'district': district_,
-                'depot': depot_,
                 'section': section_,
                 'cost_center': cost_center_,
                 'designation': designation_
@@ -579,8 +840,8 @@ def update_user(request):
 
         return redirect("/users/users-index")
 
-
 @login_required
+@allowed_roles(['Administrator'], ['users'])
 def set_requesters(request):
     if request.method == "GET":
         region = Regions.objects.filter(id=7).first()
@@ -645,9 +906,8 @@ def view_user(request):
             }
         )
 
-
 @login_required
-# @allowed_roles(['Administrator'], ['users'])
+@allowed_roles(['Administrator'], ['users'])
 def update_userx(request):
     if request.method == "GET":
 
@@ -771,7 +1031,6 @@ def update_userx(request):
                                    request.POST.get(app.name) != 'Select Role'] if role and role != ""]
         print("roles: ", roles)
 
-    
         role_objects = Roles.objects.filter(id__in=roles)  # Example of retrieving roles
         user_profile.roles.clear()
         user_profile.roles.add(*role_objects)
@@ -781,9 +1040,8 @@ def update_userx(request):
 
         return redirect("/users/users-index")
 
-
 @login_required
-# @allowed_roles(['Administrator'], ['users'])
+@allowed_roles(['Administrator'], ['users'])
 def reset_user_password(request):
     if request.method == "POST":
 
@@ -826,7 +1084,6 @@ def reset_user_password(request):
             })
 
     return redirect('/users/users-index')
-
 
 @login_required
 def change_user_password(request):
@@ -1056,6 +1313,7 @@ def import_users(request):
                 decoded_file = file.read().decode('cp1252').splitlines()
                 reader = csv.DictReader(decoded_file)
                 for row in reader:
+                    # print("Row: ", row)
                     # (username, Designation, centre, descr, surname, firstname, initials, status, section, email, phone,
                     #  extension, section_code, createdon, region) = row
                     username = row['username'].replace(" ", "")
@@ -1104,7 +1362,6 @@ def import_users(request):
                             region_id=5,
                             defaults={
                                 'code': section1,
-
                             }
 
                         )
@@ -1115,6 +1372,8 @@ def import_users(request):
                             print("section already exists!")
                     # check if user exists if not create a new one
                     username = "ze" + username
+                    
+                    # return JsonResponse({"status": "success", "message": "Users imported successfully"})
                     check_user = UserProfile.objects.filter(username=username).first()
                     if check_user:
                         print("User already exists")

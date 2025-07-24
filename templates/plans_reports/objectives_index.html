@@ -1,0 +1,268 @@
+{% extends 'admin_layout.html' %} {% load static %} {% block content %}
+<div style="display: flex; justify-content: flex-start" class="">
+  <div style="display: flex; justify-content: center">
+    <a
+      href="/reports/all_reports"
+      class="hover:bg-blue-200 outline-none focus:outline-none px-3 py-1 rounded flex items-center"
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke-width="1.5"
+        stroke="currentColor"
+        class="w-6 h-6 text-gulf-blue-700"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          d="M3.375 19.5h17.25m-17.25 0a1.125 1.125 0 0 1-1.125-1.125M3.375 19.5h7.5c.621 0 1.125-.504 1.125-1.125m-9.75 0V5.625m0 12.75v-1.5c0-.621.504-1.125 1.125-1.125m18.375 2.625V5.625m0 12.75c0 .621-.504 1.125-1.125 1.125m1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125m0 3.75h-7.5A1.125 1.125 0 0 1 12 18.375m9.75-12.75c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125m19.5 0v1.5c0 .621-.504 1.125-1.125 1.125M2.25 5.625v1.5c0 .621.504 1.125 1.125 1.125m0 0h17.25m-17.25 0h7.5c.621 0 1.125.504 1.125 1.125M3.375 8.25c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125m17.25-3.75h-7.5c-.621 0-1.125.504-1.125 1.125m8.625-1.125c.621 0 1.125.504 1.125 1.125v1.5c0 .621-.504 1.125-1.125 1.125m-17.25 0h7.5m-7.5 0c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125M12 10.875v-1.5m0 1.5c0 .621-.504 1.125-1.125 1.125M12 10.875c0 .621.504 1.125 1.125 1.125m-2.25 0c.621 0 1.125.504 1.125 1.125M13.125 12h7.5m-7.5 0c-.621 0-1.125.504-1.125 1.125M20.625 12c.621 0 1.125.504 1.125 1.125v1.5c0 .621-.504 1.125-1.125 1.125m-17.25 0h7.5M12 14.625v-1.5m0 1.5c0 .621-.504 1.125-1.125 1.125M12 14.625c0 .621.504 1.125 1.125 1.125m-2.25 0c.621 0 1.125.504 1.125 1.125m0 1.5v-1.5m0 0c0-.621.504-1.125 1.125-1.125m0 0h7.5"
+        />
+      </svg>
+      <span class="px-2 font-semibold flex-1 text-gulf-blue-700">VIEW All</span>
+    </a>
+  </div>
+  <div style="display: flex; justify-content: center">
+    <a
+      href="/reports/create_report/"
+      class="hover:bg-blue-200 outline-none focus:outline-none px-3 py-1 rounded flex items-center"
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke-width="1.5"
+        stroke="currentColor"
+        class="w-6 h-6 text-gulf-blue-700"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          d="M12 4.5v15m7.5-7.5h-15"
+        />
+      </svg>
+      <span class="px-2 font-semibold flex-1 text-gulf-blue-700">CREATE</span>
+    </a>
+  </div>
+  <div style="display: flex; justify-content: center">
+    <a
+      href="/reports/archived_reports"
+      class="hover:bg-gray-200 outline-none focus:outline-none px-3 py-1 rounded flex items-center"
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke-width="1.5"
+        stroke="currentColor"
+        class="w-6 h-6"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          d="m20.25 7.5-.625 10.632a2.25 2.25 0 0 1-2.247 2.118H6.622a2.25 2.25 0 0 1-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125Z"
+        />
+      </svg>
+      <span class="px-2 font-semibold flex-1 text-gray-700">ARCHIVE</span>
+    </a>
+  </div>
+</div>
+<div class="mt-5"></div>
+<div class="content-wrapper flex flex-wrap p-2">
+  <div class="grid grid-cols-3 gap-4">
+    <!-- Row 1 -->
+    <div class="w-auto bg-purple-200 text-center shadow shadow-nepal-300 text-gray-700 rounded px-10 py-4">
+      <a href="/reports/objectives/commercial">
+        <div class="sm:flex lg:items-center lg:justify-between">
+          <div class="min-w-0 flex-1">
+            <div class="">
+              <div class="mx-auto">
+                <div class="group relative">
+                  <div class="flex justify-between items-center">
+                    <img src="{% static 'assets/images/folder.png' %}" alt="" class="h-1/5 w-1/5 object-cover object-center" />
+                    <span class="pr-1 font-semibold flex-1 text-left text-gray-800 px-2">COMMERCIAL</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </a>
+    </div>
+
+    <div class="w-auto bg-purple-200 text-center shadow shadow-nepal-300 text-gray-700 rounded px-10 py-4">
+      <a href="/reports/objectives/hr">
+        <div class="sm:flex lg:items-center lg:justify-between">
+          <div class="min-w-0 flex-1">
+            <div class="">
+              <div class="mx-auto">
+                <div class="group relative">
+                  <div class="flex justify-between items-center">
+                    <img src="{% static 'assets/images/folder.png' %}" alt="" class="h-1/5 w-1/5 object-cover object-center" />
+                    <span class="pr-1 font-semibold flex-1 text-left text-gray-800 px-2">HUMAN RESOURCES</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </a>
+    </div>
+
+    <div class="w-auto bg-purple-200 text-center shadow shadow-nepal-300 text-gray-700 rounded px-10 py-4">
+      <a href="/reports/objectives/engineering">
+        <div class="sm:flex lg:items-center lg:justify-between">
+          <div class="min-w-0 flex-1">
+            <div class="">
+              <div class="mx-auto">
+                <div class="group relative">
+                  <div class="flex justify-between items-center">
+                    <img src="{% static 'assets/images/folder.png' %}" alt="" class="h-1/5 w-1/5 object-cover object-center" />
+                    <span class="pr-1 font-semibold flex-1 text-left text-gray-800 px-2">ENGINEERING</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </a>
+    </div>
+
+    <!-- Row 2 -->
+    <div class="w-auto bg-purple-200 text-center shadow shadow-nepal-300 text-gray-700 rounded px-10 py-4">
+      <a href="/reports/objectives/ict">
+        <div class="sm:flex lg:items-center lg:justify-between">
+          <div class="min-w-0 flex-1">
+            <div class="">
+              <div class="mx-auto">
+                <div class="group relative">
+                  <div class="flex justify-between items-center">
+                    <img src="{% static 'assets/images/folder.png' %}" alt="" class="h-1/5 w-1/5 object-cover object-center" />
+                    <span class="pr-1 font-semibold flex-1 text-left text-gray-800 px-2">ICT</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </a>
+    </div>
+
+    <div class="w-auto bg-purple-200 text-center shadow shadow-nepal-300 text-gray-700 rounded px-10 py-4">
+      <a href="/reports/objectives/risk">
+        <div class="sm:flex lg:items-center lg:justify-between">
+          <div class="min-w-0 flex-1">
+            <div class="">
+              <div class="mx-auto">
+                <div class="group relative">
+                  <div class="flex justify-between items-center">
+                    <img src="{% static 'assets/images/folder.png' %}" alt="" class="h-1/5 w-1/5 object-cover object-center" />
+                    <span class="pr-1 font-semibold flex-1 text-left text-gray-800 px-2">RISK</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </a>
+    </div>
+
+    <div class="w-auto bg-purple-200 text-center shadow shadow-nepal-300 text-gray-700 rounded px-10 py-4">
+      <a href="/reports/objectives/finance">
+        <div class="sm:flex lg:items-center lg:justify-between">
+          <div class="min-w-0 flex-1">
+            <div class="">
+              <div class="mx-auto">
+                <div class="group relative">
+                  <div class="flex justify-between items-center">
+                    <img src="{% static 'assets/images/folder.png' %}" alt="" class="h-1/5 w-1/5 object-cover object-center" />
+                    <span class="pr-1 font-semibold flex-1 text-left text-gray-800 px-2">FINANCE</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </a>
+    </div>
+
+    <!-- Row 3 -->
+    <div class="w-auto bg-purple-200 text-center shadow shadow-nepal-300 text-gray-700 rounded px-10 py-4">
+      <a href="/reports/objectives/stakeholder-relations">
+        <div class="sm:flex lg:items-center lg:justify-between">
+          <div class="min-w-0 flex-1">
+            <div class="">
+              <div class="mx-auto">
+                <div class="group relative">
+                  <div class="flex justify-between items-center">
+                    <img src="{% static 'assets/images/folder.png' %}" alt="" class="h-1/5 w-1/5 object-cover object-center" />
+                    <span class="pr-1 font-semibold flex-1 text-left text-gray-800 px-2">STAKEHOLDER RELATIONS</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </a>
+    </div>
+
+    <div class="w-auto bg-purple-200 text-center shadow shadow-nepal-300 text-gray-700 rounded px-10 py-4">
+      <a href="/reports/objectives/legal">
+        <div class="sm:flex lg:items-center lg:justify-between">
+          <div class="min-w-0 flex-1">
+            <div class="">
+              <div class="mx-auto">
+                <div class="group relative">
+                  <div class="flex justify-between items-center">
+                    <img src="{% static 'assets/images/folder.png' %}" alt="" class="h-1/5 w-1/5 object-cover object-center" />
+                    <span class="pr-1 font-semibold flex-1 text-left text-gray-800 px-2">LEGAL</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </a>
+    </div>
+
+    <div class="w-auto bg-purple-200 text-center shadow shadow-nepal-300 text-gray-700 rounded px-10 py-4">
+      <a href="/reports/objectives/procurement">
+        <div class="sm:flex lg:items-center lg:justify-between">
+          <div class="min-w-0 flex-1">
+            <div class="">
+              <div class="mx-auto">
+                <div class="group relative">
+                  <div class="flex justify-between items-center">
+                    <img src="{% static 'assets/images/folder.png' %}" alt="" class="h-1/5 w-1/5 object-cover object-center" />
+                    <span class="pr-1 font-semibold flex-1 text-left text-gray-800 px-2">PROCUREMENT</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </a>
+    </div>
+
+    <div class="w-auto bg-purple-200 text-center shadow shadow-nepal-300 text-gray-700 rounded px-10 py-4">
+      <a href="/reports/objectives/management">
+        <div class="sm:flex lg:items-center lg:justify-between">
+          <div class="min-w-0 flex-1">
+            <div class="">
+              <div class="mx-auto">
+                <div class="group relative">
+                  <div class="flex justify-between items-center">
+                    <img src="{% static 'assets/images/folder.png' %}" alt="" class="h-1/5 w-1/5 object-cover object-center" />
+                    <span class="pr-1 font-semibold flex-1 text-left text-gray-800 px-2">MANAGEMENT</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </a>
+    </div>
+  </div>
+</div>
+
+{% endblock %} 

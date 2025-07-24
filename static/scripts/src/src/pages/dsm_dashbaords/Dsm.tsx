@@ -6,6 +6,7 @@ import DsmAuditChart from "./components/DsmAuditChart";
 import DsmInitiativesOverview from './components/DsmInitiativesOverview';
 import IeugBillingOverview from "./components/IeugBillingOverview";
 import SolarProjectMonitoring from "./components/SolarProjectMonitoring";
+import BarChart from "./components/BarChart";
 
 export default function DSM({
   base_url,
@@ -16,9 +17,13 @@ export default function DSM({
   username: string;
   user_role: string;
 }) {
+
   const [netMeteringRegisterStats, setNetMeteringRegisterStats] = useState<
     NetMeteringRegisterStatsProps[]
   >([]);
+  const [dsmAudits, setDsmAudits] = useState<[]>([]);
+  const [netMeteringBilling, setNetMeteringBilling] = useState<[]>([]);
+  const [virtualPowerStats, setVirtualPowerStats] = useState<[]>([]);
 
   useEffect(() => {
     console.log(
@@ -29,93 +34,86 @@ export default function DSM({
       "user_role: ",
       user_role
     );
-    setNetMeteringRegisterStats([
-      {
-        title: "Net Metering Applications Quantum (KW)",
-        percentage: "68% Commissioned",
-        percentage_width: "68%",
-        datasets: [
-          {
-            label: "Total Applications Quantum (KW)",
-            value: "27073.08",
-          },
-          {
-            label: "Commissioned Quantum (KW)",
-            value: "18079.98",
-          },
-        ],
-      },
-      {
-        title: "Net Metering Points Commissioned Applications",
-        percentage: "69% Commissioned",
-        percentage_width: "69%",
-        datasets: [
-          {
-            label: "Total Applications",
-            value: "375",
-          },
-          {
-            label: "Commissioned Applications",
-            value: "258",
-          },
-        ],
-      },
-      {
-        title: "Exports to Import ratio after Net Metering Commissioning",
-        percentage: "21.9% Export to Import Ratio",
-        percentage_width: "21.9%",
-        datasets: [
-          {
-            label: "Total Exports (KWH)",
-            value: "10661462.35",
-          },
-          {
-            label: "Total Imports (KWH)",
-            value: "48719652.09",
-          },
-        ],
-      },
-      // {
-      //   title: "Net Metering Register",
-      //   percentage: "68%",
-      //   percentage_width: "68%",
-      //   datasets: [
-      //     {
-      //       label: "Awaiting ENM2 & Payment",
-      //       value: "104",
-      //     },
-      //     {
-      //       label: "Stores requisition in Progress",
-      //       value: "230",
-      //     },
-      //     {
-      //       label: "Awaiting Network Studies",
-      //       value: "167",
-      //     },
-      //     {
-      //       label: "Awaiting Meter Installation",
-      //       value: "810",
-      //     },
-      //     {
-      //       label: "Awaiting Commissioning",
-      //       value: "1890",
-      //     },
-      //     {
-      //       label: "Commissioned",
-      //       value: "2210",
-      //     },
-      //     {
-      //       label: "Not Yet Commissioned",
-      //       value: "410",
-      //     },
-      //     {
-      //       label: "Domestic",
-      //       value: "310",
-      //     },
-      //   ],
-      // },
-    ]);
+    fetchNetMeteringRegister();
+    fetchDsmAudits();
+    fetchNetMeteringBilling();
+    fetchVirtualPowerStats();
+    // setNetMeteringRegisterStats([
+    //   {
+    //     title: "Net Metering Applications Quantum (KW)",
+    //     percentage: "68% Commissioned",
+    //     percentage_width: "68%",
+    //     datasets: [
+    //       {
+    //         label: "Total Applications Quantum (KW)",
+    //         value: "27073.08",
+    //       },
+    //       {
+    //         label: "Commissioned Quantum (KW)",
+    //         value: "18079.98",
+    //       },
+    //     ],
+    //   },
+    //   {
+    //     title: "Net Metering Points Commissioned Applications",
+    //     percentage: "69% Commissioned",
+    //     percentage_width: "69%",
+    //     datasets: [
+    //       {
+    //         label: "Total Applications",
+    //         value: "375",
+    //       },
+    //       {
+    //         label: "Commissioned Applications",
+    //         value: "258",
+    //       },
+    //     ],
+    //   },
+    //   {
+    //     title: "Exports to Import ratio after Net Metering Commissioning",
+    //     percentage: "21.9% Export to Import Ratio",
+    //     percentage_width: "21.9%",
+    //     datasets: [
+    //       {
+    //         label: "Total Exports (KWH)",
+    //         value: "10661462.35",
+    //       },
+    //       {
+    //         label: "Total Imports (KWH)",
+    //         value: "48719652.09",
+    //       },
+    //     ],
+    //   },
+    // ]);
   }, []);
+
+  const fetchNetMeteringRegister = async () => {
+    const response = await fetch(`${base_url}/dashboards/dsm/get_net_metering_register`);
+    const data = await response.json();
+    console.log("data: ", data);
+    setNetMeteringRegisterStats(data?.net_metering_stats);
+  };
+
+  const fetchDsmAudits = async () => {
+    const response = await fetch(`${base_url}/dashboards/dsm/get_dsm_audits`);
+    const data = await response.json();
+    console.log("data: ", data);
+    setDsmAudits(data);
+  };
+
+  const fetchNetMeteringBilling = async () => {
+    const response = await fetch(`${base_url}/dashboards/dsm/get_net_metering_billing`);
+    const data = await response.json();
+    console.log("data: ", data);
+    setNetMeteringBilling(data);
+  };
+
+  const fetchVirtualPowerStats = async () => {
+    const response = await fetch(`${base_url}/dashboards/dsm/get_virtual_power_stats`);
+    const data = await response.json();
+    console.log("data: ", data);
+    setVirtualPowerStats(data);
+  };
 
   return (
     <div>
@@ -123,9 +121,14 @@ export default function DSM({
         {netMeteringRegisterStats.map((netMeteringRegisterStat, index) => (
           <NetMeteringRegisterStats key={index} {...netMeteringRegisterStat} />
         ))}
-        <DsmAuditChart />
-        <NetMeterBilling />
-        <DsmInitiativesOverview />
+        <DsmAuditChart dsmAudits={dsmAudits} />
+        <BarChart 
+            labels={["January", "February", "March", "April", "May"]}
+            data={[65, 59, 80, 81, 56]} 
+            labelTitle="Monthly Data"  
+          />
+        <NetMeterBilling netMeteringBilling={netMeteringBilling} />
+        <DsmInitiativesOverview virtualPowerStats={virtualPowerStats} />
         <IeugBillingOverview />
         <SolarProjectMonitoring />
       </div>

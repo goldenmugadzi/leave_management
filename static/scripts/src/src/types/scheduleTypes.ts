@@ -134,11 +134,19 @@ export interface ISupplier {
   id?: number;
   supplier_name?: string;
   name?: string;
+  contact_person?: string;
+  email?: string;
+  phone_number?: string;
+  address?: string;
+  tax_number?: string;
+  registration_number?: string;
+  business_type?: string;
 }
 
 export interface IUom {
   id?: number;
-  name: string;
+  unit?: string;
+  name?: string;
 }
 
 export interface IResponse {

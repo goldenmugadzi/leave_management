@@ -1,0 +1,124 @@
+{% extends "admin_layout.html" %}
+
+{% block content %}
+<div class="dashboard-container p-6">
+  <div class="header mb-6">
+    <h1 class="text-2xl font-bold text-gray-800">Fault Locator Dashboard</h1>
+    <p class="text-gray-600">Welcome, {{ user.get_full_name }} ({{ user_role }})</p>
+  </div>
+
+  <!-- Quick Stats -->
+  <div class="stats-grid grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+    <div class="stat-card bg-white rounded-lg shadow p-4">
+      <div class="flex items-center">
+        <div class="text-3xl text-red-500">🔥</div>
+        <div class="ml-3">
+          <p class="text-sm text-gray-600">Active Faults</p>
+          <p class="text-2xl font-bold">{{ stats.active_faults }}</p>
+        </div>
+      </div>
+    </div>
+    
+    <div class="stat-card bg-white rounded-lg shadow p-4">
+      <div class="flex items-center">
+        <div class="text-3xl text-yellow-500">⏳</div>
+        <div class="ml-3">
+          <p class="text-sm text-gray-600">My Assignments</p>
+          <p class="text-2xl font-bold">{{ stats.my_assignments }}</p>
+        </div>
+      </div>
+    </div>
+    
+    <div class="stat-card bg-white rounded-lg shadow p-4">
+      <div class="flex items-center">
+        <div class="text-3xl text-green-500">✅</div>
+        <div class="ml-3">
+          <p class="text-sm text-gray-600">Completed Today</p>
+          <p class="text-2xl font-bold">{{ stats.completed_today }}</p>
+        </div>
+      </div>
+    </div>
+    
+    <div class="stat-card bg-white rounded-lg shadow p-4">
+      <div class="flex items-center">
+        <div class="text-3xl text-blue-500">👥</div>
+        <div class="ml-3">
+          <p class="text-sm text-gray-600">Teams Active</p>
+          <p class="text-2xl font-bold">{{ stats.active_teams }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Action Cards -->
+  <div class="action-grid grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    {% if user_role == 'Team Member' or user_role == 'Depot Foreperson' %}
+    <div class="action-card bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg shadow-lg p-6 text-white">
+      <h3 class="text-xl font-bold mb-2">📱 Field Updates</h3>
+      <p class="mb-4">Quick updates from the field</p>
+      <a href="{% url 'simple_fault_list' %}" 
+         class="inline-block px-6 py-3 bg-white text-blue-600 rounded-lg font-semibold hover:bg-gray-100 transition">
+        View My Faults
+      </a>
+    </div>
+    {% endif %}
+
+    {% if user_role == 'Senior Foreperson' or user_role == 'Depot Foreperson' %}
+    <div class="action-card bg-gradient-to-br from-green-500 to-green-600 rounded-lg shadow-lg p-6 text-white">
+      <h3 class="text-xl font-bold mb-2">📋 Manage Faults</h3>
+      <p class="mb-4">Create and assign fault reports</p>
+      <a href="{% url 'quick_fault_report' %}" 
+         class="inline-block px-6 py-3 bg-white text-green-600 rounded-lg font-semibold hover:bg-gray-100 transition">
+        Quick Report
+      </a>
+    </div>
+    {% endif %}
+
+    <div class="action-card bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg shadow-lg p-6 text-white">
+      <h3 class="text-xl font-bold mb-2">📊 View Reports</h3>
+      <p class="mb-4">Check fault status and history</p>
+      <a href="{% url 'fault_list' %}" 
+         class="inline-block px-6 py-3 bg-white text-purple-600 rounded-lg font-semibold hover:bg-gray-100 transition">
+        All Faults
+      </a>
+    </div>
+
+    {% if user_role == 'Senior Foreperson' or user_role == 'IT Personnel' %}
+    <div class="action-card bg-gradient-to-br from-red-500 to-red-600 rounded-lg shadow-lg p-6 text-white">
+      <h3 class="text-xl font-bold mb-2">⚙️ System Admin</h3>
+      <p class="mb-4">Manage teams and devices</p>
+      <a href="{% url 'team_list' %}" 
+         class="inline-block px-6 py-3 bg-white text-red-600 rounded-lg font-semibold hover:bg-gray-100 transition">
+        Manage Teams
+      </a>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Recent Activity -->
+  {% if recent_faults %}
+  <div class="recent-activity mt-8">
+    <h2 class="text-xl font-bold text-gray-800 mb-4">Recent Activity</h2>
+    <div class="bg-white rounded-lg shadow overflow-hidden">
+      {% for fault in recent_faults %}
+      <div class="border-b border-gray-200 p-4 hover:bg-gray-50">
+        <div class="flex justify-between items-start">
+          <div>
+            <h4 class="font-semibold text-gray-800">{{ fault.description }}</h4>
+            <p class="text-sm text-gray-600">{{ fault.depot.depot }} - {{ fault.device.serial_number }}</p>
+            <p class="text-xs text-gray-500">{{ fault.created_at|timesince }} ago</p>
+          </div>
+          <span class="px-2 py-1 text-xs rounded-full
+                       {% if fault.status == 'ACTIVE' %}bg-red-100 text-red-800
+                       {% elif fault.status == 'RESOLVED' %}bg-green-100 text-green-800
+                       {% else %}bg-yellow-100 text-yellow-800{% endif %}">
+            {{ fault.get_status_display }}
+          </span>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
