@@ -27,7 +27,7 @@ CORS_ALLOW_ALL_ORIGINS = True
 # ]
 
 # CORS_ALLOW_ALL_ORIGINS = True
-CSRF_TRUSTED_ORIGINS = [config('BASE_URL'), config('BASE_URL') + ":" + config('PORT')]
+CSRF_TRUSTED_ORIGINS = [config('BASE_URL'), config('BASE_URL') + ":" + config('PORT'),"https://d4d74ece50d8.ngrok-free.app"]
 
 CORS_ALLOW_HEADERS = ('content-disposition', 'accept-encoding',
                       'content-type', 'accept', 'origin', 'authorization')
@@ -128,7 +128,8 @@ INSTALLED_APPS = [
     'competence_building.apps.CompetenceBuildingConfig',
     'graphene_django',
     'graphene_file_upload',
-    'safety', 
+    'safety',
+    'BatteryMaintenance', 
     'comm_files',
     'django_prometheus',
     'api.ops_maintenance.safety_operations',
