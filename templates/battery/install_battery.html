@@ -1,0 +1,95 @@
+{% extends "admin_layout.html" %}
+{% load static %}
+{% block content %}
+
+  <form class="row rounded py-4 border bg-gulf-blue-100 p-3 m-auto  container" method="post" action="" enctype="multipart/form-data">
+{% csrf_token %}
+    <div class="m-auto text-center">
+    <h1 class="text-2xl font-bold ">Battery Installation record</h1>
+</div>
+<div class="m-auto container justify-content-stretch align-content-stretch">
+    <div class="mx-10 my-3 d-flex col-span-4 gap-2 m-auto bg-gulf-blue-200 grid grid-cols-2">
+        {% for field in form %}
+        <div class="rounded row text-center py-2 my-3">
+            {% if field.is_hidden %}
+            {{ field }}
+            {% else %}
+            <div class=" m-auto grid grid-cols-2 pr-5">
+                <div>
+                    {{ field.label }}
+                    <div class="text-blue-500">{{ field.help_text }}</div>
+                    <div class="text-red-500 text-red-500 ">{{ field.errors }}</div>
+                </div>
+                {{ field }}
+            </div>
+            {% endif %}
+        </div>
+        {% endfor %}
+
+    </div>
+    <div class="m-auto text-center">
+        <h1 class="text-2xl font-bold ">Battery cells</h1>
+
+    </div>
+
+<div class="m-10 justify-content-stretch align-content-stretch">
+        {{ formset.management_form }}
+        <div id="formset-container">
+            {% for form in formset %}
+            <div class="rounded row rounded border bg-gulf-blue-200 px-2 my-3 gap-4 m-auto grid grid-cols-2">
+                {% with forloop.counter as num %}
+
+                {% for field in form %}
+                <div >
+                    {% if field.is_hidden %}
+                    {{ field }}
+                    {% else %}
+                    <span class=" {% if forloop.first %} font-bold {% endif %"> {{ num }}.
+                    {% endif %}
+                    </span>
+                    {{ field.label_tag }}
+                    {{ field }}
+                    <div class="text-red-500">{{ field.errors }}</div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+                {% endwith %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    <div id="blankForm" class="hidden">
+        {% for field in formset.empty_form %}
+        <div class=" ">
+            {% if field.is_hidden %}
+            {{ field }}
+            {% else %}
+            {{ field.label_tag }}
+            {{ field }}
+            <div class="text-red-500">{{ field.errors }}</div>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+    <div class="flex">
+        <input
+            class="bg-blue-500 text-white fa fa-plus p-3  mb-3 m-1  rounded-full font-bold flex justify-center  hover:bg-blue-600"
+            title="add new cell" id="add-form-button" type="button" value="+">
+
+    </div>
+    <div class="flex justify-center">
+        <button class="bg-blue-500 text-white p-3 mb-3 m-1 rounded-full font-bold flex justify-center hover:bg-blue-600"
+            type="submit" id="submit-button">
+            Submit
+        </button>
+    </div>
+</div>
+</div>
+</div>
+</form>
+
+{% endblock %}
+{% block scripts %}
+  <script src="{% static 'assets/js/battery.js' %}"></script>
+ 
+{% endblock scripts %}
