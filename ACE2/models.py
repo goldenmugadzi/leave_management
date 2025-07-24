@@ -208,6 +208,134 @@ class Ace2(models.Model):
         self.clean()
         super().save(*args, **kwargs)
 
+    def get_asset_numbers_list(self):
+        """Get list of asset numbers from both old and new format"""
+        asset_numbers = []
+        
+        # Get from new relational model
+        new_assets = [an.asset_number for an in self.asset_numbers.all()]
+        asset_numbers.extend(new_assets)
+        
+        # Get from old comma-separated field (for backward compatibility)
+        if self.asset_number and not new_assets:
+            old_assets = [an.strip() for an in self.asset_number.split(',') if an.strip()]
+            asset_numbers.extend(old_assets)
+            
+        return list(set(asset_numbers))  # Remove duplicates
+    
+    def migrate_legacy_asset_numbers(self, user):
+        """Migrate comma-separated asset numbers to relational model"""
+        if self.asset_number and not self.asset_numbers.exists():
+            asset_list = [an.strip() for an in self.asset_number.split(',') if an.strip()]
+            for asset_num in asset_list:
+                ace_asset = AceAssetNumber.objects.create(
+                    ace=self,
+                    asset_number=asset_num,
+                    added_by=user,
+                    notes="Migrated from legacy format"
+                )
+                ace_asset.verify_against_register()
+            return len(asset_list)
+        return 0
+    
+    def add_asset_number(self, asset_number, user, notes=""):
+        """Add a single asset number with validation"""
+        asset_number = asset_number.strip()
+        if not asset_number:
+            raise ValueError("Asset number cannot be empty")
+            
+        # Check if already exists
+        if self.asset_numbers.filter(asset_number=asset_number).exists():
+            raise ValueError(f"Asset number {asset_number} already exists for this ACE")
+            
+        ace_asset = AceAssetNumber.objects.create(
+            ace=self,
+            asset_number=asset_number,
+            added_by=user,
+            notes=notes
+        )
+        ace_asset.verify_against_register()
+        return ace_asset
+
+    def get_all_asset_numbers(self):
+        """Get asset numbers from both old and new system"""
+        asset_numbers = []
+        
+        # Get from enhanced system
+        enhanced_assets = [an.asset_number for an in self.enhanced_asset_numbers.all()]
+        asset_numbers.extend(enhanced_assets)
+        
+        # Get from legacy field (your existing asset_number field)
+        if self.asset_number and not enhanced_assets:
+            legacy_assets = [an.strip() for an in self.asset_number.split(',') if an.strip()]
+            asset_numbers.extend(legacy_assets)
+            
+        return asset_numbers
+
+    def migrate_to_enhanced_assets(self, user):
+        """Migrate your existing comma-separated asset numbers to enhanced format"""
+        if self.asset_number and not self.enhanced_asset_numbers.exists():
+            asset_list = [an.strip() for an in self.asset_number.split(',') if an.strip()]
+            migrated_count = 0
+            for asset_num in asset_list:
+                try:
+                    ace_asset = AceAssetNumber.objects.create(
+                        ace=self,
+                        asset_number=asset_num,
+                        added_by=user,
+                        notes="Migrated from existing data"
+                    )
+                    ace_asset.verify_against_register()
+                    migrated_count += 1
+                except Exception as e:
+                    print(f"Error migrating {asset_num}: {e}")
+            return migrated_count
+        return 0
+
+
+class AceAssetNumber(models.Model):
+    """
+    Enhanced asset number tracking - works alongside existing asset_number field
+    """
+    ace = models.ForeignKey('Ace2', on_delete=models.CASCADE, related_name='enhanced_asset_numbers')
+    asset_number = models.CharField(max_length=100, db_index=True)
+    asset_register_item = models.ForeignKey(
+        'Asset_Register.ZetdcAssets', 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True,
+        help_text="Link to asset register if exists"
+    )
+    # FIXED: Change from 'it.users.UserProfile' to 'users.UserProfile'
+    added_by = models.ForeignKey('users.UserProfile', on_delete=models.CASCADE)
+    added_date = models.DateTimeField(auto_now_add=True)
+    is_verified = models.BooleanField(default=False)
+    notes = models.TextField(blank=True, null=True)
+    
+    class Meta:
+        unique_together = ['ace', 'asset_number']
+        ordering = ['added_date']
+        verbose_name = "Enhanced Asset Number"
+        verbose_name_plural = "Enhanced Asset Numbers"
+        
+    def __str__(self):
+        return f"{self.ace.Ace_id2} - {self.asset_number}"
+    
+    def verify_against_register(self):
+        """Check if asset number exists in Asset Register"""
+        try:
+            from Asset_Register.models import ZetdcAssets
+            asset = ZetdcAssets.objects.get(asset_number=self.asset_number)
+            self.asset_register_item = asset
+            self.is_verified = True
+            self.save()
+            return asset
+        except ZetdcAssets.DoesNotExist:
+            return None
+        except Exception as e:
+            print(f"Error verifying asset {self.asset_number}: {e}")
+            return None
+
 
 class Asset_budget_Virament(models.Model):
     virament_id = models.AutoField(primary_key=True)

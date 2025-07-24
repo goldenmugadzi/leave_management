@@ -2111,10 +2111,9 @@ def ace_report_detail_pdf(request, report_id2=None):
         start_date = parse_date(request.GET.get('start_date'))
         end_date = parse_date(request.GET.get('end_date'))
         region_id = request.GET.get('region')
-        region = get_object_or_404(Regions, id=region_id)
         aces = Ace2.objects.filter(
             date_created__range=[start_date, end_date],
-            region=region
+            region=region_id
         )
         template = loader.get_template('finance/ace2/ace_reports.html')
         context = {
@@ -2600,7 +2599,7 @@ def asset_budget_report_excel(request, budget_id):
         ws.cell(row=row_num, column=2, value=ace.details_of_expenditure)
         ws.cell(row=row_num, column=3, value=float(ace.amount or 0))
         ws.cell(row=row_num, column=4, value=ace.requested_by.get_full_name())
-        ws.cell(row=row_num, column=5, value=ace.date_created.strftime('%Y-%m-%d'))
+        ws.cell(row=row_num, column=5, value=ace.date_created.strftime('%Y-%m-%d') if ace.date_created else '')
         
         # Status
         status = "-"
@@ -3140,3 +3139,178 @@ def export_current_year_pdf(request):
     html = template.render(context, request)
     pdf = HTML(string=html).write_pdf()
     return HttpResponse(pdf, content_type='application/pdf')
+
+
+@login_required
+def enhanced_add_asset_number(request):
+    """Enhanced asset number addition - works alongside your existing function"""
+    if request.method == 'POST':
+        try:
+            print('Enhanced asset number addition')
+            
+            ace_id = request.POST['ace_id']
+            ace_items = request.POST.getlist('asset_number[]')
+            use_enhanced = request.POST.get('use_enhanced', 'false') == 'true'
+            
+            ace = Ace2.objects.filter(Ace_id2=ace_id).first()
+            if not ace:
+                messages.error(request, 'ACE not found')
+                return redirect('/ace/aces')
+            
+            if use_enhanced:
+                # Use enhanced system
+                added_count = 0
+                errors = []
+                
+                for asset_num in ace_items:
+                    asset_num = asset_num.strip()
+                    if asset_num:
+                        try:
+                            # Check if already exists in enhanced system
+                            if ace.enhanced_asset_numbers.filter(asset_number=asset_num).exists():
+                                errors.append(f"Asset {asset_num} already exists")
+                                continue
+                                
+                            ace_asset = AceAssetNumber.objects.create(
+                                ace=ace,
+                                asset_number=asset_num,
+                                added_by=request.user,
+                                notes="Added via enhanced system"
+                            )
+                            ace_asset.verify_against_register()
+                            added_count += 1
+                            
+                        except Exception as e:
+                            errors.append(f"Error adding {asset_num}: {str(e)}")
+                
+                # Also update your existing field for backward compatibility
+                all_assets = ace.get_all_asset_numbers()
+                ace.asset_number = ','.join(all_assets)
+                ace.save()
+                
+                if added_count > 0:
+                    messages.success(request, f'Added {added_count} asset numbers using enhanced system')
+                if errors:
+                    for error in errors:
+                        messages.warning(request, error)
+                        
+            else:
+                # Fall back to your existing system
+                ace.asset_number = ','.join(ace_items)
+                ace.save()
+                messages.success(request, 'Asset numbers added using existing system')
+            
+            return redirect('Ace:ace_detail', Ace_id2=ace.Ace_id2)
+            
+        except Exception as e:
+            messages.error(request, f'Error: {str(e)}')
+            return redirect('/ace/aces')
+    
+    return redirect('/ace/aces')
+
+
+@login_required
+def asset_autocomplete_api(request):
+    """AJAX API for asset number autocomplete"""
+    try:
+        query = request.GET.get('q', '').strip()
+        if len(query) < 2:
+            return JsonResponse({'results': []})
+        
+        results = []
+        
+        # Search in Asset Register
+        try:
+            from Asset_Register.models import ZetdcAssets
+            assets = ZetdcAssets.objects.filter(
+                asset_number__icontains=query
+            ).select_related('product_type')[:15]
+            
+            for asset in assets:
+                results.append({
+                    'id': asset.asset_number,
+                    'text': f"{asset.asset_number} - {getattr(asset.product_type, 'product_type', 'Unknown')}",
+                    'verified': True,
+                    'source': 'Asset Register'
+                })
+                
+        except ImportError:
+            pass
+        
+        # Search in existing ACE asset numbers
+        existing_assets = AceAssetNumber.objects.filter(
+            asset_number__icontains=query
+        ).values_list('asset_number', flat=True).distinct()[:10]
+        
+        for asset_num in existing_assets:
+            if not any(r['id'] == asset_num for r in results):
+                results.append({
+                    'id': asset_num,
+                    'text': f"{asset_num} - Previously used",
+                    'verified': False,
+                    'source': 'Previous ACEs'
+                })
+        
+        return JsonResponse({'results': results})
+        
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@login_required
+def migrate_ace_assets(request, ace_id):
+    """Migrate existing asset numbers to enhanced format"""
+    try:
+        ace = get_object_or_404(Ace2, Ace_id2=ace_id)
+        
+        # Check permissions (only accounting officers)
+        user_roles = request.user.roles.all()
+        ace_roles = [role.name for role in user_roles if 'accounting_officer' in role.name.lower()]
+        
+        if not ace_roles:
+            messages.error(request, 'Permission denied')
+            return redirect('Ace:ace_detail', Ace_id2=ace_id)
+        
+        migrated_count = ace.migrate_to_enhanced_assets(request.user)
+        
+        if migrated_count > 0:
+            messages.success(request, f'Successfully migrated {migrated_count} asset numbers to enhanced format')
+        else:
+            messages.info(request, 'No asset numbers to migrate or already migrated')
+            
+        return redirect('Ace:ace_detail', Ace_id2=ace_id)
+        
+    except Exception as e:
+        messages.error(request, f'Migration error: {str(e)}')
+        return redirect('Ace:ace_detail', Ace_id2=ace_id)
+
+
+@login_required
+def remove_enhanced_asset(request, ace_id, asset_id):
+    """Remove an asset from enhanced system"""
+    try:
+        ace = get_object_or_404(Ace2, Ace_id2=ace_id)
+        ace_asset = get_object_or_404(AceAssetNumber, id=asset_id, ace=ace)
+        
+        # Check permissions
+        user_roles = request.user.roles.all()
+        ace_roles = [role.name for role in user_roles if 'accounting_officer' in role.name.lower()]
+        
+        if not ace_roles:
+            messages.error(request, 'Permission denied')
+            return redirect('Ace:ace_detail', Ace_id2=ace_id)
+        
+        asset_number = ace_asset.asset_number
+        ace_asset.delete()
+        
+        # Update legacy field
+        all_assets = ace.get_all_asset_numbers()
+        ace.asset_number = ','.join(all_assets)
+        ace.save()
+        
+        messages.success(request, f'Removed asset number {asset_number}')
+        return redirect('Ace:ace_detail', Ace_id2=ace_id)
+        
+    except Exception as e:
+        messages.error(request, f'Error removing asset: {str(e)}')
+        return redirect('Ace:ace_detail', Ace_id2=ace_id)

@@ -45,4 +45,10 @@ urlpatterns = [
     
     # API endpoints
     path('api/', include('ACE2.api_urls')),
+
+    # Enhanced asset number URLs
+    path('enhanced_add_asset_number/', views.enhanced_add_asset_number, name='enhanced_add_asset_number'),
+    path('asset_autocomplete_api/', views.asset_autocomplete_api, name='asset_autocomplete_api'),
+    path('migrate_ace_assets/<str:ace_id>/', views.migrate_ace_assets, name='migrate_ace_assets'),
+    path('remove_enhanced_asset/<str:ace_id>/<int:asset_id>/', views.remove_enhanced_asset, name='remove_enhanced_asset'),
 ]
