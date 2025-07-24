@@ -28,7 +28,11 @@ from .view import (
     QualificationCreateView,
     QualificationUpdateView,
     UserExperienceCreateView,
-    UserExperienceUpdateView
+    UserExperienceUpdateView,
+    KRATemplateView,
+    KRACreateView,
+    KRAOutComeTemplateView,
+    KRAUpdateDetailView
 )
 
 urlpatterns = [
@@ -37,6 +41,12 @@ urlpatterns = [
     path('update/<int:pk>', AppraisalUpdateView.as_view(), name='update_appraisal'),
     path('server-error/', internal_server_error_view, name='server_error_view'),
     path('<slug:object_name>/not-found-error', object_not_found_error_view, name='object_not_found_error'),
+    
+    # ===================== KRA ==================================
+    path('kra/list', KRATemplateView.as_view(), name='kra_index'),
+    path('kra/new', KRACreateView.as_view(), name='kra_create'),
+    path('kra/<int:kra_id>', KRAUpdateDetailView.as_view(), name='kra_update_detail'),
+    path('kra/outcomes/<int:kra_id>', KRAOutComeTemplateView.as_view(), name='kra_outcomes_index'),
     
     # ================= Qualification Experience url ===================
     path('qualification-experience/user/<int:user_id>', QualificationExperienceTemplateView.as_view(), name='qualification_experience_index'),

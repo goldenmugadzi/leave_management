@@ -5,7 +5,7 @@ from django.db.models.query import QuerySet
 from django.core.files.uploadedfile import UploadedFile
 from django.core.files.storage import default_storage
 
-from ..models import KeyResultArea, YearQuarter,  Appraisal, ScoreDocument, KeyResultAreaOutCome
+from ..models import KeyResultArea, YearQuarter,  Appraisal, KeyResultAreaOutCome, DepartmentOutput, AppraisalDepartmentOutput, AppraisalOutPutPerformanceDimensionScore, OutPutPerformanceDimension, ScoreDocument
 from ..helpers.types.kra import KRAType, TargetScoreType, KraRolesCreateType, ActivityType, PerformanceDimensionType
 from it.users.models import UserProfile, Application, Roles, Designations
 from loguru import logger
@@ -153,5 +153,96 @@ class KRAOutComeRepository:
         except Exception as e:
             raise Exception(f"KRAOutComeRepository with object pk: {kra_outcome_object.id} update Repo failed with error: {e}")
 
+class AppraisalDepartmentOutputRepository:
+    def create(self, appraisal_object: Appraisal, department_output_obj: DepartmentOutput, year_quarter_obj: YearQuarter)->AppraisalDepartmentOutput:
+        try:
+            return AppraisalDepartmentOutput.objects.create(appraisal=appraisal_object, department_output=department_output_obj, year_quarter=year_quarter_obj)
+        except Exception as e:
+            raise Exception(f"[AppraisalDepartmentOutputRepository] Create Repo failed with error: {e}")
+
+    def update(self, appraisal_department_output_object: AppraisalDepartmentOutput, appraisal_object: Appraisal, department_output_obj: DepartmentOutput, year_quarter_obj: YearQuarter)->AppraisalDepartmentOutput:
+        try:
+            is_changed = False
+            
+            if appraisal_department_output_object.appraisal != appraisal_object:
+                appraisal_department_output_object.appraisal = appraisal_object
+                is_changed = True
+            
+            if appraisal_department_output_object.department_output != department_output_obj:
+                appraisal_department_output_object.department_output = department_output_obj
+                is_changed = True
+            
+            if appraisal_department_output_object.year_quarter != year_quarter_obj:
+                appraisal_department_output_object.year_quarter = year_quarter_obj
+                is_changed = True
+            
+            if is_changed:
+                appraisal_department_output_object.save()
+                
+            return appraisal_department_output_object
+        except Exception as e:
+            raise Exception(f"[AppraisalDepartmentOutputRepository] Create Repo failed with error: {e}")
 
 
+
+class AppraisalOutPutPerformanceDimensionScoreRepository:
+    def create(self, appraisal_department_output_obj: AppraisalOutPutPerformanceDimensionScore, perf_dimension_obj: OutPutPerformanceDimension)->AppraisalOutPutPerformanceDimensionScore:
+        try:
+            return AppraisalOutPutPerformanceDimensionScore.objects.create(appraisal_department_output=appraisal_department_output_obj, performance_dimension=perf_dimension_obj)
+        except Exception as e:
+            raise Exception(f"[AppraisalOutPutPerformanceDimensionScoreRepository] Create Repo failed with error: {e}")
+
+    def update(self, appraisal_perf_dimension: AppraisalOutPutPerformanceDimensionScore, score: float, comments: str, is_scored: bool, appraiser_confirmation: str)->AppraisalOutPutPerformanceDimensionScore:
+        try:
+            is_changed = False
+            
+            if appraisal_perf_dimension.score != score:
+                appraisal_perf_dimension.score = score
+                is_changed = True
+                
+            if appraisal_perf_dimension.comments != comments:
+                appraisal_perf_dimension.comments = comments
+                is_changed = True
+                
+            if appraisal_perf_dimension.is_scored != is_scored:
+                appraisal_perf_dimension.is_scored = is_scored
+                is_changed = True
+                
+            if appraisal_perf_dimension.appraiser_confirmation != appraiser_confirmation:
+                appraisal_perf_dimension.appraiser_confirmation = appraiser_confirmation
+                is_changed = True
+                
+            if is_changed:
+                appraisal_perf_dimension.save()
+            return appraisal_perf_dimension
+        except Exception as e:
+            raise Exception(f"[AppraisalOutPutPerformanceDimensionScoreRepository] update Repo with pk: {appraisal_perf_dimension.id}, failed with error: {e}")
+
+class ScoreDocumentRepository:
+    def create(self, performance_dimension_score: AppraisalOutPutPerformanceDimensionScore, name: str, documents: str)->ScoreDocument:
+        try:
+            return ScoreDocument.objects.create(performance_dimension_score=performance_dimension_score, name=name, documents=documents)
+        except Exception as e:
+            raise Exception(f"[ScoreDocumentRepository] Create Repo failed with error: {e}")
+
+    def delete_obj(self, score_doc_obj: ScoreDocument)->None:
+        try:
+            document_path = score_doc_obj.documents.path
+            
+            if not default_storage.exists(document_path):
+                raise Exception("ScoreDocument  does not exist")
+            
+            score_doc_obj.delete()
+            default_storage.delete(document_path)   
+        except Exception as e:
+            raise ValueError(f"[ScoreDocumentRepository]  delete_obj with ID {score_doc_obj.id} failed with error: {e}")
+
+    def update(self, score_doc_obj: ScoreDocument, name: str, file: UploadedFile)->ScoreDocument:
+        try:
+            if score_doc_obj.name != name:
+                score_doc_obj.name = name
+            score_doc_obj.documents = file
+            score_doc_obj.save()
+            return score_doc_obj
+        except Exception as e:
+            raise Exception(f"ScoreDocumentRepository update repo with score doc obj pk: {score_doc_obj.id},  failed with error: {e}")

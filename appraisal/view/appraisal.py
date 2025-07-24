@@ -10,12 +10,9 @@ from django.shortcuts import redirect, render
 from django.contrib.messages.views import SuccessMessageMixin
 from django.contrib import messages
 
-from django.urls import reverse_lazy
-
-from ..models import Appraisal, AppraisalExperience, Experience
+from ..models import Appraisal
 from it.users.models import UserQualification, UserProfile
-from ..forms import AppraisalForm, AppraisalExperienceFormset, UserQualificationFormset, AppraisalRoleFilterForm, AppraisalUpdateForm
-from ..helpers.types import AppraisalPayloadType
+from ..forms import AppraisalForm, AppraisalRoleFilterForm, AppraisalUpdateForm
 from ..helpers.types.kra import RoleFilterChoices
 from ..repository import UserQualificationRepository, AppraisalExperienceRepository, ExperienceRepository, AppraisalRepository
 from ..repository.qualification_experience import UserExperienceRepository
@@ -46,6 +43,11 @@ class AppraisalCreateView(SuccessMessageMixin, CreateView):
     
     def get_user_object(self):
         return self.request.user
+    
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["appraisee_id"] = self.get_user_object().id
+        return kwargs
 
     def get_current_date_assessment(self):
         current_date = datetime.now()
@@ -75,57 +77,26 @@ class AppraisalCreateView(SuccessMessageMixin, CreateView):
         context["is_update"] = False
         return context
 
-    def build_payload(self) -> AppraisalPayloadType:
-        """Builds a structured payload dictionary grouping data by form name."""
-        payload = self.request.POST
-        files = self.request.FILES
-
-        qualifications = [
-            {
-                "name": payload.get(f"qualification-{i}-name"),
-                "file": files.get(f"qualification-{i}-file")  # Extract file from request.FILES
-            }
-            for i in range(int(payload.get("qualification-TOTAL_FORMS", 0)))
-            if payload.get(f"qualification-{i}-name")
-        ]
-        experiences = [
-            {
-                "name": Experience.objects.filter(id=payload.get(f"appraisal-{i}-experience")).values_list("name", flat=True).first(),
-                "years_of_experience": payload.get(f"appraisal-{i}-years_of_experience"),
-                "months_of_experience": payload.get(f"appraisal-{i}-months_of_experience")
-            }
-            for i in range(int(payload.get("appraisal-TOTAL_FORMS", 0)))
-            if payload.get(f"appraisal-{i}-experience") and payload.get(f"appraisal-{i}-experience") != "0"
-        ]
-        data = AppraisalPayloadType(experiences=experiences, qualifications=qualifications)
-        return data
-
     def form_valid(self, form: BaseModelForm) -> HttpResponse:
-        user_object = self.request.user
-        if not user_object.grade:
+        appraisee_object = self.get_user_object()
+        
+        if not appraisee_object.grade:
             messages.error(self.request, "Oops! Your profile has no grade set. Kindly contact admin.")
             return self.form_invalid(form)
 
-        appraisal_service_handler = AppraisalService(
-            appraisal_experience_repository=AppraisalExperienceRepository(),
-            qualification_repository=UserQualificationRepository(),
-            experience_repository=ExperienceRepository(),
-            appraisal_repository=AppraisalRepository()
-        )
-        structured_payload = self.build_payload()
-        appraisal_object = appraisal_service_handler.create_use_case(
-            user_object=user_object,
-            data=structured_payload,
-            appraiser=form.instance.appraiser,
-            reviewer=form.instance.reviewer
-            )
+        if not appraisee_object.designation:
+            messages.error(self.request, "Oops! Your profile has no designation set. Kindly contact admin.")
+            return self.form_invalid(form)
+        
+        if not appraisee_object.cost_center:
+            messages.error(self.request, "Oops! Your profile has no cost center set. Kindly contact admin.")
+            return self.form_invalid(form)
+        
+        appraiser_object = form.cleaned_data.get("appraiser")
+        repo = AppraisalRepository()
+        appraisal_object = repo.create(appraisee_object=appraiser_object, appraiser_object=appraiser_object)
         form.instance = appraisal_object
-
-        form.instance.user = user_object
-        # if len(structured_payload.experiences) == 0:
-        #     # return an error
-        # print("=========>>> Structured Payload:", structured_payload)
-        # input()
+        
         return super().form_valid(form)
 
     def get(self, request, *args, **kwargs):

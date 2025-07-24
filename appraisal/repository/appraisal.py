@@ -7,55 +7,55 @@ from ..helpers.types import ExperienceType
 
 
 class AppraisalRepository:
-    def create(self, user_object: UserProfile, appraiser_object: UserProfile, reviewert_object: UserProfile) -> Appraisal:
+    def create(self, appraisee_object: UserProfile, appraiser_object: UserProfile) -> Appraisal:
         try:
-            return Appraisal.objects.create(user=user_object, appraiser=appraiser_object, reviewer=reviewert_object)
+            return Appraisal.objects.create(user=appraisee_object, appraiser=appraiser_object, reviewer=None)
         except Exception as e:
             raise Exception(f"Appraisal Create Repo failed with error: {e}")
 
-    def add_experience(self, appraisal_object :Appraisal, experience_object: Experience, data: ExperienceType):
+    def fetch_by_user_id(self, user_id: UserProfile) -> List[Appraisal]:
         try:
-            appraisal_object.experience.add(
-                experience_object,
-                through_defaults={
-                    "years_of_experience": data.years_of_experience,
-                    "months_of_experience": data.months_of_experience
-                }
-
-            )
+            return Appraisal.objects.filter(user__id=user_id)
         except Exception as e:
-            raise Exception(f"Appraisal Experience Repo failed with error: {e}")
-    
-    def remove_experience(self, appraisal_object :Appraisal, experience_object: Experience):
+            raise Exception(f"Appraisal fetch_by_user_id Repo with appraisee or user pk: {user_id}, failed with error: {e}")
+
+    def fetch_by_appraiser_id(self, appraiser_id: int) -> List[Appraisal]:
         try:
-            appraisal_object.experience.remove(
-              experience_object  
-            )
+            return Appraisal.objects.filter(appraiser__id=appraiser_id)
         except Exception as e:
-            raise Exception(f"Appraisal Experience Repo failed with error: {e}")
+            raise Exception(f"Appraisal fetch_by_appraiser_id Repo with appraiser pk: {appraiser_id}, failed with error: {e}")
 
-    def fetch_by_user(self, user_object: UserProfile) -> List[Appraisal]:
-        return Appraisal.objects.filter(user=user_object)
-    
-    def fetch_by_appraiser(self, appraiser_object: UserProfile) -> List[Appraisal]:
-        return Appraisal.objects.filter(appraiser=appraiser_object)
-    
-    def fetch_by_reviewer(self, reviewer_object: UserProfile) -> List[Appraisal]:
-        return Appraisal.objects.filter(reviewer=reviewer_object)
-        
+    def fetch_by_reviewer_id(self, reviewer_id: int) -> List[Appraisal]:
+        try:
+            return Appraisal.objects.filter(reviewer__id=reviewer_id)
+        except Exception as e:
+            raise Exception(f"Appraisal fetch_by_reviewer_id Repo with reviewer pk: {reviewer__id}, failed with error: {e}")
+
     def get_appraisal_by_pk(self, appraisal_id: int)->Appraisal:
         return Appraisal.objects.filter(id=appraisal_id)
     
     def get_all_appraisal_objects(self)->list:
-        
         return Appraisal.objects.all()
 
-    def update(self, appraisal_object_id: int, appraiser_object: UserProfile)->Appraisal:
+    def update(self, appraisal_object: Appraisal, appraiser_object: UserProfile, reviewer_obj: UserProfile, is_accepted_by_appraiser_reviewer: bool)->Appraisal:
         try:
-            appraisal_object = self.get_appraisal_by_pk(appraisal_object_id)
+            is_changed = False
+            
             if appraisal_object.appraiser != appraiser_object:
                 appraisal_object.appraiser = appraiser_object
+                is_changed = True
+            
+            if appraisal_object.reviewer != reviewer_obj:
+                appraisal_object.reviewer != reviewer_obj
+                is_changed = True
+                
+            if appraisal_object.is_accepted != is_accepted_by_appraiser_reviewer:
+                appraisal_object.is_accepted != is_accepted_by_appraiser_reviewer
+                is_changed = True
+                
+            if is_changed:
                 appraisal_object.save()
+                
             return appraisal_object
         except Exception as e:
-            raise Exception(f"Appraisal Create Repo failed with error: {e}")
+            raise Exception(f"Appraisal update Repo with appraisal pk: {appraisal_object.id}, failed with error: {e}")
