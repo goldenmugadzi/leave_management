@@ -24,9 +24,7 @@
       href="{% static 'assets/cdn/tailwind.min.css' %}"
       rel="stylesheet"
     />
-    {% if show_captcha and RECAPTCHA_ENABLED %}
-    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
-    {% endif %}
+
     <style>
       /*remove custom style*/
       .circles {
@@ -293,11 +291,7 @@
                   </div>
                 </div>
 
-                {% if show_captcha and RECAPTCHA_ENABLED %}
-                <div class="form-group">
-                    <div class="g-recaptcha" data-sitekey="{{ RECAPTCHA_SITE_KEY }}"></div>
-                </div>
-                {% endif %}
+
 
                 <div>
                   <button

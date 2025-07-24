@@ -11,9 +11,3 @@ def environment_vars(request):
         'VERSION': config('VERSION', default='1.0.0'),
     }
 
-def captcha_context(request):
-    """Make reCAPTCHA site key available in templates"""
-    return {
-        'RECAPTCHA_SITE_KEY': settings.RECAPTCHA_PUBLIC_KEY,
-        'RECAPTCHA_ENABLED': getattr(settings, 'RECAPTCHA_ENABLED', True)
-    }

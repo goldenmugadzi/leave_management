@@ -210,7 +210,6 @@ def login_user(request):
     if request.method == "POST":
         username = request.POST.get('username')
         password = request.POST.get('password')
-        # captcha_response = request.POST.get('g-recaptcha-response')
         
         # Get IP address for tracking
         client_ip, is_routable = get_client_ip(request)
@@ -219,34 +218,8 @@ def login_user(request):
             
         # Log attempt
         logger.info(f"Login attempt for user: {username} from IP: {client_ip}")
-        
-        # Check if reCAPTCHA is enabled
-        # recaptcha_enabled = getattr(settings, 'RECAPTCHA_ENABLED', True)
             
-        # Check if user is locked out
-        # if LoginAttempt.is_user_locked_out(username):
-        #     locked_until = LoginAttempt.get_recent_attempts(username).first().timestamp + timezone.timedelta(minutes=30)
-        #     logger.warning(f"Blocked login attempt for locked user: {username} from IP: {client_ip}")
-        #     return render(request, 'registration/login.html', {
-        #         "error_msg": f"Account temporarily locked due to too many failed attempts. Try again after {locked_until.strftime('%H:%M:%S')}",
-        #         "show_captcha": recaptcha_enabled
-        #     })
-            
-        # Verify CAPTCHA if this isn't the first attempt and reCAPTCHA is enabled
-        # recent_failures = LoginAttempt.get_recent_attempts(username).filter(successful=False).count()
-        # if recaptcha_enabled and recent_failures >= 2 and not verify_recaptcha(captcha_response):
-        #     # Create a failed login attempt record
-        #     LoginAttempt.objects.create(
-        #         username=username,
-        #         ip_address=client_ip,
-        #         user_agent=request.META.get('HTTP_USER_AGENT', ''),
-        #         successful=False
-        #     )
-        #     logger.warning(f"Failed CAPTCHA verification for user: {username} from IP: {client_ip}")
-        #     return render(request, 'registration/login.html', {
-        #         "error_msg": "Please complete the CAPTCHA verification",
-        #         "show_captcha": True
-        #     })
+
 
         try:
             user = authenticate(request, username=username, password=password)
@@ -294,12 +267,8 @@ def login_user(request):
                 # Log failed login
                 logger.warning(f"Failed login attempt for user: {username} from IP: {client_ip}")
                 
-                # Check if user should be shown CAPTCHA for next attempt
-                # show_captcha = recaptcha_enabled and LoginAttempt.get_recent_attempts(username).filter(successful=False).count() >= 2
-                
                 return render(request, 'registration/login.html', {
-                    "error_msg": "Invalid username or password",
-                    # "show_captcha": show_captcha
+                    "error_msg": "Invalid username or password"
                 })
         except Exception as e:
             # Record failed login attempt
@@ -313,43 +282,13 @@ def login_user(request):
             # Log the exception
             logger.error(f"Login error for user: {username} from IP: {client_ip} - Error: {str(e)}")
             
-            # Check if user should be shown CAPTCHA for next attempt
-            # show_captcha = recaptcha_enabled and LoginAttempt.get_recent_attempts(username).filter(successful=False).count() >= 2
-            
             return render(request, 'registration/login.html', {
-                "error_msg": "Invalid username or password",
-                # "show_captcha": show_captcha
+                "error_msg": "Invalid username or password"
             })
 
-    # Check if we need to show CAPTCHA based on previous attempts
-    username = request.GET.get('username', '')
-    # recaptcha_enabled = getattr(settings, 'RECAPTCHA_ENABLED', True)
-    # show_captcha = False
-    # if recaptcha_enabled and username:
-    #     show_captcha = LoginAttempt.get_recent_attempts(username).filter(successful=False).count() >= 2
-        
-    return render(request, 'registration/login.html', {
-        # "show_captcha": show_captcha
-    })
+    return render(request, 'registration/login.html', {})
 
-def verify_recaptcha(recaptcha_response):
-    """Verify reCAPTCHA response with Google's API"""
-    if not recaptcha_response:
-        return False
-        
-    import requests
-    recaptcha_secret = config('RECAPTCHA_SECRET_KEY', default='')
-    verify_url = 'https://www.google.com/recaptcha/api/siteverify'
-    
-    data = {
-        'secret': recaptcha_secret,
-        'response': recaptcha_response
-    }
-    
-    response = requests.post(verify_url, data=data)
-    result = response.json()
-    
-    return result.get('success', False)
+
 
 @login_required(login_url='/accounts/login')
 def index(request):
