@@ -1,5 +1,5 @@
 from django.db import models
-from it.users.models import  UserProfile,CostCenter
+from it.users.models import CostCenter
 
 
 class BatteryInstallation(models.Model):
@@ -9,27 +9,23 @@ class BatteryInstallation(models.Model):
     cell_type = models.CharField(max_length=50, blank=True)
     cell_quantity = models.PositiveIntegerField()
     plates_per_cell = models.PositiveIntegerField(null=True, blank=True)
-    date = models.DateField(auto_now_add=True)  
+    date = models.DateField(auto_now_add=True)
     battery_application = models.CharField(max_length=100, blank=True)
 
     def __str__(self):
-        return f"{self.battery_name} ({self.battery_id})"
+        return f"{self.battery_name} ({self.id})"
 
 
 class Cell(models.Model):
-    installation = models.ForeignKey(
-        BatteryInstallation,
-        on_delete=models.CASCADE,
-        related_name='cells'  # Changed from 'cell' to 'cells'
-    )
-    cell_number = models.PositiveIntegerField()  # Added this
+    installation = models.ForeignKey(BatteryInstallation, on_delete=models.CASCADE, related_name='cells')
     specific_gravity = models.FloatField(null=True, blank=True)
     voltage = models.FloatField(null=True, blank=True)
 
     def __str__(self):
-        return f"Cell {self.cell_number} (Installation {self.installation_id})"
+        return f"Cell {self.id} (Installation {self.installation})"
 
-class BatteryMaintanence(models.Model):
+
+class BatteryMaintenance(models.Model):  # ✅ Fixed typo
     battery = models.OneToOneField(BatteryInstallation, on_delete=models.CASCADE)
     volts_high = models.FloatField(null=True, blank=True)
     volts_low = models.FloatField(null=True, blank=True)
@@ -37,27 +33,32 @@ class BatteryMaintanence(models.Model):
     sg_high = models.FloatField(null=True, blank=True)
     sg_low = models.FloatField(null=True, blank=True)
     sg_avg = models.FloatField(null=True, blank=True)
-    reading_type = models.CharField( max_length=10,choices=[("daily", "Daily"), ("monthly", "Monthly")],default="monthly"    )
-    water_used = models.FloatField()
-    date = models.DateField(auto_now_add=True)  
+    reading_type = models.CharField(
+        max_length=10,
+        choices=[("daily", "Daily"), ("monthly", "Monthly")],
+        default="monthly"
+    )
+    water_used = models.FloatField(null=True, blank=True)  # ✅ Made nullable
+    date = models.DateField(auto_now_add=True)
+
     def __str__(self):
-        return f"Summary for {self.battery}"
+        return f"Maintenance for {self.battery}"
 
 
 class CellReading(models.Model):
-    battery_maintenance = models.ForeignKey(BatteryMaintanence, on_delete=models.CASCADE)
+    battery_maintenance = models.ForeignKey(BatteryMaintenance, on_delete=models.CASCADE)
     cell = models.ForeignKey(Cell, on_delete=models.CASCADE)
     specific_gravity = models.FloatField(null=True, blank=True)
     voltage = models.FloatField(null=True, blank=True)
-   
+
     def __str__(self):
-        return f"Cell {self.cell}"
+        return f"Reading for Cell {self.cell.id} (Install {self.cell.installation_id})"
 
 
 class PilotReading(models.Model):
     installation = models.ForeignKey(BatteryInstallation, on_delete=models.CASCADE, related_name='daily_pilot_readings')
     cell = models.ForeignKey(Cell, on_delete=models.CASCADE)
-    date = models.DateField(auto_now_add=True)  
+    date = models.DateField(auto_now_add=True)
     battery_voltage = models.FloatField(null=True, blank=True)
     specific_gravity = models.FloatField(null=True, blank=True)
     acid_temp = models.FloatField(null=True, blank=True)
@@ -65,15 +66,14 @@ class PilotReading(models.Model):
     cell_voltage = models.FloatField(null=True, blank=True)
 
     def __str__(self):
-        return f"Pilot Cell {self.cell} on {self.date}"
-
+        return f"Pilot Cell {self.cell.id} on {self.date}"
 
 
 class EmergencyDischarge(models.Model):
     installation = models.ForeignKey(BatteryInstallation, on_delete=models.CASCADE, related_name='emergency_discharges')
-    date = models.DateField(auto_now_add=True)  
+    date = models.DateField(auto_now_add=True)
     amps = models.FloatField()
-    for_duration = models.FloatField( help_text="hours" )
+    for_duration = models.FloatField(help_text="hours")
 
     def __str__(self):
         return f"Discharge on {self.date}"

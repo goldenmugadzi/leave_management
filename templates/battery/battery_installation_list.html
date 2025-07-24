@@ -1,0 +1,63 @@
+{% extends "admin_layout.html" %}
+{% load static %}
+{% load humanize %}
+{% load custom_tags %}
+{% block styles %}
+  <link rel="stylesheet"
+        href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css" />
+  <style>.dataTables_wrapper .dataTables_length select { width: 4rem; }</style>
+{% endblock %}
+{% block content %}
+  <title>Battery Maintenance</title>
+  <div class="content-wrapper">
+    <div class="grid grid-cols-1">
+      <div class="bg-gulf-blue-100 shadow-lg rounded-lg p-6">
+      <div class="grid grid-cols-4 my-4">
+        
+          <a href="{% url 'BatteryMaintenance:install_battery' %}"
+          class="bg-blue-500 hover:bg-blue-700 inline-block rounded-full m-auto text-white py-2 px-4 rounded"> New Request</a>
+          </div>
+
+        <table id="tokens" class="table table-striped stripe mt-3 table-bordered">
+          <thead>
+            <tr>
+               <th >ID</th>
+          <th >Battery Name</th>
+          <th >Site Name</th>
+          <th >Cell Quantity</th>
+          <th >Date Installed</th> 
+            </tr>
+        </thead>
+          <tbody>
+            {% for installation in installations %}
+              <tr class="h-1">
+                <td><a class="text-blue-500" href="{% url 'BatteryMaintenance:installation' installation.id %}">{{ installation.id|default_if_none:'' }}</a></td>
+            <td >{{ installation.battery_name }}</td>
+            <td >{{ installation.site_name }}</td>
+            <td >{{ installation.cell_quantity }}</td>
+            <td >{{ installation.date|date:"Y-m-d" }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+{% endblock %}
+{% block scripts %}
+  <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
+  <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+  <script>
+  $(document).ready(function () {
+    $("#tokens").DataTable({
+      "pageLength": 10,
+      "columnDefs": [{ "orderable": true, "targets": [0, 1, 2,3,4] }],
+      "responsive": true,
+      "searching": true,
+      language: {
+        search: "Filter results:"
+    }
+    });
+  });
+  </script>
+{% endblock %}

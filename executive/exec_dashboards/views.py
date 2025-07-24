@@ -772,9 +772,6 @@ def upload_net_metering_register(request):
                 except ValueError:
                     print(f"Could not parse date_commissioned: {row['date_commissioned']}")
                     continue
-            # date_applied = datetime.strptime(row['date_applied'], "%Y-%m-%d")
-            # date_commissioned = datetime.strptime(row['date_commissioned'], "%Y-%m-%d")
-            
             try:
                 NetMeteringRegister.objects.create(
                     name_of_customer=row['name_of_customer'],
