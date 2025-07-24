@@ -195,12 +195,12 @@ REPORTS = [
         "iconUrl": "assets/images/non-conforming.png",
         "url": "/nonconformity_repots/"
     },
-    {
-        "name": "sanction_for_test_reports",
-        "title": "Sanction For Test Reports",
-        "iconUrl": "assets/images/sanction_for_test.png",
-        "url": "/sanction_for_test/reports/"
-    }
+    # {
+    #     "name": "sanction_for_test_reports",
+    #     "title": "Sanction For Test Reports",
+    #     "iconUrl": "assets/images/sanction_for_test.png",
+    #     "url": "/sanction_for_test/reports/"
+    # }
 ]
 
 
