@@ -98,7 +98,7 @@ def Ace_detail(request, Ace_id2):
                     userp = UserProfile.objects.filter(id=user.id).first()
                     msg = f"Your ACE {ace_item.Ace_id2} has been rejected. Allocated funds have been released."
                     url = f"/ace/ace_detail/{ace_item.Ace_id2}"
-                    notify_user(userp, msg, "ACE", url, ace_item.Ace_id2)
+                    notify_user(userp, msg, "ACE", url, ace_item.Ace_id2, request)
                     
                 # Show a message to the current user
                 sweetify.info(request, f"ACE {ace_item.Ace_id2} was rejected. Budget has been adjusted.")
@@ -138,7 +138,7 @@ def Ace_detail(request, Ace_id2):
                             
                             msg = f"Your ACE {ace_item.Ace_id2} has been approved by {approver_role} (Step {current_step}/{total_steps})"
                             url = f"/ace/ace_detail/{ace_item.Ace_id2}"
-                            notify_user(userp, msg, "ACE", url, ace_item.Ace_id2)
+                            notify_user(userp, msg, "ACE", url, ace_item.Ace_id2, request)
                             
                             sweetify.success(request, f"ACE {ace_item.Ace_id2} approved and requester notified")
                     except Exception as e:
@@ -230,7 +230,7 @@ def Ace_detail(request, Ace_id2):
 
             msg = "Your ACE " + ace_item.Ace_id2 + "has been approved by the General Manager"
             url = "/ace/ace_detail/" + ace_item.Ace_id2
-            notify_user(userp, msg, "ACE", url, ace_item.Ace_id2)
+            notify_user(userp, msg, "ACE", url, ace_item.Ace_id2, request)
 
     ace_quantity = range(ace_item.quantity)
     approved_steps = ace_item.process.approval_set.all().values_list('step__step', flat=True)
@@ -256,7 +256,7 @@ def Ace_detail(request, Ace_id2):
         general_manager = find_general_manager(request, ace_item.region)
         if general_manager:
             general_manager = UserProfile.objects.filter(username=general_manager).first()
-            notify_user(general_manager, msg, "ACE", url, ace_item.Ace_id2)
+            notify_user(general_manager, msg, "ACE", url, ace_item.Ace_id2, request)
 
     return render(request, 'finance/ace2/ace_detail.html',
                   {'ace': ace_item, 'approved_steps': approved_steps, 'approvalForm': approvalForm,
@@ -294,23 +294,41 @@ def create_Ace(request):
     """
     try:
         print('create ace')
-        global ace_role
-        QuotationFormSet()
         user_id = request.user.id
         user_profile = UserProfile.objects.filter(id=user_id).first()
 
         # Validate user profile exists
         if not user_profile:
-            messages.error(request, "User profile not found. Please contact your administrator to set up your profile.")
-            sweetify.error(request, "User profile not found. Please contact your administrator.")
+            messages.error(request, "User profile not found. Please contact your administrator to create your profile.")
+            sweetify.error(request, "User profile not found.")
             return redirect('/ace2/aces')
 
         # Check if user has required roles for ACE creation
         user_roles = user_profile.roles.all()
         if not user_roles.exists():
-            messages.error(request, "You don't have any assigned roles. Please contact your administrator to assign appropriate roles.")
-            sweetify.error(request, "No roles assigned to your profile.")
+            messages.error(request, "No roles assigned. Please contact your administrator to assign appropriate roles.")
+            sweetify.error(request, "No roles assigned.")
             return redirect('/ace2/aces')
+
+        # Determine user's ACE role - THIS IS THE MISSING PART
+        custom_user_roles = {"ace": {}}
+        roles_ = user_profile.roles.all()
+        ace_role = None
+        
+        for _role in roles_:
+            role = Roles.objects.filter(id=_role.id).first()
+            if role and role.application == "ace":
+                custom_user_roles["ace"] = role.role
+                ace_role = role.role
+                break
+        
+        # Convert to string if it's still a dict
+        if isinstance(custom_user_roles["ace"], dict):
+            ace_role = "none"
+        else:
+            ace_role = str(custom_user_roles["ace"])
+
+        print(f"User ACE role determined: {ace_role}")
 
         form = AceForm(user=user_profile)
         formset = QuotationFormSet()
@@ -378,10 +396,10 @@ def create_Ace(request):
                 # Set workflow based on ACE type with comprehensive exception handling
                 if ace_type == 'high_value':
                     try:
-                        ace.process = intiate(request, 'ace_value')  # Use high-value ACE_VALUE workflow
+                        ace.process = intiate(request, 'ace_em')  # Use high-value ACE_EM workflow
                         messages.success(request, f"High-value ACE created ({zwl_amount:,.2f} ZWL). Extended approval workflow will be used.")
                     except Workflow.DoesNotExist:
-                        messages.error(request, "High-value ACE workflow (ace_value) not configured. Please contact IT administrator.")
+                        messages.error(request, "High-value ACE workflow (ace_em) not configured. Please contact IT administrator.")
                         sweetify.error(request, "High-value ACE workflow not configured. Contact IT administrator.")
                         return render(request, 'finance/ace2/create_ace.html', {'form': form, 'formset': formset})
                     except Exception as e:
@@ -578,7 +596,7 @@ def create_Ace(request):
                             ace.budget_id)
                         url = "/ace/ace_detail/" + ace.Ace_id2
                         section_heads = UserProfile.objects.filter(username=section_heads).first()
-                        notify_user(section_heads, msg, "ACE", url, ace.Ace_id2)
+                        notify_user(section_heads, msg, "ACE", url, ace.Ace_id2, request)
 
                     # for quotation_form in formset:
                     #     quotation = quotation_form.save(commit=False)
@@ -596,7 +614,7 @@ def create_Ace(request):
                         url = "/ace/ace_detail/" + ace.Ace_id2
 
                         ace_sh = UserProfile.objects.filter(username=ace_sh).first()
-                        notify_user(ace_sh, msg, "ACE", url, ace.Ace_id2)
+                        notify_user(ace_sh, msg, "ACE", url, ace.Ace_id2, request)
 
                     else:
                         print("no ace section head found")
@@ -666,9 +684,9 @@ def create_Ace(request):
                 form = AceForm(user=user_profile)
                 formset = QuotationFormSet()
         else:
-            sweetify.error(request, "You are not authorized to create ACE. Please contact your administrator for proper role assignment.")
-            messages.error(request, "You are not authorized to create ACE. Contact your administrator for role assignment.")
-            return redirect('/ace2/aces')
+            sweetify.error(request, "You are not authorized to create ACEs")
+            messages.error(request, "You are not authorized to create ACEs")
+            return redirect('/ace/aces')
 
         return render(request, 'finance/ace2/create_ace.html', {'form': form, 'formset': formset})
         
@@ -2393,10 +2411,9 @@ def notify_pending_gm_approvals(request):
             if process.approval_set.exists():
                 latest_approval = process.approval_set.last()
                 current_step = latest_approval.step.step
-                total_steps = process.workflow.step_set.count()
                 
                 # If we're at the step before the last step, item is pending GM approval
-                if current_step == total_steps - 1:
+                if current_step == len(process.workflow.step_set.all()) - 1:
                     pending_aces.append(ace)
         
         # Notify each GM about pending items IN THEIR REGION ONLY
@@ -2408,13 +2425,13 @@ def notify_pending_gm_approvals(request):
                 # Send a summary notification
                 msg = f"You have {count} ACE items awaiting your approval in {region.region}"
                 url = "/ace/awaiting_my_action/"
-                notify_user(gm, msg, "ACE", url, f"gm_summary_{region.id}")
+                notify_user(gm, msg, "ACE", url, f"gm_summary_{region.id}", request)
                 
                 # Optional: Send individual notifications for each item
                 for ace in pending_aces:
                     item_msg = f"ACE {ace.Ace_id2} requires your final approval"
                     item_url = f"/ace/ace_detail/{ace.Ace_id2}"
-                    notify_user(gm, item_msg, "ACE", item_url, ace.Ace_id2)
+                    notify_user(gm, item_msg, "ACE", item_url, ace.Ace_id2, request)
     
     if notification_count > 0:
         sweetify.success(request, f"Sent notifications for {notification_count} pending ACE items to general managers")
@@ -2497,13 +2514,8 @@ def asset_budget_report(request, budget_id):
         'total_used': total_used,
         'allocated': allocated,
         'withdrawn': withdrawn,
-        'awaiting_sanctioning': awaiting_sanctioning,
         'balance': balance,
-        'utilization_rate': round(utilization_rate, 2),
-        'approved_count': approved_count,
-        'pending_count': pending_count,
-        'rejected_count': rejected_count,
-        'unknown_count': unknown_count,
+        'awaiting_sanctioning': awaiting_sanctioning,
         'monthly_data': monthly_data,
         'avg_ace_amount': avg_ace_amount,
         'total_aces': aces.count(),
@@ -3138,7 +3150,10 @@ def export_current_year_pdf(request):
     }
     html = template.render(context, request)
     pdf = HTML(string=html).write_pdf()
-    return HttpResponse(pdf, content_type='application/pdf')
+    
+    response = HttpResponse(pdf, content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="ace_report_{current_year}_{region.region}.pdf"'
+    return response
 
 
 @login_required
@@ -3300,7 +3315,7 @@ def migrate_ace_assets(request, ace_id):
         
         if not ace_roles:
             messages.error(request, 'Permission denied')
-            return redirect('Ace:ace_detail', Ace_id2=ace_id)
+            return redirect('Ace:ace_detail', Ace_id2=ace.Ace_id2)
         
         migrated_count = ace.migrate_to_enhanced_assets(request.user)
         
@@ -3309,11 +3324,11 @@ def migrate_ace_assets(request, ace_id):
         else:
             messages.info(request, 'No asset numbers to migrate or already migrated')
             
-        return redirect('Ace:ace_detail', Ace_id2=ace_id)
+        return redirect('Ace:ace_detail', Ace_id2=ace.Ace_id2)
         
     except Exception as e:
         messages.error(request, f'Migration error: {str(e)}')
-        return redirect('Ace:ace_detail', Ace_id2=ace_id)
+        return redirect('Ace:ace_detail', Ace_id2=ace.Ace_id2)
 
 
 @login_required
@@ -3329,7 +3344,7 @@ def remove_enhanced_asset(request, ace_id, asset_id):
         
         if not ace_roles:
             messages.error(request, 'Permission denied')
-            return redirect('Ace:ace_detail', Ace_id2=ace_id)
+            return redirect('Ace:ace_detail', Ace_id2=ace.Ace_id2)
         
         asset_number = ace_asset.asset_number
         ace_asset.delete()

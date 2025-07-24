@@ -70,6 +70,14 @@ def handle_approval_completed(sender, instance, created, **kwargs):
     
     # Check if this approval is for a sanction form
     try:
+        # First check if the process has the right workflow type
+        if not instance.process or not instance.process.workflow:
+            return
+            
+        # Only handle sanction workflows
+        if instance.process.workflow.application.name != 'sanction_for_test':
+            return
+            
         sanction_form = SanctionForTestForm.objects.get(approval_process=instance.process)
         
         # Update form status based on the approval step
@@ -98,7 +106,11 @@ def handle_approval_completed(sender, instance, created, **kwargs):
             )
             
     except SanctionForTestForm.DoesNotExist:
-        # This approval is not for a sanction form
+        # This approval is not for a sanction form - this is normal for ACE approvals
+        pass
+    except Exception as e:
+        # Handle database errors (like missing table) gracefully
+        print(f"Sanction signal handler error: {e}")
         pass
 
 
