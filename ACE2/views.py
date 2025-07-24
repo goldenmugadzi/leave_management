@@ -3219,7 +3219,7 @@ def asset_autocomplete_api(request):
         
         results = []
         
-        # Search in Asset Register
+        # Search in Asset Register (if available)
         try:
             from Asset_Register.models import ZetdcAssets
             assets = ZetdcAssets.objects.filter(
@@ -3234,10 +3234,10 @@ def asset_autocomplete_api(request):
                     'source': 'Asset Register'
                 })
                 
-        except ImportError:
-            pass
+        except (ImportError, Exception) as e:
+            print(f"Asset Register not available: {e}")
         
-        # Search in existing ACE asset numbers
+        # Search in existing ACE asset numbers for suggestions
         existing_assets = AceAssetNumber.objects.filter(
             asset_number__icontains=query
         ).values_list('asset_number', flat=True).distinct()[:10]
@@ -3246,15 +3246,46 @@ def asset_autocomplete_api(request):
             if not any(r['id'] == asset_num for r in results):
                 results.append({
                     'id': asset_num,
-                    'text': f"{asset_num} - Previously used",
+                    'text': f"{asset_num} - Previously Used",
                     'verified': False,
                     'source': 'Previous ACEs'
                 })
         
+        # Search in legacy asset numbers for additional suggestions
+        legacy_aces = Ace2.objects.exclude(
+            asset_number__isnull=True
+        ).exclude(
+            asset_number__exact=''
+        ).filter(
+            asset_number__icontains=query
+        )[:5]
+        
+        for ace in legacy_aces:
+            if ace.asset_number:
+                asset_list = [an.strip() for an in ace.asset_number.split(',') if an.strip()]
+                for asset_num in asset_list:
+                    if query.lower() in asset_num.lower() and not any(r['id'] == asset_num for r in results):
+                        results.append({
+                            'id': asset_num,
+                            'text': f"{asset_num} - From ACE {ace.Ace_id2}",
+                            'verified': False,
+                            'source': 'Legacy ACE'
+                        })
+        
+        # Allow manual entry
+        if query and not any(r['id'] == query for r in results):
+            results.insert(0, {
+                'id': query,
+                'text': f"{query} - New Asset Number",
+                'verified': False,
+                'source': 'Manual Entry'
+            })
+        
         return JsonResponse({'results': results})
         
     except Exception as e:
-        return JsonResponse({'error': str(e)}, status=500)
+        print(f"Error in asset autocomplete: {e}")
+        return JsonResponse({'results': []})
 
 
 @login_required
@@ -3314,3 +3345,140 @@ def remove_enhanced_asset(request, ace_id, asset_id):
     except Exception as e:
         messages.error(request, f'Error removing asset: {str(e)}')
         return redirect('Ace:ace_detail', Ace_id2=ace_id)
+
+
+@login_required
+def asset_management_dashboard(request):
+    """Dashboard for managing asset number migration and overview"""
+    # Calculate statistics
+    total_aces = Ace2.objects.count()
+    aces_with_legacy = Ace2.objects.exclude(asset_number__isnull=True).exclude(asset_number__exact='').count()
+    aces_with_enhanced = Ace2.objects.filter(enhanced_asset_numbers__isnull=False).distinct().count()
+    ready_to_migrate = Ace2.objects.exclude(
+        asset_number__isnull=True
+    ).exclude(
+        asset_number__exact=''
+    ).filter(
+        enhanced_asset_numbers__isnull=True
+    ).count()
+    
+    stats = {
+        'total_aces': total_aces,
+        'legacy_assets': aces_with_legacy,
+        'enhanced_assets': aces_with_enhanced,
+        'ready_to_migrate': ready_to_migrate,
+    }
+    
+    # Get sample ACEs for display
+    sample_aces = Ace2.objects.exclude(
+        asset_number__isnull=True
+    ).exclude(
+        asset_number__exact=''
+    ).prefetch_related('enhanced_asset_numbers')[:20]
+    
+    # Add asset count to each ACE
+    for ace in sample_aces:
+        if ace.asset_number:
+            ace.asset_count = len([an.strip() for an in ace.asset_number.split(',') if an.strip()])
+        else:
+            ace.asset_count = 0
+    
+    context = {
+        'stats': stats,
+        'sample_aces': sample_aces,
+    }
+    
+    return render(request, 'finance/ace2/asset_management_dashboard.html', context)
+
+
+@login_required
+def bulk_migrate_assets(request):
+    """Bulk migrate all legacy assets to enhanced system"""
+    if request.method != 'POST':
+        return JsonResponse({'error': 'POST method required'}, status=405)
+    
+    try:
+        # Check permissions
+        user_roles = request.user.roles.all()
+        ace_roles = [role.name for role in user_roles if 'accounting_officer' in role.name.lower() or request.user.is_superuser]
+        
+        if not ace_roles and not request.user.is_superuser:
+            return JsonResponse({'error': 'Permission denied'}, status=403)
+        
+        # Get ACEs ready for migration
+        aces_to_migrate = Ace2.objects.exclude(
+            asset_number__isnull=True
+        ).exclude(
+            asset_number__exact=''
+        ).filter(
+            enhanced_asset_numbers__isnull=True
+        )
+        
+        migrated_count = 0
+        ace_count = 0
+        errors = []
+        
+        for ace in aces_to_migrate:
+            try:
+                count = ace.migrate_to_enhanced_assets(request.user)
+                if count > 0:
+                    migrated_count += count
+                    ace_count += 1
+            except Exception as e:
+                errors.append(f'ACE {ace.Ace_id2}: {str(e)}')
+        
+        response_data = {
+            'migrated_count': migrated_count,
+            'ace_count': ace_count,
+        }
+        
+        if errors:
+            response_data['errors'] = errors
+            
+        return JsonResponse(response_data)
+        
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@login_required
+def test_migrate_assets(request):
+    """Test migration without making changes"""
+    try:
+        aces_to_migrate = Ace2.objects.exclude(
+            asset_number__isnull=True
+        ).exclude(
+            asset_number__exact=''
+        ).filter(
+            enhanced_asset_numbers__isnull=True
+        )
+        
+        total_assets = 0
+        samples = []
+        
+        for ace in aces_to_migrate[:10]:  # Sample first 10
+            if ace.asset_number:
+                asset_list = [an.strip() for an in ace.asset_number.split(',') if an.strip()]
+                asset_count = len(asset_list)
+                total_assets += asset_count
+                
+                samples.append({
+                    'ace_id': ace.Ace_id2,
+                    'asset_count': asset_count,
+                    'assets': asset_list
+                })
+        
+        # Count total for all ACEs
+        for ace in aces_to_migrate:
+            if ace.asset_number:
+                asset_list = [an.strip() for an in ace.asset_number.split(',') if an.strip()]
+                total_assets += len(asset_list)
+        
+        return JsonResponse({
+            'total_aces': aces_to_migrate.count(),
+            'total_assets': total_assets,
+            'samples': samples
+        })
+        
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)

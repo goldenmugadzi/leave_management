@@ -307,7 +307,7 @@ class AceAssetNumber(models.Model):
         help_text="Link to asset register if exists"
     )
     # FIXED: Change from 'it.users.UserProfile' to 'users.UserProfile'
-    added_by = models.ForeignKey('users.UserProfile', on_delete=models.CASCADE)
+    added_by = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
     added_date = models.DateTimeField(auto_now_add=True)
     is_verified = models.BooleanField(default=False)
     notes = models.TextField(blank=True, null=True)

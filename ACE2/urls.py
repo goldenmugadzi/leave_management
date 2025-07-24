@@ -51,4 +51,9 @@ urlpatterns = [
     path('asset_autocomplete_api/', views.asset_autocomplete_api, name='asset_autocomplete_api'),
     path('migrate_ace_assets/<str:ace_id>/', views.migrate_ace_assets, name='migrate_ace_assets'),
     path('remove_enhanced_asset/<str:ace_id>/<int:asset_id>/', views.remove_enhanced_asset, name='remove_enhanced_asset'),
+    
+    # Asset management dashboard
+    path('asset_management_dashboard/', views.asset_management_dashboard, name='asset_management_dashboard'),
+    path('bulk_migrate_assets/', views.bulk_migrate_assets, name='bulk_migrate_assets'),
+    path('test_migrate_assets/', views.test_migrate_assets, name='test_migrate_assets'),
 ]

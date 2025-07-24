@@ -18,7 +18,7 @@ $(document).ready(function() {
         var formData = new FormData(this);
 
         $.ajax({
-            url: "/ace/add_asset_number", // Replace with your actual URL
+            url: "/ace/add_asset_number/", // Make sure URL has trailing slash
             type: "POST",
             data: formData,
             contentType: false,
@@ -26,13 +26,14 @@ $(document).ready(function() {
             success: function(response) {
                 // Handle successful response
                 console.log("Success:", response);
-                $("#upload-form").trigger("reset"); // Reset form after submission
-                $("#modal").hide();
+                $("#asset_upload").trigger("reset"); // Reset form after submission
+                $("#asset_number_modal").hide();
                 location.reload();
             },
-            error: function(error) {
+            error: function(xhr, status, error) {
                 // Handle error response
                 console.error("Error:", error);
+                alert("Error adding asset numbers: " + (xhr.responseText || error));
             }
         });
     });
@@ -134,11 +135,13 @@ $(document).ready(function() {
             data: formData,
             processData: false,
             contentType: false,
-            success: function() {
+            success: function(response) {
+                console.log("Enhanced asset numbers added successfully");
                 $('#enhanced_asset_modal').hide();
                 location.reload();
             },
-            error: function(xhr) {
+            error: function(xhr, status, error) {
+                console.error("Error adding enhanced assets:", error);
                 alert('Error: ' + (xhr.responseText || 'Unknown error'));
             }
         });
@@ -147,6 +150,24 @@ $(document).ready(function() {
     // Close enhanced modal
     $('#close_enhanced_modal').click(function() {
         $('#enhanced_asset_modal').hide();
+    });
+    
+    // Bulk migration functionality
+    $('#migrate_all_assets').click(function() {
+        if (confirm('This will migrate all existing asset numbers to the enhanced format. Continue?')) {
+            var aceId = $(this).data('ace-id');
+            $.ajax({
+                url: '/ace/migrate_ace_assets/' + aceId + '/',
+                type: 'GET',
+                success: function(response) {
+                    alert('Migration completed successfully!');
+                    location.reload();
+                },
+                error: function(xhr, status, error) {
+                    alert('Migration failed: ' + (xhr.responseText || error));
+                }
+            });
+        }
     });
     
     // Initialize on page load
