@@ -126,14 +126,14 @@ class AppraisalService:
             #     self.appraisal_repository.remove_experience(appraisal_object=appraisal_object, experience_object=removed_experience_object)
 
     
-    def get_appraisal_by_user_use_case(self, user_object: UserProfile):
-        return self.appraisal_repository.fetch_by_user(user_object=user_object)
+    def get_appraisal_by_user_use_case(self, user_id: int):
+        return self.appraisal_repository.fetch_by_user_id(user_id=user_id)
     
-    def get_appraisal_by_appraiser_use_case(self, appraiser_object: UserProfile):
-        return self.appraisal_repository.fetch_by_appraiser(appraiser_object=appraiser_object)
+    def get_appraisal_by_appraiser_use_case(self, appraiser_id: int):
+        return self.appraisal_repository.fetch_by_appraiser_id(appraiser_id=appraiser_id)
     
-    def get_appraisal_by_reviewer_use_case(self, reviewer_object: UserProfile):
-        return self.appraisal_repository.fetch_by_reviewer(reviewer_object=reviewer_object)
+    def get_appraisal_by_reviewer_use_case(self, reviewer_id: int):
+        return self.appraisal_repository.fetch_by_reviewer_id(reviewer_id=reviewer_id)
     
     def get_appraisal_by_pk_use_case(self, appraisal_id: int)->Appraisal:
         return self.appraisal_repository.get_appraisal_by_pk(appraisal_id=appraisal_id)

@@ -224,11 +224,11 @@ class AppraisalTemplateView(TemplateView):
         
         match self.get_role_filter():
             case RoleFilterChoices.MY_APPRAISAL.value:
-                return {"appraisals": appraisal_service_handler.get_appraisal_by_user_use_case(user_object=self.request.user)}
+                return {"appraisals": appraisal_service_handler.get_appraisal_by_user_use_case(user_id=self.request.user.id)}
             case RoleFilterChoices.ASSIGNED_APPRAISALS.value:
-                return {"appraisals": appraisal_service_handler.get_appraisal_by_appraiser_use_case(appraiser_object=self.request.user)}
+                return {"appraisals": appraisal_service_handler.get_appraisal_by_appraiser_use_case(appraiser_id=self.request.user.id)}
             case RoleFilterChoices.APPRAISALS_FOR_REVIEW.value:
-                return {"appraisals": appraisal_service_handler.get_appraisal_by_reviewer_use_case(reviewer_object=self.request.user)}
+                return {"appraisals": appraisal_service_handler.get_appraisal_by_reviewer_use_case(reviewer_id=self.request.user.id)}
             case RoleFilterChoices.ALL_APPRAISALS.value:
                 return {"appraisals": appraisal_service_handler.get_all_use_case()}
     

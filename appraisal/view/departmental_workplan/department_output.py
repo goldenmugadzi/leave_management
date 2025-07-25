@@ -121,6 +121,9 @@ class DepartmentOutputCreateView(SuccessMessageMixin, CreateView):
             "remain_weight": dept_output_weight_progress.remaining_weight
         }
         context.update(**dept_output_progress_data)
+        
+        context["department_objective"] = self.get_department_objective_obj()
+        context["designation_obj"] = self.get_designation_obj()
         return context
     
     def payload_validation(self, form):
@@ -139,8 +142,8 @@ class DepartmentOutputCreateView(SuccessMessageMixin, CreateView):
             repo = DepartmentalOutRepository()
             dept_output_obj = repo.create(
                                             creator=self.request.user,
-                                            designation_obj=form.cleaned_data.get("designation"),
-                                            departmental_objective_obj=self.get_designation_obj(),
+                                            designation_obj=self.get_designation_obj(),
+                                            departmental_objective_obj=self.get_department_objective_obj(),
                                             data=payload
                                         )
             form.instance = dept_output_obj
@@ -195,6 +198,9 @@ class DepartmentOutputDetailUpdateView(SuccessMessageMixin, UpdateView):
             "remain_weight": dept_output_weight_progress.remaining_weight
         }
         context.update(**dept_output_progress_data)
+        
+        context["department_objective"] = self.get_object().department_objective
+        context["designation_obj"] = self.get_object().designation
         return context
     
     def payload_validation(self, form):

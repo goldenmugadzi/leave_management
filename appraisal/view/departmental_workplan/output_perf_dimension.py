@@ -131,6 +131,6 @@ class OutPutPerformanceDimensionDetailUpdateView(SuccessMessageMixin, UpdateView
         return super().get(request, *args, **kwargs) 
     
     def get_success_url(self):
-        return reverse('output_perf_dimension_detail_update', kwargs={"output_performance_dimension_id": self.kwargs.get('output_performance_dimension_id'), "designation_id": self.kwargs.get('designation_id')})
+        return reverse('output_perf_dimension_detail_update', kwargs={"output_performance_dimension_id": self.kwargs.get('output_performance_dimension_id')})
 
     

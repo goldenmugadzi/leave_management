@@ -32,7 +32,15 @@ class AppraisalRepository:
             raise Exception(f"Appraisal fetch_by_reviewer_id Repo with reviewer pk: {reviewer__id}, failed with error: {e}")
 
     def get_appraisal_by_pk(self, appraisal_id: int)->Appraisal:
-        return Appraisal.objects.filter(id=appraisal_id)
+        try:
+            qr = Appraisal.objects.filter(id=appraisal_id)
+            
+            if not qr.exists():
+                return None
+            return qr.first()
+        except Exception as e:
+            raise Exception(f"Appraisal get_appraisal_by_pk Repo with appraisal pk: {appraisal_id}, failed with error: {e}")
+
     
     def get_all_appraisal_objects(self)->list:
         return Appraisal.objects.all()

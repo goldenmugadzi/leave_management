@@ -4,8 +4,10 @@ from django.dispatch import receiver
 from django.db import transaction
 from ..models import Appraisal, AppraisalWorkflow
 from ..services import PerformanceReviewService, TrainingAndDevelopmentService
-from ..repository import PerformanceReviewRepository, TrainingAndDevelopmentRepository, AppraisalWorkflowRepository
-from ..helpers.types import PerformanceReviewType
+from ..services.kra import AppraisalDependanciesInitialisationService
+from ..repository import PerformanceReviewRepository, TrainingAndDevelopmentRepository, AppraisalWorkflowRepository, AppraisalRepository
+from ..repository.kra import KRARepository, AppraisalDepartmentOutputRepository, AppraisalOutPutPerformanceDimensionScoreRepository, YearQuarterRepository
+from ..repository.departmental_workplan import OutPutPerformanceDimensionRepository, DepartmentalOutRepository
 from ..helpers.types.kra import KraRolesType
 from ..helpers.notifications import send_appraisal_notifications
 from ..helpers.setters import set_approval_process
@@ -198,3 +200,27 @@ def set_appraisal_acceptance_stage_completed(sender, instance, created, **kwargs
         except Exception as e:
             return None
 
+
+@receiver(post_save, sender=Appraisal, dispatch_uid="appraisal_dependencies")
+def set_appraisal_dependencies(sender, instance, created, **kwargs):
+    if created:
+        try:
+            logger.info(f"[AppraisalSignal] set_appraisal_dependencies - Setting Appraisal Dependencies for appraisal pk:{instance.id} initialized ...")
+            service_handler = AppraisalDependanciesInitialisationService(
+                appraisal_department_output_repo=AppraisalDepartmentOutputRepository(),
+                appraisal_output_perf_dimension_repo=AppraisalOutPutPerformanceDimensionScoreRepository(),
+                appraisal_repo=AppraisalRepository(),
+                year_quarter_repo=YearQuarterRepository(),
+                performance_dimension_repo=OutPutPerformanceDimensionRepository(),
+                department_output_repo=DepartmentalOutRepository()
+            )
+            
+            appraisal_created_year = instance.created_date.year
+            
+            if service_handler.create_all_dependencies(appraisal_id=instance.id, year=appraisal_created_year): 
+                logger.success(f"[AppraisalSignal] set_appraisal_dependencies - Setting Appraisal Dependencies for appraisal pk:{instance.id} successfully completed")
+            else:
+                logger.warning(f"[AppraisalSignal] set_appraisal_dependencies - Setting Appraisal Dependencies for appraisal pk:{instance.id} not set")
+        except Exception as e:
+            logger.error(f"[AppraisalSignal] set_appraisal_dependencies - Setting Appraisal Dependencies for appraisal pk:{instance.id}, failed with error: {e}")
+            return None

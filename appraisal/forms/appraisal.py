@@ -76,6 +76,7 @@ class AppraisalForm(forms.ModelForm):
             self.fields["appraiser"].queryset = qr_exclude_appraisee
         
         self.fields["appraiser"].required = True
+        self.fields["reviewer"].required = False
         self.fields['reviewer'].disabled = True
         
 class AppraisalUpdateForm(forms.ModelForm):

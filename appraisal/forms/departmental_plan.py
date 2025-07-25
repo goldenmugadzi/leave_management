@@ -20,7 +20,7 @@ class DepartmentObjectiveUpdateForm(forms.ModelForm):
 class DepartmentOutputCreateForm(forms.ModelForm):
     class Meta:
         model = DepartmentOutput
-        fields = ["department_objective", "output_description", "weight"]
+        fields = ["output_description", "weight"]
         
         
 class DesignationFilterForm(forms.Form):
@@ -41,3 +41,8 @@ class OutPutPerformanceDimensionUpdateForm(forms.ModelForm):
     class Meta:
         model = OutPutPerformanceDimension
         fields = ["performance_indicator", "description", "weight", "allowable_variance", "agreed_target"]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['performance_indicator'].disabled = True
+        

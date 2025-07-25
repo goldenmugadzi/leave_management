@@ -1,20 +1,14 @@
-from typing import List, Dict, Annotated
+from typing import List
 from dataclasses import dataclass
-from decimal import Decimal
-
-from django.db.models import Sum
-from django.db.models.query import QuerySet
 from django.db import transaction
-
 
 from ..repository.kra import KRARepository, AppraisalDepartmentOutputRepository, AppraisalOutPutPerformanceDimensionScoreRepository, YearQuarterRepository
 from ..repository.departmental_workplan import OutPutPerformanceDimensionRepository, DepartmentalOutRepository
 from ..repository.appraisal import AppraisalRepository
 from it.users.models import Designations
-from ..models import KeyResultArea, Appraisal, AppraisalDepartmentOutput, AppraisalOutPutPerformanceDimensionScore, OutPutPerformanceDimension
-from ..helpers.types.kra import KRAType, TargetScoreType, ActivityType, WeightProgressType, PerformanceDimensionType
-from ..helpers.getters import RatingCalculation
-
+from ..models import KeyResultArea, AppraisalOutPutPerformanceDimensionScore
+from ..helpers.types.kra import KRAType
+from loguru import logger
 class KRAErr(Exception):
     ...
 
@@ -90,9 +84,14 @@ class AppraisalDependanciesInitialisationService:
                 
                 if designation_obj:
                     year_quarter_qr = self.year_quarter_repo.fetch_by_year(year=year)
-                    department_output_qr = self.department_output_repo.fetch_by_designation_id(designation_id=designation_obj.id)
+                    year_quarter_objects = year_quarter_qr.count()
+                    if year_quarter_objects != 4:
+                        logger.warning(f"[AppraisalDependanciesInitialisationService] create_all_dependencies, with pk: {appraisal_id}, has {year_quarter_objects} - not 4 required.")
+                        return False
                     
+                    department_output_qr = self.department_output_repo.fetch_by_designation_id(designation_id=designation_obj.id)
                     for department_output_obj in department_output_qr:
+                        
                         for year_quarter_obj in year_quarter_qr:
                             
                             # ============= create AppraisalDepartmentOutput object
@@ -104,8 +103,9 @@ class AppraisalDependanciesInitialisationService:
                                 self.create_output_perf_dimension(
                                     appraisal_department_output_obj=appraisal_department_output_obj,
                                     department_output_id=department_output_obj.id
-                                    )
+                                )
+                else:
+                    logger.warning(f"[AppraisalDependanciesInitialisationService] create_all_dependencies, with pk: {appraisal_id}, has no designation")
             return True
-
         except Exception as e:
             raise KRAErr(f"[AppraisalDependanciesInitialisationService] create service, failed with error: {e}")

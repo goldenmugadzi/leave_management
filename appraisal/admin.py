@@ -3,7 +3,8 @@ from .models import (Appraisal, Experience, AppraisalExperience,
     PerformanceProgressWeakness, PerformanceProgressReview,
     PerformanceProgressStrength, Competency, JobCompetency, InterventionStrategy, TrainingAndDevelopment,
     KeyResultArea, YearQuarter, AppraisalWorkflow, ScoreDocument,
-    KeyResultAreaOutCome, DepartmentObjective, DepartmentOutput, OutPutPerformanceDimension
+    KeyResultAreaOutCome, DepartmentObjective, DepartmentOutput, OutPutPerformanceDimension,
+    AppraisalDepartmentOutput, AppraisalOutPutPerformanceDimensionScore
 )
 
 # Register your models here.
@@ -30,4 +31,7 @@ admin.site.register(KeyResultAreaOutCome)
 admin.site.register(DepartmentObjective)
 admin.site.register(DepartmentOutput)
 admin.site.register(OutPutPerformanceDimension)
+
+admin.site.register(AppraisalDepartmentOutput)
+admin.site.register(AppraisalOutPutPerformanceDimensionScore)
 

@@ -144,9 +144,10 @@ class OutPutPerformanceDimensionRepository:
             
             for perf_dimension_type in PERFORMANCE_INDICATOR:
                 perf_dimension_obj = OutPutPerformanceDimension(
+                        created_by=department_output_obj.created_by,
                         department_output=department_output_obj,
                         description="",
-                        performance_indicator=perf_dimension_type[0][0],
+                        performance_indicator=perf_dimension_type[0][1],
                         allowable_variance=0.0,
                         agreed_target=0.0,
                         weight=0.0
