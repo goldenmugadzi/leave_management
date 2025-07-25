@@ -33,6 +33,8 @@ class AppraisalConfig(AppConfig):
     def ready(self) -> None:
         post_migrate.connect(load_strength_weakness_handler, sender=self)
         from .signals.kra import create_kra_roles_handler
+        from .signals.appraisal import set_appraisal_dependencies
+        from .signals.departmental_output import create_output_performance_dimensions
         post_migrate.connect(create_kra_roles_handler, sender=self)        
 
         from .tasks import run_back_ground_tasks
