@@ -4,10 +4,14 @@ from decimal import Decimal
 
 from django.db.models import Sum
 from django.db.models.query import QuerySet
+from django.db import transaction
 
-from ..repository.kra import KRARepository
+
+from ..repository.kra import KRARepository, AppraisalDepartmentOutputRepository, AppraisalOutPutPerformanceDimensionScoreRepository, YearQuarterRepository
+from ..repository.departmental_workplan import OutPutPerformanceDimensionRepository, DepartmentalOutRepository
+from ..repository.appraisal import AppraisalRepository
 from it.users.models import Designations
-from ..models import YearQuarter, KeyResultArea, Appraisal
+from ..models import KeyResultArea, Appraisal, AppraisalDepartmentOutput, AppraisalOutPutPerformanceDimensionScore, OutPutPerformanceDimension
 from ..helpers.types.kra import KRAType, TargetScoreType, ActivityType, WeightProgressType, PerformanceDimensionType
 from ..helpers.getters import RatingCalculation
 
@@ -49,3 +53,59 @@ class KRAService:
         except Exception as e:
             raise KRAErr(f"Retriev kra by id failed with error: {e}")
 
+
+@dataclass
+class AppraisalDependanciesInitialisationService:
+    appraisal_department_output_repo: AppraisalDepartmentOutputRepository
+    appraisal_output_perf_dimension_repo: AppraisalOutPutPerformanceDimensionScoreRepository
+    appraisal_repo: AppraisalRepository
+    year_quarter_repo: YearQuarterRepository
+    performance_dimension_repo: OutPutPerformanceDimensionRepository
+    department_output_repo: DepartmentalOutRepository
+    
+    def create_appraisal_department_output(self, appraisal_object, department_output_obj, year_quarter):
+        if department_output_obj is None or appraisal_object is None or year_quarter is None:
+            return None
+        
+        return self.appraisal_department_output_repo.create(appraisal_object, department_output_obj=department_output_obj, year_quarter_obj=year_quarter)
+
+    def create_output_perf_dimension(self, appraisal_department_output_obj: AppraisalOutPutPerformanceDimensionScore, department_output_id: int):
+        output_perf_dimension_qr = self.performance_dimension_repo.fetch_by_department_output_id(department_output_id=department_output_id)
+        appraisal_output_perf_dimension_objs_list = []
+        
+        for output_perf_dimension_obj in output_perf_dimension_qr:
+            appraisal_output_perf_dimension_obj = AppraisalOutPutPerformanceDimensionScore(
+                appraisal_department_output=appraisal_department_output_obj,
+                performance_dimension=output_perf_dimension_obj
+            )
+            appraisal_output_perf_dimension_objs_list.append(appraisal_output_perf_dimension_obj)
+            
+        return self.appraisal_output_perf_dimension_repo.bulk_create(appraisal_output_perf_dimension_objs_list=appraisal_output_perf_dimension_objs_list)
+    
+    def create_all_dependencies(self, appraisal_id: int, year: int)->bool|None:
+        try:
+            with transaction.atomic():
+                appraisal_obj = self.appraisal_repo.get_appraisal_by_pk(appraisal_id=appraisal_id)
+                designation_obj = appraisal_obj.user.designation
+                
+                if designation_obj:
+                    year_quarter_qr = self.year_quarter_repo.fetch_by_year(year=year)
+                    department_output_qr = self.department_output_repo.fetch_by_designation_id(designation_id=designation_obj.id)
+                    
+                    for department_output_obj in department_output_qr:
+                        for year_quarter_obj in year_quarter_qr:
+                            
+                            # ============= create AppraisalDepartmentOutput object
+                            appraisal_department_output_obj = self.create_appraisal_department_output(appraisal_object=appraisal_obj, department_output_obj=department_output_obj, year_quarter=year_quarter_obj)
+                            
+                            if appraisal_department_output_obj is not None:
+                                
+                                # ========== create AppraisalOutPutPerformanceDimensionScore objects ==========
+                                self.create_output_perf_dimension(
+                                    appraisal_department_output_obj=appraisal_department_output_obj,
+                                    department_output_id=department_output_obj.id
+                                    )
+            return True
+
+        except Exception as e:
+            raise KRAErr(f"[AppraisalDependanciesInitialisationService] create service, failed with error: {e}")

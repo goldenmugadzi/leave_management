@@ -46,6 +46,14 @@ class DepartmentalObjectiveRepository:
         except Exception as e:
             raise Exception(f"DepartmentalObjectiveRepository fetch_by_cost_center_year with cost_center pk: {cost_center_id}, failed with error: {e}")
     
+        
+    def fetch_by_designation_year(self, designation_id: int, year: int)->QuerySet[DepartmentObjective]:
+        try:
+            qr = DepartmentObjective.objects.filter(designation__id=designation_id, created_date__year=year)
+            return qr
+        except Exception as e:
+            raise Exception(f"DepartmentalObjectiveRepository fetch_by_designation_year with designation pk: {designation_id}, failed with error: {e}")
+    
     def get_by_id(self, dept_objective_id: int)->DepartmentObjective|None:
         try:
             qr = DepartmentObjective.objects.filter(id=dept_objective_id)
@@ -112,6 +120,13 @@ class DepartmentalOutRepository:
 
         except Exception as e:
             raise Exception(f"DepartmentalOutRepository fetch_by_department_objective_id with department objective pk: {department_objective_id}, failed with error: {e}")
+    
+    def fetch_by_designation_id(self, designation_id: int)->QuerySet[DepartmentOutput]:
+        try:
+            return DepartmentOutput.objects.filter(designation__id=designation_id).select_related("department_objective", "designation")
+
+        except Exception as e:
+            raise Exception(f"DepartmentalOutRepository fetch_by_fetch_by_designation_id with designation pk: {designation_id}, failed with error: {e}")
 
     def get_by_id(self, dept_output_id: int)->DepartmentOutput|None:
         try:

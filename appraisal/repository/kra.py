@@ -153,6 +153,14 @@ class KRAOutComeRepository:
         except Exception as e:
             raise Exception(f"KRAOutComeRepository with object pk: {kra_outcome_object.id} update Repo failed with error: {e}")
 
+
+class YearQuarterRepository:
+    def fetch_by_year(self, year: int)->QuerySet[YearQuarter]:
+        try:
+            return YearQuarter.objects.filter(year=year)
+        except Exception as e:
+            raise Exception(f"[YearQuarterRepository] fetch_by_year Repo with year: {year}, failed with error: {e}")
+
 class AppraisalDepartmentOutputRepository:
     def create(self, appraisal_object: Appraisal, department_output_obj: DepartmentOutput, year_quarter_obj: YearQuarter)->AppraisalDepartmentOutput:
         try:
@@ -191,6 +199,13 @@ class AppraisalOutPutPerformanceDimensionScoreRepository:
             return AppraisalOutPutPerformanceDimensionScore.objects.create(appraisal_department_output=appraisal_department_output_obj, performance_dimension=perf_dimension_obj)
         except Exception as e:
             raise Exception(f"[AppraisalOutPutPerformanceDimensionScoreRepository] Create Repo failed with error: {e}")
+    
+    def bulk_create(self, appraisal_output_perf_dimension_objs_list: List[AppraisalOutPutPerformanceDimensionScore])->bool:
+        try:
+            AppraisalOutPutPerformanceDimensionScore.objects.bulk_create(appraisal_output_perf_dimension_objs_list)
+            return True
+        except Exception as e:
+            raise Exception(f"[AppraisalOutPutPerformanceDimensionScoreRepository] bulk_create Repo failed with error: {e}")
 
     def update(self, appraisal_perf_dimension: AppraisalOutPutPerformanceDimensionScore, score: float, comments: str, is_scored: bool, appraiser_confirmation: str)->AppraisalOutPutPerformanceDimensionScore:
         try:
