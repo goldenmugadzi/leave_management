@@ -40,7 +40,7 @@
               </div>
               <div class="relative inline-block text-left mt-7">
                 <div>
-                  <button type="button" class="inline-flex justify-between w-48 rounded-2xl border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2" id="menu-button" aria-expanded="true" aria-haspopup="true">
+                  <button type="button" class="inline-flex justify-between w-48 rounded-2xl border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2" id="conf-menu-button" aria-expanded="true" aria-haspopup="true">
                     Select Configuration
                     <svg class="-mr-1 ml-2 h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
@@ -49,7 +49,7 @@
                 </div>
                 
                 <!-- Dropdown menu -->
-                <div class="absolute z-10 mt-2 w-72 right-0 origin-top-right rounded-2xl bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none hidden" role="menu" aria-orientation="vertical" aria-labelledby="menu-button" id="dropdown-menu">
+                <div class="absolute z-10 mt-2 w-72 right-0 origin-top-right rounded-2xl bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none hidden" role="menu" aria-orientation="vertical" aria-labelledby="conf-menu-button" id="dropdown-conf-menu">
                   <div class="py-1" role="none">
                     <a href="{% url 'qualification_experience_index' request.user.id %}" class="text-gray-700 block px-4 py-2 text-md hover:bg-indigo-100 hover:text-indigo-700 rounded-md" role="menuitem">My Qualifications and Experience</a>
                     <a href="{% url 'create_appraisal' %}" class="text-gray-700 block px-4 py-2 text-md hover:bg-indigo-100 hover:text-indigo-700 rounded-md" role="menuitem">Create New Appraisal</a>
@@ -94,7 +94,7 @@
                   <td>
                     <div class="relative inline-block text-left">
                       <div>
-                        <button type="button" class="inline-flex justify-between w-48 rounded-2xl border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2" id="menu-button" aria-expanded="true" aria-haspopup="true">
+                        <button type="button" class="inline-flex justify-between w-48 rounded-2xl border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2" id="section-menu-button" aria-expanded="true" aria-haspopup="true">
                           Select Section
                           <svg class="-mr-1 ml-2 h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
@@ -103,10 +103,10 @@
                       </div>
                       
                       <!-- Dropdown menu -->
-                      <div class="absolute z-10 mt-2 w-72 origin-top-right rounded-2xl bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none hidden" role="menu" aria-orientation="vertical" aria-labelledby="menu-button" id="dropdown-menu">
+                      <div class="absolute z-10 mt-2 w-72 origin-top-right rounded-2xl bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none hidden" role="menu" aria-orientation="vertical" aria-labelledby="section-menu-button" id="dropdown-section-menu">
                         <div class="py-1" role="none">
                           <a href="{% url 'update_appraisal' appraisal.id %}" class="text-gray-700 block px-4 py-2 text-sm hover:bg-indigo-100 hover:text-indigo-700 rounded-md" role="menuitem">Section 1 - Personal Details</a>
-                          <a href="{% url 'appraisal_kra_index' appraisal.id %}" class="text-gray-700 block px-4 py-2 text-sm hover:bg-indigo-100 hover:text-indigo-700 rounded-md" role="menuitem">Section 2 - Performance Plan and Assessment</a>
+                          <a href="#" class="text-gray-700 block px-4 py-2 text-sm hover:bg-indigo-100 hover:text-indigo-700 rounded-md" role="menuitem">Section 2 - Performance Plan and Assessment</a>
                           <a href="{% url 'training_development_index' appraisal.id %}" class="text-gray-700 block px-4 py-2 text-sm hover:bg-indigo-100 hover:text-indigo-700 rounded-md" role="menuitem">Section 3 - Training and Development Needs</a>
                           <a href="{% url 'performance_review_detail' appraisal.id %}" class="text-gray-700 block px-4 py-2 text-sm hover:bg-indigo-100 hover:text-indigo-700 rounded-md" role="menuitem">Section 4 - Performance Progress Reviews</a>
                           <a href="#" class="text-gray-700 block px-4 py-2 text-sm hover:bg-indigo-100 hover:text-indigo-700 rounded-md" role="menuitem">Section 5 - Final Performance Assessment and Rating</a>
@@ -138,11 +138,20 @@
     });
   });
 
-  const button = document.getElementById('menu-button');
-  const menu = document.getElementById('dropdown-menu');
+  // ==================== Configuration Menu =================================
+  const confButton = document.getElementById('conf-menu-button');
+  const confMenu = document.getElementById('dropdown-conf-menu');
 
-  button.addEventListener('click', () => {
-    menu.classList.toggle('hidden');
+  confButton.addEventListener('click', () => {
+    confMenu.classList.toggle('hidden');
+  });
+
+  // ==================== Section Menu =======================================
+  const sectionButton = document.getElementById('section-menu-button');
+  const sectionMenu = document.getElementById('dropdown-section-menu');
+
+  sectionButton.addEventListener('click', () => {
+    sectionMenu.classList.toggle('hidden');
   });
   </script>
 {% endblock %}

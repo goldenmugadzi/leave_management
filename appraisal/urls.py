@@ -36,9 +36,12 @@ from .view import (
 )
 
 urlpatterns = [
+    # ============== Appraisal ================
     path('', AppraisalTemplateView.as_view(), name='appraisal_index'),
     path('create/', AppraisalCreateView.as_view(), name='create_appraisal'),
-    path('update/<int:pk>', AppraisalUpdateView.as_view(), name='update_appraisal'),
+    path('update/<int:appraisal_id>', AppraisalUpdateView.as_view(), name='update_appraisal'),
+    
+    # ============= errors urls ==============================
     path('server-error/', internal_server_error_view, name='server_error_view'),
     path('<slug:object_name>/not-found-error', object_not_found_error_view, name='object_not_found_error'),
     

@@ -90,6 +90,7 @@ class AppraisalDependanciesInitialisationService:
                         return False
                     
                     department_output_qr = self.department_output_repo.fetch_by_designation_id(designation_id=designation_obj.id)
+                    
                     for department_output_obj in department_output_qr:
                         
                         for year_quarter_obj in year_quarter_qr:

@@ -68,7 +68,7 @@ class AppraisalForm(forms.ModelForm):
         fields = ["appraiser", "reviewer"]
         
     def __init__(self, *args, **kwargs):
-        appraisee_id = kwargs.pop("appraisee_id") or None
+        appraisee_id = kwargs.pop("appraisee_id", None)
         super().__init__(*args, **kwargs)
         
         if appraisee_id is not None:
@@ -80,46 +80,29 @@ class AppraisalForm(forms.ModelForm):
         self.fields['reviewer'].disabled = True
         
 class AppraisalUpdateForm(forms.ModelForm):
-    appraiser = forms.ModelChoiceField(
-        queryset=UserProfile.objects.filter(roles__role=KraRolesType.appraiser.value),
-        widget=forms.Select(attrs={
-            'id': 'id_appraiser',  # Add an ID for targeting with JavaScript
-        }),
-        required=True
-    )
-    reviewer = forms.ModelChoiceField(
-        queryset=UserProfile.objects.filter(roles__role=KraRolesType.reviewer.value),
-        widget=forms.Select(attrs={
-            'id': 'id_reviewer',  # Add an ID for targeting with JavaScript
-        }),
-        required=False
-    )
-    
+        
     class Meta:
         model = Appraisal
         fields = ["appraiser", "reviewer"]
         
     def __init__(self, *args, **kwargs):
-        role = kwargs.pop("role", None)
+        appraisee_id = kwargs.pop("appraisee_id", None)
+        appraiser_id = kwargs.pop("appraiser_id", None)
+        appraisal_appraisee_id = kwargs.pop("appraisal_appraisee_id", None)
         super().__init__(*args, **kwargs)
-        match role:
-            case KraRolesType.appraisee.value:
-                self.fields['reviewer'].disabled = True
-            case KraRolesType.appraiser.value:
-                self.fields['appraiser'].disabled = True
-            case None:
-                self.fields['appraiser'].disabled = True
-                self.fields['reviewer'].disabled = True
-                
-    def clean(self):
-        cleaned_data = super().clean()
-        role = self.initial.get("role")
         
-        # Ensure reviewer is set before marking as accepted
-        if role == KraRolesType.appraiser.value and not cleaned_data.get("reviewer"):
-            raise forms.ValidationError("A reviewer must be assigned before accepting the appraisal.")
-        
-        return cleaned_data
+        if appraisee_id:
+            qr_exclude_appraisee = UserProfile.objects.exclude(id=appraisee_id)
+            self.fields["appraiser"].queryset = qr_exclude_appraisee
+            self.fields['reviewer'].disabled = True
+            self.fields["reviewer"].required = False
+        elif appraiser_id:
+            qr_exclude_appraiser = UserProfile.objects.exclude(id=appraiser_id).exclude(id=appraisal_appraisee_id)
+            self.fields["reviewer"].queryset = qr_exclude_appraiser
+            self.fields['appraiser'].disabled = True
+        else:
+            self.fields['appraiser'].disabled = True
+            self.fields['reviewer'].disabled = True
         
 
 class ExperienceForm(forms.ModelForm):

@@ -33,7 +33,7 @@ class AppraisalRepository:
 
     def get_appraisal_by_pk(self, appraisal_id: int)->Appraisal:
         try:
-            qr = Appraisal.objects.filter(id=appraisal_id)
+            qr = Appraisal.objects.filter(id=appraisal_id).select_related("user", "appraiser", "reviewer")
             
             if not qr.exists():
                 return None
@@ -45,7 +45,7 @@ class AppraisalRepository:
     def get_all_appraisal_objects(self)->list:
         return Appraisal.objects.all()
 
-    def update(self, appraisal_object: Appraisal, appraiser_object: UserProfile, reviewer_obj: UserProfile, is_accepted_by_appraiser_reviewer: bool)->Appraisal:
+    def update(self, appraisal_object: Appraisal, appraiser_object: UserProfile, reviewer_obj: UserProfile, is_accepted_by_appraiser_reviewer: bool=False)->Appraisal:
         try:
             is_changed = False
             
@@ -54,11 +54,11 @@ class AppraisalRepository:
                 is_changed = True
             
             if appraisal_object.reviewer != reviewer_obj:
-                appraisal_object.reviewer != reviewer_obj
+                appraisal_object.reviewer = reviewer_obj
                 is_changed = True
                 
             if appraisal_object.is_accepted != is_accepted_by_appraiser_reviewer:
-                appraisal_object.is_accepted != is_accepted_by_appraiser_reviewer
+                appraisal_object.is_accepted = is_accepted_by_appraiser_reviewer
                 is_changed = True
                 
             if is_changed:

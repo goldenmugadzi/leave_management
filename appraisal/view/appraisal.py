@@ -38,7 +38,7 @@ class AppraisalCreateView(SuccessMessageMixin, CreateView):
     model = Appraisal
     form_class = AppraisalForm
     success_message = "Appraisal created successfully! Your appraiser will review it shortly and either accept or reject it."
-    template_name = 'appraisal/create.html'
+    template_name = 'appraisal/create_update.html'
     context_object_name = "appraisal_form"
     
     def get_user_object(self):
@@ -94,7 +94,7 @@ class AppraisalCreateView(SuccessMessageMixin, CreateView):
         
         appraiser_object = form.cleaned_data.get("appraiser")
         repo = AppraisalRepository()
-        appraisal_object = repo.create(appraisee_object=appraiser_object, appraiser_object=appraiser_object)
+        appraisal_object = repo.create(appraisee_object=appraisee_object, appraiser_object=appraiser_object)
         form.instance = appraisal_object
         
         return super().form_valid(form)
@@ -129,73 +129,119 @@ class AppraisalUpdateView(SuccessMessageMixin, UpdateView):
     model = Appraisal
     form_class = AppraisalUpdateForm
     success_message = "Appraisal reviewer was set successfully"
-    template_name = "appraisal/update.html"
+    template_name = "appraisal/create_update.html"
+    
+    def get_object(self):
+        repo = AppraisalRepository()
+        return repo.get_appraisal_by_pk(appraisal_id=self.kwargs.get('appraisal_id'))
+    
+    def is_appraisee_requesting(self):
+        appraisee_object = self.get_object().user
+        is_appraisee = appraisee_object == self.request.user
+        if is_appraisee:
+            return appraisee_object.id
+        return None
+    
+    def is_appraiser_requesting(self):
+        appraiser_object = self.get_object().appraiser
+        is_appraiser = appraiser_object == self.request.user
+        if is_appraiser:
+            return appraiser_object.id
+        return None
     
     def get_form_kwargs(self):
         kwargs = super().get_form_kwargs()
-        appraisal_object = self.get_object()
-        loggedin_user_object = self.request.user
-        
-        match loggedin_user_object:
-            case appraisal_object.user:
-                kwargs["role"] = KraRolesType.appraisee.value
-            case appraisal_object.appraiser:
-                kwargs["role"] = KraRolesType.appraiser.value
-        
+        appraisee_id = self.is_appraisee_requesting()
+        appraiser_id = self.is_appraiser_requesting()
+        if appraisee_id:
+            kwargs["appraisee_id"] = appraisee_id
+        if appraiser_id:
+            kwargs["appraiser_id"] = appraiser_id
+            kwargs["appraisal_appraisee_id"] = self.get_object().user.id
         return kwargs
+    
+    def get_current_date_assessment(self):
+        appraisal_created_date = self.get_object().created_date
+        return get_assessment_period(date_object=appraisal_created_date)
+    
+    def get_user_experiences(self, user_id: int):
+        repo = UserExperienceRepository()
+        return repo.fetch_by_user_id(user_id=user_id)
         
-    
-    def approval_user_roles(self)->Dict[str, bool]:
-        is_appraisee = self.request.user == self.get_object().user
-        is_appraiser = self.request.user == self.get_object().appraiser
-        data = {
-            "is_appraisee": is_appraisee,
-            "is_appraiser": is_appraiser
-        }
-        return data
-    
-    def form_valid(self, form):
-        role = self.get_form_kwargs().pop("role", None)
-        if role == KraRolesType.appraiser.value and not self.get_object().is_accepted:
-            form.instance.is_accepted = True
-        return super().form_valid(form)
-    
-    def get_approval_stages(self):
-        try:
-            handler = ApprovalStagesHandler(appraisal_id=self.get_object().id)
-            return handler.get_stages_info()
-        except Exception as e:
-            logger.error(f"[PerformancePlanAndAssessmentTemplateView] for Appraisal pk - {self.get_object().id} failed with error: {e}")
-            return None
+    def get_user_qualification(self, user_id: int):
+        repo = UserQualificationRepository()
+        return repo.fetch_by_user(user_id=user_id)
         
-    def get_appraisee_user_object(self):
-        return self.get_object().user
-    
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        experience_repo = AppraisalExperienceRepository()
-        experience_service_handler = AppraisalExperienceService(appraisal_repo=experience_repo)
-        qualifications = UserQualification.objects.filter(user=self.get_object().user)
-        context["experience_objects"] = experience_service_handler.get_by_appraisal_id_use_case(appraisal_id=self.get_object().id)
-        context["qualification_objects"] = qualifications
-        context["appraisal_object"] = self.get_object()
-        context["appraisee_object"] = self.get_appraisee_user_object()
+
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
+        context =  super().get_context_data(**kwargs)
+        appraisee_object = self.get_object().user
+        context[self.context_object_name] = context.get("form")
         
-        context.update(self.get_approval_stages())
-        context.update(self.approval_user_roles())
+        context["user_object"] = appraisee_object
+        context["has_no_designation"] = appraisee_object.designation == None or appraisee_object.designation == ""
+        context["assessment_period"] = self.get_current_date_assessment()
+        
+        context["user_experiences_qr"] = self.get_user_experiences(user_id=appraisee_object.id)
+        context["user_qualification_qr"] = self.get_user_qualification(user_id=appraisee_object.id)
+
+        context["is_update"] = True
         return context
     
+    def form_valid(self, form: BaseModelForm) -> HttpResponse:
+        appraisal_object = self.get_object()
+        appraisee_object = appraisal_object.user
+        
+        if not appraisee_object.grade:
+            messages.error(self.request, "Oops! Your profile has no grade set. Kindly contact admin.")
+            return self.form_invalid(form)
+
+        if not appraisee_object.designation:
+            messages.error(self.request, "Oops! Your profile has no designation set. Kindly contact admin.")
+            return self.form_invalid(form)
+        
+        if not appraisee_object.cost_center:
+            messages.error(self.request, "Oops! Your profile has no cost center set. Kindly contact admin.")
+            return self.form_invalid(form)
+        
+        appraiser_object = form.cleaned_data.get("appraiser")
+        reviewer_object = form.cleaned_data.get("reviewer")
+        
+        repo = AppraisalRepository()
+        appraisal_object = repo.update(
+            appraisal_object=appraisal_object,
+            appraiser_object=appraiser_object,
+            reviewer_obj=reviewer_object
+        )
+        form.instance = appraisal_object
+        
+        return super().form_valid(form)
+
     def get(self, request, *args, **kwargs):
-        self.object = self.get_object()
-        approval_data = self.get_approval_stages()
-        if approval_data is None:
+        try:
+            appraisal_object = self.get_object()
+            self.object = appraisal_object
+            if appraisal_object is None:
+                logger.warning(f"[AppraisalUpdateView] get_object() with appraisal pk: {appraisal_object.id}, not found error")
+                return redirect("object_not_found_error", object_name=slugify("Appraisal"))
+
+            if appraisal_object.user.designation == None or appraisal_object.user.designation == "":
+                messages.error(
+                        request,
+                        "<strong>Appraisee's designation or position</strong> was not found. Please contact IT to set designation."
+                    )
+            messages.info(
+                request,
+                "<strong>Take Note:</strong> Please ensure appraisee's profile is complete — including designation, department, qualifications, and experience — before making updates."
+            )
+        except Exception as e:
+            logger.error(f"[AppraisalUpdateView]  get_object() with appraisal pk: {appraisal_object.id}, failed with error: {e}")
             return redirect("server_error_view")
-        context = self.get_context_data(**kwargs)
-        return self.render_to_response(context)
-    
-    def get_success_url(self):
-        return reverse("update_appraisal", kwargs={"pk": self.kwargs.get("pk")})
-    
+        return super().get(request, *args, **kwargs)
+
+    def get_success_url(self) -> str:
+        return reverse('update_appraisal', kwargs={"appraisal_id": self.kwargs.get('appraisal_id')})
+
 
 class AppraisalTemplateView(TemplateView):
     template_name = 'appraisal/index.html'
@@ -231,14 +277,6 @@ class AppraisalTemplateView(TemplateView):
                 return {"appraisals": appraisal_service_handler.get_appraisal_by_reviewer_use_case(reviewer_id=self.request.user.id)}
             case RoleFilterChoices.ALL_APPRAISALS.value:
                 return {"appraisals": appraisal_service_handler.get_all_use_case()}
-    
-    def get_approval_stages(self):
-        try:
-            handler = ApprovalStagesHandler(appraisal_id=self.get_object().appraisal.id)
-            return handler.get_stages_info()
-        except Exception as e:
-            logger.error(f"[AppraisalKraUpdateView] for Appraisal - {self.get_object().appraisal} failed with error: {e}")
-            return None
     
     def get_context_data(self, **kwargs: Any) -> Dict[str, Any]:
         context =  super().get_context_data(**kwargs)
