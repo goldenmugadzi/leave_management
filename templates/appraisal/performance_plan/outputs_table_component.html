@@ -1,0 +1,67 @@
+
+
+<div style="max-height: 280px; overflow-y: auto;">
+    <table 
+        class="w-full border border-blue-800 rounded-lg shadow-lg"
+    >
+        <thead class="bg-blue-800 text-white">
+            <tr>
+                <th class="px-6 py-3 text-left text-md font-semibold">Department Objective</th>
+                <th class="px-6 py-3 text-left text-md font-semibold">Department Output</th>
+                <th class="px-6 py-3 text-left text-md font-semibold">Weight</th>
+                <th class="px-6 py-3 text-left text-md font-semibold">Weighted Score</th>
+                <th class="px-6 py-3 text-left text-md font-semibold">Total</th>
+                <th></th>
+            </tr>
+        </thead>
+
+        <tbody class="divide-y divide-blue-300 bg-blue-50">
+            {% for quarter_data in quarter_data_list %}
+                <tr class="border-b border-black">
+                    <td rowspan="{{ quarter_data.num_department_outputs }}" class="border-r border-gray-300 bg-apple-200 p-4 font-bold font-black">{{ quarter_data.department_objective }}</td>  
+
+                    {% for appraisal_dept_output_obj in quarter_data.department_outputs_qr %}
+                        <tr class="hover:bg-blue-100">
+                            <td class="px-6 py-4 text-md text-blue-900 truncate max-w-xs">{{appraisal_dept_output_obj.department_output.output_description}}</td>
+                            <td class="px-6 py-4 text-md text-blue-900">{{appraisal_dept_output_obj.department_output.weight}}</td>
+                            <td class="px-6 py-4 text-md text-blue-900">0.0</td>
+                            <td></td>
+                            <td>
+                                <div class="flex gap-2 justify-center">
+                                    <a 
+                                    href="#" 
+                                    class="rounded-2xl bg-blue-500 block px-4 py-2 text-sm text-white hover:bg-blue-700" 
+                                    >
+                                        {% if is_grade_c_and_above %}  
+                                            OUTPUT PERFORMANCE
+                                        {% else %}
+                                            ACTIVITY PERFORMANCE
+                                        {% endif %}
+                                    </a>
+
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+
+                    <tr>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td class="px-6 py-4 text-md text-blue-900 font-bold text-2xl">0.0</td>
+                        <td></td>
+                    </tr>
+                </tr>
+            {% endfor %}
+            <tr>
+                <td class="px-6 py-4 text-md text-blue-900 font-bold text-2xl">Total</td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td class="px-6 py-4 text-md text-blue-900 font-bold text-2xl underline">0.0</td>
+                <td></td>
+            </tr>
+        </tbody>
+    </table>
+
+</div>

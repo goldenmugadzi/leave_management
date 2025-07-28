@@ -1,0 +1,120 @@
+{% extends "admin_layout.html" %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+{% include 'appraisal/sections_header.html' with section_header="Section 2 - Performance Plan and Assessment" %}
+
+    <div class="content-wrapper">
+        <div class="grid grid-cols-1">
+            <div class="bg-gray-50 shadow-lg rounded-lg p-6">
+                <div class="flex justify-between">
+                    <div>
+                        <h1 class="font-bold text-2xl text-gray-900">Departmental Outputs</h1>
+                        <p class="text-md text-gray-500">This section outlines the outputs for <strong>{{appraisee_object.designation}}</strong> within the <strong>{{appraisee_object.cost_center}}</strong> department</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white shadow-lg rounded-lg border-2 border-indigo-400 my-4 p-4">
+                <!-- Tab Navigation -->
+                <div class="bg-gray-100 rounded-lg p-1">
+                    <ul class="flex flex-wrap gap-4 -mb-px text-md font-medium text-center">
+                        <li class="mr-1 border-2 rounded-lg border-2 border-gray-400">
+                            <button class="tab-button inline-block px-4 py-2 border-2 border-transparent rounded-md text-gray-600 bg-transparent hover:bg-gray-200 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 active shadow-sm" data-tab="first-quarter" aria-selected="true">First Quarter</button>
+                        </li>
+                        <li class="mr-1 border-2 rounded-lg border-2 border-gray-400">
+                            <button class="tab-button inline-block px-4 py-2 border-2 border-transparent rounded-md text-gray-600 bg-transparent hover:bg-gray-200 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2" data-tab="second-quarter" aria-selected="false">Second Quarter</button>
+                        </li>
+                        <li class="mr-1 border-2 rounded-lg border-2 border-gray-400">
+                            <button class="tab-button inline-block px-4 py-2 border-2 border-transparent rounded-md text-gray-600 bg-transparent hover:bg-gray-200 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2" data-tab="third-quarter" aria-selected="false">Third Quarter</button>
+                        </li>
+                        <li class="mr-1 border-2 rounded-lg border-2 border-gray-400">
+                            <button class="tab-button inline-block px-4 py-2 border-2 border-transparent rounded-md text-gray-600 bg-transparent hover:bg-gray-200 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2" data-tab="fourth-quarter" aria-selected="false">Fourth Quarter</button>
+                        </li>
+                    </ul>
+                </div>
+    
+                <!-- Tab Content -->
+                <div class="tab-content mt-6">
+                    <!-- first-quarter Tab -->
+                    <div id="first-quarter" class="tab-pane active">
+                        <div class="bg-white shadow-xl rounded-lg border-2 border-indigo-400 p-6">
+                            <div class="flex justify-between">
+                                <h3 class="text-lg font-semibold text-gray-900 mb-4">First Quarter</h3>
+                            </div>
+                            {% include 'appraisal/performance_plan/outputs_table_component.html' with quarter_data_list=appraisal_dept_output_qr.first_quarter is_grade_c_and_above=is_grade_c_and_above  %}
+                            
+                        </div>
+                    </div>
+                    
+                    <!-- second-quarter Tab -->
+                    <div id="second-quarter" class="tab-pane hidden">
+                        <div class="bg-white shadow-xl rounded-lg border-2 border-indigo-400 p-6">
+                            <div class="flex justify-between">
+                                <h3 class="text-lg font-semibold text-gray-900 mb-4">Second Quarter</h3>
+                            </div>
+                            {% include 'appraisal/performance_plan/outputs_table_component.html' with quarter_data_list=appraisal_dept_output_qr.second_quarter is_grade_c_and_above=is_grade_c_and_above  %}
+                            
+                        </div>
+                    </div>
+
+                    <!-- third-quarter Tab -->
+                    <div id="third-quarter" class="tab-pane hidden">
+                        <div class="bg-white shadow-xl rounded-lg border-2 border-indigo-400 p-6">
+                            <div class="flex justify-between">
+                                <h3 class="text-lg font-semibold text-gray-900 mb-4">Third Quarter</h3>
+                            </div>
+                            {% include 'appraisal/performance_plan/outputs_table_component.html' with quarter_data_list=appraisal_dept_output_qr.third_quarter is_grade_c_and_above=is_grade_c_and_above  %}
+                            
+                        </div>
+                    </div>
+
+                    <!-- fourth-quarter Tab -->
+                    <div id="fourth-quarter" class="tab-pane hidden">
+                        <div class="bg-white shadow-xl rounded-lg border-2 border-indigo-400 p-6">
+                            <div class="flex justify-between">
+                                <h3 class="text-lg font-semibold text-gray-900 mb-4">Fourth Quarter</h3>
+                            </div>
+                            {% include 'appraisal/performance_plan/outputs_table_component.html' with quarter_data_list=appraisal_dept_output_qr.fourth_quarter is_grade_c_and_above=is_grade_c_and_above  %}
+                            
+                        </div>
+                    </div>
+    
+                    
+                </div>
+            </div>
+        </div>
+
+
+    </div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+        document.addEventListener('DOMContentLoaded', function () {
+        const tabButtons = document.querySelectorAll('.tab-button');
+        const tabPanes = document.querySelectorAll('.tab-pane');
+
+        tabButtons.forEach(button => {
+            button.addEventListener('click', function () {
+                // Remove active classes
+                tabButtons.forEach(btn => {
+                    btn.classList.remove('active', 'bg-white', 'text-indigo-600', 'border-indigo-500', 'shadow-sm');
+                    btn.classList.add('text-gray-600', 'bg-transparent', 'border-transparent', 'hover:bg-gray-200', 'hover:text-gray-900');
+                    btn.setAttribute('aria-selected', 'false');
+                });
+                tabPanes.forEach(pane => pane.classList.add('hidden'));
+
+                // Add active class to clicked button and show corresponding pane
+                this.classList.add('active', 'bg-white', 'text-indigo-600', 'border-indigo-500', 'shadow-sm');
+                this.classList.remove('text-gray-600', 'bg-transparent', 'border-transparent', 'hover:bg-gray-200', 'hover:text-gray-900');
+                this.setAttribute('aria-selected', 'true');
+                const targetPane = document.getElementById(this.dataset.tab);
+                targetPane.classList.remove('hidden');
+            });
+        });
+    });
+</script>
+{% endblock %}

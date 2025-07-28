@@ -191,6 +191,12 @@ class AppraisalDepartmentOutputRepository:
         except Exception as e:
             raise Exception(f"[AppraisalDepartmentOutputRepository] Create Repo failed with error: {e}")
 
+    def fetch_by_appraisal_id_and_year(self, appraisal_id: int, year: int)->QuerySet[AppraisalDepartmentOutput]:
+        try:
+            return AppraisalDepartmentOutput.objects.filter(appraisal__id=appraisal_id, year_quarter__year=year).select_related('appraisal', 'department_output', 'department_output__department_objective', 'year_quarter')
+        except Exception as e:
+            raise Exception(f"[AppraisalDepartmentOutputRepository] fetch_by_appraisal_id_and_year, appraisal id: {appraisal_id} and year: {year}, failed with error: {e}")
+
 
 
 class AppraisalOutPutPerformanceDimensionScoreRepository:

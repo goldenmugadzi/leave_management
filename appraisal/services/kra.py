@@ -1,14 +1,16 @@
 from typing import List
 from dataclasses import dataclass
 from django.db import transaction
+from django.db.models.query import QuerySet
 
 from ..repository.kra import KRARepository, AppraisalDepartmentOutputRepository, AppraisalOutPutPerformanceDimensionScoreRepository, YearQuarterRepository
 from ..repository.departmental_workplan import OutPutPerformanceDimensionRepository, DepartmentalOutRepository
 from ..repository.appraisal import AppraisalRepository
 from it.users.models import Designations
-from ..models import KeyResultArea, AppraisalOutPutPerformanceDimensionScore
+from ..models import KeyResultArea, AppraisalOutPutPerformanceDimensionScore, AppraisalDepartmentOutput
 from ..helpers.types.kra import KRAType
 from loguru import logger
+
 class KRAErr(Exception):
     ...
 
@@ -110,3 +112,58 @@ class AppraisalDependanciesInitialisationService:
             return True
         except Exception as e:
             raise KRAErr(f"[AppraisalDependanciesInitialisationService] create service, failed with error: {e}")
+
+@dataclass
+class AppraisalDepartmentOutputService:
+    appraisal_department_output_repo: AppraisalDepartmentOutputRepository
+        
+    def get_quarter_data(self, queryset: QuerySet[AppraisalDepartmentOutput]):
+        department_objectives_qr = []
+        
+        # Get queryset with only department objectives
+        for obj in queryset:
+            department_objective_obj = obj.department_output.department_objective
+            if not department_objective_obj in department_objectives_qr:
+                department_objectives_qr.append(department_objective_obj)
+
+        quarter_data = []
+        department_outputs_total_field_count = 2
+        
+        # Construct dict with department objectives with their related department outputs
+        for department_objectives_obj in department_objectives_qr:
+            appraisal_dept_output_filter_by_department_objectives_id = queryset.filter(department_output__department_objective__id=department_objectives_obj.id)
+            data = {
+                "department_objective": department_objectives_obj,
+                "department_outputs_qr": appraisal_dept_output_filter_by_department_objectives_id,
+                "num_department_outputs": len(appraisal_dept_output_filter_by_department_objectives_id) + department_outputs_total_field_count
+            }
+            quarter_data.append(data)
+            
+        return quarter_data
+    
+    def first_quarter_data(self, appraisal_dept_output_qr: QuerySet[AppraisalDepartmentOutput]):
+        qr = appraisal_dept_output_qr.filter(year_quarter__quarter=1)
+        return self.get_quarter_data(queryset=qr)
+        
+    def second_quarter_data(self, appraisal_dept_output_qr: QuerySet[AppraisalDepartmentOutput]):
+        qr = appraisal_dept_output_qr.filter(year_quarter__quarter=2)
+        return self.get_quarter_data(queryset=qr)
+        
+    def third_quarter_data(self, appraisal_dept_output_qr: QuerySet[AppraisalDepartmentOutput]):
+        qr = appraisal_dept_output_qr.filter(year_quarter__quarter=3)
+        return self.get_quarter_data(queryset=qr)
+        
+    def fourth_quarter_data(self, appraisal_dept_output_qr: QuerySet[AppraisalDepartmentOutput]):
+        qr = appraisal_dept_output_qr.filter(year_quarter__quarter=4)
+        return self.get_quarter_data(queryset=qr)
+        
+    def fetch_quarterly(self, appraisal_id, year):
+        appraisal_dept_output_qr = self.appraisal_department_output_repo.fetch_by_appraisal_id_and_year(appraisal_id=appraisal_id, year=year)
+        data = {
+            "first_quarter": self.first_quarter_data(appraisal_dept_output_qr=appraisal_dept_output_qr),
+            "second_quarter": self.second_quarter_data(appraisal_dept_output_qr=appraisal_dept_output_qr),
+            "third_quarter": self.third_quarter_data(appraisal_dept_output_qr=appraisal_dept_output_qr),
+            "fourth_quarter": self.fourth_quarter_data(appraisal_dept_output_qr=appraisal_dept_output_qr)
+        }
+        return data
+        

@@ -7,13 +7,9 @@
 {% endblock styles %}
 
 {% block content %}
-<div class="my-4">
-    <div>
-        <div class="border-xl bg-yellow-200 p-4 rounded-l">
-            <h2 class="text-center font-bold text-xl">Section 1: Personal Details</h2>
-        </div>
-    </div>
-</div>
+
+{% include 'appraisal/sections_header.html' with section_header="Section 1 - Personal Details" %}
+
 
 <div class="mx-auto my-8 max-w">
 
@@ -72,8 +68,8 @@
                     {% endif %}
                     
                     {% if is_update %}
-                        <span><strong>Supervisor:   </strong> {{user_object.grade}}</span>
-                        <span><strong>Reviewer: </strong> {{user_object.designation}}</span>
+                        <span><strong>Supervisor:   </strong> {{appraiser_object}}</span>
+                        <span><strong>Reviewer: </strong> {{reviewer_object}}</span>
                     {% endif %}
                     <span><strong>Station:  </strong> {{user_object.region}}</span>
                     <span><strong>Department:   </strong> {{user_object.cost_center}}</span>
@@ -121,9 +117,11 @@
                     {% include "./roles/set_appraisal_users.html" %}
                 </div>
 
-                <div class="flex justify-center mt-6">
-                    <button type="submit" class="w-96 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-6 rounded-full transition duration-200">Save</button>
-                </div>
+                {% if can_mutate %}
+                    <div class="flex justify-center mt-6">
+                        <button type="submit" class="w-96 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-6 rounded-full transition duration-200">Save</button>
+                    </div>
+                {% endif %}
             </form>
         </div>
     </div>

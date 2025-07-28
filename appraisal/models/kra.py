@@ -30,7 +30,7 @@ class AppraisalDepartmentOutput(TimeStamp):
     year_quarter = models.ForeignKey(YearQuarter, on_delete=models.RESTRICT, related_name="quarterly_year")
     
     def __str__(self):
-        return f"{self.appraisal} - {self.year_quarter}"
+        return f"{self.appraisal} - {self.year_quarter} - {self.department_output}"
     
 APPRAISAL_KRA_REVIEWER_STATUS_CHOICES = [
     ("PENDING", "PENDING"),

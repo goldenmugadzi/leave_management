@@ -73,7 +73,7 @@ class AppraisalCreateView(SuccessMessageMixin, CreateView):
         
         context["user_experiences_qr"] = self.get_user_experiences(user_id=user_object.id)
         context["user_qualification_qr"] = self.get_user_qualification(user_id=user_object.id)
-
+        context["can_mutate"] = True
         context["is_update"] = False
         return context
 
@@ -175,9 +175,12 @@ class AppraisalUpdateView(SuccessMessageMixin, UpdateView):
 
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context =  super().get_context_data(**kwargs)
-        appraisee_object = self.get_object().user
+        appraisal_object = self.get_object()
+        appraisee_object = appraisal_object.user
         context[self.context_object_name] = context.get("form")
         
+        context["appraiser_object"] = appraisal_object.appraiser
+        context["reviewer_object"] = appraisal_object.reviewer
         context["user_object"] = appraisee_object
         context["has_no_designation"] = appraisee_object.designation == None or appraisee_object.designation == ""
         context["assessment_period"] = self.get_current_date_assessment()
@@ -185,6 +188,12 @@ class AppraisalUpdateView(SuccessMessageMixin, UpdateView):
         context["user_experiences_qr"] = self.get_user_experiences(user_id=appraisee_object.id)
         context["user_qualification_qr"] = self.get_user_qualification(user_id=appraisee_object.id)
 
+        can_make_changes = False
+        
+        if self.is_appraisee_requesting() or self.is_appraiser_requesting():
+            can_make_changes = True
+        
+        context["can_mutate"] = can_make_changes
         context["is_update"] = True
         return context
     
