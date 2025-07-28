@@ -33,7 +33,8 @@ from .view import (
     KRACreateView,
     KRAOutComeTemplateView,
     KRAUpdateDetailView,
-    AppraisalDepartmentOutputTemplateView
+    AppraisalDepartmentOutputTemplateView,
+    AppraisalDepartmentPerformanceDimensionTemplateView
 )
 
 urlpatterns = [
@@ -91,6 +92,7 @@ urlpatterns = [
     
     # ========================= Performance Plan Assessment ====================
     path('appraisal-department-output/<int:appraisal_id>', AppraisalDepartmentOutputTemplateView.as_view(), name="appraisal_dept_output_index"),
+    path('appraisal-department-performance/<int:appraisal_department_output_id>/', AppraisalDepartmentPerformanceDimensionTemplateView.as_view(), name="appraisal_dept_perf_index"),
     
     
     # ----- api ------

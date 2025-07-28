@@ -11,10 +11,11 @@ from django.contrib.messages.views import SuccessMessageMixin
 from django.contrib import messages
 
 from ...repository.appraisal import AppraisalRepository
-from ...repository.kra import AppraisalDepartmentOutputRepository
+from ...repository.kra import AppraisalDepartmentOutputRepository, AppraisalOutPutPerformanceDimensionScoreRepository
 from ...services.kra import AppraisalDepartmentOutputService
 from it.users.models import GRADE_CHOICES
 from loguru import logger
+
 
 class AppraisalDepartmentOutputTemplateView(TemplateView):
     template_name = 'appraisal/performance_plan/appraisal_department_output.html'
@@ -48,5 +49,44 @@ class AppraisalDepartmentOutputTemplateView(TemplateView):
 
         except Exception as e:
             logger.error(f"[AppraisalDepartmentOutputTemplateView]  get_appraisal_object() with appraisal pk: {appraisal_id}, failed with error: {e}")
+            return redirect("server_error_view")
+        return super().get(request, *args, **kwargs)
+
+class AppraisalDepartmentPerformanceDimensionTemplateView(TemplateView):
+    template_name = 'appraisal/performance_plan/appraisal_department_perf_dimension.html'
+
+    def get_appraisal_department_output_obj(self):
+        repo = AppraisalDepartmentOutputRepository()
+        return repo.get_by_id(appraisal_department_output_id=self.kwargs.get('appraisal_department_output_id'))
+
+    def get_appraisee_object(self):
+        dept_appraisal_output_obj = self.get_appraisal_department_output_obj()
+        return dept_appraisal_output_obj.appraisal.user
+    
+    def get_all_perf_dimensions(self):
+        repo = AppraisalOutPutPerformanceDimensionScoreRepository()
+        return repo.fetch_by_department_output_id(appraisal_department_output_id=self.kwargs.get('appraisal_department_output_id'))
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        appraisee_object = self.get_appraisee_object()
+        context["appraisee_object"] = appraisee_object
+        context["department_output_obj"] = self.get_appraisal_department_output_obj().department_output
+        context["is_grade_c_and_above"] = appraisee_object.grade == GRADE_CHOICES[2][0]
+        context["performance_dimensions_qr"] = self.get_all_perf_dimensions()
+        return context
+    
+    
+    def get(self, request, *args, **kwargs):
+        try:
+            appraisal_department_output_id = self.kwargs.get('appraisal_department_output_id')
+            appraisal_department_output_obj = self.get_appraisal_department_output_obj()
+            if appraisal_department_output_obj is None:
+                logger.warning(f"[AppraisalDepartmentOutputTemplateView] get_appraisal_department_output_obj() with appraisal_department_output pk: {appraisal_department_output_id}, not found error")
+                return redirect("object_not_found_error", object_name=slugify("Department Output"))
+
+        except Exception as e:
+            logger.error(f"[AppraisalDepartmentOutputTemplateView]  get_appraisal_department_output_obj() with appraisal_department_output pk: {appraisal_department_output_id}, failed with error: {e}")
             return redirect("server_error_view")
         return super().get(request, *args, **kwargs)

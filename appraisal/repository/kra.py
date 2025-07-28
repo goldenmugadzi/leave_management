@@ -196,6 +196,16 @@ class AppraisalDepartmentOutputRepository:
             return AppraisalDepartmentOutput.objects.filter(appraisal__id=appraisal_id, year_quarter__year=year).select_related('appraisal', 'department_output', 'department_output__department_objective', 'year_quarter')
         except Exception as e:
             raise Exception(f"[AppraisalDepartmentOutputRepository] fetch_by_appraisal_id_and_year, appraisal id: {appraisal_id} and year: {year}, failed with error: {e}")
+    
+    def get_by_id(self, appraisal_department_output_id: int)->AppraisalDepartmentOutput:
+        try:
+            qr = AppraisalDepartmentOutput.objects.filter(id=appraisal_department_output_id).select_related('appraisal', 'department_output', 'appraisal__user')
+            
+            if not qr.exists():
+                return None
+            return qr.first()
+        except Exception as e:
+            raise Exception(f"[AppraisalDepartmentOutputRepository] get_by_id, appraisal_department_output id: {appraisal_department_output_id}, failed with error: {e}")
 
 
 
@@ -238,6 +248,12 @@ class AppraisalOutPutPerformanceDimensionScoreRepository:
             return appraisal_perf_dimension
         except Exception as e:
             raise Exception(f"[AppraisalOutPutPerformanceDimensionScoreRepository] update Repo with pk: {appraisal_perf_dimension.id}, failed with error: {e}")
+
+    def fetch_by_department_output_id(self, appraisal_department_output_id: int)->QuerySet[AppraisalOutPutPerformanceDimensionScore]:
+        try:
+            return AppraisalOutPutPerformanceDimensionScore.objects.filter(appraisal_department_output__id=appraisal_department_output_id).select_related('appraisal_department_output', 'performance_dimension', 'appraisal_department_output__department_output')
+        except Exception as e:
+            raise Exception(f"[AppraisalOutPutPerformanceDimensionScoreRepository] fetch_by_department_output_id Repo with pk: {appraisal_department_output_id}, failed with error: {e}")
 
 class ScoreDocumentRepository:
     def create(self, performance_dimension_score: AppraisalOutPutPerformanceDimensionScore, name: str, documents: str)->ScoreDocument:

@@ -138,7 +138,7 @@ class DepartmentOutputCreateView(SuccessMessageMixin, CreateView):
             if dept_output_weight_progress.remaining_weight < payload.weight:
                 messages.error(self.request, "The department output weight cannot be greater than its departmental objective weight. Please adjust the department output weight to ensure it does not exceed the departmental objective weight.")
                 return self.form_invalid(form)
-            input()
+
             repo = DepartmentalOutRepository()
             dept_output_obj = repo.create(
                                             creator=self.request.user,
