@@ -34,7 +34,10 @@ from .view import (
     KRAOutComeTemplateView,
     KRAUpdateDetailView,
     AppraisalDepartmentOutputTemplateView,
-    AppraisalDepartmentPerformanceDimensionTemplateView
+    AppraisalDepartmentPerformanceDimensionTemplateView,
+    AppraisalDepartmentPerformanceDimensionScoreUpdateView,
+    ScoreDocumentCreateView,
+    ScoreDocumentUpdateView
 )
 
 urlpatterns = [
@@ -94,6 +97,10 @@ urlpatterns = [
     path('appraisal-department-output/<int:appraisal_id>', AppraisalDepartmentOutputTemplateView.as_view(), name="appraisal_dept_output_index"),
     path('appraisal-department-performance/<int:appraisal_department_output_id>/', AppraisalDepartmentPerformanceDimensionTemplateView.as_view(), name="appraisal_dept_perf_index"),
     
+    path('scoring/<int:performance_dimension_id>/', AppraisalDepartmentPerformanceDimensionScoreUpdateView.as_view(), name="score_view"),
+    
+    path('scoring-document/<int:performance_dimension_id>/create', ScoreDocumentCreateView.as_view(), name="score_doc_create"),
+    path('scoring-document/<int:score_doc_id>/update', ScoreDocumentUpdateView.as_view(), name="score_doc_update"),
     
     # ----- api ------
     path('api/experience-list/', experience_list_api, name='experience_list_api'),

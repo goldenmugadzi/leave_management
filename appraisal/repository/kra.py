@@ -254,6 +254,18 @@ class AppraisalOutPutPerformanceDimensionScoreRepository:
             return AppraisalOutPutPerformanceDimensionScore.objects.filter(appraisal_department_output__id=appraisal_department_output_id).select_related('appraisal_department_output', 'performance_dimension', 'appraisal_department_output__department_output')
         except Exception as e:
             raise Exception(f"[AppraisalOutPutPerformanceDimensionScoreRepository] fetch_by_department_output_id Repo with pk: {appraisal_department_output_id}, failed with error: {e}")
+    
+    def get_by_id(self, pk: int)->AppraisalOutPutPerformanceDimensionScore:
+        try:
+            qr = AppraisalOutPutPerformanceDimensionScore.objects.filter(appraisal_department_output__id=pk).select_related('appraisal_department_output', 'performance_dimension', 'appraisal_department_output__department_output')
+            
+            
+            if not qr.exists():
+                return None
+            
+            return qr.first()
+        except Exception as e:
+            raise Exception(f"[AppraisalOutPutPerformanceDimensionScoreRepository] get_by_id Repo with pk: {pk}, failed with error: {e}")
 
 class ScoreDocumentRepository:
     def create(self, performance_dimension_score: AppraisalOutPutPerformanceDimensionScore, name: str, documents: str)->ScoreDocument:
@@ -283,3 +295,20 @@ class ScoreDocumentRepository:
             return score_doc_obj
         except Exception as e:
             raise Exception(f"ScoreDocumentRepository update repo with score doc obj pk: {score_doc_obj.id},  failed with error: {e}")
+        
+    def fetch_by_score_id(self, score_obj_id: int)->QuerySet[ScoreDocument]:
+        try:
+            return ScoreDocument.objects.filter(performance_dimension_score__id=score_obj_id)
+        except Exception as e:
+            raise Exception(f"ScoreDocumentRepository fetch_by_score_obj_id repo with score_obj pk: {score_obj_id},  failed with error: {e}")
+    
+    def get_by_id(self, pk: int)->ScoreDocument:
+        try:
+            qr = ScoreDocument.objects.filter(id=pk)
+            if not qr.exists():
+                return None
+            
+            return qr.first()
+        except Exception as e:
+            raise Exception(f"ScoreDocumentRepository get_by_id repo with score_doc_obj pk: {pk},  failed with error: {e}")
+       

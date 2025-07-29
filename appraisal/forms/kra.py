@@ -1,5 +1,5 @@
 from django import forms
-from ..models import YearQuarter, KeyResultArea, ScoreDocument, KeyResultAreaOutCome
+from ..models import YearQuarter, KeyResultArea, ScoreDocument, KeyResultAreaOutCome, AppraisalOutPutPerformanceDimensionScore
 from ..helpers.types.kra import RoleFilterChoices
 from it.users.models import UserProfile
 from datetime import datetime
@@ -23,7 +23,7 @@ class KraOutComeCreateForm(forms.ModelForm):
 class ScoreDocumentForm(forms.ModelForm):
     class Meta:
         model = ScoreDocument
-        exclude = ["id", "target_score"]
+        exclude = ["id", "target_score", "performance_dimension_score"]
 
 
 class AppraisalRoleFilterForm(forms.Form):
@@ -34,3 +34,7 @@ class AppraisalRoleFilterForm(forms.Form):
         widget=forms.Select(attrs={'class': 'form-control'}),
     )
     
+class AppraisalOutPutPerformanceDimensionScoreForm(forms.ModelForm):
+    class Meta:
+        model = AppraisalOutPutPerformanceDimensionScore
+        fields = ["score", "comments", "appraiser_confirmation"]

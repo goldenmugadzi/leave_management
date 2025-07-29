@@ -52,6 +52,8 @@ class ScoreDeserializationStrategy:
 
         }
         return TargetScoreType(**data)
+
+
     
 class PerformanceDimensionDeserializationStrategy:
     def deserialize(self, form_object: BaseModelForm)->BaseModel:
@@ -187,18 +189,25 @@ def build_payload_score(request, form: BaseModelForm, is_appraisee: bool) -> Tar
         if not is_appraisee:
             data = {
                 "appraiser_confirmation": form.cleaned_data.get("appraiser_confirmation"),
-                "comment": form.cleaned_data.get("comments"),
+                "comments": form.cleaned_data.get("comments"),
                 "score": form.cleaned_data.get("score")
             }
         else:
             data = {
                 "score": form.cleaned_data.get("score"),
                 "appraiser_confirmation": form.cleaned_data.get("appraiser_confirmation"),
-                "comment": form.cleaned_data.get("comments"),
+                "comments": form.cleaned_data.get("comments"),
             }
         return TargetScoreType(**data)
     except ValidationError as e:
-        error_message = e.errors()[0]["msg"]
-        messages.error(request, error_message)
-        raise
+        error_messages = ""
+        for error_message in e.errors():
+            msg = f"{error_message['msg']}: '{error_message['loc'][0]}'"
+            error_messages.join(msg)
+        messages.error(request, error_messages)
+        return None
+    except Exception as e:
+        logger.error(f"[build_payload_score], failed with error: {e}")
+        messages.error(request, "something went wrong, please try again.")
+        return None
     
