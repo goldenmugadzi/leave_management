@@ -1,6 +1,40 @@
 {% extends "admin_layout.html" %}
 
 {% block content %}
+
+<!-- Django Messages Display - Add this section -->
+{% if messages %}
+    <div class="mb-4">
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} mb-3 p-3 rounded border-l-4 
+                {% if message.tags == 'error' %}bg-red-50 border-red-500 text-red-800
+                {% elif message.tags == 'warning' %}bg-yellow-50 border-yellow-500 text-yellow-800
+                {% elif message.tags == 'info' %}bg-blue-50 border-blue-500 text-blue-800
+                {% elif message.tags == 'success' %}bg-green-50 border-green-500 text-green-800
+                {% else %}bg-gray-50 border-gray-500 text-gray-800{% endif %}">
+                
+                <div class="flex items-start">
+                    <div class="flex-shrink-0 mr-3">
+                        {% if message.tags == 'error' %}❌
+                        {% elif message.tags == 'warning' %}⚠️
+                        {% elif message.tags == 'info' %}ℹ️
+                        {% elif message.tags == 'success' %}✅
+                        {% else %}📢{% endif %}
+                    </div>
+                    <div class="flex-1">
+                        {{ message|linebreaksbr }}
+                    </div>
+                    <button type="button" class="ml-2 text-gray-500 hover:text-gray-700" 
+                            onclick="this.parentElement.parentElement.style.display='none'">
+                        ✕
+                    </button>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+{% endif %}
+<!-- End Messages Display -->
+
 <div class="dashboard-container p-6 bg-nepal-25 min-h-screen">
   <!-- Header -->
   <div class="header mb-8">
