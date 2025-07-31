@@ -1,6 +1,7 @@
 {% extends "admin_layout.html" %}
 {% load static %}
 {% load crispy_forms_tags %}
+{% load kra_calculations %}
 
 {% block content %}
 {% include 'appraisal/sections_header.html' with section_header="Section 2 - Performance Plan and Assessment" %}
@@ -48,10 +49,10 @@
                                     <td class="px-6 py-4 text-md text-blue-900">{{performance_dimensions_obj.performance_dimension.weight}} %</td>
                                     <td class="px-6 py-4 text-md text-blue-900">{{performance_dimensions_obj.performance_dimension.agreed_target}} %</td>
                                     <td class="px-6 py-4 text-md text-blue-900">(+-) {{performance_dimensions_obj.performance_dimension.allowable_variance}} %</td>
-                                    <td class="px-6 py-4 text-md text-blue-900">{{performance_dimensions_obj.id}} %</td>
-                                    <td class="px-6 py-4 text-md text-blue-900">(+-) {{performance_dimensions_obj.id}} %</td>
-                                    <td class="px-6 py-4 text-md text-blue-900">{{performance_dimensions_obj.id}}</td>
-                                    <td class="px-6 py-4 text-md text-blue-900">{{performance_dimensions_obj.id}}</td>
+                                    <td class="px-6 py-4 text-md text-blue-900">{{performance_dimensions_obj.score}} %</td>
+                                    <td class="px-6 py-4 text-md text-blue-900">(+-) {{performance_dimensions_obj.id|get_performance_dimension_actual_variance}} %</td>
+                                    <td class="px-6 py-4 text-md text-blue-900">{{performance_dimensions_obj.id|get_performance_dimension_rating}}</td>
+                                    <td class="px-6 py-4 text-md text-blue-900">{{performance_dimensions_obj.id|get_performance_dimension_weighted_score}}</td>
                                     <td>
                                         <div class="flex justify-even gap-1">
                                             <a href="{% url 'score_view' performance_dimensions_obj.id %}"

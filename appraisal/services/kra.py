@@ -9,6 +9,8 @@ from ..repository.appraisal import AppraisalRepository
 from it.users.models import Designations
 from ..models import KeyResultArea, AppraisalOutPutPerformanceDimensionScore, AppraisalDepartmentOutput
 from ..helpers.types.kra import KRAType
+from ..helpers.getters import RatingCalculation
+
 from loguru import logger
 
 class KRAErr(Exception):
@@ -167,3 +169,44 @@ class AppraisalDepartmentOutputService:
         }
         return data
         
+
+@dataclass
+class AppraisalScoreDimensionService:
+    score_object: AppraisalOutPutPerformanceDimensionScore
+    
+    def calculate_actual_variance_use_case(self)->float:
+        """Calculate the actual variance between the actual score and the target score."""
+        try:
+            actual_score = self.score_object.score
+            target_score = self.score_object.performance_dimension.agreed_target
+            rating_calc_handler = RatingCalculation()
+            
+            actual_variance = rating_calc_handler.get_actual_variance(actual_score=actual_score, target_score=target_score)
+            return actual_variance
+        except Exception as e:
+            raise Exception(f"[AppraisalScoreDimensionService] calculate_actual_variance_use_case() for performance dimension pk: {self.score_object.id} with error: {e}")
+        
+    def calculate_performance_dimension_rating_score_use_case(self)->float:
+        """Calculate the rating score for an performance dimension based on actual variance and allowable variance."""
+        try:
+            performance_dimension_obj = self.score_object.performance_dimension
+            rating_calc_handler = RatingCalculation()
+            
+            is_target_met = rating_calc_handler.is_target_met(agreed_target=performance_dimension_obj.agreed_target, actual_target=self.score_object.score)
+            variance_range_classifier = rating_calc_handler.classify_variance_range(agreed_target=performance_dimension_obj.agreed_target, allowable_variance=performance_dimension_obj.allowable_variance, actual_score=self.score_object.score)
+            rating = rating_calc_handler.calculate_rating(is_target_met=is_target_met, variance_range_classify=variance_range_classifier)
+
+            return rating
+        except Exception as e:
+            raise Exception(f"[AppraisalScoreDimensionService] calculate_performance_dimension_rating_score_use_case() for performance dimension pk: {self.score_object.id} with error: {e}")
+
+    def calculate_performance_dimension_weighted_score(self)->float:
+        """Calculate the weighted score for an performance dimension by multiplying the performance dimension score by its weight."""
+        try:
+            performance_dimension_rate = self.calculate_performance_dimension_rating_score_use_case()
+            performance_dimension_weight = self.score_object.performance_dimension.weight/100
+            weighted_score = performance_dimension_rate * performance_dimension_weight
+
+            return weighted_score
+        except Exception as e:
+            raise Exception(f"[AppraisalScoreDimensionService] calculate_performance_dimension_weighted_score() for performance dimension pk: {self.score_object.id} with error: {e}")
