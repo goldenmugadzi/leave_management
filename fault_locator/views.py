@@ -21,6 +21,8 @@ from .central_roles import (
     is_depot_foreperson,
     is_team_leader,
     is_team_member,
+    is_fault_reporter,
+    can_report_faults,
     can_assign_faults,
     can_deploy_teams,
     can_manage_devices,
@@ -337,7 +339,10 @@ def fault_locator_dashboard(request):
         is_depot_fp = is_depot_foreperson(user_profile, user_profile.depot if user_profile and hasattr(user_profile, 'depot') and user_profile.depot else None)
         is_team_lead = is_team_leader(user_profile)
         is_team_member = is_team_member(user_profile)
+        is_fault_rep = is_fault_reporter(user_profile)
         user_depot = user_profile.depot if user_profile and hasattr(user_profile, 'depot') else None
+        user_can_manage_devices = can_manage_devices(user_profile)
+        user_role_display = FaultLocatorRoleManager.get_user_role_display(user_profile)
         
         # All dashboard logic
         context = {
@@ -348,6 +353,7 @@ def fault_locator_dashboard(request):
             'is_depot_foreperson': is_depot_fp,
             'is_team_leader': is_team_lead,
             'is_team_member': is_team_member,
+            'is_fault_reporter': is_fault_rep,
             'can_manage_devices': user_can_manage_devices,
             'user_depot': user_depot,
             'my_actions': [],
@@ -362,6 +368,7 @@ def fault_locator_dashboard(request):
                 'can_create_faults': True,  # All users can create faults
                 'can_view_faults': True,    # All users can view faults
                 'can_view_reports': True,   # All users can view reports
+                'is_fault_reporter': is_fault_rep,
             }
         }
         
@@ -579,10 +586,27 @@ def fault_locator_dashboard(request):
             'icon': '📝'
         }
 
+        # Fault Reporter Functions  
+        if is_fault_rep:
+            accessible_functions['fault_reporter_dashboard'] = {
+                'title': 'My Fault Reports',
+                'description': 'View and manage faults you have reported.',
+                'url_name': 'fault_reporter_dashboard',
+                'icon': '📋'
+            }
+            accessible_functions['bulk_fault_report'] = {
+                'title': 'Bulk Report Faults',
+                'description': 'Report multiple faults at once for efficiency.',
+                'url_name': 'bulk_fault_report',
+                'icon': '📄'
+            }
+
         # Only show functions user can access
         context['accessible_functions'] = [
             func for func in accessible_functions.values()
             if func['url_name'] == 'quick_fault_report'
+            or (func['url_name'] == 'fault_reporter_dashboard' and is_fault_rep)
+            or (func['url_name'] == 'bulk_fault_report' and is_fault_rep)
             or (func['url_name'] == 'my_work' and is_team_member)
             or (func['url_name'] == 'device_list' and can_manage_devices(user_profile))
             or (func['url_name'] == 'team_overview' and can_create_teams(user_profile))
@@ -595,6 +619,41 @@ def fault_locator_dashboard(request):
 
         # MY ACTIONS - What can I do right now?
         my_actions = []
+        
+        # For Fault Reporters - dedicated fault reporting functionality
+        if is_fault_rep:
+            # Count faults reported by this user in the last 24 hours
+            from datetime import timedelta
+            yesterday = timezone.now() - timedelta(days=1)
+            recent_reports = Fault.objects.filter(
+                reported_by=user_profile,
+                reported_at__gte=yesterday
+            ).count()
+            
+            # Count pending faults reported by this user
+            pending_reports = Fault.objects.filter(
+                reported_by=user_profile,
+                status='requested'
+            ).count()
+            
+            my_actions.append({
+                'title': 'Report New Fault',
+                'description': f'Quick fault reporting - {recent_reports} reports today',
+                'url': '/fault_locator/quick-report/',
+                'priority': 'medium',
+                'type': 'fault_reporting',
+                'count': recent_reports
+            })
+            
+            if pending_reports > 0:
+                my_actions.append({
+                    'title': f'Follow Up on {pending_reports} Pending Report{"s" if pending_reports != 1 else ""}',
+                    'description': 'Your reported faults awaiting assignment',
+                    'url': '/fault_locator/my-reports/',
+                    'priority': 'high',
+                    'type': 'follow_up',
+                    'count': pending_reports
+                })
         
         # For Team Members - Field Workers
         user_teams = user_profile.fault_locator_teams.all() if user_profile else []
@@ -700,6 +759,21 @@ def fault_locator_dashboard(request):
                 'In Progress': Fault.objects.filter(depot=user_depot, status='assigned').count(),
                 'Teams at Depot': FaultLocatorTeam.objects.filter(current_depot=user_depot).count(),
             }
+        elif is_fault_rep:
+            # Fault reporter stats
+            my_reported_faults = Fault.objects.filter(reported_by=user_profile)
+            from datetime import timedelta
+            this_week = timezone.now() - timedelta(days=7)
+            this_month = timezone.now() - timedelta(days=30)
+            
+            context['quick_stats'] = {
+                'My Total Reports': my_reported_faults.count(),
+                'Pending Assignment': my_reported_faults.filter(status='requested').count(),
+                'In Progress': my_reported_faults.filter(status='assigned').count(),
+                'Completed': my_reported_faults.filter(status='closed').count(),
+                'This Week': my_reported_faults.filter(reported_at__gte=this_week).count(),
+                'This Month': my_reported_faults.filter(reported_at__gte=this_month).count(),
+            }
         elif user_teams.exists():
             # Team member stats
             my_team = user_teams.first()
@@ -735,6 +809,20 @@ def fault_locator_dashboard(request):
                     'description': f'Fault: {fault.description}',
                     'status': fault.get_status_display(),
                     'time': fault.reported_at,
+                    'priority': fault.get_priority_display(),
+                    'url': f'/fault_locator/faults/{fault.id}/'
+                })
+        elif is_fault_rep:
+            # Fault reporter activity - my reported faults
+            my_recent_faults = Fault.objects.filter(
+                reported_by=user_profile
+            ).order_by('-reported_at')[:5]
+            for fault in my_recent_faults:
+                recent_activity.append({
+                    'description': f'Reported: {fault.description}',
+                    'location': fault.depot.depot,
+                    'time': fault.reported_at,
+                    'status': fault.get_status_display(),
                     'priority': fault.get_priority_display(),
                     'url': f'/fault_locator/faults/{fault.id}/'
                 })
@@ -894,6 +982,24 @@ def quick_fault_report(request):
     try:
         user_profile = UserProfile.objects.filter(id=request.user.id).first()
         
+        # Check if user can report faults (fault reporters, team members, or other authorized roles)
+        can_report = (
+            is_fault_reporter(user_profile) or 
+            is_team_member(user_profile) or 
+            is_team_leader(user_profile) or 
+            is_depot_foreperson(user_profile, user_profile.depot if user_profile and hasattr(user_profile, 'depot') and user_profile.depot else None) or 
+            is_senior_foreman(user_profile)
+        )
+        
+        if not can_report:
+            messages.error(request, "You don't have permission to report faults. Contact your supervisor to get the appropriate role.")
+            return redirect('fault_locator_dashboard')
+        
+        # Check depot assignment for fault reporters
+        if is_fault_reporter(user_profile) and (not hasattr(user_profile, 'depot') or not user_profile.depot):
+            messages.error(request, "You must be assigned to a depot before you can report faults.")
+            return redirect('fault_locator_dashboard')
+        
         if request.method == "POST":
             # Determine form parameters based on user role and region
             form_kwargs = {}
@@ -903,9 +1009,9 @@ def quick_fault_report(request):
             # Pre-fill user depot for non-senior users
             user_depot = None
             if user_profile and hasattr(user_profile, 'depot') and user_profile.depot:
-                user_depot = Depots.objects.filter(code=user_profile.depot).first()
-                # For non-senior foremen, restrict to their depot only
-                if not is_senior_foreman(user_profile) and user_depot:
+                user_depot = user_profile.depot
+                # For fault reporters and non-senior foremen, restrict to their depot only
+                if (is_fault_reporter(user_profile) or not is_senior_foreman(user_profile)) and user_depot:
                     form_kwargs['user_depot'] = user_depot
             
             form = QuickFaultReportForm(request.POST, **form_kwargs)
@@ -940,9 +1046,9 @@ def quick_fault_report(request):
             # Pre-fill user depot for non-senior users
             user_depot = None
             if user_profile and hasattr(user_profile, 'depot') and user_profile.depot:
-                user_depot = Depots.objects.filter(code=user_profile.depot).first()
-                # For non-senior foremen, restrict to their depot only
-                if not is_senior_foreman(user_profile) and user_depot:
+                user_depot = user_profile.depot
+                # For fault reporters and non-senior foremen, restrict to their depot only
+                if (is_fault_reporter(user_profile) or not is_senior_foreman(user_profile)) and user_depot:
                     form_kwargs['user_depot'] = user_depot
             
             form = QuickFaultReportForm(**form_kwargs)
@@ -962,10 +1068,22 @@ def quick_fault_report(request):
         return redirect('fault_locator_dashboard')
 
 @login_required
-@team_member_required
 def create_fault(request):
     try:
         user_profile = UserProfile.objects.filter(id=request.user.id).first()
+        
+        # Check if user can report faults
+        can_report = (
+            is_fault_reporter(user_profile) or 
+            is_team_member(user_profile) or 
+            is_team_leader(user_profile) or 
+            is_depot_foreperson(user_profile, user_profile.depot if user_profile and hasattr(user_profile, 'depot') and user_profile.depot else None) or 
+            is_senior_foreman(user_profile)
+        )
+        
+        if not can_report:
+            messages.error(request, "You don't have permission to report faults. Contact your supervisor to get the appropriate role.")
+            return redirect('fault_locator_dashboard')
         
         if request.method == "POST":
             form = FaultForm(request.POST)
@@ -3253,3 +3371,363 @@ def notify_priority_change(fault, old_priority, new_priority, changed_by, reques
         import logging
         logger = logging.getLogger(__name__)
         logger.error(f"Priority change notification error: {e}")
+
+
+# =====================================
+# FAULT REPORTER SPECIFIC VIEWS
+# =====================================
+
+@login_required
+def fault_reporter_dashboard(request):
+    """Dashboard specifically for fault reporters to manage their reported faults"""
+    try:
+        user_profile = UserProfile.objects.filter(id=request.user.id).first()
+        
+        # Check if user is a fault reporter
+        if not is_fault_reporter(user_profile):
+            messages.error(request, "Access denied. This dashboard is for fault reporters only.")
+            return redirect('fault_locator_dashboard')
+        
+        # Check if user has a depot assigned
+        if not hasattr(user_profile, 'depot') or not user_profile.depot:
+            messages.error(request, "You must be assigned to a depot to access fault reporting features.")
+            return redirect('fault_locator_dashboard')
+        
+        # Get faults reported by this user from their assigned depot only
+        my_faults = Fault.objects.filter(
+            reported_by=user_profile,
+            depot=user_profile.depot
+        ).select_related('depot')
+        
+        # Filter by status if requested
+        status_filter = request.GET.get('status', 'all')
+        if status_filter != 'all':
+            my_faults = my_faults.filter(status=status_filter)
+        
+        # Filter by priority if requested
+        priority_filter = request.GET.get('priority', 'all')
+        if priority_filter != 'all':
+            my_faults = my_faults.filter(priority=int(priority_filter))
+        
+        # Order by priority and date
+        my_faults = my_faults.order_by('-vvip', '-priority', '-reported_at')
+        
+        # Get statistics
+        from datetime import timedelta
+        today = timezone.now().date()
+        this_week = timezone.now() - timedelta(days=7)
+        this_month = timezone.now() - timedelta(days=30)
+        
+        stats = {
+            'total_reported': my_faults.count(),
+            'pending': my_faults.filter(status='requested').count(),
+            'in_progress': my_faults.filter(status='assigned').count(),
+            'located': my_faults.filter(status='located').count(),
+            'completed': my_faults.filter(status='closed').count(),
+            'today': my_faults.filter(reported_at__date=today).count(),
+            'this_week': my_faults.filter(reported_at__gte=this_week).count(),
+            'this_month': my_faults.filter(reported_at__gte=this_month).count(),
+            'high_priority': my_faults.filter(priority__gte=3).count(),
+            'vvip': my_faults.filter(vvip=True).count(),
+        }
+        
+        # Get current assignments for each fault
+        fault_data = []
+        for fault in my_faults:
+            current_assignment = FaultAssignment.objects.filter(
+                fault=fault, 
+                located_at__isnull=True
+            ).select_related('team', 'device').first()
+            
+            # Calculate time elapsed
+            time_elapsed = timezone.now() - fault.reported_at
+            urgency = 'normal'
+            if fault.priority >= 3:
+                urgency = 'critical'
+            elif time_elapsed.total_seconds() > 14400:  # 4 hours
+                urgency = 'urgent'
+            
+            fault_data.append({
+                'fault': fault,
+                'current_assignment': current_assignment,
+                'urgency': urgency,
+                'time_elapsed': time_elapsed,
+                'hours_elapsed': int(time_elapsed.total_seconds() / 3600),
+            })
+        
+        # Filter options for the UI
+        status_options = [
+            ('all', 'All Statuses'),
+            ('requested', 'Pending Assignment'),
+            ('assigned', 'In Progress'),
+            ('located', 'Located'),
+            ('closed', 'Completed'),
+        ]
+        
+        priority_options = [
+            ('all', 'All Priorities'),
+            (1, 'Low'),
+            (2, 'Medium'),
+            (3, 'High'),
+            (4, 'Critical'),
+        ]
+        
+        context = {
+            'user_profile': user_profile,
+            'fault_data': fault_data,
+            'stats': stats,
+            'status_filter': status_filter,
+            'priority_filter': priority_filter,
+            'status_options': status_options,
+            'priority_options': priority_options,
+            'total_count': len(fault_data),
+        }
+        
+        return render(request, "fault_locator/fault_reporter_dashboard.html", context)
+    
+    except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Fault reporter dashboard error: {e}")
+        messages.error(request, "An error occurred loading your fault reports.")
+        return redirect('fault_locator_dashboard')
+
+@login_required
+def bulk_fault_report(request):
+    """View for reporting multiple faults at once"""
+    try:
+        user_profile = UserProfile.objects.filter(id=request.user.id).first()
+        
+        # Check if user can report faults
+        can_report = (
+            is_fault_reporter(user_profile) or 
+            is_team_member(user_profile) or 
+            is_team_leader(user_profile) or 
+            is_depot_foreperson(user_profile, user_profile.depot if user_profile and hasattr(user_profile, 'depot') and user_profile.depot else None) or 
+            is_senior_foreman(user_profile)
+        )
+        
+        if not can_report:
+            messages.error(request, "You don't have permission to report faults.")
+            return redirect('fault_locator_dashboard')
+        
+        # Check depot assignment for fault reporters
+        if is_fault_reporter(user_profile) and (not hasattr(user_profile, 'depot') or not user_profile.depot):
+            messages.error(request, "You must be assigned to a depot to report faults.")
+            return redirect('fault_locator_dashboard')
+        
+        if request.method == "POST":
+            # Process bulk fault reporting
+            fault_count = int(request.POST.get('fault_count', 1))
+            successful_reports = 0
+            failed_reports = []
+            
+            for i in range(1, fault_count + 1):
+                description = request.POST.get(f'fault_{i}_description')
+                depot_id = request.POST.get(f'fault_{i}_depot')
+                priority = request.POST.get(f'fault_{i}_priority', 2)
+                voltage = request.POST.get(f'fault_{i}_voltage', '')
+                clients_affected = request.POST.get(f'fault_{i}_clients_affected', '')
+                vvip = bool(request.POST.get(f'fault_{i}_vvip'))
+                backfeed = bool(request.POST.get(f'fault_{i}_backfeed'))
+                
+                # Skip empty descriptions
+                if not description or not description.strip():
+                    continue
+                
+                try:
+                    depot = Depots.objects.get(id=depot_id)
+                    
+                    # Validate depot access for fault reporters
+                    if is_fault_reporter(user_profile):
+                        if not hasattr(user_profile, 'depot') or not user_profile.depot or user_profile.depot != depot:
+                            failed_reports.append(f"Fault {i}: You can only report faults for your assigned depot ({user_profile.depot.depot if user_profile.depot else 'None assigned'})")
+                            continue
+                    
+                    # Create the fault
+                    fault = Fault.objects.create(
+                        description=description.strip(),
+                        depot=depot,
+                        reported_by=user_profile,
+                        priority=int(priority),
+                        voltage=voltage if voltage else None,
+                        clients_affected=int(clients_affected) if clients_affected else None,
+                        vvip=vvip,
+                        backfeed=backfeed
+                    )
+                    
+                    # Send notifications for high priority faults
+                    if fault.priority >= 3:
+                        notify_high_priority_fault(fault, request)
+                    
+                    successful_reports += 1
+                    
+                except Exception as e:
+                    failed_reports.append(f"Fault {i}: {str(e)}")
+            
+            # Show results
+            if successful_reports > 0:
+                messages.success(request, f"Successfully reported {successful_reports} fault(s)!")
+            
+            if failed_reports:
+                for error in failed_reports:
+                    messages.error(request, error)
+            
+            if successful_reports > 0:
+                return redirect('fault_reporter_dashboard' if is_fault_reporter(user_profile) else 'simple_fault_list')
+        
+        # GET request - show bulk report form
+        
+        # Get available depots for the user
+        available_depots = Depots.objects.all().order_by('depot')
+        
+        # Apply restrictions based on user role
+        if is_fault_reporter(user_profile):
+            # Fault reporters can only report for their assigned depot
+            if hasattr(user_profile, 'depot') and user_profile.depot:
+                available_depots = available_depots.filter(id=user_profile.depot.id)
+            else:
+                available_depots = Depots.objects.none()
+        elif user_profile and user_profile.region:
+            # Other roles filter by region
+            available_depots = available_depots.filter(region=user_profile.region)
+        
+        context = {
+            'user_profile': user_profile,
+            'available_depots': available_depots,
+            'priority_choices': Fault._meta.get_field('priority').choices,
+            'voltage_choices': Fault._meta.get_field('voltage').choices,
+        }
+        
+        return render(request, "fault_locator/bulk_fault_report.html", context)
+    
+    except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Bulk fault report error: {e}")
+        messages.error(request, "An error occurred with bulk fault reporting.")
+        return redirect('fault_locator_dashboard')
+
+@login_required
+def my_fault_reports(request):
+    """View for fault reporters to see their reported faults with enhanced details"""
+    try:
+        user_profile = UserProfile.objects.filter(id=request.user.id).first()
+        
+        # Check if user can view their reports
+        can_view = (
+            is_fault_reporter(user_profile) or 
+            is_team_member(user_profile) or 
+            is_team_leader(user_profile) or 
+            is_depot_foreperson(user_profile, user_profile.depot if user_profile and hasattr(user_profile, 'depot') and user_profile.depot else None) or 
+            is_senior_foreman(user_profile)
+        )
+        
+        if not can_view:
+            messages.error(request, "You don't have permission to view fault reports.")
+            return redirect('fault_locator_dashboard')
+        
+        # Check depot assignment for fault reporters
+        if is_fault_reporter(user_profile) and (not hasattr(user_profile, 'depot') or not user_profile.depot):
+            messages.error(request, "You must be assigned to a depot to view fault reports.")
+            return redirect('fault_locator_dashboard')
+        
+        # Get faults reported by this user
+        my_faults = Fault.objects.filter(
+            reported_by=user_profile
+        ).select_related('depot').prefetch_related(
+            'faultassignment_set__team',
+            'faultassignment_set__device'
+        )
+        
+        # Apply depot restriction for fault reporters
+        if is_fault_reporter(user_profile) and hasattr(user_profile, 'depot') and user_profile.depot:
+            my_faults = my_faults.filter(depot=user_profile.depot)
+        
+        my_faults = my_faults.order_by('-reported_at')
+        
+        # Apply filters
+        status_filter = request.GET.get('status', 'all')
+        if status_filter != 'all':
+            my_faults = my_faults.filter(status=status_filter)
+        
+        depot_filter = request.GET.get('depot', 'all')
+        if depot_filter != 'all':
+            my_faults = my_faults.filter(depot_id=depot_filter)
+        
+        # Search functionality
+        search_query = request.GET.get('q', '')
+        if search_query:
+            my_faults = my_faults.filter(
+                Q(description__icontains=search_query) |
+                Q(depot__depot__icontains=search_query)
+            )
+        
+        # Enhanced fault data with assignment tracking
+        fault_data = []
+        for fault in my_faults:
+            # Get all assignments for this fault
+            assignments = FaultAssignment.objects.filter(
+                fault=fault
+            ).select_related('team', 'device').order_by('assigned_at')
+            
+            current_assignment = assignments.filter(located_at__isnull=True).first()
+            
+            # Calculate time metrics
+            time_elapsed = timezone.now() - fault.reported_at
+            
+            # Time to assignment
+            time_to_assignment = None
+            if assignments.exists():
+                first_assignment = assignments.first()
+                time_to_assignment = first_assignment.assigned_at - fault.reported_at
+            
+            # Time to completion
+            time_to_completion = None
+            completed_assignment = assignments.filter(located_at__isnull=False).first()
+            if completed_assignment:
+                time_to_completion = completed_assignment.located_at - fault.reported_at
+            
+            fault_data.append({
+                'fault': fault,
+                'current_assignment': current_assignment,
+                'all_assignments': assignments,
+                'time_elapsed': time_elapsed,
+                'time_to_assignment': time_to_assignment,
+                'time_to_completion': time_to_completion,
+                'assignment_count': assignments.count(),
+                'is_overdue': time_elapsed.total_seconds() > 28800 and fault.status != 'closed',  # 8 hours
+            })
+        
+        # Get filter options
+        available_depots = Depots.objects.filter(
+            id__in=my_faults.values_list('depot_id', flat=True).distinct()
+        ).order_by('depot')
+        
+        status_options = [
+            ('all', 'All Statuses'),
+            ('requested', 'Pending Assignment'),
+            ('assigned', 'In Progress'),
+            ('located', 'Located'),
+            ('closed', 'Completed'),
+        ]
+        
+        context = {
+            'user_profile': user_profile,
+            'fault_data': fault_data,
+            'available_depots': available_depots,
+            'status_options': status_options,
+            'status_filter': status_filter,
+            'depot_filter': depot_filter,
+            'search_query': search_query,
+            'total_count': len(fault_data),
+        }
+        
+        return render(request, "fault_locator/my_fault_reports.html", context)
+    
+    except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"My fault reports error: {e}")
+        messages.error(request, "An error occurred loading your fault reports.")
+        return redirect('fault_locator_dashboard')

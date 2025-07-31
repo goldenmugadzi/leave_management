@@ -44,6 +44,11 @@ urlpatterns = [
     path('simple-assign/<int:fault_id>/', views.simple_assign_fault, name='simple_assign_fault'),
     path('simple-assign/', views.simple_assign_fault, name='assign_fault'),
     
+    # Fault Reporter specific views
+    path('fault-reporter-dashboard/', views.fault_reporter_dashboard, name='fault_reporter_dashboard'),
+    path('bulk-report/', views.bulk_fault_report, name='bulk_fault_report'),
+    path('my-reports/', views.my_fault_reports, name='my_fault_reports'),
+    
     # Team management (these exist)
     path('team-overview/', views.team_overview, name='team_overview'),
     path('teams/', views.team_overview, name='team_list'),  # Redirect to team_overview

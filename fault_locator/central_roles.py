@@ -238,15 +238,57 @@ def is_team_member(user_profile):
         print(f"Error checking team member role: {e}")
         return False
 
-def is_fault_reporter(user_profile):
+def is_fault_reporter(user_profile, depot_code=None):
     """Check if user can report faults using central roles"""
     try:
         if not user_profile:
             return False
-        return FaultLocatorRoleManager.has_role(user_profile, FaultLocatorRoleManager.FAULT_REPORTER)
+        
+        if not FaultLocatorRoleManager.has_role(user_profile, FaultLocatorRoleManager.FAULT_REPORTER):
+            return False
+        
+        # If depot_code is provided, check if user is assigned to that depot
+        if depot_code:
+            if hasattr(user_profile, 'depot') and user_profile.depot:
+                if isinstance(depot_code, str):
+                    return user_profile.depot.code == depot_code
+                else:
+                    return user_profile.depot == depot_code
+        
+        # If no depot_code provided, just check if user has the role
+        return True
     except Exception as e:
         print(f"Error checking fault reporter role: {e}")
         return False
+
+def can_report_faults(user_profile, depot=None):
+    """Check if user can report faults for a specific depot"""
+    # Senior foremen can report faults anywhere
+    if is_senior_foreman(user_profile):
+        return True
+    
+    # Depot forepersons can report faults at their depot
+    if depot and is_depot_foreperson(user_profile):
+        if hasattr(user_profile, 'depot') and user_profile.depot:
+            return user_profile.depot == depot or (hasattr(depot, 'code') and user_profile.depot.code == depot.code)
+    
+    # Fault reporters can only report faults at their assigned depot
+    if is_fault_reporter(user_profile):
+        if not depot:
+            # If no depot specified, check if user has depot assigned
+            return hasattr(user_profile, 'depot') and user_profile.depot is not None
+        else:
+            # Check if user's depot matches the specified depot
+            if hasattr(user_profile, 'depot') and user_profile.depot:
+                return user_profile.depot == depot or (hasattr(depot, 'code') and user_profile.depot.code == depot.code)
+            return False
+    
+    # Team leaders and members can report faults at their depot
+    if is_team_leader(user_profile) or is_team_member(user_profile):
+        if depot and hasattr(user_profile, 'depot') and user_profile.depot:
+            return user_profile.depot == depot or (hasattr(depot, 'code') and user_profile.depot.code == depot.code)
+    
+    return False
 
 def can_assign_faults(user_profile, depot=None):
     """Check if user can assign faults at given depot"""
@@ -255,7 +297,7 @@ def can_assign_faults(user_profile, depot=None):
     
     if depot and is_depot_foreperson(user_profile):
         if hasattr(user_profile, 'depot') and user_profile.depot:
-            return user_profile.depot == depot or user_profile.depot.code == depot.code
+            return user_profile.depot == depot or (hasattr(depot, 'code') and user_profile.depot.code == depot.code)
     
     return False
 
