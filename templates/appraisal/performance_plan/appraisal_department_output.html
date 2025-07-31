@@ -43,7 +43,7 @@
                             <div class="flex justify-between">
                                 <h3 class="text-lg font-semibold text-gray-900 mb-4">First Quarter</h3>
                             </div>
-                            {% include 'appraisal/performance_plan/outputs_table_component.html' with quarter_data_list=appraisal_dept_output_qr.first_quarter is_grade_c_and_above=is_grade_c_and_above  %}
+                            {% include 'appraisal/performance_plan/outputs_table_component.html' with quarter_data_list=appraisal_dept_output_qr.first_quarter is_grade_c_and_above=is_grade_c_and_above quarter_object=appraisal_dept_output_qr.first_quarter.0.quarter_object %}
                             
                         </div>
                     </div>
@@ -54,7 +54,7 @@
                             <div class="flex justify-between">
                                 <h3 class="text-lg font-semibold text-gray-900 mb-4">Second Quarter</h3>
                             </div>
-                            {% include 'appraisal/performance_plan/outputs_table_component.html' with quarter_data_list=appraisal_dept_output_qr.second_quarter is_grade_c_and_above=is_grade_c_and_above  %}
+                            {% include 'appraisal/performance_plan/outputs_table_component.html' with quarter_data_list=appraisal_dept_output_qr.second_quarter is_grade_c_and_above=is_grade_c_and_above quarter_object=appraisal_dept_output_qr.second_quarter.0.quarter_object %}
                             
                         </div>
                     </div>
@@ -65,7 +65,7 @@
                             <div class="flex justify-between">
                                 <h3 class="text-lg font-semibold text-gray-900 mb-4">Third Quarter</h3>
                             </div>
-                            {% include 'appraisal/performance_plan/outputs_table_component.html' with quarter_data_list=appraisal_dept_output_qr.third_quarter is_grade_c_and_above=is_grade_c_and_above  %}
+                            {% include 'appraisal/performance_plan/outputs_table_component.html' with quarter_data_list=appraisal_dept_output_qr.third_quarter is_grade_c_and_above=is_grade_c_and_above quarter_object=appraisal_dept_output_qr.third_quarter.0.quarter_object %}
                             
                         </div>
                     </div>
@@ -76,7 +76,7 @@
                             <div class="flex justify-between">
                                 <h3 class="text-lg font-semibold text-gray-900 mb-4">Fourth Quarter</h3>
                             </div>
-                            {% include 'appraisal/performance_plan/outputs_table_component.html' with quarter_data_list=appraisal_dept_output_qr.fourth_quarter is_grade_c_and_above=is_grade_c_and_above  %}
+                            {% include 'appraisal/performance_plan/outputs_table_component.html' with quarter_data_list=appraisal_dept_output_qr.fourth_quarter is_grade_c_and_above=is_grade_c_and_above quarter_object=appraisal_dept_output_qr.fourth_quarter.0.quarter_object %}
                             
                         </div>
                     </div>

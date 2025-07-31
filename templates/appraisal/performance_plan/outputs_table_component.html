@@ -1,4 +1,4 @@
-
+{% load kra_calculations %}
 
 <div style="max-height: 280px; overflow-y: auto;">
     <table 
@@ -25,7 +25,7 @@
                             <td class="px-6 py-4 text-md text-blue-900 truncate max-w-xs">{{appraisal_dept_output_obj.department_output.output_description}}</td>
                             <td class="px-6 py-4 text-md text-blue-900">{{appraisal_dept_output_obj.department_output.weight}}</td>
                             <td class="px-6 py-4 text-md text-blue-900">0.0</td>
-                            <td></td>
+                            <td>{{appraisal_dept_output_obj.id|get_output_total_score}}</td>
                             <td>
                                 <div class="flex gap-2 justify-center">
                                     <a 
@@ -43,14 +43,6 @@
                             </td>
                         </tr>
                     {% endfor %}
-
-                    <tr>
-                        <td></td>
-                        <td></td>
-                        <td></td>
-                        <td class="px-6 py-4 text-md text-blue-900 font-bold text-2xl">0.0</td>
-                        <td></td>
-                    </tr>
                 </tr>
             {% endfor %}
             <tr>
@@ -58,7 +50,7 @@
                 <td></td>
                 <td></td>
                 <td></td>
-                <td class="px-6 py-4 text-md text-blue-900 font-bold text-2xl underline">0.0</td>
+                <td class="px-6 py-4 text-md text-blue-900 font-bold text-2xl underline">{{quarter_object.id|get_department_objectives_total_year_quarter_weighted_score}}</td>
                 <td></td>
             </tr>
         </tbody>

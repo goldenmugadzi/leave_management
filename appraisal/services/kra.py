@@ -2,6 +2,7 @@ from typing import List
 from dataclasses import dataclass
 from django.db import transaction
 from django.db.models.query import QuerySet
+from decimal import Decimal
 
 from ..repository.kra import KRARepository, AppraisalDepartmentOutputRepository, AppraisalOutPutPerformanceDimensionScoreRepository, YearQuarterRepository
 from ..repository.departmental_workplan import OutPutPerformanceDimensionRepository, DepartmentalOutRepository
@@ -115,64 +116,10 @@ class AppraisalDependanciesInitialisationService:
         except Exception as e:
             raise KRAErr(f"[AppraisalDependanciesInitialisationService] create service, failed with error: {e}")
 
-@dataclass
-class AppraisalDepartmentOutputService:
-    appraisal_department_output_repo: AppraisalDepartmentOutputRepository
-        
-    def get_quarter_data(self, queryset: QuerySet[AppraisalDepartmentOutput]):
-        department_objectives_qr = []
-        
-        # Get queryset with only department objectives
-        for obj in queryset:
-            department_objective_obj = obj.department_output.department_objective
-            if not department_objective_obj in department_objectives_qr:
-                department_objectives_qr.append(department_objective_obj)
-
-        quarter_data = []
-        department_outputs_total_field_count = 2
-        
-        # Construct dict with department objectives with their related department outputs
-        for department_objectives_obj in department_objectives_qr:
-            appraisal_dept_output_filter_by_department_objectives_id = queryset.filter(department_output__department_objective__id=department_objectives_obj.id)
-            data = {
-                "department_objective": department_objectives_obj,
-                "department_outputs_qr": appraisal_dept_output_filter_by_department_objectives_id,
-                "num_department_outputs": len(appraisal_dept_output_filter_by_department_objectives_id) + department_outputs_total_field_count
-            }
-            quarter_data.append(data)
-            
-        return quarter_data
-    
-    def first_quarter_data(self, appraisal_dept_output_qr: QuerySet[AppraisalDepartmentOutput]):
-        qr = appraisal_dept_output_qr.filter(year_quarter__quarter=1)
-        return self.get_quarter_data(queryset=qr)
-        
-    def second_quarter_data(self, appraisal_dept_output_qr: QuerySet[AppraisalDepartmentOutput]):
-        qr = appraisal_dept_output_qr.filter(year_quarter__quarter=2)
-        return self.get_quarter_data(queryset=qr)
-        
-    def third_quarter_data(self, appraisal_dept_output_qr: QuerySet[AppraisalDepartmentOutput]):
-        qr = appraisal_dept_output_qr.filter(year_quarter__quarter=3)
-        return self.get_quarter_data(queryset=qr)
-        
-    def fourth_quarter_data(self, appraisal_dept_output_qr: QuerySet[AppraisalDepartmentOutput]):
-        qr = appraisal_dept_output_qr.filter(year_quarter__quarter=4)
-        return self.get_quarter_data(queryset=qr)
-        
-    def fetch_quarterly(self, appraisal_id, year):
-        appraisal_dept_output_qr = self.appraisal_department_output_repo.fetch_by_appraisal_id_and_year(appraisal_id=appraisal_id, year=year)
-        data = {
-            "first_quarter": self.first_quarter_data(appraisal_dept_output_qr=appraisal_dept_output_qr),
-            "second_quarter": self.second_quarter_data(appraisal_dept_output_qr=appraisal_dept_output_qr),
-            "third_quarter": self.third_quarter_data(appraisal_dept_output_qr=appraisal_dept_output_qr),
-            "fourth_quarter": self.fourth_quarter_data(appraisal_dept_output_qr=appraisal_dept_output_qr)
-        }
-        return data
-        
 
 @dataclass
 class AppraisalScoreDimensionService:
-    score_object: AppraisalOutPutPerformanceDimensionScore
+    score_object: AppraisalOutPutPerformanceDimensionScore 
     
     def calculate_actual_variance_use_case(self)->float:
         """Calculate the actual variance between the actual score and the target score."""
@@ -210,3 +157,107 @@ class AppraisalScoreDimensionService:
             return weighted_score
         except Exception as e:
             raise Exception(f"[AppraisalScoreDimensionService] calculate_performance_dimension_weighted_score() for performance dimension pk: {self.score_object.id} with error: {e}")
+    
+
+
+class AppraisalDepartmentOutputService:
+    
+    def __init__(self, appraisal_department_output_repo: AppraisalDepartmentOutputRepository=None):
+        self.appraisal_department_output_repo = appraisal_department_output_repo
+    
+    def get_quarter_data(self, queryset: QuerySet[AppraisalDepartmentOutput]):
+        department_objectives_qr = []
+        
+        # Get queryset with only department objectives
+        for obj in queryset:
+            department_objective_obj = obj.department_output.department_objective
+            if not department_objective_obj in department_objectives_qr:
+                department_objectives_qr.append(department_objective_obj)
+
+        quarter_data = []
+        department_outputs_total_field_count = 1
+        
+        # Construct dict with department objectives with their related department outputs
+        for department_objectives_obj in department_objectives_qr:
+            appraisal_dept_output_filter_by_department_objectives_id = queryset.filter(department_output__department_objective__id=department_objectives_obj.id)
+            quarter_object = appraisal_dept_output_filter_by_department_objectives_id.first().year_quarter
+            data = {
+                "quarter_object": quarter_object,
+                "department_objective": department_objectives_obj,
+                "department_outputs_qr": appraisal_dept_output_filter_by_department_objectives_id,
+                "num_department_outputs": len(appraisal_dept_output_filter_by_department_objectives_id) + department_outputs_total_field_count
+            }
+            quarter_data.append(data)
+            
+        return quarter_data
+    
+    def first_quarter_data(self, appraisal_dept_output_qr: QuerySet[AppraisalDepartmentOutput]):
+        qr = appraisal_dept_output_qr.filter(year_quarter__quarter=1)
+        return self.get_quarter_data(queryset=qr)
+        
+    def second_quarter_data(self, appraisal_dept_output_qr: QuerySet[AppraisalDepartmentOutput]):
+        qr = appraisal_dept_output_qr.filter(year_quarter__quarter=2)
+        return self.get_quarter_data(queryset=qr)
+        
+    def third_quarter_data(self, appraisal_dept_output_qr: QuerySet[AppraisalDepartmentOutput]):
+        qr = appraisal_dept_output_qr.filter(year_quarter__quarter=3)
+        return self.get_quarter_data(queryset=qr)
+        
+    def fourth_quarter_data(self, appraisal_dept_output_qr: QuerySet[AppraisalDepartmentOutput]):
+        qr = appraisal_dept_output_qr.filter(year_quarter__quarter=4)
+        return self.get_quarter_data(queryset=qr)
+        
+    def fetch_quarterly(self, appraisal_id, year):
+        appraisal_dept_output_qr = self.appraisal_department_output_repo.fetch_by_appraisal_id_and_year(appraisal_id=appraisal_id, year=year)
+        data = {
+            "first_quarter": self.first_quarter_data(appraisal_dept_output_qr=appraisal_dept_output_qr),
+            "second_quarter": self.second_quarter_data(appraisal_dept_output_qr=appraisal_dept_output_qr),
+            "third_quarter": self.third_quarter_data(appraisal_dept_output_qr=appraisal_dept_output_qr),
+            "fourth_quarter": self.fourth_quarter_data(appraisal_dept_output_qr=appraisal_dept_output_qr)
+        }
+        
+        return data
+        
+    def get_output_total_weighted_score(self, appraisal_dept_output_id: int, performance_dimension_repo: AppraisalOutPutPerformanceDimensionScoreRepository)->float:
+        try:
+            
+            total_weight = Decimal(0)
+            qr = performance_dimension_repo.fetch_by_department_output_id(appraisal_department_output_id=appraisal_dept_output_id)
+            
+            for perform_dimension_obj in qr:
+                service_handler = AppraisalScoreDimensionService(score_object=perform_dimension_obj)
+                score_weighted_score = service_handler.calculate_performance_dimension_weighted_score()
+                total_weight += score_weighted_score
+                
+            return total_weight
+        except Exception as e:
+            raise Exception(f"[AppraisalDepartmentOutputService] get_total_weighted_score(), with appraisal_dept_output_id: {appraisal_dept_output_id}, failed with error: {e}")
+        
+    def get_department_objective_total_weighted_score(self, department_objective_id: int, performance_dimension_repo: AppraisalOutPutPerformanceDimensionScoreRepository)->float:
+        try:
+            total_weight = Decimal(0)
+            qr = performance_dimension_repo.fetch_by_department_objective_id(department_objective_id=department_objective_id)
+            
+            for perform_dimension_obj in qr:
+                service_handler = AppraisalScoreDimensionService(score_object=perform_dimension_obj)
+                score_weighted_score = service_handler.calculate_performance_dimension_weighted_score()
+                total_weight += score_weighted_score
+                
+            return total_weight
+        except Exception as e:
+            raise Exception(f"[AppraisalDepartmentOutputService] department_objective_id(), with department_objective_id: {department_objective_id}, failed with error: {e}")
+     
+    def get_department_objectives_total_year_quarter_weighted_score(self, year_quarter_id: int, performance_dimension_repo: AppraisalOutPutPerformanceDimensionScoreRepository)->float:
+        try:
+            total_weight = Decimal(0)
+            qr = performance_dimension_repo.fetch_by_year_quarter_id(year_quarter_id=year_quarter_id)
+            
+            for perform_dimension_obj in qr:
+                service_handler = AppraisalScoreDimensionService(score_object=perform_dimension_obj)
+                score_weighted_score = service_handler.calculate_performance_dimension_weighted_score()
+                total_weight += score_weighted_score
+                
+            return total_weight
+        except Exception as e:
+            raise Exception(f"[AppraisalDepartmentOutputService] get_department_objectives_total_year_quarter_weighted_score(), with year_quarter_id: {year_quarter_id}, failed with error: {e}")
+     

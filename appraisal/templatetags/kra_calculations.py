@@ -1,8 +1,8 @@
 from django import template
 
 from ..repository.kra import AppraisalOutPutPerformanceDimensionScoreRepository
-from ..services.kra import AppraisalScoreDimensionService
-from ..models.kra import AppraisalOutPutPerformanceDimensionScore
+from ..services.kra import AppraisalScoreDimensionService, AppraisalDepartmentOutputService
+
 
 from loguru import logger
 
@@ -77,49 +77,56 @@ def get_performance_dimension_actual_variance(performance_dimension_id)->float:
         return 0.0
     
 @register.filter
-def get_activity_total_score(activity_id)->float:
+def get_output_total_score(output_id)->float:
     
     try:
-        activity_id = int(activity_id)
+        output_id = int(output_id)
     except ValueError:
-        logger.error(f"[get_activity_total_score pk: {activity_id}] Invalid type Expected int, got {type(activity_id).__name__}")
+        logger.error(f"[KraCalculationTemplatetag] get_output_total_score(), output object with id: {output_id}, Invalid type Expected int, got {type(output_id).__name__}")
         return 0.0
 
-    try:        
-        ...
+    try: 
+        service_handler = AppraisalDepartmentOutputService()
+        total_weighted_score = service_handler.get_output_total_weighted_score(appraisal_dept_output_id=output_id, performance_dimension_repo=AppraisalOutPutPerformanceDimensionScoreRepository())
+        return total_weighted_score
     except Exception as e:
-        logger.error(e)
+        logger.error(f"[KraCalculationTemplatetag] get_output_total_score(), output object with id: {output_id}, failed with error: {e}")
         return 0.0
 
-    
+
 @register.filter
-def get_kra_total_score(appraisal_kra_id)->float:
+def get_department_objective_total_score(department_objective_id: int)->float:
     
     try:
-        appraisal_kra_id = int(appraisal_kra_id)
+        department_objective_id = int(department_objective_id)
     except ValueError:
-        logger.error(f"[get_kra_total_score pk: {appraisal_kra_id}] Invalid type Expected int, got {type(appraisal_kra_id).__name__}")
-        return 0.0
-    
-    try:
-        ...
-    except Exception as e:
-        logger.error(e)
-        return 0.0
-    
-@register.filter
-def get_target_score_by_performance_dimension_id(performance_dimension_id)->float:
-    
-    try:
-        performance_dimension_id = int(performance_dimension_id)
-    except ValueError:
-        logger.error(f"[get_target_score_by_performance_dimension_id pk: {performance_dimension_id}] Invalid type Expected int, got {type(performance_dimension_id).__name__}")
+        logger.error(f"[KraCalculationTemplatetag] get_department_objective_total_score(), department_objective object with id: {department_objective_id}, Invalid type Expected int, got {type(department_objective_id).__name__}")
         return 0.0
 
-    try:
-        ...
+    try: 
+        service_handler = AppraisalDepartmentOutputService()
+        total_weighted_score = service_handler.get_department_objective_total_weighted_score(department_objective_id=department_objective_id, performance_dimension_repo=AppraisalOutPutPerformanceDimensionScoreRepository())
+        return total_weighted_score
     except Exception as e:
-        logger.error(e)
+        logger.error(f"[KraCalculationTemplatetag] get_department_objective_total_score(), output object with id: {department_objective_id}, failed with error: {e}")
+        return 0.0
+    
+
+@register.filter
+def get_department_objectives_total_year_quarter_weighted_score(year_quarter_id: int)->float:
+    
+    try:
+        year_quarter_id = int(year_quarter_id)
+    except ValueError:
+        logger.error(f"[KraCalculationTemplatetag] get_department_objectives_total_year_quarter_weighted_score(), department_objective object with id: {year_quarter_id}, Invalid type Expected int, got {type(year_quarter_id).__name__}")
+        return 0.0
+
+    try: 
+        service_handler = AppraisalDepartmentOutputService()
+        total_weighted_score = service_handler.get_department_objectives_total_year_quarter_weighted_score(year_quarter_id=year_quarter_id, performance_dimension_repo=AppraisalOutPutPerformanceDimensionScoreRepository())
+        return total_weighted_score
+    except Exception as e:
+        logger.error(f"[KraCalculationTemplatetag] get_department_objectives_total_year_quarter_weighted_score(), output object with id: {year_quarter_id}, failed with error: {e}")
         return 0.0
     
 
