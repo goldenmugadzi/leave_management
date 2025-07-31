@@ -1,0 +1,429 @@
+{% extends "base_layout.html" %}
+{% load static %}
+
+{% block title %}Bulk Fault Report - Fault Locator{% endblock %}
+
+{% block styles %}
+<link href="{% static 'assets/css/tailwind.min.css' %}" rel="stylesheet">
+<style>
+    .form-section {
+        background: white;
+        border-radius: 0.5rem;
+        box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+        margin-bottom: 1.5rem;
+    }
+    .section-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 1rem;
+        border-radius: 0.5rem 0.5rem 0 0;
+        font-weight: 600;
+    }
+    .section-content {
+        padding: 1.5rem;
+    }
+    .fault-item {
+        border: 1px solid #e5e7eb;
+        border-radius: 0.5rem;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        position: relative;
+    }
+    .fault-item.removable {
+        border-color: #f59e0b;
+        background-color: #fffbeb;
+    }
+    .remove-fault-btn {
+        position: absolute;
+        top: 0.5rem;
+        right: 0.5rem;
+        background: #ef4444;
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 2rem;
+        height: 2rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        opacity: 0.7;
+        transition: opacity 0.2s;
+    }
+    .remove-fault-btn:hover {
+        opacity: 1;
+    }
+    .form-field {
+        margin-bottom: 1rem;
+    }
+    .form-label {
+        display: block;
+        font-weight: 500;
+        color: #374151;
+        margin-bottom: 0.25rem;
+    }
+    .form-input, .form-select, .form-textarea {
+        width: 100%;
+        border: 1px solid #d1d5db;
+        border-radius: 0.375rem;
+        padding: 0.5rem 0.75rem;
+        font-size: 0.875rem;
+        line-height: 1.25rem;
+    }
+    .form-input:focus, .form-select:focus, .form-textarea:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+    .form-textarea {
+        resize: vertical;
+        min-height: 4rem;
+    }
+    .required-field::after {
+        content: " *";
+        color: #ef4444;
+    }
+    .btn-primary {
+        background: linear-gradient(135deg, #3b82f6 0%, #1e40af 100%);
+        color: white;
+        padding: 0.75rem 1.5rem;
+        border-radius: 0.5rem;
+        font-weight: 600;
+        border: none;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .btn-primary:hover {
+        background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%);
+        transform: translateY(-1px);
+    }
+    .btn-secondary {
+        background: #6b7280;
+        color: white;
+        padding: 0.5rem 1rem;
+        border-radius: 0.375rem;
+        font-weight: 500;
+        border: none;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .btn-secondary:hover {
+        background: #4b5563;
+    }
+    .help-text {
+        font-size: 0.75rem;
+        color: #6b7280;
+        margin-top: 0.25rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-6">
+    <!-- Header -->
+    <div class="mb-6">
+        <h1 class="text-3xl font-bold text-gray-900">Bulk Fault Report</h1>
+        <p class="text-gray-600 mt-1">Report multiple faults efficiently for your depot</p>
+    </div>
+
+    <form method="post" id="bulk-fault-form">
+        {% csrf_token %}
+        
+        <!-- Global Settings -->
+        <div class="form-section">
+            <div class="section-header">
+                <h3>Common Settings</h3>
+            </div>
+            <div class="section-content">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="form-field">
+                        <label for="depot" class="form-label required-field">Depot</label>
+                        <select name="depot" id="depot" class="form-select" required>
+                            <option value="">Select Depot</option>
+                            {% for depot in depots %}
+                                <option value="{{ depot.id }}">{{ depot.depot }}</option>
+                            {% endfor %}
+                        </select>
+                        <div class="help-text">All faults will be reported for this depot</div>
+                    </div>
+                    
+                    <div class="form-field">
+                        <label for="default_priority" class="form-label">Default Priority</label>
+                        <select name="default_priority" id="default_priority" class="form-select">
+                            <option value="">Select Default Priority</option>
+                            {% for value, label in priority_choices %}
+                                <option value="{{ value }}">{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                        <div class="help-text">This priority will be applied to all faults (can be overridden per fault)</div>
+                    </div>
+                    
+                    <div class="form-field">
+                        <label for="default_voltage" class="form-label">Default Voltage</label>
+                        <select name="default_voltage" id="default_voltage" class="form-select">
+                            <option value="">Select Default Voltage</option>
+                            {% for value, label in voltage_choices %}
+                                <option value="{{ value }}">{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                        <div class="help-text">This voltage will be applied to all faults (can be overridden per fault)</div>
+                    </div>
+                    
+                    <div class="form-field">
+                        <label for="default_fault_type" class="form-label">Default Fault Type</label>
+                        <select name="default_fault_type" id="default_fault_type" class="form-select">
+                            <option value="">Select Default Fault Type</option>
+                            {% for value, label in fault_type_choices %}
+                                <option value="{{ value }}">{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                        <div class="help-text">This fault type will be applied to all faults (can be overridden per fault)</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Fault Entries -->
+        <div class="form-section">
+            <div class="section-header">
+                <div class="flex justify-between items-center">
+                    <h3>Fault Reports</h3>
+                    <button type="button" id="add-fault-btn" class="btn-secondary">
+                        <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                        </svg>
+                        Add Another Fault
+                    </button>
+                </div>
+            </div>
+            <div class="section-content">
+                <div id="fault-entries">
+                    <!-- Initial fault entry -->
+                    <div class="fault-item" data-fault-index="0">
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <div class="form-field md:col-span-2 lg:col-span-3">
+                                <label class="form-label required-field">Description</label>
+                                <textarea name="faults[0][description]" class="form-textarea" placeholder="Describe the fault..." required></textarea>
+                            </div>
+                            
+                            <div class="form-field">
+                                <label class="form-label">Location/Address</label>
+                                <input type="text" name="faults[0][location]" class="form-input" placeholder="Specific location or address">
+                            </div>
+                            
+                            <div class="form-field">
+                                <label class="form-label">Priority</label>
+                                <select name="faults[0][priority]" class="form-select priority-select">
+                                    <option value="">Use Default</option>
+                                    {% for value, label in priority_choices %}
+                                        <option value="{{ value }}">{{ label }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            
+                            <div class="form-field">
+                                <label class="form-label">Voltage</label>
+                                <select name="faults[0][voltage]" class="form-select voltage-select">
+                                    <option value="">Use Default</option>
+                                    {% for value, label in voltage_choices %}
+                                        <option value="{{ value }}">{{ label }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            
+                            <div class="form-field">
+                                <label class="form-label">Fault Type</label>
+                                <select name="faults[0][fault_type]" class="form-select fault-type-select">
+                                    <option value="">Use Default</option>
+                                    {% for value, label in fault_type_choices %}
+                                        <option value="{{ value }}">{{ label }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            
+                            <div class="form-field">
+                                <label class="form-label">Clients Affected</label>
+                                <input type="number" name="faults[0][clients_affected]" class="form-input" placeholder="Number of clients" min="0">
+                            </div>
+                            
+                            <div class="form-field">
+                                <label class="form-label">
+                                    <input type="checkbox" name="faults[0][vvip]" value="true" class="mr-2">
+                                    VVIP Fault
+                                </label>
+                                <div class="help-text">Check if this affects VIP clients</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="text-center mt-4">
+                    <p class="text-sm text-gray-600 mb-4">Tip: Use the default settings above to avoid repeating common values for each fault.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Submit Section -->
+        <div class="text-center">
+            <button type="submit" class="btn-primary">
+                <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
+                </svg>
+                Submit All Fault Reports
+            </button>
+            <p class="text-sm text-gray-600 mt-2">All faults will be created and you will receive confirmation notifications</p>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    let faultIndex = 1;
+    
+    // Add new fault entry
+    document.getElementById('add-fault-btn').addEventListener('click', function() {
+        const faultEntries = document.getElementById('fault-entries');
+        const newFaultHtml = `
+            <div class="fault-item removable" data-fault-index="${faultIndex}">
+                <button type="button" class="remove-fault-btn" onclick="removeFault(this)">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    <div class="form-field md:col-span-2 lg:col-span-3">
+                        <label class="form-label required-field">Description</label>
+                        <textarea name="faults[${faultIndex}][description]" class="form-textarea" placeholder="Describe the fault..." required></textarea>
+                    </div>
+                    
+                    <div class="form-field">
+                        <label class="form-label">Location/Address</label>
+                        <input type="text" name="faults[${faultIndex}][location]" class="form-input" placeholder="Specific location or address">
+                    </div>
+                    
+                    <div class="form-field">
+                        <label class="form-label">Priority</label>
+                        <select name="faults[${faultIndex}][priority]" class="form-select priority-select">
+                            <option value="">Use Default</option>
+                            {% for value, label in priority_choices %}
+                                <option value="{{ value }}">{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="form-field">
+                        <label class="form-label">Voltage</label>
+                        <select name="faults[${faultIndex}][voltage]" class="form-select voltage-select">
+                            <option value="">Use Default</option>
+                            {% for value, label in voltage_choices %}
+                                <option value="{{ value }}">{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="form-field">
+                        <label class="form-label">Fault Type</label>
+                        <select name="faults[${faultIndex}][fault_type]" class="form-select fault-type-select">
+                            <option value="">Use Default</option>
+                            {% for value, label in fault_type_choices %}
+                                <option value="{{ value }}">{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="form-field">
+                        <label class="form-label">Clients Affected</label>
+                        <input type="number" name="faults[${faultIndex}][clients_affected]" class="form-input" placeholder="Number of clients" min="0">
+                    </div>
+                    
+                    <div class="form-field">
+                        <label class="form-label">
+                            <input type="checkbox" name="faults[${faultIndex}][vvip]" value="true" class="mr-2">
+                            VVIP Fault
+                        </label>
+                        <div class="help-text">Check if this affects VIP clients</div>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        faultEntries.insertAdjacentHTML('beforeend', newFaultHtml);
+        faultIndex++;
+        
+        // Apply default values to new fault
+        applyDefaults();
+    });
+    
+    // Remove fault entry
+    window.removeFault = function(button) {
+        const faultItem = button.closest('.fault-item');
+        faultItem.remove();
+    };
+    
+    // Apply default values when they change
+    function applyDefaults() {
+        const defaultPriority = document.getElementById('default_priority').value;
+        const defaultVoltage = document.getElementById('default_voltage').value;
+        const defaultFaultType = document.getElementById('default_fault_type').value;
+        
+        // Update all fault entries that don't have specific values
+        document.querySelectorAll('.priority-select').forEach(select => {
+            if (!select.value) {
+                select.style.backgroundColor = defaultPriority ? '#f3f4f6' : '';
+            }
+        });
+        
+        document.querySelectorAll('.voltage-select').forEach(select => {
+            if (!select.value) {
+                select.style.backgroundColor = defaultVoltage ? '#f3f4f6' : '';
+            }
+        });
+        
+        document.querySelectorAll('.fault-type-select').forEach(select => {
+            if (!select.value) {
+                select.style.backgroundColor = defaultFaultType ? '#f3f4f6' : '';
+            }
+        });
+    }
+    
+    // Listen for changes in default fields
+    ['default_priority', 'default_voltage', 'default_fault_type'].forEach(id => {
+        document.getElementById(id).addEventListener('change', applyDefaults);
+    });
+    
+    // Form validation
+    document.getElementById('bulk-fault-form').addEventListener('submit', function(e) {
+        const depot = document.getElementById('depot').value;
+        if (!depot) {
+            e.preventDefault();
+            alert('Please select a depot before submitting.');
+            return;
+        }
+        
+        const descriptions = document.querySelectorAll('textarea[name*="[description]"]');
+        let hasDescription = false;
+        descriptions.forEach(textarea => {
+            if (textarea.value.trim()) {
+                hasDescription = true;
+            }
+        });
+        
+        if (!hasDescription) {
+            e.preventDefault();
+            alert('Please provide at least one fault description.');
+            return;
+        }
+        
+        // Show loading state
+        const submitBtn = this.querySelector('button[type="submit"]');
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<svg class="w-5 h-5 inline mr-2 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>Submitting...';
+    });
+    
+    // Initialize defaults
+    applyDefaults();
+});
+</script>
+{% endblock %}
