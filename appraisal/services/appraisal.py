@@ -50,7 +50,6 @@ class AppraisalService:
                 appraisal_object.id
             )
             
-            existing_experience_names = {exp.experience.name for exp in existing_experiences}
             payload_experience_names = {exp.name for exp in experience_objects}
 
             # Remove experiences not in the payload
@@ -74,7 +73,6 @@ class AppraisalService:
             existing_qualifications = self.qualification_repository.get_by_user(
                 user_object=appraisal_object.user
             )
-            existing_qualification_names = {qual.name for qual in existing_qualifications}
             payload_qualification_names = {qual.name for qual in qualifications}
 
             # Remove qualifications not in the payload

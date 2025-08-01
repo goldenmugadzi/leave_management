@@ -8,88 +8,17 @@
   <style>.dataTables_wrapper .dataTables_length select { width: 4rem; }</style>
 {% endblock %}
 {% block content %}
-{% include "appraisal/approval/detail.html" with stages=stages last_stage_num=last_stage_number %}
 
-<div class="mt-2 mb-4">
-    <div>
-        <div class="border-xl bg-yellow-200 p-4 rounded-l">
-            <h2 class="text-center font-bold text-xl">Section 4: Performance Progress Reviews</h2>
-        </div>
+{% include 'appraisal/sections_header.html' with section_header="Section 4: Performance Progress Reviews" %}
+
+{% include "appraisal/appraisee_info_component.html" with appraisee_object=appraisee_object %}
+
+
+<div class="flex gap-4">
+    <div class="flex-1">
+    {% include "./progress_review/index.html" with performance_review_objects=performance_review_objects %}
     </div>
 </div>
-
-    <div class="flex gap-2">
-        <div class="flex-1">
-            <h3>User Information</h3>
-            <div 
-            class="shadow-xl rounded-lg border-2 border-indigo-400 py-2"
-            style="max-height: 140px; overflow-y: auto;"
-            >
-                  <ul class="px-2">
-                    <li>Full Name: {{user_object}}</li>
-                    <li>Cost Center: {{user_object.cost_center}}</li>
-                    <li>EC Number: {{user_object.username}}</li>
-                    <li>Grade: {{user_object.grade}}</li>
-                    <li>Current Position: {{user_object.designation}}</li>
-                    <li>Section: {{user_object.section}}</li>
-                  </ul>
-                    
-            </div>   
-        </div>
-
-        <div class="flex-1">
-            <h3>User Qualifications</h3>
-            <div 
-            class="shadow-xl rounded-lg border-2 border-indigo-400"
-            style="max-height: 140px; overflow-y: auto;"
-            >
-                {% for qualification in user_qualification_objects %}
-                    <div class="p-2 flex gap-2">
-                        <span>Name: {{qualification.name}}</span>
-                        <a 
-                        href={{qualification.file.url}}
-                        target="_blank"
-                        >Preview Document</a>
-                    </div>
-                    <hr/>
-                {% endfor %}
-                
-            </div>
-        </div>
-        <div class="flex-1">
-            <h3>User Experiences</h3>
-            <div 
-            class="shadow-xl rounded-lg border-2 border-indigo-400"
-            style="max-height: 140px; overflow-y: auto;"
-            >
-            <table class="min-w-full border-collapse">
-                <thead>
-                    <tr class="bg-gray-200 text-gray-600 text-left text-sm uppercase tracking-wider">
-                        <th class="px-6 py-3 border-b">Experience Name</th>
-                        <th class="px-6 py-3 border-b">Years of Experience</th>
-                        <th class="px-6 py-3 border-b">Months of Experience</th>
-                    </tr>
-                </thead>
-                <tbody class="text-gray-700">
-                    {% for experience in user_experience_objects %}
-                    <tr class="border-b hover:bg-gray-100">
-                        <td class="px-6 py-4">{{ experience.experience.name }}</td>
-                        <td class="px-6 py-4">{{ experience.years_of_experience }}</td>
-                        <td class="px-6 py-4">{{ experience.months_of_experience }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-                
-            </div>
-        </div>
-    </div>
-    
-    <div class="flex gap-4">
-        <div class="flex-1">
-        {% include "./progress_review/index.html" with performance_review_objects=performance_review_objects %}
-        </div>
-    </div>
 
 
 {% endblock %}

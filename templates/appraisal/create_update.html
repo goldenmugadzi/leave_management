@@ -50,31 +50,7 @@
     <div class="tab-content mt-6">
         <!-- User Information Tab -->
         <div id="user-info" class="tab-pane active">
-            <div class="bg-white shadow-xl rounded-lg border-2 border-indigo-400 p-6">
-                <h3 class="text-lg font-semibold text-gray-900 mb-4">User Information</h3>
-                <div class="grid grid-cols-2 gap-4">
-                    <span><strong>Name: </strong> {{user_object}}</span>
-                    <span><strong>EC Number:    </strong> {{user_object.username}}</span>
-                    <span><strong>Performance Period:   </strong>{{assessment_period}}</span>
-                    {% if has_no_designation %}
-                        <span>
-                            <strong>Position: </strong>
-                                <span class="px-3 py-1 text-sm font-medium text-white bg-red-500 rounded-full">
-                                    Not Set
-                                </span>
-                        </span>
-                    {% else %}
-                        <span><strong>Position: </strong> {{user_object.designation}}</span>
-                    {% endif %}
-                    
-                    {% if is_update %}
-                        <span><strong>Supervisor:   </strong> {{appraiser_object}}</span>
-                        <span><strong>Reviewer: </strong> {{reviewer_object}}</span>
-                    {% endif %}
-                    <span><strong>Station:  </strong> {{user_object.region}}</span>
-                    <span><strong>Department:   </strong> {{user_object.cost_center}}</span>
-                </div>
-            </div>
+            {% include 'appraisal/appraisee_info_component.html' with appraisee_object=user_object has_no_designation=has_no_designation  is_update=is_update appraiser_object=appraiser_object reviewer_object=reviewer_object assessment_period=assessment_period %}
         </div>
 
         <!-- Qualifications Tab -->

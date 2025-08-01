@@ -3,23 +3,26 @@ from django.http import Http404, HttpResponseRedirect
 from django.urls import reverse
 from django.shortcuts import redirect, render
 from django.http.response import HttpResponse, HttpResponseServerError
+from django.utils.text import slugify
 
 from django.views.generic import TemplateView
 from django.contrib.messages.views import SuccessMessageMixin
 from django.contrib import messages
-from ..services import (AppraisalService, PerformanceReviewService, 
+from ...services import (AppraisalService, PerformanceReviewService, 
                         UserQualificationService, AppraisalExperienceService, 
                         TrainingAndDevelopmentService)
-from ..repository import (AppraisalRepository, UserQualificationRepository, AppraisalExperienceRepository, 
+from ...repository import (AppraisalRepository, UserQualificationRepository, AppraisalExperienceRepository, 
                           ExperienceRepository, PerformanceReviewRepository,
                           TrainingAndDevelopmentRepository)
-from ..helpers.getters import ApprovalStagesHandler
+from ...helpers.getters import ApprovalStagesHandler
 
-from ..models import PerformanceProgressReview, AppraisalExperience, TrainingAndDevelopment
+from ...models import PerformanceProgressReview, AppraisalExperience, TrainingAndDevelopment
 from it.users.models import UserQualification, UserProfile
-from ..forms import PerformanceReviewApprovalForm
+from ...forms import PerformanceReviewApprovalForm
 from approve.forms import ApprovalForm
 from approve.models import Step, Approval
+from ...helpers.getters.dates import get_assessment_period
+
 from loguru import logger
 
 class PerformancePlanAndAssessmentAppraisalTemplateView(TemplateView):
@@ -41,75 +44,57 @@ class PerformancePlanAndAssessmentTemplateView(TemplateView):
     template_name = "appraisal/performance/detail.html"
     
     def get_appraisal_object(self):
-        appraisal_service_handler = AppraisalService(
-            appraisal_experience_repository=AppraisalExperienceRepository(),
-            qualification_repository=UserQualificationRepository(),
-            experience_repository=ExperienceRepository(),
-            appraisal_repository=AppraisalRepository()
-        )
-        appraisal_id = self.kwargs.get("appraisal_id")
-        qr = appraisal_service_handler.get_appraisal_by_pk_use_case(appraisal_id=appraisal_id)
-        
-        if not qr.exists():
-            raise Http404("Appraisal not found")
-        
-        return qr.first()
-        
-    
-    def get_user_info(self, appraisal_id) -> Dict[str, Union[UserProfile, UserQualification, AppraisalExperience]]:
-        user_qualification_service = UserQualificationService(user_qualification_repo=UserQualificationRepository())
-        appraisal_experience_service = AppraisalExperienceService(appraisal_repo=AppraisalExperienceRepository())
-        
-        appraisal_object = self.get_appraisal_object()
-        user_qualification_objects = user_qualification_service.get_by_user_object_use_case(user_object=appraisal_object.user)
-        appraisal_experience_objects = appraisal_experience_service.get_by_appraisal_id_use_case(appraisal_id=appraisal_id)
-        
-        
-        data = {
-            "user_object": appraisal_object.user,
-            "user_qualification_objects": user_qualification_objects,
-            "user_experience_objects": appraisal_experience_objects
-        }
-        return data
+        repo = TrainingAndDevelopmentRepository()
+        return repo.get_by_appraisal_id(appraisal_id=self.kwargs.get('appraisal_id')).appraisal
+
         
     def get_performance_plan_info(self, appraisal_id)->Dict[str, Union[List[PerformanceProgressReview], List[TrainingAndDevelopment]]]:
         data = {}
         
         performance_review_repository = PerformanceReviewRepository()
-        performance_review_service_handler = PerformanceReviewService(performance_repo=performance_review_repository)
-        performance_review_objects = performance_review_service_handler.get_performances_by_appraisal_id_use_case(appraisal_id=appraisal_id)
+        performance_review_objects = performance_review_repository.get_performance_by_appraisal_id(appraisal_id=appraisal_id)
         data = {"performance_review_objects": performance_review_objects}
         return data
     
-    def get_approval_stages(self):
-        try:
-            handler = ApprovalStagesHandler(appraisal_id=self.kwargs.get("appraisal_id"))
-            return handler.get_stages_info()
-        except Exception as e:
-            logger.error(f"[PerformancePlanAndAssessmentTemplateView] for Appraisal - {self.get_appraisal_object()} failed with error: {e}")
-            return None
         
+    def get_current_date_assessment(self):
+        appraisal_created_date = self.get_appraisal_object().created_date
+        return get_assessment_period(date_object=appraisal_created_date)
+    
+
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
         appraisal_id = self.kwargs.get("appraisal_id")
-        
+        appraisal_object = self.get_appraisal_object()
+
         performance_plan_info = self.get_performance_plan_info(appraisal_id=appraisal_id)
-        user_info = self.get_user_info(appraisal_id=appraisal_id)
         
-        
-        context.update(self.get_approval_stages())
-        context.update(user_info)
         context.update(performance_plan_info)
-        context["appraisal_object"] = self.get_appraisal_object()
+        context["appraisal_object"] = appraisal_object
+        context["appraisal_object"] = appraisal_object
+        context["appraisee_object"] = appraisal_object.user
+        context["appraiser_object"] = appraisal_object.appraiser
+        context["reviewer_object"] = appraisal_object.reviewer
+        context["has_no_designation"] = appraisal_object.user.designation == None or appraisal_object.user.designation == ""
+        context["assessment_period"] = self.get_current_date_assessment()
+        context["is_update"] = True
         
         return context
-    
+
     def get(self, request, *args, **kwargs):
-        approval_data = self.get_approval_stages()
-        if approval_data is None:
+        try:
+            self.object = None
+            appraisal_obj = self.get_appraisal_object()
+            
+            if appraisal_obj is None:
+                logger.warning(f"[PerformancePlanAndAssessmentAppraisalTemplateView] get_appraisal_object() with appraisal_obj pk: {self.kwargs.get('appraisal_id')}, not found error")
+                return redirect("object_not_found_error", object_name=slugify("Appraisal"))
+
+        except Exception as e:
+            logger.error(f"[PerformancePlanAndAssessmentAppraisalTemplateView]  get_appraisal_object() with appraisal_obj pk: {self.kwargs.get('appraisal_id')}, failed with error: {e}")
             return redirect("server_error_view")
-        context = self.get_context_data(**kwargs)
-        return self.render_to_response(context)
+        return super().get(request, *args, **kwargs)
+
 
 
 class PerformanceReviewsApprovalView(SuccessMessageMixin, TemplateView):
