@@ -36,5 +36,23 @@ class AppraisalExperience(TimeStamp):
 
     def __str__(self) -> str:
         return f"{self.appraisal.user} - {self.experience}"
+    
+class PersonalAttribute(TimeStamp):
+    name = models.CharField(unique=True, max_length=250)
+    
+    def __str__(self):
+        return self.name
+    
+class AppraiseePersonalAttribute(TimeStamp):
+    appraisal = models.ForeignKey(Appraisal, on_delete=models.RESTRICT, related_name="appraisee_appraisal")
+    personal_attribute = models.ForeignKey(PersonalAttribute, on_delete=models.RESTRICT, related_name="personal_attributes")
+    excellent = models.BooleanField(default=False)
+    very_good = models.BooleanField(default=False)
+    satisfactory = models.BooleanField(default=False)
+    requires_improvement = models.BooleanField(default=False)
+    unsatisfactory = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"{self.appraisal}"
 
 
