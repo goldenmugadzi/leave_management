@@ -3,6 +3,9 @@
 
 {% block content %}
 
+{% include 'appraisal/performance/quarter_header_desc_component.html' with header_name="Appraisee strengths and weaknesses detail" quarter=quarter_obj %}
+
+
 <div class="container my-4">
         <div class="flex flex-col gap-4">
                 <div>
@@ -25,7 +28,7 @@
                             </div>
                         </div>
                         {% if is_appraiser == True %}
-                            {% if activity_scores_quarter_scored == True %}
+                            {% if is_quarter_scored == True %}
                                 <div class="flex justify-center my-4">
                                     <button type="submit" class="w-96 bg-blue-500 hover:bg-blue-700 inline-block rounded-full text-white py-2 px-4 rounded">Create</button>
                                 </div>

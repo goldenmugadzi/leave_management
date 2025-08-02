@@ -46,16 +46,19 @@ class PerformanceReviewRepository:
             return PerformanceProgressReview.objects.filter(appraisal__id=appraisal_id).select_related('appraisal')
         except Exception as e:
             raise ValueError(f"retrieving performance objects by appraisal failed with error: {e}")
-    
-    
-    def get_performance_by_appraisal_id_quarter(self, appraisal_id: int, year: int, quarter: int)->PerformanceProgressReview:
+
+    def get_performance_by_appraisal_id_quarter(self, appraisal_id: int, quarter_id: int)->PerformanceProgressReview:
         try:
-            object = PerformanceProgressReview.objects.filter(appraisal__id=appraisal_id, quarter__year=year, quarter__quarter=quarter)
-            if len(object) == 0:
-                return None
-            return object.first()
+            qr = PerformanceProgressReview.objects.filter(appraisal__id=appraisal_id, quarter__id=quarter_id)
+            return qr.first()
         except Exception as e:
-            raise ValueError(f"retrieving performance objects by appraisal failed with error: {e}")
+            raise ValueError(f"[PerformanceReviewRepository] get_performance_by_appraisal_id_quarter with appraisal id: {appraisal_id} and quarter id: {quarter_id}, failed with error: {e}")
+    
+    def fetch_performance_by_appraisal_id_quarter(self, appraisal_id: int, quarter_id: int)->List[PerformanceProgressReview]:
+        try:
+            return PerformanceProgressReview.objects.filter(appraisal__id=appraisal_id, quarter__id=quarter_id)
+        except Exception as e:
+            raise ValueError(f"[PerformanceReviewRepository] fetch_performance_by_appraisal_id_quarter with appraisal id: {appraisal_id} and quarter id: {quarter_id}, failed with error: {e}")
     
     def get_performance_by_id(self, pk: int)->PerformanceProgressReview:
         try:

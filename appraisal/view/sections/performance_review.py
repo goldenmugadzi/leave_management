@@ -102,16 +102,11 @@ class PerformanceReviewsApprovalView(SuccessMessageMixin, TemplateView):
     
     def get_performance_review_object(self):
         appraisal_id = self.kwargs.get("appraisal_id")
-        current_quarter = self.kwargs.get("quarter")
-        current_year = self.kwargs.get("year")
+        quarter_id = self.kwargs.get("quarter_id")
         
         repository = PerformanceReviewRepository()
-        service_handler = PerformanceReviewService(performance_repo=repository)
-        performance_review_object = service_handler.get_performances_by_appraisal_id_quarter_use_case(appraisal_id=appraisal_id, year=current_year, quarter=current_quarter)
-        
-        if performance_review_object is None:
-            raise Http404("Performance Progress Review for this quarter not found")
-        
+        performance_review_object = repository.get_performance_by_appraisal_id_quarter(appraisal_id=appraisal_id, quarter_id=quarter_id)
+
         return performance_review_object
     
     def get_performance_review_forms_objects(self) -> Dict[str, PerformanceReviewApprovalForm | List[PerformanceProgressReview | int]]:
@@ -148,31 +143,37 @@ class PerformanceReviewsApprovalView(SuccessMessageMixin, TemplateView):
         }
         return data
     
+    def is_quarter_scored(self)->bool:
+        repo = PerformanceReviewRepository()
+        qr = repo.fetch_performance_by_appraisal_id_quarter(quarter_id=self.kwargs.get("quarter_id"), appraisal_id=self.kwargs.get("appraisal_id"))
+        unscored_qr = qr.filter(is_completed=False)
+        if unscored_qr.exists():
+            return False
+        return True
+    
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
-        handler = ActivityScoreHandler()
-        data = handler.get_activity_scores_quarter_scored(appraisal_id=self.kwargs.get('appraisal_id'),
-                                                              quarter=self.kwargs.get('quarter'),
-                                                              year=self.kwargs.get('year'))
-   
-        context.update(data)
+        
         context.update(self.get_performance_review_forms_objects())
         context.update(self.approval_user_roles())
+        
+        context["is_quarter_scored"] = self.is_quarter_scored()
+        context["quarter_obj"] = self.get_performance_review_object().quarter
+        
         return context
     
     def get(self, request, *args, **kwargs):
+        self.object = None
         try:
-            handler = ActivityScoreHandler()
-            data = handler.get_activity_scores_quarter_scored(appraisal_id=self.kwargs.get('appraisal_id'),
-                                                              quarter=self.kwargs.get('quarter'),
-                                                              year=self.kwargs.get('year'))
-            if not data["activity_scores_quarter_scored"] and self.approval_user_roles()["is_appraiser"]:
-                messages.info(request=request, message="To complete this stage, you must score all activities for this quarter. Please ensure that each activity has a score before proceeding.")
+            performance_review_object = self.get_performance_review_object()
+            if performance_review_object is None:
+                logger.error(f"[PerformanceReviewsApprovalView] get_performance_review_object pk-{self.kwargs.get('appraisal_id')}, Training object not found")
+                return redirect("object_not_found_error", object_name=slugify("Performance Review"))
+            context = self.get_context_data(**kwargs)
+            return self.render_to_response(context)
         except Exception as e:
-            logger.error(f"Scored activity for appraisal: {self.kwargs.get('appraisal_id')} quarter: {self.kwargs.get('quarter')}-{self.kwargs.get('year')}, failed with error: {e}")
+            logger.error(f"[TrainingAndDevelopmentUpdateView] get_performance_review_object pk-{self.kwargs.get('appraisal_id')}, failed with error: {e}")
             return redirect("server_error_view")
-        context = self.get_context_data(**kwargs)
-        return self.render_to_response(context)
     
     def post(self, request, *args, **kwargs):
         appraisal_id = self.kwargs.get("appraisal_id")
