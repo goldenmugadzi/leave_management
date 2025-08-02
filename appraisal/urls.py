@@ -76,7 +76,7 @@ urlpatterns = [
     path('performance/<int:appraisal_id>/performance-progress-review', PerformancePlanAndAssessmentTemplateView.as_view(), name='performance_review_detail'),
     path('performance/review/<int:appraisal_id>/<int:year>/<int:quarter>', PerformanceReviewsApprovalView.as_view(), name='performance_review_create'),
     path('performance/<int:appraisal_id>/training-development', TrainingAndDevelopmentTemplateView.as_view(), name='training_development_index'),
-    path('performance/training-development/<int:appraisal_id>/<int:year>/<int:quarter>', TrainingAndDevelopmentUpdateView.as_view(), name='training_development_update'),
+    path('<int:appraisal_id>/training-development/<int:quarter_id>', TrainingAndDevelopmentUpdateView.as_view(), name='training_development_update'),
     
 
     # ======================== Departmental objective workplan =========================

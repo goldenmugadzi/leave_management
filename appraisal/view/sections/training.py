@@ -10,11 +10,11 @@ from django.utils.text import slugify
 
 from ...helpers.types.training import TrainingAndDevelopmentCreateUpdateType
 from ...helpers.getters import ApprovalStagesHandler
-from it.users.models import UserQualification, UserProfile
 
 from ...forms import InterventionStrategyFormSet, ActionsForm, CompetencyFormSet
 from ...models import TrainingAndDevelopment, InterventionStrategy, AppraisalExperience
-from ...repository import TrainingAndDevelopmentRepository, AppraisalExperienceRepository, UserQualificationRepository, ExperienceRepository, AppraisalRepository
+from ...repository import TrainingAndDevelopmentRepository
+from ...repository.kra import AppraisalOutPutPerformanceDimensionScoreRepository
 from ...services import TrainingAndDevelopmentService, AppraisalService, UserQualificationService, AppraisalExperienceService
 from ...helpers.getters.dates import get_assessment_period
 from loguru import logger
@@ -70,13 +70,10 @@ class TrainingAndDevelopmentUpdateView(SuccessMessageMixin, CreateView):
     
     def get_training_object(self)->TrainingAndDevelopment:
         training_repo_handler = TrainingAndDevelopmentRepository()
-        training_service = TrainingAndDevelopmentService(training_dev_repo=training_repo_handler)
         appraisal_id = self.kwargs.get("appraisal_id")
-        quarter = self.kwargs.get("quarter")
-        year = self.kwargs.get("year")
-        training_object = training_service.get_by_appraisal_id_quarter_use_case(appraisal_id=appraisal_id, year=year, quarter=quarter)
+        quarter = self.kwargs.get("quarter_id")
+        return training_repo_handler.get_by_appraisal_id_quarter(appraisal_id=appraisal_id, quarter_id=quarter)
 
-        return training_object
     
     def approval_user_roles(self)->Dict[str, bool]:
         appraisal_object = self.get_training_object().appraisal
@@ -99,34 +96,37 @@ class TrainingAndDevelopmentUpdateView(SuccessMessageMixin, CreateView):
         except Exception as e:
             logger.error(e)
             return HttpResponse("oops something went wrong")
-    
+        
+    def is_quarter_scored(self)->bool:
+        repo = AppraisalOutPutPerformanceDimensionScoreRepository()
+        qr = repo.fetch_by_appraisal_id_year_quarter_id(year_quarter_id=self.kwargs.get("quarter_id"), appraisal_id=self.kwargs.get("appraisal_id"))
+        unscored_qr = qr.filter(is_scored=False)
+        if unscored_qr.exists():
+            return False
+        return True
+        
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        
-        handler = ActivityScoreHandler()
-        data = handler.get_activity_scores_quarter_scored(appraisal_id=self.kwargs.get('appraisal_id'),
-                                                              quarter=self.kwargs.get('quarter'),
-                                                              year=self.kwargs.get('year'))
-        context.update(data)
+
         context.update(self.get_forms_initial_data())
         context.update(self.approval_user_roles())
         
+        context["is_quarter_scored"] = self.is_quarter_scored()
         return context
     
     def get(self, request, *args, **kwargs):
         self.object = None
+        
         try:
-            handler = ActivityScoreHandler()
-            data = handler.get_activity_scores_quarter_scored(appraisal_id=self.kwargs.get('appraisal_id'),
-                                                              quarter=self.kwargs.get('quarter'),
-                                                              year=self.kwargs.get('year'))
-            if not data["activity_scores_quarter_scored"] and self.approval_user_roles()["is_appraiser"]:
-                messages.info(request=request, message="To complete this stage, you must score all activities for this quarter. Please ensure that each activity has a score before proceeding.")
+            training_object = self.get_training_object()
+            if training_object is None:
+                logger.error(f"[TrainingAndDevelopmentUpdateView] get_training_object pk-{self.kwargs.get('appraisal_id')}, Training object not found")
+                return redirect("object_not_found_error", object_name=slugify("Training"))
+            context = self.get_context_data(**kwargs)
+            return self.render_to_response(context)
         except Exception as e:
-            logger.error(f"Scored activity for appraisal: {self.kwargs.get('appraisal_id')} quarter: {self.kwargs.get('quarter')}-{self.kwargs.get('year')}, failed with error: {e}")
+            logger.error(f"[TrainingAndDevelopmentUpdateView] get_training_object pk-{self.kwargs.get('appraisal_id')}, failed with error: {e}")
             return redirect("server_error_view")
-        context = self.get_context_data(**kwargs)
-        return self.render_to_response(context)
     
     def build_payload(self)->TrainingAndDevelopmentCreateUpdateType:
         payload = self.request.POST
@@ -177,8 +177,6 @@ class TrainingAndDevelopmentUpdateView(SuccessMessageMixin, CreateView):
             updated_training_object.save()
             
         return super().form_valid(form)
-    
-    
     
     def get_success_url(self) -> str:
         return reverse('performance_review_detail', args=(self.kwargs.get("appraisal_id"),))

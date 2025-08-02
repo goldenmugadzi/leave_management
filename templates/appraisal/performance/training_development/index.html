@@ -21,7 +21,7 @@
                     {% for training_object in training_objects %}
                         <tr class="hover:bg-gray-100">
                         <td class="px-6 py-4 whitespace-nowrap text-blue-600 hover:text-blue-800">
-                            <a href="{% url 'training_development_update' training_object.appraisal.id training_object.quarter.year training_object.quarter.quarter %}">
+                            <a href="{% url 'training_development_update' training_object.appraisal.id training_object.quarter.id %}">
                             {{ training_object.quarter }}
                             </a>
                         </td>
