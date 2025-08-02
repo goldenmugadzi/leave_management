@@ -112,6 +112,7 @@ class TrainingAndDevelopmentUpdateView(SuccessMessageMixin, CreateView):
         context.update(self.approval_user_roles())
         
         context["is_quarter_scored"] = self.is_quarter_scored()
+        context["quarter_obj"] = self.get_training_object().quarter
         return context
     
     def get(self, request, *args, **kwargs):

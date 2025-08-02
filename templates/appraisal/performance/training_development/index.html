@@ -1,4 +1,5 @@
 {% load static %}
+{% load quarter %}
 
     <div class="content-wrapper my-4">
       <div class="grid grid-cols-1">
@@ -22,7 +23,7 @@
                         <tr class="hover:bg-gray-100">
                         <td class="px-6 py-4 whitespace-nowrap text-blue-600 hover:text-blue-800">
                             <a href="{% url 'training_development_update' training_object.appraisal.id training_object.quarter.id %}">
-                            {{ training_object.quarter }}
+                            {{ training_object.quarter.quarter|quarter_name }}
                             </a>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">{{ training_object.created_date|date }}</td>

@@ -5,14 +5,8 @@
         <div class="form-row field-description">{{ intervention_strategy_form.description|as_crispy_field }}</div>
         <div class="form-row field-category">{{ intervention_strategy_form.category|as_crispy_field }}</div>
     </div>
-    <div class="flex justify-center pb-2 gap-1">
-        <button 
-            type="button" 
-            id="add-intervention_strategy-btn" 
-            class="bg-blue-500 hover:bg-blue-700 inline-block rounded-full text-white py-2 px-4" 
-            onclick="addInterventionStrategyForm('{{ intervention_strategy_forms.total_form_count }}')">
-            Add Intervention Strategy
-        </button>
+    <div class="flex justify-center pb-2">
+        
         <button 
             type="button" 
             class="remove-intervention_strategy_form-btn bg-blue-500 hover:bg-blue-700 inline-block rounded-full text-white py-2 px-4" 
