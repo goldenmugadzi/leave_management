@@ -13,10 +13,11 @@ class Appraisal(TimeStamp):
     appraiser = models.ForeignKey(User, on_delete=models.PROTECT, related_name="appraiser", null=True)
     reviewer = models.ForeignKey(User, on_delete=models.PROTECT, related_name="reviewer", null=True)
     is_accepted = models.BooleanField(default=False)
-
+    appraiser_comment = models.TextField(null=True, blank=True)
+    reviewer_comment = models.TextField(null=True, blank=True)
+    
     def __str__(self) -> str:
         return f"{self.user}"
-
 
 class Experience(TimeStamp):
     """Base model for experiences used in Appraisal"""

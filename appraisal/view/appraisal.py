@@ -28,6 +28,7 @@ from approve.forms import ApprovalForm
 from approve.models import Step, Approval
 from datetime import datetime
 from ..forms.formsets import AppraiseePersonalAttributeFormSet
+from ..forms.appraisal import AppraisalOverallCommentForm
 from ..helpers.getters.dates import get_assessment_period
 from ..helpers.getters.quarter import get_all_quarter_ratings_per_appraiser
 
@@ -326,6 +327,28 @@ class AppraiseePersonalAttributesDetailView(TemplateView):
         except Exception as e:
             logger.error(f"[AppraiseePersonalAttributesDetailView] repo failed with error: {e}")
     
+    
+    def requesters(self)->Dict[str, bool]:
+        appraisal_object = self.get_appraisal_object()
+        is_appraiser = self.request.user == appraisal_object.appraiser
+        is_appraisee = self.request.user == appraisal_object.user
+        is_reviewer = self.request.user == appraisal_object.reviewer
+        
+        data = {
+            "is_appraiser": is_appraiser,
+            "is_appraisee": is_appraisee,
+            "is_reviewer": is_reviewer
+        }
+        return data
+    
+    def get_final_comment_form(self):
+        requesters_dict = self.requesters()
+        requesters_dict.pop("is_appraisee")
+        form = AppraisalOverallCommentForm(**requesters_dict)
+        
+        form.instance = self.get_appraisal_object()
+        return form
+    
     def get_quarterly_total_score(self)->Tuple[List, Decimal]:
         appraisal_object = self.get_appraisal_object()
         appraisal_created_year = appraisal_object.created_date.year
@@ -335,12 +358,38 @@ class AppraiseePersonalAttributesDetailView(TemplateView):
         context = super().get_context_data(**kwargs)
         quarter_ratings, final_score = self.get_quarterly_total_score()
 
+        context.update(self.requesters())
         context["appraisal_object"] = self.get_appraisal_object()
         context["appraisee_personal_attr_qr"] = self.get_apraisee_personal_attrs()
         context["quarter_ratings"] = quarter_ratings
         context["final_score"] = final_score
+        context["final_comment_form"] = self.get_final_comment_form()
         return context
     
+    def post(self, request, *args, **kwargs):
+        try:
+            appraisal_object = self.get_appraisal_object()
+            form = self.get_final_comment_form()
+            
+            if form.is_valid():
+                appraiser_comment = form.cleaned_data.get("appraiser_comment", None)
+                reviewer_comment = form.cleaned_data.get("reviewer_comment", None)
+
+                repo = AppraisalRepository()
+                repo.update_final_comment(appraisal_object=appraisal_object, appraiser_comment=appraiser_comment, reviewer_comment=reviewer_comment)
+                messages.success(request, f"Overall comment successfully set")
+            else:
+                error_messages = ""
+                for error_message in form.errors:
+                    msg = f"{error_message['msg']}: '{error_message['loc'][0]}'"
+                    error_messages.join(msg)
+                messages.error(request, error_messages)
+        except Exception as e:
+            logger.error(f"[AppraiseePersonalAttributesDetailView] setting overall comment for appraisal pk: {appraisal_object.id}, failed with error")
+            messages.error(request, "Something went wrong, please contact admin")
+
+        return redirect(reverse("appraisal_final_result_index", kwargs={"appraisal_id": self.kwargs.get("appraisal_id")}))
+
     def get(self, request, *args, **kwargs):
         try:
             appraisal_id = self.kwargs.get('appraisal_id')
@@ -404,6 +453,7 @@ class AppraiseePersonalAttributesUpdateView(TemplateView):
         return reverse('appraisal_final_result_index', kwargs={"appraisal_id": self.kwargs.get('appraisal_id')})
 
     def post(self, request, *args, **kwargs):
+        
         appraisal_object = self.get_appraisal_object()
         formset = self.get_forms()
 
@@ -446,7 +496,7 @@ class AppraiseePersonalAttributesUpdateView(TemplateView):
 
             except Exception as e:
                 logger.error(f"[AppraiseePersonalAttributesUpdateView] for appraisal pk: {appraisal_object.id}, failed with error")
-                messages.error("Something went wrong, please contact admin")
+                messages.error(request, "Something went wrong, please contact admin")
         else:
             error_messages = ""
             for error_message in formset.errors:

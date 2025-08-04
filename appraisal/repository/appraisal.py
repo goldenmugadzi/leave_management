@@ -41,6 +41,26 @@ class AppraisalRepository:
     
     def get_all_appraisal_objects(self)->list:
         return Appraisal.objects.all()
+    
+    def update_final_comment(self, appraisal_object: Appraisal, appraiser_comment: str, reviewer_comment: str)->Appraisal:
+        try:
+            is_changed = False
+            
+            if appraisal_object.appraiser_comment != appraiser_comment:
+                appraisal_object.appraiser_comment = appraiser_comment
+                is_changed = True
+            
+            if appraisal_object.reviewer_comment != reviewer_comment:
+                appraisal_object.reviewer_comment = reviewer_comment
+                is_changed = True
+                
+            if is_changed:
+                appraisal_object.save()
+                
+            return appraisal_object
+        except Exception as e:
+            raise Exception(f"Appraisal update_final_comment Repo with appraisal pk: {appraisal_object.id}, failed with error: {e}")
+
 
     def update(self, appraisal_object: Appraisal, appraiser_object: UserProfile, reviewer_obj: UserProfile, is_accepted_by_appraiser_reviewer: bool=False)->Appraisal:
         try:

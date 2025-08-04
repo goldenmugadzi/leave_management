@@ -79,6 +79,21 @@ class AppraisalForm(forms.ModelForm):
         self.fields["reviewer"].required = False
         self.fields['reviewer'].disabled = True
         
+class AppraisalOverallCommentForm(forms.ModelForm):
+    class Meta:
+        model = Appraisal
+        fields = ["appraiser_comment", "reviewer_comment"]
+        
+    def __init__(self, *args, **kwargs):
+        is_appraiser = kwargs.pop("is_appraiser", False)
+        is_reviewer = kwargs.pop("is_reviewer", False)
+        super().__init__(*args, **kwargs)
+        
+        if is_appraiser:
+            self.fields['reviewer_comment'].disabled = True
+            
+        if is_reviewer:
+            self.fields['appraiser_comment'].disabled = True
 class AppraisalUpdateForm(forms.ModelForm):
         
     class Meta:
