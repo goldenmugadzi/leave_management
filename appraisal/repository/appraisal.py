@@ -1,9 +1,6 @@
 from typing import Dict, Any, List
-from django.db.models import Q
-from ..models import Appraisal, Experience
+from ..models import Appraisal, PersonalAttribute, AppraiseePersonalAttribute
 from it.users.models import UserProfile
-from approve.models import Process
-from ..helpers.types import ExperienceType
 
 
 class AppraisalRepository:
@@ -67,3 +64,56 @@ class AppraisalRepository:
             return appraisal_object
         except Exception as e:
             raise Exception(f"Appraisal update Repo with appraisal pk: {appraisal_object.id}, failed with error: {e}")
+
+
+class PersonalAttributeRepository:
+    def create(self, name: str)->PersonalAttribute:
+        try:
+            return PersonalAttribute.objects.create(name=name)
+        except Exception as e:
+            raise Exception(f"PersonalAttributeRepository create Repo failed with error: {e}")
+
+    def bulk_create(self, personal_attr_list: List[PersonalAttribute])->bool:
+        try:
+            PersonalAttribute.objects.bulk_create(objs=personal_attr_list, ignore_conflicts=True)
+            return True
+        except Exception as e:
+            raise Exception(f"PersonalAttributeRepository bulk_create Repo failed with error: {e}")
+
+
+    def fetch_all(self):
+        try:
+            return PersonalAttribute.objects.all()
+        except Exception as e:
+            raise Exception(f"PersonalAttributeRepository fetch all Repo failed with error: {e}")
+
+class AppraiseePersonalAttributeRepository:
+    def create(self, appraisal_obj: Appraisal, personal_attr_object: PersonalAttribute)->AppraiseePersonalAttribute:
+        try:
+            return AppraiseePersonalAttribute.objects.create(appraisal=appraisal_obj, personal_attribute=personal_attr_object)
+        except Exception as e:
+            raise Exception(f"AppraiseePersonalAttributeRepository create Repo failed with error: {e}")
+
+    def bulk_update(self, updated_objects_list: List[AppraiseePersonalAttribute])->bool:
+        try:
+            AppraiseePersonalAttribute.objects.bulk_update(
+                updated_objects_list,
+                fields=["excellent", "very_good", "satisfactory", "requires_improvement", "unsatisfactory"]
+            )            
+            return True
+        except Exception as e:
+            raise Exception(f"AppraiseePersonalAttributeRepository bulk_update Repo failed with error: {e}")
+
+    def bulk_create(self, appraisee_personal_attr_list: List[AppraiseePersonalAttribute])->bool:
+        try:
+            AppraiseePersonalAttribute.objects.bulk_create(objs=appraisee_personal_attr_list, ignore_conflicts=True)
+            return True
+        except Exception as e:
+            raise Exception(f"AppraiseePersonalAttributeRepository bulk_create Repo failed with error: {e}")
+
+    
+    def fetch_appraisal_id(self, appraisal_id)->List[AppraiseePersonalAttribute]:
+        try:
+            return AppraiseePersonalAttribute.objects.filter(appraisal__id=appraisal_id).select_related("personal_attribute")
+        except Exception as e:
+            raise Exception(f"AppraiseePersonalAttributeRepository fetch by appraisal pk: {appraisal_id} Repo failed with error: {e}")

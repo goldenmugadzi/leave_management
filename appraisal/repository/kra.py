@@ -160,6 +160,13 @@ class YearQuarterRepository:
             return YearQuarter.objects.filter(year=year)
         except Exception as e:
             raise Exception(f"[YearQuarterRepository] fetch_by_year Repo with year: {year}, failed with error: {e}")
+    
+    def get_by_year_quarter(self, year: int, quarter: int)->YearQuarter:
+        try:
+            qr = YearQuarter.objects.filter(year=year, quarter=quarter)
+            return qr.first()
+        except Exception as e:
+            raise Exception(f"[YearQuarterRepository] get_by_year_quarter Repo with year: {year}, quarter: {quarter}, failed with error: {e}")
 
 class AppraisalDepartmentOutputRepository:
     def create(self, appraisal_object: Appraisal, department_output_obj: DepartmentOutput, year_quarter_obj: YearQuarter)->AppraisalDepartmentOutput:
@@ -266,7 +273,6 @@ class AppraisalOutPutPerformanceDimensionScoreRepository:
             return AppraisalOutPutPerformanceDimensionScore.objects.filter(appraisal_department_output__year_quarter__id=year_quarter_id).select_related('appraisal_department_output', 'performance_dimension', 'appraisal_department_output__department_output')
         except Exception as e:
             raise Exception(f"[AppraisalOutPutPerformanceDimensionScoreRepository] fetch_by_year_quarter_id Repo with pk: {year_quarter_id}, failed with error: {e}")
-    
     
     def fetch_by_appraisal_id_year_quarter_id(self, year_quarter_id: int, appraisal_id: int)->QuerySet[AppraisalOutPutPerformanceDimensionScore]:
         try:

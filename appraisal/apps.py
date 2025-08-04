@@ -26,12 +26,36 @@ def load_strength_weakness_handler(sender, **kwargs):
     except Exception as e:
         logger.error(f"loading performance weaknesses failed with error: {e}")
 
+def load_personal_attributes_handler(sender, **kwargs):
+    from appraisal.repository.appraisal import PersonalAttributeRepository
+    from appraisal.helpers.data.personal_attr import PERSORNAL_ATTRIBUTES
+    from appraisal.models.appraisal import PersonalAttribute
+    
+    try:
+        logger.info("loading personal_attributes ...")
+        personal_attr_objs = []
+        
+        for personal_attr_item in PERSORNAL_ATTRIBUTES:
+            personal_attr_obj = PersonalAttribute(name=personal_attr_item["name"])
+            personal_attr_objs.append(personal_attr_obj)
+        
+        repo = PersonalAttributeRepository()
+        is_loaded = repo.bulk_create(personal_attr_list=personal_attr_objs)
+        if is_loaded:
+            logger.success("personal_attributes loaded successfully")
+        else:
+            logger.warning("personal_attributes loaded unsuccessfully")
+    except Exception as e:
+        logger.error(f"load_personal_attributes_handler failed with error: {e}")
+
+
 class AppraisalConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
     name = 'appraisal'
 
     def ready(self) -> None:
         post_migrate.connect(load_strength_weakness_handler, sender=self)
+        post_migrate.connect(load_personal_attributes_handler, sender=self)
         from .signals.kra import create_kra_roles_handler
         from .signals.appraisal import set_appraisal_dependencies
         from .signals.departmental_output import create_output_performance_dimensions

@@ -1,4 +1,5 @@
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Tuple
+from decimal import Decimal
 from django.forms import BaseModelForm
 from django.http import HttpResponse
 from django.views.generic.edit import CreateView, UpdateView
@@ -6,15 +7,16 @@ from django.views.generic import TemplateView
 from django.urls import reverse
 from django.utils.text import slugify
 
-from django.shortcuts import redirect, render
+from django.shortcuts import redirect, render, get_object_or_404
 from django.contrib.messages.views import SuccessMessageMixin
 from django.contrib import messages
 
-from ..models import Appraisal
-from it.users.models import UserQualification, UserProfile
+from ..models import Appraisal, AppraiseePersonalAttribute
+from it.users.models import UserProfile
 from ..forms import AppraisalForm, AppraisalRoleFilterForm, AppraisalUpdateForm
 from ..helpers.types.kra import RoleFilterChoices
 from ..repository import UserQualificationRepository, AppraisalExperienceRepository, ExperienceRepository, AppraisalRepository
+from ..repository.appraisal import AppraiseePersonalAttributeRepository
 from ..repository.qualification_experience import UserExperienceRepository
 from ..services import AppraisalService, AppraisalExperienceService
 from ..helpers.types.kra import KraRolesType
@@ -25,7 +27,10 @@ from approve.views import intiate,approve_step
 from approve.forms import ApprovalForm
 from approve.models import Step, Approval
 from datetime import datetime
+from ..forms.formsets import AppraiseePersonalAttributeFormSet
 from ..helpers.getters.dates import get_assessment_period
+from ..helpers.getters.quarter import get_all_quarter_ratings_per_appraiser
+
 from loguru import logger
 
 def get_user_by_id(user_id: int)->UserProfile:
@@ -305,3 +310,164 @@ def object_not_found_error_view(request, object_name: str):
         "object_name": object_name
     }
     return render(request, "appraisal/not_found_error.html", context=context, status=404)
+
+
+class AppraiseePersonalAttributesDetailView(TemplateView):
+    template_name = "appraisal/final_result/index.html"
+    
+    def get_appraisal_object(self):
+        obj = get_object_or_404(Appraisal, pk=self.kwargs.get("appraisal_id"))
+        return obj
+    
+    def get_apraisee_personal_attrs(self):
+        try:
+            repo = AppraiseePersonalAttributeRepository()
+            return repo.fetch_appraisal_id(appraisal_id=self.kwargs.get("appraisal_id"))
+        except Exception as e:
+            logger.error(f"[AppraiseePersonalAttributesDetailView] repo failed with error: {e}")
+    
+    def get_quarterly_total_score(self)->Tuple[List, Decimal]:
+        appraisal_object = self.get_appraisal_object()
+        appraisal_created_year = appraisal_object.created_date.year
+        return get_all_quarter_ratings_per_appraiser(year=appraisal_created_year, appraisal_id=appraisal_object.id)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        quarter_ratings, final_score = self.get_quarterly_total_score()
+
+        context["appraisal_object"] = self.get_appraisal_object()
+        context["appraisee_personal_attr_qr"] = self.get_apraisee_personal_attrs()
+        context["quarter_ratings"] = quarter_ratings
+        context["final_score"] = final_score
+        return context
+    
+    def get(self, request, *args, **kwargs):
+        try:
+            appraisal_id = self.kwargs.get('appraisal_id')
+            appraisal_object = self.get_appraisal_object()
+            if appraisal_object is None:
+                logger.warning(f"[AppraiseePersonalAttributesDetailView] get_appraisal_object() with appraisal pk: {appraisal_id}, not found error")
+                return redirect("object_not_found_error", object_name=slugify("Appraisal"))
+
+        except Exception as e:
+            logger.error(f"[AppraiseePersonalAttributesDetailView]  get_appraisal_object() with appraisal pk: {appraisal_id}, failed with error: {e}")
+            return redirect("server_error_view")
+        return super().get(request, *args, **kwargs)
+    
+class AppraiseePersonalAttributesUpdateView(TemplateView):
+    template_name = 'appraisal/final_result/update.html'
+    
+    def get_appraisal_object(self):
+        obj = get_object_or_404(Appraisal, pk=self.kwargs.get("appraisal_id"))
+        return obj
+    
+    def approval_user_roles(self)->Dict[str, bool]:
+        is_appraiser = self.request.user == self.get_appraisal_object().appraiser
+        data = {
+            "is_appraiser": is_appraiser,
+        }
+        return data
+    
+    def get_forms(self):
+        repo = AppraiseePersonalAttributeRepository()
+        qr = repo.fetch_appraisal_id(appraisal_id=self.kwargs.get("appraisal_id"))
+        formset_data = []
+        
+        for appraisee_personal_attr_obj in qr:
+            data = {"personal_attribute": appraisee_personal_attr_obj.personal_attribute,
+                    "excellent": appraisee_personal_attr_obj.excellent,
+                    "very_good": appraisee_personal_attr_obj.very_good,
+                    "satisfactory": appraisee_personal_attr_obj.satisfactory,
+                    "requires_improvement": appraisee_personal_attr_obj.requires_improvement,
+                    "unsatisfactory": appraisee_personal_attr_obj.unsatisfactory
+                    }
+            formset_data.append(data)
+            
+        formset = AppraiseePersonalAttributeFormSet(
+                    self.request.POST or None,
+                    initial=formset_data,
+                    prefix="appraisee_personal_attribute"
+                )
+        return formset
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context.update(self.approval_user_roles())
+        context["personal_attribute_formset"] = self.get_forms
+        context["appraisal_object"] = self.get_appraisal_object()
+        return context
+    
+    def get_success_url(self) -> str:
+        """
+        Redirects to the index page after successful update.
+        """
+        return reverse('appraisal_final_result_index', kwargs={"appraisal_id": self.kwargs.get('appraisal_id')})
+
+    def post(self, request, *args, **kwargs):
+        appraisal_object = self.get_appraisal_object()
+        formset = self.get_forms()
+
+        if formset.is_valid():
+            err_msg_list = []
+            updated_objects = []
+            for form in formset:
+                cleaned_data = form.cleaned_data
+                attribute = cleaned_data.get("personal_attribute")
+                excellent = cleaned_data.get("excellent", False)
+                very_good = cleaned_data.get("very_good", False)
+                satisfactory = cleaned_data.get("satisfactory", False)
+                requires_improvement = cleaned_data.get("requires_improvement", False)
+                unsatisfactory = cleaned_data.get("unsatisfactory", False)
+                if True not in [excellent, very_good, satisfactory, requires_improvement, unsatisfactory]:
+                    err_msg = f"<strong>{attribute}</strong>: should have at least one tick"
+                    err_msg_list.append(err_msg)
+                else:
+                    # =========  update fields in the model instance ========
+                    obj = attribute  
+                    obj.excellent = excellent
+                    obj.very_good = very_good
+                    obj.satisfactory = satisfactory
+                    obj.requires_improvement = requires_improvement
+                    obj.unsatisfactory = unsatisfactory
+                    updated_objects.append(obj)
+                    
+            if len(err_msg_list) != 0:
+                # =============== validation errors ============
+                full_error_message = "<br>".join(err_msg_list)
+                messages.error(request, full_error_message)
+                context = self.get_context_data()
+                context["personal_attribute_formset"] = formset
+                return self.render_to_response(context)    
+            
+            repo = AppraiseePersonalAttributeRepository()
+            try:
+                if repo.bulk_update(updated_objects_list=updated_objects):
+                    messages.success(request, "Appraisee personal attributes updated successfully.")
+
+            except Exception as e:
+                logger.error(f"[AppraiseePersonalAttributesUpdateView] for appraisal pk: {appraisal_object.id}, failed with error")
+                messages.error("Something went wrong, please contact admin")
+        else:
+            error_messages = ""
+            for error_message in formset.errors:
+                msg = f"{error_message['msg']}: '{error_message['loc'][0]}'"
+                error_messages.join(msg)
+            messages.error(request, error_messages)
+        
+        return redirect(self.get_success_url())
+
+    def get(self, request, *args, **kwargs):
+        try:
+            appraisal_id = self.kwargs.get('appraisal_id')
+            appraisal_object = self.get_appraisal_object()
+            self.object = appraisal_object
+            if appraisal_object is None:
+                logger.warning(f"[AppraiseePersonalAttributesUpdateView] get_appraisal_object() with appraisal pk: {appraisal_id}, not found error")
+                return redirect("object_not_found_error", object_name=slugify("Appraisal"))
+
+        except Exception as e:
+            logger.error(f"[AppraiseePersonalAttributesUpdateView]  get_appraisal_object() with appraisal pk: {appraisal_id}, failed with error: {e}")
+            return redirect("server_error_view")
+        return super().get(request, *args, **kwargs)
+    
+    

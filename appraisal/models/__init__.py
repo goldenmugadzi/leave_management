@@ -4,3 +4,4 @@ from .training import JobCompetency, Competency, InterventionStrategy, TrainingA
 from .kra import KeyResultArea, AppraisalWorkflow, ScoreDocument, KeyResultAreaOutCome, Appraisal, AppraisalDepartmentOutput, AppraisalDepartmentOutputReviewerStatus, AppraisalOutPutPerformanceDimensionScore
 from .helpers import YearQuarter
 from .departmental_workplan import DepartmentObjective, DepartmentOutput, OutPutPerformanceDimension
+

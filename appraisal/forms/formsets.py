@@ -1,6 +1,6 @@
 from typing import Any
 from django.forms import inlineformset_factory, modelformset_factory, formset_factory
-from .appraisal import AppraisalExperienceForm, UserQualificationForm
+from .appraisal import AppraisalExperienceForm, UserQualificationForm, AppraiseePersonalAttributeForm
 from .training import InterventionStrategyForm, CompetencyForm
 from .kra import ScoreDocumentForm
 from ..models import AppraisalExperience, Appraisal, InterventionStrategy, ScoreDocument
@@ -35,4 +35,9 @@ ScoreDocumentFormset = modelformset_factory(
     model=ScoreDocument,
     form=ScoreDocumentForm,
     extra=1
+)
+
+AppraiseePersonalAttributeFormSet = formset_factory(
+    form=AppraiseePersonalAttributeForm,
+    extra=0
 )

@@ -4,7 +4,7 @@ from django.forms import modelformset_factory
 from django.forms.renderers import BaseRenderer
 from django.forms.utils import ErrorList
 from it.users.models import UserQualification, CostCenter, UserProfile, Designations
-from ..models import Appraisal, AppraisalExperience, Experience
+from ..models import Appraisal, AppraisalExperience, Experience, AppraiseePersonalAttribute
 from ..helpers.types.kra import KraRolesType
 
 
@@ -109,3 +109,17 @@ class ExperienceForm(forms.ModelForm):
     class Meta:
         model = Experience
         fields = ["name"]
+
+class AppraiseePersonalAttributeForm(forms.ModelForm):
+    class Meta:
+        model = AppraiseePersonalAttribute
+        exclude = ["created", "updated", "appraisal"]
+        
+        
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['personal_attribute'].disabled = True
+        for field_name in ['excellent', 'very_good', 'satisfactory', 'requires_improvement', 'unsatisfactory']:
+            self.fields[field_name].widget.attrs.update({
+                'class': 'rating-checkbox'
+            })

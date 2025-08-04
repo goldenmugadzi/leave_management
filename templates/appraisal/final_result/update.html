@@ -1,0 +1,94 @@
+{% extends "admin_layout.html" %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+
+{% include 'appraisal/sections_header.html' with section_header="Section 5: Final Performance Assessment and Rating" %}
+
+
+<div class="p-6 bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl shadow-xl ">
+    <div class="bg-white rounded-xl shadow-lg p-6 border border-gray-200">
+        <h3 class="text-2xl font-semibold text-gray-800 mb-4">{{appraisal_object.user}}'s Personal Tributes</h3>
+        <p class="text-md text-gray-500">Tick Appropriate Box</p>
+    </div>
+
+    <form method="post" class="space-y-8">
+        {% csrf_token %}
+        
+        <!-- Competency Section -->
+        <div class="bg-white rounded-xl shadow-lg p-6 border border-gray-200">
+            
+            
+            {{ personal_attribute_formset.management_form }}
+            <div class="competency-forms space-y-4 pr-4">
+                {% for personal_attribute_form in personal_attribute_formset %}
+                    <div class="p-2">
+                        <div class="grid grid-cols-6 items-center gap-4">
+                            <!-- Attribute Label -->
+                            <div class="form-row field-name col-span-2">
+                                {{ personal_attribute_form.personal_attribute|as_crispy_field }}
+                            </div>
+                    
+                            <!-- Radio Options -->
+                            <div class="flex items-center space-x-4 col-span-4">
+                                <label class="flex items-center space-x-2">
+                                    {{ personal_attribute_form.excellent }}
+                                    <span class="text-sm">Excellent</span>
+                                </label>
+                                <label class="flex items-center space-x-2">
+                                    {{ personal_attribute_form.very_good }}
+                                    <span class="text-sm">Very Good</span>
+                                </label>
+                                <label class="flex items-center space-x-2">
+                                    {{ personal_attribute_form.satisfactory }}
+                                    <span class="text-sm">Satisfactory</span>
+                                </label>
+                                <label class="flex items-center space-x-2">
+                                    {{ personal_attribute_form.requires_improvement }}
+                                    <span class="text-sm">Requires Improvement</span>
+                                </label>
+                                <label class="flex items-center space-x-2">
+                                    {{ personal_attribute_form.unsatisfactory }}
+                                    <span class="text-sm">Unsatisfactory</span>
+                                </label>
+                            </div>
+                            
+                        </div>
+                    </div>
+                
+                {% endfor %}
+            </div>
+        </div>
+        <!-- Submit Button -->
+        {% if is_appraiser == True %}
+            <div class="flex justify-center">
+                <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 w-full md:w-80 rounded-full text-white py-3 px-6 font-medium transition duration-300">
+                    Save
+                </button>
+            </div>
+        {% endif %}
+    </form>
+</div>
+
+{% endblock %}
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const formRows = document.querySelectorAll('.competency-forms > .p-2');
+
+        formRows.forEach(row => {
+            const checkboxes = row.querySelectorAll('.rating-checkbox');
+
+            checkboxes.forEach(checkbox => {
+                checkbox.addEventListener('change', function () {
+                    if (this.checked) {
+                        checkboxes.forEach(cb => {
+                            if (cb !== this) cb.checked = false;
+                        });
+                    }
+                });
+            });
+        });
+    });
+</script>
+{% endblock %}

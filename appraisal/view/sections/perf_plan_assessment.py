@@ -37,10 +37,11 @@ class AppraisalDepartmentOutputTemplateView(TemplateView):
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        
-        appraisee_object = self.get_appraisal_object().user
+        appraisal_object = self.get_appraisal_object()
+        appraisee_object = appraisal_object.user
         context["appraisal_dept_output_qr"] = self.get_all_appraisal_dept_output_quarters()
         context["appraisee_object"] = appraisee_object
+        context["appraisal_object"] = appraisal_object
         context["is_grade_c_and_above"] = appraisee_object.grade == GRADE_CHOICES[2][0]
         return context
     

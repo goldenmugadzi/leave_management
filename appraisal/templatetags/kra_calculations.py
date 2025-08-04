@@ -112,21 +112,22 @@ def get_department_objective_total_score(department_objective_id: int)->float:
         return 0.0
     
 
-@register.filter
-def get_department_objectives_total_year_quarter_weighted_score(year_quarter_id: int)->float:
+@register.simple_tag
+def get_department_objectives_total_year_quarter_weighted_score(year_quarter_id: int, appraisal_id: int)->float:
     
     try:
         year_quarter_id = int(year_quarter_id)
+        appraisal_id = int(appraisal_id)
     except ValueError:
-        logger.error(f"[KraCalculationTemplatetag] get_department_objectives_total_year_quarter_weighted_score(), department_objective object with id: {year_quarter_id}, Invalid type Expected int, got {type(year_quarter_id).__name__}")
+        logger.error(f"[KraCalculationTemplatetag] get_department_objectives_total_year_quarter_weighted_score(), quarter with id: {year_quarter_id}, appraisal with id: {appraisal_id}, Invalid type Expected int, got {type(year_quarter_id).__name__}")
         return 0.0
 
     try: 
         service_handler = AppraisalDepartmentOutputService()
-        total_weighted_score = service_handler.get_department_objectives_total_year_quarter_weighted_score(year_quarter_id=year_quarter_id, performance_dimension_repo=AppraisalOutPutPerformanceDimensionScoreRepository())
+        total_weighted_score = service_handler.get_department_objectives_total_year_quarter_weighted_score(year_quarter_id=year_quarter_id, appraisal_id=appraisal_id, performance_dimension_repo=AppraisalOutPutPerformanceDimensionScoreRepository())
         return total_weighted_score
     except Exception as e:
-        logger.error(f"[KraCalculationTemplatetag] get_department_objectives_total_year_quarter_weighted_score(), output object with id: {year_quarter_id}, failed with error: {e}")
+        logger.error(f"[KraCalculationTemplatetag] get_department_objectives_total_year_quarter_weighted_score(), quarter with id: {year_quarter_id}, appraisal with id: {appraisal_id}, failed with error: {e}")
         return 0.0
     
 

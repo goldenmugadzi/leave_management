@@ -2,7 +2,7 @@ from django.core.management.base import BaseCommand
 
 
 class Command(BaseCommand):
-    help = "The command that creates all Dependencies related to the given appraisal pk."
+    help = "The command that creates appraisee personal attributes."
     
     def add_arguments(self, parser):
         parser.add_argument("--appraisal_pk", type=int, help='The appraisal pk.')
@@ -23,10 +23,10 @@ class Command(BaseCommand):
                 appraisal_obj = appraisal_repo.get_appraisal_by_pk(appraisal_id=appraisal_id)
                 
                 if appraisal_obj is None:
-                    logger.error(f"[AppraisalInitDependency] custom command set_appraisal_dependencies - Setting Appraisal Dependencies for appraisal pk:{appraisal_id} not found")
+                    logger.error(f"[AppraiseePersonalAttribute] custom command set_appraisee_personal_attr - appraisal pk:{appraisal_id} not found")
                     return None
                 
-                logger.info(f"[AppraisalInitDependency] custom command set_appraisal_dependencies - Setting Appraisal Dependencies for appraisal pk:{appraisal_id} initialized ...")
+                logger.info(f"[AppraiseePersonalAttribute] custom command set_appraisee_personal_attr - appraisal pk:{appraisal_id} initialized ...")
                 
                 service_handler = AppraisalDependanciesInitialisationService(
                     appraisal_department_output_repo=AppraisalDepartmentOutputRepository(),
@@ -37,14 +37,13 @@ class Command(BaseCommand):
                     department_output_repo=DepartmentalOutRepository()
                 )
                 
-                appraisal_created_year = appraisal_obj.created_date.year
                 
-                if service_handler.create_all_dependencies(appraisal_id=appraisal_id, year=appraisal_created_year): 
-                    logger.success(f"[AppraisalInitDependency] custom command set_appraisal_dependencies - Setting Appraisal Dependencies for appraisal pk: {appraisal_id} successfully completed")
+                if service_handler.create_appraisee_personal_attr(appraisal_object=appraisal_obj): 
+                    logger.success(f"[AppraiseePersonalAttribute] custom command set_appraisee_personal_attr - appraisal pk: {appraisal_id} successfully completed")
                 else:
-                    logger.warning(f"[AppraisalInitDependency] custom command set_appraisal_dependencies - Setting Appraisal Dependencies for appraisal pk:{appraisal_id} not set")
+                    logger.warning(f"[AppraiseePersonalAttribute] custom command set_appraisee_personal_attr - appraisal pk:{appraisal_id} not set")
             except Exception as e:
-                logger.error(f"[AppraisalInitDependency] custom command set_appraisal_dependencies - Setting Appraisal Dependencies for appraisal pk:{appraisal_id}, failed with error: {e}")
+                logger.error(f"[AppraiseePersonalAttribute] custom command set_appraisee_personal_attr - appraisal pk:{appraisal_id}, failed with error: {e}")
                 return None
         else:
             self.stdout.write(

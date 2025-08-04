@@ -6,9 +6,9 @@ from decimal import Decimal
 
 from ..repository.kra import KRARepository, AppraisalDepartmentOutputRepository, AppraisalOutPutPerformanceDimensionScoreRepository, YearQuarterRepository
 from ..repository.departmental_workplan import OutPutPerformanceDimensionRepository, DepartmentalOutRepository
-from ..repository.appraisal import AppraisalRepository
+from ..repository.appraisal import AppraisalRepository, PersonalAttributeRepository, AppraiseePersonalAttributeRepository
 from it.users.models import Designations
-from ..models import KeyResultArea, AppraisalOutPutPerformanceDimensionScore, AppraisalDepartmentOutput
+from ..models import KeyResultArea, AppraisalOutPutPerformanceDimensionScore, AppraisalDepartmentOutput, AppraiseePersonalAttribute
 from ..helpers.types.kra import KRAType
 from ..helpers.getters import RatingCalculation
 
@@ -81,6 +81,20 @@ class AppraisalDependanciesInitialisationService:
             
         return self.appraisal_output_perf_dimension_repo.bulk_create(appraisal_output_perf_dimension_objs_list=appraisal_output_perf_dimension_objs_list)
     
+    def create_appraisee_personal_attr(self, appraisal_object):
+        appraisee_personal_attr_objs_list = []
+        personal_attr_repo = PersonalAttributeRepository()
+        personal_attr_qr = personal_attr_repo.fetch_all()
+        
+        for personal_attr_obj in personal_attr_qr:
+            appraisee_personal_attr_obj = AppraiseePersonalAttribute(
+                appraisal=appraisal_object,
+                personal_attribute=personal_attr_obj
+            )
+            appraisee_personal_attr_objs_list.append(appraisee_personal_attr_obj)
+        apprasee_personal_attr_repo = AppraiseePersonalAttributeRepository()
+        return apprasee_personal_attr_repo.bulk_create(appraisee_personal_attr_list=appraisee_personal_attr_objs_list)
+    
     def create_all_dependencies(self, appraisal_id: int, year: int)->bool|None:
         try:
             with transaction.atomic():
@@ -110,6 +124,9 @@ class AppraisalDependanciesInitialisationService:
                                     appraisal_department_output_obj=appraisal_department_output_obj,
                                     department_output_id=department_output_obj.id
                                 )
+                        
+                    # ======================== create appraisee personal attributes ====================>>
+                    self.create_appraisee_personal_attr(appraisal_object=appraisal_obj)
                 else:
                     logger.warning(f"[AppraisalDependanciesInitialisationService] create_all_dependencies, with pk: {appraisal_id}, has no designation")
             return True
@@ -247,10 +264,10 @@ class AppraisalDepartmentOutputService:
         except Exception as e:
             raise Exception(f"[AppraisalDepartmentOutputService] department_objective_id(), with department_objective_id: {department_objective_id}, failed with error: {e}")
      
-    def get_department_objectives_total_year_quarter_weighted_score(self, year_quarter_id: int, performance_dimension_repo: AppraisalOutPutPerformanceDimensionScoreRepository)->float:
+    def get_department_objectives_total_year_quarter_weighted_score(self, year_quarter_id: int, appraisal_id: int, performance_dimension_repo: AppraisalOutPutPerformanceDimensionScoreRepository)->float:
         try:
             total_weight = Decimal(0)
-            qr = performance_dimension_repo.fetch_by_year_quarter_id(year_quarter_id=year_quarter_id)
+            qr = performance_dimension_repo.fetch_by_appraisal_id_year_quarter_id(year_quarter_id=year_quarter_id, appraisal_id=appraisal_id)
             
             for perform_dimension_obj in qr:
                 service_handler = AppraisalScoreDimensionService(score_object=perform_dimension_obj)

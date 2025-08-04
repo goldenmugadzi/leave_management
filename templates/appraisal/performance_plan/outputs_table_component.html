@@ -10,7 +10,6 @@
                 <th class="px-6 py-3 text-left text-md font-semibold">Department Output</th>
                 <th class="px-6 py-3 text-left text-md font-semibold">Weight</th>
                 <th class="px-6 py-3 text-left text-md font-semibold">Weighted Score</th>
-                <th class="px-6 py-3 text-left text-md font-semibold">Total</th>
                 <th></th>
             </tr>
         </thead>
@@ -24,8 +23,7 @@
                         <tr class="hover:bg-blue-100">
                             <td class="px-6 py-4 text-md text-blue-900 truncate max-w-xs">{{appraisal_dept_output_obj.department_output.output_description}}</td>
                             <td class="px-6 py-4 text-md text-blue-900">{{appraisal_dept_output_obj.department_output.weight}}</td>
-                            <td class="px-6 py-4 text-md text-blue-900">0.0</td>
-                            <td>{{appraisal_dept_output_obj.id|get_output_total_score}}</td>
+                            <td class="px-6 py-4 text-md text-blue-900">{{appraisal_dept_output_obj.id|get_output_total_score}}</td>
                             <td>
                                 <div class="flex gap-2 justify-center">
                                     <a 
@@ -49,8 +47,10 @@
                 <td class="px-6 py-4 text-md text-blue-900 font-bold text-2xl">Total</td>
                 <td></td>
                 <td></td>
-                <td></td>
-                <td class="px-6 py-4 text-md text-blue-900 font-bold text-2xl underline">{{quarter_object.id|get_department_objectives_total_year_quarter_weighted_score}}</td>
+                <td class="px-6 py-4 text-md text-blue-900 font-bold text-2xl underline">
+                    {% get_department_objectives_total_year_quarter_weighted_score quarter_object.id appraisal_object.id as total_score %}
+                    {{ total_score }}
+                </td>
                 <td></td>
             </tr>
         </tbody>

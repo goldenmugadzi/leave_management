@@ -147,7 +147,7 @@ class OutPutPerformanceDimensionRepository:
                         created_by=department_output_obj.created_by,
                         department_output=department_output_obj,
                         description="",
-                        performance_indicator=perf_dimension_type[0][1],
+                        performance_indicator=perf_dimension_type[1],
                         allowable_variance=0.0,
                         agreed_target=0.0,
                         weight=0.0
