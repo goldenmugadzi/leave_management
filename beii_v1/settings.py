@@ -131,7 +131,7 @@ INSTALLED_APPS = [
     'safety',
     'BatteryMaintenance', 
     'comm_files',
-    'django_prometheus',
+    # 'django_prometheus',  # Temporarily disabled due to import error
     'api.ops_maintenance.safety_operations',
     'Transport',
     'Hardware_Faults',
@@ -140,6 +140,7 @@ INSTALLED_APPS = [
     'meetings',
     'leave_management',
     'sanction_for_test',
+    'utils',
 ]
 
 AUTH_USER_MODEL = 'users.UserProfile'
