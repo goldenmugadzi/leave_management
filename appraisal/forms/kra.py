@@ -1,5 +1,5 @@
 from django import forms
-from ..models import YearQuarter, KeyResultArea, ScoreDocument, KeyResultAreaOutCome, AppraisalOutPutPerformanceDimensionScore
+from ..models import YearQuarter, KeyResultArea, ScoreDocument, KeyResultAreaOutCome, AppraisalOutPutPerformanceDimensionScore, AppraisalDepartmentOutputReviewerStatus
 from ..helpers.types.kra import RoleFilterChoices
 from it.users.models import UserProfile
 from datetime import datetime
@@ -38,3 +38,8 @@ class AppraisalOutPutPerformanceDimensionScoreForm(forms.ModelForm):
     class Meta:
         model = AppraisalOutPutPerformanceDimensionScore
         fields = ["score", "comments", "appraiser_confirmation"]
+        
+class AppraisalDepartmentOutputReviewerStatusForm(forms.ModelForm):
+    class Meta:
+        model = AppraisalDepartmentOutputReviewerStatus
+        fields = ["status", "comment"]

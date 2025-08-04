@@ -4,7 +4,7 @@ from .models import (Appraisal, Experience, AppraisalExperience,
     PerformanceProgressStrength, Competency, JobCompetency, InterventionStrategy, TrainingAndDevelopment,
     KeyResultArea, YearQuarter, AppraisalWorkflow, ScoreDocument,
     KeyResultAreaOutCome, DepartmentObjective, DepartmentOutput, OutPutPerformanceDimension,
-    AppraisalDepartmentOutput, AppraisalOutPutPerformanceDimensionScore, PersonalAttribute, AppraiseePersonalAttribute
+    AppraisalDepartmentOutput, AppraisalOutPutPerformanceDimensionScore, PersonalAttribute, AppraiseePersonalAttribute, AppraisalDepartmentOutputReviewerStatus
 )
 
 # Register your models here.
@@ -12,6 +12,7 @@ from .models import (Appraisal, Experience, AppraisalExperience,
 admin.site.register(Appraisal)
 admin.site.register(Experience)
 admin.site.register(AppraisalExperience)
+admin.site.register(AppraisalDepartmentOutputReviewerStatus)
 
 admin.site.register(PerformanceProgressStrength)
 admin.site.register(PerformanceProgressWeakness)

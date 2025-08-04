@@ -17,11 +17,21 @@
                         </p>                    
                     </div>
                     <div class="flex justify-end">
-                        <div onclick="openAppraiserConfirmationModal()"
-                            class="my-2 bg-blue-500 hover:bg-blue-700 inline-block rounded-full text-white py-2 px-4 rounded"
+                        <div class="flex justify-between gap-2">
+                            <div onclick="openReviewerConfirmationModal()"
+                                class="my-2 bg-blue-500 hover:bg-blue-700 inline-block rounded-full text-white py-2 px-4 rounded"
                             >
-                            Appraiser Confirmation
+                                Reviewer Confirmation
+                            </div>
+
+                            <div onclick="openAppraiserConfirmationModal()"
+                                class="my-2 bg-blue-500 hover:bg-blue-700 inline-block rounded-full text-white py-2 px-4 rounded"
+                            >
+                                Appraiser Confirmation
+                            </div>
+
                         </div>
+                        
                     </div>
                 </div>
             </div>
@@ -45,6 +55,7 @@
                     </div>
                     {% endif %}
                     
+                    {% include "appraisal/performance_plan/reviewer_confirmation_modal.htm"%}
                     {% include "appraisal/performance_plan/appraiser_confirmation_modal.html"%}
                 </form>
             </div>

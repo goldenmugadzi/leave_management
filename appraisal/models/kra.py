@@ -78,10 +78,10 @@ class AppraisalWorkflow(TimeStamp):
 
 
 class AppraisalDepartmentOutputReviewerStatus(TimeStamp):
-    appraisal_department_output = models.OneToOneField(AppraisalDepartmentOutput, on_delete=models.RESTRICT, related_name="appraisal_department_output_status")
+    performance_dimension_score = models.OneToOneField(AppraisalOutPutPerformanceDimensionScore, on_delete=models.RESTRICT, related_name="appraisal_department_output_reviewer_status", null=True)
     status = models.CharField(max_length=10, choices=APPRAISAL_KRA_REVIEWER_STATUS_CHOICES, default=APPRAISAL_KRA_REVIEWER_STATUS_CHOICES[0][0])
     comment = models.TextField(null=True, blank=True)
 
     def __str__(self):
-        return f"{self.appraisal_department_output}"
+        return f"{self.performance_dimension_score}"
 

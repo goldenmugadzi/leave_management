@@ -5,7 +5,7 @@ from django.db.models.query import QuerySet
 from django.core.files.uploadedfile import UploadedFile
 from django.core.files.storage import default_storage
 
-from ..models import KeyResultArea, YearQuarter,  Appraisal, KeyResultAreaOutCome, DepartmentOutput, AppraisalDepartmentOutput, AppraisalOutPutPerformanceDimensionScore, OutPutPerformanceDimension, ScoreDocument
+from ..models import KeyResultArea, YearQuarter,  Appraisal, KeyResultAreaOutCome, DepartmentOutput, AppraisalDepartmentOutput, AppraisalOutPutPerformanceDimensionScore, OutPutPerformanceDimension, ScoreDocument, AppraisalDepartmentOutputReviewerStatus
 from ..helpers.types.kra import KRAType, TargetScoreType, KraRolesCreateType, ActivityType, PerformanceDimensionType
 from it.users.models import UserProfile, Application, Roles, Designations
 from loguru import logger
@@ -337,3 +337,48 @@ class ScoreDocumentRepository:
         except Exception as e:
             raise Exception(f"ScoreDocumentRepository get_by_id repo with score_doc_obj pk: {pk},  failed with error: {e}")
        
+       
+class ApprasialKraReviewerStatusRepository:
+    def create(self, performance_dimension_score_obj: AppraisalOutPutPerformanceDimensionScore, status: str, comment: str = None)->AppraisalDepartmentOutputReviewerStatus:
+        try:
+            object, _ = AppraisalDepartmentOutputReviewerStatus.objects.get_or_create(performance_dimension_score=performance_dimension_score_obj, defaults={"status": status, "comment": comment})
+            return object
+        except Exception as e:
+            raise Exception(f"ApprasialKraReviewerStatusRepository create repo failed with error: {e}")
+
+    def fetch_by_appraisal_kra_id(self, appraisal_kra_id: int)->QuerySet[AppraisalDepartmentOutputReviewerStatus]:
+        try:
+            qr = AppraisalDepartmentOutputReviewerStatus.objects.filter(appraisal_kra__id=appraisal_kra_id).select_related('appraisal_kra')
+            return qr
+        except Exception as e:
+            raise Exception(f"ApprasialKraReviewerStatusRepository fetch_by_appraisal_kra_id repo failed with error: {e}")
+    
+    def get_by_appraisee_performance_dimension_score_id(self, appraisee_performance_dimension_score_id: int)->AppraisalDepartmentOutputReviewerStatus:
+        try:
+            qr = AppraisalDepartmentOutputReviewerStatus.objects.filter(performance_dimension_score__id=appraisee_performance_dimension_score_id)
+            return qr.first()
+        except Exception as e:
+            raise Exception(f"ApprasialKraReviewerStatusRepository get_by_appraisee_performance_dimension_score_id repo with appraisee_performance_dimension_score_id: {appraisee_performance_dimension_score_id}, failed with error: {e}")
+
+    def update(self, reviewer_status_obj: AppraisalDepartmentOutputReviewerStatus, status: str, comment: str)->AppraisalDepartmentOutputReviewerStatus:
+        try:
+            is_changed = False
+            
+            if reviewer_status_obj.status != status:
+                reviewer_status_obj.status = status
+                is_changed = True
+            if reviewer_status_obj.comment != comment:
+                reviewer_status_obj.comment = comment
+                is_changed = True
+            if is_changed:
+                reviewer_status_obj.save()
+            return reviewer_status_obj
+        except Exception as e:
+            raise Exception(f"ApprasialKraReviewerStatusRepository update repo failed with error: {e}")
+
+    def fetch_by_quarter_year(self, year: int)->QuerySet[AppraisalDepartmentOutputReviewerStatus]:
+        try:
+            qr = AppraisalDepartmentOutputReviewerStatus.objects.filter(appraisal_kra__quarter__year=year).select_related('appraisal_kra__quarter')
+            return qr
+        except Exception as e:
+            raise Exception(f"ApprasialKraReviewerStatusRepository fetch_by_quarter_year repo failed with error: {e}")
