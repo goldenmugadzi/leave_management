@@ -341,12 +341,14 @@ class AppraiseePersonalAttributesDetailView(TemplateView):
         }
         return data
     
-    def get_final_comment_form(self):
+    def get_final_comment_form(self, request):
         requesters_dict = self.requesters()
-        requesters_dict.pop("is_appraisee")
-        form = AppraisalOverallCommentForm(**requesters_dict)
-        
-        form.instance = self.get_appraisal_object()
+        form = AppraisalOverallCommentForm(
+                request,
+                is_appraiser=requesters_dict["is_appraiser"],
+                is_reviewer=requesters_dict["is_reviewer"],
+                instance=self.get_appraisal_object()
+            )
         return form
     
     def get_quarterly_total_score(self)->Tuple[List, Decimal]:
@@ -363,21 +365,22 @@ class AppraiseePersonalAttributesDetailView(TemplateView):
         context["appraisee_personal_attr_qr"] = self.get_apraisee_personal_attrs()
         context["quarter_ratings"] = quarter_ratings
         context["final_score"] = final_score
-        context["final_comment_form"] = self.get_final_comment_form()
+        context["final_comment_form"] = self.get_final_comment_form(None)
         return context
     
     def post(self, request, *args, **kwargs):
         try:
             appraisal_object = self.get_appraisal_object()
-            form = self.get_final_comment_form()
             
+            form = self.get_final_comment_form(request.POST)
             if form.is_valid():
                 appraiser_comment = form.cleaned_data.get("appraiser_comment", None)
                 reviewer_comment = form.cleaned_data.get("reviewer_comment", None)
 
                 repo = AppraisalRepository()
                 repo.update_final_comment(appraisal_object=appraisal_object, appraiser_comment=appraiser_comment, reviewer_comment=reviewer_comment)
-                messages.success(request, f"Overall comment successfully set")
+                
+                messages.success(request, f"Overall comments added successfully")
             else:
                 error_messages = ""
                 for error_message in form.errors:
@@ -385,8 +388,8 @@ class AppraiseePersonalAttributesDetailView(TemplateView):
                     error_messages.join(msg)
                 messages.error(request, error_messages)
         except Exception as e:
-            logger.error(f"[AppraiseePersonalAttributesDetailView] setting overall comment for appraisal pk: {appraisal_object.id}, failed with error")
-            messages.error(request, "Something went wrong, please contact admin")
+            logger.error(f"[AppraiseePersonalAttributesDetailView] setting overall comment for appraisal pk: {appraisal_object.id}, failed with error: {e}")
+            messages.error(request, "Something went wrong, please contact the admin")
 
         return redirect(reverse("appraisal_final_result_index", kwargs={"appraisal_id": self.kwargs.get("appraisal_id")}))
 

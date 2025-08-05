@@ -94,6 +94,11 @@ class AppraisalOverallCommentForm(forms.ModelForm):
             
         if is_reviewer:
             self.fields['appraiser_comment'].disabled = True
+        
+        if not is_appraiser and not is_reviewer:
+            self.fields['appraiser_comment'].disabled = True
+            self.fields['reviewer_comment'].disabled = True
+
 class AppraisalUpdateForm(forms.ModelForm):
         
     class Meta:
