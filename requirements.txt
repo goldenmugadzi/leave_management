@@ -98,36 +98,9 @@ defusedxml==0.7.1
 cached-property==1.5.2
 isodate==0.6.1
 Brotli==1.1.0
-Pygments==2.18.0
 
-# Additional Django Extensions (from legacy section - keeping unique ones)
-django-annoying==0.10.6
-django-anymail==8.4
-django-bootstrap-modal-forms==3.0.4
-django-celery-beat==2.7.0
-django-celery-results==2.5.1
-django-crispy-forms==2.3
-django-elasticsearch-dsl==8.0
-django-jazzmin==2.6.0
-django-timezone-field==7.1
-django-utils-six==2.0
-django-weasyprint==2.2.0
-
-# Additional Processing Libraries
-beautifulsoup4==4.12.3
-celery==5.4.0
-amqp==5.2.0
-billiard==4.2.1
-click==8.1.7
-colorama==0.4.6
-kombu==5.3.5
-vine==5.1.0
-
-# Additional Utilities
-python-crontab==3.2.0
-python-docx==1.1.2
-python-dotenv==1.0.1
-PyYAML==6.0.1
-tabulate==0.9.0
-redis==5.0.1
-gunicorn==20.1.0
+# MCP (Model Context Protocol) Dependencies
+mcp==1.0.0
+mcp-server-stdio==1.0.0
+mcp-client==1.0.0
+pydantic==2.8.2
