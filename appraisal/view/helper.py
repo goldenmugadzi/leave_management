@@ -2,7 +2,7 @@ from typing import Protocol
 from django.forms import BaseModelForm
 from django.contrib import messages
 from django.http import HttpRequest
-from ..helpers.types.kra import KRAType, TargetScoreType, ActivityType, PerformanceDimensionType, KRAOutComeType
+from ..helpers.types.kra import KRAType, TargetScoreType, ActivityType, PerformanceDimensionType, KRAOutComeType, AppraiserConfirmationType
 from ..helpers.types.dept_workplan import DepartmentalOutTypes, OutputPerformanceDimensionType
 from pydantic import ValidationError, BaseModel
 from loguru import logger
@@ -186,19 +186,17 @@ def build_payload_score(request, form: BaseModelForm, is_appraisee: bool) -> Tar
                 The first error message is displayed to the user via Django messages framework.
     """
     try:
-        if not is_appraisee:
+        if is_appraisee:
             data = {
-                "appraiser_confirmation": form.cleaned_data.get("appraiser_confirmation"),
-                "comments": form.cleaned_data.get("comments"),
                 "score": form.cleaned_data.get("score")
             }
+            return TargetScoreType(**data) 
         else:
             data = {
-                "score": form.cleaned_data.get("score"),
                 "appraiser_confirmation": form.cleaned_data.get("appraiser_confirmation"),
                 "comments": form.cleaned_data.get("comments"),
             }
-        return TargetScoreType(**data)
+            return AppraiserConfirmationType(**data)
     except ValidationError as e:
         error_messages = ""
         for error_message in e.errors():

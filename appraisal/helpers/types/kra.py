@@ -3,6 +3,7 @@ from decimal import Decimal
 from typing import Literal, Annotated, Optional
 from enum import Enum
 from ...models.kra import APPRAISAL_KRA_REVIEWER_STATUS_CHOICES
+from .helper import percentage_validation
 class KRAType(BaseModel):
     key_result_area_description: str = Field(..., description="The KRA description.")
     goal_description: str = Field(..., description="The goal description.")
@@ -17,6 +18,12 @@ class TargetScoreType(BaseModel):
     score: Annotated[Decimal, Field(max_digits=10, decimal_places=2)] = Field(
         ..., description="The score of the target."
     )
+    @field_validator("score")
+    @classmethod
+    def validate_weight(cls, value: str):
+        return percentage_validation(percentage_value=value, field_name="Score") 
+    
+class AppraiserConfirmationType(BaseModel):
     comments: Optional[str] = Field(None, description="The comment of the target.")
     appraiser_confirmation: str = Field(..., description="The appraiser confirmation value.")
 

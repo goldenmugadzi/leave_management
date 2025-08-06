@@ -10,6 +10,7 @@ from django.utils.text import slugify
 
 from ...helpers.types.training import TrainingAndDevelopmentCreateUpdateType
 from ...helpers.getters import ApprovalStagesHandler
+from it.users.models import UserProfile, GRADE_CHOICES
 
 from ...forms import InterventionStrategyFormSet, ActionsForm, CompetencyFormSet
 from ...models import TrainingAndDevelopment, InterventionStrategy, AppraisalExperience
@@ -210,6 +211,16 @@ class TrainingAndDevelopmentTemplateView(TemplateView):
         appraisal_created_date = self.get_appraisal_object().created_date
         return get_assessment_period(date_object=appraisal_created_date)
     
+    def appraisee_grade(self):
+        user_obj = self.get_appraisal_object().user
+        
+        if user_obj.grade == GRADE_CHOICES[1][1]:
+            return GRADE_CHOICES[1][1]
+        
+        if user_obj.grade == GRADE_CHOICES[2][1]:
+            return "C, D, E and F"
+        return ""
+    
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
         appraisal_object = self.get_appraisal_object()
@@ -224,7 +235,7 @@ class TrainingAndDevelopmentTemplateView(TemplateView):
         context["has_no_designation"] = appraisal_object.user.designation == None or appraisal_object.user.designation == ""
         context["assessment_period"] = self.get_current_date_assessment()
         context["is_update"] = True
-        
+        context["appraisee_grade"] = self.appraisee_grade()
         return context
     
     def get(self, request, *args, **kwargs):

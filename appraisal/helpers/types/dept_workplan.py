@@ -2,12 +2,7 @@ from pydantic import BaseModel, Field, field_validator, ValidationError
 from decimal import Decimal
 from typing import Literal, Annotated, Optional
 from ...models.departmental_workplan import PERFORMANCE_INDICATOR
-
-def percentage_validation(percentage_value: int, field_name: str):
-
-    if percentage_value < 0 or percentage_value > 100:
-        raise ValueError(f"{field_name} must be a percentage between 0 and 100")
-    return percentage_value
+from .helper import percentage_validation
 
 class DepartmentalOutTypes(BaseModel):
     output_description: str = Field(..., description="The description of the DepartmentOutput.")

@@ -12,7 +12,7 @@ from django.contrib.messages.views import SuccessMessageMixin
 from django.contrib import messages
 
 from ..models import Appraisal, AppraiseePersonalAttribute
-from it.users.models import UserProfile
+from it.users.models import UserProfile, GRADE_CHOICES
 from ..forms import AppraisalForm, AppraisalRoleFilterForm, AppraisalUpdateForm
 from ..helpers.types.kra import RoleFilterChoices
 from ..repository import UserQualificationRepository, AppraisalExperienceRepository, ExperienceRepository, AppraisalRepository
@@ -66,7 +66,16 @@ class AppraisalCreateView(SuccessMessageMixin, CreateView):
     def get_user_qualification(self, user_id: int):
         repo = UserQualificationRepository()
         return repo.fetch_by_user(user_id=user_id)
+    
+    def appraisee_grade(self):
+        user_obj = self.get_user_object()
         
+        if user_obj.grade == GRADE_CHOICES[1][1]:
+            return GRADE_CHOICES[1][1]
+        
+        if user_obj.grade == GRADE_CHOICES[2][1]:
+            return "C, D, E and F"
+        return ""
 
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context =  super().get_context_data(**kwargs)
@@ -81,6 +90,7 @@ class AppraisalCreateView(SuccessMessageMixin, CreateView):
         context["user_qualification_qr"] = self.get_user_qualification(user_id=user_object.id)
         context["can_mutate"] = True
         context["is_update"] = False
+        context["appraisee_grade"] = self.appraisee_grade()
         return context
 
     def form_valid(self, form: BaseModelForm) -> HttpResponse:
@@ -117,6 +127,12 @@ class AppraisalCreateView(SuccessMessageMixin, CreateView):
                 messages.error(
                         request,
                         "<strong>Your designation or position</strong> was not found. Please contact IT to set your designation."
+                    )
+                
+            if user_object.grade == None or user_object.grade == "":
+                messages.error(
+                        request,
+                        "<strong>Your grade</strong> was not found. Please contact IT to set your designation."
                     )
             messages.info(
                 request,
@@ -177,6 +193,16 @@ class AppraisalUpdateView(SuccessMessageMixin, UpdateView):
     def get_user_qualification(self, user_id: int):
         repo = UserQualificationRepository()
         return repo.fetch_by_user(user_id=user_id)
+    
+    def appraisee_grade(self):
+        user_obj = self.get_object().user
+        
+        if user_obj.grade == GRADE_CHOICES[1][1]:
+            return GRADE_CHOICES[1][1]
+        
+        if user_obj.grade == GRADE_CHOICES[2][1]:
+            return "C, D, E and F"
+        return ""
         
 
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
@@ -193,6 +219,7 @@ class AppraisalUpdateView(SuccessMessageMixin, UpdateView):
         
         context["user_experiences_qr"] = self.get_user_experiences(user_id=appraisee_object.id)
         context["user_qualification_qr"] = self.get_user_qualification(user_id=appraisee_object.id)
+        context["appraisee_grade"] = self.appraisee_grade()
 
         can_make_changes = False
         
@@ -356,6 +383,16 @@ class AppraiseePersonalAttributesDetailView(TemplateView):
         appraisal_created_year = appraisal_object.created_date.year
         return get_all_quarter_ratings_per_appraiser(year=appraisal_created_year, appraisal_id=appraisal_object.id)
 
+    def appraisee_grade(self):
+        user_obj = self.get_appraisal_object().user
+        
+        if user_obj.grade == GRADE_CHOICES[1][1]:
+            return GRADE_CHOICES[1][1]
+        
+        if user_obj.grade == GRADE_CHOICES[2][1]:
+            return "C, D, E and F"
+        return ""
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         quarter_ratings, final_score = self.get_quarterly_total_score()
@@ -366,6 +403,8 @@ class AppraiseePersonalAttributesDetailView(TemplateView):
         context["quarter_ratings"] = quarter_ratings
         context["final_score"] = final_score
         context["final_comment_form"] = self.get_final_comment_form(None)
+        context["appraisee_grade"] = self.appraisee_grade()
+
         return context
     
     def post(self, request, *args, **kwargs):
@@ -442,11 +481,23 @@ class AppraiseePersonalAttributesUpdateView(TemplateView):
                 )
         return formset
     
+    def appraisee_grade(self):
+        user_obj = self.get_appraisal_object().user
+        
+        if user_obj.grade == GRADE_CHOICES[1][1]:
+            return GRADE_CHOICES[1][1]
+        
+        if user_obj.grade == GRADE_CHOICES[2][1]:
+            return "C, D, E and F"
+        return ""
+    
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context.update(self.approval_user_roles())
         context["personal_attribute_formset"] = self.get_forms
         context["appraisal_object"] = self.get_appraisal_object()
+        context["appraisee_grade"] = self.appraisee_grade()
+
         return context
     
     def get_success_url(self) -> str:

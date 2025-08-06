@@ -16,8 +16,9 @@ from ...repository import (AppraisalRepository, UserQualificationRepository, App
                           TrainingAndDevelopmentRepository)
 from ...helpers.getters import ApprovalStagesHandler
 
+
 from ...models import PerformanceProgressReview, AppraisalExperience, TrainingAndDevelopment
-from it.users.models import UserQualification, UserProfile
+from it.users.models import UserQualification, UserProfile, GRADE_CHOICES
 from ...forms import PerformanceReviewApprovalForm
 from approve.forms import ApprovalForm
 from approve.models import Step, Approval
@@ -61,6 +62,15 @@ class PerformancePlanAndAssessmentTemplateView(TemplateView):
         appraisal_created_date = self.get_appraisal_object().created_date
         return get_assessment_period(date_object=appraisal_created_date)
     
+    def appraisee_grade(self):
+        user_obj = self.get_appraisal_object().user
+        
+        if user_obj.grade == GRADE_CHOICES[1][1]:
+            return GRADE_CHOICES[1][1]
+        
+        if user_obj.grade == GRADE_CHOICES[2][1]:
+            return "C, D, E and F"
+        return ""
 
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
@@ -78,6 +88,8 @@ class PerformancePlanAndAssessmentTemplateView(TemplateView):
         context["has_no_designation"] = appraisal_object.user.designation == None or appraisal_object.user.designation == ""
         context["assessment_period"] = self.get_current_date_assessment()
         context["is_update"] = True
+        context["appraisee_grade"] = self.appraisee_grade()
+
         
         return context
 

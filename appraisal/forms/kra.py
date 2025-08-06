@@ -37,7 +37,11 @@ class AppraisalRoleFilterForm(forms.Form):
 class AppraisalOutPutPerformanceDimensionScoreForm(forms.ModelForm):
     class Meta:
         model = AppraisalOutPutPerformanceDimensionScore
-        fields = ["score", "comments", "appraiser_confirmation"]
+        fields = ["score"]
+class AppraiserConfirmationForm(forms.ModelForm):
+    class Meta:
+        model = AppraisalOutPutPerformanceDimensionScore
+        fields = ["appraiser_confirmation", "comments"]
         
 class AppraisalDepartmentOutputReviewerStatusForm(forms.ModelForm):
     class Meta:

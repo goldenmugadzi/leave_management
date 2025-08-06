@@ -2,5 +2,5 @@ from .appraisal import UserProfileForm, CostCenterForm, UserQualificationForm, A
 from .formsets import AppraisalExperienceFormset, UserQualificationFormset, InterventionStrategyFormSet, CompetencyFormSet
 from .performance_review import PerformanceReviewApprovalForm
 from .training import ActionsForm
-from .kra import YearQuarterForm,KraCreateForm, AppraisalRoleFilterForm, ScoreDocumentForm, KraOutComeCreateForm
+from .kra import YearQuarterForm,KraCreateForm, AppraisalRoleFilterForm, ScoreDocumentForm, KraOutComeCreateForm, AppraiserConfirmationForm
 

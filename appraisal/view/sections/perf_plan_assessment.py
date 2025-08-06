@@ -15,9 +15,9 @@ from ...repository.appraisal import AppraisalRepository
 from ...repository.kra import AppraisalDepartmentOutputRepository, AppraisalOutPutPerformanceDimensionScoreRepository, ScoreDocumentRepository,ApprasialKraReviewerStatusRepository
 from ...services.kra import AppraisalDepartmentOutputService
 from ...models.kra import AppraisalOutPutPerformanceDimensionScore, ScoreDocument, APPRAISAL_KRA_REVIEWER_STATUS_CHOICES
-from ...forms.kra import AppraisalOutPutPerformanceDimensionScoreForm, ScoreDocumentForm, AppraisalDepartmentOutputReviewerStatusForm
+from ...forms.kra import AppraisalOutPutPerformanceDimensionScoreForm, ScoreDocumentForm, AppraisalDepartmentOutputReviewerStatusForm, AppraiserConfirmationForm
 from ..helper import build_payload_score
-from pydantic import ValidationError
+from django.core.exceptions import ValidationError
 from it.users.models import GRADE_CHOICES
 from loguru import logger
 
@@ -35,6 +35,16 @@ class AppraisalDepartmentOutputTemplateView(TemplateView):
         service_handler = AppraisalDepartmentOutputService(appraisal_department_output_repo=AppraisalDepartmentOutputRepository())
         return service_handler.fetch_quarterly(appraisal_id=appraisal_object.id, year=appraisal_year) 
     
+    def appraisee_grade(self):
+        user_obj = self.get_appraisal_object().user
+        
+        if user_obj.grade == GRADE_CHOICES[1][1]:
+            return GRADE_CHOICES[1][1]
+        
+        if user_obj.grade == GRADE_CHOICES[2][1]:
+            return "C, D, E and F"
+        return ""
+    
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         appraisal_object = self.get_appraisal_object()
@@ -43,6 +53,8 @@ class AppraisalDepartmentOutputTemplateView(TemplateView):
         context["appraisee_object"] = appraisee_object
         context["appraisal_object"] = appraisal_object
         context["is_grade_c_and_above"] = appraisee_object.grade == GRADE_CHOICES[2][0]
+        context["appraisee_grade"] = self.appraisee_grade()
+
         return context
     
     def get(self, request, *args, **kwargs):
@@ -73,6 +85,16 @@ class AppraisalDepartmentPerformanceDimensionTemplateView(TemplateView):
         repo = AppraisalOutPutPerformanceDimensionScoreRepository()
         return repo.fetch_by_department_output_id(appraisal_department_output_id=self.kwargs.get('appraisal_department_output_id'))
     
+    def appraisee_grade(self):
+        user_obj = self.get_appraisee_object()
+        
+        if user_obj.grade == GRADE_CHOICES[1][1]:
+            return GRADE_CHOICES[1][1]
+        
+        if user_obj.grade == GRADE_CHOICES[2][1]:
+            return "C, D, E and F"
+        return ""
+    
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         
@@ -81,6 +103,8 @@ class AppraisalDepartmentPerformanceDimensionTemplateView(TemplateView):
         context["department_output_obj"] = self.get_appraisal_department_output_obj().department_output
         context["is_grade_c_and_above"] = appraisee_object.grade == GRADE_CHOICES[2][0]
         context["performance_dimensions_qr"] = self.get_all_perf_dimensions()
+        context["appraisee_grade"] = self.appraisee_grade()
+
         return context
     
     
@@ -121,19 +145,7 @@ class AppraisalDepartmentPerformanceDimensionScoreUpdateView(SuccessMessageMixin
         qr = repo.fetch_by_score_id(score_obj_id=self.get_object().id)
         return {"score_documents_qr": qr}
     
-    def get(self, request, *args, **kwargs):
-        try:
-            score_object = self.get_object()
-            self.object = score_object
-            if score_object is None:
-                logger.error(f"[AppraisalDepartmentPerformanceDimensionScoreUpdateView] get performance dimension pk-{self.kwargs.get('performance_dimension_id')}, Score object not found")
-                return redirect("object_not_found_error", object_name=slugify("Score"))
-            context = self.get_context_data(**kwargs)
-            return self.render_to_response(context)
-        except Exception as e:
-            logger.error(f"[AppraisalDepartmentPerformanceDimensionScoreUpdateView] get performance dimension pk-{self.kwargs.get('performance_dimension_id')}, failed with error: {e}")
-            return redirect("server_error_view")
-        
+            
     
     def get_initial_form(self):
         return AppraisalOutPutPerformanceDimensionScoreForm(instance=self.get_object())
@@ -156,6 +168,19 @@ class AppraisalDepartmentPerformanceDimensionScoreUpdateView(SuccessMessageMixin
         obj = repo.get_by_appraisee_performance_dimension_score_id(appraisee_performance_dimension_score_id=self.kwargs.get("performance_dimension_id"))
         return AppraisalDepartmentOutputReviewerStatusForm(instance=obj)
     
+    def get_appraiser_form(self):
+        return AppraiserConfirmationForm(instance=self.get_object())
+    
+    def appraisee_grade(self):
+        user_obj = self.get_object().appraisal_department_output.appraisal.user
+        
+        if user_obj.grade == GRADE_CHOICES[1][1]:
+            return GRADE_CHOICES[1][1]
+        
+        if user_obj.grade == GRADE_CHOICES[2][1]:
+            return "C, D, E and F"
+        return ""
+    
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context[self.context_object_name] = self.get_initial_form()
@@ -165,7 +190,19 @@ class AppraisalDepartmentPerformanceDimensionScoreUpdateView(SuccessMessageMixin
         
         context["score_object"] = score_obj
         context["reviewer_form"] = self.get_reviewer_form()
+        context["appraiser_form"] = self.get_appraiser_form()
+        context["appraisee_grade"] = self.appraisee_grade()
         return context
+    
+    def is_appraisee_request(self):
+        if "appraisee_request" in self.request.POST:
+            return True
+        return False
+    
+    def is_appraiser_request(self):
+        if "appraiser_request" in self.request.POST:
+            return True
+        return False
     
     def is_reviewer_request(self):
         if "reviewer_request" in self.request.POST:
@@ -201,12 +238,50 @@ class AppraisalDepartmentPerformanceDimensionScoreUpdateView(SuccessMessageMixin
         
         return HttpResponseRedirect(self.get_success_url())
     
+    def appraisee_form_handler(self, form):
+        payload = build_payload_score(request=self.request, form=form, is_appraisee=True)
+        repo = AppraisalOutPutPerformanceDimensionScoreRepository()
+        is_scored = False
+        if payload.score > 0:
+            is_scored = True
+        
+        current_score_object = self.get_object()
+        updated_score_object = repo.update(
+                                    appraisal_perf_dimension=self.get_object(), 
+                                    score=payload.score, 
+                                    is_scored=is_scored, 
+                                    appraiser_confirmation=current_score_object.appraiser_confirmation,
+                                    comments=current_score_object.comments
+                                    )
+        return updated_score_object
+    
+    def appraiser_form_handler(self, form):
+        payload = build_payload_score(request=self.request, form=form, is_appraisee=False)
+
+        if payload.appraiser_confirmation == APPRAISAL_KRA_REVIEWER_STATUS_CHOICES[2][1] and (payload.comments == "" or payload.comments == None):
+            raise ValidationError("Please provide the reason for your rejection in the comment field before proceeding.")
+        
+        current_score_object = self.get_object()
+        repo = AppraisalOutPutPerformanceDimensionScoreRepository()
+        updated_score_object = repo.update(
+                                    appraisal_perf_dimension=self.get_object(), 
+                                    score=current_score_object.score, 
+                                    is_scored=current_score_object.is_scored, 
+                                    appraiser_confirmation=payload.appraiser_confirmation,
+                                    comments=payload.comments
+                                    )
+        return updated_score_object
+    
     def post(self, request, *args, **kwargs):
+        self.object = self.get_object() 
         
         if self.is_reviewer_request():
             form = AppraisalDepartmentOutputReviewerStatusForm(self.request.POST)  
-        else:   
+        if self.is_appraiser_request():   
+            form = AppraiserConfirmationForm(self.request.POST)
+        else:
             form = self.get_form()
+        
         if form.is_valid():
             return self.form_valid(form)
         else:
@@ -215,36 +290,36 @@ class AppraisalDepartmentPerformanceDimensionScoreUpdateView(SuccessMessageMixin
         
     def form_valid(self, form):
         try:
-            if "appraisee_request" in self.request.POST:
-                payload = build_payload_score(request=self.request, form=form, is_appraisee=True)
-            elif "appraiser_request" in self.request.POST:
-                payload = build_payload_score(request=self.request, form=form, is_appraisee=False)
+            if self.is_appraisee_request():
+                updated_object = self.appraisee_form_handler(form=form)
+            elif self.is_appraiser_request():
+                updated_object = self.appraiser_form_handler(form=form)
             elif self.is_reviewer_request():
                 return self.reviewer_form_handler(form=form)
             else:
                 raise Exception("Request not allowed, only 'appraisee_request' and 'appraiser_request' allowed")
-            
-            repo = AppraisalOutPutPerformanceDimensionScoreRepository()
-            
-            is_scored = False
-            if payload.score > 0:
-                is_scored = True
-            
-            score_object = repo.update(
-                                        appraisal_perf_dimension=self.get_object(), 
-                                        score=payload.score, 
-                                        is_scored=is_scored, 
-                                        appraiser_confirmation=payload.appraiser_confirmation,
-                                        comments=payload.comments
-                                        )
-            form.instance = score_object
+            form.instance = updated_object
         except ValidationError as e:
+            messages.error(self.request, "\n".join(e.messages))
             return super().form_invalid(form)
         except Exception as e:
             logger.error(f"[ AppraisalDepartmentPerformanceDimensionScoreUpdateView ] form_valid with performance dimension pk-{self.kwargs.get('performance_dimension_id')}, failed with error: {e}")
             messages.error(self.request, "An unexpected error occurred, please try again")
             return super().form_invalid(form)
         return super().form_valid(form)
+
+    def get(self, request, *args, **kwargs):
+        try:
+            score_object = self.get_object()
+            self.object = score_object
+            if score_object is None:
+                logger.error(f"[AppraisalDepartmentPerformanceDimensionScoreUpdateView] get performance dimension pk-{self.kwargs.get('performance_dimension_id')}, Score object not found")
+                return redirect("object_not_found_error", object_name=slugify("Score"))
+            context = self.get_context_data(**kwargs)
+            return self.render_to_response(context)
+        except Exception as e:
+            logger.error(f"[AppraisalDepartmentPerformanceDimensionScoreUpdateView] get performance dimension pk-{self.kwargs.get('performance_dimension_id')}, failed with error: {e}")
+            return redirect("server_error_view")
 
     def get_success_url(self) -> str:
         """
