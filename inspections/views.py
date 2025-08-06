@@ -9,10 +9,15 @@ from rest_framework import viewsets
 from rest_framework.decorators import api_view
 from django.utils import timezone
 
-from .models import ClientApplication, InspectionReport, ApplicationAssignment
+from .models import (
+    Customer, Contractor, ApplicationAttachment, ClientApplication, 
+    InspectionReport, E6Certificate, E1DefectReport, InspectionWorkflow, 
+    ApplicationAssignment
+)
 from .forms import (
-    ClientApplicationForm, InspectionReportForm, ApplicationAssignmentForm, 
-    InspectionSearchForm
+    CustomerForm, ContractorForm, ApplicationAttachmentForm, ClientApplicationForm, 
+    InspectionReportForm, E6CertificateForm, E1DefectReportForm, 
+    ApplicationAssignmentForm, InspectionSearchForm
 )
 
 
@@ -45,6 +50,178 @@ def dashboard(request):
     return render(request, 'inspections/dashboard.html', context)
 
 
+# CUSTOMER MANAGEMENT VIEWS
+@login_required
+def customer_list(request):
+    """List all customers with search and filtering"""
+    customers = Customer.objects.all()
+    
+    # Search functionality
+    search_query = request.GET.get('search', '')
+    if search_query:
+        customers = customers.filter(
+            Q(customer_id__icontains=search_query) |
+            Q(full_name__icontains=search_query) |
+            Q(phone__icontains=search_query) |
+            Q(email__icontains=search_query) |
+            Q(district__icontains=search_query)
+        )
+    
+    customers = customers.order_by('-created_at')
+    
+    # Pagination
+    paginator = Paginator(customers, 20)
+    page_number = request.GET.get('page')
+    customers = paginator.get_page(page_number)
+    
+    context = {
+        'customers': customers,
+        'search_query': search_query,
+    }
+    return render(request, 'inspections/customer_list.html', context)
+
+
+@login_required
+def customer_create(request):
+    """Create a new customer"""
+    if request.method == 'POST':
+        form = CustomerForm(request.POST)
+        if form.is_valid():
+            customer = form.save()
+            messages.success(request, f'Customer "{customer.full_name}" created successfully.')
+            return redirect('inspections:customer_list')
+    else:
+        form = CustomerForm()
+    
+    context = {
+        'form': form,
+        'is_edit': False,
+    }
+    return render(request, 'inspections/customer_form.html', context)
+
+
+@login_required
+def customer_edit(request, pk):
+    """Edit an existing customer"""
+    customer = get_object_or_404(Customer, pk=pk)
+    
+    if request.method == 'POST':
+        form = CustomerForm(request.POST, instance=customer)
+        if form.is_valid():
+            customer = form.save()
+            messages.success(request, f'Customer "{customer.full_name}" updated successfully.')
+            return redirect('inspections:customer_list')
+    else:
+        form = CustomerForm(instance=customer)
+    
+    context = {
+        'form': form,
+        'customer': customer,
+        'is_edit': True,
+    }
+    return render(request, 'inspections/customer_form.html', context)
+
+
+@login_required
+def customer_detail(request, pk):
+    """View customer details"""
+    customer = get_object_or_404(Customer, pk=pk)
+    applications = customer.applications.all().order_by('-created_at')
+    
+    context = {
+        'customer': customer,
+        'applications': applications,
+    }
+    return render(request, 'inspections/customer_detail.html', context)
+
+
+# CONTRACTOR MANAGEMENT VIEWS
+@login_required
+def contractor_list(request):
+    """List all contractors with search and filtering"""
+    contractors = Contractor.objects.all()
+    
+    # Search functionality
+    search_query = request.GET.get('search', '')
+    if search_query:
+        contractors = contractors.filter(
+            Q(contractor_id__icontains=search_query) |
+            Q(business_name__icontains=search_query) |
+            Q(contact_person__icontains=search_query) |
+            Q(phone__icontains=search_query) |
+            Q(email__icontains=search_query) |
+            Q(district__icontains=search_query) |
+            Q(license_number__icontains=search_query)
+        )
+    
+    contractors = contractors.order_by('-created_at')
+    
+    # Pagination
+    paginator = Paginator(contractors, 20)
+    page_number = request.GET.get('page')
+    contractors = paginator.get_page(page_number)
+    
+    context = {
+        'contractors': contractors,
+        'search_query': search_query,
+    }
+    return render(request, 'inspections/contractor_list.html', context)
+
+
+@login_required
+def contractor_create(request):
+    """Create a new contractor"""
+    if request.method == 'POST':
+        form = ContractorForm(request.POST)
+        if form.is_valid():
+            contractor = form.save()
+            messages.success(request, f'Contractor "{contractor.business_name}" created successfully.')
+            return redirect('inspections:contractor_list')
+    else:
+        form = ContractorForm()
+    
+    context = {
+        'form': form,
+        'is_edit': False,
+    }
+    return render(request, 'inspections/contractor_form.html', context)
+
+
+@login_required
+def contractor_edit(request, pk):
+    """Edit an existing contractor"""
+    contractor = get_object_or_404(Contractor, pk=pk)
+    
+    if request.method == 'POST':
+        form = ContractorForm(request.POST, instance=contractor)
+        if form.is_valid():
+            contractor = form.save()
+            messages.success(request, f'Contractor "{contractor.business_name}" updated successfully.')
+            return redirect('inspections:contractor_list')
+    else:
+        form = ContractorForm(instance=contractor)
+    
+    context = {
+        'form': form,
+        'contractor': contractor,
+        'is_edit': True,
+    }
+    return render(request, 'inspections/contractor_form.html', context)
+
+
+@login_required
+def contractor_detail(request, pk):
+    """View contractor details"""
+    contractor = get_object_or_404(Contractor, pk=pk)
+    applications = contractor.applications.all().order_by('-created_at')
+    
+    context = {
+        'contractor': contractor,
+        'applications': applications,
+    }
+    return render(request, 'inspections/contractor_detail.html', context)
+
+
 # CLIENT APPLICATION VIEWS
 @login_required
 def application_list(request):
@@ -62,8 +239,10 @@ def application_list(request):
         if search_query:
             applications = applications.filter(
                 Q(application_number__icontains=search_query) |
-                Q(customer_name__icontains=search_query) |
-                Q(service_number__icontains=search_query)
+                Q(customer__full_name__icontains=search_query) |
+                Q(customer__customer_id__icontains=search_query) |
+                Q(contractor__business_name__icontains=search_query) |
+                Q(contractor__contractor_id__icontains=search_query)
             )
         
         if application_type:
@@ -83,12 +262,11 @@ def application_list(request):
     # Pagination
     paginator = Paginator(applications, 20)
     page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
+    applications = paginator.get_page(page_number)
     
     context = {
         'form': form,
-        'page_obj': page_obj,
-        'applications': page_obj,
+        'applications': applications,
     }
     return render(request, 'inspections/application_list.html', context)
 
@@ -99,12 +277,22 @@ def application_detail(request, pk):
     application = get_object_or_404(ClientApplication, pk=pk)
     assignments = application.assignments.all().order_by('-created_at')
     inspection_reports = application.inspection_reports.all().order_by('-created_at')
+    attachments = application.attachments.all().order_by('-uploaded_at')
+    
+    # Get related documents
+    e6_certificates = application.e6_certificates.all().order_by('-created_at')
+    e1_defect_reports = application.e1_defect_reports.all().order_by('-created_at')
     
     context = {
         'application': application,
         'assignments': assignments,
         'inspection_reports': inspection_reports,
+        'attachments': attachments,
+        'e6_certificates': e6_certificates,
+        'e1_defect_reports': e1_defect_reports,
     }
+
+    print("attachments: ", attachments)
     return render(request, 'inspections/application_detail.html', context)
 
 
@@ -117,12 +305,37 @@ def application_create(request):
             application = form.save(commit=False)
             application.submitted_by = request.user
             application.save()
-            messages.success(request, f'Application {application.application_number} created successfully!')
+            
+            # Handle file attachments
+            files = request.FILES.getlist('attachments[]')
+            file_types = request.POST.getlist('file_types[]')
+            descriptions = request.POST.getlist('descriptions[]')
+            print('file_types: ', file_types)
+            print('descriptions: ', descriptions)
+            for i, file in enumerate(files):
+                if file:  # Only create attachment if a file was actually uploaded
+                    file_type = file_types[i] if i < len(file_types) else 'other'
+                    description = descriptions[i] if i < len(descriptions) else ''
+                    
+                    app_attachment = ApplicationAttachment(
+                        application=application,
+                        file=file,
+                        file_type=file_type,
+                        description=description
+                    )
+                    app_attachment.save()
+
+                    print('app_attachment: ', app_attachment)
+            
+            messages.success(request, f'Application "{application.application_number}" created successfully.')
             return redirect('inspections:application_detail', pk=application.pk)
     else:
         form = ClientApplicationForm()
     
-    context = {'form': form}
+    context = {
+        'form': form,
+        'is_edit': False,
+    }
     return render(request, 'inspections/application_form.html', context)
 
 
@@ -134,8 +347,33 @@ def application_edit(request, pk):
     if request.method == 'POST':
         form = ClientApplicationForm(request.POST, instance=application)
         if form.is_valid():
-            form.save()
-            messages.success(request, 'Application updated successfully!')
+            application = form.save()
+
+            # Handle file attachments
+            files = request.FILES.getlist('attachments[]')
+            file_types = request.POST.getlist('file_types[]')
+            descriptions = request.POST.getlist('descriptions[]')
+            print('file_types: ', file_types)
+            print('descriptions: ', descriptions)
+            for i, file in enumerate(files):
+                if file:
+                    file_type = file_types[i] if i < len(file_types) else 'other'
+                    description = descriptions[i] if i < len(descriptions) else ''
+                    
+                    app_attachment = ApplicationAttachment(
+                        application=application,
+                        file=file,
+                        file_type=file_type,
+                        description=description
+                    )
+                    app_attachment.save()
+                    print('app_attachment: ', app_attachment)
+            
+            # Update application status
+            application.status = 'submitted'
+            application.save()
+
+            messages.success(request, f'Application "{application.application_number}" updated successfully.')
             return redirect('inspections:application_detail', pk=application.pk)
     else:
         form = ClientApplicationForm(instance=application)
@@ -143,7 +381,7 @@ def application_edit(request, pk):
     context = {
         'form': form,
         'application': application,
-        'is_edit': True
+        'is_edit': True,
     }
     return render(request, 'inspections/application_form.html', context)
 
@@ -152,97 +390,89 @@ def application_edit(request, pk):
 @login_required
 def inspection_list(request):
     """List all inspection reports"""
-    reports = InspectionReport.objects.select_related('inspector', 'client_application').order_by('-created_at')
+    inspections = InspectionReport.objects.all().order_by('-created_at')
+    
+    # Search functionality
+    search_query = request.GET.get('search', '')
+    if search_query:
+        inspections = inspections.filter(
+            Q(service_no__icontains=search_query) |
+            Q(consumer_name__icontains=search_query) |
+            Q(inspector__username__icontains=search_query)
+        )
     
     # Pagination
-    paginator = Paginator(reports, 20)
+    paginator = Paginator(inspections, 20)
     page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
+    inspections = paginator.get_page(page_number)
     
     context = {
-        'page_obj': page_obj,
-        'reports': page_obj,
+        'inspections': inspections,
+        'search_query': search_query,
     }
     return render(request, 'inspections/inspection_list.html', context)
 
 
 @login_required
 def inspection_detail(request, pk):
-    """View details of an inspection report"""
-    report = get_object_or_404(InspectionReport, pk=pk)
-    context = {'report': report}
-    return render(request, 'inspections/inspection_detail.html', context)
-
-
-@login_required
-def inspection_create(request):
-    """Create a new inspection report"""
-    if request.method == 'POST':
-        form = InspectionReportForm(request.POST)
-        if form.is_valid():
-            report = form.save(commit=False)
-            report.inspector = request.user
-            report.save()
-            messages.success(request, 'Inspection report created successfully!')
-            return redirect('inspections:inspection_detail', pk=report.pk)
-    else:
-        form = InspectionReportForm()
-    
-    context = {'form': form}
-    return render(request, 'inspections/inspection_form.html', context)
-
-
-@login_required
-def inspection_edit(request, pk):
-    """Edit an existing inspection report"""
-    report = get_object_or_404(InspectionReport, pk=pk)
-    
-    if request.method == 'POST':
-        form = InspectionReportForm(request.POST, instance=report)
-        if form.is_valid():
-            form.save()
-            messages.success(request, 'Inspection report updated successfully!')
-            return redirect('inspections:inspection_detail', pk=report.pk)
-    else:
-        form = InspectionReportForm(instance=report)
+    """View inspection report details (E117)"""
+    inspection = get_object_or_404(InspectionReport, pk=pk)
     
     context = {
-        'form': form,
-        'report': report,
-        'is_edit': True
+        'inspection': inspection,
     }
-    return render(request, 'inspections/inspection_form.html', context)
+    return render(request, 'inspections/e117_view.html', context)
 
 
-# APPLICATION ASSIGNMENT VIEWS
+# E6 CERTIFICATE VIEWS
+@login_required
+def e6_certificate_detail(request, pk):
+    """View E6 certificate details"""
+    certificate = get_object_or_404(E6Certificate, pk=pk)
+    
+    context = {
+        'certificate': certificate,
+    }
+    return render(request, 'inspections/e6_certificate_view.html', context)
+
+
+# E1 DEFECT REPORT VIEWS
+@login_required
+def e1_defect_report_detail(request, pk):
+    """View E1 defect report details"""
+    report = get_object_or_404(E1DefectReport, pk=pk)
+    
+    context = {
+        'report': report,
+    }
+    return render(request, 'inspections/e1_defect_report_view.html', context)
+
+
+# ASSIGNMENT VIEWS
 @login_required
 def assignment_list(request):
     """List all application assignments"""
-    assignments = ApplicationAssignment.objects.select_related(
-        'application', 'assigned_to', 'assigned_by'
-    ).order_by('-created_at')
+    assignments = ApplicationAssignment.objects.all().order_by('-created_at')
     
-    # Filter by assigned user if not superuser
-    if not request.user.is_superuser:
-        assignments = assignments.filter(
-            Q(assigned_to=request.user) | Q(assigned_by=request.user)
-        )
+    # Filter by assigned user if specified
+    assigned_to = request.GET.get('assigned_to')
+    if assigned_to:
+        assignments = assignments.filter(assigned_to__username=assigned_to)
     
     # Pagination
     paginator = Paginator(assignments, 20)
     page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
+    assignments = paginator.get_page(page_number)
     
     context = {
-        'page_obj': page_obj,
-        'assignments': page_obj,
+        'assignments': assignments,
     }
     return render(request, 'inspections/assignment_list.html', context)
 
 
 @login_required
 def assignment_create(request):
-    """Create a new assignment"""
+    """Create a new application assignment"""
     if request.method == 'POST':
         form = ApplicationAssignmentForm(request.POST)
         if form.is_valid():
@@ -251,15 +481,18 @@ def assignment_create(request):
             assignment.save()
             
             # Update application status
-            assignment.application.status = 'assigned'
-            assignment.application.save()
+            application = assignment.application
+            application.status = 'assigned'
+            application.save()
             
-            messages.success(request, 'Assignment created successfully!')
+            messages.success(request, f'Application assigned to {assignment.assigned_to.get_full_name()} successfully.')
             return redirect('inspections:assignment_list')
     else:
         form = ApplicationAssignmentForm()
     
-    context = {'form': form}
+    context = {
+        'form': form,
+    }
     return render(request, 'inspections/assignment_form.html', context)
 
 
@@ -267,18 +500,13 @@ def assignment_create(request):
 @require_POST
 def assignment_accept(request, pk):
     """Accept an assignment"""
-    assignment = get_object_or_404(ApplicationAssignment, pk=pk, assigned_to=request.user)
+    assignment = get_object_or_404(ApplicationAssignment, pk=pk)
     
-    if assignment.status == 'assigned':
+    if assignment.assigned_to == request.user:
         assignment.accept_assignment()
-        
-        # Update application status
-        assignment.application.status = 'in_progress'
-        assignment.application.save()
-        
-        messages.success(request, 'Assignment accepted successfully!')
+        messages.success(request, 'Assignment accepted successfully.')
     else:
-        messages.error(request, 'Assignment cannot be accepted.')
+        messages.error(request, 'You can only accept assignments assigned to you.')
     
     return redirect('inspections:assignment_list')
 
@@ -287,40 +515,36 @@ def assignment_accept(request, pk):
 @require_POST
 def assignment_complete(request, pk):
     """Complete an assignment"""
-    assignment = get_object_or_404(ApplicationAssignment, pk=pk, assigned_to=request.user)
+    assignment = get_object_or_404(ApplicationAssignment, pk=pk)
     
-    if assignment.status in ['accepted', 'in_progress']:
-        completion_notes = request.POST.get('completion_notes', '')
-        assignment.complete_assignment(completion_notes)
-        messages.success(request, 'Assignment completed successfully!')
+    if assignment.assigned_to == request.user:
+        notes = request.POST.get('completion_notes', '')
+        assignment.complete_assignment(notes)
+        messages.success(request, 'Assignment completed successfully.')
     else:
-        messages.error(request, 'Assignment cannot be completed.')
+        messages.error(request, 'You can only complete assignments assigned to you.')
     
     return redirect('inspections:assignment_list')
 
 
-# API VIEWS FOR MOBILE APP
+# API VIEWS
 @api_view(['GET'])
 def api_my_assignments(request):
-    """API endpoint for mobile app to get user's assignments"""
-    if not request.user.is_authenticated:
-        return JsonResponse({'error': 'Authentication required'}, status=401)
-    
+    """API endpoint for getting current user's assignments"""
     assignments = ApplicationAssignment.objects.filter(
         assigned_to=request.user,
         status__in=['assigned', 'accepted', 'in_progress']
-    ).select_related('application')
+    ).order_by('-created_at')
     
     data = []
     for assignment in assignments:
         data.append({
             'id': str(assignment.id),
             'application_number': assignment.application.application_number,
-            'customer_name': assignment.application.customer_name,
-            'property_address': assignment.application.property_address,
+            'customer_name': assignment.application.customer.full_name,
             'status': assignment.status,
             'due_date': assignment.due_date.isoformat() if assignment.due_date else None,
-            'assignment_notes': assignment.assignment_notes,
+            'assignment_date': assignment.assignment_date.isoformat(),
         })
     
     return JsonResponse({'assignments': data})
@@ -328,21 +552,11 @@ def api_my_assignments(request):
 
 @api_view(['POST'])
 def api_accept_assignment(request, pk):
-    """API endpoint for mobile app to accept assignment"""
-    if not request.user.is_authenticated:
-        return JsonResponse({'error': 'Authentication required'}, status=401)
+    """API endpoint for accepting an assignment"""
+    assignment = get_object_or_404(ApplicationAssignment, pk=pk)
     
-    try:
-        assignment = ApplicationAssignment.objects.get(pk=pk, assigned_to=request.user)
-        if assignment.status == 'assigned':
-            assignment.accept_assignment()
-            
-            # Update application status
-            assignment.application.status = 'in_progress'
-            assignment.application.save()
-            
-            return JsonResponse({'success': True, 'message': 'Assignment accepted'})
-        else:
-            return JsonResponse({'error': 'Assignment cannot be accepted'}, status=400)
-    except ApplicationAssignment.DoesNotExist:
-        return JsonResponse({'error': 'Assignment not found'}, status=404) 
+    if assignment.assigned_to == request.user:
+        assignment.accept_assignment()
+        return JsonResponse({'status': 'success', 'message': 'Assignment accepted'})
+    else:
+        return JsonResponse({'status': 'error', 'message': 'Unauthorized'}, status=403) 

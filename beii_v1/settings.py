@@ -141,6 +141,7 @@ INSTALLED_APPS = [
     'leave_management',
     'sanction_for_test',
     'utils',
+    'inspections',
 ]
 
 AUTH_USER_MODEL = 'users.UserProfile'

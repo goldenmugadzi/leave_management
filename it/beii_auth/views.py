@@ -134,6 +134,12 @@ APPLICATIONS = [
         "iconUrl": "assets/images/customer.png",
         "url": "/commercial/customers"
     },
+    {
+        "name": "inspections",
+        "title": "Inspections",
+        "iconUrl": "assets/images/customer.png",
+        "url": "/inspections/"
+    },
     # {
     #     "name":"fault_locator",
     #     "title": "Fault Locator",
