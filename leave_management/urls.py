@@ -1,5 +1,6 @@
 from django.urls import path
 from . import views
+from leave_management.views import encashment_leave
 
 urlpatterns = [
 
@@ -10,6 +11,7 @@ urlpatterns = [
     path('leave_types_datatable/', views.leave_types_datatable, name='leave_types_datatable'),
     path('leave_types/', views.leave_types, name='leave_types'),
     path('accumulate_vacation/<int:pk>/<str:employee_type>/', views.accumulate_vacation_leave_view, name='accumulate_vacation_leave'),
-    path('approve_leave/', views.approve_leave, name='approve_leave'),
+    path('approve_leave/<int:pk>/', views.approve_leave, name='approve_leave'),
+    path('encashment/', encashment_leave, name='encashment'),
     
 ]

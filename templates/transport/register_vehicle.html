@@ -15,20 +15,6 @@
 <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
 <link href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css" rel="stylesheet">
 
-<script>
-  $(document).ready(function() {
-    $('#id_year').datepicker({
-      changeYear: true,        // Enables year selection
-      showButtonPanel: true,   // Shows the "Done" button
-      dateFormat: "yy",        // Shows only the year
-      minDate: new Date(1900, 1 - 1, 1), // Optional: set minimum date (start from year 1900)
-      // No maxDate specified
-    });
-  });
-</script>
-
-
-
  <div class="content-wrapper">
   
   <div class="bg-gulf-blue-100 shadow shadow-gulf-blue-300 text-gulf-blue-900 rounded px-2 py-2">
@@ -40,8 +26,8 @@
       <p class="mt-1 text-sm leading-6 text-gulf-blue-900">
         Fill all required fields.
       </p>
-      <div class="rounded row text-center py-2 grid grid-cols-2  my-3">
-        {% for field in form %} {% if field.is_hidden %} {{ field }} {% else %} <div class="mb-5 grid grid-cols-2 text-center pr-5"> <div> {{ field.label }} <div class="text-blue-500 text-center">{{ field.help_text }}</div> <div class="text-red-500 text-center text-red-500 ">{{ field.errors }}</div> </div> {{ field }} </div> {% endif %}  {% endfor %}
+      <div class="rounded row text-center py-2 grid grid-cols-3 gap-4 my-3">
+        {% for field in form %} {% if field.is_hidden %} {{ field }} {% else %} <div class="mb-5"> <div> {{ field.label }} <div class="text-blue-500 text-center">{{ field.help_text }}</div> <div class="text-red-500 text-center ">{{ field.errors }}</div> </div> {{ field }} </div> {% endif %}  {% endfor %}
         <!-- {{ form.as_p }}  -->
       </div>
       <div class="flex mt-10 px-3 py-3">
@@ -56,7 +42,7 @@
             type="submit"
             class="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
           >
-            SAVE USER
+            SAVE 
           </button>
         </div>
       </div>
@@ -64,4 +50,3 @@
         </div>
       </div>
       {% endblock %}
-      

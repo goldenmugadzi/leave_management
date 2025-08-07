@@ -1,12 +1,13 @@
 from django.shortcuts import render, redirect
-from .models import SafetyMonthlyReport,AccidentReport
-from .forms import SafetyMonthlyReportForm,AccidentReportForm
+from .models import SafetyMonthlyReport,AccidentReport,VehicleAccidentReport, PropertyLossIncident
+from .forms import SafetyMonthlyReportForm,AccidentReportForm, VehicleAccidentReportForm, PropertyLossIncidentForm
 from django.contrib import messages
 from django.http import JsonResponse
 from django.db.models import Q
 from .models import AccidentReport
 from django.shortcuts import get_object_or_404, render, redirect 
 from django.db import transaction,IntegrityError
+
 def safety_table(request):
     reports = SafetyMonthlyReport.objects.all().order_by('-year', '-month')
     return render(request, 'safety/safety_table.html', {'reports': reports})
@@ -22,7 +23,7 @@ def safety_report_create(request):
             return redirect('safety_table')
     else:
         form = SafetyMonthlyReportForm()
-    return render(request, 'safety/report_form.html', {'form': form})
+    return render(request, 'safety/safety_form.html', {'form': form})
 
 def safety_report_data(request):
     draw = int(request.GET.get('draw', 1))
@@ -135,17 +136,43 @@ def safety_ytd(request):
     })
        
 def create_accident(request):
+    accident_form = AccidentReportForm()
+    vehicle_form = VehicleAccidentReportForm()
+    property_loss_form = PropertyLossIncidentForm()
+
     if request.method == 'POST':
-        form = AccidentReportForm(request.POST)
-        if form.is_valid():
-            accident = form.save(commit=False)
-            accident.user = request.user  
-            accident.save()
-            messages.success(request, "Accident report submitted successfully.")
-            return redirect('safety_table') 
-    else:
-        form = AccidentReportForm()
-    return render(request, 'safety/accident_report.html', {'form': form})
+        # Check which form was submitted by submit button name
+        if 'submit_vehicle' in request.POST:
+            vehicle_form = VehicleAccidentReportForm(request.POST, request.FILES)
+            if vehicle_form.is_valid():
+                vehicle_report = vehicle_form.save(commit=False)
+                vehicle_report.user = request.user
+                vehicle_report.save()
+                messages.success(request, "Vehicle accident report submitted successfully.")
+                return redirect('safety_table')
+        elif 'submit_accident' in request.POST:
+            accident_form = AccidentReportForm(request.POST)
+            if accident_form.is_valid():
+                accident = accident_form.save(commit=False)
+                accident.user = request.user
+                accident.save()
+                messages.success(request, "Human accident report submitted successfully.")
+                return redirect('safety_table')
+        elif 'submit_property_loss' in request.POST:
+            property_loss_form = PropertyLossIncidentForm(request.POST, request.FILES)
+            if property_loss_form.is_valid():
+                incident = property_loss_form.save(commit=False)
+                incident.user = request.user
+                incident.save()
+                messages.success(request, "Property loss incident report submitted successfully.")
+                return redirect('safety_table') 
+
+    return render(request, 'safety/accident_report.html', {
+        'form': accident_form,
+        'vehicle_form': vehicle_form,
+        'property_loss_form': property_loss_form,
+    })
+
 
 def accident_reports_datatable(request):
     draw = int(request.GET.get('draw', 1))

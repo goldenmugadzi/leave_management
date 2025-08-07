@@ -1,36 +1,112 @@
 {% extends 'admin_layout.html' %}
 {% block styles %}
 <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css"/>
- <style>
-        .dataTables_wrapper .dataTables_length select { width: 4rem; }
-        .main-heading {
-            font-size: 1.5rem;
-            font-weight: bold;
-            color: #17191e;
-            margin-bottom: 1.5rem;
-            text-align: center;
-            width: 100%;
-        }
-        .button-grid {
-            display: flex;
-            justify-content: center;
-            gap: 1.5rem;
-            margin-bottom: 2rem;
-            flex-wrap: wrap;
-        }
-        .tab-button {
-            padding: 0.75rem 2.5rem;
-            border: none;
-            border-radius: 9999px;
-            cursor: pointer;
-            font-weight: 500;
-            font-size: 1.15rem;
-            transition: all 0.3s;
-            box-shadow: 0 2px 8px rgba(30, 41, 59, 0.04);
-            display: inline-block;
-            text-align: center;
-            text-decoration: none;
-        }
+<style>
+    .main-heading {
+        font-size: 2rem;
+        font-weight: bold;
+        color: #17191e;
+        margin-bottom: 2rem;
+        text-align: center;
+        width: 100%;
+        letter-spacing: 1px;
+    }
+    .tab-button svg {
+        width: 1.3rem;
+        height: 1.3rem;
+        margin-bottom: 0;
+        opacity: 0.85;
+    }
+    .button-grid {
+        display: flex;
+        justify-content: center;
+        gap: 1rem;
+        margin-bottom: 2rem;
+        flex-wrap: wrap;
+    }
+    .tab-button {
+        display: flex;
+        align-items: center;
+        padding: 0.5rem 1.5rem;
+        border-radius: 0.75rem;
+        font-size: 1rem;
+        font-weight: 600;
+        box-shadow: 0 2px 8px rgba(30,41,59,0.08);
+        text-decoration: none;
+        border: none;
+        min-height: 48px;
+        background: #fff;
+        gap: 0.5rem;
+        min-width: 170px;
+        transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .tab-button.bg-blue-600 { background: linear-gradient(90deg, #2563eb 80%, #3b82f6 100%); color: #fff; }
+    .tab-button.bg-indigo-600 { background: linear-gradient(90deg, #4f46e5 80%, #6366f1 100%); color: #fff; }
+    .tab-button.bg-yellow-400 { background: linear-gradient(90deg, #f59e42 80%, #fde68a 100%); color: #17191e; }
+    .tab-button.bg-green-500 { background: linear-gradient(90deg, #16a34a 80%, #22c55e 100%); color: #fff; }
+    .tab-button.bg-gray-400 { background: linear-gradient(90deg, #6b7280 80%, #9ca3af 100%); color: #fff; }
+    .tab-button.bg-red-400 { background: linear-gradient(90deg, #dc2626 80%, #ef4444 100%); color: #fff; }
+    .tab-button:hover {
+        transform: translateY(-2px) scale(1.02);
+        box-shadow: 0 4px 16px rgba(30,41,59,0.16);
+        text-decoration: none;
+    }
+    /* Table Styling */
+    .dataTables_wrapper .dataTables_length select { width: 4rem; }
+    .dataTables_wrapper .dataTables_filter input {
+        border-radius: 0.5rem;
+        border: 1px solid #d1d5db;
+        padding: 0.5rem 1rem;
+        margin-left: 0.5rem;
+        font-size: 1rem;
+    }
+    table.display {
+        background: #fff;
+        border-radius: 1rem;
+        box-shadow: 0 2px 8px rgba(30,41,59,0.08);
+        overflow: hidden;
+    }
+    table.display thead th {
+        background: #2563eb;
+        color: #fff;
+        font-size: 1rem;
+        font-weight: 600;
+        border-bottom: 2px solid #3b82f6;
+        padding: 1rem 0.75rem;
+        letter-spacing: 0.5px;
+    }
+    table.display tbody td {
+        padding: 0.75rem 0.5rem;
+        font-size: 1rem;
+        color: #17191e;
+        border-bottom: 1px solid #e5e7eb;
+        vertical-align: middle;
+    }
+    table.display tbody tr:nth-child(even) {
+        background: #f3f4f6;
+    }
+    table.display tbody tr:hover {
+        background: #e0e7ff;
+        transition: background 0.2s;
+    }
+    .action-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        border-radius: 9999px;
+        padding: 0.5rem 1rem;
+        font-weight: 500;
+        font-size: 0.95rem;
+        box-shadow: 0 2px 8px rgba(30,41,59,0.08);
+        border: none;
+        transition: background 0.2s;
+        margin-right: 0.5rem;
+        text-decoration: none;
+    }
+    .action-btn.bg-blue-600 { background: linear-gradient(90deg, #2563eb 80%, #3b82f6 100%); color: #fff; }
+    .action-btn.bg-blue-600:hover { background: #1d4ed8; color: #fff; }
+    .action-btn.bg-yellow-500 { background: linear-gradient(90deg, #f59e42 80%, #fde68a 100%); color: #17191e; }
+    .action-btn.bg-yellow-500:hover { background: #fbbf24; color: #17191e; }
 </style>
 {% endblock %}
 
@@ -39,12 +115,38 @@
   <div class="bg-gulf-blue-100 shadow shadow-gulf-blue-300 text-gulf-blue-900 rounded px-2 py-2">
     <div class="main-heading">Leave Management System</div>
     <div class="button-grid">
-      <a href="/leave" class="tab-button active bg-blue-600 hover:bg-blue-700 text-white">Apply Leave</a>
-      <a href="/create_leave_types" class="tab-button active bg-indigo-600 hover:bg-indigo-700 text-white">Create Leave Types</a>
-      <a href="/leave_table" class="tab-button active bg-yellow-400 hover:bg-yellow-500 text-gray-900">Leave Overview</a>
-      <a href="/leave_table" class="tab-button active bg-green-500 hover:bg-green-600 text-white">Approved Leaves</a>
-      <a href="/approve_leave" class="tab-button active bg-gray-400 hover:bg-gray-500 text-white">Awaiting my Action</a>
-      <a href="/leave_table" class="tab-button active bg-red-400 hover:bg-red-500 text-white">Vacation Leave Encashment</a>
+    {% if is_requester %}
+     <a href="/leave" class="tab-button active bg-blue-600">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+          Apply Leave
+        </a>
+       <a href="/leave_table" class="tab-button active bg-yellow-400">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7h18M3 12h18M3 17h18"/></svg>
+          Leave Overview
+        </a>
+     <a href="/encashment" class="tab-button active bg-red-400">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          Vacation Leave Encashment
+        </a>
+     
+    {% else %}
+      <a href="/create_leave_types" class="tab-button active bg-indigo-600">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2a4 4 0 014-4h3m-7 0V7a4 4 0 014-4h3m-7 0h7"/></svg>
+            Create Leave Types
+          </a>
+        <a href="" class="tab-button active bg-green-500">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+          Approved Leaves
+        </a>
+        <a href="/leave_table" class="tab-button active bg-gray-400">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v0.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5"/></svg>
+          Awaiting my Action
+        </a>
+        <a href="/encashment" class="tab-button active bg-red-400">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+          Vacation Leave Encashment
+        </a>
+    {% endif %}
     </div>
     <div class="overflow-x-auto">
       <table id="leaveTypesTable" class="display" style="width:100%">
@@ -62,19 +164,6 @@
           </tr>
         </thead>
         <tbody></tbody>
-        <tfoot>
-          <tr>
-            <th>ID</th>
-            <th>Sick Leave</th>
-            <th>Maternity Leave</th>
-            <th>Special Leave</th>
-            <th>Unpaid Leave</th>
-            <th>Vacation Leave</th>
-            <th>Study Leave</th>
-            <th>Occasional Leave</th>
-            <th>Action</th>
-          </tr>
-        </tfoot>
       </table>
     </div>
   </div>
@@ -85,6 +174,8 @@
 <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
 <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
 <script>
+const is_requester = "{{ is_requester|yesno:'true,false' }}".toLowerCase() === "true";
+console.log("Requester status:", is_requester);
 $(document).ready(function () {
   $("#leaveTypesTable").DataTable({
     processing: true,
@@ -105,26 +196,31 @@ $(document).ready(function () {
       {
         data: "id",
         render: function(data, type, row) {
+        if (!is_requester) {
           return `
             <a href="/accumulate_vacation/${data}/Permanent/" 
-               class="inline-flex items-center px-3 py-1.5 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition mr-2 text-sm font-semibold shadow"
-               title="Accumulate for Permanent">
+              class="action-btn bg-blue-600"
+              title="Accumulate for Permanent">
               <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
               </svg>
               Permanent
             </a>
             <a href="/accumulate_vacation/${data}/Contract/" 
-               class="inline-flex items-center px-3 py-1.5 bg-yellow-500 text-white rounded-full hover:bg-yellow-600 transition text-sm font-semibold shadow"
-               title="Accumulate for Contract">
+              class="action-btn bg-yellow-500"
+              title="Accumulate for Contract">
               <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
               </svg>
               Contract
             </a>
           `;
+        } else {
+          return '';
         }
       }
+    }
+
     ],
     order: [[0, 'desc']]
   });

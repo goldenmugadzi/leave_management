@@ -1,11 +1,13 @@
 from django.contrib import messages
 from django.shortcuts import render, redirect, get_object_or_404
-from .forms import LeaveRequestForm, LeaveTypesForm
+from .forms import LeaveRequestForm, LeaveTypesForm,  LeaveRequestFullForm
 from django.http import JsonResponse
 from django.db.models import Q
 from .models import LeaveRequest, LeaveTypes
 from it.users.models import *
 from datetime import timedelta
+from django.http import JsonResponse, Http404
+from django.db import transaction
 
 
 
@@ -40,7 +42,7 @@ def leave_create(request):
                 leave_types = LeaveTypes.objects.filter(user=user).first()
             except LeaveTypes.DoesNotExist:
                 messages.error(request, "Your leave balances are not set up")
-                return redirect('table_leave')
+                return redirect('leave_types')
 
             days = leave.number_of_days or 0
             leave_type_map = {
@@ -62,7 +64,7 @@ def leave_create(request):
                 # Now this will not error
                 if current < days:
                     messages.error(request, f"You do not have enough {leave.type_of_leave} days. Available: {current}, Requested: {days}")
-                    return redirect('table_leave')
+                    return redirect('leave_types')
 
                 # Deduct days
                 setattr(leave_types, leave_type_field, max(current - days, 0))
@@ -70,7 +72,7 @@ def leave_create(request):
 
             leave.save()
             messages.success(request, "Leave request submitted successfully.")
-            return redirect('table_leave')
+            return redirect('leave_types')
     else:
         form = LeaveRequestForm()
     user_profile = request.user
@@ -87,6 +89,15 @@ def leave_create(request):
     return render(request, 'leave_system/create_leave.html', context)
 
 def leave_request_datatable(request):
+    
+    try:
+        user_roles = request.user.get_user_role_for_application("leave management")
+        role_name = getattr(user_roles, "name", None)
+        print(f"User role for leave management: {role_name}")
+    except AttributeError as e:
+        print(f"Role error: {e}")
+        role_name = None
+        
     draw = int(request.GET.get('draw', 1))
     start = int(request.GET.get('start', 0))
     length = int(request.GET.get('length', 10))
@@ -131,8 +142,29 @@ def leave_request_datatable(request):
         "data": data
     })
 
-def table_leave (request):
-  return render(request,'leave_system/leave_table.html')
+def table_leave(request):
+    try:
+        user_roles = request.user.get_user_role_for_application("leave management")
+        is_requester = user_roles.name == 'Requester'
+    except AttributeError as e:
+        print(f"Role error: {e}")
+        is_requester = False
+
+    user = request.user
+    qs = LeaveRequest.objects.filter(user=user)
+    approved_count = qs.filter(status='approved').count()
+    rejected_count = qs.filter(status='rejected').count()
+    pending_count = qs.filter(status='pending').count()
+    total_count = qs.count()
+
+    return render(request, 'leave_system/leave_table.html', {
+        'is_requester': is_requester,
+        'approved_count': approved_count,
+        'rejected_count': rejected_count,
+        'pending_count': pending_count,
+        'total_count': total_count,
+    })
+
 
 def create_leave_types(request):
     if request.method == 'POST':
@@ -144,12 +176,79 @@ def create_leave_types(request):
         form = LeaveTypesForm()
     return render(request, 'leave_system/create.html', {'form': form})
 
+def encashment_leave(request):
+    form = LeaveRequestFullForm(request.POST or None)
+    show_table = False
+    leave_requests = None
+
+    # Get current vacation leave
+    vacation_leave = 0
+    if hasattr(request.user, "leave_types"):
+        vacation_leave = getattr(request.user.leave_types, "vacation_leave", 0)
+
+    if request.method == 'POST' and form.is_valid():
+        leave = form.save(commit=False)
+        user_profile = request.user
+
+        # Set required fields not in the form
+        leave.user = user_profile
+        leave.ecnumber = user_profile.username 
+        leave.position = getattr(user_profile, 'designation', None)
+        leave.department = getattr(user_profile, 'section', None)
+        leave.region = getattr(user_profile, 'region', None)
+        leave.status = 'pending'
+        leave.employee_types = getattr(user_profile, 'employee_types', '')
+
+        # Calculate number_of_days if needed
+        if leave.start_date and leave.end_date:
+            day_count = 0
+            current_day = leave.start_date
+            while current_day <= leave.end_date:
+                if current_day.weekday() < 5:
+                    day_count += 1
+                current_day += timedelta(days=1)
+            leave.number_of_days = day_count
+
+        # Save and update vacation leave atomically
+        with transaction.atomic():
+            leave.save()
+            # Subtract total days from vacation leave
+            if hasattr(user_profile, "leave_types"):
+                leave_type_obj = user_profile.leave_types
+                leave_type_obj.vacation_leave = max(0, leave_type_obj.vacation_leave - ((leave.days_encashed or 0) + (leave.days_taken or 0)))
+                leave_type_obj.save()
+                vacation_leave = leave_type_obj.vacation_leave
+
+        messages.success(request, "Leave encashment request submitted successfully.")
+
+        show_table = True
+        leave_requests = LeaveRequest.objects.filter(user=request.user)
+        form = LeaveRequestFullForm() 
+
+    return render(request, 'leave_system/encashment.html', {
+        'form': form,
+        'leave_requests': leave_requests,
+        'show_table': show_table,
+        'vacation_leave': vacation_leave,  # Always pass the updated value
+    })
+
 def leave_types_datatable(request):
+    
+    try:
+        user_roles = request.user.get_user_role_for_application("leave management")
+        role_name = getattr(user_roles, "name", None)
+        print(f"User role for leave management: {role_name}")
+    except AttributeError as e:
+        print(f"Role error: {e}")
+        role_name = None
+
     draw = int(request.GET.get('draw', 1))
     start = int(request.GET.get('start', 0))
     length = int(request.GET.get('length', 10))
 
+    # Optionally filter or restrict data based on role
     qs = LeaveTypes.objects.all()
+
     total = qs.count()
     qs = qs.order_by('-id')[start:start+length]
 
@@ -176,7 +275,17 @@ def leave_types_datatable(request):
     })
 
 def leave_types (request):
-  return render(request,'leave_system/types_table.html')
+    try:
+        user_roles = request.user.get_user_role_for_application("leave management")
+        is_requester= user_roles.name == 'Requester'
+    except AttributeError as e:
+        print(f"Role error: {e}")
+        is_requester = False
+
+    return render(request, 'leave_system/types_table.html', {
+        'is_requester': is_requester
+    })
+
 
 def accumulate_vacation_leave_view(request, pk, employee_type, months=1):
     leave_types = get_object_or_404(LeaveTypes, pk=pk)
@@ -184,5 +293,6 @@ def accumulate_vacation_leave_view(request, pk, employee_type, months=1):
     messages.success(request, f"Vacation leave accumulated for {employee_type} by {months} month(s).")
     return redirect('leave_types')
 
-def approve_leave (request):
-  return render(request,'leave_system/awaiting_my_action.html')
+def approve_leave (request,pk):
+    leave = get_object_or_404(LeaveRequest,pk=pk)
+    return render(request, 'leave_system/awaiting_my_action.html', {'leave': leave})

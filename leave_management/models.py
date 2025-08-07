@@ -44,6 +44,9 @@ class LeaveRequest(models.Model):
     region = models.ForeignKey(Regions, on_delete=models.DO_NOTHING, blank=True, null=True)
     employee_types = models.CharField(max_length=200, choices=EMPLOYEE_TYPES)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
+    days_taken = models.PositiveIntegerField(default=0, blank=True, null=True)
+    days_encashed = models.PositiveIntegerField(default=0, blank=True, null=True)
+    total_days = models.PositiveIntegerField(default=0, blank=True, null=True)
     
 
     def __str__(self):

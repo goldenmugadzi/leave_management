@@ -108,10 +108,10 @@ APPLICATIONS = [
         "url": "/tab/"
     },
       {
-        "name": "safety",
-        "title": "Safety.Health.Wellbeing",
-        "iconUrl": "assets/images/health.png",
-        "url": "/safety_table/"
+        "name": "leave_management",
+        "title": "Leave Management System",
+        "iconUrl": "assets/images/leave.png",
+        "url": "/leave_types/"
     },
 ]
 

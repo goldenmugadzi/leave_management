@@ -11,7 +11,7 @@
   <div class="bg-gulf-blue-100 shadow shadow-gulf-blue-300 text-gulf-blue-900 rounded px-2 py-2">
 
     <!-- Leave Approval Card -->
-    <div class="max-w-3xl mx-auto bg-white rounded-lg shadow-lg p-6 my-8">
+    <div class="max-w-3xl mx-auto  bg-shadow-gulf-blue-300 rounded-lg shadow-lg p-6 my-8">
       <div class="flex items-center justify-between mb-6">
         <h2 class="text-2xl font-bold text-gray-800">Leave Request Details</h2>
         <span class="px-4 py-1 rounded-full text-sm font-semibold
@@ -39,12 +39,12 @@
             
             <div>
               <div class="text-sm text-gray-500 font-medium">Position</div>
-              <div class="font-semibold text-gray-900">{{ leave.position.name }}</div>
+              <div class="font-semibold text-gray-900">{{ leave.position }}</div>
             </div>
             
             <div>
               <div class="text-sm text-gray-500 font-medium">Department</div>
-              <div class="font-semibold text-gray-900">{{ leave.department.name }}</div>
+              <div class="font-semibold text-gray-900">{{ leave.department}}</div>
             </div>
             
             <div>
@@ -67,7 +67,7 @@
             
             <div>
               <div class="text-sm text-gray-500 font-medium">Region</div>
-              <div class="font-semibold text-gray-900">{{ leave.region.name }}</div>
+              <div class="font-semibold text-gray-900">{{ leave.region }}</div>
             </div>
             
             <div>
@@ -91,11 +91,11 @@
       <!-- Approval/Reject buttons (only show for pending requests) -->
       {% if leave.status == 'pending' %}
       <div class="mt-6 flex gap-4">
-        <form method="post" action="{% url 'approve_leave' leave.id %}">
+        <form method="post" action="">
           {% csrf_token %}
           <button type="submit" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded font-semibold">Approve</button>
         </form>
-        <form method="post" action="{% url 'reject_leave' leave.id %}">
+        <form method="post" action="">
           {% csrf_token %}
           <button type="submit" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded font-semibold">Reject</button>
         </form>

@@ -16,11 +16,11 @@ from django.urls import reverse
 from django.template.loader import render_to_string
 from.models import*
 from it.users.models import Regions, Sections, UserProfile,Designations,CostCenter
-from.forms import TransportAssetsForm
+from.forms import  TripRecordForm
 
 def register_vehicle(request):
    if request.method == 'POST':
-        form = TransportAssetsForm(request.POST, request.FILES)
+        form =  TripRecordForm(request.POST, request.FILES)
         if form.is_valid():
             form.save()  
             return redirect('table_vehicle') 
@@ -28,7 +28,7 @@ def register_vehicle(request):
         
             print(form.errors)  
    else:
-        form = TransportAssetsForm()
+        form = TripRecordForm()
 
    return render(request, "transport/register_vehicle.html", {"form": form})
 
