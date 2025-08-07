@@ -97,7 +97,6 @@ class AppraisalDepartmentPerformanceDimensionTemplateView(TemplateView):
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        
         appraisee_object = self.get_appraisee_object()
         context["appraisee_object"] = appraisee_object
         context["department_output_obj"] = self.get_appraisal_department_output_obj().department_output

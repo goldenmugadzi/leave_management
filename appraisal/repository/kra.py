@@ -282,7 +282,7 @@ class AppraisalOutPutPerformanceDimensionScoreRepository:
     
     def get_by_id(self, pk: int)->AppraisalOutPutPerformanceDimensionScore:
         try:
-            qr = AppraisalOutPutPerformanceDimensionScore.objects.filter(appraisal_department_output__id=pk).select_related('appraisal_department_output', 'performance_dimension', 'appraisal_department_output__department_output')
+            qr = AppraisalOutPutPerformanceDimensionScore.objects.filter(id=pk).select_related('appraisal_department_output', 'performance_dimension', 'appraisal_department_output__department_output')
             
             
             if not qr.exists():
