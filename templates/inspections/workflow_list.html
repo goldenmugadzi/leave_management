@@ -1,0 +1,246 @@
+{% extends 'admin_layout.html' %}
+{% load static %}
+
+{% block title %}Inspection Workflows{% endblock %}
+
+{% block content %}
+<div class="content-wrapper">
+  <div class="bg-gulf-blue-100 shadow shadow-gulf-blue-300 text-gulf-blue-900 rounded px-6 py-6">
+    <!-- Header Section -->
+    <div class="flex justify-between items-center mb-8">
+      <div>
+        <h1 class="text-3xl font-bold text-gulf-blue-900">Inspection Workflows</h1>
+        <nav class="flex mt-2" aria-label="Breadcrumb">
+          <ol class="inline-flex items-center space-x-1 md:space-x-3">
+            <li class="inline-flex items-center">
+              <a href="{% url 'inspections:dashboard' %}" class="inline-flex items-center text-sm font-medium text-gulf-blue-600 hover:text-gulf-blue-800">
+                <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"></path>
+                </svg>
+                Inspections
+              </a>
+            </li>
+            <li>
+              <div class="flex items-center">
+                <svg class="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
+                </svg>
+                <span class="ml-1 text-sm font-medium text-gulf-blue-900 md:ml-2">Workflows</span>
+              </div>
+            </li>
+          </ol>
+        </nav>
+      </div>
+    </div>
+
+    <!-- Search Section -->
+    <div class="bg-white rounded-lg shadow-md mb-6">
+      <div class="p-6 border-b border-gray-200">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Search & Filter</h3>
+        <form method="get" class="grid grid-cols-1 md:grid-cols-5 gap-4">
+          <div>
+            <label for="search" class="block text-sm font-medium text-gray-700 mb-1">Search</label>
+            <input type="text" name="search" id="search" value="{{ search_query }}" 
+                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gulf-blue-500 focus:border-transparent"
+                   placeholder="Workflow #, Application #, Customer...">
+          </div>
+          <div>
+            <label for="status" class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+            <select name="status" id="status" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gulf-blue-500 focus:border-transparent">
+              <option value="">All Statuses</option>
+              {% for value, display in status_choices %}
+                <option value="{{ value }}" {% if status_filter == value %}selected{% endif %}>{{ display }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="flex items-end space-x-2">
+            <button type="submit" class="bg-gulf-blue-600 hover:bg-gulf-blue-700 text-white font-medium py-2 px-4 rounded-lg flex items-center">
+              <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+              </svg>
+              Search
+            </button>
+            <a href="{% url 'inspections:workflow_list' %}" class="bg-gray-500 hover:bg-gray-600 text-white font-medium py-2 px-4 rounded-lg flex items-center">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+              </svg>
+            </a>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Workflows Table -->
+    <div class="bg-white rounded-lg shadow-md">
+      <div class="p-6 border-b border-gray-200">
+        <h3 class="text-lg font-semibold text-gray-900">Workflows ({{ workflows.paginator.count }})</h3>
+      </div>
+      
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Workflow #</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Application</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Progress</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reinspections</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="bg-white divide-y divide-gray-200">
+            {% for workflow in workflows %}
+            <tr class="hover:bg-gray-50">
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="text-sm font-medium text-gray-900">{{ workflow.workflow_number }}</div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="text-sm text-gray-900">
+                  {% if workflow.client_application %}
+                    <a href="{% url 'inspections:application_detail' workflow.client_application.pk %}" 
+                       class="text-gulf-blue-600 hover:text-gulf-blue-900">
+                      {{ workflow.client_application.application_number }}
+                    </a>
+                  {% else %}
+                    -
+                  {% endif %}
+                </div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="text-sm text-gray-900">
+                  {% if workflow.client_application.customer %}
+                    {{ workflow.client_application.customer.full_name }}
+                  {% else %}
+                    -
+                  {% endif %}
+                </div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full 
+                  {% if workflow.status == 'workflow_completed' %}bg-green-100 text-green-800
+                  {% elif workflow.status == 'e6_generated' %}bg-blue-100 text-blue-800
+                  {% elif workflow.status == 'e1_generated' %}bg-red-100 text-red-800
+                  {% elif workflow.status == 'inspection_completed' %}bg-yellow-100 text-yellow-800
+                  {% elif workflow.status == 'assigned' %}bg-purple-100 text-purple-800
+                  {% else %}bg-gray-100 text-gray-800{% endif %}">
+                  {{ workflow.get_status_display }}
+                </span>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="flex items-center">
+                  <div class="w-full bg-gray-200 rounded-full h-2">
+                    {% widthratio workflow.current_step workflow.total_steps 100 as progress_percent %}
+                    <div class="bg-gulf-blue-600 h-2 rounded-full" style="width: {{ progress_percent }}%"></div>
+                  </div>
+                  <span class="ml-2 text-sm text-gray-700">{{ workflow.current_step }}/{{ workflow.total_steps }}</span>
+                </div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="text-sm text-gray-900">{{ workflow.reinspection_count }}/{{ workflow.max_reinspections }}</div>
+                {% if workflow.reinspection_count > 0 %}
+                  <div class="text-xs text-orange-600">{{ workflow.reinspection_count }} reinspection{{ workflow.reinspection_count|pluralize }}</div>
+                {% endif %}
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="text-sm text-gray-900">{{ workflow.created_at|date:"M d, Y" }}</div>
+                <div class="text-sm text-gray-500">{{ workflow.created_at|time:"H:i" }}</div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                <a href="{% url 'inspections:workflow_detail' workflow.pk %}" 
+                   class="text-gulf-blue-600 hover:text-gulf-blue-900 mr-3">View</a>
+                {% if workflow.client_application %}
+                  <a href="{% url 'inspections:application_detail' workflow.client_application.pk %}" 
+                     class="text-green-600 hover:text-green-900">Application</a>
+                {% endif %}
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="8" class="px-6 py-12 text-center">
+                <div class="text-gray-500">
+                  <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17H7A5 5 0 017 7h2m0 10v-5a4 4 0 118 0v5m-4-5h4m-4 0H9"></path>
+                  </svg>
+                  <h3 class="mt-2 text-sm font-medium text-gray-900">No workflows found</h3>
+                  <p class="mt-1 text-sm text-gray-500">
+                    {% if search_query or status_filter %}
+                      Try adjusting your search criteria or filters.
+                    {% else %}
+                      Workflows will appear here when applications are submitted.
+                    {% endif %}
+                  </p>
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination -->
+      {% if workflows.has_other_pages %}
+      <div class="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
+        <div class="flex-1 flex justify-between sm:hidden">
+          {% if workflows.has_previous %}
+            <a href="?page={{ workflows.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}" 
+               class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+              Previous
+            </a>
+          {% endif %}
+          {% if workflows.has_next %}
+            <a href="?page={{ workflows.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}" 
+               class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+              Next
+            </a>
+          {% endif %}
+        </div>
+        <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+          <div>
+            <p class="text-sm text-gray-700">
+              Showing <span class="font-medium">{{ workflows.start_index }}</span>
+              to <span class="font-medium">{{ workflows.end_index }}</span>
+              of <span class="font-medium">{{ workflows.paginator.count }}</span>
+              results
+            </p>
+          </div>
+          <div>
+            <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+              {% if workflows.has_previous %}
+                <a href="?page={{ workflows.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}" 
+                   class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                  <span class="sr-only">Previous</span>
+                  <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+                  </svg>
+                </a>
+              {% endif %}
+              
+              {% for page_num in workflows.paginator.page_range %}
+                {% if page_num == workflows.number %}
+                  <span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-gulf-blue-50 text-sm font-medium text-gulf-blue-600">{{ page_num }}</span>
+                {% else %}
+                  <a href="?page={{ page_num }}{% if search_query %}&search={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}" 
+                     class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">{{ page_num }}</a>
+                {% endif %}
+              {% endfor %}
+              
+              {% if workflows.has_next %}
+                <a href="?page={{ workflows.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}" 
+                   class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                  <span class="sr-only">Next</span>
+                  <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                  </svg>
+                </a>
+              {% endif %}
+            </nav>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

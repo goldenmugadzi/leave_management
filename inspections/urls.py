@@ -30,10 +30,16 @@ urlpatterns = [
     path('inspections/<uuid:pk>/', views.inspection_detail, name='inspection_detail'),
     
     # E6 Certificates
+    path('e6-certificates/', views.e6_certificate_list, name='e6_certificate_list'),
     path('e6-certificates/<uuid:pk>/', views.e6_certificate_detail, name='e6_certificate_detail'),
     
     # E1 Defect Reports
+    path('e1-reports/', views.e1_defect_report_list, name='e1_defect_report_list'),
     path('e1-reports/<uuid:pk>/', views.e1_defect_report_detail, name='e1_defect_report_detail'),
+    
+    # Workflows
+    path('workflows/', views.workflow_list, name='workflow_list'),
+    path('workflows/<uuid:pk>/', views.workflow_detail, name='workflow_detail'),
     
     # Assignment Management
     path('assignments/', views.assignment_list, name='assignment_list'),

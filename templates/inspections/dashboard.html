@@ -97,7 +97,7 @@
     </div>
 
     <!-- Management Quick Actions -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
       <!-- Customer Management -->
       <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-blue-500">
         <div class="flex items-center justify-between mb-4">
@@ -149,7 +149,145 @@
           </a>
         </div>
       </div>
+
+      <!-- Application Management -->
+      <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-gulf-blue-500">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <h3 class="text-lg font-semibold text-gray-900">Application Management</h3>
+            <p class="text-sm text-gray-600">Manage client applications</p>
+          </div>
+          <div class="p-3 bg-gulf-blue-100 rounded-full">
+            <svg class="w-8 h-8 text-gulf-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+            </svg>
+          </div>
+        </div>
+        <div class="flex space-x-3">
+          <a href="{% url 'inspections:application_list' %}" class="flex-1 bg-gulf-blue-600 hover:bg-gulf-blue-700 text-white font-medium py-2 px-4 rounded-lg text-center">
+            View All
+          </a>
+          <a href="{% url 'inspections:application_create' %}" class="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg flex items-center">
+            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+            </svg>
+            New
+          </a>
+        </div>
+      </div>
     </div>
+
+    <!-- Inspection Forms and Reports -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+      <!-- Inspection Reports (E117) -->
+      <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-orange-500">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <h3 class="text-lg font-semibold text-gray-900">E117 Reports</h3>
+            <p class="text-sm text-gray-600">Electrical inspection reports</p>
+          </div>
+          <div class="p-3 bg-orange-100 rounded-full">
+            <svg class="w-8 h-8 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path>
+            </svg>
+          </div>
+        </div>
+        <div class="flex space-x-3">
+          <a href="{% url 'inspections:workflow_list' %}" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-lg text-center">
+            View All
+          </a>
+        </div>
+      </div>
+
+      <!-- E6 Certificates -->
+      <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-green-500">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <h3 class="text-lg font-semibold text-gray-900">E6 Certificates</h3>
+            <p class="text-sm text-gray-600">Inspection clearance certificates</p>
+          </div>
+          <div class="p-3 bg-green-100 rounded-full">
+            <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+          </div>
+        </div>
+        <div class="flex space-x-3">
+          <a href="{% url 'inspections:e6_certificate_list' %}" class="flex-1 bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg text-center">
+            View All
+          </a>
+        </div>
+      </div>
+
+      <!-- E1 Defect Reports -->
+      <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-red-500">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <h3 class="text-lg font-semibold text-gray-900">E1 Defect Reports</h3>
+            <p class="text-sm text-gray-600">Inspection failure reports</p>
+          </div>
+          <div class="p-3 bg-red-100 rounded-full">
+            <svg class="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+          </div>
+        </div>
+        <div class="flex space-x-3">
+          <a href="{% url 'inspections:e1_defect_report_list' %}" class="flex-1 bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-lg text-center">
+            View All
+          </a>
+        </div>
+      </div>
+
+      <!-- Workflows -->
+      {% comment %} <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-indigo-500">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <h3 class="text-lg font-semibold text-gray-900">Workflows</h3>
+            <p class="text-sm text-gray-600">Inspection workflow tracking</p>
+          </div>
+          <div class="p-3 bg-indigo-100 rounded-full">
+            <svg class="w-8 h-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17H7A5 5 0 017 7h2m0 10v-5a4 4 0 118 0v5m-4-5h4m-4 0H9"></path>
+            </svg>
+          </div>
+        </div>
+        <div class="flex space-x-3">
+          <a href="{% url 'inspections:workflow_list' %}" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-lg text-center">
+            View All
+          </a>
+        </div>
+      </div> {% endcomment %}
+    </div>
+
+    <!-- Assignment Management -->
+    {% comment %} <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+      <!-- Assignments -->
+      <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-teal-500">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <h3 class="text-lg font-semibold text-gray-900">Assignment Management</h3>
+            <p class="text-sm text-gray-600">Manage application assignments</p>
+          </div>
+          <div class="p-3 bg-teal-100 rounded-full">
+            <svg class="w-8 h-8 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+            </svg>
+          </div>
+        </div>
+        <div class="flex space-x-3">
+          <a href="{% url 'inspections:assignment_list' %}" class="flex-1 bg-teal-600 hover:bg-teal-700 text-white font-medium py-2 px-4 rounded-lg text-center">
+            View All
+          </a>
+          <a href="{% url 'inspections:assignment_create' %}" class="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg flex items-center">
+            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+            </svg>
+            New
+          </a>
+        </div>
+      </div>
+    </div> {% endcomment %}
 
     <!-- Main Content Grid -->
     <div class="grid grid-cols-1 gap-8 mb-8">

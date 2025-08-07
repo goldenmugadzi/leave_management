@@ -426,6 +426,33 @@ def inspection_detail(request, pk):
 
 # E6 CERTIFICATE VIEWS
 @login_required
+def e6_certificate_list(request):
+    """List all E6 certificates"""
+    certificates = E6Certificate.objects.all().order_by('-created_at')
+    
+    # Search functionality
+    search_query = request.GET.get('search', '')
+    if search_query:
+        certificates = certificates.filter(
+            Q(certificate_number__icontains=search_query) |
+            Q(service_no__icontains=search_query) |
+            Q(property_owner_occupant__icontains=search_query) |
+            Q(installation_inspector__username__icontains=search_query)
+        )
+    
+    # Pagination
+    paginator = Paginator(certificates, 20)
+    page_number = request.GET.get('page')
+    certificates = paginator.get_page(page_number)
+    
+    context = {
+        'certificates': certificates,
+        'search_query': search_query,
+    }
+    return render(request, 'inspections/e6_certificate_list.html', context)
+
+
+@login_required
 def e6_certificate_detail(request, pk):
     """View E6 certificate details"""
     certificate = get_object_or_404(E6Certificate, pk=pk)
@@ -438,6 +465,33 @@ def e6_certificate_detail(request, pk):
 
 # E1 DEFECT REPORT VIEWS
 @login_required
+def e1_defect_report_list(request):
+    """List all E1 defect reports"""
+    reports = E1DefectReport.objects.all().order_by('-created_at')
+    
+    # Search functionality
+    search_query = request.GET.get('search', '')
+    if search_query:
+        reports = reports.filter(
+            Q(report_number__icontains=search_query) |
+            Q(service_no__icontains=search_query) |
+            Q(property_address__icontains=search_query) |
+            Q(installation_inspector__username__icontains=search_query)
+        )
+    
+    # Pagination
+    paginator = Paginator(reports, 20)
+    page_number = request.GET.get('page')
+    reports = paginator.get_page(page_number)
+    
+    context = {
+        'reports': reports,
+        'search_query': search_query,
+    }
+    return render(request, 'inspections/e1_defect_report_list.html', context)
+
+
+@login_required
 def e1_defect_report_detail(request, pk):
     """View E1 defect report details"""
     report = get_object_or_404(E1DefectReport, pk=pk)
@@ -446,6 +500,55 @@ def e1_defect_report_detail(request, pk):
         'report': report,
     }
     return render(request, 'inspections/e1_defect_report_view.html', context)
+
+
+# WORKFLOW VIEWS
+@login_required
+def workflow_list(request):
+    """List all inspection workflows"""
+    workflows = InspectionWorkflow.objects.all().order_by('-created_at')
+    
+    # Search functionality
+    search_query = request.GET.get('search', '')
+    if search_query:
+        workflows = workflows.filter(
+            Q(workflow_number__icontains=search_query) |
+            Q(client_application__application_number__icontains=search_query) |
+            Q(client_application__customer__full_name__icontains=search_query) |
+            Q(status__icontains=search_query)
+        )
+    
+    # Filter by status
+    status_filter = request.GET.get('status', '')
+    if status_filter:
+        workflows = workflows.filter(status=status_filter)
+    
+    # Pagination
+    paginator = Paginator(workflows, 20)
+    page_number = request.GET.get('page')
+    workflows = paginator.get_page(page_number)
+    
+    # Get all status choices for filter dropdown
+    status_choices = InspectionWorkflow.WORKFLOW_STATUS_CHOICES
+    
+    context = {
+        'workflows': workflows,
+        'search_query': search_query,
+        'status_filter': status_filter,
+        'status_choices': status_choices,
+    }
+    return render(request, 'inspections/workflow_list.html', context)
+
+
+@login_required
+def workflow_detail(request, pk):
+    """View workflow details"""
+    workflow = get_object_or_404(InspectionWorkflow, pk=pk)
+    
+    context = {
+        'workflow': workflow,
+    }
+    return render(request, 'inspections/workflow_detail.html', context)
 
 
 # ASSIGNMENT VIEWS
