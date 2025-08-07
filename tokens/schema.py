@@ -204,9 +204,10 @@ class CreateToken(Mutation):
                         raise Exception(f"Reconnection form error: {reconnection_form.errors}")
 
                 else:
+                    print(tamper_token.is_for)
                     tamper_token.delete()
                     token.delete()
-                    raise Exception("Invalid tamper token purpose")
+                    raise Exception(f"Invalid tamper token purpose: {tamper_token.is_for}")
             else:
                 token.delete()
                 raise Exception(f"Tamper Token form error: {tamper_token_form.errors}")

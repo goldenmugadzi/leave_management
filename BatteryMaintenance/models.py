@@ -1,16 +1,23 @@
 from django.db import models
-from it.users.models import CostCenter
+from it.users.models import Regions,Districts, Depots
 
+class Substation(models.Model):
+    name =  models.CharField(max_length=100)
+    region = models.ForeignKey(Regions, on_delete=models.DO_NOTHING)
+    district = models.ForeignKey(Districts, on_delete=models.DO_NOTHING)
+    depot = models.ForeignKey(Depots, on_delete=models.DO_NOTHING)
+
+    def __str__(self):
+        return self.name
 
 class BatteryInstallation(models.Model):
-    cost_center = models.ForeignKey(CostCenter, on_delete=models.DO_NOTHING)
-    site_name = models.CharField(max_length=100)
-    battery_name = models.CharField(max_length=100)
+    substation = models.ForeignKey(Substation, on_delete=models.DO_NOTHING,null=True, blank=True)
+    battery_name = models.CharField(max_length=100,help_text="type")
     cell_type = models.CharField(max_length=50, blank=True)
     cell_quantity = models.PositiveIntegerField()
     plates_per_cell = models.PositiveIntegerField(null=True, blank=True)
     date = models.DateField(auto_now_add=True)
-    battery_application = models.CharField(max_length=100, blank=True)
+    battery_application = models.CharField(max_length=100, blank=True, choices=[("Communication", "Communication"), ("Protection,Control and operation ", "Protection,Control and operation")],default="Communication")
 
     def __str__(self):
         return f"{self.battery_name} ({self.id})"
