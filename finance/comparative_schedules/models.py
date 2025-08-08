@@ -1,6 +1,6 @@
 from datetime import datetime
 from django.db import models
-from finance.Direct_purchases.models import Supplier
+from it.users.models import Supplier
 
 from finance.purchase_request.models import PurchaseRequest
 from it.users.models import *

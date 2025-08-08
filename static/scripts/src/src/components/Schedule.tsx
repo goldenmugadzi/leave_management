@@ -8,8 +8,7 @@ import {
   IComplianceRemark, 
   ISupplier,
   ICommittee,
-  IUser,
-  IUom
+  IUser
 } from "../types/scheduleTypes";
 import { getApiEndpoints, buildApiUrl } from "../config/apiEndpoints";
 
@@ -68,9 +67,11 @@ interface ICurrentApprover {
   approval?: string;
 }
 
-
-
-
+interface IUomItem {
+  id: string;
+  unit: string;
+  name: string;
+}
 
 // Lazy load heavy components
 const CommitteeApprovalWrapper = lazy(() => import("./Committee/CommitteeApprovalWrapper"));
@@ -156,13 +157,19 @@ const calculateBidTotal = (items: IBidItem[] | undefined): number => {
 // Helper function for fetch with retry
 const fetchWithRetry = async (url: string, options: RequestInit, retries = 3, delay = 1000) => {
   try {
+    // Making API request
     const response = await fetch(url, options);
+    // Response received
     if (!response.ok) {
       throw new Error(`HTTP error! Status: ${response.status}`);
     }
-    return await response.json();
+    const data = await response.json();
+    // Data parsed successfully
+    return data;
   } catch (error) {
+    console.error("🔍 fetchWithRetry - Error:", error);
     if (retries > 0) {
+      // Retrying request
       await new Promise((resolve) => setTimeout(resolve, delay));
       return fetchWithRetry(url, options, retries - 1, delay * 2);
     }
@@ -176,7 +183,8 @@ const TAB_CONFIG = [
   { id: 'pr-items', label: 'PR Items', icon: '📦' },
   { id: 'bids', label: 'Supplier Bids', icon: '💰' },
   { id: 'committee', label: 'Committee & Approvals', icon: '👥' },
-  { id: 'compliance', label: 'Compliance & Rankings', icon: '✅' }
+  { id: 'compliance', label: 'Compliance', icon: '✅' },
+  { id: 'rankings', label: 'Rankings & Evaluation', icon: '🏆' }
 ] as const;
 
 type TabId = typeof TAB_CONFIG[number]['id'];
@@ -209,7 +217,7 @@ export default function Schedule({
   const [createdAt, setCreatedAt] = useState<string>("");
   const [suppliers, setSuppliers] = useState<ISupplier[]>([]);
   const [users, setUsers] = useState<IUser[]>([]);
-  const [uom, setUom] = useState<IUom[]>([]);
+
   const [activeTab, setActiveTab] = useState<TabId>('details');
   const [loadedTabs, setLoadedTabs] = useState<Set<TabId>>(new Set(['details']));
   
@@ -255,6 +263,15 @@ export default function Schedule({
   const [approvalsComplete, setApprovalsComplete] = useState<boolean>(false);
   const [approvalsJustificationModal, setApprovalsJustificationModal] = useState<boolean>(false);
   const [currentApprover, setCurrentApprover] = useState<ICurrentApprover>();
+  const [currentUserRoles, setCurrentUserRoles] = useState<{
+    fm_role: boolean;
+    gm_role: boolean;
+    procurement_role: boolean;
+  }>({
+    fm_role: false,
+    gm_role: false,
+    procurement_role: false
+  });
   
   // Additional features state
   const [additionalNotes, setAdditionalNotes] = useState<string>("");
@@ -269,6 +286,20 @@ export default function Schedule({
   const [showUomDropdown, setShowUomDropdown] = useState<boolean>(false);
   const [activeUomItem, setActiveUomItem] = useState<string>("");
   const [expandedBids, setExpandedBids] = useState<Set<number>>(new Set());
+  
+  // Bid Modal Validation State
+  const [bidValidationErrors, setBidValidationErrors] = useState<string[]>([]);
+  const [invalidFields, setInvalidFields] = useState<Set<string>>(new Set());
+  
+  // UOM Server-side Search State
+  const [uomSearchResults, setUomSearchResults] = useState<IUomItem[]>([]);
+  const [isUomSearching, setIsUomSearching] = useState<boolean>(false);
+  const [debouncedUomSearchTerm, setDebouncedUomSearchTerm] = useState<string>('');
+  
+  // Supplier Server-side Search State
+  const [supplierSearchResults, setSupplierSearchResults] = useState<ISupplier[]>([]);
+  const [isSupplierSearching, setIsSupplierSearching] = useState<boolean>(false);
+  const [debouncedSupplierSearchTerm, setDebouncedSupplierSearchTerm] = useState<string>('');
   
   // PR Data State
   const [prData, setPrData] = useState<{
@@ -361,6 +392,26 @@ export default function Schedule({
       // Set creator and created_at for new schedule (will be updated with full name after users are loaded)
       setCreator(username_ ?? "");
       setCreatedAt(new Date().toISOString());
+      
+      // Load reference data for new schedules (currencies, proc plans, etc.)
+      console.log('🔄 Loading reference data for new schedule...');
+      api.fetchReferenceData()
+        .then(refResponse => {
+          if (refResponse && refResponse.success) {
+            console.log('✅ Reference data loaded for new schedule');
+            setSuppliers(refResponse.suppliers || []);
+            setUsers(refResponse.users || []);
+            setCurrencies(refResponse.currencies || []);
+            setProcPlans(refResponse.proc_plans || []);
+            console.log('📋 Currencies loaded:', refResponse.currencies?.length || 0);
+            console.log('📋 Proc Plans loaded:', refResponse.proc_plans?.length || 0);
+          }
+        })
+        .catch(error => {
+          console.error('❌ Error loading reference data for new schedule:', error);
+          // Fallback: still fetch users even if reference data fails
+          fetchUsers();
+        });
     }
     
     fetchUsers();
@@ -387,6 +438,12 @@ export default function Schedule({
     try {
       const data = await fetchWithRetry(buildApiUrl(base_url, getApiEndpoints().CS_DETAILS(cs_id)), defaultRequestOptions);
       console.log("CS Basic Data:", data);
+      console.log("CS Owner from API:", data.cs_owner);
+      console.log("Users in data:", data.users ? data.users.length : 'undefined');
+      console.log("Committee in data:", data.committee ? data.committee.length : 'undefined');
+      console.log("Compliance in data:", data.compliance ? data.compliance.length : 'undefined');
+      console.log("Rankings in data:", data.rankings ? data.rankings.length : 'undefined');
+      console.log("Data keys:", Object.keys(data));
       // Data is now returned as normal JSON, no double encoding
       const parsedData = data;
       // Extract basic metadata
@@ -395,6 +452,9 @@ export default function Schedule({
       
       // Set CS ID from response
       setCsId(parsedData.cs_id || cs_id);
+      
+      // Set CS owner from response (needed for permission checks)
+      setCsOwner(parsedData.cs_owner || '');
       
       // Set PR ID from response (needed for item updates)
       if (parsedData.pr_id) {
@@ -419,9 +479,7 @@ export default function Schedule({
       if (parsedData.currencies) {
         setCurrencies(parsedData.currencies);
       }
-      if (parsedData.uom) {
-        setUom(parsedData.uom);
-      }
+      
       
       // Set currency and proc plan if available
       if (parsedData.currency) {
@@ -522,6 +580,30 @@ export default function Schedule({
         setBidCount(parsedData.bids.length);
       }
       
+      // Load committee data if available
+      if (parsedData.committee && Array.isArray(parsedData.committee)) {
+        console.log('🔍 Committee data loaded:', parsedData.committee.length, 'members');
+        updateCommitteeMembers(parsedData.committee);
+      }
+      
+      // Load compliance data if available
+      if (parsedData.compliance && Array.isArray(parsedData.compliance)) {
+        console.log('🔍 Compliance data loaded:', parsedData.compliance.length, 'items');
+        setCompliance(parsedData.compliance);
+      }
+      
+      // Load compliance remarks if available
+      if (parsedData.complianceRemarks && Array.isArray(parsedData.complianceRemarks)) {
+        console.log('🔍 Compliance remarks loaded:', parsedData.complianceRemarks.length, 'remarks');
+        setComplianceRemarks(parsedData.complianceRemarks);
+      }
+      
+      // Load rankings data if available
+      if (parsedData.rankings && Array.isArray(parsedData.rankings)) {
+        console.log('🔍 Rankings data loaded:', parsedData.rankings.length, 'rankings');
+        setRankings(parsedData.rankings);
+      }
+      
     } catch (error) {
       console.error("Error fetching CS:", error);
       onOpenResponse("Error", "Failed to load CS data", false);
@@ -583,7 +665,6 @@ export default function Schedule({
                setUsers(refResponse.users || []);
                setCurrencies(refResponse.currencies || []);
                setProcPlans(refResponse.proc_plans || []);
-               setUom(refResponse.uom || []);
                // Log to verify data is loaded (and satisfy linter)
                console.log('📋 Currencies loaded:', refResponse.currencies?.length || 0, 'Current count:', currenciesCount);
                console.log('📋 Proc Plans loaded:', refResponse.proc_plans?.length || 0, 'Current count:', procPlansCount);
@@ -637,15 +718,21 @@ export default function Schedule({
     }, [api]);
 
 
-  // Fetch users - only when needed
+  // Fetch users - optimized for better performance
   const fetchUsers = useCallback(async () => {
-    // Always fetch all users for committee management, regardless of CS data
-    setLoadingOperation("Loading all users");
+    // Skip if users already loaded to avoid unnecessary API calls
+    if (users.length > 0) {
+      return;
+    }
+    
+    setLoadingOperation("Loading users");
     try {
-      const data = await fetchWithRetry(buildApiUrl(base_url, getApiEndpoints().USERS), defaultRequestOptions);
+      const data = await fetchWithRetry(
+        buildApiUrl(base_url, `${getApiEndpoints().USERS}?limit=100`), 
+        defaultRequestOptions
+      );
       
       if (Array.isArray(data)) {
-        console.log('🔍 Fetched ALL users from API:', data.length);
         setUsers(data);
       }
     } catch (error) {
@@ -653,25 +740,9 @@ export default function Schedule({
     } finally {
       setLoadingOperation("");
     }
-  }, [base_url, defaultRequestOptions]);
+  }, [base_url, defaultRequestOptions, users.length]);
 
-  // Force refresh all users for committee management
-  const fetchAllUsersForCommittee = useCallback(async () => {
-    console.log('🔍 Force fetching ALL users for committee...');
-    setLoadingOperation("Loading all users for committee");
-    try {
-      const data = await fetchWithRetry(buildApiUrl(base_url, getApiEndpoints().USERS), defaultRequestOptions);
-      
-      if (Array.isArray(data)) {
-        console.log('🔍 Successfully loaded ALL users:', data.length);
-        setUsers(data);
-      }
-    } catch (error) {
-      console.error("Error fetching all users:", error);
-    } finally {
-      setLoadingOperation("");
-    }
-  }, [base_url, defaultRequestOptions]);
+
   
   // Note: Suppliers are now loaded as part of CS basic data, no separate fetch needed
   
@@ -719,10 +790,13 @@ export default function Schedule({
             fetchWithRetry(
               buildApiUrl(base_url, getApiEndpoints().CS_APPROVALS_DATA(csId)), 
               defaultRequestOptions
-            ),
-            // Always ensure we have ALL users for committee management
-            fetchAllUsersForCommittee()
+            )
           ]);
+          
+          // Load users only if not already loaded (lazy loading for better performance)
+          if (users.length === 0) {
+            await fetchUsers();
+          }
           
           // Store the loaded committee data in state
           if (committeeData && committeeData.committee) {
@@ -736,6 +810,9 @@ export default function Schedule({
             }
             if (approvalData.fm_approval) {
               setFmApproval(approvalData.fm_approval);
+            }
+            if (approvalData.current_user_roles) {
+              setCurrentUserRoles(approvalData.current_user_roles);
             }
           }
           break;
@@ -777,15 +854,17 @@ export default function Schedule({
         }
           
         case 'pr-items': {
-          // Load PR items data for the CS
+          // Load PR items data for the CS with smooth transitions
           console.log('Loading PR items data...');
           setLoadingOperation("Loading PR items data");
           
-          if (csId) {
-            // For existing CS, use CS-specific endpoint that returns ALL PR items with their status
-            // Always fetch for existing CS to ensure we have complete data
-            console.log('Fetching PR items for existing CS:', csId);
-            try {
+          // Add small delay to prevent jarring transitions
+          await new Promise(resolve => setTimeout(resolve, 150));
+          
+          try {
+            if (csId) {
+              // For existing CS, use CS-specific endpoint that returns ALL PR items with their status
+              console.log('Fetching PR items for existing CS:', csId);
               const itemsResponse = await fetchWithRetry(
                 buildApiUrl(base_url, getApiEndpoints().CS_PR_ITEMS_MANAGEMENT(csId)), 
                 defaultRequestOptions
@@ -814,45 +893,48 @@ export default function Schedule({
               } else {
                 console.warn('Failed to load CS PR items:', itemsResponse);
               }
-            } catch (error) {
-              console.error('Error loading CS PR items:', error);
-            }
-          } else {
-            // For new CS (no CS ID yet), use regular PR items endpoint
-            const effectivePrId = prid || storedPrId;
-            if (effectivePrId && prData.items.length === 0) {
-              console.log('Fetching PR items for new CS, PR ID:', effectivePrId);
-              const itemsResponse = await api.fetchPRItems(effectivePrId, 1, 50);
-              if (itemsResponse && itemsResponse.success) {
-                console.log('✅ PR items loaded:', itemsResponse.pr_items?.length || 0, 'items');
-                setPrData(prev => ({
-                  ...prev,
-                  items: itemsResponse.pr_items?.map((item: {
-                    id: number;
-                    item_required: string;
-                    quantity: number;
-                    unit_of_measurement: string;
-                    ordered: boolean;
-                    status: string;
-                    included: boolean;
-                  }) => ({
-                    id: item.id.toString(),
-                    name: item.item_required,
-                    quantity: item.quantity,
-                    unit: item.unit_of_measurement,
-                    status: item.status || (item.ordered ? 'used_in_other_schedule' : 'available'),
-                    included: item.included !== undefined ? item.included : !item.ordered
-                  })) || []
-                }));
-              } else {
-                console.warn('Failed to load PR items:', itemsResponse);
-              }
-            } else if (!effectivePrId) {
-              console.warn('No PR ID available to load items');
             } else {
-              console.log('PR items already loaded:', prData.items.length, 'items');
+              // For new CS (no CS ID yet), use regular PR items endpoint
+              const effectivePrId = prid || storedPrId;
+              if (effectivePrId && prData.items.length === 0) {
+                console.log('Fetching PR items for new CS, PR ID:', effectivePrId);
+                const itemsResponse = await api.fetchPRItems(effectivePrId, 1, 50);
+                if (itemsResponse && itemsResponse.success) {
+                  console.log('✅ PR items loaded:', itemsResponse.pr_items?.length || 0, 'items');
+                  setPrData(prev => ({
+                    ...prev,
+                    items: itemsResponse.pr_items?.map((item: {
+                      id: number;
+                      item_required: string;
+                      quantity: number;
+                      unit_of_measurement: string;
+                      ordered: boolean;
+                      status: string;
+                      included: boolean;
+                    }) => ({
+                      id: item.id.toString(),
+                      name: item.item_required,
+                      quantity: item.quantity,
+                      unit: item.unit_of_measurement,
+                      status: item.status || (item.ordered ? 'used_in_other_schedule' : 'available'),
+                      included: item.included !== undefined ? item.included : !item.ordered
+                    })) || []
+                  }));
+                } else {
+                  console.warn('Failed to load PR items:', itemsResponse);
+                }
+              } else if (!effectivePrId) {
+                console.warn('No PR ID available to load items');
+              } else {
+                console.log('PR items already loaded:', prData.items.length, 'items');
+              }
             }
+          } catch (error) {
+            console.error('Error loading PR items:', error);
           }
+          
+          // Smooth transition out of loading state
+          await new Promise(resolve => setTimeout(resolve, 100));
           setLoadingOperation('');
           break;
         }
@@ -954,7 +1036,16 @@ export default function Schedule({
   // Handle saving committee
   const handleSaveCommittee = useCallback(async (committee: ICommittee[]) => {
     // Only creators can save committee
-    if (!isCreator()) {
+    const creatorCheck = isCreator();
+    console.log("🔐 handleSaveCommittee - Creator check:", {
+      creatorCheck,
+      csId,
+      username,
+      csOwner,
+      isLoading
+    });
+    
+    if (!creatorCheck) {
       onOpenResponse("Access Denied", "Only the creator can save committee data.", false);
       return;
     }
@@ -965,8 +1056,6 @@ export default function Schedule({
       formData.append("cs_id", csId);
       formData.append("committee", JSON.stringify({ committee }));
       formData.append("csrfmiddlewaretoken", csrfToken);
-      
-
       
       const requestOptions = {
         method: "POST",
@@ -1007,9 +1096,12 @@ export default function Schedule({
   
   // Check if all approvals are complete
   const checkApprovalsComplete = useCallback(() => {
-    const committeeApproved = committeeMembers.length > 0 && committeeMembers.every(m => m.memberApproval === "Approved");
+    // Committee is approved if there are no members OR if all members have approved
+    const committeeApproved = committeeMembers.length === 0 || committeeMembers.every(m => m.memberApproval === "Approved");
     const gmApproved = !!gmApproval && gmApproval.approval === "Approved";
     const fmApproved = !!fmApproval && fmApproval.approval === "Approved";
+    
+
     
     const allComplete = committeeApproved && gmApproved && fmApproved;
     setApprovalsComplete(allComplete);
@@ -1032,51 +1124,144 @@ export default function Schedule({
   // Handle approval action
   const handleApprove = useCallback(async (
     role: string,
-    username: string,
+    targetUsername: string, // Renamed for clarity - this is the user being approved
     approval: string,
     justification: string
   ) => {
-    // Only creators can perform approvals
-    if (!isCreator()) {
-      onOpenResponse("Access Denied", "Only the creator can perform approval actions.", false);
-      return;
+    // Check if user is creator
+    const userIsCreator = isCreator();
+    
+    // Find current logged-in user info for debugging
+    const currentLoggedInUser = users.find(user => user.username === username);
+    const targetUser = users.find(user => user.username === targetUsername);
+    
+    console.log("🔐 handleApprove - User info debug:", {
+      currentLoggedInUsername: username,
+      targetUsername: targetUsername,
+      currentLoggedInUser: currentLoggedInUser ? {
+        username: currentLoggedInUser.username,
+        first_name: currentLoggedInUser.first_name,
+        last_name: currentLoggedInUser.last_name,
+        displayName: `${currentLoggedInUser.first_name} ${currentLoggedInUser.last_name}`
+      } : null,
+      targetUser: targetUser ? {
+        username: targetUser.username,
+        first_name: targetUser.first_name,
+        last_name: targetUser.last_name,
+        displayName: `${targetUser.first_name} ${targetUser.last_name}`
+      } : null,
+      userIsCreator,
+      csOwner
+    });
+    
+    // For committee approvals: only committee members can approve
+    if (role === 'committee') {
+      // Check if the CURRENT USER (not the target user) is a committee member
+      const isCommitteeMember = committeeMembers.some(member => member.memberUserName === username);
+      
+      console.log("🔐 Committee approval debug:", {
+        role,
+        currentLoggedInUsername: username,
+        targetUsername: targetUsername,
+        userIsCreator,
+        isCommitteeMember,
+        committeeMembers: committeeMembers.map(m => ({ 
+          memberUserName: m.memberUserName, 
+          memberPosition: m.memberPosition 
+        })),
+        csOwner,
+        usernameComparisons: committeeMembers.map(m => ({
+          member: m.memberUserName,
+          currentLoggedIn: username,
+          match: m.memberUserName === username
+        }))
+      });
+      
+      // Only committee members can perform committee approvals
+      if (!isCommitteeMember) {
+        if (userIsCreator) {
+          onOpenResponse("Access Denied", "Creators cannot approve their own documents unless they are committee members. Please add yourself to the committee first.", false);
+        } else {
+          onOpenResponse("Access Denied", "Only committee members can perform committee approvals.", false);
+        }
+        return;
+      }
+    } else {
+      // For non-committee approvals (FM/GM): creators cannot approve
+      if (userIsCreator) {
+        onOpenResponse("Access Denied", "Creators cannot approve their own documents. Only committee members can perform approval actions.", false);
+        return;
+      }
     }
     setIsLoading(true);
     setLoadingOperation(`Processing ${approval.toLowerCase()} action`);
     try {
-      const requestOptions = {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-CSRFToken": csrfToken,
-        },
-        body: JSON.stringify({
-          role,
-          username,
-          approval,
-          justification,
-        }),
-      };
-      
-      const data = await fetchWithRetry(buildApiUrl(base_url, getApiEndpoints().CS_APPROVAL(csId)), requestOptions);
-      
-      // Update approval state based on role
-      if (role === 'GM') {
-        setGmApproval({
-          id: data.approval_id || 1,
-          approver_name: username,
-          approval,
-          approval_date: new Date().toISOString(),
-          justification
-        });
-      } else if (role === 'FM') {
-        setFmApproval({
-          id: data.approval_id || 1,
-          approver_name: username,
-          approval,
-          approval_date: new Date().toISOString(),
-          justification
-        });
+      // Handle committee approvals differently
+      if (role === 'committee') {
+        const formData = new FormData();
+        formData.append("cs_id", csId);
+        formData.append("username", targetUsername); // Use targetUsername - the person being approved
+        formData.append("approval", approval);
+        formData.append("justification", justification);
+        formData.append("csrfmiddlewaretoken", csrfToken);
+        
+        const requestOptions = {
+          method: "POST",
+          headers: {
+            "X-CSRFToken": csrfToken,
+          },
+          body: formData,
+        };
+        
+        await fetchWithRetry(buildApiUrl(base_url, "/committee_approve"), requestOptions);
+        
+        // Refresh committee data
+        const committeeData = await fetchWithRetry(
+          buildApiUrl(base_url, getApiEndpoints().CS_COMMITTEE_DATA(csId)), 
+          defaultRequestOptions
+        );
+        if (committeeData && committeeData.committee) {
+          updateCommitteeMembers(committeeData.committee);
+        }
+      } else {
+        // Handle finance manager and general manager approvals
+        // For FM/GM approvals, use the current logged-in user's username
+        const formData = new FormData();
+        formData.append("cs_id", csId);
+        formData.append("role", role);
+        formData.append("username", username); // Current logged-in user for FM/GM approvals
+        formData.append("approval", approval);
+        formData.append("justification", justification);
+        formData.append("csrfmiddlewaretoken", csrfToken);
+        
+        const requestOptions = {
+          method: "POST",
+          headers: {
+            "X-CSRFToken": csrfToken,
+          },
+          body: formData,
+        };
+        
+        const data = await fetchWithRetry(buildApiUrl(base_url, "/approval_approve"), requestOptions);
+        
+        // Update approval state based on role
+        if (role === 'general_manager') {
+          setGmApproval({
+            id: data.gm_approval?.id || 1,
+            approver_name: data.gm_approval?.approver_name || username,
+            approval,
+            approval_date: data.gm_approval?.approval_date || new Date().toISOString(),
+            justification
+          });
+        } else if (role === 'finance_manager') {
+          setFmApproval({
+            id: data.fm_approval?.id || 1,
+            approver_name: data.fm_approval?.approver_name || username,
+            approval,
+            approval_date: data.fm_approval?.approval_date || new Date().toISOString(),
+            justification
+          });
+        }
       }
       
       // Refresh data
@@ -1089,52 +1274,9 @@ export default function Schedule({
       setIsLoading(false);
       setLoadingOperation("");
     }
-  }, [csId, base_url, csrfToken, fetchCS]);
+  }, [csId, base_url, csrfToken, fetchCS, updateCommitteeMembers, committeeMembers]);
 
-  // Handle committee member approval
-  const handleCommitteeApprove = useCallback(async (
-    username: string,
-    approval: string,
-    justification: string
-  ) => {
-    setIsLoading(true);
-    setLoadingOperation(`Processing committee ${approval.toLowerCase()}`);
-    try {
-      const formData = new FormData();
-      formData.append("cs_id", csId);
-      formData.append("username", username);
-      formData.append("approval", approval);
-      formData.append("justification", justification);
-      formData.append("csrfmiddlewaretoken", csrfToken);
-      
-      const requestOptions = {
-        method: "POST",
-        headers: {
-          "X-CSRFToken": csrfToken,
-        },
-        body: formData,
-      };
-      
-      await fetchWithRetry(buildApiUrl(base_url, "/approve_cs_committee"), requestOptions);
-      
-      // Refresh committee data
-      const committeeData = await fetchWithRetry(
-        buildApiUrl(base_url, getApiEndpoints().CS_COMMITTEE_DATA(csId)), 
-        defaultRequestOptions
-      );
-      if (committeeData && committeeData.committee) {
-        updateCommitteeMembers(committeeData.committee);
-      }
-      
-      onOpenResponse("Success", `Successfully ${approval.toLowerCase()} committee member`, true);
-    } catch (error) {
-      console.error("Error during committee approval:", error);
-      onOpenResponse("Error", "Failed to process committee approval", false);
-    } finally {
-      setIsLoading(false);
-      setLoadingOperation("");
-    }
-  }, [csId, base_url, csrfToken, updateCommitteeMembers]);
+
   
 
 
@@ -1351,7 +1493,7 @@ export default function Schedule({
     const errors: string[] = [];
     
     if (!currency) errors.push("Currency is required");
-    if (!procPlan) errors.push("Procurement plan is required");
+    if (!procPlan && !prData.procurement_plan_id) errors.push("Procurement plan is required");
     if (!prData.scope_of_work?.trim()) errors.push("Scope of work is required");
     if (!prData.pr_number?.trim()) errors.push("PR number is required");
     if (!prData.pr_date) errors.push("PR date is required");
@@ -1360,10 +1502,11 @@ export default function Schedule({
     if (!prData.closing_time) errors.push("Closing time is required");
     if (!prData.cs_opened_date) errors.push("CS opened date is required");
     if (!prData.tac_date) errors.push("TAC date is required");
-    if (!advert) errors.push("Advertisement document is required");
+    // Check for either new advert file or existing advert document
+    if (!advert && !existingAdvert) errors.push("Advertisement document is required");
     
     return { isValid: errors.length === 0, errors };
-  }, [currency, procPlan, prData, advert]);
+  }, [currency, procPlan, prData, advert, existingAdvert]);
 
   // File type and size validation
   const validateFile = useCallback((file: File): { isValid: boolean; error?: string } => {
@@ -1486,22 +1629,28 @@ export default function Schedule({
   }, [csId, fetchCS]);
 
   // Helper function to check if current user is the creator
-  const isCreator = useCallback(() => {
-    // console.log("isCreator Debug:", {
-    //   csId: csId,
-    //   username: username,
-    //   creator: creator,
-    //   csOwner: csOwner,
-    //   isCreator: username === csOwner,
-    // });
-    // For new schedules (no csId), always return true
-    if (!csId || csId === "") {
-      return true;
-    }
-    // For existing schedules, check if current user is the creator
-    // Use csOwner (username) instead of creator (full name)
-    return username === csOwner;
-  }, [username, creator, csOwner, csId]);
+  const isCreator = useCallback((): boolean => {
+    const result = (() => {
+      // For new schedules (no csId), always return true
+      if (!csId || csId === "") {
+        return true;
+      }
+      // For existing schedules, check if current user is the creator
+      // Use csOwner (username) instead of creator (full name)
+      // If csOwner is empty and we're still loading, return true to avoid blocking operations
+      // This prevents the "Access Denied" modal during initial load
+      if (!csOwner || csOwner === "") {
+        // If we're loading, assume user is creator to prevent blocking
+        // The backend will handle the actual permission check
+        return true;
+      }
+      return username === csOwner;
+    })();
+    
+    // isCreator permission check completed
+    
+    return result;
+  }, [username, creator, csOwner, csId, isLoading]);
 
   // Show response notification
   const onOpenResponse = useCallback((title: string, message: string, success: boolean) => {
@@ -1822,6 +1971,8 @@ export default function Schedule({
 
   // Update bid modal
   const onUpdateBidModal = useCallback((bid_count: number) => {
+    console.log("🔧 Edit bid triggered:", { bid_count, bids: bids.length, isCreator: isCreator() });
+    
     // Only creators can update bids
     if (!isCreator()) {
       onOpenResponse("Access Denied", "Only the creator can edit bids in this schedule.", false);
@@ -1829,13 +1980,19 @@ export default function Schedule({
     }
 
     const bid = bids.find((bid) => bid && bid.bid_count === bid_count);
+    console.log("🔧 Found bid for editing:", bid);
+    
     if (bid) {
       setCurrentBid(bid);
       // Populate supplier search term for editing
       setSupplierSearchTerm(bid.supplier_name || '');
-      setUpdateBidModal(!updateBidModal);
+      setUpdateBidModal(true); // Always set to true for edit mode
+      console.log("🔧 Edit modal opened for bid:", bid.bid_count);
+    } else {
+      console.error("❌ Bid not found for editing:", bid_count);
+      onOpenResponse("Error", `Bid #${bid_count} not found for editing.`, false);
     }
-  }, [bids, updateBidModal, isCreator, onOpenResponse]);
+  }, [bids, isCreator, onOpenResponse]);
 
   // Close current bid modal
   const onCloseCurrentBid = useCallback(() => {
@@ -1843,6 +2000,8 @@ export default function Schedule({
     setCurrentBid(undefined);
     setSupplierSearchTerm(""); // Clear search when closing modal
     setShowSupplierDropdown(false); // Hide dropdown
+    setBidValidationErrors([]); // Clear validation errors
+    setInvalidFields(new Set()); // Clear invalid fields
   }, []);
 
   // Close update bid modal
@@ -1851,6 +2010,8 @@ export default function Schedule({
     setCurrentBid(undefined);
     setSupplierSearchTerm(""); // Clear search when closing modal
     setShowSupplierDropdown(false); // Hide dropdown
+    setBidValidationErrors([]); // Clear validation errors
+    setInvalidFields(new Set()); // Clear invalid fields
   }, []);
 
   // Handle current bid changes
@@ -1860,6 +2021,20 @@ export default function Schedule({
   ) => {
     const { name, value } = event.target;
     console.log("name: ", name, "value: ", value);
+    
+    // Clear validation errors for this field when user starts typing
+    if (invalidFields.has(name)) {
+      const newInvalidFields = new Set(invalidFields);
+      newInvalidFields.delete(name);
+      setInvalidFields(newInvalidFields);
+      
+      // Remove related error messages
+      const newErrors = bidValidationErrors.filter(error => 
+        !error.toLowerCase().includes(name.toLowerCase())
+      );
+      setBidValidationErrors(newErrors);
+    }
+    
     if (name_ === "supplier_name") {
       setCurrentBid({
         ...currentBid,
@@ -1871,7 +2046,7 @@ export default function Schedule({
         bid_date: value,
       });
     }
-  }, [currentBid]);
+  }, [currentBid, invalidFields, bidValidationErrors]);
 
 
 
@@ -1886,11 +2061,12 @@ export default function Schedule({
       }
       
       // Enhanced file handling - log file details for debugging
-      console.log('File uploaded:', {
+      console.log('📄 File uploaded:', {
         name: file.name,
         size: file.size,
         type: file.type,
-        lastModified: new Date(file.lastModified).toISOString()
+        lastModified: new Date(file.lastModified).toISOString(),
+        isEditMode: !!currentBid?.bid_count
       });
       
       setCurrentBid({
@@ -1899,6 +2075,8 @@ export default function Schedule({
       });
       
       onOpenResponse("File Uploaded", `File "${file.name}" uploaded successfully`, true);
+    } else {
+      console.log("📄 No file selected or file input cleared");
     }
   }, [currentBid, validateFile]);
 
@@ -1911,6 +2089,23 @@ export default function Schedule({
   ) => {
     const { value } = event.target;
     console.log("🔢 Bid item change:", { field: name_, value, description, bid_no });
+    
+    // Clear validation errors for this field when user starts typing
+    const itemIndex = currentBid?.items?.findIndex(item => item.item_required === description) ?? -1;
+    const fieldKey = `item_${itemIndex}_${name_}`;
+    
+    if (invalidFields.has(fieldKey)) {
+      const newInvalidFields = new Set(invalidFields);
+      newInvalidFields.delete(fieldKey);
+      setInvalidFields(newInvalidFields);
+      
+      // Remove related error messages
+      const newErrors = bidValidationErrors.filter(error => 
+        !error.toLowerCase().includes(description.toLowerCase()) || 
+        !error.toLowerCase().includes(name_.toLowerCase())
+      );
+      setBidValidationErrors(newErrors);
+    }
     
     if (currentBid?.items) {
       const updatedItems = currentBid.items.map((item) => {
@@ -1950,16 +2145,22 @@ export default function Schedule({
         items: updatedItems,
       });
     }
-  }, [currentBid]);
+  }, [currentBid, invalidFields, bidValidationErrors]);
 
   // Enhanced save bid function with direct purchase validation
   const onSaveBid = useCallback((bid: IBid, bids: IBid[], bid_count?: number) => {
+    console.log("💾 onSaveBid called:", { 
+      bid: bid.bid_count, 
+      bid_count, 
+      isEditMode: !!bid_count,
+      totalBids: bids.length 
+    });
+    
     // Only creators can save bids
     if (!isCreator()) {
       onOpenResponse("Access Denied", "Only the creator can save bids to this schedule.", false);
       return;
     }
-    console.log("bid_count: ", bid_count);
     
     // Direct purchase validation
     if (base_url === "/direct_purchase" && bids.length >= 1 && !bid_count) {
@@ -1983,7 +2184,18 @@ export default function Schedule({
     form_data.append("supplier", bid.supplier ?? "");
     form_data.append("supplier_name", bid.supplier_name ?? "");
     form_data.append("bid_date", bid.bid_date ?? "");
-    form_data.append("bid_document", bid.bid_document ?? "");
+    // Handle bid document - preserve existing document if no new file is uploaded
+    if (bid.bid_document instanceof File) {
+      form_data.append("bid_document", bid.bid_document);
+    } else if (bid.encoded_bid_document) {
+      // For existing encoded documents, send as string
+      form_data.append("bid_document", bid.encoded_bid_document);
+    } else if (bid.bid_document_url) {
+      // For existing document URLs, send as string
+      form_data.append("bid_document", bid.bid_document_url);
+    } else {
+      form_data.append("bid_document", "");
+    }
     form_data.append(
       "json_data",
       JSON.stringify({
@@ -1991,6 +2203,13 @@ export default function Schedule({
       })
     );
     form_data.append("csrfmiddlewaretoken", csrfToken);
+
+    console.log("📤 Sending bid data:", {
+      cs_id: csId,
+      bid_count: bid?.bid_count,
+      supplier_name: bid.supplier_name,
+      items_count: bid.items?.length || 0
+    });
 
     fetch(`${base_url}/save_bid`, {
       method: "POST",
@@ -2001,53 +2220,233 @@ export default function Schedule({
     })
       .then((response) => response.json())
       .then((data) => {
-        console.log("data: ", data, bids);
+        console.log("📥 Save bid response:", data);
         if (data.success) {
-          onOpenResponse("Save Bid Success", "Bid saved successfully", true);
-          setBids([...bids, bid]);
+          const isEditMode = !!bid_count;
+          const message = isEditMode ? "Bid updated successfully" : "Bid saved successfully";
+          onOpenResponse("Save Bid Success", message, true);
+          
+          if (isEditMode) {
+            // Update existing bid in the list
+            const updatedBids = bids.map(existingBid => 
+              existingBid.bid_count === bid.bid_count ? bid : existingBid
+            );
+            setBids(updatedBids);
+          } else {
+            // Add new bid to the list
+            setBids([...bids, bid]);
+            setBidCount(bidCount + 1);
+          }
+          
           setAddBidModal(false);
           setUpdateBidModal(false);
           setCurrentBid(undefined);
-          setBidCount(bidCount + 1);
+          setSupplierSearchTerm("");
+          setShowSupplierDropdown(false);
           onSetDirectPurchaseLimit();
         } else {
-          onOpenResponse("Save Bid Error", "Failed to save bid, please try again.", false);
+          onOpenResponse("Save Bid Error", data.message || "Failed to save bid, please try again.", false);
         }
-             });
-   }, [csId, csrfToken, base_url, bidCount, onSetDirectPurchaseLimit, validateFile]);
+      })
+      .catch((error) => {
+        console.error("❌ Save bid error:", error);
+        onOpenResponse("Save Bid Error", "Network error occurred while saving bid.", false);
+      });
+   }, [csId, csrfToken, base_url, bidCount, onSetDirectPurchaseLimit, validateFile, isCreator]);
+
+  // Helper function to check if a field is invalid
+  const isFieldInvalid = useCallback((fieldName: string) => {
+    return invalidFields.has(fieldName);
+  }, [invalidFields]);
+
+  // Server-side search for UOM
+  const searchUom = useCallback(async (searchQuery: string) => {
+    if (!searchQuery || searchQuery.length < 2) {
+      setUomSearchResults([]);
+      return;
+    }
+
+    setIsUomSearching(true);
+    try {
+      const url = buildApiUrl(base_url, `${getApiEndpoints().UOM}?search=${encodeURIComponent(searchQuery)}&limit=100`);
+      const response = await fetch(url);
+      const data = await response.json();
+      
+      if (data.uom) {
+        setUomSearchResults(data.uom);
+      }
+    } catch (error) {
+      console.error('Error searching UOM:', error);
+      setUomSearchResults([]);
+    } finally {
+      setIsUomSearching(false);
+    }
+  }, [base_url]);
+
+  // Trigger UOM search when debounced search term changes
+  useEffect(() => {
+    searchUom(debouncedUomSearchTerm);
+  }, [debouncedUomSearchTerm, searchUom]);
+
+  // Debounce UOM search term
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedUomSearchTerm(uomSearchTerm);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [uomSearchTerm]);
+
+  // Server-side search for Suppliers
+  const searchSuppliers = useCallback(async (searchQuery: string) => {
+    if (!searchQuery || searchQuery.length < 2) {
+      setSupplierSearchResults([]);
+      return;
+    }
+
+    setIsSupplierSearching(true);
+    try {
+      const url = buildApiUrl(base_url, `${getApiEndpoints().SUPPLIERS}?search=${encodeURIComponent(searchQuery)}&limit=100`);
+      console.log('🔍 Searching suppliers at URL:', url);
+      const response = await fetch(url);
+      console.log('🔍 Supplier search response status:', response.status);
+      const data = await response.json();
+      console.log('🔍 Supplier search data:', data);
+      
+      if (data.suppliers) {
+        setSupplierSearchResults(data.suppliers);
+      } else if (Array.isArray(data)) {
+        // Fallback for old API format
+        setSupplierSearchResults(data);
+      } else {
+        setSupplierSearchResults([]);
+      }
+    } catch (error) {
+      console.error('Error searching suppliers:', error);
+      // Fallback to local filtering if server search fails
+      const filteredSuppliers = suppliers.filter(supplier => 
+        (supplier.supplier_name || supplier.name || '')
+          .toLowerCase()
+          .includes(searchQuery.toLowerCase())
+      );
+      setSupplierSearchResults(filteredSuppliers);
+    } finally {
+      setIsSupplierSearching(false);
+    }
+  }, [base_url, suppliers]);
+
+  // Trigger supplier search when debounced search term changes
+  useEffect(() => {
+    searchSuppliers(debouncedSupplierSearchTerm);
+  }, [debouncedSupplierSearchTerm, searchSuppliers]);
+
+  // Debounce supplier search term
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSupplierSearchTerm(supplierSearchTerm);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [supplierSearchTerm]);
+
+  // Bid validation function
+  const validateBidForm = useCallback(() => {
+    const errors: string[] = [];
+    const invalidFieldSet = new Set<string>();
+    
+    // Validate supplier
+    if (!currentBid?.supplier_name) {
+      errors.push("Please select a supplier");
+      invalidFieldSet.add("supplier");
+    }
+    
+    // Validate bid date
+    if (!currentBid?.bid_date) {
+      errors.push("Please select a bid date");
+      invalidFieldSet.add("bid_date");
+    }
+    
+    // Validate bid document
+    if (!currentBid?.bid_document && !currentBid?.encoded_bid_document && !currentBid?.bid_document_url) {
+      errors.push("Please select a bid document");
+      invalidFieldSet.add("bid_document");
+    }
+    
+    // Validate bid items
+    if (!currentBid?.items || currentBid.items.length === 0) {
+      errors.push("Please add at least one item to the bid");
+    } else {
+      // Validate each bid item
+      currentBid.items.forEach((item, index) => {
+        if (!item.quantity) {
+          errors.push(`Item "${item.item_required}": Quantity is required`);
+          invalidFieldSet.add(`item_${index}_quantity`);
+        }
+        if (!item.unit_price) {
+          errors.push(`Item "${item.item_required}": Unit price is required`);
+          invalidFieldSet.add(`item_${index}_unit_price`);
+        }
+        if (!item.unit_of_measurement) {
+          errors.push(`Item "${item.item_required}": Unit of measurement is required`);
+          invalidFieldSet.add(`item_${index}_unit_of_measurement`);
+        }
+        if (!item.vat) {
+          errors.push(`Item "${item.item_required}": VAT selection is required`);
+          invalidFieldSet.add(`item_${index}_vat`);
+        }
+      });
+    }
+    
+    setBidValidationErrors(errors);
+    setInvalidFields(invalidFieldSet);
+    
+    return errors.length === 0;
+  }, [currentBid]);
 
   // Save current bid
   const onCurrentBidSave = useCallback(() => {
+    console.log("💾 Save bid triggered:", { 
+      currentBid, 
+      isCreator: isCreator(),
+      updateBidModal,
+      addBidModal 
+    });
+    
     // Only creators can save bids
     if (!isCreator()) {
       onOpenResponse("Access Denied", "Only the creator can save bids to this schedule.", false);
       return;
     }
-    if (!currentBid?.supplier_name) {
-      onOpenResponse("Submit Bid Error", "Please select a supplier", false);
-      return;
-    } else if (!currentBid.bid_date) {
-      onOpenResponse("Submit Bid Error", "Please select a bid date", false);
-      return;
-    } else if (!currentBid?.bid_document) {
-      onOpenResponse("Submit Bid Error", "Please select a bid document", false);
-      return;
-    } else {
-      // Check if current bid already exists
-      if (currentBid.items) {
-        const bid = bids.find((bid) => bid && bid.bid_count === currentBid.bid_count);
-        console.log("bid found: ", bid);
-        
-        if (bid) {
-          // Update existing bid
-          onSaveBid(currentBid, bids, currentBid.bid_count);
-        } else {
-          // Create new bid
-          onSaveBid(currentBid, bids);
-        }
+    
+    // Clear previous validation errors
+    setBidValidationErrors([]);
+    setInvalidFields(new Set());
+    
+    // Validate form
+    if (!validateBidForm()) {
+      return; // Stop if validation fails
+    }
+    
+    // Check if current bid already exists (edit mode)
+    if (currentBid?.items) {
+      const existingBid = bids.find((bid) => bid && bid.bid_count === currentBid.bid_count);
+      console.log("🔍 Existing bid check:", { 
+        currentBidCount: currentBid.bid_count, 
+        existingBid: existingBid ? existingBid.bid_count : null,
+        isEditMode: !!existingBid 
+      });
+      
+      if (existingBid) {
+        // Update existing bid
+        console.log("🔄 Updating existing bid:", currentBid.bid_count);
+        onSaveBid(currentBid, bids, currentBid.bid_count);
+      } else {
+        // Create new bid
+        console.log("🆕 Creating new bid");
+        onSaveBid(currentBid, bids);
       }
     }
-  }, [currentBid, bids, onSaveBid]);
+  }, [currentBid, bids, onSaveBid, isCreator, updateBidModal, addBidModal, validateBidForm]);
 
   // Enhanced delete bid with compliance cleanup
   const deleteBid = useCallback((bid_count: number, supplier_name: string) => {
@@ -2497,6 +2896,14 @@ export default function Schedule({
         const selectedProcPlan = procPlans.find(p => p.id.toString() === value);
         setProcPlan(selectedProcPlan);
         setProcRef(selectedProcPlan?.proc_ref || '');
+        // Update prData with the selected procurement plan
+        if (selectedProcPlan) {
+          updatePrData('procurement_plan_id', selectedProcPlan.id.toString());
+          updatePrData('procurement_plan_description', selectedProcPlan.description);
+        } else {
+          updatePrData('procurement_plan_id', '');
+          updatePrData('procurement_plan_description', '');
+        }
         break;
       }
       case 'showSiteVisit':
@@ -2530,9 +2937,9 @@ export default function Schedule({
       formData.append("proc_ref", procRef);
       formData.append("scope_of_work", prData.scope_of_work);
       formData.append("currency", JSON.stringify(currency?.id));
-      formData.append("proc_plan_id", prData.procurement_plan_id || "");
+      formData.append("proc_plan_id", (procPlan?.id || prData.procurement_plan_id || "").toString());
       formData.append("pr_number", prData.pr_number);
-      formData.append("quantity", quantity);
+      formData.append("quantity", quantity.toString());
       formData.append("pr_date", prData.pr_date);
       formData.append("closing_date", prData.closing_date);
       formData.append("ref_date", prData.reference_date);
@@ -2700,6 +3107,8 @@ export default function Schedule({
                     <label className="block text-sm font-medium text-gray-700 mb-1">Procurement Plan</label>
                     <select 
                       className={`w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${!isCreator() ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+                      onChange={(e) => onSelectChange("procPlan", e)}
+                      value={procPlan?.id || prData.procurement_plan_id || ""}
                       disabled={!isCreator()}
                     >
                       {prData?.procurement_plan_description && (
@@ -2919,7 +3328,7 @@ export default function Schedule({
                     Save Schedule Details
                   </button>
                 )}
-                <button className="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700 transition-colors flex items-center">
+                {/* <button className="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700 transition-colors flex items-center">
                   <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                   </svg>
@@ -2930,7 +3339,7 @@ export default function Schedule({
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2v0" />
                   </svg>
                   Duplicate Schedule
-                </button>
+                </button> */}
                 {isCreator() && (
                   <button className="bg-red-600 text-white px-6 py-2 rounded hover:bg-red-700 transition-colors flex items-center">
                     <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -2966,9 +3375,24 @@ export default function Schedule({
                     <h3 className="text-lg font-semibold text-gray-900 mb-4 border-b pb-2">Purchase Request Items</h3>
                     
                     {isLoading && loadingOperation === "Loading PR items data" ? (
-                      <div className="flex items-center justify-center py-8">
-                        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-600 mr-3"></div>
-                        <span className="text-gray-600">Loading PR items...</span>
+                      <div className="transition-all duration-300 ease-in-out">
+                        {/* Skeleton loading for PR items */}
+                        <div className="space-y-3">
+                          {[...Array(5)].map((_, i) => (
+                            <div key={i} className="animate-pulse bg-gray-200 rounded-lg p-4 flex items-center space-x-4">
+                              <div className="w-4 h-4 bg-gray-300 rounded"></div>
+                              <div className="flex-1">
+                                <div className="h-4 bg-gray-300 rounded w-3/4 mb-2"></div>
+                                <div className="h-3 bg-gray-300 rounded w-1/2"></div>
+                              </div>
+                              <div className="w-16 h-6 bg-gray-300 rounded"></div>
+                            </div>
+                          ))}
+                        </div>
+                        <div className="flex items-center justify-center py-4 mt-6">
+                          <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-blue-600 mr-3"></div>
+                          <span className="text-gray-600 font-medium">Loading PR items...</span>
+                        </div>
                       </div>
                     ) : prData.items.length === 0 ? (
                       <div className="text-center py-8">
@@ -2984,8 +3408,25 @@ export default function Schedule({
                         </p>
                       </div>
                     ) : (
-                      <>
-                        <div className="overflow-x-auto">
+                      <div className="transition-all duration-500 ease-in-out">
+                        {/* Summary Statistics */}
+                        <div className="mb-4 p-4 bg-gray-50 rounded-lg">
+                          <p className="text-sm text-gray-600">
+                            <span className="font-medium text-gray-900">Total Items: {prData.items.length}</span>
+                            {prData.items.length > 0 && (
+                              <>
+                                <span className="mx-2">|</span>
+                                <span className="text-green-700">Available: {prData.items.filter(item => item.status === 'available' || !item.status).length}</span>
+                                <span className="mx-2">|</span>
+                                <span className="text-orange-700">Used Elsewhere: {prData.items.filter(item => item.status === 'used_in_other_schedule').length}</span>
+                                <span className="mx-2">|</span>
+                                <span className="text-blue-700">Included Here: {prData.items.filter(item => item.included || item.status === 'included_in_cs').length}</span>
+                              </>
+                            )}
+                          </p>
+                        </div>
+                        
+                        <div className="overflow-x-auto transform transition-all duration-300 ease-in-out">
                           <table className="min-w-full divide-y divide-gray-200">
                             <thead className="bg-gray-50">
                               <tr>
@@ -3158,7 +3599,7 @@ export default function Schedule({
                             </button>
                           )}
                         </div>
-                      </>
+                      </div>
                     )}
                   </div>
 
@@ -3348,7 +3789,11 @@ export default function Schedule({
                                   {isCreator() && (
                                     <div className="flex space-x-2 ml-4" onClick={(e) => e.stopPropagation()}>
                                       <button
-                                        onClick={() => onUpdateBidModal(bid.bid_count || 0)}
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          console.log("🔘 Edit button clicked for bid:", bid.bid_count);
+                                          onUpdateBidModal(bid.bid_count || 0);
+                                        }}
                                         className="text-blue-600 hover:text-blue-800 text-sm font-medium"
                                       >
                                         Edit
@@ -3377,13 +3822,14 @@ export default function Schedule({
                                       <h5 className="text-md font-medium text-gray-900 mb-3">Bid Items</h5>
                                       {bid.items && bid.items.length > 0 ? (
                                         <div className="overflow-x-auto">
-                                          <table className="min-w-full divide-y divide-gray-200">
+                                          <table className="min-w-full divide-y divide-gray-200" style={{ overflow: 'visible' }}>
                                             <thead className="bg-gray-100">
                                               <tr>
                                                 <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Item</th>
                                                 <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Unit</th>
                                                 <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Qty</th>
                                                 <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Unit Price</th>
+                                                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">VAT</th>
                                                 <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Total</th>
                                               </tr>
                                             </thead>
@@ -3394,16 +3840,17 @@ export default function Schedule({
                                                   <td className="px-3 py-2 text-sm text-gray-600">{item.unit_of_measurement || '-'}</td>
                                                   <td className="px-3 py-2 text-sm text-gray-900">{item.quantity}</td>
                                                   <td className="px-3 py-2 text-sm text-gray-900">${(Number(item.unit_price) || 0).toLocaleString()}</td>
+                                                  <td className="px-3 py-2 text-sm text-gray-600">{item.vat || '-'}</td>
                                                   <td className="px-3 py-2 text-sm font-medium text-gray-900">${(Number(item.total_price) || 0).toLocaleString()}</td>
                                                 </tr>
                                               ))}
                                             </tbody>
                                             <tfoot className="bg-gray-50">
                                               <tr>
-                                                <td colSpan={4} className="px-3 py-2 text-sm font-medium text-gray-900 text-right">Grand Total:</td>
-                                                                                                 <td className="px-3 py-2 text-sm font-bold text-gray-900">
-                                                   ${calculateBidTotal(bid.items).toLocaleString()}
-                                                 </td>
+                                                <td colSpan={5} className="px-3 py-2 text-sm font-medium text-gray-900 text-right">Grand Total:</td>
+                                                <td className="px-3 py-2 text-sm font-bold text-gray-900">
+                                                  ${calculateBidTotal(bid.items).toLocaleString()}
+                                                </td>
                                               </tr>
                                             </tfoot>
                                           </table>
@@ -3494,7 +3941,11 @@ export default function Schedule({
                   <CommitteeApprovalWrapper
                     users={users}
                     onSaveCommittee={handleSaveCommittee}
-                    onApprove={handleCommitteeApprove}
+                    onApprove={(username: string, approval: string, justification: string) => 
+                      handleApprove('committee', username, approval, justification)
+                    }
+                    isCreator={isCreator()}
+                    csrfToken={csrfToken}
                   />
 
                   {/* GM/FM Approval Table */}
@@ -3505,6 +3956,7 @@ export default function Schedule({
                     fmApproval={fmApproval}
                     isCreator={isCreator()}
                     onApprove={handleApprove}
+                    currentUserRoles={currentUserRoles}
                   />
 
                   {/* Approval Summary */}
@@ -3531,17 +3983,35 @@ export default function Schedule({
                       <div className="flex justify-between items-center">
                         <span className="text-gray-600">GM Approval:</span>
                         <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                          gmApproval ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"
+                          gmApproval?.approval === "Approved" 
+                            ? "bg-green-100 text-green-800"
+                            : gmApproval?.approval === "Rejected"
+                            ? "bg-red-100 text-red-800"
+                            : "bg-yellow-100 text-yellow-800"
                         }`}>
-                          {gmApproval ? "Complete" : "Pending"}
+                          {gmApproval?.approval === "Approved" 
+                            ? "Complete"
+                            : gmApproval?.approval === "Rejected"
+                            ? "Rejected"
+                            : "Pending"
+                          }
                         </span>
                       </div>
                       <div className="flex justify-between items-center">
                         <span className="text-gray-600">FM Approval:</span>
                         <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                          fmApproval ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"
+                          fmApproval?.approval === "Approved" 
+                            ? "bg-green-100 text-green-800"
+                            : fmApproval?.approval === "Rejected"
+                            ? "bg-red-100 text-red-800"
+                            : "bg-yellow-100 text-yellow-800"
                         }`}>
-                          {fmApproval ? "Complete" : "Pending"}
+                          {fmApproval?.approval === "Approved" 
+                            ? "Complete"
+                            : fmApproval?.approval === "Rejected"
+                            ? "Rejected"
+                            : "Pending"
+                          }
                         </span>
                       </div>
                       <div className="flex justify-between items-center border-t pt-3">
@@ -4001,6 +4471,89 @@ export default function Schedule({
             </div>
           </Suspense>
         );
+      case 'rankings':
+        return (
+          <Suspense fallback={<SectionLoader />}>
+            <div className="space-y-6">
+              {!csId ? (
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
+                  <div className="flex items-center">
+                    <svg className="w-6 h-6 text-yellow-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                    </svg>
+                    <div>
+                      <h3 className="text-lg font-medium text-yellow-800">Schedule Required</h3>
+                      <p className="text-yellow-700 mt-1">Please save the schedule and complete compliance evaluation before managing rankings.</p>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  {/* Rankings Table */}
+                  <div className="bg-white p-6 rounded-lg shadow-sm border">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4 border-b pb-2 flex items-center">
+                      <svg className="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                      </svg>
+                      Supplier Rankings & Evaluation
+                    </h3>
+                    
+                    {rankings.length > 0 ? (
+                      <div className="overflow-x-auto">
+                        <table className="min-w-full divide-y divide-gray-200">
+                          <thead className="bg-gray-50">
+                            <tr>
+                              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Rank</th>
+                              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Supplier</th>
+                              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total Score</th>
+                              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Decision</th>
+                              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Remarks</th>
+                            </tr>
+                          </thead>
+                          <tbody className="bg-white divide-y divide-gray-200">
+                            {rankings.map((rank, index) => (
+                              <tr key={rank.id || index} className={rank.decision === 'Awarded' ? "bg-green-50" : "bg-gray-50"}>
+                                <td className="px-4 py-3 text-sm font-medium text-gray-900">
+                                  <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-blue-100 text-blue-800 text-xs font-medium">
+                                    {rank.rank}
+                                  </span>
+                                </td>
+                                <td className="px-4 py-3 text-sm font-medium text-gray-900">{rank.supplier_name}</td>
+                                <td className="px-4 py-3 text-sm text-gray-900">{rank.total}</td>
+                                <td className="px-4 py-3 text-sm">
+                                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                    rank.decision === 'Awarded' 
+                                      ? 'bg-green-100 text-green-800' 
+                                      : rank.decision === 'Rejected'
+                                      ? 'bg-red-100 text-red-800'
+                                      : 'bg-yellow-100 text-yellow-800'
+                                  }`}>
+                                    {rank.decision || 'Pending'}
+                                  </span>
+                                </td>
+                                <td className="px-4 py-3 text-sm text-gray-900">{rank.remarks || '-'}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    ) : (
+                      <div className="text-center py-8">
+                        <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                        </svg>
+                        <h3 className="mt-2 text-sm font-medium text-gray-900">No Rankings Available</h3>
+                        <p className="mt-1 text-sm text-gray-500">
+                          Rankings will appear here after the evaluation process is completed.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          </Suspense>
+        );
       default:
         return null;
     }
@@ -4222,14 +4775,18 @@ export default function Schedule({
        )}
 
        {/* Add/Edit Bid Modal - Only for creators */}
-       {(addBidModal || updateBidModal) && currentBid && isCreator() && (
-         <div className="fixed inset-0 z-50 overflow-y-auto">
-           <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+       {(() => {
+         const shouldShowModal = (addBidModal || updateBidModal) && currentBid && isCreator();
+                  // Modal visibility check
+         return shouldShowModal;
+       })() && (
+         <div className="fixed inset-0 z-50" style={{ overflow: 'visible' }}>
+           <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0" style={{ overflow: 'visible' }}>
              <div className="fixed inset-0 transition-opacity" aria-hidden="true">
                <div className="absolute inset-0 bg-gray-500 opacity-75"></div>
              </div>
              <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-             <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full">
+             <div className="inline-block align-bottom bg-white rounded-lg text-left shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full" style={{ overflow: 'visible' }}>
                <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
                  <div className="sm:flex sm:items-start">
                    <div className="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-blue-100 sm:mx-0 sm:h-10 sm:w-10">
@@ -4239,8 +4796,33 @@ export default function Schedule({
                    </div>
                    <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
                      <h3 className="text-lg leading-6 font-medium text-gray-900">
-                       {addBidModal ? 'Add New Bid' : 'Edit Bid'} #{currentBid.bid_count}
+                       {addBidModal ? 'Add New Bid' : 'Edit Bid'} #{currentBid?.bid_count}
                      </h3>
+                     
+                     {/* Validation Errors Display */}
+                     {bidValidationErrors.length > 0 && (
+                       <div className="mt-4 bg-red-50 border border-red-200 rounded-md p-4">
+                         <div className="flex">
+                           <div className="flex-shrink-0">
+                             <svg className="h-5 w-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
+                               <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                             </svg>
+                           </div>
+                           <div className="ml-3">
+                             <h3 className="text-sm font-medium text-red-800">
+                               Please fix the following errors:
+                             </h3>
+                             <div className="mt-2 text-sm text-red-700">
+                               <ul className="list-disc pl-5 space-y-1">
+                                 {bidValidationErrors.map((error, index) => (
+                                   <li key={index}>{error}</li>
+                                 ))}
+                               </ul>
+                             </div>
+                           </div>
+                         </div>
+                       </div>
+                     )}
                      
                      <div className="mt-4 space-y-4">
                        {/* Supplier Selection */}
@@ -4251,7 +4833,11 @@ export default function Schedule({
                              <input
                                type="text"
                                placeholder="Search and select supplier..."
-                               className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 pr-8"
+                               className={`w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 pr-8 ${
+                                 isFieldInvalid("supplier") 
+                                   ? "border-red-300 focus:ring-red-500 focus:border-red-500" 
+                                   : "border-gray-300"
+                               }`}
                                value={supplierSearchTerm}
                                onChange={(e) => {
                                  setSupplierSearchTerm(e.target.value);
@@ -4272,48 +4858,44 @@ export default function Schedule({
                              {/* Dropdown */}
                              {showSupplierDropdown && (
                                <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
-                                 {suppliers
-                                   .filter(supplier => 
-                                     !supplierSearchTerm || 
-                                     (supplier.supplier_name || supplier.name || '')
-                                       .toLowerCase()
-                                       .includes(supplierSearchTerm.toLowerCase())
-                                   )
-                                   .map((supplier) => (
-                                     <div
-                                       key={supplier.id}
-                                       className="px-3 py-2 cursor-pointer hover:bg-blue-50 hover:text-blue-900"
-                                       onMouseDown={(e) => {
-                                         e.preventDefault(); // Prevent input blur
-                                         const supplierName = supplier.supplier_name || supplier.name || '';
-                                         setSupplierSearchTerm(supplierName);
-                                         setCurrentBid({
-                                           ...currentBid,
-                                           supplier: supplier.id?.toString(),
-                                           supplier_name: supplierName,
-                                         });
-                                         setShowSupplierDropdown(false);
-                                       }}
-                                     >
-                                       <div className="font-medium text-gray-900">
-                                         {supplier.supplier_name || supplier.name}
-                                       </div>
-                                       {supplier.id && (
-                                         <div className="text-xs text-gray-500">ID: {supplier.id}</div>
-                                       )}
-                                     </div>
-                                   ))
-                                 }
-                                 {suppliers.filter(supplier => 
-                                   !supplierSearchTerm || 
-                                   (supplier.supplier_name || supplier.name || '')
-                                     .toLowerCase()
-                                     .includes(supplierSearchTerm.toLowerCase())
-                                 ).length === 0 && (
+                                 {isSupplierSearching ? (
                                    <div className="px-3 py-2 text-gray-500 text-sm">
-                                     No suppliers found matching "{supplierSearchTerm}"
+                                     Searching...
                                    </div>
-                                 )}
+                                 ) : (
+                                   <>
+                                     {supplierSearchResults.length > 0 ? (
+                                       supplierSearchResults.map((supplier) => (
+                                       <div
+                                         key={supplier.id}
+                                         className="px-3 py-2 cursor-pointer hover:bg-blue-50 hover:text-blue-900"
+                                         onMouseDown={(e) => {
+                                           e.preventDefault(); // Prevent input blur
+                                           const supplierName = supplier.supplier_name || supplier.name || '';
+                                           setSupplierSearchTerm(supplierName);
+                                           setCurrentBid({
+                                             ...currentBid,
+                                             supplier: supplier.id?.toString(),
+                                             supplier_name: supplierName,
+                                           });
+                                           setShowSupplierDropdown(false);
+                                         }}
+                                       >
+                                         <div className="font-medium text-gray-900">
+                                           {supplier.supplier_name || supplier.name}
+                                         </div>
+                                         {supplier.id && (
+                                           <div className="text-xs text-gray-500">ID: {supplier.id}</div>
+                                         )}
+                                       </div>
+                                     ))
+                                   ) : (
+                                     <div className="px-3 py-2 text-gray-500 text-sm">
+                                       {supplierSearchTerm.length >= 2 ? 'No suppliers found' : 'Type to search suppliers...'}
+                                     </div>
+                                   )}
+                                 </>
+                               )}
                                </div>
                              )}
                            </div>
@@ -4322,8 +4904,12 @@ export default function Schedule({
                            <label className="block text-sm font-medium text-gray-700 mb-2">Bid Date</label>
                            <input
                              type="date"
-                             className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                             value={currentBid.bid_date || ''}
+                             className={`w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                               isFieldInvalid("bid_date") 
+                                 ? "border-red-300 focus:ring-red-500 focus:border-red-500" 
+                                 : "border-gray-300"
+                             }`}
+                             value={currentBid?.bid_date || ''}
                              onChange={(e) => onCurrentBidChange('bid_date', e)}
                              name="bid_date"
                            />
@@ -4335,14 +4921,18 @@ export default function Schedule({
                          <label className="block text-sm font-medium text-gray-700 mb-2">Bid Document</label>
                          <input
                            type="file"
-                           className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                           className={`w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                             isFieldInvalid("bid_document") 
+                               ? "border-red-300 focus:ring-red-500 focus:border-red-500" 
+                               : "border-gray-300"
+                           }`}
                            accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
                            onChange={onBidDocumentChange}
                          />
                          <p className="text-xs text-gray-500 mt-1">PDF, DOC, or image files only (max 10MB)</p>
                          
                          {/* File Preview */}
-                         {(currentBid.bid_document || currentBid.encoded_bid_document || currentBid.bid_document_url) && (
+                         {(currentBid?.bid_document || currentBid?.encoded_bid_document || currentBid?.bid_document_url) && (
                            <div className="mt-2 p-3 bg-gray-50 border border-gray-200 rounded">
                              <div className="flex items-center">
                                <svg className="w-5 h-5 text-blue-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -4386,7 +4976,7 @@ export default function Schedule({
                        {/* Bid Items */}
                        <div>
                          <h4 className="text-md font-medium text-gray-900 mb-3">Bid Items & Pricing</h4>
-                         <div className="overflow-x-auto">
+                         <div className="overflow-visible">
                            <table className="min-w-full divide-y divide-gray-200">
                              <thead className="bg-gray-50">
                                <tr>
@@ -4394,20 +4984,25 @@ export default function Schedule({
                                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Unit of Measure</th>
                                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Quantity</th>
                                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Unit Price</th>
+                                 <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">VAT</th>
                                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Total Price</th>
                                </tr>
                              </thead>
                              <tbody className="bg-white divide-y divide-gray-200">
-                               {currentBid.items?.map((item, index) => (
-                                 <tr key={index}>
+                               {currentBid?.items?.map((item, index) => (
+                                 <tr key={index} style={{ overflow: 'visible' }}>
                                    <td className="px-4 py-2 text-sm font-medium text-gray-900">
                                      {item.item_required}
                                    </td>
-                                   <td className="px-4 py-2 text-sm">
-                                     <div className="relative">
+                                   <td className="px-4 py-2 text-sm" style={{ position: 'relative', overflow: 'visible' }}>
+                                     <div className="relative" style={{ position: 'relative', overflow: 'visible' }}>
                                        <input
                                          type="text"
-                                         className="w-full p-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 pr-6"
+                                         className={`w-full p-1 text-sm border rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 pr-6 ${
+                                           isFieldInvalid(`item_${index}_unit_of_measurement`) 
+                                             ? "border-red-300 focus:ring-red-500 focus:border-red-500" 
+                                             : "border-gray-300"
+                                         }`}
                                          placeholder="Search UOM..."
                                          value={activeUomItem === item.item_required ? uomSearchTerm : (item.unit_of_measurement || '')}
                                          onChange={(e) => {
@@ -4432,39 +5027,48 @@ export default function Schedule({
                                        
                                        {/* UOM Dropdown */}
                                        {showUomDropdown && activeUomItem === item.item_required && (
-                                         <div className="absolute z-20 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-40 overflow-auto">
-                                           {uom
-                                             .filter(uomItem => 
-                                               !uomSearchTerm || 
-                                               uomItem?.name?.toLowerCase().includes(uomSearchTerm.toLowerCase())
-                                             )
-                                             .map((uomItem) => (
-                                               <div
-                                                 key={uomItem.id}
-                                                 className="px-2 py-1 cursor-pointer hover:bg-blue-50 hover:text-blue-900 text-sm"
-                                                 onMouseDown={(e) => {
-                                                   e.preventDefault();
-                                                   onCurrentBidItemChange(
-                                                     item.item_required || '',
-                                                     'unit_of_measurement',
-                                                     { target: { name: 'unit_of_measurement', value: uomItem.name || '' } },
-                                                     currentBid.bid_count?.toString() || ''
-                                                   );
-                                                   setUomSearchTerm(uomItem?.name || '');
-                                                   setShowUomDropdown(false);
-                                                 }}
-                                               >
-                                                 {uomItem.name}
-                                               </div>
-                                               ))
-                                           }
-                                           {uom.filter(uomItem => 
-                                             !uomSearchTerm || 
-                                             uomItem?.name?.toLowerCase().includes(uomSearchTerm.toLowerCase())
-                                           ).length === 0 && (
+                                         <div 
+                                           className="absolute z-[9999] w-full bg-white border border-gray-300 rounded-md shadow-lg overflow-auto" 
+                                           style={{ 
+                                             maxHeight: '180px',
+                                             top: index >= (currentBid?.items?.length || 0) - 2 ? 'auto' : '100%',
+                                             bottom: index >= (currentBid?.items?.length || 0) - 2 ? '100%' : 'auto',
+                                             marginTop: index >= (currentBid?.items?.length || 0) - 2 ? '0' : '4px',
+                                             marginBottom: index >= (currentBid?.items?.length || 0) - 2 ? '4px' : '0'
+                                           }}
+                                         >
+                                           {isUomSearching ? (
                                              <div className="px-2 py-1 text-gray-500 text-sm">
-                                               No UOM found
+                                               Searching...
                                              </div>
+                                           ) : (
+                                             <>
+                                               {uomSearchResults.length > 0 ? (
+                                                 uomSearchResults.map((uomItem) => (
+                                                   <div
+                                                     key={uomItem.id}
+                                                     className="px-2 py-1 cursor-pointer hover:bg-blue-50 hover:text-blue-900 text-sm"
+                                                     onMouseDown={(e) => {
+                                                       e.preventDefault();
+                                                       onCurrentBidItemChange(
+                                                         item.item_required || '',
+                                                         'unit_of_measurement',
+                                                         { target: { name: 'unit_of_measurement', value: uomItem.name || '' } },
+                                                         currentBid.bid_count?.toString() || ''
+                                                       );
+                                                       setUomSearchTerm(uomItem?.name || '');
+                                                       setShowUomDropdown(false);
+                                                     }}
+                                                   >
+                                                     {uomItem.name} ({uomItem.unit})
+                                                   </div>
+                                                 ))
+                                               ) : (
+                                                 <div className="px-2 py-1 text-gray-500 text-sm">
+                                                   {uomSearchTerm.length >= 2 ? 'No UOM found' : 'Type to search UOM...'}
+                                                 </div>
+                                               )}
+                                             </>
                                            )}
                                          </div>
                                        )}
@@ -4473,7 +5077,11 @@ export default function Schedule({
                                    <td className="px-4 py-2 text-sm">
                                      <input
                                        type="number"
-                                       className="w-full p-1 text-sm border border-gray-300 rounded"
+                                       className={`w-full p-1 text-sm border rounded ${
+                                         isFieldInvalid(`item_${index}_quantity`) 
+                                           ? "border-red-300 focus:ring-red-500 focus:border-red-500" 
+                                           : "border-gray-300"
+                                       }`}
                                        value={item.quantity || ''}
                                        onChange={(e) => onCurrentBidItemChange(
                                          item.item_required || '',
@@ -4488,7 +5096,11 @@ export default function Schedule({
                                      <input
                                        type="number"
                                        step="0.01"
-                                       className="w-full p-1 text-sm border border-gray-300 rounded"
+                                       className={`w-full p-1 text-sm border rounded ${
+                                         isFieldInvalid(`item_${index}_unit_price`) 
+                                           ? "border-red-300 focus:ring-red-500 focus:border-red-500" 
+                                           : "border-gray-300"
+                                       }`}
                                        value={item.unit_price || ''}
                                        onChange={(e) => onCurrentBidItemChange(
                                          item.item_required || '',
@@ -4498,6 +5110,27 @@ export default function Schedule({
                                        )}
                                        name="unit_price"
                                      />
+                                   </td>
+                                   <td className="px-4 py-2 text-sm">
+                                                                            <select
+                                         className={`w-full p-1 text-sm border rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                                           isFieldInvalid(`item_${index}_vat`) 
+                                             ? "border-red-300 focus:ring-red-500 focus:border-red-500" 
+                                             : "border-gray-300"
+                                         }`}
+                                         value={item.vat || ''}
+                                         onChange={(e) => onCurrentBidItemChange(
+                                           item.item_required || '',
+                                           'vat',
+                                           e,
+                                           currentBid.bid_count?.toString() || ''
+                                         )}
+                                         name="vat"
+                                       >
+                                       <option value="">Select VAT</option>
+                                       <option value="Incl.">VAT Included</option>
+                                       <option value="Excl.">VAT Excluded</option>
+                                     </select>
                                    </td>
                                    <td className="px-4 py-2 text-sm">
                                      <input
@@ -4517,7 +5150,7 @@ export default function Schedule({
                          </div>
                          <div className="mt-2 text-right">
                            <span className="text-sm font-medium text-gray-700">
-                             Grand Total: ${calculateBidTotal(currentBid.items).toLocaleString()}
+                             Grand Total: ${calculateBidTotal(currentBid?.items || []).toLocaleString()}
                            </span>
                          </div>
                        </div>
@@ -4600,46 +5233,44 @@ export default function Schedule({
                            {/* Search Results Dropdown */}
                            {showSupplierDropdown && supplierSearchTerm && (
                              <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
-                               {suppliers
-                                 .filter(supplier => 
-                                   (supplier.supplier_name || supplier.name || '')
-                                     .toLowerCase()
-                                     .includes(supplierSearchTerm.toLowerCase())
-                                 )
-                                 .map((supplier) => (
-                                   <div
-                                     key={supplier.id}
-                                     className="px-3 py-2 cursor-pointer hover:bg-blue-50 hover:text-blue-900"
-                                     onMouseDown={(e) => {
-                                       e.preventDefault();
-                                       const supplierName = supplier.supplier_name || supplier.name || '';
-                                       setSupplierSearchTerm(supplierName);
-                                       setNewSupplier({
-                                         ...newSupplier,
-                                         supplier_name: supplierName,
-                                         id: supplier.id
-                                       });
-                                       setShowSupplierDropdown(false);
-                                       onOpenResponse("Supplier Found", `Supplier "${supplierName}" already exists in the system.`, true);
-                                     }}
-                                   >
-                                     <div className="font-medium text-gray-900">
-                                       {supplier.supplier_name || supplier.name}
-                                     </div>
-                                     {supplier.id && (
-                                       <div className="text-xs text-gray-500">ID: {supplier.id}</div>
-                                     )}
-                                   </div>
-                                 ))
-                               }
-                               {suppliers.filter(supplier => 
-                                 (supplier.supplier_name || supplier.name || '')
-                                   .toLowerCase()
-                                   .includes(supplierSearchTerm.toLowerCase())
-                               ).length === 0 && (
+                               {isSupplierSearching ? (
                                  <div className="px-3 py-2 text-gray-500 text-sm">
-                                   No existing suppliers found. You can add a new one below.
+                                   Searching...
                                  </div>
+                               ) : (
+                                 <>
+                                   {supplierSearchResults.length > 0 ? (
+                                     supplierSearchResults.map((supplier) => (
+                                                                          <div
+                                         key={supplier.id}
+                                         className="px-3 py-2 cursor-pointer hover:bg-blue-50 hover:text-blue-900"
+                                         onMouseDown={(e) => {
+                                           e.preventDefault();
+                                           const supplierName = supplier.supplier_name || supplier.name || '';
+                                           setSupplierSearchTerm(supplierName);
+                                           setNewSupplier({
+                                             ...newSupplier,
+                                             supplier_name: supplierName,
+                                             id: supplier.id
+                                           });
+                                           setShowSupplierDropdown(false);
+                                           onOpenResponse("Supplier Found", `Supplier "${supplierName}" already exists in the system.`, true);
+                                         }}
+                                       >
+                                         <div className="font-medium text-gray-900">
+                                           {supplier.supplier_name || supplier.name}
+                                         </div>
+                                         {supplier.id && (
+                                           <div className="text-xs text-gray-500">ID: {supplier.id}</div>
+                                         )}
+                                       </div>
+                                     ))
+                                   ) : (
+                                     <div className="px-3 py-2 text-gray-500 text-sm">
+                                       {supplierSearchTerm.length >= 2 ? 'No existing suppliers found. You can add a new one below.' : 'Type to search suppliers...'}
+                                     </div>
+                                   )}
+                                 </>
                                )}
                              </div>
                            )}

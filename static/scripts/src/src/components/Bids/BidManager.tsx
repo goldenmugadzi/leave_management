@@ -208,7 +208,7 @@ const BidManager: React.FC<BidManagerProps> = ({
   }, [currentBid.items]);
 
   // Helper function to get current bid item value
-  const getBidItemValue = useCallback((itemName: string, field: 'unit_of_measurement' | 'quantity' | 'unit_price') => {
+  const getBidItemValue = useCallback((itemName: string, field: 'unit_of_measurement' | 'quantity' | 'unit_price' | 'vat') => {
     const bidItem = currentBid.items?.find(bi => bi.item_required === itemName);
     return bidItem?.[field];
   }, [currentBid.items]);
@@ -630,6 +630,9 @@ const BidManager: React.FC<BidManagerProps> = ({
                                 Unit Price
                               </th>
                               <th scope="col" className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                VAT
+                              </th>
+                              <th scope="col" className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Total Price
                               </th>
                             </tr>
@@ -637,7 +640,7 @@ const BidManager: React.FC<BidManagerProps> = ({
                           <tbody className="bg-white divide-y divide-gray-200">
                             {selectedPrItems.filter(item => item.included).length === 0 ? (
                               <tr>
-                                <td colSpan={5} className="px-3 py-4 text-center text-sm text-gray-500">
+                                <td colSpan={6} className="px-3 py-4 text-center text-sm text-gray-500">
                                   No PR items selected. Please go to the PR Items tab and select items first.
                                 </td>
                               </tr>
@@ -680,6 +683,18 @@ const BidManager: React.FC<BidManagerProps> = ({
                                           placeholder="Unit price"
                                           onChange={(e) => onCurrentBidItemChange(item.name, e)}
                                         />
+                                      </td>
+                                      <td className="px-3 py-2 whitespace-nowrap text-sm">
+                                        <select
+                                          name="vat"
+                                          value={getBidItemValue(item.name, 'vat') || ''}
+                                          className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                                          onChange={(e) => onCurrentBidItemChange(item.name, e)}
+                                        >
+                                          <option value="">Select VAT</option>
+                                          <option value="Incl.">VAT Included</option>
+                                          <option value="Excl.">VAT Excluded</option>
+                                        </select>
                                       </td>
                                       <td className="px-3 py-2 whitespace-nowrap text-sm text-gray-500">
                                         ${calculateTotalPrice(item.name).toFixed(2)}

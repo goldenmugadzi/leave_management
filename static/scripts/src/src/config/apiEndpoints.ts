@@ -93,6 +93,7 @@ export const API_ENDPOINTS = {
     // Reference Data APIs
     CURRENCIES: `/api/currencies/`,
     PROC_PLANS: `/api/proc_plans/`,
+    UOM: `/api/uom/`,
     
     // Purchase Request APIs (legacy - for backward compatibility)
     PR_CREATE_DATA: (pr_id: string) => `/create_data/${pr_id}`,
@@ -123,6 +124,7 @@ export const API_ENDPOINTS = {
     // Committee APIs
     CS_COMMITTEE: (cs_id: string) => `/cs/${cs_id}/committee/`,
     CS_SAVE_COMMITTEE: `/save_committee`,
+    CS_DELETE_COMMITTEE_MEMBER: `/delete_committee_member`,
     
     // Compliance APIs
     CS_COMPLIANCE: (cs_id: string) => `/cs/${cs_id}/compliance/`,

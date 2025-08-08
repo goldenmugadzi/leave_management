@@ -12,6 +12,13 @@ from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes, force_str
 from django.template.loader import render_to_string
 
+# Add proper logging
+import logging
+logger = logging.getLogger(__name__)
+
+# Import pagination config for Stage 2 optimization
+from .pagination_config import get_safe_page_size, get_pagination_info, DATATABLE_MAX_SIZE, DATATABLE_DEFAULT_SIZE
+
 from it.users.views import ms_exhange_reset_password_html, ms_exhange_send, ms_exhange_send_html
 from .models import *
 from it.users.models import *
@@ -24,13 +31,16 @@ import pandas as pd
 from django.core.paginator import Paginator
 from django.utils import timezone
 from django.contrib.auth.decorators import login_required
+from django.views.decorators.http import require_http_methods
 import copy
 from django.conf import settings
 from django.core.files.storage import FileSystemStorage
+from django.core.cache import cache
 
 from django.contrib import messages
 
 APP_NAME = "comparative_schedule"
+CACHE_TIMEOUT = 300  # 5 minutes
 
 
 def add_cost_center(request):
@@ -1575,11 +1585,31 @@ def get_csv_export(request):
 
 def add_details(cs):
     cs_list = []
-    committee_reject_reason = ""
-    for c in cs:
+    
+    # Check if cs is a list (from pagination) or a QuerySet
+    if isinstance(cs, list):
+        # If it's a list, we can't use select_related, so use the list as-is
+        cs_data = cs
+    else:
+        # Don't re-prefetch if the queryset already has prefetched data
+        # This prevents the 'committee_set' lookup conflict
+        if hasattr(cs, '_prefetch_related_lookups'):
+            # Use the queryset as-is if it already has prefetched data
+            cs_data = cs
+        else:
+            # Only prefetch if not already done
+            cs_data = cs.select_related(
+                'created_by', 'region', 'section'
+            ).prefetch_related(
+                Prefetch('committee_set', queryset=Committee.objects.select_related('user')),
+                Prefetch('csapproval_set', queryset=CSApproval.objects.select_related('user'))
+            )
+    
+    for c in cs_data:
         committee_approval = ""
         gm_approval = None
         fm_approval = None
+        committee_reject_reason = ""  # Initialize to prevent NameError
         committee = Committee.objects.filter(
             cs_id=c.id
         ).all()
@@ -1669,8 +1699,15 @@ def datatable_data(request, view):
         print("error: ", ex)
     draw = int(request.GET.get('draw', default=1))
     start = int(request.GET.get('start', default=0))
-    length = int(request.GET.get('length', default=10))
+    requested_length = int(request.GET.get('length', default=DATATABLE_DEFAULT_SIZE))
     search_value = request.GET.get('search[value]', default='')
+    
+    # Apply safe pagination limits for datatable (Stage 2 optimization)
+    length = get_safe_page_size(requested_length, 'schedules')
+    
+    # Log warning if user requested too large page size
+    if requested_length > length:
+        logger.warning(f"DataTable requested length {requested_length} reduced to {length} for memory protection")
 
     # Sorting
     order_column = request.GET.get('order[0][column]')
@@ -1757,7 +1794,7 @@ def get_comperative_schedule_data(request, cs_id):
                 
         proc_plans = ProcPlan.objects.all()
         currencies = Currency.objects.all()
-        user = UserProfile.objects.filter(id=cs.created_by_id).first()
+        # user = UserProfile.objects.filter(id=cs.created_by_id).first()  # Redundant - using cs_owner instead
         region = Regions.objects.filter(id=cs.region_id).first()
         section = Sections.objects.filter(id=cs.section_id).first()
         items = CSItems.objects.filter(cs_id=cs).all()
@@ -1774,7 +1811,7 @@ def get_comperative_schedule_data(request, cs_id):
         
         suppliers = Supplier.objects.all()
         pr_items = PrItem.objects.filter(purchase_request=cs.pr_id_id, ordered=False).all()
-        users = UserProfile.objects.filter(region=cs.region).all()
+        users = UserProfile.objects.filter(region=cs.region).all() if cs and cs.region else UserProfile.objects.all()
         
         items_list = []
         for item in items:
@@ -1897,7 +1934,11 @@ def get_comperative_schedule_data(request, cs_id):
         except Exception as ex:
             print("Error: ", ex)
             
-        cs_owner = UserProfile.objects.filter(id=cs.created_by_id).first()  
+        cs_owner = UserProfile.objects.filter(id=cs.created_by_id).first() if cs and cs.created_by_id else None
+        if not cs_owner and cs:
+            print(f"CS Owner not found for CS {cs.cs_id}, created_by_id: {cs.created_by_id}")
+        elif not cs:
+            print(f"CS not found for cs_id: {cs_id}")  
         pr_attachments = Attachment.objects.filter(purchase_request=pr).all()
         
         pr_at_list = []
@@ -1956,7 +1997,7 @@ def get_comperative_schedule_data(request, cs_id):
             "tac_date": cs.tac_date,
             "show_site_visit": cs.show_site_visit,
             "show_samples_required": cs.show_sample_required,
-            "created_by": user.username,
+            "created_by": cs_owner.username if cs_owner else "",
             "section": section.section if section else "",
             "region": region.region if region else "",
             "created_at": cs.created_at,
@@ -2004,8 +2045,6 @@ def get_comperative_schedule_data(request, cs_id):
             "committee": committee_list,
             "proc_ref": cs.proc_plan.proc_ref if cs.proc_plan else "",
         }
-        
-        context = json.dumps(context, default=str)
         
         return JsonResponse(context, safe=False)
     except Exception as ex:
@@ -2613,11 +2652,26 @@ def delete_cs_bid(request):
                 complianceRemark.delete()
 
             bid.delete()
+        
+        # update bid numbers after all bids are deleted
+        # Get unique suppliers and their current bid numbers
+        from django.db.models import Min
+        supplier_bid_numbers = Bids.objects.filter(cs_id=cs_query).values('sup_id').annotate(
+            min_bid_no=Min('bid_no')
+        ).order_by('min_bid_no')
+        
+        # Reorder bid numbers for each supplier
+        for index, supplier_bid in enumerate(supplier_bid_numbers, 1):
+            new_bid_no = str(index)
+            # Update all bid records for this supplier to have the new bid number
+            Bids.objects.filter(cs_id=cs_query, sup_id=supplier_bid['sup_id']).update(bid_no=new_bid_no)
 
     return JsonResponse({
         "message": "Bid deleted successfully",
         "success": True,
     })
+    
+
 
 
 @login_required
@@ -3321,3 +3375,1318 @@ def cs_compliance_table(request, cs_id):
         return redirect('tender_compliance', tender_id=document_id)
 
     return render(request, 'finance/comparative_schedules/cs_compliance_table.html', {"bids_items": bids_dict})
+
+
+# New optimized API endpoints
+
+@login_required
+@require_http_methods(["GET"])
+def api_cs_bids(request, cs_id):
+    """Optimized API endpoint for CS bids only"""
+    cache_key = f'cs_bids_{cs_id}'
+    cached_data = cache.get(cache_key)
+    
+    if cached_data is not None:
+        return JsonResponse(cached_data, safe=False)
+    
+    try:
+        cs = ComparativeSchedules.objects.select_related().filter(cs_id=cs_id).first()
+        if not cs:
+            return JsonResponse({"error": "CS not found"}, status=404)
+        
+        # Get bids with minimal related data
+        bids = Bids.objects.select_related('sup_id', 'item_id').filter(cs_id=cs).order_by('bid_no')
+        
+        grouped_data = {}
+        for bid in bids:
+            bid_no = bid.bid_no
+            if bid_no not in grouped_data:
+                grouped_data[bid_no] = {
+                    'bid_count': bid.bid_no,
+                    'supplier_name': bid.sup_id.name,
+                    'bid_date': bid.quote_date,
+                    'has_document': bool(bid.bid_document),
+                    'items': []
+                }
+            
+            grouped_data[bid_no]['items'].append({
+                'item_id': bid.item_id.item_id,
+                'item_required': bid.item_id.item_name,
+                'quantity': bid.item_id.quantity,
+                'unit_of_measurement': bid.item_id.unit_of_measurement,
+                'unit_price': float(bid.unit_price) if bid.unit_price else 0,
+                'vat': float(bid.vat) if bid.vat else 0,
+                'total_price': float(bid.total) if bid.total else 0,
+            })
+        
+        result = list(grouped_data.values())
+        cache.set(cache_key, result, 300)  # Cache for 5 minutes
+        
+        return JsonResponse({"bids": result}, safe=False)
+        
+    except Exception as ex:
+        return JsonResponse({"error": str(ex)}, status=500)
+
+
+@login_required
+@require_http_methods(["GET"])
+def api_cs_compliance(request, cs_id):
+    """Optimized API endpoint for CS compliance only"""
+    cache_key = f'cs_compliance_{cs_id}'
+    cached_data = cache.get(cache_key)
+    
+    if cached_data is not None:
+        return JsonResponse(cached_data, safe=False)
+    
+    try:
+        cs = ComparativeSchedules.objects.filter(cs_id=cs_id).first()
+        if not cs:
+            return JsonResponse({"error": "CS not found"}, status=404)
+        
+        compliance = CSCompliance.objects.select_related('supplier_id').filter(cs_id=cs)
+        compliance_remarks = CSComplianceRemarks.objects.select_related('supplier_id').filter(cs_id=cs)
+        
+        compliance_list = [
+            {
+                "supplier_name": comp.supplier_id.name if comp.supplier_id else "",
+                "payment_terms": comp.payment_terms,
+                "bid_validity": comp.bid_validity,
+                "delivery_period": comp.delivery_period,
+                "technical_specifications": comp.technical_specifications,
+                "valid_tax_clearance": comp.valid_tax_clearance,
+                "registered_with_praz": comp.registered_with_praz,
+                "site_visit": comp.site_visit_done,
+                "samples_required": comp.samples_delivered,
+                "decision": comp.decision,
+                "remarks": comp.remarks,
+            } for comp in compliance if comp.supplier_id
+        ]
+        
+        remarks_list = [
+            {
+                "supplier": remark.supplier_id.id,
+                "supplier_name": remark.supplier_id.name,
+                "remarks": remark.remarks,
+            } for remark in compliance_remarks if remark.supplier_id
+        ]
+        
+        result = {
+            "compliance": compliance_list,
+            "complianceRemarks": remarks_list,
+            "show_site_visit": cs.show_site_visit,
+            "show_samples_required": cs.show_sample_required
+        }
+        
+        cache.set(cache_key, result, 300)
+        return JsonResponse(result, safe=False)
+        
+    except Exception as ex:
+        return JsonResponse({"error": str(ex)}, status=500)
+
+
+@login_required
+@require_http_methods(["GET"])
+def api_cs_committee(request, cs_id):
+    """Optimized API endpoint for CS committee only"""
+    cache_key = f'cs_committee_{cs_id}'
+    cached_data = cache.get(cache_key)
+    
+    if cached_data is not None:
+        return JsonResponse(cached_data, safe=False)
+    
+    try:
+        cs = ComparativeSchedules.objects.filter(cs_id=cs_id).first()
+        if not cs:
+            return JsonResponse({"error": "CS not found"}, status=404)
+        
+        committee = Committee.objects.select_related('user').filter(cs_id=cs)
+        
+        committee_list = [
+            {
+                "memberUserName": member.user.username if member.user else "",
+                "memberName": f"{member.user.first_name} {member.user.last_name}" if member.user else "",
+                "memberPosition": member.committee_position,
+                "committeeStatus": member.committee_status,
+                "memberApproval": member.committee_approval if member.committee_approval else "",
+                "committeeJustification": member.justification,
+                "committeeDate": member.committee_date,
+            } for member in committee if member.user
+        ]
+        
+        result = {"committee": committee_list}
+        cache.set(cache_key, result, 180)  # Cache for 3 minutes
+        
+        return JsonResponse(result, safe=False)
+        
+    except Exception as ex:
+        return JsonResponse({"error": str(ex)}, status=500)
+
+
+@login_required
+@require_http_methods(["POST"])
+def api_upload_file(request):
+    """Optimized file upload endpoint with validation"""
+    try:
+        if 'file' not in request.FILES:
+            return JsonResponse({"error": "No file provided"}, status=400)
+        
+        file = request.FILES['file']
+        file_type = request.POST.get('file_type', 'general')
+        
+        # Validate file size (10MB limit)
+        if file.size > 10 * 1024 * 1024:
+            return JsonResponse({"error": "File too large. Maximum size is 10MB"}, status=400)
+        
+        # Validate file type
+        allowed_extensions = ['.pdf', '.doc', '.docx', '.xls', '.xlsx', '.jpg', '.jpeg', '.png']
+        file_extension = os.path.splitext(file.name)[1].lower()
+        
+        if file_extension not in allowed_extensions:
+            return JsonResponse({"error": "File type not allowed"}, status=400)
+        
+        # Create directory based on file type
+        if file_type == 'advert':
+            root_dir = os.path.join(settings.BASE_DIR, 'uploads', 'comparative', 'adverts')
+        elif file_type == 'bid':
+            root_dir = os.path.join(settings.BASE_DIR, 'uploads', 'comparative', 'bids')
+        else:
+            root_dir = os.path.join(settings.BASE_DIR, 'uploads', 'comparative', 'general')
+        
+        # Ensure directory exists
+        os.makedirs(root_dir, exist_ok=True)
+        
+        # Generate unique filename
+        timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+        filename = f"{timestamp}_{file.name}"
+        
+        # Save file
+        fs = FileSystemStorage(location=root_dir)
+        saved_filename = fs.save(filename, file)
+        file_path = os.path.join(root_dir, saved_filename)
+        
+        # Return relative path for database storage
+        relative_path = os.path.join('uploads', 'comparative', file_type, saved_filename)
+        
+        return JsonResponse({
+            "success": True,
+            "file_path": relative_path,
+            "filename": saved_filename,
+            "original_name": file.name,
+            "size": file.size
+        })
+        
+    except Exception as ex:
+        print(f"File upload error: {ex}")
+        return JsonResponse({"error": "File upload failed"}, status=500)
+
+
+@login_required
+@require_http_methods(["GET"])
+def api_download_file(request, file_id):
+    """Optimized file download with caching headers"""
+    try:
+        # This could be enhanced based on your file tracking model
+        file_path = request.GET.get('path')
+        
+        if not file_path or not os.path.exists(file_path):
+            return JsonResponse({"error": "File not found"}, status=404)
+        
+        # Security check - ensure file is in allowed directory
+        allowed_dirs = ['uploads/comparative/', 'uploads/finance/']
+        if not any(file_path.startswith(dir) for dir in allowed_dirs):
+            return JsonResponse({"error": "Access denied"}, status=403)
+        
+        # Get file info
+        file_size = os.path.getsize(file_path)
+        filename = os.path.basename(file_path)
+        
+        # For small files, encode to base64
+        if file_size < 5 * 1024 * 1024:  # 5MB
+            encoded_data = _encode_file_safely(file_path)
+            return JsonResponse({
+                "filename": filename,
+                "data": encoded_data,
+                "size": file_size
+            })
+        else:
+            # For large files, provide download URL
+            return JsonResponse({
+                "filename": filename,
+                "download_url": f"/media/{file_path}",
+                "size": file_size
+            })
+            
+    except Exception as ex:
+        return JsonResponse({"error": str(ex)}, status=500)
+
+
+# Optimized save operations with better error handling
+
+@login_required
+@require_http_methods(["POST"])
+def api_save_cs_bid_optimized(request):
+    """Optimized bid saving with transaction management"""
+    from django.db import transaction
+    
+    try:
+        cs_id = request.POST.get("cs_id", "")
+        bid_no = request.POST.get("bid_count", "")
+        bid_date = request.POST.get("bid_date", "")
+        supplier_name = request.POST.get("supplier_name", "")
+        
+        # Parse JSON data
+        json_data = json.loads(request.POST.get("json_data", "{}"))
+        items = json_data.get("items", [])
+        
+        if not cs_id or not supplier_name or not items:
+            return JsonResponse({
+                "message": "Missing required data",
+                "success": False,
+            }, status=400)
+        
+        with transaction.atomic():
+            cs_query = ComparativeSchedules.objects.select_for_update().filter(cs_id=cs_id).first()
+            if not cs_query:
+                return JsonResponse({
+                    "message": "Comparative Schedule not found",
+                    "success": False,
+                }, status=404)
+
+            # Get or create supplier
+            supplier, created = Supplier.objects.get_or_create(name=supplier_name)
+            
+            # Clear existing bids for this supplier and bid number
+            existing_bids = Bids.objects.filter(cs_id=cs_query, sup_id=supplier, bid_no=bid_no)
+            if existing_bids.exists():
+                clear_approvals(cs_id)
+                # Delete related items first
+                CSItems.objects.filter(id__in=[bid.item_id_id for bid in existing_bids if bid.item_id_id]).delete()
+                existing_bids.delete()
+
+            # Handle file upload
+            bid_doc_path = ""
+            bid_docs = request.FILES.get("bid_document", None)
+            if bid_docs:
+                upload_result = _save_file_optimized(bid_docs, 'bid')
+                if upload_result['success']:
+                    bid_doc_path = upload_result['file_path']
+
+            # Bulk create items and bids
+            items_to_create = []
+            bids_to_create = []
+            
+            for item in items:
+                item_id = f"Item{datetime.now().strftime('%Y%m%d%H%M%S')}{len(items_to_create)}"
+                
+                cs_item = CSItems(
+                    cs_id=cs_query,
+                    item_id=item_id,
+                    item_name=item['item_required'],
+                    quantity=item['quantity'],
+                    unit_of_measurement=item['unit_of_measurement'],
+                )
+                items_to_create.append(cs_item)
+            
+            # Bulk create items
+            created_items = CSItems.objects.bulk_create(items_to_create)
+            
+            # Create bids with references to created items
+            for i, item in enumerate(items):
+                bid = Bids(
+                    cs_id=cs_query,
+                    item_id=created_items[i],
+                    sup_id=supplier,
+                    unit_price=item.get('unit_price', 0),
+                    vat=item.get('vat', 0),
+                    quoted_qty=item.get('quantity', 0),
+                    bid_no=bid_no,
+                    quote_date=bid_date,
+                    total=item.get('total_price', 0),
+                    bid_document=bid_doc_path,
+                )
+                bids_to_create.append(bid)
+            
+            Bids.objects.bulk_create(bids_to_create)
+            
+            # Clear related caches
+            cache.delete(f'cs_data_{cs_id}')
+            cache.delete(f'cs_bids_{cs_id}')
+            
+            return JsonResponse({
+                "message": "Bids saved successfully",
+                "success": True,
+            })
+            
+    except Exception as ex:
+        print(f"Error saving bid: {ex}")
+        return JsonResponse({
+            "message": "Error saving bid",
+            "error": str(ex),
+            "success": False,
+        }, status=500)
+
+
+def _save_file_optimized(file, file_type):
+    """Optimized file saving helper"""
+    try:
+        # Validate file
+        if file.size > 10 * 1024 * 1024:  # 10MB limit
+            return {"success": False, "error": "File too large"}
+        
+        allowed_extensions = ['.pdf', '.doc', '.docx', '.xls', '.xlsx', '.jpg', '.jpeg', '.png']
+        file_extension = os.path.splitext(file.name)[1].lower()
+        
+        if file_extension not in allowed_extensions:
+            return {"success": False, "error": "File type not allowed"}
+        
+        # Create directory
+        root_dir = os.path.join(settings.BASE_DIR, 'uploads', 'comparative', file_type)
+        os.makedirs(root_dir, exist_ok=True)
+        
+        # Generate unique filename
+        timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
+        filename = f"{timestamp}_{file.name}"
+        
+        # Save file
+        fs = FileSystemStorage(location=root_dir)
+        saved_filename = fs.save(filename, file)
+        
+        # Return relative path
+        relative_path = os.path.join('uploads', 'comparative', file_type, saved_filename)
+        
+        return {
+            "success": True,
+            "file_path": relative_path,
+            "filename": saved_filename
+        }
+        
+    except Exception as ex:
+        return {"success": False, "error": str(ex)}
+
+
+# New focused API endpoints
+@login_required
+@require_http_methods(["GET"])
+def api_get_pr_basic(request, pr_id):
+    """Get basic PR information only"""
+    if not pr_id.startswith("PR"):
+        pr_id = "PR" + pr_id
+        
+    try:
+        purchase_request = PurchaseRequest.objects.select_related(
+            'procurement_plan_reference', 'section', 'cost_center', 'requested_by'
+        ).get(id=pr_id)
+    except PurchaseRequest.DoesNotExist:
+        return JsonResponse({
+            "success": False,
+            "message": "PR not found",
+        })
+
+    request_user = request.user
+    request_user_profile = UserProfile.objects.select_related().get(id=request_user.id)
+    user_comparative_schedule_role = request_user_profile.get_user_role_for_application(APP_NAME)
+    
+    return JsonResponse({
+        "success": True,
+        "requester_role": user_comparative_schedule_role.role if user_comparative_schedule_role else "",
+        "message": "PR details retrieved successfully",
+        "pr_id": pr_id,
+        "scope_of_work": purchase_request.scope_of_work or "",
+        "proc_ref": purchase_request.procurement_plan_reference.id if purchase_request.procurement_plan_reference else "",
+        "proc_plan": {
+            "id": purchase_request.procurement_plan_reference.id if purchase_request.procurement_plan_reference else "",
+            "proc_ref": purchase_request.procurement_plan_reference.id if purchase_request.procurement_plan_reference else "",
+            "description": purchase_request.procurement_plan_reference.name if purchase_request.procurement_plan_reference else "",
+        } if purchase_request.procurement_plan_reference else {},
+        "pr_date": purchase_request.created_at.strftime("%Y-%m-%d") if purchase_request.created_at else "",
+    })
+
+
+@login_required
+@require_http_methods(["GET"])
+def api_get_pr_items(request, pr_id):
+    """Get PR items with pagination - shows all items with status"""
+    if not pr_id.startswith("PR"):
+        pr_id = "PR" + pr_id
+        
+    try:
+        purchase_request = PurchaseRequest.objects.get(id=pr_id)
+    except PurchaseRequest.DoesNotExist:
+        return JsonResponse({
+            "success": False,
+            "message": "PR not found",
+        })
+
+    # Get pagination parameters with safety limits (Stage 2 optimization)
+    page = int(request.GET.get('page', 1))
+    requested_page_size = int(request.GET.get('page_size', 0))
+    show_all = request.GET.get('show_all', 'true').lower() == 'true'  # Show all items by default
+    
+    # Get total items count for safe page size calculation
+    if show_all:
+        pr_items_query = purchase_request.pritem_set.select_related('unit_of_measurement').all()
+    else:
+        pr_items_query = purchase_request.pritem_set.select_related('unit_of_measurement').filter(ordered=False)
+    
+    total_items = pr_items_query.count()
+    
+    # Apply safe page size limits
+    page_size = get_safe_page_size(requested_page_size, 'pr_items', total_items)
+    
+    # Log warning if user requested too large page size
+    if requested_page_size > page_size:
+        logger.warning(f"User requested page_size {requested_page_size} reduced to {page_size} for memory protection")
+    
+    from django.core.paginator import Paginator
+    
+    # Use the already optimized query from above
+    paginator = Paginator(pr_items_query, page_size)
+    page_obj = paginator.get_page(page)
+    
+    pr_item_list = []
+    for pr_item in page_obj:
+        # Determine the status and availability
+        status = "available"
+        included = True
+        
+        if pr_item.ordered:
+            status = "used_in_other_schedule"
+            included = False  # Don't include by default if already used
+        
+        pr_item_list.append({
+            "id": pr_item.id,
+            "item_required": pr_item.item_required,
+            "quantity": pr_item.quantity,
+            "unit_of_measurement": pr_item.unit_of_measurement.name if pr_item.unit_of_measurement else "",
+            "ordered": pr_item.ordered,
+            "status": status,
+            "included": included,  # Whether to include in this CS by default
+        })
+
+    # Get enhanced pagination info with warnings
+    pagination_info = get_pagination_info(page, page_size, total_items)
+    
+    return JsonResponse({
+        "success": True,
+        "pr_items": pr_item_list,
+        "pagination": pagination_info,
+        "performance_info": {
+            "requested_page_size": requested_page_size,
+            "actual_page_size": page_size,
+            "memory_optimized": requested_page_size != page_size,
+            "total_items": total_items
+        }
+    })
+
+
+@login_required
+@require_http_methods(["GET"])
+def api_get_pr_attachments(request, pr_id):
+    """Get PR attachments"""
+    if not pr_id.startswith("PR"):
+        pr_id = "PR" + pr_id
+        
+    try:
+        purchase_request = PurchaseRequest.objects.prefetch_related('attachment_set').get(id=pr_id)
+    except PurchaseRequest.DoesNotExist:
+        return JsonResponse({
+            "success": False,
+            "message": "PR not found",
+        })
+
+    pr_at_list = []
+    for at in purchase_request.attachment_set.all():
+        try:
+            if at.file and os.path.exists(at.file.path) and at.file.size < 5 * 1024 * 1024:  # 5MB limit
+                file_data = at.file.read()
+                encoded_file_data = base64.b64encode(file_data).decode('utf-8')
+                pr_at_list.append({
+                    "id": at.id,
+                    "file": encoded_file_data,
+                    "name": os.path.basename(at.file.name),
+                })
+        except Exception as ex:
+            print(f"Error processing attachment {at.id}: {ex}")
+            continue
+
+    return JsonResponse({
+        "success": True,
+        "pr_attachments": pr_at_list,
+    })
+
+
+@login_required
+@require_http_methods(["GET"])
+def api_get_reference_data(request):
+    """Get reference data (suppliers, currencies, etc.)"""
+    try:
+        # Get cached reference data
+        proc_plans_cache_key = 'all_proc_plans'
+        proc_plans = cache.get(proc_plans_cache_key)
+        if proc_plans is None:
+            proc_plans = list(ProcPlan.objects.values('id', 'proc_ref', 'description'))
+            cache.set(proc_plans_cache_key, proc_plans, CACHE_TIMEOUT * 4)
+
+        currencies_cache_key = 'all_currencies'
+        currencies = cache.get(currencies_cache_key)
+        if currencies is None:
+            currencies = list(Currency.objects.values('id', 'currency'))
+            cache.set(currencies_cache_key, currencies, CACHE_TIMEOUT * 4)
+
+        suppliers_cache_key = 'all_suppliers'
+        suppliers = cache.get(suppliers_cache_key)
+        if suppliers is None:
+            suppliers = list(Supplier.objects.values('id', 'name'))
+            cache.set(suppliers_cache_key, suppliers, CACHE_TIMEOUT * 2)
+
+        users_cache_key = 'all_users'
+        users = cache.get(users_cache_key)
+        if users is None:
+            users = list(UserProfile.objects.values('id', 'username', 'first_name', 'last_name'))
+            cache.set(users_cache_key, users, CACHE_TIMEOUT)
+
+        uom_cache_key = 'all_uom'
+        uom = cache.get(uom_cache_key)
+        if uom is None:
+            uom = list(UnitOfMeasurement.objects.values('unit', 'name'))
+            cache.set(uom_cache_key, uom, CACHE_TIMEOUT * 4)
+
+        return JsonResponse({
+            "success": True,
+            "proc_plans": proc_plans,
+            "uom": uom,
+            "currencies": currencies,
+            "suppliers": suppliers,
+            "users": users,
+        })
+    except Exception as ex:
+        print(f"Error in api_get_reference_data: {ex}")
+        return JsonResponse({
+            "success": False,
+            "error": str(ex)
+        }, status=500)
+
+@login_required 
+@require_http_methods(["GET"])
+def api_get_users(request):
+    """API endpoint to get users for React app with server-side search support"""
+    try:
+        # Get search parameters
+        search_query = request.GET.get('search', '').strip()
+        limit = int(request.GET.get('limit', 100))  # Increased default limit
+        offset = int(request.GET.get('offset', 0))  # For pagination
+        include_inactive = request.GET.get('include_inactive', 'true').lower() == 'true'
+        
+        # Base query - include ALL users like the original API
+        users_query = UserProfile.objects.all()
+        
+        # Optionally filter by active status (default: include all)
+        if not include_inactive:
+            users_query = users_query.filter(is_active=True)
+        
+        # Apply search filter if provided
+        if search_query and len(search_query) >= 2:
+            from django.db.models import Q
+            users_query = users_query.filter(
+                Q(username__icontains=search_query) |
+                Q(first_name__icontains=search_query) |
+                Q(last_name__icontains=search_query) |
+                Q(email__icontains=search_query)
+            )
+        elif not search_query:
+            # If no search query, still apply reasonable limit but higher than before
+            users_query = users_query[:limit]
+        
+        # Apply pagination
+        total_count = users_query.count()
+        users = users_query[offset:offset + limit]
+        
+        users_data = []
+        for user in users:
+            users_data.append({
+                'id': user.id,
+                'username': user.username,
+                'first_name': user.first_name,
+                'last_name': user.last_name,
+                'name': f"{user.first_name} {user.last_name}".strip(),
+                'email': getattr(user, 'email', ''),
+                'is_active': getattr(user, 'is_active', True),
+            })
+        
+        return JsonResponse({
+            'users': users_data,
+            'total_count': total_count,
+            'has_more': (offset + limit) < total_count,
+            'search_query': search_query,
+            'include_inactive': include_inactive
+        }, safe=False)
+    except Exception as ex:
+        print("Error fetching users:", ex)
+        return JsonResponse({'error': str(ex)}, status=500)
+
+@login_required 
+@require_http_methods(["GET"])
+def api_get_suppliers(request):
+    """API endpoint to get suppliers for React app"""
+    try:
+        search_query = request.GET.get('search', '').strip()
+        limit = int(request.GET.get('limit', 100))
+        
+        suppliers = Supplier.objects.all()
+        
+        # Apply search filter if provided
+        if search_query:
+            suppliers = suppliers.filter(
+                Q(name__icontains=search_query)
+            )
+        
+        # Apply limit
+        suppliers = suppliers[:limit]
+        
+        suppliers_data = []
+        for supplier in suppliers:
+            suppliers_data.append({
+                'id': supplier.id,
+                'name': supplier.name,
+                'supplier_name': supplier.name,  # For compatibility
+            })
+        
+        # Return in the format expected by the frontend
+        return JsonResponse({
+            'suppliers': suppliers_data,
+            'count': len(suppliers_data)
+        })
+    except Exception as ex:
+        print("Error fetching suppliers:", ex)
+        return JsonResponse({'error': str(ex)}, status=500)
+
+@login_required 
+@require_http_methods(["GET"])
+def api_get_currencies(request):
+    """API endpoint to get currencies for React app"""
+    try:
+        currencies = Currency.objects.all()
+        currencies_data = []
+        for currency in currencies:
+            currencies_data.append({
+                'id': currency.id,
+                'currency': currency.currency,
+            })
+        return JsonResponse(currencies_data, safe=False)
+    except Exception as ex:
+        print("Error fetching currencies:", ex)
+        return JsonResponse({'error': str(ex)}, status=500)
+
+@login_required 
+@require_http_methods(["GET"])
+def api_get_proc_plans(request):
+    """API endpoint to get procurement plans for React app"""
+    try:
+        proc_plans = ProcPlan.objects.all()
+        proc_plans_data = []
+        for proc_plan in proc_plans:
+            proc_plans_data.append({
+                'id': proc_plan.id,
+                'proc_ref': proc_plan.proc_ref,
+                'description': proc_plan.description,
+            })
+        return JsonResponse(proc_plans_data, safe=False)
+    except Exception as ex:
+        print("Error fetching procurement plans:", ex)
+        return JsonResponse({'error': str(ex)}, status=500)
+
+@login_required
+@require_http_methods(["GET"])
+def api_get_cs_bids_optimized(request, cs_id):
+    """Get bids data for a specific CS - optimized"""
+    try:
+        cs = ComparativeSchedules.objects.prefetch_related(
+            Prefetch('bids_set', queryset=Bids.objects.select_related('sup_id', 'item_id'))
+        ).filter(cs_id=cs_id).first()
+        
+        if not cs:
+            return JsonResponse({"success": False, "message": "CS not found"})
+        
+        # Build grouped bids data efficiently
+        bids = list(cs.bids_set.all())
+        grouped_data = {}
+        
+        for bid in bids:
+            bid_no = bid.bid_no
+            if bid_no not in grouped_data:
+                encoded_file_data = ""
+                if bid.bid_document:
+                    encoded_file_data = _encode_file_safely(bid.bid_document)
+                
+                grouped_data[bid_no] = {
+                    'bid_count': bid.bid_no,
+                    'supplier_name': bid.sup_id.name,
+                    'bid_date': bid.quote_date,
+                    'encoded_bid_document': encoded_file_data,
+                    'bid_document': None,
+                    'items': []
+                }
+            
+            grouped_data[bid_no]['items'].append({
+                'item_id': bid.item_id.item_id,
+                'item_required': bid.item_id.item_name,
+                'quantity': bid.item_id.quantity,
+                'unit_of_measurement': bid.item_id.unit_of_measurement,
+                'unit_price': bid.unit_price,
+                'vat': bid.vat,
+                'total_price': bid.total,
+            })
+        
+        return JsonResponse({
+            "success": True,
+            "bids": list(grouped_data.values())
+        })
+        
+    except Exception as ex:
+        return JsonResponse({
+            "success": False,
+            "message": f"Error loading bids: {str(ex)}"
+        })
+
+
+@login_required
+@require_http_methods(["GET"])
+def api_get_cs_compliance_optimized(request, cs_id):
+    """Get compliance data for a specific CS - optimized"""
+    try:
+        cs = ComparativeSchedules.objects.prefetch_related(
+            Prefetch('cscompliance_set', queryset=CSCompliance.objects.select_related('supplier_id')),
+            Prefetch('cscomplianceremarks_set', queryset=CSComplianceRemarks.objects.select_related('supplier_id'))
+        ).filter(cs_id=cs_id).first()
+        
+        if not cs:
+            return JsonResponse({"success": False, "message": "CS not found"})
+        
+        compliance = list(cs.cscompliance_set.all())
+        compliance_remarks = list(cs.cscomplianceremarks_set.all())
+        
+        # Build compliance list
+        compliance_list = [
+            {
+                "supplier_name": comp.supplier_id.name if comp.supplier_id else "",
+                "payment_terms": comp.payment_terms,
+                "bid_validity": comp.bid_validity,
+                "delivery_period": comp.delivery_period,
+                "technical_specifications": comp.technical_specifications,
+                "valid_tax_clearance": comp.valid_tax_clearance,
+                "registered_with_praz": comp.registered_with_praz,
+                "site_visit": comp.site_visit_done,
+                "samples_required": comp.samples_delivered,
+                "decision": comp.decision,
+                "remarks": comp.remarks,
+                "created_at": comp.created_at,
+            } for comp in compliance if comp.supplier_id
+        ]
+        
+        compliance_remarks_list = [
+            {
+                "supplier": remark.supplier_id.id,
+                "supplier_name": remark.supplier_id.name,
+                "remarks": remark.remarks,
+            } for remark in compliance_remarks if remark.supplier_id
+        ]
+        
+        return JsonResponse({
+            "success": True,
+            "compliance": compliance_list,
+            "complianceRemarks": compliance_remarks_list
+        })
+        
+    except Exception as ex:
+        return JsonResponse({
+            "success": False,
+            "message": f"Error loading compliance: {str(ex)}"
+        })
+
+
+@login_required
+@require_http_methods(["GET"])
+def api_get_cs_committee_optimized(request, cs_id):
+    """Get committee data for a specific CS - optimized"""
+    try:
+        cs = ComparativeSchedules.objects.prefetch_related(
+            Prefetch('committee_set', queryset=Committee.objects.select_related('user'))
+        ).filter(cs_id=cs_id).first()
+        
+        if not cs:
+            return JsonResponse({"success": False, "message": "CS not found"})
+        
+        committee = list(cs.committee_set.all())
+        
+        committee_list = [
+            {
+                "memberUserName": member.user.username if member.user else "",
+                "memberName": f"{member.user.first_name} {member.user.last_name}" if member.user else "",
+                "memberPosition": member.committee_position,
+                "committeeStatus": member.committee_status,
+                "memberApproval": member.committee_approval if member.committee_approval else "",
+                "committeeJustification": member.justification,
+                "committeeDate": member.committee_date,
+            } for member in committee if member.user
+        ]
+        
+        return JsonResponse({
+            "success": True,
+            "committee": committee_list
+        })
+        
+    except Exception as ex:
+        return JsonResponse({
+            "success": False,
+            "message": f"Error loading committee: {str(ex)}"
+        })
+
+
+@login_required
+@require_http_methods(["GET"])
+def api_get_cs_approvals_optimized(request, cs_id):
+    """Get approval data for a specific CS - optimized"""
+    try:
+        cs = ComparativeSchedules.objects.prefetch_related(
+            Prefetch('csapproval_set', queryset=CSApproval.objects.select_related('user')),
+            Prefetch('ranking_set', queryset=Ranking.objects.select_related('supplier_id'))
+        ).filter(cs_id=cs_id).first()
+        
+        if not cs:
+            return JsonResponse({"success": False, "message": "CS not found"})
+        
+        approvals = {approval.approver_role: approval for approval in cs.csapproval_set.all()}
+        rankings = list(cs.ranking_set.all())
+        
+        # Build approval data
+        gm_approval = approvals.get("general_manager")
+        fm_approval = approvals.get("finance_manager")
+        
+        # Get current user's roles for comparative_schedule application
+        current_user = request.user
+        fm_role, gm_role, procurement_role = getUserFMGMRoles(current_user)
+        
+        rankings_list = [
+            {
+                "supplier_name": rank.supplier_id.name if rank.supplier_id else "",
+                "rank": rank.rank,
+                "remarks": rank.remarks,
+                "decision": rank.decision,
+                "total": rank.total,
+                "created_at": rank.created_at,
+            } for rank in rankings
+        ]
+        
+        return JsonResponse({
+            "success": True,
+            "gm_approval": {
+                "id": gm_approval.id,
+                "approver": gm_approval.user.username if gm_approval.user else "",
+                "approver_name": f"{gm_approval.user.first_name} {gm_approval.user.last_name}" if gm_approval.user else "",
+                "approver_role": gm_approval.approver_role,
+                "approval": gm_approval.approval,
+                "justification": gm_approval.justification,
+                "approval_date": gm_approval.approval_date,
+            } if gm_approval else {},
+            "fm_approval": {
+                "id": fm_approval.id,
+                "approver": fm_approval.user.username if fm_approval.user else "",
+                "approver_name": f"{fm_approval.user.first_name} {fm_approval.user.last_name}" if fm_approval.user else "",
+                "approver_role": fm_approval.approver_role,
+                "approval": fm_approval.approval,
+                "justification": fm_approval.justification,
+                "approval_date": fm_approval.approval_date,
+            } if fm_approval else {},
+            "rankings": rankings_list,
+            "current_user_roles": {
+                "fm_role": fm_role,
+                "gm_role": gm_role,
+                "procurement_role": procurement_role
+            }
+        })
+        
+    except Exception as ex:
+        return JsonResponse({
+            "success": False,
+            "message": f"Error loading approvals: {str(ex)}"
+        })
+
+
+@login_required
+@require_http_methods(["GET"])
+def api_get_cs_rankings_optimized(request, cs_id):
+    """Get rankings data for a specific CS - optimized"""
+    try:
+        cs = ComparativeSchedules.objects.prefetch_related(
+            Prefetch('ranking_set', queryset=Ranking.objects.select_related('supplier_id'))
+        ).filter(cs_id=cs_id).first()
+        
+        if not cs:
+            return JsonResponse({"success": False, "message": "CS not found"})
+        
+        rankings = list(cs.ranking_set.all())
+        
+        rankings_list = [
+            {
+                "supplier_name": rank.supplier_id.name if rank.supplier_id else "",
+                "rank": rank.rank,
+                "remarks": rank.remarks,
+                "decision": rank.decision,
+                "total": rank.total,
+                "created_at": rank.created_at,
+            } for rank in rankings
+        ]
+        
+        return JsonResponse({
+            "success": True,
+            "rankings": rankings_list
+        })
+        
+    except Exception as ex:
+        return JsonResponse({
+            "success": False,
+            "message": f"Error loading rankings: {str(ex)}"
+        })
+
+
+@login_required
+@require_http_methods(["GET"])
+def api_get_cs_pr_items_management(request, cs_id):
+    """Get PR items data for management tab - only accessible after CS details are saved"""
+    cache_key = f'cs_pr_items_{cs_id}'
+    cached_data = cache.get(cache_key)
+    
+    if cached_data is not None:
+        return JsonResponse(cached_data, safe=False)
+    
+    try:
+        # Get CS with related data
+        cs = ComparativeSchedules.objects.select_related(
+            'created_by', 'region', 'section', 'currency', 'proc_plan'
+        ).prefetch_related(
+            Prefetch('csrequireditems_set', queryset=CSRequiredItems.objects.all())
+        ).filter(cs_id=cs_id).first()
+        
+        if not cs:
+            return JsonResponse({
+                "success": False,
+                "message": "Comparative Schedule not found"
+            }, status=404)
+        
+        # Check if CS details have been saved (required for PR items tab access)
+        if not cs.cs_id:
+            return JsonResponse({
+                "success": False,
+                "message": "CS details must be saved before managing PR items"
+            }, status=400)
+        
+        # Get PR data
+        pr = None
+        pr_items_list = []
+        pr_attachments_list = []
+        
+        if cs.pr_id_id:
+            pr = PurchaseRequest.objects.select_related().prefetch_related(
+                Prefetch('pritem_set', 
+                        queryset=PrItem.objects.select_related('unit_of_measurement')),
+                Prefetch('attachment_set', 
+                        queryset=Attachment.objects.all())
+            ).filter(id=cs.pr_id_id).first()
+            
+            if pr:
+                # Get existing CS items (already ordered)
+                cs_items = list(cs.csrequireditems_set.all())
+                
+                # Add CS items first (already selected for this CS)
+                pr_items_list.extend([
+                    {
+                        "id": cs_item.id,
+                        "item_required": cs_item.item_name,
+                        "quantity": cs_item.quantity,
+                        "unit_of_measurement": cs_item.unit_of_measurement,
+                        "ordered": True,
+                        "status": "selected_for_this_cs",
+                        "included": True,
+                        "source": "cs_required_items"
+                    } for cs_item in cs_items
+                ])
+                
+                # Add available PR items (not ordered or not in any CS)
+                available_items = pr.pritem_set.filter(ordered=False)
+                pr_items_list.extend([
+                    {
+                        "id": pr_item.id,
+                        "item_required": pr_item.item_required,
+                        "quantity": pr_item.quantity,
+                        "unit_of_measurement": pr_item.unit_of_measurement.name if pr_item.unit_of_measurement else "",
+                        "ordered": pr_item.ordered,
+                        "status": "available",
+                        "included": False,
+                        "source": "pr_items"
+                    } for pr_item in available_items
+                ])
+                
+                # Add items used in other CSs (for reference)
+                used_items = pr.pritem_set.filter(ordered=True).exclude(
+                    id__in=[cs_item.item_id for cs_item in cs_items if cs_item.item_id]
+                )
+                pr_items_list.extend([
+                    {
+                        "id": pr_item.id,
+                        "item_required": pr_item.item_required,
+                        "quantity": pr_item.quantity,
+                        "unit_of_measurement": pr_item.unit_of_measurement.name if pr_item.unit_of_measurement else "",
+                        "ordered": pr_item.ordered,
+                        "status": "used_in_other_schedule",
+                        "included": False,
+                        "source": "pr_items"
+                    } for pr_item in used_items
+                ])
+                
+                # Process attachments
+                for attachment in pr.attachment_set.all():
+                    if attachment.file:
+                        try:
+                            if os.path.exists(attachment.file.path) and attachment.file.size < 5 * 1024 * 1024:  # 5MB limit
+                                file_data = attachment.file.read()
+                                encoded_file_data = base64.b64encode(file_data).decode('utf-8')
+                                pr_attachments_list.append({
+                                    "id": attachment.id,
+                                    "file": encoded_file_data,
+                                    "name": os.path.basename(attachment.file.name),
+                                })
+                        except Exception as ex:
+                            print(f"Error processing attachment {attachment.id}: {ex}")
+                            continue
+
+        # Get unit of measurement options
+        uom_cache_key = 'all_uom'
+        uom = cache.get(uom_cache_key)
+        if uom is None:
+            uom = list(UnitOfMeasurement.objects.values('unit', 'name'))
+            cache.set(uom_cache_key, uom, CACHE_TIMEOUT * 4)
+
+        result_data = {
+            "success": True,
+            "cs_id": cs.cs_id,
+            "pr_id": pr.id if pr else None,
+            "pr_number": cs.pr_number,
+            "scope_of_work": pr.scope_of_work if pr else cs.scope_of_work,
+            "pr_items": pr_items_list,
+            "pr_attachments": pr_attachments_list,
+            "uom": uom,
+            "can_modify": True,  # Add logic here based on user permissions and CS status
+            "total_items": len(pr_items_list),
+            "selected_items": len([item for item in pr_items_list if item['status'] == 'selected_for_this_cs']),
+            "available_items": len([item for item in pr_items_list if item['status'] == 'available']),
+        }
+        
+        # Cache for 5 minutes
+        cache.set(cache_key, result_data, CACHE_TIMEOUT)
+        
+        return JsonResponse(result_data, safe=False)
+        
+    except Exception as ex:
+        print(f"Error loading PR items management data: {ex}")
+        return JsonResponse({
+            "success": False,
+            "message": f"Error loading PR items data: {str(ex)}"
+        }, status=500)
+
+
+@login_required
+@require_http_methods(["POST"])
+def api_update_cs_pr_items(request, cs_id):
+    """Update CS PR items - optimized version for separate tab"""
+    from django.db import transaction
+    
+    try:
+        cs_query = ComparativeSchedules.objects.filter(cs_id=cs_id).first()
+        if not cs_query:
+            return JsonResponse({
+                "success": False,
+                "message": f"Comparative Schedule with ID {cs_id} not found"
+            }, status=404)
+
+        # Parse the data
+        try:
+            json_data = json.loads(request.body)
+            items = json_data.get("cs_items", [])
+            pr_id = json_data.get("pr_id")
+        except json.JSONDecodeError:
+            return JsonResponse({
+                "success": False,
+                "message": "Invalid JSON data"
+            }, status=400)
+        
+        if not pr_id:
+            return JsonResponse({
+                "success": False,
+                "message": "PR ID is required"
+            }, status=400)
+
+        purchase_request = PurchaseRequest.objects.filter(id=pr_id).first()
+        if not purchase_request:
+            return JsonResponse({
+                "success": False,
+                "message": f"Purchase Request with ID {pr_id} not found"
+            }, status=404)
+            
+        with transaction.atomic():
+            # Get existing CS items to compare
+            existing_items = CSRequiredItems.objects.filter(cs_id=cs_query).all()
+            existing_items_map = {item.item_name: item for item in existing_items}
+            
+            # Get items that should be included (from frontend selection)
+            items_to_include = {item['item_required'] for item in items if item.get('included', False)}
+            
+            # Items to add (in items_to_include but not in existing)
+            items_to_add = []
+            for item in items:
+                if item.get('included', False) and item['item_required'] not in existing_items_map:
+                    items_to_add.append(item)
+            
+            # Items to remove (in existing but not in items_to_include)
+            items_to_remove = []
+            for item_name, cs_item in existing_items_map.items():
+                if item_name not in items_to_include:
+                    items_to_remove.append(cs_item)
+
+            # Add new items
+            for item in items_to_add:
+                pr_item = PrItem.objects.filter(
+                    item_required=item['item_required'],
+                    purchase_request=purchase_request
+                ).first()
+                
+                if pr_item:
+                    pr_item.ordered = True
+                    pr_item.save()
+                    
+                    cs_required_items = CSRequiredItems(
+                        cs_id=cs_query,
+                        item_id=item.get('id'),
+                        item_name=item['item_required'],
+                        quantity=item['quantity'],
+                        unit_of_measurement=item['unit_of_measurement'],
+                    )
+                    cs_required_items.save()
+
+            # Remove items
+            for cs_item in items_to_remove:
+                pr_item = PrItem.objects.filter(
+                    item_required=cs_item.item_name, 
+                    purchase_request=purchase_request
+                ).first()
+                
+                if pr_item:
+                    pr_item.ordered = False
+                    pr_item.save()
+                
+                cs_item.delete()
+
+            # Clear approvals if items were modified
+            if items_to_add or items_to_remove:
+                clear_approvals(cs_id)
+                
+                # Clear related caches
+                cache.delete(f'cs_data_{cs_id}')
+                cache.delete(f'cs_pr_items_{cs_id}')
+
+            return JsonResponse({
+                "message": "PR Items updated successfully",
+                "success": True,
+                "stats": {
+                    "added_items": len(items_to_add),
+                    "removed_items": len(items_to_remove),
+                    "total_selected": len(items_to_include)
+                }
+            })
+            
+    except Exception as ex:
+        print(f"Error updating CS PR items: {ex}")
+        return JsonResponse({
+            "message": f"Error updating PR items: {str(ex)}",
+            "success": False,
+        }, status=500)
+
+@login_required 
+@require_http_methods(["GET"])
+def api_get_users_with_roles(request):
+    """API endpoint to get users with their roles for approval table"""
+    try:
+        users = UserProfile.objects.prefetch_related('roles').all()
+        users_data = []
+        
+        for user in users:
+            # Get user's roles for comparative_schedule application
+            user_roles = []
+            for role in user.roles.all():
+                if role.application == 'comparative_schedule':
+                    user_roles.append({
+                        'role': role.role,
+                        'name': role.name,
+                        'description': role.description
+                    })
+            
+            users_data.append({
+                'id': user.id,
+                'username': user.username,
+                'first_name': user.first_name,
+                'last_name': user.last_name,
+                'name': f"{user.first_name} {user.last_name}".strip(),
+                'roles': user_roles,
+                'region': user.region.name if user.region else None,
+                'section': user.section.name if user.section else None
+            })
+        
+        return JsonResponse(users_data, safe=False)
+    except Exception as ex:
+        print("Error fetching users with roles:", ex)
+        return JsonResponse({'error': str(ex)}, status=500)
+
+@login_required 
+@require_http_methods(["GET"])
+def api_get_uom(request):
+    """API endpoint to get UOM for React app with server-side search support"""
+    try:
+        # Get search parameters
+        search_query = request.GET.get('search', '').strip()
+        limit = int(request.GET.get('limit', 100))  # Default limit
+        offset = int(request.GET.get('offset', 0))  # For pagination
+        
+        # Base query
+        uom_query = UnitOfMeasurement.objects.all()
+        
+        # Apply search filter if provided
+        if search_query and len(search_query) >= 2:
+            from django.db.models import Q
+            uom_query = uom_query.filter(
+                Q(name__icontains=search_query) |
+                Q(unit__icontains=search_query)
+            )
+        elif not search_query:
+            # If no search query, apply reasonable limit
+            uom_query = uom_query[:limit]
+        
+        # Apply pagination
+        total_count = uom_query.count()
+        uom_list = uom_query[offset:offset + limit]
+        
+        uom_data = []
+        for uom_item in uom_list:
+            uom_data.append({
+                'id': uom_item.unit,  # Use unit as ID for consistency
+                'unit': uom_item.unit,
+                'name': uom_item.name,
+            })
+        
+        return JsonResponse({
+            'uom': uom_data,
+            'total_count': total_count,
+            'has_more': (offset + limit) < total_count,
+            'search_query': search_query
+        }, safe=False)
+    except Exception as ex:
+        print("Error fetching UOM:", ex)
+        return JsonResponse({'error': str(ex)}, status=500)

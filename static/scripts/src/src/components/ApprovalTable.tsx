@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from 'react';
 
-
-
 interface ICommittee {
   memberUserName: string;
   memberName: string;
@@ -43,6 +41,11 @@ interface ApprovalTableProps {
   fmApproval: IFmApproval | null | undefined;
   isCreator: boolean;
   onApprove: (role: string, username: string, approval: string, justification: string) => Promise<void>;
+  currentUserRoles?: {
+    fm_role: boolean;
+    gm_role: boolean;
+    procurement_role: boolean;
+  };
 }
 
 interface ApprovalRow {
@@ -57,6 +60,8 @@ interface ApprovalRow {
   canApprove: boolean;
   isCommittee: boolean;
   committeeMembers?: ICommittee[];
+  memberUserName?: string; // For individual committee members
+  memberPosition?: string; // For individual committee members
 }
 
 const ApprovalTable: React.FC<ApprovalTableProps> = ({
@@ -66,7 +71,8 @@ const ApprovalTable: React.FC<ApprovalTableProps> = ({
   gmApproval,
   fmApproval,
   isCreator,
-  onApprove
+  onApprove,
+  currentUserRoles
 }) => {
   const [loading, setLoading] = useState(true);
   const [currentApprover, setCurrentApprover] = useState<ICurrentApprover | null>(null);
@@ -83,34 +89,53 @@ const ApprovalTable: React.FC<ApprovalTableProps> = ({
   const buildApprovalRows = (): ApprovalRow[] => {
     const rows: ApprovalRow[] = [];
 
-    // Debug committee members
-    console.log("🔍 ApprovalTable - Committee members:", {
-      count: committeeMembers.length,
-      members: committeeMembers.map(m => ({
-        name: m.memberName,
-        username: m.memberUserName,
-        approval: m.memberApproval
-      }))
-    });
 
-    // Committee row
-    const committeeStatus = getCommitteeStatus();
-    rows.push({
-      id: 'committee',
-      role: 'committee',
-      roleDisplay: 'Component Committee',
-      approver: 'Multiple Members',
-      approverName: committeeMembers.map(m => m.memberName).join(', ') || 'No members assigned',
-      status: committeeStatus,
-      date: committeeMembers.length > 0 ? committeeMembers[0].committeeDate : undefined,
-      justification: committeeMembers.length > 0 ? committeeMembers[0].committeeJustification : undefined,
-      canApprove: isCreator && committeeStatus === 'pending',
-      isCommittee: true,
-      committeeMembers: committeeMembers
-    });
+
+    // Add individual committee member rows
+    if (committeeMembers.length > 0) {
+      committeeMembers.forEach((member) => {
+        const memberStatus = member.memberApproval === 'Approved' ? 'approved' : 
+                           member.memberApproval === 'Rejected' ? 'rejected' : 'pending';
+        
+        rows.push({
+          id: `committee_${member.memberUserName}`,
+          role: 'committee',
+          roleDisplay: 'Component Committee',
+          approver: member.memberName,
+          approverName: member.memberName,
+          status: memberStatus,
+          date: member.committeeDate,
+          justification: member.committeeJustification,
+          canApprove: member.memberUserName === username && (!member.memberApproval || member.memberApproval === 'Pending'),
+          isCommittee: true,
+          memberUserName: member.memberUserName,
+          memberPosition: member.memberPosition
+        });
+      });
+    } else {
+      // If no committee members, add a placeholder row
+      rows.push({
+        id: 'committee',
+        role: 'committee',
+        roleDisplay: 'Component Committee',
+        approver: 'No members assigned',
+        approverName: 'No members assigned',
+        status: 'not_started',
+        canApprove: false,
+        isCommittee: true
+      });
+    }
 
     // Finance Manager row
-    const fmStatus = fmApproval ? (fmApproval.approval === 'Approved' ? 'approved' : 'rejected') : 'pending';
+    const fmStatus = fmApproval && fmApproval.approval 
+      ? (fmApproval.approval === 'Approved' ? 'approved' : 'rejected') 
+      : 'pending';
+    const committeeStatus = getCommitteeStatus();
+    // Allow finance manager to approve if: user has FM role, is not creator, status is pending, and committee is approved or no committee members
+    const fmCanApprove = (currentUserRoles?.fm_role || false) && !isCreator && fmStatus === 'pending' && (committeeStatus === 'approved' || committeeMembers.length === 0);
+    
+
+    
     rows.push({
       id: 'finance_manager',
       role: 'finance_manager',
@@ -120,12 +145,19 @@ const ApprovalTable: React.FC<ApprovalTableProps> = ({
       status: fmStatus,
       date: fmApproval?.approval_date,
       justification: fmApproval?.justification,
-      canApprove: isCreator && fmStatus === 'pending' && committeeStatus === 'approved',
+      canApprove: fmCanApprove,
       isCommittee: false
     });
 
     // General Manager row
-    const gmStatus = gmApproval ? (gmApproval.approval === 'Approved' ? 'approved' : 'rejected') : 'pending';
+    const gmStatus = gmApproval && gmApproval.approval 
+      ? (gmApproval.approval === 'Approved' ? 'approved' : 'rejected') 
+      : 'pending';
+    // General manager can approve if: user has GM role, is not creator, status is pending, and finance manager is approved
+    const gmCanApprove = (currentUserRoles?.gm_role || false) && !isCreator && gmStatus === 'pending' && fmStatus === 'approved';
+    
+
+    
     rows.push({
       id: 'general_manager',
       role: 'general_manager',
@@ -135,7 +167,7 @@ const ApprovalTable: React.FC<ApprovalTableProps> = ({
       status: gmStatus,
       date: gmApproval?.approval_date,
       justification: gmApproval?.justification,
-      canApprove: isCreator && gmStatus === 'pending' && fmStatus === 'approved',
+      canApprove: gmCanApprove,
       isCommittee: false
     });
 
@@ -201,7 +233,7 @@ const ApprovalTable: React.FC<ApprovalTableProps> = ({
 
   const handleApprovalAction = (row: ApprovalRow, action: 'approve' | 'reject') => {
     setCurrentApprover({
-      username: username,
+      username: row.memberUserName || username,
       role: row.role,
       approval: action === 'approve' ? 'Approved' : 'Rejected'
     });
@@ -308,10 +340,31 @@ const ApprovalTable: React.FC<ApprovalTableProps> = ({
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-900">{row.approverName}</div>
-                  {row.isCommittee && row.committeeMembers && row.committeeMembers.length > 0 && (
-                    <div className="text-xs text-gray-500">
-                      {row.committeeMembers.length} member{row.committeeMembers.length !== 1 ? 's' : ''}
+                  {row.isCommittee && row.memberUserName ? (
+                    <div className="flex items-center">
+                      <div className="flex-shrink-0 h-10 w-10">
+                        <div className="h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center">
+                          <span className="text-sm font-medium text-indigo-600">
+                            {row.approverName.split(' ').map(n => n[0]).join('').toUpperCase()}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="ml-4">
+                        <div className="text-sm font-medium text-gray-900">{row.approverName}</div>
+                        <div className="text-sm text-gray-500">@{row.memberUserName}</div>
+                        {row.memberPosition && (
+                          <div className="text-xs text-gray-400">{row.memberPosition}</div>
+                        )}
+                      </div>
+                    </div>
+                  ) : (
+                    <div>
+                      <div className="text-sm text-gray-900">{row.approverName}</div>
+                      {row.isCommittee && row.committeeMembers && row.committeeMembers.length > 0 && (
+                        <div className="text-xs text-gray-500">
+                          {row.committeeMembers.length} member{row.committeeMembers.length !== 1 ? 's' : ''}
+                        </div>
+                      )}
                     </div>
                   )}
                 </td>
@@ -357,6 +410,12 @@ const ApprovalTable: React.FC<ApprovalTableProps> = ({
                         Reject
                       </button>
                     </div>
+                  ) : row.isCommittee && row.memberUserName && row.memberUserName === username && row.status === 'approved' ? (
+                    <span className="text-gray-400">Already approved</span>
+                  ) : row.isCommittee && row.memberUserName && row.memberUserName === username && row.status === 'rejected' ? (
+                    <span className="text-gray-400">Already rejected</span>
+                  ) : row.isCommittee && row.memberUserName && row.memberUserName !== username ? (
+                    <span className="text-gray-400">Not your approval</span>
                   ) : (
                     <span className="text-gray-400">No actions available</span>
                   )}

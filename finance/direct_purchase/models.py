@@ -1,5 +1,5 @@
 from django.db import models
-from finance.Direct_purchases.models import Supplier
+from it.users.models import Supplier
 from finance.comparative_schedules.models import Currency
 
 from finance.purchase_request.models import PurchaseRequest
@@ -30,7 +30,6 @@ class DirectPurchase(models.Model):
     show_sample_required = models.BooleanField(default=False, null=True, blank=True)
     pr_number = models.CharField(max_length=100)
     currency = models.ForeignKey(Currency, on_delete=models.CASCADE, default=1)
-    pr_date = models.DateField(blank=True, null=True)
     cs_opened = models.DateField(blank=True, null=True)
     tac_date = models.DateField(blank=True, null=True)
     created_by = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
@@ -102,6 +101,17 @@ class DPRanking(models.Model):
     remarks = models.CharField(max_length=255)
     decision = models.CharField(max_length=255)
     total = models.CharField(max_length=50)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+class DPOrder(models.Model):
+    cs_id = models.ForeignKey(DirectPurchase, on_delete=models.CASCADE)
+    order_no = models.CharField(max_length=100)
+    order_status = models.CharField(max_length=100)
+    order_date = models.DateField()
+    delivery_date = models.DateField()
+    payment_status = models.CharField(max_length=100)
+    site_visit_done = models.CharField(max_length=100)
+    samples_delivered = models.CharField(max_length=100)
     created_at = models.DateTimeField(auto_now_add=True)
 
 class DPCommittee(models.Model):

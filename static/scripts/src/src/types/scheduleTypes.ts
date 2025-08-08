@@ -114,6 +114,8 @@ export interface IUser {
   role: string;
   first_name: string;
   last_name: string;
+  is_active?: boolean;
+  email?: string;
 }
 
 export interface ICurrentApprover {
