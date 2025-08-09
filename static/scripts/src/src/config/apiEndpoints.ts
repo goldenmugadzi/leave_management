@@ -100,10 +100,18 @@ export const API_ENDPOINTS = {
     CS_CREATE_DATA: (pr_id: string) => `/create_data/${pr_id}/`,
     CS_DETAILS: (cs_id: string) => `/cs_data/${cs_id}/`,
     // CS_SAVE: () => `/save`,
-    // New focused APIs
-    PR_BASIC: (pr_id: string) => `/api/pr-basic/${pr_id}/`,
+    
+    // Optimized File Handling APIs (replaces Base64 encoding)
+    FILE_UPLOAD: () => `/api/files/upload/`,
+    FILE_DOWNLOAD: (path: string) => `/api/files/download/${path}/`,
+    FILE_PREVIEW: (path: string) => `/api/files/preview/${path}/`,
+    FILE_DELETE: (path: string) => `/api/files/delete/${path}/`,
+    CS_FILES: (cs_id: string) => `/api/files/cs-files/${cs_id}/`,
+    
+    // New focused APIs (updated to use optimized file handling)
+    PR_BASIC: (pr_id: string) => `/api/files/create-data/${pr_id}/`,
     PR_ITEMS: (pr_id: string) => `/api/pr-items/${pr_id}/`,
-    PR_ATTACHMENTS: (pr_id: string) => `/api/pr-attachments/${pr_id}/`,
+    PR_ATTACHMENTS: (pr_id: string) => `/api/files/attachments/${pr_id}/`,
     REFERENCE_DATA: () => `/api/reference-data/`,
     
     // Schedule APIs

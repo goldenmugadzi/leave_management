@@ -19,6 +19,9 @@ logger = logging.getLogger(__name__)
 # Import pagination config for Stage 2 optimization
 from .pagination_config import get_safe_page_size, get_pagination_info, DATATABLE_MAX_SIZE, DATATABLE_DEFAULT_SIZE
 
+# Import optimized file handlers
+from .optimized_file_handlers import OptimizedFileHandler, OptimizedAttachmentHandler
+
 from it.users.views import ms_exhange_reset_password_html, ms_exhange_send, ms_exhange_send_html
 from .models import *
 from it.users.models import *
@@ -26,7 +29,7 @@ from finance.purchase_request.models import ProcurementPlanReference, PurchaseRe
     UnitOfMeasurement
 from ACE2.models import Ace2
 from finance.comparative_schedules.models import *
-from django.db.models import Q, Exists, OuterRef, Count, F
+from django.db.models import Q, Exists, OuterRef, Count, F, Prefetch
 import pandas as pd
 from django.core.paginator import Paginator
 from django.utils import timezone
@@ -42,6 +45,51 @@ from django.contrib import messages
 APP_NAME = "comparative_schedule"
 CACHE_TIMEOUT = 300  # 5 minutes
 
+# Helper functions for optimized file handling
+def get_optimized_file_handler(user):
+    """Get optimized file handler instance"""
+    return OptimizedFileHandler(user)
+
+def get_optimized_attachment_handler(user):
+    """Get optimized attachment handler instance"""
+    return OptimizedAttachmentHandler(user)
+
+def save_file_optimized(file, file_type='general', description=None, user=None):
+    """Save file using optimized handler"""
+    if not user:
+        return None
+    
+    file_handler = get_optimized_file_handler(user)
+    try:
+        result = file_handler.save_file_optimized(file, file_type, description)
+        return result
+    except Exception as e:
+        logger.error(f"Error saving file optimized: {e}")
+        return None
+
+def get_attachments_metadata_optimized(attachments, user=None, include_preview=False):
+    """Get attachment metadata without Base64 encoding"""
+    if not user:
+        return []
+    
+    attachment_handler = get_optimized_attachment_handler(user)
+    try:
+        return attachment_handler.get_attachments_metadata(attachments, include_preview)
+    except Exception as e:
+        logger.error(f"Error getting attachments metadata: {e}")
+        return []
+
+def get_cs_file_metadata_optimized(cs_instance, file_field_name, user=None):
+    """Get file metadata for ComparativeSchedules file fields"""
+    if not user:
+        return None
+    
+    attachment_handler = get_optimized_attachment_handler(user)
+    try:
+        return attachment_handler.get_cs_file_metadata(cs_instance, file_field_name)
+    except Exception as e:
+        logger.error(f"Error getting CS file metadata: {e}")
+        return None
 
 def add_cost_center(request):
     schedules = ComparativeSchedules.objects.all()
@@ -1139,19 +1187,30 @@ def getUserFMGMRoles(user):
 
     try:
         user_comparative_schedule_role = user.roles.filter(application=APP_NAME).first()
+        print(f"🔍 User roles for {APP_NAME}:", user_comparative_schedule_role)
 
-        if user_comparative_schedule_role.application == APP_NAME:
+        if user_comparative_schedule_role and user_comparative_schedule_role.application == APP_NAME:
+            print(f"🔍 User role: {user_comparative_schedule_role.role}")
             if user_comparative_schedule_role.role == "check":
                 fm_role = True
+                print("✅ FM role detected")
             if user_comparative_schedule_role.role == "approve":
                 gm_role = True
+                print("✅ GM role detected")
             if user_comparative_schedule_role.role == "procurement":
                 procurement_role = True
+                print("✅ Procurement role detected")
+        else:
+            print(f"❌ No {APP_NAME} role found for user")
+            # Debug: show all user roles
+            all_roles = user.roles.all()
+            print(f"🔍 All user roles: {[f'{r.application}:{r.role}' for r in all_roles]}")
 
     except Exception as ex:
         # messages.error(request, "Warning: Please not that you do not have the required roles to access this page.")
         print("Error: ", ex)
 
+    print(f"🔍 Final roles - FM: {fm_role}, GM: {gm_role}, Procurement: {procurement_role}")
     return fm_role, gm_role, procurement_role
 
 
@@ -2084,20 +2143,8 @@ def get_create_data(request, pr_id):
         pr_items = PrItem.objects.filter(purchase_request=purchase_request, ordered=False).all()
         pr_attachments = Attachment.objects.filter(purchase_request=purchase_request).all()
 
-        pr_at_list = []
-        for at in pr_attachments:
-            encoded_file_data = ""
-            if at.file:
-                try:
-                    file_data = at.file.read()
-                    encoded_file_data = base64.b64encode(file_data).decode('utf-8')
-                    pr_at_list.append({
-                        "id": at.id,
-                        "file": encoded_file_data,
-                        "name": os.path.basename(at.file.name),
-                    })
-                except Exception as ex:
-                    print("Error: ", ex)
+        # Use optimized file handling instead of Base64 encoding
+        pr_at_list = get_attachments_metadata_optimized(pr_attachments, request_user)
 
         pr_item_list = []
         for pr_item in pr_items:
@@ -3525,58 +3572,31 @@ def api_cs_committee(request, cs_id):
 @login_required
 @require_http_methods(["POST"])
 def api_upload_file(request):
-    """Optimized file upload endpoint with validation"""
+    """Optimized file upload endpoint with validation - uses optimized handler"""
     try:
         if 'file' not in request.FILES:
             return JsonResponse({"error": "No file provided"}, status=400)
         
         file = request.FILES['file']
         file_type = request.POST.get('file_type', 'general')
+        description = request.POST.get('description', '')
         
-        # Validate file size (10MB limit)
-        if file.size > 10 * 1024 * 1024:
-            return JsonResponse({"error": "File too large. Maximum size is 10MB"}, status=400)
+        # Use optimized file handler
+        result = save_file_optimized(file, file_type, description, request.user)
         
-        # Validate file type
-        allowed_extensions = ['.pdf', '.doc', '.docx', '.xls', '.xlsx', '.jpg', '.jpeg', '.png']
-        file_extension = os.path.splitext(file.name)[1].lower()
-        
-        if file_extension not in allowed_extensions:
-            return JsonResponse({"error": "File type not allowed"}, status=400)
-        
-        # Create directory based on file type
-        if file_type == 'advert':
-            root_dir = os.path.join(settings.BASE_DIR, 'uploads', 'comparative', 'adverts')
-        elif file_type == 'bid':
-            root_dir = os.path.join(settings.BASE_DIR, 'uploads', 'comparative', 'bids')
+        if result:
+            return JsonResponse({
+                "success": True,
+                "file_path": result['file_path'],
+                "metadata": result['metadata'],
+                "download_url": result['download_url'],
+                "preview_url": result['preview_url']
+            })
         else:
-            root_dir = os.path.join(settings.BASE_DIR, 'uploads', 'comparative', 'general')
-        
-        # Ensure directory exists
-        os.makedirs(root_dir, exist_ok=True)
-        
-        # Generate unique filename
-        timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
-        filename = f"{timestamp}_{file.name}"
-        
-        # Save file
-        fs = FileSystemStorage(location=root_dir)
-        saved_filename = fs.save(filename, file)
-        file_path = os.path.join(root_dir, saved_filename)
-        
-        # Return relative path for database storage
-        relative_path = os.path.join('uploads', 'comparative', file_type, saved_filename)
-        
-        return JsonResponse({
-            "success": True,
-            "file_path": relative_path,
-            "filename": saved_filename,
-            "original_name": file.name,
-            "size": file.size
-        })
+            return JsonResponse({"error": "File upload failed"}, status=500)
         
     except Exception as ex:
-        print(f"File upload error: {ex}")
+        logger.error(f"File upload error: {ex}")
         return JsonResponse({"error": "File upload failed"}, status=500)
 
 
@@ -3882,7 +3902,7 @@ def api_get_pr_items(request, pr_id):
 @login_required
 @require_http_methods(["GET"])
 def api_get_pr_attachments(request, pr_id):
-    """Get PR attachments"""
+    """Get PR attachments - optimized version without Base64 encoding"""
     if not pr_id.startswith("PR"):
         pr_id = "PR" + pr_id
         
@@ -3894,24 +3914,18 @@ def api_get_pr_attachments(request, pr_id):
             "message": "PR not found",
         })
 
-    pr_at_list = []
-    for at in purchase_request.attachment_set.all():
-        try:
-            if at.file and os.path.exists(at.file.path) and at.file.size < 5 * 1024 * 1024:  # 5MB limit
-                file_data = at.file.read()
-                encoded_file_data = base64.b64encode(file_data).decode('utf-8')
-                pr_at_list.append({
-                    "id": at.id,
-                    "file": encoded_file_data,
-                    "name": os.path.basename(at.file.name),
-                })
-        except Exception as ex:
-            print(f"Error processing attachment {at.id}: {ex}")
-            continue
+    # Use optimized file handling instead of Base64 encoding
+    include_preview = request.GET.get('include_preview', 'false').lower() == 'true'
+    pr_at_list = get_attachments_metadata_optimized(
+        purchase_request.attachment_set.all(), 
+        request.user, 
+        include_preview
+    )
 
     return JsonResponse({
         "success": True,
         "pr_attachments": pr_at_list,
+        "total_count": len(pr_at_list)
     })
 
 
@@ -4266,6 +4280,19 @@ def api_get_cs_approvals_optimized(request, cs_id):
         current_user = request.user
         fm_role, gm_role, procurement_role = getUserFMGMRoles(current_user)
         
+        # Debug logging
+        print(f"🔍 API Debug - User: {current_user.username}, CS: {cs_id}")
+        print(f"🔍 API Debug - Roles: FM={fm_role}, GM={gm_role}, Procurement={procurement_role}")
+        
+        # Additional debugging for the response
+        current_user_roles = {
+            "fm_role": fm_role,
+            "gm_role": gm_role,
+            "procurement_role": procurement_role
+        }
+        print(f"🔍 API Debug - current_user_roles dict: {current_user_roles}")
+        print(f"🔍 API Debug - fm_role type: {type(fm_role)}, value: {fm_role}")
+        
         rankings_list = [
             {
                 "supplier_name": rank.supplier_id.name if rank.supplier_id else "",
@@ -4277,7 +4304,7 @@ def api_get_cs_approvals_optimized(request, cs_id):
             } for rank in rankings
         ]
         
-        return JsonResponse({
+        response_data = {
             "success": True,
             "gm_approval": {
                 "id": gm_approval.id,
@@ -4298,12 +4325,12 @@ def api_get_cs_approvals_optimized(request, cs_id):
                 "approval_date": fm_approval.approval_date,
             } if fm_approval else {},
             "rankings": rankings_list,
-            "current_user_roles": {
-                "fm_role": fm_role,
-                "gm_role": gm_role,
-                "procurement_role": procurement_role
-            }
-        })
+            "current_user_roles": current_user_roles
+        }
+        
+        print(f"🔍 API Debug - Response current_user_roles: {response_data['current_user_roles']}")
+        
+        return JsonResponse(response_data)
         
     except Exception as ex:
         return JsonResponse({

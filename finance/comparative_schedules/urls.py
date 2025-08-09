@@ -1,5 +1,14 @@
 from django.urls import path
 from .views import *
+from .optimized_file_handlers import (
+    api_upload_file_optimized,
+    api_download_file_optimized,
+    api_preview_file_optimized,
+    api_get_attachments_optimized,
+    api_get_create_data_optimized,
+    api_get_cs_files_optimized,
+    api_delete_file_optimized,
+)
 app_name = 'comparative_schedules'
 
 urlpatterns = [
@@ -38,6 +47,15 @@ urlpatterns = [
     path('api/cs-committee/<str:cs_id>/', api_get_cs_committee_optimized, name='api_get_cs_committee_optimized'),
     path('api/cs-approvals/<str:cs_id>/', api_get_cs_approvals_optimized, name='api_get_cs_approvals_optimized'),
     path('api/cs-rankings/<str:cs_id>/', api_get_cs_rankings_optimized, name='api_get_cs_rankings_optimized'),
+    
+    # Optimized File Handling Endpoints (replaces Base64 encoding)
+    path('api/files/upload/', api_upload_file_optimized, name='api_upload_file_optimized'),
+    path('api/files/download/<path:file_path>/', api_download_file_optimized, name='api_download_file_optimized'),
+    path('api/files/preview/<path:file_path>/', api_preview_file_optimized, name='api_preview_file_optimized'),
+    path('api/files/delete/<path:file_path>/', api_delete_file_optimized, name='api_delete_file_optimized'),
+    path('api/files/attachments/<str:pr_id>/', api_get_attachments_optimized, name='api_get_attachments_optimized'),
+    path('api/files/create-data/<str:pr_id>/', api_get_create_data_optimized, name='api_get_create_data_optimized'),
+    path('api/files/cs-files/<str:cs_id>/', api_get_cs_files_optimized, name='api_get_cs_files_optimized'),
     
     path('save', save_comparative_schedule, name='save_schedule'),
     path('update', update_comparative_schedule, name='update_schedule'),

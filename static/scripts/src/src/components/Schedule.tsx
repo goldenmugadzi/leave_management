@@ -106,28 +106,75 @@ const formatDisplayDate = (dateString: string) => {
   return dateString;
 };
 
-// Helper function to get file object URL (from ScheduleRef.tsx)
-const onGetFileObjectUrl = (fileData: string | File | null | undefined): string | undefined => {
+// Helper function to get file download URL (optimized with Base64 detection)
+const getFileDownloadUrl = (fileData: string | File | { download_url?: string } | null | undefined): string | undefined => {
   try {
     if (typeof fileData === "string") {
-      const decodedFileData = atob(fileData);
-      const uint8Array = new Uint8Array(decodedFileData.length);
-      for (let i = 0; i < decodedFileData.length; i++) {
-        uint8Array[i] = decodedFileData.charCodeAt(i);
+      // Check if it's Base64 data (starts with typical Base64 patterns)
+      if (fileData.startsWith('JVBERi0x') || // PDF Base64 header
+          fileData.startsWith('UEsDBBQ') || // DOCX Base64 header
+          fileData.startsWith('/9j/') ||     // JPEG Base64 header
+          fileData.length > 100 && /^[A-Za-z0-9+/=]+$/.test(fileData)) { // Generic Base64 pattern
+        
+        console.log("🔄 Detected Base64 data, creating blob URL for download");
+        
+        // Handle legacy Base64 data - convert to downloadable blob
+        try {
+          const decodedData = atob(fileData);
+          const uint8Array = new Uint8Array(decodedData.length);
+          for (let i = 0; i < decodedData.length; i++) {
+            uint8Array[i] = decodedData.charCodeAt(i);
+          }
+          
+          // Detect file type from Base64 header
+          let mimeType = 'application/octet-stream';
+          if (fileData.startsWith('JVBERi0x')) {
+            mimeType = 'application/pdf';
+          } else if (fileData.startsWith('UEsDBBQ')) {
+            mimeType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+          } else if (fileData.startsWith('/9j/')) {
+            mimeType = 'image/jpeg';
+          }
+          
+          const blob = new Blob([uint8Array], { type: mimeType });
+          return URL.createObjectURL(blob);
+        } catch (base64Error) {
+          console.error("Error processing Base64 data:", base64Error);
+          return undefined;
+        }
+      } else {
+        // Handle file paths - convert to download URLs
+        return `/comperative_schedule/api/files/download/${fileData}`;
       }
-
-      const file = new Blob([uint8Array], { type: "application/pdf" });
-      console.log("file: ", file);
-
-      return URL.createObjectURL(file);
-    } else if (fileData) {
-      console.log("fileData: ", fileData);
+    } else if (fileData && typeof fileData === 'object' && 'download_url' in fileData) {
+      // Handle metadata objects with download_url
+      return fileData.download_url;
+    } else if (fileData instanceof File) {
+      // Handle File objects - create temporary URL
       return URL.createObjectURL(fileData);
     }
     return undefined;
   } catch (err) {
-    console.log("error: ", err);
+    console.log("error getting file URL: ", err);
     return undefined;
+  }
+};
+
+// Helper function to generate filename for Base64 downloads
+const getDownloadFilename = (fileData: string | File | null | undefined, defaultName: string = 'document'): string => {
+  if (!fileData || typeof fileData !== 'string') {
+    return `${defaultName}.pdf`;
+  }
+  
+  // Detect file type from Base64 header and return appropriate filename
+  if (fileData.startsWith('JVBERi0x')) {
+    return `${defaultName}.pdf`;
+  } else if (fileData.startsWith('UEsDBBQ')) {
+    return `${defaultName}.docx`;
+  } else if (fileData.startsWith('/9j/')) {
+    return `${defaultName}.jpg`;
+  } else {
+    return `${defaultName}.pdf`;
   }
 };
 
@@ -231,7 +278,15 @@ export default function Schedule({
   const [procPlans, setProcPlans] = useState<IProcPlan[]>([]);
   const [quantity] = useState<string>("");
   const [advert, setAdvert] = useState<File>();
-  const [existingAdvert, setExistingAdvert] = useState<string>(""); // Base64 encoded existing advert
+  const [advertMetadata, setAdvertMetadata] = useState<{
+    name: string;
+    size: number;
+    download_url: string;
+    preview_url: string;
+    mime_type: string;
+    file_path?: string;
+    is_base64?: boolean;
+  } | null>(null);
   
   // Simple usage to satisfy linter - will be used properly in dropdowns later
   const currenciesCount = currencies.length;
@@ -359,6 +414,51 @@ export default function Schedule({
   
   // API Functions
   const api = useScheduleApi({ base_url, setIsLoading });
+
+  // Optimized file upload handler
+  const handleFileUpload = useCallback(async (file: File, fileType: string = 'advert', description?: string) => {
+    try {
+      setIsLoading(true);
+      const result = await api.uploadFile(file, fileType, description);
+      
+      if (result && result.success) {
+        // Store file metadata for later use
+        const metadata = {
+          name: result.metadata.original_name,
+          size: result.metadata.size,
+          download_url: result.download_url,
+          preview_url: result.preview_url,
+          mime_type: result.metadata.mime_type,
+          file_path: result.file_path
+        };
+        
+        if (fileType === 'advert') {
+          setAdvertMetadata(metadata);
+        }
+        
+        onOpenResponse("File Upload Success", `File "${file.name}" uploaded successfully`, true);
+        return metadata;
+      } else {
+        throw new Error(result?.message || 'Upload failed');
+      }
+    } catch (error) {
+      console.error('File upload error:', error);
+      onOpenResponse("File Upload Error", `Failed to upload file: ${error}`, false);
+      return null;
+    } finally {
+      setIsLoading(false);
+    }
+  }, [api, setIsLoading]);
+
+  // Cleanup blob URLs to prevent memory leaks
+  useEffect(() => {
+    return () => {
+      if (advertMetadata?.is_base64 && advertMetadata.download_url.startsWith('blob:')) {
+        URL.revokeObjectURL(advertMetadata.download_url);
+        console.log('🧹 Cleaned up advertisement blob URL');
+      }
+    };
+  }, [advertMetadata]);
   
   // Memoized CSRF token
   const csrfToken = useMemo(() => getCookie("csrftoken") ?? "", []);
@@ -490,9 +590,76 @@ export default function Schedule({
         setProcRef(parsedData.proc_plan.proc_ref || '');
       }
       
-      // Set existing advert if available
+      // Set existing advert metadata if available
       if (parsedData.advert) {
-        setExistingAdvert(parsedData.advert);
+        // Handle both Base64 data and file paths intelligently
+        const isBase64 = (
+          parsedData.advert.startsWith('JVBERi0x') || // PDF Base64 header
+          parsedData.advert.startsWith('UEsDBBQ') || // DOCX Base64 header
+          parsedData.advert.startsWith('/9j/') ||     // JPEG Base64 header
+          (parsedData.advert.length > 100 && /^[A-Za-z0-9+/=]+$/.test(parsedData.advert))
+        );
+        
+        if (isBase64) {
+          console.log("🔄 Detected Base64 advertisement data, creating blob URL");
+          
+          // Handle Base64 advertisement data
+          try {
+            const decodedData = atob(parsedData.advert);
+            const uint8Array = new Uint8Array(decodedData.length);
+            for (let i = 0; i < decodedData.length; i++) {
+              uint8Array[i] = decodedData.charCodeAt(i);
+            }
+            
+            // Detect MIME type from Base64 header
+            let mimeType = 'application/pdf';
+            let extension = '.pdf';
+            if (parsedData.advert.startsWith('JVBERi0x')) {
+              mimeType = 'application/pdf';
+              extension = '.pdf';
+            } else if (parsedData.advert.startsWith('UEsDBBQ')) {
+              mimeType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+              extension = '.docx';
+            } else if (parsedData.advert.startsWith('/9j/')) {
+              mimeType = 'image/jpeg';
+              extension = '.jpg';
+            }
+            
+            const blob = new Blob([uint8Array], { type: mimeType });
+            const blobUrl = URL.createObjectURL(blob);
+            
+            setAdvertMetadata({
+              name: `advertisement${extension}`,
+              size: uint8Array.length,
+              download_url: blobUrl,
+              preview_url: blobUrl,
+              mime_type: mimeType,
+              file_path: parsedData.advert,
+              is_base64: true
+            });
+          } catch (error) {
+            console.error("Error processing Base64 advertisement data:", error);
+            // Fallback to treating as file path
+            setAdvertMetadata({
+              name: 'advertisement.pdf',
+              size: 0,
+              download_url: `/comperative_schedule/api/files/download/${parsedData.advert}`,
+              preview_url: `/comperative_schedule/api/files/preview/${parsedData.advert}`,
+              mime_type: 'application/pdf',
+              file_path: parsedData.advert
+            });
+          }
+        } else {
+          // Handle file path (optimized endpoint)
+          setAdvertMetadata({
+            name: 'advertisement.pdf',
+            size: 0,
+            download_url: `/comperative_schedule/api/files/download/${parsedData.advert}`,
+            preview_url: `/comperative_schedule/api/files/preview/${parsedData.advert}`,
+            mime_type: 'application/pdf',
+            file_path: parsedData.advert
+          });
+        }
       }
       
       // Extract PR/CS data - backend returns all fields at root level
@@ -805,6 +972,7 @@ export default function Schedule({
           
           // Store approval data if available
           if (approvalData) {
+            console.log('🔍 Received approval data:', approvalData);
             if (approvalData.gm_approval) {
               setGmApproval(approvalData.gm_approval);
             }
@@ -812,8 +980,13 @@ export default function Schedule({
               setFmApproval(approvalData.fm_approval);
             }
             if (approvalData.current_user_roles) {
+              console.log('🔍 Setting current user roles:', approvalData.current_user_roles);
               setCurrentUserRoles(approvalData.current_user_roles);
+            } else {
+              console.log('❌ No current_user_roles in approval data');
             }
+          } else {
+            console.log('❌ No approval data received');
           }
           break;
         }
@@ -1502,11 +1675,11 @@ export default function Schedule({
     if (!prData.closing_time) errors.push("Closing time is required");
     if (!prData.cs_opened_date) errors.push("CS opened date is required");
     if (!prData.tac_date) errors.push("TAC date is required");
-    // Check for either new advert file or existing advert document
-    if (!advert && !existingAdvert) errors.push("Advertisement document is required");
+    // Check for either new advert file or existing advert metadata
+    if (!advert && !advertMetadata) errors.push("Advertisement document is required");
     
     return { isValid: errors.length === 0, errors };
-  }, [currency, procPlan, prData, advert, existingAdvert]);
+  }, [currency, procPlan, prData, advert, advertMetadata]);
 
   // File type and size validation
   const validateFile = useCallback((file: File): { isValid: boolean; error?: string } => {
@@ -3236,20 +3409,49 @@ export default function Schedule({
                             )}
                           </div>
                         </div>
-                      ) : existingAdvert ? (
+                      ) : advertMetadata ? (
                         <div className="text-center">
                           <svg className="mx-auto h-12 w-12 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                           </svg>
                           <div className="mt-2">
                             <p className="text-sm text-blue-600 font-medium">Existing Advertisement Document</p>
+                            <div className="text-sm text-gray-600 mb-2">
+                              <span className="font-medium">{advertMetadata.name}</span>
+                              {advertMetadata.size > 0 && (
+                                <span className="ml-2">({(advertMetadata.size / 1024 / 1024).toFixed(2)} MB)</span>
+                              )}
+                            </div>
                             <button
                               type="button"
-                              onClick={() => {
+                              onClick={(e) => {
+                                e.preventDefault();
+                                
+                                console.log("📄 Advertisement download click:", {
+                                  name: advertMetadata.name,
+                                  size: advertMetadata.size,
+                                  mime_type: advertMetadata.mime_type,
+                                  is_base64: advertMetadata.is_base64,
+                                  download_url_type: advertMetadata.is_base64 ? 'blob' : 'api_endpoint'
+                                });
+                                
+                                // Create download link with proper handling
                                 const link = document.createElement('a');
-                                link.href = `data:application/octet-stream;base64,${existingAdvert}`;
-                                link.download = 'advertisement.pdf';
+                                link.href = advertMetadata.download_url;
+                                link.download = advertMetadata.name;
+                                
+                                // For blob URLs, don't set target="_blank" to force download
+                                if (!advertMetadata.is_base64) {
+                                  link.target = '_blank';
+                                  link.rel = 'noopener noreferrer';
+                                }
+                                
+                                // Trigger download
+                                document.body.appendChild(link);
                                 link.click();
+                                document.body.removeChild(link);
+                                
+                                console.log(`✅ Advertisement download initiated: ${advertMetadata.name}`);
                               }}
                               className="mt-2 text-sm text-blue-600 hover:text-blue-500 underline"
                             >
@@ -3264,11 +3466,22 @@ export default function Schedule({
                                     type="file" 
                                     className="sr-only" 
                                     accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-                                    onChange={(e) => {
+                                    onChange={async (e) => {
                                       const file = e.target.files?.[0];
                                       if (file) {
-                                        setAdvert(file);
-                                        setExistingAdvert(''); // Clear existing when new file is selected
+                                        // Validate file first
+                                        const validation = validateFile(file);
+                                        if (!validation.isValid) {
+                                          onOpenResponse("File Upload Error", validation.error || "Invalid file", false);
+                                          return;
+                                        }
+                                        
+                                        // Upload file using optimized handler
+                                        const metadata = await handleFileUpload(file, 'advert', 'Advertisement document replacement');
+                                        if (metadata) {
+                                          setAdvert(undefined); // Clear local file state
+                                          // setAdvertMetadata is handled in handleFileUpload
+                                        }
                                       }
                                     }}
                                   />
@@ -3291,9 +3504,23 @@ export default function Schedule({
                                   type="file" 
                                   className="sr-only" 
                                   accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-                                  onChange={(e) => {
+                                  onChange={async (e) => {
                                     const file = e.target.files?.[0];
-                                    if (file) setAdvert(file);
+                                    if (file) {
+                                      // Validate file first
+                                      const validation = validateFile(file);
+                                      if (!validation.isValid) {
+                                        onOpenResponse("File Upload Error", validation.error || "Invalid file", false);
+                                        return;
+                                      }
+                                      
+                                      // Upload file using optimized handler
+                                      const metadata = await handleFileUpload(file, 'advert', 'Advertisement document');
+                                      if (metadata) {
+                                        setAdvert(undefined); // Clear local file state
+                                        // setAdvertMetadata is handled in handleFileUpload
+                                      }
+                                    }
                                   }}
                                 />
                               </label>
@@ -3762,27 +3989,54 @@ export default function Schedule({
                                     </div>
                                                                          {(bid.encoded_bid_document || bid.bid_document || bid.bid_document_url) && (
                                         <div className="mt-2">
-                                          <a
-                                            href={
-                                              bid.bid_document_url || 
-                                              onGetFileObjectUrl(bid.encoded_bid_document) ||
-                                              onGetFileObjectUrl(bid.bid_document) ||
-                                              "#"
-                                            }
-                                            target="_blank"
-                                            rel="noopener noreferrer"
+                                          <button
+                                            type="button"
+                                            className="text-xs text-blue-600 hover:text-blue-800 hover:underline"
                                             onClick={(e) => {
                                               e.stopPropagation();
+                                              e.preventDefault();
+                                              
+                                              // Handle document download
+                                              const downloadUrl = bid.bid_document_url || 
+                                                                getFileDownloadUrl(bid.encoded_bid_document) ||
+                                                                getFileDownloadUrl(bid.bid_document);
+                                              
                                               console.log("📄 Small document click:", {
                                                 bid_document_url: bid.bid_document_url,
                                                 encoded_bid_document: bid.encoded_bid_document ? "present" : "missing",
-                                                bid_document: bid.bid_document ? "present" : "missing"
+                                                bid_document: bid.bid_document ? "present" : "missing",
+                                                generatedUrl: downloadUrl
                                               });
+                                              
+                                              if (downloadUrl) {
+                                                // Create download link
+                                                const link = document.createElement('a');
+                                                link.href = downloadUrl;
+                                                
+                                                // Set filename based on bid data
+                                                const filename = getDownloadFilename(
+                                                  bid.encoded_bid_document || bid.bid_document,
+                                                  `bid_${bid.bid_count}_${bid.supplier_name?.replace(/[^a-zA-Z0-9]/g, '_')}`
+                                                );
+                                                link.download = filename;
+                                                
+                                                // Set target for new tab (in case download fails)
+                                                link.target = '_blank';
+                                                link.rel = 'noopener noreferrer';
+                                                
+                                                // Trigger download
+                                                document.body.appendChild(link);
+                                                link.click();
+                                                document.body.removeChild(link);
+                                                
+                                                console.log(`✅ Download initiated: ${filename}`);
+                                              } else {
+                                                console.error("❌ No download URL available");
+                                              }
                                             }}
-                                            className="text-xs text-blue-600 hover:text-blue-800 hover:underline"
                                           >
                                             📄 View Document
-                                          </a>
+                                          </button>
                                         </div>
                                       )}
                                   </div>
@@ -3872,24 +4126,49 @@ export default function Schedule({
                                          <h6 className="text-sm font-medium text-gray-900 mb-2">Documents</h6>
                                          <div className="text-sm text-gray-600">
                                                                                       {bid.encoded_bid_document || bid.bid_document || bid.bid_document_url ? (
-                                              <a
-                                                href={
-                                                  bid.bid_document_url || 
-                                                  onGetFileObjectUrl(bid.encoded_bid_document) ||
-                                                  onGetFileObjectUrl(bid.bid_document) ||
-                                                  "#"
-                                                }
-                                                target="_blank"
-                                                rel="noopener noreferrer"
+                                              <button
+                                                type="button"
                                                 className="text-blue-600 hover:text-blue-800 hover:underline flex items-center"
-                                                onClick={() => {
-                                                  // Debug logging
+                                                onClick={(e) => {
+                                                  e.preventDefault();
+                                                  
+                                                  // Handle document download
+                                                  const downloadUrl = bid.bid_document_url || 
+                                                                    getFileDownloadUrl(bid.encoded_bid_document) ||
+                                                                    getFileDownloadUrl(bid.bid_document);
+                                                  
                                                   console.log("📄 Document click:", {
                                                     bid_document_url: bid.bid_document_url,
                                                     encoded_bid_document: bid.encoded_bid_document ? "present" : "missing",
                                                     bid_document: bid.bid_document ? "present" : "missing",
-                                                    generatedUrl: onGetFileObjectUrl(bid.encoded_bid_document) || onGetFileObjectUrl(bid.bid_document)
+                                                    generatedUrl: downloadUrl
                                                   });
+                                                  
+                                                  if (downloadUrl) {
+                                                    // Create download link
+                                                    const link = document.createElement('a');
+                                                    link.href = downloadUrl;
+                                                    
+                                                    // Set filename based on bid data
+                                                    const filename = getDownloadFilename(
+                                                      bid.encoded_bid_document || bid.bid_document,
+                                                      `bid_${bid.bid_count}_${bid.supplier_name?.replace(/[^a-zA-Z0-9]/g, '_')}`
+                                                    );
+                                                    link.download = filename;
+                                                    
+                                                    // Set target for new tab (in case download fails)
+                                                    link.target = '_blank';
+                                                    link.rel = 'noopener noreferrer';
+                                                    
+                                                    // Trigger download
+                                                    document.body.appendChild(link);
+                                                    link.click();
+                                                    document.body.removeChild(link);
+                                                    
+                                                    console.log(`✅ Download initiated: ${filename}`);
+                                                  } else {
+                                                    console.error("❌ No download URL available");
+                                                  }
                                                 }}
                                               >
                                                 <svg className="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -3899,7 +4178,7 @@ export default function Schedule({
                                                 <svg className="w-3 h-3 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                                                 </svg>
-                                              </a>
+                                              </button>
                                             ) : (
                                               <p>No documents attached</p>
                                             )}

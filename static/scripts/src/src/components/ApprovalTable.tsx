@@ -134,8 +134,19 @@ const ApprovalTable: React.FC<ApprovalTableProps> = ({
     // Allow finance manager to approve if: user has FM role, is not creator, status is pending, and committee is approved or no committee members
     const fmCanApprove = (currentUserRoles?.fm_role || false) && !isCreator && fmStatus === 'pending' && (committeeStatus === 'approved' || committeeMembers.length === 0);
     
+    // Debug logging for finance manager approval
+    console.log('🔍 Finance Manager Approval Debug:', {
+      currentUserRoles,
+      fm_role: currentUserRoles?.fm_role,
+      isCreator,
+      fmStatus,
+      committeeStatus,
+      committeeMembersLength: committeeMembers.length,
+      fmCanApprove,
+      username,
+      fmApproval
+    });
 
-    
     rows.push({
       id: 'finance_manager',
       role: 'finance_manager',
@@ -156,8 +167,15 @@ const ApprovalTable: React.FC<ApprovalTableProps> = ({
     // General manager can approve if: user has GM role, is not creator, status is pending, and finance manager is approved
     const gmCanApprove = (currentUserRoles?.gm_role || false) && !isCreator && gmStatus === 'pending' && fmStatus === 'approved';
     
+    // Debug logging for general manager approval
+    console.log('🔍 General Manager Approval Debug:', {
+      gm_role: currentUserRoles?.gm_role,
+      isCreator,
+      gmStatus,
+      fmStatus,
+      gmCanApprove
+    });
 
-    
     rows.push({
       id: 'general_manager',
       role: 'general_manager',
