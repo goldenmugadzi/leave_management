@@ -145,6 +145,11 @@ MIDDLEWARE = [
     'it.beii_auth.session_middleware.SessionErrorSessionMiddleware'
 ]
 
+# ================= Appraisal Middleware ========================
+MIDDLEWARE += [
+    'appraisal.middleware.LoginRequiredForAppraisalMiddleware',
+]
+
 ROOT_URLCONF = 'beii_v1.urls'
 
 TEMPLATES = [

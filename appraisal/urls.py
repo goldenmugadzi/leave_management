@@ -81,7 +81,7 @@ urlpatterns = [
     path('performance', PerformancePlanAndAssessmentAppraisalTemplateView.as_view(), name='performance_review_index'),
     path('<int:appraisal_id>/performance-progress-review', PerformancePlanAndAssessmentTemplateView.as_view(), name='performance_review_detail'),
     path('<int:appraisal_id>/performance-progress-review/<int:quarter_id>', PerformanceReviewsApprovalView.as_view(), name='performance_review_create'),
-    path('performance/<int:appraisal_id>/training-development', TrainingAndDevelopmentTemplateView.as_view(), name='training_development_index'),
+    path('<int:appraisal_id>/training-development', TrainingAndDevelopmentTemplateView.as_view(), name='training_development_index'),
     path('<int:appraisal_id>/training-development/<int:quarter_id>', TrainingAndDevelopmentUpdateView.as_view(), name='training_development_update'),
     
 
