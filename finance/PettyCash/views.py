@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+from decimal import Decimal, InvalidOperation
 from mimetypes import guess_type
 from random import randrange
 import csv
@@ -7,6 +8,7 @@ import sweetify
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponseNotFound, FileResponse, HttpResponse
+from django.http import JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
 from openpyxl.workbook import Workbook
@@ -17,7 +19,7 @@ from approve.forms import ApprovalForm
 from approve.views import intiate
 from it.users.models import UserProfile, Roles, Sections, Regions
 from approve.models import Process, Step, Approval
-from .forms import PettycashForm, QuotationFormSet, PettycashReportForm, CashierDisbursementForm
+from .forms import PettycashForm, QuotationFormSet, PettycashReportForm, CashierDisbursementForm, RequesterClearForm
 from .models import Pettycash, Quotation, PettycashReport
 
 from ..comparative_schedules.views import notify_user
@@ -45,8 +47,9 @@ def pettyCash_detail(request, petty_id):
     # print(pettycash_role)
 
     pettycash_item = Pettycash.objects.get(petty_id=petty_id)
-    # Default form holder for cashier
-    form = None
+    # Default form holders
+    form = None  # cashier form
+    requester_form = None
 
     # return validation to clear validation = pettycash_item.process.approval_set.filter(approved='Approved',
     # step__approver__in=user_profile.roles.all()).exists()) print(validation)
@@ -97,6 +100,41 @@ def pettyCash_detail(request, petty_id):
         else:
             if not getattr(pettycash_item, "payment_mode", None):
                 form = CashierDisbursementForm(pettycash=pettycash_item)
+
+    # Requester clear flow (inline form, similar to cashier)
+    if pettycash_role == "create":
+        # Eligible only after cashier disburses and when not yet receipted
+        if pettycash_item.amount_disbursed is not None and pettycash_item.payment_mode is not None and not pettycash_item.receipt_file:
+            if request.method == "POST" and request.POST.get("action") == "requester_clear":
+                requester_form = RequesterClearForm(request.POST, request.FILES, pettycash=pettycash_item)
+                if requester_form.is_valid():
+                    pettycash_item.receipt_file = requester_form.cleaned_data["receipt_file"]
+                    pettycash_item.amount_used = float(requester_form.cleaned_data["amount_used"])
+                    pettycash_item.save(update_fields=["receipt_file", "amount_used"])
+
+                    # Auto-approve requester step if permitted
+                    try:
+                        process = pettycash_item.process
+                        latest_approval = process.approval_set.last()
+                        next_step_num = (latest_approval.step.step + 1) if latest_approval else 1
+                        user_roles = request.user.roles.all()
+                        step_for_user = Step.objects.get(step=next_step_num, workflow=process.workflow, approver__in=user_roles)
+                        Approval.objects.create(
+                            step=step_for_user,
+                            user=request.user,
+                            process=process,
+                            approved='Approved',
+                            approved_at=datetime.now()
+                        )
+                    except Step.DoesNotExist:
+                        pass
+                    except Exception:
+                        pass
+
+                    messages.success(request, "Petty cash cleared successfully.")
+                    return redirect('pettycash:pettycash_detail', petty_id=pettycash_item.petty_id)
+            else:
+                requester_form = RequesterClearForm(pettycash=pettycash_item)
 
     approvalForm = None
     to = None
@@ -182,7 +220,8 @@ def pettyCash_detail(request, petty_id):
                       'requestor': requestor,
                       'cashier': cashier,
                       'cashier_approved': cashier_approved,
-                      'form': form,  # include cashier form if available
+                      'form': form,  # cashier form
+                      'requester_form': requester_form,  # requester clear form
                   })
 
 
@@ -1048,19 +1087,79 @@ def approve_step(process_id, user_id, date_approved):
 
 
 def receipt(request):
-    if request.method == 'POST':
-        receipt_file = request.FILES['file-input']
-        print(receipt_file)
-        used = request.POST['disbursed']
-        pettycash = request.POST['petty_id']
-        pettycash = Pettycash.objects.filter(petty_id=pettycash).first()
-        pettycash.receipt_file = receipt_file
-        pettycash.amount_used = used
-        pettycash.save()
-        messages.success(request, 'Receipt uploaded successfully')
-        return redirect('pettycash:pettycash_detail', petty_id=pettycash.petty_id)
-    else:
+    if request.method != 'POST':
         return redirect('/pettycash/pettycashs')
+
+    # Defensive fetch
+    petty_id = request.POST.get('petty_id')
+    pettycash = Pettycash.objects.filter(petty_id=petty_id).first()
+    if not pettycash:
+        return JsonResponse({'success': False, 'error': 'Petty cash not found.'}, status=404)
+
+    # Authorization: only requester can clear
+    if request.user != pettycash.requested_by:
+        return JsonResponse({'success': False, 'error': 'Not authorized to clear this petty cash.'}, status=403)
+
+    # Require cashier disbursement first
+    if pettycash.amount_disbursed is None or pettycash.payment_mode is None:
+        return JsonResponse({'success': False, 'error': 'Cashier must capture disbursement before you can clear.'}, status=400)
+
+    # Ensure not already receipted
+    if pettycash.receipt_file:
+        return JsonResponse({'success': False, 'error': 'Receipt already uploaded.'}, status=400)
+
+    # Validate receipt file
+    receipt_file = request.FILES.get('file-input')
+    if not receipt_file:
+        return JsonResponse({'success': False, 'error': 'Receipt file is required.'}, status=400)
+
+    # Validate amount used
+    used_raw = request.POST.get('disbursed')
+    try:
+        used_amt = Decimal(used_raw)
+    except (InvalidOperation, TypeError):
+        return JsonResponse({'success': False, 'error': 'Amount used must be a valid number.'}, status=400)
+    if used_amt <= Decimal('0'):
+        return JsonResponse({'success': False, 'error': 'Amount used must be greater than 0.'}, status=400)
+
+    # Determine cap: prefer amount_disbursed, else requested amount
+    cap = pettycash.amount_disbursed if pettycash.amount_disbursed is not None else pettycash.amount
+    try:
+        cap_dec = Decimal(str(cap))
+    except Exception:
+        cap_dec = Decimal('0')
+
+    if used_amt > cap_dec:
+        return JsonResponse({'success': False, 'error': f'Amount used cannot exceed {cap_dec}.'}, status=400)
+
+    # Save receipt and amount used
+    pettycash.receipt_file = receipt_file
+    pettycash.amount_used = float(used_amt)
+    pettycash.save(update_fields=['receipt_file', 'amount_used'])
+
+    # Auto-approve requester clear step if the next step is assigned to the requester
+    try:
+        process = pettycash.process
+        latest_approval = process.approval_set.last()
+        next_step_num = (latest_approval.step.step + 1) if latest_approval else 1
+        user_roles = request.user.roles.all()
+        step_for_user = Step.objects.get(step=next_step_num, workflow=process.workflow, approver__in=user_roles)
+        # Create approval record
+        Approval.objects.create(
+            step=step_for_user,
+            user=request.user,
+            process=process,
+            approved='Approved',
+            approved_at=datetime.now()
+        )
+    except Step.DoesNotExist:
+        # No step for this user; skip auto-approval
+        pass
+    except Exception:
+        # Don’t fail the receipt on approval errors
+        pass
+
+    return JsonResponse({'success': True, 'redirect': f"/pettycash/pettycash_detail/{pettycash.petty_id}"})
 
 
 def download_attachment(request, attachment_id):

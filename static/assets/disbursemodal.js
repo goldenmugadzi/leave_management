@@ -22,14 +22,23 @@ $(document).ready(function() {
             contentType: false,
             processData: false,
             success: function(response) {
-                // Handle successful response
-                console.log("Success:", response);
-                $("#upload-form").trigger("reset"); // Reset form after submission
-                $("#modal").hide();
+                if (response && response.success) {
+                    if (response.redirect) {
+                        window.location.href = response.redirect;
+                    } else {
+                        window.location.reload();
+                    }
+                } else {
+                    alert((response && response.error) ? response.error : 'Unexpected response');
+                }
             },
-            error: function(error) {
-                // Handle error response
-                console.error("Error:", error);
+            error: function(xhr) {
+                try {
+                    const data = JSON.parse(xhr.responseText);
+                    alert(data.error || 'Something went wrong');
+                } catch(e) {
+                    alert('Something went wrong');
+                }
             }
         });
     });

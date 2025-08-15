@@ -101,32 +101,42 @@
                             </p>
                         {% if clear == False and requestor != None and cashier_approved == True %}
                             <br>
-                        <p class="font-bold   mb-2 bg-red-600"> Clearance status:Pending</p>
-                            <button id="open-modal" class="bg-gulf-blue-600 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded">Clear Pettycash</button>
-                            <div id="modal" class="modal">
-                                <div class="modal-content">
-                                    <form id="upload-form" enctype="multipart/form-data">
-                                        {% csrf_token %}
-                                        <div class="form-group">
-                                            <label for="file-input">Receipt:</label>
-                                            <br>
-                                            <input type="file" id="file-input" name="file-input">
+                            <p class="font-bold   mb-2 bg-red-600"> Clearance status:Pending</p>
+                            {% if requester_form %}
+                                <form class="row rounded py-4 border rounded-lg p-3 m-auto container" method="POST" enctype="multipart/form-data">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="requester_clear" />
+                                    <div class="m-auto container">
+                                        <h4 class="text-center mb-4 font-bold text-xl mb-2">Requester: Clear Pettycash</h4>
+
+                                        {% if requester_form.non_field_errors %}
+                                            <div class="text-red-600 mb-2">{{ requester_form.non_field_errors }}</div>
+                                        {% endif %}
+
+                                        <div class="m-4 text-center">
+                                            <label class="block font-medium mb-1">Receipt</label>
+                                            {{ requester_form.receipt_file }}
+                                            {% if requester_form.receipt_file.errors %}
+                                                <div class="text-red-600 text-sm">{{ requester_form.receipt_file.errors.0 }}</div>
+                                            {% endif %}
                                         </div>
-                                        <div class="form-group">
-                                            <label for="disbursed">Amount used($):</label>
-                                            <br>
-                                            <input type="text" id="disbursed" name="disbursed">
-                                            <input type="hidden" name="petty_id" value="{{ pettycash.petty_id }}">
+
+                                        <div class="m-4 text-center">
+                                            <label class="block font-medium mb-1">Amount Used</label>
+                                            {{ requester_form.amount_used }}
+                                            {% if requester_form.amount_used.errors %}
+                                                <div class="text-red-600 text-sm">{{ requester_form.amount_used.errors.0 }}</div>
+                                            {% endif %}
+                                            <p class="text-sm text-gray-600 mt-1">Max: {{ pettycash.amount_disbursed|default_if_none:pettycash.amount }}</p>
                                         </div>
-                                        <button type="submit" class="bg-gulf-blue-600 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded">Submit</button>
-                                    </form>
-                                    <br>
-                                    <button id="close-modal" class="bg-red-500 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded">Close</button>
-                                </div>
-                            </div>
-                            <br>
-                            <br>
-                        {% endif%}
+
+                                        <div class="m-4 text-center">
+                                            <button type="submit" class="bg-gulf-blue-600 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded" name="submit" value="submit">Submit</button>
+                                        </div>
+                                    </div>
+                                </form>
+                            {% endif %}
+                        {% endif %}
                         {% if clear == True %}
                             <p class="font-bold   mb-2"> Clearance status:Cleared</p>
                         {% endif %}

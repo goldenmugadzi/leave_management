@@ -217,3 +217,33 @@ class PettycashReportForm(forms.ModelForm):
         words = field_name.split('_')
         capitalized_words = [word.capitalize() for word in words]
         return ' '.join(capitalized_words)
+
+
+class RequesterClearForm(forms.Form):
+    receipt_file = forms.FileField(required=True, label="Receipt")
+    amount_used = forms.DecimalField(
+        required=True,
+        min_value=Decimal("0.01"),
+        max_digits=12,
+        decimal_places=2,
+        label="Amount used"
+    )
+
+    def __init__(self, *args, pettycash: Pettycash, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.pettycash = pettycash
+        # Helpful default: set to amount_disbursed if present, else requested
+        default_amt = self.pettycash.amount_disbursed if self.pettycash.amount_disbursed is not None else self.pettycash.amount
+        if not self.is_bound and default_amt is not None:
+            self.initial.setdefault("amount_used", Decimal(str(default_amt)))
+
+    def clean_amount_used(self):
+        used = self.cleaned_data["amount_used"]
+        try:
+            cap = self.pettycash.amount_disbursed if self.pettycash.amount_disbursed is not None else self.pettycash.amount
+            cap_dec = Decimal(str(cap))
+        except Exception:
+            cap_dec = Decimal("0")
+        if used > cap_dec:
+            raise forms.ValidationError(f"Amount used cannot exceed {cap_dec}.")
+        return used
