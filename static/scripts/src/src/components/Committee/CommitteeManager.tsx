@@ -1,8 +1,7 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { useScheduleContext } from '../../context/ScheduleContext';
-import { useCommitteeState } from '../../hooks/useCommitteeState';
 import { ICommittee, IUser } from '../../types/scheduleTypes';
-import { buildApiUrl, getApiEndpoints } from '../../config/apiEndpoints';
+import { buildApiUrl, getApiEndpoints, getCurrentModule, API_MODULES, MODULE_CONFIG } from '../../config/apiEndpoints';
 
 // Helper function to get CSRF token from cookies
 const getCookie = (name: string) => {
@@ -19,6 +18,7 @@ interface IUserOption {
 
 interface CommitteeManagerProps {
   users: IUser[];
+  committeeMembers: ICommittee[];
   onSaveCommittee: (committee: ICommittee[]) => Promise<void>;
   isCreator?: boolean; // Add isCreator prop
   csrfToken?: string; // Add CSRF token prop
@@ -26,12 +26,28 @@ interface CommitteeManagerProps {
 
 const CommitteeManager: React.FC<CommitteeManagerProps> = ({ 
   users,
+  committeeMembers: committee,
   onSaveCommittee,
   isCreator = false, // Default to false for safety
   csrfToken = "" // Default to empty string
 }) => {
   const { username, csId, base_url } = useScheduleContext();
-  const { committeeMembers: committee, updateCommitteeMembers, clearCommitteeCache } = useCommitteeState();
+  
+  // Local state for committee management
+  const [localCommitteeMembers, setLocalCommitteeMembers] = useState<ICommittee[]>(committee);
+  
+  // Update committee members locally
+  const updateCommitteeMembers = useCallback((members: ICommittee[]) => {
+    setLocalCommitteeMembers(members);
+  }, []);
+  
+  // Clear committee cache
+  const clearCommitteeCache = useCallback(() => {
+    setLocalCommitteeMembers([]);
+  }, []);
+  
+  // Use local committee members
+  const currentCommittee = localCommitteeMembers;
 
   // State for user justification
   const [justification, setJustification] = useState('');
@@ -72,7 +88,7 @@ const CommitteeManager: React.FC<CommitteeManagerProps> = ({
     };
   }, [searchTerm]);
 
-  // Committee data is already loaded by Schedule component via context
+  // Committee data is passed from parent component
   // No need for redundant API calls here
 
   // Server-side search for users
@@ -84,7 +100,23 @@ const CommitteeManager: React.FC<CommitteeManagerProps> = ({
 
     setIsSearching(true);
     try {
-      const url = buildApiUrl(base_url, `${getApiEndpoints().USERS}?search=${encodeURIComponent(searchQuery)}&limit=20`);
+      // Get the current module to construct the correct API endpoint
+      const currentModule = getCurrentModule();
+      
+      // Use the centralized MODULE_CONFIG to get the correct users endpoint
+      let usersEndpoint = '';
+      if (currentModule === API_MODULES.COMPARATIVE_SCHEDULES) {
+        usersEndpoint = MODULE_CONFIG.comparativeSchedules.users;
+      } else if (currentModule === API_MODULES.DIRECT_PURCHASE) {
+        usersEndpoint = MODULE_CONFIG.directPurchase.users;
+      } else if (currentModule === API_MODULES.RESTRICTED_BIDDING) {
+        usersEndpoint = MODULE_CONFIG.restrictedBidding.users;
+      } else {
+        // Fallback to comparative schedules
+        usersEndpoint = MODULE_CONFIG.comparativeSchedules.users;
+      }
+      
+      const url = buildApiUrl(base_url, `${usersEndpoint}?search=${encodeURIComponent(searchQuery)}&limit=20`);
       const response = await fetch(url);
       const data = await response.json();
       
@@ -180,19 +212,19 @@ const CommitteeManager: React.FC<CommitteeManagerProps> = ({
     const username = selectedUser.value;
     const memberName = selectedUser.label.split(' (')[0];
     // Check if member already exists
-    const memberExists = committee.some(m => m.memberUserName === username);
+    const memberExists = currentCommittee.some(m => m.memberUserName === username);
     if (memberExists) {
       alert('This member is already in the committee');
       return;
     }
     // Check if position already taken
-    const positionExists = committee.some(m => m.memberPosition === selectedPosition);
+    const positionExists = currentCommittee.some(m => m.memberPosition === selectedPosition);
     if (positionExists) {
       alert('This position is already assigned to another member');
       return;
     }
     const newCommittee = [
-      ...committee,
+      ...currentCommittee,
       {
         memberUserName: username,
         memberName,
@@ -248,7 +280,7 @@ const CommitteeManager: React.FC<CommitteeManagerProps> = ({
   const clearAllCommitteeMembers = useCallback(async () => {
     try {
       // Delete each committee member one by one
-      const deletePromises = committee.map(member => 
+      const deletePromises = currentCommittee.map(member => 
         deleteCommitteeMember(member.memberUserName)
       );
       
@@ -264,7 +296,7 @@ const CommitteeManager: React.FC<CommitteeManagerProps> = ({
       // Always clear local state regardless of backend results
       clearCommitteeCache();
       
-      return successCount === committee.length;
+      return successCount === currentCommittee.length;
     } catch (error) {
       console.error("❌ Error clearing committee members:", error);
       alert("Error clearing committee members. Please try again.");
@@ -278,19 +310,19 @@ const CommitteeManager: React.FC<CommitteeManagerProps> = ({
     const deleteSuccess = await deleteCommitteeMember(username_);
     
     if (deleteSuccess) {
-      // If backend deletion was successful, update local state
-      const updated = [...committee];
-      updated.splice(index, 1);
-      updateCommitteeMembers(updated);
-    } else {
-      // If backend deletion failed, show error but still update local state
-      console.warn("⚠️ Backend deletion failed, but updating local state");
-      alert("Warning: Failed to delete committee member from server. The change may not persist.");
-      const updated = [...committee];
-      updated.splice(index, 1);
-      updateCommitteeMembers(updated);
-    }
-  }, [committee, updateCommitteeMembers, deleteCommitteeMember]);
+          // If backend deletion was successful, update local state
+    const updated = [...currentCommittee];
+    updated.splice(index, 1);
+    updateCommitteeMembers(updated);
+  } else {
+    // If backend deletion failed, show error but still update local state
+    console.warn("⚠️ Backend deletion failed, but updating local state");
+    alert("Warning: Failed to delete committee member from server. The change may not persist.");
+    const updated = [...currentCommittee];
+    updated.splice(index, 1);
+    updateCommitteeMembers(updated);
+  }
+  }, [currentCommittee, updateCommitteeMembers, deleteCommitteeMember]);
   
   // Open justification modal
   const onOpenJustificationModal = useCallback((username_: string) => {
@@ -323,17 +355,17 @@ const CommitteeManager: React.FC<CommitteeManagerProps> = ({
   const onSubmitCommittee = useCallback(async () => {
     try {
       // Validation
-      if (committee.length === 0) {
+      if (currentCommittee.length === 0) {
         alert('Please add at least one committee member');
         return;
       }
       
-      await onSaveCommittee(committee);
+      await onSaveCommittee(currentCommittee);
     } catch (error) {
       console.error('Error saving committee:', error);
       alert('Error saving committee');
     }
-  }, [committee, onSaveCommittee]);
+  }, [currentCommittee, onSaveCommittee]);
   
   // Helper function to get style classes for approval status
   const getCommitteeClassNames = useCallback((approvalStatus: string) => {
@@ -364,7 +396,7 @@ const CommitteeManager: React.FC<CommitteeManagerProps> = ({
           )}
           
           {/* Only show Clear Committee button if user is creator */}
-          {isCreator && committee.length > 0 && (
+          {isCreator && currentCommittee.length > 0 && (
             <button
               type="button"
               onClick={async () => {
@@ -403,7 +435,7 @@ const CommitteeManager: React.FC<CommitteeManagerProps> = ({
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {committee.length === 0 ? (
+            {currentCommittee.length === 0 ? (
               <tr>
                 <td colSpan={5} className="px-6 py-4 text-center text-sm text-gray-500">
                   No committee members added yet.
@@ -415,7 +447,7 @@ const CommitteeManager: React.FC<CommitteeManagerProps> = ({
                 </td>
               </tr>
             ) : (
-              committee.map((member, index) => (
+              currentCommittee.map((member, index) => (
                 <tr key={member.memberUserName} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
@@ -483,7 +515,7 @@ const CommitteeManager: React.FC<CommitteeManagerProps> = ({
       </div>
 
       {/* Only show Save Committee button if user is creator and there are committee members */}
-      {isCreator && committee.length > 0 && (
+      {isCreator && currentCommittee.length > 0 && (
         <div className="mt-6 flex justify-end">
           <button
             type="button"

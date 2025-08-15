@@ -1,10 +1,10 @@
   import React from 'react';
-import { useCommitteeState } from '../../hooks/useCommitteeState';
 import CommitteeManager from './CommitteeManager';
 import { IUser, ICommittee } from '../../types/scheduleTypes';
 
 interface CommitteeApprovalWrapperProps {
   users: IUser[];
+  committeeMembers: ICommittee[];
   onSaveCommittee: (committee: ICommittee[]) => Promise<void>;
   onApprove: (username: string, approval: string, justification: string) => Promise<void>;
   isCreator?: boolean; // Add isCreator prop
@@ -13,12 +13,11 @@ interface CommitteeApprovalWrapperProps {
 
 const CommitteeApprovalWrapper: React.FC<CommitteeApprovalWrapperProps> = ({
   users,
+  committeeMembers,
   onSaveCommittee,
-  // onApprove,
   isCreator = false, // Default to false for safety
   csrfToken = "" // Default to empty string
 }) => {
-  const { committeeMembers } = useCommitteeState();
 
   return (
     <div className="space-y-8">
@@ -34,6 +33,7 @@ const CommitteeApprovalWrapper: React.FC<CommitteeApprovalWrapperProps> = ({
           </p>
           <CommitteeManager 
             users={users} 
+            committeeMembers={committeeMembers}
             onSaveCommittee={onSaveCommittee}
             isCreator={isCreator} // Pass isCreator prop
             csrfToken={csrfToken} // Pass CSRF token prop

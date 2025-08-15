@@ -37,7 +37,7 @@ from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_http_methods
 import copy
 from django.conf import settings
-from django.core.files.storage import FileSystemStorage
+# FileSystemStorage no longer needed - file uploads handled by dedicated APIs
 from django.core.cache import cache
 
 from django.contrib import messages
@@ -2317,6 +2317,12 @@ def create(request):
 
 @login_required
 def save_comparative_schedule(request):
+    """
+    Save a new comparative schedule.
+    
+    The advert field should be a file path (string) from a previous file upload API call.
+    File uploads are handled separately by dedicated file upload APIs.
+    """
     try:
 
         cs_id = "CS" + datetime.now().strftime("%Y%m%d%I%M%S")
@@ -2325,7 +2331,9 @@ def save_comparative_schedule(request):
         if cs_exists:
             cs_id = "CS" + datetime.now().strftime("%Y%m%d%I%M%S")
 
-        advert_files = request.FILES.getlist("advert", None)
+        # Get advert file path from POST data (file uploads handled separately)
+        advert_path = request.POST.get("advert", "").strip()
+        
         proc_ref = request.POST.get("proc_ref", "")
         print("proc plan: ", proc_ref)
         # check if proc ref has 'acc' prefix
@@ -2348,17 +2356,42 @@ def save_comparative_schedule(request):
         tender_adjudication_committee_date = request.POST.get("tender_adjudication_committee_date", "")
         username = request.POST.get("username", "")
 
-        # save advert file
-        advert_path = ""
-        try:
-            if advert_files:
-                advert_file = advert_files[0]
-                root_dir = os.path.join(settings.BASE_DIR, 'uploads', 'comparative', 'adverts')
-                fs = FileSystemStorage(location=root_dir)
-                filename_ = fs.save(advert_file.name, advert_file)
-                advert_path = "uploads" + os.path.sep + "comparative" + os.path.sep + "adverts" + os.path.sep + filename_
-        except Exception as ex:
-            print("Error: ", ex)
+        # Validate advert file path if provided
+        if advert_path:
+            print(f"🔍 Validating advert file path: {advert_path}")
+            print(f"🔍 Settings - BASE_DIR: {settings.BASE_DIR}")
+            print(f"🔍 Settings - MEDIA_ROOT: {settings.MEDIA_ROOT}")
+            
+            # Basic path validation
+            if not advert_path.startswith('uploads/'):
+                print(f"Warning: Invalid file path format. Expected 'uploads/...', got: {advert_path}")
+                advert_path = ""
+            else:
+                # Check if the file path exists and is valid
+                # Files are stored in media/uploads/, so we need to check both possible locations
+                base_path = os.path.join(settings.BASE_DIR, advert_path)
+                media_path = os.path.join(settings.MEDIA_ROOT, advert_path)
+                
+                print(f"🔍 Checking file existence:")
+                print(f"  - Base path: {base_path}")
+                print(f"  - Media path: {media_path}")
+                
+                if os.path.exists(base_path):
+                    print(f"✅ File found at base path: {advert_path}")
+                    # Note: File exists in BASE_DIR/uploads/ but should be in MEDIA_ROOT/uploads/
+                    print(f"⚠️  WARNING: File exists in BASE_DIR/uploads/ but should be in MEDIA_ROOT/uploads/")
+                    print(f"⚠️  This indicates a file upload configuration issue")
+                elif os.path.exists(media_path):
+                    print(f"✅ File found at media path: {advert_path}")
+                else:
+                    print(f"❌ File not found at either location")
+                    print(f"  - Base path exists: {os.path.exists(base_path)}")
+                    print(f"  - Media path exists: {os.path.exists(media_path)}")
+                    print(f"⚠️  SUGGESTION: Check if file upload system is saving to correct location")
+                    # Reset to empty if file doesn't exist
+                    advert_path = ""
+        else:
+            print("No advert file path provided")
 
         # save cs details
         # fetch purchase request
@@ -2389,6 +2422,11 @@ def save_comparative_schedule(request):
             region_id=user.region_id if user.region_id else None,
         )
         cs_query.save()
+        
+        print(f"✅ Comparative Schedule saved successfully:")
+        print(f"   - CS ID: {cs_id}")
+        print(f"   - Advert path: {advert_path}")
+        print(f"   - Owner: {user.username if user else 'Unknown'}")
 
         return JsonResponse({
             "message": "Comparative Schedule saved successfully",
@@ -2407,10 +2445,19 @@ def save_comparative_schedule(request):
 
 @login_required
 def update_comparative_schedule(request):
+    """
+    Update an existing comparative schedule.
+    
+    The advert field should be a file path (string) from a previous file upload API call.
+    File uploads are handled separately by dedicated file upload APIs.
+    If no advert path is provided, the existing advert remains unchanged.
+    """
     try:
 
-        advert_files = request.FILES.getlist("advert", None)
-        print("advert_files: ", advert_files)
+        # Get advert file path from POST data (file uploads handled separately)
+        advert_path = request.POST.get("advert", "").strip()
+        print("advert_path from POST: ", advert_path)
+        
         cs_id = request.POST.get("cs_id", "")
         plan_ref = request.POST.get("proc_ref", "")
         # proc_plan = data['proc_plan']
@@ -2427,18 +2474,42 @@ def update_comparative_schedule(request):
         tender_adjudication_committee_date = request.POST.get("tender_adjudication_committee_date", "")
         username = request.POST.get("username", "")
 
-        # save advert file
-        advert_path = ""
-        try:
-            if advert_files:
-                advert_file = advert_files[0]
-                print("advert_file: ", advert_file.name)
-                root_dir = os.path.join(settings.BASE_DIR, 'uploads', 'comparative', 'adverts')
-                fs = FileSystemStorage(location=root_dir)
-                filename_ = fs.save(advert_file.name, advert_file)
-                advert_path = "uploads" + os.path.sep + "comparative" + os.path.sep + "adverts" + os.path.sep + filename_
-        except Exception as ex:
-            print("Error: ", ex)
+        # Validate advert file path if provided
+        if advert_path:
+            print(f"🔍 Validating advert file path: {advert_path}")
+            print(f"🔍 Settings - BASE_DIR: {settings.BASE_DIR}")
+            print(f"🔍 Settings - MEDIA_ROOT: {settings.MEDIA_ROOT}")
+            
+            # Basic path validation
+            if not advert_path.startswith('uploads/'):
+                print(f"Warning: Invalid file path format. Expected 'uploads/...', got: {advert_path}")
+                advert_path = ""
+            else:
+                # Check if the file path exists and is valid
+                # Files are stored in media/uploads/, so we need to check both possible locations
+                base_path = os.path.join(settings.BASE_DIR, advert_path)
+                media_path = os.path.join(settings.MEDIA_ROOT, advert_path)
+                
+                print(f"🔍 Checking file existence:")
+                print(f"  - Base path: {base_path}")
+                print(f"  - Media path: {media_path}")
+                
+                if os.path.exists(base_path):
+                    print(f"✅ File found at base path: {advert_path}")
+                    # Note: File exists in BASE_DIR/uploads/ but should be in MEDIA_ROOT/uploads/
+                    print(f"⚠️  WARNING: File exists in BASE_DIR/uploads/ but should be in MEDIA_ROOT/uploads/")
+                    print(f"⚠️  This indicates a file upload configuration issue")
+                elif os.path.exists(media_path):
+                    print(f"✅ File found at media path: {advert_path}")
+                else:
+                    print(f"❌ File not found at either location")
+                    print(f"  - Base path exists: {os.path.exists(base_path)}")
+                    print(f"  - Media path exists: {os.path.exists(media_path)}")
+                    print(f"⚠️  SUGGESTION: Check if file upload system is saving to correct location")
+                    # Reset to empty if file doesn't exist
+                    advert_path = ""
+        else:
+            print("No advert file path provided - keeping existing advert unchanged")
 
         # fetch user
         print("pr number: ", pr_number)
@@ -2458,8 +2529,11 @@ def update_comparative_schedule(request):
                 cs_query.closing_date = closing_date
             if closing_time:
                 cs_query.closing_time = closing_time
-            if advert_path:
+            # Only update advert if we have a valid file path
+            if advert_path and advert_path.strip():
                 cs_query.advert = advert_path
+                print(f"Updated advert path: {advert_path}")
+            # Note: If no advert_path is provided, we keep the existing one unchanged
             if pr_number:
                 cs_query.pr_number = pr_number
             if pr_date:
@@ -2474,6 +2548,11 @@ def update_comparative_schedule(request):
                 cs_query.ref_date = ref_date
 
             cs_query.save()
+            
+            print(f"✅ Comparative Schedule updated successfully:")
+            print(f"   - CS ID: {cs_id}")
+            print(f"   - Advert path: {advert_path}")
+            print(f"   - Updated by: {username}")
         else:
             print("ComparativeSchedule record not found with cs_id:", cs_id)
 

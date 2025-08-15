@@ -1,11 +1,11 @@
 import React from 'react';
-import { useCommitteeState } from '../hooks/useCommitteeState';
 import ApprovalTable from './ApprovalTable';
-import { IGmApproval, IFmApproval } from '../types/scheduleTypes';
+import { IGmApproval, IFmApproval, ICommittee } from '../types/scheduleTypes';
 
 interface ApprovalTableWrapperProps {
   csId: string;
   username: string;
+  committeeMembers: ICommittee[];
   gmApproval: IGmApproval | null | undefined;
   fmApproval: IFmApproval | null | undefined;
   isCreator: boolean;
@@ -20,13 +20,13 @@ interface ApprovalTableWrapperProps {
 const ApprovalTableWrapper: React.FC<ApprovalTableWrapperProps> = ({
   csId,
   username,
+  committeeMembers,
   gmApproval,
   fmApproval,
   isCreator,
   onApprove,
   currentUserRoles
 }) => {
-  const { committeeMembers } = useCommitteeState();
 
 
 

@@ -1,28 +1,23 @@
-import { useEffect, useState, useCallback, useMemo, lazy, Suspense } from "react";
-import { ScheduleProvider } from "../context/ScheduleContext";
+import { useEffect, useCallback, useMemo, lazy, Suspense } from "react";
 import { useScheduleApi } from "../hooks/useScheduleApi";
-import { useCommitteeState } from "../hooks/useCommitteeState";
+import { useScheduleStore } from "../stores/scheduleStore";
+import { getApiEndpoints, buildApiUrl } from "../config/apiEndpoints";
 import { 
   IBid, 
-  ICompliance, 
-  IComplianceRemark, 
-  ISupplier,
-  ICommittee,
-  IUser
+  ICommittee
 } from "../types/scheduleTypes";
-import { getApiEndpoints, buildApiUrl } from "../config/apiEndpoints";
+
+// Import our new services
+import { ScheduleService } from "../services/ScheduleService";
+import { BidService } from "../services/BidService";
+import { ComplianceService } from "../services/ComplianceService";
+import { CommitteeService } from "../services/CommitteeService";
+import { FileService } from "../services/FileService";
+import { ValidationService } from "../services/ValidationService";
+import { NotificationService } from "../services/NotificationService";
 
 // Additional interfaces from ScheduleRef.tsx
-interface ICurrency {
-  id: number;
-  currency?: string;
-}
-
-interface IProcPlan {
-  id: number;
-  proc_ref: string;
-  description: string;
-}
+// Note: ICurrency and IProcPlan are now defined in the Zustand store types
 
 interface IBidItem {
   id?: number;
@@ -35,43 +30,7 @@ interface IBidItem {
   ordered?: boolean;
 }
 
-interface IRank {
-  id: number;
-  supplier_name: string;
-  rank: number;
-  decision: string;
-  remarks: string;
-  total: number;
-}
 
-interface IGmApproval {
-  id: number;
-  approver_name: string;
-  approval: string;
-  approval_date: string;
-  justification: string;
-}
-
-interface IFmApproval {
-  id: number;
-  approver_name: string;
-  approval: string;
-  approval_date: string;
-  justification: string;
-}
-
-interface ICurrentApprover {
-  username?: string;
-  justification?: string;
-  role?: string;
-  approval?: string;
-}
-
-interface IUomItem {
-  id: string;
-  unit: string;
-  name: string;
-}
 
 // Lazy load heavy components
 const CommitteeApprovalWrapper = lazy(() => import("./Committee/CommitteeApprovalWrapper"));
@@ -106,59 +65,39 @@ const formatDisplayDate = (dateString: string) => {
   return dateString;
 };
 
-// Helper function to get file download URL (optimized with Base64 detection)
-const getFileDownloadUrl = (fileData: string | File | { download_url?: string } | null | undefined): string | undefined => {
-  try {
-    if (typeof fileData === "string") {
-      // Check if it's Base64 data (starts with typical Base64 patterns)
-      if (fileData.startsWith('JVBERi0x') || // PDF Base64 header
-          fileData.startsWith('UEsDBBQ') || // DOCX Base64 header
-          fileData.startsWith('/9j/') ||     // JPEG Base64 header
-          fileData.length > 100 && /^[A-Za-z0-9+/=]+$/.test(fileData)) { // Generic Base64 pattern
-        
-        console.log("🔄 Detected Base64 data, creating blob URL for download");
-        
-        // Handle legacy Base64 data - convert to downloadable blob
-        try {
-          const decodedData = atob(fileData);
-          const uint8Array = new Uint8Array(decodedData.length);
-          for (let i = 0; i < decodedData.length; i++) {
-            uint8Array[i] = decodedData.charCodeAt(i);
-          }
-          
-          // Detect file type from Base64 header
-          let mimeType = 'application/octet-stream';
-          if (fileData.startsWith('JVBERi0x')) {
-            mimeType = 'application/pdf';
-          } else if (fileData.startsWith('UEsDBBQ')) {
-            mimeType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
-          } else if (fileData.startsWith('/9j/')) {
-            mimeType = 'image/jpeg';
-          }
-          
-          const blob = new Blob([uint8Array], { type: mimeType });
-          return URL.createObjectURL(blob);
-        } catch (base64Error) {
-          console.error("Error processing Base64 data:", base64Error);
-          return undefined;
-        }
-      } else {
-        // Handle file paths - convert to download URLs
-        return `/comperative_schedule/api/files/download/${fileData}`;
-      }
-    } else if (fileData && typeof fileData === 'object' && 'download_url' in fileData) {
-      // Handle metadata objects with download_url
-      return fileData.download_url;
-    } else if (fileData instanceof File) {
-      // Handle File objects - create temporary URL
-      return URL.createObjectURL(fileData);
-    }
-    return undefined;
-  } catch (err) {
-    console.log("error getting file URL: ", err);
-    return undefined;
+// Helper function to ensure dates are in YYYY-MM-DD format for backend
+const formatDateForBackend = (dateString: string | undefined): string | undefined => {
+  if (!dateString || dateString.trim() === '') {
+    return undefined; // Don't send empty strings
   }
+  
+  // If it includes 'T', it's a datetime string, extract just the date part
+  if (dateString.includes('T')) {
+    return dateString.split('T')[0];
+  }
+  
+  // If it's already in YYYY-MM-DD format, return as is
+  if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+    return dateString;
+  }
+  
+  // Try to parse and format the date
+  try {
+    const date = new Date(dateString);
+    if (!isNaN(date.getTime())) {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+  } catch (error) {
+    console.warn('Failed to parse date:', dateString, error);
+  }
+  
+  return undefined; // Return undefined for invalid dates
 };
+
+
 
 // Helper function to generate filename for Base64 downloads
 const getDownloadFilename = (fileData: string | File | null | undefined, defaultName: string = 'document'): string => {
@@ -255,167 +194,71 @@ export default function Schedule({
   prid: string | null;
   csid: string | null;
 }) {
-  // State
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [loadingOperation, setLoadingOperation] = useState<string>("");
-  const [csId, setCsId] = useState<string>("");
-  const [storedPrId, setStoredPrId] = useState<string>(""); // Store PR ID from CS data
-  const [creator, setCreator] = useState<string>("");
-  const [createdAt, setCreatedAt] = useState<string>("");
-  const [suppliers, setSuppliers] = useState<ISupplier[]>([]);
-  const [users, setUsers] = useState<IUser[]>([]);
-
-  const [activeTab, setActiveTab] = useState<TabId>('details');
-  const [loadedTabs, setLoadedTabs] = useState<Set<TabId>>(new Set(['details']));
-  
-  // Additional state variables from ScheduleRef.tsx
-  // const [requesterRole] = useState<string>(""); // For future role-based features
-  const [csOwner, setCsOwner] = useState<string>("");
-  const [procRef, setProcRef] = useState<string>("");
-  const [currency, setCurrency] = useState<ICurrency>();
-  const [currencies, setCurrencies] = useState<ICurrency[]>([]);
-  const [procPlan, setProcPlan] = useState<IProcPlan>();
-  const [procPlans, setProcPlans] = useState<IProcPlan[]>([]);
-  const [quantity] = useState<string>("");
-  const [advert, setAdvert] = useState<File>();
-  const [advertMetadata, setAdvertMetadata] = useState<{
-    name: string;
-    size: number;
-    download_url: string;
-    preview_url: string;
-    mime_type: string;
-    file_path?: string;
-    is_base64?: boolean;
-  } | null>(null);
+  // Zustand Store - Complete State and Actions
+  const {
+    // Basic schedule data
+    csId, storedPrId, creator, createdAt, csOwner, procRef, username,
+    // Reference data
+    suppliers, users, currencies, procPlans, currency, procPlan,
+    // PR data
+    prData, setPrData, updatePrData, updateItemSelection, handleSelectAllItems,
+    // Bid management
+    bidCount, currentBid, bids, addBidModal, updateBidModal,
+    setBidCount, setCurrentBid, setBids, setAddBidModal, setUpdateBidModal,
+    // Compliance management
+    compliance, complianceRemarks, showSamples, showSiteVisit,
+    setCompliance, setComplianceRemarks, setShowSamples, setShowSiteVisit,
+    // Rankings and evaluation
+    rankings, setRankings,
+    // Committee management
+    committeeMembers, updateCommitteeMembers,
+    // Approval workflow
+    gmApproval, fmApproval, approvalsComplete, approvalsJustificationModal, currentApprover, currentUserRoles,
+    setGmApproval, setFmApproval, setApprovalsComplete, setApprovalsJustificationModal, setCurrentApprover, setCurrentUserRoles,
+    // Loading states
+    isLoading, loadingOperation,
+    // UI state
+    activeTab, loadedTabs,
+    // File management
+    advert, advertMetadata,
+    // Additional features
+    additionalNotes, buyersNotes, directPurchaseLimit, onAddSupplier, newSupplier, showSupplierDetails,
+    supplierSearchTerm, showSupplierDropdown, uomSearchTerm, showUomDropdown, activeUomItem, expandedBids,
+    // Validation state
+    bidValidationErrors, invalidFields,
+    // Search state
+    uomSearchResults, isUomSearching, supplierSearchResults, isSupplierSearching,
+    debouncedUomSearchTerm, debouncedSupplierSearchTerm,
+    // Response and input
+    response, prIdInput, quantity,
+    // Actions
+    setCsId, setStoredPrId, setCreator, setCreatedAt, setCsOwner, setProcRef, setUsername,
+    setSuppliers, setUsers, setCurrencies, setProcPlans, setCurrency, setProcPlan,
+    setAdditionalNotes, setBuyersNotes, setDirectPurchaseLimit, setOnAddSupplier, setNewSupplier, setShowSupplierDetails,
+    setSupplierSearchTerm, setShowSupplierDropdown, setUomSearchTerm, setShowUomDropdown, setActiveUomItem, setExpandedBids,
+    setBidValidationErrors, setInvalidFields,
+    setUomSearchResults, setIsUomSearching, setSupplierSearchResults, setIsSupplierSearching,
+    setDebouncedUomSearchTerm, setDebouncedSupplierSearchTerm,
+    setResponse, setPrIdInput,
+    setIsLoading, setLoadingOperation, setActiveTab, setLoadedTabs,
+    setAdvert, setAdvertMetadata
+  } = useScheduleStore();
   
   // Simple usage to satisfy linter - will be used properly in dropdowns later
   const currenciesCount = currencies.length;
   const procPlansCount = procPlans.length;
-  const [username, setUsername] = useState<string>("");
   
-  // Enhanced bid management state
-  const [bidCount, setBidCount] = useState<number>(0);
-  const [currentBid, setCurrentBid] = useState<IBid>();
-  const [bids, setBids] = useState<IBid[]>([]);
-  const [addBidModal, setAddBidModal] = useState<boolean>(false);
-  const [updateBidModal, setUpdateBidModal] = useState<boolean>(false);
+  // Note: advert and advertMetadata are read-only from store for now
+  // We'll need to add setter actions to the store if we need to modify them
   
-  // Compliance management state
-  const [compliance, setCompliance] = useState<ICompliance[]>([]);
-  const [complianceRemarks, setComplianceRemarks] = useState<IComplianceRemark[]>([]);
-  const [showSamples, setShowSamples] = useState<string>("no");
-  const [showSiteVisit, setShowSiteVisit] = useState<string>("no");
-  
-  // Rankings and evaluation state
-  const [rankings, setRankings] = useState<IRank[]>([]);
-  
-  // Committee management state
-  const { committeeMembers, updateCommitteeMembers } = useCommitteeState();
-  
-  // Approval workflow state
-  const [gmApproval, setGmApproval] = useState<IGmApproval>();
-  const [fmApproval, setFmApproval] = useState<IFmApproval>();
-  const [approvalsComplete, setApprovalsComplete] = useState<boolean>(false);
-  const [approvalsJustificationModal, setApprovalsJustificationModal] = useState<boolean>(false);
-  const [currentApprover, setCurrentApprover] = useState<ICurrentApprover>();
-  const [currentUserRoles, setCurrentUserRoles] = useState<{
-    fm_role: boolean;
-    gm_role: boolean;
-    procurement_role: boolean;
-  }>({
-    fm_role: false,
-    gm_role: false,
-    procurement_role: false
-  });
-  
-  // Additional features state
-  const [additionalNotes, setAdditionalNotes] = useState<string>("");
-  const [buyersNotes, setBuyersNotes] = useState<string>("");
-  const [directPurchaseLimit, setDirectPurchaseLimit] = useState<boolean>(true);
-  const [onAddSupplier, setOnAddSupplier] = useState<boolean>(false);
-  const [newSupplier, setNewSupplier] = useState<ISupplier>({});
-  const [showSupplierDetails, setShowSupplierDetails] = useState<boolean>(false);
-  const [supplierSearchTerm, setSupplierSearchTerm] = useState<string>("");
-  const [showSupplierDropdown, setShowSupplierDropdown] = useState<boolean>(false);
-  const [uomSearchTerm, setUomSearchTerm] = useState<string>("");
-  const [showUomDropdown, setShowUomDropdown] = useState<boolean>(false);
-  const [activeUomItem, setActiveUomItem] = useState<string>("");
-  const [expandedBids, setExpandedBids] = useState<Set<number>>(new Set());
-  
-  // Bid Modal Validation State
-  const [bidValidationErrors, setBidValidationErrors] = useState<string[]>([]);
-  const [invalidFields, setInvalidFields] = useState<Set<string>>(new Set());
-  
-  // UOM Server-side Search State
-  const [uomSearchResults, setUomSearchResults] = useState<IUomItem[]>([]);
-  const [isUomSearching, setIsUomSearching] = useState<boolean>(false);
-  const [debouncedUomSearchTerm, setDebouncedUomSearchTerm] = useState<string>('');
-  
-  // Supplier Server-side Search State
-  const [supplierSearchResults, setSupplierSearchResults] = useState<ISupplier[]>([]);
-  const [isSupplierSearching, setIsSupplierSearching] = useState<boolean>(false);
-  const [debouncedSupplierSearchTerm, setDebouncedSupplierSearchTerm] = useState<string>('');
-  
-  // PR Data State
-  const [prData, setPrData] = useState<{
-    pr_number: string;
-    pr_date: string;
-    reference_date: string;
-    procurement_plan_description: string;
-    procurement_plan_id: string;
-    currency: string;
-    closing_date: string;
-    closing_time: string;
-    cs_opened_date: string;
-    scope_of_work: string;
-    tac_date: string;
-    region: string;
-    show_site_visit: boolean;
-    show_samples_required: boolean;
-    internal_notes: string;
-    items: Array<{
-      id: string;
-      name: string;
-      quantity: number;
-      unit: string;
-      status: string;
-      included: boolean;
-    }>;
-  }>({
-    pr_number: '',
-    pr_date: '',
-    reference_date: '',
-    procurement_plan_description: '',
-    procurement_plan_id: '',
-    currency: '',
-    closing_date: '',
-    closing_time: '',
-    cs_opened_date: '',
-    scope_of_work: '',
-    tac_date: '',
-    region: '',
-    show_site_visit: false,
-    show_samples_required: false,
-    internal_notes: '',
-    items: []
-  });
-
-  const [response, setResponse] = useState<{
-    open: boolean;
-    message: string;
-    title: string;
-    success: boolean;
-  }>({
-    open: false,
-    message: "",
-    title: "",
-    success: false,
-  });
+  // All state is now managed by Zustand store - see destructuring above
   
   // API Functions
   const api = useScheduleApi({ base_url, setIsLoading });
 
   // Optimized file upload handler
+  // This function handles file uploads separately from schedule saving
+  // The uploaded file path is stored and used when saving the schedule
   const handleFileUpload = useCallback(async (file: File, fileType: string = 'advert', description?: string) => {
     try {
       setIsLoading(true);
@@ -432,8 +275,15 @@ export default function Schedule({
           file_path: result.file_path
         };
         
+        console.log('📄 File upload successful:', {
+          fileName: file.name,
+          filePath: result.file_path,
+          metadata: metadata
+        });
+        
         if (fileType === 'advert') {
           setAdvertMetadata(metadata);
+          console.log('📄 Advertisement metadata updated:', metadata);
         }
         
         onOpenResponse("File Upload Success", `File "${file.name}" uploaded successfully`, true);
@@ -462,6 +312,25 @@ export default function Schedule({
   
   // Memoized CSRF token
   const csrfToken = useMemo(() => getCookie("csrftoken") ?? "", []);
+
+  // Initialize services
+  const scheduleService = useMemo(() => new ScheduleService(base_url, csrfToken), [base_url, csrfToken]);
+  const bidService = useMemo(() => new BidService(base_url, csrfToken), [base_url, csrfToken]);
+  const complianceService = useMemo(() => new ComplianceService(base_url, csrfToken), [base_url, csrfToken]);
+  const committeeService = useMemo(() => new CommitteeService(base_url, csrfToken), [base_url, csrfToken]);
+  const fileService = useMemo(() => new FileService(), []);
+  const validationService = useMemo(() => new ValidationService(), []);
+  const notificationService = useMemo(() => new NotificationService(), []);
+  
+  // Helper function to get file download URL using service
+  const getFileDownloadUrl = useCallback((fileData: string | File | { download_url?: string } | null | undefined): string | undefined => {
+    return fileService.getFileDownloadUrl(fileData);
+  }, [fileService]);
+  
+  // Helper function to show success notifications using service
+  const showSuccessNotification = useCallback((title: string, message: string) => {
+    notificationService.showSuccess(title, message);
+  }, [notificationService]);
   
   // Memoized request options
   const defaultRequestOptions = useMemo(() => ({
@@ -474,24 +343,43 @@ export default function Schedule({
   
   // Initialize component
   useEffect(() => {
+    console.log('🚀 Component initialization effect triggered');
+    console.log('🔍 Initial values:', { csid, prid, username_ });
+    console.log('🔍 Current pathname:', window.location.pathname);
+    
     const cs_id = csid || '';
     const pr_id = prid || '';
     
-    if (cs_id) {
+    // Check if this is a new schedule creation (URL contains 'create' and we have a CS ID)
+    const isNewScheduleCreation = window.location.pathname.includes('create') && cs_id;
+    
+    console.log('🔍 Schedule creation type:', { isNewScheduleCreation, cs_id, pr_id });
+    
+    if (cs_id && !isNewScheduleCreation) {
+      // Existing schedule - load CS data
+      console.log('🔄 Loading existing schedule with CS ID:', cs_id);
       setCsId(cs_id);
       setUsername(username_ ?? "");
       fetchCS(cs_id);
     } else if (pr_id) {
+      // New schedule with PR ID - load PR data
+      console.log('🔄 Creating new schedule from PR ID:', pr_id);
       setUsername(username_ ?? "");
-      // Set creator and created_at for new schedule (will be updated with full name after users are loaded)
       setCreator(username_ ?? "");
       setCreatedAt(new Date().toISOString());
       onFetchPR(pr_id);
     } else {
+      // New schedule without PR ID
+      console.log('🔄 Creating new schedule without PR ID');
       setUsername(username_ ?? "");
-      // Set creator and created_at for new schedule (will be updated with full name after users are loaded)
       setCreator(username_ ?? "");
       setCreatedAt(new Date().toISOString());
+      
+      // If we have a CS ID but this is a new creation, set it for later use
+      if (cs_id && isNewScheduleCreation) {
+        console.log('📝 New schedule creation with pre-generated CS ID:', cs_id);
+        setCsId(cs_id);
+      }
       
       // Load reference data for new schedules (currencies, proc plans, etc.)
       console.log('🔄 Loading reference data for new schedule...');
@@ -592,6 +480,13 @@ export default function Schedule({
       
       // Set existing advert metadata if available
       if (parsedData.advert) {
+        console.log("🔍 Advertisement data found:", {
+          hasData: !!parsedData.advert,
+          dataLength: parsedData.advert?.length || 0,
+          dataStart: parsedData.advert?.substring(0, 20) || 'N/A',
+          isString: typeof parsedData.advert === 'string'
+        });
+        
         // Handle both Base64 data and file paths intelligently
         const isBase64 = (
           parsedData.advert.startsWith('JVBERi0x') || // PDF Base64 header
@@ -599,6 +494,8 @@ export default function Schedule({
           parsedData.advert.startsWith('/9j/') ||     // JPEG Base64 header
           (parsedData.advert.length > 100 && /^[A-Za-z0-9+/=]+$/.test(parsedData.advert))
         );
+        
+        console.log("🔍 Base64 detection result:", isBase64);
         
         if (isBase64) {
           console.log("🔄 Detected Base64 advertisement data, creating blob URL");
@@ -628,7 +525,7 @@ export default function Schedule({
             const blob = new Blob([uint8Array], { type: mimeType });
             const blobUrl = URL.createObjectURL(blob);
             
-            setAdvertMetadata({
+            const metadata = {
               name: `advertisement${extension}`,
               size: uint8Array.length,
               download_url: blobUrl,
@@ -636,7 +533,9 @@ export default function Schedule({
               mime_type: mimeType,
               file_path: parsedData.advert,
               is_base64: true
-            });
+            };
+            console.log("🔍 Setting Base64 advert metadata:", metadata);
+            setAdvertMetadata(metadata);
           } catch (error) {
             console.error("Error processing Base64 advertisement data:", error);
             // Fallback to treating as file path
@@ -651,14 +550,17 @@ export default function Schedule({
           }
         } else {
           // Handle file path (optimized endpoint)
-          setAdvertMetadata({
+          console.log("🔄 Detected file path advertisement data:", parsedData.advert);
+          const metadata = {
             name: 'advertisement.pdf',
             size: 0,
             download_url: `/comperative_schedule/api/files/download/${parsedData.advert}`,
             preview_url: `/comperative_schedule/api/files/preview/${parsedData.advert}`,
             mime_type: 'application/pdf',
             file_path: parsedData.advert
-          });
+          };
+          console.log("🔍 Setting file path advert metadata:", metadata);
+          setAdvertMetadata(metadata);
         }
       }
       
@@ -1113,7 +1015,8 @@ export default function Schedule({
         }
       }
       
-      setLoadedTabs(prev => new Set([...prev, tabId]));
+      const currentLoadedTabs = useScheduleStore.getState().loadedTabs;
+      setLoadedTabs(new Set([...currentLoadedTabs, tabId]));
     } catch (error) {
       console.error(`Error loading ${tabId} data:`, error);
     } finally {
@@ -1127,49 +1030,53 @@ export default function Schedule({
     await loadTabData(tabId);
   }, [loadTabData]);
   
-  // Handle saving a bid
+  // Handle saving a bid using service
   const handleSaveBid = useCallback(async (bid: IBid) => {
     setIsLoading(true);
     setLoadingOperation("Saving bid");
     
     try {
-      const formData = new FormData();
-      
-      // Append bid data
-      const bidWithoutFile = { ...bid };
-      delete bidWithoutFile.bid_document;
-      
-      formData.append('bid_data', JSON.stringify(bidWithoutFile));
-      
-      // Append file if present
-      if (bid.bid_document) {
-        formData.append('bid_document', bid.bid_document);
-      }
-      
-      const requestOptions = {
-        method: "POST",
-        headers: {
-          "X-CSRFToken": csrfToken,
-        },
-        body: formData,
+      // Prepare bid data for service
+      const bidData = {
+        cs_id: csId,
+        bid_count: bid.bid_count,
+        supplier: bid.supplier,
+        supplier_name: bid.supplier_name,
+        bid_date: bid.bid_date,
+        bid_document: bid.bid_document === null ? undefined : bid.bid_document,
+        items: (bid.items || []).map(item => ({
+          id: item.id,
+          item_required: item.item_required || '',
+          unit_of_measurement: item.unit_of_measurement || '',
+          quantity: item.quantity || 0,
+          unit_price: item.unit_price || 0,
+          total_price: item.total_price || 0,
+          vat: item.vat || '',
+          ordered: item.ordered
+        }))
       };
+
+      // Use service to save bid
+      const data = await bidService.saveBid(bidData);
       
-      await fetchWithRetry(buildApiUrl(base_url, getApiEndpoints().CS_BIDS(csId)), requestOptions);
-      
-      // Refresh data
-      fetchCS(csId);
-      onOpenResponse("Success", "Bid saved successfully", true);
-      
-      // Close the modal
-      if (addBidModal) {
-        setAddBidModal(false);
+      if (data.success) {
+        // Refresh data
+        fetchCS(csId);
+        showSuccessNotification("Success", "Bid saved successfully");
+        
+        // Close the modal
+        if (addBidModal) {
+          setAddBidModal(false);
+        }
+        if (updateBidModal) {
+          setUpdateBidModal(false);
+        }
+        setCurrentBid(undefined);
+        setSupplierSearchTerm("");
+        setShowSupplierDropdown(false);
+      } else {
+        onOpenResponse("Error", data.error || "Failed to save bid", false);
       }
-      if (updateBidModal) {
-        setUpdateBidModal(false);
-      }
-      setCurrentBid(undefined);
-      setSupplierSearchTerm("");
-      setShowSupplierDropdown(false);
     } catch (error) {
       console.error("Error saving bid:", error);
       onOpenResponse("Error", "Failed to save bid", false);
@@ -1177,7 +1084,7 @@ export default function Schedule({
       setIsLoading(false);
       setLoadingOperation("");
     }
-  }, [csId, base_url, csrfToken, fetchCS]);
+  }, [csId, bidService, fetchCS]);
   
   // Handle deleting a bid
   const handleDeleteBid = useCallback(async (bid_count: number, supplier_name: string) => {
@@ -1206,7 +1113,7 @@ export default function Schedule({
     }
   }, [csId, base_url, csrfToken, fetchCS]);
   
-  // Handle saving committee
+  // Handle saving committee using service
   const handleSaveCommittee = useCallback(async (committee: ICommittee[]) => {
     // Only creators can save committee
     const creatorCheck = isCreator();
@@ -1225,38 +1132,36 @@ export default function Schedule({
     setIsLoading(true);
     setLoadingOperation("Saving committee members");
     try {
-      const formData = new FormData();
-      formData.append("cs_id", csId);
-      formData.append("committee", JSON.stringify({ committee }));
-      formData.append("csrfmiddlewaretoken", csrfToken);
-      
-      const requestOptions = {
-        method: "POST",
-        headers: {
-          "X-CSRFToken": csrfToken,
-        },
-        body: formData,
+      // Prepare committee data for service
+      const committeeData = {
+        cs_id: csId,
+        committee: committee
       };
+
+      // Use service to save committee
+      const data = await committeeService.saveCommittee(committeeData);
       
-      await fetchWithRetry(buildApiUrl(base_url, getApiEndpoints().CS_SAVE_COMMITTEE), requestOptions);
-      
-      // Update both local and context state
-      updateCommitteeMembers(committee);
-      
-      // Also refresh committee data from server to ensure consistency
-      try {
-        const committeeData = await fetchWithRetry(
-          buildApiUrl(base_url, getApiEndpoints().CS_COMMITTEE_DATA(csId)), 
-          defaultRequestOptions
-        );
-        if (committeeData && committeeData.committee) {
-          updateCommitteeMembers(committeeData.committee);
+      if (data.success) {
+        // Update both local and context state
+        updateCommitteeMembers(committee);
+        
+        // Also refresh committee data from server to ensure consistency
+        try {
+          const committeeData = await fetchWithRetry(
+            buildApiUrl(base_url, getApiEndpoints().CS_COMMITTEE_DATA(csId)), 
+            defaultRequestOptions
+          );
+          if (committeeData && committeeData.committee) {
+            updateCommitteeMembers(committeeData.committee);
+          }
+        } catch (error) {
+          console.error("Error refreshing committee data:", error);
         }
-      } catch (error) {
-        console.error("Error refreshing committee data:", error);
+        
+        onOpenResponse("Success", "Committee saved successfully", true);
+      } else {
+        onOpenResponse("Error", data.error || "Failed to save committee", false);
       }
-      
-      onOpenResponse("Success", "Committee saved successfully", true);
     } catch (error) {
       console.error("Error saving committee:", error);
       onOpenResponse("Error", "Failed to save committee", false);
@@ -1264,7 +1169,7 @@ export default function Schedule({
       setIsLoading(false);
       setLoadingOperation("");
     }
-  }, [csId, base_url, csrfToken, fetchCS]);
+  }, [csId, committeeService, fetchCS]);
   
   
   // Check if all approvals are complete
@@ -1661,27 +1566,28 @@ export default function Schedule({
 
   // === FORM VALIDATION FUNCTIONS ===
   
-  // Comprehensive field validation for schedule save/update
+  // Comprehensive field validation for schedule save/update using service
   const validateScheduleFields = useCallback((): { isValid: boolean; errors: string[] } => {
-    const errors: string[] = [];
+    // Prepare validation data for service with proper date formatting
+    const validationData = {
+      currency: currency,
+      procPlan: procPlan || prData.procurement_plan_id,
+      scope_of_work: prData.scope_of_work,
+      pr_number: prData.pr_number,
+      pr_date: formatDateForBackend(prData.pr_date),
+      closing_date: formatDateForBackend(prData.closing_date),
+      reference_date: formatDateForBackend(prData.reference_date),
+      closing_time: prData.closing_time,
+      cs_opened_date: formatDateForBackend(prData.cs_opened_date),
+      tac_date: formatDateForBackend(prData.tac_date),
+      advert: advert || advertMetadata
+    };
     
-    if (!currency) errors.push("Currency is required");
-    if (!procPlan && !prData.procurement_plan_id) errors.push("Procurement plan is required");
-    if (!prData.scope_of_work?.trim()) errors.push("Scope of work is required");
-    if (!prData.pr_number?.trim()) errors.push("PR number is required");
-    if (!prData.pr_date) errors.push("PR date is required");
-    if (!prData.closing_date) errors.push("Closing date is required");
-    if (!prData.reference_date) errors.push("Reference date is required");
-    if (!prData.closing_time) errors.push("Closing time is required");
-    if (!prData.cs_opened_date) errors.push("CS opened date is required");
-    if (!prData.tac_date) errors.push("TAC date is required");
-    // Check for either new advert file or existing advert metadata
-    if (!advert && !advertMetadata) errors.push("Advertisement document is required");
-    
-    return { isValid: errors.length === 0, errors };
-  }, [currency, procPlan, prData, advert, advertMetadata]);
+    // Use service to validate schedule
+    return validationService.validateSchedule(validationData);
+  }, [currency, procPlan, prData, advert, advertMetadata, validationService]);
 
-  // File type and size validation
+  // File type and size validation using service
   const validateFile = useCallback((file: File): { isValid: boolean; error?: string } => {
     const allowedTypes = [
       'application/pdf',
@@ -1692,24 +1598,15 @@ export default function Schedule({
       'image/png'
     ];
     
-    const maxSize = 10 * 1024 * 1024; // 10MB
+    const maxSize = 10 * 1024 * 1024; // 10MB; // 10MB
     
-    if (!allowedTypes.includes(file.type)) {
-      return { 
-        isValid: false, 
-        error: 'File type not allowed. Please upload PDF, DOC, DOCX, JPG, JPEG, or PNG files only.' 
-      };
-    }
+    const result = validationService.validateFile(file, allowedTypes, maxSize);
     
-    if (file.size > maxSize) {
-      return { 
-        isValid: false, 
-        error: 'File size too large. Maximum allowed size is 10MB.' 
-      };
-    }
-    
-    return { isValid: true };
-  }, []);
+    return { 
+      isValid: result.isValid, 
+      error: result.errors.length > 0 ? result.errors.join(', ') : undefined
+    };
+  }, [validationService]);
 
 
 
@@ -1808,6 +1705,14 @@ export default function Schedule({
       if (!csId || csId === "") {
         return true;
       }
+      
+      // Check if this is a new schedule creation (URL contains 'create')
+      const isNewScheduleCreation = window.location.pathname.includes('create');
+      if (isNewScheduleCreation) {
+        console.log('🔐 New schedule creation detected - user is creator');
+        return true;
+      }
+      
       // For existing schedules, check if current user is the creator
       // Use csOwner (username) instead of creator (full name)
       // If csOwner is empty and we're still loading, return true to avoid blocking operations
@@ -1845,8 +1750,7 @@ export default function Schedule({
     });
   }, []);
 
-  // Handle manual PR fetch
-  const [prIdInput, setPrIdInput] = useState<string>("");
+  // Handle manual PR fetch - Now using Zustand store
   
   const handleFetchPR = useCallback(async () => {
     if (!prIdInput.trim()) {
@@ -1858,48 +1762,21 @@ export default function Schedule({
     setPrIdInput(""); // Clear input after successful fetch
   }, [prIdInput, onFetchPR]);
 
-  // Handle PR data updates
-  const updatePrData = useCallback((field: string, value: string | boolean) => {
-    setPrData(prev => ({
-      ...prev,
-      [field]: value
-    }));
-  }, []);
+  // All PR data management functions are now provided by Zustand store
 
-  // Handle item selection updates
-  const updateItemSelection = useCallback((itemId: string, included: boolean) => {
-    console.log('🔄 Updating item selection:', { itemId, included });
-    setPrData(prev => {
-      const updatedItems = prev.items.map(item => 
-        item.id === itemId ? { ...item, included } : item
-      );
-      
-      console.log('📊 Item selection updated:', {
-        totalItems: updatedItems.length,
-        selectedItems: updatedItems.filter(item => item.included).length,
-        itemDetails: updatedItems.find(item => item.id === itemId)
-      });
-      
-      return {
-        ...prev,
-        items: updatedItems
-      };
-    });
-  }, []);
 
-  // Handle select all/deselect all items - only affects available items
-  const handleSelectAllItems = useCallback((selectAll: boolean) => {
-    setPrData(prev => ({
-      ...prev,
-      items: prev.items.map(item => ({
-        ...item,
-        // Only skip items used in other schedules - allow toggling current schedule items
-        included: item.status === 'used_in_other_schedule' ? item.included : selectAll
-      }))
-    }));
-  }, []);
 
-  // Check if all available items are selected
+
+
+
+
+
+
+
+
+
+
+    // Check if all available items are selected
   const allItemsSelected = useMemo(() => {
     const availableItems = prData.items.filter(item => item.status !== 'used_in_other_schedule');
     return availableItems.length > 0 && availableItems.every(item => item.included);
@@ -2839,8 +2716,8 @@ export default function Schedule({
     }
   }, [compliance, showSiteVisit, showSamples]);
 
-  // Save compliance
-  const onSaveCompliance = useCallback(() => {
+  // Save compliance using service
+  const onSaveCompliance = useCallback(async () => {
     // Only creators can save compliance
     if (!isCreator()) {
       onOpenResponse("Access Denied", "Only the creator can save compliance data.", false);
@@ -2854,24 +2731,14 @@ export default function Schedule({
     setIsLoading(true);
     setLoadingOperation("Saving compliance data");
 
-    // Format data to match backend expectations (similar to the working JS versions)
-    const form_data: FormData = new FormData();
-    form_data.append("cs_id", csId);
-    form_data.append("show_site_visit", showSiteVisit);
-    form_data.append("show_samples_required", showSamples);
-    form_data.append(
-      "compliance",
-      JSON.stringify({
-        compliance: compliance,
-      })
-    );
-    form_data.append(
-      "complianceRemarks",
-      JSON.stringify({
-        complianceRemarks: complianceRemarks,
-      })
-    );
-    form_data.append("csrfmiddlewaretoken", csrfToken);
+    // Prepare compliance data for service
+    const complianceData = {
+      cs_id: csId,
+      show_site_visit: showSiteVisit,
+      show_samples_required: showSamples,
+      compliance: compliance,
+      complianceRemarks: complianceRemarks
+    };
 
     console.log("Saving compliance data:", {
       cs_id: csId,
@@ -2881,35 +2748,28 @@ export default function Schedule({
       show_samples: showSamples
     });
 
-    fetch(`${base_url}/save_compliance`, {
-      method: "POST",
-      headers: {
-        "X-CSRFToken": csrfToken,
-      },
-      body: form_data,
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        console.log("save compliance response: ", data);
-        if (data.success) {
-          onOpenResponse("Save Compliance Success", "Compliance data saved successfully", true);
-          // Refresh the CS data to ensure persistence
-          if (csId) {
-            fetchCS(csId);
-          }
-        } else {
-          onOpenResponse("Save Compliance Error", data.message || "Failed to save compliance, please try again.", false);
+    try {
+      // Use service to save compliance
+      const data = await complianceService.saveCompliance(complianceData);
+      
+      console.log("save compliance response: ", data);
+      if (data.success) {
+        showSuccessNotification("Save Compliance Success", "Compliance data saved successfully");
+        // Refresh the CS data to ensure persistence
+        if (csId) {
+          fetchCS(csId);
         }
-      })
-      .catch((error) => {
-        console.error("Error saving compliance:", error);
-        onOpenResponse("Error", "Failed to save compliance", false);
-      })
-      .finally(() => {
-        setIsLoading(false);
-        setLoadingOperation("");
-      });
-  }, [compliance, complianceRemarks, csId, csrfToken, base_url, fetchCS, showSiteVisit, showSamples]);
+      } else {
+        onOpenResponse("Save Compliance Error", data.error || "Failed to save compliance, please try again.", false);
+      }
+    } catch (error) {
+      console.error("Error saving compliance:", error);
+      onOpenResponse("Error", "Failed to save compliance", false);
+    } finally {
+      setIsLoading(false);
+      setLoadingOperation("");
+    }
+  }, [compliance, complianceRemarks, csId, complianceService, fetchCS, showSiteVisit, showSamples]);
 
   // Close CS and generate rankings
   const onCloseCS = useCallback(() => {
@@ -3092,7 +2952,7 @@ export default function Schedule({
 
 
 
-  // Enhanced save schedule details with validation
+  // Enhanced save schedule details with validation using service
   const handleSaveScheduleDetails = useCallback(async () => {
     // Validate fields before saving
     const validation = validateScheduleFields();
@@ -3106,42 +2966,53 @@ export default function Schedule({
     console.log("prData", prData);
     
     try {
-      const formData = new FormData();
-      formData.append("proc_ref", procRef);
-      formData.append("scope_of_work", prData.scope_of_work);
-      formData.append("currency", JSON.stringify(currency?.id));
-      formData.append("proc_plan_id", (procPlan?.id || prData.procurement_plan_id || "").toString());
-      formData.append("pr_number", prData.pr_number);
-      formData.append("quantity", quantity.toString());
-      formData.append("pr_date", prData.pr_date);
-      formData.append("closing_date", prData.closing_date);
-      formData.append("ref_date", prData.reference_date);
-      formData.append("closing_time", prData.closing_time);
-      formData.append("date_tender_opened", prData.cs_opened_date);
-      formData.append("username", username);
-      formData.append("tender_adjudication_committee_date", prData.tac_date);
+      // Prepare schedule data for service with proper date formatting and empty value handling
+      // Handle advert field: only send file paths, not File objects
+      let advertData: string | undefined;
+      if (advertMetadata?.file_path) {
+        // Use the file_path from previously uploaded file
+        advertData = advertMetadata.file_path;
+        console.log('📄 Using uploaded file path:', advertMetadata.file_path);
+      } else {
+        // No advert data - file uploads handled by dedicated APIs
+        advertData = undefined;
+        console.log('📄 No advert file path available');
+      }
 
-      console.log("formData", formData);
+      const scheduleData = {
+        proc_ref: procRef || undefined,
+        scope_of_work: prData.scope_of_work,
+        currency_id: currency?.id?.toString(),
+        proc_plan_id: (procPlan?.id || prData.procurement_plan_id)?.toString() || undefined,
+        pr_number: prData.pr_number,
+        quantity: quantity || undefined,
+        pr_date: formatDateForBackend(prData.pr_date),
+        closing_date: formatDateForBackend(prData.closing_date),
+        ref_date: formatDateForBackend(prData.reference_date),
+        closing_time: prData.closing_time,
+        cs_opened_date: formatDateForBackend(prData.cs_opened_date),
+        username: username,
+        tac_date: formatDateForBackend(prData.tac_date),
+        advert: advertData
+      };
+
+      console.log("scheduleData", scheduleData);
       
-      if (advert) {
-        formData.append("advert", advert);
+      // Use service to save or update schedule based on whether csId exists
+      let data;
+      if (csId && csId.trim() !== "") {
+        // Update existing schedule
+        console.log("Updating existing schedule with csId:", csId);
+        data = await scheduleService.updateSchedule(csId, scheduleData);
+      } else {
+        // Create new schedule
+        console.log("Creating new schedule");
+        data = await scheduleService.saveSchedule(scheduleData);
       }
       
-      formData.append("csrfmiddlewaretoken", csrfToken);
-
-      const requestOptions = {
-        method: "POST",
-        headers: {
-          "X-CSRFToken": csrfToken,
-        },
-        body: formData,
-      };
-      
-      const data = await fetchWithRetry(buildApiUrl(base_url, getApiEndpoints().CS_SAVE), requestOptions);
-      
       if (data.success) {
-        setCsId(data.cs_id);
-        setCsOwner(data.cs_owner);
+        if (data.cs_id) setCsId(data.cs_id);
+        if (data.cs_owner) setCsOwner(data.cs_owner);
         
         // Update creator and created_at if not already set (for new schedules)
         if (!creator) {
@@ -3156,10 +3027,11 @@ export default function Schedule({
           setCreatedAt(new Date().toISOString());
         }
         
-        onOpenResponse("Success", "Comparative Schedule saved successfully", true);
+        const actionMessage = csId && csId.trim() !== "" ? "updated" : "created";
+        showSuccessNotification("Success", `Comparative Schedule ${actionMessage} successfully`);
         await refreshAllData(); // Cascading update
       } else {
-        onOpenResponse("Error", "Failed to save schedule", false);
+        onOpenResponse("Error", data.error || "Failed to save schedule", false);
       }
     } catch (error) {
       console.error("Error saving schedule details:", error);
@@ -3168,7 +3040,7 @@ export default function Schedule({
       setIsLoading(false);
       setLoadingOperation("");
     }
-  }, [validateScheduleFields, procRef, prData, currency, quantity, username, advert, csrfToken, base_url, refreshAllData]);
+  }, [validateScheduleFields, procRef, prData, currency, quantity, username, advert, scheduleService, refreshAllData]);
 
   // Memoized tab content
   const renderTabContent = useMemo(() => {
@@ -4219,6 +4091,7 @@ export default function Schedule({
                 <div className="space-y-6">
                   <CommitteeApprovalWrapper
                     users={users}
+                    committeeMembers={committeeMembers}
                     onSaveCommittee={handleSaveCommittee}
                     onApprove={(username: string, approval: string, justification: string) => 
                       handleApprove('committee', username, approval, justification)
@@ -4231,6 +4104,7 @@ export default function Schedule({
                   <ApprovalTableWrapper
                     csId={csId}
                     username={username}
+                    committeeMembers={committeeMembers}
                     gmApproval={gmApproval}
                     fmApproval={fmApproval}
                     isCreator={isCreator()}
@@ -4850,105 +4724,110 @@ export default function Schedule({
     );
   }
 
+  // Debug render
+  console.log('🎨 Component rendering with state:', {
+    csId,
+    advertMetadata,
+    advert,
+    isLoading,
+    loadingOperation
+  });
+
   return (
-    <ScheduleProvider 
-      base_url={base_url}
-      csId={csId}
-      username={username_ || ''}
-    >
+    <>
       <div className="min-h-screen bg-gray-50">
-      <div className="px-4 py-5 sm:px-6">
-          <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-semibold text-gray-900">Comparative Schedule</h1>
-          {(csId || creator || createdAt) && (
-            <div className="text-sm text-gray-500">
-              {csId && <p>CS ID: {csId}</p>}
-              {creator && <p>Created by: {creator}</p>}
-              {createdAt && <p>Created at: {formatDisplayDate(createdAt)}</p>}
-            </div>
-          )}
-        </div>
-        
-          {/* Tab Navigation */}
-          <div className="border-b border-gray-200 mb-6">
-            <nav className="-mb-px flex space-x-8" aria-label="Tabs">
-              {TAB_CONFIG.map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => handleTabChange(tab.id)}
-                  className={`${
-                    activeTab === tab.id
-                      ? 'border-blue-500 text-blue-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  } whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm flex items-center gap-2 transition-colors duration-200`}
-                  aria-current={activeTab === tab.id ? 'page' : undefined}
-                >
-                  <span>{tab.icon}</span>
-                  {tab.label}
-                  {!loadedTabs.has(tab.id) && tab.id !== 'details' && (
-                    <span className="ml-1 text-xs text-gray-400">•</span>
-                  )}
-                </button>
-              ))}
-            </nav>
+        <div className="px-4 py-5 sm:px-6">
+            <div className="flex justify-between items-center mb-6">
+            <h1 className="text-2xl font-semibold text-gray-900">Comparative Schedule</h1>
+            {(csId || creator || createdAt) && (
+              <div className="text-sm text-gray-500">
+                {csId && <p>CS ID: {csId}</p>}
+                {creator && <p>Created by: {creator}</p>}
+                {createdAt && <p>Created at: {formatDisplayDate(createdAt)}</p>}
+              </div>
+            )}
           </div>
           
-          {/* Tab Content */}
-          <div className="transition-all duration-200">
-            {renderTabContent}
+            {/* Tab Navigation */}
+            <div className="border-b border-gray-200 mb-6">
+              <nav className="-mb-px flex space-x-8" aria-label="Tabs">
+                {TAB_CONFIG.map((tab) => (
+                  <button
+                    key={tab.id}
+                    onClick={() => handleTabChange(tab.id)}
+                    className={`${
+                      activeTab === tab.id
+                        ? 'border-blue-500 text-blue-600'
+                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    } whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm flex items-center gap-2 transition-colors duration-200`}
+                    aria-current={activeTab === tab.id ? 'page' : undefined}
+                  >
+                    <span>{tab.icon}</span>
+                    {tab.label}
+                    {!loadedTabs.has(tab.id) && tab.id !== 'details' && (
+                      <span className="ml-1 text-xs text-gray-400">•</span>
+                    )}
+                  </button>
+                ))}
+              </nav>
+            </div>
+            
+            {/* Tab Content */}
+            <div className="transition-all duration-200">
+              {renderTabContent}
+            </div>
           </div>
         </div>
-      </div>
-      
-      {/* Response notification */}
-      {response.open && (
-        <div className="fixed inset-0 z-50 overflow-y-auto">
-          <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-            <div className="fixed inset-0 transition-opacity" aria-hidden="true">
-              <div className="absolute inset-0 bg-gray-500 opacity-75"></div>
-            </div>
-            <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-            <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
-              <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                <div className="sm:flex sm:items-start">
-                  <div className={`mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full ${
-                    response.success ? "bg-green-100" : "bg-red-100"
-                  } sm:mx-0 sm:h-10 sm:w-10`}>
-                    {response.success ? (
-                      <svg className="h-6 w-6 text-green-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                      </svg>
-                    ) : (
-                      <svg className="h-6 w-6 text-red-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                      </svg>
-                    )}
-                  </div>
-                  <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
-                    <h3 className="text-lg leading-6 font-medium text-gray-900">
-                      {response.title}
-                    </h3>
-                    <div className="mt-2">
-                      <p className="text-sm text-gray-500">
-                        {response.message}
-                      </p>
+        
+        {/* Response notification */}
+        {response.open && (
+          <div className="fixed inset-0 z-50 overflow-y-auto">
+            <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+              <div className="fixed inset-0 transition-opacity" aria-hidden="true">
+                <div className="absolute inset-0 bg-gray-500 opacity-75"></div>
+              </div>
+              <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+              <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                  <div className="sm:flex sm:items-start">
+                    <div className={`mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full ${
+                      response.success ? "bg-green-100" : "bg-red-100"
+                    } sm:mx-0 sm:h-10 sm:w-10`}>
+                      {response.success ? (
+                        <svg className="h-6 w-6 text-green-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                        </svg>
+                      ) : (
+                        <svg className="h-6 w-6 text-red-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      )}
+                    </div>
+                    <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+                      <h3 className="text-lg leading-6 font-medium text-gray-900">
+                        {response.title}
+                      </h3>
+                      <div className="mt-2">
+                        <p className="text-sm text-gray-500">
+                          {response.message}
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-              <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-                <button
-                  type="button"
-                  onClick={onCloseResponse}
-                  className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm"
-                >
-                  OK
-                </button>
+                <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                  <button
+                    type="button"
+                    onClick={onCloseResponse}
+                    className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm"
+                  >
+                    OK
+                  </button>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
       {/* Approval Justification Modal */}
       {approvalsJustificationModal && (
@@ -5773,7 +5652,8 @@ export default function Schedule({
                            registration_number: newSupplier.registration_number,
                            business_type: newSupplier.business_type
                          };
-                         setSuppliers(prev => [...prev, newSupplierData]);
+                         const currentSuppliers = useScheduleStore.getState().suppliers;
+                         setSuppliers([...currentSuppliers, newSupplierData]);
                          
                          setOnAddSupplier(false);
                          setNewSupplier({});
@@ -5812,6 +5692,6 @@ export default function Schedule({
           </div>
         </div>
       )}
-    </ScheduleProvider>
+    </>
   );
 }

@@ -122,6 +122,7 @@ export interface ICurrentApprover {
   username?: string;
   justification?: string;
   role?: string;
+  approval?: string;
 }
 
 export interface IPrItems {
