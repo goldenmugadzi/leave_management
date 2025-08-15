@@ -25,6 +25,18 @@ class CashierDisbursementForm(forms.Form):
         if not self.is_bound:
             self.initial.setdefault("amount_disbursed", Decimal(str(self.pettycash.amount)))
 
+        # Apply consistent styling to widgets
+        self.fields["payment_mode"].widget.attrs.update({
+            'class': "block w-full rounded-md border-0 py-1.5 text-gray-900 bg-white shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600 sm:text-sm",
+        })
+        self.fields["amount_disbursed"].widget = forms.NumberInput()
+        self.fields["amount_disbursed"].widget.attrs.update({
+            'class': "block w-full rounded-md border-0 py-1.5 text-gray-900 bg-white shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600 sm:text-sm",
+            'step': '0.01',
+            'min': '0.01',
+            'inputmode': 'decimal',
+        })
+
     def clean_amount_disbursed(self):
         amt = self.cleaned_data["amount_disbursed"]
         try:
@@ -236,6 +248,18 @@ class RequesterClearForm(forms.Form):
         default_amt = self.pettycash.amount_disbursed if self.pettycash.amount_disbursed is not None else self.pettycash.amount
         if not self.is_bound and default_amt is not None:
             self.initial.setdefault("amount_used", Decimal(str(default_amt)))
+
+        # Apply consistent styling to widgets
+        self.fields["receipt_file"].widget.attrs.update({
+            'class': "block w-full rounded-md border-0 py-1.5 text-gray-900 bg-white shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600 sm:text-sm",
+        })
+        self.fields["amount_used"].widget = forms.NumberInput()
+        self.fields["amount_used"].widget.attrs.update({
+            'class': "block w-full rounded-md border-0 py-1.5 text-gray-900 bg-white shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600 sm:text-sm",
+            'step': '0.01',
+            'min': '0.01',
+            'inputmode': 'decimal',
+        })
 
     def clean_amount_used(self):
         used = self.cleaned_data["amount_used"]
