@@ -13,6 +13,8 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
 from openpyxl.workbook import Workbook
 from django.core.exceptions import ValidationError
+from django.db.models import Sum
+from django.db.models.functions import TruncMonth
 
 from ACE2.utils import find_ace_section_head, find_pettycash_section_head
 from approve.forms import ApprovalForm
@@ -1261,6 +1263,47 @@ def print_report_excel(request, report_id):
     return response
 
 
+def print_report_csv(request, report_id):
+    """Stream a CSV petty cash report for the given report_id filters."""
+    report = get_object_or_404(PettycashReport, report_id=report_id)
+    pettycashs = Pettycash.objects.filter(
+        region=report.region,
+        section=report.section,
+        date_created__range=[report.start_date, report.end_date]
+    ).all()
+
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="pettycash_report.csv"'
+
+    writer = csv.writer(response)
+    writer.writerow([
+        'petty_id', 'details_of_expenditure', 'requested_by', 'section', 'date_created',
+        'amount', 'amount_disbursed', 'amount_used', 'payment_mode', 'currency', 'approval_status'
+    ])
+
+    for pettycash in pettycashs:
+        requested_by = pettycash.requested_by.get_full_name() if pettycash.requested_by else ''
+        section = pettycash.section.section if pettycash.section else ''
+        date_created = pettycash.date_created.strftime('%Y-%m-%d') if pettycash.date_created else ''
+        approval_status = str(pettycash.process.approval_set.last()) if pettycash.process and pettycash.process.approval_set.last() else ''
+
+        writer.writerow([
+            pettycash.petty_id,
+            pettycash.details_of_expenditure,
+            requested_by,
+            section,
+            date_created,
+            pettycash.amount or '',
+            pettycash.amount_disbursed or '',
+            pettycash.amount_used or '',
+            pettycash.payment_mode or '',
+            pettycash.currency or '',
+            approval_status
+        ])
+
+    return response
+
+
 def receipt_manual(request):
     if request.method == 'POST':
         receipt_file = request.FILES['file-input']
@@ -1273,6 +1316,99 @@ def receipt_manual(request):
         return redirect('pettycash:pettycash_detail', petty_id=pettycash.petty_id)
     else:
         return render(request, 'finance/pettycash/receipt.html')
+
+
+@login_required
+def pettycash_monthly_totals(request):
+    """Show monthly totals for PettyCash in the user's region for a selected year."""
+    try:
+        user_id = request.user.id
+        user_profile = UserProfile.objects.filter(id=user_id).first()
+        if not user_profile:
+            messages.error(request, "User profile not found. Please contact administrator.")
+            return render(request, 'finance/pettycash/pettycash_monthly_totals.html', {
+                'rows': [], 'year': None, 'years': []
+            })
+
+        try:
+            region = Regions.objects.filter(id=user_profile.region.id).first()
+            if not region:
+                messages.error(request, "User region not found. Please contact administrator.")
+                return render(request, 'finance/pettycash/pettycash_monthly_totals.html', {
+                    'rows': [], 'year': None, 'years': []
+                })
+        except AttributeError:
+            messages.error(request, "User profile is incomplete. Missing region information.")
+            return render(request, 'finance/pettycash/pettycash_monthly_totals.html', {
+                'rows': [], 'year': None, 'years': []
+            })
+
+        # Determine year (default to current year)
+        try:
+            selected_year = int(request.GET.get('year', datetime.now(timezone.utc).year))
+        except (TypeError, ValueError):
+            selected_year = datetime.now(timezone.utc).year
+
+        base_qs = Pettycash.objects.filter(region=region, date_created__year=selected_year)
+
+        # Aggregate by month
+        monthly = (
+            base_qs
+            .annotate(month=TruncMonth('date_created'))
+            .values('month')
+            .order_by('month')
+            .annotate(
+                total_amount=Sum('amount'),
+                total_disbursed=Sum('amount_disbursed'),
+                total_used=Sum('amount_used'),
+            )
+        )
+
+        # Build a dict keyed by month for easy lookup
+        month_map = {m['month'].month: m for m in monthly}
+
+        # Prepare rows for all 12 months
+        rows = []
+        grand_amount = 0.0
+        grand_disbursed = 0.0
+        grand_used = 0.0
+
+        for m in range(1, 13):
+            rec = month_map.get(m)
+            amt = float(rec['total_amount']) if rec and rec['total_amount'] is not None else 0.0
+            disb = float(rec['total_disbursed']) if rec and rec['total_disbursed'] is not None else 0.0
+            used = float(rec['total_used']) if rec and rec['total_used'] is not None else 0.0
+
+            grand_amount += amt
+            grand_disbursed += disb
+            grand_used += used
+
+            rows.append({
+                'month_num': m,
+                'amount': amt,
+                'disbursed': disb,
+                'used': used,
+            })
+
+        # Available years for dropdown (only in this region)
+        years = [d.year for d in Pettycash.objects.filter(region=region).dates('date_created', 'year')]
+
+        context = {
+            'rows': rows,
+            'year': selected_year,
+            'years': years,
+            'grand_amount': grand_amount,
+            'grand_disbursed': grand_disbursed,
+            'grand_used': grand_used,
+            'region': region,
+        }
+        return render(request, 'finance/pettycash/pettycash_monthly_totals.html', context)
+
+    except Exception as e:
+        messages.error(request, f"System error: {str(e)}")
+        return render(request, 'finance/pettycash/pettycash_monthly_totals.html', {
+            'rows': [], 'year': None, 'years': []
+        })
 
 
 @login_required
