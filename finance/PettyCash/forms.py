@@ -1,3 +1,41 @@
+from decimal import Decimal
+from django import forms
+from .models import Pettycash
+
+
+class CashierDisbursementForm(forms.Form):
+    payment_mode = forms.ChoiceField(
+        choices=Pettycash.PAYMENT_MODE_CHOICES,
+        required=True,
+        label="Payment mode"
+    )
+    amount_disbursed = forms.DecimalField(
+        required=True,
+        min_value=Decimal("0.01"),
+        max_digits=12,
+        decimal_places=2,
+        label="Amount disbursed"
+    )
+
+    def __init__(self, *args, pettycash: Pettycash, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.pettycash = pettycash
+
+        # Helpful default for cashier: start at requested amount
+        if not self.is_bound:
+            self.initial.setdefault("amount_disbursed", Decimal(str(self.pettycash.amount)))
+
+    def clean_amount_disbursed(self):
+        amt = self.cleaned_data["amount_disbursed"]
+        try:
+            max_amt = Decimal(str(self.pettycash.amount))
+        except Exception:
+            max_amt = Decimal("0")
+        if amt > max_amt:
+            raise forms.ValidationError(f"Amount disbursed cannot exceed requested amount ({max_amt}).")
+        return amt
+
+
 from django import forms
 from django.contrib.auth.models import User
 
@@ -174,8 +212,7 @@ class PettycashReportForm(forms.ModelForm):
         # quotation_form.fields['quotation_file'].label = self.get_quotation_label(i + 1)
 
     # def get_quotation_label(self, quotation_number): suffix = 'ACE' if 11 <= quotation_number <= 13 else {1: 'st',
-    # 2: 'nd', 3
-
+    # 2: 'nd', 3: 'rd'}.get(quotation_number % 10, 'th')
     def humanize_field_name(self, field_name):
         words = field_name.split('_')
         capitalized_words = [word.capitalize() for word in words]

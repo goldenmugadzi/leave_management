@@ -179,38 +179,41 @@
                     <h1 class="text-center mb-4 font-bold text-xl  mb-2">Workflow Details</h1>
                     <p class="font-bold  mb-2"> Workflow name : {{ pettycash.process.workflow }}</p>
                 {% if clear_minus and pettycash.payment_mode == None and cashier != None %}
-                <form class="row rounded py-4 border  rounded-lg p-3 m-auto container" method="POST"
+                <form class="row rounded py-4 border rounded-lg p-3 m-auto container" method="POST"
                       action="/pettycash/pettycash_detail/{{ pettycash.petty_id  }}/" enctype="multipart/form-data">
                     {% csrf_token %}
-                    <div class=" m-auto container  ">
-                        <h4 class="text-center mb-4 font-bold text-xl  mb-2">Add Payment Mode</h4>
+                    <div class="m-auto container">
+                        <h4 class="text-center mb-4 font-bold text-xl mb-2">Cashier: Capture Disbursement</h4>
+
+                        {% if form and form.non_field_errors %}
+                            <div class="text-red-600 mb-2">
+                                {{ form.non_field_errors }}
+                            </div>
+                        {% endif %}
 
                         <div class="m-4 text-center">
-{#                            <label for="payment_mode">Payment mode</label>#}
-                            <select name="payment_mode" id="payment_mode" required>
-                                <option value="">Add Payment Mode</option>
-                                <option value="ZIG_SWIPE">Swipe ZIG</option>
-                                <option value="SWIPE_USD">Swipe Usd</option>
-                                <option value="CASH_USD">Cash Usd</option>
-                                <option value="ZIG_CASH">Cash ZIG</option>
-                                <option value="CASH_USD">(transfer) Usd</option>
-                                <option value="CASH_ZIG">(transfer) ZIG</option>
-                            </select>
+                            <label for="id_payment_mode" class="block font-medium mb-1">Payment mode</label>
+                            {% if form %}{{ form.payment_mode }}{% else %}
+                                <select disabled class="opacity-50 cursor-not-allowed"><option>Form unavailable</option></select>
+                            {% endif %}
+                            {% if form and form.payment_mode.errors %}
+                                <div class="text-red-600 text-sm">{{ form.payment_mode.errors.0 }}</div>
+                            {% endif %}
                         </div>
 
                         <div class="m-4 text-center">
-                            <label for="amount_disbursed">Amount Disbursed</label>
-                            <input type="text" name="amount_disbursed" required min="1" max="{{ pettycash.amount }}">
-                        </div>
-                        <div>
-                            <label for="payee">Payee</label>
-                            <input type="text" name="payee" required>
-                        
+                            <label for="id_amount_disbursed" class="block font-medium mb-1">Amount Disbursed</label>
+                            {% if form %}{{ form.amount_disbursed }}{% else %}
+                                <input type="number" disabled class="opacity-50 cursor-not-allowed" />
+                            {% endif %}
+                            {% if form and form.amount_disbursed.errors %}
+                                <div class="text-red-600 text-sm">{{ form.amount_disbursed.errors.0 }}</div>
+                            {% endif %}
+                            <p class="text-sm text-gray-600 mt-1">Requested: {{ pettycash.amount }}</p>
                         </div>
 
                         <div class="m-4 text-center">
-{#                            <button type="submit" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded" name="approved" value="Rejected">Reject</button>#}
-                            <button type="submit" class="bg-gulf-blue-600 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded" name="submit" value="submit"> Add </button>
+                            <button type="submit" class="bg-gulf-blue-600 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded" name="submit" value="submit">Capture</button>
                         </div>
                     </div>
                 </form>

@@ -10,13 +10,14 @@ from django.http import HttpResponseNotFound, FileResponse, HttpResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
 from openpyxl.workbook import Workbook
+from django.core.exceptions import ValidationError
 
 from ACE2.utils import find_ace_section_head, find_pettycash_section_head
 from approve.forms import ApprovalForm
 from approve.views import intiate
 from it.users.models import UserProfile, Roles, Sections, Regions
 from approve.models import Process, Step, Approval
-from .forms import PettycashForm, QuotationFormSet, PettycashReportForm
+from .forms import PettycashForm, QuotationFormSet, PettycashReportForm, CashierDisbursementForm
 from .models import Pettycash, Quotation, PettycashReport
 
 from ..comparative_schedules.views import notify_user
@@ -44,6 +45,8 @@ def pettyCash_detail(request, petty_id):
     # print(pettycash_role)
 
     pettycash_item = Pettycash.objects.get(petty_id=petty_id)
+    # Default form holder for cashier
+    form = None
 
     # return validation to clear validation = pettycash_item.process.approval_set.filter(approved='Approved',
     # step__approver__in=user_profile.roles.all()).exists()) print(validation)
@@ -51,26 +54,54 @@ def pettyCash_detail(request, petty_id):
     quotations = Quotation.objects.filter(pettycash=pettycash_item).all()
     # print(quotations.count())
 
-    if pettycash_role == "disburse" and request.method == 'POST':
-        payment_mode = request.POST.get('payment_mode')
-        amount_disbursed = request.POST.get('amount_disbursed')
-        payee = request.POST.get('payee')
-        print(payment_mode)
-        if payment_mode and payment_mode != '':
-            pettycash_item.payment_mode = payment_mode
-            pettycash_item.amount_disbursed = amount_disbursed
-            pettycash_item.payee = payee
-            pettycash_item.save()
-            user = pettycash_item.requested_by
-            userp = UserProfile.objects.filter(id=user).first()
+    # REPLACE the current raw POST handling under pettycash_role == "disburse"
+    # with the safer form-based flow below.
 
-            msg = "Your Pettycash " + pettycash_item.petty_id + "has a payment method added by Cashier"
-            url = "/pettycash/pettycash_detail/" + pettycash_item.petty_id
-            notify_user(userp, msg, "Pettycash", url, pettycash_item.petty_id)
+    if pettycash_role == "disburse":
+        # Prevent editing if already captured
+        if request.method == "POST":
+            if getattr(pettycash_item, "payment_mode", None):
+                messages.warning(request, "Payment already captured. Contact Finance to amend.")
+                return redirect('pettycash:pettycash_detail', petty_id=pettycash_item.petty_id)
+
+            form = CashierDisbursementForm(request.POST, pettycash=pettycash_item)
+            if form.is_valid():
+                pettycash_item.payment_mode = form.cleaned_data["payment_mode"]
+                pettycash_item.amount_disbursed = form.cleaned_data["amount_disbursed"]
+                # Model-level validation safety net
+                try:
+                    pettycash_item.full_clean()
+                except ValidationError as e:
+                    # Attach specific validation errors and fall through to render
+                    if hasattr(e, 'message_dict') and 'amount_disbursed' in e.message_dict:
+                        for msg in e.message_dict['amount_disbursed']:
+                            form.add_error("amount_disbursed", msg)
+                    else:
+                        for msg in e.messages:
+                            form.add_error("amount_disbursed", msg)
+                else:
+                    pettycash_item.save(update_fields=["payment_mode", "amount_disbursed"])
+
+                # Notify requester (keep your existing pattern)
+                try:
+                    msg = f"Your Petty Cash {pettycash_item.petty_id} has been captured by Cashier"
+                    url = f"/pettycash/pettycash_detail/{pettycash_item.petty_id}"
+                    # notify_user(pettycash_item.requested_by, msg, "PettyCash", url, pettycash_item.petty_id)
+                except Exception:
+                    pass
+
+                if not form.errors:
+                    messages.success(request, "Payment captured successfully.")
+                    return redirect('pettycash:pettycash_detail', petty_id=pettycash_item.petty_id)
+            # if invalid, keep form with errors and fall through to shared render
+        else:
+            if not getattr(pettycash_item, "payment_mode", None):
+                form = CashierDisbursementForm(pettycash=pettycash_item)
 
     approvalForm = None
     to = None
     user_roles = request.user.roles.all()  # Accessing the user's roles through the 'roles' attribute
+
     clear = False
     clear_minus = False
 
@@ -129,12 +160,30 @@ def pettyCash_detail(request, petty_id):
     else:
         cashier = None
 
+    # Ensure cashier form is available on final render when needed
+    if pettycash_role == "disburse" and not getattr(pettycash_item, "payment_mode", None) and form is None:
+        try:
+            form = CashierDisbursementForm(pettycash=pettycash_item)
+        except Exception:
+            form = None
+
     print(pettycash_role, clear, requestor, clear_minus, cashier_approved)
     return render(request, 'finance/pettycash/pettycash_detail.html',
-                  {'pettycash': pettycash_item, 'approved_steps': approved_steps, 'approvalForm': approvalForm,
-                   'to': to, 'pettycash_role': pettycash_role, 'user_groups': user_groups, 'quotations': quotations
-                      , 'clear': clear, "clear_minus": clear_minus, 'requestor': requestor, 'cashier': cashier,
-                   'cashier_approved': cashier_approved})
+                  {
+                      'pettycash': pettycash_item,
+                      'approved_steps': approved_steps,
+                      'approvalForm': approvalForm,
+                      'to': to,
+                      'pettycash_role': pettycash_role,
+                      'user_groups': user_groups,
+                      'quotations': quotations,
+                      'clear': clear,
+                      "clear_minus": clear_minus,
+                      'requestor': requestor,
+                      'cashier': cashier,
+                      'cashier_approved': cashier_approved,
+                      'form': form,  # include cashier form if available
+                  })
 
 
 @login_required
