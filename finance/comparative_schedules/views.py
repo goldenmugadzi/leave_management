@@ -1,6 +1,7 @@
 import base64
 import csv
 import os
+from django.core.files.storage import FileSystemStorage
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
 import json
@@ -1381,11 +1382,16 @@ def get_pending_fm_approval(request):
 def get_your_schedules(user_id, search_value=None, column_name=None, region=None):
     
     try:   
-        cs = ComparativeSchedules.objects.filter(
+        cs = ComparativeSchedules.objects.select_related(
+            'created_by', 'region', 'section', 'pr_id'
+        ).prefetch_related(
+            Prefetch('committee_set', queryset=Committee.objects.select_related('user')),
+            Prefetch('csapproval_set', queryset=CSApproval.objects.select_related('user'))
+        ).filter(
             region=region,
             created_by_id=user_id,
             cancelled=False
-        ).all()
+        )
 
         # Filter based on search value
         if search_value:
@@ -1405,12 +1411,17 @@ def get_your_schedules(user_id, search_value=None, column_name=None, region=None
 def get_pending_committee_table(user_id, search_value=None, column_name=None, region=None):
     print("user id: ", user_id)
     # fetch schedules if user exists in the committee and has not yet approved
-    cs = ComparativeSchedules.objects.filter(
+    cs = ComparativeSchedules.objects.select_related(
+        'created_by', 'region', 'section', 'pr_id'
+    ).prefetch_related(
+        Prefetch('committee_set', queryset=Committee.objects.select_related('user')),
+        Prefetch('csapproval_set', queryset=CSApproval.objects.select_related('user'))
+    ).filter(
         Q(committee__committee_approval=None) | Q(committee__committee_approval=""),
         Q(committee__user_id=user_id),
         cancelled=False,
         region=region,
-    ).all()
+    )
 
     # Filter based on search value
     if search_value:
@@ -1507,7 +1518,12 @@ def get_general_manager(user_id, search_value=None, column_name=None, region=Non
 
 
 def get_all_schedules_table(user_id, search_value=None, column_name=None, region=None):
-    cs = ComparativeSchedules.objects.filter(region=region, cancelled=False).all()
+    cs = ComparativeSchedules.objects.select_related(
+        'created_by', 'region', 'section', 'pr_id'
+    ).prefetch_related(
+        Prefetch('committee_set', queryset=Committee.objects.select_related('user')),
+        Prefetch('csapproval_set', queryset=CSApproval.objects.select_related('user'))
+    ).filter(region=region, cancelled=False)
 
     # Filter based on search value
     if search_value:
@@ -1527,9 +1543,14 @@ def get_filtered_schedules(user_id, search_value, column_name, user_region, stat
     print("user id: ", user_id, "search_value: ", search_value, "column_name: ", column_name, "user_region: ",
           user_region, "status: ", status, "station: ", station, "pickStation: ", pickStation, "start_date: ",
           start_date, "end_date: ", end_date)
-    cs = ComparativeSchedules.objects.filter(
+    cs = ComparativeSchedules.objects.select_related(
+        'created_by', 'region', 'section', 'pr_id'
+    ).prefetch_related(
+        Prefetch('committee_set', queryset=Committee.objects.select_related('user')),
+        Prefetch('csapproval_set', queryset=CSApproval.objects.select_related('user'))
+    ).filter(
         region=user_region,
-    ).all()
+    )
 
     try:
 
@@ -1642,68 +1663,38 @@ def get_csv_export(request):
     return response
 
 
-def add_details(cs):
+def add_details(cs_queryset):
     cs_list = []
     
-    # Check if cs is a list (from pagination) or a QuerySet
-    if isinstance(cs, list):
-        # If it's a list, we can't use select_related, so use the list as-is
-        cs_data = cs
-    else:
-        # Don't re-prefetch if the queryset already has prefetched data
-        # This prevents the 'committee_set' lookup conflict
-        if hasattr(cs, '_prefetch_related_lookups'):
-            # Use the queryset as-is if it already has prefetched data
-            cs_data = cs
-        else:
-            # Only prefetch if not already done
-            cs_data = cs.select_related(
-                'created_by', 'region', 'section'
-            ).prefetch_related(
-                Prefetch('committee_set', queryset=Committee.objects.select_related('user')),
-                Prefetch('csapproval_set', queryset=CSApproval.objects.select_related('user'))
-            )
-    
-    for c in cs_data:
+    for c in cs_queryset:
         committee_approval = ""
         gm_approval = None
         fm_approval = None
-        committee_reject_reason = ""  # Initialize to prevent NameError
-        committee = Committee.objects.filter(
-            cs_id=c.id
-        ).all()
-
-        if len(committee) > 0:
-            committee_approved = all([c.committee_approval == "Approved" for c in committee])
+        committee_reject_reason = ""
+        
+        # Use prefetched committee data instead of new queries
+        committee_list = list(c.committee_set.all())
+        
+        if len(committee_list) > 0:
+            committee_approved = all([comm.committee_approval == "Approved" for comm in committee_list])
             if committee_approved:
                 committee_approval = "Approval Complete"
-                fm_approval = CSApproval.objects.filter(
-                    cs_id=c,
-                    approver_role="finance_manager",
-                ).first()
-
-                gm_approval = CSApproval.objects.filter(
-                    cs_id=c,
-                    approver_role="general_manager",
-                ).first()
+                # Use prefetched approval data
+                fm_approval = next((app for app in c.csapproval_set.all() 
+                                  if app.approver_role == "finance_manager"), None)
+                gm_approval = next((app for app in c.csapproval_set.all() 
+                                  if app.approver_role == "general_manager"), None)
             else:
                 committee_approval = "Pending"
                 fm_approval = None
                 gm_approval = None
 
-                committee_pending = Committee.objects.filter(
-                    cs_id=c,
-                    committee_approval__in=["", None]
-                ).exists()
-
+                committee_pending = any(comm.committee_approval in ["", None] for comm in committee_list)
                 if committee_pending:
                     committee_approval = "Pending"
 
-                committee_rejected = Committee.objects.filter(
-                    cs_id=c,
-                    committee_approval="Rejected"
-                ).first()
-
+                committee_rejected = next((comm for comm in committee_list 
+                                        if comm.committee_approval == "Rejected"), None)
                 if committee_rejected:
                     committee_reject_reason = committee_rejected.justification
                     committee_approval = "Rejected"
@@ -1712,35 +1703,27 @@ def add_details(cs):
             fm_approval = None
             gm_approval = None
 
-        print("c.pr_id_id: ", c.pr_id_id)
-        pr = PurchaseRequest.objects.filter(id=c.pr_id_id).first()
-        user = UserProfile.objects.filter(id=c.created_by_id).first()
-        region = Regions.objects.filter(id=c.region_id).first()
-        section = Sections.objects.filter(id=c.section_id).first()
-
         try:
             cs_list.append({
                 "cs_id": c.cs_id,
-                "pr_id": pr.id if pr else "",
+                "pr_id": c.pr_id.id if c.pr_id else "",
                 "pr_number": c.pr_number,
                 "pr_date": c.pr_date,
                 "scope_of_work": c.scope_of_work,
                 "closing_date": c.closing_date,
                 "closing_time": c.closing_time,
                 "advert": c.advert,
-                "pr_number": c.pr_number,
-                "pr_date": c.pr_date,
                 "cs_opened": c.cs_opened,
                 "tac_date": c.tac_date,
-                "created_by": user.username if user else None,
+                "created_by": c.created_by.username if c.created_by else None,
                 "committee_approval": committee_approval,
                 "committee_reject_reason": committee_reject_reason,
                 "gm_approval": gm_approval.approval if gm_approval else "Pending",
                 "gm_reject_reason": gm_approval.justification if gm_approval else "",
                 "fm_approval": fm_approval.approval if fm_approval else "Pending",
                 "fm_reject_reason": fm_approval.justification if fm_approval else "",
-                "section": section.section if section else "",
-                "region": region.region if region else "",
+                "section": c.section.section if c.section else "",
+                "region": c.region.region if c.region else "",
                 "created_at": c.created_at.strftime("%Y-%m-%d %H:%M") if c.created_at else ""
             })
         except Exception as ex:
@@ -1987,11 +1970,46 @@ def get_comperative_schedule_data(request, cs_id):
         encoded_advert_file = ""
         try:
             if cs.advert:
-                with open(cs.advert, 'rb') as f:
-                    file_data = f.read()
-                encoded_advert_file = base64.b64encode(file_data).decode('utf-8')
+                # Construct the correct file path
+                if cs.advert.startswith('uploads/'):
+                    # File is stored in media directory
+                    file_path = os.path.join(settings.MEDIA_ROOT, cs.advert)
+                else:
+                    # File is stored with absolute path
+                    file_path = cs.advert
+                
+                print(f"🔍 Attempting to read advert file: {file_path}")
+                print(f"🔍 File exists: {os.path.exists(file_path)}")
+                
+                if os.path.exists(file_path):
+                    with open(file_path, 'rb') as f:
+                        file_data = f.read()
+                    encoded_advert_file = base64.b64encode(file_data).decode('utf-8')
+                    print(f"✅ Successfully encoded advert file: {len(encoded_advert_file)} characters")
+                else:
+                    print(f"❌ Advert file not found at path: {file_path}")
+                    # Try alternative locations
+                    alt_paths = [
+                        os.path.join(settings.BASE_DIR, cs.advert),
+                        os.path.join(settings.MEDIA_ROOT, 'uploads', 'comparative_schedules', os.path.basename(cs.advert)),
+                        os.path.join(settings.MEDIA_ROOT, 'uploads', 'purchase_request', os.path.basename(cs.advert))
+                    ]
+                    
+                    for alt_path in alt_paths:
+                        if os.path.exists(alt_path):
+                            print(f"✅ Found file at alternative path: {alt_path}")
+                            with open(alt_path, 'rb') as f:
+                                file_data = f.read()
+                            encoded_advert_file = base64.b64encode(file_data).decode('utf-8')
+                            break
+                    else:
+                        print(f"❌ File not found at any alternative location")
+                        
         except Exception as ex:
-            print("Error: ", ex)
+            print(f"Error reading advert file: {ex}")
+            print(f"Advert field value: {cs.advert}")
+            print(f"MEDIA_ROOT: {settings.MEDIA_ROOT}")
+            print(f"BASE_DIR: {settings.BASE_DIR}")
             
         cs_owner = UserProfile.objects.filter(id=cs.created_by_id).first() if cs and cs.created_by_id else None
         if not cs_owner and cs:
@@ -2117,10 +2135,22 @@ def get_comperative_schedule_data(request, cs_id):
 
 def save_file(f, file_path):
     if f:
-        with open(file_path, 'wb+') as destination:
-            for chunk in f.chunks():
-                destination.write(chunk)
+        try:
+            # Ensure the directory exists
+            directory = os.path.dirname(file_path)
+            if directory and not os.path.exists(directory):
+                os.makedirs(directory, exist_ok=True)
+                print(f"✅ Created directory: {directory}")
+            
+            # Save the file
+            with open(file_path, 'wb+') as destination:
+                for chunk in f.chunks():
+                    destination.write(chunk)
+            print(f"✅ File saved successfully: {file_path}")
             return True
+        except Exception as ex:
+            print(f"❌ Error saving file {file_path}: {ex}")
+            return False
     else:
         return False
 
@@ -2227,16 +2257,23 @@ def create(request):
         try:
             if 'advert' in request.FILES:
                 advert_file = request.FILES['advert']
-                advert_path = 'uploads/finance/cs/adverts/' + \
-                              timezone.astimezone(timezone.get_current_timezone()).strftime(
-                                  "%Y%m%d%I%M%S%p") + advert_file.name
+                # Use proper media path construction
+                timestamp = timezone.astimezone(timezone.get_current_timezone()).strftime("%Y%m%d%I%M%S%p")
+                filename = f"{timestamp}_{advert_file.name}"
+                advert_path = os.path.join(settings.MEDIA_ROOT, 'uploads', 'finance', 'cs', 'adverts', filename)
                 save_file(advert_file, advert_path)
+                # Store relative path in database for consistency
+                advert_path_db = os.path.join('uploads', 'finance', 'cs', 'adverts', filename)
 
             if 'bid_document' in request.FILES:
                 bid_document_file = request.FILES['bid_document']
-                bid_document_path = 'uploads/finance/cs/bids/' + \
-                                    datetime.now().strftime("%Y%m%d%I%M%S%p") + bid_document_file.name
+                # Use proper media path construction
+                timestamp = datetime.now().strftime("%Y%m%d%I%M%S%p")
+                filename = f"{timestamp}_{bid_document_file.name}"
+                bid_document_path = os.path.join(settings.MEDIA_ROOT, 'uploads', 'finance', 'cs', 'bids', filename)
                 save_file(bid_document_file, bid_document_path)
+                # Store relative path in database for consistency
+                bid_document_path_db = os.path.join('uploads', 'finance', 'cs', 'bids', filename)
 
         except Exception as ex:
             print("Error: ", ex)
@@ -2281,7 +2318,7 @@ def create(request):
                 quote_date=bid_date,
                 rfq_no=rfq_no,
                 total=total_price,
-                bid_document=bid_document_path,
+                bid_document=bid_document_path_db if 'bid_document_path_db' in locals() else bid_document_path,
             )
             bid.save()
 
@@ -2292,7 +2329,7 @@ def create(request):
             closing_date=closing_date,
             closing_time=closing_time,
             rfq_no=rfq,
-            advert=advert_path,
+            advert=advert_path_db if 'advert_path_db' in locals() else advert_path,
             date_created=date_tender_opened,
             pr_number=pr_number,
             pr_date=pr_date,
@@ -2701,12 +2738,16 @@ def save_cs_bid(request):
     try:
         if bid_docs:
             bid_doc = bid_docs
-            root_dir = os.path.join(settings.BASE_DIR, 'uploads', 'comparative', 'adverts')
+            # Use proper media path construction
+            timestamp = datetime.now().strftime("%Y%m%d%I%M%S")
+            filename = f"{timestamp}_{bid_doc.name}"
+            root_dir = os.path.join(settings.MEDIA_ROOT, 'uploads', 'comparative', 'adverts')
             fs = FileSystemStorage(location=root_dir)
-            filename_ = fs.save(bid_doc.name, bid_doc)
-            bid_doc_path = "uploads" + os.path.sep + "comparative" + os.path.sep + "adverts" + os.path.sep + filename_
+            filename_ = fs.save(filename, bid_doc)
+            bid_doc_path = os.path.join('uploads', 'comparative', 'adverts', filename_)
+            print(f"✅ Bid document saved: {bid_doc_path}")
     except Exception as ex:
-        print("Error: ", ex)
+        print(f"❌ Error saving bid document: {ex}")
 
     for item in items:
         item_id = "Item" + datetime.now().strftime("%Y%m%d%I%M%S%p")
@@ -3372,10 +3413,13 @@ def cs_add_supplier(request, cs_id):
 
             if 'bid_document' in request.FILES:
                 bid_document_file = request.FILES['bid_document']
-                bid_document_path = 'uploads/finance/cs/bids/' + \
-                                    timezone.astimezone(timezone.get_current_timezone()).strftime(
-                                        "%Y%m%d%I%M%S") + bid_document_file.name
+                # Use proper media path construction
+                timestamp = timezone.astimezone(timezone.get_current_timezone()).strftime("%Y%m%d%I%M%S")
+                filename = f"{timestamp}_{bid_document_file.name}"
+                bid_document_path = os.path.join(settings.MEDIA_ROOT, 'uploads', 'finance', 'cs', 'bids', filename)
                 save_file(bid_document_file, bid_document_path)
+                # Store relative path in database for consistency
+                bid_document_path_db = os.path.join('uploads', 'finance', 'cs', 'bids', filename)
 
         except Exception as ex:
             print("Error: ", ex)
@@ -3421,7 +3465,7 @@ def cs_add_supplier(request, cs_id):
                 quote_date=bid_date,
                 rfq_no=rfq_no,
                 total=total_price,
-                bid_document=bid_document_path,
+                bid_document=bid_document_path_db if 'bid_document_path_db' in locals() else bid_document_path,
             )
             bid.save()
 
@@ -4191,7 +4235,7 @@ def api_get_proc_plans(request):
 @login_required
 @require_http_methods(["GET"])
 def api_get_cs_bids_optimized(request, cs_id):
-    """Get bids data for a specific CS - optimized"""
+    """Get bids data for a specific CS - optimized with proper file handling"""
     try:
         cs = ComparativeSchedules.objects.prefetch_related(
             Prefetch('bids_set', queryset=Bids.objects.select_related('sup_id', 'item_id'))
@@ -4207,16 +4251,55 @@ def api_get_cs_bids_optimized(request, cs_id):
         for bid in bids:
             bid_no = bid.bid_no
             if bid_no not in grouped_data:
-                encoded_file_data = ""
+                # Use optimized file handling instead of Base64 encoding
+                bid_document_info = None
                 if bid.bid_document:
-                    encoded_file_data = _encode_file_safely(bid.bid_document)
+                    # Check if file exists and provide metadata
+                    file_path = bid.bid_document
+                    if file_path.startswith('uploads/'):
+                        # File is stored in media directory
+                        full_path = os.path.join(settings.MEDIA_ROOT, file_path)
+                    else:
+                        # File is stored with absolute path
+                        full_path = file_path
+                    
+                    if os.path.exists(full_path):
+                        try:
+                            file_size = os.path.getsize(full_path)
+                            filename = os.path.basename(file_path)
+                            
+                            bid_document_info = {
+                                'file_path': file_path,
+                                'filename': filename,
+                                'size': file_size,
+                                'download_url': f"/media/{file_path}",
+                                'preview_url': f"/api/files/preview/{file_path}/"
+                            }
+                        except Exception as ex:
+                            print(f"Error getting file info for {file_path}: {ex}")
+                            bid_document_info = {
+                                'file_path': file_path,
+                                'filename': os.path.basename(file_path),
+                                'size': 0,
+                                'download_url': f"/media/{file_path}",
+                                'preview_url': f"/api/files/preview/{file_path}/"
+                            }
+                    else:
+                        # File not found, but provide path for debugging
+                        bid_document_info = {
+                            'file_path': file_path,
+                            'filename': os.path.basename(file_path),
+                            'size': 0,
+                            'download_url': f"/media/{file_path}",
+                            'preview_url': f"/api/files/preview/{file_path}/",
+                            'error': 'File not found'
+                        }
                 
                 grouped_data[bid_no] = {
                     'bid_count': bid.bid_no,
                     'supplier_name': bid.sup_id.name,
                     'bid_date': bid.quote_date,
-                    'encoded_bid_document': encoded_file_data,
-                    'bid_document': None,
+                    'bid_document_info': bid_document_info,
                     'items': []
                 }
             

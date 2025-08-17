@@ -310,6 +310,11 @@ export default function Schedule({
     };
   }, [advertMetadata]);
   
+  // Debug: Log advertMetadata changes
+  useEffect(() => {
+    console.log("🔍 advertMetadata changed:", advertMetadata);
+  }, [advertMetadata]);
+  
   // Memoized CSRF token
   const csrfToken = useMemo(() => getCookie("csrftoken") ?? "", []);
 
@@ -434,6 +439,14 @@ export default function Schedule({
       console.log("Data keys:", Object.keys(data));
       // Data is now returned as normal JSON, no double encoding
       const parsedData = data;
+      console.log("🔍 Full parsedData structure:", JSON.stringify(parsedData, null, 2));
+      console.log("🔍 Advertisement field specifically:", {
+        advert: parsedData.advert,
+        advertType: typeof parsedData.advert,
+        advertExists: 'advert' in parsedData,
+        advertNull: parsedData.advert === null,
+        advertUndefined: parsedData.advert === undefined
+      });
       // Extract basic metadata
       setCreator(parsedData.creator || '');
       setCreatedAt(parsedData.created_at || '');
@@ -479,12 +492,14 @@ export default function Schedule({
       }
       
       // Set existing advert metadata if available
+      console.log("🔍 Checking for advert data in parsedData...");
       if (parsedData.advert) {
         console.log("🔍 Advertisement data found:", {
           hasData: !!parsedData.advert,
           dataLength: parsedData.advert?.length || 0,
           dataStart: parsedData.advert?.substring(0, 20) || 'N/A',
-          isString: typeof parsedData.advert === 'string'
+          isString: typeof parsedData.advert === 'string',
+          fullData: parsedData.advert
         });
         
         // Handle both Base64 data and file paths intelligently
@@ -536,31 +551,71 @@ export default function Schedule({
             };
             console.log("🔍 Setting Base64 advert metadata:", metadata);
             setAdvertMetadata(metadata);
+            
+            // Debug: Check if advertMetadata was set correctly
+            setTimeout(() => {
+              console.log("🔍 advertMetadata after setting Base64:", metadata);
+            }, 100);
           } catch (error) {
             console.error("Error processing Base64 advertisement data:", error);
             // Fallback to treating as file path
-            setAdvertMetadata({
-              name: 'advertisement.pdf',
+            const fileName = parsedData.advert.includes('/') 
+              ? parsedData.advert.split('/').pop() || 'advertisement.pdf'
+              : parsedData.advert || 'advertisement.pdf';
+              
+            const fallbackMetadata = {
+              name: fileName,
               size: 0,
-              download_url: `/comperative_schedule/api/files/download/${parsedData.advert}`,
-              preview_url: `/comperative_schedule/api/files/preview/${parsedData.advert}`,
+              download_url: buildApiUrl(base_url, getApiEndpoints().FILE_DOWNLOAD(parsedData.advert)),
+              preview_url: buildApiUrl(base_url, getApiEndpoints().FILE_PREVIEW(parsedData.advert)),
               mime_type: 'application/pdf',
               file_path: parsedData.advert
-            });
+            };
+            
+            console.log("🔍 Setting fallback advert metadata:", fallbackMetadata);
+            setAdvertMetadata(fallbackMetadata);
+            
+            // Debug: Check if advertMetadata was set correctly
+            setTimeout(() => {
+              console.log("🔍 advertMetadata after setting fallback:", fallbackMetadata);
+            }, 100);
           }
         } else {
           // Handle file path (optimized endpoint)
           console.log("🔄 Detected file path advertisement data:", parsedData.advert);
+          
+          // Extract filename from path if possible
+          const fileName = parsedData.advert.includes('/') 
+            ? parsedData.advert.split('/').pop() || 'advertisement.pdf'
+            : parsedData.advert || 'advertisement.pdf';
+          
           const metadata = {
-            name: 'advertisement.pdf',
-            size: 0,
-            download_url: `/comperative_schedule/api/files/download/${parsedData.advert}`,
-            preview_url: `/comperative_schedule/api/files/preview/${parsedData.advert}`,
+            name: fileName,
+            size: 0, // File size not available for file paths
+            download_url: buildApiUrl(base_url, getApiEndpoints().FILE_DOWNLOAD(parsedData.advert)),
+            preview_url: buildApiUrl(base_url, getApiEndpoints().FILE_PREVIEW(parsedData.advert)),
             mime_type: 'application/pdf',
             file_path: parsedData.advert
           };
           console.log("🔍 Setting file path advert metadata:", metadata);
           setAdvertMetadata(metadata);
+          
+          // Debug: Check if advertMetadata was set correctly
+          setTimeout(() => {
+            console.log("🔍 advertMetadata after setting:", metadata);
+          }, 100);
+        }
+      } else {
+        console.log("🔍 No advertisement data found in parsedData");
+        console.log("🔍 Available fields:", Object.keys(parsedData));
+        console.log("🔍 Checking for alternative advert fields...");
+        
+        // Check for alternative field names that might contain advert data
+        const possibleAdvertFields = ['advertisement', 'advert_file', 'advert_path', 'file_path', 'document'];
+        for (const field of possibleAdvertFields) {
+          if (parsedData[field]) {
+            console.log(`🔍 Found alternative field '${field}':`, parsedData[field]);
+          }
         }
       }
       
@@ -1713,6 +1768,18 @@ export default function Schedule({
         return true;
       }
       
+      // Check if schedule approval is complete (committee + FM + GM all approved)
+      // If approval is complete, lock all edit options regardless of creator status
+      const committeeApproved = committeeMembers.length === 0 || committeeMembers.every(m => m.memberApproval === "Approved");
+      const gmApproved = !!gmApproval && gmApproval.approval === "Approved";
+      const fmApproved = !!fmApproval && fmApproval.approval === "Approved";
+      const approvalComplete = committeeApproved && gmApproved && fmApproved;
+      
+      if (approvalComplete) {
+        console.log('🔒 Schedule approval complete - locking all edit options');
+        return false;
+      }
+      
       // For existing schedules, check if current user is the creator
       // Use csOwner (username) instead of creator (full name)
       // If csOwner is empty and we're still loading, return true to avoid blocking operations
@@ -1728,7 +1795,20 @@ export default function Schedule({
     // isCreator permission check completed
     
     return result;
-  }, [username, creator, csOwner, csId, isLoading]);
+  }, [username, creator, csOwner, csId, isLoading, committeeMembers, gmApproval, fmApproval]);
+
+  // Helper function to check if schedule approval is complete
+  const isApprovalComplete = useCallback((): boolean => {
+    if (!csId || csId === "") {
+      return false; // New schedules don't have approvals yet
+    }
+    
+    const committeeApproved = committeeMembers.length === 0 || committeeMembers.every(m => m.memberApproval === "Approved");
+    const gmApproved = !!gmApproval && gmApproval.approval === "Approved";
+    const fmApproved = !!fmApproval && fmApproval.approval === "Approved";
+    
+    return committeeApproved && gmApproved && fmApproved;
+  }, [csId, committeeMembers, gmApproval, fmApproval]);
 
   // Show response notification
   const onOpenResponse = useCallback((title: string, message: string, success: boolean) => {
@@ -2237,6 +2317,9 @@ export default function Schedule({
     // Handle bid document - preserve existing document if no new file is uploaded
     if (bid.bid_document instanceof File) {
       form_data.append("bid_document", bid.bid_document);
+    } else if (bid.bid_document_info?.file_path) {
+      // For existing documents with file info, send the file path
+      form_data.append("bid_document", bid.bid_document_info.file_path);
     } else if (bid.encoded_bid_document) {
       // For existing encoded documents, send as string
       form_data.append("bid_document", bid.encoded_bid_document);
@@ -2417,7 +2500,7 @@ export default function Schedule({
     }
     
     // Validate bid document
-    if (!currentBid?.bid_document && !currentBid?.encoded_bid_document && !currentBid?.bid_document_url) {
+    if (!currentBid?.bid_document && !currentBid?.bid_document_info && !currentBid?.encoded_bid_document && !currentBid?.bid_document_url) {
       errors.push("Please select a bid document");
       invalidFieldSet.add("bid_document");
     }
@@ -3112,13 +3195,69 @@ export default function Schedule({
               </div>
             </div>
 
+            {/* Approval Status and Edit Lock Indicator */}
+            {csId && csId.trim() !== "" && (
+              <div className={`p-4 rounded-lg border ${
+                isApprovalComplete() 
+                  ? 'bg-green-50 border-green-200' 
+                  : 'bg-blue-50 border-blue-200'
+              }`}>
+                <div className="flex items-center">
+                  <svg className={`w-5 h-5 mr-3 ${
+                    isApprovalComplete() ? 'text-green-600' : 'text-blue-600'
+                  }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    {isApprovalComplete() ? (
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    ) : (
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    )}
+                  </svg>
+                  <div>
+                    <h4 className={`text-sm font-medium ${
+                      isApprovalComplete() ? 'text-green-800' : 'text-blue-800'
+                    }`}>
+                      {isApprovalComplete() ? 'Schedule Approved - Edit Options Locked' : 'Schedule Pending Approval - Edit Options Available'}
+                    </h4>
+                    <p className={`text-sm mt-1 ${
+                      isApprovalComplete() ? 'text-green-700' : 'text-blue-700'
+                    }`}>
+                      {isApprovalComplete() 
+                        ? 'This schedule has been fully approved by committee, finance manager, and general manager. All edit options are now locked to maintain data integrity.'
+                        : 'This schedule is awaiting approval. Edit options are available until final approval is complete.'
+                      }
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Procurement Information */}
             <div className="bg-white p-6 rounded-lg shadow-sm border">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4 border-b pb-2">Procurement Details</h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4 border-b pb-2 flex items-center justify-between">
+                <span>Procurement Details</span>
+                {!isCreator() && isApprovalComplete() && (
+                  <span className="inline-flex items-center text-sm text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                    <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                    </svg>
+                    Edit Options Locked
+                  </span>
+                )}
+              </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">PR Number</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      PR Number
+                      {!isCreator() && isApprovalComplete() && (
+                        <span className="ml-2 inline-flex items-center text-xs text-gray-500">
+                          <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                          </svg>
+                          Locked
+                        </span>
+                      )}
+                    </label>
                     <input 
                       type="text" 
                       className={`w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${!isCreator() ? 'bg-gray-100 cursor-not-allowed' : ''}`}
@@ -3129,7 +3268,17 @@ export default function Schedule({
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">PR Date</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      PR Date
+                      {!isCreator() && isApprovalComplete() && (
+                        <span className="ml-2 inline-flex items-center text-xs text-gray-500">
+                          <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                          </svg>
+                          Locked
+                        </span>
+                      )}
+                    </label>
                     <input 
                       type="date" 
                       className={`w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${!isCreator() ? 'bg-gray-100 cursor-not-allowed' : ''}`}
@@ -3149,7 +3298,17 @@ export default function Schedule({
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Procurement Plan</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Procurement Plan
+                      {!isCreator() && isApprovalComplete() && (
+                        <span className="ml-2 inline-flex items-center text-xs text-gray-500">
+                          <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                          </svg>
+                          Locked
+                        </span>
+                      )}
+                    </label>
                     <select 
                       className={`w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${!isCreator() ? 'bg-gray-100 cursor-not-allowed' : ''}`}
                       onChange={(e) => onSelectChange("procPlan", e)}
@@ -3221,9 +3380,29 @@ export default function Schedule({
 
             {/* Scope of Work */}
             <div className="bg-white p-6 rounded-lg shadow-sm border">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4 border-b pb-2">Scope of Work</h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4 border-b pb-2 flex items-center justify-between">
+                <span>Scope of Work</span>
+                {!isCreator() && isApprovalComplete() && (
+                  <span className="inline-flex items-center text-sm text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                    <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                    </svg>
+                    Edit Options Locked
+                  </span>
+                )}
+              </h3>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Description
+                  {!isCreator() && isApprovalComplete() && (
+                    <span className="ml-2 inline-flex items-center text-xs text-gray-500">
+                      <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                      </svg>
+                      Locked
+                    </span>
+                  )}
+                </label>
                 <textarea 
                   rows={4}
                   className={`w-full p-3 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${!isCreator() ? 'bg-gray-100 cursor-not-allowed' : ''}`}
@@ -3290,8 +3469,10 @@ export default function Schedule({
                             <p className="text-sm text-blue-600 font-medium">Existing Advertisement Document</p>
                             <div className="text-sm text-gray-600 mb-2">
                               <span className="font-medium">{advertMetadata.name}</span>
-                              {advertMetadata.size > 0 && (
+                              {advertMetadata.size > 0 ? (
                                 <span className="ml-2">({(advertMetadata.size / 1024 / 1024).toFixed(2)} MB)</span>
+                              ) : (
+                                <span className="ml-2 text-gray-400">(Size not available)</span>
                               )}
                             </div>
                             <button
@@ -3471,7 +3652,17 @@ export default function Schedule({
                 <div className="space-y-6">
                   {/* Purchase Request Items */}
                   <div className="bg-white p-6 rounded-lg shadow-sm border">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4 border-b pb-2">Purchase Request Items</h3>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4 border-b pb-2 flex items-center justify-between">
+                      <span>Purchase Request Items</span>
+                      {!isCreator() && isApprovalComplete() && (
+                        <span className="inline-flex items-center text-sm text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                          <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                          </svg>
+                          Edit Options Locked
+                        </span>
+                      )}
+                    </h3>
                     
                     {isLoading && loadingOperation === "Loading PR items data" ? (
                       <div className="transition-all duration-300 ease-in-out">
@@ -3704,9 +3895,29 @@ export default function Schedule({
 
                   {/* Additional Notes */}
                   <div className="bg-white p-6 rounded-lg shadow-sm border">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4 border-b pb-2">Additional Notes</h3>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4 border-b pb-2 flex items-center justify-between">
+                      <span>Additional Notes</span>
+                      {!isCreator() && isApprovalComplete() && (
+                        <span className="inline-flex items-center text-sm text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                          <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                          </svg>
+                          Edit Options Locked
+                        </span>
+                      )}
+                    </h3>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Internal Notes</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Internal Notes
+                        {!isCreator() && isApprovalComplete() && (
+                          <span className="ml-2 inline-flex items-center text-xs text-gray-500">
+                            <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                            </svg>
+                            Locked
+                          </span>
+                        )}
+                      </label>
                       <textarea 
                         rows={3}
                         className={`w-full p-3 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${!isCreator() ? 'bg-gray-100 cursor-not-allowed' : ''}`}
@@ -3749,6 +3960,14 @@ export default function Schedule({
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
                           </svg>
                           Supplier Bids Management
+                          {!isCreator() && isApprovalComplete() && (
+                            <span className="ml-2 inline-flex items-center text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                              <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                              </svg>
+                              Locked
+                            </span>
+                          )}
                         </h3>
                         <p className="text-gray-600 mt-1">
                           {isCreator() 
@@ -3859,7 +4078,7 @@ export default function Schedule({
                                         <span className="font-medium">Total:</span> ${calculateBidTotal(bid.items).toLocaleString()}
                                       </div>
                                     </div>
-                                                                         {(bid.encoded_bid_document || bid.bid_document || bid.bid_document_url) && (
+                                                                         {(bid.bid_document_info || bid.encoded_bid_document || bid.bid_document || bid.bid_document_url) && (
                                         <div className="mt-2">
                                           <button
                                             type="button"
@@ -3868,12 +4087,14 @@ export default function Schedule({
                                               e.stopPropagation();
                                               e.preventDefault();
                                               
-                                              // Handle document download
-                                              const downloadUrl = bid.bid_document_url || 
+                                              // Handle document download - prioritize bid_document_info
+                                              const downloadUrl = bid.bid_document_info?.download_url ||
+                                                                bid.bid_document_url || 
                                                                 getFileDownloadUrl(bid.encoded_bid_document) ||
                                                                 getFileDownloadUrl(bid.bid_document);
                                               
                                               console.log("📄 Small document click:", {
+                                                bid_document_info: bid.bid_document_info ? "present" : "missing",
                                                 bid_document_url: bid.bid_document_url,
                                                 encoded_bid_document: bid.encoded_bid_document ? "present" : "missing",
                                                 bid_document: bid.bid_document ? "present" : "missing",
@@ -3886,10 +4107,11 @@ export default function Schedule({
                                                 link.href = downloadUrl;
                                                 
                                                 // Set filename based on bid data
-                                                const filename = getDownloadFilename(
-                                                  bid.encoded_bid_document || bid.bid_document,
-                                                  `bid_${bid.bid_count}_${bid.supplier_name?.replace(/[^a-zA-Z0-9]/g, '_')}`
-                                                );
+                                                const filename = bid.bid_document_info?.filename ||
+                                                  getDownloadFilename(
+                                                    bid.encoded_bid_document || bid.bid_document,
+                                                    `bid_${bid.bid_count}_${bid.supplier_name?.replace(/[^a-zA-Z0-9]/g, '_')}`
+                                                  );
                                                 link.download = filename;
                                                 
                                                 // Set target for new tab (in case download fails)
@@ -3908,6 +4130,9 @@ export default function Schedule({
                                             }}
                                           >
                                             📄 View Document
+                                            {bid.bid_document_info?.error && (
+                                              <span className="text-red-500 ml-1">(File not found)</span>
+                                            )}
                                           </button>
                                         </div>
                                       )}
@@ -3997,19 +4222,21 @@ export default function Schedule({
                                                                              <div>
                                          <h6 className="text-sm font-medium text-gray-900 mb-2">Documents</h6>
                                          <div className="text-sm text-gray-600">
-                                                                                      {bid.encoded_bid_document || bid.bid_document || bid.bid_document_url ? (
+                                                                                      {(bid.bid_document_info || bid.encoded_bid_document || bid.bid_document || bid.bid_document_url) ? (
                                               <button
                                                 type="button"
                                                 className="text-blue-600 hover:text-blue-800 hover:underline flex items-center"
                                                 onClick={(e) => {
                                                   e.preventDefault();
                                                   
-                                                  // Handle document download
-                                                  const downloadUrl = bid.bid_document_url || 
+                                                  // Handle document download - prioritize bid_document_info
+                                                  const downloadUrl = bid.bid_document_info?.download_url ||
+                                                                    bid.bid_document_url || 
                                                                     getFileDownloadUrl(bid.encoded_bid_document) ||
                                                                     getFileDownloadUrl(bid.bid_document);
                                                   
                                                   console.log("📄 Document click:", {
+                                                    bid_document_info: bid.bid_document_info ? "present" : "missing",
                                                     bid_document_url: bid.bid_document_url,
                                                     encoded_bid_document: bid.encoded_bid_document ? "present" : "missing",
                                                     bid_document: bid.bid_document ? "present" : "missing",
@@ -4022,10 +4249,11 @@ export default function Schedule({
                                                     link.href = downloadUrl;
                                                     
                                                     // Set filename based on bid data
-                                                    const filename = getDownloadFilename(
-                                                      bid.encoded_bid_document || bid.bid_document,
-                                                      `bid_${bid.bid_count}_${bid.supplier_name?.replace(/[^a-zA-Z0-9]/g, '_')}`
-                                                    );
+                                                    const filename = bid.bid_document_info?.filename ||
+                                                      getDownloadFilename(
+                                                        bid.encoded_bid_document || bid.bid_document,
+                                                        `bid_${bid.bid_count}_${bid.supplier_name?.replace(/[^a-zA-Z0-9]/g, '_')}`
+                                                      );
                                                     link.download = filename;
                                                     
                                                     // Set target for new tab (in case download fails)
@@ -4044,9 +4272,12 @@ export default function Schedule({
                                                 }}
                                               >
                                                 <svg className="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.586a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                                 </svg>
                                                 View/Download Bid Document
+                                                {bid.bid_document_info?.error && (
+                                                  <span className="text-red-500 ml-1">(File not found)</span>
+                                                )}
                                                 <svg className="w-3 h-3 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                                                 </svg>
@@ -4261,7 +4492,17 @@ export default function Schedule({
                   {/* Compliance Table */}
                   {compliance.length > 0 && (
                     <div className="bg-white p-6 rounded-lg shadow-sm border">
-                      <h3 className="text-lg font-semibold text-gray-900 mb-4 border-b pb-2">Compliance Evaluation</h3>
+                      <h3 className="text-lg font-semibold text-gray-900 mb-4 border-b pb-2 flex items-center justify-between">
+                  <span>Compliance Evaluation</span>
+                  {!isCreator() && isApprovalComplete() && (
+                    <span className="inline-flex items-center text-sm text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                      <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                      </svg>
+                      Edit Options Locked
+                    </span>
+                  )}
+                </h3>
                       
                       <div className="overflow-x-auto">
                         <table className="min-w-full divide-y divide-gray-200">
@@ -5090,7 +5331,7 @@ export default function Schedule({
                          <p className="text-xs text-gray-500 mt-1">PDF, DOC, or image files only (max 10MB)</p>
                          
                          {/* File Preview */}
-                         {(currentBid?.bid_document || currentBid?.encoded_bid_document || currentBid?.bid_document_url) && (
+                         {(currentBid?.bid_document || currentBid?.bid_document_info || currentBid?.encoded_bid_document || currentBid?.bid_document_url) && (
                            <div className="mt-2 p-3 bg-gray-50 border border-gray-200 rounded">
                              <div className="flex items-center">
                                <svg className="w-5 h-5 text-blue-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -5102,6 +5343,27 @@ export default function Schedule({
                                      <p className="text-sm font-medium text-gray-900">{currentBid.bid_document.name}</p>
                                      <p className="text-xs text-gray-500">
                                        {(currentBid.bid_document.size / 1024 / 1024).toFixed(2)} MB - {currentBid.bid_document.type}
+                                     </p>
+                                   </>
+                                 ) : currentBid.bid_document_info ? (
+                                   <>
+                                     <p className="text-sm font-medium text-gray-900">
+                                       {currentBid.bid_document_info.filename || 'Bid document'}
+                                       {currentBid.bid_document_info.error && (
+                                         <span className="text-red-500 ml-2">(File not found)</span>
+                                       )}
+                                     </p>
+                                     <p className="text-xs text-gray-500">
+                                       {currentBid.bid_document_info.size > 0 
+                                         ? `${(currentBid.bid_document_info.size / 1024 / 1024).toFixed(2)} MB` 
+                                         : 'Size unknown'}
+                                       {currentBid.bid_document_info.download_url && (
+                                         <span className="ml-2 text-blue-600">
+                                           <a href={currentBid.bid_document_info.download_url} target="_blank" rel="noopener noreferrer">
+                                             Download
+                                           </a>
+                                         </span>
+                                       )}
                                      </p>
                                    </>
                                  ) : (
@@ -5119,6 +5381,7 @@ export default function Schedule({
                                  onClick={() => setCurrentBid({
                                    ...currentBid, 
                                    bid_document: undefined,
+                                   bid_document_info: undefined,
                                    encoded_bid_document: undefined,
                                    bid_document_url: undefined
                                  })}

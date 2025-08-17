@@ -26,6 +26,14 @@ export interface IBid {
   encoded_bid_document?: string;
   bid_document?: File | null;
   bid_document_url?: string;
+  bid_document_info?: {
+    file_path: string;
+    filename: string;
+    size: number;
+    download_url: string;
+    preview_url: string;
+    error?: string;
+  };
   bid_count?: number;
   items?: IBidItem[];
 }
