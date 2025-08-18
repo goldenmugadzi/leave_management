@@ -4,6 +4,8 @@ from django.contrib import messages
 from django.http import HttpRequest
 from ..helpers.types.kra import KRAType, TargetScoreType, ActivityType, PerformanceDimensionType, KRAOutComeType, AppraiserConfirmationType
 from ..helpers.types.dept_workplan import DepartmentalOutTypes, OutputPerformanceDimensionType
+from ..helpers.getters.dates import CurrentQuarterDate
+
 from pydantic import ValidationError, BaseModel
 from loguru import logger
 
@@ -209,3 +211,23 @@ def build_payload_score(request, form: BaseModelForm, is_appraisee: bool) -> Tar
         messages.error(request, "something went wrong, please try again.")
         return None
     
+
+def is_within_current_quarter(year: int, quarter: int)->bool:
+    current_quarter_date_handler = CurrentQuarterDate(year=year)
+    current_quarter_date = current_quarter_date_handler.get_current_quarter()
+    
+    match quarter:
+        case 1:
+            if current_quarter_date.is_within_first_quarter:
+                return True
+        case 2:
+            if current_quarter_date.is_within_second_quarter:
+                return True
+        case 3:
+            if current_quarter_date.is_within_third_quarter:
+                return True
+        case 4:
+            if current_quarter_date.is_within_fourth_quarter:
+                return True
+        case default:
+            return False

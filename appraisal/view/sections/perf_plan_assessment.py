@@ -17,6 +17,7 @@ from ...services.kra import AppraisalDepartmentOutputService
 from ...models.kra import AppraisalOutPutPerformanceDimensionScore, ScoreDocument, APPRAISAL_KRA_REVIEWER_STATUS_CHOICES
 from ...forms.kra import AppraisalOutPutPerformanceDimensionScoreForm, ScoreDocumentForm, AppraisalDepartmentOutputReviewerStatusForm, AppraiserConfirmationForm
 from ..helper import build_payload_score
+from ..helper import is_within_current_quarter
 from django.core.exceptions import ValidationError
 from it.users.models import GRADE_CHOICES
 from loguru import logger
@@ -144,8 +145,6 @@ class AppraisalDepartmentPerformanceDimensionScoreUpdateView(SuccessMessageMixin
         qr = repo.fetch_by_score_id(score_obj_id=self.get_object().id)
         return {"score_documents_qr": qr}
     
-            
-    
     def get_initial_form(self):
         return AppraisalOutPutPerformanceDimensionScoreForm(instance=self.get_object())
     
@@ -180,6 +179,10 @@ class AppraisalDepartmentPerformanceDimensionScoreUpdateView(SuccessMessageMixin
             return "C, D, E and F"
         return ""
     
+    def is_current_date_in_current_quarter(self)->bool:
+        appraisal_year_quarter_obj = self.get_object().appraisal_department_output.year_quarter
+        return is_within_current_quarter(year=appraisal_year_quarter_obj.year, quarter=appraisal_year_quarter_obj.quarter)
+    
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context[self.context_object_name] = self.get_initial_form()
@@ -187,6 +190,7 @@ class AppraisalDepartmentPerformanceDimensionScoreUpdateView(SuccessMessageMixin
         context.update(self.requesters())
         context.update(self.get_score_documents())
         
+        context["is_within_current_quarter"] = self.is_current_date_in_current_quarter()
         context["score_object"] = score_obj
         context["reviewer_form"] = self.get_reviewer_form()
         context["appraiser_form"] = self.get_appraiser_form()
