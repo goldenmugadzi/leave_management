@@ -1,13 +1,13 @@
 # Virement Error Handling Verification Summary
 
 ## Overview
-This document provides a comprehensive analysis and implementation summary of error handling improvements for the virements (budget transfer) process in the ACE2 module.
+This document provides a comprehensive analysis and implementation summary of error handling improvements for the virements (budget transfer) process in the ACE2 module, including proper handling of the `to_be_withdrawn` field for accurate budget availability calculations.
 
 ## Original Issues Identified
 
 ### 1. Form Validation Gaps
 - **Issue**: No validation for negative amounts
-- **Issue**: No checking of available budget balance
+- **Issue**: No checking of available budget balance (ignored `to_be_withdrawn`)
 - **Issue**: No prevention of same-budget transfers
 - **Issue**: Insufficient business rule validation
 
@@ -15,6 +15,7 @@ This document provides a comprehensive analysis and implementation summary of er
 - **Issue**: No model-level constraints on amount field
 - **Issue**: Missing business logic validation at model level
 - **Issue**: No clean() method for comprehensive validation
+- **Issue**: Not considering `to_be_withdrawn` in balance calculations
 
 ### 3. View-Level Error Handling Problems
 - **Issue**: No atomic transaction handling
@@ -23,10 +24,72 @@ This document provides a comprehensive analysis and implementation summary of er
 - **Issue**: Missing authorization checks
 - **Issue**: No database locking for concurrent operations
 - **Issue**: Lack of audit logging
+- **Issue**: Not properly managing `to_be_withdrawn` field during virement lifecycle
 
-## Implemented Solutions
+### 4. Budget Management Issues
+- **Issue**: Balance validation ignored committed funds in `to_be_withdrawn`
+- **Issue**: No reservation of funds when virements created
+- **Issue**: No release of reserved funds when virements rejected
+- **Issue**: Incomplete fund tracking during approval process
 
-### 1. Enhanced Form Validation (ACE2/forms.py)
+### 4. Enhanced Budget Management (NEW)
+
+#### Available Balance Calculation
+```python
+@property
+def available_balance(self):
+    """
+    Calculate available balance considering to_be_withdrawn amounts.
+    This is the actual amount available for new commitments.
+    """
+    if self.balance is None:
+        return 0
+    
+    # Subtract to_be_withdrawn from balance to get truly available funds
+    available = self.balance - (self.to_be_withdrawn or 0)
+    return max(0, available)  # Ensure never negative
+```
+
+#### Fund Reservation and Release
+```python
+def reserve_amount(self, amount):
+    """Reserve an amount in to_be_withdrawn field"""
+    if self.can_accommodate_amount(amount):
+        if self.to_be_withdrawn is None:
+            self.to_be_withdrawn = 0
+        self.to_be_withdrawn += amount
+        return True
+    return False
+
+def release_amount(self, amount):
+    """Release a reserved amount from to_be_withdrawn field"""
+    if self.to_be_withdrawn is None:
+        self.to_be_withdrawn = 0
+    
+    if amount > 0:
+        self.to_be_withdrawn = max(0, self.to_be_withdrawn - amount)
+```
+
+#### Virement Lifecycle Management
+- **Creation**: Amount reserved in source budget's `to_be_withdrawn`
+- **Approval**: Amount transferred and removed from `to_be_withdrawn`
+- **Rejection**: Reserved amount released from `to_be_withdrawn`
+
+#### Updated Validation Logic
+Forms and models now use `available_balance` instead of `balance`:
+```python
+# Before: Only checked balance
+if amount > from_budget.balance:
+    raise ValidationError("Insufficient balance")
+
+# After: Considers to_be_withdrawn
+if amount > from_budget.available_balance:
+    raise ValidationError(
+        f"Insufficient available balance: {from_budget.available_balance:,.2f} "
+        f"(Balance: {from_budget.balance:,.2f}, "
+        f"To be withdrawn: {from_budget.to_be_withdrawn or 0:,.2f})"
+    )
+```
 
 ```python
 class ViramentForm(forms.ModelForm):
@@ -142,9 +205,23 @@ class Asset_budget_Virament(models.Model):
 - ✅ Invalid user contexts
 - ✅ Workflow authorization
 
-## Database Changes Applied
+### 6. Budget Allocation Errors (NEW)
 
-### Migration: 0006_alter_asset_budget_virament_amount
+- ✅ Attempting virement with insufficient available balance
+- ✅ Concurrent reservations exceeding budget capacity  
+- ✅ Failed fund reservation during virement creation
+- ✅ Orphaned reservations from cancelled virements
+- ✅ Inconsistent `to_be_withdrawn` calculations
+
+## Enhanced Budget Management
+
+### Key Improvements
+
+1. **Available Balance Calculation**: New `available_balance` property considers both `balance` and `to_be_withdrawn` fields
+2. **Fund Reservation**: Virements now reserve funds in `to_be_withdrawn` when created  
+3. **Fund Release**: Reserved funds automatically released when virements rejected
+4. **Proper Fund Transfer**: On approval, funds properly transferred and `to_be_withdrawn` updated
+5. **Comprehensive Validation**: All validation now uses true available balance
 - Added `MinValueValidator(0.01)` to amount field
 - Ensures database-level constraint for positive amounts
 - Migration successfully applied

@@ -102,6 +102,47 @@ class AssetBudget(models.Model):
 
     def __str__(self):
         return str(self.budget_name)
+    
+    @property
+    def available_balance(self):
+        """
+        Calculate available balance considering to_be_withdrawn amounts.
+        This is the actual amount available for new commitments.
+        """
+        if self.balance is None:
+            return 0
+        
+        # Subtract to_be_withdrawn from balance to get truly available funds
+        available = self.balance - (self.to_be_withdrawn or 0)
+        return max(0, available)  # Ensure never negative
+    
+    @property
+    def remaining_balance(self):
+        """Alias for available_balance for backward compatibility"""
+        return self.available_balance
+    
+    def can_accommodate_amount(self, amount):
+        """Check if budget can accommodate a new amount considering to_be_withdrawn"""
+        if amount is None or amount <= 0:
+            return False
+        return self.available_balance >= amount
+    
+    def reserve_amount(self, amount):
+        """Reserve an amount in to_be_withdrawn field"""
+        if self.can_accommodate_amount(amount):
+            if self.to_be_withdrawn is None:
+                self.to_be_withdrawn = 0
+            self.to_be_withdrawn += amount
+            return True
+        return False
+    
+    def release_amount(self, amount):
+        """Release a reserved amount from to_be_withdrawn field"""
+        if self.to_be_withdrawn is None:
+            self.to_be_withdrawn = 0
+        
+        if amount > 0:
+            self.to_be_withdrawn = max(0, self.to_be_withdrawn - amount)
 
     #order list by id and period starting with the largest
     class Meta:
@@ -363,32 +404,53 @@ class Asset_budget_Virament(models.Model):
                 'to_budget': 'Source and destination budgets cannot be the same.'
             })
         
-        # Validate sufficient balance (only for new virements or amount changes)
+        # Validate sufficient available balance considering to_be_withdrawn
         if self.from_budget and self.amount is not None:
             # For existing virements, check if amount changed
             if self.pk:
                 try:
                     original = Asset_budget_Virament.objects.get(pk=self.pk)
                     if original.amount != self.amount or original.from_budget != self.from_budget:
-                        # Amount or budget changed, validate balance
-                        if self.amount > self.from_budget.balance:
+                        # Amount or budget changed, validate available balance
+                        if self.amount > self.from_budget.available_balance:
                             raise ValidationError({
-                                'amount': f'Insufficient balance in source budget. '
-                                         f'Available: {self.from_budget.balance:,.2f}'
+                                'amount': f'Insufficient available balance in source budget. '
+                                         f'Available: {self.from_budget.available_balance:,.2f} '
+                                         f'(Balance: {self.from_budget.balance:,.2f}, '
+                                         f'To be withdrawn: {self.from_budget.to_be_withdrawn or 0:,.2f})'
                             })
                 except Asset_budget_Virament.DoesNotExist:
                     pass
             else:
-                # New virment, validate balance
-                if self.amount > self.from_budget.balance:
+                # New virement, validate available balance
+                if self.amount > self.from_budget.available_balance:
                     raise ValidationError({
-                        'amount': f'Insufficient balance in source budget. '
-                                 f'Available: {self.from_budget.balance:,.2f}'
+                        'amount': f'Insufficient available balance in source budget. '
+                                 f'Available: {self.from_budget.available_balance:,.2f} '
+                                 f'(Balance: {self.from_budget.balance:,.2f}, '
+                                 f'To be withdrawn: {self.from_budget.to_be_withdrawn or 0:,.2f})'
                     })
 
     def save(self, *args, **kwargs):
         self.full_clean()
         super().save(*args, **kwargs)
+    
+    def release_reserved_amount(self):
+        """Release the reserved amount from source budget's to_be_withdrawn field"""
+        try:
+            if self.from_budget and self.amount:
+                budget = AssetBudget.objects.select_for_update().get(
+                    budget_id=self.from_budget.budget_id
+                )
+                if budget.to_be_withdrawn is not None and budget.to_be_withdrawn >= self.amount:
+                    budget.to_be_withdrawn -= self.amount
+                    budget.save()
+                    return True
+        except Exception as e:
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"Error releasing reserved amount for virement {self.virament_id}: {e}")
+        return False
 
     def __str__(self):
         return str(self.virament_id)
