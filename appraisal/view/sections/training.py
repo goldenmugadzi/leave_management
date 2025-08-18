@@ -18,6 +18,7 @@ from ...repository import TrainingAndDevelopmentRepository
 from ...repository.kra import AppraisalOutPutPerformanceDimensionScoreRepository
 from ...services import TrainingAndDevelopmentService, AppraisalService, UserQualificationService, AppraisalExperienceService
 from ...helpers.getters.dates import get_assessment_period
+from ..helper import is_within_current_quarter
 from loguru import logger
 
 class TrainingAndDevelopmentUpdateView(SuccessMessageMixin, CreateView):
@@ -106,14 +107,20 @@ class TrainingAndDevelopmentUpdateView(SuccessMessageMixin, CreateView):
             return False
         return True
         
+    def is_current_date_in_current_quarter(self, quarter_obj)->bool:
+        return is_within_current_quarter(year=quarter_obj.year, quarter=quarter_obj.quarter)
+    
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
 
         context.update(self.get_forms_initial_data())
         context.update(self.approval_user_roles())
         
+        quarter_obj = self.get_training_object().quarter
         context["is_quarter_scored"] = self.is_quarter_scored()
-        context["quarter_obj"] = self.get_training_object().quarter
+        context["quarter_obj"] = quarter_obj
+        context["is_within_current_quarter"] = self.is_current_date_in_current_quarter(quarter_obj=quarter_obj)
+
         return context
     
     def get(self, request, *args, **kwargs):
