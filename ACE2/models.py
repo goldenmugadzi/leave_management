@@ -342,13 +342,53 @@ class Asset_budget_Virament(models.Model):
     requested_by = models.ForeignKey(UserProfile, on_delete=models.DO_NOTHING, blank=True, null=True)
     from_budget = models.ForeignKey(AssetBudget, on_delete=models.DO_NOTHING, related_name='from_budget')
     to_budget = models.ForeignKey(AssetBudget, on_delete=models.DO_NOTHING, related_name='to_budget')
-    amount = models.FloatField(blank=True, null=True)
+    amount = models.FloatField(blank=True, null=True, validators=[MinValueValidator(0.01)])
     reason = models.TextField(blank=True, null=True)
     process = models.ForeignKey(Process, on_delete=models.DO_NOTHING, blank=True, null=True)
     region = models.ForeignKey(Regions, on_delete=models.DO_NOTHING, blank=True, null=True)
     section = models.ForeignKey(Sections, on_delete=models.DO_NOTHING, blank=True, null=True)
     date_created = models.DateField(auto_now_add=True, blank=True, null=True)
     currency = models.CharField(max_length=15, blank=True, null=True, choices=Ace2.CURRENCY_CHOICES)
+
+    def clean(self):
+        from django.core.exceptions import ValidationError
+        
+        # Validate amount is positive
+        if self.amount is not None and self.amount <= 0:
+            raise ValidationError({'amount': 'Amount must be positive.'})
+        
+        # Validate from_budget != to_budget
+        if self.from_budget and self.to_budget and self.from_budget == self.to_budget:
+            raise ValidationError({
+                'to_budget': 'Source and destination budgets cannot be the same.'
+            })
+        
+        # Validate sufficient balance (only for new virements or amount changes)
+        if self.from_budget and self.amount is not None:
+            # For existing virements, check if amount changed
+            if self.pk:
+                try:
+                    original = Asset_budget_Virament.objects.get(pk=self.pk)
+                    if original.amount != self.amount or original.from_budget != self.from_budget:
+                        # Amount or budget changed, validate balance
+                        if self.amount > self.from_budget.balance:
+                            raise ValidationError({
+                                'amount': f'Insufficient balance in source budget. '
+                                         f'Available: {self.from_budget.balance:,.2f}'
+                            })
+                except Asset_budget_Virament.DoesNotExist:
+                    pass
+            else:
+                # New virment, validate balance
+                if self.amount > self.from_budget.balance:
+                    raise ValidationError({
+                        'amount': f'Insufficient balance in source budget. '
+                                 f'Available: {self.from_budget.balance:,.2f}'
+                    })
+
+    def save(self, *args, **kwargs):
+        self.full_clean()
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return str(self.virament_id)

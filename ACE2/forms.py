@@ -208,6 +208,42 @@ class ViramentForm(forms.ModelForm):
         exclude = ['process', 'requested_by', 'virament_id', 'date_created', 'region'
                    ]
 
+    def clean_amount(self):
+        amount = self.cleaned_data.get('amount')
+        if amount is None:
+            raise forms.ValidationError("Amount is required.")
+        if amount <= 0:
+            raise forms.ValidationError("Amount must be positive.")
+        return amount
+
+    def clean(self):
+        cleaned_data = super().clean()
+        from_budget = cleaned_data.get('from_budget')
+        to_budget = cleaned_data.get('to_budget')
+        amount = cleaned_data.get('amount')
+
+        # Check if from_budget and to_budget are the same
+        if from_budget and to_budget and from_budget == to_budget:
+            raise forms.ValidationError("Source and destination budgets cannot be the same.")
+
+        # Check if source budget has sufficient balance
+        if from_budget and amount is not None:
+            if amount > from_budget.balance:
+                raise forms.ValidationError(
+                    f"Insufficient balance in source budget. "
+                    f"Available: {from_budget.balance:,.2f}, "
+                    f"Requested: {amount:,.2f}"
+                )
+            
+            # Warn if transfer would use more than 80% of available balance
+            if amount > (from_budget.balance * 0.8):
+                self.add_error('amount', 
+                    f"Warning: This transfer uses {(amount/from_budget.balance)*100:.1f}% "
+                    f"of available budget balance."
+                )
+
+        return cleaned_data
+
     def __init__(self, *args, **kwargs):
 
         user = kwargs.pop('user', None)
