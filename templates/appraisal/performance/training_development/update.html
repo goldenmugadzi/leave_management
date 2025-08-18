@@ -1,0 +1,183 @@
+{% extends "admin_layout.html" %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+
+{% include 'appraisal/sections_header.html' with section_header="Section 3: Training and Development Needs" %}
+
+{% include 'appraisal/performance/quarter_header_desc_component.html' with header_name="Competency and Intervention Strategy" quarter=quarter_obj %}
+
+<div class="p-6 bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl shadow-xl ">
+    <form method="post" class="space-y-8">
+        {% csrf_token %}
+        
+        <!-- Competency Section -->
+        <div class="bg-white rounded-xl shadow-lg p-6 border border-gray-200">
+            <h3 class="text-2xl font-semibold text-gray-800 mb-4">Competency</h3>
+            {{ competency_forms.management_form }}
+            <div class="competency-forms space-y-4 max-h-64 overflow-y-auto pr-4">
+                {% for competency_form in competency_forms %}
+                    {% include "./competency_base.html" with competency_form=competency_form total_form_count=competency_forms.total_form_count %}
+                {% endfor %}
+            </div>
+            <!-- Add Competency Button -->
+            <button type="button" onclick="addCompetencyForm({{ competency_forms.total_form_count }})" 
+                    class="mt-4 w-full bg-indigo-600 text-white py-2 px-4 rounded-lg hover:bg-indigo-700 transition duration-300 flex items-center justify-center gap-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                </svg>
+                Add Competency
+            </button>
+            <!-- Hidden competency form template -->
+            <div id="empty-competency-template" style="display: none;">
+                {% include "./competency_base.html" with competency_form=competency_forms.empty_form total_form_count=competency_forms.total_form_count %}
+            </div>
+        </div>
+
+        <!-- Intervention Strategy Section -->
+        <div class="bg-white rounded-xl shadow-lg p-6 border border-gray-200">
+            <h3 class="text-2xl font-semibold text-gray-800 mb-4">Intervention Strategy</h3>
+            {{ intervention_strategy_forms.management_form }}
+            <div class="intervention_strategy-forms space-y-4 max-h-64 overflow-y-auto pr-4">
+                {% for intervention_strategy_form in intervention_strategy_forms %}
+                    {% include "./intervention_strategy.html" with intervention_strategy_form=intervention_strategy_form total_form_count=intervention_strategy_forms.total_form_count %}
+                {% endfor %}
+            </div>
+            <!-- Add Intervention Strategy Button -->
+            <button type="button" onclick="addInterventionStrategyForm({{ intervention_strategy_forms.total_form_count }})" 
+                    class="mt-4 w-full bg-indigo-600 text-white py-2 px-4 rounded-lg hover:bg-indigo-700 transition duration-300 flex items-center justify-center gap-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                </svg>
+                Add Intervention Strategy
+            </button>
+            <!-- Hidden intervention strategy form template -->
+            <div id="empty-intervention_strategy-template" style="display: none;">
+                {% include "./intervention_strategy.html" with intervention_strategy_form=intervention_strategy_forms.empty_form total_form_count=intervention_strategy_forms.total_form_count %}
+            </div>
+        </div>
+
+        <!-- Actions Section -->
+        <div class="bg-white rounded-xl shadow-lg p-6 border border-gray-200">
+            <h3 class="text-2xl font-semibold text-gray-800 mb-4">Actions</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="form-row field-action_recommended">{{ action_form.action_recommended|as_crispy_field }}</div>
+                <div class="form-row field-action_taken">{{ action_form.action_taken|as_crispy_field }}</div>
+            </div>
+        </div>
+
+        <!-- Submit Button -->
+        {% if is_within_current_quarter %}
+            {% if is_appraiser == True %}
+                {% if is_quarter_scored == True %}
+                    <div class="flex justify-center">
+                        <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 w-full md:w-80 rounded-full text-white py-3 px-6 font-medium transition duration-300">
+                            Create
+                        </button>
+                    </div>
+                {% endif %}
+            {% endif %}
+        {% endif %}
+    </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // addCompetencyForm() adds new form to the formset container and updates form count
+    function addCompetencyForm(total_form_count) {
+        const formContainer = document.querySelector(".competency-forms");
+        const totalFormCount = document.getElementById("id_competency-TOTAL_FORMS");
+        let formCount = parseInt(totalFormCount.value);
+        const newFormHtml = document.getElementById("empty-competency-template").innerHTML.replace(/__prefix__/g, formCount);
+        const newForm = document.createElement("div");
+        newForm.classList.add("competency-form", "bg-gray-50", "p-4", "rounded-lg", "border", "border-gray-200");
+        newForm.innerHTML = newFormHtml;
+
+        formContainer.appendChild(newForm);
+
+        formCount++;
+        totalFormCount.value = formCount;
+        toggleRemoveCompetencyButtons();
+    }
+
+    // Removes a Competency form from the formset container and updates the total form count
+    function removeCompetencyForm(button, total_form_count) {
+        const totalFormsInput = document.getElementById('id_competency-TOTAL_FORMS');
+        button.closest(".competency-form").remove();
+
+        let formCount = parseInt(totalFormsInput.value);
+        formCount--;
+        totalFormsInput.value = formCount;
+
+        const forms = document.querySelectorAll(".competency-form");
+        forms.forEach((form, index) => {
+            form.innerHTML = form.innerHTML.replace(/competency-\d+-/g, `competency-${index}-`);
+        });
+        toggleRemoveCompetencyButtons();
+    }
+
+    // addInterventionStrategyForm() adds new form to the formset container and updates form count
+    function addInterventionStrategyForm(total_form_count) {
+        const formContainer = document.querySelector(".intervention_strategy-forms");
+        const totalFormCount = document.getElementById("id_intervention_strategy-TOTAL_FORMS");
+        let formCount = parseInt(totalFormCount.value);
+        const newFormHtml = document.getElementById("empty-intervention_strategy-template").innerHTML.replace(/__prefix__/g, formCount);
+        const newForm = document.createElement("div");
+        newForm.classList.add("intervention_strategy-form", "bg-gray-50", "p-4", "rounded-lg", "border", "border-gray-200");
+        newForm.innerHTML = newFormHtml;
+
+        formContainer.appendChild(newForm);
+
+        formCount++;
+        totalFormCount.value = formCount;
+        toggleRemoveInterventionStrategyButtons();
+    }
+
+    // Removes an InterventionStrategy form from the formset container and updates the total form count
+    function removeInterventionStrategyForm(button, total_form_count) {
+        const totalFormsInput = document.getElementById('id_intervention_strategy-TOTAL_FORMS');
+        button.closest(".intervention_strategy-form").remove();
+
+        let formCount = parseInt(totalFormsInput.value);
+        formCount--;
+        totalFormsInput.value = formCount;
+
+        const forms = document.querySelectorAll(".intervention_strategy-form");
+        forms.forEach((form, index) => {
+            form.innerHTML = form.innerHTML.replace(/intervention_strategy-\d+-/g, `intervention_strategy-${index}-`);
+        });
+        toggleRemoveInterventionStrategyButtons();
+    }
+
+    function toggleRemoveCompetencyButtons() {
+        const totalFormsInput = document.getElementById("id_competency-TOTAL_FORMS");
+        let formCount = parseInt(totalFormsInput.value);
+        const removeButtons = document.querySelectorAll(".remove-competency-btn");
+
+        if (formCount === 1) {
+            removeButtons.forEach(button => button.classList.add("hidden"));
+        } else {
+            removeButtons.forEach(button => button.classList.remove("hidden"));
+        }
+    }
+
+    function toggleRemoveInterventionStrategyButtons() {
+        const totalFormsInput = document.getElementById("id_intervention_strategy-TOTAL_FORMS");
+        let formCount = parseInt(totalFormsInput.value);
+        const removeButtons = document.querySelectorAll(".remove-intervention_strategy_form-btn");
+
+        if (formCount === 1) {
+            removeButtons.forEach(button => button.classList.add("hidden"));
+        } else {
+            removeButtons.forEach(button => button.classList.remove("hidden"));
+        }
+    }
+
+    // Initial setup to hide or show remove buttons on page load
+    document.addEventListener("DOMContentLoaded", () => {
+        toggleRemoveInterventionStrategyButtons();
+        toggleRemoveCompetencyButtons();
+    });
+</script>
+{% endblock scripts %}

@@ -1,0 +1,62 @@
+{% extends "admin_layout.html" %}
+{% load static %}
+{% load humanize %}
+{% load custom_tags %}
+{% block styles %}
+  <link rel="stylesheet"
+        href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css" />
+  <style>.dataTables_wrapper .dataTables_length select { width: 4rem; }</style>
+{% endblock %}
+{% block content %}
+  <div class="content-wrapper">
+    <div class="grid grid-cols-1">
+      <div class="bg-gulf-blue-100 shadow-lg rounded-lg p-6">
+        <div class="flex justify-between">           
+            <h3 class="text-center font-bold">Performance Plan & Assessment</h3>
+        </div>
+        
+        <table id="performance_reviews_objects" class="table table-striped stripe mt-3 table-bordered">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Appraisal for</th>
+              <th>Created at</th>
+              <th>Updated at</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for appraisal in appraisals %}
+              <tr>
+                <td>
+                    <a class="text-blue-500" href="{% url 'performance_review_detail' appraisal.id %}">{{ appraisal.id }}</a>
+                </td>
+                <td>{{ appraisal.user }}</td>
+                <td>{{ appraisal.created_date|date }}</td>
+                <td>{{ appraisal.updated|date }}</td>
+                <td>{{ appraisal.process.approval_set.last|default_if_none:"No Approval" }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}
+{% block scripts %}
+  <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
+  <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+  <script>
+  $(document).ready(function () {
+    $("#performance_reviews_objects").DataTable({
+      "pageLength": 10,
+      "columnDefs": [{ "orderable": true, "targets": [0, 1, 2,3] }],
+      "responsive": true,
+      "searching": false,
+      
+    });
+  });
+  </script>
+{% endblock %}

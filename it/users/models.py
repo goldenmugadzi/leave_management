@@ -8,6 +8,9 @@ from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 
+from helpers.models import TimeStamp
+from datetime import date
+from dateutil.relativedelta import relativedelta
 
 class UserManager(BaseUserManager):
     def create_user(self, username, password=None, **extra_fields):
@@ -84,7 +87,7 @@ class Roles(models.Model):
     app_id = models.ForeignKey(Application, on_delete=models.DO_NOTHING, blank=True, null=True)
 
     def __str__(self):
-        return f"{self.name}"
+        return f"{self.name} - {self.application}"
 
 
 class Designations(models.Model):
@@ -169,6 +172,13 @@ class CostCenter(models.Model):
         return f"{self.name} ({self.code})"
 
 
+GRADE_CHOICES = [
+    ('',''),
+    ('A and B', 'A and B'),
+    ('C and Above', 'C and Above'), 
+]
+
+
 class UserProfile(AbstractUser):
     username = models.CharField(max_length=15, unique=True, verbose_name='EC Number', db_index=True)
     designation = models.ForeignKey(Designations, on_delete=models.DO_NOTHING, blank=True, null=True)
@@ -184,7 +194,8 @@ class UserProfile(AbstractUser):
     password_expiry_date = models.DateField(null=True, blank=True)
     password_expiry_days = models.IntegerField(default=90)
     change_password = models.BooleanField(default=False, null=True, blank=True)
-
+    grade = models.CharField(choices=GRADE_CHOICES, max_length=20, null=True, blank=True)
+    national_id = models.CharField(max_length=18, null=True, default=None)
     class Meta:
         ordering = ['last_name', 'first_name', 'username']
 
@@ -287,3 +298,55 @@ class Responsibilities(models.Model):
 
     def __str__(self):
         return str(self.role.name)
+   
+
+class UserQualification(TimeStamp):
+    """_summary_
+
+    Args:
+        TimeStamp (_type_): _description_
+    """
+    user = models.ForeignKey(UserProfile, on_delete=models.PROTECT)
+    name = models.CharField(max_length=255, null=False, blank=False)
+    file = models.FileField(upload_to='uploads/appraisal/user_qualification', null=True, blank=True)
+    
+    def __str__(self) -> str:
+        return f"{self.name}"
+    
+class UserExperience(TimeStamp):
+    """
+        Represents a work experience entry for a user, storing when the experience started and ended.
+        The duration in years can be computed from these dates.
+    """
+    user = models.ForeignKey(UserProfile, on_delete=models.PROTECT, related_name="user_experience")
+    name = models.CharField(max_length=255, null=False)
+    experience_from = models.DateField()
+    experience_to = models.DateField(null=True, blank=True)
+    
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(fields=["user", "name"],
+                                    violation_error_message="user experience with this name already exists",
+                                    name='unique_user_experience_name'
+                                    )
+        ]
+        ordering = ['-experience_from']
+    
+    @property
+    def years_of_experience(self):
+        """
+            Returns the duration between start and end date as a string in years and months.
+            Example: '3 years, 2 months'
+        """
+        end_date = self.experience_to or date.today()
+        rdelta = relativedelta(end_date, self.experience_from)
+        parts = []
+        if rdelta.years:
+            parts.append(f"{rdelta.years} year{'s' if rdelta.years > 1 else ''}")
+        if rdelta.months:
+            parts.append(f"{rdelta.months} month{'s' if rdelta.months > 1 else ''}")
+        return ", ".join(parts) if parts else "0 months"
+    
+    def __str__(self):
+        return f"{self.name}"
+    

@@ -1,0 +1,207 @@
+from unittest import TestCase
+from unittest.mock import Mock, patch
+from ...models.kra import KeyResultArea, KeyResultAreaOutCome
+from it.users.models import UserProfile
+from ...repository.kra import KRARepository, KRAOutComeRepository
+from ...helpers.types.kra import KRAType
+
+class TestKRARepositoryCreateRepo(TestCase):
+    def setUp(self):
+        self.kra_repo = KRARepository()
+        self.create_data = KRAType(
+            key_result_area_description="Cooperate governance",
+            goal_description="Increase employeement"
+        )
+        
+    def mock_user(self):
+        mock = Mock(spec=UserProfile)
+        return mock
+    
+    def mock_kra_instance(self):
+        mock = Mock(spec=KeyResultArea)
+        return mock
+        
+    @patch('appraisal.repository.kra.KeyResultArea.objects.create')
+    def test_create_kra_called_once(self, patch_kra_create_orm):
+        mock_user_object = self.mock_user()
+        
+        self.kra_repo.create(creator=mock_user_object, data=self.create_data)
+        patch_kra_create_orm.assert_called_once_with(
+            key_result_area_description=self.create_data.key_result_area_description, 
+            goal_description=self.create_data.goal_description, 
+            created_by=mock_user_object
+        )
+        
+    @patch('appraisal.repository.kra.KeyResultArea.objects.create')
+    def test_create_kra_success(self, patch_kra_create_orm):
+        mock_user_object = self.mock_user()
+        mock_kra_object = self.mock_kra_instance()
+        
+        # Mock the return value of django create orm
+        patch_kra_create_orm.return_value = mock_kra_object
+        
+        got_instance = self.kra_repo.create(creator=mock_user_object, data=self.create_data)
+        
+        self.assertEqual(got_instance, mock_kra_object)
+        
+    @patch('appraisal.repository.kra.KeyResultArea.objects.create')
+    def test_create_kra_raises_exception(self, patch_kra_create_orm):
+        mock_user_object = self.mock_user()
+        exception_desc = "Database error"
+        # simulate the orm exception
+        patch_kra_create_orm.side_effect = Exception(exception_desc)
+        
+        with self.assertRaises(Exception) as context:
+            self.kra_repo.create(creator=mock_user_object, data=self.create_data)
+        
+        self.assertIn(f"KRA Create Repo failed with error: {exception_desc}", str(context.exception))
+        
+        
+    
+        
+class TestKRARepositoryUpdateRepo(TestCase):
+    def setUp(self):
+        self.kra_repo = KRARepository()
+        self.update_data = KRAType(
+            key_result_area_description="Cooperate governance",
+            goal_description="Increase employeement"
+        )
+        
+    def mock_user(self):
+        mock = Mock(spec=UserProfile)
+        return mock
+    
+    def mock_kra_instance(self):
+        mock = Mock(spec=KeyResultArea)
+        mock.key_result_area_description = "Corporate governance"
+        mock.goal_description = "Increase efficiency"
+        mock.updated_by = None
+        return mock
+        
+        
+    def test_update_kra_called_once(self):
+        mock_user_object = self.mock_user()
+        mock_kra_object = self.mock_kra_instance()
+        
+        # mock django save() explicitly
+        mock_kra_object.save = Mock()
+
+        self.kra_repo.update(kra_object=mock_kra_object, updated_by=mock_user_object, data=self.update_data)
+        mock_kra_object.save.assert_called_once()
+        
+    def test_update_kra_success(self):
+        mock_user_object = self.mock_user()
+        mock_kra_object = self.mock_kra_instance()
+        
+        # mock django save() explicitly
+        mock_kra_object.save = Mock()
+        
+        # Mock the return value of django save orm
+        mock_kra_object.return_value = mock_kra_object
+        
+        got_instance = self.kra_repo.update(kra_object=mock_kra_object, updated_by=mock_user_object, data=self.update_data)
+        self.assertEqual(got_instance, mock_kra_object)
+        
+    def test_update_kra_raises_exception(self):
+        mock_user_object = self.mock_user()
+        mock_kra_object = self.mock_kra_instance()
+        exception_desc = "Database error"
+        
+        # simulate the orm exception
+        mock_kra_object.save.side_effect = Exception(exception_desc)
+        
+        with self.assertRaises(Exception) as context:
+            self.kra_repo.update(kra_object=mock_kra_object, updated_by=mock_user_object, data=self.update_data)
+        
+        self.assertIn(f"KRA update Repo failed with error: {exception_desc}", str(context.exception))
+        
+        
+class TestKRAOutcomesCreateRepo(TestCase):
+    def setUp(self):
+        self.kra_outcome_repo = KRAOutComeRepository()
+        self.mock_kra_object = Mock(spec=KeyResultArea)
+        self.outcome_description = "Outcome description"
+        
+    def test_create_called_once(self):
+        mock_kra_object = self.mock_kra_object
+        
+        with patch('appraisal.repository.kra.KeyResultAreaOutCome.objects.create') as mock_create_orm:
+            self.kra_outcome_repo.create(outcome_description=self.outcome_description, kra_obj=mock_kra_object)
+        mock_create_orm.assert_called_once_with(key_result_area=mock_kra_object,
+                                                outcome_description=self.outcome_description)
+        
+    def test_create_success(self):
+        mock_kra_object = self.mock_kra_object
+        mock_kra_outcome = Mock(spec=KeyResultAreaOutCome)
+        
+        with patch('appraisal.repository.kra.KeyResultAreaOutCome.objects.create') as mock_create_orm:
+            mock_create_orm.return_value = mock_kra_outcome
+            got = self.kra_outcome_repo.create(outcome_description=self.outcome_description, kra_obj=mock_kra_object)
+            self.assertEqual(got, mock_kra_outcome)
+            
+    def test_create_raises_exception(self):
+        mock_kra_object = self.mock_kra_object
+        exception_desc = "Database error"
+        
+        with patch('appraisal.repository.kra.KeyResultAreaOutCome.objects.create') as mock_create_orm:
+            with self.assertRaises(Exception) as context:
+                mock_create_orm.side_effect = Exception(exception_desc)
+                self.kra_outcome_repo.create(outcome_description=self.outcome_description, kra_obj=mock_kra_object)
+
+                self.assertIn(f"KRAOutComeRepository Create Repo failed with error: {exception_desc}", str(context.exception))
+
+class TestKRAOutcomesUpdateRepo(TestCase):
+    def setUp(self):
+        self.kra_outcome_repo = KRAOutComeRepository()
+        self.mock_kra_outcome_obj = Mock(spec=KeyResultAreaOutCome)
+        self.outcome_description = "Outcome description"       
+
+    def test_update_called_once_for_new_changes(self):
+        mock_kra_outcome_obj = self.mock_kra_outcome_obj
+        mock_kra_outcome_obj.outcome_description = self.outcome_description
+        changed_outcome_desc = "Changed description"   
+             
+        # mock save() explicitly
+        mock_kra_outcome_obj.save = Mock()
+        
+        self.kra_outcome_repo.update(kra_outcome_object=mock_kra_outcome_obj, outcome_description=changed_outcome_desc)
+        mock_kra_outcome_obj.save.assert_called_once()
+    
+    def test_update_not_called_for_no_changes(self):
+        mock_kra_outcome_obj = self.mock_kra_outcome_obj
+        mock_kra_outcome_obj.outcome_description = self.outcome_description
+ 
+        # mock save() explicitly
+        mock_kra_outcome_obj.save = Mock()
+        
+        self.kra_outcome_repo.update(kra_outcome_object=mock_kra_outcome_obj, outcome_description=self.outcome_description)
+        mock_kra_outcome_obj.save.assert_not_called()
+        
+    def test_update_successful(self):
+        mock_kra_outcome_obj = self.mock_kra_outcome_obj
+        mock_kra_outcome_obj.outcome_description = self.outcome_description
+        changed_outcome_desc = "Changed description"   
+        
+        # mock save() explicitly
+        mock_kra_outcome_obj.save = Mock()
+        
+        got = self.kra_outcome_repo.update(kra_outcome_object=mock_kra_outcome_obj, outcome_description=changed_outcome_desc)
+        self.assertEqual(got, mock_kra_outcome_obj)
+        
+    def test_update_raises_exception(self):
+        mock_kra_outcome_obj = self.mock_kra_outcome_obj
+        mock_kra_outcome_obj.outcome_description = self.outcome_description
+        mock_kra_outcome_obj.id = 1
+        changed_outcome_desc = "Changed description"   
+        exception_desc = "Database error"   
+        
+        # mock save() explicitly
+        mock_kra_outcome_obj.save = Mock()
+        mock_kra_outcome_obj.save.side_effect = Exception(exception_desc)
+        
+        with self.assertRaises(Exception) as context:
+            self.kra_outcome_repo.update(kra_outcome_object=mock_kra_outcome_obj, outcome_description=changed_outcome_desc)
+        
+        self.assertIn(f"KRAOutComeRepository with object pk: 1 update Repo failed with error: {exception_desc}", str(context.exception))
+        
+        

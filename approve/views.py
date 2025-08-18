@@ -13,6 +13,8 @@ from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
 from decouple import config
 from datetime import datetime
+from appraisal.helpers.notifications import send_appraisal_notifications
+
 
 
 def is_valid_email(email):
@@ -137,11 +139,27 @@ def approve_step(request, process_id):
     except Step.DoesNotExist:
         next_step = 1
     try:
-        step = Step.objects.get(
-            workflow=process.workflow,
-            step=next_step,
-            approver__in=request.user.roles.all(),
-        )
+        step = None
+        
+        check_step = Step.objects.filter(workflow=process.workflow,step=next_step)   
+          
+        if process.workflow.name == "Appraisal":
+            if check_step.first().approver.name == "appraisee" or check_step.first().approver.name == "appraiser":
+                is_appraisee = check_step.filter(
+                    approver__name="appraisee"
+                ).exists()
+                
+                is_appraiser = check_step.filter(
+                    approver__name="appraiser"
+                ).exists()
+                if (is_appraisee and process.appraisal_process.last().user == request.user) | (is_appraiser and process.appraisal_process.last().appraiser == request.user):
+                    step = check_step.first()
+        else:
+            step = Step.objects.get(
+                workflow=process.workflow,
+                step=next_step,
+                approver__in=request.user.roles.all(),
+            )
     except Step.DoesNotExist:
         messages.info(request, "This process was completed")
         return redirect("approve:workflow_detail", process.workflow.id)
@@ -162,6 +180,27 @@ def approve_step(request, process_id):
                         "purchase_request:purchase_request_detail",
                         process.purchaserequest_set.last().id,
                     )
+
+               
+                elif process.workflow.name == "Appraisal":
+                    appraisal = process.appraisal_process.last()
+                    url = reverse("update_appraisal", kwargs={"pk": appraisal.id})
+                    notification_type="Appraisal"
+                    notification_id=appraisal.id
+                    send_appraisal_notifications(user_object=appraisal.user,
+                                                notification_type=notification_type,
+                                                notification_id=notification_id,
+                                                url=url
+                                                )
+                    messages.success(request, "approved successfully")
+                    
+                    return step
+                elif process.token_set.exists() != None:
+                    token = process.token_set.last()
+
+                    send_notification(request, 'tokens:token', token.type, token, token.id)
+                    return redirect('tokens:token', token.id)
+                 
                 elif process.workflow.name == "ace":
                     # Get the approval status to customize the message
                     approval_status = approval.approved

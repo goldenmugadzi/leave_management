@@ -1,0 +1,48 @@
+{% extends "admin_layout.html" %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+
+{% include 'appraisal/performance/quarter_header_desc_component.html' with header_name="Appraisee strengths and weaknesses detail" quarter=quarter_obj %}
+
+
+<div class="container my-4">
+        <div class="flex flex-col gap-4">
+                <div>
+                    <h3>{{ performance_review_object.quarter }} </h3>
+                    <form method="post">
+                        {%csrf_token%}
+                        {{ current_form.quarter }}
+                        <div class="flex gap-2">  
+                            <div 
+                                class="flex-1 px-2 shadow-xl rounded-lg border-2 border-indigo-400"
+                                style="max-height: 180px; overflow-y: auto;"
+                            >
+                                {{ current_form.strengths|as_crispy_field }}
+                            </div>
+                            <div 
+                                class="flex-1 px-2 shadow-xl rounded-lg border-2 border-indigo-400"
+                                style="max-height: 180px; overflow-y: auto;"
+                            >
+                                {{ current_form.areas_of_weaknesses|as_crispy_field }}
+                            </div>
+                        </div>
+
+                        {% if is_within_current_quarter %}
+                            {% if is_appraiser == True %}
+                                {% if is_quarter_scored == True %}
+                                    <div class="flex justify-center my-4">
+                                        <button type="submit" class="w-96 bg-blue-500 hover:bg-blue-700 inline-block rounded-full text-white py-2 px-4 rounded">Create</button>
+                                    </div>
+                                {% endif %}
+                            {% endif %}
+                        {% endif %}
+                    </form>
+                </div>
+                <hr/>
+        </div>
+        
+    
+</div>
+
+{% endblock%}

@@ -1,0 +1,80 @@
+{% extends "admin_layout.html" %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+<div class="grid grid-cols-1">
+        <div class="bg-gulf-blue-100 shadow-lg rounded-lg p-6">
+            <div class="flex justify-between">
+                <div>
+                    <h1 class="font-bold">Create Activity Target</h1>
+                    <p class="text-sm text-muted">
+                        Create/Update Activity Target for <strong>{{ activity_object.name }}</strong>
+                    </p>
+                </div>
+                
+            </div>
+                
+        </div>
+</div>
+<div class="container my-4">
+        <form method="post">
+            {%csrf_token%}
+            <div class="flex flex-col gap-6">
+                <div 
+                    class="flex-1 px-2 shadow-xl rounded-lg border-2"
+                    >
+                        {{ target_form.name|as_crispy_field }}
+                </div>
+                <div class="flex gap-2">
+                    <div 
+                        class="flex-1 px-2 w-80 shadow-xl rounded-lg border-2"
+                        >
+                            {{ target_form.metric_type|as_crispy_field }}
+                    </div>
+                    <div 
+                        class="flex-1 px-2 w-80 shadow-xl rounded-lg border-2"
+                        >
+                            {{ target_form.weight|as_crispy_field }}
+                    </div>
+                    <div 
+                        class="flex-1 px-2 w-80 shadow-xl rounded-lg border-2"
+                        >
+                            {{ target_form.agreed_target|as_crispy_field }}
+                    </div>
+                </div>
+                <div class="flex gap-2">
+                    <div 
+                        class="flex-1 px-2 w-80 shadow-xl rounded-lg border-2"
+                        >
+                            {{ target_form.allowable_variance|as_crispy_field }}
+                    </div>
+                    
+                    <div 
+                        class="flex-1 px-2 w-80 shadow-xl rounded-lg border-2"
+                        >
+                            {{ target_form.unit|as_crispy_field }}
+                    </div>
+                </div>
+            </div>
+            {% if is_appraiser == True %}
+                <div class="flex justify-center my-2">
+                    <div class="flex gap-1">
+                        <button type="submit" class="w-96 bg-blue-500 hover:bg-blue-700 inline-block rounded-full text-white py-2 px-4" name="Save And Add Another">Save and Add Another</button>
+                        <button type="submit" class="w-96 bg-blue-500 hover:bg-blue-700 inline-block rounded-full text-white py-2 px-4" name="Save and Add Confirm">Save and Add Confirm</button>
+                    </div>
+                </div>
+            {% endif %}
+            {% if is_appraisee == True %}
+                {% if target_object.is_approved == False %}
+                    <div class="flex justify-center my-2">
+                        <div class="flex gap-1">
+                            <button type="submit" class="w-96 bg-blue-500 hover:bg-blue-700 inline-block rounded-full text-white py-2 px-4" name="Accept Target">Accept Target</button>
+                            <button type="submit" class="w-96 bg-blue-500 hover:bg-blue-700 inline-block rounded-full text-white py-2 px-4" name="Reject Target">Reject Target</button>
+                        </div>
+                    </div>
+                {% endif %}
+            {% endif %}
+        </form>
+         
+</div>
+{% endblock %}

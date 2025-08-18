@@ -1,0 +1,157 @@
+{% extends "admin_layout.html" %}
+{% load static %}
+{% load humanize %}
+{% load custom_tags %}
+{% load approval_stages %}
+{% load crispy_forms_tags %}
+{% block styles %}
+  <link rel="stylesheet"
+        href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css" />
+  <style>.dataTables_wrapper .dataTables_length select { width: 4rem; }</style>
+{% endblock %}
+{% block content %}
+<div class="mt-2 mb-4">
+  <div>
+      <div class="border-xl bg-yellow-200 p-4 rounded-l">
+          <h2 class="text-center font-bold text-xl">PERSONNEL PERFORMANCE PLAN AND ASSESSMENT</h2>
+      </div>
+  </div>
+</div>
+
+  <div class="content-wrapper">
+    <div class="grid grid-cols-1">
+      <div class="bg-gulf-blue-100 shadow-lg rounded-lg p-6">
+        <div class="flex justify-between">
+          <h1 class="text-center font-bold mt-7">{{heading_name}}</h1>
+                        
+          <div class="flex">
+              <div class="flex-1">
+                <form>
+                      {%csrf_token%}
+                      <div class="flex">
+                          <div class="flex-1">
+                              {{role_filter_form|crispy}}
+                          </div>
+                          <div class="flex-1">
+                            <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white px-4 mt-7 h-10 rounded">Role Filter</button>
+                          </div>
+                      </div>
+                  </form>
+              </div>
+              <div class="relative inline-block text-left mt-7">
+                <div>
+                  <button type="button" class="inline-flex justify-between w-48 rounded-2xl border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2" id="conf-menu-button" aria-expanded="true" aria-haspopup="true">
+                    Select Configuration
+                    <svg class="-mr-1 ml-2 h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+                </div>
+                
+                <!-- Dropdown menu -->
+                <div class="absolute z-10 mt-2 w-72 right-0 origin-top-right rounded-2xl bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none hidden" role="menu" aria-orientation="vertical" aria-labelledby="conf-menu-button" id="dropdown-conf-menu">
+                  <div class="py-1" role="none">
+                    <a href="{% url 'qualification_experience_index' request.user.id %}" class="text-gray-700 block px-4 py-2 text-md hover:bg-indigo-100 hover:text-indigo-700 rounded-md" role="menuitem">My Qualifications and Experience</a>
+                    <a href="{% url 'create_appraisal' %}" class="text-gray-700 block px-4 py-2 text-md hover:bg-indigo-100 hover:text-indigo-700 rounded-md" role="menuitem">Create New Appraisal</a>
+                    <a href="{% url 'kra_index' %}" class="text-gray-700 block px-4 py-2 text-md hover:bg-indigo-100 hover:text-indigo-700 rounded-md" role="menuitem">Key Result Area</a>
+                    <a href="{% url 'departmental_workplan_index' %}" class="text-gray-700 block px-4 py-2 text-md hover:bg-indigo-100 hover:text-indigo-700 rounded-md" role="menuitem">Departmental WorkPlan</a>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+        </div>
+        
+        <table id="appraisals" class="table table-striped stripe mt-3 table-bordered">
+          <thead>
+            <tr>
+              <th>Appraisee</th>
+              <th>Appraiser</th>
+              <th>Reviewer</th>
+              <th>Create at</th>
+              <th>Approval Stage Status</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for appraisal in appraisals %}
+              <tr>
+                <td>{{ appraisal.user }}</td>
+                <td>{{ appraisal.appraiser }}</td>
+                <td>{{ appraisal.reviewer }}</td>
+                <td>{{ appraisal.created_date|date }}</td>
+                <td>
+                  {% with data=appraisal.id|get_current_approval_stage %}
+                    {% if data.current_stage != None %}
+                      
+                        <p class="flex justify-center py-2">
+                          {{data.current_stage.stage_name}} stage
+                        </p>
+                      
+                    {% endif %}
+                  {% endwith %}
+                </td>
+                  <td>
+                    <div class="relative inline-block text-left">
+                      <div>
+                        <button type="button" class="inline-flex justify-between w-48 rounded-2xl border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2" id="section-menu-button" aria-expanded="true" aria-haspopup="true">
+                          Select Section
+                          <svg class="-mr-1 ml-2 h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                          </svg>
+                        </button>
+                      </div>
+                      
+                      <!-- Dropdown menu -->
+                      <div class="absolute z-10 mt-2 w-72 origin-top-right rounded-2xl bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none hidden" role="menu" aria-orientation="vertical" aria-labelledby="section-menu-button" id="dropdown-section-menu">
+                        <div class="py-1" role="none">
+                          <a href="{% url 'update_appraisal' appraisal.id %}" class="text-gray-700 block px-4 py-2 text-sm hover:bg-indigo-100 hover:text-indigo-700 rounded-md" role="menuitem">Section 1 - Personal Details</a>
+                          <a href="{% url 'appraisal_dept_output_index' appraisal.id %}" class="text-gray-700 block px-4 py-2 text-sm hover:bg-indigo-100 hover:text-indigo-700 rounded-md" role="menuitem">Section 2 - Performance Plan and Assessment</a>
+                          <a href="{% url 'training_development_index' appraisal.id %}" class="text-gray-700 block px-4 py-2 text-sm hover:bg-indigo-100 hover:text-indigo-700 rounded-md" role="menuitem">Section 3 - Training and Development Needs</a>
+                          <a href="{% url 'performance_review_detail' appraisal.id %}" class="text-gray-700 block px-4 py-2 text-sm hover:bg-indigo-100 hover:text-indigo-700 rounded-md" role="menuitem">Section 4 - Performance Progress Reviews</a>
+                          <a href="{% url 'appraisal_final_result_index' appraisal.id %}" class="text-gray-700 block px-4 py-2 text-sm hover:bg-indigo-100 hover:text-indigo-700 rounded-md" role="menuitem">Section 5 - Final Performance Assessment and Rating</a>
+                        </div>
+                      </div>
+                    </div>
+                  </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}
+{% block scripts %}
+  <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
+  <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+  <script>
+  $(document).ready(function () {
+    $("#appraisals").DataTable({
+      "pageLength": 10,
+      "columnDefs": [{ "orderable": true, "targets": [0, 1, 2,3] }],
+      "responsive": true,
+      "searching": false,
+      
+    });
+  });
+
+  // ==================== Configuration Menu =================================
+  const confButton = document.getElementById('conf-menu-button');
+  const confMenu = document.getElementById('dropdown-conf-menu');
+
+  confButton.addEventListener('click', () => {
+    confMenu.classList.toggle('hidden');
+  });
+
+  // ==================== Section Menu =======================================
+  const sectionButton = document.getElementById('section-menu-button');
+  const sectionMenu = document.getElementById('dropdown-section-menu');
+
+  sectionButton.addEventListener('click', () => {
+    sectionMenu.classList.toggle('hidden');
+  });
+  </script>
+{% endblock %}

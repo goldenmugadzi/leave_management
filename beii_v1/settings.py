@@ -119,6 +119,8 @@ INSTALLED_APPS = [
     'finance.Direct_purchases',
     'ACE2',
     'esearch',
+    'appraisal.apps.AppraisalConfig',
+
     'toolsandequipment',
     'reports',
     'sweetify',
@@ -126,6 +128,8 @@ INSTALLED_APPS = [
     'tokens',
     'commecial.tempertockens',
     'competence_building.apps.CompetenceBuildingConfig',
+    'crispy_forms',
+    'crispy_tailwind',
     'graphene_django',
     'graphene_file_upload',
     'safety',
@@ -159,6 +163,11 @@ MIDDLEWARE = [
     'it.beii_auth.inactive_user_middleware.InactiveUserMiddleware',
     'it.beii_auth.session_middleware.LimitConcurrentSessionsMiddleware',
     'it.beii_auth.session_middleware.SessionErrorSessionMiddleware'
+]
+
+# ================= Appraisal Middleware ========================
+MIDDLEWARE += [
+    'appraisal.middleware.LoginRequiredForAppraisalMiddleware',
 ]
 
 ROOT_URLCONF = 'beii_v1.urls'
@@ -321,3 +330,6 @@ STATICFILES_DIRS = [BASE_DIR / "static", BASE_DIR / "uploads", BASE_DIR / "media
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 LOGIN_REDIRECT_URL = '/dashboards/overview'
+
+CRISPY_ALLOWED_TEMPLATE_PACKS = "tailwind"
+CRISPY_TEMPLATE_PACK = "tailwind"

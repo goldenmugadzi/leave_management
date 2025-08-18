@@ -1,0 +1,70 @@
+{% load approval_stages %}
+
+<h1 class="text-center mb-4 font-bold text-xl">Approval Workflow</h1>
+<div class="flex items-center justify-center bg-gray-100 p-4">
+
+    <div class="w-full max-w-2xl">
+        <p class="text-blue-500 font-semibold text-sm px-4">
+            Current Stage: ({{ current_stage.stage_num }}) {{ current_stage.stage_name }}
+        </p>
+        {% if next_stage != None %}
+        <p class="text-blue-500 font-semibold text-sm px-4">
+            Next Stage: ({{ next_stage.stage_num }}) {{ next_stage.stage_name }}
+        </p>
+        {% else %}
+            <p class="text-blue-500 font-semibold text-sm px-4">
+                All stages completed
+            </p>
+        {% endif %}
+        
+        <div class="flex items-center justify-between pt-4 space-x-2">
+            <!-- Step 1 -->
+            {% for stage in stages %}
+                
+                <div class="relative flex-1 text-center min-w-0">
+                    {% if stage.stage_num == 1 %}
+                        <!-- Stage 1 has no modal -->
+                        {% if stage.is_completed == True %}
+                            <div class="w-12 h-12 flex items-center justify-center rounded-full text-white font-bold bg-blue-500 mx-auto">
+                                {{ stage.stage_num }}
+                            </div>
+                        {% else %}
+                            <div onclick="openModal('{{ stage.stage_num }}')" class="w-12 h-12 flex items-center justify-center rounded-full text-white font-bold bg-gray-400 mx-auto">
+                                {{ stage.stage_num }}
+                            </div>
+                        {% endif %}
+
+                    {% else %}
+                        <!-- Other stages has modal -->
+                        {% if stage.is_completed == True %}
+                            <button onclick="openModal('{{ stage.stage_num }}')" class="w-12 h-12 flex items-center justify-center rounded-full text-white font-bold bg-blue-500 mx-auto">
+                                {{ stage.stage_num }}
+                            </button>
+                        {% else %}
+                            <button onclick="openModal('{{ stage.stage_num }}')" class="w-12 h-12 flex items-center justify-center rounded-full text-white font-bold bg-gray-400 mx-auto">
+                                {{ stage.stage_num }}
+                            </button>
+                        {% endif %}
+                    {% endif %}
+                    
+                </div>
+
+                <!-- Line -->
+                {% if last_stage_num != stage.stage_num %}
+                    {% if stage.is_completed %}
+                        <div class="flex-1 h-1 bg-blue-500"></div>
+                    {% else %}
+                        <div class="flex-1 h-1 bg-gray-400"></div>
+                    {% endif %}
+                {% endif %}
+
+                <!-- Modal template -->
+                {% include "./modal.html" with modal_heading=stage.stage_name modal_id=stage.stage_num appraisal_kra_id=stage.appraisal.id %}
+                
+
+            {% endfor %}
+        </div>
+
+    </div>
+
+</div>

@@ -1,0 +1,131 @@
+{% extends "admin_layout.html" %}
+{% load quarter %}
+{% load static %}
+{% load crispy_forms_tags %}
+{% load kra_calculations %}
+{% load kra_permissions %}
+{% load approval_stages %}
+
+{% block content %}
+    {% include "appraisal/approval/detail.html" with stages=stages last_stage_num=last_stage_number %}
+
+    <div class="content-wrapper">
+        <div class="grid grid-cols-1">
+            <div class="bg-gulf-blue-100 shadow-lg rounded-lg p-6">
+                <div class="flex justify-between">
+                    <div>
+                        <h1 class="font-bold">Key Result Area Details</h1>
+                        <p class="text-sm text-muted">
+                            Key Result Area: <strong>{{ appraisal_kra_object.get_name }}</strong> for {{ appraisal_kra_object.quarter.quarter|quarter_name }} of {{ appraisal_kra_object.quarter.year }}
+                        </p>
+                    </div>  
+                </div>   
+            </div>  
+        </div>
+
+        <div class="bg-gulf-blue-100 shadow-lg rounded-lg p-6 my-6">
+            {% if is_reviewer == True %}
+                {% if appraisal_kra_activities_scored == True %}
+                    <div class="flex justify-end my-2">
+                        <a 
+                            href="{% url 'appraisal_kra_reviewer_status_update' appraisal_kra_object.id %}"
+                            onclick="window.open(this.href, 'reviewer_status_popup', 'width=600,height=400'); return false;"
+                            data-pop="yes"
+                            title="Update status"
+                            class="bg-blue-500 hover:bg-blue-700 inline-block rounded-xl text-white p-2"
+                        >
+                            Reviewer Action
+                        </a>
+                    </div>
+                {% endif %}
+            {% endif %}
+            <div style="max-height: 600px; overflow-y: auto;">
+                <table class="w-full border border-gray-300">
+                    <thead class="bg-blue-800 text-white">
+                        <tr>
+                            <th class="p-4 text-left text-md font-semibold border-r border-gray-300">Activity</th>
+                            <th class="p-4 text-left text-md font-semibold border-r border-gray-300">Indicator</th>
+                            <th class="p-4 text-left text-md font-semibold border-r border-gray-300">Description</th>
+                            <th class="p-6 text-left text-md font-semibold border-r border-gray-300">Weight</th>
+                            <th class="p-4 text-left text-md font-semibold border-r border-gray-300">Agreed Target</th>
+                            <th class="p-4 text-left text-md font-semibold border-r border-gray-300">Allowable Variance</th>
+                            <th class="p-4 text-left text-md font-semibold border-r border-gray-300">Actual Performance</th>
+                            <th class="p-4 text-left text-md font-semibold border-r border-gray-300">Actual Variance</th>
+                            <th class="p-4 text-left text-md font-semibold border-r border-gray-300">Rating</th>
+                            <th class="p-4 text-left text-md font-semibold border-r border-gray-300">Weight</th>
+                            <th class="p-4 text-left text-md font-semibold border-r border-gray-300">Supporting Document</th>
+                            <th class="p-4 text-left text-md font-semibold border-r border-gray-300">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Activity: Reduce Latency -->
+                        {% for activity_obj in activities_data %}
+                            <tr class="border-b border-black">
+                                <td rowspan="{{ activity_obj.performance_dimension_length }}" class="border-r border-gray-300 bg-apple-200 px-4 py-2">{{ activity_obj.activity_name }}</td>  
+                                
+                                {% for performance_dimension_obj in activity_obj.activity_performance_dimension_qr %}
+                                    <tr class="border-b border-black hover:bg-gray-50">
+                                        {% if performance_dimension_obj.is_applicable == True %}
+                                            <td class="border-r border-black px-4 py-2">{{ performance_dimension_obj.performance_indicator }}</td>
+                                            <td class="border-r border-black px-4 py-2 truncate max-w-xs">{{ performance_dimension_obj.description }}</td>
+                                            <td class="border-r border-black px-4 py-2">{{ performance_dimension_obj.weight }} %</td>
+                                            <td class="border-r border-black px-4 py-2">{{ performance_dimension_obj.agreed_target }} %</td>
+                                            <td class="border-r border-black px-4 py-2">(+-) {{ performance_dimension_obj.allowable_variance }}</td>
+                                            <td class="border-r border-black px-4 py-2">{{ performance_dimension_obj.id|get_target_score_by_performance_dimension_id }} %</td>
+                                            <td class="border-r border-black px-4 py-2">(+-) {{ performance_dimension_obj.id|get_performance_dimension_actual_variance }}</td>
+                                            <td class="border-r border-black px-4 py-2">{{performance_dimension_obj.id|get_performance_dimension_rating}}</td>
+                                            <td class="border-r border-black px-4 py-2">{{performance_dimension_obj.id|get_performance_dimension_weighted_score}}</td>
+                                            <td class="border-r border-black px-4 py-2">
+                                                {% url 'score_supporting_docs_view' performance_dimension_obj.id as url %}
+                                                <button 
+                                                    onclick="openSupportingDocsModal('{{ url|escapejs }}')" 
+                                                    class="w-14 h-10 flex items-center justify-center rounded-2xl text-white font-bold bg-blue-500 mx-auto">
+                                                    View
+                                                </button>
+                                            </td>
+                                        {% else %}
+                                            <td class="border-r border-black px-4 py-2">{{ performance_dimension_obj.performance_indicator }}</td>
+                                            <td class="border-r border-black px-4 py-2 truncate max-w-xs">{{ performance_dimension_obj.description }}</td>
+                                            <td class="border-r border-black px-4 py-2">
+                                                <span class="px-2 text-sm font-medium text-white bg-yellow-600 rounded-full">
+                                                    Not Set
+                                                </span>
+                                            </td>
+                                            <td class="border-r border-black px-4 py-2"> - </td>
+                                            <td class="border-r border-black px-4 py-2"> - </td>
+                                            <td class="border-r border-black px-4 py-2"> - </td>
+                                            <td class="border-r border-black px-4 py-2"> - </td>
+                                            <td class="border-r border-black px-4 py-2"> - </td>
+                                            <td class="border-r border-black px-4 py-2"> - </td>
+                                            <td class="border-r border-black px-4 py-2"> - </td>
+                                        {% endif %}
+                                        
+                                    </tr>
+                                {% endfor %}
+                            </tr>
+                            <tr>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+                                <td></td>
+
+                                <td class="font-bold flex justify-center underline">{{ activity_obj.activity_id|get_activity_total_score }}</td>
+
+                            </tr>
+                        {% endfor %}
+                        
+                    </tbody>
+                </table>
+            </div>
+            {% include "appraisal/kra/targets/score_docs/modal_view.html"%}
+
+
+            
+{% endblock %}

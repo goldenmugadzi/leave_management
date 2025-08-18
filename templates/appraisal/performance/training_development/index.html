@@ -1,0 +1,52 @@
+{% load static %}
+{% load quarter %}
+
+    <div class="content-wrapper my-4">
+      <div class="grid grid-cols-1">
+        <div class="bg-gulf-blue-96 shadow-lg rounded-lg p-3">
+          <div class="flex justify-between">           
+              <h3 class="text-center font-bold">Training And Development Needs</h3>
+          </div>
+          
+            <div class="overflow-x-auto">
+                <table class="min-w-full border-collapse border border-gray-200 shadow-md rounded-lg">
+                    <thead>
+                    <tr class="bg-blue-500 text-white">
+                        <th class="px-6 py-2 text-left text-sm font-semibold">Quarter</th>
+                        <th class="px-6 py-2 text-left text-sm font-semibold">Created at</th>
+                        <th class="px-6 py-2 text-left text-sm font-semibold">Updated at</th>
+                        <th class="px-6 py-2 text-left text-sm font-semibold">Status</th>
+                    </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                    {% for training_object in training_objects %}
+                        <tr class="hover:bg-gray-100">
+                        <td class="px-6 py-4 whitespace-nowrap text-blue-600 hover:text-blue-800">
+                            <a href="{% url 'training_development_update' training_object.appraisal.id training_object.quarter.id %}">
+                            {{ training_object.quarter.quarter|quarter_name }}
+                            </a>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">{{ training_object.created_date|date }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">{{ training_object.updated|date }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            {% if training_object.is_completed == True %}
+                                <span class="px-3 py-1 text-sm font-medium text-white bg-green-500 rounded-full">
+                                    Completion
+                                </span>
+                            {% else %}
+                                <span class="px-3 py-1 text-sm font-medium text-white bg-yellow-600 rounded-full">
+                                    Pending
+                                </span>
+                            {% endif %}
+                        </td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+          
+          </div>
+        </div>
+      </div>
+

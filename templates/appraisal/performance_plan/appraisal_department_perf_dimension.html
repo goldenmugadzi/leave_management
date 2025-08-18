@@ -1,0 +1,95 @@
+{% extends "admin_layout.html" %}
+{% load static %}
+{% load crispy_forms_tags %}
+{% load kra_calculations %}
+
+{% block content %}
+{% include 'appraisal/sections_header.html' with section_header="Section 2 - Performance Plan and Assessment" %}
+
+    <div class="content-wrapper">
+        <div class="grid grid-cols-1">
+            <div class="bg-gray-50 shadow-lg rounded-lg p-6">
+                <div class="flex justify-between">
+                    <div>
+                        <h1 class="font-bold text-2xl text-gray-900">
+                            {% if is_grade_c_and_above %}
+                                OUTPUT PERFORMANCE
+                            {% else %}
+                                ACTIVITY PERFORMANCE
+                            {% endif %}
+                        </h1>
+                        <p class="text-lg font-bold text-gray-500">Department Output: {{department_output_obj}} with Weight: {{department_output_obj.weight}}%</p>
+                        <p class="text-md text-gray-500">This section provides a brief summary of the evaluated performance dimensions, highlighting their respective scores to offer a clear overview of overall performance.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white shadow-lg rounded-lg border-2 border-indigo-200 my-4 p-4">
+                <div class="overflow-x-auto max-h-[350px]">
+                    <table class="min-w-full border border-blue-800 rounded-lg shadow-lg">
+                      <thead class="bg-blue-800 text-white">
+                        <tr>
+                          <th class="px-4 py-3 text-left text-sm font-semibold">Performance Indicator</th>
+                          <th class="px-4 py-3 text-left text-sm font-semibold">
+                            {% if is_grade_c_and_above %}
+                              Output description
+                            {% else %}
+                              Activity description
+                            {% endif %}
+                          </th>
+                          <th class="px-4 py-3 text-left text-sm font-semibold">Weight</th>
+                          <th class="px-4 py-3 text-left text-sm font-semibold">Agreed Target</th>
+                          <th class="px-4 py-3 text-left text-sm font-semibold">Allowable Variance</th>
+                          <th class="px-4 py-3 text-left text-sm font-semibold">Actual Performance</th>
+                          <th class="px-4 py-3 text-left text-sm font-semibold">Actual Variance</th>
+                          <th class="px-4 py-3 text-left text-sm font-semibold">Rating</th>
+                          <th class="px-4 py-3 text-left text-sm font-semibold">Weighted Score</th>
+                          <th class="px-4 py-3 text-left text-sm font-semibold"></th>
+                        </tr>
+                      </thead>
+                  
+                      <tbody class="divide-y divide-blue-300 bg-blue-50">
+                        {% for performance_dimensions_obj in performance_dimensions_qr %}
+                          <tr class="hover:bg-blue-100 transition-colors duration-200">
+                            <td class="px-4 py-3 text-sm text-blue-900 max-w-xs truncate">{{ performance_dimensions_obj.performance_dimension.performance_indicator }}</td>
+                            
+                            <!-- TRUNCATED DESCRIPTION -->
+                            <td class="px-4 py-3 text-sm text-blue-900 max-w-xs truncate" title="{{ performance_dimensions_obj.performance_dimension.description }}">
+                              {{ performance_dimensions_obj.performance_dimension.description }}
+                            </td>
+                            
+                            <td class="px-4 py-3 text-sm text-blue-900">{{ performance_dimensions_obj.performance_dimension.weight }} %</td>
+                            <td class="px-4 py-3 text-sm text-blue-900">{{ performance_dimensions_obj.performance_dimension.agreed_target }} %</td>
+                            <td class="px-4 py-3 text-sm text-blue-900">(+/-) {{ performance_dimensions_obj.performance_dimension.allowable_variance }} %</td>
+                            <td class="px-4 py-3 text-sm text-blue-900">{{ performance_dimensions_obj.score }} %</td>
+                            <td class="px-4 py-3 text-sm text-blue-900">(+/-) {{ performance_dimensions_obj.id|get_performance_dimension_actual_variance }} %</td>
+                            <td class="px-4 py-3 text-sm text-blue-900">{{ performance_dimensions_obj.id|get_performance_dimension_rating }}</td>
+                            <td class="px-4 py-3 text-sm text-blue-900">{{ performance_dimensions_obj.id|get_performance_dimension_weighted_score }}</td>
+                            <td class="px-4 py-3">
+                              <a href="{% url 'score_view' performance_dimensions_obj.id %}"
+                                 class="bg-blue-500 hover:bg-blue-700 text-white text-sm font-medium py-1 px-3 rounded-full transition">
+                                Score
+                              </a>
+                            </td>
+                          </tr>
+                        {% endfor %}
+                  
+                        <!-- TOTAL ROW -->
+                        <tr class="font-semibold text-blue-900 bg-blue-100">
+                          <td colspan="7" class="px-4 py-3"></td>
+                          <td class="px-4 py-3 text-sm underline underline-offset-2">
+                            {{ department_output_obj.id|get_output_total_score }}
+                          </td>
+                          <td class="px-4 py-3"></td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                  
+            </div>
+
+
+
+        </div>
+    </div>
+{% endblock %}

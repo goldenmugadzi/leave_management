@@ -111,6 +111,12 @@ APPLICATIONS = [
         "url": "/change_requests/change_request_index"
     },
     {
+        "name": "appraisal",
+        "title": "Appraisal",
+        "iconUrl": "assets/images/performance-appraisal-employee.png",
+        "url": "/appraisal"
+    },
+    {
         "name": "hardware_faults",
         "title": "IT Hardware Management",
         "iconUrl": "assets/images/hardware.png",

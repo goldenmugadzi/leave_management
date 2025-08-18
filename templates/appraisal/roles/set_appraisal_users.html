@@ -1,0 +1,33 @@
+{% load crispy_forms_tags %}
+
+
+<div class="flex flex-row gap-2 px-2">  
+    <!-- appraisal_object Form -->
+        <div class="flex-1 text-xl font-bold text-black focus:ring-blue-500 focus:border-blue-500">
+        {{ form.appraiser|as_crispy_field }}
+    </div>
+    <div class="flex-1 text-xl font-bold text-black focus:ring-blue-500 focus:border-blue-500">
+        {{ form.reviewer|as_crispy_field }}
+    </div>
+</div>
+<script>
+
+    // Tom Select for appraiser
+    document.addEventListener("DOMContentLoaded", function () {
+        
+        function getConfObject(placeholder){
+            const confObject = {
+                create: false, // Prevent custom options
+                sortField: { field: "text", direction: "asc" }, // Sort options alphabetically
+                maxOptions: 100, // Limit the number of options shown in the dropdown
+                placeholder: "", // Add a placeholder
+    
+            }
+            confObject.placeholder = placeholder
+            return confObject
+        }
+
+        new TomSelect("#id_appraiser", getConfObject("Search and Select Appraiser"));
+        new TomSelect("#id_reviewer", getConfObject("Search and Select Reviewer"));
+    });
+</script>

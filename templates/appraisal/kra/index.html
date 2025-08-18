@@ -1,0 +1,90 @@
+{% extends "admin_layout.html" %}
+{% load quarter %}
+{% load static %}
+{% load crispy_forms_tags %}
+{% load kra_calculations %}
+{% load kra_permissions %}
+
+{% block content %}
+
+  <div class="content-wrapper">
+    <div class="grid grid-cols-1">
+      <div class="bg-gulf-blue-100 shadow-lg rounded-lg p-6">
+        <div class="flex justify-between">
+            <div>
+              <h1 class="font-bold">Key Result Area</h1>
+              <p class="text-sm text-muted">Key Result Area main page</p>
+            </div>
+            
+        </div>
+                
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-gulf-blue-100 shadow-lg rounded-lg p-6 my-6">
+            <div class="flex justify-end">
+              <a href="{% url 'kra_create' %}"
+                  class="my-2 bg-blue-500 hover:bg-blue-700 inline-block rounded-full text-white py-2 px-4">Create New</a>
+            </div>
+      <div style="max-height: 280px; overflow-y: auto;">
+        <table 
+        class="w-full border border-blue-800 rounded-lg shadow-lg">
+         <thead class="bg-blue-800 text-white">
+           <tr>
+             <th class="px-6 py-3 text-left text-md font-semibold">Kra Description</th>
+             <th class="px-6 py-3 text-left text-md font-semibold">Created by</th>
+             <th class="px-6 py-3 text-left text-md font-semibold">Created date</th>
+             <th></th>
+           </tr>
+         </thead>
+         <tbody class="divide-y divide-blue-300 bg-blue-50">
+           {% for kra_obj in kra_objects %}
+           <tr class="hover:bg-blue-100">
+             <td class="px-6 py-4 text-md text-blue-900 truncate max-w-xs">{{kra_obj.key_result_area_description}}</td>
+             <td class="px-6 py-4 text-md text-blue-900">{{kra_obj.created_by}}</td>
+             <td class="px-6 py-4 text-md text-blue-900">{{kra_obj.created_date}}</td>
+             <td>
+                <div class="flex gap-2 justify-center">
+                  <a 
+                    href="{% url 'kra_update_detail' kra_obj.id %}" 
+                    class="rounded-2xl bg-blue-500 block px-4 py-2 text-sm text-white hover:bg-blue-700" 
+                  >
+                    View
+                  </a>
+                </div>
+             </td>
+             
+   
+           </tr>
+          {% endfor %}
+         </tbody>
+       </table>
+
+      </div>
+    </div>
+  </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // Function to toggle the dropdown visibility
+  function toggleDropdown(kraId) {
+    const dropdownMenu = document.getElementById(`dropdownMenu-${kraId}`);
+     if (dropdownMenu) {  
+    dropdownMenu.classList.toggle('hidden');
+  }
+  }
+
+  // Close the dropdown when clicking outside
+  window.addEventListener('click', function(event) {
+    const dropdowns = document.querySelectorAll("[id^='dropdownMenu-']");
+    dropdowns.forEach(dropdown => {
+      if (!dropdown.contains(event.target) && !event.target.matches('button')) {
+        dropdown.classList.add('hidden');
+      }
+    });
+  });
+</script>
+
+{% endblock %}

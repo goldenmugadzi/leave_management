@@ -48,6 +48,9 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     # path('accounts/', include('django.contrib.auth.urls')),
     path('ace/', include('ACE2.urls')),
+    path('appraisal/', include('appraisal.urls')),
+
+    # path('ace/', include('finance.Ace.urls')),
     path('', include('toolsandequipment.urls')),
     path('', include('safety.urls')),   
     path('', include('BatteryMaintenance.urls')),

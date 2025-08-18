@@ -1,0 +1,34 @@
+{% extends "admin_layout.html" %}
+
+{% load crispy_forms_tags %}
+
+{% block content %}
+<div class="content-wrapper">
+    <div class="grid grid-cols-1">
+        <div class="bg-gulf-blue-100 shadow-lg rounded-lg p-6">
+            <div class="flex justify-between">
+                <div>
+                    <h1 class="font-bold">Performance Dimension</h1>
+                    <p class="text-sm text-muted">Performance Dimension for departmental output, <strong>{{perf_dimension_obj.department_output}}</strong> with weight <strong>{{perf_dimension_obj.department_output.weight}} %</strong></p>
+                </div>
+                <div>
+                    {% include "appraisal/kra/weight_progress.html" with weight_of="Departmental Output" %} 
+                </div>
+                
+            </div>
+                
+        </div>
+    </div>
+
+    <div class="bg-gulf-blue-98 shadow-lg border-2 rounded-lg my-4 p-4">
+        <form method="post">
+            {%csrf_token%}
+            {{performance_dimension_form|crispy}}
+            <div class="flex justify-center my-2">
+                <button type="submit" class="w-96 bg-blue-500 hover:bg-blue-700 inline-block rounded-full text-white py-2 px-4" name="kra_request">Save</button>
+            </div>
+        </form>
+    </div>
+
+</div>
+{% endblock content %}
