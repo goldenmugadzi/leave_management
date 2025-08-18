@@ -113,7 +113,7 @@ APPLICATIONS = [
     {
         "name": "appraisal",
         "title": "Appraisal",
-        "iconUrl": "assets/images/change.png",
+        "iconUrl": "assets/images/performance-appraisal-employee.png",
         "url": "/appraisal"
     },
     {
