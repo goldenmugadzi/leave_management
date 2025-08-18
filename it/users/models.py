@@ -96,7 +96,7 @@ class Designations(models.Model):
     region = models.ForeignKey(Regions, on_delete=models.DO_NOTHING, blank=True, null=True)
 
     def __str__(self):
-        return self.identifier
+        return self.description
 
 
 class CostCenter(models.Model):
@@ -154,6 +154,16 @@ class CostCenter(models.Model):
             self = self.parent
             i += 1
         return cost_centers
+    def get_view_1(self):
+        """ return a list of cost centers involving children, grand children, brothers ,parent , parent brothers, grand parent"""
+        cost_centers = []
+        i = 0
+        while self.parent and i < 4:
+            cost_centers.append(self)
+            cost_centers += self.get_all_children()
+            self = self.parent
+            i += 1
+        return cost_centers
 
     def __str__(self):
 
@@ -177,6 +187,7 @@ class UserProfile(AbstractUser):
     roles = models.ManyToManyField(Roles, blank=True, null=True)
     region = models.ForeignKey(Regions, on_delete=models.DO_NOTHING, blank=True, null=True)
     status = models.CharField(max_length=30, blank=True)
+    email = models.CharField(max_length=50, blank=True)
     last_reset = models.DateField(default=date.today())
     password_expiry_date = models.DateField(null=True, blank=True)
     password_expiry_days = models.IntegerField(default=90)

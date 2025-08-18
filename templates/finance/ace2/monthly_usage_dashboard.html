@@ -1,0 +1,154 @@
+{% extends "admin_layout.html" %}
+{% block content %}
+<div class="content-wrapper py-8 px-4">
+  <h2 class="font-bold text-2xl mb-8 text-center text-blue-900">
+    Monthly Usage Dashboard ({{ current_year }}){% if selected_region %} - {{ selected_region.region }}{% endif %}
+  </h2>
+
+  <form method="get" class="mb-6 flex justify-center">
+    <label for="region" class="mr-2 font-semibold">Region:</label>
+    <select name="region" id="region" class="border rounded px-2 py-1">
+      <option value="all" {% if not selected_region_id or selected_region_id == "all" %}selected{% endif %}>All Regions</option>
+      {% for region in all_regions %}
+        <option value="{{ region.id }}" {% if selected_region and region.id == selected_region.id %}selected{% endif %}>
+          {{ region.region }}
+        </option>
+      {% endfor %}
+    </select>
+    <button type="submit" class="ml-2 px-4 py-1 bg-blue-600 text-white rounded">Filter</button>
+  </form>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+
+    <!-- ACE Usage -->
+    <div class="bg-white rounded-lg shadow p-6">
+      <h3 class="font-semibold text-lg mb-4 text-blue-800 flex items-center">
+        <span class="material-symbols-outlined mr-2 text-blue-500">analytics</span> ACE Usage
+      </h3>
+      <table class="min-w-full table-auto border border-blue-200 rounded">
+        <thead class="bg-blue-50">
+          <tr>
+            <th class="px-3 py-2 border-b text-left">Month</th>
+            <th class="px-3 py-2 border-b text-left">Total Amount</th>
+            <th class="px-3 py-2 border-b text-left">Number of ACEs</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in ace_monthly %}
+          <tr class="hover:bg-blue-50">
+            <td class="px-3 py-2 border-b">{{ row.month|date:"Y-m" }}</td>
+            <td class="px-3 py-2 border-b">{{ row.total_amount|floatformat:2 }}</td>
+            <td class="px-3 py-2 border-b">{{ row.count }}</td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="3" class="text-center py-2 text-gray-400">No data</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- PettyCash Usage -->
+    <div class="bg-white rounded-lg shadow p-6">
+      <h3 class="font-semibold text-lg mb-4 text-green-800 flex items-center">
+        <span class="material-symbols-outlined mr-2 text-green-500">payments</span> PettyCash Usage
+      </h3>
+      <table class="min-w-full table-auto border border-green-200 rounded">
+        <thead class="bg-green-50">
+          <tr>
+            <th class="px-3 py-2 border-b text-left">Month</th>
+            <th class="px-3 py-2 border-b text-left">Total Disbursed</th>
+            <th class="px-3 py-2 border-b text-left">Number of PettyCash Items</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in pettycash_monthly %}
+          <tr class="hover:bg-green-50">
+            <td class="px-3 py-2 border-b">{{ row.month|date:"Y-m" }}</td>
+            <td class="px-3 py-2 border-b">{{ row.total_amount|floatformat:2 }}</td>
+            <td class="px-3 py-2 border-b">{{ row.count }}</td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="3" class="text-center py-2 text-gray-400">No data</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Token Usage -->
+    <div class="bg-white rounded-lg shadow p-6">
+      <h3 class="font-semibold text-lg mb-4 text-purple-800 flex items-center">
+        <span class="material-symbols-outlined mr-2 text-purple-500"></span> Token Usage
+      </h3>
+      <table class="min-w-full table-auto border border-purple-200 rounded">
+        <thead class="bg-purple-50">
+          <tr>
+            <th class="px-3 py-2 border-b text-left">Month</th>
+            <th class="px-3 py-2 border-b text-left">Number of Tokens Created</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in token_monthly %}
+          <tr class="hover:bg-purple-50">
+            <td class="px-3 py-2 border-b">{{ row.month|date:"Y-m" }}</td>
+            <td class="px-3 py-2 border-b">{{ row.total_tokens }}</td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="2" class="text-center py-2 text-gray-400">No data</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Comparative Schedule Usage -->
+    <div class="bg-white rounded-lg shadow p-6">
+      <h3 class="font-semibold text-lg mb-4 text-orange-800 flex items-center">
+        <span class="material-symbols-outlined mr-2 text-orange-500"></span> Comparative Schedule Usage
+      </h3>
+      <table class="min-w-full table-auto border border-orange-200 rounded">
+        <thead class="bg-orange-50">
+          <tr>
+            <th class="px-3 py-2 border-b text-left">Month</th>
+            <th class="px-3 py-2 border-b text-left">Number of Comparative Schedules</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in comparative_monthly %}
+          <tr class="hover:bg-orange-50">
+            <td class="px-3 py-2 border-b">{{ row.month|date:"Y-m" }}</td>
+            <td class="px-3 py-2 border-b">{{ row.total_schedules }}</td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="2" class="text-center py-2 text-gray-400">No data</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Direct Purchase Usage -->
+    <div class="bg-white rounded-lg shadow p-6 col-span-1 md:col-span-2">
+      <h3 class="font-semibold text-lg mb-4 text-red-800 flex items-center">
+        <span class="material-symbols-outlined mr-2 text-red-500">t</span> Direct Purchase Usage
+      </h3>
+      <table class="min-w-full table-auto border border-red-200 rounded">
+        <thead class="bg-red-50">
+          <tr>
+            <th class="px-3 py-2 border-b text-left">Month</th>
+            <th class="px-3 py-2 border-b text-left">Number of Direct Purchases</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in direct_purchase_monthly %}
+          <tr class="hover:bg-red-50">
+            <td class="px-3 py-2 border-b">{{ row.month|date:"Y-m" }}</td>
+            <td class="px-3 py-2 border-b">{{ row.count }}</td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="2" class="text-center py-2 text-gray-400">No data</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

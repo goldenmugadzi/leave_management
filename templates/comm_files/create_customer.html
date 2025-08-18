@@ -1,0 +1,234 @@
+{% extends "admin_layout.html" %}
+{% load static %}
+
+{% block title %}Add New Customer{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-6">
+    <!-- Back Button and Header -->
+    <div class="mb-6">
+        <a href="{% url 'comm_files:customer_list' %}" class="inline-flex items-center text-blue-600 hover:text-blue-800 mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd" />
+            </svg>
+            Back to Customer List
+        </a>
+        <h1 class="text-2xl font-bold text-gray-800">Add New Customer</h1>
+        <p class="text-gray-600">Create a new customer record in the system</p>
+    </div>
+    
+    <!-- Customer Form -->
+    <div class="bg-white rounded-lg shadow-md p-6">
+        <form method="post" class="space-y-6">
+            {% csrf_token %}
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Customer ID -->
+                <div>
+                    <label for="{{ form.customer_id.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                        Customer ID*
+                    </label>
+                    {{ form.customer_id }}
+                    {% if form.customer_id.help_text %}
+                    <p class="mt-1 text-sm text-gray-500">{{ form.customer_id.help_text }}</p>
+                    {% endif %}
+                    {% if form.customer_id.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.customer_id.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <!-- Name -->
+                <div>
+                    <label for="{{ form.name.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                        Name*
+                    </label>
+                    {{ form.name }}
+                    {% if form.name.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.name.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <!-- Address -->
+                <div>
+                    <label for="{{ form.address.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                        Address*
+                    </label>
+                    {{ form.address }}
+                    {% if form.address.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.address.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <!-- Stand Number -->
+                <div>
+                    <label for="{{ form.stand_number.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                        Stand Number
+                    </label>
+                    {{ form.stand_number }}
+                    {% if form.stand_number.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.stand_number.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <!-- Contact Number -->
+                <div>
+                    <label for="{{ form.contact_number.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                        Contact Number
+                    </label>
+                    {{ form.contact_number }}
+                    {% if form.contact_number.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.contact_number.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <!-- Email -->
+                <div>
+                    <label for="{{ form.email.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                        Email
+                    </label>
+                    {{ form.email }}
+                    {% if form.email.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.email.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <!-- Customer Type -->
+                <div>
+                    <label for="{{ form.customer_type.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                        Customer Type*
+                    </label>
+                    {{ form.customer_type }}
+                    {% if form.customer_type.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.customer_type.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <!-- Account Number -->
+                <div>
+                    <label for="{{ form.account_number.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                        Account Number
+                    </label>
+                    {{ form.account_number }}
+                    {% if form.account_number.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.account_number.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <!-- Meter Number -->
+                <div>
+                    <label for="{{ form.meter_number.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                        Meter Number
+                    </label>
+                    {{ form.meter_number }}
+                    {% if form.meter_number.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.meter_number.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <!-- Region -->
+                <div>
+                    <label for="{{ form.region.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                        Region
+                    </label>
+                    {{ form.region }}
+                    {% if form.region.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.region.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                <!-- District -->
+                <div>
+                    <label for="{{ form.district.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                        District
+                    </label>
+                    {{ form.district }}
+                    {% if form.district.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.district.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                <!-- Depot -->
+                <div>
+                    <label for="{{ form.depot.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                        Depot
+                    </label>
+                    {{ form.depot }}
+                    {% if form.depot.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.depot.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                <!-- Suburb -->
+                <div>
+                    <label for="{{ form.suburb.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                        Suburb
+                    </label>
+                    {{ form.suburb }}
+                    {% if form.suburb.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.suburb.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                <!-- Tariff Description -->
+                <div>
+                    <label for="{{ form.tariff_description.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                        Tariff Description
+                    </label>
+                    {{ form.tariff_description }}
+                    {% if form.tariff_description.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.tariff_description.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                <!-- Supply Point Number -->
+                <div>
+                    <label for="{{ form.supply_point_number.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                        Supply Point Number
+                    </label>
+                    {{ form.supply_point_number }}
+                    {% if form.supply_point_number.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.supply_point_number.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                <!-- Status -->
+                <div>
+                    <label for="{{ form.status.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                        Status
+                    </label>
+                    {{ form.status }}
+                    {% if form.status.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.status.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                <!-- PJob -->
+                <div>
+                    <label for="{{ form.pjob.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                        Project Job Reference
+                    </label>
+                    {{ form.pjob }}
+                    {% if form.pjob.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.pjob.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                <!-- Is Active -->
+                <div class="col-span-1 md:col-span-2">
+                    <div class="flex items-center">
+                        {{ form.is_active }}
+                        <label for="{{ form.is_active.id_for_label }}" class="ml-2 block text-sm font-medium text-gray-700">
+                            Active Customer
+                        </label>
+                    </div>
+                    {% if form.is_active.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.is_active.errors.0 }}</p>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Form Actions -->
+            <div class="flex justify-end space-x-4 pt-4">
+                <a href="{% url 'comm_files:customer_list' %}" class="inline-flex justify-center py-2 px-4 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    Cancel
+                </a>
+                <button type="submit" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+                    Create Customer
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %} 

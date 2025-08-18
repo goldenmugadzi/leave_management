@@ -30,8 +30,6 @@ class Token(models.Model):
     created_by = models.ForeignKey(UserProfile, on_delete=models.CASCADE, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     process=models.ForeignKey(Process, on_delete=models.CASCADE, blank=True, null=True)
-    # section=models.ForeignKey(Sections, on_delete=models.CASCADE, blank=True, null=True)
-    region=models.ForeignKey(Regions, on_delete=models.CASCADE, blank=True, null=True)
     cost_center=models.ForeignKey(CostCenter, on_delete=models.CASCADE, blank=True, null=True)
      
     token_photo = models.FileField(upload_to='uploads/Tokens/generatedtoken',help_text="photo of generated token " , blank=True, null=True)
@@ -61,9 +59,12 @@ class CLEARCREDIT(models.Model):
 
 class TAMPERTOKEN(models.Model):
     token = models.ForeignKey(Token, on_delete=models.CASCADE)
-    is_for = models.CharField(max_length=25, blank=True, null=True,help_text=" Why?" ,choices=[('Fauty Maintanance', 'Fauty Maintanance'),('Recovered Meter', 'Recovered Meter'),("Reconnection","Reconnection" ),])
+    is_for = models.CharField(max_length=25,blank=True,null=True,help_text="Why?",choices=[('Fault Maintenance', 'Fault Maintenance'),('Recovered Meter', 'Recovered Meter'),('Reconnection', 'Reconnection'),])
     def __str__(self):
-        return str(self.token.meter.number)
+        token = getattr(self, 'token', None)
+        meter = getattr(token, 'meter', None) if token else None
+        meter_number = getattr(meter, 'number', 'N/A') if meter else 'N/A'
+        return f"{meter_number} - {self.is_for}"
 
 class OldToken(models.Model):
     token = models.ForeignKey(Token, on_delete=models.CASCADE)
@@ -75,7 +76,7 @@ class FaultMeter(models.Model):
     units = models.DecimalField(max_digits=10, decimal_places=2, help_text="kilowatt hours remaining", default=0)
     photo= models.FileField(upload_to='uploads/Tokens/faultMeter',help_text="Meter photo showing showing units ", blank=True, null=True)
     def __str__(self):
-        return str(self.token.meter.number)
+        return str(self.token)
     
 class RecoveredMeter(models.Model):
     token = models.ForeignKey(Token, on_delete=models.CASCADE)

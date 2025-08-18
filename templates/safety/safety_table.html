@@ -1,0 +1,152 @@
+
+{% extends 'admin_layout.html' %}
+
+{% block styles %}
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css"/>
+  <style>
+    .dataTables_wrapper .dataTables_length select { width: 4rem; }
+    .tab-button {
+      padding: 0.5rem 1rem;
+      border: 2px solid transparent;
+      border-radius: 0.375rem;
+      cursor: pointer;
+      transition: background-color 0.3s, color 0.3s;
+      text-align: center;
+    }
+    .tab-button.active {
+      background-color: #1d4ed8;
+      color: white;
+      border-color: #1d4ed8;
+    }
+    .tab-button:hover {
+      background-color: #2563eb;
+      color: white;
+    }
+  </style>
+{% endblock styles %}
+
+{% block content %}
+<div class="content-wrapper">
+  <div class="bg-gulf-blue-100 shadow shadow-gulf-blue-300 text-gulf-blue-900 rounded px-2 py-2">
+    <div class="flex justify-between items-center mb-5">
+      <span class="text-lg font-bold text-black">Safety Performance</span>
+      <div class="mb-4 flex space-x-4 p-2 bg-white rounded-lg shadow-md">
+        <a href="{% url 'safety_report_create' %}" class="tab-button active">Create Report</a>
+       <a href="/accident" class="tab-button">Create Accident Report</a>
+      </div>
+    </div>
+    <div class="overflow-x-auto">
+      <table id="safetyTable" class="display" style="width: 100%">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>User</th>
+            <th>Department</th>
+            <th>Date</th>
+            <th>Work Related Accidents</th>
+            <th>Disabling Accidents</th>
+            <th>Fatal Accidents</th>
+            <th>Man Hours Lost</th>
+            <th>Accident Free Days</th>
+            <th>Motor Vehicle Accidents</th>
+            <th>Property Damaged</th>
+            <th>Number of Workers</th>
+            <th>Number of Days</th>
+            <th>Accident Frequency Rate</th>
+            <th>Injury Severity Rate</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+        <tfoot>
+          <tr>
+            <th>ID</th>
+            <th>User</th>
+            <th>Department</th>
+            <th>Date</th>
+            <th>Work Related Accidents</th>
+            <th>Disabling Accidents</th>
+            <th>Fatal Accidents</th>
+            <th>Man Hours Lost</th>
+            <th>Accident Free Days</th>
+            <th>Motor Vehicle Accidents</th>
+            <th>Property Damaged</th>
+            <th>Number of Workers</th>
+            <th>Number of Days</th>
+            <th>Accident Frequency Rate</th>
+            <th>Injury Severity Rate</th>
+            <th>Action</th>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/alpinejs@2.8.2/dist/alpine.min.js" defer></script>
+<script src="https://code.jquery.com/jquery-3.7.0.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script>
+$(document).ready(function () {
+  var table = $("#safetyTable").DataTable({
+    processing: true,
+    serverSide: true,
+    ajax: {
+      url: "{% url 'safety_report_data' %}",
+      data: function(d) {
+        d.department = $('#departmentFilter').val();
+      },
+      error: function (xhr, error, thrown) {
+        console.error("DataTable error:", xhr.responseText);
+      }
+    },
+    columns: [
+      { data: "id" },
+      { data: "user" },
+      { data: "department" },
+      { data: "date" },
+      { data: "work_related_accidents" },
+      { data: "disabling_accidents" },
+      { data: "fatal_accidents" },
+      { data: "man_hours_lost" },
+      { data: "accident_free_days" },
+      { data: "motor_vehicle_accidents" },
+      { data: "property_damaged" },
+      { data: "number_of_workers" },
+      { data: "number_of_days" },
+      { data: "accident_frequency_rate" },
+      { data: "injury_severity_rate" },
+      {
+        data: "id",
+        render: function(data, type, row) {
+          return `
+            <span style="display: inline-flex; gap: 0.5rem;">
+
+              <a href="/safety_update/${data}/" class="btn btn-info" title="Edit">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+                </svg>
+              </a>
+              <a href="{% url 'safety_ytd' %}" class="btn btn-info" title="info" style="font-size: 2rem; font-weight: bold; line-height: 1;">
+<<<<<<< HEAD
+                <i class="fa-solid fa-circle-info"></i>
+=======
+                !
+>>>>>>> 1b24c077b0267638fdc753da98de11aedc9afed6
+              </a>
+            </span>
+          `;
+        }
+      }
+    ],
+    order: [[0, 'desc']]
+  });
+
+  $('#departmentFilter').on('keyup change', function() {
+    table.ajax.reload();
+  });
+});
+</script>
+{% endblock scripts %}

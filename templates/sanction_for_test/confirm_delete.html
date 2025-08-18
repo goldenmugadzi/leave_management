@@ -1,0 +1,202 @@
+{% extends 'admin_layout.html' %}
+
+{% block title %}Delete Sanction For Test Form{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-danger text-white">
+                    <h3 class="card-title">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        Confirm Deletion
+                    </h3>
+                </div>
+                
+                <div class="card-body">
+                    <div class="alert alert-danger" role="alert">
+                        <h4 class="alert-heading">
+                            <i class="fas fa-warning"></i>
+                            Warning: This action cannot be undone!
+                        </h4>
+                        <p>You are about to permanently delete the following Sanction For Test form:</p>
+                        <hr>
+                        <p class="mb-0">
+                            <strong>Form Number:</strong> {{ object.form_no }}<br>
+                            <strong>Status:</strong> 
+                            <span class="badge 
+                                {% if object.status == 'draft' %}badge-secondary
+                                {% elif object.status == 'issued' %}badge-primary
+                                {% elif object.status == 'received' %}badge-info
+                                {% elif object.status == 'cleared' %}badge-success
+                                {% elif object.status == 'cancelled' %}badge-warning
+                                {% elif object.status == 'completed' %}badge-dark
+                                {% endif %}">
+                                {{ object.get_status_display }}
+                            </span><br>
+                            <strong>Created By:</strong> {{ object.created_by.get_full_name|default:object.created_by.username }}<br>
+                            <strong>Date Issued:</strong> {{ object.date_issued|date:"M d, Y" }}<br>
+                        </p>
+                    </div>
+
+                    {% if object.status != 'draft' %}
+                        <div class="alert alert-warning" role="alert">
+                            <h5 class="alert-heading">
+                                <i class="fas fa-info-circle"></i>
+                                Additional Warning
+                            </h5>
+                            <p class="mb-0">
+                                This form has progressed beyond the draft stage and may have associated signatures or workflow history. 
+                                Deleting it will permanently remove all related data including:
+                            </p>
+                            <ul class="mt-2 mb-0">
+                                <li>All signature entries</li>
+                                <li>Declaration records</li>
+                                <li>Receipt confirmations</li>
+                                <li>Clearance approvals</li>
+                                <li>Any cancellation records</li>
+                            </ul>
+                        </div>
+                    {% endif %}
+
+                    <div class="card mt-4">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0">Form Details</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <strong>Work to be Carried Out:</strong>
+                                    <p class="text-muted">{{ object.work_to_be_carried_out|default:"-"|truncatewords:10 }}</p>
+                                </div>
+                                <div class="col-md-6">
+                                    <strong>Plant/Equipment to be Tested:</strong>
+                                    <p class="text-muted">{{ object.plant_or_equipment_to_be_tested|default:"-"|truncatewords:10 }}</p>
+                                </div>
+                            </div>
+                            
+                            {% if object.status != 'draft' %}
+                                <div class="row">
+                                    <div class="col-12">
+                                        <strong>Associated Records Count:</strong>
+                                        <ul class="text-muted">
+                                            {% if declaration_entries_count %}
+                                                <li>{{ declaration_entries_count }} declaration signature(s)</li>
+                                            {% endif %}
+                                            {% if object.receipt_signer %}
+                                                <li>1 receipt confirmation</li>
+                                            {% endif %}
+                                            {% if object.clearance_signer %}
+                                                <li>1 clearance approval</li>
+                                            {% endif %}
+                                            {% if object.cancellation_controller_signer %}
+                                                <li>1 cancellation record</li>
+                                            {% endif %}
+                                        </ul>
+                                    </div>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <form method="post" class="mt-4">
+                        {% csrf_token %}
+                        <div class="form-group">
+                            <label for="confirmation">
+                                <strong>Type "DELETE" to confirm deletion:</strong>
+                            </label>
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="confirmation" 
+                                   name="confirmation" 
+                                   placeholder="Type DELETE to confirm" 
+                                   required>
+                            <small class="form-text text-muted">
+                                This is a safety measure to prevent accidental deletions.
+                            </small>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="deletion_reason">
+                                <strong>Reason for Deletion (Optional):</strong>
+                            </label>
+                            <textarea class="form-control" 
+                                      id="deletion_reason" 
+                                      name="deletion_reason" 
+                                      rows="3" 
+                                      placeholder="Please provide a reason for deleting this form..."></textarea>
+                        </div>
+                        
+                        <div class="form-group form-check">
+                            <input type="checkbox" 
+                                   class="form-check-input" 
+                                   id="understand_consequences" 
+                                   name="understand_consequences" 
+                                   required>
+                            <label class="form-check-label" for="understand_consequences">
+                                I understand that this action cannot be undone and all associated data will be permanently lost.
+                            </label>
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="submit" 
+                                    class="btn btn-danger" 
+                                    id="delete-button" 
+                                    disabled>
+                                <i class="fas fa-trash"></i>
+                                Permanently Delete Form
+                            </button>
+                            
+                            <a href="{% url 'sanction_for_test:detail' object.pk %}" 
+                               class="btn btn-secondary">
+                                <i class="fas fa-times"></i>
+                                Cancel
+                            </a>
+                            
+                            <a href="{% url 'sanction_for_test:list' %}" 
+                               class="btn btn-outline-secondary">
+                                <i class="fas fa-list"></i>
+                                Back to List
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const confirmationInput = document.getElementById('confirmation');
+    const understandCheckbox = document.getElementById('understand_consequences');
+    const deleteButton = document.getElementById('delete-button');
+    
+    function checkFormValidity() {
+        const confirmationValid = confirmationInput.value.toUpperCase() === 'DELETE';
+        const checkboxChecked = understandCheckbox.checked;
+        
+        deleteButton.disabled = !(confirmationValid && checkboxChecked);
+        
+        if (confirmationValid && checkboxChecked) {
+            deleteButton.classList.remove('btn-secondary');
+            deleteButton.classList.add('btn-danger');
+        } else {
+            deleteButton.classList.remove('btn-danger');
+            deleteButton.classList.add('btn-secondary');
+        }
+    }
+    
+    confirmationInput.addEventListener('input', checkFormValidity);
+    understandCheckbox.addEventListener('change', checkFormValidity);
+    
+    // Form submission confirmation
+    document.querySelector('form').addEventListener('submit', function(e) {
+        if (!confirm('Are you absolutely sure you want to delete this form? This action cannot be undone.')) {
+            e.preventDefault();
+        }
+    });
+});
+</script>
+{% endblock %}

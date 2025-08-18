@@ -1,38 +1,47 @@
 $(document).ready(function() {
+    console.log("ACE Asset Numbers JS loaded");
+    
+    // Check if elements exist
+    console.log("Button exists:", $("#asset_number_btn").length > 0);
+    console.log("Modal exists:", $("#asset_number_modal").length > 0);
+    console.log("Form exists:", $("#asset_upload").length > 0);
+    console.log("Close button exists:", $("#close-modal").length > 0);
+    
     // Open modal on button click
-    $("#asset_number_btn").click(function() {
+    $("#asset_number_btn").click(function(e) {
+        e.preventDefault();
+        console.log("Button clicked!");
         $("#asset_number_modal").show();
+        return false;
     });
 
     // Close modal on close button click
     $("#close-modal").click(function() {
+        console.log("Close button clicked");
         $("#asset_number_modal").hide();
-        // reload page after closing modal
-        location.reload();
     });
 
     // Submit form data via AJAX
     $("#asset_upload").submit(function(e) {
         e.preventDefault();
+        console.log("Form submitted");
 
         var formData = new FormData(this);
 
         $.ajax({
-            url: "/ace/add_asset_number", // Replace with your actual URL
+            url: "/ace/add_asset_number/", // Correct URL path
             type: "POST",
             data: formData,
-            contentType: false,
             processData: false,
+            contentType: false,
             success: function(response) {
-                // Handle successful response
-                console.log("Success:", response);
-                $("#upload-form").trigger("reset"); // Reset form after submission
-                $("#modal").hide();
+                alert("Asset numbers added successfully!");
+                $("#asset_number_modal").hide();
                 location.reload();
             },
-            error: function(error) {
-                // Handle error response
-                console.error("Error:", error);
+            error: function(xhr, status, error) {
+                alert("Error adding asset numbers: " + error);
+                console.log("AJAX error:", xhr.responseText);
             }
         });
     });

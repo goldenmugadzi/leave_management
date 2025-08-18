@@ -1,0 +1,154 @@
+{% extends "admin_layout.html" %}
+{% load static %}
+{% load humanize %}{% load custom_tags %}
+
+{% block styles %}
+<link  rel="stylesheet"  href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css"/>
+<style>
+  .dataTables_wrapper .dataTables_length select {
+    width: 4rem;
+  }
+</style>
+{% endblock %}
+{% block content %}
+<div class="content-wrapper">
+  <div class="grid grid-cols-1">
+    <div class="bg-gulf-blue-100 shadow-lg rounded-lg p-6">
+       <h3 class="text-center font-bold  mb-4">Nonconformities</h3>
+     
+      {% if nonconformities %}
+      <table id="nonconformity" class="table table-striped stripe table-bordered">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th class="col-2" >Date</th>
+            <th>Description</th>
+            <th>Auditor</th>
+            <th>Recipient</th>
+            <th>Cost Centre</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for nonconformity in nonconformities %}
+          <tr class="h-1 ">
+            <td ><a class="text-blue-500" href="{% url 'nonconformity:nonconformity' nonconformity.id %}">{{ nonconformity.id|default_if_none:'' }}</a></td>
+            <td>{{ nonconformity.created_at|date:'d-m-Y @ H:i ' }}</td>
+            <td>{{ nonconformity.description |default_if_none:''}}</td>
+            <td>{% if nonconformity.created_by == user %} You {% else %} {{nonconformity.created_by.get_full_name }} {% endif %}</td>
+            <td>{% if nonconformity.recipient == user %} You {% else %} {{nonconformity.recipient.get_full_name }} {% endif %}</td>
+            <td>{{nonconformity.cost_center|default_if_none:nonconformity.created_by.cost_center}}</td>
+            <td>{% if nonconformity.closed == 1 %}Closed{% elif nonconformity.resolved == 1 %}Resolved{% elif nonconformity.accepted == 1 %}Accepted {% elif nonconformity.accepted == 0 %} Rejected {% else %}  Created  {% endif %}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% endif %}
+      <div class=" container text-center ">
+        <form method="post">
+          {% csrf_token %}
+          <div class="grid grid-cols-2 gap-4 mx-2 py-1">
+            {{ form.as_p }}
+            <button type="submit" class="bg-green-500 hover:bg-green-700 inline-block rounded-full m-auto text-white py-2 px-4 rounded">Filter</button>
+          </div>
+        </form>
+    </div>
+    </div>
+    <div class="mt-6">
+      <canvas id="nonconformityChart" width="400" height="100"></canvas>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="https://code.jquery.com/jquery-3.7.0.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+  $(document).ready(function () {
+    // Initialize the DataTable with options and Tailwind CSS classes
+    $("#nonconformity").DataTable({
+      // Set the number of rows to display per page
+      "pageLength": 10,
+  
+      // Enable sorting on the specified columns
+      "columnDefs": [
+        { "orderable": true, "targets": [0, 1, 2] }
+      ],
+  
+      // Enable searching within the table
+      "searching": true,
+  
+      // Display the DataTable in a responsive manner
+      "responsive": true,
+    });
+    const ctx = document.getElementById('nonconformityChart').getContext('2d');
+    const nonconformityChart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: {{ dates|safe }},  // Dates for the x-axis
+        datasets: [
+          {
+            label: 'Total Nonconformities Created',
+            data: {{ created|safe }},
+            borderColor: 'rgb(16, 31, 15)',
+            fill: false,
+          }
+          ,{
+            label: 'New Nonconformities',
+            data: {{ closed|safe }},
+            borderColor: 'rgb( 0, 0, 255)',
+            fill: false,
+          },
+          {
+            label: 'Nonconformities Accepted',
+            data: {{ accepted|safe }},
+            borderColor: 'rgb(222, 226, 4)',
+            fill: false,
+          },
+          {
+            label: 'Rejected Nonconformities ',
+            data: {{ rejected|safe }},
+            borderColor: 'rgb(255, 0, 0)',
+            fill: false,
+          },{
+            label: ' Nonconformities Resolved',
+            data: {{ resolved|safe }},
+            borderColor: 'rgb(99, 219, 255)',
+            fill: false,
+          },{
+            label: ' Nonconformities Closed',
+            data: {{ closed|safe }},
+            borderColor: 'rgb(0,255, 0)',
+            fill: false,
+          }
+    
+        ]
+      },
+      options: {
+        responsive: true,
+        scales: {
+          x: {
+            display: true,
+            title: {
+              display: true,
+              text: 'Date'
+            }
+          },
+          y: {
+            display: true,
+            title: {
+              display: true,
+              text: 'Number of Tokens'
+            }
+          }
+        }
+      }
+    });
+    
+  });
+
+</script>
+{% endblock %}

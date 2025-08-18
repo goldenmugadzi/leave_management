@@ -65,6 +65,7 @@ def create_new_profile(request):
         designation_ = request.POST.get('designation')
         cost_center = request.POST.get('cost_center')
         application = request.POST.get('for_application')
+        roles_to_action = request.POST.get('roles_to_action')
 
         region = Regions.objects.filter(id=request.user.region.id).first() if request.user else None
         cost_center_ = CostCenter.objects.filter(id=cost_center).first() if cost_center else None
@@ -78,7 +79,8 @@ def create_new_profile(request):
             designation=designation,
             cost_center= cost_center_,
             region=region,
-            created_at=datetime.now()
+            created_at=datetime.now(),
+            roles_to_action=roles_to_action
         )
 
         user.save()
@@ -113,11 +115,7 @@ def create_new_profile(request):
                 messages.error(request, "No section head approver found for this cost center")
                 return redirect("/change_requests/create_change_request")
             print("Sending email to: ", approver.email)
-            # ms_exhange_send_html("New Profile Request", [approver.email], [], "emails/email_template.html", {
-            #     "message": "New profile request submitted successfully",
-            #     "type": "New Profile Request",
-            #     "redirect_url": "https://172.16.29.32:9300/change_requests/new_profile_request?i=" + change_request.cr_id
-            # })
+
             email_template_name = 'registration/email.html'
             msg = "New profile request submitted successfully"
             type_ = "New Profile Request"
@@ -135,8 +133,10 @@ def create_new_profile(request):
             email = render_to_string(email_template_name, c, request=request)
             ms_exhange_reset_password_html(subject=type_,to_recipients=[approver.email], cc_recipients=[],template=email,
                                             kwargs={"kwargs": c})
-            
-            messages.success(request, "Section head approver notified successfully")
+            if approver.section:
+                messages.success(request, f"Section head approver {approver.first_name} {approver.last_name}, {approver.section.name} notified successfully")
+            else:
+                messages.success(request, f"Section head approver {approver.first_name} {approver.last_name} notified successfully")
         except Exception as ex:
             print("Error: ", str(ex))
             # messages.error(request, "An error occurred while sending the email: " + str(ex))
@@ -153,6 +153,7 @@ def profile_modification_request(request):
         change_description = request.POST.get("change_description")
         profile_username = request.POST.get("user_profile")
         application = request.POST.get("for_application")
+        roles_to_action = request.POST.get("roles_to_action")
         auth_user = request.user
         print("username: ", profile_username)
         user = UserProfile.objects.filter(username=profile_username).first()
@@ -169,7 +170,8 @@ def profile_modification_request(request):
             profile_mod = ProfileChange(
                 user=user,
                 change_date=datetime.now(),
-                changed_by=user
+                changed_by=user,
+                roles_to_action=roles_to_action
             )
             profile_mod.save()
             
@@ -223,7 +225,11 @@ def profile_modification_request(request):
                 ms_exhange_reset_password_html(subject=type_,to_recipients=[approver.email], cc_recipients=[],template=email,
                                                 kwargs={"kwargs": c})
                 
-                messages.success(request, "Section head approver notified successfully")
+                if approver.section:
+                    messages.success(request, f'Section head approver {approver.first_name} {approver.last_name}, {approver.section.name} notified successfully')
+                else:
+                    messages.success(request, f'Section head approver {approver.first_name} {approver.last_name} notified successfully')
+                    
             except Exception as ex:
                 print("Error: ", str(ex))
                 # messages.error(request, "An error occurred while sending the email: " + str(ex))
@@ -330,6 +336,7 @@ def profile_deactivation_request(request):
                 profile_deactivation=profile_deactivation,
                 change_description=change_description,
                 change_reason=change_reason,
+                application=application,
                 creator_designation=user.designation,
                 created_by=request.user,
                 region=auth_user.region,
@@ -370,7 +377,10 @@ def profile_deactivation_request(request):
                 ms_exhange_reset_password_html(subject=type_,to_recipients=[approver.email], cc_recipients=[],template=email,
                                                 kwargs={"kwargs": c})
             
-                messages.success(request, "Section head approver notified successfully")
+                if approver.section:
+                    messages.success(request, f'Section head approver {approver.first_name} {approver.last_name}, {approver.section.name} notified successfully')
+                else:
+                    messages.success(request, f'Section head approver {approver.first_name} {approver.last_name} notified successfully')
             except Exception as ex:
                 print("error: ", str(ex))
         else:
@@ -393,6 +403,8 @@ def new_profile_request(request):
                     "firstname": change_request.new_profile.first_name,
                     "lastname": change_request.new_profile.last_name,
                     "email": change_request.new_profile.email,
+                    "roles_to_action": change_request.new_profile.roles_to_action,
+                    "roles_actions": change_request.new_profile.roles_actions,
                     "section": Sections.objects.filter(id=change_request.new_profile.section.id).first() if change_request.new_profile.section else None,
                     "district": Districts.objects.filter(id=change_request.new_profile.district.id).first() if change_request.new_profile.district else None,
                     "region": Regions.objects.filter(id=change_request.new_profile.region.id).first() if change_request.new_profile.region else None,
@@ -436,6 +448,8 @@ def update_change_request(request):
                     "firstname": change_request.new_profile.first_name,
                     "lastname": change_request.new_profile.last_name,
                     "email": change_request.new_profile.email,
+                    "roles_to_action": change_request.new_profile.roles_to_action,
+                    "roles_actions": change_request.new_profile.roles_actions,
                     "section": Sections.objects.filter(id=change_request.new_profile.section.id).first() if change_request.new_profile.section else None,
                     "district": Districts.objects.filter(id=change_request.new_profile.district.id).first() if change_request.new_profile.district else None,
                     "region": Regions.objects.filter(id=change_request.new_profile.region.id).first() if change_request.new_profile.region else None,
@@ -486,6 +500,8 @@ def update_change_request(request):
                 "region": user.region,
                 "cost_center": cost_center,
                 "designation": user.designation if user.designation else None,
+                "roles_to_action": profile_change.roles_to_action,
+                "roles_actions": profile_change.roles_actions,
             }
 
             cr = {
@@ -545,6 +561,8 @@ def update_change_request(request):
             cr_id = request.POST.get('cr_id')
             change_reason = request.POST.get('change_reason')
             change_description = request.POST.get('change_description')
+            roles_to_action = request.POST.get('roles_to_action')
+            roles_actions = request.POST.get('roles_actions')
             change_request = ChangeRequest.objects.filter(cr_id=cr_id).first()
             
             section_head_approval = CRApproval.objects.filter(cr_id=change_request, approver_role__role="section_head").first()
@@ -558,6 +576,8 @@ def update_change_request(request):
                 
                 change_request.change_reason = change_reason if change_reason else change_request.change_reason
                 change_request.change_description = change_description if change_reason else change_request.change_description
+                change_request.roles_to_action = roles_to_action if roles_to_action else change_request.roles_to_action
+                change_request.roles_actions = roles_actions if roles_actions else change_request.roles_actions
                 change_request.save()
 
                 if change_request.profile_change:
@@ -603,6 +623,9 @@ def view_profile_request(request):
             if change_request.cost_center in cost_centers:
                 it_section_head_allowed = True
         
+        # Set modal_auto_show to False to prevent modals from showing automatically
+        modal_auto_show = False
+        
         if change_request.new_profile:
 
                 new_user = {
@@ -611,6 +634,8 @@ def view_profile_request(request):
                     "firstname": change_request.new_profile.first_name,
                     "lastname": change_request.new_profile.last_name,
                     "email": change_request.new_profile.email,
+                    "roles_to_action": change_request.new_profile.roles_to_action,
+                    "roles_actions": change_request.new_profile.roles_actions,
                     "section": Sections.objects.filter(id=change_request.new_profile.section.id).first() if change_request.new_profile.section else None,
                     "district": Districts.objects.filter(id=change_request.new_profile.district.id).first() if change_request.new_profile.district else None,
                     "region": Regions.objects.filter(id=change_request.new_profile.region.id).first() if change_request.new_profile.region else None,
@@ -661,7 +686,8 @@ def view_profile_request(request):
                         "cr_approvals": cr_approvals,
                         "user_title": request.user.get_full_name(),
                         "user_groups": list(request.user.groups.values_list('name', flat=True)),
-                        "cr": cr
+                        "cr": cr,
+                        "modal_auto_show": modal_auto_show
                     }
                 )
         
@@ -685,6 +711,8 @@ def view_profile_request(request):
                 "region": user.region,
                 "cost_center": cost_center,
                 "designation": user.designation,
+                "roles_to_action": profile_change.roles_to_action,
+                "roles_actions": profile_change.roles_actions,
             }
 
             cr_approvals = CRApproval.objects.filter(cr_id=change_request).all()
@@ -707,6 +735,9 @@ def view_profile_request(request):
                 "cr_id": change_request.cr_id,
                 "change_reason": change_request.change_reason,
                 "change_description": change_request.change_description,
+                "application": change_request.application,
+                "roles_to_action": profile_change.roles_to_action,
+                "roles_actions": profile_change.roles_actions,
                 "created_by": change_request.created_by.first_name + " " + change_request.created_by.last_name,
                 "creator_designation": change_request.creator_designation.description,
                 "created_at": change_request.created_at
@@ -715,6 +746,8 @@ def view_profile_request(request):
                 request,
                 "change_requests/view_profile_modification.html",
                 {
+                    "section_head_allowed": section_head_allowed,
+                    "it_section_head_allowed": it_section_head_allowed,
                     "requestor_role": requestor_role,
                     "section_head_awaiting_action": section_head_awaiting_action,
                     "it_section_head_awaiting_action": it_section_head_awaiting_action,
@@ -760,6 +793,8 @@ def view_profile_request(request):
                 request,
                 "change_requests/view_profile_deactivation.html",
                 {
+                    "section_head_allowed": section_head_allowed,
+                    "it_section_head_allowed": it_section_head_allowed,
                     "user_applications": Application.objects.all(),
                     "user_designations": Designations.objects.all(),
                     "sections": Sections.objects.all(),
@@ -803,6 +838,8 @@ def update_new_profile_request(request):
             cr_id = request.POST.get('cr_id')
             change_reason = request.POST.get('change_reason')
             change_description = request.POST.get('change_description')
+            roles_to_action = request.POST.get('roles_to_action')
+            roles_actions = request.POST.get('roles_actions')
             change_request = ChangeRequest.objects.filter(cr_id=cr_id).first()
             
             section_head_approval = CRApproval.objects.filter(cr_id=change_request, approver_role__role="section_head").first()
@@ -813,7 +850,8 @@ def update_new_profile_request(request):
                 messages.warning(request, "Change request has already been approved by the section head. You cannot update it")
                 return redirect("/change_requests/change_request_index")
             else:
-                
+                change_request.roles_to_action = roles_to_action if roles_to_action else change_request.new_profile.roles_to_action
+                change_request.roles_actions = roles_actions if roles_actions else change_request.new_profile.roles_actions
                 change_request.change_reason = change_reason if change_reason else change_request.change_reason
                 change_request.change_description = change_description if change_reason else change_request.change_description
                 change_request.save()
@@ -823,6 +861,8 @@ def update_new_profile_request(request):
                     'last_name': request.POST.get('lastname'),
                     'username': request.POST.get('username'),
                     'email': request.POST.get('email'),
+                    'roles_to_action': roles_to_action if roles_to_action else change_request.roles_to_action,
+                    'roles_actions': roles_actions if roles_actions else change_request.roles_actions,
                     'region': Regions.objects.filter(id=request.POST.get('region')).first(),
                     'cost_center': CostCenter.objects.filter(id=request.POST.get('cost_center')).first() if request.POST.get('cost_center') not in ["Select Cost Center", ""] else None,
                     'district': Districts.objects.filter(id=request.POST.get('district')).first() if request.POST.get('district') not in ["Select District", ""] else None,
@@ -925,7 +965,34 @@ def approve_profile_request(request):
                 return redirect("/change_requests/change_request_index")
             elif 'APPLY' in action_button:
                 # The "APPLY CHANGE REQUEST" button was clicked
+                    
                 if user_role == "it_section_head":
+                    roles_actions = request.POST.get('roles_actions')
+                    print("roles_actions: ", roles_actions)
+                    if roles_actions:
+                        roles_actions = roles_actions.strip()
+                        if change_request.change_type == "new_profile":
+                            new_profile = change_request.new_profile
+                            new_profile.roles_actions = roles_actions if roles_actions else new_profile.roles_actions
+                            new_profile.save()
+                        elif change_request.change_type == "profile_modification":
+                            profile_modification = change_request.profile_modification
+                            profile_modification.roles_actions = roles_actions if roles_actions else profile_modification.roles_actions
+                            profile_modification.save()
+                    if not roles_actions:
+                        messages.error(request, "Please enter the roles implemented")
+                        return redirect("/change_requests/change_request_index")
+                    if change_request.change_type == "new_profile":
+                        new_profile = change_request.new_profile
+                        print("new_profile: ", new_profile)
+                        new_profile.roles_actions = roles_actions
+                        new_profile.save()
+                    elif change_request.change_type == "profile_modification":
+                        profile_modification = change_request.profile_modification
+                        print("profile modification: ", profile_modification)
+                        profile_modification.roles_actions = roles_actions
+                        profile_modification.save()
+                        
                     cr_approval = CRApproval(
                         cr_id=change_request,
                         approver=request.user,
@@ -991,6 +1058,8 @@ def datatable_data(request, view):
             if search_value and records:
                 records = records.filter(
                 Q(change_reason__icontains=search_value) |
+                Q(change_description__icontains=search_value) |
+                Q(application__icontains=search_value) |
                 Q(new_profile__first_name__icontains=search_value) |
                 Q(new_profile__last_name__icontains=search_value) |
                 Q(new_profile__email__icontains=search_value) |
@@ -1002,7 +1071,11 @@ def datatable_data(request, view):
             order = request.GET.get('order[0][dir]')
             if order_column:
                 column_name = request.GET.get(f'columns[{order_column}][data]')
-                if order == 'desc':
+                if column_name != "it_section_head_approval" and column_name != "section_head_approval":
+                    column_name = f'{column_name}'
+                else:
+                    column_name = "created_at"
+                if order == 'desc' and column_name != 'it_section_head_approval' and column_name != 'section_head_approval':
                     column_name = f'-{column_name}'
                 records = records.order_by(column_name)
             
@@ -1108,6 +1181,7 @@ def datatable_data(request, view):
                         "change_type": obj.change_type,
                         "change_description": obj.change_description,
                         "change_reason": obj.change_reason,
+                        "application": obj.application,
                         "section_head_approval": sh_status,
                         "it_section_head_approval": itsh,
                         "creator_designation": obj.creator_designation.description,
@@ -1130,6 +1204,7 @@ def datatable_data(request, view):
 
     except Exception as ex:
         print("Error: ", ex)
+        traceback.print_exc()
         return JsonResponse({
             'draw': draw,
             'recordsTotal': 0,

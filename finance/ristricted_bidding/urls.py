@@ -33,8 +33,11 @@ urlpatterns = [
     path('comperative_schedule/<str:cs_id>', get_comperative_schedule, name='get_comperative_schedule'),
     path('cs_data/<str:cs_id>', get_comperative_schedule_data, name='get_comperative_schedule_data'),
     
-    path('update_pritem_ordered', update_pritem_ordered, name='update_pritem_ordered'),
-    # path('import_old_rfq', import_old_rfq, name='import_old_rfq'),
+    # API endpoints for React app
+    path('api/users/', api_get_users, name='api_get_users'),
+    path('api/suppliers/', api_get_suppliers, name='api_get_suppliers'), 
+    path('api/restricted_bidding/cs/<str:cs_id>/', get_comperative_schedule_data, name='api_get_cs_data'),
+    path('api/restricted_bidding/cs/<str:cs_id>/bids/', save_cs_bid, name='api_save_cs_bid'),
     
     path('pending_commitee', get_pending_committee, name='get_pending_committee'),
     path('your_schedules', your_comperative_schedules, name='your_comperative_schedules'),

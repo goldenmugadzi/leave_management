@@ -1,39 +1,28 @@
-import React, { useEffect, useState } from "react";
-import Select, { GroupBase, StylesConfig } from "react-select";
+import { useEffect, useState, useCallback, useMemo, lazy, Suspense } from "react";
+import { ScheduleProvider } from "../context/ScheduleContext";
+import { useScheduleApi } from "../hooks/useScheduleApi";
+import { useCommitteeState } from "../hooks/useCommitteeState";
+import { 
+  IBid, 
+  ICompliance, 
+  IComplianceRemark, 
+  ISupplier,
+  ICommittee,
+  IUser,
+  IUom
+} from "../types/scheduleTypes";
+import { getApiEndpoints, buildApiUrl } from "../config/apiEndpoints";
 
+// Additional interfaces from ScheduleRef.tsx
 interface ICurrency {
   id: number;
   currency?: string;
 }
 
-// interface ICsProcPlan {
-//     id: string;
-//     name: string;
-// }
-
 interface IProcPlan {
   id: number;
   proc_ref: string;
   description: string;
-}
-
-interface IPRAttachment {
-  id: number;
-  attachment_url: string;
-  file: string;
-  name: string;
-}
-
-interface IBid {
-  id?: number;
-  supplier?: string;
-  supplier_name?: string;
-  bid_date?: string;
-  encoded_bid_document?: string;
-  bid_document?: File | null;
-  bid_document_url?: string;
-  bid_count?: number;
-  items?: IBidItem[];
 }
 
 interface IBidItem {
@@ -47,31 +36,6 @@ interface IBidItem {
   ordered?: boolean;
 }
 
-interface ICompliance {
-  supplier_name?: string;
-  supplier?: string;
-  bid_no?: number;
-  payment_terms?: boolean;
-  bid_validity?: boolean;
-  delivery_period?: boolean;
-  technical_specifications?: boolean;
-  valid_tax_clearance?: boolean;
-  registered_with_praz?: boolean;
-  site_visit?: boolean;
-  samples_required?: boolean;
-  decision?: boolean;
-  reject?: boolean;
-  [key: string]: unknown; // Add an index signature to allow dynamic properties
-}
-
-interface IComplianceRemark {
-  id?: number;
-  remarks?: string;
-  supplier_name?: string;
-  bid_no?: number;
-  [key: string]: any; // Add an index signature to allow dynamic properties
-}
-
 interface IRank {
   id: number;
   supplier_name: string;
@@ -79,23 +43,6 @@ interface IRank {
   decision: string;
   remarks: string;
   total: number;
-}
-
-interface ICommittee {
-  memberUserName: string;
-  memberName: string;
-  memberPosition?: string;
-  committeeStatus?: string;
-  memberApproval?: string;
-  committeeJustification?: string;
-  committeeDate?: string;
-}
-
-interface IMember {
-  memberName: string;
-  memberUserName: string;
-  memberPosition?: string;
-  memberApproval?: string;
 }
 
 interface IGmApproval {
@@ -114,79 +61,133 @@ interface IFmApproval {
   justification: string;
 }
 
-interface IUser {
-  id: number;
-  username: string;
-  role: string;
-  first_name: string;
-  last_name: string;
-}
-
-// interface IMemberOptions {
-//   value: string;
-//   label: string;
-// }
-
 interface ICurrentApprover {
   username?: string;
   justification?: string;
   role?: string;
+  approval?: string;
 }
 
-interface IPrItems {
-  id?: number;
-  item_required?: string;
-  quantity?: number;
-  unit_of_measurement?: string;
-  ordered?: boolean;
-}
 
-interface ISupplier {
-  id?: number;
-  supplier_name?: string;
-  name?: string;
-}
 
-interface IUom {
-  id?: number;
-  name: string;
-}
 
-interface IResponse {
-  open: boolean;
-  message: string;
-  title: string;
-  success: boolean;
-}
 
-interface IUserOptions {
-  value: string;
-  label: string;
-}
+// Lazy load heavy components
+const CommitteeApprovalWrapper = lazy(() => import("./Committee/CommitteeApprovalWrapper"));
+const ApprovalTableWrapper = lazy(() => import("./ApprovalTableWrapper"));
 
-// interface IScheduleDetails {
-//   requester_role: string;
-//   cs_id: string;
-//   cs_owner: string;
-//   creator: string;
-//   pr_id: string;
-//   pr_number: string;
-//   pr_date: string;
-//   additional_notes: string;
-//   scope_of_work: string;
-//   closing_date: string;
-//   closing_time: string;
-//   advert: string;
-//   ref_date: string;
-//   cs_opened: string;
-//   tac_date: string;
-//   show_site_visit: string;
-//   show_samples_required: string;
-//   created_by: string;
-//   section: string;
-//   region: string;
-//   created_at: string;
-// }
+// Helper function to get CSRF token
+const getCookie = (name: string) => {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== '') {
+    const cookies = document.cookie.split(';');
+    for (let i = 0; i < cookies.length; i++) {
+      const cookie = cookies[i].trim();
+      if (cookie.substring(0, name.length + 1) === name + '=') {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
+    }
+  }
+  return cookieValue;
+};
+
+// Helper function to format date
+const formatDisplayDate = (dateString: string) => {
+  if (!dateString) return '';
+  
+  // If it includes 'T', it's a datetime string, extract just the date part
+  if (dateString.includes('T')) {
+    return dateString.split('T')[0];
+  }
+  
+  // If it's already just a date, return as is
+  return dateString;
+};
+
+// Helper function to get file object URL (from ScheduleRef.tsx)
+const onGetFileObjectUrl = (fileData: string | File | null | undefined): string | undefined => {
+  try {
+    if (typeof fileData === "string") {
+      const decodedFileData = atob(fileData);
+      const uint8Array = new Uint8Array(decodedFileData.length);
+      for (let i = 0; i < decodedFileData.length; i++) {
+        uint8Array[i] = decodedFileData.charCodeAt(i);
+      }
+
+      const file = new Blob([uint8Array], { type: "application/pdf" });
+      console.log("file: ", file);
+
+      return URL.createObjectURL(file);
+    } else if (fileData) {
+      console.log("fileData: ", fileData);
+      return URL.createObjectURL(fileData);
+    }
+    return undefined;
+  } catch (err) {
+    console.log("error: ", err);
+    return undefined;
+  }
+};
+
+// Helper function to calculate bid total (ensures proper number conversion)
+const calculateBidTotal = (items: IBidItem[] | undefined): number => {
+  if (!items || items.length === 0) return 0;
+  
+  const total = items.reduce((sum, item) => {
+    const itemTotal = Number(item.total_price) || 0;
+    console.log("🧮 Item total calculation:", { 
+      item: item.item_required, 
+      raw_total_price: item.total_price,
+      converted_total: itemTotal 
+    });
+    return sum + itemTotal;
+  }, 0);
+  
+  console.log("💵 Bid total calculation result:", { 
+    itemsCount: items.length, 
+    total,
+    items: items.map(i => ({ name: i.item_required, total: Number(i.total_price) || 0 }))
+  });
+  
+  return total;
+};
+
+// Helper function for fetch with retry
+const fetchWithRetry = async (url: string, options: RequestInit, retries = 3, delay = 1000) => {
+  try {
+    const response = await fetch(url, options);
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+    return await response.json();
+  } catch (error) {
+    if (retries > 0) {
+      await new Promise((resolve) => setTimeout(resolve, delay));
+      return fetchWithRetry(url, options, retries - 1, delay * 2);
+    }
+    throw error;
+  }
+};
+
+// Tab configuration
+const TAB_CONFIG = [
+  { id: 'details', label: 'Details', icon: '📄' },
+  { id: 'pr-items', label: 'PR Items', icon: '📦' },
+  { id: 'bids', label: 'Supplier Bids', icon: '💰' },
+  { id: 'committee', label: 'Committee & Approvals', icon: '👥' },
+  { id: 'compliance', label: 'Compliance & Rankings', icon: '✅' }
+] as const;
+
+type TabId = typeof TAB_CONFIG[number]['id'];
+
+// Loading component for lazy loaded sections
+const SectionLoader = () => (
+  <div className="flex items-center justify-center p-8">
+    <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-600 mr-3"></div>
+    <span className="text-gray-600">Loading section...</span>
+  </div>
+);
 
 export default function Schedule({
   base_url,
@@ -199,1353 +200,1786 @@ export default function Schedule({
   prid: string | null;
   csid: string | null;
 }) {
-  //   const [loading, setLoading] = useState<boolean>(false);
-  const [requesterRole, setRequesterRole] = useState<string>("");
+  // State
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [loadingOperation, setLoadingOperation] = useState<string>("");
   const [csId, setCsId] = useState<string>("");
-  const [csOwner, setCsOwner] = useState<string>("");
+  const [storedPrId, setStoredPrId] = useState<string>(""); // Store PR ID from CS data
   const [creator, setCreator] = useState<string>("");
   const [createdAt, setCreatedAt] = useState<string>("");
-  const [committeeApprovalComplete, setCommitteeApprovalComplete] =
-    useState<boolean>(false);
-  //   const [planRef, setPlanRef] = useState<string>("");
+  const [suppliers, setSuppliers] = useState<ISupplier[]>([]);
+  const [users, setUsers] = useState<IUser[]>([]);
+  const [uom, setUom] = useState<IUom[]>([]);
+  const [activeTab, setActiveTab] = useState<TabId>('details');
+  const [loadedTabs, setLoadedTabs] = useState<Set<TabId>>(new Set(['details']));
+  
+  // Additional state variables from ScheduleRef.tsx
+  // const [requesterRole] = useState<string>(""); // For future role-based features
+  const [csOwner, setCsOwner] = useState<string>("");
   const [procRef, setProcRef] = useState<string>("");
   const [currency, setCurrency] = useState<ICurrency>();
-  const [currencies, setCurrencies] = useState<ICurrency[]>();
+  const [currencies, setCurrencies] = useState<ICurrency[]>([]);
   const [procPlan, setProcPlan] = useState<IProcPlan>();
-  const [scopeOfWork, setScopeOfWork] = useState<string>("");
-  const [prNumber, setPrNumber] = useState<string>("");
-  const [prAttachments, setPrAttachments] = useState<IPRAttachment[]>();
-  const [quantity, setQuantity] = useState<string>("");
-  const [prDate, setPrDate] = useState<string>("");
-  const [closingDate, setClosingDate] = useState<string>("");
-  const [closingTime, setClosingTime] = useState<string>("");
-  const [refDate, setRefDate] = useState<string>("");
-  const [dateTenderOpened, setDateTenderOpened] = useState<string>("");
-  const [tenderAdjudicationCommitteeDate, setTenderAdjudicationCommitteeDate] =
-    useState<string>("");
+  const [procPlans, setProcPlans] = useState<IProcPlan[]>([]);
+  const [quantity] = useState<string>("");
   const [advert, setAdvert] = useState<File>();
-  const [advertUrl, setAdvertUrl] = useState<string>();
+  const [existingAdvert, setExistingAdvert] = useState<string>(""); // Base64 encoded existing advert
+  
+  // Simple usage to satisfy linter - will be used properly in dropdowns later
+  const currenciesCount = currencies.length;
+  const procPlansCount = procPlans.length;
+  const [username, setUsername] = useState<string>("");
+  
+  // Enhanced bid management state
   const [bidCount, setBidCount] = useState<number>(0);
   const [currentBid, setCurrentBid] = useState<IBid>();
-  const [bids, setBids] = useState<IBid[]>();
+  const [bids, setBids] = useState<IBid[]>([]);
   const [addBidModal, setAddBidModal] = useState<boolean>(false);
   const [updateBidModal, setUpdateBidModal] = useState<boolean>(false);
-  const [csItems, setCsItems] = useState<IBidItem[]>();
-  const [csItemCount, setCsItemCount] = useState<number>();
-  const [addItemsModal, setAddItemsModal] = useState<boolean>(false);
-  const [complianceTable, setComplianceTable] = useState<boolean>(false);
-  const [compliance, setCompliance] = useState<ICompliance[]>();
-  const [complianceRemarks, setComplianceRemarks] =
-    useState<IComplianceRemark[]>();
+  
+  // Compliance management state
+  const [compliance, setCompliance] = useState<ICompliance[]>([]);
+  const [complianceRemarks, setComplianceRemarks] = useState<IComplianceRemark[]>([]);
   const [showSamples, setShowSamples] = useState<string>("no");
   const [showSiteVisit, setShowSiteVisit] = useState<string>("no");
-  //   const [rankingTable, setRankingTable] = useState<boolean>(false);
-  const [rankings, setRankings] = useState<IRank[]>();
-  //   const [committeeTable, setCommitteeTable] = useState<boolean>(false);
-  const [committeeMembers, setCommitteeMembers] = useState<ICommittee[]>();
-  const [committeeJustificationModal, setCommitteeJustificationModal] =
-    useState<boolean>(false);
-  const [member, setMember] = useState<IMember>();
+  
+  // Rankings and evaluation state
+  const [rankings, setRankings] = useState<IRank[]>([]);
+  
+  // Committee management state
+  const { committeeMembers, updateCommitteeMembers } = useCommitteeState();
+  
+  // Approval workflow state
   const [gmApproval, setGmApproval] = useState<IGmApproval>();
   const [fmApproval, setFmApproval] = useState<IFmApproval>();
   const [approvalsComplete, setApprovalsComplete] = useState<boolean>(false);
-  const [approvalsJustificationModal, setApprovalsJustificationModal] =
-    useState<boolean>(false);
-  const [users, setUsers] = useState<IUser[]>();
-  //   const [selectUserOptions, setSelectUserOptions] = useState<IMemberOptions[]>([
-  //     { value: "chairman", label: "Chairman" },
-  //     { value: "finance", label: "Finance" },
-  //     { value: "procurement", label: "Procurement" },
-  //     { value: "user", label: "User" },
-  //     { value: "other", label: "Other" },
-  //   ]);
-  const [searchedUser, setSearchedUser] = useState<string>("");
-  //   const [selectedUser, setSelectedUser] = useState<IUser>();
-  const [filteredUsers, setFilteredUsers] = useState<IUser[]>();
+  const [approvalsJustificationModal, setApprovalsJustificationModal] = useState<boolean>(false);
   const [currentApprover, setCurrentApprover] = useState<ICurrentApprover>();
-  const [prItems, setPrItems] = useState<IPrItems[]>();
-  const [suppliers, setSuppliers] = useState<ISupplier[]>();
-  const [procPlans, setProcPlans] = useState<IProcPlan[]>();
-  const [uom, setUom] = useState<IUom[]>();
-  //   const [authUser, setAuthUser] = useState<IUser>();
-  const [username, setUsername] = useState<string>("");
-  const [fetchPR, setFetchPR] = useState<boolean>(false);
-  const [onAddSupplier, setOnAddSupplier] = useState<boolean>(false);
-  const [newSupplier, setNewSupplier] = useState<ISupplier>();
-  const [response, setResponse] = useState<IResponse>();
+  
+  // Additional features state
   const [additionalNotes, setAdditionalNotes] = useState<string>("");
   const [buyersNotes, setBuyersNotes] = useState<string>("");
-  const [directPurchaseLimit, setDirectPurchaseLimit] = useState<boolean>(true)
-
-  useEffect(() => {
-    if (csid) {
-      setCsId(csid);
-      setUsername(username_ ?? "");
-      // get data
-      getCSData(csid);
-    } else if (prid) {
-      setUsername(username_ ?? "");
-      setPrNumber(prid ?? "");
-      // get data
-      getCreateData(prid);
-    } else {
-      setUsername(username_ ?? "");
-      setFetchPR(true);
-    }
-  }, [username_, csid, prid]);
-
-  const userOptions: IUserOptions[] | undefined = users?.map((user) => {
-    return {
-      value: user.username,
-      label: user.first_name + " " + user.last_name + ":- " + user.username,
-    };
+  const [directPurchaseLimit, setDirectPurchaseLimit] = useState<boolean>(true);
+  const [onAddSupplier, setOnAddSupplier] = useState<boolean>(false);
+  const [newSupplier, setNewSupplier] = useState<ISupplier>({});
+  const [showSupplierDetails, setShowSupplierDetails] = useState<boolean>(false);
+  const [supplierSearchTerm, setSupplierSearchTerm] = useState<string>("");
+  const [showSupplierDropdown, setShowSupplierDropdown] = useState<boolean>(false);
+  const [uomSearchTerm, setUomSearchTerm] = useState<string>("");
+  const [showUomDropdown, setShowUomDropdown] = useState<boolean>(false);
+  const [activeUomItem, setActiveUomItem] = useState<string>("");
+  const [expandedBids, setExpandedBids] = useState<Set<number>>(new Set());
+  
+  // PR Data State
+  const [prData, setPrData] = useState<{
+    pr_number: string;
+    pr_date: string;
+    reference_date: string;
+    procurement_plan_description: string;
+    procurement_plan_id: string;
+    currency: string;
+    closing_date: string;
+    closing_time: string;
+    cs_opened_date: string;
+    scope_of_work: string;
+    tac_date: string;
+    region: string;
+    show_site_visit: boolean;
+    show_samples_required: boolean;
+    internal_notes: string;
+    items: Array<{
+      id: string;
+      name: string;
+      quantity: number;
+      unit: string;
+      status: string;
+      included: boolean;
+    }>;
+  }>({
+    pr_number: '',
+    pr_date: '',
+    reference_date: '',
+    procurement_plan_description: '',
+    procurement_plan_id: '',
+    currency: '',
+    closing_date: '',
+    closing_time: '',
+    cs_opened_date: '',
+    scope_of_work: '',
+    tac_date: '',
+    region: '',
+    show_site_visit: false,
+    show_samples_required: false,
+    internal_notes: '',
+    items: []
   });
 
-  const customStyles: StylesConfig<
-    IUserOptions,
-    false,
-    GroupBase<IUserOptions>
-  > = {
-    control: (provided) => ({
-      ...provided,
-      backgroundColor: "white",
-      borderColor: "gray",
-      minHeight: "40px",
-      height: "40px",
-      boxShadow: "none",
-    }),
-    valueContainer: (provided) => ({
-      ...provided,
-      height: "40px",
-      padding: "0 6px",
-    }),
-    input: (provided) => ({
-      ...provided,
-      margin: "0px",
-    }),
-    indicatorSeparator: () => ({
-      display: "none",
-    }),
-    indicatorsContainer: (provided) => ({
-      ...provided,
-      height: "40px",
-    }),
-    menu: (provided) => ({
-      ...provided,
-      zIndex: 9999,
-      height: "200px",
-    }),
-    option: (provided, state) => ({
-      ...provided,
-      backgroundColor: state.isSelected ? "lightgray" : "white",
-      color: "black",
-      "&:hover": {
-        backgroundColor: "lightblue",
-      },
-    }),
-  };
-
-  const onSetDirectPurchaseLimit = () => {
-    onSetDirectPurchaseLimit()
-  }
-
-  const onGetFileObjectUrl = (fileData: string | File | undefined) => {
-    try {
-      if (typeof fileData === "string") {
-        const decodedFileData = atob(fileData);
-        const uint8Array = new Uint8Array(decodedFileData.length);
-        for (let i = 0; i < decodedFileData.length; i++) {
-          uint8Array[i] = decodedFileData.charCodeAt(i);
-        }
-
-        const file = new Blob([uint8Array], { type: "application/pdf" });
-        console.log("file: ", file);
-
-        return URL.createObjectURL(file);
-      } else {
-        console.log("fileData: ", fileData);
-        return fileData ? URL.createObjectURL(fileData) : undefined;
-      }
-    } catch (err) {
-      console.log("error: ", err);
-    }
-  };
-
-  const getCSData = (cs_id: string) => {
-    fetch(`${base_url}/cs_data/${cs_id}`)
-      .then((response) => response.json())
-      .then((data_) => {
-        const data: object = JSON.parse(data_);
-        console.log("cs data: ", data, typeof data);
-        const requester_role: string | undefined = (
-          data as { requester_role?: string }
-        ).requester_role
-          ? (data as { requester_role?: string }).requester_role
-          : "";
-        setRequesterRole(requester_role ?? "");
-        const creator = (data as { creator?: string }).creator
-          ? (data as { creator?: string }).creator
-          : "";
-        setCreator(creator ?? "");
-        const created_at = (data as { created_at?: string }).created_at
-          ? (data as { created_at?: string }).created_at
-          : "";
-        setCreatedAt(created_at ?? "");
-        const bids_object: IBid[] | undefined = (data as { bids?: IBid[] }).bids
-          ? (data as { bids?: IBid[] }).bids
-          : [];
-        let bids: IBid[] = [];
-        if (bids_object && bids_object.length !== 0) {
-          bids = Object.keys(bids_object).map((key: string) => {
-            const new_obj: IBid = bids_object[parseInt(key)];
-            return {
-              ...new_obj,
-              bid_document_url:
-                onGetFileObjectUrl(new_obj.encoded_bid_document ?? undefined) ??
-                "",
-            };
-          });
-        }
-        const sorted_bids: IBid[] = bids.sort(
-          (a: IBid, b: IBid) => (a.bid_count ?? 0) - (b?.bid_count ?? 0)
-        );
-        setBids(sorted_bids);
-        const bid_count: number = bids?.length ?? 0;
-        setBidCount(bid_count);
-        
-        if(base_url === "/direct_purchase"){
-            const limit: boolean = bids?.length??0 >= 1 ? false : true;
-            setDirectPurchaseLimit(limit)
-        }
-
-        const compliance = (data as { compliance?: ICompliance[] }).compliance
-          ? (data as { compliance?: ICompliance[] }).compliance
-          : [];
-        setCompliance(compliance);
-        const complianceRemarks = (
-          data as { compliance_remarks?: IComplianceRemark[] }
-        ).compliance_remarks
-          ? (data as { compliance_remarks?: IComplianceRemark[] })
-              .compliance_remarks
-          : [];
-        setComplianceRemarks(complianceRemarks);
-        const rankings = (data as { rankings?: IRank[] }).rankings
-          ? (data as { rankings?: IRank[] }).rankings
-          : [];
-        if (rankings) {
-          rankings.sort((a: IRank, b: IRank) => a.rank - b.rank);
-        }
-        setRankings(rankings);
-        const committee = (data as { committee?: ICommittee[] }).committee
-          ? (data as { committee?: ICommittee[] }).committee
-          : [];
-        setCommitteeMembers(committee);
-        const gm_approval = (data as { gm_approval?: IGmApproval }).gm_approval
-          ? (data as { gm_approval?: IGmApproval }).gm_approval
-          : null;
-        setGmApproval(gm_approval ?? undefined);
-        const fm_approval = (data as { fm_approval?: IFmApproval }).fm_approval
-          ? (data as { fm_approval?: IFmApproval }).fm_approval
-          : null;
-        setFmApproval(fm_approval ?? undefined);
-        const pr_date = (data as { pr_date?: string }).pr_date
-          ? (data as { pr_date?: string }).pr_date
-          : "";
-        setPrDate(pr_date ?? "");
-        const proc_ref = (data as { proc_ref?: string }).proc_ref
-          ? (data as { proc_ref?: string }).proc_ref
-          : "";
-        setProcRef(proc_ref ?? "");
-        const proc_plan = (data as { proc_plan?: IProcPlan }).proc_plan
-          ? (data as { proc_plan?: IProcPlan }).proc_plan
-          : undefined;
-        setProcPlan(proc_plan);
-        const scope_of_work = (data as { scope_of_work?: string }).scope_of_work
-          ? (data as { scope_of_work?: string }).scope_of_work
-          : "";
-        setScopeOfWork(scope_of_work ?? "");
-        const pr_number = (data as { pr_number?: string }).pr_number
-          ? (data as { pr_number?: string }).pr_number
-          : "";
-        setPrNumber(pr_number ?? "");
-        const quantity = (data as { quantity?: string }).quantity
-          ? (data as { quantity?: string }).quantity
-          : "";
-        setQuantity(quantity ?? "");
-        const closing_date = (data as { closing_date?: string }).closing_date
-          ? (data as { closing_date?: string }).closing_date
-          : "";
-        setClosingDate(closing_date ?? "");
-        const ref_date = (data as { ref_date?: string }).ref_date
-          ? (data as { ref_date?: string }).ref_date
-          : "";
-        setRefDate(ref_date ?? "");
-        const closing_time = (data as { closing_time?: string }).closing_time
-          ? (data as { closing_time?: string }).closing_time
-          : "";
-        setClosingTime(closing_time ?? "");
-        const tender_adjudication_committee_date = (
-          data as { tac_date?: string }
-        ).tac_date
-          ? (data as { tac_date?: string }).tac_date
-          : "";
-        setTenderAdjudicationCommitteeDate(
-          tender_adjudication_committee_date ?? ""
-        );
-        const cs_opened = (data as { cs_opened?: string }).cs_opened
-          ? (data as { cs_opened?: string }).cs_opened
-          : "";
-        setDateTenderOpened(cs_opened ?? "");
-        const additionalNotes = (data as { additional_notes?: string })
-          .additional_notes
-          ? (data as { additional_notes?: string }).additional_notes
-          : "";
-        setAdditionalNotes(additionalNotes ?? "");
-        const buyersNotes = (data as { buyers_notes?: string }).buyers_notes
-          ? (data as { buyers_notes?: string }).buyers_notes
-          : "";
-        setBuyersNotes(buyersNotes ?? "");
-
-        const proc_plans = (data as { proc_plans?: IProcPlan[] }).proc_plans
-          ? (data as { proc_plans?: IProcPlan[] }).proc_plans
-          : [];
-        setProcPlans(proc_plans);
-        const uom = (data as { uom?: IUom[] }).uom
-          ? (data as { uom?: IUom[] }).uom
-          : undefined;
-        setUom(uom);
-        const suppliers_ = (data as { suppliers?: ISupplier[] }).suppliers
-          ? (data as { suppliers?: ISupplier[] }).suppliers
-          : [];
-        setSuppliers(suppliers_);
-        const pr_items = (data as { pr_items?: IPrItems[] }).pr_items
-          ? (data as { pr_items?: IPrItems[] }).pr_items
-          : [];
-        setPrItems(pr_items);
-        const pr_attachments = (data as { pr_attachments?: IPRAttachment[] })
-          .pr_attachments
-          ? (data as { pr_attachments?: IPRAttachment[] }).pr_attachments
-          : [];
-        setPrAttachments(pr_attachments);
-        const cs_items = (data as { cs_items?: IBidItem[] }).cs_items
-          ? (data as { cs_items?: IBidItem[] }).cs_items
-          : [];
-        setCsItems(cs_items as IBidItem[] | undefined);
-        const users = (data as { users?: IUser[] }).users
-          ? (data as { users?: IUser[] }).users
-          : [];
-        users?.sort((user1, user2) => {
-          const fullName1 = user1.first_name + " " + user1.last_name;
-          const fullName2 = user2.first_name + " " + user2.last_name;
-          return fullName1.localeCompare(fullName2);
-        });
-        setUsers(users);
-        const cs_owner = (data as { cs_owner?: string }).cs_owner
-          ? (data as { cs_owner?: string }).cs_owner
-          : "";
-        setCsOwner(cs_owner ?? "");
-        const currencies = (data as { currencies?: ICurrency[] }).currencies
-          ? (data as { currencies?: ICurrency[] }).currencies
-          : [];
-        setCurrencies(currencies);
-        const currency = (data as { currency?: ICurrency }).currency
-          ? (data as { currency?: ICurrency }).currency
-          : undefined;
-        setCurrency(currency);
-        const advert = (data as { advert?: string }).advert
-          ? (data as { advert?: string }).advert
-          : "";
-        const advert_url = onGetFileObjectUrl(advert ?? "");
-        setAdvertUrl(advert_url);
-        let pr_at_list: IPRAttachment[] = [];
-        if (pr_attachments && pr_attachments.length > 0) {
-          pr_at_list = pr_attachments.map((pr_attachment) => {
-            return {
-              ...pr_attachment,
-              attachment_url: onGetFileObjectUrl(pr_attachment.file) ?? "",
-            };
-          });
-        }
-        setPrAttachments(pr_at_list);
-
-        const committeeApprovalComplete =
-          committee?.filter(
-            (member) =>
-              member.memberApproval === "" ||
-              member.memberApproval === null ||
-              member.memberApproval === undefined ||
-              member.memberApproval === "Rejected"
-          ).length === 0;
-        setCommitteeApprovalComplete(committeeApprovalComplete);
-
-        const approvalsComplete =
-          gm_approval?.approval !== "" &&
-          fm_approval?.approval !== "" &&
-          gm_approval?.approval !== undefined &&
-          fm_approval?.approval !== undefined;
-        setApprovalsComplete(approvalsComplete);
-
-        const showSiteVisit =
-          (data as { show_site_visit?: boolean }).show_site_visit === true
-            ? "yes"
-            : "no";
-        setShowSiteVisit(showSiteVisit);
-        const showSamples =
-          (data as { show_samples_required?: boolean })
-            .show_samples_required === true
-            ? "yes"
-            : "no";
-        setShowSamples(showSamples);
-      })
-      .catch((error) => console.log("error: ", error));
-  };
-
-  const getCreateData = (pr_id: string) => {
-    console.log("cs pr_id: ", pr_id);
-
-    fetch(`${base_url}/create_data/${pr_id}`)
-      .then((response) => response.json())
-      .then((data) => {
-        console.log("data: ", data);
-        const scope_of_work = (data as { scope_of_work?: string }).scope_of_work
-          ? (data as { scope_of_work?: string }).scope_of_work
-          : "";
-        setScopeOfWork(scope_of_work ?? "");
-        const proc_ref = (data as { proc_ref?: string }).proc_ref
-          ? (data as { proc_ref?: string }).proc_ref
-          : "";
-
-        setProcRef(proc_ref ?? "");
-        const plans = (data as { proc_plans?: IProcPlan[] }).proc_plans
-          ? (data as { proc_plans?: IProcPlan[] }).proc_plans
-          : [];
-        setProcPlans(plans);
-        const uom = (data as { uom?: IUom[] }).uom
-          ? (data as { uom?: IUom[] }).uom
-          : undefined;
-        setUom(uom);
-        const suppliers = (data as { suppliers?: ISupplier[] }).suppliers
-          ? (data as { suppliers?: ISupplier[] }).suppliers
-          : [];
-        setSuppliers(suppliers);
-        const pr_items = (data as { pr_items?: IPrItems[] }).pr_items
-          ? (data as { pr_items?: IPrItems[] }).pr_items
-          : [];
-        setPrItems(pr_items);
-        const pr_attachments = (data as { pr_attachments?: IPRAttachment[] })
-          .pr_attachments
-          ? (data as { pr_attachments?: IPRAttachment[] }).pr_attachments
-          : [];
-        setPrAttachments(pr_attachments);
-        const pr_id = (data as { pr_id?: string }).pr_id
-          ? (data as { pr_id?: string }).pr_id
-          : "";
-        setPrNumber(pr_id ?? "");
-        const pr_date = (data as { pr_date?: string }).pr_date
-          ? (data as { pr_date?: string }).pr_date
-          : "";
-        setPrDate(pr_date ?? "");
-        const users = (data as { users?: IUser[] }).users
-          ? (data as { users?: IUser[] }).users
-          : [];
-        const currencies = (data as { currencies?: ICurrency[] }).currencies
-          ? (data as { currencies?: ICurrency[] }).currencies
-          : [];
-        // Sort users by full name (first_name + " " + last_name)
-        users?.sort((user1, user2) => {
-          const fullName1 = user1.first_name + " " + user1.last_name;
-          const fullName2 = user2.first_name + " " + user2.last_name;
-          return fullName1.localeCompare(fullName2);
-        });
-        setUsers(users);
-        setCurrencies(currencies);
-        let pr_at_list: IPRAttachment[];
-        if (pr_items && pr_items.length === 0) {
-          pr_at_list =
-            pr_attachments?.map((pr_attachment) => {
-              return {
-                ...pr_attachment,
-                attachment_url: onGetFileObjectUrl(pr_attachment.file) ?? "",
-              };
-            }) ?? [];
-          setPrAttachments(pr_at_list);
-        }
-      })
-      .catch((error) => console.log("error: ", error));
-  };
-
-  const onFetchPR = (pr_id: string) => {
-    console.log("cs pr_id: ", pr_id);
-
-    fetch(`${base_url}/create_data/${pr_id}`)
-      .then((response) => response.json())
-      .then((data) => {
-        console.log("data: ", data);
-        if (data && data.success) {
-            const requester_role: string | undefined = (
-                data as { requester_role?: string }
-            ).requester_role
-                ? (data as { requester_role?: string }).requester_role
-                : "";
-            setRequesterRole(requester_role ?? "");
-          const pr_items = (data as { pr_items?: IPrItems[] }).pr_items
-            ? (data as { pr_items?: IPrItems[] }).pr_items
-            : undefined;
-          if (!pr_items || pr_items?.length < 1) {
-            // set response message
-            onOpenResponse(
-              "Fetch PR Error",
-              "This Purchase Request is either empty or has no items. Please check and try again.",
-              false
-            );
-            return;
-          }
-          setPrItems(pr_items);
-          const scope_of_work = (data as { scope_of_work?: string })
-            .scope_of_work
-            ? (data as { scope_of_work?: string }).scope_of_work
-            : "";
-          setScopeOfWork(scope_of_work ?? "");
-          const proc_ref = (data as { proc_ref?: string }).proc_ref
-            ? (data as { proc_ref?: string }).proc_ref
-            : "";
-          setProcRef(proc_ref ?? "");
-          const proc_plan = (data as { proc_plan?: IProcPlan }).proc_plan
-            ? (data as { proc_plan?: IProcPlan }).proc_plan
-            : undefined;
-          setProcPlan(proc_plan);
-          const plans = (data as { proc_plans?: IProcPlan[] }).proc_plans
-            ? (data as { proc_plans?: IProcPlan[] }).proc_plans
-            : [];
-          setProcPlans(plans);
-          const currencies = (data as { currencies?: ICurrency[] }).currencies
-            ? (data as { currencies?: ICurrency[] }).currencies
-            : [];
-          setCurrencies(currencies);
-          const uom = (data as { uom?: IUom[] }).uom
-            ? (data as { uom?: IUom[] }).uom
-            : undefined;
-          setUom(uom);
-          const suppliers = (data as { suppliers?: ISupplier[] }).suppliers
-            ? (data as { suppliers?: ISupplier[] }).suppliers
-            : [];
-          setSuppliers(suppliers);
-          const pr_attachments = (data as { pr_attachments?: IPRAttachment[] })
-            .pr_attachments
-            ? (data as { pr_attachments?: IPRAttachment[] }).pr_attachments
-            : [];
-          const pr_id = (data as { pr_id?: string }).pr_id
-            ? (data as { pr_id?: string }).pr_id
-            : "";
-          setPrNumber(pr_id ?? "");
-          const pr_date = (data as { pr_date?: string }).pr_date
-            ? (data as { pr_date?: string }).pr_date
-            : "";
-          setPrDate(pr_date ?? "");
-          const users = (data as { users?: IUser[] }).users
-            ? (data as { users?: IUser[] }).users
-            : [];
-          setUsers(users);
-          let pr_at_list: IPRAttachment[];
-          if (pr_attachments && pr_attachments.length > 0) {
-            pr_at_list =
-              pr_attachments?.map((pr_attachment) => {
-                return {
-                  ...pr_attachment,
-                  attachment_url: onGetFileObjectUrl(pr_attachment.file) ?? "",
-                };
-              }) ?? undefined;
-            setPrAttachments(pr_at_list);
-          }
-          setFetchPR(false);
-
-          onOpenResponse(
-            "Fetch PR Success",
-            "Purchase Request fetched successfully",
-            true
-          );
-        } else {
-          onOpenResponse(
-            "Fetch PR Error",
-            "PR Number not found. Please try again.",
-            false
-          );
-        }
-      })
-      .catch((error) => console.log("error: ", error));
-  };
-
-  const onFetchPrNumberChange = (event: {
-    target: { name: string; value: string };
-  }) => {
-    const { value } = event.target;
-    setPrNumber(value);
-  };
-
-  const onCommitteeChange = (
-    name_: string,
-    event: { target: { name: string; value: string } }
-  ) => {
-    const { value } = event.target;
-    console.log("name: ", name_, "value: ", value);
-    let memberNames: string;
-    let memberValue: string;
-    if (name_ === "memberUserName") {
-      const user = users?.find((user) => user.username === value);
-      memberNames = user?.first_name + " " + user?.last_name;
-      //   member_[name_] = value;
-      memberValue = value;
-      const thisMember: IMember = {
-        memberName: memberNames,
-        memberUserName: memberValue,
-        ...member,
-      };
-      setMember(thisMember);
-    } else if (name_ === "memberPosition") {
-      // member_[name_] = value;
-      memberValue = value;
-      const thisMember: IMember = {
-        ...member,
-        memberName: member?.memberName ?? "",
-        memberUserName: member?.memberUserName ?? "",
-        memberPosition: memberValue ?? undefined,
-      };
-      setMember(thisMember);
+  const [response, setResponse] = useState<{
+    open: boolean;
+    message: string;
+    title: string;
+    success: boolean;
+  }>({
+    open: false,
+    message: "",
+    title: "",
+    success: false,
+  });
+  
+  // API Functions
+  const api = useScheduleApi({ base_url, setIsLoading });
+  
+  // Memoized CSRF token
+  const csrfToken = useMemo(() => getCookie("csrftoken") ?? "", []);
+  
+  // Memoized request options
+  const defaultRequestOptions = useMemo(() => ({
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      "X-CSRFToken": csrfToken,
+    },
+  }), [csrfToken]);
+  
+  // Initialize component
+  useEffect(() => {
+    const cs_id = csid || '';
+    const pr_id = prid || '';
+    
+    if (cs_id) {
+      setCsId(cs_id);
+      setUsername(username_ ?? "");
+      fetchCS(cs_id);
+    } else if (pr_id) {
+      setUsername(username_ ?? "");
+      // Set creator and created_at for new schedule (will be updated with full name after users are loaded)
+      setCreator(username_ ?? "");
+      setCreatedAt(new Date().toISOString());
+      onFetchPR(pr_id);
     } else {
-      // member_[name_] = value;
-      memberValue = value;
-      const thisMember: IMember = {
-        memberUserName: memberValue ?? "",
-        memberName: member?.memberName ?? "",
-        ...member,
-      };
-      setMember(thisMember);
+      setUsername(username_ ?? "");
+      // Set creator and created_at for new schedule (will be updated with full name after users are loaded)
+      setCreator(username_ ?? "");
+      setCreatedAt(new Date().toISOString());
     }
-  };
-
-  const onCommitteeSelect = (name_: string, username: string) => {
-    console.log(filteredUsers, onSearchUser, searchedUser);
-    let fullname: string = "";
-    let memberName: string = "";
-    let memberUserName: string = "";
-    if (name_ === "memberUserName") {
-      const user: IUser | undefined = users?.find(
-        (user) => user.username === username
-      );
-      fullname = user?.first_name + " " + user?.last_name;
-      memberName = fullname;
-      memberUserName = username;
-    }
-    const thisMember: IMember = {
-      ...member,
-      memberName: memberName,
-      memberUserName: memberUserName,
-    };
-    setMember(thisMember);
-    setSearchedUser(fullname);
-    // setSelectedUser(undefined);
-    setFilteredUsers([]);
-  };
-
-  const onRemoveCommitteeMember = (index: number, username: string) => {
-    const members = committeeMembers?.filter((_, _index) => _index !== index);
-    if (
-      members &&
-      committeeMembers &&
-      members.length < committeeMembers.length
-    ) {
-      setCommitteeMembers(members);
-    }
-    deleteCommitteeMember(username);
-  };
-
-  const deleteCommitteeMember = (username: string) => {
-    const form_data: FormData = new FormData();
-    form_data.append("cs_id", csId);
-    form_data.append("username", username);
-    form_data.append("csrfmiddlewaretoken", getCookie("csrftoken") ?? "");
-
-    fetch(`${base_url}/delete_committee_member`, {
-      method: "POST",
-      headers: {
-        "X-CSRFToken": getCookie("csrftoken") ?? "",
-      },
-      body: form_data,
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        console.log("data: ", data);
-        if (data.success) {
-          onOpenResponse(
-            "Remove Committee Member Success",
-            "Committee member removed successfully",
-            true
-          );
-        } else {
-          onOpenResponse(
-            "Remove Committee Member Error",
-            "Error deleting Committee member",
-            false
-          );
+    
+    fetchUsers();
+  }, [csid, prid, username_]);
+  
+  // Update creator name with full name once users are loaded (for new schedules)
+  useEffect(() => {
+    if (users.length > 0 && creator === username && username) {
+      const currentUser = users.find(user => user.username === username);
+      if (currentUser) {
+        const displayName = `${currentUser.first_name} ${currentUser.last_name}`.trim();
+        if (displayName && displayName !== username) {
+          setCreator(displayName);
         }
-      });
-  };
-
-  const onCommitteeJustificationModal = (justification: string) => {
-    setCurrentApprover({
-      ...currentApprover,
-      justification: justification,
-      username: username,
-    });
-    setCommitteeJustificationModal(!committeeJustificationModal);
-  };
-
-  const onCommitteeJustificationModalClose = () => {
-    setCurrentApprover({
-      justification: "",
-      username: "",
-      role: "",
-    });
-    setCommitteeJustificationModal(!committeeJustificationModal);
-  };
-
-  const onCommitteeJustificationChange = (event: {
-    target: { value: string };
-  }) => {
-    console.log("event: ", event);
-    const { value } = event.target;
-    const justification: string = value;
-    setCurrentApprover({
-      ...currentApprover,
-      justification: justification,
-    });
-  };
-
-  const onCommitteeApprove = (
-    username: string,
-    approval: string,
-    justification: string
-  ) => {
-    const form_data: FormData = new FormData();
-    console.log("approval: ", approval, justification);
-    if (approval === "Rejected" && justification === "") {
-      onOpenResponse(
-        "Committee Member Approval Error",
-        "Justification is required. Please add justification before submitting.",
-        false
-      );
-      return;
+      }
     }
-    form_data.append("cs_id", csId);
-    form_data.append("username", username);
-    form_data.append("approval", approval);
-    form_data.append("justification", justification);
-    form_data.append("csrfmiddlewaretoken", getCookie("csrftoken") ?? "");
-
-    fetch(`${base_url}/committee_approve`, {
-      method: "POST",
-      headers: {
-        "X-CSRFToken": getCookie("csrftoken") ?? "",
-      },
-      body: form_data,
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        console.log("data: ", data);
-        if (data.success) {
-          const committeeDate = (data as { committee_date?: string })
-            .committee_date
-            ? (data as { committee_date?: string }).committee_date
-            : "";
-          const committeeApproval = (data as { committee_approval?: string })
-            .committee_approval
-            ? (data as { committee_approval?: string }).committee_approval
-            : "";
-          //   const memberName = (data as { member_name?: string }).member_name
-          //     ? (data as { member_name?: string }).member_name
-          //     : "";
-          let members: ICommittee[] = [];
-          if (committeeMembers && committeeMembers.length > 0) {
-            members = committeeMembers.map((member) => {
-              if (member.memberUserName === username) {
-                member.committeeDate = committeeDate;
-                member.memberApproval = committeeApproval;
-              }
-              return member;
+  }, [users, creator, username]);
+  
+  // Fetch CS data - optimized
+  const fetchCS = useCallback(async (cs_id: string) => {
+    setIsLoading(true);
+    setLoadingOperation("Loading comparative schedule data");
+    
+    try {
+      const data = await fetchWithRetry(buildApiUrl(base_url, getApiEndpoints().CS_DETAILS(cs_id)), defaultRequestOptions);
+      console.log("CS Basic Data:", data);
+      // Data is now returned as normal JSON, no double encoding
+      const parsedData = data;
+      // Extract basic metadata
+      setCreator(parsedData.creator || '');
+      setCreatedAt(parsedData.created_at || '');
+      
+      // Set CS ID from response
+      setCsId(parsedData.cs_id || cs_id);
+      
+      // Set PR ID from response (needed for item updates)
+      if (parsedData.pr_id) {
+        setStoredPrId(parsedData.pr_id.toString());
+      }
+      
+      // Set reference data from response (now included in lightweight response)
+      if (parsedData.users) {
+        console.log('🔍 Users loaded from CS data:', parsedData.users.length);
+        setUsers(parsedData.users);
+      } else {
+        console.log('🔍 No users found in CS data, will fetch separately');
+        // Fallback: fetch users if not included in CS data
+        fetchUsers();
+      }
+      if (parsedData.suppliers) {
+        setSuppliers(parsedData.suppliers);
+      }
+      if (parsedData.proc_plans) {
+        setProcPlans(parsedData.proc_plans);
+      }
+      if (parsedData.currencies) {
+        setCurrencies(parsedData.currencies);
+      }
+      if (parsedData.uom) {
+        setUom(parsedData.uom);
+      }
+      
+      // Set currency and proc plan if available
+      if (parsedData.currency) {
+        setCurrency(parsedData.currency);
+      }
+      if (parsedData.proc_plan) {
+        setProcPlan(parsedData.proc_plan);
+        setProcRef(parsedData.proc_plan.proc_ref || '');
+      }
+      
+      // Set existing advert if available
+      if (parsedData.advert) {
+        setExistingAdvert(parsedData.advert);
+      }
+      
+      // Extract PR/CS data - backend returns all fields at root level
+      setPrData({
+        pr_number: parsedData.pr_number || '',
+        pr_date: parsedData.pr_date || '',
+        reference_date: parsedData.ref_date || '',
+        procurement_plan_description: parsedData.proc_plan?.description || '',
+        procurement_plan_id: parsedData.proc_plan?.id || '',
+        currency: parsedData.currency?.currency || '',
+        closing_date: parsedData.closing_date || '',
+        closing_time: parsedData.closing_time || '',
+        cs_opened_date: parsedData.cs_opened || '',
+        scope_of_work: parsedData.scope_of_work || '',
+        tac_date: parsedData.tac_date || '',
+        region: parsedData.region || '',
+        show_site_visit: parsedData.show_site_visit || false,
+        show_samples_required: parsedData.show_samples_required || false,
+        internal_notes: parsedData.additional_notes || '',
+        items: []
+      });
+      
+      // Process items from both cs_items (included in CS) and pr_items (available from PR)
+      const allItems: Array<{
+        id: string;
+        name: string;
+        quantity: number;
+        unit: string;
+        status: string;
+        included: boolean;
+      }> = [];
+      
+      // Add CS items (already included in this schedule)
+      if (parsedData.cs_items && Array.isArray(parsedData.cs_items)) {
+        parsedData.cs_items.forEach((item: {
+          id: number;
+          item_required: string;
+          quantity: number;
+          unit_of_measurement: string;
+        }) => {
+          allItems.push({
+            id: item.id?.toString() || '',
+            name: item.item_required || '',
+            quantity: item.quantity || 0,
+            unit: item.unit_of_measurement || '',
+            status: 'included_in_cs',
+            included: true
+          });
+        });
+      }
+      
+      // Add PR items (available items from original PR)
+      if (parsedData.pr_items && Array.isArray(parsedData.pr_items)) {
+        parsedData.pr_items.forEach((item: {
+          id: number;
+          item_required: string;
+          quantity: number;
+          unit_of_measurement: string;
+          ordered?: boolean;
+        }) => {
+          // Check if this item is already in cs_items to avoid duplicates
+          const existsInCS = allItems.some(csItem => csItem.id === item.id?.toString());
+          if (!existsInCS) {
+            allItems.push({
+              id: item.id?.toString() || '',
+              name: item.item_required || '',
+              quantity: item.quantity || 0,
+              unit: item.unit_of_measurement || '',
+              status: item.ordered ? 'used_in_other_schedule' : 'available',
+              included: false
             });
           }
-          setCommitteeMembers(members);
-          // @TODO: check committee approval value
-          onOpenResponse(
-            "Committee Member Approval Success",
-            "You have successfully approved this schedule.",
-            true
-          );
-          // reload page
-          window.location.href = base_url + "/comperative_schedules";
-        } else {
-          onOpenResponse(
-            "Committee Member Approval Error",
-            "Failed to submit your approval please try again.",
-            false
-          );
+        });
+      }
+      
+      // Update prData with processed items
+      setPrData(prev => ({
+        ...prev,
+        items: allItems
+      }));
+      
+      // Load bids data if available
+      if (parsedData.bids && Array.isArray(parsedData.bids)) {
+        setBids(parsedData.bids);
+        setBidCount(parsedData.bids.length);
+      }
+      
+    } catch (error) {
+      console.error("Error fetching CS:", error);
+      onOpenResponse("Error", "Failed to load CS data", false);
+    } finally {
+      setIsLoading(false);
+      setLoadingOperation("");
+    }
+  }, [base_url, defaultRequestOptions]);
+  
+  // Fetch PR data
+  const onFetchPR = useCallback(async (pr_id: string) => {
+    setIsLoading(true);
+    setLoadingOperation("Loading purchase request data");
+    
+    try {
+          // Step 1: Fetch basic PR info immediately (fast load)
+    console.log('🚀 Fetching PR basic info...');
+    const prBasicResponse = await api.fetchPR(pr_id);
+    console.log("prResponse basic: ", prBasicResponse);
+      // Populate PR data from response based on actual get_create_data response structure
+      if (prBasicResponse && prBasicResponse.success) {
+        // Set basic PR data immediately (fast UI update)
+        setPrData({
+          pr_number: prBasicResponse.pr_id || '',
+          pr_date: prBasicResponse.pr_date || '',
+          reference_date: prBasicResponse.pr_date || '', // Use pr_date as reference if no separate field
+          procurement_plan_description: prBasicResponse.proc_plan?.description || '',
+          procurement_plan_id: prBasicResponse.proc_plan?.id || '',
+          currency: '', // Will be populated from currencies list
+          closing_date: '',
+          closing_time: '',
+          cs_opened_date: '',
+          scope_of_work: prBasicResponse.scope_of_work || '',
+          tac_date: '',
+          region: '', // Will need to be set separately
+          show_site_visit: false,
+          show_samples_required: false,
+          internal_notes: '',
+          items: [] // Will be loaded in background
+        });
+        
+        // Set procPlan state for validation
+        if (prBasicResponse.proc_plan) {
+          setProcPlan(prBasicResponse.proc_plan);
         }
-      })
-      .catch((err) => console.log("onCommitteeApprove error: ", err));
-  };
 
-  const onSubmitCommitee = () => {
-    const form_data: FormData = new FormData();
-    form_data.append("cs_id", csId);
-    form_data.append(
-      "committee",
-      JSON.stringify({
-        committee: committeeMembers,
-      })
-    );
-    form_data.append("csrfmiddlewaretoken", getCookie("csrftoken") ?? "");
+        // Step 2: Start background loading (non-blocking)
+        console.log('🔄 Starting background data loading...');
+        setLoadingOperation("Loading additional data in background...");
+        
+        // Load reference data in background (for dropdowns)
+        api.fetchReferenceData()
+          .then(refResponse => {
+            if (refResponse && refResponse.success) {
+              console.log('✅ Reference data loaded');
+                             // Set individual reference data states
+               setSuppliers(refResponse.suppliers || []);
+               console.log('🔍 Users loaded from reference data:', refResponse.users?.length || 0);
+               setUsers(refResponse.users || []);
+               setCurrencies(refResponse.currencies || []);
+               setProcPlans(refResponse.proc_plans || []);
+               setUom(refResponse.uom || []);
+               // Log to verify data is loaded (and satisfy linter)
+               console.log('📋 Currencies loaded:', refResponse.currencies?.length || 0, 'Current count:', currenciesCount);
+               console.log('📋 Proc Plans loaded:', refResponse.proc_plans?.length || 0, 'Current count:', procPlansCount);
+            }
+          })
+          .catch(error => console.error('❌ Error loading reference data:', error));
 
-    fetch(`${base_url}/save_committee`, {
-      method: "POST",
-      headers: {
-        "X-CSRFToken": getCookie("csrftoken") ?? "",
-      },
-      body: form_data,
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        console.log("data: ", data);
-        if (data.success) {
-          onOpenResponse(
-            "Submit Committee Member Success",
-            "You have successfully submitted this committee",
-            true
+        // Load PR items in background (paginated)
+        api.fetchPRItems(pr_id, 1, 50)
+          .then(itemsResponse => {
+            if (itemsResponse && itemsResponse.success) {
+              console.log('✅ PR items loaded:', itemsResponse.pr_items?.length || 0, 'items');
+              setPrData(prev => ({
+                ...prev,
+                items: itemsResponse.pr_items?.map((item: {
+                  id: number;
+                  item_required: string;
+                  quantity: number;
+                  unit_of_measurement: string;
+                  ordered: boolean;
+                  status: string;
+                  included: boolean;
+                }) => ({
+                  id: item.id.toString(),
+                  name: item.item_required,
+                  quantity: item.quantity,
+                  unit: item.unit_of_measurement,
+                  status: item.status || (item.ordered ? 'used_in_other_schedule' : 'available'),
+                  included: item.included !== undefined ? item.included : !item.ordered
+                })) || []
+              }));
+            }
+          })
+          .catch(error => console.error('❌ Error loading PR items:', error));
+
+        console.log('✅ Basic PR info loaded. Background loading in progress...');
+        
+        // Clear main loading state since basic info is loaded
+        setIsLoading(false);
+        setLoadingOperation("");
+      }
+
+      // Note: For now, we don't automatically create a CS. Users can manually save after reviewing the data.
+      
+    } catch (error) {
+      console.error("Error fetching PR:", error);
+      onOpenResponse("Error", "Failed to load PR data", false);
+      setIsLoading(false);
+      setLoadingOperation("");
+    }
+    }, [api]);
+
+
+  // Fetch users - only when needed
+  const fetchUsers = useCallback(async () => {
+    // Always fetch all users for committee management, regardless of CS data
+    setLoadingOperation("Loading all users");
+    try {
+      const data = await fetchWithRetry(buildApiUrl(base_url, getApiEndpoints().USERS), defaultRequestOptions);
+      
+      if (Array.isArray(data)) {
+        console.log('🔍 Fetched ALL users from API:', data.length);
+        setUsers(data);
+      }
+    } catch (error) {
+      console.error("Error fetching users:", error);
+    } finally {
+      setLoadingOperation("");
+    }
+  }, [base_url, defaultRequestOptions]);
+
+  // Force refresh all users for committee management
+  const fetchAllUsersForCommittee = useCallback(async () => {
+    console.log('🔍 Force fetching ALL users for committee...');
+    setLoadingOperation("Loading all users for committee");
+    try {
+      const data = await fetchWithRetry(buildApiUrl(base_url, getApiEndpoints().USERS), defaultRequestOptions);
+      
+      if (Array.isArray(data)) {
+        console.log('🔍 Successfully loaded ALL users:', data.length);
+        setUsers(data);
+      }
+    } catch (error) {
+      console.error("Error fetching all users:", error);
+    } finally {
+      setLoadingOperation("");
+    }
+  }, [base_url, defaultRequestOptions]);
+  
+  // Note: Suppliers are now loaded as part of CS basic data, no separate fetch needed
+  
+  // Load tab data when tab becomes active
+  const loadTabData = useCallback(async (tabId: TabId) => {
+    // For PR items tab, always reload when CS ID exists to ensure complete data
+    if (loadedTabs.has(tabId) && !(tabId === 'pr-items' && csId)) {
+      return;
+    }
+    if (!csId && tabId !== 'pr-items') return;
+    
+    setLoadingOperation(`Loading ${tabId} data`);
+    
+    try {
+      switch (tabId) {
+        case 'bids': {
+          // Load bids data using optimized endpoint
+          console.log('Loading bids data...');
+          const bidsData = await fetchWithRetry(
+            buildApiUrl(base_url, getApiEndpoints().CS_BIDS_DATA(csId)), 
+            defaultRequestOptions
           );
-        } else {
-          onOpenResponse(
-            "Submit Committee Member Error",
-            "Failed to submit this committee please try again",
-            false
-          );
+          console.log('Bids data loaded:', bidsData);
+          
+          // Set bids data to state
+          if (bidsData && bidsData.success && bidsData.bids) {
+            setBids(bidsData.bids);
+            setBidCount(bidsData.bids.length);
+          } else if (bidsData && Array.isArray(bidsData)) {
+            setBids(bidsData);
+            setBidCount(bidsData.length);
+          }
+          break;
         }
-      });
-  };
+          
+        case 'committee': {
+          // Load committee and approval data (merged tab)
+          const committeeUrl = buildApiUrl(base_url, getApiEndpoints().CS_COMMITTEE_DATA(csId));
+          
+          const [committeeData, approvalData] = await Promise.all([
+            fetchWithRetry(
+            committeeUrl, 
+            defaultRequestOptions
+            ),
+            fetchWithRetry(
+              buildApiUrl(base_url, getApiEndpoints().CS_APPROVALS_DATA(csId)), 
+              defaultRequestOptions
+            ),
+            // Always ensure we have ALL users for committee management
+            fetchAllUsersForCommittee()
+          ]);
+          
+          // Store the loaded committee data in state
+          if (committeeData && committeeData.committee) {
+            updateCommitteeMembers(committeeData.committee);
+          }
+          
+          // Store approval data if available
+          if (approvalData) {
+            if (approvalData.gm_approval) {
+              setGmApproval(approvalData.gm_approval);
+            }
+            if (approvalData.fm_approval) {
+              setFmApproval(approvalData.fm_approval);
+            }
+          }
+          break;
+        }
+          
+        case 'compliance': {
+          // Load compliance data and rankings (merged tab)
+          console.log('Loading compliance data and rankings...');
+          const complianceData = await fetchWithRetry(
+            buildApiUrl(base_url, getApiEndpoints().CS_COMPLIANCE_DATA(csId)), 
+            defaultRequestOptions
+          );
+          console.log('Compliance data loaded:', complianceData);
+          
+          // Store the loaded compliance data in state
+          if (complianceData && complianceData.compliance) {
+            setCompliance(complianceData.compliance);
+            console.log("Loaded existing compliance data:", complianceData.compliance.length, "records");
+          }
+          if (complianceData && complianceData.compliance_remarks) {
+            setComplianceRemarks(complianceData.compliance_remarks);
+            console.log("Loaded existing compliance remarks:", complianceData.compliance_remarks.length, "records");
+          }
+          
+          // Also try to load existing rankings if they exist
+          try {
+            const rankingsResponse = await fetch(`${base_url}/api/cs-rankings/${csId}/`, defaultRequestOptions);
+            if (rankingsResponse.ok) {
+              const rankingsData = await rankingsResponse.json();
+              if (rankingsData && rankingsData.rankings && rankingsData.rankings.length > 0) {
+                setRankings(rankingsData.rankings);
+                console.log("Loaded existing rankings:", rankingsData.rankings.length, "records");
+              }
+            }
+          } catch (error) {
+            console.log("No existing rankings found or error loading rankings:", error);
+          }
+          break;
+        }
+          
+        case 'pr-items': {
+          // Load PR items data for the CS
+          console.log('Loading PR items data...');
+          setLoadingOperation("Loading PR items data");
+          
+          if (csId) {
+            // For existing CS, use CS-specific endpoint that returns ALL PR items with their status
+            // Always fetch for existing CS to ensure we have complete data
+            console.log('Fetching PR items for existing CS:', csId);
+            try {
+              const itemsResponse = await fetchWithRetry(
+                buildApiUrl(base_url, getApiEndpoints().CS_PR_ITEMS_MANAGEMENT(csId)), 
+                defaultRequestOptions
+              );
+              
+              if (itemsResponse && itemsResponse.success) {
+                console.log('✅ CS PR items loaded:', itemsResponse.pr_items?.length || 0, 'items');
+                setPrData(prev => ({
+                  ...prev,
+                  items: itemsResponse.pr_items?.map((item: {
+                    id: number;
+                    item_required: string;
+                    quantity: number;
+                    unit_of_measurement: string;
+                    status: string;
+                    included: boolean;
+                  }) => ({
+                    id: item.id.toString(),
+                    name: item.item_required,
+                    quantity: item.quantity,
+                    unit: item.unit_of_measurement,
+                    status: item.status,
+                    included: item.included
+                  })) || []
+                }));
+              } else {
+                console.warn('Failed to load CS PR items:', itemsResponse);
+              }
+            } catch (error) {
+              console.error('Error loading CS PR items:', error);
+            }
+          } else {
+            // For new CS (no CS ID yet), use regular PR items endpoint
+            const effectivePrId = prid || storedPrId;
+            if (effectivePrId && prData.items.length === 0) {
+              console.log('Fetching PR items for new CS, PR ID:', effectivePrId);
+              const itemsResponse = await api.fetchPRItems(effectivePrId, 1, 50);
+              if (itemsResponse && itemsResponse.success) {
+                console.log('✅ PR items loaded:', itemsResponse.pr_items?.length || 0, 'items');
+                setPrData(prev => ({
+                  ...prev,
+                  items: itemsResponse.pr_items?.map((item: {
+                    id: number;
+                    item_required: string;
+                    quantity: number;
+                    unit_of_measurement: string;
+                    ordered: boolean;
+                    status: string;
+                    included: boolean;
+                  }) => ({
+                    id: item.id.toString(),
+                    name: item.item_required,
+                    quantity: item.quantity,
+                    unit: item.unit_of_measurement,
+                    status: item.status || (item.ordered ? 'used_in_other_schedule' : 'available'),
+                    included: item.included !== undefined ? item.included : !item.ordered
+                  })) || []
+                }));
+              } else {
+                console.warn('Failed to load PR items:', itemsResponse);
+              }
+            } else if (!effectivePrId) {
+              console.warn('No PR ID available to load items');
+            } else {
+              console.log('PR items already loaded:', prData.items.length, 'items');
+            }
+          }
+          setLoadingOperation('');
+          break;
+        }
+      }
+      
+      setLoadedTabs(prev => new Set([...prev, tabId]));
+    } catch (error) {
+      console.error(`Error loading ${tabId} data:`, error);
+    } finally {
+      setLoadingOperation('');
+    }
+  }, [loadedTabs, csId, base_url, defaultRequestOptions, prid, storedPrId, prData.items.length, api]);
+  
+  // Handle tab change
+  const handleTabChange = useCallback(async (tabId: TabId) => {
+    setActiveTab(tabId);
+    await loadTabData(tabId);
+  }, [loadTabData]);
+  
+  // Handle saving a bid
+  const handleSaveBid = useCallback(async (bid: IBid) => {
+    setIsLoading(true);
+    setLoadingOperation("Saving bid");
+    
+    try {
+      const formData = new FormData();
+      
+      // Append bid data
+      const bidWithoutFile = { ...bid };
+      delete bidWithoutFile.bid_document;
+      
+      formData.append('bid_data', JSON.stringify(bidWithoutFile));
+      
+      // Append file if present
+      if (bid.bid_document) {
+        formData.append('bid_document', bid.bid_document);
+      }
+      
+      const requestOptions = {
+        method: "POST",
+        headers: {
+          "X-CSRFToken": csrfToken,
+        },
+        body: formData,
+      };
+      
+      await fetchWithRetry(buildApiUrl(base_url, getApiEndpoints().CS_BIDS(csId)), requestOptions);
+      
+      // Refresh data
+      fetchCS(csId);
+      onOpenResponse("Success", "Bid saved successfully", true);
+      
+      // Close the modal
+      if (addBidModal) {
+        setAddBidModal(false);
+      }
+      if (updateBidModal) {
+        setUpdateBidModal(false);
+      }
+      setCurrentBid(undefined);
+      setSupplierSearchTerm("");
+      setShowSupplierDropdown(false);
+    } catch (error) {
+      console.error("Error saving bid:", error);
+      onOpenResponse("Error", "Failed to save bid", false);
+    } finally {
+      setIsLoading(false);
+      setLoadingOperation("");
+    }
+  }, [csId, base_url, csrfToken, fetchCS]);
+  
+  // Handle deleting a bid
+  const handleDeleteBid = useCallback(async (bid_count: number, supplier_name: string) => {
+    setIsLoading(true);
+    setLoadingOperation(`Deleting bid from ${supplier_name}`);
+    try {
+      const requestOptions = {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": csrfToken,
+        },
+      };
+      
+      await fetchWithRetry(buildApiUrl(base_url, getApiEndpoints().CS_BID_DELETE(csId, bid_count)), requestOptions);
+      
+      // Refresh data
+      fetchCS(csId);
+      onOpenResponse("Success", `Bid from ${supplier_name} deleted successfully`, true);
+    } catch (error) {
+      console.error("Error deleting bid:", error);
+      onOpenResponse("Error", "Failed to delete bid", false);
+    } finally {
+      setIsLoading(false);
+      setLoadingOperation("");
+    }
+  }, [csId, base_url, csrfToken, fetchCS]);
+  
+  // Handle saving committee
+  const handleSaveCommittee = useCallback(async (committee: ICommittee[]) => {
+    // Only creators can save committee
+    if (!isCreator()) {
+      onOpenResponse("Access Denied", "Only the creator can save committee data.", false);
+      return;
+    }
+    setIsLoading(true);
+    setLoadingOperation("Saving committee members");
+    try {
+      const formData = new FormData();
+      formData.append("cs_id", csId);
+      formData.append("committee", JSON.stringify({ committee }));
+      formData.append("csrfmiddlewaretoken", csrfToken);
+      
 
-  const onApprovalApprove = (
+      
+      const requestOptions = {
+        method: "POST",
+        headers: {
+          "X-CSRFToken": csrfToken,
+        },
+        body: formData,
+      };
+      
+      await fetchWithRetry(buildApiUrl(base_url, getApiEndpoints().CS_SAVE_COMMITTEE), requestOptions);
+      
+      // Update both local and context state
+      updateCommitteeMembers(committee);
+      
+      // Also refresh committee data from server to ensure consistency
+      try {
+        const committeeData = await fetchWithRetry(
+          buildApiUrl(base_url, getApiEndpoints().CS_COMMITTEE_DATA(csId)), 
+          defaultRequestOptions
+        );
+        if (committeeData && committeeData.committee) {
+          updateCommitteeMembers(committeeData.committee);
+        }
+      } catch (error) {
+        console.error("Error refreshing committee data:", error);
+      }
+      
+      onOpenResponse("Success", "Committee saved successfully", true);
+    } catch (error) {
+      console.error("Error saving committee:", error);
+      onOpenResponse("Error", "Failed to save committee", false);
+    } finally {
+      setIsLoading(false);
+      setLoadingOperation("");
+    }
+  }, [csId, base_url, csrfToken, fetchCS]);
+  
+  
+  // Check if all approvals are complete
+  const checkApprovalsComplete = useCallback(() => {
+    const committeeApproved = committeeMembers.length > 0 && committeeMembers.every(m => m.memberApproval === "Approved");
+    const gmApproved = !!gmApproval && gmApproval.approval === "Approved";
+    const fmApproved = !!fmApproval && fmApproval.approval === "Approved";
+    
+    const allComplete = committeeApproved && gmApproved && fmApproved;
+    setApprovalsComplete(allComplete);
+    
+    return allComplete;
+  }, [committeeMembers, gmApproval, fmApproval]);
+
+  // Update approvals status when data changes
+  useEffect(() => {
+    checkApprovalsComplete();
+  }, [checkApprovalsComplete]);
+
+  // Load committee data when component mounts or csId changes
+  useEffect(() => {
+    if (csId && activeTab === 'committee') {
+      loadTabData('committee');
+    }
+  }, [csId, activeTab]);
+  
+  // Handle approval action
+  const handleApprove = useCallback(async (
     role: string,
     username: string,
     approval: string,
     justification: string
   ) => {
-    console.log("approval: ", approval, justification);
-    if (approval === "Rejected" && justification === "") {
-      onOpenResponse(
-        "Approval Error",
-        "Justification is required. Please add justification before submitting.",
-        false
-      );
+    // Only creators can perform approvals
+    if (!isCreator()) {
+      onOpenResponse("Access Denied", "Only the creator can perform approval actions.", false);
       return;
     }
-    const form_data: FormData = new FormData();
-    form_data.append("cs_id", csId);
-    form_data.append("role", role);
-    form_data.append("username", username);
-    form_data.append("approval", approval);
-    form_data.append("justification", justification);
-    form_data.append("csrfmiddlewaretoken", getCookie("csrftoken") ?? "");
+    setIsLoading(true);
+    setLoadingOperation(`Processing ${approval.toLowerCase()} action`);
+    try {
+      const requestOptions = {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": csrfToken,
+        },
+        body: JSON.stringify({
+          role,
+          username,
+          approval,
+          justification,
+        }),
+      };
+      
+      const data = await fetchWithRetry(buildApiUrl(base_url, getApiEndpoints().CS_APPROVAL(csId)), requestOptions);
+      
+      // Update approval state based on role
+      if (role === 'GM') {
+        setGmApproval({
+          id: data.approval_id || 1,
+          approver_name: username,
+          approval,
+          approval_date: new Date().toISOString(),
+          justification
+        });
+      } else if (role === 'FM') {
+        setFmApproval({
+          id: data.approval_id || 1,
+          approver_name: username,
+          approval,
+          approval_date: new Date().toISOString(),
+          justification
+        });
+      }
+      
+      // Refresh data
+      fetchCS(csId);
+      onOpenResponse("Success", `Successfully ${approval.toLowerCase()} the schedule`, true);
+    } catch (error) {
+      console.error("Error during approval:", error);
+      onOpenResponse("Error", "Failed to process approval", false);
+    } finally {
+      setIsLoading(false);
+      setLoadingOperation("");
+    }
+  }, [csId, base_url, csrfToken, fetchCS]);
 
-    fetch(`${base_url}/approval_approve`, {
-      method: "POST",
-      headers: {
-        "X-CSRFToken": getCookie("csrftoken") ?? "",
-      },
-      body: form_data,
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        console.log("data: ", data);
-        if (data.success) {
-          const role = (data as { role?: string }).role
-            ? (data as { role?: string }).role
-            : "";
-          const approval = (data as { approval?: string }).approval
-            ? (data as { approval?: string }).approval
-            : "";
-          if (role === "finance_manager") {
-            const fm_approval = (data as { fm_approval?: IFmApproval })
-              .fm_approval
-              ? (data as { fm_approval?: IFmApproval }).fm_approval
-              : undefined;
-            setFmApproval(fm_approval);
-          } else if (role === "general_manager") {
-            const gm_approval = (data as { gm_approval?: IGmApproval })
-              .gm_approval
-              ? (data as { gm_approval?: IGmApproval }).gm_approval
-              : undefined;
-            setGmApproval(gm_approval);
-          }
-          if (approval === "Approved") {
-            onOpenResponse(
-              "Approval Success",
-              "You have successfully approved this RFQ.",
-              true
-            );
+  // Handle committee member approval
+  const handleCommitteeApprove = useCallback(async (
+    username: string,
+    approval: string,
+    justification: string
+  ) => {
+    setIsLoading(true);
+    setLoadingOperation(`Processing committee ${approval.toLowerCase()}`);
+    try {
+      const formData = new FormData();
+      formData.append("cs_id", csId);
+      formData.append("username", username);
+      formData.append("approval", approval);
+      formData.append("justification", justification);
+      formData.append("csrfmiddlewaretoken", csrfToken);
+      
+      const requestOptions = {
+        method: "POST",
+        headers: {
+          "X-CSRFToken": csrfToken,
+        },
+        body: formData,
+      };
+      
+      await fetchWithRetry(buildApiUrl(base_url, "/approve_cs_committee"), requestOptions);
+      
+      // Refresh committee data
+      const committeeData = await fetchWithRetry(
+        buildApiUrl(base_url, getApiEndpoints().CS_COMMITTEE_DATA(csId)), 
+        defaultRequestOptions
+      );
+      if (committeeData && committeeData.committee) {
+        updateCommitteeMembers(committeeData.committee);
+      }
+      
+      onOpenResponse("Success", `Successfully ${approval.toLowerCase()} committee member`, true);
+    } catch (error) {
+      console.error("Error during committee approval:", error);
+      onOpenResponse("Error", "Failed to process committee approval", false);
+    } finally {
+      setIsLoading(false);
+      setLoadingOperation("");
+    }
+  }, [csId, base_url, csrfToken, updateCommitteeMembers]);
+  
 
-            // reload page
-            window.location.href = base_url + "/comperative_schedules";
-          } else {
-            onOpenResponse(
-              "Approval Success",
-              "You have successfully rejected this RFQ.",
-              true
-            );
-            window.location.href = base_url + "/comperative_schedules";
-          }
-        } else {
-          onOpenResponse(
-            "Approval Error",
-            "Failed to submit your approval. Please try again.",
-            false
-          );
-        }
-      });
-  };
 
-  const onApprovalJustificationModal = (username: string, role: string) => {
-    setCurrentApprover({
-      username: username,
-      justification: "",
-      role: role,
+  // Fetch currencies
+  // const fetchCurrencies = useCallback(async () => {
+  //   if (currencies.length > 0) return;
+    
+  //   setLoadingOperation("Loading currencies");
+  //   try {
+  //     const data = await fetchWithRetry(buildApiUrl(base_url, getApiEndpoints().CURRENCIES), defaultRequestOptions);
+  //     if (Array.isArray(data)) {
+  //       setCurrencies(data);
+  //     }
+  //   } catch (error) {
+  //     console.error("Error fetching currencies:", error);
+  //   } finally {
+  //     setLoadingOperation("");
+  //   }
+  // }, [base_url, defaultRequestOptions, currencies.length]);
+
+  // // Fetch procurement plans
+  // const fetchProcPlans = useCallback(async () => {
+  //   if (procPlans.length > 0) return;
+    
+  //   setLoadingOperation("Loading procurement plans");
+  //   try {
+  //     const data = await fetchWithRetry(buildApiUrl(base_url, getApiEndpoints().PROC_PLANS), defaultRequestOptions);
+  //     if (Array.isArray(data)) {
+  //       setProcPlans(data);
+  //     }
+  //   } catch (error) {
+  //     console.error("Error fetching procurement plans:", error);
+  //   } finally {
+  //     setLoadingOperation("");
+  //   }
+  // }, [base_url, defaultRequestOptions, procPlans.length]);
+
+
+
+  // Update schedule
+  // const handleUpdateSchedule = useCallback(async () => {
+  //   if (!csId) {
+  //     onOpenResponse("Update Schedule Error", "Please save the Comparative Schedule first", false);
+  //     return;
+  //   }
+
+  //   setIsLoading(true);
+  //   setLoadingOperation("Updating schedule");
+    
+  //   try {
+  //     const formData = new FormData();
+  //     formData.append("cs_id", csId);
+  //     formData.append("proc_ref", procPlan?.proc_ref ?? "");
+  //     formData.append("scope_of_work", prData.scope_of_work);
+  //     formData.append("currency", JSON.stringify(currency?.id));
+  //     formData.append("pr_number", prData.pr_number);
+  //     formData.append("quantity", quantity);
+  //     formData.append("pr_date", prData.pr_date);
+  //     formData.append("closing_date", prData.closing_date);
+  //     formData.append("ref_date", prData.reference_date);
+  //     formData.append("closing_time", prData.closing_time);
+  //     formData.append("date_tender_opened", prData.cs_opened_date);
+  //     formData.append("username", username);
+  //     formData.append("tender_adjudication_committee_date", prData.tac_date);
+      
+  //     if (advert) {
+  //       formData.append("advert", advert);
+  //     }
+      
+  //     formData.append("csrfmiddlewaretoken", csrfToken);
+
+  //     const requestOptions = {
+  //       method: "POST",
+  //       headers: {
+  //         "X-CSRFToken": csrfToken,
+  //       },
+  //       body: formData,
+  //     };
+
+  //     const data = await fetchWithRetry(buildApiUrl(base_url, getApiEndpoints().CS_UPDATE), requestOptions);
+      
+  //     if (data.success) {
+  //       onOpenResponse("Update Successful", "Comparative Schedule updated successfully", true);
+  //       fetchCS(csId); // Refresh data
+  //     } else {
+  //       onOpenResponse("Update Error", "Failed to update schedule", false);
+  //     }
+  //   } catch (error) {
+  //     console.error("Error updating schedule:", error);
+  //     onOpenResponse("Error", "Failed to update schedule", false);
+  //   } finally {
+  //     setIsLoading(false);
+  //     setLoadingOperation("");
+  //   }
+  // }, [csId, procPlan, prData, currency, quantity, username, advert, csrfToken, base_url, fetchCS]);
+
+  // // Close CS and generate rankings
+  // const handleCloseCS = useCallback(async () => {
+  //   setIsLoading(true);
+  //   setLoadingOperation("Processing compliance and generating rankings");
+    
+  //   try {
+  //     const formData = new FormData();
+  //     formData.append("cs_id", csId);
+  //     formData.append("csrfmiddlewaretoken", csrfToken);
+
+  //     const requestOptions = {
+  //       method: "POST",
+  //       headers: {
+  //         "X-CSRFToken": csrfToken,
+  //       },
+  //       body: formData,
+  //     };
+
+  //     const data = await fetchWithRetry(buildApiUrl(base_url, getApiEndpoints().CS_CLOSE_COMPLIANCE), requestOptions);
+      
+  //     if (data.success) {
+  //       setRankings(data.rankings || []);
+  //       onOpenResponse("Rank Bids Successful", "Bids ranked successfully", true);
+  //     } else {
+  //       onOpenResponse("Rank Bids Error", "Failed to rank bids", false);
+  //     }
+  //   } catch (error) {
+  //     console.error("Error ranking bids:", error);
+  //     onOpenResponse("Error", "Failed to rank bids", false);
+  //   } finally {
+  //     setIsLoading(false);
+  //     setLoadingOperation("");
+  //   }
+  // }, [csId, csrfToken, base_url]);
+
+  // // Save additional notes
+  // const handleAdditionalNotesSubmit = useCallback(async () => {
+  //   setIsLoading(true);
+  //   setLoadingOperation("Saving additional notes");
+    
+  //   try {
+  //     const formData = new FormData();
+  //     formData.append("cs_id", csId);
+  //     formData.append("additional_notes", additionalNotes);
+  //     formData.append("csrfmiddlewaretoken", csrfToken);
+
+  //     const requestOptions = {
+  //       method: "POST",
+  //       headers: {
+  //         "X-CSRFToken": csrfToken,
+  //       },
+  //       body: formData,
+  //     };
+
+  //     const data = await fetchWithRetry(buildApiUrl(base_url, getApiEndpoints().CS_ADDITIONAL_NOTES), requestOptions);
+      
+  //     if (data.success) {
+  //       onOpenResponse("Additional Notes Saved", "Additional notes saved successfully", true);
+  //     } else {
+  //       onOpenResponse("Additional Notes Error", "Failed to save additional notes", false);
+  //     }
+  //   } catch (error) {
+  //     console.error("Error saving additional notes:", error);
+  //     onOpenResponse("Error", "Failed to save additional notes", false);
+  //   } finally {
+  //     setIsLoading(false);
+  //     setLoadingOperation("");
+  //   }
+  // }, [csId, additionalNotes, csrfToken, base_url]);
+
+  // // Save buyer notes
+  // const handleBuyersNotesSubmit = useCallback(async () => {
+  //   setIsLoading(true);
+  //   setLoadingOperation("Saving buyer notes");
+    
+  //   try {
+  //     const formData = new FormData();
+  //     formData.append("cs_id", csId);
+  //     formData.append("buyers_notes", buyersNotes);
+  //     formData.append("csrfmiddlewaretoken", csrfToken);
+
+  //     const requestOptions = {
+  //       method: "POST",
+  //       headers: {
+  //         "X-CSRFToken": csrfToken,
+  //       },
+  //       body: formData,
+  //     };
+
+  //     const data = await fetchWithRetry(buildApiUrl(base_url, getApiEndpoints().CS_BUYERS_NOTES), requestOptions);
+      
+  //     if (data.success) {
+  //       // Update rankings with buyer notes for rank 1
+  //       const newRankings: IRank[] = (rankings ?? []).map((ranking) => {
+  //         if (ranking.rank === 1) {
+  //           ranking.remarks = buyersNotes;
+  //         }
+  //         return ranking;
+  //       });
+  //       setRankings(newRankings);
+  //       onOpenResponse("Buyer's Notes Saved", "Buyer's notes saved successfully", true);
+  //     } else {
+  //       onOpenResponse("Buyer's Notes Error", "Failed to save buyer's notes", false);
+  //     }
+  //   } catch (error) {
+  //     console.error("Error saving buyer notes:", error);
+  //     onOpenResponse("Error", "Failed to save buyer's notes", false);
+  //   } finally {
+  //     setIsLoading(false);
+  //     setLoadingOperation("");
+  //   }
+  // }, [csId, buyersNotes, csrfToken, base_url, rankings]);
+
+  // === FORM VALIDATION FUNCTIONS ===
+  
+  // Comprehensive field validation for schedule save/update
+  const validateScheduleFields = useCallback((): { isValid: boolean; errors: string[] } => {
+    const errors: string[] = [];
+    
+    if (!currency) errors.push("Currency is required");
+    if (!procPlan) errors.push("Procurement plan is required");
+    if (!prData.scope_of_work?.trim()) errors.push("Scope of work is required");
+    if (!prData.pr_number?.trim()) errors.push("PR number is required");
+    if (!prData.pr_date) errors.push("PR date is required");
+    if (!prData.closing_date) errors.push("Closing date is required");
+    if (!prData.reference_date) errors.push("Reference date is required");
+    if (!prData.closing_time) errors.push("Closing time is required");
+    if (!prData.cs_opened_date) errors.push("CS opened date is required");
+    if (!prData.tac_date) errors.push("TAC date is required");
+    if (!advert) errors.push("Advertisement document is required");
+    
+    return { isValid: errors.length === 0, errors };
+  }, [currency, procPlan, prData, advert]);
+
+  // File type and size validation
+  const validateFile = useCallback((file: File): { isValid: boolean; error?: string } => {
+    const allowedTypes = [
+      'application/pdf',
+      'application/msword', 
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'image/jpeg',
+      'image/jpg', 
+      'image/png'
+    ];
+    
+    const maxSize = 10 * 1024 * 1024; // 10MB
+    
+    if (!allowedTypes.includes(file.type)) {
+      return { 
+        isValid: false, 
+        error: 'File type not allowed. Please upload PDF, DOC, DOCX, JPG, JPEG, or PNG files only.' 
+      };
+    }
+    
+    if (file.size > maxSize) {
+      return { 
+        isValid: false, 
+        error: 'File size too large. Maximum allowed size is 10MB.' 
+      };
+    }
+    
+    return { isValid: true };
+  }, []);
+
+
+
+
+
+  // // Utility functions
+  // const showEnhancedError = useCallback((operation: string, error: unknown, retryAction?: () => void) => {
+  //   const message = error instanceof Error ? error.message : String(error);
+  //   console.error(`Operation ${operation} failed:`, error);
+  //   setResponse({
+  //     open: true,
+  //     title: `${operation.replace('_', ' ').toUpperCase()} Error`,
+  //     message,
+  //     success: false
+  //   });
+  // }, []);
+
+  // const retryWithBackoff = useCallback(async (operation: () => Promise<any>, maxRetries: number = 3, baseDelay: number = 1000) => {
+  //   for (let attempt = 0; attempt <= maxRetries; attempt++) {
+  //     try {
+  //       return await operation();
+  //     } catch (error) {
+  //       if (attempt === maxRetries) throw error;
+  //       const delay = baseDelay * Math.pow(2, attempt);
+  //       await new Promise(resolve => setTimeout(resolve, delay));
+  //     }
+  //   }
+  // }, []);
+
+  // // === USER MANAGEMENT FUNCTIONS ===
+  
+  // // Role-based access control logic
+  // const checkUserPermissions = useCallback((action: string): boolean => {
+  //   if (!username || !requesterRole) return false;
+    
+  //   switch (action) {
+  //     case 'create_schedule':
+  //       return ['procurement', 'admin'].includes(requesterRole);
+  //     case 'edit_schedule':
+  //       return username === csOwner || ['admin'].includes(requesterRole);
+  //     case 'add_bids':
+  //       return username === csOwner || ['procurement', 'admin'].includes(requesterRole);
+  //     case 'approve_committee':
+  //       return ['committee_member', 'admin'].includes(requesterRole);
+  //     case 'final_approval':
+  //       return ['gm', 'fm', 'admin'].includes(requesterRole);
+  //     default:
+  //       return false;
+  //   }
+  // }, [username, requesterRole, csOwner]);
+
+  // // Username-based permission checks
+  // const isScheduleOwner = useCallback((): boolean => {
+  //   return username === csOwner;
+  // }, [username, csOwner]);
+
+  // // === FILE MANAGEMENT FUNCTIONS ===
+  
+  // // File upload with validation
+  // const onFileInputChange = useCallback((name: string, event: React.ChangeEvent<HTMLInputElement>) => {
+  //   const file = event.target.files?.[0];
+  //   if (!file) return;
+    
+  //   const validation = validateFile(file);
+  //   if (!validation.isValid) {
+  //     onOpenResponse("File Upload Error", validation.error || "Invalid file", false);
+  //     return;
+  //   }
+    
+  //   switch (name) {
+  //     case 'advert':
+        // setAdvert(file);
+  //       break;
+  //     default:
+  //       console.warn(`Unknown file input: ${name}`);
+  //   }
+  // }, [validateFile]);
+
+  // === FORM HANDLING FUNCTIONS - WILL BE DEFINED AFTER updatePrData ===
+
+  // === ENHANCED DATA UPDATES & SYNCHRONIZATION ===
+  
+
+
+  // Cascading data updates after operations
+  const refreshAllData = useCallback(async () => {
+    if (csId) {
+      await fetchCS(csId);
+    }
+  }, [csId, fetchCS]);
+
+  // Helper function to check if current user is the creator
+  const isCreator = useCallback(() => {
+    // console.log("isCreator Debug:", {
+    //   csId: csId,
+    //   username: username,
+    //   creator: creator,
+    //   csOwner: csOwner,
+    //   isCreator: username === csOwner,
+    // });
+    // For new schedules (no csId), always return true
+    if (!csId || csId === "") {
+      return true;
+    }
+    // For existing schedules, check if current user is the creator
+    // Use csOwner (username) instead of creator (full name)
+    return username === csOwner;
+  }, [username, creator, csOwner, csId]);
+
+  // Show response notification
+  const onOpenResponse = useCallback((title: string, message: string, success: boolean) => {
+    setResponse({
+      open: true,
+      title,
+      message,
+      success,
     });
-    setApprovalsJustificationModal(!approvalsJustificationModal);
-  };
-
-  const onApprovalJustificationModalClose = () => {
-    setCurrentApprover({
-      username: "",
-      justification: "",
-      role: "",
+  }, []);
+  
+  // Close response notification
+  const onCloseResponse = useCallback(() => {
+    setResponse({
+      open: false,
+      title: "",
+      message: "",
+      success: false,
     });
-    setApprovalsJustificationModal(!approvalsJustificationModal);
-  };
+  }, []);
 
-  const onSaveSupplier = () => {
-    const form_data: FormData = new FormData();
-    form_data.append("supplier_name", newSupplier?.supplier_name ?? "");
-    form_data.append("csrfmiddlewaretoken", getCookie("csrftoken") ?? "");
+  // Handle manual PR fetch
+  const [prIdInput, setPrIdInput] = useState<string>("");
+  
+  const handleFetchPR = useCallback(async () => {
+    if (!prIdInput.trim()) {
+      onOpenResponse("Error", "Please enter a valid PR ID", false);
+      return;
+    }
+    
+    await onFetchPR(prIdInput.trim());
+    setPrIdInput(""); // Clear input after successful fetch
+  }, [prIdInput, onFetchPR]);
 
-    fetch(`${base_url}/save_supplier`, {
-      method: "POST",
-      headers: {
-        "X-CSRFToken": getCookie("csrftoken") ?? "",
-      },
-      body: form_data,
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        console.log("data: ", data);
-        if (data.success) {
-          onOpenResponse(
-            "Add New Supplier Success",
-            "New supplier added successfully",
-            true
-          );
-          setOnAddSupplier(false);
-          setNewSupplier({
-            id: 0,
-            name: "",
-            supplier_name: "",
-          });
-          const suppliers_ = (data as { suppliers?: ISupplier[] }).suppliers
-            ? (data as { suppliers?: ISupplier[] }).suppliers
-            : [];
-          setSuppliers(suppliers_);
-        } else {
-          onOpenResponse(
-            "Add New Supplier Error",
-            "Failed to add new supplier, please try again.",
-            false
-          );
-        }
+  // Handle PR data updates
+  const updatePrData = useCallback((field: string, value: string | boolean) => {
+    setPrData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  }, []);
+
+  // Handle item selection updates
+  const updateItemSelection = useCallback((itemId: string, included: boolean) => {
+    console.log('🔄 Updating item selection:', { itemId, included });
+    setPrData(prev => {
+      const updatedItems = prev.items.map(item => 
+        item.id === itemId ? { ...item, included } : item
+      );
+      
+      console.log('📊 Item selection updated:', {
+        totalItems: updatedItems.length,
+        selectedItems: updatedItems.filter(item => item.included).length,
+        itemDetails: updatedItems.find(item => item.id === itemId)
       });
-  };
-
-  const onApprovalJustificationChange = (event: {
-    target: { value: string };
-  }) => {
-    console.log("event: ", event);
-    const { value } = event.target;
-    const justification = value;
-    setCurrentApprover({
-      ...currentApprover,
-      justification: justification,
+      
+      return {
+        ...prev,
+        items: updatedItems
+      };
     });
-  };
+  }, []);
 
-  const onAddCSItem = (item_id: number) => {
-    // check is item already added
-    const item = csItems?.find((item) => item.id === item_id);
-    console.log("item: ", item);
-    if (item) {
-      // update item selected to false
-      item.ordered = false;
-      // update pr_items
-      const pr_items = prItems?.map((_item) => {
-        if (_item.id === item_id) {
-          return {
-            id: item.id,
-            item_required: item.item_required,
-            unit_of_measurement: item.unit_of_measurement,
-            quantity: item.quantity,
-            ordered: false,
-          };
-        }
-        return _item;
+  // Handle select all/deselect all items - only affects available items
+  const handleSelectAllItems = useCallback((selectAll: boolean) => {
+    setPrData(prev => ({
+      ...prev,
+      items: prev.items.map(item => ({
+        ...item,
+        // Only skip items used in other schedules - allow toggling current schedule items
+        included: item.status === 'used_in_other_schedule' ? item.included : selectAll
+      }))
+    }));
+  }, []);
+
+  // Check if all available items are selected
+  const allItemsSelected = useMemo(() => {
+    const availableItems = prData.items.filter(item => item.status !== 'used_in_other_schedule');
+    return availableItems.length > 0 && availableItems.every(item => item.included);
+  }, [prData.items]);
+
+  // Handle updating selected items
+  const handleUpdateSelectedItems = useCallback(async () => {
+    const effectivePrId = prid || storedPrId || prData.pr_number; // Use prop prid, stored PR ID, or PR number from data
+    
+    console.log("Update Items Debug:", {
+      csId: csId,
+      prid: prid, 
+      storedPrId: storedPrId,
+      prDataPrNumber: prData.pr_number,
+      effectivePrId: effectivePrId,
+      hasCsId: !!csId,
+      hasEffectivePrId: !!effectivePrId
+    });
+    
+    if (!csId) {
+      onOpenResponse("Error", "CS ID is required to update items", false);
+      return;
+    }
+    
+    if (!effectivePrId) {
+      onOpenResponse("Error", "PR ID is required to update items. Please ensure the PR is properly linked to this schedule.", false);
+      return;
+    }
+
+    // Check if bids exist - if true, do not allow form submission
+    if (bids && bids.length > 0) {
+      onOpenResponse("Update Blocked", "Cannot update PR items when bids exist. Please delete all bids before updating items.", false);
+      return;
+    }
+
+    setIsLoading(true);
+    setLoadingOperation("Updating selected items");
+
+    try {
+      // Send all items that need to be updated - newly selected available items and existing items being removed
+      const itemsToUpdate = prData.items.filter(item => 
+        // Include newly selected available items
+        (item.included && (item.status === 'available' || !item.status)) ||
+        // Include items currently in schedule (whether selected or deselected for removal)
+        item.status === 'included_in_cs'
+      );
+      
+      console.log('📤 Items to update:', {
+        totalItems: prData.items.length,
+        itemsToUpdate: itemsToUpdate.length,
+        selectedItems: prData.items.filter(item => item.included).length,
+        itemsDetails: itemsToUpdate.map(item => ({
+          id: item.id,
+          name: item.name,
+          status: item.status,
+          included: item.included
+        }))
       });
-      // remove item
-      const items = csItems?.filter((item) => item.id !== item_id);
-      setCsItems(items);
-      setPrItems(pr_items);
-    } else {
-      // find item in pr_items
-      const prItem = prItems?.find((item) => item.id === item_id);
-      // update pr_item selected to added
-      if (!prItem) {
+      
+      if (itemsToUpdate.length === 0) {
+        onOpenResponse("Info", "No items to update", false);
         return;
       }
-      prItem.ordered = true;
-      //   item.item_required = item.item_required;
-      // update pr_items
-      const pr_items = prItems?.map((_item) => {
-        if (_item.id === item_id) {
-          return prItem;
+        
+        const formData = new FormData();
+        formData.append("cs_id", csId);
+        formData.append("pr_id", effectivePrId!); // Non-null assertion since we checked above
+        formData.append("json_data", JSON.stringify({
+          cs_items: itemsToUpdate.map((item: { id: string; name: string; quantity: number; unit: string; included: boolean; status: string }) => ({
+          id: item.id,
+          item_required: item.name,
+          quantity: item.quantity,
+          unit_of_measurement: item.unit,
+          included: item.included
+        }))
+      }));
+      formData.append("csrfmiddlewaretoken", csrfToken);
+
+      const requestOptions = {
+        method: "POST",
+        headers: {
+          "X-CSRFToken": csrfToken,
+        },
+        body: formData,
+      };
+
+      const data = await fetchWithRetry(buildApiUrl(base_url, getApiEndpoints().CS_UPDATE_ITEMS()), requestOptions);
+      
+      if (data.success) {
+        onOpenResponse("Success", "Selected items updated successfully", true);
+        
+        // Refresh both CS items and PR items to get the complete updated state
+        try {
+          // Fetch updated CS data to get the new CS items
+          const updatedCSData = await fetchWithRetry(buildApiUrl(base_url, getApiEndpoints().CS_DETAILS(csId)), defaultRequestOptions);
+          
+          // Fetch updated PR items
+          const itemsResponse = await api.fetchPRItems(effectivePrId!, 1, 50);
+          
+          if (updatedCSData && itemsResponse && itemsResponse.success) {
+            // Process items from both cs_items (included in CS) and pr_items (available from PR)
+            const allItems: Array<{
+              id: string;
+              name: string;
+              quantity: number;
+              unit: string;
+              status: string;
+              included: boolean;
+            }> = [];
+            
+            // Add CS items (already included in this schedule)
+            if (updatedCSData.cs_items && Array.isArray(updatedCSData.cs_items)) {
+              updatedCSData.cs_items.forEach((item: {
+                id: number;
+                item_required: string;
+                quantity: number;
+                unit_of_measurement: string;
+              }) => {
+                allItems.push({
+                  id: item.id?.toString() || '',
+                  name: item.item_required || '',
+                  quantity: item.quantity || 0,
+                  unit: item.unit_of_measurement || '',
+                  status: 'included_in_cs',
+                  included: true
+                });
+              });
+            }
+            
+            // Add PR items (available items from original PR)
+            if (itemsResponse.pr_items && Array.isArray(itemsResponse.pr_items)) {
+              itemsResponse.pr_items.forEach((item: {
+                id: number;
+                item_required: string;
+                quantity: number;
+                unit_of_measurement: string;
+                ordered?: boolean;
+                status?: string;
+                included?: boolean;
+              }) => {
+                // Check if this item is already in cs_items to avoid duplicates
+                const existsInCS = allItems.some(csItem => csItem.id === item.id?.toString());
+                if (!existsInCS) {
+                  allItems.push({
+                    id: item.id?.toString() || '',
+                    name: item.item_required || '',
+                    quantity: item.quantity || 0,
+                    unit: item.unit_of_measurement || '',
+                    status: item.ordered ? 'used_in_other_schedule' : 'available',
+                    included: false
+                  });
+                }
+              });
+            }
+            
+            // Update prData with the complete merged items
+            setPrData(prev => ({
+              ...prev,
+              items: allItems
+            }));
+            
+            console.log('✅ Items refreshed successfully:', {
+              csItems: updatedCSData.cs_items?.length || 0,
+              prItems: itemsResponse.pr_items?.length || 0,
+              totalItems: allItems.length,
+              includedItems: allItems.filter(item => item.included).length
+            });
+          }
+        } catch (refreshError) {
+          console.error("Error refreshing items after update:", refreshError);
+          // Fallback: just refresh the entire CS data
+          fetchCS(csId);
         }
-        return _item;
-      });
-
-      const item_count = csItemCount ? csItemCount + 1 : 1;
-      setCsItemCount(item_count);
-      setCsItems([...(csItems ?? []), { ...prItem }]);
-      setPrItems(pr_items);
+      } else {
+        onOpenResponse("Error", data.message || "Failed to update items", false);
+      }
+    } catch (error) {
+      console.error("Error updating items:", error);
+      onOpenResponse("Error", "Failed to update selected items", false);
+    } finally {
+      setIsLoading(false);
+      setLoadingOperation("");
     }
-  };
+  }, [csId, prid, storedPrId, prData.items, csrfToken, base_url, api, bids]);
 
-  const onSubmitCSItems = () => {
-    if (csItems && csItems.length === 0) {
-      onOpenResponse(
-        "Submit Schedule Items Error",
-        "Please add items to the Comparative Schedule",
-        false
-      );
-      return;
+  // === ENHANCED BID MANAGEMENT FUNCTIONS ===
+  
+
+
+  // Set direct purchase limit
+  const onSetDirectPurchaseLimit = useCallback(() => {
+    if (base_url === "/direct_purchase") {
+      const limit = (bids?.length ?? 0) >= 1 ? false : true;
+      setDirectPurchaseLimit(limit);
     }
-    const form_data: FormData = new FormData();
-    form_data.append("cs_id", csId);
-    form_data.append("pr_id", prNumber);
-    form_data.append(
-      "json_data",
-      JSON.stringify({
-        cs_items: csItems,
-      })
-    );
-    form_data.append("csrfmiddlewaretoken", getCookie("csrftoken") ?? "");
+  }, [base_url, bids]);
 
-    fetch(`${base_url}/update_pritem_ordered`, {
-      method: "POST",
-      headers: {
-        "X-CSRFToken": getCookie("csrftoken") ?? "",
-      },
-      body: form_data,
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        console.log("data: ", data);
-        if (data.success) {
-          onOpenResponse(
-            "Submit Schedule Items Success",
-            "Items submitted successfully",
-            true
-          );
-        } else {
-          onOpenResponse(
-            "Submit Schedule Items Error",
-            "Failed to submit schedule items, please try again.",
-            false
-          );
-        }
-      });
-    setAddItemsModal(false);
-  };
-
-  const onAddSuppliersModal = () => {
+  // Add supplier modal
+  const onAddSuppliersModal = useCallback(() => {
     setOnAddSupplier(!onAddSupplier);
-  };
+  }, [onAddSupplier]);
 
-  const onSupplierChange = (event: {
-    target: { name: string; value: string };
-  }) => {
+  // Handle supplier change
+  const onSupplierChange = useCallback((event: { target: { name: string; value: string } }) => {
     const { name, value } = event.target;
     setNewSupplier({
       ...newSupplier,
       [name]: value,
     });
-  };
+  }, [newSupplier]);
 
-  const onAddBidModal = () => {
+  // Add bid modal
+  const onAddBidModal = useCallback(() => {
+    // Only creators can add bids
+    if (!isCreator()) {
+      onOpenResponse("Access Denied", "Only the creator can add bids to this schedule.", false);
+      return;
+    }
+
+    // Convert selected PR items to bid items format
+    const selectedPrItems = prData.items.filter(item => item.included);
+    const bidItems: IBidItem[] = selectedPrItems.map(item => ({
+      id: parseInt(item.id),
+      item_required: item.name,
+      unit_of_measurement: item.unit,
+      quantity: item.quantity,
+      unit_price: 0,
+      total_price: 0,
+      vat: "0",
+      ordered: false
+    }));
+
     setCurrentBid({
-        bid_count: bidCount + 1,
-        items: csItems,
-        });
+      bid_count: bidCount + 1,
+      items: bidItems,
+    });
     setAddBidModal(!addBidModal);
-    console.log("currentBid: ", currentBid, addBidModal);
-  };
+    setSupplierSearchTerm(""); // Clear search when opening modal
+    setShowSupplierDropdown(false); // Hide dropdown
+    console.log("currentBid with PR items: ", { bid_count: bidCount + 1, items: bidItems });
+  }, [bidCount, prData.items, addBidModal, isCreator, onOpenResponse]);
 
-  const onUpdateBidModal = (bid_count: number) => {
-    const bid = bids?.find((bid) => bid.bid_count === bid_count);
-    setUpdateBidModal(!updateBidModal);
-    setCurrentBid(bid);
-  };
+  // Update bid modal
+  const onUpdateBidModal = useCallback((bid_count: number) => {
+    // Only creators can update bids
+    if (!isCreator()) {
+      onOpenResponse("Access Denied", "Only the creator can edit bids in this schedule.", false);
+      return;
+    }
 
-  const onCloseCurrentBid = () => {
-    setUpdateBidModal(false);
+    const bid = bids.find((bid) => bid && bid.bid_count === bid_count);
+    if (bid) {
+      setCurrentBid(bid);
+      // Populate supplier search term for editing
+      setSupplierSearchTerm(bid.supplier_name || '');
+      setUpdateBidModal(!updateBidModal);
+    }
+  }, [bids, updateBidModal, isCreator, onOpenResponse]);
+
+  // Close current bid modal
+  const onCloseCurrentBid = useCallback(() => {
     setAddBidModal(false);
-    setCurrentBid({});
-  };
+    setCurrentBid(undefined);
+    setSupplierSearchTerm(""); // Clear search when closing modal
+    setShowSupplierDropdown(false); // Hide dropdown
+  }, []);
 
-  const onCloseUpdateBidBid = () => {
+  // Close update bid modal
+  const onCloseUpdateBidBid = useCallback(() => {
     setUpdateBidModal(false);
-    setCurrentBid({});
-  };
+    setCurrentBid(undefined);
+    setSupplierSearchTerm(""); // Clear search when closing modal
+    setShowSupplierDropdown(false); // Hide dropdown
+  }, []);
 
-  const onCurrentBidChange = (
+  // Handle current bid changes
+  const onCurrentBidChange = useCallback((
     name_: string,
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
-    if (name_ === "supplier") {
-      const { value } = event.target;
-      console.log("value: ", value);
-      const id_name = value ? value.split("-#-") : [];
-      const supplier: string = id_name.length > 0 ? id_name[0] : "";
-      const supplier_name: string = id_name.length >= 1 ? id_name[1] : "";
+    const { name, value } = event.target;
+    console.log("name: ", name, "value: ", value);
+    if (name_ === "supplier_name") {
       setCurrentBid({
         ...currentBid,
-        supplier: supplier,
-        supplier_name: supplier_name,
+        supplier_name: value,
       });
-    } else {
-      const { value } = event.target;
+    } else if (name_ === "bid_date") {
       setCurrentBid({
         ...currentBid,
-        [name_]: value,
+        bid_date: value,
       });
     }
-  };
+  }, [currentBid]);
 
-  const onCurrentBidSupplierChange = (
-    name_: string,
-    event: React.ChangeEvent<HTMLSelectElement>
-  ) => {
-    if (name_ === "supplier") {
-      const { value } = event.target;
-      console.log("value: ", value);
-      const id_name = value ? value.split("-#-") : [];
-      const supplier: string = id_name.length > 0 ? id_name[0] : "";
-      const supplier_name: string = id_name.length >= 1 ? id_name[1] : "";
+
+
+  // Handle bid document change with enhanced file handling
+  const onBidDocumentChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const validation = validateFile(file);
+      if (!validation.isValid) {
+        onOpenResponse("File Upload Error", validation.error || "Invalid file", false);
+        return;
+      }
+      
+      // Enhanced file handling - log file details for debugging
+      console.log('File uploaded:', {
+        name: file.name,
+        size: file.size,
+        type: file.type,
+        lastModified: new Date(file.lastModified).toISOString()
+      });
+      
       setCurrentBid({
         ...currentBid,
-        supplier: supplier,
-        supplier_name: supplier_name,
+        bid_document: file,
       });
-    } else {
-      const { value } = event.target;
-      setCurrentBid({
-        ...currentBid,
-        [name_]: value,
-      });
+      
+      onOpenResponse("File Uploaded", `File "${file.name}" uploaded successfully`, true);
     }
-  };
+  }, [currentBid, validateFile]);
 
-  const onBidDocumentChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const bid_file = event.target.files && event.target.files[0];
-    const bid_document_url = onGetFileObjectUrl(bid_file ?? undefined);
-    const bid_document: File | null = bid_file;
-    setCurrentBid({
-      ...currentBid,
-      bid_document: bid_document,
-      bid_document_url: bid_document_url || "",
-    });
-  };
-
-  const onCurrentBidItemChange = (
+  // Handle current bid item changes with auto-calculation
+  const onCurrentBidItemChange = useCallback((
     description: string,
     name_: string,
     event: { target: { name: string; value: string } },
     bid_no: string
   ) => {
-    const { name, value } = event.target;
-    console.log("name: ", name, " value: ", value, " bid no: ", bid_no);
-    console.log("description: ", description);
-
-    const items = currentBid && currentBid.items;
-
-    const new_items = items
-      ? items.map((it) => {
-          if (it.item_required === description) {
-            return {
-              ...it,
-              [name_]: value,
-            };
-          } else {
-            return it;
-          }
-        })
-      : [];
-
-    setCurrentBid({
-      ...currentBid,
-      items: new_items,
-    });
-  };
-
-  const onCurrentBidSave = () => {
-    if (
-      currentBid?.supplier_name === "" ||
-      currentBid?.supplier_name === undefined
-    ) {
-      onOpenResponse("Submit Bid Error", "Please select a supplier", false);
-      return;
-    } else if (
-      currentBid.bid_date === "" ||
-      currentBid.bid_date === undefined
-    ) {
-      onOpenResponse("Submit Bid Error", "Please select a bid date", false);
-      return;
-    } else if (currentBid?.bid_document === undefined) {
-      onOpenResponse("Submit Bid Error", "Please select a bid document", false);
-      return;
-    } else {
-      // check if current bid already exists
-      if (currentBid.items) {
-        const bid =
-          bids &&
-          bids.find((bid) => bid && bid.bid_count === currentBid.bid_count);
-        console.log("bid found: ", bid);
-        if (bid) {
-          // update bid
-          console.log("currentBid 1: ", currentBid);
-          let items: IBidItem[];
-          if (currentBid.items && currentBid.items.length > 0) {
-            items = currentBid.items.map((item) => {
-              item.total_price =
-                item.quantity && item.unit_price
-                  ? item.quantity * item.unit_price
-                  : 0;
-              return item;
-            });
-
-            const missingFields = items.filter(
-              (item) =>
-                item.quantity === undefined ||
-                item.unit_price === undefined ||
-                item.vat === "" ||
-                item.vat === undefined ||
-                item.unit_of_measurement === "" ||
-                item.unit_of_measurement === undefined ||
-                item.total_price === undefined
-            );
-
-            if (missingFields.length > 0) {
-              onOpenResponse(
-                "Submit Bid Error",
-                "Please fill in all required fields",
-                false
-              );
-              return;
-            }
-            currentBid.items = items;
-            console.log("currentBid: ", currentBid);
-            let bids_: IBid[] = [];
-            if (bids && bids.length > 0) {
-              bids_ = bids.map((bid) => {
-                if (bid.bid_count === currentBid.bid_count) {
-                  return {
-                    ...currentBid,
-                    bid_document: currentBid.bid_document
-                      ? currentBid.bid_document
-                      : bid.bid_document,
-                    bid_document_url: onGetFileObjectUrl(
-                      currentBid.bid_document ?? undefined
-                    ),
-                  };
-                }
-                return bid;
-              });
-
-              bids_.sort((a, b) =>
-                a.bid_count && b.bid_count ? a.bid_count - b.bid_count : 0
-              );
-              onSaveBid(currentBid, bids_, undefined);
-            }
-          }
-        } else {
-          // calculate total price for each item
-          let items: IBidItem[] = [];
-          if (currentBid.items && currentBid.items.length > 0) {
-            items = currentBid.items.map((item) => {
-              item.total_price =
-                item.quantity &&
-                item.unit_price &&
-                item.quantity * item.unit_price;
-              return item;
+    const { value } = event.target;
+    console.log("🔢 Bid item change:", { field: name_, value, description, bid_no });
+    
+    if (currentBid?.items) {
+      const updatedItems = currentBid.items.map((item) => {
+        if (item.item_required === description) {
+          const updatedItem = {
+            ...item,
+            [name_]: name_ === "quantity" || name_ === "unit_price" ? 
+              parseFloat(value) || 0 : value,
+          };
+          
+          // Auto-calculate total price when quantity or unit_price changes
+          if (name_ === "quantity" || name_ === "unit_price") {
+            const quantity = name_ === "quantity" ? parseFloat(value) || 0 : Number(item.quantity) || 0;
+            const unitPrice = name_ === "unit_price" ? parseFloat(value) || 0 : Number(item.unit_price) || 0;
+            const calculatedTotal = quantity * unitPrice;
+            updatedItem.total_price = calculatedTotal;
+            
+            console.log("💰 Total calculation:", { 
+              item: description, 
+              quantity, 
+              unitPrice, 
+              calculatedTotal,
+              originalQuantity: item.quantity,
+              originalUnitPrice: item.unit_price
             });
           }
-
-          const missingFields = items.filter(
-            (item) =>
-              item.quantity === undefined ||
-              item.unit_price === undefined ||
-              item.vat === "" ||
-              item.vat === undefined ||
-              item.unit_of_measurement === "" ||
-              item.unit_of_measurement === undefined ||
-              item.total_price === undefined
-          );
-
-          if (missingFields.length > 0) {
-            onOpenResponse(
-              "Submit Bid Error",
-              "Please fill in all required fields",
-              false
-            );
-            return;
-          }
-          // update current bid items
-          currentBid.items = items;
-
-          bids?.sort((a, b) =>
-            a.bid_count && b.bid_count ? a.bid_count - b.bid_count : 0
-          );
-          onSaveBid(currentBid, bids ?? []);
+          
+          return updatedItem;
         }
-      } else {
-        onOpenResponse(
-          "Submit Bid Error",
-          "Please add items to the bid",
-          false
-        );
+        return item;
+      });
+      
+      console.log("📊 Updated bid items:", updatedItems);
+      
+      setCurrentBid({
+        ...currentBid,
+        items: updatedItems,
+      });
+    }
+  }, [currentBid]);
+
+  // Enhanced save bid function with direct purchase validation
+  const onSaveBid = useCallback((bid: IBid, bids: IBid[], bid_count?: number) => {
+    // Only creators can save bids
+    if (!isCreator()) {
+      onOpenResponse("Access Denied", "Only the creator can save bids to this schedule.", false);
+      return;
+    }
+    console.log("bid_count: ", bid_count);
+    
+    // Direct purchase validation
+    if (base_url === "/direct_purchase" && bids.length >= 1 && !bid_count) {
+      onOpenResponse("Direct Purchase Limit", "Direct purchase allows maximum 1 bid only", false);
+      return;
+    }
+    
+    // File validation
+    if (bid.bid_document && bid.bid_document instanceof File) {
+      const fileValidation = validateFile(bid.bid_document);
+      if (!fileValidation.isValid) {
+        onOpenResponse("File Validation Error", fileValidation.error || "Invalid file", false);
+        return;
       }
     }
-  };
 
-  const onSaveBid = (bid: IBid, bids: IBid[], bid_count?: number) => {
-    console.log("bid_count: ", bid_count);
     const form_data: FormData = new FormData();
 
     form_data.append("cs_id", csId);
-    form_data.append(
-      "bid_count",
-      bid?.bid_count ? bid?.bid_count?.toString() : ""
-    );
+    form_data.append("bid_count", bid?.bid_count ? bid?.bid_count?.toString() : "");
     form_data.append("supplier", bid.supplier ?? "");
     form_data.append("supplier_name", bid.supplier_name ?? "");
     form_data.append("bid_date", bid.bid_date ?? "");
@@ -1556,12 +1990,12 @@ export default function Schedule({
         items: bid.items,
       })
     );
-    form_data.append("csrfmiddlewaretoken", getCookie("csrftoken") ?? "");
+    form_data.append("csrfmiddlewaretoken", csrfToken);
 
     fetch(`${base_url}/save_bid`, {
       method: "POST",
       headers: {
-        "X-CSRFToken": getCookie("csrftoken") ?? "",
+        "X-CSRFToken": csrfToken,
       },
       body: form_data,
     })
@@ -1573,207 +2007,65 @@ export default function Schedule({
           setBids([...bids, bid]);
           setAddBidModal(false);
           setUpdateBidModal(false);
-          setCurrentBid({});
-          setBidCount(bidCount+1);
-          if(base_url === "/direct_purchase"){
-              const limit: boolean = bids?.length??0 >= 1 ? false : true;
-              setDirectPurchaseLimit(limit)
-          }
+          setCurrentBid(undefined);
+          setBidCount(bidCount + 1);
+          onSetDirectPurchaseLimit();
         } else {
-          onOpenResponse(
-            "Save Bid Error",
-            "Failed to save bid, please try again.",
-            false
-          );
+          onOpenResponse("Save Bid Error", "Failed to save bid, please try again.", false);
         }
-      });
-  };
+             });
+   }, [csId, csrfToken, base_url, bidCount, onSetDirectPurchaseLimit, validateFile]);
 
-  const onDeleteBidModal = (
-    bid_count: number | undefined,
-    supplier_name: string | undefined
-  ) => {
-    onOpenResponse(
-      "Delete Bid",
-      "Are you sure you want to delete this bid? This action cannot be undone",
-      false
-    );
-    deleteBid(bid_count ?? 0, supplier_name ?? "");
-    onSetDirectPurchaseLimit()
-  };
-
-  const onSaveSchedule = () => {
-    if (
-      !currency ||
-      !procRef ||
-      !scopeOfWork ||
-      !prNumber ||
-      !prDate ||
-      !closingDate ||
-      !refDate ||
-      !closingTime ||
-      !dateTenderOpened ||
-      !tenderAdjudicationCommitteeDate ||
-      !advert
-    ) {
-      onOpenResponse(
-        "Submit Schedule Error",
-        "Please fill in all required fields",
-        false
-      );
+  // Save current bid
+  const onCurrentBidSave = useCallback(() => {
+    // Only creators can save bids
+    if (!isCreator()) {
+      onOpenResponse("Access Denied", "Only the creator can save bids to this schedule.", false);
       return;
     }
-    if (prItems && prItems.length === 0) {
-      onOpenResponse(
-        "Submit Schedule Error",
-        "Cannot create a Comparative Schedule without Purchase Request items.",
-        false
-      );
+    if (!currentBid?.supplier_name) {
+      onOpenResponse("Submit Bid Error", "Please select a supplier", false);
       return;
-    }
-    const form_data: FormData = new FormData();
-    // add enctype to form data
-    // form_data.enctype = "multipart/form-data";
-    form_data.append("proc_ref", procRef);
-    form_data.append("scope_of_work", scopeOfWork);
-    form_data.append("currency", JSON.stringify(currency.id));
-    form_data.append("pr_number", prNumber);
-    form_data.append("quantity", quantity);
-    form_data.append("pr_date", prDate);
-    form_data.append("closing_date", closingDate);
-    form_data.append("ref_date", refDate);
-    form_data.append("closing_time", closingTime);
-    form_data.append("date_tender_opened", dateTenderOpened);
-    form_data.append("username", username ?? "");
-    form_data.append(
-      "tender_adjudication_committee_date",
-      tenderAdjudicationCommitteeDate
-    );
-    form_data.append("advert", advert);
-    form_data.append("csrfmiddlewaretoken", getCookie("csrftoken") ?? "");
-
-    fetch(`${base_url}/save`, {
-      method: "POST",
-      headers: {
-        "X-CSRFToken": getCookie("csrftoken") ?? "",
-      },
-      body: form_data,
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        console.log("comperative schedule saved data: ", data);
-        if (data.success) {
-          onOpenResponse(
-            "Submit Schedule Successful",
-            "Comparative Schedule saved successfully",
-            true
-          );
-          setCsId(data.cs_id);
-          setCsOwner(data.cs_owner);
+    } else if (!currentBid.bid_date) {
+      onOpenResponse("Submit Bid Error", "Please select a bid date", false);
+      return;
+    } else if (!currentBid?.bid_document) {
+      onOpenResponse("Submit Bid Error", "Please select a bid document", false);
+      return;
+    } else {
+      // Check if current bid already exists
+      if (currentBid.items) {
+        const bid = bids.find((bid) => bid && bid.bid_count === currentBid.bid_count);
+        console.log("bid found: ", bid);
+        
+        if (bid) {
+          // Update existing bid
+          onSaveBid(currentBid, bids, currentBid.bid_count);
         } else {
-          onOpenResponse(
-            "Submit Schedule Error",
-            "Failed to submit schedule, please try again.",
-            false
-          );
+          // Create new bid
+          onSaveBid(currentBid, bids);
         }
-      })
-      .catch((err) => console.log("onSaveSchedule: ", err));
-  };
+      }
+    }
+  }, [currentBid, bids, onSaveBid]);
 
-  const onUpdateSchedule = () => {
-    console.log("adverts: ", advert);
-    if (csId === "" || csId === undefined) {
-      onOpenResponse(
-        "Update Schedule Error",
-        "Please save the Comparative Schedule first",
-        false
-      );
+  // Enhanced delete bid with compliance cleanup
+  const deleteBid = useCallback((bid_count: number, supplier_name: string) => {
+    // Only creators can delete bids
+    if (!isCreator()) {
+      onOpenResponse("Access Denied", "Only the creator can delete bids from this schedule.", false);
       return;
     }
-    setProcRef(procPlan?.proc_ref??"")
-    console.log("currency ...", currency, "procRef: ", procPlan?.proc_ref, "scopeOfWork: ", scopeOfWork, "prNumber: ", prNumber, "prDate: ", prDate, "closingDate: ", closingDate, "refDate: ", refDate, "closingTime: ", closingTime, "dateTenderOpened: ", dateTenderOpened, "tenderAdjudicationCommitteeDate: ", tenderAdjudicationCommitteeDate);
-    if (
-      !currency ||
-      !procPlan ||
-      !scopeOfWork ||
-      !prNumber ||
-      !prDate ||
-      !closingDate ||
-      !refDate ||
-      !closingTime ||
-      !dateTenderOpened ||
-      !tenderAdjudicationCommitteeDate ||
-      !advert
-    ) {
-      onOpenResponse(
-        "Update Schedule Error",
-        "Please fill in all required fields",
-        false
-      );
-      return;
-    }
-    const form_data: FormData = new FormData();
-    // console.log("currency ...", this.state);
-    // add enctype to form data
-    // form_data.enctype = "multipart/form-data";
-    form_data.append("cs_id", csId);
-    form_data.append("proc_ref", procPlan?.proc_ref ?? "");
-    form_data.append("scope_of_work", scopeOfWork);
-    form_data.append("currency", JSON.stringify(currency.id));
-    form_data.append("pr_number", prNumber);
-    form_data.append("quantity", quantity);
-    form_data.append("pr_date", prDate);
-    form_data.append("closing_date", closingDate);
-    form_data.append("ref_date", refDate);
-    form_data.append("closing_time", closingTime);
-    form_data.append("date_tender_opened", dateTenderOpened);
-    form_data.append("username", username ?? "");
-    form_data.append(
-      "tender_adjudication_committee_date",
-      tenderAdjudicationCommitteeDate
-    );
-    form_data.append("advert", advert);
-    form_data.append("csrfmiddlewaretoken", getCookie("csrftoken") ?? "");
-
-    fetch(`${base_url}/update`, {
-      method: "POST",
-      headers: {
-        "X-CSRFToken": getCookie("csrftoken") ?? "",
-      },
-      body: form_data,
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        console.log("data: ", data);
-        if (data.success) {
-          onOpenResponse(
-            "Update Schedule Successful",
-            "Comparative Schedule updated successfully",
-            true
-          );
-        } else {
-          onOpenResponse(
-            "Update Schedule Error",
-            "Failed to submit schedule, please try again.",
-            false
-          );
-        }
-      })
-      .catch((err) => console.log("onUpdateSchedule: ", err));
-  };
-
-  const deleteBid = (bid_count: number, supplier_name: string) => {
     const form_data: FormData = new FormData();
     form_data.append("cs_id", csId);
     form_data.append("bid_count", JSON.stringify(bid_count));
     form_data.append("supplier_name", supplier_name);
-    form_data.append("csrfmiddlewaretoken", getCookie("csrftoken") ?? "");
+    form_data.append("csrfmiddlewaretoken", csrfToken);
 
     fetch(`${base_url}/delete_bid`, {
       method: "POST",
       headers: {
-        "X-CSRFToken": getCookie("csrftoken") ?? "",
+        "X-CSRFToken": csrfToken,
       },
       body: form_data,
     })
@@ -1781,180 +2073,62 @@ export default function Schedule({
       .then((data) => {
         console.log("data: ", data);
         if (data.success) {
-          // delete compliance if bid_no and supplier_name
-          const _compliance = compliance?.filter(
+          // Delete compliance if bid_no and supplier_name
+          const updatedCompliance = compliance?.filter(
             (compliance_) =>
               compliance_.supplier_name !== supplier_name &&
               compliance_.bid_no !== bid_count
           );
 
-          const complianceRemark = complianceRemarks?.filter(
+          const updatedComplianceRemarks = complianceRemarks?.filter(
             (complianceRemark_) =>
               complianceRemark_.supplier_name !== supplier_name &&
               complianceRemark_.bid_no !== bid_count
           );
-          setCompliance(_compliance);
-          setComplianceRemarks(complianceRemark);
-          onOpenResponse(
-            "Delete Bid Successful",
-            "Bid deleted successfully",
-            true
-          );
+          
+          setCompliance(updatedCompliance);
+          setComplianceRemarks(updatedComplianceRemarks);
+          
+          onOpenResponse("Delete Bid Successful", "Bid deleted successfully", true);
+          
+          // Reset bid no index
+          const newBidCount = bidCount > 0 ? bidCount - 1 : 0;
+          const newBids = bids?.filter((bid) => bid.bid_count !== bid_count);
+          
+          // Update bid_count index for all bids sequentially
+          const updatedBids = newBids?.map((bid, index) => {
+            bid.bid_count = index + 1;
+            return bid;
+          });
+          
+          setBids(updatedBids || []);
+          setBidCount(newBidCount);
+          onSetDirectPurchaseLimit();
         } else {
-          onOpenResponse(
-            "Delete Bid Error",
-            "Failed to delete schedule",
-            false
-          );
+          onOpenResponse("Delete Bid Error", "Failed to delete bid", false);
         }
-        
-        if (response?.open) {
-          window.location.reload();
-        }
+             });
+   }, [csId, csrfToken, base_url, compliance, complianceRemarks, bidCount, bids, onSetDirectPurchaseLimit]);
 
-        // reset bid no index
-        const bid_count_ = bidCount > 0? bidCount - 1: 0;
-        const newBids = bids?.filter((bid) => bid.bid_count !== bid_count);
-        // update bid_count index for all bids sequentially
-        const updatedBids = newBids?.map((bid, index) => {
-          bid.bid_count = index + 1;
-          return bid;
-        });
-        setBidCount(bid_count_);
-        setBids(updatedBids);
-      });
-  };
 
-  const onAddItemsModal = () => {
-    setAddItemsModal(!addItemsModal);
-  };
 
-  const onSelectChange = (
-    name_: string,
-    event: React.ChangeEvent<HTMLSelectElement>
-  ) => {
-    const { value } = event.target;
+  // === COMPLIANCE MANAGEMENT FUNCTIONS ===
 
-    if (name_ === "closing_time") {
-      setClosingTime(value);
-    } else if (name_ === "proc_ref") {
-      setProcRef(value);
-    } else if (name_ === "currency") {
-      setCurrency({
-        id: parseInt(value),
-      });
-    }
-  };
-
-  const onAddCommitteeMembers = () => {
-    if (!member?.memberUserName || !member?.memberPosition) {
-      onOpenResponse(
-        "Add Committee Member Error",
-        "Please select a user",
-        false
-      );
-    } else {
-      // check if memberUserName exists
-      const member_ = committeeMembers?.find(
-        (_member) => _member.memberUserName === member?.memberUserName
-      );
-      // check if memberUserName is the one creating
-      const currentUserFlag = member?.memberUserName === username;
-      // check if memberPosition exists
-      const positionFlag = committeeMembers?.find(
-        (_member) => _member.memberPosition === member?.memberPosition
-      );
-      console.log(
-        "member_: ",
-        member_,
-        "currentUserFlag: ",
-        currentUserFlag,
-        "positionFlag: ",
-        positionFlag
-      );
-      console.log("owner: ", username, "member: ", member?.memberUserName);
-      if (member_) {
-        onOpenResponse(
-          "Add Committee Member Error",
-          "Committee Member already added.",
-          false
-        );
-      } else if (currentUserFlag) {
-        onOpenResponse(
-          "Add Committee Member Error",
-          "You cannot add yourself. Please choose another user.",
-          false
-        );
-      } else if (positionFlag) {
-        onOpenResponse(
-          "Add Committee Member Error",
-          member?.memberPosition +
-            ", already exists, please add a different one.",
-          false
-        );
-      } else {
-        const members = [
-          ...(committeeMembers ?? []),
-          {
-            memberUserName: member?.memberUserName ?? "",
-            memberName: member?.memberName ?? "",
-            memberPosition: member?.memberPosition ?? "",
-            memberApproval: "",
-          },
-        ];
-        setCommitteeMembers(members);
-        setMember({
-          memberUserName: "",
-          memberName: "",
-          memberPosition: "",
-          memberApproval: "",
-        });
-        setSearchedUser("");
-      }
-    }
-  };
-
-  const onFileInputChange = (
-    name_: string,
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    console.log("event: ", event, "name: ", name_);
-    const file = event?.target?.files ? event?.target?.files[0] : undefined;
-    const fileUrl = onGetFileObjectUrl(file);
-    console.log("file: ", file, "fileUrl: ", fileUrl);
-    if (name_ === "advert") {
-      setAdvert(file);
-      setAdvertUrl(fileUrl);
-    }
-  };
-
-  const getCookie = (name: string) => {
-    let cookieValue = null;
-    if (document.cookie && document.cookie !== "") {
-      const cookies = document.cookie.split(";");
-      for (let i = 0; i < cookies.length; i++) {
-        const cookie = cookies[i].trim();
-        if (cookie.substring(0, name.length + 1) === name + "=") {
-          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-          break;
-        }
-      }
-    }
-    return cookieValue;
-  };
-
-  const onAddComplianceTable = () => {
-    // add bid compliance
-    if (bids && bids.length === 0) {
-      onOpenResponse(
-        "Add Compliance Table Error",
-        "Please add bids first",
-        false
-      );
+  // Add compliance table
+  const onAddComplianceTable = useCallback(() => {
+    // Only creators can add compliance tables
+    if (!isCreator()) {
+      onOpenResponse("Access Denied", "Only the creator can generate compliance tables.", false);
       return;
     }
+    // add bid compliance
+    if (bids && bids.length === 0) {
+      onOpenResponse("Add Compliance Table Error", "Please add bids first", false);
+      return;
+    }
+    
     const compliances = bids?.map((bid) => {
-      // check is compliance already exists
+      // check if compliance already exists
       const comp = compliance?.find(
         (compliance) => compliance.supplier_name === bid.supplier_name
       );
@@ -1981,7 +2155,7 @@ export default function Schedule({
     });
 
     const complianceRemarks_ = bids?.map((bid) => {
-      // check is compliance already exists
+      // check if compliance remarks already exist
       const comp = complianceRemarks?.find(
         (compR) => compR.supplier_name === bid.supplier_name
       );
@@ -1997,179 +2171,118 @@ export default function Schedule({
       }
     });
 
-    setCompliance(compliances);
-    setComplianceRemarks(complianceRemarks_);
-    setComplianceTable(!complianceTable);
-  };
-
-  const onComplianceItemsChange = (
-    name_: string,
-    event: { target: { name: string; value: string } }
-  ) => {
-    const { name, value } = event.target;
-    console.log("name: ", name, "value: ", value);
-    if (name_ === "showSiteVisit") {
-      setShowSiteVisit(value);
-    } else if (name_ === "showSamples") {
-      setShowSamples(value);
-    }
-
-    if (compliance && compliance.length === 0) {
-      onOpenResponse(
-        "Add Compliance Table Error",
-        "Please add bids first",
-        false
-      );
-      return;
-    }
-
-    const updatedComplianceList = compliance?.map((compliance_) => {
-      let _compliance = {};
-      const site_visit = compliance_.site_visit;
-      const samples_required = compliance_.samples_required;
-
-      _compliance = {
-        payment_terms: compliance_.payment_terms,
-        bid_validity: compliance_.bid_validity,
-        delivery_period: compliance_.delivery_period,
-        technical_specifications: compliance_.technical_specifications,
-        valid_tax_clearance: compliance_.valid_tax_clearance,
-        registered_with_praz: compliance_.registered_with_praz,
-        site_visit: site_visit,
-        samples_required: samples_required,
-      };
-
-      // set compliance_['decision'] to true if all compliance are true
-      const keysToCheck = Object.keys(_compliance).filter(
-        (key) =>
-          key !== "decision" &&
-          key !== "reject" &&
-          key !== "remarks" &&
-          key !== "supplier_name" &&
-          key !== "bid_no" &&
-          key !== "supplier"
-      );
-      console.log("keysToCheck: ", keysToCheck);
-      const allValuesTrue = keysToCheck.every((key) => {
-        if (key === "site_visit" && showSiteVisit === "no") return true;
-        if (key === "samples_required" && showSamples === "no") return true;
-        return compliance_[key];
-      });
-      compliance_["decision"] = allValuesTrue;
-      compliance_["reject"] = !allValuesTrue;
-
-      return compliance_;
+    setCompliance(compliances || []);
+    setComplianceRemarks(complianceRemarks_ || []);
+    
+    console.log("Generated compliance table:", {
+      bids_count: bids?.length || 0,
+      compliance_count: compliances?.length || 0,
+      remarks_count: complianceRemarks_?.length || 0
     });
+  }, [bids, compliance, complianceRemarks]);
 
-    setCompliance(updatedComplianceList);
-  };
 
-  const onComplianceChange = (
+
+  // Handle compliance change
+  const onComplianceChange = useCallback((
     index: number,
     event: { target: { name: string; checked: boolean } }
   ) => {
     const { name, checked } = event.target;
     console.log("name : ", name, "checked: ", checked);
     console.log("compliance: ", compliance);
+    
     if (compliance && compliance.length > 0) {
-      const currentCompliances = compliance;
+      const currentCompliances = [...compliance];
       const currentCompliance = currentCompliances[index];
       console.log("currentCompliance: ", currentCompliance);
       currentCompliance[name] = checked;
       console.log("currentCompliance: ", name, currentCompliance);
 
-      if (name === "decision") {
-        const updatedCompliances = currentCompliances.map((compliance_) => {
-          if (compliance_.supplier_name === currentCompliance.supplier_name) {
-            return {
-              ...compliance_,
-              decision: checked,
-              reject: !checked,
-              payment_terms: checked,
-              bid_validity: checked,
-              delivery_period: checked,
-              technical_specifications: checked,
-              valid_tax_clearance: checked,
-              registered_with_praz: checked,
-              site_visit: showSiteVisit === "yes" ? checked : false,
-              samples_required: showSamples === "yes" ? checked : false,
-            };
-          } else {
-            return compliance_;
-          }
-        });
-        setCompliance(updatedCompliances);
-      } else {
-        console.log("currentCompliance else: ", currentCompliance);
-        const keysToCheck = Object.keys(currentCompliance).filter(
-          (key) =>
-            key !== "decision" &&
-            key !== "reject" &&
-            key !== "remarks" &&
-            key !== "supplier_name" &&
-            key !== "bid_no" &&
-            key !== "supplier"
-        );
-        console.log("keysToCheck: ", keysToCheck);
-        const allValuesTrue = keysToCheck.every((key) => {
-          if (key === "site_visit" && showSiteVisit === "no") return true;
-          if (key === "samples_required" && showSamples === "no") return true;
-          return currentCompliance[key];
-        });
-        currentCompliance["decision"] = allValuesTrue;
-        currentCompliance["reject"] = !allValuesTrue;
+      // Set decision based on all compliance checks
+      const keysToCheck = [
+        'payment_terms', 'bid_validity', 'delivery_period',
+        'technical_specifications', 'valid_tax_clearance', 'registered_with_praz'
+      ];
+      
+      if (showSiteVisit === "yes") keysToCheck.push('site_visit');
+      if (showSamples === "yes") keysToCheck.push('samples_required');
 
-        const updatedCompliances = currentCompliances.map((compliance_) => {
-          if (compliance_.supplier_name === currentCompliance.supplier_name) {
-            return currentCompliance;
-          } else {
-            return compliance_;
-          }
-        });
-        setCompliance(updatedCompliances);
-      }
+      const allValuesTrue = keysToCheck.every((key) => currentCompliance[key] === true);
+      currentCompliance["decision"] = allValuesTrue;
+      currentCompliance["reject"] = !allValuesTrue;
+
+      setCompliance(currentCompliances);
     }
-  };
+  }, [compliance, showSiteVisit, showSamples]);
 
-  const onComplianceRemarksChange = (
+  // Handle compliance remarks change
+  const onComplianceRemarksChange = useCallback((
     supplier_name: string,
     event: { target: { name: string; value: string } }
   ) => {
-    const { name, value } = event.target;
-    console.log(
-      "name: ",
-      name,
-      "value: ",
-      value,
-      "supplier_name: ",
-      supplier_name
-    );
-
-    const index = complianceRemarks?.findIndex(
-      (item) => item.supplier_name === supplier_name
-    );
-    if (index !== -1) {
-      const updatedComplianceRemarks = Object.entries(
-        complianceRemarks ?? {}
-      ).map(([key, value_]) => {
-        if (key === String(index)) {
-          value_.remarks = value;
-          return value_;
+    const { value } = event.target;
+    console.log("supplier_name: ", supplier_name, "value: ", value);
+    
+    if (complianceRemarks && complianceRemarks.length > 0) {
+      const updatedRemarks = complianceRemarks.map((remark) => {
+        if (remark.supplier_name === supplier_name) {
+          return {
+            ...remark,
+            remarks: value,
+          };
         }
-        return value_;
+        return remark;
       });
-      setComplianceRemarks(updatedComplianceRemarks);
-    } else {
-      complianceRemarks?.push({
-        supplier_name: supplier_name,
-        remarks: value,
-      });
-
-      setComplianceRemarks(complianceRemarks);
+      setComplianceRemarks(updatedRemarks);
     }
-  };
+  }, [complianceRemarks]);
 
-  const onSaveCompliance = () => {
+  // Handle check all for a specific compliance row
+  const onCheckAllCompliance = useCallback((index: number) => {
+    if (compliance && compliance.length > 0) {
+      const currentCompliances = [...compliance];
+      const currentCompliance = currentCompliances[index];
+      
+      // Check all required criteria
+      const keysToCheck = [
+        'payment_terms', 'bid_validity', 'delivery_period',
+        'technical_specifications', 'valid_tax_clearance', 'registered_with_praz'
+      ];
+      
+      if (showSiteVisit === "yes") keysToCheck.push('site_visit');
+      if (showSamples === "yes") keysToCheck.push('samples_required');
+
+      // Set all criteria to true
+      keysToCheck.forEach(key => {
+        currentCompliance[key] = true;
+      });
+
+      // Update decision and reject status
+      currentCompliance["decision"] = true;
+      currentCompliance["reject"] = false;
+
+      setCompliance(currentCompliances);
+      console.log(`All compliance criteria checked for ${currentCompliance.supplier_name}`);
+    }
+  }, [compliance, showSiteVisit, showSamples]);
+
+  // Save compliance
+  const onSaveCompliance = useCallback(() => {
+    // Only creators can save compliance
+    if (!isCreator()) {
+      onOpenResponse("Access Denied", "Only the creator can save compliance data.", false);
+      return;
+    }
+    if (!compliance || compliance.length === 0) {
+      onOpenResponse("Save Compliance Error", "Please add compliance data first", false);
+      return;
+    }
+
+    setIsLoading(true);
+    setLoadingOperation("Saving compliance data");
+
+    // Format data to match backend expectations (similar to the working JS versions)
     const form_data: FormData = new FormData();
     form_data.append("cs_id", csId);
     form_data.append("show_site_visit", showSiteVisit);
@@ -2186,2841 +2299,2609 @@ export default function Schedule({
         complianceRemarks: complianceRemarks,
       })
     );
-    form_data.append("csrfmiddlewaretoken", getCookie("csrftoken") ?? "");
+    form_data.append("csrfmiddlewaretoken", csrfToken);
+
+    console.log("Saving compliance data:", {
+      cs_id: csId,
+      compliance_count: compliance.length,
+      remarks_count: complianceRemarks.length,
+      show_site_visit: showSiteVisit,
+      show_samples: showSamples
+    });
 
     fetch(`${base_url}/save_compliance`, {
       method: "POST",
       headers: {
-        "X-CSRFToken": getCookie("csrftoken") ?? "",
+        "X-CSRFToken": csrfToken,
       },
       body: form_data,
     })
       .then((response) => response.json())
       .then((data) => {
-        console.log("data: ", data);
+        console.log("save compliance response: ", data);
         if (data.success) {
-          onOpenResponse(
-            "Submit Compliances Successful",
-            "Compliances submitted successfully",
-            true
-          );
+          onOpenResponse("Save Compliance Success", "Compliance data saved successfully", true);
+          // Refresh the CS data to ensure persistence
+          if (csId) {
+            fetchCS(csId);
+          }
         } else {
-          onOpenResponse(
-            "Submit Compliances Error",
-            "Failed to submit compiances, please try again.",
-            false
-          );
+          onOpenResponse("Save Compliance Error", data.message || "Failed to save compliance, please try again.", false);
         }
+      })
+      .catch((error) => {
+        console.error("Error saving compliance:", error);
+        onOpenResponse("Error", "Failed to save compliance", false);
+      })
+      .finally(() => {
+        setIsLoading(false);
+        setLoadingOperation("");
       });
-  };
+  }, [compliance, complianceRemarks, csId, csrfToken, base_url, fetchCS, showSiteVisit, showSamples]);
 
-  const onCloseCS = () => {
+  // Close CS and generate rankings
+  const onCloseCS = useCallback(() => {
+    // Only creators can close CS and generate rankings
+    if (!isCreator()) {
+      onOpenResponse("Access Denied", "Only the creator can generate rankings.", false);
+      return;
+    }
+    // Validation: Check if compliance data exists
+    if (!compliance || compliance.length === 0) {
+      onOpenResponse("Generate Rankings Error", "Please complete compliance evaluation first", false);
+      return;
+    }
+
+    // Validation: Check if at least one bid is compliant
+    const compliantBids = compliance.filter(comp => comp.decision === true);
+    if (compliantBids.length === 0) {
+      onOpenResponse("Generate Rankings Error", "No compliant bids found. Please review compliance evaluation.", false);
+      return;
+    }
+
+    setIsLoading(true);
+    setLoadingOperation("Generating bid rankings");
+
     const form_data: FormData = new FormData();
     form_data.append("cs_id", csId);
-    form_data.append("csrfmiddlewaretoken", getCookie("csrftoken") ?? "");
+    form_data.append("csrfmiddlewaretoken", csrfToken);
 
     fetch(`${base_url}/close_compliance`, {
       method: "POST",
       headers: {
-        "X-CSRFToken": getCookie("csrftoken") ?? "",
+        "X-CSRFToken": csrfToken,
       },
       body: form_data,
     })
       .then((response) => response.json())
       .then((data) => {
-        console.log("data: ", data);
+        console.log("close CS data: ", data);
         if (data.success) {
           const rankings = data.rankings;
           setRankings(rankings);
-          //   setRankingTable(true);
-          onOpenResponse(
-            "Rank Bids Successful",
-            "Bids ranked successfully",
-            true
-          );
+          onOpenResponse("Rank Bids Successful", `Successfully generated rankings for ${rankings.length} bids`, true);
         } else {
-          onOpenResponse(
-            "Rank Bids Error",
-            "Failed to rank bids, please try again",
-            false
-          );
+          onOpenResponse("Rank Bids Error", data.message || "Failed to rank bids, please try again", false);
         }
+      })
+      .catch((error) => {
+        console.error("Error closing CS:", error);
+        onOpenResponse("Error", "Failed to rank bids", false);
+      })
+      .finally(() => {
+        setIsLoading(false);
+        setLoadingOperation("");
       });
-  };
+  }, [csId, csrfToken, base_url, compliance]);
 
-  const onOpenResponse = (title: string, message: string, success: boolean) => {
-    setResponse({
-      open: true,
-      title: title,
-      message: message,
-      success: success,
-    });
-  };
+  // === ADDITIONAL FEATURES ===
 
-  const onCloseResponse = () => {
-    setResponse({
-      open: false,
-      title: "",
-      message: "",
-      success: false,
-    });
-  };
-
-  const onSearchUser = (event: { target: { name: string; value: string } }) => {
-    console.log("searching user ...");
-    const { value } = event.target;
-    console.log("valued: ", value);
-
-    if (value.length > 3) {
-      const filteredOptions = users?.filter((user) => {
-        console.log("user: ", user);
-        return (
-          (user.first_name.toLowerCase() || "").includes(value.toLowerCase()) ||
-          (user.last_name.toLowerCase() || "").includes(value.toLowerCase())
-        );
-      });
-
-      setSearchedUser(value);
-      setFilteredUsers(filteredOptions);
-    } else {
-      setSearchedUser(value);
-      setFilteredUsers([]);
-    }
-  };
-
-  const onAdditionalNotesChange = (event: {
-    target: { name: string; value: string };
-  }) => {
+  // Handle additional notes change
+  const onAdditionalNotesChange = useCallback((event: { target: { name: string; value: string } }) => {
     const { value } = event.target;
     setAdditionalNotes(value);
-  };
+  }, []);
 
-  const onAdditionalNotesSubmit = () => {
+  // Submit additional notes
+  const onAdditionalNotesSubmit = useCallback(() => {
     const form_data: FormData = new FormData();
     form_data.append("cs_id", csId);
     form_data.append("additional_notes", additionalNotes);
-    form_data.append("csrfmiddlewaretoken", getCookie("csrftoken") ?? "");
+    form_data.append("csrfmiddlewaretoken", csrfToken);
 
     fetch(`${base_url}/save_additional_notes`, {
       method: "POST",
       headers: {
-        "X-CSRFToken": getCookie("csrftoken") ?? "",
+        "X-CSRFToken": csrfToken,
       },
       body: form_data,
     })
       .then((response) => response.json())
       .then((data) => {
-        console.log("data: ", data);
+        console.log("additional notes data: ", data);
         if (data.success) {
-          onOpenResponse(
-            "Additional Notes Saved",
-            "Additional notes saved successfully",
-            true
-          );
+          onOpenResponse("Additional Notes Saved", "Additional notes saved successfully", true);
         } else {
-          onOpenResponse(
-            "Additional Notes Error",
-            "Failed to save additional notes, please try again",
-            false
-          );
+          onOpenResponse("Additional Notes Error", "Failed to save additional notes", false);
         }
+      })
+      .catch((error) => {
+        console.error("Error saving additional notes:", error);
+        onOpenResponse("Error", "Failed to save additional notes", false);
       });
-  };
+  }, [csId, additionalNotes, csrfToken, base_url]);
 
-  const onBuyersNotesChange = (event: {
-    target: { name: string; value: string };
-  }) => {
+  // Handle buyer notes change
+  const onBuyersNotesChange = useCallback((event: { target: { name: string; value: string } }) => {
     const { value } = event.target;
     setBuyersNotes(value);
-  };
+  }, []);
 
-  const onBuyersNotesSubmit = () => {
+  // Submit buyer notes
+  const onBuyersNotesSubmit = useCallback(() => {
+    // Only creators can submit buyer's notes
+    if (!isCreator()) {
+      onOpenResponse("Access Denied", "Only the creator can submit buyer's notes.", false);
+      return;
+    }
     const form_data: FormData = new FormData();
     form_data.append("cs_id", csId);
     form_data.append("buyers_notes", buyersNotes);
-    form_data.append("csrfmiddlewaretoken", getCookie("csrftoken") ?? "");
+    form_data.append("csrfmiddlewaretoken", csrfToken);
 
     fetch(`${base_url}/save_buyers_notes`, {
       method: "POST",
       headers: {
-        "X-CSRFToken": getCookie("csrftoken") ?? "",
+        "X-CSRFToken": csrfToken,
       },
       body: form_data,
     })
       .then((response) => response.json())
       .then((data) => {
-        console.log("data: ", data);
+        console.log("buyers notes data: ", data);
         if (data.success) {
-            const newRankings: IRank[] = (rankings ?? []).map((ranking) => {
-              if (ranking.rank === 1) {
-                ranking.remarks = buyersNotes;
-              }
-              return ranking;
+          // Update rankings with buyer notes for rank 1
+          const newRankings = (rankings ?? []).map((ranking) => {
+            if (ranking.rank === 1) {
+              ranking.remarks = buyersNotes;
             }
-              );
-              setRankings(newRankings??rankings);
-          onOpenResponse(
-            "Buyer's Notes Saved",
-            "Buyer's notes saved successfully",
-            true
-          );
+            return ranking;
+          });
+          setRankings(newRankings);
+          onOpenResponse("Buyer's Notes Saved", "Buyer's notes saved successfully", true);
         } else {
-          onOpenResponse(
-            "Buyer's Notes Error",
-            "Failed to save Buyer's notes, please try again",
-            false
-          );
+          onOpenResponse("Buyer's Notes Error", "Failed to save buyer's notes", false);
         }
+      })
+      .catch((error) => {
+        console.error("Error saving buyer notes:", error);
+        onOpenResponse("Error", "Failed to save buyer's notes", false);
       });
-  };
+  }, [csId, buyersNotes, csrfToken, base_url, rankings]);
 
-  const getCommitteeClassNames = (approvalStatus: string) => {
-    const baseClasses = "grid grid-cols-5 gap-4 px-2 py-2 m-2 rounded-md";
-    let statusClasses = "";
+
+
+  // === FORM HANDLING FUNCTIONS ===
   
-    switch (approvalStatus) {
-      case "Approved":
-        statusClasses = "bg-green-100 hover:bg-green-200 text-green-700 hover:text-green-900 border before:border-green-400 after:border-green-700 border-green-400";
+  // Handle dropdown selections
+  const onSelectChange = useCallback((name: string, event: React.ChangeEvent<HTMLSelectElement>) => {
+    const { value } = event.target;
+    
+    switch (name) {
+      case 'currency': {
+        const selectedCurrency = currencies.find(c => c.id.toString() === value);
+        setCurrency(selectedCurrency);
         break;
-      case "Rejected":
-        statusClasses = "bg-red-100 hover:bg-red-200 text-red-700 hover:text-red-900 border before:border-red-400 after:border-red-700 border-red-400";
+      }
+      case 'procPlan': {
+        const selectedProcPlan = procPlans.find(p => p.id.toString() === value);
+        setProcPlan(selectedProcPlan);
+        setProcRef(selectedProcPlan?.proc_ref || '');
         break;
-      case "":
-        statusClasses = "bg-blue-100 hover:bg-blue-200 text-blue-700 hover:text-blue-900 border before:border-gray-400 after:border-gray-700 border-gray-400";
+      }
+      case 'showSiteVisit':
+        updatePrData('show_site_visit', value === 'yes');
+        break;
+      case 'showSamples':
+        updatePrData('show_samples_required', value === 'yes');
         break;
       default:
-        statusClasses = "bg-blue-100 hover:bg-blue-200 text-blue-700 hover:text-blue-900 border before:border-gray-400 after:border-gray-700 border-gray-400";
-        break;
+        console.warn(`Unknown select: ${name}`);
     }
-  
-    return `${statusClasses} ${baseClasses}`;
-  };
+  }, [currencies, procPlans, updatePrData]);
 
-  const itemsModal = (
-    <div className="fixed inset-0 flex items-center justify-center z-50 pt-10 pb-20">
-      <div className="bg-gulf-blue-50 rounded-lg shadow-lg p-6 h-5/6">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-medium">SELECT SCHEDULE ITEMS</h3>
-          <button
-            type="button"
-            className="text-gray-400 hover:text-gray-500 focus:outline-none"
-            onClick={onAddItemsModal}
-          >
-            <svg
-              className="h-6 w-6"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M6 18L18 6M6 6l12 12"
-              />
-            </svg>
-          </button>
-        </div>
-        <div className="px-2 py-2 mt-3 rounded-md bg-gulf-blue-300 h-4/5 overflow-y-auto">
-          <table
-            style={{ width: "100%" }}
-            className="table-auto w-full text-left"
-          >
-            <thead>
-              <tr className="text-gray-900">
-                <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                  Item
-                </th>
-                <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                  Quantity
-                </th>
-                <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                  Action
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {prItems &&
-                prItems.map((item, index) => {
-                  return (
-                    <tr key={index} className="text-gray-900">
-                      <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                        {item.item_required}
-                      </td>
-                      <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                        {item.quantity}
-                      </td>
-                      <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                        <input
-                          type="checkbox"
-                          checked={item.ordered ? item.ordered : false}
-                          onChange={() => onAddCSItem(item.id ?? 0)}
-                        />
-                      </td>
-                    </tr>
-                  );
-                })}
-            </tbody>
-          </table>
-        </div>
-        <div className="flex justify-center mt-1 px-3 py-3">
-            <div className="m-2">
-              <button
-                onClick={onSubmitCSItems}
-                className="rounded-md text-gray-50 text-sm bg-blue-925 hover:bg-blue-550 px-3 py-2 font-semibold leading-6"
-              >
-                <span className="ml-2">SAVE SCHEDULE ITEMS</span>
-              </button>
-            </div>
-          </div>
-      </div>
-    </div>
-  );
 
-  const bidsModal = (
-    <div
-      id={"bid-" + currentBid?.bid_count}
-      className="fixed inset-0 flex items-center justify-center z-50 pt-10 pb-20"
-    >
-      <div className="transition-all duration-300 bg-gulf-blue-50 p-4 rounded-lg border-l-4 border-blue-600 rounded-lg shadow-lg p-6 max-h-screen min-w-max overflow-y-auto">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-medium">ADD BID DETAILS</h3>
-          <button
-            type="button"
-            className="text-gray-400 hover:text-gray-500 focus:outline-none"
-            onClick={onCloseCurrentBid}
-          >
-            <svg
-              className="h-6 w-6"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M6 18L18 6M6 6l12 12"
-              />
-            </svg>
-          </button>
-        </div>
-        <div className="px-4 sm:px-0 mt-6 rounded-md border-t border-gray-100 border-b border-gray-900/10 pb-12">
-          <div id="bid_container" className=" rounded-md">
-            <div className="flex justify-evenly mt-5  px-2 py-2 rounded-md">
-              <div className="flex-1 w-20 ml-1">
-                <label
-                  htmlFor="supplier_name"
-                  className="block text-sm font-medium leading-6 text-gray-900"
-                >
-                  Supplier
-                </label>
-                <div className="mt-2">
-                  <select
-                    id="supplier"
-                    onChange={(e) => onCurrentBidSupplierChange("supplier", e)}
-                    className="block w-full rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
-                  >
-                    {currentBid?.supplier_name ? (
-                      <option
-                        value={
-                          currentBid?.supplier +
-                          "-#-" +
-                          currentBid?.supplier_name
-                        }
-                      >
-                        {currentBid?.supplier_name}
-                      </option>
-                    ) : (
-                      ""
-                    )}
-                    <option>Select Supplier</option>
-                    {suppliers
-                      ? suppliers?.map((supplier) => (
-                          <option value={supplier?.id + "-#-" + supplier?.name}>
-                            {supplier.name}
-                          </option>
-                        ))
-                      : ""}
-                  </select>
-                </div>
-              </div>
-              <div className="flex-1 w-20 ml-1">
-                <label
-                  htmlFor="bid_date"
-                  className="block text-sm font-medium leading-6 text-gray-900"
-                >
-                  Bid Date
-                </label>
-                <div className="mt-2">
-                  <input
-                    name="bid_date"
-                    value={currentBid?.bid_date}
-                    onChange={(e) => onCurrentBidChange("bid_date", e)}
-                    type="date"
-                    required
-                    className="block w-full rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                  />
-                </div>
-              </div>
-              <div className="flex-1 w-20 ml-1">
-                <label
-                  htmlFor="supplier[bid][0]"
-                  className="block text-sm font-medium leading-6 text-gray-900"
-                >
-                  Bid No.
-                </label>
-                <div className="mt-2">
-                  <input
-                    name=""
-                    type="number"
-                    value={bidCount+1}
-                    id="bid"
-                    required
-                    readOnly
-                    className="block w-full rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                  />
-                </div>
-              </div>
-              <div className="flex-1 w-40 ml-1">
-                <label
-                  htmlFor="bid_document"
-                  className="block text-sm font-medium leading-6 text-gray-900"
-                >
-                  Bid Documents
-                </label>
-                <div className="mt-2">
-                  <input
-                    name="bid_document"
-                    type="file"
-                    onChange={(e) => onBidDocumentChange(e)}
-                    className="block w-full rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                  />
-                </div>
-              </div>
-            </div>
 
-            {csItems &&
-              csItems.map((item) => {
-                return (
-                  <div className="flex justify-evenly mt-5  px-2 py-2 rounded-md">
-                    <div className="flex-1 w-15 ml-1">
-                      <label
-                        htmlFor="item_name"
-                        className="block text-sm font-medium leading-6 text-gray-900"
-                      >
-                        Item Description
-                      </label>
-                      <div className="mt-2">
-                        <input
-                          name="item_description"
-                          defaultValue={item.item_required}
-                          onChange={(e) =>
-                            onCurrentBidItemChange(
-                              item.item_required ?? "",
-                              "item_required",
-                              e,
-                              currentBid?.bid_count?.toString() ?? ""
-                            )
-                          }
-                          id="item_description"
-                          required
-                          className="block w-full rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                        />
-                      </div>
-                    </div>
-                    <div className="flex-1 w-15 ml-1">
-                      <label
-                        htmlFor="quantity"
-                        className="block text-sm font-medium leading-6 text-gray-900"
-                      >
-                        Quantity
-                      </label>
-                      <div className="mt-2">
-                        <input
-                          name="quantity"
-                          required
-                          defaultValue={item.quantity}
-                          onChange={(e) =>
-                            onCurrentBidItemChange(
-                              item.item_required ?? "",
-                              "quantity",
-                              e,
-                              currentBid?.bid_count?.toString() ?? ""
-                            )
-                          }
-                          type="number"
-                          id="quantity"
-                          className="block inpt w-full rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                        />
-                      </div>
-                    </div>
-                    <div className="flex-1 w-15 ml-3">
-                      <div>
-                        <label
-                          htmlFor="unit_of_measurement"
-                          className="block text-sm font-medium leading-6 text-gray-900"
-                        >
-                          UOM
-                        </label>
-                        <div className="mt-2">
-                          <select
-                            id="unit_of_measurement"
-                            onChange={(e) =>
-                              onCurrentBidItemChange(
-                                item.item_required ?? "",
-                                "unit_of_measurement",
-                                e,
-                                currentBid?.bid_count?.toString() ?? ""
-                              )
-                            }
-                            autoComplete="unit_of_measurement"
-                            className="block w-full rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
-                          >
-                            {item.unit_of_measurement ? (
-                              <option value={item.unit_of_measurement}>
-                                {item.unit_of_measurement}
-                              </option>
-                            ) : (
-                              ""
-                            )}
-                            {uom ? (
-                              uom.map((uom) => (
-                                <option value={uom.name}>{uom.name}</option>
-                              ))
-                            ) : (
-                              <option>No Units</option>
-                            )}
-                          </select>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex-1 w-15 ml-3">
-                      <div>
-                        <label
-                          htmlFor="vat"
-                          className="block text-sm font-medium leading-6 text-gray-900"
-                        >
-                          VAT
-                        </label>
-                        <div className="mt-2">
-                          <select
-                            id="vat"
-                            onChange={(e) =>
-                              onCurrentBidItemChange(
-                                item.item_required ?? "",
-                                "vat",
-                                e,
-                                currentBid?.bid_count?.toString() ?? ""
-                              )
-                            }
-                            autoComplete="vat"
-                            className="block w-full rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
-                          >
-                            {item.vat ? (
-                              <option value={item.vat}>{item.vat}</option>
-                            ) : (
-                              ""
-                            )}
-                            <option value="">Select VAT</option>
-                            <option value="Excl.">Excl.</option>
-                            <option value="Incl.">Incl.</option>
-                          </select>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex-1 w-15 ml-1">
-                      <label
-                        htmlFor="unit_price"
-                        className="block text-sm font-medium leading-6 text-gray-900"
-                      >
-                        Unit Price
-                      </label>
-                      <div className="mt-2">
-                        <input
-                          name="unit_price"
-                          defaultValue={item.unit_price}
-                          onChange={(e) =>
-                            onCurrentBidItemChange(
-                              item.item_required ?? "",
-                              "unit_price",
-                              e,
-                              currentBid?.bid_count?.toString() ?? ""
-                            )
-                          }
-                          type="text"
-                          id="unit_price"
-                          required
-                          className="block inpt w-full rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                        />
-                      </div>
-                    </div>
+  // Enhanced save schedule details with validation
+  const handleSaveScheduleDetails = useCallback(async () => {
+    // Validate fields before saving
+    const validation = validateScheduleFields();
+    if (!validation.isValid) {
+      onOpenResponse("Validation Error", validation.errors.join(', '), false);
+      return;
+    }
+
+    setIsLoading(true);
+    setLoadingOperation("Saving schedule details");
+    console.log("prData", prData);
+    
+    try {
+      const formData = new FormData();
+      formData.append("proc_ref", procRef);
+      formData.append("scope_of_work", prData.scope_of_work);
+      formData.append("currency", JSON.stringify(currency?.id));
+      formData.append("proc_plan_id", prData.procurement_plan_id || "");
+      formData.append("pr_number", prData.pr_number);
+      formData.append("quantity", quantity);
+      formData.append("pr_date", prData.pr_date);
+      formData.append("closing_date", prData.closing_date);
+      formData.append("ref_date", prData.reference_date);
+      formData.append("closing_time", prData.closing_time);
+      formData.append("date_tender_opened", prData.cs_opened_date);
+      formData.append("username", username);
+      formData.append("tender_adjudication_committee_date", prData.tac_date);
+
+      console.log("formData", formData);
+      
+      if (advert) {
+        formData.append("advert", advert);
+      }
+      
+      formData.append("csrfmiddlewaretoken", csrfToken);
+
+      const requestOptions = {
+        method: "POST",
+        headers: {
+          "X-CSRFToken": csrfToken,
+        },
+        body: formData,
+      };
+      
+      const data = await fetchWithRetry(buildApiUrl(base_url, getApiEndpoints().CS_SAVE), requestOptions);
+      
+      if (data.success) {
+        setCsId(data.cs_id);
+        setCsOwner(data.cs_owner);
+        
+        // Update creator and created_at if not already set (for new schedules)
+        if (!creator) {
+          // Try to find the user's full name from the users list, otherwise use username
+          const currentUser = users.find(user => user.username === username);
+          const displayName = currentUser ? 
+            `${currentUser.first_name} ${currentUser.last_name}`.trim() || username : 
+            username;
+          setCreator(displayName);
+        }
+        if (!createdAt) {
+          setCreatedAt(new Date().toISOString());
+        }
+        
+        onOpenResponse("Success", "Comparative Schedule saved successfully", true);
+        await refreshAllData(); // Cascading update
+      } else {
+        onOpenResponse("Error", "Failed to save schedule", false);
+      }
+    } catch (error) {
+      console.error("Error saving schedule details:", error);
+      onOpenResponse("Error", "Failed to save schedule details", false);
+    } finally {
+      setIsLoading(false);
+      setLoadingOperation("");
+    }
+  }, [validateScheduleFields, procRef, prData, currency, quantity, username, advert, csrfToken, base_url, refreshAllData]);
+
+  // Memoized tab content
+  const renderTabContent = useMemo(() => {
+    switch (activeTab) {
+      case 'details':
+        return (
+          <div className="space-y-6">
+            {/* PR Fetch Section - Visible to creator or when creating new schedule */}
+            {(isCreator() || !csId || csId === "") && (
+              <div className="bg-blue-50 p-6 rounded-lg shadow-sm border border-blue-200">
+                <h3 className="text-lg font-semibold text-blue-900 mb-4 flex items-center">
+                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  Load Purchase Request Data
+                </h3>
+                <div className="flex flex-col md:flex-row gap-4 items-end">
+                  <div className="flex-1">
+                    <label className="block text-sm font-medium text-blue-700 mb-2">
+                      Enter PR ID to load data into this schedule
+                    </label>
+                    <input
+                      type="text"
+                      value={prIdInput}
+                      onChange={(e) => setPrIdInput(e.target.value)}
+                      placeholder="Enter Purchase Request ID (e.g., PR-2024-001)"
+                      className="w-full p-3 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      onKeyPress={(e) => e.key === 'Enter' && handleFetchPR()}
+                    />
                   </div>
-                );
-              })}
-          </div>
-
-          <div className="flex justify-center mt-5 px-3 py-3">
-            <div className="m-2">
-              <button
-                onClick={onCloseCurrentBid}
-                type="submit"
-                className="rounded-md bg-gray-700 hover:bg-gray-600 text-sm font-semibold px-3 py-2 text-white shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
-              >
-                <span className="ml-2">CANCEL</span>
-              </button>
-            </div>
-            <div className="m-2">
-              <button
-                onClick={onCurrentBidSave}
-                className="rounded-md text-blue-50 text-sm bg-blue-600 hover:bg-blue-500 px-3 py-2 font-semibold leading-6"
-              >
-                <span className="ml-2">SAVE BID</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-
-  const responseModal = (
-    <div className="fixed inset-0 z-50 overflow-y-auto">
-      <div className="flex items-end justify-center min-h-screen px-4 text-center md:items-center sm:block sm:p-0">
-        <div
-          //   enter="transition ease-out duration-300 transform"
-          //   enterStart="opacity-0"
-          //   enterEnd="opacity-100"
-          //   leave="transition ease-in duration-200 transform"
-          //   leaveStart="opacity-100"
-          //   leaveEnd="opacity-0"
-          className="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-40"
-        ></div>
-
-        <div
-          //   enter="transition ease-out duration-300 transform"
-          //   enterStart="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-          //   enterEnd="opacity-100 translate-y-0 sm:scale-100"
-          //   leave="transition ease-in duration-200 transform"
-          //   leaveStart="opacity-100 translate-y-0 sm:scale-100"
-          //   leaveEnd="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-          className="inline-block w-full max-w-xl p-8 my-20 overflow-hidden text-left transition-all transform bg-white rounded-lg shadow-xl 2xl:max-w-2xl"
-        >
-          <div className="flex items-center justify-between space-x-4">
-            <h1 className="text-xl font-medium text-gray-800">
-              {response?.title}
-            </h1>
-
-            <button
-              type="button"
-              onClick={onCloseResponse}
-              className="text-gray-600 focus:outline-none hover:text-gray-700"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                className="w-6 h-6"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
-            </button>
-          </div>
-
-          <p
-            className={`mt-5 text-sm p-2 rounded-md ${
-              response?.success
-                ? "bg-green-100 text-green-700"
-                : "bg-red-100 text-red-700"
-            }`}
-          >
-            {response?.message}
-          </p>
-
-          <form>
-            <div className="flex justify-evenly mt-6">
-              <button
-                type="button"
-                style={{ width: "100%" }}
-                onClick={onCloseResponse}
-                className="px-3 py-2 text-sm tracking-wide text-white capitalize transition-colors duration-200 transform bg-gulf-blue-600 rounded-md dark:bg-gulf-blue-800 dark:hover:bg-gulf-blue-700 dark:focus:bg-gulf-blue-700 hover:bg-gulf-blue-600 focus:outline-none focus:bg-gulf-blue-500 focus:ring focus:ring-gulf-blue-300 focus:ring-opacity-50"
-              >
-                CLOSE
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
-    </div>
-  );
-
-  const complianceTableComp = (
-    <div className="transition-all duration-300 bg-gulf-blue-100 p-4 rounded-lg border-l-4 border-blue-600">
-      <div className="space-y-12 px-5 py-5">
-        <div className="px-4 sm:px-0 mt-6 border-t border-gray-100 border-gray-900/10">
-          <h2 className="text-base font-semibold leading-6 text-gray-900">
-            COMPLIANCE TABLE
-          </h2>
-          <p className="mt-1 max-w-2xl text-sm leading-6 text-gray-500">
-            Key: Comply/ Not Comply (Y/ N), Not Stated (NS)
-          </p>
-          <div className="flex justify-evenly mt-5  px-2 py-2 rounded-md">
-            <div className="flex-1 w-45">
-              <label
-                htmlFor="site_visit"
-                className="block text-sm font-medium leading-6 text-gray-900"
-              >
-                Site visit required?
-              </label>
-              <div className="mt-2">
-                <select
-                  id="site_visit"
-                  name="showSiteVisit"
-                  onChange={(e) => onComplianceItemsChange("showSiteVisit", e)}
-                  disabled={
-                    username === csOwner || csOwner === "" ? false : true
-                  }
-                  autoComplete="site_visit"
-                  className="block w-full rounded-md border-0 py-2 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
-                >
-                  {showSiteVisit ? (
-                    <option value={showSiteVisit}>{showSiteVisit}</option>
-                  ) : (
-                    ""
-                  )}
-                  <option value="">Select Option</option>
-                  <option value="yes">Yes</option>
-                  <option value="no">No</option>
-                </select>
-              </div>
-            </div>
-            <div className="flex-1 w-45">
-              <div>
-                <label
-                  htmlFor="samples"
-                  className="block text-sm font-medium leading-6 text-gray-900"
-                >
-                  Are Samples Required?
-                </label>
-                <div className="mt-2">
-                  <select
-                    id="samples"
-                    name="showSamples"
-                    onChange={(e) => onComplianceItemsChange("showSamples", e)}
-                    disabled={
-                      username === csOwner || csOwner === "" ? false : true
-                    }
-                    autoComplete="samples"
-                    className="block w-full rounded-md border-0 py-2 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
-                  >
-                    {showSamples ? (
-                      <option value={showSamples}>{showSamples}</option>
-                    ) : (
-                      ""
-                    )}
-                    <option value="">Select Option</option>
-                    <option value="yes">Yes</option>
-                    <option value="no">No</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div className="overflow-auto px-2 py-2 mt-5 rounded-md ">
-            <table className="table-auto w-full text-left">
-              <thead>
-                <tr className="text-gray-900">
-                  <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                    #
-                  </th>
-                  <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                    Name of Supplier
-                  </th>
-                  <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                    Payment <br />
-                    Terms
-                  </th>
-                  <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                    Bid <br />
-                    Validity
-                  </th>
-                  <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                    Delivery <br />
-                    Period
-                  </th>
-                  <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                    Technical <br />
-                    Specifications
-                  </th>
-                  <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                    Valid <br />
-                    Tax Clearance
-                  </th>
-                  <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                    Registered <br />
-                    with PRAZ?
-                  </th>
-                  {showSiteVisit === "yes" ? (
-                    <th
-                      id="site_visit_header"
-                      className="site-visit-header border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2"
-                    >
-                      Site Visit
-                      <br />
-                      Done?
-                    </th>
-                  ) : (
-                    ""
-                  )}
-                  {showSamples === "yes" ? (
-                    <th
-                      id="samples_header"
-                      className="samples-header border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2"
-                    >
-                      Samples <br />
-                      Required?
-                    </th>
-                  ) : (
-                    ""
-                  )}
-
-                  <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                    Accept
-                  </th>
-                  <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                    Reject
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {compliance &&
-                  compliance.map((comp, key) => {
-                    return (
-                      <tr key={key}>
-                        <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                          {key + 1}
-                        </td>
-                        <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                          {comp.supplier_name}
-                        </td>
-                        <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                          <input
-                            name="payment_terms"
-                            checked={
-                              comp.payment_terms ? comp.payment_terms : false
-                            }
-                            onChange={(e) => onComplianceChange(key, e)}
-                            disabled={
-                              username === csOwner || csOwner === ""
-                                ? false
-                                : true
-                            }
-                            id="payment_terms"
-                            type="checkbox"
-                          />
-                        </td>
-                        <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                          <input
-                            name="bid_validity"
-                            checked={
-                              comp.bid_validity ? comp.bid_validity : false
-                            }
-                            onChange={(e) => onComplianceChange(key, e)}
-                            disabled={
-                              username === csOwner || csOwner === ""
-                                ? false
-                                : true
-                            }
-                            id="bid_validity"
-                            type="checkbox"
-                          />
-                        </td>
-                        <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                          <input
-                            name="delivery_period"
-                            checked={
-                              comp.delivery_period
-                                ? comp.delivery_period
-                                : false
-                            }
-                            onChange={(e) => onComplianceChange(key, e)}
-                            disabled={
-                              username === csOwner || csOwner === ""
-                                ? false
-                                : true
-                            }
-                            id="delivery_period"
-                            type="checkbox"
-                          />
-                        </td>
-                        <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                          <input
-                            name="technical_specifications"
-                            checked={
-                              comp.technical_specifications
-                                ? comp.technical_specifications
-                                : false
-                            }
-                            onChange={(e) => onComplianceChange(key, e)}
-                            disabled={
-                              username === csOwner || csOwner === ""
-                                ? false
-                                : true
-                            }
-                            id="technical_specifications"
-                            type="checkbox"
-                          />
-                        </td>
-                        <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                          <input
-                            name="valid_tax_clearance"
-                            checked={
-                              comp.valid_tax_clearance
-                                ? comp.valid_tax_clearance
-                                : false
-                            }
-                            onChange={(e) => onComplianceChange(key, e)}
-                            disabled={
-                              username === csOwner || csOwner === ""
-                                ? false
-                                : true
-                            }
-                            id="valid_tax_clearance"
-                            type="checkbox"
-                          />
-                        </td>
-                        <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                          <input
-                            name="registered_with_praz"
-                            checked={
-                              comp.registered_with_praz
-                                ? comp.registered_with_praz
-                                : false
-                            }
-                            onChange={(e) => onComplianceChange(key, e)}
-                            disabled={
-                              username === csOwner || csOwner === ""
-                                ? false
-                                : true
-                            }
-                            id="registered_with_praz"
-                            type="checkbox"
-                          />
-                        </td>
-                        {showSiteVisit === "yes" ? (
-                          <td
-                            id="site_visit_header"
-                            className="site-visit-header border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2"
-                          >
-                            <input
-                              name="site_visit"
-                              checked={
-                                comp.site_visit ? comp.site_visit : false
-                              }
-                              onChange={(e) => onComplianceChange(key, e)}
-                              disabled={
-                                username === csOwner || csOwner === ""
-                                  ? false
-                                  : true
-                              }
-                              id="site_visit"
-                              type="checkbox"
-                            />
-                          </td>
-                        ) : (
-                          ""
-                        )}
-                        {showSamples === "yes" ? (
-                          <td
-                            id="samples_header"
-                            className="samples-header border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2"
-                          >
-                            <input
-                              name="samples_required"
-                              checked={
-                                comp.samples_required
-                                  ? comp.samples_required
-                                  : false
-                              }
-                              onChange={(e) => onComplianceChange(key, e)}
-                              disabled={
-                                username === csOwner || csOwner === ""
-                                  ? false
-                                  : true
-                              }
-                              id="samples_required"
-                              type="checkbox"
-                            />
-                          </td>
-                        ) : (
-                          ""
-                        )}
-                        <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                          <input
-                            name="decision"
-                            checked={comp.decision ? comp.decision : false}
-                            onChange={(e) => onComplianceChange(key, e)}
-                            disabled={
-                              username === csOwner || csOwner === ""
-                                ? false
-                                : true
-                            }
-                            id="decision"
-                            type="checkbox"
-                          />
-                        </td>
-                        <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                          <input
-                            name="reject"
-                            checked={comp.reject ? comp.reject : false}
-                            onChange={(e) => onComplianceChange(key, e)}
-                            disabled={
-                              username === csOwner || csOwner === ""
-                                ? false
-                                : true
-                            }
-                            id="reject"
-                            type="checkbox"
-                          />
-                        </td>
-                      </tr>
-                    );
-                  })}
-              </tbody>
-            </table>
-          </div>
-          <div className="px-2 py-2 mt-5 rounded-sm ">
-            <table className="table-auto w-full text-left">
-              <thead>
-                <tr className="text-gray-900">
-                  <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                    Supplier
-                  </th>
-                  <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                    Remarks
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {complianceRemarks &&
-                  complianceRemarks.map((bid, key) => {
-                    return (
-                      <tr key={"cr" + key}>
-                        <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                          {bid.supplier_name}
-                        </td>
-                        <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                          <input
-                            name="remarks"
-                            defaultValue={bid.remarks}
-                            onChange={(e) =>
-                              onComplianceRemarksChange(
-                                bid.supplier_name ?? "",
-                                e
-                              )
-                            }
-                            disabled={
-                              username === csOwner || csOwner === ""
-                                ? false
-                                : true
-                            }
-                            type="text"
-                            className="block w-full rounded-md border-0 py-1.5 text-gray-900 px-2 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
-                          />
-                        </td>
-                      </tr>
-                    );
-                  })}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-
-      {username === csOwner && !approvalsComplete ? (
-        <div className="flex justify-center mt-5 px-3 py-3">
-          <div className="flex-1 m-2">
-            <button
-              style={{ width: "100%" }}
-              onClick={onSaveCompliance}
-              name="save_next"
-              className="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-            >
-              SAVE COMPLIANCES
-            </button>
-          </div>
-        </div>
-      ) : (
-        ""
-      )}
-    </div>
-  );
-
-  //   const loadingModal = (
-  //     <div className="fixed inset-0 z-50 overflow-y-auto">
-  //       <div className="flex items-end justify-center min-h-screen px-4 text-center md:items-center sm:block sm:p-0">
-  //         <div
-  //         //   enter="transition ease-out duration-300 transform"
-  //         //   enterStart="opacity-0"
-  //         //   enterEnd="opacity-100"
-  //         //   leave="transition ease-in duration-200 transform"
-  //         //   leaveStart="opacity-100"
-  //         //   leaveEnd="opacity-0"
-  //           className="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-40"
-  //         ></div>
-
-  //         <div
-  //         //   enter="transition ease-out duration-300 transform"
-  //         //   enterStart="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-  //         //   enterEnd="opacity-100 translate-y-0 sm:scale-100"
-  //         //   leave="transition ease-in duration-200 transform"
-  //         //   leaveStart="opacity-100 translate-y-0 sm:scale-100"
-  //         //   leaveEnd="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-  //           className="inline-block w-full max-w-xl p-8 my-20 overflow-hidden text-left transition-all transform bg-white rounded-lg shadow-xl 2xl:max-w-2xl"
-  //         >
-  //           <div className="flex items-center justify-between space-x-4">
-  //             <h1 className="text-xl font-medium text-gray-800">
-  //                 Loading ...
-  //             </h1>
-  //           </div>
-
-  //           <p
-  //             className={`mt-5 text-sm p-2 rounded-md bg-gulf-blue-100 text-gulf-blue-700`}
-  //           >
-  //             Please wait ...
-  //           </p>
-  //         </div>
-  //       </div>
-  //     </div>
-  //   );
-
-  const supplierModal = (
-    <div className="fixed inset-0 flex items-center justify-center z-50 pt-10 pb-20">
-      <div className="bg-gulf-blue-100 rounded-lg shadow-lg p-6 max-h-screen overflow-y-auto">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-medium">ADD SUPPLIER</h3>
-          <button
-            type="button"
-            className="text-gray-400 hover:text-gray-500 focus:outline-none"
-            onClick={onAddSuppliersModal}
-          >
-            <svg
-              className="h-6 w-6"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M6 18L18 6M6 6l12 12"
-              />
-            </svg>
-          </button>
-        </div>
-        <div className="overflow-auto px-2 py-2 mt-5 rounded-md bg-gulf-blue-300">
-          <div>
-            <div className="flex-1 w-full ml-1">
-              <label
-                htmlFor="supplier_name"
-                className="block text-sm font-medium leading-6 text-gray-900"
-              >
-                Supplier Name
-              </label>
-              <div className="mt-2">
-                <input
-                  name="supplier_name"
-                  onChange={(e) => onSupplierChange(e)}
-                  type="text"
-                  required
-                  className="block w-full rounded-md border-0 py-1.5 text-gray-900 px-2 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                />
-              </div>
-            </div>
-          </div>
-
-          <div className="flex justify-center mt-5 px-3 py-3">
-            <div className="m-2">
-              <button
-                onClick={onAddSuppliersModal}
-                className="rounded-md text-gray-50 text-sm bg-gray-300 hover:bg-blue-550 px-3 py-2 font-semibold leading-6"
-              >
-                <span className="ml-2">CANCEL</span>
-              </button>
-            </div>
-            <div className="m-2">
-              <button
-                onClick={onSaveSupplier}
-                className="rounded-md text-gray-50 text-sm bg-blue-925 hover:bg-blue-550 px-3 py-2 font-semibold leading-6"
-              >
-                <span className="ml-2">SAVE SUPPLIER</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-
-  const rejectApprovalJustification = (
-    <div className="fixed inset-0 flex items-center justify-center z-50 pt-10 pb-20">
-      <div className="bg-gulf-blue-100 rounded-lg shadow-lg p-6 max-h-screen overflow-y-auto">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-medium">Reason for rejection</h3>
-          <button
-            type="button"
-            className="text-gray-400 hover:text-gray-500 focus:outline-none"
-            onClick={onApprovalJustificationModalClose}
-          >
-            <svg
-              className="h-6 w-6"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M6 18L18 6M6 6l12 12"
-              />
-            </svg>
-          </button>
-        </div>
-        <div className="overflow-auto px-2 py-2 mt-5 rounded-md bg-gulf-blue-300">
-          <div>
-            <div className="flex-1 w-full ml-1">
-              <label
-                htmlFor="bid_date"
-                className="block text-sm font-medium leading-6 text-gray-900"
-              >
-                Justification
-              </label>
-              <div className="mt-2">
-                <textarea
-                  name="justification"
-                  onChange={(e) => onApprovalJustificationChange(e)}
-                  required
-                  className="block w-full rounded-md border-0 py-1.5 text-gray-900 px-2 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                />
-              </div>
-            </div>
-          </div>
-
-          <div className="flex justify-center mt-5 px-3 py-3">
-            <div className="m-2">
-              <button
-                onClick={onApprovalJustificationModalClose}
-                className="rounded-md text-gray-50 text-sm bg-gray-300 hover:bg-blue-550 px-3 py-2 font-semibold leading-6"
-              >
-                <span className="ml-2">CANCEL</span>
-              </button>
-            </div>
-            <div className="m-2">
-              <button
-                onClick={() =>
-                  onApprovalApprove(
-                    currentApprover?.role ?? "",
-                    currentApprover?.username ?? "",
-                    "Rejected",
-                    currentApprover?.justification ?? ""
-                  )
-                }
-                className="rounded-md text-gray-50 text-sm bg-blue-925 hover:bg-blue-550 px-3 py-2 font-semibold leading-6"
-              >
-                <span className="ml-2">PROCEED</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-
-  const rejectJustification = (
-    <div className="fixed inset-0 flex items-center justify-center z-50 pt-10 pb-20">
-      <div className="bg-gulf-blue-100 rounded-lg shadow-lg p-6 max-h-screen overflow-y-auto">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-medium">Reason for rejection</h3>
-          <button
-            type="button"
-            className="text-gray-400 hover:text-gray-500 focus:outline-none"
-            onClick={onCommitteeJustificationModalClose}
-          >
-            <svg
-              className="h-6 w-6"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M6 18L18 6M6 6l12 12"
-              />
-            </svg>
-          </button>
-        </div>
-        <div className="overflow-auto px-2 py-2 mt-5 rounded-md bg-gulf-blue-300">
-          <div>
-            <div className="flex-1 w-full ml-1">
-              <label
-                htmlFor="bid_date"
-                className="block text-sm font-medium leading-6 text-gray-900"
-              >
-                Justification
-              </label>
-              <div className="mt-2">
-                <textarea
-                  name="justification"
-                  onChange={(e) => onCommitteeJustificationChange(e)}
-                  required
-                  className="block w-full rounded-md border-0 py-1.5 text-gray-900 px-2 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                />
-              </div>
-            </div>
-          </div>
-
-          <div className="flex justify-center mt-5 px-3 py-3">
-            <div className="m-2">
-              <button
-                onClick={onCommitteeJustificationModalClose}
-                className="rounded-md text-gray-50 text-sm bg-gray-300 hover:bg-blue-550 px-3 py-2 font-semibold leading-6"
-              >
-                <span className="ml-2">CANCEL</span>
-              </button>
-            </div>
-            <div className="m-2">
-              <button
-                onClick={() =>
-                  onCommitteeApprove(
-                    currentApprover?.username ?? "",
-                    "Rejected",
-                    currentApprover?.justification ?? ""
-                  )
-                }
-                className="rounded-md text-gray-50 text-sm bg-blue-925 hover:bg-blue-550 px-3 py-2 font-semibold leading-6"
-              >
-                <span className="ml-2">PROCEED</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-
-  const updateBidModalComp = (
-    <div
-      id={"bid-" + currentBid?.bid_count}
-      className="fixed inset-0 flex items-center justify-center z-50 pt-10 pb-20"
-    >
-      <div className="transition-all duration-300 bg-gulf-blue-50 p-4 rounded-lg border-l-4 border-blue-600 rounded-lg shadow-lg p-6 max-h-screen min-w-max overflow-y-auto">
-        <div className="flex justify-between items-center mb-4">
-          <h3 className="text-lg font-medium">Update Bid</h3>
-          <button
-            type="button"
-            className="text-gray-400 hover:text-gray-500 focus:outline-none"
-            onClick={onCloseUpdateBidBid}
-          >
-            <svg
-              className="h-6 w-6"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M6 18L18 6M6 6l12 12"
-              />
-            </svg>
-          </button>
-        </div>
-        <div className="px-4 sm:px-0 mt-6 rounded-md border-t border-gray-100 border-b border-gray-900/10 pb-12">
-          <div id="bid_container" className=" rounded-md">
-            <div className="flex justify-evenly mt-5  px-2 py-2 rounded-md">
-              <div className="flex-1 w-20 ml-1">
-                <label
-                  htmlFor="supplier_name"
-                  className="block text-sm font-medium leading-6 text-gray-900"
-                >
-                  Supplier
-                </label>
-                <div className="mt-2">
-                  <select
-                    id="supplier"
-                    onChange={(e) => onCurrentBidSupplierChange("supplier", e)}
-                    className="block w-full rounded-md border-0 py-1.5 text-gray-900 px-2 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
-                  >
-                    {currentBid?.supplier_name ? (
-                      <option
-                        value={
-                          currentBid?.supplier +
-                          "-#-" +
-                          currentBid?.supplier_name
-                        }
-                      >
-                        {currentBid?.supplier_name}
-                      </option>
-                    ) : (
-                      ""
-                    )}
-                    <option>Select Supplier</option>
-                    {suppliers
-                      ? suppliers.map((supplier) => (
-                          <option value={supplier.id + "-#-" + supplier.name}>
-                            {supplier.name}
-                          </option>
-                        ))
-                      : ""}
-                  </select>
-                </div>
-              </div>
-              <div className="flex-1 w-20 ml-1">
-                <label
-                  htmlFor="bid_date"
-                  className="block text-sm font-medium leading-6 text-gray-900"
-                >
-                  Bid Date
-                </label>
-                <div className="mt-2">
-                  <input
-                    name="bid_date"
-                    value={currentBid?.bid_date}
-                    onChange={(e) => onCurrentBidChange("bid_date", e)}
-                    type="date"
-                    required
-                    className="block w-full rounded-md border-0 py-1.5 text-gray-900 px-2 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                  />
-                </div>
-              </div>
-              <div className="flex-1 w-20 ml-1">
-                <label
-                  htmlFor="supplier[bid][0]"
-                  className="block text-sm font-medium leading-6 text-gray-900"
-                >
-                  Bid No.
-                </label>
-                <div className="mt-2">
-                  <input
-                    name="supplier[bid][0]"
-                    type="number"
-                    value={currentBid?.bid_count}
-                    id="bid"
-                    required
-                    readOnly
-                    className="block w-full rounded-md border-0 py-1.5 text-gray-900 px-2 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                  />
-                </div>
-              </div>
-              <div className="flex-1 w-40 ml-1">
-                <label
-                  htmlFor="bid_document"
-                  className="block text-sm font-medium leading-6 text-gray-900"
-                >
-                  Bid Documents
-                </label>
-                <div className="mt-2">
-                  <input
-                    name="bid_document"
-                    type="file"
-                    onChange={(e) => onBidDocumentChange(e)}
-                    className="block w-full rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {currentBid?.items &&
-              currentBid?.items.map((item, index) => {
-                return (
-                  <div
-                    key={index}
-                    className="flex justify-evenly mt-5  px-2 py-2 rounded-md"
-                  >
-                    <div className="flex-1 w-15 ml-1">
-                      <label
-                        htmlFor="item_name"
-                        className="block text-sm font-medium leading-6 text-gray-900"
-                      >
-                        Item Description
-                      </label>
-                      <div className="mt-2">
-                        <input
-                          name="item_description"
-                          defaultValue={item.item_required}
-                          onChange={(e) =>
-                            onCurrentBidItemChange(
-                              item.item_required ?? "",
-                              "item_required",
-                              e,
-                              currentBid?.bid_count?.toString() ?? ""
-                            )
-                          }
-                          id="item_description"
-                          required
-                          className="block w-full rounded-md border-0 py-1.5 text-gray-900 px-2 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                        />
-                      </div>
-                    </div>
-                    <div className="flex-1 w-15 ml-1">
-                      <label
-                        htmlFor="quantity"
-                        className="block text-sm font-medium leading-6 text-gray-900"
-                      >
-                        Quantity
-                      </label>
-                      <div className="mt-2">
-                        <input
-                          name="quantity"
-                          defaultValue={item.quantity}
-                          onChange={(e) =>
-                            onCurrentBidItemChange(
-                              item.item_required ?? "",
-                              "quantity",
-                              e,
-                              currentBid?.bid_count?.toString() ?? ""
-                            )
-                          }
-                          type="number"
-                          id="quantity"
-                          className="block inpt w-full rounded-md border-0 py-1.5 text-gray-900 px-2 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                        />
-                      </div>
-                    </div>
-                    <div className="flex-1 w-15 ml-3">
-                      <div>
-                        <label
-                          htmlFor="unit_of_measurement"
-                          className="block text-sm font-medium leading-6 text-gray-900"
-                        >
-                          UOM
-                        </label>
-                        <div className="mt-2">
-                          <select
-                            id="unit_of_measurement"
-                            defaultValue={item.unit_of_measurement}
-                            onChange={(e) =>
-                              onCurrentBidItemChange(
-                                item.item_required ?? "",
-                                "unit_of_measurement",
-                                e,
-                                currentBid?.bid_count?.toString() ?? ""
-                              )
-                            }
-                            autoComplete="unit_of_measurement"
-                            className="block w-full rounded-md border-0 py-1.5 text-gray-900 px-2 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
-                          >
-                            {item.unit_of_measurement ? (
-                              <option value={item.unit_of_measurement}>
-                                {item.unit_of_measurement}
-                              </option>
-                            ) : (
-                              ""
-                            )}
-                            {uom ? (
-                              uom.map((uom) => (
-                                <option value={uom.name}>{uom.name}</option>
-                              ))
-                            ) : (
-                              <option>No Units</option>
-                            )}
-                          </select>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex-1 w-15 ml-3">
-                      <div>
-                        <label
-                          htmlFor="vat"
-                          className="block text-sm font-medium leading-6 text-gray-900"
-                        >
-                          VAT
-                        </label>
-                        <div className="mt-2">
-                          <select
-                            id="vat"
-                            defaultValue={item.vat}
-                            onChange={(e) =>
-                              onCurrentBidItemChange(
-                                item.item_required ?? "",
-                                "vat",
-                                e,
-                                currentBid?.bid_count?.toString() ?? ""
-                              )
-                            }
-                            autoComplete="vat"
-                            className="block w-full rounded-md border-0 py-1.5 text-gray-900 px-2 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
-                          >
-                            {item.vat ? (
-                              <option value={item.vat}>{item.vat}</option>
-                            ) : (
-                              ""
-                            )}
-                            <option value="">Select VAT</option>
-                            <option value="Excl.">Excl.</option>
-                            <option value="Incl.">Incl.</option>
-                          </select>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="flex-1 w-15 ml-1">
-                      <label
-                        htmlFor="unit_price"
-                        className="block text-sm font-medium leading-6 text-gray-900"
-                      >
-                        Unit Price
-                      </label>
-                      <div className="mt-2">
-                        <input
-                          name="unit_price"
-                          defaultValue={item.unit_price}
-                          onChange={(e) =>
-                            onCurrentBidItemChange(
-                              item.item_required ?? "",
-                              "unit_price",
-                              e,
-                              currentBid?.bid_count?.toString() ?? ""
-                            )
-                          }
-                          type="text"
-                          id="unit_price"
-                          required
-                          className="block inpt w-full rounded-md border-0 py-1.5 text-gray-900 px-2 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-          </div>
-
-          <div className="flex justify-center mt-5 px-3 py-3">
-            <div className="m-2">
-              <button
-                onClick={onCloseCurrentBid}
-                type="submit"
-                className="rounded-md bg-gray-700 hover:bg-gray-600 text-sm font-semibold px-3 py-2 text-white shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
-              >
-                <span className="ml-2">CANCEL</span>
-              </button>
-            </div>
-            <div className="m-2">
-              <button
-                onClick={onCurrentBidSave}
-                className="rounded-md text-blue-50 text-sm bg-blue-600 hover:bg-blue-500 px-3 py-2 font-semibold leading-6"
-              >
-                <span className="ml-2">SAVE BID</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-
-  const approvalsTable = (
-    <div className="transition-all duration-300 bg-gulf-blue-100 p-4 rounded-lg border-l-4 border-blue-600">
-      <div className="space-y-12 px-5 py-5">
-        <div className="px-4 sm:px-0 mt-6 border-t border-gray-100 border-gray-900/10">
-          <h2 className="text-base font-semibold leading-6 text-gray-900">
-            Approvals
-          </h2>
-
-          <div className="overflow-auto px-2 py-2 mt-5 rounded-md">
-            <table className="table-auto w-full text-left">
-              <tbody>
-                <tr className="text-gray-900">
-                  <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                    FINANCE MANAGER
-                  </td>
-                  <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                    {fmApproval && fmApproval?.approver_name}
-                  </td>
-                  <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                    {fmApproval &&
-                      fmApproval?.approval === "Rejected" &&
-                      fmApproval?.justification}
-                  </td>
-                  <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                    {fmApproval &&
-                      fmApproval?.approval === "Approved" &&
-                      "APPROVED"}
-                    {fmApproval &&
-                      fmApproval?.approval === "Rejected" &&
-                      "REJECTED"}
-                    {committeeApprovalComplete && (
-                      <div className="flex justify-content-evenly">
-                        {requesterRole === "check" &&
-                        Object.keys(fmApproval ?? {}).length === 0 ? (
-                          <div className="flex justify-content-evenly">
-                            <div className="m-2">
-                              <button
-                                onClick={() =>
-                                  onApprovalApprove(
-                                    "finance_manager",
-                                    username ?? "",
-                                    "Approved",
-                                    ""
-                                  )
-                                }
-                                name="save_next"
-                                className="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-                              >
-                                APPROVE
-                              </button>
-                            </div>
-                            <div className="m-2">
-                              <button
-                                onClick={() =>
-                                  onApprovalJustificationModal(
-                                    username ?? "",
-                                    "finance_manager"
-                                  )
-                                }
-                                name="save_next"
-                                className="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-                              >
-                                REJECT
-                              </button>
-                            </div>
-                          </div>
-                        ) : (
-                          ""
-                        )}
-                      </div>
-                    )}
-                  </td>
-                  <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                    {fmApproval && fmApproval?.approval_date
-                      ? fmApproval?.approval_date.split(".")[0]
-                      : ""}
-                  </td>
-                </tr>
-                <tr className="text-gray-900">
-                  <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                    GENERAL MANAGER
-                  </td>
-                  <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                    {gmApproval && gmApproval.approver_name}
-                  </td>
-                  <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                    {gmApproval &&
-                      gmApproval.approval === "Rejected" &&
-                      gmApproval.justification}
-                  </td>
-                  <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                    {gmApproval &&
-                      gmApproval.approval === "Approved" &&
-                      "APPROVED"}
-                    {gmApproval &&
-                      gmApproval.approval === "Rejected" &&
-                      "REJECTED"}
-                    {
-                      <div className="flex justify-content-evenly">
-                        {fmApproval &&
-                        fmApproval?.approval === "Approved" &&
-                        requesterRole === "approve" &&
-                        Object.keys(gmApproval ?? {}).length === 0 ? (
-                          <div className="flex justify-content-evenly">
-                            <div className="m-2">
-                              <button
-                                onClick={() =>
-                                  onApprovalApprove(
-                                    "general_manager",
-                                    username ?? "",
-                                    "Approved",
-                                    ""
-                                  )
-                                }
-                                name="save_next"
-                                className="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-                              >
-                                APPROVE
-                              </button>
-                            </div>
-                            <div className="m-2">
-                              <button
-                                onClick={() =>
-                                  onApprovalJustificationModal(
-                                    username ?? "",
-                                    "general_manager"
-                                  )
-                                }
-                                name="save_next"
-                                className="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-                              >
-                                REJECT
-                              </button>
-                            </div>
-                          </div>
-                        ) : (
-                          ""
-                        )}
-                      </div>
-                    }
-                  </td>
-                  <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                    {gmApproval && gmApproval.approval_date
-                      ? gmApproval.approval_date.split(".")[0]
-                      : ""}
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-
-  const csDetailsView = (
-    <div className="transition-all duration-300 bg-gulf-blue-100 p-4 rounded-lg border-l-4 border-blue-600">
-      <h2 className="text-base font-semibold leading-6 text-gray-900">
-        COMPERATIVE SCHEDULE DETAILS
-      </h2>
-      <p className="mt-1 max-w-2xl text-sm leading-6 text-gray-500">
-        CS NO: {csId}
-      </p>
-
-      <div className="flex justify-evenly mt-5  px-2 py-2 rounded-md">
-        <div className="flex-1 w-100">
-          <label
-            htmlFor="scope"
-            className="block text-sm font-medium leading-6 text-gray-900"
-          >
-            Scope of Work
-          </label>
-          <div className="mt-2">
-            <textarea
-              id="scope"
-              name="scope_of_work"
-              value={scopeOfWork}
-              disabled={username === csOwner || csOwner === "" ? false : true}
-              onChange={(e) => setScopeOfWork(e.target.value)}
-              className="block w-full rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-            ></textarea>
-          </div>
-        </div>
-      </div>
-      <div className="flex justify-evenly mt-5  px-2 py-2 rounded-md">
-        <div className="flex-1 w-20 ml-1">
-          <label
-            htmlFor="pr_number"
-            className="block text-sm font-medium leading-6 text-gray-900"
-          >
-            PR No.
-          </label>
-          <div className="mt-2">
-            <input
-              name="pr_number"
-              value={prNumber}
-              onChange={(e) => setCsOwner(e.target.value)}
-              disabled={username === csOwner || csOwner === "" ? false : true}
-              id="pr_number"
-              required
-              className="block w-full rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-            />
-          </div>
-        </div>
-        <div className="flex-1 w-20 ml-1">
-          <label
-            htmlFor="pr_date"
-            className="block text-sm font-medium leading-6 text-gray-900"
-          >
-            PR Date
-          </label>
-          <div className="mt-2">
-            <input
-              name="pr_date"
-              value={prDate}
-              onChange={(e) => setPrDate(e.target.value)}
-              disabled={username === csOwner || csOwner === "" ? false : true}
-              type="date"
-              required
-              className="block w-full rounded-md border-0 py-1.5 text-gray-900 px-2 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-            />
-          </div>
-        </div>
-        <div className="flex-1 w-20 ml-1">
-          <label
-            htmlFor="closing_date"
-            className="block text-sm font-medium leading-6 text-gray-900"
-          >
-            Closing Date
-          </label>
-          <div className="mt-2">
-            <input
-              name="closing_date"
-              value={closingDate}
-              onChange={(e) => setClosingDate(e.target.value)}
-              disabled={username === csOwner || csOwner === "" ? false : true}
-              type="date"
-              required
-              className="block w-full rounded-md border-0 py-1.5 text-gray-900 px-2 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-            />
-          </div>
-        </div>
-        <div className="flex-1 w-20 ml-1">
-          <div>
-            <label
-              htmlFor="closing_time"
-              className="block text-sm font-medium leading-6 text-gray-900"
-            >
-              Closing Time
-            </label>
-            <div className="mt-2 text-gray-900">
-              <div className="flex px-1">
-                <select
-                  name="closing_time"
-                  onChange={(e) => setClosingTime(e.target.value)}
-                  disabled={
-                    username === csOwner || csOwner === "" ? false : true
-                  }
-                  className="rounded-md block border-none w-full py-1.5 px-2 text-gray-900 sm:max-w-xs sm:text-sm sm:leading-6"
-                >
-                  {closingTime ? (
-                    <option value={closingTime}>{closingTime}</option>
-                  ) : (
-                    <option value="">Select Closing Time</option>
-                  )}
-                  <option value="10:00">10:00</option>
-                  <option value="14:00">14:00</option>
-                </select>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div className="flex justify-evenly mt-5  px-2 py-2 rounded-md">
-        <div className="flex-1 w-20 ml-1">
-          <label
-            htmlFor="designation"
-            className="block text-sm font-medium leading-6 text-gray-900"
-          >
-            Procurement Plan
-          </label>
-          <div className="mt-2">
-            <select
-              id="proc_plan"
-              name="proc_plan"
-              autoComplete="proc_plan"
-              onChange={(e) => onSelectChange("proc_ref", e)}
-              disabled={username === csOwner || csOwner === "" ? false : true}
-              className="block w-full rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
-            >
-              {procPlan ? (
-                <option value={procPlan?.proc_ref}>{procPlan?.description}</option>
-              ) : (
-                ""
-              )}
-              {procPlans
-                ? procPlans.map((plan) => (
-                    <option value={plan.proc_ref}>{plan.description}</option>
-                  ))
-                : ""}
-            </select>
-          </div>
-        </div>
-        <div className="flex-1 w-20 ml-1">
-          <label
-            htmlFor="currency"
-            className="block text-sm font-medium leading-6 text-gray-900"
-          >
-            Currency
-          </label>
-          <div className="mt-2">
-            <select
-              id="currency"
-              name="currency"
-              autoComplete="currency"
-              onChange={(e) => onSelectChange("currency", e)}
-              disabled={username === csOwner || csOwner === "" ? false : true}
-              className="block w-full rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
-            >
-              {currency ? (
-                <option value={currency.id}>{currency.currency}</option>
-              ) : (
-                <option value="">Select Currency</option>
-              )}
-              {currencies
-                ? currencies.map((currency) => (
-                    <option value={currency.id}>{currency.currency}</option>
-                  ))
-                : ""}
-            </select>
-          </div>
-        </div>
-        <div className="flex-1 w-20 ml-1">
-          <label
-            htmlFor="pr_date"
-            className="block text-sm font-medium leading-6 text-gray-900"
-          >
-            Ref Date
-          </label>
-          <div className="mt-2">
-            <input
-              name="ref_date"
-              value={refDate}
-              onChange={(e) => setRefDate(e.target.value)}
-              disabled={username === csOwner || csOwner === "" ? false : true}
-              type="date"
-              required
-              className="block w-full rounded-md border-0 py-1.5 text-gray-900 px-2 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-            />
-          </div>
-        </div>
-        <div className="flex-1 w-20 ml-1">
-          <label
-            htmlFor="date_tender_opened"
-            className="block text-sm font-medium leading-6 text-gray-900"
-          >
-            Tender Box Opened On
-          </label>
-          <div className="mt-2">
-            <input
-              name="date_tender_opened"
-              value={dateTenderOpened}
-              onChange={(e) => setDateTenderOpened(e.target.value)}
-              disabled={username === csOwner || csOwner === "" ? false : true}
-              type="date"
-              required
-              className="block w-full rounded-md border-0 py-1.5 text-gray-900 px-2 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-            />
-          </div>
-        </div>
-        <div className="flex-1 w-40 ml-1">
-          <label
-            htmlFor="tender_adjudication_committee_date"
-            className="block text-sm font-medium leading-6 text-gray-900"
-          >
-            Tender Committee Date
-          </label>
-          <div className="mt-2">
-            <input
-              name="tender_adjudication_committee_date"
-              value={tenderAdjudicationCommitteeDate}
-              onChange={(e) =>
-                setTenderAdjudicationCommitteeDate(e.target.value)
-              }
-              disabled={username === csOwner || csOwner === "" ? false : true}
-              type="date"
-              required
-              className="block w-full rounded-md border-0 py-1.5 text-gray-900 px-2 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-            />
-          </div>
-        </div>
-      </div>
-      <div className="flex justify-evenly mt-5  px-2 py-2 rounded-md">
-        <div className="flex-1 w-full ml-1">
-          <label
-            htmlFor="advert"
-            className="block text-sm font-medium leading-6 text-gray-900"
-          >
-            Tender Advert
-          </label>
-          <div className="mt-2">
-            <input
-              name="advert"
-              onChange={(e) => onFileInputChange("advert", e)}
-              disabled={username === csOwner || csOwner === "" ? false : true}
-              type="file"
-              id="advert"
-              required
-              readOnly
-              className="block w-full rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-            />
-          </div>
-        </div>
-        <div className="flex-1 w-40 ml-2">
-          <label
-            htmlFor="bid_document"
-            className="block text-sm font-medium leading-6 text-gray-900"
-          >
-            Advert Document
-          </label>
-          <div className="mt-2">
-            <a href={advertUrl} rel="noopener noreferrer">
-              View Advert Document
-            </a>
-          </div>
-        </div>
-      </div>
-      <div className="flex justify-evenly mt-5  px-2 py-2 rounded-md">
-        {prAttachments &&
-          prAttachments?.length > 0 &&
-          prAttachments?.map((attachment) => {
-            return (
-              <div className="flex-1 w-20 ml-1">
-                <div className="mt-2">
-                  <div className="rounded bg-white border border-1 shadow-lg text-center m-2">
-                    <a
-                      href={attachment.attachment_url}
-                      className="text-center text-blue-600  p-3 sm whitespace-normal max-w-full"
-                    >
-                      {attachment.name}
-                    </a>
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-      </div>
-
-      {(username === csOwner || !csId) && !approvalsComplete ? (
-        <div className="flex justify-center mt-10 px-3 py-3">
-          {csId ? (
-            <div className="w-30 m-2">
-              <button
-                style={{ width: "100%" }}
-                onClick={onUpdateSchedule}
-                name="save_next"
-                className="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-              >
-                UPDATE SCHEDULE
-              </button>
-            </div>
-          ) : (
-            <div className="w-30 m-2">
-              <button
-                style={{ width: "100%" }}
-                onClick={onSaveSchedule}
-                name="save_next"
-                className="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-              >
-                SAVE SCHEDULE
-              </button>
-            </div>
-          )}
-        </div>
-      ) : (
-        ""
-      )}
-    </div>
-  );
-
-  const additionalInfo = (
-    <div className="transition-all duration-300 bg-gulf-blue-100 p-4 rounded-lg border-l-4 border-blue-600">
-      <h2 className="text-base font-semibold leading-6 text-gray-900">
-        Additional Information (For Procurement Admin Only)
-      </h2>
-
-      <div className="flex justify-evenly mt-5  px-2 py-2 rounded-md">
-        <div className="flex-1 w-100">
-          <label
-            htmlFor="additionalNotes"
-            className="block text-sm font-medium leading-6 text-gray-900"
-          >
-            Notes
-          </label>
-          <div className="mt-2">
-            <textarea
-              id="additionalNotes"
-              name="additionalNotes"
-              value={additionalNotes}
-              disabled={requesterRole === "verify" ? false : true}
-              onChange={onAdditionalNotesChange}
-              className="block w-full rounded-md border-0 py-2 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-            ></textarea>
-          </div>
-        </div>
-      </div>
-
-      {requesterRole === "verify" && additionalNotes ? (
-        <div className="flex justify-center mt-2 px-3 py-3">
-          <div className="w-50 m-2">
-            <button
-              style={{ width: "100%" }}
-              onClick={onAdditionalNotesSubmit}
-              name="save_next"
-              className="rounded-md bg-blue-700 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-            >
-              SUBMIT NOTES
-            </button>
-          </div>
-        </div>
-      ) : (
-        ""
-      )}
-    </div>
-  );
-
-  const buyersInfo = (
-    <div className="transition-all duration-300 bg-gulf-blue-100 p-4 rounded-lg border-l-4 border-blue-600">
-      <h2 className="text-base font-semibold leading-6 text-gray-900">
-        Buyer's Award Notes (For Buyers Only)
-      </h2>
-
-      <div className="flex justify-evenly mt-5  px-2 py-2 rounded-md">
-        <div className="flex-1 w-100">
-          <label
-            htmlFor="buyersNotes"
-            className="block text-sm font-medium leading-6 text-gray-900"
-          >
-            Notes
-          </label>
-          <div className="mt-2">
-            <textarea
-              id="buyersNotes"
-              name="buyersNotes"
-              value={buyersNotes}
-              disabled={requesterRole === "procurement" ? false : true}
-              onChange={onBuyersNotesChange}
-              className="block w-full rounded-md border-0 py-2 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-            ></textarea>
-          </div>
-        </div>
-      </div>
-
-      {requesterRole === "procurement" && username === csOwner && buyersNotes ? (
-        <div className="flex justify-center mt-2 px-3 py-3">
-          <div className="w-50 m-2">
-            <button
-              style={{ width: "100%" }}
-              onClick={onBuyersNotesSubmit}
-              name="save_next"
-              className="rounded-md bg-blue-700 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-            >
-              SUBMIT NOTES
-            </button>
-          </div>
-        </div>
-      ) : (
-        ""
-      )}
-    </div>
-  );
-
-  const committeeTableComp = (
-    <div className="transition-all duration-300 bg-gulf-blue-100 p-4 rounded-lg border-l-4 border-blue-600">
-      <div className="space-y-12 px-5 py-5">
-        <div className="px-4 sm:px-0 mt-6 border-t border-gray-100 border-gray-900/10">
-          <h2 className="text-base font-semibold leading-6 text-gray-900">
-            Committee Members
-          </h2>
-
-          <div className="px-2 py-2 mt-5 rounded-md">
-            <div className="grid grid-cols-3 gap-4 px-2 py-2 items-center">
-              <div>
-                <div className="mt-2">
-                  {username === csOwner ? (
-                    <select
-                      title="Select Member Position"
-                      onChange={(text) =>
-                        onCommitteeChange("memberPosition", text)
-                      }
-                      id="memberPosition"
-                      name="memberPosition"
-                      className="block w-full rounded-md border-0 py-2 px-2 text-gray-900 shadow-sm sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
-                    >
-                      <option value="">Select Member Position</option>
-                      <option value="chairman">Chairman</option>
-                      <option value="finance">Finance</option>
-                      <option value="procurement">Procurement</option>
-                      <option value="user">User</option>
-                      <option value="other">Other</option>
-                    </select>
-                  ) : (
-                    ""
-                  )}
-                </div>
-              </div>
-              <div>
-                <div className="mt-2">
-                  {username === csOwner ? (
-                    <div>
-                      {username === csOwner && (
-                        <Select
-                          id="memberUserName"
-                          name="memberUserName"
-                          className="block w-full rounded-md border-0 py-2 text-gray-900 sm:max-w-xs sm:text-sm sm:leading-6 chzn-select"
-                          options={userOptions}
-                          styles={customStyles}
-                          onChange={(option) =>
-                            onCommitteeSelect(
-                              "memberUserName",
-                              option?.value ?? ""
-                            )
-                          }
-                          placeholder="Search Member Name"
-                        />
-                      )}
-                    </div>
-                  ) : (
-                    ""
-                  )}
-                </div>
-              </div>
-              {username === csOwner &&
-              !approvalsComplete &&
-              member?.memberPosition &&
-              member?.memberUserName ? (
-                <div className="w-30">
                   <button
-                    style={{ width: "100%" }}
-                    onClick={onAddCommitteeMembers}
-                    name="save_next"
-                    className="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                    onClick={handleFetchPR}
+                    disabled={!prIdInput.trim() || isLoading}
+                    className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed transition-colors flex items-center min-w-max"
                   >
-                    ADD MEMBER
+                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v4m0 0v4" />
+                    </svg>
+                    {isLoading ? 'Loading...' : 'Fetch PR Data'}
                   </button>
                 </div>
-              ) : (
-                ""
-              )}
-            </div>
-            <div className="grid grid-cols-3 gap-4 bg-blue-100 border before:border-blue-400 after:border-blue-700 border-blue-400 px-2 py-2 m-2 rounded-md">
-              <div style={{ width: "100%" }}>
-                <p className="font-medium leading-6 text-gray-900">CREATED BY</p>
-                <p>{creator}</p>
+                <p className="text-sm text-blue-600 mt-2">
+                  {!csId 
+                    ? "Load existing Purchase Request data to populate this new schedule."
+                    : "This will populate all fields below with data from the specified Purchase Request."
+                  }
+                </p>
               </div>
-              <div style={{ width: "100%" }}>
-                <p className="font-medium leading-6 text-gray-900">ACTION</p>
-                <p>INITIATED</p>
-              </div>
-              <div style={{ width: "100%" }}>
-                <p className="font-medium leading-6 text-gray-900">DATE</p>
-                <p>{createdAt ? createdAt.split(".")[0] : ""}</p>
-              </div>
-            </div>
+            )}
 
-            {committeeMembers &&
-              committeeMembers.map((member, key) => {
-                return (
-                  <div className={getCommitteeClassNames(member.memberApproval??"")}>
-                    <div style={{ width: "100%" }}>
-                      <p className="font-medium leading-6 text-gray-900">ROLE</p>
-                      <p>{member?.memberPosition?.toUpperCase()}</p>
-                    </div>
-                    <div style={{ width: "100%" }}>
-                      <p className="font-medium leading-6 text-gray-900">MEMBER</p>
-                      <p>
-                        {member.memberName
-                          ? member.memberName
-                          : member.memberUserName}
-                      </p>
-                    </div>
-                    <div style={{ width: "100%" }}>
-                      <p className="font-medium leading-6 text-gray-900">Comment</p>
-                      <p>{member.committeeJustification}</p>
-                    </div>
-                    <div style={{ width: "100%" }}>
-                      <p className="font-medium leading-6 text-gray-900">DATE</p>
-                      <p>
-                        {member.committeeDate
-                          ? member.committeeDate.split(".")[0]
-                          : ""}
-                      </p>
-                    </div>
-                    <div style={{ width: "100%" }} className="text-center">
-                      <p className="font-medium leading-6 text-gray-900">ACTION</p>
-                      <p>
-                        {member.memberApproval === "Approved" && "APPROVED"}
-                        {member.memberApproval === "Rejected" && "REJECTED"}
-                        {(member.memberApproval === "" ||
-                          member.memberApproval === null) && (
-                          <div style={{ width: "100%" }} className="flex justify-center">
-                            {username === csOwner && !approvalsComplete ? (
-                              <div style={{ width: "100%" }} className="m-1">
-                                <button
-                                  onClick={() =>
-                                    onRemoveCommitteeMember(
-                                      key,
-                                      member.memberUserName
-                                    )
-                                  }
-                                  name="save_next"
-                                  className="rounded-md bg-red-600 hover:bg-red-500 px-3 py-2 text-sm font-semibold text-white shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2"
-                                >
-                                  REMOVE
-                                </button>
-                              </div>
-                            ) : (
-                              ""
-                            )}
-                            {username === member.memberUserName ? (
-                              <div style={{ width: "100%" }} className="flex justify-content-between">
-                                <div style={{ width: "45%" }} className="m-1">
-                                  <button
-                                    onClick={() =>
-                                      onCommitteeApprove(
-                                        member.memberUserName,
-                                        "Approved",
-                                        ""
-                                      )
-                                    }
-                                    name="save_next"
-                                    className="rounded-md bg-blue-600 hover:bg-blue-400 px-3 py-2 text-sm font-semibold text-white shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-                                  >
-                                    APPROVE
-                                  </button>
-                                </div>
-                                <div style={{ width: "45%" }} className="m-1">
-                                  <button
-                                    onClick={() =>
-                                      onCommitteeJustificationModal(
-                                        member?.memberUserName
-                                      )
-                                    }
-                                    name="save_next"
-                                    className="rounded-md bg-red-600 hover:bg-red-400 px-2 py-2 text-sm font-semibold text-white shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-                                  >
-                                    REJECT
-                                  </button>
-                                </div>
-                              </div>
-                            ) : (
-                              ""
-                            )}
-                          </div>
-                        )}
-                      </p>
+            {/* Basic Schedule Information */}
+            <div className="bg-white p-6 rounded-lg shadow-sm border">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4 border-b pb-2">Basic Information</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">CS ID</label>
+                  <div className="text-sm text-gray-900 bg-gray-50 p-2 rounded border">{csId}</div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Created by</label>
+                  <div className="text-sm text-gray-900 bg-gray-50 p-2 rounded border">{creator}</div>
+                </div>
+                                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Created at</label>
+                    <div className="text-sm text-gray-900 bg-gray-50 p-2 rounded border">
+                      {formatDisplayDate(createdAt)}
                     </div>
                   </div>
-                );
-              })}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+              </div>
+            </div>
 
-  const rankingTableComp = (
-    <div className="transition-all duration-300 bg-gulf-blue-100 p-4 rounded-lg border-l-4 border-blue-600">
-      <div className="space-y-12 px-5 py-5">
-        <div className="px-4 sm:px-0 mt-6 border-t border-gray-100 border-gray-900/10">
-          <h2 className="text-base font-semibold leading-6 text-gray-900">
-            RANKING TABLE
-          </h2>
-
-          <div className="overflow-auto px-2 py-2 mt-5 rounded-md">
-            <table className="table-auto w-full text-left">
-              <thead>
-                <tr className="text-gray-900">
-                  <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                    ID
-                  </th>
-                  <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                    Name of Supplier
-                  </th>
-                  <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                    Rank
-                  </th>
-                  <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                    Decision
-                  </th>
-                  <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                    Remarks
-                  </th>
-                  <th className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                    Total
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {rankings &&
-                  rankings.map((rank, key) => {
-                    return (
-                      <tr className="text-gray-900">
-                        <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                          {key + 1}
-                        </td>
-                        <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                          {rank.supplier_name}
-                        </td>
-                        <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                          {rank.rank}
-                        </td>
-                        <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                          {rank.decision}
-                        </td>
-                        <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                          {rank.rank == 1? rank.remarks: ""}
-                        </td>
-                        <td className="border-b before:border-gray-700 after:border-gray-700 border-gray-700 px-2 py-2">
-                          {rank.total}
-                        </td>
-                      </tr>
-                    );
-                  })}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-
-  return (
-    <div>
-      {addItemsModal && itemsModal}
-      {addBidModal && bidsModal}
-      {onAddSupplier && supplierModal}
-      {updateBidModal && updateBidModalComp}
-      {committeeJustificationModal && rejectJustification}
-      {approvalsJustificationModal && rejectApprovalJustification}
-      {response?.open && responseModal}
-      {/* {loadingModal} */}
-      <div className="space-y-12 px-5 py-5">
-        <div className="px-4 sm:px-0">
-            {(username === csOwner || !csId) ? (
-            <div className="m-2">
-            <button
-                style={{ width: "100%" }}
-                onClick={onAddSuppliersModal}
-                className="rounded-md bg-nepal-950 hover:bg-nepal-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-            >
-                ADD NEW SUPPLIER
-            </button>
-            </div>): ""}
-          {fetchPR && (
-            <div className="transition-all duration-300 bg-gulf-blue-100 p-4 rounded-lg border-l-4 border-blue-600 mt-5 mb-5">
-              <div className="flex justify-evenly items-end mt-3 px-2 py-2">
-                <div className="flex-1 w-40">
-                  <label
-                    htmlFor="pr_number"
-                    className="block text-sm font-medium leading-6 text-gray-900"
-                  >
-                    Enter PR Number
-                  </label>
-                  <div className="mt-2">
-                    <input
-                      name="pr_number"
-                      id="pr_number"
-                      onChange={onFetchPrNumberChange}
-                      defaultValue={prNumber}
-                      className="block w-full rounded-md border-0 py-2 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+            {/* Procurement Information */}
+            <div className="bg-white p-6 rounded-lg shadow-sm border">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4 border-b pb-2">Procurement Details</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">PR Number</label>
+                    <input 
+                      type="text" 
+                      className={`w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${!isCreator() ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+                      placeholder="Enter PR Number"
+                      value={prData.pr_number}
+                      onChange={(e) => updatePrData('pr_number', e.target.value)}
+                      readOnly={!isCreator()}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">PR Date</label>
+                    <input 
+                      type="date" 
+                      className={`w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${!isCreator() ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+                      value={prData.pr_date}
+                      onChange={(e) => updatePrData('pr_date', e.target.value)}
+                      readOnly={!isCreator()}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Reference Date</label>
+                    <input 
+                      type="date" 
+                      className={`w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${!isCreator() ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+                      value={prData.reference_date}
+                      onChange={(e) => updatePrData('reference_date', e.target.value)}
+                      readOnly={!isCreator()}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Procurement Plan</label>
+                    <select 
+                      className={`w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${!isCreator() ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+                      disabled={!isCreator()}
+                    >
+                      {prData?.procurement_plan_description && (
+                        <option value={prData.procurement_plan_id} selected>{prData.procurement_plan_description}</option>
+                      )}
+                      <option value="">Select Procurement Plan</option>
+                      {procPlans.map((plan) => (
+                        <option key={plan.id} value={plan.id}>{plan.description}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Currency</label>
+                    <select 
+                      className={`w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${!isCreator() ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+                      onChange={(e) => onSelectChange("currency", e)}
+                      value={currency?.id || ""}
+                      disabled={!isCreator()}
+                    >
+                      {/* <option value="">Select Currency</option> */}
+                      {currency && (
+                        <option value={currency.id} selected>{currency.currency}</option>
+                      )}
+                      <option value="">Select Currency</option>
+                      {currencies.map((currency) => (
+                        <option key={currency.id} value={currency.id}>{currency.currency}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Closing Date</label>
+                    <input 
+                      type="date" 
+                      className={`w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${!isCreator() ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+                      value={prData.closing_date}
+                      onChange={(e) => updatePrData('closing_date', e.target.value)}
+                      readOnly={!isCreator()}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Closing Time</label>
+                    <input 
+                      type="time" 
+                      className={`w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${!isCreator() ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+                      value={prData.closing_time}
+                      onChange={(e) => updatePrData('closing_time', e.target.value)}
+                      readOnly={!isCreator()}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">CS Opened Date</label>
+                    <input 
+                      type="date" 
+                      className={`w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${!isCreator() ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+                      value={prData.cs_opened_date}
+                      onChange={(e) => updatePrData('cs_opened_date', e.target.value)}
+                      readOnly={!isCreator()}
                     />
                   </div>
                 </div>
-                <div className="flex-1 ml-2 w-40">
-                  <div className="w-30">
-                    <button
-                      style={{ width: "100%" }}
-                      onClick={() => onFetchPR(prNumber)}
-                      name="save_next"
-                      className="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-                    >
-                      FETCH PR
-                    </button>
+              </div>
+            </div>
+
+            {/* Scope of Work */}
+            <div className="bg-white p-6 rounded-lg shadow-sm border">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4 border-b pb-2">Scope of Work</h3>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                <textarea 
+                  rows={4}
+                  className={`w-full p-3 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${!isCreator() ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+                  placeholder="Enter detailed scope of work..."
+                  value={prData.scope_of_work}
+                  onChange={(e) => updatePrData('scope_of_work', e.target.value)}
+                  readOnly={!isCreator()}
+                ></textarea>
+              </div>
+            </div>
+
+            {/* Additional Information */}
+            <div className="bg-white p-6 rounded-lg shadow-sm border">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4 border-b pb-2">Additional Information</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">TAC Date</label>
+                    <input 
+                      type="date" 
+                      className={`w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${!isCreator() ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+                      value={prData.tac_date}
+                      onChange={(e) => updatePrData('tac_date', e.target.value)}
+                      readOnly={!isCreator()}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Region</label>
+                    <div className="text-sm text-gray-900 bg-gray-50 p-2 rounded border">
+                      {prData.region || 'Not specified'}
+                    </div>
+                  </div>
+
+                </div>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Advertisement Document</label>
+                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-4">
+                      {advert ? (
+                        <div className="text-center">
+                          <svg className="mx-auto h-12 w-12 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          <div className="mt-2">
+                            <p className="text-sm text-green-600 font-medium">{advert.name}</p>
+                            <p className="text-xs text-gray-500">{(advert.size / 1024 / 1024).toFixed(2)} MB</p>
+                            {isCreator() && (
+                              <button
+                                type="button"
+                                onClick={() => setAdvert(undefined)}
+                                className="mt-2 text-sm text-red-600 hover:text-red-500"
+                              >
+                                Remove file
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      ) : existingAdvert ? (
+                        <div className="text-center">
+                          <svg className="mx-auto h-12 w-12 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                          </svg>
+                          <div className="mt-2">
+                            <p className="text-sm text-blue-600 font-medium">Existing Advertisement Document</p>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const link = document.createElement('a');
+                                link.href = `data:application/octet-stream;base64,${existingAdvert}`;
+                                link.download = 'advertisement.pdf';
+                                link.click();
+                              }}
+                              className="mt-2 text-sm text-blue-600 hover:text-blue-500 underline"
+                            >
+                              Download Current Document
+                            </button>
+                            {isCreator() && (
+                              <div className="mt-2">
+                                <label htmlFor="advert-upload-replace" className="cursor-pointer">
+                                  <span className="text-sm text-gray-600 hover:text-gray-500">Replace with new file</span>
+                                  <input 
+                                    id="advert-upload-replace" 
+                                    type="file" 
+                                    className="sr-only" 
+                                    accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                                    onChange={(e) => {
+                                      const file = e.target.files?.[0];
+                                      if (file) {
+                                        setAdvert(file);
+                                        setExistingAdvert(''); // Clear existing when new file is selected
+                                      }
+                                    }}
+                                  />
+                                </label>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="text-center">
+                          <svg className="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                            <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                          </svg>
+                          {isCreator() ? (
+                            <div className="mt-2">
+                              <label htmlFor="advert-upload" className="cursor-pointer">
+                                <span className="text-sm text-blue-600 hover:text-blue-500">Upload advertisement</span>
+                                <input 
+                                  id="advert-upload" 
+                                  type="file" 
+                                  className="sr-only" 
+                                  accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                                  onChange={(e) => {
+                                    const file = e.target.files?.[0];
+                                    if (file) setAdvert(file);
+                                  }}
+                                />
+                              </label>
+                              <p className="text-xs text-gray-500">PDF, DOC, or image up to 10MB</p>
+                            </div>
+                          ) : (
+                            <div className="mt-2">
+                              <p className="text-sm text-gray-500">No advertisement document uploaded</p>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
-          )}
-          {csDetailsView}
-        </div>
 
-        {username === csOwner ? (
-          <div className="m-2">
-            <button
-              style={{ width: "100%" }}
-              onClick={onAddItemsModal}
-              className="rounded-md bg-nepal-950 hover:bg-nepal-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-            >
-              ADD SCHEDULE ITEMS
-            </button>
-          </div>
-        ) : (
-          ""
-        )}
 
-        {bids &&
-          bids.map((loopBid) => {
-            return (
-              <div
-                id="opening_rfq"
-                className="transition-all duration-300 bg-gulf-blue-100 p-4 rounded-lg border-l-4 border-blue-600 pb-12"
-              >
-                <div id="bid_container" className=" rounded-md">
-                  <div className="flex justify-evenly mt-5  px-2 py-2 rounded-md">
-                    <div className="flex-1 w-20 ml-1">
-                      <label
-                        htmlFor="supplier_name"
-                        className="block text-sm font-medium leading-6 text-gray-900"
-                      >
-                        Supplier
-                      </label>
-                      <div className="mt-2">
-                        <p>{loopBid.supplier_name}</p>
-                      </div>
-                    </div>
-                    <div className="flex-1 w-20 ml-1">
-                      <label
-                        htmlFor="bid_date"
-                        className="block text-sm font-medium leading-6 text-gray-900"
-                      >
-                        Bid Date
-                      </label>
-                      <div className="mt-2">
-                        <p>{loopBid.bid_date}</p>
-                      </div>
-                    </div>
-                    <div className="flex-1 w-20 ml-1">
-                      <label
-                        htmlFor="supplier[bid][0]"
-                        className="block text-sm font-medium leading-6 text-gray-900"
-                      >
-                        Bid No.
-                      </label>
-                      <div className="mt-2">
-                        <p>{loopBid?.bid_count}</p>
-                      </div>
-                    </div>
-                    <div className="flex-1 w-40 ml-1">
-                      <label
-                        htmlFor="bid_document"
-                        className="block text-sm font-medium leading-6 text-gray-900"
-                      >
-                        Bid Documents
-                      </label>
-                      <div className="mt-2">
-                        <a
-                          href={
-                            loopBid?.encoded_bid_document ||
-                            currentBid?.bid_document ||
-                            loopBid?.bid_document ||
-                            loopBid?.bid_document_url
-                              ? loopBid.bid_document_url
-                              : "#"
-                          }
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          {loopBid?.encoded_bid_document ||
-                          currentBid?.bid_document ||
-                          loopBid?.bid_document ||
-                          loopBid?.bid_document_url
-                            ? "View Document"
-                            : "NO DOCUMENT"}
-                        </a>
-                      </div>
-                    </div>
-                  </div>
 
-                  {loopBid?.items?.map((item) => {
-                    return (
-                      <div className="flex justify-evenly mt-5  px-2 py-2 rounded-md">
-                        <div className="flex-1 w-15 ml-1">
-                          <label
-                            htmlFor="item_name"
-                            className="block text-sm font-medium leading-6 text-gray-900"
-                          >
-                            Item Description
-                          </label>
-                          <div className="mt-2">
-                            <p>{item.item_required}</p>
-                          </div>
-                        </div>
-                        <div className="flex-1 w-15 ml-1">
-                          <label
-                            htmlFor="quantity"
-                            className="block text-sm font-medium leading-6 text-gray-900"
-                          >
-                            Quantity
-                          </label>
-                          <div className="mt-2">
-                            <p>{item.quantity}</p>
-                          </div>
-                        </div>
-                        <div className="flex-1 w-15 ml-3">
-                          <div>
-                            <label
-                              htmlFor="unit_of_measurement"
-                              className="block text-sm font-medium leading-6 text-gray-900"
-                            >
-                              UOM
-                            </label>
-                            <div className="mt-2">
-                              <p>{item.unit_of_measurement}</p>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="flex-1 w-15 ml-3">
-                          <div>
-                            <label
-                              htmlFor="vat"
-                              className="block text-sm font-medium leading-6 text-gray-900"
-                            >
-                              VAT
-                            </label>
-                            <div className="mt-2">
-                              <p>{item.vat}</p>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="flex-1 w-15 ml-1">
-                          <label
-                            htmlFor="unit_price"
-                            className="block text-sm font-medium leading-6 text-gray-900"
-                          >
-                            Unit Price
-                          </label>
-                          <div className="mt-2">
-                            <p>{item.unit_price}</p>
-                          </div>
-                        </div>
-                        <div className="flex-1 w-15 ml-1">
-                          <label
-                            htmlFor="total_price"
-                            className="block text-sm font-medium leading-6 text-gray-900"
-                          >
-                            Total Price
-                          </label>
-                          <div className="mt-2">
-                            <p>{item.total_price}</p>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-
-                {username === csOwner && !approvalsComplete ? (
-                  <div className="flex justify-center mt-5 px-3 py-3">
-                    <div className="m-2">
-                      <button
-                        onClick={() =>
-                          onUpdateBidModal(loopBid?.bid_count ?? 0)
-                        }
-                        className="rounded-md text-gray-50 text-sm bg-blue-925 hover:bg-blue-550 px-3 py-2 font-semibold leading-6"
-                      >
-                        UPDATE BID
-                      </button>
-                    </div>
-                    <div className="m-2">
-                      <button
-                        onClick={() =>
-                          onDeleteBidModal(
-                            loopBid.bid_count,
-                            loopBid.supplier_name
-                          )
-                        }
-                        type="submit"
-                        className="rounded-md bg-red-600 hover:bg-red-400 text-sm font-semibold px-3 py-2 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-                      >
-                        DELETE BID
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  ""
+            {/* Action Buttons */}
+            <div className="bg-white p-6 rounded-lg shadow-sm border">
+              <div className="flex flex-wrap gap-3">
+                {isCreator() && (
+                  <button 
+                    onClick={handleSaveScheduleDetails}
+                    className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 transition-colors flex items-center"
+                  >
+                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                    </svg>
+                    Save Schedule Details
+                  </button>
+                )}
+                <button className="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700 transition-colors flex items-center">
+                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                  </svg>
+                  Export PDF
+                </button>
+                <button className="bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700 transition-colors flex items-center">
+                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2v0" />
+                  </svg>
+                  Duplicate Schedule
+                </button>
+                {isCreator() && (
+                  <button className="bg-red-600 text-white px-6 py-2 rounded hover:bg-red-700 transition-colors flex items-center">
+                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                    Cancel Schedule
+                  </button>
                 )}
               </div>
-            );
-          })}
-
-        {(csItems?.length ?? 0 > 0) &&
-        (directPurchaseLimit) &&
-        username === csOwner &&
-        !approvalsComplete ? (
-          <div className="m-2">
-            <button
-              style={{ width: "100%" }}
-              onClick={onAddBidModal}
-              className="rounded-md bg-nepal-950 hover:bg-nepal-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-            >
-              ADD BID
-            </button>
+            </div>
           </div>
-        ) : (
-          ""
-        )}
+        );
+      case 'pr-items':
+        return (
+          <Suspense fallback={<SectionLoader />}>
+            <div className="space-y-6">
+              {!csId ? (
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
+                  <div className="flex items-center">
+                    <svg className="w-6 h-6 text-yellow-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                    </svg>
+                    <div>
+                      <h3 className="text-lg font-medium text-yellow-800">Schedule Details Required</h3>
+                      <p className="text-yellow-700 mt-1">Please save the schedule details first before managing PR items.</p>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  {/* Purchase Request Items */}
+                  <div className="bg-white p-6 rounded-lg shadow-sm border">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4 border-b pb-2">Purchase Request Items</h3>
+                    
+                    {isLoading && loadingOperation === "Loading PR items data" ? (
+                      <div className="flex items-center justify-center py-8">
+                        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-600 mr-3"></div>
+                        <span className="text-gray-600">Loading PR items...</span>
+                      </div>
+                    ) : prData.items.length === 0 ? (
+                      <div className="text-center py-8">
+                        <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V9a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                        </svg>
+                        <h3 className="mt-2 text-sm font-medium text-gray-900">No PR items found</h3>
+                        <p className="mt-1 text-sm text-gray-500">
+                          {!(prid || storedPrId) 
+                            ? "Please load PR data from the Details tab first." 
+                            : "This purchase request has no items to display."
+                          }
+                        </p>
+                      </div>
+                    ) : (
+                      <>
+                        <div className="overflow-x-auto">
+                          <table className="min-w-full divide-y divide-gray-200">
+                            <thead className="bg-gray-50">
+                              <tr>
+                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                  {isCreator() && (
+                                    <input 
+                                      type="checkbox" 
+                                      className="h-4 w-4 text-blue-600 border-gray-300 rounded" 
+                                      checked={allItemsSelected}
+                                      onChange={(e) => handleSelectAllItems(e.target.checked)}
+                                      title={allItemsSelected ? "Deselect all items" : "Select all items"}
+                                    />
+                                  )}
+                                </th>
+                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Item Required</th>
+                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quantity</th>
+                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Unit of Measurement</th>
+                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                              </tr>
+                            </thead>
+                            <tbody className="bg-white divide-y divide-gray-200">
+                              {(() => {
+                                const filteredItems = prData.items.filter(item => isCreator() ? true : (item.included || item.status === 'included_in_cs'));
+                                console.log('PR Items Debug:', {
+                                  totalItems: prData.items.length,
+                                  isCreator: isCreator(),
+                                  username: username,
+                                  creator: creator,
+                                  csId: csId,
+                                  filteredItemsCount: filteredItems.length,
+                                  items: prData.items.slice(0, 3) // Show first 3 items for debugging
+                                });
+                                return filteredItems.map((item) => (
+                                  <tr key={item.id} className={
+                                    item.status === 'included_in_cs' ? 'bg-blue-50' : 
+                                    item.status === 'used_in_other_schedule' ? 'bg-gray-50' : ''
+                                  }>
+                                    <td className="px-4 py-3 whitespace-nowrap">
+                                      {isCreator() ? (
+                                        <div className="flex items-center">
+                                          {item.included && item.status !== 'included_in_cs' && (
+                                            <div className="w-2 h-2 bg-red-500 rounded-full mr-2" title="Newly selected"></div>
+                                          )}
+                                          <input 
+                                            type="checkbox" 
+                                            className="h-4 w-4 text-blue-600 border-gray-300 rounded" 
+                                            checked={item.included}
+                                            disabled={item.status === 'used_in_other_schedule'}
+                                            onChange={() => updateItemSelection(item.id, !item.included)}
+                                            title={
+                                              item.status === 'used_in_other_schedule' 
+                                                ? 'This item is already used in another schedule and cannot be modified' 
+                                                : item.status === 'included_in_cs'
+                                                ? 'This item is currently used in this schedule (can be removed if no bids exist)'
+                                                : 'Click to include/exclude this item from the schedule'
+                                            }
+                                          />
+                                        </div>
+                                      ) : (
+                                        <div className="w-4 h-4 flex items-center justify-center">
+                                          {item.included && (
+                                            <svg className="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                                              <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                            </svg>
+                                          )}
+                                        </div>
+                                      )}
+                                    </td>
+                                    <td className="px-4 py-3 text-sm text-gray-900">
+                                      {item.name}
+                                      {item.status === 'included_in_cs' && (
+                                        <span className="ml-2 text-xs text-green-600">(Used in this schedule)</span>
+                                      )}
+                                      {item.status === 'used_in_other_schedule' && (
+                                        <span className="ml-2 text-xs text-gray-500">(Used in other schedule)</span>
+                                      )}
+                                    </td>
+                                    <td className="px-4 py-3 text-sm text-gray-900">{item.quantity}</td>
+                                    <td className="px-4 py-3 text-sm text-gray-900">{item.unit}</td>
+                                    <td className="px-4 py-3 whitespace-nowrap">
+                                      {item.status === 'included_in_cs' ? (
+                                        <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                                          In Schedule (Editable)
+                                        </span>
+                                      ) : item.status === 'used_in_other_schedule' ? (
+                                        <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-600">
+                                          Used Elsewhere (Locked)
+                                        </span>
+                                      ) : (
+                                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                                          item.included 
+                                            ? "bg-green-100 text-green-800" 
+                                            : "bg-yellow-100 text-yellow-800"
+                                        }`}>
+                                          {item.included ? "Selected" : "Available"}
+                                        </span>
+                                      )}
+                                    </td>
+                                  </tr>
+                                ));
+                              })()}
+                                                      </tbody>
+                          </table>
+                        </div>
+                        <div className="mt-4 flex justify-between items-center">
+                          <div className="text-sm text-gray-500">
+                            {isCreator() ? (
+                              <>
+                                Select items to include in this comparative schedule. Items already in this schedule can be removed unless bids exist.
+                                <div className="text-xs text-gray-400 mt-1 space-y-1">
+                                  {prData.items.some(item => item.status === 'included_in_cs') && (
+                                    <div className="flex items-center">
+                                      <div className="w-3 h-3 bg-blue-100 rounded mr-2"></div>
+                                      <span>Blue background: Items in this schedule (can be edited)</span>
+                                    </div>
+                                  )}
+                                  {prData.items.some(item => item.status === 'used_in_other_schedule') && (
+                                    <div className="flex items-center">
+                                      <div className="w-3 h-3 bg-gray-100 rounded mr-2"></div>
+                                      <span>Gray background: Items used in other schedules (locked)</span>
+                                    </div>
+                                  )}
+                                  {prData.items.some(item => item.status === 'available' || (!item.status)) && (
+                                    <div className="flex items-center">
+                                      <div className="w-3 h-3 bg-white border border-gray-300 rounded mr-2"></div>
+                                      <span>White background: Available items that can be selected</span>
+                                    </div>
+                                  )}
+                                </div>
+                              </>
+                            ) : (
+                              <>
+                                View of selected items in this comparative schedule. Only the creator can modify item selections.
+                                <div className="text-xs text-gray-400 mt-1 space-y-1">
+                                  {prData.items.some(item => item.status === 'included_in_cs') && (
+                                    <div className="flex items-center">
+                                      <div className="w-3 h-3 bg-blue-100 rounded mr-2"></div>
+                                      <span>Blue background: Items currently in this schedule</span>
+                                    </div>
+                                  )}
+                                  <div className="flex items-center">
+                                    <svg className="w-3 h-3 text-green-600 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                    </svg>
+                                    <span>Green checkmark: Selected items</span>
+                                  </div>
+                                </div>
+                              </>
+                            )}
+                          </div>
+                          {isCreator() && (
+                            <button 
+                              onClick={handleUpdateSelectedItems}
+                              disabled={!csId || isLoading || prData.items.filter(item => item.included && (item.status === 'available' || item.status === 'included_in_cs' || !item.status)).length === 0 || ( bids && bids.length > 0)}
+                              className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center"
+                            >
+                              {isLoading ? (
+                                <>
+                                  <div className="animate-spin rounded-full h-4 w-4 border-t-2 border-b-2 border-white mr-2"></div>
+                                  Updating...
+                                </>
+                              ) : (
+                                <>
+                                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                  </svg>
+                                  Update Selected Items
+                                </>
+                              )}
+                            </button>
+                          )}
+                        </div>
+                      </>
+                    )}
+                  </div>
 
-        {(bids?.length ?? 0 > 0) &&
-        username === csOwner &&
-        !approvalsComplete ? (
-          <div className="m-2">
-            <button
-              style={{ width: "100%" }}
-              onClick={onAddComplianceTable}
-              className="rounded-md bg-nepal-950 hover:bg-nepal-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-            >
-              ADD COMPLIANCES
-            </button>
-          </div>
-        ) : (
-          ""
-        )}
+                  {/* Additional Notes */}
+                  <div className="bg-white p-6 rounded-lg shadow-sm border">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4 border-b pb-2">Additional Notes</h3>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Internal Notes</label>
+                      <textarea 
+                        rows={3}
+                        className={`w-full p-3 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${!isCreator() ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+                        placeholder="Add any additional notes or special instructions..."
+                        value={prData.internal_notes}
+                        onChange={(e) => updatePrData('internal_notes', e.target.value)}
+                        readOnly={!isCreator()}
+                      ></textarea>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </Suspense>
+        );
+      case 'bids':
+        return (
+          <Suspense fallback={<SectionLoader />}>
+            <div className="space-y-6">
+              {!csId ? (
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
+                  <div className="flex items-center">
+                    <svg className="w-6 h-6 text-yellow-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                    </svg>
+                    <div>
+                      <h3 className="text-lg font-medium text-yellow-800">Schedule Required</h3>
+                      <p className="text-yellow-700 mt-1">Please save the schedule details first before managing bids.</p>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  {/* Bid Management Header */}
+                  <div className="bg-white p-6 rounded-lg shadow-sm border">
+                    <div className="flex justify-between items-center">
+                      <div>
+                        <h3 className="text-lg font-semibold text-gray-900 flex items-center">
+                          <svg className="w-5 h-5 mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                          </svg>
+                          Supplier Bids Management
+                        </h3>
+                        <p className="text-gray-600 mt-1">
+                          {isCreator() 
+                            ? "Add and manage supplier bids for this comparative schedule."
+                            : "View supplier bids for this comparative schedule. Only the creator can modify bids."
+                          }
+                        </p>
+                      </div>
+                      {isCreator() ? (
+                        <div className="flex space-x-3">
+                          <button
+                            onClick={onAddSuppliersModal}
+                            className="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700 transition-colors flex items-center"
+                          >
+                            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                            </svg>
+                            Add Supplier
+                          </button>
+                          <button
+                            onClick={onAddBidModal}
+                            disabled={prData.items.filter(item => item.included).length === 0}
+                            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center"
+                          >
+                            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                            </svg>
+                            Add New Bid
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="text-sm text-gray-500">
+                          View-only mode - Only the creator can manage bids
+                        </div>
+                      )}
+                    </div>
+                    
+                    {directPurchaseLimit && base_url === "/direct_purchase" && (
+                      <div className="mt-4 bg-orange-50 border border-orange-200 rounded-lg p-3">
+                        <p className="text-orange-800 text-sm">
+                          <svg className="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                          </svg>
+                          Direct Purchase Mode: Maximum 1 bid allowed.
+                        </p>
+                      </div>
+                    )}
+                  </div>
 
-        {compliance?.length ?? 0 > 0 ? complianceTableComp : ""}
+                  {/* Existing Bids Display */}
+                  <div className="bg-white p-6 rounded-lg shadow-sm border">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4 border-b pb-2">Current Bids</h3>
+                    
+                    {bids.length === 0 ? (
+                      <div className="text-center py-8">
+                        <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V9a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                        </svg>
+                        <h3 className="mt-2 text-sm font-medium text-gray-900">No bids submitted yet</h3>
+                        <p className="mt-1 text-sm text-gray-500">
+                          {isCreator() 
+                            ? "Get started by adding a new supplier bid."
+                            : "No bids have been submitted for this schedule yet."
+                          }
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="space-y-4">
+                        {bids.map((bid, index) => {
+                          const bidId = bid.bid_count || index;
+                          const isExpanded = expandedBids.has(bidId);
+                          
+                          return (
+                            <div key={index} className="border border-gray-200 rounded-lg overflow-hidden">
+                              {/* Header - Always Visible */}
+                              <div className="p-4 hover:bg-gray-50 cursor-pointer" 
+                                   onClick={() => {
+                                     const newExpanded = new Set(expandedBids);
+                                     if (isExpanded) {
+                                       newExpanded.delete(bidId);
+                                     } else {
+                                       newExpanded.add(bidId);
+                                     }
+                                     setExpandedBids(newExpanded);
+                                   }}>
+                                <div className="flex justify-between items-start">
+                                  <div className="flex-1">
+                                    <div className="flex items-center mb-2">
+                                      <h4 className="text-lg font-medium text-gray-900 mr-3">
+                                        Bid #{bid.bid_count} - {bid.supplier_name}
+                                      </h4>
+                                      <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">
+                                        Active
+                                      </span>
+                                      <svg className={`w-5 h-5 ml-2 transform transition-transform ${isExpanded ? 'rotate-180' : ''}`} 
+                                           fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                                      </svg>
+                                    </div>
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-600">
+                                      <div>
+                                        <span className="font-medium">Bid Date:</span> {formatDisplayDate(bid.bid_date || '')}
+                                      </div>
+                                      <div>
+                                        <span className="font-medium">Items:</span> {bid.items?.length || 0} items
+                                      </div>
+                                      <div>
+                                        <span className="font-medium">Total:</span> ${calculateBidTotal(bid.items).toLocaleString()}
+                                      </div>
+                                    </div>
+                                                                         {(bid.encoded_bid_document || bid.bid_document || bid.bid_document_url) && (
+                                        <div className="mt-2">
+                                          <a
+                                            href={
+                                              bid.bid_document_url || 
+                                              onGetFileObjectUrl(bid.encoded_bid_document) ||
+                                              onGetFileObjectUrl(bid.bid_document) ||
+                                              "#"
+                                            }
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            onClick={(e) => {
+                                              e.stopPropagation();
+                                              console.log("📄 Small document click:", {
+                                                bid_document_url: bid.bid_document_url,
+                                                encoded_bid_document: bid.encoded_bid_document ? "present" : "missing",
+                                                bid_document: bid.bid_document ? "present" : "missing"
+                                              });
+                                            }}
+                                            className="text-xs text-blue-600 hover:text-blue-800 hover:underline"
+                                          >
+                                            📄 View Document
+                                          </a>
+                                        </div>
+                                      )}
+                                  </div>
+                                  {isCreator() && (
+                                    <div className="flex space-x-2 ml-4" onClick={(e) => e.stopPropagation()}>
+                                      <button
+                                        onClick={() => onUpdateBidModal(bid.bid_count || 0)}
+                                        className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                                      >
+                                        Edit
+                                      </button>
+                                      <button
+                                        onClick={() => {
+                                          if (window.confirm(`Are you sure you want to delete the bid from ${bid.supplier_name}?`)) {
+                                            deleteBid(bid.bid_count || 0, bid.supplier_name || '');
+                                          }
+                                        }}
+                                        className="text-red-600 hover:text-red-800 text-sm font-medium"
+                                      >
+                                        Delete
+                                      </button>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                              
+                              {/* Expandable Details */}
+                              {isExpanded && (
+                                <div className="border-t bg-gray-50 p-4">
+                                  <div className="space-y-4">
+                                    {/* Bid Items */}
+                                    <div>
+                                      <h5 className="text-md font-medium text-gray-900 mb-3">Bid Items</h5>
+                                      {bid.items && bid.items.length > 0 ? (
+                                        <div className="overflow-x-auto">
+                                          <table className="min-w-full divide-y divide-gray-200">
+                                            <thead className="bg-gray-100">
+                                              <tr>
+                                                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Item</th>
+                                                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Unit</th>
+                                                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Qty</th>
+                                                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Unit Price</th>
+                                                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Total</th>
+                                              </tr>
+                                            </thead>
+                                            <tbody className="bg-white divide-y divide-gray-200">
+                                              {bid.items.map((item, itemIndex) => (
+                                                <tr key={itemIndex}>
+                                                  <td className="px-3 py-2 text-sm text-gray-900">{item.item_required}</td>
+                                                  <td className="px-3 py-2 text-sm text-gray-600">{item.unit_of_measurement || '-'}</td>
+                                                  <td className="px-3 py-2 text-sm text-gray-900">{item.quantity}</td>
+                                                  <td className="px-3 py-2 text-sm text-gray-900">${(Number(item.unit_price) || 0).toLocaleString()}</td>
+                                                  <td className="px-3 py-2 text-sm font-medium text-gray-900">${(Number(item.total_price) || 0).toLocaleString()}</td>
+                                                </tr>
+                                              ))}
+                                            </tbody>
+                                            <tfoot className="bg-gray-50">
+                                              <tr>
+                                                <td colSpan={4} className="px-3 py-2 text-sm font-medium text-gray-900 text-right">Grand Total:</td>
+                                                                                                 <td className="px-3 py-2 text-sm font-bold text-gray-900">
+                                                   ${calculateBidTotal(bid.items).toLocaleString()}
+                                                 </td>
+                                              </tr>
+                                            </tfoot>
+                                          </table>
+                                        </div>
+                                      ) : (
+                                        <p className="text-sm text-gray-500">No items in this bid</p>
+                                      )}
+                                    </div>
+                                    
+                                    {/* Additional Details */}
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                                             <div>
+                                         <h6 className="text-sm font-medium text-gray-900 mb-2">Supplier Details</h6>
+                                         <div className="text-sm text-gray-600">
+                                           <p><span className="font-medium">Name:</span> {bid.supplier_name}</p>
+                                         </div>
+                                       </div>
+                                                                             <div>
+                                         <h6 className="text-sm font-medium text-gray-900 mb-2">Documents</h6>
+                                         <div className="text-sm text-gray-600">
+                                                                                      {bid.encoded_bid_document || bid.bid_document || bid.bid_document_url ? (
+                                              <a
+                                                href={
+                                                  bid.bid_document_url || 
+                                                  onGetFileObjectUrl(bid.encoded_bid_document) ||
+                                                  onGetFileObjectUrl(bid.bid_document) ||
+                                                  "#"
+                                                }
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="text-blue-600 hover:text-blue-800 hover:underline flex items-center"
+                                                onClick={() => {
+                                                  // Debug logging
+                                                  console.log("📄 Document click:", {
+                                                    bid_document_url: bid.bid_document_url,
+                                                    encoded_bid_document: bid.encoded_bid_document ? "present" : "missing",
+                                                    bid_document: bid.bid_document ? "present" : "missing",
+                                                    generatedUrl: onGetFileObjectUrl(bid.encoded_bid_document) || onGetFileObjectUrl(bid.bid_document)
+                                                  });
+                                                }}
+                                              >
+                                                <svg className="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                                </svg>
+                                                View/Download Bid Document
+                                                <svg className="w-3 h-3 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                                                </svg>
+                                              </a>
+                                            ) : (
+                                              <p>No documents attached</p>
+                                            )}
+                                         </div>
+                                       </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          </Suspense>
+        );
+      case 'committee':
+        return (
+          <Suspense fallback={<SectionLoader />}>
+            <div className="space-y-6">
+              {!csId ? (
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
+                  <div className="flex items-center">
+                    <svg className="w-6 h-6 text-yellow-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                    </svg>
+                    <div>
+                      <h3 className="text-lg font-medium text-yellow-800">Schedule Required</h3>
+                      <p className="text-yellow-700 mt-1">Please save the schedule before managing committee and approvals.</p>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  <CommitteeApprovalWrapper
+                    users={users}
+                    onSaveCommittee={handleSaveCommittee}
+                    onApprove={handleCommitteeApprove}
+                  />
 
-        {(compliance?.length ?? 0 > 0) &&
-        username === csOwner &&
-        !approvalsComplete ? (
-          <div className="m-2">
-            <button
-              style={{ width: "100%" }}
-              onClick={onCloseCS}
-              className="rounded-md bg-nepal-950 hover:bg-nepal-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-            >
-              RANK BIDS
-            </button>
-          </div>
-        ) : (
-          ""
-        )}
+                  {/* GM/FM Approval Table */}
+                  <ApprovalTableWrapper
+                    csId={csId}
+                    username={username}
+                    gmApproval={gmApproval}
+                    fmApproval={fmApproval}
+                    isCreator={isCreator()}
+                    onApprove={handleApprove}
+                  />
 
-        {rankings?.length ?? 0 > 0 ? rankingTableComp : ""}
+                  {/* Approval Summary */}
+                  <div className="bg-white p-6 rounded-lg shadow-sm border">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4 border-b pb-2">Approval Summary</h3>
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-600">Committee Approval:</span>
+                        <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                          committeeMembers.every(m => m.memberApproval === "Approved")
+                            ? "bg-green-100 text-green-800"
+                            : committeeMembers.some(m => m.memberApproval === "Rejected")
+                            ? "bg-red-100 text-red-800"
+                            : "bg-yellow-100 text-yellow-800"
+                        }`}>
+                          {committeeMembers.every(m => m.memberApproval === "Approved")
+                            ? "Complete"
+                            : committeeMembers.some(m => m.memberApproval === "Rejected")
+                            ? "Rejected"
+                            : "Pending"
+                          }
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-600">GM Approval:</span>
+                        <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                          gmApproval ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"
+                        }`}>
+                          {gmApproval ? "Complete" : "Pending"}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-gray-600">FM Approval:</span>
+                        <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                          fmApproval ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"
+                        }`}>
+                          {fmApproval ? "Complete" : "Pending"}
+                        </span>
+                      </div>
+                      <div className="flex justify-between items-center border-t pt-3">
+                        <span className="text-gray-900 font-medium">Overall Status:</span>
+                        <span className={`px-3 py-1 text-sm font-semibold rounded-full ${
+                          approvalsComplete
+                            ? "bg-green-100 text-green-800"
+                            : "bg-yellow-100 text-yellow-800"
+                        }`}>
+                          {approvalsComplete ? "All Approvals Complete" : "Approvals Pending"}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </Suspense>
+        );
+      case 'compliance':
+        return (
+          <Suspense fallback={<SectionLoader />}>
+            <div className="space-y-6">
+              {!csId ? (
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
+                  <div className="flex items-center">
+                    <svg className="w-6 h-6 text-yellow-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                    </svg>
+                    <div>
+                      <h3 className="text-lg font-medium text-yellow-800">Schedule Required</h3>
+                      <p className="text-yellow-700 mt-1">Please save the schedule and add bids before managing compliance.</p>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  {/* Compliance Requirements Setup */}
+                  <div className="bg-white p-6 rounded-lg shadow-sm border">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4 border-b pb-2 flex items-center">
+                      <svg className="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      Compliance Requirements Setup
+                    </h3>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Site Visit Required</label>
+                        <select 
+                          className={`w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${!isCreator() ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+                          value={showSiteVisit}
+                          onChange={(e) => setShowSiteVisit(e.target.value)}
+                          disabled={!isCreator()}
+                        >
+                          <option value="no">No</option>
+                          <option value="yes">Yes</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">Samples Required</label>
+                        <select 
+                          className={`w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${!isCreator() ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+                          value={showSamples}
+                          onChange={(e) => setShowSamples(e.target.value)}
+                          disabled={!isCreator()}
+                        >
+                          <option value="no">No</option>
+                          <option value="yes">Yes</option>
+                        </select>
+                      </div>
+                    </div>
+                    
+                    {isCreator() ? (
+                      <div className="mt-4">
+                        <button
+                          onClick={onAddComplianceTable}
+                          disabled={bids.length === 0}
+                          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center"
+                        >
+                          <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                          </svg>
+                          {compliance.length > 0 ? "Update Compliance Table" : "Generate Compliance Table"}
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="mt-4 text-sm text-gray-500">
+                        Only the creator can generate and update compliance tables.
+                      </div>
+                    )}
+                  </div>
 
-        {rankings?.length ?? 0 > 0  ? additionalInfo: ""}
+                  {/* Compliance Table */}
+                  {compliance.length > 0 && (
+                    <div className="bg-white p-6 rounded-lg shadow-sm border">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-4 border-b pb-2">Compliance Evaluation</h3>
+                      
+                      <div className="overflow-x-auto">
+                        <table className="min-w-full divide-y divide-gray-200">
+                          <thead className="bg-gray-50">
+                            <tr>
+                              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Supplier</th>
+                              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Payment Terms</th>
+                              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Bid Validity</th>
+                              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Delivery Period</th>
+                              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Technical Specs</th>
+                              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tax Clearance</th>
+                              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">PRAZ Registered</th>
+                              {showSiteVisit === "yes" && (
+                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Site Visit</th>
+                              )}
+                              {showSamples === "yes" && (
+                                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Samples</th>
+                              )}
+                              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Decision</th>
+                              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Remarks</th>
+                            </tr>
+                          </thead>
+                          <tbody className="bg-white divide-y divide-gray-200">
+                            {compliance.map((comp, index) => (
+                              <tr key={index} className={comp.decision ? "bg-green-50" : "bg-red-50"}>
+                                <td className="px-4 py-3 text-sm font-medium text-gray-900">{comp.supplier_name}</td>
+                                <td className="px-4 py-3 text-sm">
+                                  {isCreator() ? (
+                                    <button
+                                      onClick={() => onCheckAllCompliance(index)}
+                                      className="bg-blue-500 text-white px-2 py-1 rounded text-xs hover:bg-blue-600 transition-colors"
+                                      title="Check all compliance criteria"
+                                    >
+                                      Check All
+                                    </button>
+                                  ) : (
+                                    <span className="text-gray-500 text-xs">View Only</span>
+                                  )}
+                                </td>
+                                <td className="px-4 py-3 text-sm">
+                                  {isCreator() ? (
+                                    <input
+                                      type="checkbox"
+                                      checked={comp.payment_terms}
+                                      onChange={(e) => onComplianceChange(index, e)}
+                                      name="payment_terms"
+                                      className="h-4 w-4 text-blue-600 border-gray-300 rounded"
+                                    />
+                                  ) : (
+                                    <div className="w-4 h-4 flex items-center justify-center">
+                                      {comp.payment_terms && (
+                                        <svg className="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                        </svg>
+                                      )}
+                                    </div>
+                                  )}
+                                </td>
+                                <td className="px-4 py-3 text-sm">
+                                  {isCreator() ? (
+                                    <input
+                                      type="checkbox"
+                                      checked={comp.bid_validity}
+                                      onChange={(e) => onComplianceChange(index, e)}
+                                      name="bid_validity"
+                                      className="h-4 w-4 text-blue-600 border-gray-300 rounded"
+                                    />
+                                  ) : (
+                                    <div className="w-4 h-4 flex items-center justify-center">
+                                      {comp.bid_validity && (
+                                        <svg className="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                        </svg>
+                                      )}
+                                    </div>
+                                  )}
+                                </td>
+                                <td className="px-4 py-3 text-sm">
+                                  {isCreator() ? (
+                                    <input
+                                      type="checkbox"
+                                      checked={comp.delivery_period}
+                                      onChange={(e) => onComplianceChange(index, e)}
+                                      name="delivery_period"
+                                      className="h-4 w-4 text-blue-600 border-gray-300 rounded"
+                                    />
+                                  ) : (
+                                    <div className="w-4 h-4 flex items-center justify-center">
+                                      {comp.delivery_period && (
+                                        <svg className="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                        </svg>
+                                      )}
+                                    </div>
+                                  )}
+                                </td>
+                                <td className="px-4 py-3 text-sm">
+                                  {isCreator() ? (
+                                    <input
+                                      type="checkbox"
+                                      checked={comp.technical_specifications}
+                                      onChange={(e) => onComplianceChange(index, e)}
+                                      name="technical_specifications"
+                                      className="h-4 w-4 text-blue-600 border-gray-300 rounded"
+                                    />
+                                  ) : (
+                                    <div className="w-4 h-4 flex items-center justify-center">
+                                      {comp.technical_specifications && (
+                                        <svg className="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                        </svg>
+                                      )}
+                                    </div>
+                                  )}
+                                </td>
+                                <td className="px-4 py-3 text-sm">
+                                  {isCreator() ? (
+                                    <input
+                                      type="checkbox"
+                                      checked={comp.valid_tax_clearance}
+                                      onChange={(e) => onComplianceChange(index, e)}
+                                      name="valid_tax_clearance"
+                                      className="h-4 w-4 text-blue-600 border-gray-300 rounded"
+                                    />
+                                  ) : (
+                                    <div className="w-4 h-4 flex items-center justify-center">
+                                      {comp.valid_tax_clearance && (
+                                        <svg className="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                        </svg>
+                                      )}
+                                    </div>
+                                  )}
+                                </td>
+                                <td className="px-4 py-3 text-sm">
+                                  {isCreator() ? (
+                                    <input
+                                      type="checkbox"
+                                      checked={comp.registered_with_praz}
+                                      onChange={(e) => onComplianceChange(index, e)}
+                                      name="registered_with_praz"
+                                      className="h-4 w-4 text-blue-600 border-gray-300 rounded"
+                                    />
+                                  ) : (
+                                    <div className="w-4 h-4 flex items-center justify-center">
+                                      {comp.registered_with_praz && (
+                                        <svg className="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                        </svg>
+                                      )}
+                                    </div>
+                                  )}
+                                </td>
+                                {showSiteVisit === "yes" && (
+                                  <td className="px-4 py-3 text-sm">
+                                    {isCreator() ? (
+                                      <input
+                                        type="checkbox"
+                                        checked={comp.site_visit}
+                                        onChange={(e) => onComplianceChange(index, e)}
+                                        name="site_visit"
+                                        className="h-4 w-4 text-blue-600 border-gray-300 rounded"
+                                      />
+                                    ) : (
+                                      <div className="w-4 h-4 flex items-center justify-center">
+                                        {comp.site_visit && (
+                                          <svg className="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                          </svg>
+                                        )}
+                                      </div>
+                                    )}
+                                  </td>
+                                )}
+                                {showSamples === "yes" && (
+                                  <td className="px-4 py-3 text-sm">
+                                    {isCreator() ? (
+                                      <input
+                                        type="checkbox"
+                                        checked={comp.samples_required}
+                                        onChange={(e) => onComplianceChange(index, e)}
+                                        name="samples_required"
+                                        className="h-4 w-4 text-blue-600 border-gray-300 rounded"
+                                      />
+                                    ) : (
+                                      <div className="w-4 h-4 flex items-center justify-center">
+                                        {comp.samples_required && (
+                                          <svg className="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                          </svg>
+                                        )}
+                                      </div>
+                                    )}
+                                  </td>
+                                )}
+                                <td className="px-4 py-3 text-sm">
+                                  <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                                    comp.decision ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
+                                  }`}>
+                                    {comp.decision ? "Compliant" : "Non-Compliant"}
+                                  </span>
+                                </td>
+                                <td className="px-4 py-3 text-sm">
+                                  {isCreator() ? (
+                                    <input
+                                      type="text"
+                                      value={complianceRemarks.find(r => r.supplier_name === comp.supplier_name)?.remarks || ''}
+                                      onChange={(e) => onComplianceRemarksChange(comp.supplier_name || '', e)}
+                                      name="remarks"
+                                      placeholder="Add remarks..."
+                                      className="w-full p-1 text-xs border border-gray-300 rounded"
+                                    />
+                                  ) : (
+                                    <span className="text-xs text-gray-600">
+                                      {complianceRemarks.find(r => r.supplier_name === comp.supplier_name)?.remarks || '-'}
+                                    </span>
+                                  )}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                      
+                      {isCreator() ? (
+                        <div className="mt-4 flex justify-between">
+                          <button
+                            onClick={onSaveCompliance}
+                            className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition-colors flex items-center"
+                          >
+                            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                            </svg>
+                            Save Compliance
+                          </button>
+                          
+                          <button
+                            onClick={onCloseCS}
+                            disabled={compliance.every(c => !c.decision)}
+                            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center"
+                          >
+                            <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            Generate Rankings
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="mt-4 text-sm text-gray-500 text-center">
+                          Only the creator can save compliance data and generate rankings.
+                        </div>
+                      )}
+                    </div>
+                  )}
 
-        {rankings?.length ?? 0 > 0  ? buyersInfo: ""}
+                  {/* Rankings Table */}
+                  {rankings.length > 0 && (
+                    <div className="bg-white p-6 rounded-lg shadow-sm border">
+                      <h3 className="text-lg font-semibold text-gray-900 mb-4 border-b pb-2 flex items-center">
+                        <svg className="w-5 h-5 mr-2 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                        </svg>
+                        Bid Rankings & Evaluation
+                      </h3>
+                      
+                      <div className="overflow-x-auto">
+                        <table className="min-w-full divide-y divide-gray-200">
+                          <thead className="bg-gray-50">
+                            <tr>
+                              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Rank</th>
+                              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Supplier Name</th>
+                              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total Amount</th>
+                              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Decision</th>
+                              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Remarks</th>
+                            </tr>
+                          </thead>
+                          <tbody className="bg-white divide-y divide-gray-200">
+                            {rankings.map((rank, index) => (
+                              <tr key={index} className={rank.rank === 1 ? "bg-yellow-50" : ""}>
+                                <td className="px-4 py-3 text-sm font-medium">
+                                  <div className="flex items-center">
+                                    {rank.rank === 1 && (
+                                      <svg className="w-5 h-5 text-yellow-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                                      </svg>
+                                    )}
+                                    #{rank.rank}
+                                  </div>
+                                </td>
+                                <td className="px-4 py-3 text-sm font-medium text-gray-900">{rank.supplier_name}</td>
+                                <td className="px-4 py-3 text-sm text-gray-900">${rank.total.toLocaleString()}</td>
+                                <td className="px-4 py-3 text-sm">
+                                  <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                                    rank.decision === "Accepted" ? "bg-green-100 text-green-800" : 
+                                    rank.decision === "Rejected" ? "bg-red-100 text-red-800" : "bg-yellow-100 text-yellow-800"
+                                  }`}>
+                                    {rank.decision || ""}
+                                  </span>
+                                </td>
+                                <td className="px-4 py-3 text-sm text-gray-900">
+                                  {rank.rank === 1 ? (
+                                    <div className="space-y-2">
+                                      {isCreator() ? (
+                                        <>
+                                          <textarea
+                                            value={buyersNotes}
+                                            onChange={onBuyersNotesChange}
+                                            placeholder="Add buyer's notes for the winning bid..."
+                                            className="w-full p-2 text-sm border border-gray-300 rounded"
+                                            rows={2}
+                                          />
+                                          <button
+                                            onClick={onBuyersNotesSubmit}
+                                            className="text-xs bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700"
+                                          >
+                                            Save Notes
+                                          </button>
+                                        </>
+                                      ) : (
+                                        <span className="text-sm text-gray-600">
+                                          {buyersNotes || 'No notes added yet'}
+                                        </span>
+                                      )}
+                                    </div>
+                                  ) : (
+                                    rank.remarks || '-'
+                                  )}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                      
+                      {/* Additional Notes Section */}
+                      <div className="mt-6 border-t pt-4">
+                        <h4 className="text-md font-semibold text-gray-900 mb-3">Additional Notes</h4>
+                        <textarea
+                          value={additionalNotes}
+                          onChange={onAdditionalNotesChange}
+                          placeholder="Add any additional notes about the evaluation process..."
+                          className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          rows={3}
+                        />
+                        <button
+                          onClick={onAdditionalNotesSubmit}
+                          className="mt-2 bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700 transition-colors flex items-center"
+                        >
+                          <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                          </svg>
+                          Save Additional Notes
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </Suspense>
+        );
+      default:
+        return null;
+    }
+  }, [activeTab, csId, creator, createdAt, suppliers, users, handleSaveBid, handleDeleteBid, handleSaveCommittee, onSaveCompliance, handleApprove, prData, updatePrData, updateItemSelection, handleSaveScheduleDetails, prIdInput, handleFetchPR, isLoading]);
 
-        {rankings?.length ?? 0 > 0 ? committeeTableComp : ""}
-
-        {(committeeMembers?.length ?? 0 > 0) &&
-        username === csOwner &&
-        !approvalsComplete ? (
-          <div className="m-2">
-            <button
-              style={{ width: "100%" }}
-              onClick={onSubmitCommitee}
-              className="rounded-md bg-nepal-950 hover:bg-nepal-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-            >
-              SUBMIT COMMITTEE
-            </button>
-          </div>
-        ) : (
-          ""
-        )}
-        {committeeMembers?.length ?? 0 > 2 ? approvalsTable : ""}
-
-        <div className="flex m-2">
-          <button
-            style={{ width: username === csOwner ? "50%" : "100%" }}
-            onClick={() => {
-              console.log("going back ...");
-              window.history.back();
-            }}
-            className="rounded-md bg-nepal-950 hover:bg-nepal-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 m-1"
-          >
-            GO BACK TO SCHEDULES
-          </button>
-          {username === csOwner && (
-            <button
-              style={{ width: "50%" }}
-              onClick={() => {
-                window.location.href = base_url + "/cancel_schedule/" + csId;
-              }}
-              className="rounded-md bg-red-800 hover:bg-red-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600 m-1"
-            >
-              DELETE SCHEDULE
-            </button>
-          )}
+  // Loading indicator
+  if (isLoading) {
+    return (
+      <div className="fixed inset-0 flex items-center justify-center z-50 bg-gray-800 bg-opacity-50">
+        <div className="bg-white p-4 rounded-lg shadow-lg flex flex-col items-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-600 mb-3"></div>
+          <p className="text-blue-800 font-medium">{loadingOperation || "Loading..."}</p>
         </div>
       </div>
-    </div>
+    );
+  }
+
+  return (
+    <ScheduleProvider 
+      base_url={base_url}
+      csId={csId}
+      username={username_ || ''}
+    >
+      <div className="min-h-screen bg-gray-50">
+      <div className="px-4 py-5 sm:px-6">
+          <div className="flex justify-between items-center mb-6">
+          <h1 className="text-2xl font-semibold text-gray-900">Comparative Schedule</h1>
+          {(csId || creator || createdAt) && (
+            <div className="text-sm text-gray-500">
+              {csId && <p>CS ID: {csId}</p>}
+              {creator && <p>Created by: {creator}</p>}
+              {createdAt && <p>Created at: {formatDisplayDate(createdAt)}</p>}
+            </div>
+          )}
+        </div>
+        
+          {/* Tab Navigation */}
+          <div className="border-b border-gray-200 mb-6">
+            <nav className="-mb-px flex space-x-8" aria-label="Tabs">
+              {TAB_CONFIG.map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => handleTabChange(tab.id)}
+                  className={`${
+                    activeTab === tab.id
+                      ? 'border-blue-500 text-blue-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  } whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm flex items-center gap-2 transition-colors duration-200`}
+                  aria-current={activeTab === tab.id ? 'page' : undefined}
+                >
+                  <span>{tab.icon}</span>
+                  {tab.label}
+                  {!loadedTabs.has(tab.id) && tab.id !== 'details' && (
+                    <span className="ml-1 text-xs text-gray-400">•</span>
+                  )}
+                </button>
+              ))}
+            </nav>
+          </div>
+          
+          {/* Tab Content */}
+          <div className="transition-all duration-200">
+            {renderTabContent}
+          </div>
+        </div>
+      </div>
+      
+      {/* Response notification */}
+      {response.open && (
+        <div className="fixed inset-0 z-50 overflow-y-auto">
+          <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div className="fixed inset-0 transition-opacity" aria-hidden="true">
+              <div className="absolute inset-0 bg-gray-500 opacity-75"></div>
+            </div>
+            <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+              <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                <div className="sm:flex sm:items-start">
+                  <div className={`mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full ${
+                    response.success ? "bg-green-100" : "bg-red-100"
+                  } sm:mx-0 sm:h-10 sm:w-10`}>
+                    {response.success ? (
+                      <svg className="h-6 w-6 text-green-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                      </svg>
+                    ) : (
+                      <svg className="h-6 w-6 text-red-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    )}
+                  </div>
+                  <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+                    <h3 className="text-lg leading-6 font-medium text-gray-900">
+                      {response.title}
+                    </h3>
+                    <div className="mt-2">
+                      <p className="text-sm text-gray-500">
+                        {response.message}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                <button
+                  type="button"
+                  onClick={onCloseResponse}
+                  className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm"
+                >
+                  OK
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Approval Justification Modal */}
+      {approvalsJustificationModal && (
+        <div className="fixed inset-0 z-50 overflow-y-auto">
+          <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div className="fixed inset-0 transition-opacity" aria-hidden="true">
+              <div className="absolute inset-0 bg-gray-500 opacity-75"></div>
+            </div>
+            <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+              <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                <div className="sm:flex sm:items-start">
+                  <div className="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-blue-100 sm:mx-0 sm:h-10 sm:w-10">
+                    <svg className="h-6 w-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                  </div>
+                  <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
+                    <h3 className="text-lg leading-6 font-medium text-gray-900">
+                      {currentApprover?.role} Approval Action
+                    </h3>
+                    <div className="mt-4">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Choose your action:
+                      </label>
+                      <div className="space-y-3 mb-4">
+                        <label className="flex items-center">
+                          <input
+                            type="radio"
+                            name="approvalAction"
+                            value="Approved"
+                            className="h-4 w-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                            onChange={(e) => setCurrentApprover(prev => ({...prev!, approval: e.target.value}))}
+                          />
+                          <span className="ml-2 text-sm text-gray-700">Approve</span>
+                        </label>
+                        <label className="flex items-center">
+                          <input
+                            type="radio"
+                            name="approvalAction"
+                            value="Rejected"
+                            className="h-4 w-4 text-red-600 border-gray-300 focus:ring-red-500"
+                            onChange={(e) => setCurrentApprover(prev => ({...prev!, approval: e.target.value}))}
+                          />
+                          <span className="ml-2 text-sm text-gray-700">Reject</span>
+                        </label>
+                      </div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Justification:
+                      </label>
+                      <textarea
+                        rows={4}
+                        className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="Please provide justification for your decision..."
+                        value={currentApprover?.justification || ''}
+                        onChange={(e) => setCurrentApprover(prev => ({...prev!, justification: e.target.value}))}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                <button
+                  type="button"
+                  onClick={async () => {
+                    if (!currentApprover?.approval) {
+                      onOpenResponse("Error", "Please select an approval action", false);
+                      return;
+                    }
+                    if (currentApprover.approval === "Rejected" && !currentApprover.justification?.trim()) {
+                      onOpenResponse("Error", "Justification is required for rejection", false);
+                      return;
+                    }
+                    
+                    await handleApprove(
+                      currentApprover.role!,
+                      currentApprover.username!,
+                      currentApprover.approval,
+                      currentApprover.justification || ''
+                    );
+                    
+                    setApprovalsJustificationModal(false);
+                    setCurrentApprover(undefined);
+                  }}
+                  className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm"
+                >
+                  Submit
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setApprovalsJustificationModal(false);
+                    setCurrentApprover(undefined);
+                  }}
+                  className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+                     </div>
+         </div>
+       )}
+
+       {/* Add/Edit Bid Modal - Only for creators */}
+       {(addBidModal || updateBidModal) && currentBid && isCreator() && (
+         <div className="fixed inset-0 z-50 overflow-y-auto">
+           <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+             <div className="fixed inset-0 transition-opacity" aria-hidden="true">
+               <div className="absolute inset-0 bg-gray-500 opacity-75"></div>
+             </div>
+             <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+             <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full">
+               <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                 <div className="sm:flex sm:items-start">
+                   <div className="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-blue-100 sm:mx-0 sm:h-10 sm:w-10">
+                     <svg className="h-6 w-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                     </svg>
+                   </div>
+                   <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
+                     <h3 className="text-lg leading-6 font-medium text-gray-900">
+                       {addBidModal ? 'Add New Bid' : 'Edit Bid'} #{currentBid.bid_count}
+                     </h3>
+                     
+                     <div className="mt-4 space-y-4">
+                       {/* Supplier Selection */}
+                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                         <div className="relative">
+                           <label className="block text-sm font-medium text-gray-700 mb-2">Supplier</label>
+                           <div className="relative">
+                             <input
+                               type="text"
+                               placeholder="Search and select supplier..."
+                               className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 pr-8"
+                               value={supplierSearchTerm}
+                               onChange={(e) => {
+                                 setSupplierSearchTerm(e.target.value);
+                                 setShowSupplierDropdown(true);
+                               }}
+                               onFocus={() => setShowSupplierDropdown(true)}
+                               onBlur={() => {
+                                 // Delay hiding dropdown to allow selection
+                                 setTimeout(() => setShowSupplierDropdown(false), 200);
+                               }}
+                             />
+                             <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
+                               <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                               </svg>
+                             </div>
+                             
+                             {/* Dropdown */}
+                             {showSupplierDropdown && (
+                               <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
+                                 {suppliers
+                                   .filter(supplier => 
+                                     !supplierSearchTerm || 
+                                     (supplier.supplier_name || supplier.name || '')
+                                       .toLowerCase()
+                                       .includes(supplierSearchTerm.toLowerCase())
+                                   )
+                                   .map((supplier) => (
+                                     <div
+                                       key={supplier.id}
+                                       className="px-3 py-2 cursor-pointer hover:bg-blue-50 hover:text-blue-900"
+                                       onMouseDown={(e) => {
+                                         e.preventDefault(); // Prevent input blur
+                                         const supplierName = supplier.supplier_name || supplier.name || '';
+                                         setSupplierSearchTerm(supplierName);
+                                         setCurrentBid({
+                                           ...currentBid,
+                                           supplier: supplier.id?.toString(),
+                                           supplier_name: supplierName,
+                                         });
+                                         setShowSupplierDropdown(false);
+                                       }}
+                                     >
+                                       <div className="font-medium text-gray-900">
+                                         {supplier.supplier_name || supplier.name}
+                                       </div>
+                                       {supplier.id && (
+                                         <div className="text-xs text-gray-500">ID: {supplier.id}</div>
+                                       )}
+                                     </div>
+                                   ))
+                                 }
+                                 {suppliers.filter(supplier => 
+                                   !supplierSearchTerm || 
+                                   (supplier.supplier_name || supplier.name || '')
+                                     .toLowerCase()
+                                     .includes(supplierSearchTerm.toLowerCase())
+                                 ).length === 0 && (
+                                   <div className="px-3 py-2 text-gray-500 text-sm">
+                                     No suppliers found matching "{supplierSearchTerm}"
+                                   </div>
+                                 )}
+                               </div>
+                             )}
+                           </div>
+                         </div>
+                         <div>
+                           <label className="block text-sm font-medium text-gray-700 mb-2">Bid Date</label>
+                           <input
+                             type="date"
+                             className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                             value={currentBid.bid_date || ''}
+                             onChange={(e) => onCurrentBidChange('bid_date', e)}
+                             name="bid_date"
+                           />
+                         </div>
+                       </div>
+
+                       {/* Bid Document */}
+                       <div>
+                         <label className="block text-sm font-medium text-gray-700 mb-2">Bid Document</label>
+                         <input
+                           type="file"
+                           className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                           accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                           onChange={onBidDocumentChange}
+                         />
+                         <p className="text-xs text-gray-500 mt-1">PDF, DOC, or image files only (max 10MB)</p>
+                         
+                         {/* File Preview */}
+                         {(currentBid.bid_document || currentBid.encoded_bid_document || currentBid.bid_document_url) && (
+                           <div className="mt-2 p-3 bg-gray-50 border border-gray-200 rounded">
+                             <div className="flex items-center">
+                               <svg className="w-5 h-5 text-blue-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                               </svg>
+                               <div className="flex-1">
+                                 {currentBid.bid_document instanceof File ? (
+                                   <>
+                                     <p className="text-sm font-medium text-gray-900">{currentBid.bid_document.name}</p>
+                                     <p className="text-xs text-gray-500">
+                                       {(currentBid.bid_document.size / 1024 / 1024).toFixed(2)} MB - {currentBid.bid_document.type}
+                                     </p>
+                                   </>
+                                 ) : (
+                                   <>
+                                     <p className="text-sm font-medium text-gray-900">Existing document attached</p>
+                                     <p className="text-xs text-gray-500">
+                                       {currentBid.encoded_bid_document ? 'Encoded document' : 
+                                        currentBid.bid_document_url ? 'Document URL available' : 'Document attached'}
+                                     </p>
+                                   </>
+                                 )}
+                               </div>
+                               <button
+                                 type="button"
+                                 onClick={() => setCurrentBid({
+                                   ...currentBid, 
+                                   bid_document: undefined,
+                                   encoded_bid_document: undefined,
+                                   bid_document_url: undefined
+                                 })}
+                                 className="text-red-600 hover:text-red-800 text-sm"
+                               >
+                                 Remove
+                               </button>
+                             </div>
+                           </div>
+                         )}
+                       </div>
+
+                       {/* Bid Items */}
+                       <div>
+                         <h4 className="text-md font-medium text-gray-900 mb-3">Bid Items & Pricing</h4>
+                         <div className="overflow-x-auto">
+                           <table className="min-w-full divide-y divide-gray-200">
+                             <thead className="bg-gray-50">
+                               <tr>
+                                 <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Item</th>
+                                 <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Unit of Measure</th>
+                                 <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Quantity</th>
+                                 <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Unit Price</th>
+                                 <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Total Price</th>
+                               </tr>
+                             </thead>
+                             <tbody className="bg-white divide-y divide-gray-200">
+                               {currentBid.items?.map((item, index) => (
+                                 <tr key={index}>
+                                   <td className="px-4 py-2 text-sm font-medium text-gray-900">
+                                     {item.item_required}
+                                   </td>
+                                   <td className="px-4 py-2 text-sm">
+                                     <div className="relative">
+                                       <input
+                                         type="text"
+                                         className="w-full p-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 pr-6"
+                                         placeholder="Search UOM..."
+                                         value={activeUomItem === item.item_required ? uomSearchTerm : (item.unit_of_measurement || '')}
+                                         onChange={(e) => {
+                                           setUomSearchTerm(e.target.value);
+                                           setActiveUomItem(item.item_required || '');
+                                           setShowUomDropdown(true);
+                                         }}
+                                         onFocus={() => {
+                                           setActiveUomItem(item.item_required || '');
+                                           setUomSearchTerm(item.unit_of_measurement || '');
+                                           setShowUomDropdown(true);
+                                         }}
+                                         onBlur={() => {
+                                           setTimeout(() => setShowUomDropdown(false), 200);
+                                         }}
+                                       />
+                                       <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
+                                         <svg className="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                                         </svg>
+                                       </div>
+                                       
+                                       {/* UOM Dropdown */}
+                                       {showUomDropdown && activeUomItem === item.item_required && (
+                                         <div className="absolute z-20 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-40 overflow-auto">
+                                           {uom
+                                             .filter(uomItem => 
+                                               !uomSearchTerm || 
+                                               uomItem?.name?.toLowerCase().includes(uomSearchTerm.toLowerCase())
+                                             )
+                                             .map((uomItem) => (
+                                               <div
+                                                 key={uomItem.id}
+                                                 className="px-2 py-1 cursor-pointer hover:bg-blue-50 hover:text-blue-900 text-sm"
+                                                 onMouseDown={(e) => {
+                                                   e.preventDefault();
+                                                   onCurrentBidItemChange(
+                                                     item.item_required || '',
+                                                     'unit_of_measurement',
+                                                     { target: { name: 'unit_of_measurement', value: uomItem.name || '' } },
+                                                     currentBid.bid_count?.toString() || ''
+                                                   );
+                                                   setUomSearchTerm(uomItem?.name || '');
+                                                   setShowUomDropdown(false);
+                                                 }}
+                                               >
+                                                 {uomItem.name}
+                                               </div>
+                                               ))
+                                           }
+                                           {uom.filter(uomItem => 
+                                             !uomSearchTerm || 
+                                             uomItem?.name?.toLowerCase().includes(uomSearchTerm.toLowerCase())
+                                           ).length === 0 && (
+                                             <div className="px-2 py-1 text-gray-500 text-sm">
+                                               No UOM found
+                                             </div>
+                                           )}
+                                         </div>
+                                       )}
+                                     </div>
+                                   </td>
+                                   <td className="px-4 py-2 text-sm">
+                                     <input
+                                       type="number"
+                                       className="w-full p-1 text-sm border border-gray-300 rounded"
+                                       value={item.quantity || ''}
+                                       onChange={(e) => onCurrentBidItemChange(
+                                         item.item_required || '',
+                                         'quantity',
+                                         e,
+                                         currentBid.bid_count?.toString() || ''
+                                       )}
+                                       name="quantity"
+                                     />
+                                   </td>
+                                   <td className="px-4 py-2 text-sm">
+                                     <input
+                                       type="number"
+                                       step="0.01"
+                                       className="w-full p-1 text-sm border border-gray-300 rounded"
+                                       value={item.unit_price || ''}
+                                       onChange={(e) => onCurrentBidItemChange(
+                                         item.item_required || '',
+                                         'unit_price',
+                                         e,
+                                         currentBid.bid_count?.toString() || ''
+                                       )}
+                                       name="unit_price"
+                                     />
+                                   </td>
+                                   <td className="px-4 py-2 text-sm">
+                                     <input
+                                       type="number"
+                                       step="0.01"
+                                       className="w-full p-1 text-sm border border-gray-300 rounded bg-gray-50"
+                                       value={item.total_price || ''}
+                                       readOnly
+                                       name="total_price"
+                                       title="Auto-calculated: Quantity × Unit Price"
+                                     />
+                                   </td>
+                                 </tr>
+                               ))}
+                             </tbody>
+                           </table>
+                         </div>
+                         <div className="mt-2 text-right">
+                           <span className="text-sm font-medium text-gray-700">
+                             Grand Total: ${calculateBidTotal(currentBid.items).toLocaleString()}
+                           </span>
+                         </div>
+                       </div>
+                     </div>
+                   </div>
+                 </div>
+               </div>
+               <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                 <button
+                   type="button"
+                   onClick={onCurrentBidSave}
+                   className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm"
+                 >
+                   Save Bid
+                 </button>
+                 <button
+                   type="button"
+                   onClick={() => {
+                     if (addBidModal) {
+                       onCloseCurrentBid();
+                     } else {
+                       onCloseUpdateBidBid();
+                     }
+                   }}
+                   className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
+                 >
+                   Cancel
+                 </button>
+               </div>
+             </div>
+           </div>
+         </div>
+       )}
+
+       {/* Add Supplier Modal */}
+       {onAddSupplier && (
+         <div className="fixed inset-0 z-50 overflow-y-auto">
+           <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+             <div className="fixed inset-0 transition-opacity" aria-hidden="true">
+               <div className="absolute inset-0 bg-gray-500 opacity-75"></div>
+             </div>
+             <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+             <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+               <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                 <div className="sm:flex sm:items-start">
+                   <div className="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-green-100 sm:mx-0 sm:h-10 sm:w-10">
+                     <svg className="h-6 w-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                     </svg>
+                   </div>
+                   <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
+                     <h3 className="text-lg leading-6 font-medium text-gray-900">
+                       Add New Supplier
+                     </h3>
+                     <div className="mt-4 space-y-4">
+                       {/* Search Existing Suppliers */}
+                       <div>
+                         <label className="block text-sm font-medium text-gray-700 mb-2">Search Existing Suppliers</label>
+                         <div className="relative">
+                           <input
+                             type="text"
+                             className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 pr-8"
+                             placeholder="Search for existing suppliers..."
+                             value={supplierSearchTerm}
+                             onChange={(e) => {
+                               setSupplierSearchTerm(e.target.value);
+                               setShowSupplierDropdown(true);
+                             }}
+                             onFocus={() => setShowSupplierDropdown(true)}
+                             onBlur={() => {
+                               setTimeout(() => setShowSupplierDropdown(false), 200);
+                             }}
+                           />
+                           <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
+                             <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                             </svg>
+                           </div>
+                           
+                           {/* Search Results Dropdown */}
+                           {showSupplierDropdown && supplierSearchTerm && (
+                             <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
+                               {suppliers
+                                 .filter(supplier => 
+                                   (supplier.supplier_name || supplier.name || '')
+                                     .toLowerCase()
+                                     .includes(supplierSearchTerm.toLowerCase())
+                                 )
+                                 .map((supplier) => (
+                                   <div
+                                     key={supplier.id}
+                                     className="px-3 py-2 cursor-pointer hover:bg-blue-50 hover:text-blue-900"
+                                     onMouseDown={(e) => {
+                                       e.preventDefault();
+                                       const supplierName = supplier.supplier_name || supplier.name || '';
+                                       setSupplierSearchTerm(supplierName);
+                                       setNewSupplier({
+                                         ...newSupplier,
+                                         supplier_name: supplierName,
+                                         id: supplier.id
+                                       });
+                                       setShowSupplierDropdown(false);
+                                       onOpenResponse("Supplier Found", `Supplier "${supplierName}" already exists in the system.`, true);
+                                     }}
+                                   >
+                                     <div className="font-medium text-gray-900">
+                                       {supplier.supplier_name || supplier.name}
+                                     </div>
+                                     {supplier.id && (
+                                       <div className="text-xs text-gray-500">ID: {supplier.id}</div>
+                                     )}
+                                   </div>
+                                 ))
+                               }
+                               {suppliers.filter(supplier => 
+                                 (supplier.supplier_name || supplier.name || '')
+                                   .toLowerCase()
+                                   .includes(supplierSearchTerm.toLowerCase())
+                               ).length === 0 && (
+                                 <div className="px-3 py-2 text-gray-500 text-sm">
+                                   No existing suppliers found. You can add a new one below.
+                                 </div>
+                               )}
+                             </div>
+                           )}
+                         </div>
+                       </div>
+
+                       {/* Divider */}
+                       <div className="relative">
+                         <div className="absolute inset-0 flex items-center">
+                           <div className="w-full border-t border-gray-300" />
+                         </div>
+                         <div className="relative flex justify-center text-sm">
+                           <span className="px-2 bg-white text-gray-500">OR</span>
+                         </div>
+                       </div>
+
+                       {/* Add New Supplier */}
+                       <div>
+                         <label className="block text-sm font-medium text-gray-700 mb-2">Add New Supplier</label>
+                         <input
+                           type="text"
+                           className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                           placeholder="Enter new supplier name"
+                           value={newSupplier.supplier_name || ''}
+                           onChange={(e) => onSupplierChange({ target: { name: 'supplier_name', value: e.target.value } })}
+                           name="supplier_name"
+                         />
+                       </div>
+
+                       {/* Optional Supplier Details Toggle */}
+                       <div className="flex items-center">
+                         <button
+                           type="button"
+                           onClick={() => setShowSupplierDetails(!showSupplierDetails)}
+                           className="text-sm text-blue-600 hover:text-blue-800 flex items-center"
+                         >
+                           <svg className={`w-4 h-4 mr-1 transition-transform ${showSupplierDetails ? 'rotate-90' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+                           </svg>
+                           {showSupplierDetails ? 'Hide' : 'Add'} Optional Details
+                         </button>
+                       </div>
+
+                       {/* Optional Supplier Details */}
+                       {showSupplierDetails && (
+                         <div className="space-y-4 pl-4 border-l-2 border-gray-200">
+                           <div>
+                             <label className="block text-sm font-medium text-gray-700 mb-2">Contact Person</label>
+                             <input
+                               type="text"
+                               className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                               placeholder="Enter contact person name"
+                               value={newSupplier.contact_person || ''}
+                               onChange={(e) => onSupplierChange({ target: { name: 'contact_person', value: e.target.value } })}
+                               name="contact_person"
+                             />
+                           </div>
+                           <div>
+                             <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                             <input
+                               type="email"
+                               className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                               placeholder="Enter email address"
+                               value={newSupplier.email || ''}
+                               onChange={(e) => onSupplierChange({ target: { name: 'email', value: e.target.value } })}
+                               name="email"
+                             />
+                           </div>
+                           <div>
+                             <label className="block text-sm font-medium text-gray-700 mb-2">Phone Number</label>
+                             <input
+                               type="tel"
+                               className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                               placeholder="Enter phone number"
+                               value={newSupplier.phone_number || ''}
+                               onChange={(e) => onSupplierChange({ target: { name: 'phone_number', value: e.target.value } })}
+                               name="phone_number"
+                             />
+                           </div>
+                           <div>
+                             <label className="block text-sm font-medium text-gray-700 mb-2">Address</label>
+                             <textarea
+                               className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                               placeholder="Enter business address"
+                               rows={3}
+                               value={newSupplier.address || ''}
+                               onChange={(e) => onSupplierChange({ target: { name: 'address', value: e.target.value } })}
+                               name="address"
+                             />
+                           </div>
+                           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                             <div>
+                               <label className="block text-sm font-medium text-gray-700 mb-2">Tax Number</label>
+                               <input
+                                 type="text"
+                                 className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                 placeholder="Enter tax number"
+                                 value={newSupplier.tax_number || ''}
+                                 onChange={(e) => onSupplierChange({ target: { name: 'tax_number', value: e.target.value } })}
+                                 name="tax_number"
+                               />
+                             </div>
+                             <div>
+                               <label className="block text-sm font-medium text-gray-700 mb-2">Registration Number</label>
+                               <input
+                                 type="text"
+                                 className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                 placeholder="Enter registration number"
+                                 value={newSupplier.registration_number || ''}
+                                 onChange={(e) => onSupplierChange({ target: { name: 'registration_number', value: e.target.value } })}
+                                 name="registration_number"
+                               />
+                             </div>
+                           </div>
+                           <div>
+                             <label className="block text-sm font-medium text-gray-700 mb-2">Business Type</label>
+                             <select
+                               className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                               value={newSupplier.business_type || ''}
+                               onChange={(e) => onSupplierChange({ target: { name: 'business_type', value: e.target.value } })}
+                               name="business_type"
+                             >
+                               <option value="">Select business type</option>
+                               <option value="Sole Proprietorship">Sole Proprietorship</option>
+                               <option value="Partnership">Partnership</option>
+                               <option value="Private Limited Company">Private Limited Company</option>
+                               <option value="Public Limited Company">Public Limited Company</option>
+                               <option value="Government Entity">Government Entity</option>
+                               <option value="Non-Profit Organization">Non-Profit Organization</option>
+                               <option value="Other">Other</option>
+                             </select>
+                           </div>
+                         </div>
+                       )}
+                     </div>
+                   </div>
+                 </div>
+               </div>
+               <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                 <button
+                   type="button"
+                   onClick={async () => {
+                     // Check if this is an existing supplier (has ID)
+                     if (newSupplier.id) {
+                       onOpenResponse("Supplier Exists", "This supplier already exists in the system. Please use the search function to find existing suppliers.", false);
+                       return;
+                     }
+
+                     // Validate supplier data
+                     if (!newSupplier.supplier_name?.trim()) {
+                       onOpenResponse("Error", "Please enter a supplier name", false);
+                       return;
+                     }
+
+                     // Check if supplier name already exists
+                     const existingSupplier = suppliers.find(s => 
+                       (s.supplier_name || s.name || '').toLowerCase() === (newSupplier.supplier_name || '').toLowerCase()
+                     );
+                     
+                     if (existingSupplier) {
+                       onOpenResponse("Supplier Exists", `Supplier "${newSupplier.supplier_name || ''}" already exists in the system.`, false);
+                       return;
+                     }
+
+                     setIsLoading(true);
+                     setLoadingOperation("Saving supplier");
+
+                     try {
+                       const formData = new FormData();
+                       formData.append("supplier_name", newSupplier.supplier_name || '');
+                       
+                       // Add optional fields if provided
+                       if (newSupplier.contact_person) {
+                         formData.append("contact_person", newSupplier.contact_person);
+                       }
+                       if (newSupplier.email) {
+                         formData.append("email", newSupplier.email);
+                       }
+                       if (newSupplier.phone_number) {
+                         formData.append("phone_number", newSupplier.phone_number);
+                       }
+                       if (newSupplier.address) {
+                         formData.append("address", newSupplier.address);
+                       }
+                       if (newSupplier.tax_number) {
+                         formData.append("tax_number", newSupplier.tax_number);
+                       }
+                       if (newSupplier.registration_number) {
+                         formData.append("registration_number", newSupplier.registration_number);
+                       }
+                       if (newSupplier.business_type) {
+                         formData.append("business_type", newSupplier.business_type);
+                       }
+                       
+                       formData.append("csrfmiddlewaretoken", csrfToken);
+
+                       const requestOptions = {
+                         method: "POST",
+                         headers: {
+                           "X-CSRFToken": csrfToken,
+                         },
+                         body: formData,
+                       };
+
+                       const data = await fetchWithRetry(
+                         buildApiUrl(base_url, '/save_supplier'), 
+                         requestOptions
+                       );
+
+                       if (data.success) {
+                         // Add to suppliers list locally
+                         const newSupplierData = {
+                           id: data.supplier_id || Date.now(), // Fallback ID
+                           supplier_name: newSupplier.supplier_name,
+                           name: newSupplier.supplier_name,
+                           contact_person: newSupplier.contact_person,
+                           email: newSupplier.email,
+                           phone_number: newSupplier.phone_number,
+                           address: newSupplier.address,
+                           tax_number: newSupplier.tax_number,
+                           registration_number: newSupplier.registration_number,
+                           business_type: newSupplier.business_type
+                         };
+                         setSuppliers(prev => [...prev, newSupplierData]);
+                         
+                         setOnAddSupplier(false);
+                         setNewSupplier({});
+                         setSupplierSearchTerm("");
+                         setShowSupplierDetails(false);
+                         onOpenResponse("Success", "Supplier added successfully", true);
+                       } else {
+                         onOpenResponse("Error", data.message || "Failed to save supplier", false);
+                       }
+                     } catch (error) {
+                       console.error("Error saving supplier:", error);
+                       onOpenResponse("Error", "Failed to save supplier. Please try again.", false);
+                     } finally {
+                       setIsLoading(false);
+                       setLoadingOperation("");
+                     }
+                   }}
+                   className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-green-600 text-base font-medium text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 sm:ml-3 sm:w-auto sm:text-sm"
+                 >
+                   Add Supplier
+                 </button>
+                 <button
+                   type="button"
+                   onClick={() => {
+                     setOnAddSupplier(false);
+                     setNewSupplier({});
+                     setSupplierSearchTerm("");
+                     setShowSupplierDetails(false);
+                   }}
+                   className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
+                 >
+                   Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </ScheduleProvider>
   );
 }

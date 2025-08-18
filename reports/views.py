@@ -62,10 +62,12 @@ def plans_reports_index(request):
     
     return render(request, 'plans_reports/plans_reports.html', {})
 
+@login_required
 def reports_index(request):
     
     return render(request, 'plans_reports/reports_index.html', {})
 
+@login_required
 def plans_index(request):
     
     return render(request, 'plans_reports/plans_index.html', {})
@@ -128,32 +130,48 @@ def create_report(request):
         except Exception as ex:
             print("Error:", ex)
         
-        region = Regions.objects.filter(id=request.POST.get('region')).first()
-        section = Sections.objects.filter(id=request.POST.get('section')).first()
-        created_by = UserProfile.objects.filter(id=user.id).first()
-        new_plans_and_reports_fields = Report(
-            uploaded_by=user if user else "",
-            region=region if region else None,
-            report_period=report_period if report_period else None,
-            report_type=report_type if report_type else None,
-            date_created=datetime.now().strftime("%Y%m%d"),
-            date_updated=datetime.now().strftime("%Y%m%d"),
-            section=section if section else None,
-            file_name=file_name if file_name else "",
-            file_path=file_path,
-            created_by=created_by if created_by else None
-        )
-        new_plans_and_reports_fields.save()       
-        
-        messages.success(request, 'Report created successfully')        
-        if report_period:
-            period = report_period.lower()
-            report = report_type.lower()+'s'
-        else:
-            period = "all"
-            report = report_type.lower()+'s'
+        try:
+            region = Regions.objects.filter(id=request.POST.get('region')).first()
+            
+            # Handle section based on report type
+            if report_type == "Objective":
+                # For objectives, use logged in user's section and store section name in report_period
+                section = user.section if user.section else None
+                # Store the section name in report_period field for objectives
+                report_period = request.POST.get('section') if request.POST.get('section') else None
+            else:
+                # For reports and plans, use the existing logic
+                section = Sections.objects.filter(id=request.POST.get('section')).first()
+                
+            created_by = UserProfile.objects.filter(id=user.id).first()
+            new_plans_and_reports_fields = Report(
+                uploaded_by=user if user else "",
+                region=region if region else None,
+                report_period=report_period if report_period else None,
+                report_type=report_type if report_type else None,
+                date_created=datetime.now().strftime("%Y%m%d"),
+                date_updated=datetime.now().strftime("%Y%m%d"),
+                section=section if section else None,
+                file_name=file_name if file_name else "",
+                file_path=file_path,
+                created_by=created_by if created_by else None
+            )
+            new_plans_and_reports_fields.save()       
+            
+            messages.success(request, 'Report created successfully')        
+            if report_type == "Objective":
+                # For objectives, redirect to the objectives index
+                return redirect('/reports/objectives_index')
+            elif report_period:
+                period = report_period.lower()
+                report = report_type.lower()+'s'
+            else:
+                period = "all"
+                report = report_type.lower()+'s'
 
-        return redirect('/reports/'+report+'/'+period)
+            return redirect('/reports/'+report+'/'+period)
+        except Exception as ex:
+            print("Error:", ex)
     
     sections = Sections.objects.all()
     regions = Regions.objects.all()
@@ -175,10 +193,10 @@ def download_file(request):
         base_directory_path = os.path.join(settings.BASE_DIR, file_path)
         import mimetypes
         content_type, _ = mimetypes.guess_type(base_directory_path)
-        # if content_type is None:
-        #     content_type = 'application/octet-stream'  # Default to binary file type if MIME type cannot be guessed
-        # print(content_type)
-        print(base_directory_path)
+        if content_type is None:
+            content_type = 'application/octet-stream'  # Default to binary file type if MIME type cannot be guessed
+        print("content_type: ", content_type)
+        print("base_directory_path: ", base_directory_path)
         return FileResponse(open(base_directory_path, 'rb'), content_type=content_type)
     except Exception as ex:
         print(ex)
@@ -208,7 +226,17 @@ def edit_report(request):
             print("Error:", ex)
         
         region = Regions.objects.filter(id=request.POST.get('region')).first()
-        section = Sections.objects.filter(id=request.POST.get('section')).first()
+        
+        # Handle section based on report type
+        if report_type == "Objective":
+            # For objectives, use logged in user's section and store section name in report_period
+            section = request.user.section if request.user.section else None
+            # Store the section name in report_period field for objectives
+            report_period = request.POST.get('section') if request.POST.get('section') else None
+        else:
+            # For reports and plans, use the existing logic
+            section = Sections.objects.filter(id=request.POST.get('section')).first()
+            
         report_ = Report.objects.filter(id=report_id).first()
 
         if report_:
@@ -228,7 +256,11 @@ def edit_report(request):
 
             report_.save()       
         
-        if report_period:
+        if report_type == "Objective":
+            # For objectives, redirect to the objectives index
+            messages.success(request, 'Objective updated successfully')
+            return redirect('/reports/objectives_index')
+        elif report_period:
             period = report_period.lower()
             report = report_type.lower()+'s'
         else:
@@ -280,14 +312,68 @@ def get_plans(request, period):
     
     return render(request, 'plans_reports/view_reports.html', {'context':context})
 
+@login_required
+def get_objectives(request, section_name):
+    """Get objectives filtered by section name stored in report_period field"""
+    # Map URL section names to display names
+    section_mapping = {
+        'commercial': 'COMMERCIAL',
+        'hr': 'HUMAN RESOURCES', 
+        'engineering': 'ENGINEERING',
+        'ict': 'ICT',
+        'risk': 'RISK',
+        'finance': 'FINANCE',
+        'stakeholder-relations': 'STAKEHOLDER RELATIONS',
+        'legal': 'LEGAL',
+        'procurement': 'PROCUREMENT'
+    }
+    
+    display_name = section_mapping.get(section_name, section_name.upper())
+    
+    # For objectives, filter by report_period field which contains the section name
+    objectives = Report.objects.filter(
+        report_type="Objective", 
+        report_period=display_name, 
+        archived=False
+    ).all()
+    
+    files_list = []
+    for file in objectives:
+        fullname = file.created_by.first_name + " " + file.created_by.last_name if file.created_by else None
+        new_file = {
+            "id": file.id,
+            "uploaded_by": file.uploaded_by,
+            "region": file.region.region if file.region else "",
+            "report_period": file.report_period,  # This contains the section name for objectives
+            "date_created": file.date_created.strftime("%Y-%m-%d %H:%M") if file.date_created else "",
+            "date_updated": file.date_updated.strftime("%Y-%m-%d %H:%M") if file.date_updated else "",
+            "section": file.section.section if file.section else "",
+            "file_name": file.file_name,
+            "file_path": file.file_path,
+            "created_by": fullname
+        }
+        files_list.append(new_file)
+        
+    context = json.dumps(files_list, default=str)
+    
+    return render(request, 'plans_reports/view_reports.html', {
+        'context': context,
+        'section_name': display_name
+    })
+
+@login_required
+def objectives_index(request):
+    """Display objectives index page with sections as folders"""
+    return render(request, 'plans_reports/objectives_index.html', {})
+
 def save_file(f,file_path):
     if f:
         with open(file_path, 'wb+') as destination:
             for chunk in f.chunks():
                 destination.write(chunk)
-                return True
-            else:
-                return False
+            return True
+    else:
+        return False
             
             
             

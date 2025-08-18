@@ -6,6 +6,7 @@ import DsmAuditChart from "./components/DsmAuditChart";
 import DsmInitiativesOverview from './components/DsmInitiativesOverview';
 import IeugBillingOverview from "./components/IeugBillingOverview";
 import SolarProjectMonitoring from "./components/SolarProjectMonitoring";
+import BarChart from "./components/BarChart";
 
 export default function DSM({
   base_url,
@@ -121,6 +122,11 @@ export default function DSM({
           <NetMeteringRegisterStats key={index} {...netMeteringRegisterStat} />
         ))}
         <DsmAuditChart dsmAudits={dsmAudits} />
+        <BarChart 
+            labels={["January", "February", "March", "April", "May"]}
+            data={[65, 59, 80, 81, 56]} 
+            labelTitle="Monthly Data"  
+          />
         <NetMeterBilling netMeteringBilling={netMeteringBilling} />
         <DsmInitiativesOverview virtualPowerStats={virtualPowerStats} />
         <IeugBillingOverview />

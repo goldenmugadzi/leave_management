@@ -1,7 +1,9 @@
 .env
+.vscode/
 env.local
 uploads/
 uploads/*
+media/temp/*
 
 debug.log
 
@@ -41,6 +43,10 @@ share/python-wheels/
 .installed.cfg
 *.egg
 MANIFEST
+
+# Ignore dr_setup folder
+dr_setup/
+dr_setup/*
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
@@ -152,3 +158,37 @@ node_modules/
 /bet/Scripts/weasyprint.exe
 /bet/Scripts/python.exe
 .idea/
+/elasticSearchConf/logs/*
+/elasticSearchConf/elasticSearchConf/logs/*
+/tika/*
+/tika/tika-app*
+/tika/tika-server*
+
+/static/ace/*
+/static/comparative/*
+/static/job_descriptions/*
+/static/network_development/*
+/static/pettycash/*
+/static/plan_and_reports/*
+/static/process_maps/*
+/static/rfq/*
+/static/signatures/*
+/staticfiles/*
+
+/elasticSearchConf/elasticSearchConf/logs/*
+elasticSearchConf/config/fscrawler/_status.json
+/elasticSearchConf/elasticSearchConf/logs/*elasticSearchConf/config/fscrawler/_status.json
+/elasticSearchConf/elasticSearchConf/logs/*
+elasticSearchConf/logs/
+elasticsearchConf/
+/staticfiles/
+staticfiles/*
+elasticSearchConf/config/fscrawler/_status.json
+/elasticSearchConf/config/fscrawler/_status.json
+/media
+media/*
+static/*/
+!static/admin/
+!static/scripts/
+!static/tika/
+!static/assets/

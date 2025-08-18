@@ -77,6 +77,94 @@
           text-decoration: none;
           cursor: pointer;
       }
+
+    .enhanced-assets-section {
+        border: 1px solid #e3e6f0;
+        border-radius: 5px;
+        padding: 15px;
+        background: #f8f9fc;
+    }
+
+    .enhanced-asset-item {
+        display: flex;
+        align-items: center;
+        padding: 8px;
+        margin-bottom: 8px;
+        border-radius: 4px;
+        background: white;
+        border-left: 4px solid #ddd;
+    }
+
+    .enhanced-asset-item.verified {
+        border-left-color: #28a745;
+    }
+
+    .enhanced-asset-item.unverified {
+        border-left-color: #ffc107;
+    }
+
+    .status-badge {
+        padding: 2px 8px;
+        border-radius: 3px;
+        font-size: 0.8em;
+        margin-left: 10px;
+    }
+
+    .status-badge.verified {
+        background: #d4edda;
+        color: #155724;
+    }
+
+    .status-badge.unverified {
+        background: #fff3cd;
+        color: #856404;
+    }
+
+    .asset-info {
+        color: #6c757d;
+        font-size: 0.9em;
+        margin-left: 10px;
+    }
+
+    .added-info {
+        color: #6c757d;
+        font-size: 0.8em;
+        margin-left: auto;
+    }
+
+    .remove-btn {
+        color: #dc3545;
+        text-decoration: none;
+        font-weight: bold;
+        margin-left: 10px;
+        padding: 2px 6px;
+    }
+
+    .enhanced-modal {
+        max-width: 700px;
+    }
+
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+
+    .close-btn {
+        background: none;
+        border: none;
+        font-size: 24px;
+        cursor: pointer;
+    }
+
+    .asset-option.verified {
+        border-left: 3px solid #28a745;
+    }
+
+    .asset-option.unverified {
+        border-left: 3px solid #ffc107;
+    }
   </style>
     <script src="{% static 'assets/disbursemodal.js' %}"></script>
 </head>
@@ -105,12 +193,12 @@
                             <p class="font-bold mb-2">Budget:{{ ace.budget_id }}</p>
                         <p class="font-bold mb-2">
                             {% for attachment in ace.quotation_set.all %}
-                                <a href="/ace/attachment/ {{attachment}}"><button class=" hover:text-green-600 text-green-300 font-bold py-2 px-4 rounded"
-                                        href="/ace/attachment/ {{attachment}}">
-                                    {{ attachment.quotation_file.name|basename }}
-                                </button>
-                                </a>
-                            {% endfor %}
+    <a href="{% url 'Ace:download_ace_quotation' attachment.id %}">
+        <button class="hover:text-green-600 text-green-300 font-bold py-2 px-4 rounded">
+            Download {{ attachment.quotation_file.name|default:"Quotation" }}
+        </button>
+    </a>
+{% endfor %}
                         </p>
                             <p class="font-bold   mb-2"> Requested By: {{ ace.requested_by }}</p>
                             <p class="font-bold   mb-2"> Date Created: {{ ace.date_created }}</p>
@@ -300,7 +388,18 @@
                     <form class="row rounded py-4 border bg-gulf-blue-400 rounded-lg p-3 m-auto container" method="POST" action="{% url 'approve:approve' ace.process.id %}" enctype="multipart/form-data">
                          {% csrf_token %}
                         <div class=" m-auto container  ">
-                             {{approvalForm.comment}}
+                            <div class="bg-white rounded-lg p-4 mb-4 shadow-inner">
+                                <h3 class="text-lg font-semibold text-gray-800 mb-2">📝 Review & Comments</h3>
+                                <div class="space-y-2">
+                                    <label for="{{ approvalForm.comment.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                                        💬 Comments <span class="text-red-500">*</span>
+                                    </label>
+                                    {{ approvalForm.comment }}
+                                    <p class="text-xs text-gray-500 mt-1">
+                                        Please provide comments for your decision. Comments are required for rejections.
+                                    </p>
+                                </div>
+                            </div>
 
                                  <div class="m-4 text-center">
                                     <button type="submit" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded" name="approved" value="Rejected">Reject</button>
@@ -322,8 +421,14 @@
                                         {% for approval in ace.process.approval_set.all %}
                                            {% if step == approval.step %}
                                                 <div class="card-body m-auto arrow arrow-step mb-5 bg-gradient-to-r from-gulf-blue-100 to-green-700 ed p-3 border rounded  container rounded shadow-lg">
-                                                    <div class="p-4 rounded-lg" title="Comment : {{ approval.comment }}" >
+                                                    <div class="p-4 rounded-lg">
                                                         <p class="font-bold">{{ step }}</p> <br>
+                                                        {% if approval.comment %}
+                                                            <div class="mt-2 p-3 bg-white bg-opacity-50 rounded-lg border-l-4 border-blue-500">
+                                                                <p class="text-sm font-medium text-gray-700">💬 Comment:</p>
+                                                                <p class="text-sm text-gray-800 mt-1">{{ approval.comment }}</p>
+                                                            </div>
+                                                        {% endif %}
                                                     </div>
                                                     <div class=" grid grid-cols-2 text-center">
                                                         <span class="inline-block rounded-full text-sm"> {{ approval.approved }}</span>
@@ -344,7 +449,7 @@
 
                                         {% else %}
                                             <div class="card-body m-auto arrow arrow-step mb-5 bg-gradient-to-r from-gulf-blue-100 to-blue-500 ed p-3 border rounded  container rounded shadow-lg">
-                                                <div class="p-4 rounded-lg" title="{{ approval.comment }}" >
+                                                <div class="p-4 rounded-lg">
                                                     <p class="font-bold">{{ step }}</p> <br>
                                                     {% if step.to %}
                                                         <span class="inline-block rounded-full text-sm">To {{ step.to|default_if_none:'' }}</span>
@@ -367,5 +472,88 @@
 {% endblock %}
 {% block scripts %}
     <script src="{% static 'assets/ace_add_asset_numbers.js' %}"></script>
+    <script src="{% static 'js/enhanced_comments.js' %}"></script>
 {% endblock %}
+
+<!-- Enhanced Asset Number Section (Add after existing asset number display) -->
+{% if ace.enhanced_asset_numbers.exists %}
+    <div class="enhanced-assets-section mt-4">
+        <h4 class="font-bold mb-2">Enhanced Asset Numbers:</h4>
+        <div class="enhanced-asset-list">
+            {% for enhanced_asset in ace.enhanced_asset_numbers.all %}
+                <div class="enhanced-asset-item {{ enhanced_asset.is_verified|yesno:'verified,unverified' }}">
+                    <span class="asset-number">{{ enhanced_asset.asset_number }}</span>
+                    {% if enhanced_asset.is_verified %}
+                        <span class="status-badge verified">✓ Verified</span>
+                        {% if enhanced_asset.asset_register_item %}
+                            <span class="asset-info">{{ enhanced_asset.asset_register_item.product_type.product_type|default:"Unknown Type" }}</span>
+                        {% endif %}
+                    {% else %}
+                        <span class="status-badge unverified">⚠ Needs Verification</span>
+                    {% endif %}
+                    <span class="added-info">Added by {{ enhanced_asset.added_by.get_full_name }} on {{ enhanced_asset.added_date|date:"M d, Y" }}</span>
+                    {% if accounting_officer_role %}
+                        <a href="{% url 'Ace:remove_enhanced_asset' ace.Ace_id2 enhanced_asset.id %}" 
+                           class="remove-btn" onclick="return confirm('Remove this asset?')">×</a>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+{% endif %}
+
+<!-- Migration option for existing asset numbers -->
+{% if ace.asset_number and not ace.enhanced_asset_numbers.exists and accounting_officer_role %}
+    <div class="migration-section mt-3">
+        <p class="text-warning">
+            <i class="fa fa-info-circle"></i>
+            You have asset numbers in the old format. 
+            <a href="{% url 'Ace:migrate_ace_assets' ace.Ace_id2 %}" 
+               class="btn btn-sm btn-warning">Migrate to Enhanced Format</a>
+        </p>
+    </div>
+{% endif %}
+
+<!-- Enhanced Add Asset Numbers Button (Additional to existing) -->
+{% if accounting_officer_role %}
+    <button id="enhanced_asset_btn" class="bg-green-600 hover:bg-green-500 text-white font-bold py-2 px-4 rounded mt-2">
+        Add Enhanced Asset Numbers
+    </button>
+    
+    <!-- Enhanced Modal -->
+    <div id="enhanced_asset_modal" class="modal" style="display: none;">
+        <div class="modal-content enhanced-modal">
+            <div class="modal-header">
+                <h3>Add Enhanced Asset Numbers</h3>
+                <button type="button" id="close_enhanced_modal" class="close-btn">×</button>
+            </div>
+            
+            <form id="enhanced_asset_form">
+                {% csrf_token %}
+                <div id="enhanced_fields_container">
+                    <div class="enhanced-asset-field mb-3">
+                        <label>Asset Number 1:</label>
+                        <select class="enhanced-asset-select" name="asset_number[]" style="width: 100%;">
+                            <option value=""></option>
+                        </select>
+                    </div>
+                </div>
+                
+                <button type="button" id="add_enhanced_field" class="btn btn-secondary mb-3">
+                    Add Another Asset
+                </button>
+                
+                <input type="hidden" name="ace_id" value="{{ ace.Ace_id2 }}">
+                
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">Add Assets</button>
+                    <button type="button" id="close_enhanced_modal" class="btn btn-secondary">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+{% endif %}
+
+<!-- Load enhanced JavaScript -->
+<script src="{% static 'assets/ace_enhanced_assets.js' %}"></script>
 

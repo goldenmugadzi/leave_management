@@ -182,22 +182,61 @@ def import_processes(request):
     return JsonResponse({"message": "Data imported successfully"})
     
 def import_files(request):
-    level = request.POST['level']
-    root_folder = request.POST['root_folder']
-    folder = request.POST['subfolder_'+level]
-    section = request.POST['section']
-    region = request.POST['region']
+    try:
+        region = Regions.objects.filter(id=1).first()
+        # Get the approved and commissioned directories
+        approved_dir = os.path.join(settings.MEDIA_ROOT, 'temp', 'approved')
+        commissioned_dir = os.path.join(settings.MEDIA_ROOT, 'temp', 'commissioned')
+        
+        print("approved_dir: ", os.path.exists(approved_dir), os.listdir(approved_dir))
+        print("commissioned_dir: ", os.path.exists(commissioned_dir), os.listdir(commissioned_dir))
+        # Process files from approved directory
+        if os.path.exists(approved_dir):
+            for file in os.listdir(approved_dir):
+                file_path = os.path.join(approved_dir, file)
+                if os.path.isfile(file_path):
+                    file_name = os.path.basename(file)
+                    relative_path = os.path.join('uploads', 'knowledge_center', file_name)
+                    folder = KnowledgeCentreFolder.objects.filter(name='Approved Drawings').first()
+                    file_exists = KnowldgeCentreFile.objects.filter(filename=file_name, folder=folder, region=region).first()
+                    if not file_exists:
+                        file_record = KnowldgeCentreFile(
+                            filename=file_name,
+                            file=relative_path,
+                            folder=folder,
+                            region=region
+                        )
+
+                        file_record.save()
+                        print("Added approved file:", file_name)
+
+        # Process files from commissioned directory 
+        if os.path.exists(commissioned_dir):
+            for file in os.listdir(commissioned_dir):
+                file_path = os.path.join(commissioned_dir, file)
+                if os.path.isfile(file_path):
+                    file_name = os.path.basename(file)
+                    relative_path = os.path.join('uploads', 'knowledge_center', file_name)
+                    folder = KnowledgeCentreFolder.objects.filter(name='Commissioned Drawings').first()
+                    file_exists = KnowldgeCentreFile.objects.filter(filename=file_name, folder=folder, region=region).first()
+                    if not file_exists:
+
+                        file_record = KnowldgeCentreFile(
+                            filename=file_name,
+                            file=relative_path,
+                            folder=folder,
+                            region=region
+                        )
+                        file_record.save()
+                        print("Added commissioned file:", file_name)
+                        
+        return JsonResponse({"message": "Data imported successfully"})
+    except Exception as ex:
+        print("Error: ", ex)
+        return JsonResponse({"message": "Error importing data"})
+
     
-    files_directory = os.path.join(settings.MEDIA_ROOT, 'uploads', application)
-    files = os.listdir(files_directory)
-    for file in files:
-        file_path = os.path.join(files_directory, file)
-        if os.path.isfile(file_path):
-            file_name = os.path.basename(file)
-            file_record = KnowldgeCentreFile(filename=file_name, file=file_path)
-            file_record.save()
-            print("success: ", file_name)
-    
+
 @login_required
 def download_file(request):
     file_id = request.GET.get('file_id')
@@ -228,6 +267,7 @@ def download_file(request):
     
     return redirect('/ims/ims_files')
 
+@login_required
 def view_root_folders(request, app_name):
     if app_name == "knowledge_centre":
         id = 1
@@ -255,9 +295,10 @@ def view_root_folders(request, app_name):
     return render(request, 'knowledge-center/root_folders.html', {
         "url_path": url_path,
         "folders": root_folders_list,
-        "page_title": "KNOWLEDGE CENTRE", 
+        "page_title": "KNOWLEDGE CENTRE" if app_name == "knowledge_centre" else "PROCESSES AND PROCEDURES", 
         "results": []})
-    
+
+@login_required
 def view_sub_folders(request, folder_name, folder_id):
     
     current_folder = KnowledgeCentreFolder.objects.filter(id=folder_id).first()
@@ -287,6 +328,7 @@ def view_sub_folders(request, folder_name, folder_id):
     
     return render(request, 'knowledge-center/sub_folders.html', {"url_path": url_path, "url": url, "subfolders": subfolders_list, 'title': title, "files": files})
 
+@login_required
 def view_files_in_folder(request, folder_name, folder_id):
     current_folder = KnowledgeCentreFolder.objects.filter(id=folder_id).first()
     current_folder = KnowledgeCentreFolder.objects.filter(folder=current_folder).first()
@@ -295,7 +337,8 @@ def view_files_in_folder(request, folder_name, folder_id):
     title = current_folder.name.upper()
     
     return render(request, 'knowledge-center/view_file_tiles.html', {"files": files, "url_path": url_path, "title": title})
-    
+
+@login_required
 def create_root_folder(request):
     url_path = request.path.split("/")
     if request.method == 'POST':
@@ -312,6 +355,7 @@ def create_root_folder(request):
     applications = FolderApplication.objects.all()
     return render(request, 'knowledge-center/create_root_folder.html', {"url_path": url_path, "applications": applications})
 
+@login_required
 def create_subfolder(request, folder_id):
     url_path = request.path.split("/")
     if request.method == 'POST':
@@ -329,11 +373,13 @@ def create_subfolder(request, folder_id):
     current_folder = KnowledgeCentreFolder.objects.filter(id=folder_id).first()
     return render(request, 'knowledge-center/create_sub_folder.html', {"url_path": url_path, "current_folder": current_folder})
 
+@login_required
 def get_subfolders(request, folder_id):
     subfolders = KnowledgeCentreFolder.objects.filter(parent_id=folder_id)
     subfolders_data = [{'id': folder.id, 'name': folder.name} for folder in subfolders]
     return JsonResponse(subfolders_data, safe=False)
 
+@login_required
 def manage_folders(request):
     folders = KnowledgeCentreFolder.objects.all()
     folders_list = []
@@ -351,6 +397,7 @@ def manage_folders(request):
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/view_folder_list.html', {"url_path": url_path, "folders": folders_json, "page_title": "Manage Folders"})
 
+@login_required 
 def edit_folder(request, folder_id):
     url_path = request.path.split("/")
     if request.method == 'GET':
@@ -371,13 +418,15 @@ def edit_folder(request, folder_id):
         folder.save()
         messages.success(request, "Folder updated successfully")
         return redirect('/ims/manage_folders')
-    
+
+@login_required
 def delete_folder(request, folder_id):
     folder = KnowledgeCentreFolder.objects.filter(id=folder_id).first()
     folder.delete()
     messages.success(request, "Folder deleted successfully")
     return redirect('/ims/manage_folders')
 
+@login_required
 def edit_subfolder(request, folder_id):
     url_path = request.path.split("/")
     if request.method == 'GET':
@@ -399,6 +448,7 @@ def edit_subfolder(request, folder_id):
         messages.success(request, "Folder updated successfully")
         return redirect('/ims/manage_folders')
 
+@login_required
 def view_folders(request, folder_id):
     folder = KnowledgeCentreFolder.objects.filter(id=folder_id).first()
     subfolders = folder.subfolders.all()
@@ -406,6 +456,7 @@ def view_folders(request, folder_id):
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/view_folders.html', {"url_path": url_path, "folder": folder, "subfolders": subfolders, "files": files})
 
+@login_required
 def create_file(request):
     url_path = request.path.split("/")
     if request.method == 'POST':
@@ -435,6 +486,7 @@ def create_file(request):
     regions = Regions.objects.all()
     return render(request, 'knowledge-center/create_file.html', {"url_path": url_path, "folder_applications": folder_applications, "sections": sections, "regions": regions})
 
+@login_required
 def create_bulk_files(request):
     url_path = request.path.split("/")
     if request.method == 'POST':
@@ -465,6 +517,7 @@ def create_bulk_files(request):
     regions = Regions.objects.all()
     return render(request, 'knowledge-center/create_bulk_files.html', {"url_path": url_path, "folder_applications": folder_applications, "sections": sections, "regions": regions})
 
+@login_required
 def get_root_folders(request, folder_application_id):
     
     print("folder_application_id: ", folder_application_id)
@@ -481,12 +534,14 @@ def get_root_folders(request, folder_application_id):
     print("root_folders_list: ", root_folders_list)
     return JsonResponse(root_folders_list, safe=False)
 
+@login_required
 def get_subfolders(request, folder_id):
     folder = KnowledgeCentreFolder.objects.filter(id=folder_id).first()
     subfolders = KnowledgeCentreFolder.objects.filter(parent=folder)
     subfolders_data = [{'id': folder.id, 'name': folder.name} for folder in subfolders]
     return JsonResponse(subfolders_data, safe=False)
 
+@login_required
 def ims_files(request):
         
     files = KnowldgeCentreFile.objects.filter(archived=False).all()
@@ -505,6 +560,7 @@ def ims_files(request):
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/view_kc_files.html', {"url_path": url_path, "files": files_json, "page": "kc_all"})
 
+@login_required
 def view_knowledge_center_archives(request):
         
     files = KnowldgeCentreFile.objects.filter(archived=True).all()
@@ -2176,6 +2232,7 @@ def file_search(request):
     url_path = request.path.split("/")
     return render(request, 'knowledge-center/view_firstview.html', {"page_title": "KNOWLEDGE CENTRE", "results": results})
 
+@login_required
 def save_file(f,file_path):
     if f:
         with open(file_path, 'wb+') as destination:
@@ -2184,3 +2241,143 @@ def save_file(f,file_path):
                 return True
             else:
                 return False
+
+@login_required
+def view_interactive_processes(request):
+    """
+    View for displaying interactive processes with process map-like functionality
+    """
+    # Get specific folders by their exact IDs as provided
+    commercial_folder = KnowledgeCentreFolder.objects.filter(id=151).first()
+    engineering_folder = KnowledgeCentreFolder.objects.filter(id=152).first()
+    finance_folder = KnowledgeCentreFolder.objects.filter(id=153).first()
+    hr_folder = KnowledgeCentreFolder.objects.filter(id=154).first()
+    ict_folder = KnowledgeCentreFolder.objects.filter(id=155).first()
+    procurement_folder = KnowledgeCentreFolder.objects.filter(id=156).first()
+    risk_folder = KnowledgeCentreFolder.objects.filter(id=157).first()
+    management_folder = KnowledgeCentreFolder.objects.filter(id=167).first()
+    stakeholder_folder = KnowledgeCentreFolder.objects.filter(id=168).first()
+    legal_folder = KnowledgeCentreFolder.objects.filter(id=169).first()
+    
+    context = {
+        'title': 'Interactive Processes',
+        'commercial_folder_id': commercial_folder.id if commercial_folder else '',
+        'engineering_folder_id': engineering_folder.id if engineering_folder else '',
+        'ict_folder_id': ict_folder.id if ict_folder else '',
+        'finance_folder_id': finance_folder.id if finance_folder else '',
+        'hr_folder_id': hr_folder.id if hr_folder else '',
+        'risk_folder_id': risk_folder.id if risk_folder else '',
+        'procurement_folder_id': procurement_folder.id if procurement_folder else '',
+        'stakeholder_folder_id': stakeholder_folder.id if stakeholder_folder else '',
+        'legal_folder_id': legal_folder.id if legal_folder else '',
+        'management_folder_id': management_folder.id if management_folder else '',
+    }
+    
+    url_path = request.path.split("/")
+    context['url_path'] = url_path
+    
+    return render(request, 'knowledge-center/interactive_processes.html', context)
+
+@login_required
+def update_filename(request):
+    """
+    Update filename for a knowledge center file (Admin only)
+    """
+    if not request.user.is_staff:
+        return JsonResponse({'success': False, 'error': 'Permission denied'})
+    
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Method not allowed'})
+    
+    try:
+        import json
+        data = json.loads(request.body)
+        file_id = data.get('file_id')
+        new_filename = data.get('new_filename', '').strip()
+        
+        if not file_id or not new_filename:
+            return JsonResponse({'success': False, 'error': 'Missing file ID or filename'})
+        
+        # Get the file record
+        file_record = KnowldgeCentreFile.objects.filter(id=file_id).first()
+        if not file_record:
+            return JsonResponse({'success': False, 'error': 'File not found'})
+        
+        # Validate filename
+        if len(new_filename) > 255:
+            return JsonResponse({'success': False, 'error': 'Filename too long'})
+        
+        # Check for invalid characters
+        invalid_chars = ['/', '\\', ':', '*', '?', '"', '<', '>', '|']
+        if any(char in new_filename for char in invalid_chars):
+            return JsonResponse({'success': False, 'error': 'Filename contains invalid characters'})
+        
+        # Update the filename
+        old_filename = file_record.filename
+        file_record.filename = new_filename
+        file_record.name = new_filename  # Update name field too if it exists
+        file_record.updated_on = datetime.now()
+        file_record.save()
+        
+        # Log the change
+        print(f"Admin {request.user.username} changed filename from '{old_filename}' to '{new_filename}' for file ID {file_id}")
+        
+        return JsonResponse({
+            'success': True, 
+            'message': 'Filename updated successfully',
+            'old_filename': old_filename,
+            'new_filename': new_filename
+        })
+        
+    except json.JSONDecodeError:
+        return JsonResponse({'success': False, 'error': 'Invalid JSON data'})
+    except Exception as e:
+        print(f"Error updating filename: {str(e)}")
+        return JsonResponse({'success': False, 'error': 'Server error occurred'})
+
+@login_required
+def delete_file_admin(request):
+    """
+    Delete a knowledge center file (Admin only)
+    """
+    if not request.user.is_staff:
+        return JsonResponse({'success': False, 'error': 'Permission denied'})
+    
+    if request.method != 'POST':
+        return JsonResponse({'success': False, 'error': 'Method not allowed'})
+    
+    try:
+        import json
+        data = json.loads(request.body)
+        file_id = data.get('file_id')
+        
+        if not file_id:
+            return JsonResponse({'success': False, 'error': 'Missing file ID'})
+        
+        # Get the file record
+        file_record = KnowldgeCentreFile.objects.filter(id=file_id).first()
+        if not file_record:
+            return JsonResponse({'success': False, 'error': 'File not found'})
+        
+        # Store filename for logging
+        filename = file_record.filename
+        
+        # Delete the file record (consider soft delete by setting archived=True instead)
+        file_record.archived = True
+        file_record.updated_on = datetime.now()
+        file_record.save()
+        
+        # Log the deletion
+        print(f"Admin {request.user.username} deleted file '{filename}' (ID: {file_id})")
+        
+        return JsonResponse({
+            'success': True, 
+            'message': 'File deleted successfully',
+            'filename': filename
+        })
+        
+    except json.JSONDecodeError:
+        return JsonResponse({'success': False, 'error': 'Invalid JSON data'})
+    except Exception as e:
+        print(f"Error deleting file: {str(e)}")
+        return JsonResponse({'success': False, 'error': 'Server error occurred'})

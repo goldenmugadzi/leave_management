@@ -3,6 +3,7 @@
 from datetime import timedelta
 import json
 import csv
+import traceback
 from django.contrib.auth import login
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
@@ -32,9 +33,189 @@ from decouple import config
 from django.forms import inlineformset_factory
 from .forms import ResponsibilitiesForm
 from django.template.loader import get_template
+import logging
+import traceback
+from django.db.models import Count
+from django.http import HttpResponse
+from rest_framework.response import Response
 
 BASE_URL = "http://" + config('HOST') + ":" + config('PORT')
 APP_NAME = "users"
+
+@login_required(login_url='/accounts/login')
+def user_reports(request):
+    """View function for user reports page"""
+    user_title = request.user.get_full_name()
+    user_groups = list(request.user.groups.values_list('name', flat=True))
+    
+    # Get all regions, sections, and roles for filters
+    regions = Regions.objects.all()
+    sections = Sections.objects.all()
+    roles = Roles.objects.filter(application='users')
+    
+    return render(
+        request,
+        'users/user_reports.html',
+        {
+            "user_title": user_title,
+            "user_groups": user_groups,
+            "regions": regions,
+            "sections": sections,
+            "roles": roles,
+        }
+    )
+
+@login_required(login_url='/accounts/login')
+@api_view(['GET'])
+def user_reports_api(request):
+    
+    try:
+        """API endpoint for user reports data"""
+        # Get filter parameters
+        region_id = request.GET.get('region', '')
+        district_id = request.GET.get('district', '')
+        depot_id = request.GET.get('depot', '')
+        section_id = request.GET.get('section', '')
+        role_id = request.GET.get('role', '')
+    
+        # Base query
+        users_query = UserProfile.objects.filter(is_superuser=False)
+    
+        # Apply filters
+        if region_id:
+            users_query = users_query.filter(region=region_id)
+        if section_id:
+            users_query = users_query.filter(section=section_id)
+        if role_id:
+            users_query = users_query.filter(userprofile__roles__id=role_id)
+    
+        # Get user data with related information
+        users_data = []
+        for user in users_query:
+            profile = UserProfile.objects.filter(username=user.username).first()
+            if profile:
+                region = Regions.objects.filter(id=profile.region.id).first() if profile.region else None
+                district = Districts.objects.filter(code=profile.district.id).first() if profile.district else None
+                depot = Depots.objects.filter(id=profile.depot.id).first() if profile.depot else None
+                section = Sections.objects.filter(id=profile.section.id).first() if profile.section else None
+            
+                users_data.append({
+                    'id': user.id,
+                    'username': user.username,
+                    'first_name': user.first_name,
+                    'last_name': user.last_name,
+                    'email': user.email,
+                    'is_active': user.is_active,
+                    'region': region.region if region else None,
+                    'district': district.district if district else None,
+                    'depot': depot.depot if depot else None,
+                    'section': section.section if section else None,
+                })
+    
+        # Generate chart data
+        chart_data = {
+            'regions': get_region_chart_data(),
+            'roles': get_role_chart_data(),
+        }
+    
+        return Response({
+            'users': users_data,
+            'charts': chart_data,
+        })
+    except Exception as ex:
+        traceback.print_exc()
+        print("error : " + str(ex))
+        return Response({'error': str(ex)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+def get_region_chart_data():
+    """Generate data for region chart"""
+    regions_data = UserProfile.objects.values('region').annotate(count=Count('region'))
+    labels = []
+    data = []
+    
+    for item in regions_data:
+        region_id = item['region']
+        if region_id:
+            region = Regions.objects.filter(id=region_id).first()
+            if region:
+                labels.append(region.region)
+                data.append(item['count'])
+    
+    return {
+        'labels': labels,
+        'data': data,
+    }
+
+def get_role_chart_data():
+    """Generate data for role chart"""
+    roles = Roles.objects.filter(application='users')
+    labels = []
+    data = []
+    
+    for role in roles:
+        count = UserProfile.objects.filter(roles=role).count()
+        labels.append(role.role)
+        data.append(count)
+    
+    return {
+        'labels': labels,
+        'data': data,
+    }
+
+@login_required(login_url='/accounts/login')
+def export_users_csv(request):
+    """Export users data as CSV"""
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="user_report.csv"'
+    
+    # Create CSV writer
+    writer = csv.writer(response)
+    writer.writerow(['Username', 'First Name', 'Last Name', 'Email', 'Region', 'District', 'Depot', 'Section', 'Status'])
+    
+    # Get filter parameters
+    region_id = request.GET.get('region', '')
+    district_id = request.GET.get('district', '')
+    depot_id = request.GET.get('depot', '')
+    section_id = request.GET.get('section', '')
+    role_id = request.GET.get('role', '')
+    
+    # Base query
+    users_query = User.objects.filter(is_superuser=False)
+    
+    # Apply filters
+    if region_id:
+        users_query = users_query.filter(userprofile__region=region_id)
+    if district_id:
+        users_query = users_query.filter(userprofile__district=district_id)
+    if depot_id:
+        users_query = users_query.filter(userprofile__depot=depot_id)
+    if section_id:
+        users_query = users_query.filter(userprofile__section=section_id)
+    if role_id:
+        users_query = users_query.filter(userprofile__roles__id=role_id)
+    
+    # Write data rows
+    for user in users_query:
+        profile = UserProfile.objects.filter(user=user).first()
+        if profile:
+            region = Regions.objects.filter(id=profile.region).first() if profile.region else None
+            district = Districts.objects.filter(code=profile.district).first() if profile.district else None
+            depot = Depots.objects.filter(code=profile.depot).first() if profile.depot else None
+            section = Sections.objects.filter(code=profile.section).first() if profile.section else None
+            
+            writer.writerow([
+                user.username,
+                user.first_name,
+                user.last_name,
+                user.email,
+                region.region if region else '',
+                district.district if district else '',
+                depot.depot if depot else '',
+                section.section if section else '',
+                'Active' if user.is_active else 'Inactive',
+            ])
+    
+    return response
 
 def getUserFMGMRoles(user):
     print("user: ", user.username, user.id)
@@ -64,29 +245,55 @@ def user_centers(request):
     return JsonResponse({"status": "success", "message": "Centers added successfully"})
 
 def get_exchange_account():
+    logger = logging.getLogger('security')
     try:
         from decouple import config as cnf
-        print(cnf)
+        logger.info("Attempting to connect to Exchange server")
+        
+        # Log environment variable availability (just presence, not values for security)
+        has_email = bool(cnf('MS_EMAIL', default=''))
+        has_pass = bool(cnf('MS_PASS', default=''))
+        has_server = bool(cnf('MS_SERVER', default=''))
+        has_smtp = bool(cnf('MS_PRIMARY_SMTP_ADDRESS', default=''))
+        
+        logger.info(f"Exchange config variables present: Email: {has_email}, Password: {has_pass}, Server: {has_server}, SMTP: {has_smtp}")
+        
+        if not (has_email and has_pass and has_server and has_smtp):
+            logger.error("Missing Exchange server configuration variables")
+            return None
+            
         credentials = Credentials(
             username=cnf('MS_EMAIL'),
             password=cnf('MS_PASS')
         )
-        print("Credentials: ", credentials)
+        logger.info("Exchange credentials created")
+        
         config = Configuration(
             server=cnf('MS_SERVER'),
             credentials=credentials,
         )
-        print("Config: ", config)
+        logger.info("Exchange configuration created")
+        
         account = Account(
             primary_smtp_address=cnf('MS_PRIMARY_SMTP_ADDRESS'),
             config=config,
             autodiscover=False,
             access_type='delegate'
         )
-        print("Successfully connected to Exchange server.")
-        return account
+        
+        # Test the connection by accessing the inbox
+        try:
+            _ = account.inbox
+            logger.info("Successfully connected to Exchange server and verified inbox access")
+            return account
+        except Exception as e:
+            logger.error(f"Failed to verify inbox access: {str(e)}")
+            return None
+            
     except Exception as ex:
-        print("Error: ", ex)
+        error_message = str(ex)
+        logger.error(f"Error creating Exchange account: {error_message}", exc_info=True)
+        print("Error connecting to Exchange server: ", error_message)
         return None
 
 @login_required
@@ -150,8 +357,18 @@ def email_notification(subject,user,message,redirect_url,url,notification_type,n
 
 def ms_exhange_reset_password_html(subject, to_recipients, cc_recipients, template, kwargs):
     try:
+        # Log connection attempt
+        logger = logging.getLogger('security')
+        logger.info(f"Attempting to send password reset email to: {to_recipients}")
+        
         account = get_exchange_account()
-        # message_body = get_template(f"{template}").render(kwargs["kwargs"])
+        if account is None:
+            logger.error("Failed to get Exchange account")
+            return JsonResponse({"status": "error", "message": "Failed to connect to email server"})
+        
+        # Log success of obtaining account
+        logger.info("Successfully got Exchange account")
+        
         message = Message(
             account=account,
             folder=account.sent,
@@ -160,12 +377,19 @@ def ms_exhange_reset_password_html(subject, to_recipients, cc_recipients, templa
             to_recipients=[Mailbox(email_address=recipient) for recipient in to_recipients],
             cc_recipients=[Mailbox(email_address=recipient) for recipient in cc_recipients]
         )
-
+        
+        # Log message creation success
+        logger.info("Message object created, attempting to send")
+        
         message.send()
+        logger.info(f"Email sent successfully to {to_recipients}")
         return JsonResponse({"status": "success", "message": "Email sent successfully"})
     except Exception as ex:
-        print("Error: ", ex)
-        return JsonResponse({"status": "error", "message": "An error occurred while sending the email: " + str(ex)})
+        error_message = str(ex)
+        if logger:
+            logger.error(f"Error sending email: {error_message}", exc_info=True)
+        print("Error: ", error_message)
+        return JsonResponse({"status": "error", "message": "An error occurred while sending the email: " + error_message})
 
 @login_required
 @allowed_roles(['Administrator'], ['users'])
@@ -222,7 +446,7 @@ def add_centers(request):
         _district.save()
 
     for depot in DEPOTS:
-        district_id = Districts.objects.filter(code=depot['district_code']).first()
+        district_id = District.objects.filter(code=depot['district_code']).first()
         region_id = Regions.objects.filter(code=depot['parent_code']).first()
         _depot = Depots(
             depot=depot['name'],
@@ -474,7 +698,7 @@ def datatable_data(request):
         return JsonResponse({"status": "error", "message": "An error occurred while fetching the users"})
 
 @login_required
-@allowed_roles(['Administrator'], ['users'])
+#@allowed_roles(['Administrator'], ['users'])
 def update_user(request):
     if request.method == "GET":
         user_profile = UserProfile.objects.get(id=request.GET['i'])
@@ -993,10 +1217,10 @@ def fetch_center_parents(cost_center):
                                                                                                        'parent')
                     filtered_centers += filtered_centers_4
     return filtered_centers
-
+ 
 
 @login_required
-# @allowed_roles(['administrator'], ['users'])
+# @allowed_roles(['Administrator'], ['users'])
 def get_filtered_districts(request, region_id):
     print("Region ID: ", region_id)
     districts = Districts.objects.filter(region_id=region_id).all()
@@ -1005,7 +1229,7 @@ def get_filtered_districts(request, region_id):
 
 
 @login_required
-# @allowed_roles(['administrator'], ['users'])
+# @allowed_roles(['Administrator'], ['users'])
 def get_filtered_depots(request, district_id):
     print("District ID: ", district_id)
     depots = Depots.objects.filter(district_id=district_id).all()
@@ -1015,7 +1239,7 @@ def get_filtered_depots(request, district_id):
 
 
 @login_required
-# @allowed_roles(['administrator'], ['users'])
+# @allowed_roles(['Administrator'], ['users'])
 def get_user_all_groups(request):
     if request.method == "GET":
         user_title = request.user.get_full_name()
@@ -1199,7 +1423,7 @@ def import_users(request):
         return render(request, 'users/import_users.html')
 
 
-@allowed_roles(['administrator'], ['users'])
+@allowed_roles(['Administrator'], ['users'])
 def import_old_users(request):
     try:
         users_csv = 'execsys.csv'

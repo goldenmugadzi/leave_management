@@ -5,6 +5,7 @@
     <script src="{% static 'assets/disbursemodal.js' %}"></script>
 </head>
 {% load custom_tags %}
+{% load humanize %}
 {% block content %}
     <head>
         <style>
@@ -89,7 +90,7 @@
                             <p class="font-bold   mb-2"> Details of expenditure: {{ pettycash.details_of_expenditure }}</p>
                             <p class="font-bold   mb-2"> Currency: {{ pettycash.currency }}</p>
                             <p class="font-bold   mb-2"> Allocation code of expenditure: {{ pettycash.section }}</p>
-                            <p class="font-bold   mb-2"> Amount: {{ pettycash.amount }}</p>
+                            <p class="font-bold   mb-2"> Amount: {{ pettycash.amount|floatformat:2|intcomma }}</p>
                             <p class="font-bold mb-2">Attachments:
                                 {% for attachment in pettycash.quotation_set.all %}
                                     <a href="/pettycash/attachments/ {{attachment}}"><button class="bg-red-500 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded"
@@ -101,32 +102,42 @@
                             </p>
                         {% if clear == False and requestor != None and cashier_approved == True %}
                             <br>
-                        <p class="font-bold   mb-2 bg-red-600"> Clearance status:Pending</p>
-                            <button id="open-modal" class="bg-gulf-blue-600 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded">Clear Pettycash</button>
-                            <div id="modal" class="modal">
-                                <div class="modal-content">
-                                    <form id="upload-form" enctype="multipart/form-data">
-                                        {% csrf_token %}
-                                        <div class="form-group">
-                                            <label for="file-input">Receipt:</label>
-                                            <br>
-                                            <input type="file" id="file-input" name="file-input">
+                            <p class="font-bold   mb-2 bg-red-600"> Clearance status:Pending</p>
+                            {% if requester_form %}
+                                <form class="row rounded py-4 border rounded-lg p-3 m-auto container" method="POST" enctype="multipart/form-data">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="action" value="requester_clear" />
+                                    <div class="m-auto container">
+                                        <h4 class="text-center mb-4 font-bold text-xl mb-2">Requester: Clear Pettycash</h4>
+
+                                        {% if requester_form.non_field_errors %}
+                                            <div class="text-red-600 mb-2">{{ requester_form.non_field_errors }}</div>
+                                        {% endif %}
+
+                                        <div class="m-4 text-center">
+                                            <label class="block font-medium mb-1">Receipt</label>
+                                            {{ requester_form.receipt_file }}
+                                            {% if requester_form.receipt_file.errors %}
+                                                <div class="text-red-600 text-sm">{{ requester_form.receipt_file.errors.0 }}</div>
+                                            {% endif %}
                                         </div>
-                                        <div class="form-group">
-                                            <label for="disbursed">Amount used($):</label>
-                                            <br>
-                                            <input type="text" id="disbursed" name="disbursed">
-                                            <input type="hidden" name="petty_id" value="{{ pettycash.petty_id }}">
+
+                                        <div class="m-4 text-center">
+                                            <label class="block font-medium mb-1">Amount Used</label>
+                                            {{ requester_form.amount_used }}
+                                            {% if requester_form.amount_used.errors %}
+                                                <div class="text-red-600 text-sm">{{ requester_form.amount_used.errors.0 }}</div>
+                                            {% endif %}
+                                            <p class="text-sm text-gray-600 mt-1">Max: {{ pettycash.amount_disbursed|default_if_none:pettycash.amount|floatformat:2|intcomma }}</p>
                                         </div>
-                                        <button type="submit" class="bg-gulf-blue-600 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded">Submit</button>
-                                    </form>
-                                    <br>
-                                    <button id="close-modal" class="bg-red-500 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded">Close</button>
-                                </div>
-                            </div>
-                            <br>
-                            <br>
-                        {% endif%}
+
+                                        <div class="m-4 text-center">
+                                            <button type="submit" class="bg-gulf-blue-600 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded" name="submit" value="submit">Submit</button>
+                                        </div>
+                                    </div>
+                                </form>
+                            {% endif %}
+                        {% endif %}
                         {% if clear == True %}
                             <p class="font-bold   mb-2"> Clearance status:Cleared</p>
                         {% endif %}
@@ -155,7 +166,7 @@
                                 <p class="font-bold   mb-2 bg-red-600"> Payment mode: Not yet Added By Cashier</p>
                             {% else %}
                                 <p class="font-bold   mb-2"> Payment mode: {{ pettycash.payment_mode }}</p>
-                                <p class="font-bold   mb-2"> Disbursed Amount($): {{ pettycash.amount_disbursed }}</p>
+                                <p class="font-bold   mb-2"> Disbursed Amount($): {{ pettycash.amount_disbursed|default_if_none:0|floatformat:2|intcomma }}</p>
                                 {% if pettycash.receipt_file == '' or pettycash.receipt_file == None and request.user == approval.user %}
                                     <p class="font-bold   mb-2"> Receipt: Not yet Receipted</p>
 
@@ -165,7 +176,7 @@
                                         {{ pettycash.receipt_file.name|basename }}
                                     </button>
                                     </a></p>
-                                    <p class="font-bold   mb-2"> Amount Used($): {{ pettycash.amount_used }}</p>
+                                    <p class="font-bold   mb-2"> Amount Used($): {{ pettycash.amount_used|default_if_none:0|floatformat:2|intcomma }}</p>
                                     {#                               #input and post receipt file #}
                                 {% endif %}
 
@@ -179,38 +190,41 @@
                     <h1 class="text-center mb-4 font-bold text-xl  mb-2">Workflow Details</h1>
                     <p class="font-bold  mb-2"> Workflow name : {{ pettycash.process.workflow }}</p>
                 {% if clear_minus and pettycash.payment_mode == None and cashier != None %}
-                <form class="row rounded py-4 border  rounded-lg p-3 m-auto container" method="POST"
+                <form class="row rounded py-4 border rounded-lg p-3 m-auto container" method="POST"
                       action="/pettycash/pettycash_detail/{{ pettycash.petty_id  }}/" enctype="multipart/form-data">
                     {% csrf_token %}
-                    <div class=" m-auto container  ">
-                        <h4 class="text-center mb-4 font-bold text-xl  mb-2">Add Payment Mode</h4>
+                    <div class="m-auto container">
+                        <h4 class="text-center mb-4 font-bold text-xl mb-2">Cashier: Capture Disbursement</h4>
+
+                        {% if form and form.non_field_errors %}
+                            <div class="text-red-600 mb-2">
+                                {{ form.non_field_errors }}
+                            </div>
+                        {% endif %}
 
                         <div class="m-4 text-center">
-{#                            <label for="payment_mode">Payment mode</label>#}
-                            <select name="payment_mode" id="payment_mode" required>
-                                <option value="">Add Payment Mode</option>
-                                <option value="ZIG_SWIPE">Swipe ZIG</option>
-                                <option value="SWIPE_USD">Swipe Usd</option>
-                                <option value="CASH_USD">Cash Usd</option>
-                                <option value="ZIG_CASH">Cash ZIG</option>
-                                <option value="CASH_USD">(transfer) Usd</option>
-                                <option value="CASH_ZIG">(transfer) ZIG</option>
-                            </select>
+                            <label for="id_payment_mode" class="block font-medium mb-1">Payment mode</label>
+                            {% if form %}{{ form.payment_mode }}{% else %}
+                                <select disabled class="opacity-50 cursor-not-allowed"><option>Form unavailable</option></select>
+                            {% endif %}
+                            {% if form and form.payment_mode.errors %}
+                                <div class="text-red-600 text-sm">{{ form.payment_mode.errors.0 }}</div>
+                            {% endif %}
                         </div>
 
                         <div class="m-4 text-center">
-                            <label for="amount_disbursed">Amount Disbursed</label>
-                            <input type="text" name="amount_disbursed" required min="1" max="{{ pettycash.amount }}">
-                        </div>
-                        <div>
-                            <label for="payee">Payee</label>
-                            <input type="text" name="payee" required>
-                        
+                            <label for="id_amount_disbursed" class="block font-medium mb-1">Amount Disbursed</label>
+                            {% if form %}{{ form.amount_disbursed }}{% else %}
+                                <input type="number" disabled class="opacity-50 cursor-not-allowed" />
+                            {% endif %}
+                            {% if form and form.amount_disbursed.errors %}
+                                <div class="text-red-600 text-sm">{{ form.amount_disbursed.errors.0 }}</div>
+                            {% endif %}
+                            <p class="text-sm text-gray-600 mt-1">Requested: {{ pettycash.amount|floatformat:2|intcomma }}</p>
                         </div>
 
                         <div class="m-4 text-center">
-{#                            <button type="submit" class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded" name="approved" value="Rejected">Reject</button>#}
-                            <button type="submit" class="bg-gulf-blue-600 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded" name="submit" value="submit"> Add </button>
+                            <button type="submit" class="bg-gulf-blue-600 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded" name="submit" value="submit">Capture</button>
                         </div>
                     </div>
                 </form>
@@ -247,7 +261,18 @@
                               enctype="multipart/form-data">
                             {% csrf_token %}
                             <div class=" m-auto container  ">
-                                {{ approvalForm.comment }}
+                                <div class="bg-white rounded-lg p-4 mb-4 shadow-inner">
+                                    <h3 class="text-lg font-semibold text-gray-800 mb-2">📝 Review & Comments</h3>
+                                    <div class="space-y-2">
+                                        <label for="{{ approvalForm.comment.id_for_label }}" class="block text-sm font-medium text-gray-700">
+                                            💬 Comments <span class="text-red-500">*</span>
+                                        </label>
+                                        {{ approvalForm.comment }}
+                                        <p class="text-xs text-gray-500 mt-1">
+                                            Please provide comments for your decision. Comments are required for rejections.
+                                        </p>
+                                    </div>
+                                </div>
                                 <div class="m-4 text-center">
                                     <button type="submit"
                                             class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded"
@@ -291,9 +316,15 @@
                                         {% for approval in pettycash.process.approval_set.all %}
                                             {% if step == approval.step %}
                                                 <div class="card-body px-2 arrow bg-gradient-to-r from-gulf-blue-100 to-green-700 ed border rounded container rounded">
-                                                    <div class=" rounded-lg" title="{{ approval.comment }}">
+                                                    <div class=" rounded-lg">
                                                         <p class="font-bold">{{ step |default_if_none:'' }}</p>
                                                         <br>
+                                                        {% if approval.comment %}
+                                                            <div class="mt-2 p-2 bg-white bg-opacity-50 rounded border-l-4 border-blue-500">
+                                                                <p class="text-xs font-medium text-gray-700">💬 Comment:</p>
+                                                                <p class="text-xs text-gray-800 mt-1">{{ approval.comment }}</p>
+                                                            </div>
+                                                        {% endif %}
                                                     </div>
                                                     <div class=" grid grid-cols-2 text-center">
                                                         <span class="inline-block rounded-full text-sm">{{ approval.approved }}</span>
@@ -314,7 +345,7 @@
                                         {% endfor %}
                                     {% else %}
                                         <div class="card-body px-2 arrow bg-gradient-to-r from-gulf-blue-100 to-blue-700 ed border rounded container rounded">
-                                            <div class=" rounded-lg" title="{{ approval.comment }}">
+                                            <div class=" rounded-lg">
                                                 <p class="font-bold">{{ step |default_if_none:'' }}</p>
                                                 <br>
                                                 {% if step.to %}
@@ -342,4 +373,20 @@
 {% endblock %}
 {% block scripts %}
     <script src="{% static 'assets/disbursemodal.js' %}"></script>
+    <script src="{% static 'js/enhanced_comments.js' %}"></script>
+    <script>
+        // Prevent double submissions on all forms on this page
+        document.addEventListener('DOMContentLoaded', function () {
+            const forms = document.querySelectorAll('form');
+            forms.forEach(form => {
+                form.addEventListener('submit', function (e) {
+                    const buttons = form.querySelectorAll('button[type="submit"]');
+                    buttons.forEach(btn => {
+                        btn.disabled = true;
+                        btn.classList.add('opacity-60', 'cursor-not-allowed');
+                    });
+                }, { once: true });
+            });
+        });
+    </script>
 {% endblock %}

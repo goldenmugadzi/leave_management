@@ -1,0 +1,1153 @@
+Budget Logic Verification Results
+Generated: 2025-07-15 10:58:41
+==================================================
+
+[ERROR] Budget allocation mismatch
+  budget_name: East district  T & E
+  allocated: 7370844.65
+  withdrawn: 1590003.0
+  to_be_withdrawn: 5672073.88
+  balance: 5780841.65
+  calculated_allocated: 13042918.53
+  difference: -5672073.88
+  Timestamp: 2025-07-15 10:58:38.744357
+
+[ERROR] Withdrawn amount mismatch
+  budget_name: East district  T & E
+  expected_withdrawn: 1390001.0
+  actual_withdrawn: 1590003.0
+  difference: -200002.0
+  approved_aces_count: 12
+  Timestamp: 2025-07-15 10:58:38.863884
+
+[ERROR] To-be-withdrawn amount mismatch
+  budget_name: East district  T & E
+  expected_to_be_withdrawn: 5768074.88
+  actual_to_be_withdrawn: 5672073.88
+  difference: 96001.00
+  pending_aces_count: 28
+  Timestamp: 2025-07-15 10:58:38.863884
+
+[ERROR] Transaction record inconsistencies found
+  budget_name: East district  T & E
+  issues_count: 1
+  issues: [{'ace_id': 'ACE20250314869', 'issue': 'Rejected ACE but transaction not marked as rejected', 'ace_status': 'REJECTED', 'transaction_status': 'created', 'amount': 104000.0}]
+  Timestamp: 2025-07-15 10:58:38.960926
+
+[ERROR] Budget allocation mismatch
+  budget_name: North District  T & E
+  allocated: 3500391.77
+  withdrawn: 890389.0
+  to_be_withdrawn: 234568.0
+  balance: 2610002.77
+  calculated_allocated: 3734959.77
+  difference: -234568.00
+  Timestamp: 2025-07-15 10:58:38.962928
+
+[ERROR] To-be-withdrawn amount mismatch
+  budget_name: North District  T & E
+  expected_to_be_withdrawn: 196768.0
+  actual_to_be_withdrawn: 234568.0
+  difference: -37800.0
+  pending_aces_count: 3
+  Timestamp: 2025-07-15 10:58:39.017470
+
+[ERROR] Transaction record inconsistencies found
+  budget_name: North District  T & E
+  issues_count: 1
+  issues: [{'ace_id': 'ACE20250306794', 'issue': 'Rejected ACE but transaction not marked as rejected', 'ace_status': 'REJECTED', 'transaction_status': 'created', 'amount': 37800.0}]
+  Timestamp: 2025-07-15 10:58:39.068285
+
+[ERROR] Budget allocation mismatch
+  budget_name: South District  T & E
+  allocated: 3959611.15
+  withdrawn: 1261900.0
+  to_be_withdrawn: 490000.0
+  balance: 2697711.15
+  calculated_allocated: 4449611.15
+  difference: -490000.00
+  Timestamp: 2025-07-15 10:58:39.068285
+
+[ERROR] Budget allocation mismatch
+  budget_name: Chitungwiza  T & E
+  allocated: 2604801.63
+  withdrawn: 0
+  to_be_withdrawn: 20299.03
+  balance: 2604801.63
+  calculated_allocated: 2625100.66
+  difference: -20299.03
+  Timestamp: 2025-07-15 10:58:39.150955
+
+[ERROR] To-be-withdrawn amount mismatch
+  budget_name: Chitungwiza  T & E
+  expected_to_be_withdrawn: 5000.0
+  actual_to_be_withdrawn: 20299.03
+  difference: -15299.03
+  pending_aces_count: 1
+  Timestamp: 2025-07-15 10:58:39.161548
+
+[ERROR] Transaction record inconsistencies found
+  budget_name: Chitungwiza  T & E
+  issues_count: 2
+  issues: [{'ace_id': 'ACE20250306910', 'issue': 'Rejected ACE but transaction not marked as rejected', 'ace_status': 'REJECTED', 'transaction_status': 'created', 'amount': 7303.37}, {'ace_id': 'ACE20250306107', 'issue': 'Rejected ACE but transaction not marked as rejected', 'ace_status': 'REJECTED', 'transaction_status': 'created', 'amount': 7995.66}]
+  Timestamp: 2025-07-15 10:58:39.170610
+
+[ERROR] Budget allocation mismatch
+  budget_name: East district  L & B
+  allocated: 24406739.53
+  withdrawn: 20000.0
+  to_be_withdrawn: 7896000.0
+  balance: 24386739.53
+  calculated_allocated: 32302739.53
+  difference: -7896000.00
+  Timestamp: 2025-07-15 10:58:39.170610
+
+[ERROR] To-be-withdrawn amount mismatch
+  budget_name: East district  L & B
+  expected_to_be_withdrawn: 3942000.0
+  actual_to_be_withdrawn: 7896000.0
+  difference: -3954000.0
+  pending_aces_count: 1
+  Timestamp: 2025-07-15 10:58:39.183814
+
+[ERROR] Transaction record inconsistencies found
+  budget_name: East district  L & B
+  issues_count: 2
+  issues: [{'ace_id': 'ACE20250226958', 'issue': 'Rejected ACE but transaction not marked as rejected', 'ace_status': 'REJECTED', 'transaction_status': 'created', 'amount': 12000.0}, {'ace_id': 'ACE20250423882', 'issue': 'Rejected ACE but transaction not marked as rejected', 'ace_status': 'REJECTED', 'transaction_status': 'created', 'amount': 3942000.0}]
+  Timestamp: 2025-07-15 10:58:39.193608
+
+[ERROR] Budget allocation mismatch
+  budget_name: North District  L & B
+  allocated: 4237420.85
+  withdrawn: 354400.0
+  to_be_withdrawn: 33500.0
+  balance: 3883020.8499999996
+  calculated_allocated: 4270920.8499999996
+  difference: -33499.9999999996
+  Timestamp: 2025-07-15 10:58:39.193608
+
+[ERROR] To-be-withdrawn amount mismatch
+  budget_name: North District  L & B
+  expected_to_be_withdrawn: 0
+  actual_to_be_withdrawn: 33500.0
+  difference: -33500.0
+  pending_aces_count: 0
+  Timestamp: 2025-07-15 10:58:39.210873
+
+[ERROR] Transaction record inconsistencies found
+  budget_name: North District  L & B
+  issues_count: 2
+  issues: [{'ace_id': 'ACE20250402770', 'issue': 'Rejected ACE but transaction not marked as rejected', 'ace_status': 'REJECTED', 'transaction_status': 'created', 'amount': 18000.0}, {'ace_id': 'ACE20250403946', 'issue': 'Rejected ACE but transaction not marked as rejected', 'ace_status': 'REJECTED', 'transaction_status': 'created', 'amount': 15500.0}]
+  Timestamp: 2025-07-15 10:58:39.228730
+
+[ERROR] Budget allocation mismatch
+  budget_name: Chitungwiza  L & B
+  allocated: 1354542.27
+  withdrawn: 0
+  to_be_withdrawn: 1331192.24
+  balance: 1354542.27
+  calculated_allocated: 2685734.51
+  difference: -1331192.24
+  Timestamp: 2025-07-15 10:58:39.307295
+
+[ERROR] To-be-withdrawn amount mismatch
+  budget_name: Chitungwiza  L & B
+  expected_to_be_withdrawn: 1018096.52
+  actual_to_be_withdrawn: 1331192.24
+  difference: -313095.72
+  pending_aces_count: 2
+  Timestamp: 2025-07-15 10:58:39.317727
+
+[ERROR] Transaction record inconsistencies found
+  budget_name: Chitungwiza  L & B
+  issues_count: 4
+  issues: [{'ace_id': 'ACE20250321823', 'issue': 'Rejected ACE but transaction not marked as rejected', 'ace_status': 'REJECTED', 'transaction_status': 'created', 'amount': 75264.0}, {'ace_id': 'ACE2025032182', 'issue': 'Rejected ACE but transaction not marked as rejected', 'ace_status': 'REJECTED', 'transaction_status': 'created', 'amount': 55649.72}, {'ace_id': 'ACE20250326618', 'issue': 'Rejected ACE but transaction not marked as rejected', 'ace_status': 'REJECTED', 'transaction_status': 'created', 'amount': 51604.56}, {'ace_id': 'ACE20250327764', 'issue': 'Rejected ACE but transaction not marked as rejected', 'ace_status': 'REJECTED', 'transaction_status': 'created', 'amount': 130577.44}]
+  Timestamp: 2025-07-15 10:58:39.338003
+
+[ERROR] Budget allocation mismatch
+  budget_name: South District  Vehicles
+  allocated: 19165830.53
+  withdrawn: 280353.04
+  to_be_withdrawn: 594674.0
+  balance: 18885477.490000002
+  calculated_allocated: 19760504.530000002
+  difference: -594674.000000002
+  Timestamp: 2025-07-15 10:58:39.362623
+
+[ERROR] Budget allocation mismatch
+  budget_name: North District  Plant and Machinery
+  allocated: 3842938.39
+  withdrawn: 208500.0
+  to_be_withdrawn: 503152.0
+  balance: 3634438.39
+  calculated_allocated: 4346090.39
+  difference: -503152.00
+  Timestamp: 2025-07-15 10:58:39.398956
+
+[ERROR] To-be-withdrawn amount mismatch
+  budget_name: North District  Plant and Machinery
+  expected_to_be_withdrawn: 2.0
+  actual_to_be_withdrawn: 503152.0
+  difference: -503150.0
+  pending_aces_count: 1
+  Timestamp: 2025-07-15 10:58:39.415998
+
+[ERROR] Transaction record inconsistencies found
+  budget_name: North District  Plant and Machinery
+  issues_count: 3
+  issues: [{'ace_id': 'ACE20250214595', 'issue': 'Rejected ACE but transaction not marked as rejected', 'ace_status': 'REJECTED', 'transaction_status': 'created', 'amount': 173750.0}, {'ace_id': 'ACE20250306721', 'issue': 'Rejected ACE but transaction not marked as rejected', 'ace_status': 'REJECTED', 'transaction_status': 'created', 'amount': 216000.0}, {'ace_id': 'ACE2025030619', 'issue': 'Rejected ACE but transaction not marked as rejected', 'ace_status': 'REJECTED', 'transaction_status': 'created', 'amount': 113400.0}]
+  Timestamp: 2025-07-15 10:58:39.429071
+
+[ERROR] Budget allocation mismatch
+  budget_name: East district  Computers
+  allocated: 507863.51
+  withdrawn: 78190.0
+  to_be_withdrawn: 1200.0
+  balance: 429673.51
+  calculated_allocated: 509063.51
+  difference: -1200.00
+  Timestamp: 2025-07-15 10:58:39.429071
+
+[ERROR] Budget allocation mismatch
+  budget_name: North District  Computers
+  allocated: 1401513.82
+  withdrawn: 292900.0
+  to_be_withdrawn: 43000.0
+  balance: 1108613.82
+  calculated_allocated: 1444513.82
+  difference: -43000.00
+  Timestamp: 2025-07-15 10:58:39.455705
+
+[ERROR] To-be-withdrawn amount mismatch
+  budget_name: North District  Computers
+  expected_to_be_withdrawn: 0
+  actual_to_be_withdrawn: 43000.0
+  difference: -43000.0
+  pending_aces_count: 0
+  Timestamp: 2025-07-15 10:58:39.485769
+
+[ERROR] Transaction record inconsistencies found
+  budget_name: North District  Computers
+  issues_count: 1
+  issues: [{'ace_id': 'ACE20250224752', 'issue': 'Rejected ACE but transaction not marked as rejected', 'ace_status': 'REJECTED', 'transaction_status': 'created', 'amount': 43000.0}]
+  Timestamp: 2025-07-15 10:58:39.513596
+
+[ERROR] Budget allocation mismatch
+  budget_name: East district  Office & Furniture Equipment
+  allocated: 2663148.47
+  withdrawn: 400.0
+  to_be_withdrawn: 14208.0
+  balance: 2662748.47
+  calculated_allocated: 2677356.47
+  difference: -14208.00
+  Timestamp: 2025-07-15 10:58:39.543148
+
+[ERROR] Budget allocation mismatch
+  budget_name: North District  Office & Furniture Equipment
+  allocated: 200741.93
+  withdrawn: 31320.0
+  to_be_withdrawn: 38025.0
+  balance: 169421.93
+  calculated_allocated: 238766.93
+  difference: -38025.00
+  Timestamp: 2025-07-15 10:58:39.559120
+
+[ERROR] To-be-withdrawn amount mismatch
+  budget_name: North District  Office & Furniture Equipment
+  expected_to_be_withdrawn: 0
+  actual_to_be_withdrawn: 38025.0
+  difference: -38025.0
+  pending_aces_count: 0
+  Timestamp: 2025-07-15 10:58:39.585446
+
+[ERROR] Transaction record inconsistencies found
+  budget_name: North District  Office & Furniture Equipment
+  issues_count: 2
+  issues: [{'ace_id': 'ACE20250214771', 'issue': 'Rejected ACE but transaction not marked as rejected', 'ace_status': 'REJECTED', 'transaction_status': 'created', 'amount': 4275.0}, {'ace_id': 'ACE20250310157', 'issue': 'Rejected ACE but transaction not marked as rejected', 'ace_status': 'REJECTED', 'transaction_status': 'created', 'amount': 33750.0}]
+  Timestamp: 2025-07-15 10:58:39.599908
+
+[ERROR] Budget allocation mismatch
+  budget_name: South District  Office & Furniture Equipment
+  allocated: 2540527.54
+  withdrawn: 1221200.0
+  to_be_withdrawn: 260000.0
+  balance: 1319327.54
+  calculated_allocated: 2800527.54
+  difference: -260000.00
+  Timestamp: 2025-07-15 10:58:39.601029
+
+[ERROR] To-be-withdrawn amount mismatch
+  budget_name: South District  Office & Furniture Equipment
+  expected_to_be_withdrawn: 0
+  actual_to_be_withdrawn: 260000.0
+  difference: -260000.0
+  pending_aces_count: 0
+  Timestamp: 2025-07-15 10:58:39.654193
+
+[ERROR] Transaction record inconsistencies found
+  budget_name: South District  Office & Furniture Equipment
+  issues_count: 2
+  issues: [{'ace_id': 'ACE20250225597', 'issue': 'Rejected ACE but transaction not marked as rejected', 'ace_status': 'REJECTED', 'transaction_status': 'created', 'amount': 30000.0}, {'ace_id': 'ACE20250318951', 'issue': 'Rejected ACE but transaction not marked as rejected', 'ace_status': 'REJECTED', 'transaction_status': 'created', 'amount': 230000.0}]
+  Timestamp: 2025-07-15 10:58:39.711324
+
+[ERROR] Budget allocation mismatch
+  budget_name: Human Resources  L & B
+  allocated: 16059474.55
+  withdrawn: 177277.5
+  to_be_withdrawn: 10800.0
+  balance: 15882197.05
+  calculated_allocated: 16070274.55
+  difference: -10800.00
+  Timestamp: 2025-07-15 10:58:39.756069
+
+[ERROR] Budget allocation mismatch
+  budget_name: Network Development  Vehicles
+  allocated: 1462981.3
+  withdrawn: 636951.0
+  to_be_withdrawn: 42475.40000000002
+  balance: 826030.3
+  calculated_allocated: 1505456.70000000002
+  difference: -42475.40000000002
+  Timestamp: 2025-07-15 10:58:39.777535
+
+[ERROR] To-be-withdrawn amount mismatch
+  budget_name: Network Development  Vehicles
+  expected_to_be_withdrawn: 0
+  actual_to_be_withdrawn: 42475.40000000002
+  difference: -42475.40000000002
+  pending_aces_count: 0
+  Timestamp: 2025-07-15 10:58:39.786500
+
+[ERROR] Transaction record inconsistencies found
+  budget_name: Network Development  Vehicles
+  issues_count: 2
+  issues: [{'ace_id': 'ACE20250404542', 'issue': 'Rejected ACE but transaction not marked as rejected', 'ace_status': 'REJECTED', 'transaction_status': 'created', 'amount': 21237.7}, {'ace_id': 'ACE20250404652', 'issue': 'Rejected ACE but transaction not marked as rejected', 'ace_status': 'REJECTED', 'transaction_status': 'created', 'amount': 21237.7}]
+  Timestamp: 2025-07-15 10:58:39.794503
+
+[ERROR] Budget allocation mismatch
+  budget_name: Operation and Maintenance  Plant and Machinery
+  allocated: 1684518.47
+  withdrawn: 0
+  to_be_withdrawn: 12500.0
+  balance: 1684518.47
+  calculated_allocated: 1697018.47
+  difference: -12500.00
+  Timestamp: 2025-07-15 10:58:39.812440
+
+[ERROR] To-be-withdrawn amount mismatch
+  budget_name: Operation and Maintenance  Plant and Machinery
+  expected_to_be_withdrawn: 0
+  actual_to_be_withdrawn: 12500.0
+  difference: -12500.0
+  pending_aces_count: 0
+  Timestamp: 2025-07-15 10:58:39.816059
+
+[ERROR] Transaction record inconsistencies found
+  budget_name: Operation and Maintenance  Plant and Machinery
+  issues_count: 1
+  issues: [{'ace_id': 'ACE20250319774', 'issue': 'Rejected ACE but transaction not marked as rejected', 'ace_status': 'REJECTED', 'transaction_status': 'created', 'amount': 12500.0}]
+  Timestamp: 2025-07-15 10:58:39.818583
+
+[ERROR] Budget allocation mismatch
+  budget_name: Network Development  Computers
+  allocated: 415000.0
+  withdrawn: 274000.0
+  to_be_withdrawn: 102000.0
+  balance: 141000.0
+  calculated_allocated: 517000.0
+  difference: -102000.0
+  Timestamp: 2025-07-15 10:58:39.819575
+
+[ERROR] To-be-withdrawn amount mismatch
+  budget_name: Network Development  Computers
+  expected_to_be_withdrawn: 0
+  actual_to_be_withdrawn: 102000.0
+  difference: -102000.0
+  pending_aces_count: 0
+  Timestamp: 2025-07-15 10:58:39.833525
+
+[ERROR] Transaction record inconsistencies found
+  budget_name: Network Development  Computers
+  issues_count: 1
+  issues: [{'ace_id': 'ACE20250314198', 'issue': 'Rejected ACE but transaction not marked as rejected', 'ace_status': 'REJECTED', 'transaction_status': 'created', 'amount': 102000.0}]
+  Timestamp: 2025-07-15 10:58:39.847131
+
+[ERROR] Budget allocation mismatch
+  budget_name: Operation and Maintenance  Computers
+  allocated: 188097.6
+  withdrawn: 69940.0
+  to_be_withdrawn: 6940.0
+  balance: 118157.6
+  calculated_allocated: 195037.6
+  difference: -6940.0
+  Timestamp: 2025-07-15 10:58:39.847782
+
+[ERROR] To-be-withdrawn amount mismatch
+  budget_name: Operation and Maintenance  Computers
+  expected_to_be_withdrawn: 0
+  actual_to_be_withdrawn: 6940.0
+  difference: -6940.0
+  pending_aces_count: 0
+  Timestamp: 2025-07-15 10:58:39.855148
+
+[ERROR] Transaction record inconsistencies found
+  budget_name: Operation and Maintenance  Computers
+  issues_count: 1
+  issues: [{'ace_id': 'ACE20250314570', 'issue': 'Rejected ACE but transaction not marked as rejected', 'ace_status': 'REJECTED', 'transaction_status': 'created', 'amount': 6940.0}]
+  Timestamp: 2025-07-15 10:58:39.859146
+
+[ERROR] Budget allocation mismatch
+  budget_name: Finance  Computers
+  allocated: 775139.27
+  withdrawn: 0
+  to_be_withdrawn: 90679.37
+  balance: 775139.27
+  calculated_allocated: 865818.64
+  difference: -90679.37
+  Timestamp: 2025-07-15 10:58:39.873566
+
+[ERROR] Withdrawn amount mismatch
+  budget_name: Risk  Computers
+  expected_withdrawn: 69800.0
+  actual_withdrawn: 36000.0
+  difference: 33800.0
+  approved_aces_count: 2
+  Timestamp: 2025-07-15 10:58:39.892787
+
+[ERROR] Transaction record inconsistencies found
+  budget_name: Risk  Computers
+  issues_count: 2
+  issues: [{'ace_id': 'ACE2025022888', 'issue': 'Rejected ACE but transaction not marked as rejected', 'ace_status': 'REJECTED', 'transaction_status': 'created', 'amount': 33800.0}, {'ace_id': 'ACE20250324534', 'issue': 'Rejected ACE but transaction not marked as rejected', 'ace_status': 'REJECTED', 'transaction_status': 'created', 'amount': 1.0}]
+  Timestamp: 2025-07-15 10:58:39.907186
+
+[ERROR] Budget allocation mismatch
+  budget_name: IT  Computers
+  allocated: 1765838.75
+  withdrawn: 1212682.0
+  to_be_withdrawn: 524951.0
+  balance: 553156.75
+  calculated_allocated: 2290789.75
+  difference: -524951.00
+  Timestamp: 2025-07-15 10:58:39.908348
+
+[ERROR] To-be-withdrawn amount mismatch
+  budget_name: IT  Computers
+  expected_to_be_withdrawn: 1.0
+  actual_to_be_withdrawn: 524951.0
+  difference: -524950.0
+  pending_aces_count: 1
+  Timestamp: 2025-07-15 10:58:39.967092
+
+[ERROR] Transaction record inconsistencies found
+  budget_name: IT  Computers
+  issues_count: 7
+  issues: [{'ace_id': 'ACE20250314719', 'issue': 'Rejected ACE but transaction not marked as rejected', 'ace_status': 'REJECTED', 'transaction_status': 'created', 'amount': 30000.0}, {'ace_id': 'ACE20250314124', 'issue': 'Rejected ACE but transaction not marked as rejected', 'ace_status': 'REJECTED', 'transaction_status': 'created', 'amount': 25000.0}, {'ace_id': 'ACE20250314330', 'issue': 'Rejected ACE but transaction not marked as rejected', 'ace_status': 'REJECTED', 'transaction_status': 'created', 'amount': 10.0}, {'ace_id': 'ACE20250314326', 'issue': 'Rejected ACE but transaction not marked as rejected', 'ace_status': 'REJECTED', 'transaction_status': 'created', 'amount': 312000.0}, {'ace_id': 'ACE2025031485', 'issue': 'Rejected ACE but transaction not marked as rejected', 'ace_status': 'REJECTED', 'transaction_status': 'created', 'amount': 69940.0}, {'ace_id': 'ACE20250314529', 'issue': 'Rejected ACE but transaction not marked as rejected', 'ace_status': 'REJECTED', 'transaction_status': 'created', 'amount': 52000.0}, {'ace_id': 'ACE20250403530', 'issue': 'Rejected ACE but transaction not marked as rejected', 'ace_status': 'REJECTED', 'transaction_status': 'created', 'amount': 36000.0}]
+  Timestamp: 2025-07-15 10:58:40.026496
+
+[ERROR] Budget allocation mismatch
+  budget_name: Human Resources  Office & Furniture Equipment
+  allocated: 78000.0
+  withdrawn: 54000.0
+  to_be_withdrawn: 5000.0
+  balance: 24000.0
+  calculated_allocated: 83000.0
+  difference: -5000.0
+  Timestamp: 2025-07-15 10:58:40.073422
+
+[ERROR] To-be-withdrawn amount mismatch
+  budget_name: Human Resources  Office & Furniture Equipment
+  expected_to_be_withdrawn: 0
+  actual_to_be_withdrawn: 5000.0
+  difference: -5000.0
+  pending_aces_count: 0
+  Timestamp: 2025-07-15 10:58:40.081759
+
+[ERROR] Transaction record inconsistencies found
+  budget_name: Human Resources  Office & Furniture Equipment
+  issues_count: 1
+  issues: [{'ace_id': 'ACE20250306858', 'issue': 'Rejected ACE but transaction not marked as rejected', 'ace_status': 'REJECTED', 'transaction_status': 'created', 'amount': 5000.0}]
+  Timestamp: 2025-07-15 10:58:40.089737
+
+[ERROR] Budget allocation mismatch
+  budget_name: Commercial  Office & Furniture Equipment
+  allocated: 262291.65
+  withdrawn: 10000.0
+  to_be_withdrawn: 85600.0
+  balance: 252291.65000000002
+  calculated_allocated: 347891.65000000002
+  difference: -85600.00000000002
+  Timestamp: 2025-07-15 10:58:40.090160
+
+[ERROR] To-be-withdrawn amount mismatch
+  budget_name: Commercial  Office & Furniture Equipment
+  expected_to_be_withdrawn: 0
+  actual_to_be_withdrawn: 85600.0
+  difference: -85600.0
+  pending_aces_count: 0
+  Timestamp: 2025-07-15 10:58:40.098981
+
+[ERROR] Transaction record inconsistencies found
+  budget_name: Commercial  Office & Furniture Equipment
+  issues_count: 1
+  issues: [{'ace_id': 'ACE20250327798', 'issue': 'Rejected ACE but transaction not marked as rejected', 'ace_status': 'REJECTED', 'transaction_status': 'created', 'amount': 85600.0}]
+  Timestamp: 2025-07-15 10:58:40.100189
+
+[ERROR] To-be-withdrawn amount mismatch
+  budget_name: Motor Vehicles-Operational
+  expected_to_be_withdrawn: 5016438.0
+  actual_to_be_withdrawn: 0
+  difference: 5016438.0
+  pending_aces_count: 5
+  Timestamp: 2025-07-15 10:58:40.135739
+
+[ERROR] Transaction record inconsistencies found
+  budget_name: Motor Vehicles-Operational
+  issues_count: 1
+  issues: [{'ace_id': 'ACE20250213487', 'issue': 'Rejected ACE but transaction not marked as rejected', 'ace_status': 'REJECTED', 'transaction_status': 'created', 'amount': 98168.0}]
+  Timestamp: 2025-07-15 10:58:40.146928
+
+[ERROR] Budget allocation mismatch
+  budget_name: Computers
+  allocated: 5493508.0
+  withdrawn: 286442.727
+  to_be_withdrawn: -286442.727
+  balance: 5207065.273
+  calculated_allocated: 5207065.273
+  difference: 286442.727
+  Timestamp: 2025-07-15 10:58:40.151802
+
+[ERROR] To-be-withdrawn amount mismatch
+  budget_name: Computers
+  expected_to_be_withdrawn: 1478400.0
+  actual_to_be_withdrawn: -286442.727
+  difference: 1764842.727
+  pending_aces_count: 3
+  Timestamp: 2025-07-15 10:58:40.176581
+
+[ERROR] Transaction record inconsistencies found
+  budget_name: Computers
+  issues_count: 1
+  issues: [{'ace_id': 'ACE20250318999', 'issue': 'Rejected ACE but transaction not marked as rejected', 'ace_status': 'REJECTED', 'transaction_status': 'created', 'amount': 2000000.0}]
+  Timestamp: 2025-07-15 10:58:40.196509
+
+[ERROR] Budget allocation mismatch
+  budget_name: Office Furniture & Equipment
+  allocated: 11870455.0
+  withdrawn: 2000.0
+  to_be_withdrawn: 2373.0
+  balance: 11868455.0
+  calculated_allocated: 11872828.0
+  difference: -2373.0
+  Timestamp: 2025-07-15 10:58:40.198074
+
+[ERROR] Budget allocation mismatch
+  budget_name: Mutare District - Construction works
+  allocated: 47953600.0
+  withdrawn: 3517323.779999999
+  to_be_withdrawn: 108905.52000000083
+  balance: 44436276.219999984
+  calculated_allocated: 48062505.51999998383
+  difference: -108905.51999998383
+  Timestamp: 2025-07-15 10:58:40.218460
+
+[ERROR] Budget allocation mismatch
+  budget_name: Masvingo District - Construction works
+  allocated: 47953600.0
+  withdrawn: 0
+  to_be_withdrawn: 1061917.0
+  balance: 47953600.0
+  calculated_allocated: 49015517.0
+  difference: -1061917.0
+  Timestamp: 2025-07-15 10:58:40.397968
+
+[ERROR] To-be-withdrawn amount mismatch
+  budget_name: Masvingo District - Construction works
+  expected_to_be_withdrawn: 665122.0
+  actual_to_be_withdrawn: 1061917.0
+  difference: -396795.0
+  pending_aces_count: 5
+  Timestamp: 2025-07-15 10:58:40.428828
+
+[ERROR] Transaction record inconsistencies found
+  budget_name: Masvingo District - Construction works
+  issues_count: 1
+  issues: [{'ace_id': 'ACE20250325384', 'issue': 'Rejected ACE but transaction not marked as rejected', 'ace_status': 'REJECTED', 'transaction_status': 'created', 'amount': 396795.0}]
+  Timestamp: 2025-07-15 10:58:40.446738
+
+[ERROR] Budget allocation mismatch
+  budget_name: Tools & Equipment
+  allocated: 21257302.0
+  withdrawn: 369734.93
+  to_be_withdrawn: -369734.93
+  balance: 20887567.07
+  calculated_allocated: 20887567.07
+  difference: 369734.93
+  Timestamp: 2025-07-15 10:58:40.452713
+
+[ERROR] To-be-withdrawn amount mismatch
+  budget_name: Tools & Equipment
+  expected_to_be_withdrawn: 8000.0
+  actual_to_be_withdrawn: -369734.93
+  difference: 377734.93
+  pending_aces_count: 1
+  Timestamp: 2025-07-15 10:58:40.464224
+
+[ERROR] Transaction record inconsistencies found
+  budget_name: Tools & Equipment
+  issues_count: 1
+  issues: [{'ace_id': 'ACE2025032126', 'issue': 'Rejected ACE but transaction not marked as rejected', 'ace_status': 'REJECTED', 'transaction_status': 'created', 'amount': 8000.0}]
+  Timestamp: 2025-07-15 10:58:40.474643
+
+[ERROR] Budget allocation mismatch
+  budget_name: Land and Buildings
+  allocated: 50000000.0
+  withdrawn: 4050000.0
+  to_be_withdrawn: -4050000.0
+  balance: 45950000.0
+  calculated_allocated: 45950000.0
+  difference: 4050000.0
+  Timestamp: 2025-07-15 10:58:40.474643
+
+[ERROR] To-be-withdrawn amount mismatch
+  budget_name: Land and Buildings
+  expected_to_be_withdrawn: 1300000.0
+  actual_to_be_withdrawn: -4050000.0
+  difference: 5350000.0
+  pending_aces_count: 5
+  Timestamp: 2025-07-15 10:58:40.505421
+
+[ERROR] Budget allocation mismatch
+  budget_name: Retail Manager  Motor Vehicles-Operational
+  allocated: 1230000.0
+  withdrawn: 160049.4
+  to_be_withdrawn: -160049.4
+  balance: 1069950.6
+  calculated_allocated: 1069950.6
+  difference: 160049.4
+  Timestamp: 2025-07-15 10:58:40.603052
+
+[ERROR] To-be-withdrawn amount mismatch
+  budget_name: Retail Manager  Motor Vehicles-Operational
+  expected_to_be_withdrawn: 0
+  actual_to_be_withdrawn: -160049.4
+  difference: 160049.4
+  pending_aces_count: 0
+  Timestamp: 2025-07-15 10:58:40.603052
+
+[ERROR] Budget allocation mismatch
+  budget_name: Northern Region  Tools & Equipment
+  allocated: 37023000.0
+  withdrawn: 0
+  to_be_withdrawn: 2411535.1
+  balance: 37023000.0
+  calculated_allocated: 39434535.1
+  difference: -2411535.1
+  Timestamp: 2025-07-15 10:58:40.666734
+
+[ERROR] To-be-withdrawn amount mismatch
+  budget_name: Northern Region  Tools & Equipment
+  expected_to_be_withdrawn: 1224640.0
+  actual_to_be_withdrawn: 2411535.1
+  difference: -1186895.1
+  pending_aces_count: 6
+  Timestamp: 2025-07-15 10:58:40.697810
+
+[ERROR] Transaction record inconsistencies found
+  budget_name: Northern Region  Tools & Equipment
+  issues_count: 1
+  issues: [{'ace_id': 'ACE20250402934', 'issue': 'Rejected ACE but transaction not marked as rejected', 'ace_status': 'REJECTED', 'transaction_status': 'created', 'amount': 1186895.1}]
+  Timestamp: 2025-07-15 10:58:40.722236
+
+[ERROR] Budget allocation mismatch
+  budget_name: Northern Region  Plant & Machinery
+  allocated: 20000000.0
+  withdrawn: 0
+  to_be_withdrawn: 720881.1
+  balance: 20000000.0
+  calculated_allocated: 20720881.1
+  difference: -720881.1
+  Timestamp: 2025-07-15 10:58:40.725114
+
+[ERROR] Budget allocation mismatch
+  budget_name: Northern Region  Computers (Business Information Systems)
+  allocated: 41430500.0
+  withdrawn: 0
+  to_be_withdrawn: 509768.0
+  balance: 41430500.0
+  calculated_allocated: 41940268.0
+  difference: -509768.0
+  Timestamp: 2025-07-15 10:58:40.746034
+
+[ERROR] To-be-withdrawn amount mismatch
+  budget_name: Northern Region  Computers (Business Information Systems)
+  expected_to_be_withdrawn: 149048.0
+  actual_to_be_withdrawn: 509768.0
+  difference: -360720.0
+  pending_aces_count: 2
+  Timestamp: 2025-07-15 10:58:40.760656
+
+[ERROR] Transaction record inconsistencies found
+  budget_name: Northern Region  Computers (Business Information Systems)
+  issues_count: 3
+  issues: [{'ace_id': 'ACE20250402555', 'issue': 'Rejected ACE but transaction not marked as rejected', 'ace_status': 'REJECTED', 'transaction_status': 'created', 'amount': 120240.0}, {'ace_id': 'ACE20250402995', 'issue': 'Rejected ACE but transaction not marked as rejected', 'ace_status': 'REJECTED', 'transaction_status': 'created', 'amount': 120240.0}, {'ace_id': 'ACE20250402460', 'issue': 'Rejected ACE but transaction not marked as rejected', 'ace_status': 'REJECTED', 'transaction_status': 'created', 'amount': 120240.0}]
+  Timestamp: 2025-07-15 10:58:40.770858
+
+[ERROR] Budget allocation mismatch
+  budget_name: Northern Region  Office Furniture & Equipment
+  allocated: 33497000.0
+  withdrawn: 0
+  to_be_withdrawn: 170000.0
+  balance: 33497000.0
+  calculated_allocated: 33667000.0
+  difference: -170000.0
+  Timestamp: 2025-07-15 10:58:40.772988
+
+[ERROR] Budget allocation mismatch
+  budget_name: Maintenance  Tools & Equipment
+  allocated: 1249578.652
+  withdrawn: 4000.0
+  to_be_withdrawn: 81000.0
+  balance: 1245578.652
+  calculated_allocated: 1330578.652
+  difference: -81000.000
+  Timestamp: 2025-07-15 10:58:40.783523
+
+[ERROR] Budget allocation mismatch
+  budget_name: HR & ADMIN  Land and Buildings
+  allocated: 15887500.0
+  withdrawn: 550000.0
+  to_be_withdrawn: 67000.0
+  balance: 15337500.0
+  calculated_allocated: 15954500.0
+  difference: -67000.0
+  Timestamp: 2025-07-15 10:58:40.811307
+
+[ERROR] To-be-withdrawn amount mismatch
+  budget_name: HR & ADMIN  Land and Buildings
+  expected_to_be_withdrawn: 57000.0
+  actual_to_be_withdrawn: 67000.0
+  difference: -10000.0
+  pending_aces_count: 2
+  Timestamp: 2025-07-15 10:58:40.831923
+
+[ERROR] Transaction record inconsistencies found
+  budget_name: HR & ADMIN  Land and Buildings
+  issues_count: 1
+  issues: [{'ace_id': 'ACE20250306442', 'issue': 'Rejected ACE but transaction not marked as rejected', 'ace_status': 'REJECTED', 'transaction_status': 'created', 'amount': 10000.0}]
+  Timestamp: 2025-07-15 10:58:40.847515
+
+[ERROR] Budget allocation mismatch
+  budget_name: Engineering  Motor Vehicles
+  allocated: 22242500.0
+  withdrawn: 115542.53
+  to_be_withdrawn: 115542.53
+  balance: 22126957.47
+  calculated_allocated: 22358042.53
+  difference: -115542.53
+  Timestamp: 2025-07-15 10:58:40.858172
+
+[ERROR] To-be-withdrawn amount mismatch
+  budget_name: Engineering  Motor Vehicles
+  expected_to_be_withdrawn: 0
+  actual_to_be_withdrawn: 115542.53
+  difference: -115542.53
+  pending_aces_count: 0
+  Timestamp: 2025-07-15 10:58:40.865505
+
+[ERROR] Transaction record inconsistencies found
+  budget_name: Engineering  Motor Vehicles
+  issues_count: 1
+  issues: [{'ace_id': 'ACE20250228495', 'issue': 'Rejected ACE but transaction not marked as rejected', 'ace_status': 'REJECTED', 'transaction_status': 'created', 'amount': 115542.53}]
+  Timestamp: 2025-07-15 10:58:40.870902
+
+[ERROR] Budget allocation mismatch
+  budget_name: Maintenance  Plant & Machinery
+  allocated: 1869117.647
+  withdrawn: 0
+  to_be_withdrawn: 1000.0
+  balance: 1869117.647
+  calculated_allocated: 1870117.647
+  difference: -1000.000
+  Timestamp: 2025-07-15 10:58:40.870902
+
+[ERROR] To-be-withdrawn amount mismatch
+  budget_name: Maintenance  Plant & Machinery
+  expected_to_be_withdrawn: 0
+  actual_to_be_withdrawn: 1000.0
+  difference: -1000.0
+  pending_aces_count: 0
+  Timestamp: 2025-07-15 10:58:40.876113
+
+[ERROR] Transaction record inconsistencies found
+  budget_name: Maintenance  Plant & Machinery
+  issues_count: 1
+  issues: [{'ace_id': 'ACE20250428641', 'issue': 'Rejected ACE but transaction not marked as rejected', 'ace_status': 'REJECTED', 'transaction_status': 'created', 'amount': 1000.0}]
+  Timestamp: 2025-07-15 10:58:40.879847
+
+[ERROR] Budget allocation mismatch
+  budget_name: Stores  Plant & Machinery
+  allocated: 1401838.235
+  withdrawn: 0
+  to_be_withdrawn: 54000.0
+  balance: 1401838.235
+  calculated_allocated: 1455838.235
+  difference: -54000.000
+  Timestamp: 2025-07-15 10:58:40.880540
+
+[ERROR] To-be-withdrawn amount mismatch
+  budget_name: Stores  Plant & Machinery
+  expected_to_be_withdrawn: 0
+  actual_to_be_withdrawn: 54000.0
+  difference: -54000.0
+  pending_aces_count: 0
+  Timestamp: 2025-07-15 10:58:40.883632
+
+[ERROR] Transaction record inconsistencies found
+  budget_name: Stores  Plant & Machinery
+  issues_count: 1
+  issues: [{'ace_id': 'ACE20250410509', 'issue': 'Rejected ACE but transaction not marked as rejected', 'ace_status': 'REJECTED', 'transaction_status': 'created', 'amount': 54000.0}]
+  Timestamp: 2025-07-15 10:58:40.885656
+
+[ERROR] Budget allocation mismatch
+  budget_name: IT  Communications Equipmement
+  allocated: 6355000.0
+  withdrawn: 0
+  to_be_withdrawn: 5080000.0
+  balance: 6355000.0
+  calculated_allocated: 11435000.0
+  difference: -5080000.0
+  Timestamp: 2025-07-15 10:58:40.903201
+
+[ERROR] To-be-withdrawn amount mismatch
+  budget_name: IT  Communications Equipmement
+  expected_to_be_withdrawn: 0
+  actual_to_be_withdrawn: 5080000.0
+  difference: -5080000.0
+  pending_aces_count: 0
+  Timestamp: 2025-07-15 10:58:40.908779
+
+[ERROR] Transaction record inconsistencies found
+  budget_name: IT  Communications Equipmement
+  issues_count: 5
+  issues: [{'ace_id': 'ACE20250227324', 'issue': 'Rejected ACE but transaction not marked as rejected', 'ace_status': 'REJECTED', 'transaction_status': 'created', 'amount': 150000.0}, {'ace_id': 'ACE20250228378', 'issue': 'Rejected ACE but transaction not marked as rejected', 'ace_status': 'REJECTED', 'transaction_status': 'created', 'amount': 4600000.0}, {'ace_id': 'ACE20250228299', 'issue': 'Rejected ACE but transaction not marked as rejected', 'ace_status': 'REJECTED', 'transaction_status': 'created', 'amount': 110000.0}, {'ace_id': 'ACE20250228757', 'issue': 'Rejected ACE but transaction not marked as rejected', 'ace_status': 'REJECTED', 'transaction_status': 'created', 'amount': 110000.0}, {'ace_id': 'ACE202502281', 'issue': 'Rejected ACE but transaction not marked as rejected', 'ace_status': 'REJECTED', 'transaction_status': 'created', 'amount': 110000.0}]
+  Timestamp: 2025-07-15 10:58:40.922192
+
+[ERROR] Budget allocation mismatch
+  budget_name: HR & ADMIN  Furniture & Office Equipment
+  allocated: 1588750.0
+  withdrawn: 359000.0
+  to_be_withdrawn: 105000.0
+  balance: 1229750.0
+  calculated_allocated: 1693750.0
+  difference: -105000.0
+  Timestamp: 2025-07-15 10:58:40.923175
+
+[ERROR] Budget allocation mismatch
+  budget_name: Kwekwe District  Furniture & Office Equipment
+  allocated: 7467125.0
+  withdrawn: 322602.0
+  to_be_withdrawn: 145185.5
+  balance: 7144523.0
+  calculated_allocated: 7612310.5
+  difference: -145185.5
+  Timestamp: 2025-07-15 10:58:41.014384
+
+[ERROR] To-be-withdrawn amount mismatch
+  budget_name: Kwekwe District  Furniture & Office Equipment
+  expected_to_be_withdrawn: 144580.5
+  actual_to_be_withdrawn: 145185.5
+  difference: -605.0
+  pending_aces_count: 4
+  Timestamp: 2025-07-15 10:58:41.071009
+
+[ERROR] Transaction record inconsistencies found
+  budget_name: Kwekwe District  Furniture & Office Equipment
+  issues_count: 2
+  issues: [{'ace_id': 'ACE20250411253', 'issue': 'Rejected ACE but transaction not marked as rejected', 'ace_status': 'REJECTED', 'transaction_status': 'created', 'amount': 310.0}, {'ace_id': 'ACE2025041149', 'issue': 'Rejected ACE but transaction not marked as rejected', 'ace_status': 'REJECTED', 'transaction_status': 'created', 'amount': 295.0}]
+  Timestamp: 2025-07-15 10:58:41.105469
+
+[ERROR] Negative budget values detected
+  budget_name: Gweru District  Furniture & Office Equipment
+  withdrawn: 494830.8
+  to_be_withdrawn: -1.0913936421275139E-11
+  balance: 4430294.2
+  Timestamp: 2025-07-15 10:58:41.105469
+
+[ERROR] To-be-withdrawn amount mismatch
+  budget_name: Gweru District  Furniture & Office Equipment
+  expected_to_be_withdrawn: 18600.0
+  actual_to_be_withdrawn: -1.0913936421275139E-11
+  difference: 18600.00000000001091393642128
+  pending_aces_count: 1
+  Timestamp: 2025-07-15 10:58:41.136647
+
+[ERROR] Transaction record inconsistencies found
+  budget_name: Gweru District  Furniture & Office Equipment
+  issues_count: 1
+  issues: [{'ace_id': 'ACE2025042240', 'issue': 'Missing transaction record', 'amount': 18600.0}]
+  Timestamp: 2025-07-15 10:58:41.160719
+
+[ERROR] Budget allocation mismatch
+  budget_name: IT Computers
+  allocated: 19065000.0
+  withdrawn: 0
+  to_be_withdrawn: 5670005.0
+  balance: 19065000.0
+  calculated_allocated: 24735005.0
+  difference: -5670005.0
+  Timestamp: 2025-07-15 10:58:41.162406
+
+[ERROR] To-be-withdrawn amount mismatch
+  budget_name: IT Computers
+  expected_to_be_withdrawn: 5670000.0
+  actual_to_be_withdrawn: 5670005.0
+  difference: -5.0
+  pending_aces_count: 7
+  Timestamp: 2025-07-15 10:58:41.174957
+
+[ERROR] Budget allocation mismatch
+  budget_name: East  Distribution General
+  allocated: 500691889.3
+  withdrawn: 0
+  to_be_withdrawn: 2892045.67
+  balance: 500691889.3
+  calculated_allocated: 503583934.97
+  difference: -2892045.67
+  Timestamp: 2025-07-15 10:58:41.186250
+
+[ERROR] Budget allocation mismatch
+  budget_name: North  Distribution General
+  allocated: 202290557.4
+  withdrawn: 0
+  to_be_withdrawn: 2.0
+  balance: 202290557.4
+  calculated_allocated: 202290559.4
+  difference: -2.0
+  Timestamp: 2025-07-15 10:58:41.203752
+
+[ERROR] To-be-withdrawn amount mismatch
+  budget_name: North  Distribution General
+  expected_to_be_withdrawn: 0
+  actual_to_be_withdrawn: 2.0
+  difference: -2.0
+  pending_aces_count: 0
+  Timestamp: 2025-07-15 10:58:41.210070
+
+[ERROR] Transaction record inconsistencies found
+  budget_name: North  Distribution General
+  issues_count: 2
+  issues: [{'ace_id': 'ACE20250320351', 'issue': 'Rejected ACE but transaction not marked as rejected', 'ace_status': 'REJECTED', 'transaction_status': 'created', 'amount': 1.0}, {'ace_id': 'ACE20250320892', 'issue': 'Rejected ACE but transaction not marked as rejected', 'ace_status': 'REJECTED', 'transaction_status': 'created', 'amount': 1.0}]
+  Timestamp: 2025-07-15 10:58:41.215304
+
+[ERROR] Budget allocation mismatch
+  budget_name: Chitungwiza  Distribution General
+  allocated: 59170079.88
+  withdrawn: 29640.0
+  to_be_withdrawn: 1567957.04
+  balance: 59140439.88
+  calculated_allocated: 60738036.92
+  difference: -1567957.04
+  Timestamp: 2025-07-15 10:58:41.217321
+
+[ERROR] To-be-withdrawn amount mismatch
+  budget_name: Chitungwiza  Distribution General
+  expected_to_be_withdrawn: 1538317.04
+  actual_to_be_withdrawn: 1567957.04
+  difference: -29640.00
+  pending_aces_count: 5
+  Timestamp: 2025-07-15 10:58:41.240504
+
+[ERROR] Transaction record inconsistencies found
+  budget_name: Chitungwiza  Distribution General
+  issues_count: 1
+  issues: [{'ace_id': 'ACE2025031984', 'issue': 'Rejected ACE but transaction not marked as rejected', 'ace_status': 'REJECTED', 'transaction_status': 'created', 'amount': 29640.0}]
+  Timestamp: 2025-07-15 10:58:41.265169
+
+[ERROR] Budget allocation mismatch
+  budget_name: Network Development  Distribution General
+  allocated: 850320995.1
+  withdrawn: 29570796.74
+  to_be_withdrawn: 56661640.620000005
+  balance: 820750198.36
+  calculated_allocated: 906982635.720000005
+  difference: -56661640.620000005
+  Timestamp: 2025-07-15 10:58:41.265636
+
+[ERROR] To-be-withdrawn amount mismatch
+  budget_name: Network Development  Distribution General
+  expected_to_be_withdrawn: 0
+  actual_to_be_withdrawn: 56661640.620000005
+  difference: -56661640.620000005
+  pending_aces_count: 0
+  Timestamp: 2025-07-15 10:58:41.277186
+
+[ERROR] Transaction record inconsistencies found
+  budget_name: Network Development  Distribution General
+  issues_count: 2
+  issues: [{'ace_id': 'ACE20250317888', 'issue': 'Rejected ACE but transaction not marked as rejected', 'ace_status': 'REJECTED', 'transaction_status': 'created', 'amount': 1086140.62}, {'ace_id': 'ACE20250319463', 'issue': 'Rejected ACE but transaction not marked as rejected', 'ace_status': 'REJECTED', 'transaction_status': 'created', 'amount': 55575500.0}]
+  Timestamp: 2025-07-15 10:58:41.288949
+
+[ERROR] Withdrawn amount mismatch
+  budget_name: Regional Transmission East  Tools & Equipment
+  expected_withdrawn: 0
+  actual_withdrawn: 2200000.0
+  difference: -2200000.0
+  approved_aces_count: 0
+  Timestamp: 2025-07-15 10:58:41.295087
+
+[ERROR] Withdrawn amount mismatch
+  budget_name: Regional Transmission East  Motor Vehicles-Operational
+  expected_withdrawn: 0
+  actual_withdrawn: 11696253.0
+  difference: -11696253.0
+  approved_aces_count: 0
+  Timestamp: 2025-07-15 10:58:41.296921
+
+[ERROR] Withdrawn amount mismatch
+  budget_name: Regional Transmission East  Furniture & Office Equipment
+  expected_withdrawn: 0
+  actual_withdrawn: 2422000.0
+  difference: -2422000.0
+  approved_aces_count: 0
+  Timestamp: 2025-07-15 10:58:41.298127
+
+[ERROR] Withdrawn amount mismatch
+  budget_name: Regional Transmission East  Plant & Machinery
+  expected_withdrawn: 0
+  actual_withdrawn: 1000000.0
+  difference: -1000000.0
+  approved_aces_count: 0
+  Timestamp: 2025-07-15 10:58:41.300068
+
+[ERROR] Withdrawn amount mismatch
+  budget_name: Regional Transmission East  Computers (Including projects)
+  expected_withdrawn: 0
+  actual_withdrawn: 880000.0
+  difference: -880000.0
+  approved_aces_count: 0
+  Timestamp: 2025-07-15 10:58:41.301035
+
+[ERROR] Withdrawn amount mismatch
+  budget_name: Regional Transmission West  Furniture & Office Equipment
+  expected_withdrawn: 0
+  actual_withdrawn: 1761100.0
+  difference: -1761100.0
+  approved_aces_count: 0
+  Timestamp: 2025-07-15 10:58:41.310976
+
+[ERROR] Withdrawn amount mismatch
+  budget_name: Regional Transmission West  Plant & Machinery
+  expected_withdrawn: 0
+  actual_withdrawn: 970000.0
+  difference: -970000.0
+  approved_aces_count: 0
+  Timestamp: 2025-07-15 10:58:41.313365
+
+[ERROR] Withdrawn amount mismatch
+  budget_name: Regional Transmission West  Computers (Including projects)
+  expected_withdrawn: 0
+  actual_withdrawn: 1470000.0
+  difference: -1470000.0
+  approved_aces_count: 0
+  Timestamp: 2025-07-15 10:58:41.314979
+
+[ERROR] Withdrawn amount mismatch
+  budget_name: Technical Services   Tools & Equipment
+  expected_withdrawn: 0
+  actual_withdrawn: 60337054.66
+  difference: -60337054.66
+  approved_aces_count: 0
+  Timestamp: 2025-07-15 10:58:41.319790
+
+[ERROR] Budget allocation mismatch
+  budget_name: Technical Services   Motor Vehicles-Operational
+  allocated: 55505866.947
+  withdrawn: 2890000.0
+  to_be_withdrawn: 96124.24
+  balance: 52615866.947
+  calculated_allocated: 55601991.187
+  difference: -96124.240
+  Timestamp: 2025-07-15 10:58:41.321627
+
+[ERROR] Withdrawn amount mismatch
+  budget_name: Technical Services   Motor Vehicles-Operational
+  expected_withdrawn: 0
+  actual_withdrawn: 2890000.0
+  difference: -2890000.0
+  approved_aces_count: 0
+  Timestamp: 2025-07-15 10:58:41.325327
+
+[ERROR] Withdrawn amount mismatch
+  budget_name: Technical Services   Furniture & Office Equipment
+  expected_withdrawn: 0
+  actual_withdrawn: 461985.75
+  difference: -461985.75
+  approved_aces_count: 0
+  Timestamp: 2025-07-15 10:58:41.335239
+
+[ERROR] Withdrawn amount mismatch
+  budget_name: Technical Services   Computers (Including projects)
+  expected_withdrawn: 0
+  actual_withdrawn: 2297000.0
+  difference: -2297000.0
+  approved_aces_count: 0
+  Timestamp: 2025-07-15 10:58:41.338056
+
+[ERROR] Withdrawn amount mismatch
+  budget_name: Systems Development  Motor Vehicles
+  expected_withdrawn: 0
+  actual_withdrawn: 222000.0
+  difference: -222000.0
+  approved_aces_count: 0
+  Timestamp: 2025-07-15 10:58:41.342770
+
+[ERROR] Withdrawn amount mismatch
+  budget_name: Human Resources Admnistration  Furniture & Office Equipment
+  expected_withdrawn: 0
+  actual_withdrawn: 62000.0
+  difference: -62000.0
+  approved_aces_count: 0
+  Timestamp: 2025-07-15 10:58:41.352068
+
+[ERROR] Withdrawn amount mismatch
+  budget_name: Electricity Trading & Operations   Furniture & Office Equipment
+  expected_withdrawn: 0
+  actual_withdrawn: 630000.0
+  difference: -630000.0
+  approved_aces_count: 0
+  Timestamp: 2025-07-15 10:58:41.361120
+
+[ERROR] Withdrawn amount mismatch
+  budget_name: Electricity Trading & Operations   Computers (Including projects)
+  expected_withdrawn: 0
+  actual_withdrawn: 590000.0
+  difference: -590000.0
+  approved_aces_count: 0
+  Timestamp: 2025-07-15 10:58:41.361777
+
+[ERROR] Withdrawn amount mismatch
+  budget_name: Finance  Furniture & Office Equipment
+  expected_withdrawn: 0
+  actual_withdrawn: 60870.0
+  difference: -60870.0
+  approved_aces_count: 0
+  Timestamp: 2025-07-15 10:58:41.367058
+
+[ERROR] Withdrawn amount mismatch
+  budget_name: Finance  Computers (Including projects)
+  expected_withdrawn: 0
+  actual_withdrawn: 420000.0
+  difference: -420000.0
+  approved_aces_count: 0
+  Timestamp: 2025-07-15 10:58:41.369534
+
+[WARNING] ACEs without transaction records
+  count: 16
+  examples: [{'Ace_id2': 'ACE20240603615', 'amount': 1456540.0, 'details_of_expenditure': 'Construction of 3 AB Type substation buildings for Presidential Villas and Hall at New City'}, {'Ace_id2': 'ACE20240603377', 'amount': 1456540.0, 'details_of_expenditure': 'Construction of 3 AB Type substation buildings for Presidential Villas and Hall at New City'}, {'Ace_id2': 'ACE20240603198', 'amount': 1456540.0, 'details_of_expenditure': 'Construction of 3 AB Type substation buildings for Presidential Villas and Hall at New City'}, {'Ace_id2': 'ACE20240604935', 'amount': 7000.0, 'details_of_expenditure': '12000 BTU AIRCOPN FOR COMMERCIAL MANAGER'}, {'Ace_id2': 'ACE2024060540', 'amount': 27000.0, 'details_of_expenditure': '7.5  kv Generator -Petrol'}]
+  Timestamp: 2025-07-15 10:58:41.373917
+
+[WARNING] Transactions without ACEs
+  count: 13
+  examples: [{'transaction_id': 2858, 'details_of_expenditure': 'virement of ND - Computers to Projects-Category 3'}, {'transaction_id': 2859, 'details_of_expenditure': 'virement of Projects-Category 3 to IT-computer'}, {'transaction_id': 2872, 'details_of_expenditure': 'virement of Projects-Category 3 to Warren Park -T&E'}, {'transaction_id': 2964, 'details_of_expenditure': 'virement of Zengeza-motor vehicles to Plant & Machinery'}, {'transaction_id': 2965, 'details_of_expenditure': 'virement of Zengeza-motor vehicles to Plant & Machinery'}]
+  Timestamp: 2025-07-15 10:58:41.380133
+

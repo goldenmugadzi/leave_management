@@ -7,6 +7,8 @@
   href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css"
 />
 <style>
+  [x-cloak] { display: none !important; }
+  
   .dataTables_wrapper .dataTables_length select {
     width: 4rem;
   }
@@ -42,7 +44,12 @@
     class="bg-gulf-blue-100 shadow shadow-gulf-blue-200 text-gray-900 rounded px-2 py-2"
   >
     <!-- component -->
-    <div x-data="{ openTab: 1 }" class="p-8">
+    <div x-data="{ 
+      openTab: 1,
+      selectedUsername: '',
+      selectedApplication: '',
+      fetchUserData() { /* Empty function for now */ }
+    }" class="p-8">
       <div class="">
         <div
           x-show="openTab === 1"
@@ -114,6 +121,26 @@
                         autocomplete="application"
                         class="block w-full bg-gulf-blue-50 rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
                       />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label
+                      for="roles_to_action"
+                      class="block text-sm font-medium leading-6 text-gray-900"
+                      >Roles to Action</label
+                    >
+                    <div class="mt-2">
+                      <textarea disabled type="text" name="roles_to_action" id="roles_to_action" autocomplete="roles_to_action" class="block w-full bg-gulf-blue-50 rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">{% if cr.user.roles_to_action %}{{cr.user.roles_to_action}}{% endif %}</textarea>
+                    </div>
+                  </div>
+                  <div class="bg-green-50 rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
+                    <label
+                      for="roles_actions"
+                      class="block text-sm font-medium leading-6 text-gray-900"
+                      >Roles Implemented</label>
+                    <div class="mt-2">
+                      <textarea {% if requestor_role == "it_section_head" and it_section_head_awaiting_action and section_head_awaiting_action == False and it_section_head_allowed == True %} required {% else %} disabled {% endif %} type="text" name="roles_actions" id="roles_actions" autocomplete="roles_actions" class="block w-full rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">{% if cr.user.roles_actions %}{{cr.user.roles_actions}}{% endif %}</textarea>
                     </div>
                   </div>
 
@@ -421,8 +448,7 @@
                           disabled
                           type="text"
                           id="comment"
-                          class="block w-full bg-gulf-blue-50 rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 px-2 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
-                        >{{approvals.comment}}</textarea>
+                          class="block w-full bg-gulf-blue-50 rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 px-2 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6">{{approvals.comment}}</textarea>
                       </div>
                     </div>
                     <div></div>
@@ -440,6 +466,12 @@
                 rejectOpen: false,
                 confirmOpen: false,
                 confirmApply: false
+                }"
+                x-init="() => { 
+                  // Initialize all modal states to false on page load
+                  rejectOpen = false; 
+                  confirmOpen = false; 
+                  confirmApply = false;
                 }"
                 class="flex justify-evenly mt-10 px-3 py-3"
               >
@@ -504,7 +536,8 @@
                 {% endif %}
                 <div>
                   <div
-                    x-show="rejectOpen"
+                    x-cloak
+                    x-show="rejectOpen === true"
                     class="fixed inset-0 z-50 overflow-y-auto"
                     aria-labelledby="modal-title"
                     role="dialog"
@@ -608,7 +641,8 @@
                 </div>
                 <div>
                   <div
-                    x-show="confirmOpen"
+                    x-cloak
+                    x-show="confirmOpen === true"
                     class="fixed inset-0 z-50 overflow-y-auto"
                     aria-labelledby="modal-title"
                     role="dialog"
@@ -699,7 +733,8 @@
                 </div>
                 <div>
                   <div
-                    x-show="confirmApply"
+                    x-cloak
+                    x-show="confirmApply === true"
                     class="fixed inset-0 z-50 overflow-y-auto"
                     aria-labelledby="modal-title"
                     role="dialog"
@@ -799,72 +834,110 @@
 {% endblock %} {% block scripts %}
 <script>
   $(document).ready(() => {
+    // Initialize Alpine.js data variables to false to keep modals closed by default
+    if (typeof Alpine !== 'undefined') {
+      // Force all modals to be closed on page load
+      document.querySelectorAll('[x-data]').forEach(element => {
+        if (element.__x && typeof element.__x.getUnobservedData === 'function') {
+          const data = element.__x.getUnobservedData();
+          if (data.hasOwnProperty('confirmOpen')) data.confirmOpen = false;
+          if (data.hasOwnProperty('rejectOpen')) data.rejectOpen = false;
+          if (data.hasOwnProperty('confirmApply')) data.confirmApply = false;
+        }
+      });
+    }
+
+    // Add null checks for DOM elements
     const region = document.getElementById("region");
     const cost_center = document.getElementById("cost_center");
+    const district = document.getElementById("district");
 
-    region.addEventListener("change", (e) => {
-      const regionId = e.target.value;
-      fetch(`{{BASE_URL}}/users/filtered_centers/${regionId}`)
-        .then((res) => res.json())
-        .then((data) => {
-          console.log("var: ", data);
-          cost_center.innerHTML = "<option>Select Cost Centre</option>";
-          data.forEach((_cost_center) => {
-            cost_center.innerHTML += `<option value="${_cost_center.id}">${_cost_center.name}</option>`;
+    // Only add event listeners if elements exist
+    if (region) {
+      region.addEventListener("change", (e) => {
+        const regionId = e.target.value;
+        fetch(`{{BASE_URL}}/users/filtered_centers/${regionId}`)
+          .then((res) => res.json())
+          .then((data) => {
+            console.log("var: ", data);
+            if (cost_center) {
+              cost_center.innerHTML = "<option>Select Cost Centre</option>";
+              data.forEach((_cost_center) => {
+                cost_center.innerHTML += `<option value="${_cost_center.id}">${_cost_center.name}</option>`;
+              });
+            }
           });
-        });
-    });
+      });
 
-    region.addEventListener("change", (e) => {
-      const regionId = e.target.value;
-      fetch(`{{BASE_URL}}/users/filtered_districts/${regionId}`)
-        .then((res) => res.json())
-        .then((data) => {
-          console.log("var: ", data);
-          district.innerHTML = "<option>Select District</option>";
-          data.forEach((_district) => {
-            district.innerHTML += `<option value="${_district.id}">${_district.district}</option>`;
-          });
-        });
-    });
+      region.addEventListener("change", (e) => {
+        const regionId = e.target.value;
+        if (district) {
+          fetch(`{{BASE_URL}}/users/filtered_districts/${regionId}`)
+            .then((res) => res.json())
+            .then((data) => {
+              console.log("var: ", data);
+              district.innerHTML = "<option>Select District</option>";
+              data.forEach((_district) => {
+                district.innerHTML += `<option value="${_district.id}">${_district.district}</option>`;
+              });
+            });
+        }
+      });
+    }
 
-    district.addEventListener("change", (e) => {
-      const districtId = e.target.value;
-      fetch(`{{BASE_URL}}/users/filtered_depots/${districtId}`)
-        .then((res) => res.json())
-        .then((data) => {
-          console.log("depots: ", data);
-          depot.innerHTML = "<option>Select Depot</option>";
-          data.forEach((_depot) => {
-            depot.innerHTML += `<option value="${_depot.id}">${_depot.depot}</option>`;
-          });
-        });
-    });
+    if (district) {
+      district.addEventListener("change", (e) => {
+        const districtId = e.target.value;
+        const depot = document.getElementById("depot");
+        if (depot) {
+          fetch(`{{BASE_URL}}/users/filtered_depots/${districtId}`)
+            .then((res) => res.json())
+            .then((data) => {
+              console.log("depots: ", data);
+              depot.innerHTML = "<option>Select Depot</option>";
+              data.forEach((_depot) => {
+                depot.innerHTML += `<option value="${_depot.id}">${_depot.depot}</option>`;
+              });
+            });
+        }
+      });
+    }
   });
-  document.getElementById('confirmReject').addEventListener('click', function() {
-    // Get the reject reason from the modal
-    var rejectReason = document.getElementById('modalRejectReason').value;
-    
-    // Set the reject reason in the main form's hidden input
-    document.getElementById('rejectReason').value = rejectReason;
-    document.getElementById('actionButton').value = "REJECT"
-    
-    // Submit the main form
-    document.getElementById('profile_form').submit();
-});
-document.getElementById('confirmApprove').addEventListener('click', function() {
-
-  document.getElementById('actionButton').value = "APPROVE"
   
-  // Submit the main form
-  document.getElementById('profile_form').submit();
-});
-document.getElementById('confirmApply').addEventListener('click', function() {
-
-  document.getElementById('actionButton').value = "APPLY"
+  // Add null checks for buttons
+  const confirmRejectBtn = document.getElementById('confirmReject');
+  if (confirmRejectBtn) {
+    confirmRejectBtn.addEventListener('click', function() {
+      // Get the reject reason from the modal
+      var rejectReason = document.getElementById('modalRejectReason').value;
+      
+      // Set the reject reason in the main form's hidden input
+      document.getElementById('rejectReason').value = rejectReason;
+      document.getElementById('actionButton').value = "REJECT"
+      
+      // Submit the main form
+      document.getElementById('profile_form').submit();
+    });
+  }
   
-  // Submit the main form
-  document.getElementById('profile_form').submit();
-});
+  const confirmApproveBtn = document.getElementById('confirmApprove');
+  if (confirmApproveBtn) {
+    confirmApproveBtn.addEventListener('click', function() {
+      document.getElementById('actionButton').value = "APPROVE"
+      
+      // Submit the main form
+      document.getElementById('profile_form').submit();
+    });
+  }
+  
+  const confirmApplyBtn = document.getElementById('confirmApply');
+  if (confirmApplyBtn) {
+    confirmApplyBtn.addEventListener('click', function() {
+      document.getElementById('actionButton').value = "APPLY"
+      
+      // Submit the main form
+      document.getElementById('profile_form').submit();
+    });
+  }
 </script>
 {% endblock %}

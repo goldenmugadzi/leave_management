@@ -111,6 +111,15 @@ def intiate(request, app):
     process.save()
     return process
 
+def gql_initiate_approval_process(app):
+    """
+    This function is used to initiate a process for a given application.
+    It creates a new Process object associated with the specified application.
+    """
+    app = Workflow.objects.get(name__iexact=app)
+    process = Process.objects.create(workflow=app)
+    process.save()
+    return process
 
 def approve_step(request, process_id):
     """
@@ -165,6 +174,7 @@ def approve_step(request, process_id):
                 approval.step = step
                 approval.save()
 
+                # Handle different workflow types - check specific workflows first
                 if process.workflow.name == "purchase request":
                     return redirect(
                         "purchase_request:purchase_request_detail",
@@ -191,36 +201,74 @@ def approve_step(request, process_id):
                     send_notification(request, 'tokens:token', token.type, token, token.id)
                     return redirect('tokens:token', token.id)
                  
+                elif process.workflow.name == "ace":
+                    # Get the approval status to customize the message
+                    approval_status = approval.approved
+                    if approval_status == "Approved":
+                        messages.success(request, "ACE approved successfully")
+                    elif approval_status == "Rejected":
+                        messages.warning(request, "ACE rejected successfully")
+                    else:
+                        messages.success(request, "ACE actioned successfully")
+                    
+                    print(process.ace2_set.last().Ace_id2, "Please")
+                    return redirect("Ace:ace_detail", process.ace2_set.last().Ace_id2)
+                elif process.workflow.name == "ace_value":
+                    # Handle high-value ACE workflow with enhanced messaging
+                    approval_status = approval.approved
+                    if approval_status == "Approved":
+                        messages.success(request, "High-value ACE approved successfully")
+                    elif approval_status == "Rejected":
+                        messages.warning(request, "High-value ACE rejected successfully")
+                    else:
+                        messages.success(request, "High-value ACE actioned successfully")
+                    
+                    return redirect("Ace:ace_detail", process.ace2_set.last().Ace_id2)
                 elif process.workflow.name == "pettycash":
+                    # Get the approval status to customize the message
+                    approval_status = approval.approved
+                    if approval_status == "Approved":
+                        messages.success(request, "PettyCash approved successfully")
+                    elif approval_status == "Rejected":
+                        messages.warning(request, "PettyCash rejected successfully")
+                    else:
+                        messages.success(request, "PettyCash actioned successfully")
+                    
                     return redirect(
                         "pettycash:pettycash_detail",
                         process.pettycash_set.last().petty_id,
                     )
-                elif process.workflow.name == "ace":
-                    print(process.ace2_set.last().Ace_id2, "Please")
-                    messages.success(request, "ace actioned successfully")
-                    return redirect("Ace:ace_detail", process.ace2_set.last().Ace_id2)
+                # Check for tokens only if no specific workflow matched
+                elif process.token_set.exists():
+                    token = process.token_set.last()
+                    send_notification(request, 'tokens:token', token.type, token, token.id)
+                    print('------------------------------got here-----------------------------------', str(token.id))
+                    return redirect('tokens:token', token.id)
                 else:
                     return redirect("approve:workflow_detail", process.workflow.id)
             else:
-
                 messages.error(request, "A comment must be provided for rejection.")
                 if process.workflow.name == "purchase request":
                     return redirect(
                         "purchase_request:purchase_request_detail",
                         process.purchaserequest_set.last().id,
                     )
-
-                if process.workflow.name == "tokens":
-                    return (
-                        False  # redirect('tokens:token', process.token_set.last().id)
-                    )
+                elif process.workflow.name == "ace":
+                    messages.info(request, "Returning to ACE detail page. Please provide a comment for rejection.")
+                    return redirect("Ace:ace_detail", process.ace2_set.last().Ace_id2)
+                elif process.workflow.name == "ace_value":
+                    messages.info(request, "Returning to high-value ACE detail page. Please provide a comment for rejection.")
+                    return redirect("Ace:ace_detail", process.ace2_set.last().Ace_id2)
                 elif process.workflow.name == "pettycash":
+                    messages.info(request, "Returning to PettyCash detail page. Please provide a comment for rejection.")
                     return redirect(
                         "pettycash:pettycash_detail",
                         process.pettycash_set.last().petty_id,
                     )
-
+                elif process.workflow.name == "tokens":
+                    return (
+                        False  # redirect('tokens:token', process.token_set.last().id)
+                    )
                 else:
                     return redirect("approve:workflow_detail", process.workflow.id)
 
@@ -230,14 +278,16 @@ def approve_step(request, process_id):
                 "purchase_request:purchase_request_detail",
                 process.purchaserequest_set.last().id,
             )
-
-        if process.workflow.name == "tokens":
-            return redirect("tokens:token", process.token_set.last().id)
+        elif process.workflow.name == "ace":
+            return redirect("Ace:ace_detail", process.ace2_set.last().Ace_id2)
+        elif process.workflow.name == "ace_value":
+            return redirect("Ace:ace_detail", process.ace2_set.last().Ace_id2)
         elif process.workflow.name == "pettycash":
             return redirect(
                 "pettycash:pettycash_detail", process.pettycash_set.last().petty_id
             )
-
+        elif process.workflow.name == "tokens":
+            return redirect("tokens:token", process.token_set.last().id)
         else:
             return redirect("approve:workflow_detail", process.workflow.id)
 
@@ -247,14 +297,16 @@ def approve_step(request, process_id):
             "purchase_request:purchase_request_detail",
             process.purchaserequest_set.last().id,
         )
-
-    if process.workflow.name == "tokens":
-        return redirect("tokens:token", process.token_set.last().id)
+    elif process.workflow.name == "ace":
+        return redirect("Ace:ace_detail", process.ace2_set.last().Ace_id2)
+    elif process.workflow.name == "ace_value":
+        return redirect("Ace:ace_detail", process.ace2_set.last().Ace_id2)
     elif process.workflow.name == "pettycash":
         return redirect(
             "pettycash:pettycash_detail", process.pettycash_set.last().petty_id
         )
-
+    elif process.workflow.name == "tokens":
+        return redirect("tokens:token", process.token_set.last().id)
     else:
         return redirect("approve:workflow_detail", process.workflow.id)
 
@@ -319,6 +371,126 @@ def send_notification(request, url, app, obj,id):
 
         messages.info(request, f" Please inform your EXPECTED APPROVER to contact system administrator for approval authorisation of ({notification_type.upper()}) for ({ str(obj.cost_center).upper() })")
         return 0
+# def gql_send_notification(obj):
+#     responsibilities = approvers(obj)
+#     recipients = []
+#     recipient_emails = []
+#     if responsibilities is None:
+#         return "This process was completed successfully", []
+#     elif not responsibilities:
+#         return f"No approvers for the next step. Please inform your EXPECTED APPROVER to contact system administrator for approval authorisation of ({str(obj.cost_center).upper()})", []
+#     domain_name = config('be_url')
+#     cc_recipients = []
+#     cc_recipients_names = []
+#     redirect_url = f"{domain_name}/graphql"  # Adjust as needed for your frontend
+#     message = "We kindly request that you review and take necessary action regarding this"
+
+#     hour = datetime.now().hour
+#     greetings = {(0, 4): "Good night!", (5, 11): "Good morning!", (12, 16): "Good afternoon!", (17, 20): "Good evening!", (21, 23): "Good night!"}
+#     subject = next((msg for (start, end), msg in greetings.items() if start <= hour <= end), "Hello!")
+
+#     notification_type = obj.__class__.__name__.lower()
+#     notification_id = getattr(obj, 'id', None)
+
+#     for responsibility in responsibilities:
+#         if responsibility.user.email and is_valid_email(responsibility.user.email):
+#             recipients.append(responsibility.user)
+#             recipient_emails.append(responsibility.user.email)
+#             cc_recipients.append(responsibility.user.email)
+#             cc_recipients_names.append(responsibility.user.get_full_name())
+#     try:
+#         user = recipients[0]
+#         Notification.objects.create(
+#             user=user,
+#             message=message,
+#             url=redirect_url,
+#             notification_type=notification_type,
+#             notification_id=notification_id
+#         )
+#         response = ms_exhange_send_html(
+#             subject=subject,
+#             to_recipients=[user.email],
+#             cc_recipients=cc_recipients,
+#             template='email/email_template.html',
+#             kwargs={"kwargs": {"redirect_url": redirect_url, "type": notification_type, "user_fullname": user.get_full_name(), "message": message}}
+#         )
+#         if response.status_code == 200:
+#             return f"Email notification successfully sent to {', '.join(recipient_emails)}"
+#         else:
+#             return f"Error sending email to {user.get_full_name()}"
+#     except Exception as e:
+#         return f"Error: {str(e)}. Please inform your EXPECTED APPROVER to contact system administrator for approval authorisation of ({obj.process.workflow.name.upper()}) for ({str(obj.cost_center).upper()})"
+
+def gql_send_notification(obj):
+    responsibilities = approvers(obj)
+    recipients = []
+    recipient_emails = []
+
+    if responsibilities is None:
+        return "This process was completed successfully"
+
+    elif not responsibilities:
+        return f"No approvers for the next step. Please inform your EXPECTED APPROVER to contact system administrator for approval authorisation of ({str(obj.cost_center).upper()})"
+
+    domain_name = config('be_url')
+    cc_recipients = []
+    cc_recipients_names = []
+    redirect_url = f"{domain_name}/graphql"  # Adjust for your frontend
+    message = "We kindly request that you review and take necessary action regarding this"
+
+    hour = datetime.now().hour
+    greetings = {
+        (0, 4): "Good night!",
+        (5, 11): "Good morning!",
+        (12, 16): "Good afternoon!",
+        (17, 20): "Good evening!",
+        (21, 23): "Good night!"
+    }
+    subject = next((msg for (start, end), msg in greetings.items() if start <= hour <= end), "Hello!")
+
+    notification_type = obj.__class__.__name__.lower()
+    notification_id = getattr(obj, 'id', None)
+
+    for responsibility in responsibilities:
+        if responsibility.user.email and is_valid_email(responsibility.user.email):
+            recipients.append(responsibility.user)
+            recipient_emails.append(responsibility.user.email)
+            cc_recipients.append(responsibility.user.email)
+            cc_recipients_names.append(responsibility.user.get_full_name())
+
+    try:
+        user = recipients[0]
+        Notification.objects.create(
+            user=user,
+            message=message,
+            url=redirect_url,
+            notification_type=notification_type,
+            notification_id=notification_id
+        )
+        response = ms_exhange_send_html(
+            subject=subject,
+            to_recipients=[user.email],
+            cc_recipients=cc_recipients,
+            template='email/email_template.html',
+            kwargs={
+                "kwargs": {
+                    "redirect_url": redirect_url,
+                    "type": notification_type,
+                    "user_fullname": user.get_full_name(),
+                    "message": message
+                }
+            }
+        )
+        if response.status_code == 200:
+            return f"Email notification successfully sent to {', '.join(recipient_emails)}"
+        else:
+            return f"Error sending email to {user.get_full_name()}"
+
+    except Exception as e:
+        return (
+            f"Error: {str(e)}. Please inform your EXPECTED APPROVER to contact system administrator "
+            f"for approval authorisation of ({obj.process.workflow.name.upper()}) for ({str(obj.cost_center).upper()})"
+        )
 
 def notify(request,subject,user,message,redirect_url,url,notification_type,notification_id,cc_recipients,cc_recipients_names):
       # Create the notification

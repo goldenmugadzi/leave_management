@@ -18,15 +18,16 @@ SECRET_KEY = 'django-insecure-7per#nouy422m0!hn0!ecb7ltnq#!^#g!2r5&%^5c%v(!ivv&a
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG', default=False, cast=bool)
 
-ALLOWED_HOSTS = [config('HOST'), "*", "172.16.8.121"]
+ALLOWED_HOSTS = ["*"]
+CORS_ALLOW_ALL_ORIGINS = True
 
-CORS_ALLOWED_ORIGINS = [
-    config('BASE_URL') + ":" + config('PORT'),
-    config('BASE_URL') + ":3000",
-]
+# CORS_ALLOWED_ORIGINS = [
+#     config('BASE_URL') + ":" + config('PORT'),
+#     config('BASE_URL') + ":3000",
+# ]
 
 # CORS_ALLOW_ALL_ORIGINS = True
-CSRF_TRUSTED_ORIGINS = [config('BASE_URL'), config('BASE_URL') + ":" + config('PORT')]
+CSRF_TRUSTED_ORIGINS = [config('BASE_URL'), config('BASE_URL') + ":" + config('PORT'),"https://d4d74ece50d8.ngrok-free.app"]
 
 CORS_ALLOW_HEADERS = ('content-disposition', 'accept-encoding',
                       'content-type', 'accept', 'origin', 'authorization')
@@ -103,6 +104,7 @@ INSTALLED_APPS = [
     'it.users',
     'it.change_requests',
     'executive.exec_dashboards',
+    'executive.general_dashboards',
     'knowledge_center',
     'Docs',
     'approve',
@@ -119,6 +121,7 @@ INSTALLED_APPS = [
     'esearch',
     'appraisal.apps.AppraisalConfig',
 
+    'toolsandequipment',
     'reports',
     'sweetify',
     'mathfilters',
@@ -126,12 +129,27 @@ INSTALLED_APPS = [
     'commecial.tempertockens',
     'competence_building.apps.CompetenceBuildingConfig',
     'crispy_forms',
-    'crispy_tailwind'
+    'crispy_tailwind',
+    'graphene_django',
+    'graphene_file_upload',
+    'safety',
+    'BatteryMaintenance', 
+    'comm_files',
+    'django_prometheus',
+    'api.ops_maintenance.safety_operations',
+    'Transport',
+    'Hardware_Faults',
+    'Asset_Register',
+    'widget_tweaks',
+    'meetings',
+    'leave_management',
+    'sanction_for_test',
 ]
 
 AUTH_USER_MODEL = 'users.UserProfile'
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'corsheaders.middleware.CorsMiddleware',
@@ -170,6 +188,7 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'beii_v1.wsgi.application'
+ASGI_APPLICATION = 'beii_v1.wsgi.application'
 SECURE_SSL_REDIRECT = config('SECURE_SSL_REDIRECT', default=False, cast=bool)
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', config('SECURE_PROXY_SSL_HEADER', default='http'))
 CSRF_COOKIE_SECURE = config('CSRF_COOKIE_SECURE', default=False, cast=bool)
@@ -199,6 +218,21 @@ DATABASES = {
     #     'PORT': config('REMOTE_DB_PORT', default='3306'),
     # }
 }
+
+
+
+GRAPHENE = {
+    'SCHEMA': 'beii_v1.schema.schema',
+    'MIDDLEWARE': [
+        'graphql_jwt.middleware.JSONWebTokenMiddleware',
+    ],
+}
+
+AUTHENTICATION_BACKENDS = [
+    'graphql_jwt.backends.JSONWebTokenBackend',
+    'django.contrib.auth.backends.ModelBackend',
+]
+
 
 # Password validation
 # https://docs.djangoproject.com/en/4.1/ref/settings/#auth-password-validators
@@ -276,7 +310,6 @@ EMAIL_HOST = config("MS_SERVER")
 EMAIL_HOST_USER = config("MS_EMAIL")
 DEFAULT_FROM_EMAIL = config("MS_EMAIL")
 EMAIL_HOST_PASSWORD = config("MS_PASS")
-PASSWORD_RESET_TIMEOUT = 3600  # 1 hour
 
 DATA_UPLOAD_MAX_MEMORY_SIZE = 1024 * 1024 * 30
 

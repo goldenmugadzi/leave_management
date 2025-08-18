@@ -1,0 +1,95 @@
+{% extends "admin_layout.html" %}
+{% load static %}
+
+{% block content %}
+<div class="content-wrapper">
+  <div class="max-w-6xl mx-auto py-10">
+    <h2 class="text-2xl font-bold mb-8 text-center">Fault Locator System</h2>
+    
+    <!-- Senior Foreperson Section -->
+    {% if user.designation and "senior" in user.designation.description.lower %}
+    <div class="mb-8">
+      <h3 class="text-xl font-semibold mb-4 text-blue-600">Senior Foreperson Functions</h3>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <a href="{% url 'senior_device_assignment' %}" class="block bg-blue-50 rounded-lg shadow hover:shadow-lg p-6 text-center hover:bg-blue-100 transition">
+          <div class="text-lg font-semibold mb-2">Assign Devices to Teams</div>
+          <div class="text-gray-600">Allocate fault locator devices to teams</div>
+        </a>
+        <a href="{% url 'deploy_team_to_depot' %}" class="block bg-blue-50 rounded-lg shadow hover:shadow-lg p-6 text-center hover:bg-blue-100 transition">
+          <div class="text-lg font-semibold mb-2">Deploy Teams to Depots</div>
+          <div class="text-gray-600">Send teams to specific depot locations</div>
+        </a>
+        <a href="{% url 'team_deployments' %}" class="block bg-blue-50 rounded-lg shadow hover:shadow-lg p-6 text-center hover:bg-blue-100 transition">
+          <div class="text-lg font-semibold mb-2">View Team Deployments</div>
+          <div class="text-gray-600">Monitor active team assignments</div>
+        </a>
+      </div>
+    </div>
+    {% endif %}
+    
+    <!-- Depot Foreperson Section -->
+    {% if user.designation and "foreperson" in user.designation.description.lower and user.depot %}
+    <div class="mb-8">
+      <h3 class="text-xl font-semibold mb-4 text-green-600">Depot Foreperson Functions</h3>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <a href="{% url 'depot_fault_priority' depot_id=user.depot.id %}" class="block bg-green-50 rounded-lg shadow hover:shadow-lg p-6 text-center hover:bg-green-100 transition">
+          <div class="text-lg font-semibold mb-2">Prioritize Depot Faults</div>
+          <div class="text-gray-600">Set priority levels for faults at your depot</div>
+        </a>
+        <a href="{% url 'fault_list' %}?depot={{ user.depot.id }}" class="block bg-green-50 rounded-lg shadow hover:shadow-lg p-6 text-center hover:bg-green-100 transition">
+          <div class="text-lg font-semibold mb-2">View Depot Faults</div>
+          <div class="text-gray-600">See all faults reported at your depot</div>
+        </a>
+      </div>
+    </div>
+    {% endif %}
+    
+    <!-- General Functions -->
+    <div class="mb-8">
+      <h3 class="text-xl font-semibold mb-4 text-gray-700">General Functions</h3>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <a href="{% url 'fault_locator_home' %}" class="block bg-white rounded-lg shadow hover:shadow-lg p-6 text-center hover:bg-gulf-blue-100 transition">
+          <div class="text-xl font-semibold mb-2">Home</div>
+          <div class="text-gray-500">Fault Locator Dashboard</div>
+        </a>
+        <a href="{% url 'device_list' %}" class="block bg-white rounded-lg shadow hover:shadow-lg p-6 text-center hover:bg-gulf-blue-100 transition">
+          <div class="text-xl font-semibold mb-2">Device List</div>
+          <div class="text-gray-500">View and manage locator devices</div>
+        </a>
+        <a href="{% url 'create_device' %}" class="block bg-white rounded-lg shadow hover:shadow-lg p-6 text-center hover:bg-gulf-blue-100 transition">
+          <div class="text-xl font-semibold mb-2">Add Device</div>
+          <div class="text-gray-500">Register a new locator device</div>
+        </a>
+        <a href="{% url 'usage_report' %}" class="block bg-white rounded-lg shadow hover:shadow-lg p-6 text-center hover:bg-gulf-blue-100 transition">
+          <div class="text-xl font-semibold mb-2">Device Usage Report</div>
+          <div class="text-gray-500">View device usage analytics</div>
+        </a>
+        <a href="{% url 'team_list' %}" class="block bg-white rounded-lg shadow hover:shadow-lg p-6 text-center hover:bg-gulf-blue-100 transition">
+          <div class="text-xl font-semibold mb-2">Team List</div>
+          <div class="text-gray-500">View and manage locator teams</div>
+        </a>
+        <a href="{% url 'create_team' %}" class="block bg-white rounded-lg shadow hover:shadow-lg p-6 text-center hover:bg-gulf-blue-100 transition">
+          <div class="text-xl font-semibold mb-2">Add Team</div>
+          <div class="text-gray-500">Create a new locator team</div>
+        </a>
+        <a href="{% url 'create_fault' %}" class="block bg-white rounded-lg shadow hover:shadow-lg p-6 text-center hover:bg-gulf-blue-100 transition">
+          <div class="text-xl font-semibold mb-2">Report Fault</div>
+          <div class="text-gray-500">Log a new fault for tracking</div>
+        </a>
+        <a href="{% url 'assign_fault' %}" class="block bg-white rounded-lg shadow hover:shadow-lg p-6 text-center hover:bg-gulf-blue-100 transition">
+          <div class="text-xl font-semibold mb-2">Assign Fault</div>
+          <div class="text-gray-500">Assign a team and device to a fault</div>
+        </a>
+        <a href="{% url 'assign_device_to_team' %}" class="block bg-white rounded-lg shadow hover:shadow-lg p-6 text-center hover:bg-gulf-blue-100 transition">
+          <div class="text-xl font-semibold mb-2">Assign Device to Team</div>
+          <div class="text-gray-500">Allocate a locator device to a team (one device per team)</div>
+        </a>
+        <a href="{% url 'fault_list' %}" class="block bg-white rounded-lg shadow hover:shadow-lg p-6 text-center hover:bg-gulf-blue-100 transition">
+          <div class="text-xl font-semibold mb-2">Fault List</div>
+          <div class="text-gray-500">View all faults and their assigned teams/devices</div>
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

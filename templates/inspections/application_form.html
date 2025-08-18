@@ -1,0 +1,311 @@
+{% extends 'admin_layout.html' %}
+{% load static %}
+{% load widget_tweaks %}
+
+{% block title %}{% if is_edit %}Edit Application{% else %}New Application{% endif %}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-title-box">
+                <div class="page-title-right">
+                    <a href="{% url 'inspections:application_list' %}" class="btn btn-secondary">
+                        <i class="mdi mdi-arrow-left"></i> Back to List
+                    </a>
+                </div>
+                <h4 class="page-title">{% if is_edit %}Edit Application{% else %}New Application{% endif %}</h4>
+                <ol class="breadcrumb m-0">
+                    <li class="breadcrumb-item"><a href="{% url 'inspections:dashboard' %}">Inspections</a></li>
+                    <li class="breadcrumb-item"><a href="{% url 'inspections:application_list' %}">Applications</a></li>
+                    <li class="breadcrumb-item active">{% if is_edit %}Edit{% else %}Create{% endif %}</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <form method="post" novalidate>
+                        {% csrf_token %}
+                        
+                        <!-- Application Information -->
+                        <div class="row">
+                            <div class="col-12">
+                                <h5 class="mb-3 text-uppercase bg-light p-2">
+                                    <i class="mdi mdi-file-document me-1"></i> Application Information
+                                </h5>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.application_type.id_for_label }}" class="form-label">
+                                        Application Type <span class="text-danger">*</span>
+                                    </label>
+                                    {{ form.application_type|add_class:"form-control" }}
+                                    {% if form.application_type.errors %}
+                                        <div class="text-danger small">{{ form.application_type.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.priority.id_for_label }}" class="form-label">
+                                        Priority Level <span class="text-danger">*</span>
+                                    </label>
+                                    {{ form.priority|add_class:"form-control" }}
+                                    {% if form.priority.errors %}
+                                        <div class="text-danger small">{{ form.priority.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Customer Information -->
+                        <div class="row">
+                            <div class="col-12">
+                                <h5 class="mb-3 text-uppercase bg-light p-2">
+                                    <i class="mdi mdi-account me-1"></i> Customer Information
+                                </h5>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.customer_name.id_for_label }}" class="form-label">
+                                        Customer Name <span class="text-danger">*</span>
+                                    </label>
+                                    {{ form.customer_name|add_class:"form-control" }}
+                                    {% if form.customer_name.errors %}
+                                        <div class="text-danger small">{{ form.customer_name.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.customer_phone.id_for_label }}" class="form-label">
+                                        Customer Phone
+                                    </label>
+                                    {{ form.customer_phone|add_class:"form-control" }}
+                                    {% if form.customer_phone.errors %}
+                                        <div class="text-danger small">{{ form.customer_phone.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.customer_email.id_for_label }}" class="form-label">
+                                        Customer Email
+                                    </label>
+                                    {{ form.customer_email|add_class:"form-control" }}
+                                    {% if form.customer_email.errors %}
+                                        <div class="text-danger small">{{ form.customer_email.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.customer_address.id_for_label }}" class="form-label">
+                                        Customer Address
+                                    </label>
+                                    {{ form.customer_address|add_class:"form-control" }}
+                                    {% if form.customer_address.errors %}
+                                        <div class="text-danger small">{{ form.customer_address.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Property Information -->
+                        <div class="row">
+                            <div class="col-12">
+                                <h5 class="mb-3 text-uppercase bg-light p-2">
+                                    <i class="mdi mdi-home me-1"></i> Property Information
+                                </h5>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-8">
+                                <div class="mb-3">
+                                    <label for="{{ form.property_address.id_for_label }}" class="form-label">
+                                        Property Address <span class="text-danger">*</span>
+                                    </label>
+                                    {{ form.property_address|add_class:"form-control" }}
+                                    {% if form.property_address.errors %}
+                                        <div class="text-danger small">{{ form.property_address.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="mb-3">
+                                    <label for="{{ form.property_type.id_for_label }}" class="form-label">
+                                        Property Type
+                                    </label>
+                                    {{ form.property_type|add_class:"form-control" }}
+                                    {% if form.property_type.errors %}
+                                        <div class="text-danger small">{{ form.property_type.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.service_number.id_for_label }}" class="form-label">
+                                        Service Number
+                                    </label>
+                                    {{ form.service_number|add_class:"form-control" }}
+                                    <small class="form-text text-muted">If existing service available</small>
+                                    {% if form.service_number.errors %}
+                                        <div class="text-danger small">{{ form.service_number.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Installation Details -->
+                        <div class="row">
+                            <div class="col-12">
+                                <h5 class="mb-3 text-uppercase bg-light p-2">
+                                    <i class="mdi mdi-wrench me-1"></i> Installation Details
+                                </h5>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="mb-3">
+                                    <label for="{{ form.installation_description.id_for_label }}" class="form-label">
+                                        Installation Description
+                                    </label>
+                                    {{ form.installation_description|add_class:"form-control" }}
+                                    {% if form.installation_description.errors %}
+                                        <div class="text-danger small">{{ form.installation_description.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.contractor_name.id_for_label }}" class="form-label">
+                                        Contractor Name
+                                    </label>
+                                    {{ form.contractor_name|add_class:"form-control" }}
+                                    {% if form.contractor_name.errors %}
+                                        <div class="text-danger small">{{ form.contractor_name.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="{{ form.contractor_license.id_for_label }}" class="form-label">
+                                        Contractor License
+                                    </label>
+                                    {{ form.contractor_license|add_class:"form-control" }}
+                                    {% if form.contractor_license.errors %}
+                                        <div class="text-danger small">{{ form.contractor_license.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Additional Information -->
+                        <div class="row">
+                            <div class="col-12">
+                                <h5 class="mb-3 text-uppercase bg-light p-2">
+                                    <i class="mdi mdi-information me-1"></i> Additional Information
+                                </h5>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="mb-3">
+                                    <label for="{{ form.notes.id_for_label }}" class="form-label">
+                                        Notes
+                                    </label>
+                                    {{ form.notes|add_class:"form-control" }}
+                                    {% if form.notes.errors %}
+                                        <div class="text-danger small">{{ form.notes.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <div class="form-check">
+                                        {{ form.documents_attached }}
+                                        <label class="form-check-label" for="{{ form.documents_attached.id_for_label }}">
+                                            Documents Attached
+                                        </label>
+                                    </div>
+                                    {% if form.documents_attached.errors %}
+                                        <div class="text-danger small">{{ form.documents_attached.errors.0 }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Form Actions -->
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="text-end">
+                                    <a href="{% url 'inspections:application_list' %}" class="btn btn-secondary me-2">
+                                        Cancel
+                                    </a>
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="mdi mdi-content-save"></i> 
+                                        {% if is_edit %}Update Application{% else %}Create Application{% endif %}
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Add form validation feedback
+    const form = document.querySelector('form');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            // Basic client-side validation
+            const requiredFields = form.querySelectorAll('[required]');
+            let isValid = true;
+            
+            requiredFields.forEach(field => {
+                if (!field.value.trim()) {
+                    field.classList.add('is-invalid');
+                    isValid = false;
+                } else {
+                    field.classList.remove('is-invalid');
+                }
+            });
+            
+            if (!isValid) {
+                e.preventDefault();
+                alert('Please fill in all required fields.');
+            }
+        });
+    }
+});
+</script>
+{% endblock %} 
