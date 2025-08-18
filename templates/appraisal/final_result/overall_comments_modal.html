@@ -19,8 +19,11 @@
             </div>
 
             <div class="flex justify-end mt-2 mr-8 gap-2">
+
                 {% if is_appraiser or is_reviewer %}
-                    <button type="submit" class="w-96 bg-blue-500 hover:bg-blue-700 inline-block rounded-full text-white py-2 px-4" name="appraisal_overall_comment_request">Save</button>
+                    {% if is_within_current_quarter and is_all_scored %}
+                        <button type="submit" class="w-96 bg-blue-500 hover:bg-blue-700 inline-block rounded-full text-white py-2 px-4" name="appraisal_overall_comment_request">Save</button>
+                    {% endif %}
                 {% endif %}
                 <button type="button" onclick="closeOverallCommentModal()" class="px-4 py-2 text-white bg-red-500 rounded-lg">Close</button>
             </div> 

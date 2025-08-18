@@ -393,6 +393,20 @@ class AppraiseePersonalAttributesDetailView(TemplateView):
             return "C, D, E and F"
         return ""
 
+    def is_current_date_in_current_quarter(self)->bool:
+        appraisal_object = self.get_appraisal_object()
+        handler = CurrentQuarterDate(year=appraisal_object.created_date.year)
+        current_quarter = handler.get_current_quarter()
+        return current_quarter.is_within_fourth_quarter
+    
+    def is_all_scored(self):
+        repo = AppraisalOutPutPerformanceDimensionScoreRepository()
+        scores_qr = repo.fetch_by_appraisal_id(appraisal_id=self.get_appraisal_object().id)
+        not_scored_qr = scores_qr.filter(is_scored=False)
+        if not_scored_qr.exists():
+            return False
+        return True
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         quarter_ratings, final_score = self.get_quarterly_total_score()
@@ -404,6 +418,8 @@ class AppraiseePersonalAttributesDetailView(TemplateView):
         context["final_score"] = final_score
         context["final_comment_form"] = self.get_final_comment_form(None)
         context["appraisee_grade"] = self.appraisee_grade()
+        context["is_within_current_quarter"] = self.is_current_date_in_current_quarter()
+        context["is_all_scored"] = self.is_all_scored()
 
         return context
     
