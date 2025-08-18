@@ -4,6 +4,7 @@
 
 {% block styles %}
 <link  rel="stylesheet"  href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css"/>
+<link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.dataTables.min.css"/>
 <style>
   .dataTables_wrapper .dataTables_length select {
     width: 4rem;
@@ -19,9 +20,10 @@
       <div class=" grid grid-cols-4 container text-center ">
 {#        {% comment %} <a href="{% url 'nonconformity:checklist' %}" class="bg-blue-500 hover:bg-blue-700 inline-block rounded-full mx-3 text-white py-2 px-4 rounded">Create from checklist</a> {% endcomment %}#}
           <a href="/pettycash/print_report_csv/{{ report }}" class="bg-green-500 hover:bg-green-900 inline-block rounded-full mx-3 text-white py-2 px-4 rounded">CSV report</a>
+          <a href="/pettycash/print_report_xlsx/{{ report }}" class="bg-blue-500 hover:bg-blue-700 inline-block rounded-full mx-3 text-white py-2 px-4 rounded">Excel report</a>
 {#          <a href="/pettycash/print_report_pdf/{{ report }}" class="bg-yellow-500 hover:bg-red-900 inline-block rounded-full mx-3 text-white py-2 px-4 rounded">PDF report</a>#}
       </div>
-      <br> <table id="nonconformity" class="table table-striped stripe table-bordered">
+  <br> <table id="nonconformity" class="table table-striped stripe table-bordered">
         <thead>
           <tr>
             <tr>
@@ -41,17 +43,36 @@
             <tr class="h-1">
                 <td><a class="text-blue-500" href="/pettycash/pettycash_detail/{{pettycash.petty_id}}">{{ pettycash.petty_id|default_if_none:'' }}</a></td>
                 <td>{{ pettycash.details_of_expenditure }}</td>
-              <td>{{ pettycash.amount }}</td>
+              <td>{{ pettycash.amount|floatformat:2|intcomma }}</td>
 
             <td>{% if pettycash.requested_by == user %} You {% else %} {{pettycash.requested_by.get_full_name }} {% endif %}</td>
-              <td>{{ pettycash.date_created }}</td>
+              <td>{{ pettycash.date_created|date:"Y-m-d" }}</td>
               <td>{{ pettycash.section }}</td>
             <td>{{ pettycash.section.code }}</td>
-            <td>{{ pettycash.process.approval_set.last|default_if_none:'' }}</td>
+            <td>
+              {% if pettycash.receipt_file %}
+                <span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs">Cleared</span>
+              {% elif pettycash.payment_mode %}
+                <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs">Disbursed</span>
+              {% elif pettycash.process.approval_set.last and pettycash.process.approval_set.last.approved == 'Rejected' %}
+                <span class="bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs">Rejected</span>
+              {% elif pettycash.process.approval_set.last %}
+                <span class="bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs">Approved</span>
+              {% else %}
+                <span class="bg-gray-100 text-gray-800 px-2 py-1 rounded-full text-xs">Created</span>
+              {% endif %}
+            </td>
               {% comment %} <td>{{ pettycash.process }}</td> {% endcomment %}
             </tr>
           {% endfor %}
         </tbody>
+        <tfoot>
+          <tr>
+            <th colspan="2" class="text-right">Total (visible):</th>
+            <th id="amountTotal"></th>
+            <th colspan="5"></th>
+          </tr>
+        </tfoot>
       </table>
 
     </div>
@@ -63,12 +84,26 @@
 {% block scripts %}
 <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
 <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.print.min.js"></script>
 <script>
   $(document).ready(function () {
     // Initialize the DataTable with options and Tailwind CSS classes
-    $("#nonconformity").DataTable({
+    const table = $("#nonconformity").DataTable({
+      dom: 'Bfrtip',
+      buttons: [
+        { extend: 'copyHtml5', footer: true },
+        { extend: 'csvHtml5', title: 'pettycash_report', footer: true },
+        { extend: 'excelHtml5', title: 'pettycash_report', footer: true },
+        { extend: 'pdfHtml5', title: 'pettycash_report', footer: true },
+        { extend: 'print', title: 'Pettycash Report' }
+      ],
       // Set the number of rows to display per page
-      "pageLength": 10,
+      "pageLength": parseInt(localStorage.getItem('pc_reports_length') || '10', 10),
   
       // Enable sorting on the specified columns
       "columnDefs": [
@@ -80,9 +115,40 @@
   
       // Display the DataTable in a responsive manner
       "responsive": true,
+      "footerCallback": function ( row, data, start, end, display ) {
+        const api = this.api();
+        // Remove formatting to get an integer for summation
+        const intVal = function ( i ) {
+            if (typeof i === 'string') {
+              return parseFloat(i.replace(/[,\s]/g, '')) || 0;
+            }
+            if (typeof i === 'number') {
+              return i;
+            }
+            return 0;
+        };
+        // Column index for Amount (zero-based)
+        const amountIdx = 2;
+        const pageTotal = api
+            .column( amountIdx, { page: 'current'} )
+            .data()
+            .reduce( function (a, b) {
+                return intVal(a) + intVal(b);
+            }, 0 );
+        // Write to footer cell
+        $( api.column(amountIdx).footer() ).html(
+            pageTotal.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+        );
+      }
   
      
     });
+    // Restore prior search
+    const prevSearch = localStorage.getItem('pc_reports_search');
+    if (prevSearch) { table.search(prevSearch).draw(); }
+    // Persist length and search
+    table.on('search.dt', function(){ localStorage.setItem('pc_reports_search', table.search()); });
+    table.on('length.dt', function(e, settings, len){ localStorage.setItem('pc_reports_length', String(len)); });
   });
 </script>
 {% endblock %}

@@ -1,3 +1,53 @@
+from decimal import Decimal
+from django import forms
+from .models import Pettycash
+
+
+class CashierDisbursementForm(forms.Form):
+    payment_mode = forms.ChoiceField(
+        choices=Pettycash.PAYMENT_MODE_CHOICES,
+        required=True,
+        label="Payment mode"
+    )
+    amount_disbursed = forms.DecimalField(
+        required=True,
+        min_value=Decimal("0.01"),
+        max_digits=12,
+        decimal_places=2,
+        label="Amount disbursed"
+    )
+
+    def __init__(self, *args, pettycash: Pettycash, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.pettycash = pettycash
+
+        # Helpful default for cashier: start at requested amount
+        if not self.is_bound:
+            self.initial.setdefault("amount_disbursed", Decimal(str(self.pettycash.amount)))
+
+        # Apply consistent styling to widgets
+        self.fields["payment_mode"].widget.attrs.update({
+            'class': "block w-full rounded-md border-0 py-1.5 text-gray-900 bg-white shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600 sm:text-sm",
+        })
+        self.fields["amount_disbursed"].widget = forms.NumberInput()
+        self.fields["amount_disbursed"].widget.attrs.update({
+            'class': "block w-full rounded-md border-0 py-1.5 text-gray-900 bg-white shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600 sm:text-sm",
+            'step': '0.01',
+            'min': '0.01',
+            'inputmode': 'decimal',
+        })
+
+    def clean_amount_disbursed(self):
+        amt = self.cleaned_data["amount_disbursed"]
+        try:
+            max_amt = Decimal(str(self.pettycash.amount))
+        except Exception:
+            max_amt = Decimal("0")
+        if amt > max_amt:
+            raise forms.ValidationError(f"Amount disbursed cannot exceed requested amount ({max_amt}).")
+        return amt
+
+
 from django import forms
 from django.contrib.auth.models import User
 
@@ -174,9 +224,50 @@ class PettycashReportForm(forms.ModelForm):
         # quotation_form.fields['quotation_file'].label = self.get_quotation_label(i + 1)
 
     # def get_quotation_label(self, quotation_number): suffix = 'ACE' if 11 <= quotation_number <= 13 else {1: 'st',
-    # 2: 'nd', 3
-
+    # 2: 'nd', 3: 'rd'}.get(quotation_number % 10, 'th')
     def humanize_field_name(self, field_name):
         words = field_name.split('_')
         capitalized_words = [word.capitalize() for word in words]
         return ' '.join(capitalized_words)
+
+
+class RequesterClearForm(forms.Form):
+    receipt_file = forms.FileField(required=True, label="Receipt")
+    amount_used = forms.DecimalField(
+        required=True,
+        min_value=Decimal("0.01"),
+        max_digits=12,
+        decimal_places=2,
+        label="Amount used"
+    )
+
+    def __init__(self, *args, pettycash: Pettycash, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.pettycash = pettycash
+        # Helpful default: set to amount_disbursed if present, else requested
+        default_amt = self.pettycash.amount_disbursed if self.pettycash.amount_disbursed is not None else self.pettycash.amount
+        if not self.is_bound and default_amt is not None:
+            self.initial.setdefault("amount_used", Decimal(str(default_amt)))
+
+        # Apply consistent styling to widgets
+        self.fields["receipt_file"].widget.attrs.update({
+            'class': "block w-full rounded-md border-0 py-1.5 text-gray-900 bg-white shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600 sm:text-sm",
+        })
+        self.fields["amount_used"].widget = forms.NumberInput()
+        self.fields["amount_used"].widget.attrs.update({
+            'class': "block w-full rounded-md border-0 py-1.5 text-gray-900 bg-white shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-indigo-600 sm:text-sm",
+            'step': '0.01',
+            'min': '0.01',
+            'inputmode': 'decimal',
+        })
+
+    def clean_amount_used(self):
+        used = self.cleaned_data["amount_used"]
+        try:
+            cap = self.pettycash.amount_disbursed if self.pettycash.amount_disbursed is not None else self.pettycash.amount
+            cap_dec = Decimal(str(cap))
+        except Exception:
+            cap_dec = Decimal("0")
+        if used > cap_dec:
+            raise forms.ValidationError(f"Amount used cannot exceed {cap_dec}.")
+        return used

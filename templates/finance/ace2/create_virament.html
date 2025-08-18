@@ -19,12 +19,13 @@
           {% if field.is_hidden %}
             {{ field }}
           {% else %}
-            <div class="gap-4  m-auto grid grid-cols-3  "> 
+            <div class="gap-4 m-auto grid grid-cols-3"> 
               {{ field.label_tag }}
               {{ field }}
               <div class="text-red-500">
                 {{ field.errors }}
               </div>
+            </div>
           {% endif %}
         </div>
       {% endfor %}

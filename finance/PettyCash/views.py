@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+from decimal import Decimal, InvalidOperation
 from mimetypes import guess_type
 from random import randrange
 import csv
@@ -7,16 +8,20 @@ import sweetify
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponseNotFound, FileResponse, HttpResponse
+from django.http import JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
 from openpyxl.workbook import Workbook
+from django.core.exceptions import ValidationError
+from django.db.models import Sum
+from django.db.models.functions import TruncMonth
 
 from ACE2.utils import find_ace_section_head, find_pettycash_section_head
 from approve.forms import ApprovalForm
 from approve.views import intiate
 from it.users.models import UserProfile, Roles, Sections, Regions
 from approve.models import Process, Step, Approval
-from .forms import PettycashForm, QuotationFormSet, PettycashReportForm
+from .forms import PettycashForm, QuotationFormSet, PettycashReportForm, CashierDisbursementForm, RequesterClearForm
 from .models import Pettycash, Quotation, PettycashReport
 
 from ..comparative_schedules.views import notify_user
@@ -44,6 +49,9 @@ def pettyCash_detail(request, petty_id):
     # print(pettycash_role)
 
     pettycash_item = Pettycash.objects.get(petty_id=petty_id)
+    # Default form holders
+    form = None  # cashier form
+    requester_form = None
 
     # return validation to clear validation = pettycash_item.process.approval_set.filter(approved='Approved',
     # step__approver__in=user_profile.roles.all()).exists()) print(validation)
@@ -51,26 +59,89 @@ def pettyCash_detail(request, petty_id):
     quotations = Quotation.objects.filter(pettycash=pettycash_item).all()
     # print(quotations.count())
 
-    if pettycash_role == "disburse" and request.method == 'POST':
-        payment_mode = request.POST.get('payment_mode')
-        amount_disbursed = request.POST.get('amount_disbursed')
-        payee = request.POST.get('payee')
-        print(payment_mode)
-        if payment_mode and payment_mode != '':
-            pettycash_item.payment_mode = payment_mode
-            pettycash_item.amount_disbursed = amount_disbursed
-            pettycash_item.payee = payee
-            pettycash_item.save()
-            user = pettycash_item.requested_by
-            userp = UserProfile.objects.filter(id=user).first()
+    # REPLACE the current raw POST handling under pettycash_role == "disburse"
+    # with the safer form-based flow below.
 
-            msg = "Your Pettycash " + pettycash_item.petty_id + "has a payment method added by Cashier"
-            url = "/pettycash/pettycash_detail/" + pettycash_item.petty_id
-            notify_user(userp, msg, "Pettycash", url, pettycash_item.petty_id)
+    if pettycash_role == "disburse":
+        # Prevent editing if already captured
+        if request.method == "POST":
+            if getattr(pettycash_item, "payment_mode", None):
+                messages.warning(request, "Payment already captured. Contact Finance to amend.")
+                return redirect('pettycash:pettycash_detail', petty_id=pettycash_item.petty_id)
+
+            form = CashierDisbursementForm(request.POST, pettycash=pettycash_item)
+            if form.is_valid():
+                pettycash_item.payment_mode = form.cleaned_data["payment_mode"]
+                pettycash_item.amount_disbursed = form.cleaned_data["amount_disbursed"]
+                # Model-level validation safety net
+                try:
+                    pettycash_item.full_clean()
+                except ValidationError as e:
+                    # Attach specific validation errors and fall through to render
+                    if hasattr(e, 'message_dict') and 'amount_disbursed' in e.message_dict:
+                        for msg in e.message_dict['amount_disbursed']:
+                            form.add_error("amount_disbursed", msg)
+                    else:
+                        for msg in e.messages:
+                            form.add_error("amount_disbursed", msg)
+                else:
+                    pettycash_item.save(update_fields=["payment_mode", "amount_disbursed"])
+
+                # Notify requester (keep your existing pattern)
+                try:
+                    msg = f"Your Petty Cash {pettycash_item.petty_id} has been captured by Cashier"
+                    url = f"/pettycash/pettycash_detail/{pettycash_item.petty_id}"
+                    # notify_user(pettycash_item.requested_by, msg, "PettyCash", url, pettycash_item.petty_id)
+                except Exception:
+                    pass
+
+                if not form.errors:
+                    messages.success(request, "Payment captured successfully.")
+                    return redirect('pettycash:pettycash_detail', petty_id=pettycash_item.petty_id)
+            # if invalid, keep form with errors and fall through to shared render
+        else:
+            if not getattr(pettycash_item, "payment_mode", None):
+                form = CashierDisbursementForm(pettycash=pettycash_item)
+
+    # Requester clear flow (inline form, similar to cashier)
+    if pettycash_role == "create":
+        # Eligible only after cashier disburses and when not yet receipted
+        if pettycash_item.amount_disbursed is not None and pettycash_item.payment_mode is not None and not pettycash_item.receipt_file:
+            if request.method == "POST" and request.POST.get("action") == "requester_clear":
+                requester_form = RequesterClearForm(request.POST, request.FILES, pettycash=pettycash_item)
+                if requester_form.is_valid():
+                    pettycash_item.receipt_file = requester_form.cleaned_data["receipt_file"]
+                    pettycash_item.amount_used = float(requester_form.cleaned_data["amount_used"])
+                    pettycash_item.save(update_fields=["receipt_file", "amount_used"])
+
+                    # Auto-approve requester step if permitted
+                    try:
+                        process = pettycash_item.process
+                        latest_approval = process.approval_set.last()
+                        next_step_num = (latest_approval.step.step + 1) if latest_approval else 1
+                        user_roles = request.user.roles.all()
+                        step_for_user = Step.objects.get(step=next_step_num, workflow=process.workflow, approver__in=user_roles)
+                        Approval.objects.create(
+                            step=step_for_user,
+                            user=request.user,
+                            process=process,
+                            approved='Approved',
+                            approved_at=datetime.now()
+                        )
+                    except Step.DoesNotExist:
+                        pass
+                    except Exception:
+                        pass
+
+                    messages.success(request, "Petty cash cleared successfully.")
+                    return redirect('pettycash:pettycash_detail', petty_id=pettycash_item.petty_id)
+            else:
+                requester_form = RequesterClearForm(pettycash=pettycash_item)
 
     approvalForm = None
     to = None
     user_roles = request.user.roles.all()  # Accessing the user's roles through the 'roles' attribute
+
     clear = False
     clear_minus = False
 
@@ -129,12 +200,31 @@ def pettyCash_detail(request, petty_id):
     else:
         cashier = None
 
+    # Ensure cashier form is available on final render when needed
+    if pettycash_role == "disburse" and not getattr(pettycash_item, "payment_mode", None) and form is None:
+        try:
+            form = CashierDisbursementForm(pettycash=pettycash_item)
+        except Exception:
+            form = None
+
     print(pettycash_role, clear, requestor, clear_minus, cashier_approved)
     return render(request, 'finance/pettycash/pettycash_detail.html',
-                  {'pettycash': pettycash_item, 'approved_steps': approved_steps, 'approvalForm': approvalForm,
-                   'to': to, 'pettycash_role': pettycash_role, 'user_groups': user_groups, 'quotations': quotations
-                      , 'clear': clear, "clear_minus": clear_minus, 'requestor': requestor, 'cashier': cashier,
-                   'cashier_approved': cashier_approved})
+                  {
+                      'pettycash': pettycash_item,
+                      'approved_steps': approved_steps,
+                      'approvalForm': approvalForm,
+                      'to': to,
+                      'pettycash_role': pettycash_role,
+                      'user_groups': user_groups,
+                      'quotations': quotations,
+                      'clear': clear,
+                      "clear_minus": clear_minus,
+                      'requestor': requestor,
+                      'cashier': cashier,
+                      'cashier_approved': cashier_approved,
+                      'form': form,  # cashier form
+                      'requester_form': requester_form,  # requester clear form
+                  })
 
 
 @login_required
@@ -999,19 +1089,79 @@ def approve_step(process_id, user_id, date_approved):
 
 
 def receipt(request):
-    if request.method == 'POST':
-        receipt_file = request.FILES['file-input']
-        print(receipt_file)
-        used = request.POST['disbursed']
-        pettycash = request.POST['petty_id']
-        pettycash = Pettycash.objects.filter(petty_id=pettycash).first()
-        pettycash.receipt_file = receipt_file
-        pettycash.amount_used = used
-        pettycash.save()
-        messages.success(request, 'Receipt uploaded successfully')
-        return redirect('pettycash:pettycash_detail', petty_id=pettycash.petty_id)
-    else:
+    if request.method != 'POST':
         return redirect('/pettycash/pettycashs')
+
+    # Defensive fetch
+    petty_id = request.POST.get('petty_id')
+    pettycash = Pettycash.objects.filter(petty_id=petty_id).first()
+    if not pettycash:
+        return JsonResponse({'success': False, 'error': 'Petty cash not found.'}, status=404)
+
+    # Authorization: only requester can clear
+    if request.user != pettycash.requested_by:
+        return JsonResponse({'success': False, 'error': 'Not authorized to clear this petty cash.'}, status=403)
+
+    # Require cashier disbursement first
+    if pettycash.amount_disbursed is None or pettycash.payment_mode is None:
+        return JsonResponse({'success': False, 'error': 'Cashier must capture disbursement before you can clear.'}, status=400)
+
+    # Ensure not already receipted
+    if pettycash.receipt_file:
+        return JsonResponse({'success': False, 'error': 'Receipt already uploaded.'}, status=400)
+
+    # Validate receipt file
+    receipt_file = request.FILES.get('file-input')
+    if not receipt_file:
+        return JsonResponse({'success': False, 'error': 'Receipt file is required.'}, status=400)
+
+    # Validate amount used
+    used_raw = request.POST.get('disbursed')
+    try:
+        used_amt = Decimal(used_raw)
+    except (InvalidOperation, TypeError):
+        return JsonResponse({'success': False, 'error': 'Amount used must be a valid number.'}, status=400)
+    if used_amt <= Decimal('0'):
+        return JsonResponse({'success': False, 'error': 'Amount used must be greater than 0.'}, status=400)
+
+    # Determine cap: prefer amount_disbursed, else requested amount
+    cap = pettycash.amount_disbursed if pettycash.amount_disbursed is not None else pettycash.amount
+    try:
+        cap_dec = Decimal(str(cap))
+    except Exception:
+        cap_dec = Decimal('0')
+
+    if used_amt > cap_dec:
+        return JsonResponse({'success': False, 'error': f'Amount used cannot exceed {cap_dec}.'}, status=400)
+
+    # Save receipt and amount used
+    pettycash.receipt_file = receipt_file
+    pettycash.amount_used = float(used_amt)
+    pettycash.save(update_fields=['receipt_file', 'amount_used'])
+
+    # Auto-approve requester clear step if the next step is assigned to the requester
+    try:
+        process = pettycash.process
+        latest_approval = process.approval_set.last()
+        next_step_num = (latest_approval.step.step + 1) if latest_approval else 1
+        user_roles = request.user.roles.all()
+        step_for_user = Step.objects.get(step=next_step_num, workflow=process.workflow, approver__in=user_roles)
+        # Create approval record
+        Approval.objects.create(
+            step=step_for_user,
+            user=request.user,
+            process=process,
+            approved='Approved',
+            approved_at=datetime.now()
+        )
+    except Step.DoesNotExist:
+        # No step for this user; skip auto-approval
+        pass
+    except Exception:
+        # Don’t fail the receipt on approval errors
+        pass
+
+    return JsonResponse({'success': True, 'redirect': f"/pettycash/pettycash_detail/{pettycash.petty_id}"})
 
 
 def download_attachment(request, attachment_id):
@@ -1113,6 +1263,47 @@ def print_report_excel(request, report_id):
     return response
 
 
+def print_report_csv(request, report_id):
+    """Stream a CSV petty cash report for the given report_id filters."""
+    report = get_object_or_404(PettycashReport, report_id=report_id)
+    pettycashs = Pettycash.objects.filter(
+        region=report.region,
+        section=report.section,
+        date_created__range=[report.start_date, report.end_date]
+    ).all()
+
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="pettycash_report.csv"'
+
+    writer = csv.writer(response)
+    writer.writerow([
+        'petty_id', 'details_of_expenditure', 'requested_by', 'section', 'date_created',
+        'amount', 'amount_disbursed', 'amount_used', 'payment_mode', 'currency', 'approval_status'
+    ])
+
+    for pettycash in pettycashs:
+        requested_by = pettycash.requested_by.get_full_name() if pettycash.requested_by else ''
+        section = pettycash.section.section if pettycash.section else ''
+        date_created = pettycash.date_created.strftime('%Y-%m-%d') if pettycash.date_created else ''
+        approval_status = str(pettycash.process.approval_set.last()) if pettycash.process and pettycash.process.approval_set.last() else ''
+
+        writer.writerow([
+            pettycash.petty_id,
+            pettycash.details_of_expenditure,
+            requested_by,
+            section,
+            date_created,
+            pettycash.amount or '',
+            pettycash.amount_disbursed or '',
+            pettycash.amount_used or '',
+            pettycash.payment_mode or '',
+            pettycash.currency or '',
+            approval_status
+        ])
+
+    return response
+
+
 def receipt_manual(request):
     if request.method == 'POST':
         receipt_file = request.FILES['file-input']
@@ -1125,6 +1316,99 @@ def receipt_manual(request):
         return redirect('pettycash:pettycash_detail', petty_id=pettycash.petty_id)
     else:
         return render(request, 'finance/pettycash/receipt.html')
+
+
+@login_required
+def pettycash_monthly_totals(request):
+    """Show monthly totals for PettyCash in the user's region for a selected year."""
+    try:
+        user_id = request.user.id
+        user_profile = UserProfile.objects.filter(id=user_id).first()
+        if not user_profile:
+            messages.error(request, "User profile not found. Please contact administrator.")
+            return render(request, 'finance/pettycash/pettycash_monthly_totals.html', {
+                'rows': [], 'year': None, 'years': []
+            })
+
+        try:
+            region = Regions.objects.filter(id=user_profile.region.id).first()
+            if not region:
+                messages.error(request, "User region not found. Please contact administrator.")
+                return render(request, 'finance/pettycash/pettycash_monthly_totals.html', {
+                    'rows': [], 'year': None, 'years': []
+                })
+        except AttributeError:
+            messages.error(request, "User profile is incomplete. Missing region information.")
+            return render(request, 'finance/pettycash/pettycash_monthly_totals.html', {
+                'rows': [], 'year': None, 'years': []
+            })
+
+        # Determine year (default to current year)
+        try:
+            selected_year = int(request.GET.get('year', datetime.now(timezone.utc).year))
+        except (TypeError, ValueError):
+            selected_year = datetime.now(timezone.utc).year
+
+        base_qs = Pettycash.objects.filter(region=region, date_created__year=selected_year)
+
+        # Aggregate by month
+        monthly = (
+            base_qs
+            .annotate(month=TruncMonth('date_created'))
+            .values('month')
+            .order_by('month')
+            .annotate(
+                total_amount=Sum('amount'),
+                total_disbursed=Sum('amount_disbursed'),
+                total_used=Sum('amount_used'),
+            )
+        )
+
+        # Build a dict keyed by month for easy lookup
+        month_map = {m['month'].month: m for m in monthly}
+
+        # Prepare rows for all 12 months
+        rows = []
+        grand_amount = 0.0
+        grand_disbursed = 0.0
+        grand_used = 0.0
+
+        for m in range(1, 13):
+            rec = month_map.get(m)
+            amt = float(rec['total_amount']) if rec and rec['total_amount'] is not None else 0.0
+            disb = float(rec['total_disbursed']) if rec and rec['total_disbursed'] is not None else 0.0
+            used = float(rec['total_used']) if rec and rec['total_used'] is not None else 0.0
+
+            grand_amount += amt
+            grand_disbursed += disb
+            grand_used += used
+
+            rows.append({
+                'month_num': m,
+                'amount': amt,
+                'disbursed': disb,
+                'used': used,
+            })
+
+        # Available years for dropdown (only in this region)
+        years = [d.year for d in Pettycash.objects.filter(region=region).dates('date_created', 'year')]
+
+        context = {
+            'rows': rows,
+            'year': selected_year,
+            'years': years,
+            'grand_amount': grand_amount,
+            'grand_disbursed': grand_disbursed,
+            'grand_used': grand_used,
+            'region': region,
+        }
+        return render(request, 'finance/pettycash/pettycash_monthly_totals.html', context)
+
+    except Exception as e:
+        messages.error(request, f"System error: {str(e)}")
+        return render(request, 'finance/pettycash/pettycash_monthly_totals.html', {
+            'rows': [], 'year': None, 'years': []
+        })
 
 
 @login_required
