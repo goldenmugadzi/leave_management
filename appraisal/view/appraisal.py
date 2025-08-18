@@ -17,6 +17,7 @@ from ..forms import AppraisalForm, AppraisalRoleFilterForm, AppraisalUpdateForm
 from ..helpers.types.kra import RoleFilterChoices
 from ..repository import UserQualificationRepository, AppraisalExperienceRepository, ExperienceRepository, AppraisalRepository
 from ..repository.appraisal import AppraiseePersonalAttributeRepository
+from ..repository.kra import AppraisalOutPutPerformanceDimensionScoreRepository
 from ..repository.qualification_experience import UserExperienceRepository
 from ..services import AppraisalService, AppraisalExperienceService
 from ..helpers.types.kra import KraRolesType
@@ -29,9 +30,8 @@ from approve.models import Step, Approval
 from datetime import datetime
 from ..forms.formsets import AppraiseePersonalAttributeFormSet
 from ..forms.appraisal import AppraisalOverallCommentForm
-from ..helpers.getters.dates import get_assessment_period
+from ..helpers.getters.dates import get_assessment_period, CurrentQuarterDate
 from ..helpers.getters.quarter import get_all_quarter_ratings_per_appraiser
-
 from loguru import logger
 
 def get_user_by_id(user_id: int)->UserProfile:
@@ -491,13 +491,28 @@ class AppraiseePersonalAttributesUpdateView(TemplateView):
             return "C, D, E and F"
         return ""
     
+    def is_current_date_in_current_quarter(self)->bool:
+        appraisal_object = self.get_appraisal_object()
+        handler = CurrentQuarterDate(year=appraisal_object.created_date.year)
+        current_quarter = handler.get_current_quarter()
+        return current_quarter.is_within_fourth_quarter
+    
+    def is_all_scored(self):
+        repo = AppraisalOutPutPerformanceDimensionScoreRepository()
+        scores_qr = repo.fetch_by_appraisal_id(appraisal_id=self.get_appraisal_object().id)
+        not_scored_qr = scores_qr.filter(is_scored=False)
+        if not_scored_qr.exists():
+            return False
+        return True
+    
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context.update(self.approval_user_roles())
         context["personal_attribute_formset"] = self.get_forms
         context["appraisal_object"] = self.get_appraisal_object()
         context["appraisee_grade"] = self.appraisee_grade()
-
+        context["is_within_current_quarter"] = self.is_current_date_in_current_quarter()
+        context["is_all_scored"] = self.is_all_scored()
         return context
     
     def get_success_url(self) -> str:

@@ -292,6 +292,13 @@ class AppraisalOutPutPerformanceDimensionScoreRepository:
         except Exception as e:
             raise Exception(f"[AppraisalOutPutPerformanceDimensionScoreRepository] get_by_id Repo with pk: {pk}, failed with error: {e}")
 
+    def fetch_by_appraisal_id(self, appraisal_id)->QuerySet[AppraisalOutPutPerformanceDimensionScore]:
+        try:
+            return AppraisalOutPutPerformanceDimensionScore.objects.filter(appraisal_department_output__appraisal__id=appraisal_id)
+
+        except Exception as e:
+            raise Exception(f"[AppraisalOutPutPerformanceDimensionScoreRepository] fetch_by_appraisal_id Repo with pk: {appraisal_id}, failed with error: {e}")
+
 class ScoreDocumentRepository:
     def create(self, performance_dimension_score: AppraisalOutPutPerformanceDimensionScore, name: str, documents: str)->ScoreDocument:
         try:
