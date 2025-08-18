@@ -144,7 +144,6 @@ export default function Schedule({
     // Actions
     setCsId, setStoredPrId, setCreator, setCreatedAt, setCsOwner, setProcRef, setUsername,
     setSuppliers, setUsers, setCurrencies, setProcPlans, setCurrency, setProcPlan,
-    resetForNewSchedule,
     setAdditionalNotes, setBuyersNotes, setDirectPurchaseLimit, setOnAddSupplier, setNewSupplier, setShowSupplierDetails,
     setSupplierSearchTerm, setShowSupplierDropdown, setUomSearchTerm, setShowUomDropdown, setActiveUomItem, setExpandedBids,
     setBidValidationErrors, setInvalidFields,
@@ -266,8 +265,8 @@ export default function Schedule({
     const cs_id = csid || '';
     const pr_id = prid || '';
     
-    // Check if this is a new schedule creation (URL contains 'create')
-    const isNewScheduleCreation = window.location.pathname.includes('create');
+    // Check if this is a new schedule creation (URL contains 'create' and we have a CS ID)
+    const isNewScheduleCreation = window.location.pathname.includes('create') && cs_id;
     
     console.log('🔍 Schedule creation type:', { isNewScheduleCreation, cs_id, pr_id });
     
@@ -277,49 +276,45 @@ export default function Schedule({
       setCsId(cs_id);
       setUsername(username_ ?? "");
       fetchCS(cs_id);
-    } else if (isNewScheduleCreation) {
-      // New schedule creation - reset store to clear any cached data
-      console.log('🔄 Creating new schedule - resetting store to clear cached data');
-      resetForNewSchedule();
+    } else if (pr_id) {
+      // New schedule with PR ID - load PR data
+      console.log('🔄 Creating new schedule from PR ID:', pr_id);
+      setUsername(username_ ?? "");
+      setCreator(username_ ?? "");
+      setCreatedAt(new Date().toISOString());
+      onFetchPR(pr_id);
+    } else {
+      // New schedule without PR ID
+      console.log('🔄 Creating new schedule without PR ID');
       setUsername(username_ ?? "");
       setCreator(username_ ?? "");
       setCreatedAt(new Date().toISOString());
       
-      // If we have a CS ID for new creation, set it for later use
-      if (cs_id) {
+      // If we have a CS ID but this is a new creation, set it for later use
+      if (cs_id && isNewScheduleCreation) {
         console.log('📝 New schedule creation with pre-generated CS ID:', cs_id);
         setCsId(cs_id);
       }
       
-      if (pr_id) {
-        // New schedule with PR ID - load PR data
-        console.log('🔄 Creating new schedule from PR ID:', pr_id);
-        onFetchPR(pr_id);
-      } else {
-        // Load reference data for new schedules (currencies, proc plans, etc.)
-        console.log('🔄 Loading reference data for new schedule...');
-        api.fetchReferenceData()
-          .then(refResponse => {
-            if (refResponse && refResponse.success) {
-              console.log('✅ Reference data loaded for new schedule');
-              setSuppliers(refResponse.suppliers || []);
-              setUsers(refResponse.users || []);
-              setCurrencies(refResponse.currencies || []);
-              setProcPlans(refResponse.proc_plans || []);
-              console.log('📋 Currencies loaded:', refResponse.currencies?.length || 0);
-              console.log('📋 Proc Plans loaded:', refResponse.proc_plans?.length || 0);
-            }
-          })
-          .catch(error => {
-            console.error('❌ Error loading reference data for new schedule:', error);
-            // Fallback: still fetch users even if reference data fails
-            fetchUsers();
-          });
-      }
-    } else {
-      // Fallback case - should not happen in normal operation
-      console.log('⚠️ Unexpected state - no CS ID and not in create mode');
-      setUsername(username_ ?? "");
+      // Load reference data for new schedules (currencies, proc plans, etc.)
+      console.log('🔄 Loading reference data for new schedule...');
+      api.fetchReferenceData()
+        .then(refResponse => {
+          if (refResponse && refResponse.success) {
+            console.log('✅ Reference data loaded for new schedule');
+            setSuppliers(refResponse.suppliers || []);
+            setUsers(refResponse.users || []);
+            setCurrencies(refResponse.currencies || []);
+            setProcPlans(refResponse.proc_plans || []);
+            console.log('📋 Currencies loaded:', refResponse.currencies?.length || 0);
+            console.log('📋 Proc Plans loaded:', refResponse.proc_plans?.length || 0);
+          }
+        })
+        .catch(error => {
+          console.error('❌ Error loading reference data for new schedule:', error);
+          // Fallback: still fetch users even if reference data fails
+          fetchUsers();
+        });
     }
     
     fetchUsers();

@@ -26,6 +26,15 @@ import os
 # Import pagination config for Stage 2 optimization
 from .pagination_config import get_safe_page_size, get_pagination_info, DATATABLE_MAX_SIZE, DATATABLE_DEFAULT_SIZE
 
+# Import optimized file handlers (NEW)
+from .optimized_file_handlers import (
+    OptimizedFileHandler,
+    OptimizedDirectPurchaseFileHandler,
+    validate_dp_file,
+    get_dp_file_download_url,
+    get_dp_file_preview_url
+)
+
 from finance.comparative_schedules.models import Currency, ProcPlan
 from finance.comparative_schedules.views import notification_update, notify_user
 from .models import *
@@ -43,53 +52,6 @@ APP_NAME = "direct_purchases"
 
 # Cache timeout in seconds (5 minutes)
 CACHE_TIMEOUT = 300
-
-# Enhanced file handling function
-def _save_file_optimized(uploaded_file, file_type='bid'):
-    """Optimized file upload with validation and error handling"""
-    try:
-        # File size validation (10MB limit)
-        if uploaded_file.size > 10 * 1024 * 1024:
-            return {
-                'success': False,
-                'message': 'File too large. Maximum size is 10MB.',
-                'file_path': None
-            }
-        
-        # File type validation
-        allowed_extensions = ['.pdf', '.doc', '.docx', '.jpg', '.jpeg', '.png', '.zip', '.rar']
-        file_extension = os.path.splitext(uploaded_file.name)[1].lower()
-        
-        if file_extension not in allowed_extensions:
-            return {
-                'success': False,
-                'message': f'File type {file_extension} not allowed.',
-                'file_path': None
-            }
-        
-        # Generate unique filename
-        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        filename = f"{file_type}_{timestamp}_{uploaded_file.name}"
-        
-        # Save file
-        fs = FileSystemStorage()
-        file_path = fs.save(filename, uploaded_file)
-        
-        return {
-            'success': True,
-            'message': 'File uploaded successfully.',
-            'file_path': file_path,
-            'original_name': uploaded_file.name,
-            'size': uploaded_file.size
-        }
-        
-    except Exception as ex:
-        logger.error(f"File upload error: {str(ex)}")
-        return {
-            'success': False,
-            'message': f'File upload failed: {str(ex)}',
-            'file_path': None
-        }
 
 # Enhanced bulk operations helper
 def _bulk_create_items(cs_query, items_data):
@@ -305,12 +267,9 @@ def import_old_dp(request):
                                     total = bid.total,
                                 )
                                 ranking_query.save()
-                                print("ranking_query: ", ranking_query)
-                        else:
-                            print("Ranking Supplier not found")
-                    
                 except Exception as ex:
-                    print("Error: ", ex)        
+                    logger.error(f"Error processing ranking: {ex}")
+                
                 # save committee
                 for i in range(1,3):
                     username = row[f'update_user{i}'] if f'update_user{i}' in row else None
@@ -417,12 +376,11 @@ def import_old_dp(request):
                         other_df = pd.concat([other_df, pd.DataFrame({'document_id': [cs_id], 'sup_id': [gm_user], 'model': ["DPApproval"], 'status': ['Failed'], 'message': ['GM DB finance_user empty']})], ignore_index=True)
                 else:
                     other_df = pd.concat([other_df, pd.DataFrame({'document_id': [cs_id], 'sup_id': [gm_user], 'model': ["DPApproval"], 'status': ['Failed'], 'message': ['GM finance_user empty']})], ignore_index=True)
-            else:
-                print("cs not found")
-                other_df = pd.concat([other_df, pd.DataFrame({'document_id': [cs_id], 'sup_id': [""], 'model': ["Direct Purchase"], 'status': ['Failed'], 'message': ['Schedule not found']})], ignore_index=True)
+        else:
+            other_df = pd.concat([other_df, pd.DataFrame({'document_id': [cs_id], 'sup_id': [""], 'model': ["Direct Purchase"], 'status': ['Failed'], 'message': ['Schedule not found']})], ignore_index=True)
 
     except Exception as ex:
-        print("Error: ", ex)   
+        logger.error(f"Error in import_old_dp: {ex}")   
     
     other_df.to_csv('dp_other_df.csv')    
       
@@ -534,7 +492,6 @@ def your_comperative_schedules(request):
     fm_role, gm_role, procurement_role = getUserFMGMRoles(user)
 
     user_page = 'finance/direct_purchase/cs_schedules.html'
-    print("roles: ", fm_role, gm_role)
     return render(request, user_page, { 
             "fm_role": fm_role,
             "gm_role": gm_role,
@@ -545,13 +502,9 @@ def your_comperative_schedules(request):
 def get_all_schedules(request):
     
     user_id = request.user.id
-    print("user name: ", request.user.username, request.user.id)
     user_profile = UserProfile.objects.filter(id=user_id).first()
-    print("user: ", user_profile.username, user_profile.id)
     fm_role, gm_role = False, False
     fm_role, gm_role, procurement_role = getUserFMGMRoles(user_profile)
-    
-    print("roles: ", fm_role, gm_role)
     user_page = 'finance/direct_purchase/cs_schedules.html'
     return render(request, user_page, {"fm_role": fm_role, "gm_role": gm_role, "procurement_role": procurement_role,
             "page_title": "Direct Purchases"})
@@ -561,13 +514,10 @@ def get_all_schedules(request):
 def reports_all_schedules(request):
     
     user_id = request.user.id
-    print("user name: ", request.user.username, request.user.id)
     user_profile = UserProfile.objects.filter(id=user_id).first()
-    print("user: ", user_profile.username, user_profile.id)
     fm_role, gm_role = False, False
     fm_role, gm_role, procurement_role = getUserFMGMRoles(user_profile)
     
-    print("roles: ", fm_role, gm_role)
     user_page = 'finance/direct_purchase/cs_reports.html'
     return render(request, user_page, {"fm_role": fm_role, "gm_role": gm_role, "procurement_role": procurement_role,
             "page_title": "Direct Purchases"})
@@ -582,9 +532,7 @@ def get_pending_committee(request):
     fm_role, gm_role = False, False
     fm_role, gm_role, procurement_role = getUserFMGMRoles(user_profile)   
         
-    print("roles: ", fm_role, gm_role)
     user_page = 'finance/direct_purchase/cs_schedules.html'
-    print("roles: ", fm_role, gm_role)
     return render(request, user_page, { 
             "fm_role": fm_role,
             "gm_role": gm_role,
@@ -600,7 +548,6 @@ def get_pending_gm_approval(request):
     fm_role, gm_role = False, False
     fm_role, gm_role, procurement_role = getUserFMGMRoles(user_profile)
     user_page = 'finance/direct_purchase/cs_schedules.html'
-    print("roles: ", fm_role, gm_role)
     return render(request, user_page, { 
             "fm_role": fm_role,
             "gm_role": gm_role,
@@ -615,7 +562,6 @@ def get_pending_fm_approval(request):
     fm_role, gm_role = False, False
     fm_role, gm_role, procurement_role = getUserFMGMRoles(user_profile)
     user_page = 'finance/direct_purchase/cs_schedules.html'
-    print("roles: ", fm_role, gm_role)
     return render(request, user_page, { 
             "fm_role": fm_role,
             "gm_role": gm_role,
@@ -886,7 +832,7 @@ def get_csv_export(request):
             user_region = Regions.objects.filter(region=request.user.region).first()
         except Exception as ex:
             user_region = None
-            print("error: ",  ex)
+            logger.error(f"Error getting user region: {ex}")
         status = request.GET.get('status')
         station = request.GET.get('station')
         pickStation = request.GET.get('pick_station')
@@ -903,11 +849,11 @@ def get_csv_export(request):
                     writer.writerow([item['cs_id'], item['pr_id'], item['pr_number'], item['pr_date'], item['scope_of_work'], item['closing_date'], item['closing_time'], item['advert'], item['pr_number'], item['pr_date'], item['cs_opened'], item['tac_date'], item['created_by'], item['committee_approval'], item['gm_approval'], item['fm_approval'], item['section'], item['region'], item['created_at']])
                     
                 except Exception as ex:
-                    print("For Writting to CSV: ", ex)
+                    logger.error(f"Error writing CSV row: {ex}")
         except Exception as ex:
-            print("Error Writting to CSV: ", ex)
+            logger.error(f"Error writing CSV: {ex}")
     except Exception as ex:
-        print("Error: ", ex)
+        logger.error(f"Error in get_csv_export: {ex}")
     
     
     return response
@@ -1201,7 +1147,7 @@ def get_comperative_schedule_data(request, cs_id):
         return JsonResponse(context, safe=False)
         
     except Exception as ex:
-        print("Error: ", ex)
+        logger.error(f"Error retrieving Comparative Schedule data: {ex}")
         return JsonResponse({
             "message": "Error retrieving Comparative Schedule data",
             "error": str(ex),
@@ -1236,17 +1182,55 @@ def _build_dp_cs_context_without_pr_items(cs, pr, user_role):
     for bid in bids:
         bid_no = bid.bid_no
         if bid_no not in grouped_data:
-            # Handle file encoding efficiently
-            encoded_file_data = ""
+            # Handle bid documents with Base64 encoding (same as comparative schedules)
+            encoded_bid_document = ""
             if bid.bid_document:
-                encoded_file_data = _encode_file_safely(bid.bid_document)
+                try:
+                    # Construct the correct file path for direct purchase files
+                    # Direct purchase files are stored without 'uploads/' prefix in the database
+                    if bid.bid_document.startswith('uploads/'):
+                        # File already has uploads/ prefix
+                        file_path = os.path.join(settings.MEDIA_ROOT, bid.bid_document)
+                    elif bid.bid_document.startswith('direct_purchase/'):
+                        # Direct purchase files are stored directly in media directory
+                        file_path = os.path.join(settings.MEDIA_ROOT, bid.bid_document)
+                    else:
+                        # Try as absolute path
+                        file_path = bid.bid_document
+                    
+                    if os.path.exists(file_path):
+                        with open(file_path, 'rb') as f:
+                            file_data = f.read()
+                        encoded_bid_document = base64.b64encode(file_data).decode('utf-8')
+                    else:
+                        # Try alternative locations
+                        alt_paths = [
+                            os.path.join(settings.BASE_DIR, bid.bid_document),
+                            os.path.join(settings.MEDIA_ROOT, bid.bid_document),  # Direct media path
+                            os.path.join(settings.MEDIA_ROOT, 'uploads', bid.bid_document),  # With uploads prefix
+                            os.path.join(settings.MEDIA_ROOT, 'uploads', 'direct_purchase', os.path.basename(bid.bid_document)),
+                            os.path.join(settings.MEDIA_ROOT, 'uploads', 'finance', 'cs', 'bids', os.path.basename(bid.bid_document))
+                        ]
+                        
+                        for alt_path in alt_paths:
+                            if os.path.exists(alt_path):
+                                with open(alt_path, 'rb') as f:
+                                    file_data = f.read()
+                                encoded_bid_document = base64.b64encode(file_data).decode('utf-8')
+                                break
+                        else:
+                            encoded_bid_document = ""
+                            
+                except Exception as ex:
+                    logger.error(f"Error processing bid document for bid {bid_no}: {ex}")
+                    encoded_bid_document = ""
             
             grouped_data[bid_no] = {
                 'bid_count': bid.bid_no,
                 'supplier_name': bid.sup_id.name,
                 'bid_date': bid.quote_date,
-                'encoded_bid_document': encoded_file_data,
-                'bid_document': None,
+                'encoded_bid_document': encoded_bid_document,  # Return Base64 string like comparative schedules
+                'bid_document': None,  # Keep for backward compatibility but set to None
                 'items': []
             }
         
@@ -1318,6 +1302,49 @@ def _build_dp_cs_context_without_pr_items(cs, pr, user_role):
     pr_items_tab_enabled = bool(cs.cs_id)  # Enable if CS has been saved (has cs_id)
     has_pr_items_configured = bool(cs_items)  # Check if PR items have been configured
 
+    # Handle advert file with Base64 encoding (same as comparative schedules)
+    encoded_advert_file = ""
+    try:
+        if cs.advert:
+            # Construct the correct file path for direct purchase files
+            # Direct purchase files are stored without 'uploads/' prefix in the database
+            if cs.advert.startswith('uploads/'):
+                # File already has uploads/ prefix
+                file_path = os.path.join(settings.MEDIA_ROOT, cs.advert)
+            elif cs.advert.startswith('direct_purchase/'):
+                # Direct purchase files are stored directly in media directory
+                file_path = os.path.join(settings.MEDIA_ROOT, cs.advert)
+            else:
+                # Try as absolute path
+                file_path = cs.advert
+            
+            if os.path.exists(file_path):
+                with open(file_path, 'rb') as f:
+                    file_data = f.read()
+                encoded_advert_file = base64.b64encode(file_data).decode('utf-8')
+            else:
+                # Try alternative locations for direct purchase files
+                alt_paths = [
+                    os.path.join(settings.BASE_DIR, cs.advert),
+                    os.path.join(settings.MEDIA_ROOT, cs.advert),  # Direct media path
+                    os.path.join(settings.MEDIA_ROOT, 'uploads', cs.advert),  # With uploads prefix
+                    os.path.join(settings.MEDIA_ROOT, 'uploads', 'direct_purchase', os.path.basename(cs.advert)),
+                    os.path.join(settings.MEDIA_ROOT, 'uploads', 'finance', 'cs', 'adverts', os.path.basename(cs.advert))
+                ]
+                
+                for alt_path in alt_paths:
+                    if os.path.exists(alt_path):
+                        with open(alt_path, 'rb') as f:
+                            file_data = f.read()
+                        encoded_advert_file = base64.b64encode(file_data).decode('utf-8')
+                        break
+                else:
+                    encoded_advert_file = ""
+                    
+    except Exception as ex:
+        logger.error(f"Error processing advert file: {ex}")
+        encoded_advert_file = ""
+
     context = {
         "requester_role": user_role.role if user_role else "",
         "cs_id": cs.cs_id,
@@ -1331,7 +1358,7 @@ def _build_dp_cs_context_without_pr_items(cs, pr, user_role):
         "scope_of_work": cs.scope_of_work,
         "closing_date": cs.closing_date,
         "closing_time": cs.closing_time,
-        "advert": _encode_file_safely(cs.advert) if cs.advert else "",
+        "advert": encoded_advert_file if encoded_advert_file else None,  # Return Base64 string like comparative schedules
         "ref_date": cs.ref_date,
         "cs_opened": cs.cs_opened,
         "tac_date": cs.tac_date,
@@ -1406,18 +1433,10 @@ def _build_dp_cs_context_without_pr_items(cs, pr, user_role):
     return context
 
 
-def _encode_file_safely(file_path):
-    """Safely encode file to base64"""
-    try:
-        if not file_path or not os.path.exists(file_path):
-            return ""
-        
-        with open(file_path, 'rb') as f:
-            file_data = f.read()
-        return base64.b64encode(file_data).decode('utf-8')
-    except Exception as ex:
-        print(f"Error encoding file {file_path}: {ex}")
-        return ""
+# This function has been replaced by optimized file handlers
+# def _encode_file_safely(file_path):
+#     """Safely encode file to base64 - REPLACED by optimized handlers"""
+#     pass
 
 
 def _get_cached_dp_proc_plans():
@@ -1481,7 +1500,9 @@ def save_file(f, file_path):
     else:
         return False
     
-@login_required
+from django.views.decorators.csrf import csrf_exempt
+
+@csrf_exempt
 def get_create_data(request, pr_id):
 
     # check is pr_id started with PR or not
@@ -1499,18 +1520,20 @@ def get_create_data(request, pr_id):
         
         pr_at_list = []
         for at in pr_attachments:
-            encoded_file_data = ""
             if at.file:
                 try:
-                    file_data = at.file.read()
-                    encoded_file_data = base64.b64encode(file_data).decode('utf-8')
+                    # Use file path instead of Base64 encoding
+                    file_path = at.file.name
                     pr_at_list.append({
                         "id": at.id,
-                        "file": encoded_file_data,
+                        "file_path": file_path,
                         "name": os.path.basename(at.file.name),
+                        "download_url": f"/api/dp-files/download/{file_path}/",
+                        "preview_url": f"/api/dp-files/preview/{file_path}/",
                     })
                 except Exception as ex:
-                    print("Error: ", ex)
+                    logger.error(f"Error processing attachment {at.id}: {ex}")
+                    continue
 
         pr_item_list = []
         for pr_item in pr_items:
@@ -1522,6 +1545,19 @@ def get_create_data(request, pr_id):
                 "ordered": pr_item.ordered,
             })
         
+        pr_proc_plan = None
+
+        # get DP proc plan 
+        try:
+            if purchase_request.procurement_plan_reference:
+                proc_ref = "acc" + str(purchase_request.procurement_plan_reference.id)
+            else:
+                proc_ref = ""
+            pr_proc_plan = DPProcPlan.objects.filter(proc_ref=proc_ref).first()
+        except Exception as ex:
+            logger.error(f"Error getting DP proc plan: {ex}")
+            pr_proc_plan = None
+
         return JsonResponse({
                 "success": True,
                 "message": "PR details retrieved successfully",
@@ -1529,9 +1565,9 @@ def get_create_data(request, pr_id):
                 "scope_of_work": purchase_request.scope_of_work,
                 "proc_ref": purchase_request.procurement_plan_reference.id if purchase_request.procurement_plan_reference else "",
                 "proc_plan": {
-                    "id": purchase_request.procurement_plan_reference.id if purchase_request.procurement_plan_reference else "",
-                    "proc_ref": purchase_request.procurement_plan_reference.id if purchase_request.procurement_plan_reference else "",
-                    "description": purchase_request.procurement_plan_reference.name if purchase_request.procurement_plan_reference else "",
+                    "id": pr_proc_plan.id if pr_proc_plan else "",
+                    "proc_ref": pr_proc_plan.proc_ref if pr_proc_plan else "",
+                    "description": pr_proc_plan.description if pr_proc_plan else "",
                 } if purchase_request.procurement_plan_reference else {},
                 "pr_date": purchase_request.created_at.strftime("%Y-%m-%d") if purchase_request.created_at else "",
                 "pr_items": pr_item_list,
@@ -1551,7 +1587,6 @@ def get_create_data(request, pr_id):
 @login_required
 def get_create_cs(request, pr_id):
 
-    print("get_create_cs pr_id: ", pr_id)
     # get proc plans
     proc_plans = DPProcPlan.objects.all()
     username = request.user.username
@@ -1607,7 +1642,7 @@ def create(request):
                 # save_file(bid_document_file, bid_document_path)
         
         except Exception as ex:
-            print("Error: ", ex)
+            logger.error(f"Error in create function: {ex}")
         
         for i in range(0,int(item_count)):
             item_id = "Item" + datetime.now().strftime("%Y%m%d%I%M%S%p")
@@ -1682,28 +1717,64 @@ def create(request):
             "proc_plans": None,
         })
         
-@login_required
+from django.views.decorators.csrf import csrf_exempt
+
+@csrf_exempt
 def save_comparative_schedule(request):
 
     try:
-        
         cs_id = "DP" + datetime.now().strftime("%Y%m%d%I%M%S")
         cs_exists = DirectPurchase.objects.filter(cs_id=cs_id).first()
         # @TODO try random number if cs_id exists or return error
         if cs_exists:
             cs_id = "DP" + datetime.now().strftime("%Y%m%d%I%M%S")
-        advert_files = request.FILES.getlist("advert", None)
-        proc_plan_id = request.POST.get("proc_plan_id", "")
-        print("proc plan: ", proc_plan_id)
-        # # check if proc ref has 'acc' prefix
-        # if not proc_plan_id.startswith("acc"):
-        #     temp_proc_ref = "acc" + proc_plan_id
-        #     proc_plan_ref = temp_proc_ref
-        # else:
-        #     proc_plan_ref = proc_plan_id
-            
-        proc_plan = DPProcPlan.objects.filter(id=proc_plan_id).first()
-        print("proc_plan: ", proc_plan)
+
+        # Get advert file path from POST data (file uploads handled separately)
+        advert_path = request.POST.get("advert", "").strip()
+        
+        # Handle both proc_ref and proc_plan_id fields from frontend
+        proc_ref = request.POST.get("proc_ref", "").strip()
+        proc_plan_id = request.POST.get("proc_plan", "").strip()  # Frontend sends this as 'proc_plan'
+        
+        # Debug: Log all POST data to see what's actually being sent
+        logger.info(f"Direct Purchase - All POST data keys: {list(request.POST.keys())}")
+        logger.info(f"Direct Purchase - proc_ref: '{proc_ref}', proc_plan_id: '{proc_plan_id}'")
+        
+        # Determine which field to use for finding the procurement plan
+        proc_plan = None
+        
+        if proc_plan_id and proc_plan_id.strip():
+            # Frontend sent proc_plan_id, try to find by ID first
+            try:
+                if proc_plan_id.startswith('"'):
+                    # Clean the string and convert to integer for ID lookup
+                    cleaned_proc_plan_id = proc_plan_id.strip().replace('"', '').replace("'", "")
+                    logger.info(f"Direct Purchase - Cleaned proc_plan_id: '{cleaned_proc_plan_id}'")
+                    proc_plan_ref = "acc" + cleaned_proc_plan_id
+                    proc_plan = DPProcPlan.objects.filter(proc_ref=proc_plan_ref).first()
+                    logger.info(f"Direct Purchase - Found proc_plan by ID: {proc_plan}")
+                else:
+                    proc_plan = DPProcPlan.objects.filter(id=proc_plan_id).first()
+                    logger.info(f"Direct Purchase - Found proc_plan by ID: {proc_plan}")
+            except (ValueError, TypeError) as e:
+                logger.warning(f"Direct Purchase - Invalid proc_plan_id format: '{proc_plan_id}', error: {e}")
+                # If ID lookup fails, try proc_ref as fallback
+                if proc_ref and proc_ref.strip():
+                    if not proc_ref.startswith("acc"):
+                        temp_proc_ref = "acc" + proc_ref
+                        proc_ref = temp_proc_ref
+                    proc_plan = DPProcPlan.objects.filter(proc_ref=proc_ref).first()
+                    logger.info(f"Direct Purchase - Found proc_plan by proc_ref fallback: {proc_plan}")
+        elif proc_ref and proc_ref.strip():
+            # Frontend sent proc_ref, use the original logic
+            if not proc_ref.startswith("acc"):
+                temp_proc_ref = "acc" + proc_ref
+                proc_ref = temp_proc_ref
+            proc_plan = DPProcPlan.objects.filter(proc_ref=proc_ref).first()
+            logger.info(f"Direct Purchase - Found proc_plan by proc_ref: {proc_plan}")
+        else:
+            logger.warning("Direct Purchase - No procurement plan reference provided")
+        
         scope_of_work = request.POST.get("scope_of_work", "")
         pr_number = request.POST.get("pr_number", "")
         pr_date = request.POST.get("pr_date", "")
@@ -1716,28 +1787,46 @@ def save_comparative_schedule(request):
         tender_adjudication_committee_date = request.POST.get("tender_adjudication_committee_date", "")
         username = request.POST.get("username", "")
         
-        # save advert file
-        advert_path = ""
-        try:
-            if advert_files:
-                advert_file = advert_files[0]
-                root_dir = os.path.join(settings.BASE_DIR, 'uploads', 'comparative', 'adverts')
-                fs = FileSystemStorage(location=root_dir)
-                filename_ = fs.save(advert_file.name, advert_file)
-                advert_path = "uploads" + os.path.sep + "comparative" + os.path.sep + "adverts" + os.path.sep + filename_
-        except Exception as ex:
-            print("Error: ", ex)
-        
+        # Validate advert file path if provided
+        if advert_path:
+            # Check file existence at multiple possible locations
+            # Your system stores files directly in media/direct_purchase/ without uploads/ prefix
+            possible_paths = [
+                # Original path as received
+                advert_path,
+                # With uploads/ prefix (standard Django convention)
+                f"uploads/{advert_path}",
+                # Direct media path (your actual storage location)
+                advert_path
+            ]
+            
+            for path in possible_paths:
+                base_path = os.path.join(settings.BASE_DIR, path)
+                media_path = os.path.join(settings.MEDIA_ROOT, path)
+                
+                if os.path.exists(base_path):
+                    advert_path = path
+                    break
+                elif os.path.exists(media_path):
+                    advert_path = path
+                    break
+            else:
+                # If we get here, file wasn't found at any location
+                advert_path = ""    
         # save cs details
         # fetch purchase request
-        print("pr number: ", pr_number)
         pr = PurchaseRequest.objects.get(id=pr_number)
-        print("PR: ", pr, pr_number, username)
         # fetch user
         user = UserProfile.objects.filter(username=username).first()
         currency = Currency.objects.filter(id=currency).first() if currency else None
         # region_ = Regions.objects.filter(region=pr.region).first() if 'region' in pr else None
         # section = Sections.objects.filter(section=pr.section).first() if 'section' in pr else None
+        # Log the final procurement plan assignment
+        if proc_plan:
+            logger.info(f"Direct Purchase - Final proc_plan assigned: {proc_plan.proc_ref} - {proc_plan.description}")
+        else:
+            logger.warning("Direct Purchase - No procurement plan assigned to DirectPurchase object")
+            
         cs_query = DirectPurchase(
             cs_id = cs_id,
             pr_id_id = pr.id,
@@ -1765,30 +1854,64 @@ def save_comparative_schedule(request):
             "cs_owner": user.username if user else "",
             }, safe=False)
     except Exception as ex:
-        print("Error: ", ex)
+        logger.error(f"Error saving Comparative Schedule: {ex}")
         return JsonResponse({
             "message": "Error saving Comparative Schedule",
             "error": str(ex),
             "success": False,
             }, safe=False)
    
-@login_required
+@csrf_exempt
 def update_comparative_schedule(request):
 
     try:
-        
-        advert_files = request.FILES.getlist("advert", None)
         cs_id = request.POST.get("cs_id", "")
-        proc_plan_id = request.POST.get("proc_plan_id", "")
-        # proc_plan = data['proc_plan']
-        # check if proc ref has 'acc' prefix
-        # if not proc_plan_id.startswith("acc"):
-        #     temp_proc_ref = "acc" + proc_plan_id
-        #     proc_plan_ref = temp_proc_ref
-        # else:
-        #     proc_plan_ref = proc_plan_id
-            
-        proc_plan_ = DPProcPlan.objects.filter(id=proc_plan_id).first()
+        # Handle both proc_plan_id and proc_plan fields from frontend
+        proc_plan_id = request.POST.get("proc_plan_id", "").strip()
+        proc_plan_field = request.POST.get("proc_plan", "").strip()  # Frontend sends this as 'proc_plan'
+        
+        # Debug: Log all POST data to see what's actually being sent
+        logger.info(f"Direct Purchase Update - All POST data keys: {list(request.POST.keys())}")
+        logger.info(f"Direct Purchase Update - proc_plan_id: '{proc_plan_id}', proc_plan_field: '{proc_plan_field}'")
+        
+        # Determine which field to use for finding the procurement plan
+        proc_plan_ = None
+        
+        if proc_plan_field and proc_plan_field.strip():
+            # Frontend sent proc_plan field, try to find by ID first
+            try:
+                # Clean the string and convert to integer for ID lookup
+                cleaned_proc_plan = proc_plan_field.strip().replace('"', '').replace("'", "")
+                logger.info(f"Direct Purchase Update - Cleaned proc_plan field: '{cleaned_proc_plan}'")
+                proc_plan_id_int = int(cleaned_proc_plan)
+                proc_plan_ = DPProcPlan.objects.filter(id=proc_plan_id_int).first()
+                logger.info(f"Direct Purchase Update - Found proc_plan by proc_plan field: {proc_plan_}")
+            except (ValueError, TypeError) as e:
+                logger.warning(f"Direct Purchase Update - Invalid proc_plan field format: '{proc_plan_field}', error: {e}")
+                # If ID lookup fails, try proc_plan_id as fallback
+                if proc_plan_id and proc_plan_id.strip():
+                    try:
+                        cleaned_proc_plan_id = proc_plan_id.strip().replace('"', '').replace("'", "")
+                        logger.info(f"Direct Purchase Update - Cleaned proc_plan_id: '{cleaned_proc_plan_id}'")
+                        proc_plan_id_int = int(cleaned_proc_plan_id)
+                        proc_plan_ = DPProcPlan.objects.filter(id=proc_plan_id_int).first()
+                        logger.info(f"Direct Purchase Update - Found proc_plan by proc_plan_id fallback: {proc_plan_}")
+                    except (ValueError, TypeError) as e:
+                        logger.warning(f"Direct Purchase Update - Invalid proc_plan_id format: '{proc_plan_id}', error: {e}")
+                        proc_plan_ = None
+        elif proc_plan_id and proc_plan_id.strip():
+            # Frontend sent proc_plan_id, use the original logic
+            try:
+                cleaned_proc_plan_id = proc_plan_id.strip().replace('"', '').replace("'", "")
+                logger.info(f"Direct Purchase Update - Cleaned proc_plan_id: '{cleaned_proc_plan_id}'")
+                proc_plan_id_int = int(cleaned_proc_plan_id)
+                proc_plan_ = DPProcPlan.objects.filter(id=proc_plan_id_int).first()
+                logger.info(f"Direct Purchase Update - Found proc_plan by proc_plan_id: {proc_plan_}")
+            except (ValueError, TypeError) as e:
+                logger.warning(f"Direct Purchase Update - Invalid proc_plan_id format: '{proc_plan_id}', error: {e}")
+                proc_plan_ = None
+        else:
+            logger.warning("Direct Purchase Update - No procurement plan reference provided")
         scope_of_work = request.POST.get("scope_of_work", "")
         currency = request.POST.get("currency", "")
         pr_number = request.POST.get("pr_number", "")
@@ -1801,17 +1924,35 @@ def update_comparative_schedule(request):
         tender_adjudication_committee_date = request.POST.get("tender_adjudication_committee_date", "")
         username = request.POST.get("username", "")
         
-        # save advert file
-        advert_path = ""
-        try:
-            if advert_files:
-                advert_file = advert_files[0]
-                root_dir = os.path.join(settings.BASE_DIR, 'uploads', 'comparative', 'adverts')
-                fs = FileSystemStorage(location=root_dir)
-                filename_ = fs.save(advert_file.name, advert_file)
-                advert_path = "uploads" + os.path.sep + "comparative" + os.path.sep + "adverts" + os.path.sep + filename_
-        except Exception as ex:
-            print("Error: ", ex)
+        # Get advert file path from POST data (file uploads handled separately)
+        advert_path = request.POST.get("advert", "").strip()
+        
+        # Validate advert file path if provided (same logic as save function)
+        if advert_path:
+            # Check file existence at multiple possible locations
+            # Your system stores files directly in media/direct_purchase/ without uploads/ prefix
+            possible_paths = [
+                # Original path as received
+                advert_path,
+                # With uploads/ prefix (standard Django convention)
+                f"uploads/{advert_path}",
+                # Direct media path (your actual storage location)
+                advert_path
+            ]
+            
+            for path in possible_paths:
+                base_path = os.path.join(settings.BASE_DIR, path)
+                media_path = os.path.join(settings.MEDIA_ROOT, path)
+                
+                if os.path.exists(base_path):
+                    advert_path = path
+                    break
+                elif os.path.exists(media_path):
+                    advert_path = path
+                    break
+            else:
+                # If we get here, file wasn't found at any location
+                advert_path = ""
 
         # fetch user
         currency = Currency.objects.filter(id=currency).first() if currency else None
@@ -1840,28 +1981,26 @@ def update_comparative_schedule(request):
             if tender_adjudication_committee_date:
                 cs_query.tac_date = tender_adjudication_committee_date
             if proc_plan_:
+                logger.info(f"Direct Purchase Update - Updating proc_plan to: {proc_plan_.proc_ref} - {proc_plan_.description}")
                 cs_query.proc_plan = proc_plan_
             if ref_date:
                 cs_query.ref_date = ref_date
             
             cs_query.save()
-        else:
-            print("ComparativeSchedule record not found with cs_id:", cs_id)
-        
         return JsonResponse({
             "message": "Comparative Schedule saved successfully",
             "success": True,
             "cs_id": cs_id,
             }, safe=False)
     except Exception as ex:
-        print("Error: ", ex)
+        logger.error(f"Error updating Comparative Schedule: {ex}")
         return JsonResponse({
             "message": "Error saving Comparative Schedule",
             "error": str(ex),
             "success": False,
             }, safe=False)
 
-@login_required
+@csrf_exempt
 def update_pritem_ordered(request):
     
     cs_id = request.POST.get("cs_id", "")
@@ -1870,12 +2009,8 @@ def update_pritem_ordered(request):
     if cs_query:
         pr_item_id = request.POST.get("pr_id", "")
         DPitems_data = json.loads(request.POST.get("json_data", "{}"))
-        print("DPitems_data: ", DPitems_data)
         items = DPitems_data.get("cs_items", [])
-        print("items ", items, type(items))
-        print("pr_item_id: ", pr_item_id)
         purchase_request = PurchaseRequest.objects.filter(id=pr_item_id).first()
-        print("purchase request: ", purchase_request)
         existing_items = DPRequiredItems.objects.filter(cs_id=cs_query).all()
         
         # Convert existing items to a list of dictionaries for easier comparison
@@ -1889,35 +2024,28 @@ def update_pritem_ordered(request):
             }
             for item in existing_items
         ]
-        print("existing_items_list: ", existing_items_list)
 
         # Step 2: Identify items to add
         # Convert provided list to a set of IDs for faster lookup
         provided_ids = {item['item_required'] for item in items}
-        print("provided_ids: ", provided_ids)
 
         # Find IDs in the provided list that are not in the existing items
         ids_to_add = provided_ids - {item['item_name'] for item in existing_items_list}
-        print("ids_to_add: ", ids_to_add)
 
         # Filter the provided list to get the items to add
         items_to_add = [item for item in items if item['item_required'] in ids_to_add]
-        print("items_to_add: ", items_to_add)
 
         # Step 3: Identify items to delete
         # Find IDs in the existing items that are not in the provided list
         ids_to_delete = {item['item_name'] for item in existing_items_list} - provided_ids
-        print("ids_to_delete: ", ids_to_delete)
 
         # Step 4: Update the database
         # Add new items
         for item in items_to_add:
-            print("item: ", item)
             pr_item = PrItem.objects.filter(item_required=item['item_required'], purchase_request=purchase_request).first()
             if pr_item:
                 pr_item.ordered = True
                 pr_item.save()
-                print("item: ", item)
                 cs_required_items = DPRequiredItems(
                     cs_id = cs_query,
                     item_id = item['id'],
@@ -1926,11 +2054,9 @@ def update_pritem_ordered(request):
                     unit_of_measurement = item['unit_of_measurement'],
                 )
                 cs_required_items.save()
-                print("added ...")
 
         # Delete items that no longer exist
         for item in ids_to_delete:
-            print("item: ", item)
             pr_item = PrItem.objects.filter(item_required=item, purchase_request=purchase_request).first()
             if pr_item:
                 pr_item.ordered = False
@@ -1948,7 +2074,7 @@ def update_pritem_ordered(request):
             "success": False,
             }, safe=False)
     
-@login_required
+@csrf_exempt
 def save_cs_bid(request):
 
     cs_id = request.POST.get("cs_id", "")
@@ -1987,17 +2113,24 @@ def save_cs_bid(request):
                 item.delete()
             bid.delete()
             
-    # save bids
+    # save bids using optimized file handler
     bid_doc_path = ""
     try:
         if bid_docs:
             bid_doc = bid_docs
-            root_dir = os.path.join(settings.BASE_DIR, 'uploads', 'comparative', 'adverts')
-            fs = FileSystemStorage(location=root_dir)
-            filename_ = fs.save(bid_doc.name, bid_doc)
-            bid_doc_path = "uploads" + os.path.sep + "comparative" + os.path.sep + "adverts" + os.path.sep + filename_
+            # Use optimized file handler for bid documents
+            file_handler = OptimizedDirectPurchaseFileHandler(request.user)
+            result = file_handler.handle_bid_document_upload(bid_doc, cs_query)
+            
+            if result['success']:
+                bid_doc_path = result['file_path']
+                logger.info(f"Bid document uploaded successfully: {bid_doc_path}")
+            else:
+                logger.error(f"Bid document upload failed: {result.get('error', 'Unknown error')}")
+                bid_doc_path = ""
     except Exception as ex:
-        print("Error: ", ex)
+        logger.error(f"Error uploading bid document: {ex}")
+        bid_doc_path = ""
         
     for item in items:
         item_id = "Item" + datetime.now().strftime("%Y%m%d%I%M%S%p")
@@ -2029,7 +2162,7 @@ def save_cs_bid(request):
         "success": True,
     })
 
-@login_required
+@csrf_exempt
 def delete_cs_bid(request):
     cs_id = request.POST.get("cs_id", "")
     supplier_name = request.POST.get("supplier_name", "")
@@ -2055,7 +2188,6 @@ def delete_cs_bid(request):
         for bid in bid_query:
             # delete item
             item = bid.item_id if bid.item_id else None
-            print("items: ", item) 
             if item:
                 item.delete()
                 
@@ -2087,7 +2219,7 @@ def delete_cs_bid(request):
         "success": True,
     })
 
-@login_required
+@csrf_exempt
 def save_cs_compliance(request):
 
     cs_id = request.POST.get("cs_id", "")
@@ -2119,7 +2251,6 @@ def save_cs_compliance(request):
             compliance.delete()
     
     for comp in compliances:
-        print("comp: ", comp)
         supplier_name = comp['supplier_name'] if 'supplier_name' in comp else False
         payment_terms = comp['payment_terms'] if 'payment_terms' in comp else False
         bid_validity = comp['bid_validity'] if 'bid_validity' in comp else False
@@ -2158,9 +2289,7 @@ def save_cs_compliance(request):
     for remark in compliance_remarks:
         if 'remarks' in remark and remark['remarks']:
             supplier_name = remark['supplier_name'] if 'supplier_name' in remark else ""
-            print("supplier_name: ", supplier_name, cs_query)
             supplier = Supplier.objects.filter(name=supplier_name).first()
-            print("supplier: ", supplier)
             _remark = DPComplianceRemarks(
                 cs_id = cs_query,
                 supplier_id = supplier,
@@ -2173,7 +2302,7 @@ def save_cs_compliance(request):
         "success": True,
     })
     
-@login_required
+@csrf_exempt
 def save_supplier(request):
 
     supplier_name = request.POST.get("supplier_name", "")
@@ -2190,7 +2319,7 @@ def save_supplier(request):
         "success": True,
     })
     
-@login_required
+@csrf_exempt
 def save_cs_ranking(request):
     cs_id = request.POST.get("cs_id", "")
     cs_query = DirectPurchase.objects.filter(cs_id=cs_id).first()
@@ -2206,6 +2335,7 @@ def save_cs_ranking(request):
         clear_approval = clear_approvals(cs_id)
         for ranking in ranking_query:
             ranking.delete()
+    
     # get bids
     bids = DPBids.objects.filter(cs_id=cs_query).values('sup_id').annotate(total_sum=Sum('total'))
     compliant_bids = []
@@ -2215,9 +2345,7 @@ def save_cs_ranking(request):
         if _compliance:
             compliant_bids.append(bid)
     rankings = {bid['sup_id']: bid['total_sum'] for bid in compliant_bids}
-    print("rankings: ", rankings)
     sorted_rankings = sorted(rankings.items(), key=lambda x: x[1])
-    print("sorted_rankings: ", sorted_rankings)
     rank = 1
     sorted_rankings_dict = dict(sorted_rankings)
     for supplier_id, total in sorted_rankings_dict.items():
@@ -2258,7 +2386,7 @@ def save_cs_ranking(request):
         "rankings": list(custom_rankings),
     })
     
-@login_required
+@csrf_exempt
 def save_cs_committee(request):
 
     try:
@@ -2295,8 +2423,9 @@ def save_cs_committee(request):
             "message": "Committee saved successfully",
             "success": True,
         })
+        
     except Exception as ex:
-        print("Error: ", ex)
+        logger.error(f"Error saving committee: {ex}")
         return JsonResponse({
             "message": "Committee saved successfully",
             "success": False,
@@ -2306,18 +2435,16 @@ def save_cs_committee(request):
 def delete_cs_committee_member(request):
     cs_id = request.POST.get("cs_id", "")
     username = request.POST.get("username", "")
-    print("username: ", username)
     cs_query = DirectPurchase.objects.filter(cs_id=cs_id).first()
     if not cs_query:
         return JsonResponse({
             "message": "Comparative Schedule not found",
             "success": False,
             }, safe=False)
-    
+
     member_profile = UserProfile.objects.filter(username=username).first()
     if member_profile:
         committee_query = DPCommittee.objects.filter(cs_id=cs_query, user=member_profile).first()
-        print("committee_query: ", committee_query)
         if committee_query:
             clear_approvals(cs_id)
             committee_query.delete()
@@ -2336,12 +2463,11 @@ def delete_cs_committee_member(request):
             "success": False,
         })
 
-@login_required
+@csrf_exempt
 def approve_cs_committee(request):
     try:
         cs_id = request.POST.get("cs_id", "")
         username = request.POST.get("username", "")
-        print("username: ", username)
         approval = request.POST.get("approval", "")
         justification = request.POST.get("justification", "")
         
@@ -2369,15 +2495,13 @@ def approve_cs_committee(request):
             committee_approved = all([c.committee_approval == "Approved" for c in committees])
             if committee_approved:
                 fm_role = Roles.objects.filter(name="Finance Manager", application=APP_NAME).first()
-                print("fm role: ", fm_role)
                 fm_user = UserProfile.objects.filter(region=cs_query.region, roles=fm_role).first()
                 if fm_user:
-                    print("fm user: ", fm_user.username, fm_user.id)
                     msg = cs_query.cs_id + " Direct Purchase is ready for your approval "
                     url = "/direct_purchase/comperative_schedule/" + cs_query.cs_id
                     notify_user(fm_user, msg, "Direct Purchase", url, cs_query.cs_id, request)
                 else:
-                    print("No Finance Manager found for region: ", cs_query.region)
+                    logger.warning(f"No Finance Manager found for region: {cs_query.region}")
 
             return JsonResponse({
                 "message": "Committee member approved successfully",
@@ -2466,25 +2590,20 @@ def approve_cs(request):
                 )
                 fm_approval.save()
                 
-                print("user: ", user, cs_query.id)
                 flag = notification_update(user, cs_query.cs_id)
-                print("flag: ", flag)
                 notification = Notification.objects.filter(user=user, notification_id=cs_query.id).first()
                 if notification:
-                    print("notification: ", notification.is_read, notification.notification_type, notification.message)
                     notification.is_read = True
                     notification.save()
                     
                 committee_approved = all([c.committee_approval == "Approved" for c in committees])
                 if committee_approved and approval == "Approved":
                     gm_role = Roles.objects.filter(name="General Manager", application=APP_NAME).first()
-                    print("gm role: ", gm_role)
                     gm_user = UserProfile.objects.filter(region=cs_query.region, roles=gm_role).first()
                     if gm_user:
-                        print("gm user: ", gm_user.username, gm_user.id)
                         notify_user(gm_user, "Direct Purchase is ready for your approval " + cs_query.cs_id, "Direct Purchase", "/direct_purchase/comperative_schedule/" + cs_query.cs_id, cs_query.cs_id, request)
                     else:
-                        print("No General Manager found for region: ", cs_query.region)
+                        logger.warning(f"No General Manager found for region: {cs_query.region}")
             
                 return JsonResponse({
                     "message": "FM approval saved successfully",
@@ -2518,7 +2637,7 @@ def approve_cs(request):
             "success": False,
         }, status=500)
 
-@login_required
+@csrf_exempt
 def save_cs_decision(request):
     cs_id = request.POST.get("cs_id", "")
     committee_id = request.POST.get("committee_id", "")
@@ -2569,7 +2688,6 @@ def cs_add_supplier(request, cs_id):
                     item = DPItems.objects.filter(item_id=bid.item_id).first()
 
                     if supplier:
-                        print(supplier, supplier.supplier, supplier.sup_id)
                         supplier_id = supplier.sup_id
                         supplier_name = supplier.supplier
                         bids_dict[str(i)].append({
@@ -2598,8 +2716,6 @@ def cs_add_supplier(request, cs_id):
             "proc_plan": proc_plan
         })
     elif request.method == "POST":
-        print("request: ", request.POST)
-        print(i)
         tender_id = request.POST['tender_id']
         item_count = request.POST['item_count']
         rfq_no = request.POST['rfq_id']
@@ -2619,7 +2735,7 @@ def cs_add_supplier(request, cs_id):
                 save_file(bid_document_file, bid_document_path)
         
         except Exception as ex:
-            print("Error: ", ex)
+            logger.error(f"Error in cs_add_supplier: {ex}")
         
         for i in range(0,int(item_count)):
             item_id = "Item" + datetime.now().strftime("%Y%m%d%I%M%S%p")
@@ -2693,7 +2809,6 @@ def cs_compliance_table(request, cs_id):
                     supplier = Suppliers.objects.filter(sup_id=bid.sup_id).first()
                     item = DPItems.objects.filter(item_id=bid.item_id).first()
                     
-                    print(supplier, supplier.supplier, supplier.sup_id)
                     supplier_id = supplier.sup_id
                     supplier_name = supplier.supplier
                     bids_dict[str(i)].append({
@@ -2764,7 +2879,6 @@ def save_additional_notes(request):
 def save_buyers_notes(request):
     cs_id = request.POST.get("cs_id", "")
     buyers_notes = request.POST.get("buyers_notes", "")
-    print("buyers_notes: ", buyers_notes)
     cs_query = DirectPurchase.objects.filter(cs_id=cs_id).first()
     if cs_query:
         ranking = DPRanking.objects.filter(cs_id=cs_query, rank=1).first()
@@ -2783,14 +2897,12 @@ def save_buyers_notes(request):
 
 @login_required
 def cancel_schedule(request, cs_id):
-    print("cs_id: ", cs_id)
     try:
         cs_query = DirectPurchase.objects.filter(cs_id=cs_id).first()
         if cs_query:
             cs_query.cancelled = True
             cs_query.scope_of_work = "Cancelled Schedule: " + cs_query.scope_of_work
             cs_query.save()
-            print("cs_query: ", cs_query, cs_query.cancelled, "scope: ", cs_query.scope_of_work, cs_query.pr_number)
             required_items = DPRequiredItems.objects.filter(cs_id=cs_query).all()
             pr_query = PurchaseRequest.objects.filter(id=cs_query.pr_number).first()
             for item in required_items:
@@ -2800,7 +2912,7 @@ def cancel_schedule(request, cs_id):
                 item.delete()
 
     except Exception as ex:
-        print("Error: ", ex)
+        logger.error(f"Error cancelling Comparative Schedule: {ex}")
         messages.error(request, "Error cancelling Comparative Schedule", str(ex))
     
     messages.success(request, "Comparative Schedule cancelled successfully")
@@ -2949,7 +3061,7 @@ def api_get_pr_attachments(request, pr_id):
                     "name": os.path.basename(at.file.name),
                 })
         except Exception as ex:
-            print(f"Error processing attachment {at.id}: {ex}")
+            logger.error(f"Error processing attachment {at.id}: {ex}")
             continue
 
     return JsonResponse({
@@ -3155,13 +3267,21 @@ def api_get_currencies(request):
 @login_required 
 @require_http_methods(["GET"])
 def api_get_proc_plans(request):
-    """Get procurement plans for dropdowns"""
-    proc_plans = list(DPProcPlan.objects.values('id', 'proc_ref', 'description'))
-    
-    return JsonResponse({
-        "success": True,
-        "proc_plans": proc_plans,
-    })
+    """Get procurement plans for dropdowns - using comparative_schedules as single source of truth"""
+    try:
+        proc_plans = list(DPProcPlan.objects.values('id', 'proc_ref', 'description'))
+        
+        return JsonResponse({
+            "success": True,
+            "proc_plans": proc_plans,
+        })
+    except Exception as ex:
+        logger.error(f"Error fetching procurement plans: {ex}")
+        return JsonResponse({
+            "success": False,
+            "error": str(ex),
+            "proc_plans": []
+        })
 
 
 @login_required 
@@ -3558,7 +3678,7 @@ def api_get_cs_pr_items_management(request, cs_id):
                                     "name": os.path.basename(attachment.file.name),
                                 })
                         except Exception as ex:
-                            print(f"Error processing attachment {attachment.id}: {ex}")
+                            logger.error(f"Error processing attachment {attachment.id}: {ex}")
                             continue
 
         # Get unit of measurement options
@@ -3589,7 +3709,7 @@ def api_get_cs_pr_items_management(request, cs_id):
         return JsonResponse(result_data, safe=False)
         
     except Exception as ex:
-        print(f"Error loading PR items management data: {ex}")
+        logger.error(f"Error loading PR items management data: {ex}")
         return JsonResponse({
             "success": False,
             "message": f"Error loading PR items data: {str(ex)}"
@@ -3641,46 +3761,83 @@ def api_update_cs_pr_items(request, cs_id):
         }, status=500)
 
 
-# Helper function for file encoding
-def _encode_file_safely(file_path):
-    """Safely encode file to base64"""
-    try:
-        if file_path and os.path.exists(file_path):
-            with open(file_path, 'rb') as file:
-                file_data = file.read()
-                return base64.b64encode(file_data).decode('utf-8')
-    except Exception as ex:
-        print(f"Error encoding file {file_path}: {ex}")
-    return ""
+# This function has been replaced by optimized file handlers
+# def _encode_file_safely(file_path):
+#     """Safely encode file to base64 - REPLACED by optimized handlers"""
+#     pass
 
 
 # File upload/download functions
 @login_required
-@require_http_methods(["POST"])
+@csrf_exempt
 def api_upload_file(request):
-    """Upload file for CS bid"""
+    """Upload file for CS bid - compatible with frontend file upload"""
     try:
+        if request.method != "POST":
+            return JsonResponse({
+                "success": False,
+                "message": "Only POST method allowed"
+            }, status=405)
+        
+        # Check if user is authenticated
+        if not request.user.is_authenticated:
+            return JsonResponse({
+                "success": False,
+                "message": "Authentication required"
+            }, status=401)
+        
+        # Debug user object
+        logger.info(f"User object: {request.user}, type: {type(request.user)}, username: {getattr(request.user, 'username', 'No username')}")
+        
         file = request.FILES.get('file')
         if not file:
             return JsonResponse({
                 "success": False,
                 "message": "No file provided"
+            }, status=400)
+        
+        # Save file using optimized file handler
+        try:
+            file_handler = OptimizedFileHandler(request.user)
+            result = file_handler.save_file_optimized(file, 'bid_document')
+        except Exception as e:
+            logger.error(f"Error in save_file_optimized: {e}")
+            return JsonResponse({
+                "success": False,
+                "message": f"File handler error: {str(e)}"
+            }, status=500)
+        
+        # The save_file_optimized method returns a dict with file_path, metadata, etc.
+        # It doesn't have a 'success' key - if it succeeds, it returns the file info
+        if 'file_path' in result:
+            file_path = result['file_path']
+            metadata = result.get('metadata', {})
+            
+            # Return the complete response that the frontend expects
+            return JsonResponse({
+                "success": True,
+                "file_path": file_path,
+                "message": "File uploaded successfully",
+                "metadata": {
+                    "original_name": metadata.get('original_name', file.name),
+                    "size": metadata.get('size', file.size),
+                    "mime_type": metadata.get('mime_type', file.content_type)
+                },
+                "download_url": result.get('download_url', ''),
+                "preview_url": result.get('preview_url', '')
             })
-        
-        # Save file
-        file_path = _save_file_optimized(file, 'bid_document')
-        
-        return JsonResponse({
-            "success": True,
-            "file_path": file_path,
-            "message": "File uploaded successfully"
-        })
+        else:
+            return JsonResponse({
+                "success": False,
+                "message": "File upload failed - no file path returned"
+            }, status=400)
         
     except Exception as ex:
+        logger.error(f"Error uploading file: {ex}")
         return JsonResponse({
             "success": False,
             "message": f"Error uploading file: {str(ex)}"
-        })
+        }, status=500)
 
 
 @login_required
@@ -4702,3 +4859,17 @@ def api_search_filters_data(request):
             "success": False,
             "message": f"Error getting filter data: {str(ex)}"
         }, status=500)
+
+# Test endpoint for debugging
+from django.views.decorators.csrf import csrf_exempt
+
+@csrf_exempt
+def test_api_endpoint(request, pr_id):
+    """Test endpoint to verify API routing is working"""
+    return JsonResponse({
+        "success": True,
+        "message": "Test endpoint working",
+        "pr_id": pr_id,
+        "endpoint": "test_api_endpoint",
+        "timestamp": datetime.now().isoformat(),
+    }, safe=False)

@@ -49,6 +49,13 @@ class ComparativeSchedules(models.Model):
     additional_notes = models.CharField(max_length=400, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     
+    class Meta:
+        indexes = [
+            models.Index(fields=['created_by_id', 'region', 'cancelled']),
+            models.Index(fields=['cs_id']),
+            models.Index(fields=['created_at']),
+        ]
+    
     # add a function to get logged in user's cost center
     def get_logged_in_user_cost_center(self):
         return self.created_by.cost_center
@@ -135,6 +142,12 @@ class Committee(models.Model):
     justification = models.CharField(max_length=255, null=True, blank=True)
     committee_date = models.DateTimeField(blank=True, null=True, default=None)
     created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        indexes = [
+            models.Index(fields=['cs_id', 'user_id']),
+            models.Index(fields=['committee_approval']),
+        ]
 
 class CSApproval(models.Model):
     cs_id = models.ForeignKey(ComparativeSchedules, on_delete=models.CASCADE)
@@ -144,3 +157,9 @@ class CSApproval(models.Model):
     justification = models.CharField(max_length=255, null=True, blank=True)
     approval_date = models.DateTimeField(blank=True, null=True, default=None)
     created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        indexes = [
+            models.Index(fields=['cs_id', 'approver_role']),
+            models.Index(fields=['approval']),
+        ]

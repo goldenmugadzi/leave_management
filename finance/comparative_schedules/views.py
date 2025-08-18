@@ -1,6 +1,7 @@
 import base64
 import csv
 import os
+from django.core.files.storage import FileSystemStorage
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
 import json
@@ -25,7 +26,7 @@ from .optimized_file_handlers import OptimizedFileHandler, OptimizedAttachmentHa
 from it.users.views import ms_exhange_reset_password_html, ms_exhange_send, ms_exhange_send_html
 from .models import *
 from it.users.models import *
-from finance.purchase_request.models import ProcurementPlanReference, PurchaseRequest, PrItem, Attachment, \
+from finance.purchase_request.models import PurchaseRequest, PrItem, Attachment, \
     UnitOfMeasurement
 from ACE2.models import Ace2
 from finance.comparative_schedules.models import *
@@ -37,7 +38,7 @@ from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_http_methods
 import copy
 from django.conf import settings
-from django.core.files.storage import FileSystemStorage
+# FileSystemStorage no longer needed - file uploads handled by dedicated APIs
 from django.core.cache import cache
 
 from django.contrib import messages
@@ -1381,11 +1382,16 @@ def get_pending_fm_approval(request):
 def get_your_schedules(user_id, search_value=None, column_name=None, region=None):
     
     try:   
-        cs = ComparativeSchedules.objects.filter(
+        cs = ComparativeSchedules.objects.select_related(
+            'created_by', 'region', 'section', 'pr_id'
+        ).prefetch_related(
+            Prefetch('committee_set', queryset=Committee.objects.select_related('user')),
+            Prefetch('csapproval_set', queryset=CSApproval.objects.select_related('user'))
+        ).filter(
             region=region,
             created_by_id=user_id,
             cancelled=False
-        ).all()
+        )
 
         # Filter based on search value
         if search_value:
@@ -1405,12 +1411,17 @@ def get_your_schedules(user_id, search_value=None, column_name=None, region=None
 def get_pending_committee_table(user_id, search_value=None, column_name=None, region=None):
     print("user id: ", user_id)
     # fetch schedules if user exists in the committee and has not yet approved
-    cs = ComparativeSchedules.objects.filter(
+    cs = ComparativeSchedules.objects.select_related(
+        'created_by', 'region', 'section', 'pr_id'
+    ).prefetch_related(
+        Prefetch('committee_set', queryset=Committee.objects.select_related('user')),
+        Prefetch('csapproval_set', queryset=CSApproval.objects.select_related('user'))
+    ).filter(
         Q(committee__committee_approval=None) | Q(committee__committee_approval=""),
         Q(committee__user_id=user_id),
         cancelled=False,
         region=region,
-    ).all()
+    )
 
     # Filter based on search value
     if search_value:
@@ -1507,7 +1518,12 @@ def get_general_manager(user_id, search_value=None, column_name=None, region=Non
 
 
 def get_all_schedules_table(user_id, search_value=None, column_name=None, region=None):
-    cs = ComparativeSchedules.objects.filter(region=region, cancelled=False).all()
+    cs = ComparativeSchedules.objects.select_related(
+        'created_by', 'region', 'section', 'pr_id'
+    ).prefetch_related(
+        Prefetch('committee_set', queryset=Committee.objects.select_related('user')),
+        Prefetch('csapproval_set', queryset=CSApproval.objects.select_related('user'))
+    ).filter(region=region, cancelled=False)
 
     # Filter based on search value
     if search_value:
@@ -1527,9 +1543,14 @@ def get_filtered_schedules(user_id, search_value, column_name, user_region, stat
     print("user id: ", user_id, "search_value: ", search_value, "column_name: ", column_name, "user_region: ",
           user_region, "status: ", status, "station: ", station, "pickStation: ", pickStation, "start_date: ",
           start_date, "end_date: ", end_date)
-    cs = ComparativeSchedules.objects.filter(
+    cs = ComparativeSchedules.objects.select_related(
+        'created_by', 'region', 'section', 'pr_id'
+    ).prefetch_related(
+        Prefetch('committee_set', queryset=Committee.objects.select_related('user')),
+        Prefetch('csapproval_set', queryset=CSApproval.objects.select_related('user'))
+    ).filter(
         region=user_region,
-    ).all()
+    )
 
     try:
 
@@ -1642,68 +1663,38 @@ def get_csv_export(request):
     return response
 
 
-def add_details(cs):
+def add_details(cs_queryset):
     cs_list = []
     
-    # Check if cs is a list (from pagination) or a QuerySet
-    if isinstance(cs, list):
-        # If it's a list, we can't use select_related, so use the list as-is
-        cs_data = cs
-    else:
-        # Don't re-prefetch if the queryset already has prefetched data
-        # This prevents the 'committee_set' lookup conflict
-        if hasattr(cs, '_prefetch_related_lookups'):
-            # Use the queryset as-is if it already has prefetched data
-            cs_data = cs
-        else:
-            # Only prefetch if not already done
-            cs_data = cs.select_related(
-                'created_by', 'region', 'section'
-            ).prefetch_related(
-                Prefetch('committee_set', queryset=Committee.objects.select_related('user')),
-                Prefetch('csapproval_set', queryset=CSApproval.objects.select_related('user'))
-            )
-    
-    for c in cs_data:
+    for c in cs_queryset:
         committee_approval = ""
         gm_approval = None
         fm_approval = None
-        committee_reject_reason = ""  # Initialize to prevent NameError
-        committee = Committee.objects.filter(
-            cs_id=c.id
-        ).all()
-
-        if len(committee) > 0:
-            committee_approved = all([c.committee_approval == "Approved" for c in committee])
+        committee_reject_reason = ""
+        
+        # Use prefetched committee data instead of new queries
+        committee_list = list(c.committee_set.all())
+        
+        if len(committee_list) > 0:
+            committee_approved = all([comm.committee_approval == "Approved" for comm in committee_list])
             if committee_approved:
                 committee_approval = "Approval Complete"
-                fm_approval = CSApproval.objects.filter(
-                    cs_id=c,
-                    approver_role="finance_manager",
-                ).first()
-
-                gm_approval = CSApproval.objects.filter(
-                    cs_id=c,
-                    approver_role="general_manager",
-                ).first()
+                # Use prefetched approval data
+                fm_approval = next((app for app in c.csapproval_set.all() 
+                                  if app.approver_role == "finance_manager"), None)
+                gm_approval = next((app for app in c.csapproval_set.all() 
+                                  if app.approver_role == "general_manager"), None)
             else:
                 committee_approval = "Pending"
                 fm_approval = None
                 gm_approval = None
 
-                committee_pending = Committee.objects.filter(
-                    cs_id=c,
-                    committee_approval__in=["", None]
-                ).exists()
-
+                committee_pending = any(comm.committee_approval in ["", None] for comm in committee_list)
                 if committee_pending:
                     committee_approval = "Pending"
 
-                committee_rejected = Committee.objects.filter(
-                    cs_id=c,
-                    committee_approval="Rejected"
-                ).first()
-
+                committee_rejected = next((comm for comm in committee_list 
+                                        if comm.committee_approval == "Rejected"), None)
                 if committee_rejected:
                     committee_reject_reason = committee_rejected.justification
                     committee_approval = "Rejected"
@@ -1712,35 +1703,27 @@ def add_details(cs):
             fm_approval = None
             gm_approval = None
 
-        print("c.pr_id_id: ", c.pr_id_id)
-        pr = PurchaseRequest.objects.filter(id=c.pr_id_id).first()
-        user = UserProfile.objects.filter(id=c.created_by_id).first()
-        region = Regions.objects.filter(id=c.region_id).first()
-        section = Sections.objects.filter(id=c.section_id).first()
-
         try:
             cs_list.append({
                 "cs_id": c.cs_id,
-                "pr_id": pr.id if pr else "",
+                "pr_id": c.pr_id.id if c.pr_id else "",
                 "pr_number": c.pr_number,
                 "pr_date": c.pr_date,
                 "scope_of_work": c.scope_of_work,
                 "closing_date": c.closing_date,
                 "closing_time": c.closing_time,
                 "advert": c.advert,
-                "pr_number": c.pr_number,
-                "pr_date": c.pr_date,
                 "cs_opened": c.cs_opened,
                 "tac_date": c.tac_date,
-                "created_by": user.username if user else None,
+                "created_by": c.created_by.username if c.created_by else None,
                 "committee_approval": committee_approval,
                 "committee_reject_reason": committee_reject_reason,
                 "gm_approval": gm_approval.approval if gm_approval else "Pending",
                 "gm_reject_reason": gm_approval.justification if gm_approval else "",
                 "fm_approval": fm_approval.approval if fm_approval else "Pending",
                 "fm_reject_reason": fm_approval.justification if fm_approval else "",
-                "section": section.section if section else "",
-                "region": region.region if region else "",
+                "section": c.section.section if c.section else "",
+                "region": c.region.region if c.region else "",
                 "created_at": c.created_at.strftime("%Y-%m-%d %H:%M") if c.created_at else ""
             })
         except Exception as ex:
@@ -1987,11 +1970,46 @@ def get_comperative_schedule_data(request, cs_id):
         encoded_advert_file = ""
         try:
             if cs.advert:
-                with open(cs.advert, 'rb') as f:
-                    file_data = f.read()
-                encoded_advert_file = base64.b64encode(file_data).decode('utf-8')
+                # Construct the correct file path
+                if cs.advert.startswith('uploads/'):
+                    # File is stored in media directory
+                    file_path = os.path.join(settings.MEDIA_ROOT, cs.advert)
+                else:
+                    # File is stored with absolute path
+                    file_path = cs.advert
+                
+                print(f"🔍 Attempting to read advert file: {file_path}")
+                print(f"🔍 File exists: {os.path.exists(file_path)}")
+                
+                if os.path.exists(file_path):
+                    with open(file_path, 'rb') as f:
+                        file_data = f.read()
+                    encoded_advert_file = base64.b64encode(file_data).decode('utf-8')
+                    print(f"✅ Successfully encoded advert file: {len(encoded_advert_file)} characters")
+                else:
+                    print(f"❌ Advert file not found at path: {file_path}")
+                    # Try alternative locations
+                    alt_paths = [
+                        os.path.join(settings.BASE_DIR, cs.advert),
+                        os.path.join(settings.MEDIA_ROOT, 'uploads', 'comparative_schedules', os.path.basename(cs.advert)),
+                        os.path.join(settings.MEDIA_ROOT, 'uploads', 'purchase_request', os.path.basename(cs.advert))
+                    ]
+                    
+                    for alt_path in alt_paths:
+                        if os.path.exists(alt_path):
+                            print(f"✅ Found file at alternative path: {alt_path}")
+                            with open(alt_path, 'rb') as f:
+                                file_data = f.read()
+                            encoded_advert_file = base64.b64encode(file_data).decode('utf-8')
+                            break
+                    else:
+                        print(f"❌ File not found at any alternative location")
+                        
         except Exception as ex:
-            print("Error: ", ex)
+            print(f"Error reading advert file: {ex}")
+            print(f"Advert field value: {cs.advert}")
+            print(f"MEDIA_ROOT: {settings.MEDIA_ROOT}")
+            print(f"BASE_DIR: {settings.BASE_DIR}")
             
         cs_owner = UserProfile.objects.filter(id=cs.created_by_id).first() if cs and cs.created_by_id else None
         if not cs_owner and cs:
@@ -2117,10 +2135,22 @@ def get_comperative_schedule_data(request, cs_id):
 
 def save_file(f, file_path):
     if f:
-        with open(file_path, 'wb+') as destination:
-            for chunk in f.chunks():
-                destination.write(chunk)
+        try:
+            # Ensure the directory exists
+            directory = os.path.dirname(file_path)
+            if directory and not os.path.exists(directory):
+                os.makedirs(directory, exist_ok=True)
+                print(f"✅ Created directory: {directory}")
+            
+            # Save the file
+            with open(file_path, 'wb+') as destination:
+                for chunk in f.chunks():
+                    destination.write(chunk)
+            print(f"✅ File saved successfully: {file_path}")
             return True
+        except Exception as ex:
+            print(f"❌ Error saving file {file_path}: {ex}")
+            return False
     else:
         return False
 
@@ -2156,6 +2186,17 @@ def get_create_data(request, pr_id):
                 "ordered": pr_item.ordered,
             })
 
+        # get proc plan for PR
+        try:
+            if purchase_request.procurement_plan_reference:
+                proc_ref = "acc" + str(purchase_request.procurement_plan_reference.id)
+            else:
+                proc_ref = ""
+            pr_proc_plan = ProcPlan.objects.filter(proc_ref=proc_ref).first()
+        except Exception as ex:
+            logger.error(f"Error getting DP proc plan: {ex}")
+            pr_proc_plan = None
+
         return JsonResponse({
             "success": True,
             "requester_role": user_comparative_schedule_role.role if user_comparative_schedule_role else "",
@@ -2164,9 +2205,9 @@ def get_create_data(request, pr_id):
             "scope_of_work": purchase_request.scope_of_work if purchase_request.scope_of_work else "",
             "proc_ref": purchase_request.procurement_plan_reference.id if purchase_request.procurement_plan_reference else "",
             "proc_plan": {
-                "id": purchase_request.procurement_plan_reference.id if purchase_request.procurement_plan_reference else "",
-                "proc_ref": purchase_request.procurement_plan_reference.id if purchase_request.procurement_plan_reference else "",
-                "description": purchase_request.procurement_plan_reference.name if purchase_request.procurement_plan_reference else "",
+                "id": pr_proc_plan.id if pr_proc_plan else "",
+                "proc_ref": pr_proc_plan.proc_ref if pr_proc_plan else "",
+                "description": pr_proc_plan.description if pr_proc_plan else "",
             } if purchase_request.procurement_plan_reference else {},
             "pr_date": purchase_request.created_at.strftime("%Y-%m-%d") if purchase_request.created_at else "",
             "pr_items": pr_item_list,
@@ -2227,16 +2268,23 @@ def create(request):
         try:
             if 'advert' in request.FILES:
                 advert_file = request.FILES['advert']
-                advert_path = 'uploads/finance/cs/adverts/' + \
-                              timezone.astimezone(timezone.get_current_timezone()).strftime(
-                                  "%Y%m%d%I%M%S%p") + advert_file.name
+                # Use proper media path construction
+                timestamp = timezone.astimezone(timezone.get_current_timezone()).strftime("%Y%m%d%I%M%S%p")
+                filename = f"{timestamp}_{advert_file.name}"
+                advert_path = os.path.join(settings.MEDIA_ROOT, 'uploads', 'finance', 'cs', 'adverts', filename)
                 save_file(advert_file, advert_path)
+                # Store relative path in database for consistency
+                advert_path_db = os.path.join('uploads', 'finance', 'cs', 'adverts', filename)
 
             if 'bid_document' in request.FILES:
                 bid_document_file = request.FILES['bid_document']
-                bid_document_path = 'uploads/finance/cs/bids/' + \
-                                    datetime.now().strftime("%Y%m%d%I%M%S%p") + bid_document_file.name
+                # Use proper media path construction
+                timestamp = datetime.now().strftime("%Y%m%d%I%M%S%p")
+                filename = f"{timestamp}_{bid_document_file.name}"
+                bid_document_path = os.path.join(settings.MEDIA_ROOT, 'uploads', 'finance', 'cs', 'bids', filename)
                 save_file(bid_document_file, bid_document_path)
+                # Store relative path in database for consistency
+                bid_document_path_db = os.path.join('uploads', 'finance', 'cs', 'bids', filename)
 
         except Exception as ex:
             print("Error: ", ex)
@@ -2281,7 +2329,7 @@ def create(request):
                 quote_date=bid_date,
                 rfq_no=rfq_no,
                 total=total_price,
-                bid_document=bid_document_path,
+                bid_document=bid_document_path_db if 'bid_document_path_db' in locals() else bid_document_path,
             )
             bid.save()
 
@@ -2292,7 +2340,7 @@ def create(request):
             closing_date=closing_date,
             closing_time=closing_time,
             rfq_no=rfq,
-            advert=advert_path,
+            advert=advert_path_db if 'advert_path_db' in locals() else advert_path,
             date_created=date_tender_opened,
             pr_number=pr_number,
             pr_date=pr_date,
@@ -2317,54 +2365,118 @@ def create(request):
 
 @login_required
 def save_comparative_schedule(request):
+    """
+    Save a new comparative schedule.
+    
+    The advert field should be a file path (string) from a previous file upload API call.
+    File uploads are handled separately by dedicated file upload APIs.
+    """
     try:
-
+        print("save_comparative_schedule request: ", request.POST)
         cs_id = "CS" + datetime.now().strftime("%Y%m%d%I%M%S")
         cs_exists = ComparativeSchedules.objects.filter(cs_id=cs_id).first()
         # @TODO try random number if cs_id exists or return error
         if cs_exists:
             cs_id = "CS" + datetime.now().strftime("%Y%m%d%I%M%S")
 
-        advert_files = request.FILES.getlist("advert", None)
-        proc_ref = request.POST.get("proc_ref", "")
-        print("proc plan: ", proc_ref)
-        # check if proc ref has 'acc' prefix
-        if not proc_ref.startswith("acc"):
-            temp_proc_ref = "acc" + proc_ref
-            proc_ref = temp_proc_ref
-
-        proc_plan = ProcPlan.objects.filter(proc_ref=proc_ref).first()
-        print("proc_plan: ", proc_plan)
+        # Get advert file path from POST data (file uploads handled separately)
+        advert_path = request.POST.get("advert", "").strip()
         scope_of_work = request.POST.get("scope_of_work", "")
         pr_number = request.POST.get("pr_number", "")
         pr_date = request.POST.get("pr_date", "")
         ref_date = request.POST.get("ref_date", "")
         currency = request.POST.get("currency", "")
-        print("currency: ", currency)
-        # quantity = data['quantity']
+
         closing_date = request.POST.get("closing_date", "")
         closing_time = request.POST.get("closing_time", "")
         date_tender_opened = request.POST.get("date_tender_opened", "")
         tender_adjudication_committee_date = request.POST.get("tender_adjudication_committee_date", "")
         username = request.POST.get("username", "")
 
-        # save advert file
-        advert_path = ""
-        try:
-            if advert_files:
-                advert_file = advert_files[0]
-                root_dir = os.path.join(settings.BASE_DIR, 'uploads', 'comparative', 'adverts')
-                fs = FileSystemStorage(location=root_dir)
-                filename_ = fs.save(advert_file.name, advert_file)
-                advert_path = "uploads" + os.path.sep + "comparative" + os.path.sep + "adverts" + os.path.sep + filename_
-        except Exception as ex:
-            print("Error: ", ex)
+        # Validate advert file path if provided
+        if advert_path:
+            print(f"🔍 Validating advert file path: {advert_path}")
+            print(f"🔍 Settings - BASE_DIR: {settings.BASE_DIR}")
+            print(f"🔍 Settings - MEDIA_ROOT: {settings.MEDIA_ROOT}")
+            
+            # Basic path validation
+            if not advert_path.startswith('uploads/'):
+                print(f"Warning: Invalid file path format. Expected 'uploads/...', got: {advert_path}")
+                advert_path = ""
+            else:
+                # Check if the file path exists and is valid
+                # Files are stored in media/uploads/, so we need to check both possible locations
+                base_path = os.path.join(settings.BASE_DIR, advert_path)
+                media_path = os.path.join(settings.MEDIA_ROOT, advert_path)
+                
+                print(f"🔍 Checking file existence:")
+                print(f"  - Base path: {base_path}")
+                print(f"  - Media path: {media_path}")
+                
+                if os.path.exists(base_path):
+                    print(f"✅ File found at base path: {advert_path}")
+                    # Note: File exists in BASE_DIR/uploads/ but should be in MEDIA_ROOT/uploads/
+                    print(f"⚠️  WARNING: File exists in BASE_DIR/uploads/ but should be in MEDIA_ROOT/uploads/")
+                    print(f"⚠️  This indicates a file upload configuration issue")
+                elif os.path.exists(media_path):
+                    print(f"✅ File found at media path: {advert_path}")
+                else:
+                    print(f"❌ File not found at either location")
+                    print(f"  - Base path exists: {os.path.exists(base_path)}")
+                    print(f"  - Media path exists: {os.path.exists(media_path)}")
+                    print(f"⚠️  SUGGESTION: Check if file upload system is saving to correct location")
+                    # Reset to empty if file doesn't exist
+                    advert_path = ""
+        else:
+            print("No advert file path provided")
 
         # save cs details
         # fetch purchase request
         print("pr number: ", pr_number)
         pr = PurchaseRequest.objects.get(id=pr_number)
-        print("PR: ", pr, pr_number, username)
+        # Handle both proc_ref and proc_plan_id fields from frontend
+        proc_ref = request.POST.get("proc_ref", "").strip()
+        proc_plan_id = request.POST.get("proc_plan", "").strip()  # Frontend sends this as 'proc_plan'
+        
+        # Debug: Log all POST data to see what's actually being sent
+        print(f"Direct Purchase - All POST data keys: {list(request.POST.keys())}")
+        print(f"Direct Purchase - proc_ref: '{proc_ref}', proc_plan_id: '{proc_plan_id}'")
+        
+        # Determine which field to use for finding the procurement plan
+        proc_plan = None
+        
+        if proc_plan_id and proc_plan_id.strip():
+            # Frontend sent proc_plan_id, try to find by ID first
+            try:
+                if proc_plan_id.startswith('"'):
+                    # Clean the string and convert to integer for ID lookup
+                    cleaned_proc_plan_id = proc_plan_id.strip().replace('"', '').replace("'", "")
+                    print(f"Direct Purchase - Cleaned proc_plan_id: '{cleaned_proc_plan_id}'")
+                    proc_plan_ref = "acc" + cleaned_proc_plan_id
+                    proc_plan = ProcPlan.objects.filter(proc_ref=proc_plan_ref).first()
+                    print(f"Direct Purchase - Found proc_plan by ID: {proc_plan}")
+                else:
+                    proc_plan = ProcPlan.objects.filter(id=proc_plan_id).first()
+                    print(f"Direct Purchase - Found proc_plan by ID: {proc_plan}")
+            except (ValueError, TypeError) as e:
+                print(f"Direct Purchase - Invalid proc_plan_id format: '{proc_plan_id}', error: {e}")
+                # If ID lookup fails, try proc_ref as fallback
+                if proc_ref and proc_ref.strip():
+                    if not proc_ref.startswith("acc"):
+                        temp_proc_ref = "acc" + proc_ref
+                        proc_ref = temp_proc_ref
+                    proc_plan = ProcPlan.objects.filter(proc_ref=proc_ref).first()
+                    print(f"Direct Purchase - Found proc_plan by proc_ref fallback: {proc_plan}")
+        elif proc_ref and proc_ref.strip():
+            # Frontend sent proc_ref, use the original logic
+            if not proc_ref.startswith("acc"):
+                temp_proc_ref = "acc" + proc_ref
+                proc_ref = temp_proc_ref
+            proc_plan = ProcPlan.objects.filter(proc_ref=proc_ref).first()
+            print(f"Direct Purchase - Found proc_plan by proc_ref: {proc_plan}")
+        else:
+            print("Direct Purchase - No procurement plan reference provided")
+        
         # fetch user
         user = UserProfile.objects.filter(username=username).first()
         currency = Currency.objects.filter(id=currency).first() if currency else None
@@ -2389,6 +2501,11 @@ def save_comparative_schedule(request):
             region_id=user.region_id if user.region_id else None,
         )
         cs_query.save()
+        
+        print(f"✅ Comparative Schedule saved successfully:")
+        print(f"   - CS ID: {cs_id}")
+        print(f"   - Advert path: {advert_path}")
+        print(f"   - Owner: {user.username if user else 'Unknown'}")
 
         return JsonResponse({
             "message": "Comparative Schedule saved successfully",
@@ -2407,10 +2524,19 @@ def save_comparative_schedule(request):
 
 @login_required
 def update_comparative_schedule(request):
+    """
+    Update an existing comparative schedule.
+    
+    The advert field should be a file path (string) from a previous file upload API call.
+    File uploads are handled separately by dedicated file upload APIs.
+    If no advert path is provided, the existing advert remains unchanged.
+    """
     try:
 
-        advert_files = request.FILES.getlist("advert", None)
-        print("advert_files: ", advert_files)
+        # Get advert file path from POST data (file uploads handled separately)
+        advert_path = request.POST.get("advert", "").strip()
+        print("advert_path from POST: ", advert_path)
+        
         cs_id = request.POST.get("cs_id", "")
         plan_ref = request.POST.get("proc_ref", "")
         # proc_plan = data['proc_plan']
@@ -2427,18 +2553,42 @@ def update_comparative_schedule(request):
         tender_adjudication_committee_date = request.POST.get("tender_adjudication_committee_date", "")
         username = request.POST.get("username", "")
 
-        # save advert file
-        advert_path = ""
-        try:
-            if advert_files:
-                advert_file = advert_files[0]
-                print("advert_file: ", advert_file.name)
-                root_dir = os.path.join(settings.BASE_DIR, 'uploads', 'comparative', 'adverts')
-                fs = FileSystemStorage(location=root_dir)
-                filename_ = fs.save(advert_file.name, advert_file)
-                advert_path = "uploads" + os.path.sep + "comparative" + os.path.sep + "adverts" + os.path.sep + filename_
-        except Exception as ex:
-            print("Error: ", ex)
+        # Validate advert file path if provided
+        if advert_path:
+            print(f"🔍 Validating advert file path: {advert_path}")
+            print(f"🔍 Settings - BASE_DIR: {settings.BASE_DIR}")
+            print(f"🔍 Settings - MEDIA_ROOT: {settings.MEDIA_ROOT}")
+            
+            # Basic path validation
+            if not advert_path.startswith('uploads/'):
+                print(f"Warning: Invalid file path format. Expected 'uploads/...', got: {advert_path}")
+                advert_path = ""
+            else:
+                # Check if the file path exists and is valid
+                # Files are stored in media/uploads/, so we need to check both possible locations
+                base_path = os.path.join(settings.BASE_DIR, advert_path)
+                media_path = os.path.join(settings.MEDIA_ROOT, advert_path)
+                
+                print(f"🔍 Checking file existence:")
+                print(f"  - Base path: {base_path}")
+                print(f"  - Media path: {media_path}")
+                
+                if os.path.exists(base_path):
+                    print(f"✅ File found at base path: {advert_path}")
+                    # Note: File exists in BASE_DIR/uploads/ but should be in MEDIA_ROOT/uploads/
+                    print(f"⚠️  WARNING: File exists in BASE_DIR/uploads/ but should be in MEDIA_ROOT/uploads/")
+                    print(f"⚠️  This indicates a file upload configuration issue")
+                elif os.path.exists(media_path):
+                    print(f"✅ File found at media path: {advert_path}")
+                else:
+                    print(f"❌ File not found at either location")
+                    print(f"  - Base path exists: {os.path.exists(base_path)}")
+                    print(f"  - Media path exists: {os.path.exists(media_path)}")
+                    print(f"⚠️  SUGGESTION: Check if file upload system is saving to correct location")
+                    # Reset to empty if file doesn't exist
+                    advert_path = ""
+        else:
+            print("No advert file path provided - keeping existing advert unchanged")
 
         # fetch user
         print("pr number: ", pr_number)
@@ -2458,8 +2608,11 @@ def update_comparative_schedule(request):
                 cs_query.closing_date = closing_date
             if closing_time:
                 cs_query.closing_time = closing_time
-            if advert_path:
+            # Only update advert if we have a valid file path
+            if advert_path and advert_path.strip():
                 cs_query.advert = advert_path
+                print(f"Updated advert path: {advert_path}")
+            # Note: If no advert_path is provided, we keep the existing one unchanged
             if pr_number:
                 cs_query.pr_number = pr_number
             if pr_date:
@@ -2474,6 +2627,11 @@ def update_comparative_schedule(request):
                 cs_query.ref_date = ref_date
 
             cs_query.save()
+            
+            print(f"✅ Comparative Schedule updated successfully:")
+            print(f"   - CS ID: {cs_id}")
+            print(f"   - Advert path: {advert_path}")
+            print(f"   - Updated by: {username}")
         else:
             print("ComparativeSchedule record not found with cs_id:", cs_id)
 
@@ -2622,12 +2780,16 @@ def save_cs_bid(request):
     try:
         if bid_docs:
             bid_doc = bid_docs
-            root_dir = os.path.join(settings.BASE_DIR, 'uploads', 'comparative', 'adverts')
+            # Use proper media path construction
+            timestamp = datetime.now().strftime("%Y%m%d%I%M%S")
+            filename = f"{timestamp}_{bid_doc.name}"
+            root_dir = os.path.join(settings.MEDIA_ROOT, 'uploads', 'comparative', 'adverts')
             fs = FileSystemStorage(location=root_dir)
-            filename_ = fs.save(bid_doc.name, bid_doc)
-            bid_doc_path = "uploads" + os.path.sep + "comparative" + os.path.sep + "adverts" + os.path.sep + filename_
+            filename_ = fs.save(filename, bid_doc)
+            bid_doc_path = os.path.join('uploads', 'comparative', 'adverts', filename_)
+            print(f"✅ Bid document saved: {bid_doc_path}")
     except Exception as ex:
-        print("Error: ", ex)
+        print(f"❌ Error saving bid document: {ex}")
 
     for item in items:
         item_id = "Item" + datetime.now().strftime("%Y%m%d%I%M%S%p")
@@ -3293,10 +3455,13 @@ def cs_add_supplier(request, cs_id):
 
             if 'bid_document' in request.FILES:
                 bid_document_file = request.FILES['bid_document']
-                bid_document_path = 'uploads/finance/cs/bids/' + \
-                                    timezone.astimezone(timezone.get_current_timezone()).strftime(
-                                        "%Y%m%d%I%M%S") + bid_document_file.name
+                # Use proper media path construction
+                timestamp = timezone.astimezone(timezone.get_current_timezone()).strftime("%Y%m%d%I%M%S")
+                filename = f"{timestamp}_{bid_document_file.name}"
+                bid_document_path = os.path.join(settings.MEDIA_ROOT, 'uploads', 'finance', 'cs', 'bids', filename)
                 save_file(bid_document_file, bid_document_path)
+                # Store relative path in database for consistency
+                bid_document_path_db = os.path.join('uploads', 'finance', 'cs', 'bids', filename)
 
         except Exception as ex:
             print("Error: ", ex)
@@ -3342,7 +3507,7 @@ def cs_add_supplier(request, cs_id):
                 quote_date=bid_date,
                 rfq_no=rfq_no,
                 total=total_price,
-                bid_document=bid_document_path,
+                bid_document=bid_document_path_db if 'bid_document_path_db' in locals() else bid_document_path,
             )
             bid.save()
 
@@ -4112,7 +4277,7 @@ def api_get_proc_plans(request):
 @login_required
 @require_http_methods(["GET"])
 def api_get_cs_bids_optimized(request, cs_id):
-    """Get bids data for a specific CS - optimized"""
+    """Get bids data for a specific CS - optimized with proper file handling"""
     try:
         cs = ComparativeSchedules.objects.prefetch_related(
             Prefetch('bids_set', queryset=Bids.objects.select_related('sup_id', 'item_id'))
@@ -4128,16 +4293,55 @@ def api_get_cs_bids_optimized(request, cs_id):
         for bid in bids:
             bid_no = bid.bid_no
             if bid_no not in grouped_data:
-                encoded_file_data = ""
+                # Use optimized file handling instead of Base64 encoding
+                bid_document_info = None
                 if bid.bid_document:
-                    encoded_file_data = _encode_file_safely(bid.bid_document)
+                    # Check if file exists and provide metadata
+                    file_path = bid.bid_document
+                    if file_path.startswith('uploads/'):
+                        # File is stored in media directory
+                        full_path = os.path.join(settings.MEDIA_ROOT, file_path)
+                    else:
+                        # File is stored with absolute path
+                        full_path = file_path
+                    
+                    if os.path.exists(full_path):
+                        try:
+                            file_size = os.path.getsize(full_path)
+                            filename = os.path.basename(file_path)
+                            
+                            bid_document_info = {
+                                'file_path': file_path,
+                                'filename': filename,
+                                'size': file_size,
+                                'download_url': f"/media/{file_path}",
+                                'preview_url': f"/api/files/preview/{file_path}/"
+                            }
+                        except Exception as ex:
+                            print(f"Error getting file info for {file_path}: {ex}")
+                            bid_document_info = {
+                                'file_path': file_path,
+                                'filename': os.path.basename(file_path),
+                                'size': 0,
+                                'download_url': f"/media/{file_path}",
+                                'preview_url': f"/api/files/preview/{file_path}/"
+                            }
+                    else:
+                        # File not found, but provide path for debugging
+                        bid_document_info = {
+                            'file_path': file_path,
+                            'filename': os.path.basename(file_path),
+                            'size': 0,
+                            'download_url': f"/media/{file_path}",
+                            'preview_url': f"/api/files/preview/{file_path}/",
+                            'error': 'File not found'
+                        }
                 
                 grouped_data[bid_no] = {
                     'bid_count': bid.bid_no,
                     'supplier_name': bid.sup_id.name,
                     'bid_date': bid.quote_date,
-                    'encoded_bid_document': encoded_file_data,
-                    'bid_document': None,
+                    'bid_document_info': bid_document_info,
                     'items': []
                 }
             

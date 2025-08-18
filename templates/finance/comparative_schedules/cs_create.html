@@ -1,4 +1,10 @@
 <!--users/templates/users/add_user.html-->
+<!-- 
+  Note: This template is for creating NEW comparative schedules.
+  - data-csid should only be set if you want to pre-generate a CS ID for the new schedule
+  - If editing an existing schedule, use a different template (e.g., cs_edit.html)
+  - The React component will detect new schedule creation vs editing based on the URL
+-->
 
 {% extends 'admin_layout.html' %} {% load static %}
 {% block styles %}

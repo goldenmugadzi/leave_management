@@ -1,40 +1,7 @@
 import { useState, useCallback } from 'react';
 import { IBid, ICompliance, IComplianceRemark, IPrItems, ICommittee } from '../types/scheduleTypes';
 import { API_ENDPOINTS, getApiEndpoints, buildApiUrl } from '../config/apiEndpoints';
-
-// Helper function to get CSRF token
-const getCookie = (name: string) => {
-  let cookieValue = null;
-  if (document.cookie && document.cookie !== '') {
-    const cookies = document.cookie.split(';');
-    for (let i = 0; i < cookies.length; i++) {
-      const cookie = cookies[i].trim();
-      if (cookie.substring(0, name.length + 1) === name + '=') {
-        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-        break;
-      }
-    }
-  }
-  return cookieValue;
-};
-
-// Helper function to fetch with retry capability
-const fetchWithRetry = async (url: string, options: RequestInit, retries = 3, delay = 1000) => {
-  try {
-    const response = await fetch(url, options);
-    console.log("response: ", response, JSON.stringify(response));
-    if (!response.ok) {
-      throw new Error(`HTTP error! Status: ${response.status}`);
-    }
-    return await response.json();
-  } catch (error) {
-    if (retries > 0) {
-      await new Promise((resolve) => setTimeout(resolve, delay));
-      return fetchWithRetry(url, options, retries - 1, delay * 2);
-    }
-    throw error;
-  }
-};
+import { getCookie, fetchWithRetry } from '../utils';
 
 export interface UseScheduleApiProps {
   base_url: string;
