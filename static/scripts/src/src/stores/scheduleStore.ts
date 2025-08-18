@@ -420,11 +420,11 @@ export const useScheduleStore = create<ScheduleStore>()(
             : { ...state.prData, ...data }
         })),
         
-        updatePrData: (field, value) => set((state) => ({
+        updatePrData: (field: string, value: string | boolean) => set((state) => ({
           prData: { ...state.prData, [field]: value }
         })),
         
-        updateItemSelection: (itemId, included) => set((state) => ({
+        updateItemSelection: (itemId: string, included: boolean) => set((state) => ({
           prData: {
             ...state.prData,
             items: state.prData.items.map(item => 
@@ -433,7 +433,7 @@ export const useScheduleStore = create<ScheduleStore>()(
           }
         })),
         
-        handleSelectAllItems: (selectAll) => set((state) => ({
+        handleSelectAllItems: (selectAll: boolean) => set((state) => ({
           prData: {
             ...state.prData,
             items: state.prData.items.map(item => ({
@@ -444,91 +444,91 @@ export const useScheduleStore = create<ScheduleStore>()(
         })),
         
         // === BID MANAGEMENT ACTIONS ===
-        setBidCount: (count) => set({ bidCount: count }),
-        setCurrentBid: (bid) => set({ currentBid: bid }),
-        setBids: (bids) => set({ bids }),
+        setBidCount: (count: number) => set({ bidCount: count }),
+        setCurrentBid: (bid: IBid | undefined) => set({ currentBid: bid }),
+        setBids: (bids: IBid[]) => set({ bids }),
         
-        addBid: (bid) => set((state) => ({
+        addBid: (bid: IBid) => set((state) => ({
           bids: [...state.bids, bid],
           bidCount: state.bidCount + 1
         })),
         
-        updateBid: (bidId, updates) => set((state) => ({
+        updateBid: (bidId: number, updates: Partial<IBid>) => set((state) => ({
           bids: state.bids.map(bid => 
             bid.bid_count === bidId ? { ...bid, ...updates } : bid
           )
         })),
         
-        deleteBid: (bidId) => set((state) => ({
+        deleteBid: (bidId: number) => set((state) => ({
           bids: state.bids.filter(bid => bid.bid_count !== bidId),
           bidCount: Math.max(0, state.bidCount - 1)
         })),
         
-        setAddBidModal: (open) => set({ addBidModal: open }),
-        setUpdateBidModal: (open) => set({ updateBidModal: open }),
+        setAddBidModal: (open: boolean) => set({ addBidModal: open }),
+        setUpdateBidModal: (open: boolean) => set({ updateBidModal: open }),
         
         // === COMPLIANCE ACTIONS ===
-        setCompliance: (compliance) => set({ compliance }),
-        setComplianceRemarks: (remarks) => set({ complianceRemarks: remarks }),
-        setShowSamples: (show) => set({ showSamples: show }),
-        setShowSiteVisit: (show) => set({ showSiteVisit: show }),
+        setCompliance: (compliance: ICompliance[]) => set({ compliance }),
+        setComplianceRemarks: (remarks: IComplianceRemark[]) => set({ complianceRemarks: remarks }),
+        setShowSamples: (show: string) => set({ showSamples: show }),
+        setShowSiteVisit: (show: string) => set({ showSiteVisit: show }),
         
         // === RANKINGS ACTIONS ===
-        setRankings: (rankings) => set({ rankings }),
+        setRankings: (rankings: IRank[]) => set({ rankings }),
         
         // === COMMITTEE ACTIONS ===
-        setCommitteeMembers: (members) => set({ committeeMembers: members }),
+        setCommitteeMembers: (members: ICommittee[]) => set({ committeeMembers: members }),
         
-        updateCommitteeMembers: (members) => set({ committeeMembers: members }),
+        updateCommitteeMembers: (members: ICommittee[]) => set({ committeeMembers: members }),
         
         // === APPROVAL ACTIONS ===
-        setGmApproval: (approval) => set({ gmApproval: approval }),
-        setFmApproval: (approval) => set({ fmApproval: approval }),
-        setApprovalsComplete: (complete) => set({ approvalsComplete: complete }),
-        setApprovalsJustificationModal: (open) => set({ approvalsJustificationModal: open }),
-        setCurrentApprover: (approver) => set((state) => ({
+        setGmApproval: (approval: IGmApproval | undefined) => set({ gmApproval: approval }),
+        setFmApproval: (approval: IFmApproval | undefined) => set({ fmApproval: approval }),
+        setApprovalsComplete: (complete: boolean) => set({ approvalsComplete: complete }),
+        setApprovalsJustificationModal: (open: boolean) => set({ approvalsJustificationModal: open }),
+        setCurrentApprover: (approver: ICurrentApprover | undefined | ((prev: ICurrentApprover | undefined) => ICurrentApprover | undefined)) => set((state) => ({
           currentApprover: typeof approver === 'function' 
             ? approver(state.currentApprover) 
             : approver
         })),
-        setCurrentUserRoles: (roles) => set({ currentUserRoles: roles }),
+        setCurrentUserRoles: (roles: ScheduleState['currentUserRoles']) => set({ currentUserRoles: roles }),
         
         // === UTILITY ACTIONS ===
-        setIsLoading: (loading) => set({ isLoading: loading }),
-        setLoadingOperation: (operation) => set({ loadingOperation: operation }),
-        setActiveTab: (tab) => set({ activeTab: tab }),
-        setLoadedTabs: (tabs) => set({ loadedTabs: tabs }),
-        setResponse: (response) => set({ response }),
+        setIsLoading: (loading: boolean) => set({ isLoading: loading }),
+        setLoadingOperation: (operation: string) => set({ loadingOperation: operation }),
+        setActiveTab: (tab: string) => set({ activeTab: tab }),
+        setLoadedTabs: (tabs: Set<string>) => set({ loadedTabs: tabs }),
+        setResponse: (response: ScheduleState['response']) => set({ response }),
         
         // === ADDITIONAL FEATURES ACTIONS ===
-        setAdditionalNotes: (notes) => set({ additionalNotes: notes }),
-        setBuyersNotes: (notes) => set({ buyersNotes: notes }),
-        setDirectPurchaseLimit: (limit) => set({ directPurchaseLimit: limit }),
-        setOnAddSupplier: (open) => set({ onAddSupplier: open }),
-        setNewSupplier: (supplier) => set({ newSupplier: supplier }),
-        setShowSupplierDetails: (show) => set({ showSupplierDetails: show }),
-        setSupplierSearchTerm: (term) => set({ supplierSearchTerm: term }),
-        setShowSupplierDropdown: (show) => set({ showSupplierDropdown: show }),
-        setUomSearchTerm: (term) => set({ uomSearchTerm: term }),
-        setShowUomDropdown: (show) => set({ showUomDropdown: show }),
-        setActiveUomItem: (item) => set({ activeUomItem: item }),
-        setExpandedBids: (expanded) => set({ expandedBids: expanded }),
+        setAdditionalNotes: (notes: string) => set({ additionalNotes: notes }),
+        setBuyersNotes: (notes: string) => set({ buyersNotes: notes }),
+        setDirectPurchaseLimit: (limit: boolean) => set({ directPurchaseLimit: limit }),
+        setOnAddSupplier: (open: boolean) => set({ onAddSupplier: open }),
+        setNewSupplier: (supplier: ISupplier) => set({ newSupplier: supplier }),
+        setShowSupplierDetails: (show: boolean) => set({ showSupplierDetails: show }),
+        setSupplierSearchTerm: (term: string) => set({ supplierSearchTerm: term }),
+        setShowSupplierDropdown: (show: boolean) => set({ showSupplierDropdown: show }),
+        setUomSearchTerm: (term: string) => set({ uomSearchTerm: term }),
+        setShowUomDropdown: (show: boolean) => set({ showUomDropdown: show }),
+        setActiveUomItem: (item: string) => set({ activeUomItem: item }),
+        setExpandedBids: (expanded: Set<number>) => set({ expandedBids: expanded }),
         
         // === VALIDATION ACTIONS ===
-        setBidValidationErrors: (errors) => set({ bidValidationErrors: errors }),
-        setInvalidFields: (fields) => set({ invalidFields: fields }),
+        setBidValidationErrors: (errors: string[]) => set({ bidValidationErrors: errors }),
+        setInvalidFields: (fields: Set<string>) => set({ invalidFields: fields }),
         
         // === SEARCH ACTIONS ===
-        setUomSearchResults: (results) => set({ uomSearchResults: results }),
-        setIsUomSearching: (searching) => set({ isUomSearching: searching }),
-        setSupplierSearchResults: (results) => set({ supplierSearchResults: results }),
-        setIsSupplierSearching: (searching) => set({ isSupplierSearching: searching }),
-        setDebouncedUomSearchTerm: (term) => set({ debouncedUomSearchTerm: term }),
-        setDebouncedSupplierSearchTerm: (term) => set({ debouncedSupplierSearchTerm: term }),
+        setUomSearchResults: (results: IUom[]) => set({ uomSearchResults: results }),
+        setIsUomSearching: (searching: boolean) => set({ isUomSearching: searching }),
+        setSupplierSearchResults: (results: ISupplier[]) => set({ supplierSearchResults: results }),
+        setIsSupplierSearching: (searching: boolean) => set({ isSupplierSearching: searching }),
+        setDebouncedUomSearchTerm: (term: string) => set({ debouncedUomSearchTerm: term }),
+        setDebouncedSupplierSearchTerm: (term: string) => set({ debouncedSupplierSearchTerm: term }),
         
         // === PR INPUT ACTIONS ===
-        setPrIdInput: (input) => set({ prIdInput: input }),
-        setQuantity: (qty) => set({ quantity: qty }),
+        setPrIdInput: (input: string) => set({ prIdInput: input }),
+        setQuantity: (qty: string) => set({ quantity: qty }),
         
         // === COMPUTED ACTIONS ===
         isCreator: () => {
@@ -562,9 +562,9 @@ export const useScheduleStore = create<ScheduleStore>()(
         resetCompliance: () => set({ compliance: [], complianceRemarks: [] }),
         
         // === BATCH ACTIONS ===
-        initializeSchedule: (data) => set((state) => ({ ...state, ...data })),
+        initializeSchedule: (data: Partial<ScheduleState>) => set((state) => ({ ...state, ...data })),
         
-        updateScheduleData: (updates) => set((state) => ({ ...state, ...updates }))
+        updateScheduleData: (updates: Partial<ScheduleState>) => set((state) => ({ ...state, ...updates }))
       }),
       {
         name: 'schedule-store',

@@ -1,3 +1,5 @@
+import { isValidDateFormat } from '../utils/dateUtils';
+
 export interface IValidationResult {
   isValid: boolean;
   errors: string[];
@@ -108,23 +110,8 @@ export class ValidationService {
    * Validate date format (YYYY-MM-DD)
    */
   private isValidDateFormat(dateString: string): boolean {
-    if (!dateString || typeof dateString !== 'string') return false;
-    
-    // Check if it matches YYYY-MM-DD format
-    const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
-    if (!dateRegex.test(dateString)) return false;
-    
-    // Check if it's a valid date
-    const date = new Date(dateString);
-    if (isNaN(date.getTime())) return false;
-    
-    // Check if the parsed date matches the input string (prevents dates like 2024-13-45)
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    const formattedDate = `${year}-${month}-${day}`;
-    
-    return formattedDate === dateString;
+    // Use utility function from dateUtils
+    return isValidDateFormat(dateString);
   }
 
   /**

@@ -1,4 +1,4 @@
-from django.urls import path
+from django.urls import path, include
 from .views import *
 app_name ='direct_purchase'
 
@@ -87,4 +87,19 @@ urlpatterns = [
     # Bulk operation endpoints
     path('api/bulk-update-items/', api_bulk_update_items, name='api_bulk_update_items'),
     path('api/bulk-approve-committee/', api_bulk_approve_committee, name='api_bulk_approve_committee'),
+    
+    # Optimized file handling endpoints (NEW)
+    path('api/dp-files/', include('finance.direct_purchase.optimized_file_urls')),
+    
+    # Frontend API compatibility endpoints (NEW)
+    path('api/files/create-data/<str:pr_id>/', get_create_data, name='api_files_create_data'),
+    path('api/files/attachments/<str:pr_id>/', api_get_pr_attachments, name='api_files_attachments'),
+    path('api/files/upload/', api_upload_file, name='api_files_upload'),
+    
+    # Additional file endpoints for frontend compatibility
+    path('api/files/download/<path:file_path>/', api_download_file, name='api_files_download'),
+    path('api/files/preview/<path:file_path>/', api_download_file, name='api_files_preview'),  # Reuse download for now
+    
+    # Test endpoint for debugging
+    path('api/test/<str:pr_id>/', test_api_endpoint, name='test_api_endpoint'),
 ]

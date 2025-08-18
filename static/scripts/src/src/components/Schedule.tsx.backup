@@ -16,16 +16,6 @@ import { FileService } from "../services/FileService";
 import { ValidationService } from "../services/ValidationService";
 import { NotificationService } from "../services/NotificationService";
 
-// Import utility functions
-import { 
-  getCookie, 
-  formatDisplayDate, 
-  formatDateForBackend, 
-  getDownloadFilename, 
-  fetchWithRetry,
-  validateFile as validateFileUtil
-} from "../utils";
-
 // Additional interfaces from ScheduleRef.tsx
 // Note: ICurrency and IProcPlan are now defined in the Zustand store types
 
@@ -46,7 +36,86 @@ interface IBidItem {
 const CommitteeApprovalWrapper = lazy(() => import("./Committee/CommitteeApprovalWrapper"));
 const ApprovalTableWrapper = lazy(() => import("./ApprovalTableWrapper"));
 
-// Helper functions moved to utils/ - imported above
+// Helper function to get CSRF token
+const getCookie = (name: string) => {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== '') {
+    const cookies = document.cookie.split(';');
+    for (let i = 0; i < cookies.length; i++) {
+      const cookie = cookies[i].trim();
+      if (cookie.substring(0, name.length + 1) === name + '=') {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
+    }
+  }
+  return cookieValue;
+};
+
+// Helper function to format date
+const formatDisplayDate = (dateString: string) => {
+  if (!dateString) return '';
+  
+  // If it includes 'T', it's a datetime string, extract just the date part
+  if (dateString.includes('T')) {
+    return dateString.split('T')[0];
+  }
+  
+  // If it's already just a date, return as is
+  return dateString;
+};
+
+// Helper function to ensure dates are in YYYY-MM-DD format for backend
+const formatDateForBackend = (dateString: string | undefined): string | undefined => {
+  if (!dateString || dateString.trim() === '') {
+    return undefined; // Don't send empty strings
+  }
+  
+  // If it includes 'T', it's a datetime string, extract just the date part
+  if (dateString.includes('T')) {
+    return dateString.split('T')[0];
+  }
+  
+  // If it's already in YYYY-MM-DD format, return as is
+  if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+    return dateString;
+  }
+  
+  // Try to parse and format the date
+  try {
+    const date = new Date(dateString);
+    if (!isNaN(date.getTime())) {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+  } catch (error) {
+    console.warn('Failed to parse date:', dateString, error);
+  }
+  
+  return undefined; // Return undefined for invalid dates
+};
+
+
+
+// Helper function to generate filename for Base64 downloads
+const getDownloadFilename = (fileData: string | File | null | undefined, defaultName: string = 'document'): string => {
+  if (!fileData || typeof fileData !== 'string') {
+    return `${defaultName}.pdf`;
+  }
+  
+  // Detect file type from Base64 header and return appropriate filename
+  if (fileData.startsWith('JVBERi0x')) {
+    return `${defaultName}.pdf`;
+  } else if (fileData.startsWith('UEsDBBQ')) {
+    return `${defaultName}.docx`;
+  } else if (fileData.startsWith('/9j/')) {
+    return `${defaultName}.jpg`;
+  } else {
+    return `${defaultName}.pdf`;
+  }
+};
 
 // Helper function to calculate bid total (ensures proper number conversion)
 const calculateBidTotal = (items: IBidItem[] | undefined): number => {
@@ -71,7 +140,28 @@ const calculateBidTotal = (items: IBidItem[] | undefined): number => {
   return total;
 };
 
-// Helper function moved to utils/ - imported above
+// Helper function for fetch with retry
+const fetchWithRetry = async (url: string, options: RequestInit, retries = 3, delay = 1000) => {
+  try {
+    // Making API request
+    const response = await fetch(url, options);
+    // Response received
+    if (!response.ok) {
+      throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+    const data = await response.json();
+    // Data parsed successfully
+    return data;
+  } catch (error) {
+    console.error("🔍 fetchWithRetry - Error:", error);
+    if (retries > 0) {
+      // Retrying request
+      await new Promise((resolve) => setTimeout(resolve, delay));
+      return fetchWithRetry(url, options, retries - 1, delay * 2);
+    }
+    throw error;
+  }
+};
 
 // Tab configuration
 const TAB_CONFIG = [
@@ -403,21 +493,21 @@ export default function Schedule({
       
       // Set existing advert metadata if available
       console.log("🔍 Checking for advert data in parsedData...");
-      if (parsedData?.advert) {
+      if (parsedData.advert) {
         console.log("🔍 Advertisement data found:", {
-          hasData: !!parsedData?.advert,
-          dataLength: parsedData?.advert?.length || 0,
-          dataStart: parsedData?.advert?.substring(0, 20) || 'N/A',
-          isString: typeof parsedData?.advert === 'string',
-          fullData: parsedData?.advert
+          hasData: !!parsedData.advert,
+          dataLength: parsedData.advert?.length || 0,
+          dataStart: parsedData.advert?.substring(0, 20) || 'N/A',
+          isString: typeof parsedData.advert === 'string',
+          fullData: parsedData.advert
         });
         
         // Handle both Base64 data and file paths intelligently
         const isBase64 = (
-          parsedData?.advert.startsWith('JVBERi0x') || // PDF Base64 header
-          parsedData?.advert.startsWith('UEsDBBQ') || // DOCX Base64 header
-          parsedData?.advert.startsWith('/9j/') ||     // JPEG Base64 header
-          (parsedData?.advert.length > 100 && /^[A-Za-z0-9+/=]+$/.test(parsedData?.advert))
+          parsedData.advert.startsWith('JVBERi0x') || // PDF Base64 header
+          parsedData.advert.startsWith('UEsDBBQ') || // DOCX Base64 header
+          parsedData.advert.startsWith('/9j/') ||     // JPEG Base64 header
+          (parsedData.advert.length > 100 && /^[A-Za-z0-9+/=]+$/.test(parsedData.advert))
         );
         
         console.log("🔍 Base64 detection result:", isBase64);
@@ -427,7 +517,7 @@ export default function Schedule({
           
           // Handle Base64 advertisement data
           try {
-            const decodedData = atob(parsedData?.advert);
+            const decodedData = atob(parsedData.advert);
             const uint8Array = new Uint8Array(decodedData.length);
             for (let i = 0; i < decodedData.length; i++) {
               uint8Array[i] = decodedData.charCodeAt(i);
@@ -436,13 +526,13 @@ export default function Schedule({
             // Detect MIME type from Base64 header
             let mimeType = 'application/pdf';
             let extension = '.pdf';
-            if (parsedData?.advert.startsWith('JVBERi0x')) {
+            if (parsedData.advert.startsWith('JVBERi0x')) {
               mimeType = 'application/pdf';
               extension = '.pdf';
-            } else if (parsedData?.advert.startsWith('UEsDBBQ')) {
+            } else if (parsedData.advert.startsWith('UEsDBBQ')) {
               mimeType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
               extension = '.docx';
-            } else if (parsedData?.advert.startsWith('/9j/')) {
+            } else if (parsedData.advert.startsWith('/9j/')) {
               mimeType = 'image/jpeg';
               extension = '.jpg';
             }
@@ -456,7 +546,7 @@ export default function Schedule({
               download_url: blobUrl,
               preview_url: blobUrl,
               mime_type: mimeType,
-              file_path: parsedData?.advert,
+              file_path: parsedData.advert,
               is_base64: true
             };
             console.log("🔍 Setting Base64 advert metadata:", metadata);
@@ -469,17 +559,17 @@ export default function Schedule({
           } catch (error) {
             console.error("Error processing Base64 advertisement data:", error);
             // Fallback to treating as file path
-            const fileName = parsedData?.advert.includes('/') 
-              ? parsedData?.advert.split('/').pop() || 'advertisement.pdf'
-              : parsedData?.advert || 'advertisement.pdf';
+            const fileName = parsedData.advert.includes('/') 
+              ? parsedData.advert.split('/').pop() || 'advertisement.pdf'
+              : parsedData.advert || 'advertisement.pdf';
               
             const fallbackMetadata = {
               name: fileName,
               size: 0,
               download_url: buildApiUrl(base_url, getApiEndpoints().FILE_DOWNLOAD(parsedData.advert)),
-                preview_url: buildApiUrl(base_url, getApiEndpoints().FILE_PREVIEW(parsedData.advert)),
-                mime_type: 'application/pdf',
-              file_path: parsedData?.advert
+              preview_url: buildApiUrl(base_url, getApiEndpoints().FILE_PREVIEW(parsedData.advert)),
+              mime_type: 'application/pdf',
+              file_path: parsedData.advert
             };
             
             console.log("🔍 Setting fallback advert metadata:", fallbackMetadata);
@@ -1552,15 +1642,26 @@ export default function Schedule({
     return validationService.validateSchedule(validationData);
   }, [currency, procPlan, prData, advert, advertMetadata, validationService]);
 
-  // File type and size validation using utility function
-  const validateFileLocal = useCallback((file: File): { isValid: boolean; error?: string } => {
-    const result = validateFileUtil(file);
+  // File type and size validation using service
+  const validateFile = useCallback((file: File): { isValid: boolean; error?: string } => {
+    const allowedTypes = [
+      'application/pdf',
+      'application/msword', 
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'image/jpeg',
+      'image/jpg', 
+      'image/png'
+    ];
+    
+    const maxSize = 10 * 1024 * 1024; // 10MB; // 10MB
+    
+    const result = validationService.validateFile(file, allowedTypes, maxSize);
     
     return { 
       isValid: result.isValid, 
-      error: result.error
+      error: result.errors.length > 0 ? result.errors.join(', ') : undefined
     };
-  }, []);
+  }, [validationService]);
 
 
 
@@ -2083,7 +2184,7 @@ export default function Schedule({
   const onBidDocumentChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      const validation = validateFileLocal(file);
+      const validation = validateFile(file);
       if (!validation.isValid) {
         onOpenResponse("File Upload Error", validation.error || "Invalid file", false);
         return;
@@ -2107,7 +2208,7 @@ export default function Schedule({
     } else {
       console.log("📄 No file selected or file input cleared");
     }
-  }, [currentBid, validateFileLocal]);
+  }, [currentBid, validateFile]);
 
   // Handle current bid item changes with auto-calculation
   const onCurrentBidItemChange = useCallback((
@@ -2199,7 +2300,7 @@ export default function Schedule({
     
     // File validation
     if (bid.bid_document && bid.bid_document instanceof File) {
-      const fileValidation = validateFileLocal(bid.bid_document);
+      const fileValidation = validateFile(bid.bid_document);
       if (!fileValidation.isValid) {
         onOpenResponse("File Validation Error", fileValidation.error || "Invalid file", false);
         return;
@@ -2284,7 +2385,7 @@ export default function Schedule({
         console.error("❌ Save bid error:", error);
         onOpenResponse("Save Bid Error", "Network error occurred while saving bid.", false);
       });
-   }, [csId, csrfToken, base_url, bidCount, onSetDirectPurchaseLimit, validateFileLocal, isCreator]);
+   }, [csId, csrfToken, base_url, bidCount, onSetDirectPurchaseLimit, validateFile, isCreator]);
 
   // Helper function to check if a field is invalid
   const isFieldInvalid = useCallback((fieldName: string) => {
@@ -3422,7 +3523,7 @@ export default function Schedule({
                                       const file = e.target.files?.[0];
                                       if (file) {
                                         // Validate file first
-                                        const validation = validateFileLocal(file);
+                                        const validation = validateFile(file);
                                         if (!validation.isValid) {
                                           onOpenResponse("File Upload Error", validation.error || "Invalid file", false);
                                           return;
@@ -3460,7 +3561,7 @@ export default function Schedule({
                                     const file = e.target.files?.[0];
                                     if (file) {
                                       // Validate file first
-                                      const validation = validateFileLocal(file);
+                                      const validation = validateFile(file);
                                       if (!validation.isValid) {
                                         onOpenResponse("File Upload Error", validation.error || "Invalid file", false);
                                         return;
