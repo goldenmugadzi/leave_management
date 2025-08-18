@@ -23,7 +23,7 @@ from ...forms import PerformanceReviewApprovalForm
 from approve.forms import ApprovalForm
 from approve.models import Step, Approval
 from ...helpers.getters.dates import get_assessment_period
-
+from ..helper import is_within_current_quarter
 from loguru import logger
 
 class PerformancePlanAndAssessmentAppraisalTemplateView(TemplateView):
@@ -163,15 +163,21 @@ class PerformanceReviewsApprovalView(SuccessMessageMixin, TemplateView):
             return False
         return True
     
+    
+    def is_current_date_in_current_quarter(self, quarter_obj)->bool:
+        return is_within_current_quarter(year=quarter_obj.year, quarter=quarter_obj.quarter)
+    
+    
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
         
         context.update(self.get_performance_review_forms_objects())
         context.update(self.approval_user_roles())
+        quarter_obj = self.get_performance_review_object().quarter
         
         context["is_quarter_scored"] = self.is_quarter_scored()
-        context["quarter_obj"] = self.get_performance_review_object().quarter
-        
+        context["quarter_obj"] = quarter_obj
+        context["is_within_current_quarter"] = self.is_current_date_in_current_quarter(quarter_obj=quarter_obj)
         return context
     
     def get(self, request, *args, **kwargs):
