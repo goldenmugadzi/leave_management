@@ -256,6 +256,7 @@ export interface ScheduleActions {
   resetSchedule: () => void;
   resetBids: () => void;
   resetCompliance: () => void;
+  resetForNewSchedule: () => void;
   
   // === BATCH ACTIONS ===
   initializeSchedule: (data: Partial<ScheduleState>) => void;
@@ -561,6 +562,18 @@ export const useScheduleStore = create<ScheduleStore>()(
         resetBids: () => set({ bids: [], bidCount: 0, currentBid: undefined }),
         resetCompliance: () => set({ compliance: [], complianceRemarks: [] }),
         
+        // === NEW SCHEDULE RESET ACTION ===
+        resetForNewSchedule: () => set((state) => ({
+          ...initialState,
+          // Preserve only essential user data and reference data
+          username: state.username,
+          suppliers: state.suppliers,
+          users: state.users,
+          currencies: state.currencies,
+          procPlans: state.procPlans,
+          currentUserRoles: state.currentUserRoles
+        })),
+        
         // === BATCH ACTIONS ===
         initializeSchedule: (data: Partial<ScheduleState>) => set((state) => ({ ...state, ...data })),
         
@@ -569,15 +582,12 @@ export const useScheduleStore = create<ScheduleStore>()(
       {
         name: 'schedule-store',
         partialize: (state) => ({
-          // Only persist non-sensitive data
-          csId: state.csId,
-          storedPrId: state.storedPrId,
-          creator: state.creator,
-          createdAt: state.createdAt,
-          csOwner: state.csOwner,
-          procRef: state.procRef,
+          // Only persist essential user data and reference data
           username: state.username,
-          // Don't persist sensitive data like bids, compliance, etc.
+          currentUserRoles: state.currentUserRoles,
+          // Note: Do NOT persist csId, storedPrId, creator, createdAt, csOwner
+          // to prevent caching issues when creating new schedules
+          // These should be set fresh for each schedule session
         })
       }
     ),

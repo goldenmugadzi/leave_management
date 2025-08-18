@@ -26,7 +26,7 @@ from .optimized_file_handlers import OptimizedFileHandler, OptimizedAttachmentHa
 from it.users.views import ms_exhange_reset_password_html, ms_exhange_send, ms_exhange_send_html
 from .models import *
 from it.users.models import *
-from finance.purchase_request.models import ProcurementPlanReference, PurchaseRequest, PrItem, Attachment, \
+from finance.purchase_request.models import PurchaseRequest, PrItem, Attachment, \
     UnitOfMeasurement
 from ACE2.models import Ace2
 from finance.comparative_schedules.models import *
@@ -2186,6 +2186,17 @@ def get_create_data(request, pr_id):
                 "ordered": pr_item.ordered,
             })
 
+        # get proc plan for PR
+        try:
+            if purchase_request.procurement_plan_reference:
+                proc_ref = "acc" + str(purchase_request.procurement_plan_reference.id)
+            else:
+                proc_ref = ""
+            pr_proc_plan = ProcPlan.objects.filter(proc_ref=proc_ref).first()
+        except Exception as ex:
+            logger.error(f"Error getting DP proc plan: {ex}")
+            pr_proc_plan = None
+
         return JsonResponse({
             "success": True,
             "requester_role": user_comparative_schedule_role.role if user_comparative_schedule_role else "",
@@ -2194,9 +2205,9 @@ def get_create_data(request, pr_id):
             "scope_of_work": purchase_request.scope_of_work if purchase_request.scope_of_work else "",
             "proc_ref": purchase_request.procurement_plan_reference.id if purchase_request.procurement_plan_reference else "",
             "proc_plan": {
-                "id": purchase_request.procurement_plan_reference.id if purchase_request.procurement_plan_reference else "",
-                "proc_ref": purchase_request.procurement_plan_reference.id if purchase_request.procurement_plan_reference else "",
-                "description": purchase_request.procurement_plan_reference.name if purchase_request.procurement_plan_reference else "",
+                "id": pr_proc_plan.id if pr_proc_plan else "",
+                "proc_ref": pr_proc_plan.proc_ref if pr_proc_plan else "",
+                "description": pr_proc_plan.description if pr_proc_plan else "",
             } if purchase_request.procurement_plan_reference else {},
             "pr_date": purchase_request.created_at.strftime("%Y-%m-%d") if purchase_request.created_at else "",
             "pr_items": pr_item_list,
@@ -2361,7 +2372,7 @@ def save_comparative_schedule(request):
     File uploads are handled separately by dedicated file upload APIs.
     """
     try:
-
+        print("save_comparative_schedule request: ", request.POST)
         cs_id = "CS" + datetime.now().strftime("%Y%m%d%I%M%S")
         cs_exists = ComparativeSchedules.objects.filter(cs_id=cs_id).first()
         # @TODO try random number if cs_id exists or return error
@@ -2370,23 +2381,12 @@ def save_comparative_schedule(request):
 
         # Get advert file path from POST data (file uploads handled separately)
         advert_path = request.POST.get("advert", "").strip()
-        
-        proc_ref = request.POST.get("proc_ref", "")
-        print("proc plan: ", proc_ref)
-        # check if proc ref has 'acc' prefix
-        if not proc_ref.startswith("acc"):
-            temp_proc_ref = "acc" + proc_ref
-            proc_ref = temp_proc_ref
-
-        proc_plan = ProcPlan.objects.filter(proc_ref=proc_ref).first()
-        print("proc_plan: ", proc_plan)
         scope_of_work = request.POST.get("scope_of_work", "")
         pr_number = request.POST.get("pr_number", "")
         pr_date = request.POST.get("pr_date", "")
         ref_date = request.POST.get("ref_date", "")
         currency = request.POST.get("currency", "")
-        print("currency: ", currency)
-        # quantity = data['quantity']
+
         closing_date = request.POST.get("closing_date", "")
         closing_time = request.POST.get("closing_time", "")
         date_tender_opened = request.POST.get("date_tender_opened", "")
@@ -2434,7 +2434,49 @@ def save_comparative_schedule(request):
         # fetch purchase request
         print("pr number: ", pr_number)
         pr = PurchaseRequest.objects.get(id=pr_number)
-        print("PR: ", pr, pr_number, username)
+        # Handle both proc_ref and proc_plan_id fields from frontend
+        proc_ref = request.POST.get("proc_ref", "").strip()
+        proc_plan_id = request.POST.get("proc_plan", "").strip()  # Frontend sends this as 'proc_plan'
+        
+        # Debug: Log all POST data to see what's actually being sent
+        print(f"Direct Purchase - All POST data keys: {list(request.POST.keys())}")
+        print(f"Direct Purchase - proc_ref: '{proc_ref}', proc_plan_id: '{proc_plan_id}'")
+        
+        # Determine which field to use for finding the procurement plan
+        proc_plan = None
+        
+        if proc_plan_id and proc_plan_id.strip():
+            # Frontend sent proc_plan_id, try to find by ID first
+            try:
+                if proc_plan_id.startswith('"'):
+                    # Clean the string and convert to integer for ID lookup
+                    cleaned_proc_plan_id = proc_plan_id.strip().replace('"', '').replace("'", "")
+                    print(f"Direct Purchase - Cleaned proc_plan_id: '{cleaned_proc_plan_id}'")
+                    proc_plan_ref = "acc" + cleaned_proc_plan_id
+                    proc_plan = ProcPlan.objects.filter(proc_ref=proc_plan_ref).first()
+                    print(f"Direct Purchase - Found proc_plan by ID: {proc_plan}")
+                else:
+                    proc_plan = ProcPlan.objects.filter(id=proc_plan_id).first()
+                    print(f"Direct Purchase - Found proc_plan by ID: {proc_plan}")
+            except (ValueError, TypeError) as e:
+                print(f"Direct Purchase - Invalid proc_plan_id format: '{proc_plan_id}', error: {e}")
+                # If ID lookup fails, try proc_ref as fallback
+                if proc_ref and proc_ref.strip():
+                    if not proc_ref.startswith("acc"):
+                        temp_proc_ref = "acc" + proc_ref
+                        proc_ref = temp_proc_ref
+                    proc_plan = ProcPlan.objects.filter(proc_ref=proc_ref).first()
+                    print(f"Direct Purchase - Found proc_plan by proc_ref fallback: {proc_plan}")
+        elif proc_ref and proc_ref.strip():
+            # Frontend sent proc_ref, use the original logic
+            if not proc_ref.startswith("acc"):
+                temp_proc_ref = "acc" + proc_ref
+                proc_ref = temp_proc_ref
+            proc_plan = ProcPlan.objects.filter(proc_ref=proc_ref).first()
+            print(f"Direct Purchase - Found proc_plan by proc_ref: {proc_plan}")
+        else:
+            print("Direct Purchase - No procurement plan reference provided")
+        
         # fetch user
         user = UserProfile.objects.filter(username=username).first()
         currency = Currency.objects.filter(id=currency).first() if currency else None

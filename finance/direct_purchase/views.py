@@ -1545,6 +1545,19 @@ def get_create_data(request, pr_id):
                 "ordered": pr_item.ordered,
             })
         
+        pr_proc_plan = None
+
+        # get DP proc plan 
+        try:
+            if purchase_request.procurement_plan_reference:
+                proc_ref = "acc" + str(purchase_request.procurement_plan_reference.id)
+            else:
+                proc_ref = ""
+            pr_proc_plan = DPProcPlan.objects.filter(proc_ref=proc_ref).first()
+        except Exception as ex:
+            logger.error(f"Error getting DP proc plan: {ex}")
+            pr_proc_plan = None
+
         return JsonResponse({
                 "success": True,
                 "message": "PR details retrieved successfully",
@@ -1552,9 +1565,9 @@ def get_create_data(request, pr_id):
                 "scope_of_work": purchase_request.scope_of_work,
                 "proc_ref": purchase_request.procurement_plan_reference.id if purchase_request.procurement_plan_reference else "",
                 "proc_plan": {
-                    "id": purchase_request.procurement_plan_reference.id if purchase_request.procurement_plan_reference else "",
-                    "proc_ref": purchase_request.procurement_plan_reference.id if purchase_request.procurement_plan_reference else "",
-                    "description": purchase_request.procurement_plan_reference.name if purchase_request.procurement_plan_reference else "",
+                    "id": pr_proc_plan.id if pr_proc_plan else "",
+                    "proc_ref": pr_proc_plan.proc_ref if pr_proc_plan else "",
+                    "description": pr_proc_plan.description if pr_proc_plan else "",
                 } if purchase_request.procurement_plan_reference else {},
                 "pr_date": purchase_request.created_at.strftime("%Y-%m-%d") if purchase_request.created_at else "",
                 "pr_items": pr_item_list,
@@ -1733,12 +1746,16 @@ def save_comparative_schedule(request):
         if proc_plan_id and proc_plan_id.strip():
             # Frontend sent proc_plan_id, try to find by ID first
             try:
-                # Clean the string and convert to integer for ID lookup
-                cleaned_proc_plan_id = proc_plan_id.strip().replace('"', '').replace("'", "")
-                logger.info(f"Direct Purchase - Cleaned proc_plan_id: '{cleaned_proc_plan_id}'")
-                proc_plan_id_int = int(cleaned_proc_plan_id)
-                proc_plan = DPProcPlan.objects.filter(id=proc_plan_id_int).first()
-                logger.info(f"Direct Purchase - Found proc_plan by ID: {proc_plan}")
+                if proc_plan_id.startswith('"'):
+                    # Clean the string and convert to integer for ID lookup
+                    cleaned_proc_plan_id = proc_plan_id.strip().replace('"', '').replace("'", "")
+                    logger.info(f"Direct Purchase - Cleaned proc_plan_id: '{cleaned_proc_plan_id}'")
+                    proc_plan_ref = "acc" + cleaned_proc_plan_id
+                    proc_plan = DPProcPlan.objects.filter(proc_ref=proc_plan_ref).first()
+                    logger.info(f"Direct Purchase - Found proc_plan by ID: {proc_plan}")
+                else:
+                    proc_plan = DPProcPlan.objects.filter(id=proc_plan_id).first()
+                    logger.info(f"Direct Purchase - Found proc_plan by ID: {proc_plan}")
             except (ValueError, TypeError) as e:
                 logger.warning(f"Direct Purchase - Invalid proc_plan_id format: '{proc_plan_id}', error: {e}")
                 # If ID lookup fails, try proc_ref as fallback
