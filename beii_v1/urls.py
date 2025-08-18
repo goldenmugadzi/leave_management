@@ -86,3 +86,5 @@ urlpatterns = [
 
 ] 
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+# Serve uploads directory for CS bid documents
+urlpatterns += static('/uploads/', document_root=settings.BASE_DIR / 'uploads')

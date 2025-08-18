@@ -1972,8 +1972,8 @@ def get_comperative_schedule_data(request, cs_id):
             if cs.advert:
                 # Construct the correct file path
                 if cs.advert.startswith('uploads/'):
-                    # File is stored in media directory
-                    file_path = os.path.join(settings.MEDIA_ROOT, cs.advert)
+                    # File is stored in root directory (BASE_DIR)
+                    file_path = os.path.join(settings.BASE_DIR, cs.advert)
                 else:
                     # File is stored with absolute path
                     file_path = cs.advert
@@ -1991,6 +1991,7 @@ def get_comperative_schedule_data(request, cs_id):
                     # Try alternative locations
                     alt_paths = [
                         os.path.join(settings.BASE_DIR, cs.advert),
+                        os.path.join(settings.BASE_DIR, 'uploads', 'comparative', 'adverts', os.path.basename(cs.advert)),
                         os.path.join(settings.MEDIA_ROOT, 'uploads', 'comparative_schedules', os.path.basename(cs.advert)),
                         os.path.join(settings.MEDIA_ROOT, 'uploads', 'purchase_request', os.path.basename(cs.advert))
                     ]
@@ -2271,20 +2272,20 @@ def create(request):
                 # Use proper media path construction
                 timestamp = timezone.astimezone(timezone.get_current_timezone()).strftime("%Y%m%d%I%M%S%p")
                 filename = f"{timestamp}_{advert_file.name}"
-                advert_path = os.path.join(settings.MEDIA_ROOT, 'uploads', 'finance', 'cs', 'adverts', filename)
+                advert_path = os.path.join(settings.BASE_DIR, 'uploads', 'comparative', 'adverts', filename)
                 save_file(advert_file, advert_path)
                 # Store relative path in database for consistency
-                advert_path_db = os.path.join('uploads', 'finance', 'cs', 'adverts', filename)
+                advert_path_db = os.path.join('uploads', 'comparative', 'adverts', filename)
 
             if 'bid_document' in request.FILES:
                 bid_document_file = request.FILES['bid_document']
                 # Use proper media path construction
                 timestamp = datetime.now().strftime("%Y%m%d%I%M%S%p")
                 filename = f"{timestamp}_{bid_document_file.name}"
-                bid_document_path = os.path.join(settings.MEDIA_ROOT, 'uploads', 'finance', 'cs', 'bids', filename)
+                bid_document_path = os.path.join(settings.BASE_DIR, 'uploads', 'comparative', 'adverts', filename)
                 save_file(bid_document_file, bid_document_path)
                 # Store relative path in database for consistency
-                bid_document_path_db = os.path.join('uploads', 'finance', 'cs', 'bids', filename)
+                bid_document_path_db = os.path.join('uploads', 'comparative', 'adverts', filename)
 
         except Exception as ex:
             print("Error: ", ex)
@@ -2783,7 +2784,7 @@ def save_cs_bid(request):
             # Use proper media path construction
             timestamp = datetime.now().strftime("%Y%m%d%I%M%S")
             filename = f"{timestamp}_{bid_doc.name}"
-            root_dir = os.path.join(settings.MEDIA_ROOT, 'uploads', 'comparative', 'adverts')
+            root_dir = os.path.join(settings.BASE_DIR, 'uploads', 'comparative', 'adverts')
             fs = FileSystemStorage(location=root_dir)
             filename_ = fs.save(filename, bid_doc)
             bid_doc_path = os.path.join('uploads', 'comparative', 'adverts', filename_)
@@ -3458,10 +3459,10 @@ def cs_add_supplier(request, cs_id):
                 # Use proper media path construction
                 timestamp = timezone.astimezone(timezone.get_current_timezone()).strftime("%Y%m%d%I%M%S")
                 filename = f"{timestamp}_{bid_document_file.name}"
-                bid_document_path = os.path.join(settings.MEDIA_ROOT, 'uploads', 'finance', 'cs', 'bids', filename)
+                bid_document_path = os.path.join(settings.BASE_DIR, 'uploads', 'comparative', 'adverts', filename)
                 save_file(bid_document_file, bid_document_path)
                 # Store relative path in database for consistency
-                bid_document_path_db = os.path.join('uploads', 'finance', 'cs', 'bids', filename)
+                bid_document_path_db = os.path.join('uploads', 'comparative', 'adverts', filename)
 
         except Exception as ex:
             print("Error: ", ex)
@@ -3797,7 +3798,7 @@ def api_download_file(request, file_id):
             # For large files, provide download URL
             return JsonResponse({
                 "filename": filename,
-                "download_url": f"/media/{file_path}",
+                "download_url": f"/uploads/{file_path.replace('uploads/', '')}",
                 "size": file_size
             })
             
@@ -4299,8 +4300,8 @@ def api_get_cs_bids_optimized(request, cs_id):
                     # Check if file exists and provide metadata
                     file_path = bid.bid_document
                     if file_path.startswith('uploads/'):
-                        # File is stored in media directory
-                        full_path = os.path.join(settings.MEDIA_ROOT, file_path)
+                        # File is stored in root directory (BASE_DIR)
+                        full_path = os.path.join(settings.BASE_DIR, file_path)
                     else:
                         # File is stored with absolute path
                         full_path = file_path
@@ -4314,7 +4315,7 @@ def api_get_cs_bids_optimized(request, cs_id):
                                 'file_path': file_path,
                                 'filename': filename,
                                 'size': file_size,
-                                'download_url': f"/media/{file_path}",
+                                'download_url': f"/uploads/{file_path.replace('uploads/', '')}",
                                 'preview_url': f"/api/files/preview/{file_path}/"
                             }
                         except Exception as ex:
@@ -4323,7 +4324,7 @@ def api_get_cs_bids_optimized(request, cs_id):
                                 'file_path': file_path,
                                 'filename': os.path.basename(file_path),
                                 'size': 0,
-                                'download_url': f"/media/{file_path}",
+                                'download_url': f"/uploads/{file_path.replace('uploads/', '')}",
                                 'preview_url': f"/api/files/preview/{file_path}/"
                             }
                     else:

@@ -35,8 +35,8 @@ from .optimized_file_handlers import (
     get_dp_file_preview_url
 )
 
-from finance.comparative_schedules.models import Currency, ProcPlan
-from finance.comparative_schedules.views import notification_update, notify_user
+from finance.comparative_schedules.models import Currency, ProcPlan, Supplier
+from finance.comparative_schedules.views import notification_update, notify_user, get_attachments_metadata_optimized
 from .models import *
 from it.users.models import *
 from finance.purchase_request.models import PurchaseRequest, PrItem, Attachment, UnitOfMeasurement
@@ -3037,7 +3037,7 @@ def api_get_pr_items(request, pr_id):
 @login_required
 @require_http_methods(["GET"])
 def api_get_pr_attachments(request, pr_id):
-    """Get PR attachments"""
+    """Get PR attachments - optimized version without Base64 encoding"""
     if not pr_id.startswith("PR"):
         pr_id = "PR" + pr_id
         
@@ -3049,24 +3049,18 @@ def api_get_pr_attachments(request, pr_id):
             "message": "PR not found",
         })
 
-    pr_at_list = []
-    for at in purchase_request.attachment_set.all():
-        try:
-            if at.file and os.path.exists(at.file.path) and at.file.size < 5 * 1024 * 1024:  # 5MB limit
-                file_data = at.file.read()
-                encoded_file_data = base64.b64encode(file_data).decode('utf-8')
-                pr_at_list.append({
-                    "id": at.id,
-                    "file": encoded_file_data,
-                    "name": os.path.basename(at.file.name),
-                })
-        except Exception as ex:
-            logger.error(f"Error processing attachment {at.id}: {ex}")
-            continue
+    # Use optimized file handling instead of Base64 encoding
+    include_preview = request.GET.get('include_preview', 'false').lower() == 'true'
+    pr_at_list = get_attachments_metadata_optimized(
+        purchase_request.attachment_set.all(), 
+        request.user, 
+        include_preview
+    )
 
     return JsonResponse({
         "success": True,
         "pr_attachments": pr_at_list,
+        "total_count": len(pr_at_list)
     })
 
 
@@ -3074,38 +3068,52 @@ def api_get_pr_attachments(request, pr_id):
 @require_http_methods(["GET"])
 def api_get_reference_data(request):
     """Get reference data (suppliers, currencies, etc.)"""
-    # Get cached reference data
-    proc_plans_cache_key = 'all_dp_proc_plans'
-    proc_plans = cache.get(proc_plans_cache_key)
-    if proc_plans is None:
-        proc_plans = list(DPProcPlan.objects.values('id', 'proc_ref', 'description'))
-        cache.set(proc_plans_cache_key, proc_plans, CACHE_TIMEOUT * 4)
+    try:
+        # Get cached reference data
+        proc_plans_cache_key = 'all_proc_plans'
+        proc_plans = cache.get(proc_plans_cache_key)
+        if proc_plans is None:
+            proc_plans = list(DPProcPlan.objects.values('id', 'proc_ref', 'description'))
+            cache.set(proc_plans_cache_key, proc_plans, CACHE_TIMEOUT * 4)
 
-    currencies_cache_key = 'all_currencies'
-    currencies = cache.get(currencies_cache_key)
-    if currencies is None:
-        currencies = list(Currency.objects.values('id', 'currency'))
-        cache.set(currencies_cache_key, currencies, CACHE_TIMEOUT * 4)
+        currencies_cache_key = 'all_currencies'
+        currencies = cache.get(currencies_cache_key)
+        if currencies is None:
+            currencies = list(Currency.objects.values('id', 'currency'))
+            cache.set(currencies_cache_key, currencies, CACHE_TIMEOUT * 4)
 
-    suppliers_cache_key = 'all_suppliers'
-    suppliers = cache.get(suppliers_cache_key)
-    if suppliers is None:
-        suppliers = list(Supplier.objects.values('id', 'name'))
-        cache.set(suppliers_cache_key, suppliers, CACHE_TIMEOUT * 2)
+        suppliers_cache_key = 'all_suppliers'
+        suppliers = cache.get(suppliers_cache_key)
+        if suppliers is None:
+            suppliers = list(Supplier.objects.values('id', 'name'))
+            cache.set(suppliers_cache_key, suppliers, CACHE_TIMEOUT * 2)
 
-    users_cache_key = 'all_users'
-    users = cache.get(users_cache_key)
-    if users is None:
-        users = list(UserProfile.objects.values('id', 'username', 'first_name', 'last_name'))
-        cache.set(users_cache_key, users, CACHE_TIMEOUT * 2)
+        users_cache_key = 'all_users'
+        users = cache.get(users_cache_key)
+        if users is None:
+            users = list(UserProfile.objects.values('id', 'username', 'first_name', 'last_name'))
+            cache.set(users_cache_key, users, CACHE_TIMEOUT)
 
-    return JsonResponse({
-        "success": True,
-        "proc_plans": proc_plans,
-        "currencies": currencies,
-        "suppliers": suppliers,
-        "users": users,
-    })
+        uom_cache_key = 'all_uom'
+        uom = cache.get(uom_cache_key)
+        if uom is None:
+            uom = list(UnitOfMeasurement.objects.values('unit', 'name'))
+            cache.set(uom_cache_key, uom, CACHE_TIMEOUT * 4)
+
+        return JsonResponse({
+            "success": True,
+            "proc_plans": proc_plans,
+            "uom": uom,
+            "currencies": currencies,
+            "suppliers": suppliers,
+            "users": users,
+        })
+    except Exception as ex:
+        print(f"Error in api_get_reference_data: {ex}")
+        return JsonResponse({
+            "success": False,
+            "error": str(ex)
+        }, status=500)
 
 
 @login_required 
