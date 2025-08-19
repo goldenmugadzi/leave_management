@@ -33,22 +33,47 @@ def pettyCash_detail(request, petty_id):
     user_id = request.user.id
     user_profile = UserProfile.objects.filter(id=user_id).first()
 
-    user_groups = user_profile.groups.values_list('name', flat=True)
+    # Handle missing user profile
+    if not user_profile:
+        messages.error(request, "User profile not found. Please contact administrator.")
+        return redirect('/pettycash/pettycashs')
+
+    # Handle missing user groups safely
+    try:
+        user_groups = user_profile.groups.values_list('name', flat=True) if user_profile.groups.exists() else []
+    except Exception:
+        user_groups = []
 
     custom_user_roles = {
         "pettycash": {},
     }
 
-    roles_ = user_profile.roles.all()
-    for _role in roles_:
-        role = Roles.objects.filter(id=_role.id).first()
-
-        if role.application == "pettycash":
-            custom_user_roles["pettycash"] = role.role
+    # Safely get user roles
+    try:
+        roles_ = user_profile.roles.all()
+        for _role in roles_:
+            try:
+                role = Roles.objects.filter(id=_role.id).first()
+                if role and role.application == "pettycash":
+                    custom_user_roles["pettycash"] = role.role
+            except Exception:
+                continue
+    except Exception:
+        roles_ = []
+        
     pettycash_role = str(custom_user_roles["pettycash"])
     # print(pettycash_role)
 
-    pettycash_item = Pettycash.objects.get(petty_id=petty_id)
+    # Safely get PettyCash object
+    try:
+        pettycash_item = Pettycash.objects.get(petty_id=petty_id)
+    except Pettycash.DoesNotExist:
+        messages.error(request, f"PettyCash {petty_id} not found.")
+        return redirect('/pettycash/pettycashs')
+    except Exception as e:
+        messages.error(request, f"Error accessing PettyCash: {str(e)}")
+        return redirect('/pettycash/pettycashs')
+        
     # Default form holders
     form = None  # cashier form
     requester_form = None
@@ -119,7 +144,7 @@ def pettyCash_detail(request, petty_id):
                         process = pettycash_item.process
                         latest_approval = process.approval_set.last()
                         next_step_num = (latest_approval.step.step + 1) if latest_approval else 1
-                        user_roles = request.user.roles.all()
+                        user_roles = user_profile.roles.all()
                         step_for_user = Step.objects.get(step=next_step_num, workflow=process.workflow, approver__in=user_roles)
                         Approval.objects.create(
                             step=step_for_user,
@@ -140,7 +165,12 @@ def pettyCash_detail(request, petty_id):
 
     approvalForm = None
     to = None
-    user_roles = request.user.roles.all()  # Accessing the user's roles through the 'roles' attribute
+    
+    # Safely get user roles
+    try:
+        user_roles = user_profile.roles.all() if user_profile else []
+    except Exception:
+        user_roles = []
 
     clear = False
     clear_minus = False
