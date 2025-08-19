@@ -4,6 +4,8 @@ from django.forms import modelformset_factory
 from django.forms.renderers import BaseRenderer
 from django.forms.utils import ErrorList
 from it.users.models import UserQualification, CostCenter, UserProfile, Designations
+from ..services.user import UserProfileService
+from ..repository.users import UserProfileRepository
 from ..models import Appraisal, AppraisalExperience, Experience, AppraiseePersonalAttribute
 from ..helpers.types.kra import KraRolesType
 
@@ -52,6 +54,7 @@ class AppraisalExperienceForm(forms.ModelForm):
         
         # Assign choices to the widget
         self.fields['experience'].widget = forms.Select(choices=experience_choices)
+
 class AppraisalExperienceUpdateForm(forms.ModelForm):
     class Meta:
         model = AppraisalExperience
@@ -60,6 +63,19 @@ class AppraisalExperienceUpdateForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['experience'].disabled = True
+
+
+def get_all_cost_center_users(user_id):
+    service_handler = UserProfileService(user_profile_repo=UserProfileRepository())
+    cost_center_user_qr = service_handler.fetch_cost_center_users_from_user_id(user_id=user_id)
+    
+    if cost_center_user_qr is None:
+        cost_center_user_qr = UserProfile.objects.none
+    else:
+        # exclude this user instance
+        cost_center_user_qr = cost_center_user_qr.exclude(id=user_id)
+    return cost_center_user_qr
+
 
 class AppraisalForm(forms.ModelForm):
     
@@ -72,8 +88,8 @@ class AppraisalForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         
         if appraisee_id is not None:
-            qr_exclude_appraisee = UserProfile.objects.exclude(id=appraisee_id)
-            self.fields["appraiser"].queryset = qr_exclude_appraisee
+            cost_center_user_qr = get_all_cost_center_users(user_id=appraisee_id)
+            self.fields["appraiser"].queryset = cost_center_user_qr
         
         self.fields["appraiser"].required = True
         self.fields["reviewer"].required = False
