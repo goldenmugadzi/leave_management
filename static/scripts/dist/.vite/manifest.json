@@ -1,31 +1,9 @@
 {
-  "src/components/ApprovalTableWrapper.tsx": {
-    "file": "ApprovalTableWrapper.js",
-    "name": "ApprovalTableWrapper",
-    "src": "src/components/ApprovalTableWrapper.tsx",
-    "isDynamicEntry": true,
-    "imports": [
-      "src/main.tsx"
-    ]
-  },
-  "src/components/Committee/CommitteeApprovalWrapper.tsx": {
-    "file": "CommitteeApprovalWrapper.js",
-    "name": "CommitteeApprovalWrapper",
-    "src": "src/components/Committee/CommitteeApprovalWrapper.tsx",
-    "isDynamicEntry": true,
-    "imports": [
-      "src/main.tsx"
-    ]
-  },
   "src/main.tsx": {
     "file": "main.js",
     "name": "main",
     "src": "src/main.tsx",
     "isEntry": true,
-    "dynamicImports": [
-      "src/components/Committee/CommitteeApprovalWrapper.tsx",
-      "src/components/ApprovalTableWrapper.tsx"
-    ],
     "css": [
       "main.css"
     ]

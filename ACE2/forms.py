@@ -129,13 +129,19 @@ class AceForm(forms.ModelForm):
         budget = cleaned_data.get('budget_id')
         amount = cleaned_data.get('amount')
         if budget and amount is not None:
-            remaining = budget.balance - amount
-            threshold = budget.balance * 0.1  # 10% of current balance
+            # Use available_balance to consider to_be_withdrawn amounts
+            remaining = budget.available_balance - amount
+            threshold = budget.available_balance * 0.1  # 10% of available balance
             if remaining < threshold:
-                self.add_error('amount', f"Warning: This will leave less than 10% of the budget remaining (only {remaining} left).")
+                self.add_error('amount', f"Warning: This will leave less than 10% of the available budget remaining (only {remaining:,.2f} left).")
 
-            if amount > budget.balance:
-                self.add_error('amount', "Amount exceeds available budget.")
+            if amount > budget.available_balance:
+                self.add_error('amount', 
+                    f"Amount exceeds available budget. "
+                    f"Available: {budget.available_balance:,.2f} "
+                    f"(Balance: {budget.balance:,.2f}, "
+                    f"To be withdrawn: {budget.to_be_withdrawn or 0:,.2f})"
+                )
 
         return cleaned_data
 
@@ -207,6 +213,44 @@ class ViramentForm(forms.ModelForm):
         fields = '__all__'
         exclude = ['process', 'requested_by', 'virament_id', 'date_created', 'region'
                    ]
+
+    def clean_amount(self):
+        amount = self.cleaned_data.get('amount')
+        if amount is None:
+            raise forms.ValidationError("Amount is required.")
+        if amount <= 0:
+            raise forms.ValidationError("Amount must be positive.")
+        return amount
+
+    def clean(self):
+        cleaned_data = super().clean()
+        from_budget = cleaned_data.get('from_budget')
+        to_budget = cleaned_data.get('to_budget')
+        amount = cleaned_data.get('amount')
+
+        # Check if from_budget and to_budget are the same
+        if from_budget and to_budget and from_budget == to_budget:
+            raise forms.ValidationError("Source and destination budgets cannot be the same.")
+
+        # Check if source budget has sufficient available balance (considering to_be_withdrawn)
+        if from_budget and amount is not None:
+            # Use available_balance property which considers to_be_withdrawn
+            if amount > from_budget.available_balance:
+                raise forms.ValidationError(
+                    f"Insufficient available balance in source budget. "
+                    f"Available: {from_budget.available_balance:,.2f} "
+                    f"(Balance: {from_budget.balance:,.2f}, "
+                    f"To be withdrawn: {from_budget.to_be_withdrawn or 0:,.2f})"
+                )
+            
+            # Warn if transfer would use more than 80% of available balance
+            if amount > (from_budget.available_balance * 0.8):
+                self.add_error('amount', 
+                    f"Warning: This transfer uses {(amount/from_budget.available_balance)*100:.1f}% "
+                    f"of available budget balance."
+                )
+
+        return cleaned_data
 
     def __init__(self, *args, **kwargs):
 

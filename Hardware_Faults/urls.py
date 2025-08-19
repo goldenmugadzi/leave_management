@@ -5,7 +5,6 @@ from django.conf.urls.static import static
 
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
     #path('create_fault/', views.create_fault, name="create_fault"),
     path('createFault/',views.createFault, name="createFault"),
     path('show_fault/', views.show_fault, name="show_fault"),

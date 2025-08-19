@@ -140,6 +140,12 @@ APPLICATIONS = [
         "iconUrl": "assets/images/customer.png",
         "url": "/commercial/customers"
     },
+    {
+        "name": "inspections",
+        "title": "Inspections",
+        "iconUrl": "assets/images/customer.png",
+        "url": "/inspections/"
+    },
     # {
     #     "name":"fault_locator",
     #     "title": "Fault Locator",
@@ -166,6 +172,12 @@ REPORTS = [
         "title": "Petty Cash Reports",
         "iconUrl": "assets/images/pettyreports.png",
         "url": "/pettycash/create_pettycash_report"
+    },
+    {
+        "name": "petty_cash_monthly_totals",
+        "title": "Petty Cash Monthly Totals",
+        "iconUrl": "assets/images/pettyreports.png",
+        "url": "/pettycash/monthly_totals"
     },
     {
         "name": "comperative_schedule",
@@ -504,9 +516,8 @@ def business_applications(request):
         applications = applications
     else:
         if user.region:
+            # Relaxed: show all report modules regardless of region (including T&D)
             applications = applications
-            if user.region.region == "TRANSMISSION & DISTRIBUTION":
-                applications = [app for app in applications if app['name'] == 'users' or app['name'] == 'non_conformity']
                 
         else:
             messages.error(request, "Your region is missing on your account profile, Please contact the administrator")
@@ -557,9 +568,8 @@ def application_reports(request):
         applications = applications
     else:
         if user.region:
+            # Relaxed: show all report modules regardless of region (including T&D)
             applications = applications
-            if user.region.region == "TRANSMISSION & DISTRIBUTION":
-                applications = [app for app in applications if app['name'] == 'users' or app['name'] == 'non_conformity']
                 
         else:
             messages.error(request, "Your region is missing on your account profile, Please contact the administrator")

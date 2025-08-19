@@ -5,307 +5,488 @@
 {% block title %}{% if is_edit %}Edit Application{% else %}New Application{% endif %}{% endblock %}
 
 {% block content %}
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-12">
-            <div class="page-title-box">
-                <div class="page-title-right">
-                    <a href="{% url 'inspections:application_list' %}" class="btn btn-secondary">
-                        <i class="mdi mdi-arrow-left"></i> Back to List
-                    </a>
-                </div>
-                <h4 class="page-title">{% if is_edit %}Edit Application{% else %}New Application{% endif %}</h4>
-                <ol class="breadcrumb m-0">
-                    <li class="breadcrumb-item"><a href="{% url 'inspections:dashboard' %}">Inspections</a></li>
-                    <li class="breadcrumb-item"><a href="{% url 'inspections:application_list' %}">Applications</a></li>
-                    <li class="breadcrumb-item active">{% if is_edit %}Edit{% else %}Create{% endif %}</li>
-                </ol>
-            </div>
-        </div>
+<div class="content-wrapper">
+  <div class="bg-gulf-blue-100 shadow shadow-gulf-blue-300 text-gulf-blue-900 rounded px-6 py-6">
+    <!-- Header Section -->
+    <div class="flex justify-between items-center mb-8">
+      <div>
+        <h1 class="text-3xl font-bold text-gulf-blue-900">
+          {% if is_edit %}Edit Application{% else %}New Application{% endif %}
+        </h1>
+        <nav class="flex mt-2" aria-label="Breadcrumb">
+          <ol class="inline-flex items-center space-x-1 md:space-x-3">
+            <li class="inline-flex items-center">
+              <a href="{% url 'inspections:dashboard' %}" class="inline-flex items-center text-sm font-medium text-gulf-blue-600 hover:text-gulf-blue-800">
+                <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"></path>
+                </svg>
+                Inspections
+              </a>
+            </li>
+            <li>
+              <div class="flex items-center">
+                <svg class="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
+                </svg>
+                <a href="{% url 'inspections:application_list' %}" class="ml-1 text-sm font-medium text-gulf-blue-600 hover:text-gulf-blue-800 md:ml-2">Applications</a>
+              </div>
+            </li>
+            <li>
+              <div class="flex items-center">
+                <svg class="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
+                </svg>
+                <span class="ml-1 text-sm font-medium text-gulf-blue-900 md:ml-2">{% if is_edit %}Edit{% else %}Create{% endif %}</span>
+              </div>
+            </li>
+          </ol>
+        </nav>
+      </div>
+      <a href="{% url 'inspections:application_list' %}" class="bg-gray-500 hover:bg-gray-600 text-white font-medium py-2 px-4 rounded-lg flex items-center">
+        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+        </svg>
+        Back to List
+      </a>
     </div>
 
-    <div class="row">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-body">
-                    <form method="post" novalidate>
-                        {% csrf_token %}
-                        
-                        <!-- Application Information -->
-                        <div class="row">
-                            <div class="col-12">
-                                <h5 class="mb-3 text-uppercase bg-light p-2">
-                                    <i class="mdi mdi-file-document me-1"></i> Application Information
-                                </h5>
-                            </div>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="{{ form.application_type.id_for_label }}" class="form-label">
-                                        Application Type <span class="text-danger">*</span>
-                                    </label>
-                                    {{ form.application_type|add_class:"form-control" }}
-                                    {% if form.application_type.errors %}
-                                        <div class="text-danger small">{{ form.application_type.errors.0 }}</div>
-                                    {% endif %}
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="{{ form.priority.id_for_label }}" class="form-label">
-                                        Priority Level <span class="text-danger">*</span>
-                                    </label>
-                                    {{ form.priority|add_class:"form-control" }}
-                                    {% if form.priority.errors %}
-                                        <div class="text-danger small">{{ form.priority.errors.0 }}</div>
-                                    {% endif %}
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Customer Information -->
-                        <div class="row">
-                            <div class="col-12">
-                                <h5 class="mb-3 text-uppercase bg-light p-2">
-                                    <i class="mdi mdi-account me-1"></i> Customer Information
-                                </h5>
-                            </div>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="{{ form.customer_name.id_for_label }}" class="form-label">
-                                        Customer Name <span class="text-danger">*</span>
-                                    </label>
-                                    {{ form.customer_name|add_class:"form-control" }}
-                                    {% if form.customer_name.errors %}
-                                        <div class="text-danger small">{{ form.customer_name.errors.0 }}</div>
-                                    {% endif %}
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="{{ form.customer_phone.id_for_label }}" class="form-label">
-                                        Customer Phone
-                                    </label>
-                                    {{ form.customer_phone|add_class:"form-control" }}
-                                    {% if form.customer_phone.errors %}
-                                        <div class="text-danger small">{{ form.customer_phone.errors.0 }}</div>
-                                    {% endif %}
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="{{ form.customer_email.id_for_label }}" class="form-label">
-                                        Customer Email
-                                    </label>
-                                    {{ form.customer_email|add_class:"form-control" }}
-                                    {% if form.customer_email.errors %}
-                                        <div class="text-danger small">{{ form.customer_email.errors.0 }}</div>
-                                    {% endif %}
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="{{ form.customer_address.id_for_label }}" class="form-label">
-                                        Customer Address
-                                    </label>
-                                    {{ form.customer_address|add_class:"form-control" }}
-                                    {% if form.customer_address.errors %}
-                                        <div class="text-danger small">{{ form.customer_address.errors.0 }}</div>
-                                    {% endif %}
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Property Information -->
-                        <div class="row">
-                            <div class="col-12">
-                                <h5 class="mb-3 text-uppercase bg-light p-2">
-                                    <i class="mdi mdi-home me-1"></i> Property Information
-                                </h5>
-                            </div>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-md-8">
-                                <div class="mb-3">
-                                    <label for="{{ form.property_address.id_for_label }}" class="form-label">
-                                        Property Address <span class="text-danger">*</span>
-                                    </label>
-                                    {{ form.property_address|add_class:"form-control" }}
-                                    {% if form.property_address.errors %}
-                                        <div class="text-danger small">{{ form.property_address.errors.0 }}</div>
-                                    {% endif %}
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="mb-3">
-                                    <label for="{{ form.property_type.id_for_label }}" class="form-label">
-                                        Property Type
-                                    </label>
-                                    {{ form.property_type|add_class:"form-control" }}
-                                    {% if form.property_type.errors %}
-                                        <div class="text-danger small">{{ form.property_type.errors.0 }}</div>
-                                    {% endif %}
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="{{ form.service_number.id_for_label }}" class="form-label">
-                                        Service Number
-                                    </label>
-                                    {{ form.service_number|add_class:"form-control" }}
-                                    <small class="form-text text-muted">If existing service available</small>
-                                    {% if form.service_number.errors %}
-                                        <div class="text-danger small">{{ form.service_number.errors.0 }}</div>
-                                    {% endif %}
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Installation Details -->
-                        <div class="row">
-                            <div class="col-12">
-                                <h5 class="mb-3 text-uppercase bg-light p-2">
-                                    <i class="mdi mdi-wrench me-1"></i> Installation Details
-                                </h5>
-                            </div>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-12">
-                                <div class="mb-3">
-                                    <label for="{{ form.installation_description.id_for_label }}" class="form-label">
-                                        Installation Description
-                                    </label>
-                                    {{ form.installation_description|add_class:"form-control" }}
-                                    {% if form.installation_description.errors %}
-                                        <div class="text-danger small">{{ form.installation_description.errors.0 }}</div>
-                                    {% endif %}
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="{{ form.contractor_name.id_for_label }}" class="form-label">
-                                        Contractor Name
-                                    </label>
-                                    {{ form.contractor_name|add_class:"form-control" }}
-                                    {% if form.contractor_name.errors %}
-                                        <div class="text-danger small">{{ form.contractor_name.errors.0 }}</div>
-                                    {% endif %}
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label for="{{ form.contractor_license.id_for_label }}" class="form-label">
-                                        Contractor License
-                                    </label>
-                                    {{ form.contractor_license|add_class:"form-control" }}
-                                    {% if form.contractor_license.errors %}
-                                        <div class="text-danger small">{{ form.contractor_license.errors.0 }}</div>
-                                    {% endif %}
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Additional Information -->
-                        <div class="row">
-                            <div class="col-12">
-                                <h5 class="mb-3 text-uppercase bg-light p-2">
-                                    <i class="mdi mdi-information me-1"></i> Additional Information
-                                </h5>
-                            </div>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-12">
-                                <div class="mb-3">
-                                    <label for="{{ form.notes.id_for_label }}" class="form-label">
-                                        Notes
-                                    </label>
-                                    {{ form.notes|add_class:"form-control" }}
-                                    {% if form.notes.errors %}
-                                        <div class="text-danger small">{{ form.notes.errors.0 }}</div>
-                                    {% endif %}
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <div class="form-check">
-                                        {{ form.documents_attached }}
-                                        <label class="form-check-label" for="{{ form.documents_attached.id_for_label }}">
-                                            Documents Attached
-                                        </label>
-                                    </div>
-                                    {% if form.documents_attached.errors %}
-                                        <div class="text-danger small">{{ form.documents_attached.errors.0 }}</div>
-                                    {% endif %}
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Form Actions -->
-                        <div class="row">
-                            <div class="col-12">
-                                <div class="text-end">
-                                    <a href="{% url 'inspections:application_list' %}" class="btn btn-secondary me-2">
-                                        Cancel
-                                    </a>
-                                    <button type="submit" class="btn btn-primary">
-                                        <i class="mdi mdi-content-save"></i> 
-                                        {% if is_edit %}Update Application{% else %}Create Application{% endif %}
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    </form>
-                </div>
+    <!-- Form Section -->
+    <div class="bg-white rounded-lg shadow-md p-6">
+      <form method="post" enctype="multipart/form-data" novalidate class="space-y-8">
+        {% csrf_token %}
+        
+        <!-- Application Information -->
+        <div class="border-b border-gray-200 pb-8">
+          <div class="flex items-center mb-6">
+            <div class="flex-shrink-0">
+              <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                </svg>
+              </div>
             </div>
-        </div>
-    </div>
-</div>
+            <div class="ml-4">
+              <h3 class="text-lg font-medium text-gray-900">Application Information</h3>
+              <p class="text-sm text-gray-500">Basic details about the inspection application</p>
+            </div>
+          </div>
 
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Add form validation feedback
-    const form = document.querySelector('form');
-    if (form) {
-        form.addEventListener('submit', function(e) {
-            // Basic client-side validation
-            const requiredFields = form.querySelectorAll('[required]');
-            let isValid = true;
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label for="{{ form.application_type.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                Application Type <span class="text-red-500">*</span>
+              </label>
+              {{ form.application_type|add_class:"w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gulf-blue-500 focus:border-gulf-blue-500" }}
+              {% if form.application_type.errors %}
+                <p class="mt-1 text-sm text-red-600">{{ form.application_type.errors.0 }}</p>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+
+        <!-- Customer Information -->
+        <div class="border-b border-gray-200 pb-8">
+          <div class="flex items-center mb-6">
+            <div class="flex-shrink-0">
+              <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+                <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                </svg>
+              </div>
+            </div>
+            <div class="ml-4">
+              <h3 class="text-lg font-medium text-gray-900">Customer Information</h3>
+              <p class="text-sm text-gray-500">Details of the applicant/customer</p>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label for="{{ form.customer.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                Customer <span class="text-red-500">*</span>
+              </label>
+              <div class="flex space-x-2">
+                {{ form.customer|add_class:"flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gulf-blue-500 focus:border-gulf-blue-500" }}
+                <a href="{% url 'inspections:customer_create' %}" target="_blank" class="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-md text-sm font-medium flex items-center">
+                  <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                  </svg>
+                  New
+                </a>
+              </div>
+              {% if form.customer.errors %}
+                <p class="mt-1 text-sm text-red-600">{{ form.customer.errors.0 }}</p>
+              {% endif %}
+              <p class="mt-1 text-xs text-gray-500">Can't find the customer? Click "New" to create one.</p>
+            </div>
+
+            <div>
+              <label for="{{ form.owner_name.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                Property Owner Name (if different from applicant)
+              </label>
+              {{ form.owner_name|add_class:"w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gulf-blue-500 focus:border-gulf-blue-500" }}
+              {% if form.owner_name.errors %}
+                <p class="mt-1 text-sm text-red-600">{{ form.owner_name.errors.0 }}</p>
+              {% endif %}
+            </div>
+
+            <div class="md:col-span-2">
+              <label for="{{ form.owner_address.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                Property Owner Address (if different from applicant)
+              </label>
+              {{ form.owner_address|add_class:"w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gulf-blue-500 focus:border-gulf-blue-500"|attr:"rows:3" }}
+              {% if form.owner_address.errors %}
+                <p class="mt-1 text-sm text-red-600">{{ form.owner_address.errors.0 }}</p>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+
+        <!-- Contractor Information -->
+        <div class="border-b border-gray-200 pb-8">
+          <div class="flex items-center mb-6">
+            <div class="flex-shrink-0">
+              <div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+                <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                </svg>
+              </div>
+            </div>
+            <div class="ml-4">
+              <h3 class="text-lg font-medium text-gray-900">Contractor Information</h3>
+              <p class="text-sm text-gray-500">Electrical contractor details</p>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label for="{{ form.contractor.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                Electrical Contractor <span class="text-red-500">*</span>
+              </label>
+              <div class="flex space-x-2">
+                {{ form.contractor|add_class:"flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gulf-blue-500 focus:border-gulf-blue-500" }}
+                <a href="{% url 'inspections:contractor_create' %}" target="_blank" class="bg-purple-600 hover:bg-purple-700 text-white px-3 py-2 rounded-md text-sm font-medium flex items-center">
+                  <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                  </svg>
+                  New
+                </a>
+              </div>
+              {% if form.contractor.errors %}
+                <p class="mt-1 text-sm text-red-600">{{ form.contractor.errors.0 }}</p>
+              {% endif %}
+              <p class="mt-1 text-xs text-gray-500">Can't find the contractor? Click "New" to create one.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Electrical Supply Details -->
+        <div class="border-b border-gray-200 pb-8">
+          <div class="flex items-center mb-6">
+            <div class="flex-shrink-0">
+              <div class="w-8 h-8 bg-yellow-100 rounded-lg flex items-center justify-center">
+                <svg class="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                </svg>
+              </div>
+            </div>
+            <div class="ml-4">
+              <h3 class="text-lg font-medium text-gray-900">Electrical Supply Details</h3>
+              <p class="text-sm text-gray-500">Purpose and type of electrical supply required</p>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label for="{{ form.purpose.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                Purpose/Use of Supply <span class="text-red-500">*</span>
+              </label>
+              {{ form.purpose|add_class:"w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gulf-blue-500 focus:border-gulf-blue-500" }}
+              {% if form.purpose.errors %}
+                <p class="mt-1 text-sm text-red-600">{{ form.purpose.errors.0 }}</p>
+              {% endif %}
+            </div>
+
+            <div>
+              <label for="{{ form.supply_type.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                Supply Type <span class="text-red-500">*</span>
+              </label>
+              {{ form.supply_type|add_class:"w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gulf-blue-500 focus:border-gulf-blue-500" }}
+              {% if form.supply_type.errors %}
+                <p class="mt-1 text-sm text-red-600">{{ form.supply_type.errors.0 }}</p>
+              {% endif %}
+            </div>
+
+            <div>
+              <label for="{{ form.roof_covering.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                Roof Covering Material
+              </label>
+              {{ form.roof_covering|add_class:"w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gulf-blue-500 focus:border-gulf-blue-500" }}
+              {% if form.roof_covering.errors %}
+                <p class="mt-1 text-sm text-red-600">{{ form.roof_covering.errors.0 }}</p>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+
+        <!-- Supply Particulars -->
+        <div class="border-b border-gray-200 pb-8">
+          <div class="flex items-center mb-6">
+            <div class="flex-shrink-0">
+              <div class="w-8 h-8 bg-indigo-100 rounded-lg flex items-center justify-center">
+                <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"></path>
+                </svg>
+              </div>
+            </div>
+            <div class="ml-4">
+              <h3 class="text-lg font-medium text-gray-900">Supply Particulars</h3>
+              <p class="text-sm text-gray-500">Technical specifications of the electrical supply</p>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="border border-gray-200 rounded-lg p-4">
+              <h4 class="text-md font-medium text-gray-900 mb-4">Single Phase</h4>
+              <div class="space-y-4">
+                <div class="flex items-center">
+                  {{ form.single_phase_required|add_class:"h-4 w-4 text-gulf-blue-600 focus:ring-gulf-blue-500 border-gray-300 rounded" }}
+                  <label for="{{ form.single_phase_required.id_for_label }}" class="ml-2 block text-sm text-gray-900">
+                    Single Phase Required
+                  </label>
+                </div>
+                <div>
+                  <label for="{{ form.single_phase_count.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                    Number of Single Phases
+                  </label>
+                  {{ form.single_phase_count|add_class:"w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gulf-blue-500 focus:border-gulf-blue-500" }}
+                </div>
+              </div>
+            </div>
+
+            <div class="border border-gray-200 rounded-lg p-4">
+              <h4 class="text-md font-medium text-gray-900 mb-4">Three Phase</h4>
+              <div class="space-y-4">
+                <div class="flex items-center">
+                  {{ form.three_phase_required|add_class:"h-4 w-4 text-gulf-blue-600 focus:ring-gulf-blue-500 border-gray-300 rounded" }}
+                  <label for="{{ form.three_phase_required.id_for_label }}" class="ml-2 block text-sm text-gray-900">
+                    Three Phase Required
+                  </label>
+                </div>
+                <div>
+                  <label for="{{ form.three_phase_count.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                    Number of Three Phases
+                  </label>
+                  {{ form.three_phase_count|add_class:"w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gulf-blue-500 focus:border-gulf-blue-500" }}
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <label for="{{ form.service_feed_type.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                Service Feed Type
+              </label>
+              {{ form.service_feed_type|add_class:"w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gulf-blue-500 focus:border-gulf-blue-500" }}
+              {% if form.service_feed_type.errors %}
+                <p class="mt-1 text-sm text-red-600">{{ form.service_feed_type.errors.0 }}</p>
+              {% endif %}
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label for="{{ form.main_switch_size_amperes.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                  Main Switch Size (Amperes)
+                </label>
+                {{ form.main_switch_size_amperes|add_class:"w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gulf-blue-500 focus:border-gulf-blue-500" }}
+              </div>
+              <div>
+                <label for="{{ form.main_switch_size_kva.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                  Main Switch Size (KVA)
+                </label>
+                {{ form.main_switch_size_kva|add_class:"w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gulf-blue-500 focus:border-gulf-blue-500" }}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Attachments -->
+        <div class="border-b border-gray-200 pb-8">
+          <div class="flex items-center mb-6">
+            <div class="flex-shrink-0">
+              <div class="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center">
+                <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path>
+                </svg>
+              </div>
+            </div>
+            <div class="ml-4">
+              <h3 class="text-lg font-medium text-gray-900">Supporting Documents</h3>
+              <p class="text-sm text-gray-500">Upload relevant documents and attachments</p>
+            </div>
+          </div>
+
+          <div class="space-y-6">
+            <!-- Dynamic File Upload Section -->
+            <div id="attachments-container">
+              <div class="attachment-item border border-gray-200 rounded-lg p-4">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                      File Type
+                    </label>
+                    <select name="file_types[]" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gulf-blue-500 focus:border-gulf-blue-500">
+                      <option value="other">Other</option>
+                      <option value="E21">E21</option>
+                      <option value="E22">E22</option>
+                      <option value="E25">E25</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                      Select File
+                    </label>
+                    <input type="file" name="attachments[]" accept=".pdf,.jpg,.jpeg,.png,.doc,.docx" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gulf-blue-500 focus:border-gulf-blue-500">
+                  </div>
+                  <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                      Description
+                    </label>
+                    <input type="text" name="descriptions[]" placeholder="Brief description..." class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gulf-blue-500 focus:border-gulf-blue-500">
+                  </div>
+                </div>
+                <div class="mt-3 flex justify-end">
+                  <button type="button" class="remove-attachment text-red-600 hover:text-red-800 text-sm font-medium" style="display: none;">
+                    <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1-1H8a1 1 0 00-1 1v3M4 7h16"></path>
+                    </svg>
+                    Remove
+                  </button>
+                </div>
+              </div>
+            </div>
             
-            requiredFields.forEach(field => {
-                if (!field.value.trim()) {
-                    field.classList.add('is-invalid');
-                    isValid = false;
-                } else {
-                    field.classList.remove('is-invalid');
+            <div class="flex justify-center">
+              <button type="button" id="add-attachment" class="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg flex items-center">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                </svg>
+                Add Another Attachment
+              </button>
+            </div>
+
+            <div class="bg-blue-50 border border-blue-200 rounded-md p-4">
+              <div class="flex">
+                <div class="flex-shrink-0">
+                  <svg class="h-5 w-5 text-blue-400" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
+                  </svg>
+                </div>
+                <div class="ml-3">
+                  <p class="text-sm text-blue-700">
+                    <strong>Supported file types:</strong> PDF, JPG, JPEG, PNG, DOC, DOCX<br>
+                    <strong>Maximum file size:</strong> 10MB per file<br>
+                    <strong>Note:</strong> Use description field to specify document type (e.g., "ID Document", "Site Plan", "Contractor License")
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <script>
+            document.addEventListener('DOMContentLoaded', function() {
+              let attachmentCount = 1;
+              
+              function updateRemoveButtons() {
+                const attachmentItems = document.querySelectorAll('.attachment-item');
+                attachmentItems.forEach((item, index) => {
+                  const removeBtn = item.querySelector('.remove-attachment');
+                  if (attachmentItems.length > 1) {
+                    removeBtn.style.display = 'inline-flex';
+                  } else {
+                    removeBtn.style.display = 'none';
+                  }
+                });
+              }
+              
+              document.getElementById('add-attachment').addEventListener('click', function() {
+                attachmentCount++;
+                const container = document.getElementById('attachments-container');
+                const template = container.children[0].cloneNode(true);
+                
+                // Clear the values
+                const inputs = template.querySelectorAll('input, select');
+                inputs.forEach(input => {
+                  if (input.type === 'file') {
+                    input.value = '';
+                  } else if (input.tagName === 'SELECT') {
+                    input.selectedIndex = 0;
+                  } else {
+                    input.value = '';
+                  }
+                });
+                
+                container.appendChild(template);
+                updateRemoveButtons();
+              });
+              
+              document.addEventListener('click', function(e) {
+                if (e.target.closest('.remove-attachment')) {
+                  const attachmentItem = e.target.closest('.attachment-item');
+                  const container = document.getElementById('attachments-container');
+                  
+                  if (container.children.length > 1) {
+                    attachmentItem.remove();
+                    updateRemoveButtons();
+                  }
                 }
+              });
+              
+              updateRemoveButtons();
             });
-            
-            if (!isValid) {
-                e.preventDefault();
-                alert('Please fill in all required fields.');
-            }
-        });
-    }
-});
-</script>
+          </script>
+        </div>
+
+        <!-- Additional Information -->
+        <div class="border-b border-gray-200 pb-8">
+          <div class="flex items-center mb-6">
+            <div class="flex-shrink-0">
+              <div class="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center">
+                <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+                </svg>
+              </div>
+            </div>
+            <div class="ml-4">
+              <h3 class="text-lg font-medium text-gray-900">Additional Information</h3>
+              <p class="text-sm text-gray-500">Any additional notes or comments</p>
+            </div>
+          </div>
+
+          <div>
+            <label for="{{ form.notes.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+              Notes
+            </label>
+            {{ form.notes|add_class:"w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gulf-blue-500 focus:border-gulf-blue-500"|attr:"rows:4" }}
+            {% if form.notes.errors %}
+              <p class="mt-1 text-sm text-red-600">{{ form.notes.errors.0 }}</p>
+            {% endif %}
+          </div>
+        </div>
+
+        <!-- Submit Button -->
+        <div class="flex justify-end space-x-4">
+          <a href="{% url 'inspections:application_list' %}" class="bg-gray-500 hover:bg-gray-600 text-white font-medium py-2 px-6 rounded-lg">
+            Cancel
+          </a>
+          <button type="submit" class="bg-gulf-blue-600 hover:bg-gulf-blue-700 text-white font-medium py-2 px-6 rounded-lg flex items-center">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+            </svg>
+            {% if is_edit %}Update Application{% else %}Submit Application{% endif %}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
 {% endblock %} 

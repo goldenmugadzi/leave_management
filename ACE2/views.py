@@ -1,6 +1,7 @@
 from datetime import datetime, date
 from os.path import basename
 from random import randrange
+import logging
 
 import sweetify
 import csv
@@ -19,6 +20,8 @@ from django.utils.dateparse import parse_date
 from django.db.models.functions import TruncMonth
 from django.db.models import Sum, Count
 from django.utils import timezone
+
+logger = logging.getLogger(__name__)
 
 from ACE2.forms import *
 from ACE2.utils import find_pettycash_section_head, determine_ace_type
@@ -1605,48 +1608,123 @@ def upload_aces_csv(request):
         return render(request, 'finance/ace2/upload_ace.html')
 
 @login_required
+@transaction.atomic
 def create_virament(request):
-    # Creates new virament
-    # 1. Initializes workflow process
-    # 2. Records transaction
-    # 3. Handles attachments
-    # 4. Links to source/target budgets
+    """
+    Creates new virament with comprehensive error handling
+    1. Validates form and business rules
+    2. Initializes workflow process
+    3. Records transaction atomically
+    4. Handles attachments
+    5. Links to source/target budgets
+    """
     user_id = request.user.id
     user_profile = UserProfile.objects.filter(id=user_id).first()
+    
+    if not user_profile.roles.filter(application="virement").exists():
+        messages.error(request, "You are not authorized to create virements.")
+        return HttpResponseForbidden("Access denied: No virement role assigned.")
+    
     form = ViramentForm(user=user_profile)
     formset = QuotationFormSet()
+    
     if request.method == 'POST':
-        form = ViramentForm(request.POST, request.FILES)
-        formset = QuotationFormSet(request.POST, request.FILES)
-        if form.is_valid():
-            virament = form.save(commit=False)
-            virament.process = intiate(request, 'virement')
-            virament.requested_by = request.user
-            virament.region = request.user.region
-            virament.save()
-            #add attachments
-            attachments = request.FILES.getlist('attachments')
-            for attachment in attachments:
-                attachment = Quotation(quotation_file=attachment,
-                                       virament=virament)
-                attachment.save()
-
-            #create transaction
-            transaction = Transactions.objects.create(
-                virament=virament,
-                details_of_expenditure="virement of " + str(virament.from_budget) + " to " + str(virament.to_budget),
-                approval_status="created",
-                region=request.user.region,
-                amount=virament.amount,
-                budget=virament.from_budget,
-                section=virament.section
-            )
-            transaction.section = virament.section
-            transaction.save()
-            url = reverse('Ace:virament_detail', args=[virament.virament_id])
-            return redirect(url)
+        try:
+            form = ViramentForm(request.POST, request.FILES)
+            formset = QuotationFormSet(request.POST, request.FILES)
+            
+            if form.is_valid():
+                # Additional business validations
+                from_budget = form.cleaned_data['from_budget']
+                to_budget = form.cleaned_data['to_budget']
+                amount = form.cleaned_data['amount']
+                
+                # Double-check available balance with database lock (considering to_be_withdrawn)
+                from_budget.refresh_from_db()
+                if amount > from_budget.available_balance:
+                    messages.error(request, 
+                        f"Insufficient available balance: Available {from_budget.available_balance:,.2f} "
+                        f"(Balance: {from_budget.balance:,.2f}, "
+                        f"To be withdrawn: {from_budget.to_be_withdrawn or 0:,.2f}), "
+                        f"Requested {amount:,.2f}")
+                    return render(request, 'finance/ace2/create_virament.html', 
+                                {'form': form, 'formset': formset})
+                
+                # Create virament
+                virament = form.save(commit=False)
+                virament.process = intiate(request, 'virement')
+                virament.requested_by = request.user
+                virament.region = request.user.region
+                virament.save()
+                
+                # Reserve amount in source budget's to_be_withdrawn field
+                try:
+                    from_budget_obj = AssetBudget.objects.select_for_update().get(
+                        budget_id=virament.from_budget.budget_id
+                    )
+                    if from_budget_obj.to_be_withdrawn is None:
+                        from_budget_obj.to_be_withdrawn = 0
+                    from_budget_obj.to_be_withdrawn += virament.amount
+                    from_budget_obj.save()
+                    logger.info(f"Reserved {virament.amount} in to_be_withdrawn for budget {from_budget_obj.budget_id}")
+                except Exception as e:
+                    logger.error(f"Error reserving amount in to_be_withdrawn: {e}")
+                    # Note: Transaction will rollback due to @transaction.atomic
+                    messages.error(request, "Error reserving budget amount. Please try again.")
+                    return render(request, 'finance/ace2/create_virment.html', 
+                                {'form': form, 'formset': formset})
+                
+                # Add attachments
+                attachments = request.FILES.getlist('attachments')
+                for attachment in attachments:
+                    try:
+                        attachment_obj = Quotation(
+                            quotation_file=attachment,
+                            virament=virament
+                        )
+                        attachment_obj.save()
+                    except Exception as e:
+                        logger.error(f"Error saving attachment: {e}")
+                        # Continue processing other attachments
+                        
+                # Create transaction
+                try:
+                    transaction = Transactions.objects.create(
+                        virament=virament,
+                        details_of_expenditure=f"virement of {virament.from_budget} to {virament.to_budget}",
+                        approval_status="created",
+                        region=request.user.region,
+                        amount=virament.amount,
+                        budget=virament.from_budget,
+                        section=virament.section
+                    )
+                    transaction.section = virament.section
+                    transaction.save()
+                    
+                    messages.success(request, f"Virament {virament.virament_id} created successfully.")
+                    url = reverse('Ace:virament_detail', args=[virament.virament_id])
+                    return redirect(url)
+                    
+                except Exception as e:
+                    logger.error(f"Error creating transaction for virament {virament.virament_id}: {e}")
+                    messages.error(request, "Error creating transaction record. Please contact support.")
+                    # Transaction will rollback due to @transaction.atomic
+                    return render(request, 'finance/ace2/create_virament.html', 
+                                {'form': form, 'formset': formset})
+            else:
+                # Form validation errors
+                for field, errors in form.errors.items():
+                    for error in errors:
+                        messages.error(request, f"{field}: {error}")
+                        
+        except Exception as e:
+            logger.error(f"Unexpected error in create_virament: {e}")
+            messages.error(request, "An unexpected error occurred. Please try again.")
+            return render(request, 'finance/ace2/create_virament.html', 
+                        {'form': form, 'formset': formset})
     else:
         form = ViramentForm(user=user_profile)
+    
     return render(request, 'finance/ace2/create_virament.html', {'form': form, 'formset': formset})
 
 
@@ -1695,8 +1773,9 @@ def virament_detail(request, virament_id):
     virement_role = str(custom_user_roles["virement"])
 
     try:
-        last_approved = virament_item.process.approval_set.last().step.step
-    except AttributeError:
+        last_approved = virament_item.process.approval_set.last().step.step if virament_item.process.approval_set.exists() else 0
+    except (AttributeError, TypeError):
+        logger.warning(f"Error getting last approved step for virament {virament_id}")
         last_approved = 0
     if virement_role == "create" or virement_role == "order":
         if len(virament_item.process.approval_set.all()) == len(virament_item.process.workflow.step_set.all()):
@@ -1743,44 +1822,124 @@ def virament_detail(request, virament_id):
 
     print(approve_now)
     if approve_now:
-
         balance_before_from = "Actioned"
         balance_before_to = "Actioned"
         balance_after_from = "Actioned"
         balance_after_to = "Actioned"
 
-        # budget calculations
-        fbudget = virament_item.from_budget
-        tbudget = virament_item.to_budget
+        # Enhanced budget calculations with proper error handling
+        try:
+            with transaction.atomic():
+                # Lock budgets to prevent concurrent modifications
+                fbudget = AssetBudget.objects.select_for_update().get(budget_id=virament_item.from_budget.budget_id)
+                tbudget = AssetBudget.objects.select_for_update().get(budget_id=virament_item.to_budget.budget_id)
+                
+                print("virament: ", virament_item.virament_id)
+                transaction_obj = Transactions.objects.filter(virament_id=str(virament_item.virament_id)).first()
+                
+                if not transaction_obj:
+                    logger.error(f"No transaction found for virament {virament_item.virament_id}")
+                    messages.error(request, "Transaction record not found.")
+                    return render(request, 'finance/ace2/virament_detail.html', {
+                        'virament': virament_item,
+                        'statements': statements,
+                        'approved_steps': approved_steps,
+                        'error': 'Transaction record missing'
+                    })
+                
+                print("transaction: ", str(transaction_obj.approval_status))
 
-        fbudget = AssetBudget.objects.get(budget_id=fbudget.budget_id)
-        tbudget = AssetBudget.objects.get(budget_id=tbudget.budget_id)
-        print("virament: ", virament_item.virament_id)
-        transaction = Transactions.objects.filter(virament_id=str(virament_item.virament_id)).first()
-        # print("transaction: ", transaction)
-        print("transaction: ", str(transaction.approval_status))
+                # Validate available balance before processing (considering to_be_withdrawn)
+                if virament_item.amount > fbudget.available_balance:
+                    logger.error(f"Insufficient available balance for virament {virament_item.virament_id}: "
+                               f"Required {virament_item.amount}, Available {fbudget.available_balance} "
+                               f"(Balance: {fbudget.balance}, To be withdrawn: {fbudget.to_be_withdrawn or 0})")
+                    messages.error(request, 
+                        f"Insufficient available balance in source budget. "
+                        f"Available: {fbudget.available_balance:,.2f} "
+                        f"(Balance: {fbudget.balance:,.2f}, "
+                        f"To be withdrawn: {fbudget.to_be_withdrawn or 0:,.2f}), "
+                        f"Required: {virament_item.amount:,.2f}")
+                    return render(request, 'finance/ace2/virament_detail.html', {
+                        'virament': virament_item,
+                        'statements': statements,
+                        'approved_steps': approved_steps,
+                        'balance_before_to': balance_before_to,
+                        'balance_after_to': balance_after_to,
+                        'balance_before_from': balance_before_from,
+                        'balance_after_from': balance_after_from,
+                        'error': 'Insufficient available balance'
+                    })
 
-        if transaction.approval_status != "approved by General Manager" and virement_role == "approve":
-            fbudget.balance = fbudget.balance - virament_item.amount
-            # budget.to_be_withdrawn = budget.to_be_withdrawn - virament_item.amount
-            fbudget.withdrawal_date = date.today()
-            fbudget.withdrawn = fbudget.withdrawn + virament_item.amount
-            # fbudget.balance = fbudget.balance - virament_item.amount
-            fbudget.save()
+                if transaction_obj.approval_status != "approved by General Manager" and virement_role == "approve":
+                    # Update source budget - remove from to_be_withdrawn and deduct from balance
+                    fbudget.balance = fbudget.balance - virament_item.amount
+                    fbudget.withdrawal_date = date.today()
+                    fbudget.withdrawn = fbudget.withdrawn + virament_item.amount
+                    
+                    # Remove from to_be_withdrawn since it's now actually withdrawn
+                    if fbudget.to_be_withdrawn is not None and fbudget.to_be_withdrawn >= virament_item.amount:
+                        fbudget.to_be_withdrawn = fbudget.to_be_withdrawn - virament_item.amount
+                    else:
+                        logger.warning(f"to_be_withdrawn ({fbudget.to_be_withdrawn}) less than virement amount ({virament_item.amount}) for budget {fbudget.budget_id}")
+                        fbudget.to_be_withdrawn = max(0, (fbudget.to_be_withdrawn or 0) - virament_item.amount)
+                    
+                    fbudget.save()
 
-            # budget viremented to
-            tbudget.balance = tbudget.balance + virament_item.amount
-            tbudget.allocated = tbudget.allocated + virament_item.amount
-            tbudget.save()
+                    # Update destination budget
+                    tbudget.balance = tbudget.balance + virament_item.amount
+                    tbudget.allocated = tbudget.allocated + virament_item.amount
+                    tbudget.save()
 
-            # transaction
-
-            transaction.approval_status = "approved by General Manager"
-            transaction.save()
-            print("transaction: ", str(transaction.approval_status))
+                    # Update transaction status
+                    transaction_obj.approval_status = "approved by General Manager"
+                    transaction_obj.save()
+                    
+                    logger.info(f"Virament {virament_item.virament_id} approved successfully. "
+                              f"Transferred {virament_item.amount} from {fbudget.budget_name} to {tbudget.budget_name}")
+                    messages.success(request, f"Virament approved successfully. Funds transferred.")
+                    
+                    print("transaction: ", str(transaction_obj.approval_status))
+                
+        except AssetBudget.DoesNotExist as e:
+            logger.error(f"Budget not found for virament {virament_item.virament_id}: {e}")
+            messages.error(request, "Budget not found. Please contact support.")
+            return render(request, 'finance/ace2/virament_detail.html', {
+                'virament': virament_item,
+                'statements': statements,
+                'approved_steps': approved_steps,
+                'error': 'Budget not found'
+            })
+        except Exception as e:
+            logger.error(f"Error processing virament approval {virament_item.virament_id}: {e}")
+            messages.error(request, "Error processing approval. Please try again.")
+            return render(request, 'finance/ace2/virament_detail.html', {
+                'virament': virament_item,
+                'statements': statements,
+                'approved_steps': approved_steps,
+                'error': str(e)
+            })
 
     # ace_quantity = range(virament_item.quantity)
     approved_steps = virament_item.process.approval_set.all().values_list('step__step', flat=True)
+    
+    # Handle rejected virements - release reserved funds
+    if approval_status == "Rejected":
+        try:
+            # Check if transaction needs to be marked as rejected
+            transaction_obj = Transactions.objects.filter(virament_id=str(virament_item.virament_id)).first()
+            if transaction_obj and transaction_obj.approval_status != "Rejected":
+                transaction_obj.approval_status = "Rejected"
+                transaction_obj.save()
+                
+                # Release reserved amount from to_be_withdrawn
+                if virament_item.release_reserved_amount():
+                    logger.info(f"Released reserved amount for rejected virement {virament_item.virament_id}")
+                    messages.info(request, "Virement rejected. Reserved funds have been released.")
+                else:
+                    logger.warning(f"Failed to release reserved amount for rejected virement {virament_item.virament_id}")
+        except Exception as e:
+            logger.error(f"Error handling rejected virement {virament_item.virament_id}: {e}")
 
     return render(request, 'finance/ace2/virament_detail.html', {'virament': virament_item,
                                                                  'statements': statements,

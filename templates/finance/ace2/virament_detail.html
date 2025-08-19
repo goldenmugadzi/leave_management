@@ -107,58 +107,18 @@
                         <p class="font-bold mb-2">Section:{{ virament.section }}</p>
                         <p class="font-bold mb-2">
                             {% for attachment in virament.quotation_set.all %}
-                                <a href="/ace/attachment/ {{attachment}}"><button class=" hover:text-green-600 text-green-300 font-bold py-2 px-4 rounded"
-                                        href="/ace/attachment/ {{attachment}}">
-                                    {{ attachment.quotation_file.name|basename }}
-                                </button>
+                                <a href="/ace/attachment/{{attachment.id}}/">
+                                    <button class="hover:text-green-600 text-green-300 font-bold py-2 px-4 rounded">
+                                        {{ attachment.quotation_file.name|basename }}
+                                    </button>
                                 </a>
                             {% endfor %}
                         </p>
                             <p class="font-bold   mb-2"> Requested By: {{ virament.requested_by }}</p>
                             <p class="font-bold   mb-2"> Date Created: {{ virament.date_created }}</p>
-                        {% if virament.asset_number != None %}
-                            <p class="font-bold   mb-2"> Asset Number or (s): {{ virament.asset_number }}</p>
-                        {% elif accounting_officer_role %}
-                            <button id="asset_number_btn" class="bg-gulf-blue-600 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded">Add Asset Numbers</button>
-                            <div id="asset_number_modal" class="modal">
-                                <div class="modal-content">
-                                    <form id="asset_upload" enctype="multipart/form-data">
-                                        {% csrf_token %}
-                                        {% for index in virament_quantity %}
-                                        <div class="form-group">
-                                            <label for="asset_number">Asset Number {{ index }}:</label>
-                                            <br>
-                                            <input required="required" type="text" id="asset_number" name="asset_number[]">
-                                        </div>
-                                        {% endfor %}
-                                            <input type="hidden" name="virament_id" value="{{ virament.virament_id2 }}">
-                                            <input type="hidden" name="quantity" value="{{ virament.quantity }}">
-                                        <button type="submit" class="bg-gulf-blue-600 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded">Submit</button>
-                                    </form>
-                                    <br>
-                                    <button id="close-modal" class="bg-red-500 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded">Close</button>
-                                </div>
-                            </div>
-                        {% endif %}
                             <p class="font-bold   mb-2"> Currency: {{ virament.currency }}</p>
-{#                            <p class="font-bold mb-2">Budget:{{ virament.budget_id }}</p>#}
-{#                            <p class="font-bold   mb-2"> Allocation code of expenditure: {{ virament.allocation_code_of_expenditure }}</p>#}
-                            <p class="font-bold   mb-2"> Amount($) : {{ virament.amount }}</p>
-{#                            <p class="font-bold   mb-2"> Quantity : {{ virament.quantity }}</p>#}
-{#                            <p class="font-bold   mb-2"> Designation :{{ virament.designation }}</p>#}
-{#                            <p class="font-bold   mb-2"> Classification :{{ virament.classification }}</p>#}
-                            {% if virament.classification == 'Project' %}
-                                <p class="font-bold   mb-2"> Present Tariff :{{ virament.project_name }}</p>
-                                <p class="font-bold   mb-2"> Present Fmc :{{ virament.present_fmc }}</p>
-                                <p class="font-bold   mb-2"> Capital Contribution :{{ virament.capital_contribution }}</p>
-                                <p class="font-bold   mb-2"> Materials :{{ virament.materials }}</p>
-                                <p class="font-bold   mb-2"> Connection Fee :{{ virament.connection_fee }}</p>
-                                <p class="font-bold   mb-2"> Labour :{{ virament.labour }}</p>
-                                <p class="font-bold   mb-2"> Transport :{{ virament.transport }}</p>
-                                <p class="font-bold   mb-2"> Total Connection Fee :{{ virament.total_connection_fee }}</p>
-                            {% endif %}
 
-                        {%   if quotations %}
+                        {%   if statements %}
                         {% for quotation in quotations %}
                             {% if quotation.quotation_file == '' %}
                                 <p class="font-bold   mb-2"> Quotation: not available</p>

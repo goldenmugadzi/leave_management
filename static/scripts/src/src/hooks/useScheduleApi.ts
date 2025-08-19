@@ -1,40 +1,7 @@
 import { useState, useCallback } from 'react';
 import { IBid, ICompliance, IComplianceRemark, IPrItems, ICommittee } from '../types/scheduleTypes';
 import { API_ENDPOINTS, getApiEndpoints, buildApiUrl } from '../config/apiEndpoints';
-
-// Helper function to get CSRF token
-const getCookie = (name: string) => {
-  let cookieValue = null;
-  if (document.cookie && document.cookie !== '') {
-    const cookies = document.cookie.split(';');
-    for (let i = 0; i < cookies.length; i++) {
-      const cookie = cookies[i].trim();
-      if (cookie.substring(0, name.length + 1) === name + '=') {
-        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-        break;
-      }
-    }
-  }
-  return cookieValue;
-};
-
-// Helper function to fetch with retry capability
-const fetchWithRetry = async (url: string, options: RequestInit, retries = 3, delay = 1000) => {
-  try {
-    const response = await fetch(url, options);
-    console.log("response: ", response, JSON.stringify(response));
-    if (!response.ok) {
-      throw new Error(`HTTP error! Status: ${response.status}`);
-    }
-    return await response.json();
-  } catch (error) {
-    if (retries > 0) {
-      await new Promise((resolve) => setTimeout(resolve, delay));
-      return fetchWithRetry(url, options, retries - 1, delay * 2);
-    }
-    throw error;
-  }
-};
+import { getCookie, fetchWithRetry } from '../utils';
 
 export interface UseScheduleApiProps {
   base_url: string;
@@ -425,6 +392,103 @@ export function useScheduleApi({ base_url, setIsLoading }: UseScheduleApiProps) 
     }
   }, [base_url, setIsLoading]);
 
+  /**
+   * Upload file using optimized handler
+   */
+  const uploadFile = useCallback(async (file: File, fileType: string = 'general', description?: string) => {
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('file_type', fileType);
+      if (description) {
+        formData.append('description', description);
+      }
+      
+      const requestOptions = {
+        method: "POST",
+        headers: {
+          "X-CSRFToken": getCookie("csrftoken") ?? "",
+        },
+        body: formData,
+      };
+      
+      const data = await fetchWithRetry(
+        buildApiUrl(base_url, API_ENDPOINTS.FILE_UPLOAD()),
+        requestOptions
+      );
+      
+      return data;
+    } catch (err) {
+      setError(`Failed to upload file: ${err instanceof Error ? err.message : String(err)}`);
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  }, [base_url, setIsLoading]);
+
+  /**
+   * Get CS files metadata
+   */
+  const getCSFiles = useCallback(async (cs_id: string) => {
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      const requestOptions = {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": getCookie("csrftoken") ?? "",
+        },
+      };
+      
+      const data = await fetchWithRetry(
+        buildApiUrl(base_url, API_ENDPOINTS.CS_FILES(cs_id)),
+        requestOptions
+      );
+      
+      return data;
+    } catch (err) {
+      setError(`Failed to get CS files: ${err instanceof Error ? err.message : String(err)}`);
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  }, [base_url, setIsLoading]);
+
+  /**
+   * Delete file using optimized handler
+   */
+  const deleteFile = useCallback(async (filePath: string) => {
+    setIsLoading(true);
+    setError(null);
+    
+    try {
+      const requestOptions = {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": getCookie("csrftoken") ?? "",
+        },
+      };
+      
+      const data = await fetchWithRetry(
+        buildApiUrl(base_url, API_ENDPOINTS.FILE_DELETE(filePath)),
+        requestOptions
+      );
+      
+      return data;
+    } catch (err) {
+      setError(`Failed to delete file: ${err instanceof Error ? err.message : String(err)}`);
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  }, [base_url, setIsLoading]);
+
   return {
     fetchPR,
     fetchPRItems,
@@ -438,6 +502,9 @@ export function useScheduleApi({ base_url, setIsLoading }: UseScheduleApiProps) 
     saveCompliance,
     saveSchedule,
     updateSchedule,
+    uploadFile,
+    getCSFiles,
+    deleteFile,
     error
   };
 } 

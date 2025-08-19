@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, ReactNode, Dispatch, SetStateAction } from 'react';
+import React, { createContext, useContext, useState, ReactNode, Dispatch, SetStateAction, useEffect } from 'react';
 import { ICompliance, IComplianceRemark, IBid, IPrItems, ICommittee, ICurrentApprover } from '../types/scheduleTypes';
 
 interface ScheduleContextType {
@@ -58,6 +58,8 @@ export const ScheduleProvider: React.FC<ScheduleProviderProps> = ({
   csId,
   username,
 }) => {
+  // Debug logging removed for production performance
+  
   const [bids, setBids] = useState<IBid[]>([]);
   const [prItems, setPrItems] = useState<IPrItems[]>([]);
   const [committee, setCommittee] = useState<ICommittee[]>([]);
@@ -65,6 +67,26 @@ export const ScheduleProvider: React.FC<ScheduleProviderProps> = ({
   const [complianceRemarks, setComplianceRemarks] = useState<IComplianceRemark[]>([]);
   const [currentApprover, setCurrentApprover] = useState<ICurrentApprover | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);
+
+  // Track when the provider is recreated
+  useEffect(() => {
+    // Provider lifecycle tracking
+    return () => {
+      // Cleanup if needed
+    };
+  }, []);
+
+  // Committee update handler
+  const setCommitteeWithLogging = (newCommittee: ICommittee[] | ((prev: ICommittee[]) => ICommittee[])) => {
+    if (typeof newCommittee === 'function') {
+      setCommittee(prev => {
+        const result = newCommittee(prev);
+        return result;
+      });
+    } else {
+      setCommittee(newCommittee);
+    }
+  };
 
   const value = {
     base_url,
@@ -78,13 +100,15 @@ export const ScheduleProvider: React.FC<ScheduleProviderProps> = ({
     currentApprover,
     setBids,
     setPrItems,
-    setCommittee,
+    setCommittee: setCommitteeWithLogging,
     setCompliance,
     setComplianceRemarks,
     setCurrentApprover,
     isLoading,
     setIsLoading,
   };
+
+  // Committee state tracking
 
   return (
     <ScheduleContext.Provider value={value}>

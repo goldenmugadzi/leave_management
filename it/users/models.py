@@ -6,6 +6,8 @@ from django.contrib.auth.models import AbstractUser
 from django.contrib.auth.models import BaseUserManager
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
+from django.utils import timezone
+
 from helpers.models import TimeStamp
 from datetime import date
 from dateutil.relativedelta import relativedelta
@@ -184,11 +186,11 @@ class UserProfile(AbstractUser):
     cost_center = models.ForeignKey(CostCenter, on_delete=models.DO_NOTHING, blank=True, null=True)
     depot = models.ForeignKey(Depots, on_delete=models.DO_NOTHING, blank=True, null=True)
     district = models.ForeignKey(Districts, on_delete=models.DO_NOTHING, blank=True, null=True)
-    roles = models.ManyToManyField(Roles, blank=True, null=True)
+    roles = models.ManyToManyField(Roles, blank=True)
     region = models.ForeignKey(Regions, on_delete=models.DO_NOTHING, blank=True, null=True)
     status = models.CharField(max_length=30, blank=True)
     email = models.CharField(max_length=50, blank=True)
-    last_reset = models.DateField(default=date.today())
+    last_reset = models.DateField(default=timezone.now)
     password_expiry_date = models.DateField(null=True, blank=True)
     password_expiry_days = models.IntegerField(default=90)
     change_password = models.BooleanField(default=False, null=True, blank=True)

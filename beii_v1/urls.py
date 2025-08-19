@@ -72,12 +72,11 @@ urlpatterns = [
     path('search/', include('esearch.urls')),
     path('temp_tokens/', include('commecial.tempertockens.urls')),
     path('competence_building/', include('competence_building.urls')),
-    path('comm_files/', include('comm_files.urls')),
     # path('api/', include('api.urls')),  # Commented out until api.urls exists
     path('', include('meetings.urls')),
     path('', include('leave_management.urls')),
     path('sanction_for_test/', include('sanction_for_test.urls')),
-      
+    path('inspections/', include('inspections.urls')),
     
     path('api-auth/', include('rest_framework.urls')),
     path("gql/", csrf_exempt(FileUploadGraphQLView.as_view(graphiql=True))),  # <-- wrap with csrf_exempt
@@ -87,3 +86,5 @@ urlpatterns = [
 
 ] 
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+# Serve uploads directory for CS bid documents
+urlpatterns += static('/uploads/', document_root=settings.BASE_DIR / 'uploads')
