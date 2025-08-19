@@ -57,24 +57,24 @@ export const setCurrentModule = (module: string): void => {
 };
 
 // Function to get base URL (matching main.tsx logic)
+// Updated to support the correct URL structure where each module uses its own endpoints
 export const getBaseUrl = (baseUrl: string, path?: string): string => {
   const currentPath = path || (typeof window !== 'undefined' ? window.location.pathname : '');
   
-  // If baseUrl already contains the module path, don't add it again
-  if (baseUrl.includes('/direct_purchase')) {
-    return baseUrl;
-  }
-  if (baseUrl.includes('/restricted_bidding')) {
-    return baseUrl;
-  }
-  if (baseUrl.includes('/comperative_schedule')) {
+  // If baseUrl already contains the module path, return as-is
+  if (baseUrl.includes('/direct_purchase') || 
+      baseUrl.includes('/comperative_schedule') ||
+      baseUrl.includes('/restricted_bidding')) {
     return baseUrl;
   }
   
-  // Otherwise, determine module and append it
+  // Each module uses its own endpoint structure:
+  // - direct_purchase URLs: /direct_purchase/...
+  // - comperative_schedule URLs: /comperative_schedule/...
+  // - restricted_bidding URLs: /restricted_bidding/...
   switch (true) {
     case currentPath.includes('/direct_purchase/'):
-      return `${baseUrl}/${API_MODULES.DIRECT_PURCHASE}`;
+      return `${baseUrl}/direct_purchase`;
     case currentPath.includes('/restricted_bidding/'):
       return `${baseUrl}/${API_MODULES.RESTRICTED_BIDDING}`;
     case currentPath.includes('/comperative_schedule/'):
@@ -84,7 +84,8 @@ export const getBaseUrl = (baseUrl: string, path?: string): string => {
   }
 };
 
-// API endpoints (without module prefix since base_url already includes it)
+// API endpoints (shared structure but each module uses its own base path)
+// Each module has its own URL space: /direct_purchase/, /comperative_schedule/, /restricted_bidding/
 export const API_ENDPOINTS = {
     // User and Supplier APIs
     USERS: `/api/users/`,
@@ -93,20 +94,31 @@ export const API_ENDPOINTS = {
     // Reference Data APIs
     CURRENCIES: `/api/currencies/`,
     PROC_PLANS: `/api/proc_plans/`,
+    UOM: `/api/uom/`,
     
     // Purchase Request APIs (legacy - for backward compatibility)
     PR_CREATE_DATA: (pr_id: string) => `/create_data/${pr_id}`,
     CS_CREATE_DATA: (pr_id: string) => `/create_data/${pr_id}/`,
     CS_DETAILS: (cs_id: string) => `/cs_data/${cs_id}/`,
     // CS_SAVE: () => `/save`,
-    // New focused APIs
-    PR_BASIC: (pr_id: string) => `/api/pr-basic/${pr_id}/`,
+    
+    // Optimized File Handling APIs (replaces Base64 encoding)
+    FILE_UPLOAD: () => `/api/files/upload/`,
+    FILE_DOWNLOAD: (path: string) => `/api/files/download/${path}/`,
+    FILE_PREVIEW: (path: string) => `/api/files/preview/${path}/`,
+    FILE_DELETE: (path: string) => `/api/files/delete/${path}/`,
+    CS_FILES: (cs_id: string) => `/api/files/cs-files/${cs_id}/`,
+    
+    // New focused APIs (updated to use optimized file handling)
+    PR_BASIC: (pr_id: string) => `/api/files/create-data/${pr_id}/`,
     PR_ITEMS: (pr_id: string) => `/api/pr-items/${pr_id}/`,
-    PR_ATTACHMENTS: (pr_id: string) => `/api/pr-attachments/${pr_id}/`,
+    PR_ATTACHMENTS: (pr_id: string) => `/api/files/attachments/${pr_id}/`,
     REFERENCE_DATA: () => `/api/reference-data/`,
     
     // Schedule APIs
     CS_SAVE: `/save`,
+    CS_SAVE_BID: `/save_bid`,
+    CS_DELETE_BID: `/delete_bid`,
     CS_UPDATE: () => `/update`,
     CS_UPDATE_ITEMS: () => `/update_pritem_ordered`,
     CS_BIDS_API: (cs_id: string) => `/api_cs_bids/${cs_id}`,
@@ -123,6 +135,7 @@ export const API_ENDPOINTS = {
     // Committee APIs
     CS_COMMITTEE: (cs_id: string) => `/cs/${cs_id}/committee/`,
     CS_SAVE_COMMITTEE: `/save_committee`,
+    CS_DELETE_COMMITTEE_MEMBER: `/delete_committee_member`,
     
     // Compliance APIs
     CS_COMPLIANCE: (cs_id: string) => `/cs/${cs_id}/compliance/`,
@@ -134,6 +147,8 @@ export const API_ENDPOINTS = {
     
     // Approval APIs
     CS_APPROVAL: (cs_id: string) => `/cs/${cs_id}/approval/`,
+    COMMITTEE_APPROVE: `/committee_approve`,
+    APPROVAL_APPROVE: `/approval_approve`,
     
     // Tab-specific APIs (for optimized loading)
     CS_BIDS_DATA: (cs_id: string) => `/api/cs-bids/${cs_id}/`,
@@ -157,6 +172,7 @@ export const getModuleEndpoint = (module: keyof typeof API_MODULES, path: string
 };
 
 // Configuration object for easy switching between modules
+// Each module uses its own endpoint structure
 export const MODULE_CONFIG = {
   restrictedBidding: {
     users: `/${API_MODULES.RESTRICTED_BIDDING}/api/users/`,
@@ -167,8 +183,9 @@ export const MODULE_CONFIG = {
     suppliers: `/${API_MODULES.COMPARATIVE_SCHEDULES}/api/suppliers/`,
   },
   directPurchase: {
-    users: `/${API_MODULES.DIRECT_PURCHASE}/api/users/`,
-    suppliers: `/${API_MODULES.DIRECT_PURCHASE}/api/suppliers/`,
+    // Direct purchase uses its own endpoints: /direct_purchase/...
+    users: `/direct_purchase/api/users/`,
+    suppliers: `/direct_purchase/api/suppliers/`,
   }
 } as const;
 

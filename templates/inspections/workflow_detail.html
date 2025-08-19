@@ -1,0 +1,298 @@
+{% extends 'admin_layout.html' %}
+{% load static %}
+
+{% block title %}Workflow {{ workflow.workflow_number }}{% endblock %}
+
+{% block content %}
+<div class="content-wrapper">
+  <div class="bg-gulf-blue-100 shadow shadow-gulf-blue-300 text-gulf-blue-900 rounded px-6 py-6">
+    <!-- Header Section -->
+    <div class="flex justify-between items-center mb-8">
+      <div>
+        <h1 class="text-3xl font-bold text-gulf-blue-900">Workflow {{ workflow.workflow_number }}</h1>
+        <nav class="flex mt-2" aria-label="Breadcrumb">
+          <ol class="inline-flex items-center space-x-1 md:space-x-3">
+            <li class="inline-flex items-center">
+              <a href="{% url 'inspections:dashboard' %}" class="inline-flex items-center text-sm font-medium text-gulf-blue-600 hover:text-gulf-blue-800">
+                <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"></path>
+                </svg>
+                Inspections
+              </a>
+            </li>
+            <li>
+              <div class="flex items-center">
+                <svg class="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
+                </svg>
+                <a href="{% url 'inspections:workflow_list' %}" class="ml-1 text-sm font-medium text-gulf-blue-600 hover:text-gulf-blue-800 md:ml-2">Workflows</a>
+              </div>
+            </li>
+            <li>
+              <div class="flex items-center">
+                <svg class="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
+                </svg>
+                <span class="ml-1 text-sm font-medium text-gulf-blue-900 md:ml-2">{{ workflow.workflow_number }}</span>
+              </div>
+            </li>
+          </ol>
+        </nav>
+      </div>
+      <div class="flex space-x-3">
+        <a href="{% url 'inspections:workflow_list' %}" class="bg-gray-500 hover:bg-gray-600 text-white font-medium py-2 px-4 rounded-lg flex items-center">
+          <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+          </svg>
+          Back to List
+        </a>
+      </div>
+    </div>
+
+    <!-- Status Header -->
+    <div class="bg-white rounded-lg shadow-md mb-6">
+      <div class="p-6 border-b border-gray-200">
+        <div class="flex justify-between items-center">
+          <h2 class="text-xl font-semibold text-gray-900">Workflow Details</h2>
+          <div class="flex space-x-2">
+            <span class="inline-flex px-3 py-1 text-sm font-semibold rounded-full 
+              {% if workflow.status == 'workflow_completed' %}bg-green-100 text-green-800
+              {% elif workflow.status == 'e6_generated' %}bg-blue-100 text-blue-800
+              {% elif workflow.status == 'e1_generated' %}bg-red-100 text-red-800
+              {% elif workflow.status == 'inspection_completed' %}bg-yellow-100 text-yellow-800
+              {% elif workflow.status == 'assigned' %}bg-purple-100 text-purple-800
+              {% else %}bg-gray-100 text-gray-800{% endif %}">
+              {{ workflow.get_status_display }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <!-- Main Content -->
+      <div class="lg:col-span-2 space-y-6">
+        <!-- Workflow Information -->
+        <div class="bg-white rounded-lg shadow-md">
+          <div class="p-6 border-b border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-900">Workflow Information</h3>
+          </div>
+          <div class="p-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div class="space-y-4">
+                <div>
+                  <dt class="text-sm font-medium text-gray-500">Workflow Number</dt>
+                  <dd class="mt-1 text-sm text-gray-900">{{ workflow.workflow_number }}</dd>
+                </div>
+                <div>
+                  <dt class="text-sm font-medium text-gray-500">Current Status</dt>
+                  <dd class="mt-1 text-sm text-gray-900">{{ workflow.get_status_display }}</dd>
+                </div>
+                <div>
+                  <dt class="text-sm font-medium text-gray-500">Progress</dt>
+                  <dd class="mt-1">
+                    <div class="flex items-center">
+                      <div class="w-full bg-gray-200 rounded-full h-2 mr-3">
+                        {% widthratio workflow.current_step workflow.total_steps 100 as progress_percent %}
+                        <div class="bg-gulf-blue-600 h-2 rounded-full" style="width: {{ progress_percent }}%"></div>
+                      </div>
+                      <span class="text-sm text-gray-700">{{ workflow.current_step }}/{{ workflow.total_steps }}</span>
+                    </div>
+                  </dd>
+                </div>
+                <div>
+                  <dt class="text-sm font-medium text-gray-500">Reinspections</dt>
+                  <dd class="mt-1 text-sm text-gray-900">{{ workflow.reinspection_count }}/{{ workflow.max_reinspections }}</dd>
+                </div>
+              </div>
+              <div class="space-y-4">
+                <div>
+                  <dt class="text-sm font-medium text-gray-500">Created Date</dt>
+                  <dd class="mt-1 text-sm text-gray-900">{{ workflow.created_at|date:"F d, Y" }}</dd>
+                </div>
+                <div>
+                  <dt class="text-sm font-medium text-gray-500">Last Updated</dt>
+                  <dd class="mt-1 text-sm text-gray-900">{{ workflow.updated_at|date:"F d, Y H:i" }}</dd>
+                </div>
+                {% if workflow.reinspection_count > 0 %}
+                <div>
+                  <dt class="text-sm font-medium text-gray-500">Can Proceed to Reinspection</dt>
+                  <dd class="mt-1">
+                    {% if workflow.can_proceed_to_reinspection %}
+                      <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">Yes</span>
+                    {% else %}
+                      <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">No (Max reached)</span>
+                    {% endif %}
+                  </dd>
+                </div>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Related Documents -->
+        <div class="bg-white rounded-lg shadow-md">
+          <div class="p-6 border-b border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-900">Related Documents</h3>
+          </div>
+          <div class="p-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <dt class="text-sm font-medium text-gray-500 mb-2">Inspection Report</dt>
+                {% if workflow.inspection_report %}
+                  <dd class="text-sm text-gray-900">
+                    <a href="{% url 'inspections:inspection_detail' workflow.inspection_report.pk %}" 
+                       class="text-gulf-blue-600 hover:text-gulf-blue-900 flex items-center">
+                      <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                      </svg>
+                      E117 Inspection Report
+                    </a>
+                  </dd>
+                {% else %}
+                  <dd class="text-sm text-gray-500">Not available</dd>
+                {% endif %}
+              </div>
+              <div>
+                <dt class="text-sm font-medium text-gray-500 mb-2">E6 Certificate</dt>
+                {% if workflow.e6_certificate %}
+                  <dd class="text-sm text-gray-900">
+                    <a href="{% url 'inspections:e6_certificate_detail' workflow.e6_certificate.pk %}" 
+                       class="text-gulf-blue-600 hover:text-gulf-blue-900 flex items-center">
+                      <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                      </svg>
+                      {{ workflow.e6_certificate.certificate_number }}
+                    </a>
+                  </dd>
+                {% else %}
+                  <dd class="text-sm text-gray-500">Not generated</dd>
+                {% endif %}
+              </div>
+              <div>
+                <dt class="text-sm font-medium text-gray-500 mb-2">E1 Defect Report</dt>
+                {% if workflow.e1_defect_report %}
+                  <dd class="text-sm text-gray-900">
+                    <a href="{% url 'inspections:e1_defect_report_detail' workflow.e1_defect_report.pk %}" 
+                       class="text-gulf-blue-600 hover:text-gulf-blue-900 flex items-center">
+                      <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                      </svg>
+                      {{ workflow.e1_defect_report.report_number }}
+                    </a>
+                  </dd>
+                {% else %}
+                  <dd class="text-sm text-gray-500">Not generated</dd>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sidebar -->
+      <div class="space-y-6">
+        <!-- Application Information -->
+        {% if workflow.client_application %}
+        <div class="bg-white rounded-lg shadow-md">
+          <div class="p-6 border-b border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-900">Application</h3>
+          </div>
+          <div class="p-6">
+            <div class="space-y-4">
+              <div>
+                <dt class="text-sm font-medium text-gray-500">Application Number</dt>
+                <dd class="mt-1">
+                  <a href="{% url 'inspections:application_detail' workflow.client_application.pk %}" 
+                     class="text-gulf-blue-600 hover:text-gulf-blue-900">
+                    {{ workflow.client_application.application_number }}
+                  </a>
+                </dd>
+              </div>
+              <div>
+                <dt class="text-sm font-medium text-gray-500">Customer</dt>
+                <dd class="mt-1 text-sm text-gray-900">
+                  {% if workflow.client_application.customer %}
+                    <a href="{% url 'inspections:customer_detail' workflow.client_application.customer.pk %}" 
+                       class="text-gulf-blue-600 hover:text-gulf-blue-900">
+                      {{ workflow.client_application.customer.full_name }}
+                    </a>
+                  {% else %}
+                    -
+                  {% endif %}
+                </dd>
+              </div>
+              <div>
+                <dt class="text-sm font-medium text-gray-500">Application Type</dt>
+                <dd class="mt-1 text-sm text-gray-900">{{ workflow.client_application.get_application_type_display }}</dd>
+              </div>
+              <div>
+                <dt class="text-sm font-medium text-gray-500">Application Status</dt>
+                <dd class="mt-1">
+                  <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full 
+                    {% if workflow.client_application.status == 'completed' %}bg-green-100 text-green-800
+                    {% elif workflow.client_application.status == 'in_progress' %}bg-blue-100 text-blue-800
+                    {% elif workflow.client_application.status == 'assigned' %}bg-yellow-100 text-yellow-800
+                    {% elif workflow.client_application.status == 'rejected' %}bg-red-100 text-red-800
+                    {% else %}bg-gray-100 text-gray-800{% endif %}">
+                    {{ workflow.client_application.get_status_display }}
+                  </span>
+                </dd>
+              </div>
+            </div>
+          </div>
+        </div>
+        {% endif %}
+
+        <!-- Quick Actions -->
+        <div class="bg-white rounded-lg shadow-md">
+          <div class="p-6 border-b border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-900">Quick Actions</h3>
+          </div>
+          <div class="p-6">
+            <div class="space-y-3">
+              {% if workflow.client_application %}
+                <a href="{% url 'inspections:application_detail' workflow.client_application.pk %}" 
+                   class="w-full bg-gulf-blue-600 hover:bg-gulf-blue-700 text-white font-medium py-2 px-4 rounded-lg flex items-center justify-center">
+                  <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                  </svg>
+                  View Application
+                </a>
+              {% endif %}
+              {% if workflow.inspection_report %}
+                <a href="{% url 'inspections:inspection_detail' workflow.inspection_report.pk %}" 
+                   class="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg flex items-center justify-center">
+                  <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"></path>
+                  </svg>
+                  View Inspection Report
+                </a>
+              {% endif %}
+              {% if workflow.e6_certificate %}
+                <a href="{% url 'inspections:e6_certificate_detail' workflow.e6_certificate.pk %}" 
+                   class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg flex items-center justify-center">
+                  <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                  </svg>
+                  View E6 Certificate
+                </a>
+              {% endif %}
+              {% if workflow.e1_defect_report %}
+                <a href="{% url 'inspections:e1_defect_report_detail' workflow.e1_defect_report.pk %}" 
+                   class="w-full bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-lg flex items-center justify-center">
+                  <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                  </svg>
+                  View E1 Defect Report
+                </a>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

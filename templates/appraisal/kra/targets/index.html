@@ -1,0 +1,111 @@
+{% extends "admin_layout.html" %}
+{% load quarter %}
+{% load static %}
+{% load crispy_forms_tags %}
+{% load kra_calculations %}
+{% load approval_stages %}
+
+{% block content %}
+  {% include "appraisal/approval/detail.html" %}
+  <div class="content-wrapper">
+    <div class="grid grid-cols-1">
+      <div class="bg-gulf-blue-100 shadow-lg rounded-lg p-6">
+        <div class="flex justify-between">
+            <div>
+                <h1 class="font-bold">Activity Targets</h1>
+                <p class="text-sm text-muted">
+                    Activity: <strong>{{ activity_object.name }}</strong> Targets
+                </p>
+            </div>
+               
+        </div>
+                
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-gulf-blue-100 shadow-lg rounded-lg p-6 my-6">
+      {% if is_appraiser == True %}
+        <div class="flex justify-end">
+          <a href="{% url 'target_create' activity_object.id %}"
+            class="my-2 bg-blue-500 hover:bg-blue-700 inline-block rounded-full text-white py-2 px-4 rounded"
+            >
+            Create New
+          </a>
+
+        </div>
+      {% endif %}
+      <div style="max-height: 280px; overflow-y: auto;">
+        <table 
+        class="w-full border border-blue-800 rounded-lg shadow-lg">
+         <thead class="bg-blue-800 text-white">
+           <tr>
+             <th class="px-6 py-3 text-left text-md font-semibold">Name</th>
+             <th class="px-6 py-3 text-left text-md font-semibold">Metric Type</th>
+             <th class="px-6 py-3 text-left text-md font-semibold">Allowance Variance</th>
+             <th class="px-6 py-3 text-left text-md font-semibold">Target</th>
+             <th class="px-6 py-3 text-left text-md font-semibold">Rating</th>
+             <th></th>
+           </tr>
+         </thead>
+         <tbody class="divide-y divide-blue-300 bg-blue-50">
+           {% for target_obj in target_objects %}
+           <tr class="hover:bg-blue-100">
+             <td class="px-6 py-4 text-md text-blue-900 truncate max-w-xs">{{target_obj.name}}</td>
+             <td class="px-6 py-4 text-md text-blue-900">{{target_obj.metric_type}}</td>
+             <td class="px-6 py-4 text-md text-blue-900">{{target_obj.allowable_variance}}</td>
+             <td class="px-6 py-4 text-md text-blue-900">{{target_obj.agreed_target}}</td>
+             <td class="px-6 py-4 text-md text-blue-900">{{target_obj.id|get_target_rating}}</td>
+             <td>
+               <div class="flex gap-2 justify-center">
+                  <a 
+                    href="{% url 'target_update' activity_object.id target_obj.id %}" 
+                    class="rounded-2xl bg-blue-500 block px-4 py-2 text-sm text-white hover:bg-blue-700" 
+                    role="menuitem"
+                  >
+                    Detail
+                  </a>
+                  <a 
+                    href="{% url 'score' activity_object.id target_obj.id %}" 
+                    class="rounded-2xl bg-blue-500 block px-4 py-2 text-sm text-white hover:bg-blue-700" 
+                    role="menuitem"
+                  >
+                  Score
+                  </a>
+
+               </div>
+             </td>
+             
+   
+           </tr>
+          {% endfor %}
+         </tbody>
+       </table>
+
+      </div>
+    </div>
+  </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // Function to toggle the dropdown visibility
+  function toggleDropdown(targetId) {
+    const dropdownMenu = document.getElementById(`dropdownMenu-${targetId}`);
+     if (dropdownMenu) {  
+    dropdownMenu.classList.toggle('hidden');
+  }
+  }
+
+  // Close the dropdown when clicking outside
+  window.addEventListener('click', function(event) {
+    const dropdowns = document.querySelectorAll("[id^='dropdownMenu-']");
+    dropdowns.forEach(dropdown => {
+      if (!dropdown.contains(event.target) && !event.target.matches('button')) {
+        dropdown.classList.add('hidden');
+      }
+    });
+  });
+</script>
+
+{% endblock %}

@@ -1,0 +1,8 @@
+{% load crispy_forms_tags %}
+
+<form method="post">
+    {% csrf_token %}
+    {{ form|crispy }}
+    <input type="hidden" name="popup" value="true">
+    <button type="submit">Save</button>
+</form>

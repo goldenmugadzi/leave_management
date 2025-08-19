@@ -1,0 +1,10 @@
+{% load quarter %}
+
+<div class="my-4 bg-gray-50 shadow-lg rounded-lg p-6">
+    <div class="flex justify-between">
+        <div>
+            <h1 class="font-bold text-2xl text-gray-900">{{header_name}}</h1>
+            <p class="text-md text-gray-500">This is for the <strong>{{quarter_obj.quarter|quarter_name}} of {{quarter_obj.year}}</strong></p>
+        </div>
+    </div>
+</div>

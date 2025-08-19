@@ -111,6 +111,12 @@ APPLICATIONS = [
         "url": "/change_requests/change_request_index"
     },
     {
+        "name": "appraisal",
+        "title": "Appraisal",
+        "iconUrl": "assets/images/performance-appraisal-employee.png",
+        "url": "/appraisal"
+    },
+    {
         "name": "hardware_faults",
         "title": "IT Hardware Management",
         "iconUrl": "assets/images/hardware.png",
@@ -133,6 +139,12 @@ APPLICATIONS = [
         "title": "Commercial Files",
         "iconUrl": "assets/images/customer.png",
         "url": "/commercial/customers"
+    },
+    {
+        "name": "inspections",
+        "title": "Inspections",
+        "iconUrl": "assets/images/customer.png",
+        "url": "/inspections/"
     },
     # {
     #     "name":"fault_locator",

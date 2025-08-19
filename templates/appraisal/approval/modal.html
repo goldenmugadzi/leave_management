@@ -1,0 +1,50 @@
+{% load approval_stages %}
+
+<!-- Modal (Hidden by Default) -->
+<div id="myModal-{{modal_id}}" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 hidden z-50">
+    <div class="bg-white p-6 rounded-lg shadow-lg w-1/3">
+        <h2 class="text-xl font-bold mb-4">{{modal_heading}}</h2>
+        <p class="text-gray-600 mb-4">{{modal_description}}</p>
+        
+        <div class="max-w-lg mx-auto p-6 bg-white shadow-md rounded-lg">
+            <h2 class="text-xl font-bold mb-4">Quarterly Progress</h2>
+            
+            {% get_stage_data modal_heading appraisal_kra_id as stages_data %}
+            
+            {% for stage_data in stages_data %}
+                <ul class="space-y-4">
+                    <!-- Quarter -->
+                    {% if stage_data.is_approved %}
+                    <li class="flex items-center justify-between p-4 border rounded-lg">
+                        <span class="font-medium">{{stage_data.quarter_name}}</span>
+                        <span class="px-3 py-1 text-sm font-semibold text-green-700 bg-green-100 rounded-full">
+                            Completed
+                        </span>
+                    </li>
+                    {% else %}
+                    <li class="flex items-center justify-between p-4 border rounded-lg">
+                        <span class="font-medium">{{stage_data.quarter_name}}</span>
+                        <span class="px-3 py-1 text-sm font-semibold text-red-700 bg-red-100 rounded-full">
+                            Pending
+                        </span>
+                    </li>
+                    {% endif %}
+                </ul>
+            {% endfor %}
+        </div>
+
+        <div class="flex justify-end mt-2 mr-8">
+            <button onclick="closeModal('{{modal_id}}')" class="px-4 py-2 text-white bg-red-500 rounded-lg">Close</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    function openModal(modal_id) {
+        document.getElementById(`myModal-${modal_id}`).classList.remove("hidden");
+    }
+
+    function closeModal(modal_id) {
+        document.getElementById(`myModal-${modal_id}`).classList.add("hidden");
+    }
+</script>

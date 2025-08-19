@@ -1,0 +1,56 @@
+{% extends "admin_layout.html" %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+<div class="container my-4">
+    <div class="grid grid-cols-1 my-4">
+        <div class="bg-gulf-blue-100 shadow-lg rounded-lg p-6">
+            <div class="flex justify-between">
+                <div>
+                    <h1 class="font-bold">Key Result Area Activity</h1>
+                    <p class="text-sm text-muted">
+                        Create new or Update Activity for <strong>{{ appraisal_kra_object.get_name }} with weight: {{ appraisal_kra_object.get_weight }}</strong> 
+                    </p>
+                </div>
+
+                <div>
+                    {% include "appraisal/kra/weight_progress.html" with weight_of="KRA" %} 
+                </div>
+               
+            </div>      
+        </div>
+    </div>
+    <form method="post">
+        {%csrf_token%}
+        <div class="flex flex-col gap-4">
+            <div class="flex gap-2">
+                <div 
+                    class="flex-1 px-2 shadow-xl rounded-lg border-2"
+                    >
+                        {{ activity_form.name|as_crispy_field }}
+                </div>
+                <div 
+                    class="flex-1 px-2 shadow-xl rounded-lg border-2"
+                    >
+                        {{ activity_form.weight|as_crispy_field }}
+                </div>
+            </div>
+            
+           
+            
+            
+            <div 
+                class="flex-1 px-2 shadow-xl rounded-lg border-2"
+                >
+                    {{ activity_form.description|as_crispy_field }}
+            </div>
+        </div>
+        {% if is_appraiser == True %}
+        <div class="flex justify-center my-2">
+            <button type="submit" class="w-96 bg-blue-500 hover:bg-blue-700 inline-block rounded-full text-white py-2 px-4 rounded">Save</button>
+        </div>
+        {% endif %}
+    </form>
+         
+</div>
+{% endblock %}

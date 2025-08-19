@@ -14,7 +14,7 @@ class NewProfile(models.Model):
     district = models.ForeignKey(Districts, on_delete=models.DO_NOTHING, blank=True, null=True)
     roles_to_action = models.CharField(max_length=300, null=True, blank=True, default=None)
     roles_actions = models.CharField(max_length=300, null=True, blank=True, default=None)
-    roles = models.ManyToManyField(Roles, blank=True, null=True)
+    roles = models.ManyToManyField(Roles, blank=True)
     region = models.ForeignKey(Regions, on_delete=models.DO_NOTHING, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -29,8 +29,8 @@ class ProfileChange(models.Model):
     application = models.CharField(max_length=100, null=True, blank=True, default=None)
     roles_to_action = models.CharField(max_length=300, null=True, blank=True, default=None)
     roles_actions = models.CharField(max_length=300, null=True, blank=True, default=None)
-    role_to_assign = models.ManyToManyField(Roles, related_name='role_to_assign', null=True, blank=True, default=None)
-    role_to_remove = models.ManyToManyField(Roles, related_name='role_to_remove', null=True, blank=True, default=None)
+    role_to_assign = models.ManyToManyField(Roles, related_name='role_to_assign', blank=True, default=None)
+    role_to_remove = models.ManyToManyField(Roles, related_name='role_to_remove', blank=True, default=None)
     change_date = models.DateTimeField()
     changed_by = models.ForeignKey(UserProfile, on_delete=models.CASCADE, related_name='changed_by')
 

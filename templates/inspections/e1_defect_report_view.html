@@ -1,0 +1,209 @@
+{% extends 'admin_layout.html' %}
+{% load static %}
+
+{% block title %}E1 Defect Report - {{ report.report_number }}{% endblock %}
+
+{% block content %}
+<div class="content-wrapper">
+  <div class="bg-gulf-blue-100 shadow shadow-gulf-blue-300 text-gulf-blue-900 rounded px-6 py-6">
+    <!-- Header -->
+    <div class="flex justify-between items-center mb-8">
+      <div>
+        <h1 class="text-3xl font-bold text-gulf-blue-900">E1 Defect Report</h1>
+        <p class="text-sm text-gray-600 mt-2">Report No: {{ report.report_number|default:"TBD" }}</p>
+      </div>
+      <div class="flex space-x-3">
+        <span class="inline-flex px-3 py-1 text-sm font-semibold rounded-full bg-red-100 text-red-800">
+          Defects Found
+        </span>
+        {% if report.is_reinspection %}
+        <span class="inline-flex px-3 py-1 text-sm font-semibold rounded-full bg-yellow-100 text-yellow-800">
+          Reinspection
+        </span>
+        {% endif %}
+        <a href="{% url 'inspections:application_detail' report.client_application.pk %}" class="bg-gray-500 hover:bg-gray-600 text-white font-medium py-2 px-4 rounded-lg">
+          Back to Application
+        </a>
+      </div>
+    </div>
+
+    <!-- Report Content -->
+    <div class="bg-white rounded-lg shadow-md p-8">
+      <!-- Report Header -->
+      <div class="text-center mb-8 border-b-2 border-gray-300 pb-6">
+        <h2 class="text-2xl font-bold text-gray-900 mb-2">ZIMBABWE ELECTRICITY SUPPLY AUTHORITY</h2>
+        <h3 class="text-xl font-semibold text-gray-800">INSPECTION OF INSTALLATION</h3>
+        <div class="mt-4 flex justify-between text-sm">
+          <span><strong>Service No:</strong> {{ report.service_no|default:"TBD" }}</span>
+          <span><strong>E1</strong></span>
+        </div>
+      </div>
+
+      <!-- Distribution List -->
+      <div class="mb-8">
+        <h4 class="font-semibold text-gray-900 mb-3">TO: Distribution:</h4>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+          <div class="flex items-center">
+            <span class="w-6 h-6 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-xs font-bold mr-3">1</span>
+            <span class="{% if report.sent_to_consumer %}text-green-600{% else %}text-gray-600{% endif %}">
+              CONSUMER OR OWNER
+            </span>
+          </div>
+          <div class="flex items-center">
+            <span class="w-6 h-6 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-xs font-bold mr-3">2</span>
+            <span class="{% if report.sent_to_contractor %}text-green-600{% else %}text-gray-600{% endif %}">
+              CONTRACTOR
+            </span>
+          </div>
+          <div class="flex items-center">
+            <span class="w-6 h-6 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-xs font-bold mr-3">3</span>
+            <span class="{% if report.sent_to_district_manager %}text-green-600{% else %}text-gray-600{% endif %}">
+              DISTRICT MANAGER
+            </span>
+          </div>
+          <div class="flex items-center">
+            <span class="w-6 h-6 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-xs font-bold mr-3">4</span>
+            <span class="{% if report.sent_to_depot_official %}text-green-600{% else %}text-gray-600{% endif %}">
+              OFFICIAL I/C OF DEPOT
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Property Information -->
+      <div class="mb-8">
+        <p class="text-lg mb-4">
+          <strong>Sir,</strong>
+        </p>
+        <p class="text-lg mb-4">
+          You are hereby notified that the electrical installation on 
+          <strong>{{ report.sub_division_number|default:"[Sub-division number]" }}</strong>
+        </p>
+        <div class="bg-gray-50 p-4 rounded-md mb-6">
+          <p class="text-gray-800">
+            {{ report.property_address|default:"[Property address to be filled]" }}
+          </p>
+        </div>
+        <p class="text-lg mb-4">
+          has been inspected and that certain defects, a list of which is given below, require your attention.
+        </p>
+      </div>
+
+      <!-- Reinspection Information -->
+      {% if report.is_reinspection %}
+      <div class="mb-8 p-4 bg-yellow-50 border border-yellow-200 rounded-md">
+        <h4 class="font-semibold text-yellow-800 mb-2">Reinspection Information</h4>
+        <p class="text-sm text-yellow-700">
+          This is a reinspection of the original installation. The original report was: 
+          <strong>{{ report.original_report.report_number|default:"Unknown" }}</strong>
+        </p>
+      </div>
+      {% endif %}
+
+      <!-- Reinspection Notice -->
+      <div class="mb-8 p-4 bg-blue-50 border border-blue-200 rounded-md">
+        <p class="text-lg mb-4">
+          This installation will be reinspected on receipt of a Notification of Completion of Wiring Form E.38 and the reinspection fee.
+        </p>
+        <p class="text-sm text-blue-700">
+          Due in terms of the Authority General Conditions of Supply Schedule of prescribed Fees.
+        </p>
+      </div>
+
+      <!-- Defects List -->
+      <div class="mb-8">
+        <h4 class="font-semibold text-gray-900 mb-4 text-lg">LIST OF DEFECTS REQUIRING ATTENTION</h4>
+        {% if report.defects_list %}
+        <div class="bg-red-50 p-6 border border-red-200 rounded-md">
+          <div class="whitespace-pre-line text-gray-800">
+            {{ report.defects_list }}
+          </div>
+        </div>
+        {% else %}
+        <div class="bg-gray-50 p-6 border border-gray-200 rounded-md">
+          <p class="text-gray-500 italic">
+            [Defects list to be filled by inspector]
+          </p>
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- Additional Defects -->
+      {% if report.defects_requiring_attention %}
+      <div class="mb-8">
+        <h4 class="font-semibold text-gray-900 mb-4">Additional Defects Requiring Attention</h4>
+        <div class="bg-orange-50 p-6 border border-orange-200 rounded-md">
+          <div class="whitespace-pre-line text-gray-800">
+            {{ report.defects_requiring_attention }}
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Signature Section -->
+      <div class="flex justify-between items-end mt-12">
+        <div class="text-sm text-gray-600">
+          <p>Date: {{ report.created_at|date:"F d, Y" }}</p>
+          <p>Ref: {{ report.report_number }}</p>
+        </div>
+        <div class="text-right">
+          <div class="mb-2">
+            <span class="font-semibold">SIGNED</span>
+          </div>
+          <div class="border-t border-gray-400 w-48 mb-2"></div>
+          <div class="text-sm text-gray-600">
+            {{ report.installation_inspector.get_full_name|default:report.installation_inspector.username|default:"[Inspector Name]" }}
+          </div>
+          <div class="mt-2">
+            <span class="font-semibold">DESIGNATION:</span>
+            <span class="ml-2">Installation Inspector</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Electronic Delivery Status -->
+      <div class="mt-8 p-4 bg-blue-50 border border-blue-200 rounded-md">
+        <h4 class="font-semibold text-blue-800 mb-2">Electronic Delivery Status</h4>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+          <div>
+            <span class="font-medium">Sent to Consumer:</span>
+            <span class="{% if report.sent_to_consumer %}text-green-600{% else %}text-red-600{% endif %}">
+              {{ report.sent_to_consumer|yesno:"Yes,No" }}
+            </span>
+          </div>
+          <div>
+            <span class="font-medium">Sent to Contractor:</span>
+            <span class="{% if report.sent_to_contractor %}text-green-600{% else %}text-red-600{% endif %}">
+              {{ report.sent_to_contractor|yesno:"Yes,No" }}
+            </span>
+          </div>
+          <div>
+            <span class="font-medium">Sent to District Manager:</span>
+            <span class="{% if report.sent_to_district_manager %}text-green-600{% else %}text-red-600{% endif %}">
+              {{ report.sent_to_district_manager|yesno:"Yes,No" }}
+            </span>
+          </div>
+          <div>
+            <span class="font-medium">Sent to Depot Official:</span>
+            <span class="{% if report.sent_to_depot_official %}text-green-600{% else %}text-red-600{% endif %}">
+              {{ report.sent_to_depot_official|yesno:"Yes,No" }}
+            </span>
+          </div>
+          {% if report.sent_date %}
+          <div>
+            <span class="font-medium">Sent Date:</span>
+            {{ report.sent_date|date:"F d, Y H:i" }}
+          </div>
+          {% endif %}
+          {% if report.delivery_method %}
+          <div>
+            <span class="font-medium">Delivery Method:</span>
+            {{ report.delivery_method }}
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %} 

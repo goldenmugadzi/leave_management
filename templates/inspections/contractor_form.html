@@ -1,0 +1,200 @@
+{% extends 'admin_layout.html' %}
+{% load static %}
+{% load widget_tweaks %}
+
+{% block title %}{% if is_edit %}Edit Contractor{% else %}New Contractor{% endif %}{% endblock %}
+
+{% block content %}
+<div class="content-wrapper">
+  <div class="bg-gulf-blue-100 shadow shadow-gulf-blue-300 text-gulf-blue-900 rounded px-6 py-6">
+    <!-- Header Section -->
+    <div class="flex justify-between items-center mb-8">
+      <div>
+        <h1 class="text-3xl font-bold text-gulf-blue-900">
+          {% if is_edit %}Edit Contractor{% else %}New Contractor{% endif %}
+        </h1>
+        <nav class="flex mt-2" aria-label="Breadcrumb">
+          <ol class="inline-flex items-center space-x-1 md:space-x-3">
+            <li class="inline-flex items-center">
+              <a href="{% url 'inspections:dashboard' %}" class="inline-flex items-center text-sm font-medium text-gulf-blue-600 hover:text-gulf-blue-800">
+                <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"></path>
+                </svg>
+                Inspections
+              </a>
+            </li>
+            <li>
+              <div class="flex items-center">
+                <svg class="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
+                </svg>
+                <a href="{% url 'inspections:contractor_list' %}" class="ml-1 text-sm font-medium text-gulf-blue-600 hover:text-gulf-blue-800 md:ml-2">Contractors</a>
+              </div>
+            </li>
+            <li>
+              <div class="flex items-center">
+                <svg class="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
+                </svg>
+                <span class="ml-1 text-sm font-medium text-gulf-blue-900 md:ml-2">{% if is_edit %}Edit{% else %}Create{% endif %}</span>
+              </div>
+            </li>
+          </ol>
+        </nav>
+      </div>
+      <a href="{% url 'inspections:contractor_list' %}" class="bg-gray-500 hover:bg-gray-600 text-white font-medium py-2 px-4 rounded-lg flex items-center">
+        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+        </svg>
+        Back to List
+      </a>
+    </div>
+
+    <!-- Form Section -->
+    <div class="bg-white rounded-lg shadow-md p-6">
+      <form method="post" novalidate class="space-y-8">
+        {% csrf_token %}
+        
+        <!-- Business Information -->
+        <div class="border-b border-gray-200 pb-8">
+          <div class="flex items-center mb-6">
+            <div class="flex-shrink-0">
+              <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                </svg>
+              </div>
+            </div>
+            <div class="ml-4">
+              <h3 class="text-lg font-medium text-gray-900">Business Information</h3>
+              <p class="text-sm text-gray-500">Company and contact details</p>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label for="{{ form.business_name.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                Business Name <span class="text-red-500">*</span>
+              </label>
+              {{ form.business_name }}
+              {% if form.business_name.errors %}
+                <p class="mt-1 text-sm text-red-600">{{ form.business_name.errors.0 }}</p>
+              {% endif %}
+            </div>
+
+            <div>
+              <label for="{{ form.contact_person.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                Contact Person
+              </label>
+              {{ form.contact_person }}
+              {% if form.contact_person.errors %}
+                <p class="mt-1 text-sm text-red-600">{{ form.contact_person.errors.0 }}</p>
+              {% endif %}
+            </div>
+
+            <div>
+              <label for="{{ form.phone.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                Phone Number
+              </label>
+              {{ form.phone }}
+              {% if form.phone.errors %}
+                <p class="mt-1 text-sm text-red-600">{{ form.phone.errors.0 }}</p>
+              {% endif %}
+            </div>
+
+            <div>
+              <label for="{{ form.email.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                Email Address
+              </label>
+              {{ form.email }}
+              {% if form.email.errors %}
+                <p class="mt-1 text-sm text-red-600">{{ form.email.errors.0 }}</p>
+              {% endif %}
+            </div>
+
+            <div class="md:col-span-2">
+              <label for="{{ form.address.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                Business Address
+              </label>
+              {{ form.address }}
+              {% if form.address.errors %}
+                <p class="mt-1 text-sm text-red-600">{{ form.address.errors.0 }}</p>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+
+        <!-- Location and Licensing -->
+        <div class="border-b border-gray-200 pb-8">
+          <div class="flex items-center mb-6">
+            <div class="flex-shrink-0">
+              <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+                <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                </svg>
+              </div>
+            </div>
+            <div class="ml-4">
+              <h3 class="text-lg font-medium text-gray-900">Location and Licensing</h3>
+              <p class="text-sm text-gray-500">Geographic and regulatory information</p>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label for="{{ form.city.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                City
+              </label>
+              {{ form.city }}
+              {% if form.city.errors %}
+                <p class="mt-1 text-sm text-red-600">{{ form.city.errors.0 }}</p>
+              {% endif %}
+            </div>
+
+            <div>
+              <label for="{{ form.district.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                District
+              </label>
+              {{ form.district }}
+              {% if form.district.errors %}
+                <p class="mt-1 text-sm text-red-600">{{ form.district.errors.0 }}</p>
+              {% endif %}
+            </div>
+
+            <div>
+              <label for="{{ form.license_number.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                License Number
+              </label>
+              {{ form.license_number }}
+              {% if form.license_number.errors %}
+                <p class="mt-1 text-sm text-red-600">{{ form.license_number.errors.0 }}</p>
+              {% endif %}
+            </div>
+
+            <div>
+              <label for="{{ form.business_registration.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                Business Registration Number
+              </label>
+              {{ form.business_registration }}
+              {% if form.business_registration.errors %}
+                <p class="mt-1 text-sm text-red-600">{{ form.business_registration.errors.0 }}</p>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+
+        <!-- Form Actions -->
+        <div class="flex justify-end space-x-4">
+          <a href="{% url 'inspections:contractor_list' %}" class="bg-gray-500 hover:bg-gray-600 text-white font-medium py-2 px-4 rounded-lg">
+            Cancel
+          </a>
+          <button type="submit" class="bg-gulf-blue-600 hover:bg-gulf-blue-700 text-white font-medium py-2 px-4 rounded-lg">
+            {% if is_edit %}Update Contractor{% else %}Create Contractor{% endif %}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %} 

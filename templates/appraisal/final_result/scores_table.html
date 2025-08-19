@@ -1,0 +1,30 @@
+<h3 class="text-lg font-semibold text-indigo-600 mb-4 border-b pb-2">Final Rating</h3>
+
+<table 
+    class="min-w-full border border-gray-200 rounded-lg overflow-hidden text-sm"                                 
+    >
+        <thead>
+            <tr class="bg-blue-500 text-white">
+                <th class="px-6 py-2 text-left text-sm font-semibold">Quarters</th>
+                <th class="px-6 py-2 text-left text-sm font-semibold">Total Weighted Score</th>
+            </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200">
+            {% for quarter_rating in quarter_ratings %}
+                <tr class="hover:bg-gray-100">
+                    <td class="px-6 py-4 whitespace-nowrap">{{ quarter_rating.name }} ( {{quarter_rating.start_date}} - {{quarter_rating.end_date}} )</td>
+                    <td class="px-6 py-4 whitespace-nowrap">{{ quarter_rating.total_score }}</td>
+                </tr>
+            {% endfor %}
+            <tr>
+                <td></td>
+                <td></td>
+            </tr>
+            <tr class="hover:bg-gray-100">
+                <td class="px-6 py-4 whitespace-nowrap">
+                    <p class="font-bold">Final Score</p>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap underline font-bold">{{final_score}}</td>
+            </tr>
+        </tbody>
+</table>

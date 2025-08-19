@@ -44,3 +44,6 @@ class ResponsibilitiesAdmin(admin.ModelAdmin):
     def get_app_name(self, obj):
         return obj.role.app_id.name if obj.role and obj.role.app_id else 'No App'
     get_app_name.short_description = 'App Name'
+    
+admin.site.register(UserQualification)
+admin.site.register(UserExperience)

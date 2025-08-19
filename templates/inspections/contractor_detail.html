@@ -1,0 +1,221 @@
+{% extends 'admin_layout.html' %}
+{% load static %}
+
+{% block title %}Contractor Details - {{ contractor.business_name }}{% endblock %}
+
+{% block content %}
+<div class="content-wrapper">
+  <div class="bg-gulf-blue-100 shadow shadow-gulf-blue-300 text-gulf-blue-900 rounded px-6 py-6">
+    <!-- Header Section -->
+    <div class="flex justify-between items-center mb-8">
+      <div>
+        <h1 class="text-3xl font-bold text-gulf-blue-900">Contractor Details</h1>
+        <nav class="flex mt-2" aria-label="Breadcrumb">
+          <ol class="inline-flex items-center space-x-1 md:space-x-3">
+            <li class="inline-flex items-center">
+              <a href="{% url 'inspections:dashboard' %}" class="inline-flex items-center text-sm font-medium text-gulf-blue-600 hover:text-gulf-blue-800">
+                <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"></path>
+                </svg>
+                Inspections
+              </a>
+            </li>
+            <li>
+              <div class="flex items-center">
+                <svg class="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
+                </svg>
+                <a href="{% url 'inspections:contractor_list' %}" class="ml-1 text-sm font-medium text-gulf-blue-600 hover:text-gulf-blue-800 md:ml-2">Contractors</a>
+              </div>
+            </li>
+            <li>
+              <div class="flex items-center">
+                <svg class="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
+                </svg>
+                <span class="ml-1 text-sm font-medium text-gulf-blue-900 md:ml-2">{{ contractor.business_name }}</span>
+              </div>
+            </li>
+          </ol>
+        </nav>
+      </div>
+      <div class="flex space-x-3">
+        <a href="{% url 'inspections:contractor_edit' contractor.pk %}" class="bg-gulf-blue-600 hover:bg-gulf-blue-700 text-white font-medium py-2 px-4 rounded-lg flex items-center">
+          <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+          </svg>
+          Edit
+        </a>
+        <a href="{% url 'inspections:contractor_list' %}" class="bg-gray-500 hover:bg-gray-600 text-white font-medium py-2 px-4 rounded-lg flex items-center">
+          <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+          </svg>
+          Back to List
+        </a>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <!-- Main Content -->
+      <div class="lg:col-span-2 space-y-6">
+        <!-- Contractor Information -->
+        <div class="bg-white rounded-lg shadow-md">
+          <div class="p-6 border-b border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-900">Contractor Information</h3>
+          </div>
+          <div class="p-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div class="space-y-4">
+                <div>
+                  <dt class="text-sm font-medium text-gray-500">Contractor ID</dt>
+                  <dd class="mt-1 text-sm text-gray-900">{{ contractor.contractor_id }}</dd>
+                </div>
+                <div>
+                  <dt class="text-sm font-medium text-gray-500">Business Name</dt>
+                  <dd class="mt-1 text-sm text-gray-900">{{ contractor.business_name }}</dd>
+                </div>
+                <div>
+                  <dt class="text-sm font-medium text-gray-500">Contact Person</dt>
+                  <dd class="mt-1 text-sm text-gray-900">{{ contractor.contact_person|default:"-" }}</dd>
+                </div>
+                <div>
+                  <dt class="text-sm font-medium text-gray-500">Phone Number</dt>
+                  <dd class="mt-1 text-sm text-gray-900">{{ contractor.phone|default:"-" }}</dd>
+                </div>
+                <div>
+                  <dt class="text-sm font-medium text-gray-500">Email Address</dt>
+                  <dd class="mt-1 text-sm text-gray-900">{{ contractor.email|default:"-" }}</dd>
+                </div>
+              </div>
+              <div class="space-y-4">
+                <div>
+                  <dt class="text-sm font-medium text-gray-500">License Number</dt>
+                  <dd class="mt-1 text-sm text-gray-900">{{ contractor.license_number|default:"-" }}</dd>
+                </div>
+                <div>
+                  <dt class="text-sm font-medium text-gray-500">Business Registration</dt>
+                  <dd class="mt-1 text-sm text-gray-900">{{ contractor.business_registration|default:"-" }}</dd>
+                </div>
+                <div>
+                  <dt class="text-sm font-medium text-gray-500">City</dt>
+                  <dd class="mt-1 text-sm text-gray-900">{{ contractor.city|default:"-" }}</dd>
+                </div>
+                <div>
+                  <dt class="text-sm font-medium text-gray-500">District</dt>
+                  <dd class="mt-1 text-sm text-gray-900">{{ contractor.district|default:"-" }}</dd>
+                </div>
+              </div>
+            </div>
+            <div class="mt-6">
+              <dt class="text-sm font-medium text-gray-500">Business Address</dt>
+              <dd class="mt-1 text-sm text-gray-900">
+                {% if contractor.address %}{{ contractor.address }}{% endif %}
+                {% if contractor.city %}, {{ contractor.city }}{% endif %}
+                {% if contractor.district %}, {{ contractor.district }}{% endif %}
+                {% if not contractor.address and not contractor.city and not contractor.district %}-{% endif %}
+              </dd>
+            </div>
+            <div class="mt-4">
+              <dt class="text-sm font-medium text-gray-500">Registration Date</dt>
+              <dd class="mt-1 text-sm text-gray-900">{{ contractor.created_at|date:"F d, Y g:i A" }}</dd>
+            </div>
+          </div>
+        </div>
+
+        <!-- Applications -->
+        <div class="bg-white rounded-lg shadow-md">
+          <div class="p-6 border-b border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-900">Applications ({{ applications.count }})</h3>
+          </div>
+          <div class="p-6">
+            {% if applications %}
+              <div class="space-y-4">
+                {% for application in applications %}
+                <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                  <div>
+                    <p class="text-sm font-medium text-gray-900">
+                      <a href="{% url 'inspections:application_detail' application.pk %}" class="text-gulf-blue-600 hover:text-gulf-blue-800">
+                        {{ application.application_number }}
+                      </a>
+                    </p>
+                    <p class="text-xs text-gray-500">{{ application.get_application_type_display }} • {{ application.submission_date|date:"M d, Y" }}</p>
+                    {% if application.customer %}
+                      <p class="text-xs text-gray-600">Customer: {{ application.customer.full_name }}</p>
+                    {% endif %}
+                  </div>
+                  <div class="flex items-center space-x-2">
+                    <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full 
+                      {% if application.status == 'completed' %}bg-green-100 text-green-800
+                      {% elif application.status == 'in_progress' %}bg-blue-100 text-blue-800
+                      {% elif application.status == 'assigned' %}bg-yellow-100 text-yellow-800
+                      {% elif application.status == 'rejected' %}bg-red-100 text-red-800
+                      {% else %}bg-gray-100 text-gray-800{% endif %}">
+                      {{ application.get_status_display }}
+                    </span>
+                  </div>
+                </div>
+                {% endfor %}
+              </div>
+            {% else %}
+              <div class="text-center py-8">
+                <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+                </svg>
+                <h3 class="mt-2 text-sm font-medium text-gray-900">No applications</h3>
+                <p class="mt-1 text-sm text-gray-500">This contractor hasn't been assigned to any applications yet.</p>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <!-- Sidebar -->
+      <div class="space-y-6">
+        <!-- Quick Actions -->
+        <div class="bg-white rounded-lg shadow-md">
+          <div class="p-6 border-b border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-900">Quick Actions</h3>
+          </div>
+          <div class="p-6 space-y-3">
+            <a href="{% url 'inspections:application_create' %}?contractor={{ contractor.pk }}" class="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg flex items-center justify-center">
+              <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+              </svg>
+              New Application
+            </a>
+            <a href="{% url 'inspections:contractor_edit' contractor.pk %}" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-lg flex items-center justify-center">
+              <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+              </svg>
+              Edit Contractor
+            </a>
+          </div>
+        </div>
+
+        <!-- Contractor Statistics -->
+        <div class="bg-white rounded-lg shadow-md">
+          <div class="p-6 border-b border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-900">Statistics</h3>
+          </div>
+          <div class="p-6 space-y-4">
+            <div class="flex justify-between">
+              <span class="text-sm text-gray-500">Total Applications</span>
+              <span class="text-sm font-medium text-gray-900">{{ applications.count }}</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-sm text-gray-500">License Status</span>
+              <span class="text-sm font-medium {% if contractor.license_number %}text-green-600{% else %}text-red-600{% endif %}">
+                {% if contractor.license_number %}Licensed{% else %}Not Licensed{% endif %}
+              </span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-sm text-gray-500">Contractor Since</span>
+              <span class="text-sm font-medium text-gray-900">{{ contractor.created_at|date:"M Y" }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

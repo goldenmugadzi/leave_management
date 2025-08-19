@@ -1,0 +1,86 @@
+{% extends "admin_layout.html" %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+
+  <div class="content-wrapper">
+    <div class="grid grid-cols-1">
+        <div class="bg-gulf-blue-100 shadow-lg rounded-lg p-6">
+            <div class="flex justify-between">
+                <div>
+                    <h1 class="font-bold">Departmental Objectives</h1>
+                    <p class="text-sm text-muted">{{cost_center_obj}} objectives for the year {{year}}</p>
+                </div>
+                
+                <div>
+                    <p class="text-sm font-bold">Filter by Cost Center and year</p>
+                    <div class="bg-white rounded-lg border-2 border-blue-400">
+                        <form>
+                            {%csrf_token%}
+                            <div class="flex p-1 justify-between gap-2">
+                                <div class="flex justify-between gap-1">
+                                    <div>{{ cost_center_form.cost_center|as_crispy_field }}</div>
+                                    <div>{{ cost_center_form.year|as_crispy_field }}</div>
+                                </div>
+                                
+                                <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white px-4 mt-7 h-10 rounded">Filter</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+            </div>
+                    
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-gulf-blue-100 shadow-lg rounded-lg p-6 my-6">
+            <div class="flex justify-end">
+              <a href="{% url 'departmental_objective_create' %}"
+                  class="my-2 bg-blue-500 hover:bg-blue-700 inline-block rounded-full text-white py-2 px-4">Create New</a>
+            </div>
+      <div style="max-height: 280px; overflow-y: auto;">
+        <table 
+        class="w-full border border-blue-800 rounded-lg shadow-lg">
+         <thead class="bg-blue-800 text-white">
+           <tr>
+                <th class="px-6 py-3 text-left text-md font-semibold">Objectives Description</th>
+                <th class="px-6 py-3 text-left text-md font-semibold">KRA Description</th>
+                <th class="px-6 py-3 text-left text-md font-semibold">Created by</th>
+                <th></th>
+           </tr>
+         </thead>
+         <tbody class="divide-y divide-blue-300 bg-blue-50">
+            {% for departmental_objective_obj in departmental_objectives_qr %}
+                <tr class="hover:bg-blue-100">
+                        <td class="px-6 py-4 text-md text-blue-900 truncate max-w-xs">{{departmental_objective_obj.objective_description}}</td>
+                        <td class="px-6 py-4 text-md text-blue-900 truncate max-w-xs">{{departmental_objective_obj.key_result_area}}</td>
+                        <td class="px-6 py-4 text-md text-blue-900 truncate max-w-xs">{{departmental_objective_obj.created_by}}</td>
+                        <td>
+                            <div class="flex gap-2 justify-center">
+                            <a 
+                                href="{% url 'departmental_workplan_update_detail' departmental_objective_obj.id %}" 
+                                class="rounded-2xl bg-blue-500 block px-4 py-2 text-sm text-white hover:bg-blue-700" 
+                            >
+                                View
+                            </a>
+                            <a 
+                                href="{% url 'departmental_output_index' departmental_objective_obj.id %}" 
+                                class="rounded-2xl bg-blue-500 block px-4 py-2 text-sm text-white hover:bg-blue-700" 
+                            >
+                                Outputs
+                            </a>
+                            </div>
+                        </td>   
+                </tr>
+            {% endfor %}
+         </tbody>
+       </table>
+
+      </div>
+    </div>
+  </div>
+{% endblock %}
+

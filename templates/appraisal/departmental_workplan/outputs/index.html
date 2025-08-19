@@ -1,0 +1,91 @@
+{% extends "admin_layout.html" %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+
+  <div class="content-wrapper">
+    <div class="grid grid-cols-1">
+        <div class="bg-gulf-blue-100 shadow-lg rounded-lg p-6">
+            <div class="flex justify-between">
+                <div>
+                    <h1 class="font-bold">Departmental Outputs</h1>
+                    <p class="text-sm text-muted">Departmental Objective: <strong>{{department_objective}}</strong></p>
+                    <p class="text-sm text-muted">Designation: <strong>{{designation_obj}}</strong></p>
+                </div>
+                <div>
+                    {% include "appraisal/kra/weight_progress.html" with weight_of="Department objective" %} 
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-gulf-blue-100 shadow-lg rounded-lg p-6 my-6">
+        <div class="flex justify-end items-start gap-4 mb-4">
+            <div>
+                <form method="get" class="flex items-end gap-2">
+                    {% csrf_token %}
+                    
+                    <!-- Designation Field -->
+                    <div class="w-64">
+                        {{ designation_form.designations|as_crispy_field }}
+                    </div>
+                
+                    <!-- Submit Button -->
+                    <button type="submit"
+                            class="bg-blue-500 hover:bg-blue-700 text-white px-4 h-10 mb-3 rounded transition-colors duration-200">
+                        Designation Filter
+                    </button>
+                </form>
+              </div>
+            
+            <div class="mt-10">
+                <a href="{% url 'departmental_output_create' departmental_objective_id=department_objective.id designation_id=designation_obj.id %}" 
+                   class="bg-blue-500 hover:bg-blue-700 text-white py-2 px-4 rounded-full transition-colors duration-200 whitespace-nowrap">
+                  Create New
+                </a>
+            </div>
+          </div>
+      <div style="max-height: 280px; overflow-y: auto;">
+        <table 
+        class="w-full border border-blue-800 rounded-lg shadow-lg">
+         <thead class="bg-blue-800 text-white">
+           <tr>
+                <th class="px-6 py-3 text-left text-md font-semibold">Output Description</th>
+                <th class="px-6 py-3 text-left text-md font-semibold">Created by</th>
+                <th class="px-6 py-3 text-left text-md font-semibold">Weight</th>
+                <th></th>
+           </tr>
+         </thead>
+         <tbody class="divide-y divide-blue-300 bg-blue-50">
+            {% for departmental_out_obj in departmental_outs_qr %}
+                <tr class="hover:bg-blue-100">
+                        <td class="px-6 py-4 text-md text-blue-900 truncate max-w-xs">{{departmental_out_obj.output_description}}</td>
+                        <td class="px-6 py-4 text-md text-blue-900 truncate max-w-xs">{{departmental_out_obj.created_by}}</td>
+                        <td class="px-6 py-4 text-md text-blue-900 truncate max-w-xs">{{departmental_out_obj.weight}}</td>
+                        <td>
+                            <div class="flex gap-2 justify-center">
+                                <a 
+                                    href="{% url 'departmental_output_detail_update' department_output_id=departmental_out_obj.id designation_id=designation_obj.id %}" 
+                                    class="rounded-2xl bg-blue-500 block px-4 py-2 text-sm text-white hover:bg-blue-700" 
+                                >
+                                    View
+                                </a>
+                                <a 
+                                    href="{% url 'output_perf_dimension_index' department_output_id=departmental_out_obj.id %}" 
+                                    class="rounded-2xl bg-blue-500 block px-4 py-2 text-sm text-white hover:bg-blue-700" 
+                                >
+                                    Performance Dimensions
+                                </a>
+                            </div>
+                        </td>   
+                </tr>
+            {% endfor %}
+         </tbody>
+       </table>
+
+      </div>
+    </div>
+  </div>
+{% endblock %}
+

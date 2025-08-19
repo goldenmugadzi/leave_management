@@ -4,6 +4,7 @@ from django.db import models
 from django.core.exceptions import ValidationError
 from finance.Ace.models import Ace
 from it.users.models import CostCenter, UserProfile, Sections, Regions, Districts, Depots
+
 class ProcurementPlanReference(models.Model):
     id = models.CharField(primary_key=True, max_length=10)
     name = models.CharField(max_length=100)

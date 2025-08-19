@@ -1,0 +1,18 @@
+{% load crispy_forms_tags %}
+
+<div class="intervention_strategy-form p-2">
+    <div class="grid grid-flow-col justify-stretch gap-4">
+        <div class="form-row field-description">{{ intervention_strategy_form.description|as_crispy_field }}</div>
+        <div class="form-row field-category">{{ intervention_strategy_form.category|as_crispy_field }}</div>
+    </div>
+    <div class="flex justify-center pb-2">
+        
+        <button 
+            type="button" 
+            class="remove-intervention_strategy_form-btn bg-blue-500 hover:bg-blue-700 inline-block rounded-full text-white py-2 px-4" 
+            onclick="removeInterventionStrategyForm(this, '{{total_form_count}}')">
+            Remove
+        </button>
+    </div>
+    <hr class="h-1 bg-gray-400 border-0 my-4"/>
+</div>

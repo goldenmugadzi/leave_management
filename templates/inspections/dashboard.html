@@ -4,233 +4,371 @@
 {% block title %}Inspections Dashboard{% endblock %}
 
 {% block content %}
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-12">
-            <div class="page-title-box">
-                <h4 class="page-title">Inspections Dashboard</h4>
-                <ol class="breadcrumb m-0">
-                    <li class="breadcrumb-item"><a href="/">Home</a></li>
-                    <li class="breadcrumb-item active">Inspections</li>
-                </ol>
-            </div>
-        </div>
+<div class="content-wrapper">
+  <div class="bg-gulf-blue-100 shadow shadow-gulf-blue-300 text-gulf-blue-900 rounded px-6 py-6">
+    <!-- Header Section -->
+    <div class="flex justify-between items-center mb-8">
+      <div>
+        <h1 class="text-3xl font-bold text-gulf-blue-900">Inspections Dashboard</h1>
+        <nav class="flex mt-2" aria-label="Breadcrumb">
+          <ol class="inline-flex items-center space-x-1 md:space-x-3">
+            <li class="inline-flex items-center">
+              <a href="/" class="inline-flex items-center text-sm font-medium text-gulf-blue-600 hover:text-gulf-blue-800">
+                <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"></path>
+                </svg>
+                Home
+              </a>
+            </li>
+            <li>
+              <div class="flex items-center">
+                <svg class="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
+                </svg>
+                <span class="ml-1 text-sm font-medium text-gulf-blue-900 md:ml-2">Inspections</span>
+              </div>
+            </li>
+          </ol>
+        </nav>
+      </div>
     </div>
 
     <!-- Statistics Cards -->
-    <div class="row">
-        <div class="col-xl-3 col-md-6">
-            <div class="card widget-flat">
-                <div class="card-body">
-                    <div class="float-end">
-                        <i class="mdi mdi-file-document widget-icon bg-primary-lighten text-primary"></i>
-                    </div>
-                    <h5 class="text-muted font-weight-normal mt-0" title="Total Applications">Total Applications</h5>
-                    <h3 class="mt-3 mb-3">{{ total_applications }}</h3>
-                </div>
-            </div>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <!-- Total Applications -->
+      <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-blue-500">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm font-medium text-gray-600">Total Applications</p>
+            <p class="text-3xl font-bold text-gray-900">{{ total_applications }}</p>
+          </div>
+          <div class="p-3 bg-blue-100 rounded-full">
+            <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+            </svg>
+          </div>
         </div>
+      </div>
 
-        <div class="col-xl-3 col-md-6">
-            <div class="card widget-flat">
-                <div class="card-body">
-                    <div class="float-end">
-                        <i class="mdi mdi-clock-outline widget-icon bg-warning-lighten text-warning"></i>
-                    </div>
-                    <h5 class="text-muted font-weight-normal mt-0" title="Pending Applications">Pending</h5>
-                    <h3 class="mt-3 mb-3">{{ pending_applications }}</h3>
-                </div>
-            </div>
+      <!-- Pending Applications -->
+      <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-yellow-500">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm font-medium text-gray-600">Pending</p>
+            <p class="text-3xl font-bold text-gray-900">{{ pending_applications }}</p>
+          </div>
+          <div class="p-3 bg-yellow-100 rounded-full">
+            <svg class="w-8 h-8 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+          </div>
         </div>
+      </div>
 
-        <div class="col-xl-3 col-md-6">
-            <div class="card widget-flat">
-                <div class="card-body">
-                    <div class="float-end">
-                        <i class="mdi mdi-progress-clock widget-icon bg-info-lighten text-info"></i>
-                    </div>
-                    <h5 class="text-muted font-weight-normal mt-0" title="In Progress">In Progress</h5>
-                    <h3 class="mt-3 mb-3">{{ in_progress }}</h3>
-                </div>
-            </div>
+      <!-- In Progress -->
+      <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-indigo-500">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm font-medium text-gray-600">In Progress</p>
+            <p class="text-3xl font-bold text-gray-900">{{ in_progress }}</p>
+          </div>
+          <div class="p-3 bg-indigo-100 rounded-full">
+            <svg class="w-8 h-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+            </svg>
+          </div>
         </div>
+      </div>
 
-        <div class="col-xl-3 col-md-6">
-            <div class="card widget-flat">
-                <div class="card-body">
-                    <div class="float-end">
-                        <i class="mdi mdi-check-circle widget-icon bg-success-lighten text-success"></i>
-                    </div>
-                    <h5 class="text-muted font-weight-normal mt-0" title="Completed">Completed</h5>
-                    <h3 class="mt-3 mb-3">{{ completed }}</h3>
-                </div>
-            </div>
+      <!-- Completed -->
+      <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-green-500">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-sm font-medium text-gray-600">Completed</p>
+            <p class="text-3xl font-bold text-gray-900">{{ completed }}</p>
+          </div>
+          <div class="p-3 bg-green-100 rounded-full">
+            <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+          </div>
         </div>
+      </div>
     </div>
 
-    <div class="row">
-        <!-- Recent Applications -->
-        <div class="col-lg-6">
-            <div class="card">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h4 class="header-title">Recent Applications</h4>
-                        <a href="{% url 'inspections:application_create' %}" class="btn btn-primary btn-sm">
-                            <i class="mdi mdi-plus"></i> New Application
+    <!-- Management Quick Actions -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+      <!-- Customer Management -->
+      <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-blue-500">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <h3 class="text-lg font-semibold text-gray-900">Customer Management</h3>
+            <p class="text-sm text-gray-600">Manage customer information and details</p>
+          </div>
+          <div class="p-3 bg-blue-100 rounded-full">
+            <svg class="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+            </svg>
+          </div>
+        </div>
+        <div class="flex space-x-3">
+          <a href="{% url 'inspections:customer_list' %}" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg text-center">
+            View All
+          </a>
+          <a href="{% url 'inspections:customer_create' %}" class="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg flex items-center">
+            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+            </svg>
+            New
+          </a>
+        </div>
+      </div>
+
+      <!-- Contractor Management -->
+      <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-purple-500">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <h3 class="text-lg font-semibold text-gray-900">Contractor Management</h3>
+            <p class="text-sm text-gray-600">Manage electrical contractor information</p>
+          </div>
+          <div class="p-3 bg-purple-100 rounded-full">
+            <svg class="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path>
+            </svg>
+          </div>
+        </div>
+        <div class="flex space-x-3">
+          <a href="{% url 'inspections:contractor_list' %}" class="flex-1 bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-lg text-center">
+            View All
+          </a>
+          <a href="{% url 'inspections:contractor_create' %}" class="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg flex items-center">
+            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+            </svg>
+            New
+          </a>
+        </div>
+      </div>
+
+      <!-- Application Management -->
+      <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-gulf-blue-500">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <h3 class="text-lg font-semibold text-gray-900">Application Management</h3>
+            <p class="text-sm text-gray-600">Manage client applications</p>
+          </div>
+          <div class="p-3 bg-gulf-blue-100 rounded-full">
+            <svg class="w-8 h-8 text-gulf-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+            </svg>
+          </div>
+        </div>
+        <div class="flex space-x-3">
+          <a href="{% url 'inspections:application_list' %}" class="flex-1 bg-gulf-blue-600 hover:bg-gulf-blue-700 text-white font-medium py-2 px-4 rounded-lg text-center">
+            View All
+          </a>
+          <a href="{% url 'inspections:application_create' %}" class="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg flex items-center">
+            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+            </svg>
+            New
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Inspection Forms and Reports -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+      <!-- Inspection Reports (E117) -->
+      <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-orange-500">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <h3 class="text-lg font-semibold text-gray-900">E117 Reports</h3>
+            <p class="text-sm text-gray-600">Electrical inspection reports</p>
+          </div>
+          <div class="p-3 bg-orange-100 rounded-full">
+            <svg class="w-8 h-8 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path>
+            </svg>
+          </div>
+        </div>
+        <div class="flex space-x-3">
+          <a href="{% url 'inspections:workflow_list' %}" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-lg text-center">
+            View All
+          </a>
+        </div>
+      </div>
+
+      <!-- E6 Certificates -->
+      <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-green-500">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <h3 class="text-lg font-semibold text-gray-900">E6 Certificates</h3>
+            <p class="text-sm text-gray-600">Inspection clearance certificates</p>
+          </div>
+          <div class="p-3 bg-green-100 rounded-full">
+            <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+          </div>
+        </div>
+        <div class="flex space-x-3">
+          <a href="{% url 'inspections:e6_certificate_list' %}" class="flex-1 bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg text-center">
+            View All
+          </a>
+        </div>
+      </div>
+
+      <!-- E1 Defect Reports -->
+      <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-red-500">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <h3 class="text-lg font-semibold text-gray-900">E1 Defect Reports</h3>
+            <p class="text-sm text-gray-600">Inspection failure reports</p>
+          </div>
+          <div class="p-3 bg-red-100 rounded-full">
+            <svg class="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+          </div>
+        </div>
+        <div class="flex space-x-3">
+          <a href="{% url 'inspections:e1_defect_report_list' %}" class="flex-1 bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-lg text-center">
+            View All
+          </a>
+        </div>
+      </div>
+
+      <!-- Workflows -->
+      {% comment %} <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-indigo-500">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <h3 class="text-lg font-semibold text-gray-900">Workflows</h3>
+            <p class="text-sm text-gray-600">Inspection workflow tracking</p>
+          </div>
+          <div class="p-3 bg-indigo-100 rounded-full">
+            <svg class="w-8 h-8 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17H7A5 5 0 017 7h2m0 10v-5a4 4 0 118 0v5m-4-5h4m-4 0H9"></path>
+            </svg>
+          </div>
+        </div>
+        <div class="flex space-x-3">
+          <a href="{% url 'inspections:workflow_list' %}" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-lg text-center">
+            View All
+          </a>
+        </div>
+      </div> {% endcomment %}
+    </div>
+
+    <!-- Assignment Management -->
+    {% comment %} <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+      <!-- Assignments -->
+      <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-teal-500">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <h3 class="text-lg font-semibold text-gray-900">Assignment Management</h3>
+            <p class="text-sm text-gray-600">Manage application assignments</p>
+          </div>
+          <div class="p-3 bg-teal-100 rounded-full">
+            <svg class="w-8 h-8 text-teal-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+            </svg>
+          </div>
+        </div>
+        <div class="flex space-x-3">
+          <a href="{% url 'inspections:assignment_list' %}" class="flex-1 bg-teal-600 hover:bg-teal-700 text-white font-medium py-2 px-4 rounded-lg text-center">
+            View All
+          </a>
+          <a href="{% url 'inspections:assignment_create' %}" class="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg flex items-center">
+            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+            </svg>
+            New
+          </a>
+        </div>
+      </div>
+    </div> {% endcomment %}
+
+    <!-- Main Content Grid -->
+    <div class="grid grid-cols-1 gap-8 mb-8">
+      <!-- Recent Applications -->
+      <div class="bg-white rounded-lg shadow-md">
+        <div class="flex justify-between items-center p-6 border-b border-gray-200">
+          <h3 class="text-lg font-semibold text-gray-900">Recent Applications</h3>
+          <a href="{% url 'inspections:application_create' %}" class="bg-gulf-blue-600 hover:bg-gulf-blue-700 text-white font-medium py-2 px-4 rounded-lg flex items-center">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+            </svg>
+            New Application
+          </a>
+        </div>
+
+        <div class="p-6">
+          {% if recent_applications %}
+            <div class="overflow-x-auto">
+              <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                  <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Application #</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                  </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                  {% for app in recent_applications %}
+                  <tr class="hover:bg-gray-50">
+                    <td class="px-6 py-4 whitespace-nowrap">
+                      <a href="{% url 'inspections:application_detail' app.pk %}" class="text-gulf-blue-600 hover:text-gulf-blue-800 font-medium">
+                        {{ app.application_number }}
+                      </a>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {% if app.customer %}
+                        <a href="{% url 'inspections:customer_detail' app.customer.pk %}" class="text-gulf-blue-600 hover:text-gulf-blue-800">
+                          {{ app.customer.full_name }}
                         </a>
-                    </div>
-
-                    {% if recent_applications %}
-                        <div class="table-responsive">
-                            <table class="table table-sm">
-                                <thead>
-                                    <tr>
-                                        <th>Application #</th>
-                                        <th>Customer</th>
-                                        <th>Status</th>
-                                        <th>Date</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for app in recent_applications %}
-                                    <tr>
-                                        <td>
-                                            <a href="{% url 'inspections:application_detail' app.pk %}">
-                                                {{ app.application_number }}
-                                            </a>
-                                        </td>
-                                        <td>{{ app.customer_name }}</td>
-                                        <td>
-                                            <span class="badge badge-{% if app.status == 'completed' %}success{% elif app.status == 'in_progress' %}info{% elif app.status == 'assigned' %}warning{% else %}secondary{% endif %}">
-                                                {{ app.get_status_display }}
-                                            </span>
-                                        </td>
-                                        <td>{{ app.submission_date|date:"M d, Y" }}</td>
-                                    </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
-                        <div class="text-center">
-                            <a href="{% url 'inspections:application_list' %}" class="btn btn-outline-primary btn-sm">
-                                View All Applications
-                            </a>
-                        </div>
-                    {% else %}
-                        <div class="text-center py-4">
-                            <p class="text-muted">No applications yet.</p>
-                            <a href="{% url 'inspections:application_create' %}" class="btn btn-primary">
-                                Create First Application
-                            </a>
-                        </div>
-                    {% endif %}
-                </div>
+                      {% else %}
+                        <span class="text-gray-500">Not specified</span>
+                      {% endif %}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                      <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full 
+                        {% if app.status == 'completed' %}bg-green-100 text-green-800
+                        {% elif app.status == 'in_progress' %}bg-blue-100 text-blue-800
+                        {% elif app.status == 'assigned' %}bg-yellow-100 text-yellow-800
+                        {% else %}bg-gray-100 text-gray-800{% endif %}">
+                        {{ app.get_status_display }}
+                      </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ app.submission_date|date:"M d, Y" }}</td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
             </div>
-        </div>
-
-        <!-- My Assignments -->
-        <div class="col-lg-6">
-            <div class="card">
-                <div class="card-body">
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <h4 class="header-title">My Assignments</h4>
-                        <a href="{% url 'inspections:assignment_create' %}" class="btn btn-primary btn-sm">
-                            <i class="mdi mdi-account-plus"></i> Assign Task
-                        </a>
-                    </div>
-
-                    {% if my_assignments %}
-                        <div class="table-responsive">
-                            <table class="table table-sm">
-                                <thead>
-                                    <tr>
-                                        <th>Application</th>
-                                        <th>Status</th>
-                                        <th>Due Date</th>
-                                        <th>Action</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for assignment in my_assignments %}
-                                    <tr>
-                                        <td>
-                                            <a href="{% url 'inspections:application_detail' assignment.application.pk %}">
-                                                {{ assignment.application.application_number }}
-                                            </a>
-                                        </td>
-                                        <td>
-                                            <span class="badge badge-{% if assignment.status == 'completed' %}success{% elif assignment.status == 'in_progress' %}info{% elif assignment.status == 'accepted' %}primary{% else %}warning{% endif %}">
-                                                {{ assignment.get_status_display }}
-                                            </span>
-                                        </td>
-                                        <td>
-                                            {% if assignment.due_date %}
-                                                {{ assignment.due_date|date:"M d" }}
-                                            {% else %}
-                                                -
-                                            {% endif %}
-                                        </td>
-                                        <td>
-                                            {% if assignment.status == 'assigned' %}
-                                                <form method="post" action="{% url 'inspections:assignment_accept' assignment.pk %}" style="display: inline;">
-                                                    {% csrf_token %}
-                                                    <button type="submit" class="btn btn-success btn-xs">Accept</button>
-                                                </form>
-                                            {% elif assignment.status == 'accepted' %}
-                                                <a href="{% url 'inspections:inspection_create' %}" class="btn btn-info btn-xs">Inspect</a>
-                                            {% endif %}
-                                        </td>
-                                    </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
-                        <div class="text-center">
-                            <a href="{% url 'inspections:assignment_list' %}" class="btn btn-outline-primary btn-sm">
-                                View All Assignments
-                            </a>
-                        </div>
-                    {% else %}
-                        <div class="text-center py-4">
-                            <p class="text-muted">No assignments for you.</p>
-                        </div>
-                    {% endif %}
-                </div>
+            <div class="mt-4 text-center">
+              <a href="{% url 'inspections:application_list' %}" class="text-gulf-blue-600 hover:text-gulf-blue-800 font-medium">
+                View All Applications →
+              </a>
             </div>
+          {% else %}
+            <div class="text-center py-8">
+              <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+              </svg>
+              <h3 class="mt-2 text-sm font-medium text-gray-900">No applications</h3>
+              <p class="mt-1 text-sm text-gray-500">Get started by creating a new application.</p>
+              <div class="mt-6">
+                <a href="{% url 'inspections:application_create' %}" class="bg-gulf-blue-600 hover:bg-gulf-blue-700 text-white font-medium py-2 px-4 rounded-lg">
+                  Create First Application
+                </a>
+              </div>
+            </div>
+          {% endif %}
         </div>
+      </div>
     </div>
-
-    <!-- Quick Actions -->
-    <div class="row">
-        <div class="col-12">
-            <div class="card">
-                <div class="card-body">
-                    <h4 class="header-title mb-3">Quick Actions</h4>
-                    <div class="row">
-                        <div class="col-md-3">
-                            <a href="{% url 'inspections:application_create' %}" class="btn btn-primary btn-block">
-                                <i class="mdi mdi-file-document-plus"></i> New Application
-                            </a>
-                        </div>
-                        <div class="col-md-3">
-                            <a href="{% url 'inspections:inspection_create' %}" class="btn btn-info btn-block">
-                                <i class="mdi mdi-clipboard-check"></i> New Inspection
-                            </a>
-                        </div>
-                        <div class="col-md-3">
-                            <a href="{% url 'inspections:assignment_create' %}" class="btn btn-warning btn-block">
-                                <i class="mdi mdi-account-arrow-right"></i> Assign Task
-                            </a>
-                        </div>
-                        <div class="col-md-3">
-                            <a href="{% url 'inspections:application_list' %}" class="btn btn-outline-primary btn-block">
-                                <i class="mdi mdi-view-list"></i> View All
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+  </div>
 </div>
 {% endblock %} 

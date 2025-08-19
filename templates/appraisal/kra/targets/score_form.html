@@ -1,0 +1,53 @@
+{% extends "admin_layout.html" %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+
+<div class="grid grid-cols-1">
+        <div class="bg-gulf-blue-100 shadow-lg rounded-lg p-6">
+            <div class="flex justify-between">
+                <div>
+                    <h1 class="font-bold">Form for Scoring {{ target_score_object.performance_dimension }} Description</h1>
+                    <p class="text-sm text-muted">
+                        Description: <strong>{{ target_score_object.performance_dimension.description }}</strong>.
+                        with target of <strong>{{ target_score_object.performance_dimension.agreed_target }} %</strong> and allowable variance of <strong>{{ target_score_object.performance_dimension.allowable_variance }} %</strong>
+                    </p>
+                </div>
+
+                <div class="flex justify-end">
+                    <div onclick="openAppraiserConfirmationModal()"
+                        class="my-2 bg-blue-500 hover:bg-blue-700 inline-block rounded-full text-white py-2 px-4 rounded"
+                        >
+                        Appraiser Confirmation
+                    </div>
+                </div>
+                
+            </div>
+                
+        </div>
+</div>
+<div class="container my-4">
+    <form method="post" enctype="multipart/form-data">
+        {%csrf_token%}
+        <div 
+        class="flex-1 px-2 shadow-xl rounded-lg border-2"
+        >
+        {{ target_score_form.score|as_crispy_field }}
+    </div>
+    
+    <div>
+        {% include "appraisal/kra/targets/score_docs/index.html"%}
+    </div>
+    
+    {% if is_appraisee == True %}
+    <div class="flex justify-center my-2">
+        <button type="submit" class="w-96 bg-blue-500 hover:bg-blue-700 inline-block rounded-full text-white py-2 px-4" name="appraisee_request">Save</button>
+    </div>
+    {% endif %}
+    
+    {% include "appraisal/kra/targets/appraiser_confirmation_modal.html"%}
+</form>
+</div>
+
+
+{% endblock %}

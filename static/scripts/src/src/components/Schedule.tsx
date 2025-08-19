@@ -1,29 +1,33 @@
-import { useEffect, useState, useCallback, useMemo, lazy, Suspense } from "react";
-import { ScheduleProvider } from "../context/ScheduleContext";
+import { useEffect, useCallback, useMemo, lazy, Suspense } from "react";
 import { useScheduleApi } from "../hooks/useScheduleApi";
-import { useCommitteeState } from "../hooks/useCommitteeState";
+import { useScheduleStore } from "../stores/scheduleStore";
+import { getApiEndpoints, buildApiUrl } from "../config/apiEndpoints";
 import { 
   IBid, 
-  ICompliance, 
-  IComplianceRemark, 
-  ISupplier,
-  ICommittee,
-  IUser,
-  IUom
+  ICommittee
 } from "../types/scheduleTypes";
-import { getApiEndpoints, buildApiUrl } from "../config/apiEndpoints";
+
+// Import our new services
+import { ScheduleService } from "../services/ScheduleService";
+import { BidService } from "../services/BidService";
+import { ComplianceService } from "../services/ComplianceService";
+import { CommitteeService } from "../services/CommitteeService";
+import { FileService } from "../services/FileService";
+import { ValidationService } from "../services/ValidationService";
+import { NotificationService } from "../services/NotificationService";
+
+// Import utility functions
+import { 
+  getCookie, 
+  formatDisplayDate, 
+  formatDateForBackend, 
+  getDownloadFilename, 
+  fetchWithRetry,
+  validateFile as validateFileUtil
+} from "../utils";
 
 // Additional interfaces from ScheduleRef.tsx
-interface ICurrency {
-  id: number;
-  currency?: string;
-}
-
-interface IProcPlan {
-  id: number;
-  proc_ref: string;
-  description: string;
-}
+// Note: ICurrency and IProcPlan are now defined in the Zustand store types
 
 interface IBidItem {
   id?: number;
@@ -36,99 +40,13 @@ interface IBidItem {
   ordered?: boolean;
 }
 
-interface IRank {
-  id: number;
-  supplier_name: string;
-  rank: number;
-  decision: string;
-  remarks: string;
-  total: number;
-}
-
-interface IGmApproval {
-  id: number;
-  approver_name: string;
-  approval: string;
-  approval_date: string;
-  justification: string;
-}
-
-interface IFmApproval {
-  id: number;
-  approver_name: string;
-  approval: string;
-  approval_date: string;
-  justification: string;
-}
-
-interface ICurrentApprover {
-  username?: string;
-  justification?: string;
-  role?: string;
-  approval?: string;
-}
-
-
-
 
 
 // Lazy load heavy components
 const CommitteeApprovalWrapper = lazy(() => import("./Committee/CommitteeApprovalWrapper"));
 const ApprovalTableWrapper = lazy(() => import("./ApprovalTableWrapper"));
 
-// Helper function to get CSRF token
-const getCookie = (name: string) => {
-  let cookieValue = null;
-  if (document.cookie && document.cookie !== '') {
-    const cookies = document.cookie.split(';');
-    for (let i = 0; i < cookies.length; i++) {
-      const cookie = cookies[i].trim();
-      if (cookie.substring(0, name.length + 1) === name + '=') {
-        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-        break;
-      }
-    }
-  }
-  return cookieValue;
-};
-
-// Helper function to format date
-const formatDisplayDate = (dateString: string) => {
-  if (!dateString) return '';
-  
-  // If it includes 'T', it's a datetime string, extract just the date part
-  if (dateString.includes('T')) {
-    return dateString.split('T')[0];
-  }
-  
-  // If it's already just a date, return as is
-  return dateString;
-};
-
-// Helper function to get file object URL (from ScheduleRef.tsx)
-const onGetFileObjectUrl = (fileData: string | File | null | undefined): string | undefined => {
-  try {
-    if (typeof fileData === "string") {
-      const decodedFileData = atob(fileData);
-      const uint8Array = new Uint8Array(decodedFileData.length);
-      for (let i = 0; i < decodedFileData.length; i++) {
-        uint8Array[i] = decodedFileData.charCodeAt(i);
-      }
-
-      const file = new Blob([uint8Array], { type: "application/pdf" });
-      console.log("file: ", file);
-
-      return URL.createObjectURL(file);
-    } else if (fileData) {
-      console.log("fileData: ", fileData);
-      return URL.createObjectURL(fileData);
-    }
-    return undefined;
-  } catch (err) {
-    console.log("error: ", err);
-    return undefined;
-  }
-};
+// Helper functions moved to utils/ - imported above
 
 // Helper function to calculate bid total (ensures proper number conversion)
 const calculateBidTotal = (items: IBidItem[] | undefined): number => {
@@ -153,22 +71,7 @@ const calculateBidTotal = (items: IBidItem[] | undefined): number => {
   return total;
 };
 
-// Helper function for fetch with retry
-const fetchWithRetry = async (url: string, options: RequestInit, retries = 3, delay = 1000) => {
-  try {
-    const response = await fetch(url, options);
-    if (!response.ok) {
-      throw new Error(`HTTP error! Status: ${response.status}`);
-    }
-    return await response.json();
-  } catch (error) {
-    if (retries > 0) {
-      await new Promise((resolve) => setTimeout(resolve, delay));
-      return fetchWithRetry(url, options, retries - 1, delay * 2);
-    }
-    throw error;
-  }
-};
+// Helper function moved to utils/ - imported above
 
 // Tab configuration
 const TAB_CONFIG = [
@@ -176,7 +79,8 @@ const TAB_CONFIG = [
   { id: 'pr-items', label: 'PR Items', icon: '📦' },
   { id: 'bids', label: 'Supplier Bids', icon: '💰' },
   { id: 'committee', label: 'Committee & Approvals', icon: '👥' },
-  { id: 'compliance', label: 'Compliance & Rankings', icon: '✅' }
+  { id: 'compliance', label: 'Compliance', icon: '✅' },
+  { id: 'rankings', label: 'Rankings & Evaluation', icon: '🏆' }
 ] as const;
 
 type TabId = typeof TAB_CONFIG[number]['id'];
@@ -200,137 +104,149 @@ export default function Schedule({
   prid: string | null;
   csid: string | null;
 }) {
-  // State
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [loadingOperation, setLoadingOperation] = useState<string>("");
-  const [csId, setCsId] = useState<string>("");
-  const [storedPrId, setStoredPrId] = useState<string>(""); // Store PR ID from CS data
-  const [creator, setCreator] = useState<string>("");
-  const [createdAt, setCreatedAt] = useState<string>("");
-  const [suppliers, setSuppliers] = useState<ISupplier[]>([]);
-  const [users, setUsers] = useState<IUser[]>([]);
-  const [uom, setUom] = useState<IUom[]>([]);
-  const [activeTab, setActiveTab] = useState<TabId>('details');
-  const [loadedTabs, setLoadedTabs] = useState<Set<TabId>>(new Set(['details']));
-  
-  // Additional state variables from ScheduleRef.tsx
-  // const [requesterRole] = useState<string>(""); // For future role-based features
-  const [csOwner, setCsOwner] = useState<string>("");
-  const [procRef, setProcRef] = useState<string>("");
-  const [currency, setCurrency] = useState<ICurrency>();
-  const [currencies, setCurrencies] = useState<ICurrency[]>([]);
-  const [procPlan, setProcPlan] = useState<IProcPlan>();
-  const [procPlans, setProcPlans] = useState<IProcPlan[]>([]);
-  const [quantity] = useState<string>("");
-  const [advert, setAdvert] = useState<File>();
-  const [existingAdvert, setExistingAdvert] = useState<string>(""); // Base64 encoded existing advert
+  // Zustand Store - Complete State and Actions
+  const {
+    // Basic schedule data
+    csId, storedPrId, creator, createdAt, csOwner, procRef, username,
+    // Reference data
+    suppliers, users, currencies, procPlans, currency, procPlan,
+    // PR data
+    prData, setPrData, updatePrData, updateItemSelection, handleSelectAllItems,
+    // Bid management
+    bidCount, currentBid, bids, addBidModal, updateBidModal,
+    setBidCount, setCurrentBid, setBids, setAddBidModal, setUpdateBidModal,
+    // Compliance management
+    compliance, complianceRemarks, showSamples, showSiteVisit,
+    setCompliance, setComplianceRemarks, setShowSamples, setShowSiteVisit,
+    // Rankings and evaluation
+    rankings, setRankings,
+    // Committee management
+    committeeMembers, updateCommitteeMembers,
+    // Approval workflow
+    gmApproval, fmApproval, approvalsComplete, approvalsJustificationModal, currentApprover, currentUserRoles,
+    setGmApproval, setFmApproval, setApprovalsComplete, setApprovalsJustificationModal, setCurrentApprover, setCurrentUserRoles,
+    // Loading states
+    isLoading, loadingOperation,
+    // UI state
+    activeTab, loadedTabs,
+    // File management
+    advert, advertMetadata,
+    // Additional features
+    additionalNotes, buyersNotes, directPurchaseLimit, onAddSupplier, newSupplier, showSupplierDetails,
+    supplierSearchTerm, showSupplierDropdown, uomSearchTerm, showUomDropdown, activeUomItem, expandedBids,
+    // Validation state
+    bidValidationErrors, invalidFields,
+    // Search state
+    uomSearchResults, isUomSearching, supplierSearchResults, isSupplierSearching,
+    debouncedUomSearchTerm, debouncedSupplierSearchTerm,
+    // Response and input
+    response, prIdInput, quantity,
+    // Actions
+    setCsId, setStoredPrId, setCreator, setCreatedAt, setCsOwner, setProcRef, setUsername,
+    setSuppliers, setUsers, setCurrencies, setProcPlans, setCurrency, setProcPlan,
+    resetForNewSchedule,
+    setAdditionalNotes, setBuyersNotes, setDirectPurchaseLimit, setOnAddSupplier, setNewSupplier, setShowSupplierDetails,
+    setSupplierSearchTerm, setShowSupplierDropdown, setUomSearchTerm, setShowUomDropdown, setActiveUomItem, setExpandedBids,
+    setBidValidationErrors, setInvalidFields,
+    setUomSearchResults, setIsUomSearching, setSupplierSearchResults, setIsSupplierSearching,
+    setDebouncedUomSearchTerm, setDebouncedSupplierSearchTerm,
+    setResponse, setPrIdInput,
+    setIsLoading, setLoadingOperation, setActiveTab, setLoadedTabs,
+    setAdvert, setAdvertMetadata
+  } = useScheduleStore();
   
   // Simple usage to satisfy linter - will be used properly in dropdowns later
   const currenciesCount = currencies.length;
   const procPlansCount = procPlans.length;
-  const [username, setUsername] = useState<string>("");
   
-  // Enhanced bid management state
-  const [bidCount, setBidCount] = useState<number>(0);
-  const [currentBid, setCurrentBid] = useState<IBid>();
-  const [bids, setBids] = useState<IBid[]>([]);
-  const [addBidModal, setAddBidModal] = useState<boolean>(false);
-  const [updateBidModal, setUpdateBidModal] = useState<boolean>(false);
+  // Note: advert and advertMetadata are read-only from store for now
+  // We'll need to add setter actions to the store if we need to modify them
   
-  // Compliance management state
-  const [compliance, setCompliance] = useState<ICompliance[]>([]);
-  const [complianceRemarks, setComplianceRemarks] = useState<IComplianceRemark[]>([]);
-  const [showSamples, setShowSamples] = useState<string>("no");
-  const [showSiteVisit, setShowSiteVisit] = useState<string>("no");
-  
-  // Rankings and evaluation state
-  const [rankings, setRankings] = useState<IRank[]>([]);
-  
-  // Committee management state
-  const { committeeMembers, updateCommitteeMembers } = useCommitteeState();
-  
-  // Approval workflow state
-  const [gmApproval, setGmApproval] = useState<IGmApproval>();
-  const [fmApproval, setFmApproval] = useState<IFmApproval>();
-  const [approvalsComplete, setApprovalsComplete] = useState<boolean>(false);
-  const [approvalsJustificationModal, setApprovalsJustificationModal] = useState<boolean>(false);
-  const [currentApprover, setCurrentApprover] = useState<ICurrentApprover>();
-  
-  // Additional features state
-  const [additionalNotes, setAdditionalNotes] = useState<string>("");
-  const [buyersNotes, setBuyersNotes] = useState<string>("");
-  const [directPurchaseLimit, setDirectPurchaseLimit] = useState<boolean>(true);
-  const [onAddSupplier, setOnAddSupplier] = useState<boolean>(false);
-  const [newSupplier, setNewSupplier] = useState<ISupplier>({});
-  const [showSupplierDetails, setShowSupplierDetails] = useState<boolean>(false);
-  const [supplierSearchTerm, setSupplierSearchTerm] = useState<string>("");
-  const [showSupplierDropdown, setShowSupplierDropdown] = useState<boolean>(false);
-  const [uomSearchTerm, setUomSearchTerm] = useState<string>("");
-  const [showUomDropdown, setShowUomDropdown] = useState<boolean>(false);
-  const [activeUomItem, setActiveUomItem] = useState<string>("");
-  const [expandedBids, setExpandedBids] = useState<Set<number>>(new Set());
-  
-  // PR Data State
-  const [prData, setPrData] = useState<{
-    pr_number: string;
-    pr_date: string;
-    reference_date: string;
-    procurement_plan_description: string;
-    procurement_plan_id: string;
-    currency: string;
-    closing_date: string;
-    closing_time: string;
-    cs_opened_date: string;
-    scope_of_work: string;
-    tac_date: string;
-    region: string;
-    show_site_visit: boolean;
-    show_samples_required: boolean;
-    internal_notes: string;
-    items: Array<{
-      id: string;
-      name: string;
-      quantity: number;
-      unit: string;
-      status: string;
-      included: boolean;
-    }>;
-  }>({
-    pr_number: '',
-    pr_date: '',
-    reference_date: '',
-    procurement_plan_description: '',
-    procurement_plan_id: '',
-    currency: '',
-    closing_date: '',
-    closing_time: '',
-    cs_opened_date: '',
-    scope_of_work: '',
-    tac_date: '',
-    region: '',
-    show_site_visit: false,
-    show_samples_required: false,
-    internal_notes: '',
-    items: []
-  });
-
-  const [response, setResponse] = useState<{
-    open: boolean;
-    message: string;
-    title: string;
-    success: boolean;
-  }>({
-    open: false,
-    message: "",
-    title: "",
-    success: false,
-  });
+  // All state is now managed by Zustand store - see destructuring above
   
   // API Functions
   const api = useScheduleApi({ base_url, setIsLoading });
+
+  // Optimized file upload handler
+  // This function handles file uploads separately from schedule saving
+  // The uploaded file path is stored and used when saving the schedule
+  const handleFileUpload = useCallback(async (file: File, fileType: string = 'advert', description?: string) => {
+    try {
+      setIsLoading(true);
+      const result = await api.uploadFile(file, fileType, description);
+      
+      if (result && result.success) {
+        // Store file metadata for later use
+        const metadata = {
+          name: result.metadata.original_name,
+          size: result.metadata.size,
+          download_url: result.download_url,
+          preview_url: result.preview_url,
+          mime_type: result.metadata.mime_type,
+          file_path: result.file_path
+        };
+        
+        console.log('📄 File upload successful:', {
+          fileName: file.name,
+          filePath: result.file_path,
+          metadata: metadata
+        });
+        
+        if (fileType === 'advert') {
+          setAdvertMetadata(metadata);
+          console.log('📄 Advertisement metadata updated:', metadata);
+        }
+        
+        onOpenResponse("File Upload Success", `File "${file.name}" uploaded successfully`, true);
+        return metadata;
+      } else {
+        throw new Error(result?.message || 'Upload failed');
+      }
+    } catch (error) {
+      console.error('File upload error:', error);
+      onOpenResponse("File Upload Error", `Failed to upload file: ${error}`, false);
+      return null;
+    } finally {
+      setIsLoading(false);
+    }
+  }, [api, setIsLoading]);
+
+  // Cleanup blob URLs to prevent memory leaks
+  useEffect(() => {
+    return () => {
+      if (advertMetadata?.is_base64 && advertMetadata.download_url.startsWith('blob:')) {
+        URL.revokeObjectURL(advertMetadata.download_url);
+        console.log('🧹 Cleaned up advertisement blob URL');
+      }
+    };
+  }, [advertMetadata]);
+  
+  // Debug: Log advertMetadata changes
+  useEffect(() => {
+    console.log("🔍 advertMetadata changed:", advertMetadata);
+  }, [advertMetadata]);
   
   // Memoized CSRF token
   const csrfToken = useMemo(() => getCookie("csrftoken") ?? "", []);
+
+  // Initialize services
+  const scheduleService = useMemo(() => new ScheduleService(base_url, csrfToken), [base_url, csrfToken]);
+  const bidService = useMemo(() => new BidService(base_url, csrfToken), [base_url, csrfToken]);
+  const complianceService = useMemo(() => new ComplianceService(base_url, csrfToken), [base_url, csrfToken]);
+  const committeeService = useMemo(() => new CommitteeService(base_url, csrfToken), [base_url, csrfToken]);
+  const fileService = useMemo(() => new FileService(10 * 1024 * 1024, base_url), [base_url]);
+  const validationService = useMemo(() => new ValidationService(), []);
+  const notificationService = useMemo(() => new NotificationService(), []);
+  
+  // Helper function to get file download URL using service
+  const getFileDownloadUrl = useCallback((fileData: string | File | { download_url?: string } | null | undefined): string | undefined => {
+    return fileService.getFileDownloadUrl(fileData);
+  }, [fileService]);
+  
+  // Helper function to show success notifications using service
+  const showSuccessNotification = useCallback((title: string, message: string) => {
+    notificationService.showSuccess(title, message);
+  }, [notificationService]);
   
   // Memoized request options
   const defaultRequestOptions = useMemo(() => ({
@@ -343,24 +259,67 @@ export default function Schedule({
   
   // Initialize component
   useEffect(() => {
+    console.log('🚀 Component initialization effect triggered');
+    console.log('🔍 Initial values:', { csid, prid, username_ });
+    console.log('🔍 Current pathname:', window.location.pathname);
+    
     const cs_id = csid || '';
     const pr_id = prid || '';
     
-    if (cs_id) {
+    // Check if this is a new schedule creation (URL contains 'create')
+    const isNewScheduleCreation = window.location.pathname.includes('create');
+    
+    console.log('🔍 Schedule creation type:', { isNewScheduleCreation, cs_id, pr_id });
+    
+    if (cs_id && !isNewScheduleCreation) {
+      // Existing schedule - load CS data
+      console.log('🔄 Loading existing schedule with CS ID:', cs_id);
       setCsId(cs_id);
       setUsername(username_ ?? "");
       fetchCS(cs_id);
-    } else if (pr_id) {
+    } else if (isNewScheduleCreation) {
+      // New schedule creation - reset store to clear any cached data
+      console.log('🔄 Creating new schedule - resetting store to clear cached data');
+      resetForNewSchedule();
       setUsername(username_ ?? "");
-      // Set creator and created_at for new schedule (will be updated with full name after users are loaded)
       setCreator(username_ ?? "");
       setCreatedAt(new Date().toISOString());
-      onFetchPR(pr_id);
+      
+      // If we have a CS ID for new creation, set it for later use
+      if (cs_id) {
+        console.log('📝 New schedule creation with pre-generated CS ID:', cs_id);
+        setCsId(cs_id);
+      }
+      
+      if (pr_id) {
+        // New schedule with PR ID - load PR data
+        console.log('🔄 Creating new schedule from PR ID:', pr_id);
+        onFetchPR(pr_id);
+      } else {
+        // Load reference data for new schedules (currencies, proc plans, etc.)
+        console.log('🔄 Loading reference data for new schedule...');
+        api.fetchReferenceData()
+          .then(refResponse => {
+            if (refResponse && refResponse.success) {
+              console.log('✅ Reference data loaded for new schedule');
+              setSuppliers(refResponse.suppliers || []);
+              setUsers(refResponse.users || []);
+              setCurrencies(refResponse.currencies || []);
+              setProcPlans(refResponse.proc_plans || []);
+              console.log('📋 Currencies loaded:', refResponse.currencies?.length || 0);
+              console.log('📋 Proc Plans loaded:', refResponse.proc_plans?.length || 0);
+            }
+          })
+          .catch(error => {
+            console.error('❌ Error loading reference data for new schedule:', error);
+            // Fallback: still fetch users even if reference data fails
+            fetchUsers();
+          });
+      }
     } else {
+      // Fallback case - should not happen in normal operation
+      console.log('⚠️ Unexpected state - no CS ID and not in create mode');
       setUsername(username_ ?? "");
-      // Set creator and created_at for new schedule (will be updated with full name after users are loaded)
-      setCreator(username_ ?? "");
-      setCreatedAt(new Date().toISOString());
     }
     
     fetchUsers();
@@ -387,14 +346,31 @@ export default function Schedule({
     try {
       const data = await fetchWithRetry(buildApiUrl(base_url, getApiEndpoints().CS_DETAILS(cs_id)), defaultRequestOptions);
       console.log("CS Basic Data:", data);
+      console.log("CS Owner from API:", data.cs_owner);
+      console.log("Users in data:", data.users ? data.users.length : 'undefined');
+      console.log("Committee in data:", data.committee ? data.committee.length : 'undefined');
+      console.log("Compliance in data:", data.compliance ? data.compliance.length : 'undefined');
+      console.log("Rankings in data:", data.rankings ? data.rankings.length : 'undefined');
+      console.log("Data keys:", Object.keys(data));
       // Data is now returned as normal JSON, no double encoding
       const parsedData = data;
+      console.log("🔍 Full parsedData structure:", JSON.stringify(parsedData, null, 2));
+      console.log("🔍 Advertisement field specifically:", {
+        advert: parsedData.advert,
+        advertType: typeof parsedData.advert,
+        advertExists: 'advert' in parsedData,
+        advertNull: parsedData.advert === null,
+        advertUndefined: parsedData.advert === undefined
+      });
       // Extract basic metadata
       setCreator(parsedData.creator || '');
       setCreatedAt(parsedData.created_at || '');
       
       // Set CS ID from response
       setCsId(parsedData.cs_id || cs_id);
+      
+      // Set CS owner from response (needed for permission checks)
+      setCsOwner(parsedData.cs_owner || '');
       
       // Set PR ID from response (needed for item updates)
       if (parsedData.pr_id) {
@@ -419,9 +395,7 @@ export default function Schedule({
       if (parsedData.currencies) {
         setCurrencies(parsedData.currencies);
       }
-      if (parsedData.uom) {
-        setUom(parsedData.uom);
-      }
+      
       
       // Set currency and proc plan if available
       if (parsedData.currency) {
@@ -432,9 +406,132 @@ export default function Schedule({
         setProcRef(parsedData.proc_plan.proc_ref || '');
       }
       
-      // Set existing advert if available
-      if (parsedData.advert) {
-        setExistingAdvert(parsedData.advert);
+      // Set existing advert metadata if available
+      console.log("🔍 Checking for advert data in parsedData...");
+      if (parsedData?.advert) {
+        console.log("🔍 Advertisement data found:", {
+          hasData: !!parsedData?.advert,
+          dataLength: parsedData?.advert?.length || 0,
+          dataStart: parsedData?.advert?.substring(0, 20) || 'N/A',
+          isString: typeof parsedData?.advert === 'string',
+          fullData: parsedData?.advert
+        });
+        
+        // Handle both Base64 data and file paths intelligently
+        const isBase64 = (
+          parsedData?.advert.startsWith('JVBERi0x') || // PDF Base64 header
+          parsedData?.advert.startsWith('UEsDBBQ') || // DOCX Base64 header
+          parsedData?.advert.startsWith('/9j/') ||     // JPEG Base64 header
+          (parsedData?.advert.length > 100 && /^[A-Za-z0-9+/=]+$/.test(parsedData?.advert))
+        );
+        
+        console.log("🔍 Base64 detection result:", isBase64);
+        
+        if (isBase64) {
+          console.log("🔄 Detected Base64 advertisement data, creating blob URL");
+          
+          // Handle Base64 advertisement data
+          try {
+            const decodedData = atob(parsedData?.advert);
+            const uint8Array = new Uint8Array(decodedData.length);
+            for (let i = 0; i < decodedData.length; i++) {
+              uint8Array[i] = decodedData.charCodeAt(i);
+            }
+            
+            // Detect MIME type from Base64 header
+            let mimeType = 'application/pdf';
+            let extension = '.pdf';
+            if (parsedData?.advert.startsWith('JVBERi0x')) {
+              mimeType = 'application/pdf';
+              extension = '.pdf';
+            } else if (parsedData?.advert.startsWith('UEsDBBQ')) {
+              mimeType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+              extension = '.docx';
+            } else if (parsedData?.advert.startsWith('/9j/')) {
+              mimeType = 'image/jpeg';
+              extension = '.jpg';
+            }
+            
+            const blob = new Blob([uint8Array], { type: mimeType });
+            const blobUrl = URL.createObjectURL(blob);
+            
+            const metadata = {
+              name: `advertisement${extension}`,
+              size: uint8Array.length,
+              download_url: blobUrl,
+              preview_url: blobUrl,
+              mime_type: mimeType,
+              file_path: parsedData?.advert,
+              is_base64: true
+            };
+            console.log("🔍 Setting Base64 advert metadata:", metadata);
+            setAdvertMetadata(metadata);
+            
+            // Debug: Check if advertMetadata was set correctly
+            setTimeout(() => {
+              console.log("🔍 advertMetadata after setting Base64:", metadata);
+            }, 100);
+          } catch (error) {
+            console.error("Error processing Base64 advertisement data:", error);
+            // Fallback to treating as file path
+            const fileName = parsedData?.advert.includes('/') 
+              ? parsedData?.advert.split('/').pop() || 'advertisement.pdf'
+              : parsedData?.advert || 'advertisement.pdf';
+              
+            const fallbackMetadata = {
+              name: fileName,
+              size: 0,
+              download_url: buildApiUrl(base_url, getApiEndpoints().FILE_DOWNLOAD(parsedData.advert)),
+                preview_url: buildApiUrl(base_url, getApiEndpoints().FILE_PREVIEW(parsedData.advert)),
+                mime_type: 'application/pdf',
+              file_path: parsedData?.advert
+            };
+            
+            console.log("🔍 Setting fallback advert metadata:", fallbackMetadata);
+            setAdvertMetadata(fallbackMetadata);
+            
+            // Debug: Check if advertMetadata was set correctly
+            setTimeout(() => {
+              console.log("🔍 advertMetadata after setting fallback:", fallbackMetadata);
+            }, 100);
+          }
+        } else {
+          // Handle file path (optimized endpoint)
+          console.log("🔄 Detected file path advertisement data:", parsedData.advert);
+          
+          // Extract filename from path if possible
+          const fileName = parsedData.advert.includes('/') 
+            ? parsedData.advert.split('/').pop() || 'advertisement.pdf'
+            : parsedData.advert || 'advertisement.pdf';
+          
+          const metadata = {
+            name: fileName,
+            size: 0, // File size not available for file paths
+            download_url: buildApiUrl(base_url, getApiEndpoints().FILE_DOWNLOAD(parsedData.advert)),
+            preview_url: buildApiUrl(base_url, getApiEndpoints().FILE_PREVIEW(parsedData.advert)),
+            mime_type: 'application/pdf',
+            file_path: parsedData.advert
+          };
+          console.log("🔍 Setting file path advert metadata:", metadata);
+          setAdvertMetadata(metadata);
+          
+          // Debug: Check if advertMetadata was set correctly
+          setTimeout(() => {
+            console.log("🔍 advertMetadata after setting:", metadata);
+          }, 100);
+        }
+      } else {
+        console.log("🔍 No advertisement data found in parsedData");
+        console.log("🔍 Available fields:", Object.keys(parsedData));
+        console.log("🔍 Checking for alternative advert fields...");
+        
+        // Check for alternative field names that might contain advert data
+        const possibleAdvertFields = ['advertisement', 'advert_file', 'advert_path', 'file_path', 'document'];
+        for (const field of possibleAdvertFields) {
+          if (parsedData[field]) {
+            console.log(`🔍 Found alternative field '${field}':`, parsedData[field]);
+          }
+        }
       }
       
       // Extract PR/CS data - backend returns all fields at root level
@@ -522,6 +619,30 @@ export default function Schedule({
         setBidCount(parsedData.bids.length);
       }
       
+      // Load committee data if available
+      if (parsedData.committee && Array.isArray(parsedData.committee)) {
+        console.log('🔍 Committee data loaded:', parsedData.committee.length, 'members');
+        updateCommitteeMembers(parsedData.committee);
+      }
+      
+      // Load compliance data if available
+      if (parsedData.compliance && Array.isArray(parsedData.compliance)) {
+        console.log('🔍 Compliance data loaded:', parsedData.compliance.length, 'items');
+        setCompliance(parsedData.compliance);
+      }
+      
+      // Load compliance remarks if available
+      if (parsedData.complianceRemarks && Array.isArray(parsedData.complianceRemarks)) {
+        console.log('🔍 Compliance remarks loaded:', parsedData.complianceRemarks.length, 'remarks');
+        setComplianceRemarks(parsedData.complianceRemarks);
+      }
+      
+      // Load rankings data if available
+      if (parsedData.rankings && Array.isArray(parsedData.rankings)) {
+        console.log('🔍 Rankings data loaded:', parsedData.rankings.length, 'rankings');
+        setRankings(parsedData.rankings);
+      }
+      
     } catch (error) {
       console.error("Error fetching CS:", error);
       onOpenResponse("Error", "Failed to load CS data", false);
@@ -583,7 +704,6 @@ export default function Schedule({
                setUsers(refResponse.users || []);
                setCurrencies(refResponse.currencies || []);
                setProcPlans(refResponse.proc_plans || []);
-               setUom(refResponse.uom || []);
                // Log to verify data is loaded (and satisfy linter)
                console.log('📋 Currencies loaded:', refResponse.currencies?.length || 0, 'Current count:', currenciesCount);
                console.log('📋 Proc Plans loaded:', refResponse.proc_plans?.length || 0, 'Current count:', procPlansCount);
@@ -637,15 +757,21 @@ export default function Schedule({
     }, [api]);
 
 
-  // Fetch users - only when needed
+  // Fetch users - optimized for better performance
   const fetchUsers = useCallback(async () => {
-    // Always fetch all users for committee management, regardless of CS data
-    setLoadingOperation("Loading all users");
+    // Skip if users already loaded to avoid unnecessary API calls
+    if (users.length > 0) {
+      return;
+    }
+    
+    setLoadingOperation("Loading users");
     try {
-      const data = await fetchWithRetry(buildApiUrl(base_url, getApiEndpoints().USERS), defaultRequestOptions);
+      const data = await fetchWithRetry(
+        buildApiUrl(base_url, `${getApiEndpoints().USERS}?limit=100`), 
+        defaultRequestOptions
+      );
       
       if (Array.isArray(data)) {
-        console.log('🔍 Fetched ALL users from API:', data.length);
         setUsers(data);
       }
     } catch (error) {
@@ -653,25 +779,9 @@ export default function Schedule({
     } finally {
       setLoadingOperation("");
     }
-  }, [base_url, defaultRequestOptions]);
+  }, [base_url, defaultRequestOptions, users.length]);
 
-  // Force refresh all users for committee management
-  const fetchAllUsersForCommittee = useCallback(async () => {
-    console.log('🔍 Force fetching ALL users for committee...');
-    setLoadingOperation("Loading all users for committee");
-    try {
-      const data = await fetchWithRetry(buildApiUrl(base_url, getApiEndpoints().USERS), defaultRequestOptions);
-      
-      if (Array.isArray(data)) {
-        console.log('🔍 Successfully loaded ALL users:', data.length);
-        setUsers(data);
-      }
-    } catch (error) {
-      console.error("Error fetching all users:", error);
-    } finally {
-      setLoadingOperation("");
-    }
-  }, [base_url, defaultRequestOptions]);
+
   
   // Note: Suppliers are now loaded as part of CS basic data, no separate fetch needed
   
@@ -719,10 +829,13 @@ export default function Schedule({
             fetchWithRetry(
               buildApiUrl(base_url, getApiEndpoints().CS_APPROVALS_DATA(csId)), 
               defaultRequestOptions
-            ),
-            // Always ensure we have ALL users for committee management
-            fetchAllUsersForCommittee()
+            )
           ]);
+          
+          // Load users only if not already loaded (lazy loading for better performance)
+          if (users.length === 0) {
+            await fetchUsers();
+          }
           
           // Store the loaded committee data in state
           if (committeeData && committeeData.committee) {
@@ -731,12 +844,21 @@ export default function Schedule({
           
           // Store approval data if available
           if (approvalData) {
+            console.log('🔍 Received approval data:', approvalData);
             if (approvalData.gm_approval) {
               setGmApproval(approvalData.gm_approval);
             }
             if (approvalData.fm_approval) {
               setFmApproval(approvalData.fm_approval);
             }
+            if (approvalData.current_user_roles) {
+              console.log('🔍 Setting current user roles:', approvalData.current_user_roles);
+              setCurrentUserRoles(approvalData.current_user_roles);
+            } else {
+              console.log('❌ No current_user_roles in approval data');
+            }
+          } else {
+            console.log('❌ No approval data received');
           }
           break;
         }
@@ -762,7 +884,7 @@ export default function Schedule({
           
           // Also try to load existing rankings if they exist
           try {
-            const rankingsResponse = await fetch(`${base_url}/api/cs-rankings/${csId}/`, defaultRequestOptions);
+            const rankingsResponse = await fetch(buildApiUrl(base_url, `/api/cs-rankings/${csId}/`), defaultRequestOptions);
             if (rankingsResponse.ok) {
               const rankingsData = await rankingsResponse.json();
               if (rankingsData && rankingsData.rankings && rankingsData.rankings.length > 0) {
@@ -777,15 +899,17 @@ export default function Schedule({
         }
           
         case 'pr-items': {
-          // Load PR items data for the CS
+          // Load PR items data for the CS with smooth transitions
           console.log('Loading PR items data...');
           setLoadingOperation("Loading PR items data");
           
-          if (csId) {
-            // For existing CS, use CS-specific endpoint that returns ALL PR items with their status
-            // Always fetch for existing CS to ensure we have complete data
-            console.log('Fetching PR items for existing CS:', csId);
-            try {
+          // Add small delay to prevent jarring transitions
+          await new Promise(resolve => setTimeout(resolve, 150));
+          
+          try {
+            if (csId) {
+              // For existing CS, use CS-specific endpoint that returns ALL PR items with their status
+              console.log('Fetching PR items for existing CS:', csId);
               const itemsResponse = await fetchWithRetry(
                 buildApiUrl(base_url, getApiEndpoints().CS_PR_ITEMS_MANAGEMENT(csId)), 
                 defaultRequestOptions
@@ -814,51 +938,55 @@ export default function Schedule({
               } else {
                 console.warn('Failed to load CS PR items:', itemsResponse);
               }
-            } catch (error) {
-              console.error('Error loading CS PR items:', error);
-            }
-          } else {
-            // For new CS (no CS ID yet), use regular PR items endpoint
-            const effectivePrId = prid || storedPrId;
-            if (effectivePrId && prData.items.length === 0) {
-              console.log('Fetching PR items for new CS, PR ID:', effectivePrId);
-              const itemsResponse = await api.fetchPRItems(effectivePrId, 1, 50);
-              if (itemsResponse && itemsResponse.success) {
-                console.log('✅ PR items loaded:', itemsResponse.pr_items?.length || 0, 'items');
-                setPrData(prev => ({
-                  ...prev,
-                  items: itemsResponse.pr_items?.map((item: {
-                    id: number;
-                    item_required: string;
-                    quantity: number;
-                    unit_of_measurement: string;
-                    ordered: boolean;
-                    status: string;
-                    included: boolean;
-                  }) => ({
-                    id: item.id.toString(),
-                    name: item.item_required,
-                    quantity: item.quantity,
-                    unit: item.unit_of_measurement,
-                    status: item.status || (item.ordered ? 'used_in_other_schedule' : 'available'),
-                    included: item.included !== undefined ? item.included : !item.ordered
-                  })) || []
-                }));
-              } else {
-                console.warn('Failed to load PR items:', itemsResponse);
-              }
-            } else if (!effectivePrId) {
-              console.warn('No PR ID available to load items');
             } else {
-              console.log('PR items already loaded:', prData.items.length, 'items');
+              // For new CS (no CS ID yet), use regular PR items endpoint
+              const effectivePrId = prid || storedPrId;
+              if (effectivePrId && prData.items.length === 0) {
+                console.log('Fetching PR items for new CS, PR ID:', effectivePrId);
+                const itemsResponse = await api.fetchPRItems(effectivePrId, 1, 50);
+                if (itemsResponse && itemsResponse.success) {
+                  console.log('✅ PR items loaded:', itemsResponse.pr_items?.length || 0, 'items');
+                  setPrData(prev => ({
+                    ...prev,
+                    items: itemsResponse.pr_items?.map((item: {
+                      id: number;
+                      item_required: string;
+                      quantity: number;
+                      unit_of_measurement: string;
+                      ordered: boolean;
+                      status: string;
+                      included: boolean;
+                    }) => ({
+                      id: item.id.toString(),
+                      name: item.item_required,
+                      quantity: item.quantity,
+                      unit: item.unit_of_measurement,
+                      status: item.status || (item.ordered ? 'used_in_other_schedule' : 'available'),
+                      included: item.included !== undefined ? item.included : !item.ordered
+                    })) || []
+                  }));
+                } else {
+                  console.warn('Failed to load PR items:', itemsResponse);
+                }
+              } else if (!effectivePrId) {
+                console.warn('No PR ID available to load items');
+              } else {
+                console.log('PR items already loaded:', prData.items.length, 'items');
+              }
             }
+          } catch (error) {
+            console.error('Error loading PR items:', error);
           }
+          
+          // Smooth transition out of loading state
+          await new Promise(resolve => setTimeout(resolve, 100));
           setLoadingOperation('');
           break;
         }
       }
       
-      setLoadedTabs(prev => new Set([...prev, tabId]));
+      const currentLoadedTabs = useScheduleStore.getState().loadedTabs;
+      setLoadedTabs(new Set([...currentLoadedTabs, tabId]));
     } catch (error) {
       console.error(`Error loading ${tabId} data:`, error);
     } finally {
@@ -872,49 +1000,53 @@ export default function Schedule({
     await loadTabData(tabId);
   }, [loadTabData]);
   
-  // Handle saving a bid
+  // Handle saving a bid using service
   const handleSaveBid = useCallback(async (bid: IBid) => {
     setIsLoading(true);
     setLoadingOperation("Saving bid");
     
     try {
-      const formData = new FormData();
-      
-      // Append bid data
-      const bidWithoutFile = { ...bid };
-      delete bidWithoutFile.bid_document;
-      
-      formData.append('bid_data', JSON.stringify(bidWithoutFile));
-      
-      // Append file if present
-      if (bid.bid_document) {
-        formData.append('bid_document', bid.bid_document);
-      }
-      
-      const requestOptions = {
-        method: "POST",
-        headers: {
-          "X-CSRFToken": csrfToken,
-        },
-        body: formData,
+      // Prepare bid data for service
+      const bidData = {
+        cs_id: csId,
+        bid_count: bid.bid_count,
+        supplier: bid.supplier,
+        supplier_name: bid.supplier_name,
+        bid_date: bid.bid_date,
+        bid_document: bid.bid_document === null ? undefined : bid.bid_document,
+        items: (bid.items || []).map(item => ({
+          id: item.id,
+          item_required: item.item_required || '',
+          unit_of_measurement: item.unit_of_measurement || '',
+          quantity: item.quantity || 0,
+          unit_price: item.unit_price || 0,
+          total_price: item.total_price || 0,
+          vat: item.vat || '',
+          ordered: item.ordered
+        }))
       };
+
+      // Use service to save bid
+      const data = await bidService.saveBid(bidData);
       
-      await fetchWithRetry(buildApiUrl(base_url, getApiEndpoints().CS_BIDS(csId)), requestOptions);
-      
-      // Refresh data
-      fetchCS(csId);
-      onOpenResponse("Success", "Bid saved successfully", true);
-      
-      // Close the modal
-      if (addBidModal) {
-        setAddBidModal(false);
+      if (data.success) {
+        // Refresh data
+        fetchCS(csId);
+        showSuccessNotification("Success", "Bid saved successfully");
+        
+        // Close the modal
+        if (addBidModal) {
+          setAddBidModal(false);
+        }
+        if (updateBidModal) {
+          setUpdateBidModal(false);
+        }
+        setCurrentBid(undefined);
+        setSupplierSearchTerm("");
+        setShowSupplierDropdown(false);
+      } else {
+        onOpenResponse("Error", data.error || "Failed to save bid", false);
       }
-      if (updateBidModal) {
-        setUpdateBidModal(false);
-      }
-      setCurrentBid(undefined);
-      setSupplierSearchTerm("");
-      setShowSupplierDropdown(false);
     } catch (error) {
       console.error("Error saving bid:", error);
       onOpenResponse("Error", "Failed to save bid", false);
@@ -922,7 +1054,7 @@ export default function Schedule({
       setIsLoading(false);
       setLoadingOperation("");
     }
-  }, [csId, base_url, csrfToken, fetchCS]);
+  }, [csId, bidService, fetchCS]);
   
   // Handle deleting a bid
   const handleDeleteBid = useCallback(async (bid_count: number, supplier_name: string) => {
@@ -951,50 +1083,55 @@ export default function Schedule({
     }
   }, [csId, base_url, csrfToken, fetchCS]);
   
-  // Handle saving committee
+  // Handle saving committee using service
   const handleSaveCommittee = useCallback(async (committee: ICommittee[]) => {
     // Only creators can save committee
-    if (!isCreator()) {
+    const creatorCheck = isCreator();
+    console.log("🔐 handleSaveCommittee - Creator check:", {
+      creatorCheck,
+      csId,
+      username,
+      csOwner,
+      isLoading
+    });
+    
+    if (!creatorCheck) {
       onOpenResponse("Access Denied", "Only the creator can save committee data.", false);
       return;
     }
     setIsLoading(true);
     setLoadingOperation("Saving committee members");
     try {
-      const formData = new FormData();
-      formData.append("cs_id", csId);
-      formData.append("committee", JSON.stringify({ committee }));
-      formData.append("csrfmiddlewaretoken", csrfToken);
-      
-
-      
-      const requestOptions = {
-        method: "POST",
-        headers: {
-          "X-CSRFToken": csrfToken,
-        },
-        body: formData,
+      // Prepare committee data for service
+      const committeeData = {
+        cs_id: csId,
+        committee: committee
       };
+
+      // Use service to save committee
+      const data = await committeeService.saveCommittee(committeeData);
       
-      await fetchWithRetry(buildApiUrl(base_url, getApiEndpoints().CS_SAVE_COMMITTEE), requestOptions);
-      
-      // Update both local and context state
-      updateCommitteeMembers(committee);
-      
-      // Also refresh committee data from server to ensure consistency
-      try {
-        const committeeData = await fetchWithRetry(
-          buildApiUrl(base_url, getApiEndpoints().CS_COMMITTEE_DATA(csId)), 
-          defaultRequestOptions
-        );
-        if (committeeData && committeeData.committee) {
-          updateCommitteeMembers(committeeData.committee);
+      if (data.success) {
+        // Update both local and context state
+        updateCommitteeMembers(committee);
+        
+        // Also refresh committee data from server to ensure consistency
+        try {
+          const committeeData = await fetchWithRetry(
+            buildApiUrl(base_url, getApiEndpoints().CS_COMMITTEE_DATA(csId)), 
+            defaultRequestOptions
+          );
+          if (committeeData && committeeData.committee) {
+            updateCommitteeMembers(committeeData.committee);
+          }
+        } catch (error) {
+          console.error("Error refreshing committee data:", error);
         }
-      } catch (error) {
-        console.error("Error refreshing committee data:", error);
+        
+        onOpenResponse("Success", "Committee saved successfully", true);
+      } else {
+        onOpenResponse("Error", data.error || "Failed to save committee", false);
       }
-      
-      onOpenResponse("Success", "Committee saved successfully", true);
     } catch (error) {
       console.error("Error saving committee:", error);
       onOpenResponse("Error", "Failed to save committee", false);
@@ -1002,14 +1139,17 @@ export default function Schedule({
       setIsLoading(false);
       setLoadingOperation("");
     }
-  }, [csId, base_url, csrfToken, fetchCS]);
+  }, [csId, committeeService, fetchCS]);
   
   
   // Check if all approvals are complete
   const checkApprovalsComplete = useCallback(() => {
-    const committeeApproved = committeeMembers.length > 0 && committeeMembers.every(m => m.memberApproval === "Approved");
+    // Committee is approved if there are no members OR if all members have approved
+    const committeeApproved = committeeMembers.length === 0 || committeeMembers.every(m => m.memberApproval === "Approved");
     const gmApproved = !!gmApproval && gmApproval.approval === "Approved";
     const fmApproved = !!fmApproval && fmApproval.approval === "Approved";
+    
+
     
     const allComplete = committeeApproved && gmApproved && fmApproved;
     setApprovalsComplete(allComplete);
@@ -1032,51 +1172,144 @@ export default function Schedule({
   // Handle approval action
   const handleApprove = useCallback(async (
     role: string,
-    username: string,
+    targetUsername: string, // Renamed for clarity - this is the user being approved
     approval: string,
     justification: string
   ) => {
-    // Only creators can perform approvals
-    if (!isCreator()) {
-      onOpenResponse("Access Denied", "Only the creator can perform approval actions.", false);
-      return;
+    // Check if user is creator
+    const userIsCreator = isCreator();
+    
+    // Find current logged-in user info for debugging
+    const currentLoggedInUser = users.find(user => user.username === username);
+    const targetUser = users.find(user => user.username === targetUsername);
+    
+    console.log("🔐 handleApprove - User info debug:", {
+      currentLoggedInUsername: username,
+      targetUsername: targetUsername,
+      currentLoggedInUser: currentLoggedInUser ? {
+        username: currentLoggedInUser.username,
+        first_name: currentLoggedInUser.first_name,
+        last_name: currentLoggedInUser.last_name,
+        displayName: `${currentLoggedInUser.first_name} ${currentLoggedInUser.last_name}`
+      } : null,
+      targetUser: targetUser ? {
+        username: targetUser.username,
+        first_name: targetUser.first_name,
+        last_name: targetUser.last_name,
+        displayName: `${targetUser.first_name} ${targetUser.last_name}`
+      } : null,
+      userIsCreator,
+      csOwner
+    });
+    
+    // For committee approvals: only committee members can approve
+    if (role === 'committee') {
+      // Check if the CURRENT USER (not the target user) is a committee member
+      const isCommitteeMember = committeeMembers.some(member => member.memberUserName === username);
+      
+      console.log("🔐 Committee approval debug:", {
+        role,
+        currentLoggedInUsername: username,
+        targetUsername: targetUsername,
+        userIsCreator,
+        isCommitteeMember,
+        committeeMembers: committeeMembers.map(m => ({ 
+          memberUserName: m.memberUserName, 
+          memberPosition: m.memberPosition 
+        })),
+        csOwner,
+        usernameComparisons: committeeMembers.map(m => ({
+          member: m.memberUserName,
+          currentLoggedIn: username,
+          match: m.memberUserName === username
+        }))
+      });
+      
+      // Only committee members can perform committee approvals
+      if (!isCommitteeMember) {
+        if (userIsCreator) {
+          onOpenResponse("Access Denied", "Creators cannot approve their own documents unless they are committee members. Please add yourself to the committee first.", false);
+        } else {
+          onOpenResponse("Access Denied", "Only committee members can perform committee approvals.", false);
+        }
+        return;
+      }
+    } else {
+      // For non-committee approvals (FM/GM): creators cannot approve
+      if (userIsCreator) {
+        onOpenResponse("Access Denied", "Creators cannot approve their own documents. Only committee members can perform approval actions.", false);
+        return;
+      }
     }
     setIsLoading(true);
     setLoadingOperation(`Processing ${approval.toLowerCase()} action`);
     try {
-      const requestOptions = {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-CSRFToken": csrfToken,
-        },
-        body: JSON.stringify({
-          role,
-          username,
-          approval,
-          justification,
-        }),
-      };
-      
-      const data = await fetchWithRetry(buildApiUrl(base_url, getApiEndpoints().CS_APPROVAL(csId)), requestOptions);
-      
-      // Update approval state based on role
-      if (role === 'GM') {
-        setGmApproval({
-          id: data.approval_id || 1,
-          approver_name: username,
-          approval,
-          approval_date: new Date().toISOString(),
-          justification
-        });
-      } else if (role === 'FM') {
-        setFmApproval({
-          id: data.approval_id || 1,
-          approver_name: username,
-          approval,
-          approval_date: new Date().toISOString(),
-          justification
-        });
+      // Handle committee approvals differently
+      if (role === 'committee') {
+        const formData = new FormData();
+        formData.append("cs_id", csId);
+        formData.append("username", targetUsername); // Use targetUsername - the person being approved
+        formData.append("approval", approval);
+        formData.append("justification", justification);
+        formData.append("csrfmiddlewaretoken", csrfToken);
+        
+        const requestOptions = {
+          method: "POST",
+          headers: {
+            "X-CSRFToken": csrfToken,
+          },
+          body: formData,
+        };
+        
+        await fetchWithRetry(buildApiUrl(base_url, getApiEndpoints().COMMITTEE_APPROVE), requestOptions);
+        
+        // Refresh committee data
+        const committeeData = await fetchWithRetry(
+          buildApiUrl(base_url, getApiEndpoints().CS_COMMITTEE_DATA(csId)), 
+          defaultRequestOptions
+        );
+        if (committeeData && committeeData.committee) {
+          updateCommitteeMembers(committeeData.committee);
+        }
+      } else {
+        // Handle finance manager and general manager approvals
+        // For FM/GM approvals, use the current logged-in user's username
+        const formData = new FormData();
+        formData.append("cs_id", csId);
+        formData.append("role", role);
+        formData.append("username", username); // Current logged-in user for FM/GM approvals
+        formData.append("approval", approval);
+        formData.append("justification", justification);
+        formData.append("csrfmiddlewaretoken", csrfToken);
+        
+        const requestOptions = {
+          method: "POST",
+          headers: {
+            "X-CSRFToken": csrfToken,
+          },
+          body: formData,
+        };
+        
+        const data = await fetchWithRetry(buildApiUrl(base_url, getApiEndpoints().APPROVAL_APPROVE), requestOptions);
+        
+        // Update approval state based on role
+        if (role === 'general_manager') {
+          setGmApproval({
+            id: data.gm_approval?.id || 1,
+            approver_name: data.gm_approval?.approver_name || username,
+            approval,
+            approval_date: data.gm_approval?.approval_date || new Date().toISOString(),
+            justification
+          });
+        } else if (role === 'finance_manager') {
+          setFmApproval({
+            id: data.fm_approval?.id || 1,
+            approver_name: data.fm_approval?.approver_name || username,
+            approval,
+            approval_date: data.fm_approval?.approval_date || new Date().toISOString(),
+            justification
+          });
+        }
       }
       
       // Refresh data
@@ -1089,52 +1322,9 @@ export default function Schedule({
       setIsLoading(false);
       setLoadingOperation("");
     }
-  }, [csId, base_url, csrfToken, fetchCS]);
+  }, [csId, base_url, csrfToken, fetchCS, updateCommitteeMembers, committeeMembers]);
 
-  // Handle committee member approval
-  const handleCommitteeApprove = useCallback(async (
-    username: string,
-    approval: string,
-    justification: string
-  ) => {
-    setIsLoading(true);
-    setLoadingOperation(`Processing committee ${approval.toLowerCase()}`);
-    try {
-      const formData = new FormData();
-      formData.append("cs_id", csId);
-      formData.append("username", username);
-      formData.append("approval", approval);
-      formData.append("justification", justification);
-      formData.append("csrfmiddlewaretoken", csrfToken);
-      
-      const requestOptions = {
-        method: "POST",
-        headers: {
-          "X-CSRFToken": csrfToken,
-        },
-        body: formData,
-      };
-      
-      await fetchWithRetry(buildApiUrl(base_url, "/approve_cs_committee"), requestOptions);
-      
-      // Refresh committee data
-      const committeeData = await fetchWithRetry(
-        buildApiUrl(base_url, getApiEndpoints().CS_COMMITTEE_DATA(csId)), 
-        defaultRequestOptions
-      );
-      if (committeeData && committeeData.committee) {
-        updateCommitteeMembers(committeeData.committee);
-      }
-      
-      onOpenResponse("Success", `Successfully ${approval.toLowerCase()} committee member`, true);
-    } catch (error) {
-      console.error("Error during committee approval:", error);
-      onOpenResponse("Error", "Failed to process committee approval", false);
-    } finally {
-      setIsLoading(false);
-      setLoadingOperation("");
-    }
-  }, [csId, base_url, csrfToken, updateCommitteeMembers]);
+
   
 
 
@@ -1346,53 +1536,35 @@ export default function Schedule({
 
   // === FORM VALIDATION FUNCTIONS ===
   
-  // Comprehensive field validation for schedule save/update
+  // Comprehensive field validation for schedule save/update using service
   const validateScheduleFields = useCallback((): { isValid: boolean; errors: string[] } => {
-    const errors: string[] = [];
+    // Prepare validation data for service with proper date formatting
+    const validationData = {
+      currency: currency,
+      procPlan: procPlan || prData.procurement_plan_id,
+      scope_of_work: prData.scope_of_work,
+      pr_number: prData.pr_number,
+      pr_date: formatDateForBackend(prData.pr_date),
+      closing_date: formatDateForBackend(prData.closing_date),
+      reference_date: formatDateForBackend(prData.reference_date),
+      closing_time: prData.closing_time,
+      cs_opened_date: formatDateForBackend(prData.cs_opened_date),
+      tac_date: formatDateForBackend(prData.tac_date),
+      advert: advert || advertMetadata
+    };
     
-    if (!currency) errors.push("Currency is required");
-    if (!procPlan) errors.push("Procurement plan is required");
-    if (!prData.scope_of_work?.trim()) errors.push("Scope of work is required");
-    if (!prData.pr_number?.trim()) errors.push("PR number is required");
-    if (!prData.pr_date) errors.push("PR date is required");
-    if (!prData.closing_date) errors.push("Closing date is required");
-    if (!prData.reference_date) errors.push("Reference date is required");
-    if (!prData.closing_time) errors.push("Closing time is required");
-    if (!prData.cs_opened_date) errors.push("CS opened date is required");
-    if (!prData.tac_date) errors.push("TAC date is required");
-    if (!advert) errors.push("Advertisement document is required");
-    
-    return { isValid: errors.length === 0, errors };
-  }, [currency, procPlan, prData, advert]);
+    // Use service to validate schedule
+    return validationService.validateSchedule(validationData);
+  }, [currency, procPlan, prData, advert, advertMetadata, validationService]);
 
-  // File type and size validation
-  const validateFile = useCallback((file: File): { isValid: boolean; error?: string } => {
-    const allowedTypes = [
-      'application/pdf',
-      'application/msword', 
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-      'image/jpeg',
-      'image/jpg', 
-      'image/png'
-    ];
+  // File type and size validation using utility function
+  const validateFileLocal = useCallback((file: File): { isValid: boolean; error?: string } => {
+    const result = validateFileUtil(file);
     
-    const maxSize = 10 * 1024 * 1024; // 10MB
-    
-    if (!allowedTypes.includes(file.type)) {
-      return { 
-        isValid: false, 
-        error: 'File type not allowed. Please upload PDF, DOC, DOCX, JPG, JPEG, or PNG files only.' 
-      };
-    }
-    
-    if (file.size > maxSize) {
-      return { 
-        isValid: false, 
-        error: 'File size too large. Maximum allowed size is 10MB.' 
-      };
-    }
-    
-    return { isValid: true };
+    return { 
+      isValid: result.isValid, 
+      error: result.error
+    };
   }, []);
 
 
@@ -1486,22 +1658,61 @@ export default function Schedule({
   }, [csId, fetchCS]);
 
   // Helper function to check if current user is the creator
-  const isCreator = useCallback(() => {
-    // console.log("isCreator Debug:", {
-    //   csId: csId,
-    //   username: username,
-    //   creator: creator,
-    //   csOwner: csOwner,
-    //   isCreator: username === csOwner,
-    // });
-    // For new schedules (no csId), always return true
+  const isCreator = useCallback((): boolean => {
+    const result = (() => {
+      // For new schedules (no csId), always return true
+      if (!csId || csId === "") {
+        return true;
+      }
+      
+      // Check if this is a new schedule creation (URL contains 'create')
+      const isNewScheduleCreation = window.location.pathname.includes('create');
+      if (isNewScheduleCreation) {
+        console.log('🔐 New schedule creation detected - user is creator');
+        return true;
+      }
+      
+      // Check if schedule approval is complete (committee + FM + GM all approved)
+      // If approval is complete, lock all edit options regardless of creator status
+      const committeeApproved = committeeMembers.length === 0 || committeeMembers.every(m => m.memberApproval === "Approved");
+      const gmApproved = !!gmApproval && gmApproval.approval === "Approved";
+      const fmApproved = !!fmApproval && fmApproval.approval === "Approved";
+      const approvalComplete = committeeApproved && gmApproved && fmApproved;
+      
+      if (approvalComplete) {
+        console.log('🔒 Schedule approval complete - locking all edit options');
+        return false;
+      }
+      
+      // For existing schedules, check if current user is the creator
+      // Use csOwner (username) instead of creator (full name)
+      // If csOwner is empty and we're still loading, return true to avoid blocking operations
+      // This prevents the "Access Denied" modal during initial load
+      if (!csOwner || csOwner === "") {
+        // If we're loading, assume user is creator to prevent blocking
+        // The backend will handle the actual permission check
+        return true;
+      }
+      return username === csOwner;
+    })();
+    
+    // isCreator permission check completed
+    
+    return result;
+  }, [username, creator, csOwner, csId, isLoading, committeeMembers, gmApproval, fmApproval]);
+
+  // Helper function to check if schedule approval is complete
+  const isApprovalComplete = useCallback((): boolean => {
     if (!csId || csId === "") {
-      return true;
+      return false; // New schedules don't have approvals yet
     }
-    // For existing schedules, check if current user is the creator
-    // Use csOwner (username) instead of creator (full name)
-    return username === csOwner;
-  }, [username, creator, csOwner, csId]);
+    
+    const committeeApproved = committeeMembers.length === 0 || committeeMembers.every(m => m.memberApproval === "Approved");
+    const gmApproved = !!gmApproval && gmApproval.approval === "Approved";
+    const fmApproved = !!fmApproval && fmApproval.approval === "Approved";
+    
+    return committeeApproved && gmApproved && fmApproved;
+  }, [csId, committeeMembers, gmApproval, fmApproval]);
 
   // Show response notification
   const onOpenResponse = useCallback((title: string, message: string, success: boolean) => {
@@ -1523,8 +1734,7 @@ export default function Schedule({
     });
   }, []);
 
-  // Handle manual PR fetch
-  const [prIdInput, setPrIdInput] = useState<string>("");
+  // Handle manual PR fetch - Now using Zustand store
   
   const handleFetchPR = useCallback(async () => {
     if (!prIdInput.trim()) {
@@ -1536,48 +1746,21 @@ export default function Schedule({
     setPrIdInput(""); // Clear input after successful fetch
   }, [prIdInput, onFetchPR]);
 
-  // Handle PR data updates
-  const updatePrData = useCallback((field: string, value: string | boolean) => {
-    setPrData(prev => ({
-      ...prev,
-      [field]: value
-    }));
-  }, []);
+  // All PR data management functions are now provided by Zustand store
 
-  // Handle item selection updates
-  const updateItemSelection = useCallback((itemId: string, included: boolean) => {
-    console.log('🔄 Updating item selection:', { itemId, included });
-    setPrData(prev => {
-      const updatedItems = prev.items.map(item => 
-        item.id === itemId ? { ...item, included } : item
-      );
-      
-      console.log('📊 Item selection updated:', {
-        totalItems: updatedItems.length,
-        selectedItems: updatedItems.filter(item => item.included).length,
-        itemDetails: updatedItems.find(item => item.id === itemId)
-      });
-      
-      return {
-        ...prev,
-        items: updatedItems
-      };
-    });
-  }, []);
 
-  // Handle select all/deselect all items - only affects available items
-  const handleSelectAllItems = useCallback((selectAll: boolean) => {
-    setPrData(prev => ({
-      ...prev,
-      items: prev.items.map(item => ({
-        ...item,
-        // Only skip items used in other schedules - allow toggling current schedule items
-        included: item.status === 'used_in_other_schedule' ? item.included : selectAll
-      }))
-    }));
-  }, []);
 
-  // Check if all available items are selected
+
+
+
+
+
+
+
+
+
+
+    // Check if all available items are selected
   const allItemsSelected = useMemo(() => {
     const availableItems = prData.items.filter(item => item.status !== 'used_in_other_schedule');
     return availableItems.length > 0 && availableItems.every(item => item.included);
@@ -1769,7 +1952,11 @@ export default function Schedule({
 
   // Set direct purchase limit
   const onSetDirectPurchaseLimit = useCallback(() => {
-    if (base_url === "/direct_purchase") {
+    // Check if this is a direct purchase module (supports both old and new URL structures)
+    const isDirectPurchase = base_url.includes('/direct_purchase') || 
+                            window.location.pathname.includes('/direct_purchase/');
+    
+    if (isDirectPurchase) {
       const limit = (bids?.length ?? 0) >= 1 ? false : true;
       setDirectPurchaseLimit(limit);
     }
@@ -1822,6 +2009,8 @@ export default function Schedule({
 
   // Update bid modal
   const onUpdateBidModal = useCallback((bid_count: number) => {
+    console.log("🔧 Edit bid triggered:", { bid_count, bids: bids.length, isCreator: isCreator() });
+    
     // Only creators can update bids
     if (!isCreator()) {
       onOpenResponse("Access Denied", "Only the creator can edit bids in this schedule.", false);
@@ -1829,13 +2018,19 @@ export default function Schedule({
     }
 
     const bid = bids.find((bid) => bid && bid.bid_count === bid_count);
+    console.log("🔧 Found bid for editing:", bid);
+    
     if (bid) {
       setCurrentBid(bid);
       // Populate supplier search term for editing
       setSupplierSearchTerm(bid.supplier_name || '');
-      setUpdateBidModal(!updateBidModal);
+      setUpdateBidModal(true); // Always set to true for edit mode
+      console.log("🔧 Edit modal opened for bid:", bid.bid_count);
+    } else {
+      console.error("❌ Bid not found for editing:", bid_count);
+      onOpenResponse("Error", `Bid #${bid_count} not found for editing.`, false);
     }
-  }, [bids, updateBidModal, isCreator, onOpenResponse]);
+  }, [bids, isCreator, onOpenResponse]);
 
   // Close current bid modal
   const onCloseCurrentBid = useCallback(() => {
@@ -1843,6 +2038,8 @@ export default function Schedule({
     setCurrentBid(undefined);
     setSupplierSearchTerm(""); // Clear search when closing modal
     setShowSupplierDropdown(false); // Hide dropdown
+    setBidValidationErrors([]); // Clear validation errors
+    setInvalidFields(new Set()); // Clear invalid fields
   }, []);
 
   // Close update bid modal
@@ -1851,6 +2048,8 @@ export default function Schedule({
     setCurrentBid(undefined);
     setSupplierSearchTerm(""); // Clear search when closing modal
     setShowSupplierDropdown(false); // Hide dropdown
+    setBidValidationErrors([]); // Clear validation errors
+    setInvalidFields(new Set()); // Clear invalid fields
   }, []);
 
   // Handle current bid changes
@@ -1860,6 +2059,20 @@ export default function Schedule({
   ) => {
     const { name, value } = event.target;
     console.log("name: ", name, "value: ", value);
+    
+    // Clear validation errors for this field when user starts typing
+    if (invalidFields.has(name)) {
+      const newInvalidFields = new Set(invalidFields);
+      newInvalidFields.delete(name);
+      setInvalidFields(newInvalidFields);
+      
+      // Remove related error messages
+      const newErrors = bidValidationErrors.filter(error => 
+        !error.toLowerCase().includes(name.toLowerCase())
+      );
+      setBidValidationErrors(newErrors);
+    }
+    
     if (name_ === "supplier_name") {
       setCurrentBid({
         ...currentBid,
@@ -1871,7 +2084,7 @@ export default function Schedule({
         bid_date: value,
       });
     }
-  }, [currentBid]);
+  }, [currentBid, invalidFields, bidValidationErrors]);
 
 
 
@@ -1879,18 +2092,19 @@ export default function Schedule({
   const onBidDocumentChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      const validation = validateFile(file);
+      const validation = validateFileLocal(file);
       if (!validation.isValid) {
         onOpenResponse("File Upload Error", validation.error || "Invalid file", false);
         return;
       }
       
       // Enhanced file handling - log file details for debugging
-      console.log('File uploaded:', {
+      console.log('📄 File uploaded:', {
         name: file.name,
         size: file.size,
         type: file.type,
-        lastModified: new Date(file.lastModified).toISOString()
+        lastModified: new Date(file.lastModified).toISOString(),
+        isEditMode: !!currentBid?.bid_count
       });
       
       setCurrentBid({
@@ -1899,8 +2113,10 @@ export default function Schedule({
       });
       
       onOpenResponse("File Uploaded", `File "${file.name}" uploaded successfully`, true);
+    } else {
+      console.log("📄 No file selected or file input cleared");
     }
-  }, [currentBid, validateFile]);
+  }, [currentBid, validateFileLocal]);
 
   // Handle current bid item changes with auto-calculation
   const onCurrentBidItemChange = useCallback((
@@ -1911,6 +2127,23 @@ export default function Schedule({
   ) => {
     const { value } = event.target;
     console.log("🔢 Bid item change:", { field: name_, value, description, bid_no });
+    
+    // Clear validation errors for this field when user starts typing
+    const itemIndex = currentBid?.items?.findIndex(item => item.item_required === description) ?? -1;
+    const fieldKey = `item_${itemIndex}_${name_}`;
+    
+    if (invalidFields.has(fieldKey)) {
+      const newInvalidFields = new Set(invalidFields);
+      newInvalidFields.delete(fieldKey);
+      setInvalidFields(newInvalidFields);
+      
+      // Remove related error messages
+      const newErrors = bidValidationErrors.filter(error => 
+        !error.toLowerCase().includes(description.toLowerCase()) || 
+        !error.toLowerCase().includes(name_.toLowerCase())
+      );
+      setBidValidationErrors(newErrors);
+    }
     
     if (currentBid?.items) {
       const updatedItems = currentBid.items.map((item) => {
@@ -1950,26 +2183,35 @@ export default function Schedule({
         items: updatedItems,
       });
     }
-  }, [currentBid]);
+  }, [currentBid, invalidFields, bidValidationErrors]);
 
   // Enhanced save bid function with direct purchase validation
   const onSaveBid = useCallback((bid: IBid, bids: IBid[], bid_count?: number) => {
+    console.log("💾 onSaveBid called:", { 
+      bid: bid.bid_count, 
+      bid_count, 
+      isEditMode: !!bid_count,
+      totalBids: bids.length 
+    });
+    
     // Only creators can save bids
     if (!isCreator()) {
       onOpenResponse("Access Denied", "Only the creator can save bids to this schedule.", false);
       return;
     }
-    console.log("bid_count: ", bid_count);
     
     // Direct purchase validation
-    if (base_url === "/direct_purchase" && bids.length >= 1 && !bid_count) {
+    const isDirectPurchase = base_url.includes('/direct_purchase') || 
+                            window.location.pathname.includes('/direct_purchase/');
+    
+    if (isDirectPurchase && bids.length >= 1 && !bid_count) {
       onOpenResponse("Direct Purchase Limit", "Direct purchase allows maximum 1 bid only", false);
       return;
     }
     
     // File validation
     if (bid.bid_document && bid.bid_document instanceof File) {
-      const fileValidation = validateFile(bid.bid_document);
+      const fileValidation = validateFileLocal(bid.bid_document);
       if (!fileValidation.isValid) {
         onOpenResponse("File Validation Error", fileValidation.error || "Invalid file", false);
         return;
@@ -1983,7 +2225,21 @@ export default function Schedule({
     form_data.append("supplier", bid.supplier ?? "");
     form_data.append("supplier_name", bid.supplier_name ?? "");
     form_data.append("bid_date", bid.bid_date ?? "");
-    form_data.append("bid_document", bid.bid_document ?? "");
+    // Handle bid document - preserve existing document if no new file is uploaded
+    if (bid.bid_document instanceof File) {
+      form_data.append("bid_document", bid.bid_document);
+    } else if (bid.bid_document_info?.file_path) {
+      // For existing documents with file info, send the file path
+      form_data.append("bid_document", bid.bid_document_info.file_path);
+    } else if (bid.encoded_bid_document) {
+      // For existing encoded documents, send as string
+      form_data.append("bid_document", bid.encoded_bid_document);
+    } else if (bid.bid_document_url) {
+      // For existing document URLs, send as string
+      form_data.append("bid_document", bid.bid_document_url);
+    } else {
+      form_data.append("bid_document", "");
+    }
     form_data.append(
       "json_data",
       JSON.stringify({
@@ -1992,7 +2248,14 @@ export default function Schedule({
     );
     form_data.append("csrfmiddlewaretoken", csrfToken);
 
-    fetch(`${base_url}/save_bid`, {
+    console.log("📤 Sending bid data:", {
+      cs_id: csId,
+      bid_count: bid?.bid_count,
+      supplier_name: bid.supplier_name,
+      items_count: bid.items?.length || 0
+    });
+
+    fetch(buildApiUrl(base_url, getApiEndpoints().CS_SAVE_BID), {
       method: "POST",
       headers: {
         "X-CSRFToken": csrfToken,
@@ -2001,53 +2264,233 @@ export default function Schedule({
     })
       .then((response) => response.json())
       .then((data) => {
-        console.log("data: ", data, bids);
+        console.log("📥 Save bid response:", data);
         if (data.success) {
-          onOpenResponse("Save Bid Success", "Bid saved successfully", true);
-          setBids([...bids, bid]);
+          const isEditMode = !!bid_count;
+          const message = isEditMode ? "Bid updated successfully" : "Bid saved successfully";
+          onOpenResponse("Save Bid Success", message, true);
+          
+          if (isEditMode) {
+            // Update existing bid in the list
+            const updatedBids = bids.map(existingBid => 
+              existingBid.bid_count === bid.bid_count ? bid : existingBid
+            );
+            setBids(updatedBids);
+          } else {
+            // Add new bid to the list
+            setBids([...bids, bid]);
+            setBidCount(bidCount + 1);
+          }
+          
           setAddBidModal(false);
           setUpdateBidModal(false);
           setCurrentBid(undefined);
-          setBidCount(bidCount + 1);
+          setSupplierSearchTerm("");
+          setShowSupplierDropdown(false);
           onSetDirectPurchaseLimit();
         } else {
-          onOpenResponse("Save Bid Error", "Failed to save bid, please try again.", false);
+          onOpenResponse("Save Bid Error", data.message || "Failed to save bid, please try again.", false);
         }
-             });
-   }, [csId, csrfToken, base_url, bidCount, onSetDirectPurchaseLimit, validateFile]);
+      })
+      .catch((error) => {
+        console.error("❌ Save bid error:", error);
+        onOpenResponse("Save Bid Error", "Network error occurred while saving bid.", false);
+      });
+   }, [csId, csrfToken, base_url, bidCount, onSetDirectPurchaseLimit, validateFileLocal, isCreator]);
+
+  // Helper function to check if a field is invalid
+  const isFieldInvalid = useCallback((fieldName: string) => {
+    return invalidFields.has(fieldName);
+  }, [invalidFields]);
+
+  // Server-side search for UOM
+  const searchUom = useCallback(async (searchQuery: string) => {
+    if (!searchQuery || searchQuery.length < 2) {
+      setUomSearchResults([]);
+      return;
+    }
+
+    setIsUomSearching(true);
+    try {
+      const url = buildApiUrl(base_url, `${getApiEndpoints().UOM}?search=${encodeURIComponent(searchQuery)}&limit=100`);
+      const response = await fetch(url);
+      const data = await response.json();
+      
+      if (data.uom) {
+        setUomSearchResults(data.uom);
+      }
+    } catch (error) {
+      console.error('Error searching UOM:', error);
+      setUomSearchResults([]);
+    } finally {
+      setIsUomSearching(false);
+    }
+  }, [base_url]);
+
+  // Trigger UOM search when debounced search term changes
+  useEffect(() => {
+    searchUom(debouncedUomSearchTerm);
+  }, [debouncedUomSearchTerm, searchUom]);
+
+  // Debounce UOM search term
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedUomSearchTerm(uomSearchTerm);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [uomSearchTerm]);
+
+  // Server-side search for Suppliers
+  const searchSuppliers = useCallback(async (searchQuery: string) => {
+    if (!searchQuery || searchQuery.length < 2) {
+      setSupplierSearchResults([]);
+      return;
+    }
+
+    setIsSupplierSearching(true);
+    try {
+      const url = buildApiUrl(base_url, `${getApiEndpoints().SUPPLIERS}?search=${encodeURIComponent(searchQuery)}&limit=100`);
+      console.log('🔍 Searching suppliers at URL:', url);
+      const response = await fetch(url);
+      console.log('🔍 Supplier search response status:', response.status);
+      const data = await response.json();
+      console.log('🔍 Supplier search data:', data);
+      
+      if (data.suppliers) {
+        setSupplierSearchResults(data.suppliers);
+      } else if (Array.isArray(data)) {
+        // Fallback for old API format
+        setSupplierSearchResults(data);
+      } else {
+        setSupplierSearchResults([]);
+      }
+    } catch (error) {
+      console.error('Error searching suppliers:', error);
+      // Fallback to local filtering if server search fails
+      const filteredSuppliers = suppliers.filter(supplier => 
+        (supplier.supplier_name || supplier.name || '')
+          .toLowerCase()
+          .includes(searchQuery.toLowerCase())
+      );
+      setSupplierSearchResults(filteredSuppliers);
+    } finally {
+      setIsSupplierSearching(false);
+    }
+  }, [base_url, suppliers]);
+
+  // Trigger supplier search when debounced search term changes
+  useEffect(() => {
+    searchSuppliers(debouncedSupplierSearchTerm);
+  }, [debouncedSupplierSearchTerm, searchSuppliers]);
+
+  // Debounce supplier search term
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSupplierSearchTerm(supplierSearchTerm);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [supplierSearchTerm]);
+
+  // Bid validation function
+  const validateBidForm = useCallback(() => {
+    const errors: string[] = [];
+    const invalidFieldSet = new Set<string>();
+    
+    // Validate supplier
+    if (!currentBid?.supplier_name) {
+      errors.push("Please select a supplier");
+      invalidFieldSet.add("supplier");
+    }
+    
+    // Validate bid date
+    if (!currentBid?.bid_date) {
+      errors.push("Please select a bid date");
+      invalidFieldSet.add("bid_date");
+    }
+    
+    // Validate bid document
+    if (!currentBid?.bid_document && !currentBid?.bid_document_info && !currentBid?.encoded_bid_document && !currentBid?.bid_document_url) {
+      errors.push("Please select a bid document");
+      invalidFieldSet.add("bid_document");
+    }
+    
+    // Validate bid items
+    if (!currentBid?.items || currentBid.items.length === 0) {
+      errors.push("Please add at least one item to the bid");
+    } else {
+      // Validate each bid item
+      currentBid.items.forEach((item, index) => {
+        if (!item.quantity) {
+          errors.push(`Item "${item.item_required}": Quantity is required`);
+          invalidFieldSet.add(`item_${index}_quantity`);
+        }
+        if (!item.unit_price) {
+          errors.push(`Item "${item.item_required}": Unit price is required`);
+          invalidFieldSet.add(`item_${index}_unit_price`);
+        }
+        if (!item.unit_of_measurement) {
+          errors.push(`Item "${item.item_required}": Unit of measurement is required`);
+          invalidFieldSet.add(`item_${index}_unit_of_measurement`);
+        }
+        if (!item.vat) {
+          errors.push(`Item "${item.item_required}": VAT selection is required`);
+          invalidFieldSet.add(`item_${index}_vat`);
+        }
+      });
+    }
+    
+    setBidValidationErrors(errors);
+    setInvalidFields(invalidFieldSet);
+    
+    return errors.length === 0;
+  }, [currentBid]);
 
   // Save current bid
   const onCurrentBidSave = useCallback(() => {
+    console.log("💾 Save bid triggered:", { 
+      currentBid, 
+      isCreator: isCreator(),
+      updateBidModal,
+      addBidModal 
+    });
+    
     // Only creators can save bids
     if (!isCreator()) {
       onOpenResponse("Access Denied", "Only the creator can save bids to this schedule.", false);
       return;
     }
-    if (!currentBid?.supplier_name) {
-      onOpenResponse("Submit Bid Error", "Please select a supplier", false);
-      return;
-    } else if (!currentBid.bid_date) {
-      onOpenResponse("Submit Bid Error", "Please select a bid date", false);
-      return;
-    } else if (!currentBid?.bid_document) {
-      onOpenResponse("Submit Bid Error", "Please select a bid document", false);
-      return;
-    } else {
-      // Check if current bid already exists
-      if (currentBid.items) {
-        const bid = bids.find((bid) => bid && bid.bid_count === currentBid.bid_count);
-        console.log("bid found: ", bid);
-        
-        if (bid) {
-          // Update existing bid
-          onSaveBid(currentBid, bids, currentBid.bid_count);
-        } else {
-          // Create new bid
-          onSaveBid(currentBid, bids);
-        }
+    
+    // Clear previous validation errors
+    setBidValidationErrors([]);
+    setInvalidFields(new Set());
+    
+    // Validate form
+    if (!validateBidForm()) {
+      return; // Stop if validation fails
+    }
+    
+    // Check if current bid already exists (edit mode)
+    if (currentBid?.items) {
+      const existingBid = bids.find((bid) => bid && bid.bid_count === currentBid.bid_count);
+      console.log("🔍 Existing bid check:", { 
+        currentBidCount: currentBid.bid_count, 
+        existingBid: existingBid ? existingBid.bid_count : null,
+        isEditMode: !!existingBid 
+      });
+      
+      if (existingBid) {
+        // Update existing bid
+        console.log("🔄 Updating existing bid:", currentBid.bid_count);
+        onSaveBid(currentBid, bids, currentBid.bid_count);
+      } else {
+        // Create new bid
+        console.log("🆕 Creating new bid");
+        onSaveBid(currentBid, bids);
       }
     }
-  }, [currentBid, bids, onSaveBid]);
+  }, [currentBid, bids, onSaveBid, isCreator, updateBidModal, addBidModal, validateBidForm]);
 
   // Enhanced delete bid with compliance cleanup
   const deleteBid = useCallback((bid_count: number, supplier_name: string) => {
@@ -2062,7 +2505,7 @@ export default function Schedule({
     form_data.append("supplier_name", supplier_name);
     form_data.append("csrfmiddlewaretoken", csrfToken);
 
-    fetch(`${base_url}/delete_bid`, {
+    fetch(buildApiUrl(base_url, getApiEndpoints().CS_DELETE_BID), {
       method: "POST",
       headers: {
         "X-CSRFToken": csrfToken,
@@ -2267,8 +2710,8 @@ export default function Schedule({
     }
   }, [compliance, showSiteVisit, showSamples]);
 
-  // Save compliance
-  const onSaveCompliance = useCallback(() => {
+  // Save compliance using service
+  const onSaveCompliance = useCallback(async () => {
     // Only creators can save compliance
     if (!isCreator()) {
       onOpenResponse("Access Denied", "Only the creator can save compliance data.", false);
@@ -2282,24 +2725,14 @@ export default function Schedule({
     setIsLoading(true);
     setLoadingOperation("Saving compliance data");
 
-    // Format data to match backend expectations (similar to the working JS versions)
-    const form_data: FormData = new FormData();
-    form_data.append("cs_id", csId);
-    form_data.append("show_site_visit", showSiteVisit);
-    form_data.append("show_samples_required", showSamples);
-    form_data.append(
-      "compliance",
-      JSON.stringify({
-        compliance: compliance,
-      })
-    );
-    form_data.append(
-      "complianceRemarks",
-      JSON.stringify({
-        complianceRemarks: complianceRemarks,
-      })
-    );
-    form_data.append("csrfmiddlewaretoken", csrfToken);
+    // Prepare compliance data for service
+    const complianceData = {
+      cs_id: csId,
+      show_site_visit: showSiteVisit,
+      show_samples_required: showSamples,
+      compliance: compliance,
+      complianceRemarks: complianceRemarks
+    };
 
     console.log("Saving compliance data:", {
       cs_id: csId,
@@ -2309,35 +2742,28 @@ export default function Schedule({
       show_samples: showSamples
     });
 
-    fetch(`${base_url}/save_compliance`, {
-      method: "POST",
-      headers: {
-        "X-CSRFToken": csrfToken,
-      },
-      body: form_data,
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        console.log("save compliance response: ", data);
-        if (data.success) {
-          onOpenResponse("Save Compliance Success", "Compliance data saved successfully", true);
-          // Refresh the CS data to ensure persistence
-          if (csId) {
-            fetchCS(csId);
-          }
-        } else {
-          onOpenResponse("Save Compliance Error", data.message || "Failed to save compliance, please try again.", false);
+    try {
+      // Use service to save compliance
+      const data = await complianceService.saveCompliance(complianceData);
+      
+      console.log("save compliance response: ", data);
+      if (data.success) {
+        showSuccessNotification("Save Compliance Success", "Compliance data saved successfully");
+        // Refresh the CS data to ensure persistence
+        if (csId) {
+          fetchCS(csId);
         }
-      })
-      .catch((error) => {
-        console.error("Error saving compliance:", error);
-        onOpenResponse("Error", "Failed to save compliance", false);
-      })
-      .finally(() => {
-        setIsLoading(false);
-        setLoadingOperation("");
-      });
-  }, [compliance, complianceRemarks, csId, csrfToken, base_url, fetchCS, showSiteVisit, showSamples]);
+      } else {
+        onOpenResponse("Save Compliance Error", data.error || "Failed to save compliance, please try again.", false);
+      }
+    } catch (error) {
+      console.error("Error saving compliance:", error);
+      onOpenResponse("Error", "Failed to save compliance", false);
+    } finally {
+      setIsLoading(false);
+      setLoadingOperation("");
+    }
+  }, [compliance, complianceRemarks, csId, complianceService, fetchCS, showSiteVisit, showSamples]);
 
   // Close CS and generate rankings
   const onCloseCS = useCallback(() => {
@@ -2366,7 +2792,7 @@ export default function Schedule({
     form_data.append("cs_id", csId);
     form_data.append("csrfmiddlewaretoken", csrfToken);
 
-    fetch(`${base_url}/close_compliance`, {
+    fetch(buildApiUrl(base_url, getApiEndpoints().CS_CLOSE_COMPLIANCE), {
       method: "POST",
       headers: {
         "X-CSRFToken": csrfToken,
@@ -2409,7 +2835,7 @@ export default function Schedule({
     form_data.append("additional_notes", additionalNotes);
     form_data.append("csrfmiddlewaretoken", csrfToken);
 
-    fetch(`${base_url}/save_additional_notes`, {
+    fetch(buildApiUrl(base_url, getApiEndpoints().CS_ADDITIONAL_NOTES), {
       method: "POST",
       headers: {
         "X-CSRFToken": csrfToken,
@@ -2449,7 +2875,7 @@ export default function Schedule({
     form_data.append("buyers_notes", buyersNotes);
     form_data.append("csrfmiddlewaretoken", csrfToken);
 
-    fetch(`${base_url}/save_buyers_notes`, {
+    fetch(buildApiUrl(base_url, getApiEndpoints().CS_BUYERS_NOTES), {
       method: "POST",
       headers: {
         "X-CSRFToken": csrfToken,
@@ -2497,6 +2923,14 @@ export default function Schedule({
         const selectedProcPlan = procPlans.find(p => p.id.toString() === value);
         setProcPlan(selectedProcPlan);
         setProcRef(selectedProcPlan?.proc_ref || '');
+        // Update prData with the selected procurement plan
+        if (selectedProcPlan) {
+          updatePrData('procurement_plan_id', selectedProcPlan.id.toString());
+          updatePrData('procurement_plan_description', selectedProcPlan.description);
+        } else {
+          updatePrData('procurement_plan_id', '');
+          updatePrData('procurement_plan_description', '');
+        }
         break;
       }
       case 'showSiteVisit':
@@ -2512,7 +2946,7 @@ export default function Schedule({
 
 
 
-  // Enhanced save schedule details with validation
+  // Enhanced save schedule details with validation using service
   const handleSaveScheduleDetails = useCallback(async () => {
     // Validate fields before saving
     const validation = validateScheduleFields();
@@ -2526,42 +2960,53 @@ export default function Schedule({
     console.log("prData", prData);
     
     try {
-      const formData = new FormData();
-      formData.append("proc_ref", procRef);
-      formData.append("scope_of_work", prData.scope_of_work);
-      formData.append("currency", JSON.stringify(currency?.id));
-      formData.append("proc_plan_id", prData.procurement_plan_id || "");
-      formData.append("pr_number", prData.pr_number);
-      formData.append("quantity", quantity);
-      formData.append("pr_date", prData.pr_date);
-      formData.append("closing_date", prData.closing_date);
-      formData.append("ref_date", prData.reference_date);
-      formData.append("closing_time", prData.closing_time);
-      formData.append("date_tender_opened", prData.cs_opened_date);
-      formData.append("username", username);
-      formData.append("tender_adjudication_committee_date", prData.tac_date);
+      // Prepare schedule data for service with proper date formatting and empty value handling
+      // Handle advert field: only send file paths, not File objects
+      let advertData: string | undefined;
+      if (advertMetadata?.file_path) {
+        // Use the file_path from previously uploaded file
+        advertData = advertMetadata.file_path;
+        console.log('📄 Using uploaded file path:', advertMetadata.file_path);
+      } else {
+        // No advert data - file uploads handled by dedicated APIs
+        advertData = undefined;
+        console.log('📄 No advert file path available');
+      }
 
-      console.log("formData", formData);
+      const scheduleData = {
+        proc_ref: procRef || undefined,
+        scope_of_work: prData.scope_of_work,
+        currency_id: currency?.id?.toString(),
+        proc_plan_id: (procPlan?.id || prData.procurement_plan_id)?.toString() || undefined,
+        pr_number: prData.pr_number,
+        quantity: quantity || undefined,
+        pr_date: formatDateForBackend(prData.pr_date),
+        closing_date: formatDateForBackend(prData.closing_date),
+        ref_date: formatDateForBackend(prData.reference_date),
+        closing_time: prData.closing_time,
+        cs_opened_date: formatDateForBackend(prData.cs_opened_date),
+        username: username,
+        tac_date: formatDateForBackend(prData.tac_date),
+        advert: advertData
+      };
+
+      console.log("scheduleData", scheduleData);
       
-      if (advert) {
-        formData.append("advert", advert);
+      // Use service to save or update schedule based on whether csId exists
+      let data;
+      if (csId && csId.trim() !== "") {
+        // Update existing schedule
+        console.log("Updating existing schedule with csId:", csId);
+        data = await scheduleService.updateSchedule(csId, scheduleData);
+      } else {
+        // Create new schedule
+        console.log("Creating new schedule");
+        data = await scheduleService.saveSchedule(scheduleData);
       }
       
-      formData.append("csrfmiddlewaretoken", csrfToken);
-
-      const requestOptions = {
-        method: "POST",
-        headers: {
-          "X-CSRFToken": csrfToken,
-        },
-        body: formData,
-      };
-      
-      const data = await fetchWithRetry(buildApiUrl(base_url, getApiEndpoints().CS_SAVE), requestOptions);
-      
       if (data.success) {
-        setCsId(data.cs_id);
-        setCsOwner(data.cs_owner);
+        if (data.cs_id) setCsId(data.cs_id);
+        if (data.cs_owner) setCsOwner(data.cs_owner);
         
         // Update creator and created_at if not already set (for new schedules)
         if (!creator) {
@@ -2576,10 +3021,11 @@ export default function Schedule({
           setCreatedAt(new Date().toISOString());
         }
         
-        onOpenResponse("Success", "Comparative Schedule saved successfully", true);
+        const actionMessage = csId && csId.trim() !== "" ? "updated" : "created";
+        showSuccessNotification("Success", `Comparative Schedule ${actionMessage} successfully`);
         await refreshAllData(); // Cascading update
       } else {
-        onOpenResponse("Error", "Failed to save schedule", false);
+        onOpenResponse("Error", data.error || "Failed to save schedule", false);
       }
     } catch (error) {
       console.error("Error saving schedule details:", error);
@@ -2588,7 +3034,7 @@ export default function Schedule({
       setIsLoading(false);
       setLoadingOperation("");
     }
-  }, [validateScheduleFields, procRef, prData, currency, quantity, username, advert, csrfToken, base_url, refreshAllData]);
+  }, [validateScheduleFields, procRef, prData, currency, quantity, username, advert, scheduleService, refreshAllData]);
 
   // Memoized tab content
   const renderTabContent = useMemo(() => {
@@ -2660,13 +3106,69 @@ export default function Schedule({
               </div>
             </div>
 
+            {/* Approval Status and Edit Lock Indicator */}
+            {csId && csId.trim() !== "" && (
+              <div className={`p-4 rounded-lg border ${
+                isApprovalComplete() 
+                  ? 'bg-green-50 border-green-200' 
+                  : 'bg-blue-50 border-blue-200'
+              }`}>
+                <div className="flex items-center">
+                  <svg className={`w-5 h-5 mr-3 ${
+                    isApprovalComplete() ? 'text-green-600' : 'text-blue-600'
+                  }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    {isApprovalComplete() ? (
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    ) : (
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    )}
+                  </svg>
+                  <div>
+                    <h4 className={`text-sm font-medium ${
+                      isApprovalComplete() ? 'text-green-800' : 'text-blue-800'
+                    }`}>
+                      {isApprovalComplete() ? 'Schedule Approved - Edit Options Locked' : 'Schedule Pending Approval - Edit Options Available'}
+                    </h4>
+                    <p className={`text-sm mt-1 ${
+                      isApprovalComplete() ? 'text-green-700' : 'text-blue-700'
+                    }`}>
+                      {isApprovalComplete() 
+                        ? 'This schedule has been fully approved by committee, finance manager, and general manager. All edit options are now locked to maintain data integrity.'
+                        : 'This schedule is awaiting approval. Edit options are available until final approval is complete.'
+                      }
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Procurement Information */}
             <div className="bg-white p-6 rounded-lg shadow-sm border">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4 border-b pb-2">Procurement Details</h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4 border-b pb-2 flex items-center justify-between">
+                <span>Procurement Details</span>
+                {!isCreator() && isApprovalComplete() && (
+                  <span className="inline-flex items-center text-sm text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                    <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                    </svg>
+                    Edit Options Locked
+                  </span>
+                )}
+              </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">PR Number</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      PR Number
+                      {!isCreator() && isApprovalComplete() && (
+                        <span className="ml-2 inline-flex items-center text-xs text-gray-500">
+                          <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                          </svg>
+                          Locked
+                        </span>
+                      )}
+                    </label>
                     <input 
                       type="text" 
                       className={`w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${!isCreator() ? 'bg-gray-100 cursor-not-allowed' : ''}`}
@@ -2677,7 +3179,17 @@ export default function Schedule({
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">PR Date</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      PR Date
+                      {!isCreator() && isApprovalComplete() && (
+                        <span className="ml-2 inline-flex items-center text-xs text-gray-500">
+                          <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                          </svg>
+                          Locked
+                        </span>
+                      )}
+                    </label>
                     <input 
                       type="date" 
                       className={`w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${!isCreator() ? 'bg-gray-100 cursor-not-allowed' : ''}`}
@@ -2697,9 +3209,21 @@ export default function Schedule({
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Procurement Plan</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Procurement Plan
+                      {!isCreator() && isApprovalComplete() && (
+                        <span className="ml-2 inline-flex items-center text-xs text-gray-500">
+                          <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                          </svg>
+                          Locked
+                        </span>
+                      )}
+                    </label>
                     <select 
                       className={`w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${!isCreator() ? 'bg-gray-100 cursor-not-allowed' : ''}`}
+                      onChange={(e) => onSelectChange("procPlan", e)}
+                      value={procPlan?.id || prData.procurement_plan_id || ""}
                       disabled={!isCreator()}
                     >
                       {prData?.procurement_plan_description && (
@@ -2767,9 +3291,29 @@ export default function Schedule({
 
             {/* Scope of Work */}
             <div className="bg-white p-6 rounded-lg shadow-sm border">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4 border-b pb-2">Scope of Work</h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4 border-b pb-2 flex items-center justify-between">
+                <span>Scope of Work</span>
+                {!isCreator() && isApprovalComplete() && (
+                  <span className="inline-flex items-center text-sm text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                    <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                    </svg>
+                    Edit Options Locked
+                  </span>
+                )}
+              </h3>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Description
+                  {!isCreator() && isApprovalComplete() && (
+                    <span className="ml-2 inline-flex items-center text-xs text-gray-500">
+                      <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                      </svg>
+                      Locked
+                    </span>
+                  )}
+                </label>
                 <textarea 
                   rows={4}
                   className={`w-full p-3 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${!isCreator() ? 'bg-gray-100 cursor-not-allowed' : ''}`}
@@ -2827,20 +3371,51 @@ export default function Schedule({
                             )}
                           </div>
                         </div>
-                      ) : existingAdvert ? (
+                      ) : advertMetadata ? (
                         <div className="text-center">
                           <svg className="mx-auto h-12 w-12 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                           </svg>
                           <div className="mt-2">
                             <p className="text-sm text-blue-600 font-medium">Existing Advertisement Document</p>
+                            <div className="text-sm text-gray-600 mb-2">
+                              <span className="font-medium">{advertMetadata.name}</span>
+                              {advertMetadata.size > 0 ? (
+                                <span className="ml-2">({(advertMetadata.size / 1024 / 1024).toFixed(2)} MB)</span>
+                              ) : (
+                                <span className="ml-2 text-gray-400">(Size not available)</span>
+                              )}
+                            </div>
                             <button
                               type="button"
-                              onClick={() => {
+                              onClick={(e) => {
+                                e.preventDefault();
+                                
+                                console.log("📄 Advertisement download click:", {
+                                  name: advertMetadata.name,
+                                  size: advertMetadata.size,
+                                  mime_type: advertMetadata.mime_type,
+                                  is_base64: advertMetadata.is_base64,
+                                  download_url_type: advertMetadata.is_base64 ? 'blob' : 'api_endpoint'
+                                });
+                                
+                                // Create download link with proper handling
                                 const link = document.createElement('a');
-                                link.href = `data:application/octet-stream;base64,${existingAdvert}`;
-                                link.download = 'advertisement.pdf';
+                                link.href = advertMetadata.download_url;
+                                link.download = advertMetadata.name;
+                                
+                                // For blob URLs, don't set target="_blank" to force download
+                                if (!advertMetadata.is_base64) {
+                                  link.target = '_blank';
+                                  link.rel = 'noopener noreferrer';
+                                }
+                                
+                                // Trigger download
+                                document.body.appendChild(link);
                                 link.click();
+                                document.body.removeChild(link);
+                                
+                                console.log(`✅ Advertisement download initiated: ${advertMetadata.name}`);
                               }}
                               className="mt-2 text-sm text-blue-600 hover:text-blue-500 underline"
                             >
@@ -2855,11 +3430,22 @@ export default function Schedule({
                                     type="file" 
                                     className="sr-only" 
                                     accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-                                    onChange={(e) => {
+                                    onChange={async (e) => {
                                       const file = e.target.files?.[0];
                                       if (file) {
-                                        setAdvert(file);
-                                        setExistingAdvert(''); // Clear existing when new file is selected
+                                        // Validate file first
+                                        const validation = validateFileLocal(file);
+                                        if (!validation.isValid) {
+                                          onOpenResponse("File Upload Error", validation.error || "Invalid file", false);
+                                          return;
+                                        }
+                                        
+                                        // Upload file using optimized handler
+                                        const metadata = await handleFileUpload(file, 'advert', 'Advertisement document replacement');
+                                        if (metadata) {
+                                          setAdvert(undefined); // Clear local file state
+                                          // setAdvertMetadata is handled in handleFileUpload
+                                        }
                                       }
                                     }}
                                   />
@@ -2882,9 +3468,23 @@ export default function Schedule({
                                   type="file" 
                                   className="sr-only" 
                                   accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
-                                  onChange={(e) => {
+                                  onChange={async (e) => {
                                     const file = e.target.files?.[0];
-                                    if (file) setAdvert(file);
+                                    if (file) {
+                                      // Validate file first
+                                      const validation = validateFileLocal(file);
+                                      if (!validation.isValid) {
+                                        onOpenResponse("File Upload Error", validation.error || "Invalid file", false);
+                                        return;
+                                      }
+                                      
+                                      // Upload file using optimized handler
+                                      const metadata = await handleFileUpload(file, 'advert', 'Advertisement document');
+                                      if (metadata) {
+                                        setAdvert(undefined); // Clear local file state
+                                        // setAdvertMetadata is handled in handleFileUpload
+                                      }
+                                    }
                                   }}
                                 />
                               </label>
@@ -2919,7 +3519,7 @@ export default function Schedule({
                     Save Schedule Details
                   </button>
                 )}
-                <button className="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700 transition-colors flex items-center">
+                {/* <button className="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700 transition-colors flex items-center">
                   <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                   </svg>
@@ -2930,7 +3530,7 @@ export default function Schedule({
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2v0" />
                   </svg>
                   Duplicate Schedule
-                </button>
+                </button> */}
                 {isCreator() && (
                   <button className="bg-red-600 text-white px-6 py-2 rounded hover:bg-red-700 transition-colors flex items-center">
                     <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -2963,12 +3563,37 @@ export default function Schedule({
                 <div className="space-y-6">
                   {/* Purchase Request Items */}
                   <div className="bg-white p-6 rounded-lg shadow-sm border">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4 border-b pb-2">Purchase Request Items</h3>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4 border-b pb-2 flex items-center justify-between">
+                      <span>Purchase Request Items</span>
+                      {!isCreator() && isApprovalComplete() && (
+                        <span className="inline-flex items-center text-sm text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                          <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                          </svg>
+                          Edit Options Locked
+                        </span>
+                      )}
+                    </h3>
                     
                     {isLoading && loadingOperation === "Loading PR items data" ? (
-                      <div className="flex items-center justify-center py-8">
-                        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-600 mr-3"></div>
-                        <span className="text-gray-600">Loading PR items...</span>
+                      <div className="transition-all duration-300 ease-in-out">
+                        {/* Skeleton loading for PR items */}
+                        <div className="space-y-3">
+                          {[...Array(5)].map((_, i) => (
+                            <div key={i} className="animate-pulse bg-gray-200 rounded-lg p-4 flex items-center space-x-4">
+                              <div className="w-4 h-4 bg-gray-300 rounded"></div>
+                              <div className="flex-1">
+                                <div className="h-4 bg-gray-300 rounded w-3/4 mb-2"></div>
+                                <div className="h-3 bg-gray-300 rounded w-1/2"></div>
+                              </div>
+                              <div className="w-16 h-6 bg-gray-300 rounded"></div>
+                            </div>
+                          ))}
+                        </div>
+                        <div className="flex items-center justify-center py-4 mt-6">
+                          <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-blue-600 mr-3"></div>
+                          <span className="text-gray-600 font-medium">Loading PR items...</span>
+                        </div>
                       </div>
                     ) : prData.items.length === 0 ? (
                       <div className="text-center py-8">
@@ -2984,8 +3609,25 @@ export default function Schedule({
                         </p>
                       </div>
                     ) : (
-                      <>
-                        <div className="overflow-x-auto">
+                      <div className="transition-all duration-500 ease-in-out">
+                        {/* Summary Statistics */}
+                        <div className="mb-4 p-4 bg-gray-50 rounded-lg">
+                          <p className="text-sm text-gray-600">
+                            <span className="font-medium text-gray-900">Total Items: {prData.items.length}</span>
+                            {prData.items.length > 0 && (
+                              <>
+                                <span className="mx-2">|</span>
+                                <span className="text-green-700">Available: {prData.items.filter(item => item.status === 'available' || !item.status).length}</span>
+                                <span className="mx-2">|</span>
+                                <span className="text-orange-700">Used Elsewhere: {prData.items.filter(item => item.status === 'used_in_other_schedule').length}</span>
+                                <span className="mx-2">|</span>
+                                <span className="text-blue-700">Included Here: {prData.items.filter(item => item.included || item.status === 'included_in_cs').length}</span>
+                              </>
+                            )}
+                          </p>
+                        </div>
+                        
+                        <div className="overflow-x-auto transform transition-all duration-300 ease-in-out">
                           <table className="min-w-full divide-y divide-gray-200">
                             <thead className="bg-gray-50">
                               <tr>
@@ -3158,15 +3800,35 @@ export default function Schedule({
                             </button>
                           )}
                         </div>
-                      </>
+                      </div>
                     )}
                   </div>
 
                   {/* Additional Notes */}
                   <div className="bg-white p-6 rounded-lg shadow-sm border">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4 border-b pb-2">Additional Notes</h3>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4 border-b pb-2 flex items-center justify-between">
+                      <span>Additional Notes</span>
+                      {!isCreator() && isApprovalComplete() && (
+                        <span className="inline-flex items-center text-sm text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                          <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                          </svg>
+                          Edit Options Locked
+                        </span>
+                      )}
+                    </h3>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Internal Notes</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Internal Notes
+                        {!isCreator() && isApprovalComplete() && (
+                          <span className="ml-2 inline-flex items-center text-xs text-gray-500">
+                            <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                            </svg>
+                            Locked
+                          </span>
+                        )}
+                      </label>
                       <textarea 
                         rows={3}
                         className={`w-full p-3 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${!isCreator() ? 'bg-gray-100 cursor-not-allowed' : ''}`}
@@ -3209,6 +3871,14 @@ export default function Schedule({
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
                           </svg>
                           Supplier Bids Management
+                          {!isCreator() && isApprovalComplete() && (
+                            <span className="ml-2 inline-flex items-center text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                              <svg className="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                              </svg>
+                              Locked
+                            </span>
+                          )}
                         </h3>
                         <p className="text-gray-600 mt-1">
                           {isCreator() 
@@ -3246,7 +3916,7 @@ export default function Schedule({
                       )}
                     </div>
                     
-                    {directPurchaseLimit && base_url === "/direct_purchase" && (
+                    {directPurchaseLimit && (base_url.includes('/direct_purchase') || window.location.pathname.includes('/direct_purchase/')) && (
                       <div className="mt-4 bg-orange-50 border border-orange-200 rounded-lg p-3">
                         <p className="text-orange-800 text-sm">
                           <svg className="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -3319,36 +3989,85 @@ export default function Schedule({
                                         <span className="font-medium">Total:</span> ${calculateBidTotal(bid.items).toLocaleString()}
                                       </div>
                                     </div>
-                                                                         {(bid.encoded_bid_document || bid.bid_document || bid.bid_document_url) && (
+                                                                         {(bid.bid_document_info || bid.encoded_bid_document || bid.bid_document || bid.bid_document_url) && (
                                         <div className="mt-2">
-                                          <a
-                                            href={
-                                              bid.bid_document_url || 
-                                              onGetFileObjectUrl(bid.encoded_bid_document) ||
-                                              onGetFileObjectUrl(bid.bid_document) ||
-                                              "#"
-                                            }
-                                            target="_blank"
-                                            rel="noopener noreferrer"
+                                          <button
+                                            type="button"
+                                            className="text-xs text-blue-600 hover:text-blue-800 hover:underline"
                                             onClick={(e) => {
                                               e.stopPropagation();
+                                              e.preventDefault();
+                                              
+                                              // Handle document download - prioritize encoded data (same as adverts)
+                                              let downloadUrl;
+                                              if (bid.encoded_bid_document) {
+                                                // Use encoded data to create blob URL (same as adverts)
+                                                downloadUrl = getFileDownloadUrl(bid.encoded_bid_document);
+                                              } else if (bid.bid_document_info?.download_url) {
+                                                // Use API endpoint if no encoded data
+                                                downloadUrl = buildApiUrl(base_url, bid.bid_document_info.download_url);
+                                              } else if (bid.bid_document_url) {
+                                                // Use direct URL if available
+                                                downloadUrl = bid.bid_document_url;
+                                              } else if (bid.bid_document && typeof bid.bid_document === 'string') {
+                                                // Fallback to file path
+                                                downloadUrl = buildApiUrl(base_url, getApiEndpoints().FILE_DOWNLOAD(bid.bid_document));
+                                              } else {
+                                                downloadUrl = getFileDownloadUrl(bid.bid_document);
+                                              }
+                                              
                                               console.log("📄 Small document click:", {
+                                                bid_document_info: bid.bid_document_info ? "present" : "missing",
                                                 bid_document_url: bid.bid_document_url,
                                                 encoded_bid_document: bid.encoded_bid_document ? "present" : "missing",
-                                                bid_document: bid.bid_document ? "present" : "missing"
+                                                bid_document: bid.bid_document ? "present" : "missing",
+                                                generatedUrl: downloadUrl
                                               });
+                                              
+                                              if (downloadUrl) {
+                                                // Create download link
+                                                const link = document.createElement('a');
+                                                link.href = downloadUrl;
+                                                
+                                                // Set filename based on bid data
+                                                const filename = bid.bid_document_info?.filename ||
+                                                  getDownloadFilename(
+                                                    bid.encoded_bid_document || bid.bid_document,
+                                                    `bid_${bid.bid_count}_${bid.supplier_name?.replace(/[^a-zA-Z0-9]/g, '_')}`
+                                                  );
+                                                link.download = filename;
+                                                
+                                                // Set target for new tab (in case download fails)
+                                                link.target = '_blank';
+                                                link.rel = 'noopener noreferrer';
+                                                
+                                                // Trigger download
+                                                document.body.appendChild(link);
+                                                link.click();
+                                                document.body.removeChild(link);
+                                                
+                                                console.log(`✅ Download initiated: ${filename}`);
+                                              } else {
+                                                console.error("❌ No download URL available");
+                                              }
                                             }}
-                                            className="text-xs text-blue-600 hover:text-blue-800 hover:underline"
                                           >
                                             📄 View Document
-                                          </a>
+                                            {bid.bid_document_info?.error && (
+                                              <span className="text-red-500 ml-1">(File not found)</span>
+                                            )}
+                                          </button>
                                         </div>
                                       )}
                                   </div>
                                   {isCreator() && (
                                     <div className="flex space-x-2 ml-4" onClick={(e) => e.stopPropagation()}>
                                       <button
-                                        onClick={() => onUpdateBidModal(bid.bid_count || 0)}
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          console.log("🔘 Edit button clicked for bid:", bid.bid_count);
+                                          onUpdateBidModal(bid.bid_count || 0);
+                                        }}
                                         className="text-blue-600 hover:text-blue-800 text-sm font-medium"
                                       >
                                         Edit
@@ -3377,13 +4096,14 @@ export default function Schedule({
                                       <h5 className="text-md font-medium text-gray-900 mb-3">Bid Items</h5>
                                       {bid.items && bid.items.length > 0 ? (
                                         <div className="overflow-x-auto">
-                                          <table className="min-w-full divide-y divide-gray-200">
+                                          <table className="min-w-full divide-y divide-gray-200" style={{ overflow: 'visible' }}>
                                             <thead className="bg-gray-100">
                                               <tr>
                                                 <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Item</th>
                                                 <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Unit</th>
                                                 <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Qty</th>
                                                 <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Unit Price</th>
+                                                <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">VAT</th>
                                                 <th className="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase">Total</th>
                                               </tr>
                                             </thead>
@@ -3394,16 +4114,17 @@ export default function Schedule({
                                                   <td className="px-3 py-2 text-sm text-gray-600">{item.unit_of_measurement || '-'}</td>
                                                   <td className="px-3 py-2 text-sm text-gray-900">{item.quantity}</td>
                                                   <td className="px-3 py-2 text-sm text-gray-900">${(Number(item.unit_price) || 0).toLocaleString()}</td>
+                                                  <td className="px-3 py-2 text-sm text-gray-600">{item.vat || '-'}</td>
                                                   <td className="px-3 py-2 text-sm font-medium text-gray-900">${(Number(item.total_price) || 0).toLocaleString()}</td>
                                                 </tr>
                                               ))}
                                             </tbody>
                                             <tfoot className="bg-gray-50">
                                               <tr>
-                                                <td colSpan={4} className="px-3 py-2 text-sm font-medium text-gray-900 text-right">Grand Total:</td>
-                                                                                                 <td className="px-3 py-2 text-sm font-bold text-gray-900">
-                                                   ${calculateBidTotal(bid.items).toLocaleString()}
-                                                 </td>
+                                                <td colSpan={5} className="px-3 py-2 text-sm font-medium text-gray-900 text-right">Grand Total:</td>
+                                                <td className="px-3 py-2 text-sm font-bold text-gray-900">
+                                                  ${calculateBidTotal(bid.items).toLocaleString()}
+                                                </td>
                                               </tr>
                                             </tfoot>
                                           </table>
@@ -3424,35 +4145,78 @@ export default function Schedule({
                                                                              <div>
                                          <h6 className="text-sm font-medium text-gray-900 mb-2">Documents</h6>
                                          <div className="text-sm text-gray-600">
-                                                                                      {bid.encoded_bid_document || bid.bid_document || bid.bid_document_url ? (
-                                              <a
-                                                href={
-                                                  bid.bid_document_url || 
-                                                  onGetFileObjectUrl(bid.encoded_bid_document) ||
-                                                  onGetFileObjectUrl(bid.bid_document) ||
-                                                  "#"
-                                                }
-                                                target="_blank"
-                                                rel="noopener noreferrer"
+                                                                                      {(bid.bid_document_info || bid.encoded_bid_document || bid.bid_document || bid.bid_document_url) ? (
+                                              <button
+                                                type="button"
                                                 className="text-blue-600 hover:text-blue-800 hover:underline flex items-center"
-                                                onClick={() => {
-                                                  // Debug logging
+                                                onClick={(e) => {
+                                                  e.preventDefault();
+                                                  
+                                                  // Handle document download - prioritize encoded data (same as adverts)
+                                                  let downloadUrl;
+                                                  if (bid.encoded_bid_document) {
+                                                    // Use encoded data to create blob URL (same as adverts)
+                                                    downloadUrl = getFileDownloadUrl(bid.encoded_bid_document);
+                                                  } else if (bid.bid_document_info?.download_url) {
+                                                    // Use API endpoint if no encoded data
+                                                    downloadUrl = buildApiUrl(base_url, bid.bid_document_info.download_url);
+                                                  } else if (bid.bid_document_url) {
+                                                    // Use direct URL if available
+                                                    downloadUrl = bid.bid_document_url;
+                                                  } else if (bid.bid_document && typeof bid.bid_document === 'string') {
+                                                    // Fallback to file path
+                                                    downloadUrl = buildApiUrl(base_url, getApiEndpoints().FILE_DOWNLOAD(bid.bid_document));
+                                                  } else {
+                                                    downloadUrl = getFileDownloadUrl(bid.bid_document);
+                                                  }
+                                                  
                                                   console.log("📄 Document click:", {
+                                                    bid_document_info: bid.bid_document_info ? "present" : "missing",
                                                     bid_document_url: bid.bid_document_url,
                                                     encoded_bid_document: bid.encoded_bid_document ? "present" : "missing",
                                                     bid_document: bid.bid_document ? "present" : "missing",
-                                                    generatedUrl: onGetFileObjectUrl(bid.encoded_bid_document) || onGetFileObjectUrl(bid.bid_document)
+                                                    generatedUrl: downloadUrl
                                                   });
+                                                  
+                                                  if (downloadUrl) {
+                                                    // Create download link
+                                                    const link = document.createElement('a');
+                                                    link.href = downloadUrl;
+                                                    
+                                                    // Set filename based on bid data
+                                                    const filename = bid.bid_document_info?.filename ||
+                                                      getDownloadFilename(
+                                                        bid.encoded_bid_document || bid.bid_document,
+                                                        `bid_${bid.bid_count}_${bid.supplier_name?.replace(/[^a-zA-Z0-9]/g, '_')}`
+                                                      );
+                                                    link.download = filename;
+                                                    
+                                                    // Set target for new tab (in case download fails)
+                                                    link.target = '_blank';
+                                                    link.rel = 'noopener noreferrer';
+                                                    
+                                                    // Trigger download
+                                                    document.body.appendChild(link);
+                                                    link.click();
+                                                    document.body.removeChild(link);
+                                                    
+                                                    console.log(`✅ Download initiated: ${filename}`);
+                                                  } else {
+                                                    console.error("❌ No download URL available");
+                                                  }
                                                 }}
                                               >
                                                 <svg className="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.586a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                                 </svg>
                                                 View/Download Bid Document
+                                                {bid.bid_document_info?.error && (
+                                                  <span className="text-red-500 ml-1">(File not found)</span>
+                                                )}
                                                 <svg className="w-3 h-3 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                                                 </svg>
-                                              </a>
+                                              </button>
                                             ) : (
                                               <p>No documents attached</p>
                                             )}
@@ -3493,18 +4257,25 @@ export default function Schedule({
                 <div className="space-y-6">
                   <CommitteeApprovalWrapper
                     users={users}
+                    committeeMembers={committeeMembers}
                     onSaveCommittee={handleSaveCommittee}
-                    onApprove={handleCommitteeApprove}
+                    onApprove={(username: string, approval: string, justification: string) => 
+                      handleApprove('committee', username, approval, justification)
+                    }
+                    isCreator={isCreator()}
+                    csrfToken={csrfToken}
                   />
 
                   {/* GM/FM Approval Table */}
                   <ApprovalTableWrapper
                     csId={csId}
                     username={username}
+                    committeeMembers={committeeMembers}
                     gmApproval={gmApproval}
                     fmApproval={fmApproval}
                     isCreator={isCreator()}
                     onApprove={handleApprove}
+                    currentUserRoles={currentUserRoles}
                   />
 
                   {/* Approval Summary */}
@@ -3531,17 +4302,35 @@ export default function Schedule({
                       <div className="flex justify-between items-center">
                         <span className="text-gray-600">GM Approval:</span>
                         <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                          gmApproval ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"
+                          gmApproval?.approval === "Approved" 
+                            ? "bg-green-100 text-green-800"
+                            : gmApproval?.approval === "Rejected"
+                            ? "bg-red-100 text-red-800"
+                            : "bg-yellow-100 text-yellow-800"
                         }`}>
-                          {gmApproval ? "Complete" : "Pending"}
+                          {gmApproval?.approval === "Approved" 
+                            ? "Complete"
+                            : gmApproval?.approval === "Rejected"
+                            ? "Rejected"
+                            : "Pending"
+                          }
                         </span>
                       </div>
                       <div className="flex justify-between items-center">
                         <span className="text-gray-600">FM Approval:</span>
                         <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                          fmApproval ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"
+                          fmApproval?.approval === "Approved" 
+                            ? "bg-green-100 text-green-800"
+                            : fmApproval?.approval === "Rejected"
+                            ? "bg-red-100 text-red-800"
+                            : "bg-yellow-100 text-yellow-800"
                         }`}>
-                          {fmApproval ? "Complete" : "Pending"}
+                          {fmApproval?.approval === "Approved" 
+                            ? "Complete"
+                            : fmApproval?.approval === "Rejected"
+                            ? "Rejected"
+                            : "Pending"
+                          }
                         </span>
                       </div>
                       <div className="flex justify-between items-center border-t pt-3">
@@ -3638,7 +4427,17 @@ export default function Schedule({
                   {/* Compliance Table */}
                   {compliance.length > 0 && (
                     <div className="bg-white p-6 rounded-lg shadow-sm border">
-                      <h3 className="text-lg font-semibold text-gray-900 mb-4 border-b pb-2">Compliance Evaluation</h3>
+                      <h3 className="text-lg font-semibold text-gray-900 mb-4 border-b pb-2 flex items-center justify-between">
+                  <span>Compliance Evaluation</span>
+                  {!isCreator() && isApprovalComplete() && (
+                    <span className="inline-flex items-center text-sm text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                      <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                      </svg>
+                      Edit Options Locked
+                    </span>
+                  )}
+                </h3>
                       
                       <div className="overflow-x-auto">
                         <table className="min-w-full divide-y divide-gray-200">
@@ -4001,6 +4800,89 @@ export default function Schedule({
             </div>
           </Suspense>
         );
+      case 'rankings':
+        return (
+          <Suspense fallback={<SectionLoader />}>
+            <div className="space-y-6">
+              {!csId ? (
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
+                  <div className="flex items-center">
+                    <svg className="w-6 h-6 text-yellow-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                    </svg>
+                    <div>
+                      <h3 className="text-lg font-medium text-yellow-800">Schedule Required</h3>
+                      <p className="text-yellow-700 mt-1">Please save the schedule and complete compliance evaluation before managing rankings.</p>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  {/* Rankings Table */}
+                  <div className="bg-white p-6 rounded-lg shadow-sm border">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4 border-b pb-2 flex items-center">
+                      <svg className="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                      </svg>
+                      Supplier Rankings & Evaluation
+                    </h3>
+                    
+                    {rankings.length > 0 ? (
+                      <div className="overflow-x-auto">
+                        <table className="min-w-full divide-y divide-gray-200">
+                          <thead className="bg-gray-50">
+                            <tr>
+                              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Rank</th>
+                              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Supplier</th>
+                              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total Score</th>
+                              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Decision</th>
+                              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Remarks</th>
+                            </tr>
+                          </thead>
+                          <tbody className="bg-white divide-y divide-gray-200">
+                            {rankings.map((rank, index) => (
+                              <tr key={rank.id || index} className={rank.decision === 'Awarded' ? "bg-green-50" : "bg-gray-50"}>
+                                <td className="px-4 py-3 text-sm font-medium text-gray-900">
+                                  <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-blue-100 text-blue-800 text-xs font-medium">
+                                    {rank.rank}
+                                  </span>
+                                </td>
+                                <td className="px-4 py-3 text-sm font-medium text-gray-900">{rank.supplier_name}</td>
+                                <td className="px-4 py-3 text-sm text-gray-900">{rank.total}</td>
+                                <td className="px-4 py-3 text-sm">
+                                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                    rank.decision === 'Awarded' 
+                                      ? 'bg-green-100 text-green-800' 
+                                      : rank.decision === 'Rejected'
+                                      ? 'bg-red-100 text-red-800'
+                                      : 'bg-yellow-100 text-yellow-800'
+                                  }`}>
+                                    {rank.decision || 'Pending'}
+                                  </span>
+                                </td>
+                                <td className="px-4 py-3 text-sm text-gray-900">{rank.remarks || '-'}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    ) : (
+                      <div className="text-center py-8">
+                        <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                        </svg>
+                        <h3 className="mt-2 text-sm font-medium text-gray-900">No Rankings Available</h3>
+                        <p className="mt-1 text-sm text-gray-500">
+                          Rankings will appear here after the evaluation process is completed.
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          </Suspense>
+        );
       default:
         return null;
     }
@@ -4018,105 +4900,110 @@ export default function Schedule({
     );
   }
 
+  // Debug render
+  console.log('🎨 Component rendering with state:', {
+    csId,
+    advertMetadata,
+    advert,
+    isLoading,
+    loadingOperation
+  });
+
   return (
-    <ScheduleProvider 
-      base_url={base_url}
-      csId={csId}
-      username={username_ || ''}
-    >
+    <>
       <div className="min-h-screen bg-gray-50">
-      <div className="px-4 py-5 sm:px-6">
-          <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-semibold text-gray-900">Comparative Schedule</h1>
-          {(csId || creator || createdAt) && (
-            <div className="text-sm text-gray-500">
-              {csId && <p>CS ID: {csId}</p>}
-              {creator && <p>Created by: {creator}</p>}
-              {createdAt && <p>Created at: {formatDisplayDate(createdAt)}</p>}
-            </div>
-          )}
-        </div>
-        
-          {/* Tab Navigation */}
-          <div className="border-b border-gray-200 mb-6">
-            <nav className="-mb-px flex space-x-8" aria-label="Tabs">
-              {TAB_CONFIG.map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => handleTabChange(tab.id)}
-                  className={`${
-                    activeTab === tab.id
-                      ? 'border-blue-500 text-blue-600'
-                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                  } whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm flex items-center gap-2 transition-colors duration-200`}
-                  aria-current={activeTab === tab.id ? 'page' : undefined}
-                >
-                  <span>{tab.icon}</span>
-                  {tab.label}
-                  {!loadedTabs.has(tab.id) && tab.id !== 'details' && (
-                    <span className="ml-1 text-xs text-gray-400">•</span>
-                  )}
-                </button>
-              ))}
-            </nav>
+        <div className="px-4 py-5 sm:px-6">
+            <div className="flex justify-between items-center mb-6">
+            <h1 className="text-2xl font-semibold text-gray-900">Comparative Schedule</h1>
+            {(csId || creator || createdAt) && (
+              <div className="text-sm text-gray-500">
+                {csId && <p>CS ID: {csId}</p>}
+                {creator && <p>Created by: {creator}</p>}
+                {createdAt && <p>Created at: {formatDisplayDate(createdAt)}</p>}
+              </div>
+            )}
           </div>
           
-          {/* Tab Content */}
-          <div className="transition-all duration-200">
-            {renderTabContent}
+            {/* Tab Navigation */}
+            <div className="border-b border-gray-200 mb-6">
+              <nav className="-mb-px flex space-x-8" aria-label="Tabs">
+                {TAB_CONFIG.map((tab) => (
+                  <button
+                    key={tab.id}
+                    onClick={() => handleTabChange(tab.id)}
+                    className={`${
+                      activeTab === tab.id
+                        ? 'border-blue-500 text-blue-600'
+                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    } whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm flex items-center gap-2 transition-colors duration-200`}
+                    aria-current={activeTab === tab.id ? 'page' : undefined}
+                  >
+                    <span>{tab.icon}</span>
+                    {tab.label}
+                    {!loadedTabs.has(tab.id) && tab.id !== 'details' && (
+                      <span className="ml-1 text-xs text-gray-400">•</span>
+                    )}
+                  </button>
+                ))}
+              </nav>
+            </div>
+            
+            {/* Tab Content */}
+            <div className="transition-all duration-200">
+              {renderTabContent}
+            </div>
           </div>
         </div>
-      </div>
-      
-      {/* Response notification */}
-      {response.open && (
-        <div className="fixed inset-0 z-50 overflow-y-auto">
-          <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
-            <div className="fixed inset-0 transition-opacity" aria-hidden="true">
-              <div className="absolute inset-0 bg-gray-500 opacity-75"></div>
-            </div>
-            <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-            <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
-              <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                <div className="sm:flex sm:items-start">
-                  <div className={`mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full ${
-                    response.success ? "bg-green-100" : "bg-red-100"
-                  } sm:mx-0 sm:h-10 sm:w-10`}>
-                    {response.success ? (
-                      <svg className="h-6 w-6 text-green-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                      </svg>
-                    ) : (
-                      <svg className="h-6 w-6 text-red-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                      </svg>
-                    )}
-                  </div>
-                  <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
-                    <h3 className="text-lg leading-6 font-medium text-gray-900">
-                      {response.title}
-                    </h3>
-                    <div className="mt-2">
-                      <p className="text-sm text-gray-500">
-                        {response.message}
-                      </p>
+        
+        {/* Response notification */}
+        {response.open && (
+          <div className="fixed inset-0 z-50 overflow-y-auto">
+            <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+              <div className="fixed inset-0 transition-opacity" aria-hidden="true">
+                <div className="absolute inset-0 bg-gray-500 opacity-75"></div>
+              </div>
+              <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+              <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                  <div className="sm:flex sm:items-start">
+                    <div className={`mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full ${
+                      response.success ? "bg-green-100" : "bg-red-100"
+                    } sm:mx-0 sm:h-10 sm:w-10`}>
+                      {response.success ? (
+                        <svg className="h-6 w-6 text-green-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                        </svg>
+                      ) : (
+                        <svg className="h-6 w-6 text-red-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      )}
+                    </div>
+                    <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+                      <h3 className="text-lg leading-6 font-medium text-gray-900">
+                        {response.title}
+                      </h3>
+                      <div className="mt-2">
+                        <p className="text-sm text-gray-500">
+                          {response.message}
+                        </p>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-              <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-                <button
-                  type="button"
-                  onClick={onCloseResponse}
-                  className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm"
-                >
-                  OK
-                </button>
+                <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                  <button
+                    type="button"
+                    onClick={onCloseResponse}
+                    className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm"
+                  >
+                    OK
+                  </button>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
       {/* Approval Justification Modal */}
       {approvalsJustificationModal && (
@@ -4222,14 +5109,18 @@ export default function Schedule({
        )}
 
        {/* Add/Edit Bid Modal - Only for creators */}
-       {(addBidModal || updateBidModal) && currentBid && isCreator() && (
-         <div className="fixed inset-0 z-50 overflow-y-auto">
-           <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+       {(() => {
+         const shouldShowModal = (addBidModal || updateBidModal) && currentBid && isCreator();
+                  // Modal visibility check
+         return shouldShowModal;
+       })() && (
+         <div className="fixed inset-0 z-50" style={{ overflow: 'visible' }}>
+           <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0" style={{ overflow: 'visible' }}>
              <div className="fixed inset-0 transition-opacity" aria-hidden="true">
                <div className="absolute inset-0 bg-gray-500 opacity-75"></div>
              </div>
              <span className="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
-             <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full">
+             <div className="inline-block align-bottom bg-white rounded-lg text-left shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full" style={{ overflow: 'visible' }}>
                <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
                  <div className="sm:flex sm:items-start">
                    <div className="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-blue-100 sm:mx-0 sm:h-10 sm:w-10">
@@ -4239,8 +5130,33 @@ export default function Schedule({
                    </div>
                    <div className="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left w-full">
                      <h3 className="text-lg leading-6 font-medium text-gray-900">
-                       {addBidModal ? 'Add New Bid' : 'Edit Bid'} #{currentBid.bid_count}
+                       {addBidModal ? 'Add New Bid' : 'Edit Bid'} #{currentBid?.bid_count}
                      </h3>
+                     
+                     {/* Validation Errors Display */}
+                     {bidValidationErrors.length > 0 && (
+                       <div className="mt-4 bg-red-50 border border-red-200 rounded-md p-4">
+                         <div className="flex">
+                           <div className="flex-shrink-0">
+                             <svg className="h-5 w-5 text-red-400" fill="currentColor" viewBox="0 0 20 20">
+                               <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                             </svg>
+                           </div>
+                           <div className="ml-3">
+                             <h3 className="text-sm font-medium text-red-800">
+                               Please fix the following errors:
+                             </h3>
+                             <div className="mt-2 text-sm text-red-700">
+                               <ul className="list-disc pl-5 space-y-1">
+                                 {bidValidationErrors.map((error, index) => (
+                                   <li key={index}>{error}</li>
+                                 ))}
+                               </ul>
+                             </div>
+                           </div>
+                         </div>
+                       </div>
+                     )}
                      
                      <div className="mt-4 space-y-4">
                        {/* Supplier Selection */}
@@ -4251,7 +5167,11 @@ export default function Schedule({
                              <input
                                type="text"
                                placeholder="Search and select supplier..."
-                               className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 pr-8"
+                               className={`w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 pr-8 ${
+                                 isFieldInvalid("supplier") 
+                                   ? "border-red-300 focus:ring-red-500 focus:border-red-500" 
+                                   : "border-gray-300"
+                               }`}
                                value={supplierSearchTerm}
                                onChange={(e) => {
                                  setSupplierSearchTerm(e.target.value);
@@ -4272,48 +5192,44 @@ export default function Schedule({
                              {/* Dropdown */}
                              {showSupplierDropdown && (
                                <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
-                                 {suppliers
-                                   .filter(supplier => 
-                                     !supplierSearchTerm || 
-                                     (supplier.supplier_name || supplier.name || '')
-                                       .toLowerCase()
-                                       .includes(supplierSearchTerm.toLowerCase())
-                                   )
-                                   .map((supplier) => (
-                                     <div
-                                       key={supplier.id}
-                                       className="px-3 py-2 cursor-pointer hover:bg-blue-50 hover:text-blue-900"
-                                       onMouseDown={(e) => {
-                                         e.preventDefault(); // Prevent input blur
-                                         const supplierName = supplier.supplier_name || supplier.name || '';
-                                         setSupplierSearchTerm(supplierName);
-                                         setCurrentBid({
-                                           ...currentBid,
-                                           supplier: supplier.id?.toString(),
-                                           supplier_name: supplierName,
-                                         });
-                                         setShowSupplierDropdown(false);
-                                       }}
-                                     >
-                                       <div className="font-medium text-gray-900">
-                                         {supplier.supplier_name || supplier.name}
-                                       </div>
-                                       {supplier.id && (
-                                         <div className="text-xs text-gray-500">ID: {supplier.id}</div>
-                                       )}
-                                     </div>
-                                   ))
-                                 }
-                                 {suppliers.filter(supplier => 
-                                   !supplierSearchTerm || 
-                                   (supplier.supplier_name || supplier.name || '')
-                                     .toLowerCase()
-                                     .includes(supplierSearchTerm.toLowerCase())
-                                 ).length === 0 && (
+                                 {isSupplierSearching ? (
                                    <div className="px-3 py-2 text-gray-500 text-sm">
-                                     No suppliers found matching "{supplierSearchTerm}"
+                                     Searching...
                                    </div>
-                                 )}
+                                 ) : (
+                                   <>
+                                     {supplierSearchResults.length > 0 ? (
+                                       supplierSearchResults.map((supplier) => (
+                                       <div
+                                         key={supplier.id}
+                                         className="px-3 py-2 cursor-pointer hover:bg-blue-50 hover:text-blue-900"
+                                         onMouseDown={(e) => {
+                                           e.preventDefault(); // Prevent input blur
+                                           const supplierName = supplier.supplier_name || supplier.name || '';
+                                           setSupplierSearchTerm(supplierName);
+                                           setCurrentBid({
+                                             ...currentBid,
+                                             supplier: supplier.id?.toString(),
+                                             supplier_name: supplierName,
+                                           });
+                                           setShowSupplierDropdown(false);
+                                         }}
+                                       >
+                                         <div className="font-medium text-gray-900">
+                                           {supplier.supplier_name || supplier.name}
+                                         </div>
+                                         {supplier.id && (
+                                           <div className="text-xs text-gray-500">ID: {supplier.id}</div>
+                                         )}
+                                       </div>
+                                     ))
+                                   ) : (
+                                     <div className="px-3 py-2 text-gray-500 text-sm">
+                                       {supplierSearchTerm.length >= 2 ? 'No suppliers found' : 'Type to search suppliers...'}
+                                     </div>
+                                   )}
+                                 </>
+                               )}
                                </div>
                              )}
                            </div>
@@ -4322,8 +5238,12 @@ export default function Schedule({
                            <label className="block text-sm font-medium text-gray-700 mb-2">Bid Date</label>
                            <input
                              type="date"
-                             className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                             value={currentBid.bid_date || ''}
+                             className={`w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                               isFieldInvalid("bid_date") 
+                                 ? "border-red-300 focus:ring-red-500 focus:border-red-500" 
+                                 : "border-gray-300"
+                             }`}
+                             value={currentBid?.bid_date || ''}
                              onChange={(e) => onCurrentBidChange('bid_date', e)}
                              name="bid_date"
                            />
@@ -4335,14 +5255,18 @@ export default function Schedule({
                          <label className="block text-sm font-medium text-gray-700 mb-2">Bid Document</label>
                          <input
                            type="file"
-                           className="w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                           className={`w-full p-2 border rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                             isFieldInvalid("bid_document") 
+                               ? "border-red-300 focus:ring-red-500 focus:border-red-500" 
+                               : "border-gray-300"
+                           }`}
                            accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
                            onChange={onBidDocumentChange}
                          />
                          <p className="text-xs text-gray-500 mt-1">PDF, DOC, or image files only (max 10MB)</p>
                          
                          {/* File Preview */}
-                         {(currentBid.bid_document || currentBid.encoded_bid_document || currentBid.bid_document_url) && (
+                         {(currentBid?.bid_document || currentBid?.bid_document_info || currentBid?.encoded_bid_document || currentBid?.bid_document_url) && (
                            <div className="mt-2 p-3 bg-gray-50 border border-gray-200 rounded">
                              <div className="flex items-center">
                                <svg className="w-5 h-5 text-blue-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -4354,6 +5278,27 @@ export default function Schedule({
                                      <p className="text-sm font-medium text-gray-900">{currentBid.bid_document.name}</p>
                                      <p className="text-xs text-gray-500">
                                        {(currentBid.bid_document.size / 1024 / 1024).toFixed(2)} MB - {currentBid.bid_document.type}
+                                     </p>
+                                   </>
+                                 ) : currentBid.bid_document_info ? (
+                                   <>
+                                     <p className="text-sm font-medium text-gray-900">
+                                       {currentBid.bid_document_info.filename || 'Bid document'}
+                                       {currentBid.bid_document_info.error && (
+                                         <span className="text-red-500 ml-2">(File not found)</span>
+                                       )}
+                                     </p>
+                                     <p className="text-xs text-gray-500">
+                                       {currentBid.bid_document_info.size > 0 
+                                         ? `${(currentBid.bid_document_info.size / 1024 / 1024).toFixed(2)} MB` 
+                                         : 'Size unknown'}
+                                       {currentBid.bid_document_info.download_url && (
+                                         <span className="ml-2 text-blue-600">
+                                           <a href={currentBid.bid_document_info.download_url} target="_blank" rel="noopener noreferrer">
+                                             Download
+                                           </a>
+                                         </span>
+                                       )}
                                      </p>
                                    </>
                                  ) : (
@@ -4371,6 +5316,7 @@ export default function Schedule({
                                  onClick={() => setCurrentBid({
                                    ...currentBid, 
                                    bid_document: undefined,
+                                   bid_document_info: undefined,
                                    encoded_bid_document: undefined,
                                    bid_document_url: undefined
                                  })}
@@ -4386,7 +5332,7 @@ export default function Schedule({
                        {/* Bid Items */}
                        <div>
                          <h4 className="text-md font-medium text-gray-900 mb-3">Bid Items & Pricing</h4>
-                         <div className="overflow-x-auto">
+                         <div className="overflow-visible">
                            <table className="min-w-full divide-y divide-gray-200">
                              <thead className="bg-gray-50">
                                <tr>
@@ -4394,20 +5340,25 @@ export default function Schedule({
                                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Unit of Measure</th>
                                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Quantity</th>
                                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Unit Price</th>
+                                 <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">VAT</th>
                                  <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase">Total Price</th>
                                </tr>
                              </thead>
                              <tbody className="bg-white divide-y divide-gray-200">
-                               {currentBid.items?.map((item, index) => (
-                                 <tr key={index}>
+                               {currentBid?.items?.map((item, index) => (
+                                 <tr key={index} style={{ overflow: 'visible' }}>
                                    <td className="px-4 py-2 text-sm font-medium text-gray-900">
                                      {item.item_required}
                                    </td>
-                                   <td className="px-4 py-2 text-sm">
-                                     <div className="relative">
+                                   <td className="px-4 py-2 text-sm" style={{ position: 'relative', overflow: 'visible' }}>
+                                     <div className="relative" style={{ position: 'relative', overflow: 'visible' }}>
                                        <input
                                          type="text"
-                                         className="w-full p-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 pr-6"
+                                         className={`w-full p-1 text-sm border rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 pr-6 ${
+                                           isFieldInvalid(`item_${index}_unit_of_measurement`) 
+                                             ? "border-red-300 focus:ring-red-500 focus:border-red-500" 
+                                             : "border-gray-300"
+                                         }`}
                                          placeholder="Search UOM..."
                                          value={activeUomItem === item.item_required ? uomSearchTerm : (item.unit_of_measurement || '')}
                                          onChange={(e) => {
@@ -4432,39 +5383,48 @@ export default function Schedule({
                                        
                                        {/* UOM Dropdown */}
                                        {showUomDropdown && activeUomItem === item.item_required && (
-                                         <div className="absolute z-20 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-40 overflow-auto">
-                                           {uom
-                                             .filter(uomItem => 
-                                               !uomSearchTerm || 
-                                               uomItem?.name?.toLowerCase().includes(uomSearchTerm.toLowerCase())
-                                             )
-                                             .map((uomItem) => (
-                                               <div
-                                                 key={uomItem.id}
-                                                 className="px-2 py-1 cursor-pointer hover:bg-blue-50 hover:text-blue-900 text-sm"
-                                                 onMouseDown={(e) => {
-                                                   e.preventDefault();
-                                                   onCurrentBidItemChange(
-                                                     item.item_required || '',
-                                                     'unit_of_measurement',
-                                                     { target: { name: 'unit_of_measurement', value: uomItem.name || '' } },
-                                                     currentBid.bid_count?.toString() || ''
-                                                   );
-                                                   setUomSearchTerm(uomItem?.name || '');
-                                                   setShowUomDropdown(false);
-                                                 }}
-                                               >
-                                                 {uomItem.name}
-                                               </div>
-                                               ))
-                                           }
-                                           {uom.filter(uomItem => 
-                                             !uomSearchTerm || 
-                                             uomItem?.name?.toLowerCase().includes(uomSearchTerm.toLowerCase())
-                                           ).length === 0 && (
+                                         <div 
+                                           className="absolute z-[9999] w-full bg-white border border-gray-300 rounded-md shadow-lg overflow-auto" 
+                                           style={{ 
+                                             maxHeight: '180px',
+                                             top: index >= (currentBid?.items?.length || 0) - 2 ? 'auto' : '100%',
+                                             bottom: index >= (currentBid?.items?.length || 0) - 2 ? '100%' : 'auto',
+                                             marginTop: index >= (currentBid?.items?.length || 0) - 2 ? '0' : '4px',
+                                             marginBottom: index >= (currentBid?.items?.length || 0) - 2 ? '4px' : '0'
+                                           }}
+                                         >
+                                           {isUomSearching ? (
                                              <div className="px-2 py-1 text-gray-500 text-sm">
-                                               No UOM found
+                                               Searching...
                                              </div>
+                                           ) : (
+                                             <>
+                                               {uomSearchResults.length > 0 ? (
+                                                 uomSearchResults.map((uomItem) => (
+                                                   <div
+                                                     key={uomItem.id}
+                                                     className="px-2 py-1 cursor-pointer hover:bg-blue-50 hover:text-blue-900 text-sm"
+                                                     onMouseDown={(e) => {
+                                                       e.preventDefault();
+                                                       onCurrentBidItemChange(
+                                                         item.item_required || '',
+                                                         'unit_of_measurement',
+                                                         { target: { name: 'unit_of_measurement', value: uomItem.name || '' } },
+                                                         currentBid.bid_count?.toString() || ''
+                                                       );
+                                                       setUomSearchTerm(uomItem?.name || '');
+                                                       setShowUomDropdown(false);
+                                                     }}
+                                                   >
+                                                     {uomItem.name} ({uomItem.unit})
+                                                   </div>
+                                                 ))
+                                               ) : (
+                                                 <div className="px-2 py-1 text-gray-500 text-sm">
+                                                   {uomSearchTerm.length >= 2 ? 'No UOM found' : 'Type to search UOM...'}
+                                                 </div>
+                                               )}
+                                             </>
                                            )}
                                          </div>
                                        )}
@@ -4473,7 +5433,11 @@ export default function Schedule({
                                    <td className="px-4 py-2 text-sm">
                                      <input
                                        type="number"
-                                       className="w-full p-1 text-sm border border-gray-300 rounded"
+                                       className={`w-full p-1 text-sm border rounded ${
+                                         isFieldInvalid(`item_${index}_quantity`) 
+                                           ? "border-red-300 focus:ring-red-500 focus:border-red-500" 
+                                           : "border-gray-300"
+                                       }`}
                                        value={item.quantity || ''}
                                        onChange={(e) => onCurrentBidItemChange(
                                          item.item_required || '',
@@ -4488,7 +5452,11 @@ export default function Schedule({
                                      <input
                                        type="number"
                                        step="0.01"
-                                       className="w-full p-1 text-sm border border-gray-300 rounded"
+                                       className={`w-full p-1 text-sm border rounded ${
+                                         isFieldInvalid(`item_${index}_unit_price`) 
+                                           ? "border-red-300 focus:ring-red-500 focus:border-red-500" 
+                                           : "border-gray-300"
+                                       }`}
                                        value={item.unit_price || ''}
                                        onChange={(e) => onCurrentBidItemChange(
                                          item.item_required || '',
@@ -4498,6 +5466,27 @@ export default function Schedule({
                                        )}
                                        name="unit_price"
                                      />
+                                   </td>
+                                   <td className="px-4 py-2 text-sm">
+                                                                            <select
+                                         className={`w-full p-1 text-sm border rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                                           isFieldInvalid(`item_${index}_vat`) 
+                                             ? "border-red-300 focus:ring-red-500 focus:border-red-500" 
+                                             : "border-gray-300"
+                                         }`}
+                                         value={item.vat || ''}
+                                         onChange={(e) => onCurrentBidItemChange(
+                                           item.item_required || '',
+                                           'vat',
+                                           e,
+                                           currentBid.bid_count?.toString() || ''
+                                         )}
+                                         name="vat"
+                                       >
+                                       <option value="">Select VAT</option>
+                                       <option value="Incl.">VAT Included</option>
+                                       <option value="Excl.">VAT Excluded</option>
+                                     </select>
                                    </td>
                                    <td className="px-4 py-2 text-sm">
                                      <input
@@ -4517,7 +5506,7 @@ export default function Schedule({
                          </div>
                          <div className="mt-2 text-right">
                            <span className="text-sm font-medium text-gray-700">
-                             Grand Total: ${calculateBidTotal(currentBid.items).toLocaleString()}
+                             Grand Total: ${calculateBidTotal(currentBid?.items || []).toLocaleString()}
                            </span>
                          </div>
                        </div>
@@ -4600,46 +5589,44 @@ export default function Schedule({
                            {/* Search Results Dropdown */}
                            {showSupplierDropdown && supplierSearchTerm && (
                              <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
-                               {suppliers
-                                 .filter(supplier => 
-                                   (supplier.supplier_name || supplier.name || '')
-                                     .toLowerCase()
-                                     .includes(supplierSearchTerm.toLowerCase())
-                                 )
-                                 .map((supplier) => (
-                                   <div
-                                     key={supplier.id}
-                                     className="px-3 py-2 cursor-pointer hover:bg-blue-50 hover:text-blue-900"
-                                     onMouseDown={(e) => {
-                                       e.preventDefault();
-                                       const supplierName = supplier.supplier_name || supplier.name || '';
-                                       setSupplierSearchTerm(supplierName);
-                                       setNewSupplier({
-                                         ...newSupplier,
-                                         supplier_name: supplierName,
-                                         id: supplier.id
-                                       });
-                                       setShowSupplierDropdown(false);
-                                       onOpenResponse("Supplier Found", `Supplier "${supplierName}" already exists in the system.`, true);
-                                     }}
-                                   >
-                                     <div className="font-medium text-gray-900">
-                                       {supplier.supplier_name || supplier.name}
-                                     </div>
-                                     {supplier.id && (
-                                       <div className="text-xs text-gray-500">ID: {supplier.id}</div>
-                                     )}
-                                   </div>
-                                 ))
-                               }
-                               {suppliers.filter(supplier => 
-                                 (supplier.supplier_name || supplier.name || '')
-                                   .toLowerCase()
-                                   .includes(supplierSearchTerm.toLowerCase())
-                               ).length === 0 && (
+                               {isSupplierSearching ? (
                                  <div className="px-3 py-2 text-gray-500 text-sm">
-                                   No existing suppliers found. You can add a new one below.
+                                   Searching...
                                  </div>
+                               ) : (
+                                 <>
+                                   {supplierSearchResults.length > 0 ? (
+                                     supplierSearchResults.map((supplier) => (
+                                                                          <div
+                                         key={supplier.id}
+                                         className="px-3 py-2 cursor-pointer hover:bg-blue-50 hover:text-blue-900"
+                                         onMouseDown={(e) => {
+                                           e.preventDefault();
+                                           const supplierName = supplier.supplier_name || supplier.name || '';
+                                           setSupplierSearchTerm(supplierName);
+                                           setNewSupplier({
+                                             ...newSupplier,
+                                             supplier_name: supplierName,
+                                             id: supplier.id
+                                           });
+                                           setShowSupplierDropdown(false);
+                                           onOpenResponse("Supplier Found", `Supplier "${supplierName}" already exists in the system.`, true);
+                                         }}
+                                       >
+                                         <div className="font-medium text-gray-900">
+                                           {supplier.supplier_name || supplier.name}
+                                         </div>
+                                         {supplier.id && (
+                                           <div className="text-xs text-gray-500">ID: {supplier.id}</div>
+                                         )}
+                                       </div>
+                                     ))
+                                   ) : (
+                                     <div className="px-3 py-2 text-gray-500 text-sm">
+                                       {supplierSearchTerm.length >= 2 ? 'No existing suppliers found. You can add a new one below.' : 'Type to search suppliers...'}
+                                     </div>
+                                   )}
+                                 </>
                                )}
                              </div>
                            )}
@@ -4863,7 +5850,8 @@ export default function Schedule({
                            registration_number: newSupplier.registration_number,
                            business_type: newSupplier.business_type
                          };
-                         setSuppliers(prev => [...prev, newSupplierData]);
+                         const currentSuppliers = useScheduleStore.getState().suppliers;
+                         setSuppliers([...currentSuppliers, newSupplierData]);
                          
                          setOnAddSupplier(false);
                          setNewSupplier({});
@@ -4902,6 +5890,6 @@ export default function Schedule({
           </div>
         </div>
       )}
-    </ScheduleProvider>
+    </>
   );
 }

@@ -1,2 +1,0 @@
-# beii
-be django version
