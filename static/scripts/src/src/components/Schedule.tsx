@@ -3998,11 +3998,23 @@ export default function Schedule({
                                               e.stopPropagation();
                                               e.preventDefault();
                                               
-                                              // Handle document download - prioritize bid_document_info
-                                              const downloadUrl = bid.bid_document_info?.download_url ||
-                                                                bid.bid_document_url || 
-                                                                getFileDownloadUrl(bid.encoded_bid_document) ||
-                                                                getFileDownloadUrl(bid.bid_document);
+                                              // Handle document download - prioritize encoded data (same as adverts)
+                                              let downloadUrl;
+                                              if (bid.encoded_bid_document) {
+                                                // Use encoded data to create blob URL (same as adverts)
+                                                downloadUrl = getFileDownloadUrl(bid.encoded_bid_document);
+                                              } else if (bid.bid_document_info?.download_url) {
+                                                // Use API endpoint if no encoded data
+                                                downloadUrl = buildApiUrl(base_url, bid.bid_document_info.download_url);
+                                              } else if (bid.bid_document_url) {
+                                                // Use direct URL if available
+                                                downloadUrl = bid.bid_document_url;
+                                              } else if (bid.bid_document && typeof bid.bid_document === 'string') {
+                                                // Fallback to file path
+                                                downloadUrl = buildApiUrl(base_url, getApiEndpoints().FILE_DOWNLOAD(bid.bid_document));
+                                              } else {
+                                                downloadUrl = getFileDownloadUrl(bid.bid_document);
+                                              }
                                               
                                               console.log("📄 Small document click:", {
                                                 bid_document_info: bid.bid_document_info ? "present" : "missing",
@@ -4140,11 +4152,23 @@ export default function Schedule({
                                                 onClick={(e) => {
                                                   e.preventDefault();
                                                   
-                                                  // Handle document download - prioritize bid_document_info
-                                                  const downloadUrl = bid.bid_document_info?.download_url ||
-                                                                    bid.bid_document_url || 
-                                                                    getFileDownloadUrl(bid.encoded_bid_document) ||
-                                                                    getFileDownloadUrl(bid.bid_document);
+                                                  // Handle document download - prioritize encoded data (same as adverts)
+                                                  let downloadUrl;
+                                                  if (bid.encoded_bid_document) {
+                                                    // Use encoded data to create blob URL (same as adverts)
+                                                    downloadUrl = getFileDownloadUrl(bid.encoded_bid_document);
+                                                  } else if (bid.bid_document_info?.download_url) {
+                                                    // Use API endpoint if no encoded data
+                                                    downloadUrl = buildApiUrl(base_url, bid.bid_document_info.download_url);
+                                                  } else if (bid.bid_document_url) {
+                                                    // Use direct URL if available
+                                                    downloadUrl = bid.bid_document_url;
+                                                  } else if (bid.bid_document && typeof bid.bid_document === 'string') {
+                                                    // Fallback to file path
+                                                    downloadUrl = buildApiUrl(base_url, getApiEndpoints().FILE_DOWNLOAD(bid.bid_document));
+                                                  } else {
+                                                    downloadUrl = getFileDownloadUrl(bid.bid_document);
+                                                  }
                                                   
                                                   console.log("📄 Document click:", {
                                                     bid_document_info: bid.bid_document_info ? "present" : "missing",

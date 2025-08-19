@@ -4294,48 +4294,78 @@ def api_get_cs_bids_optimized(request, cs_id):
         for bid in bids:
             bid_no = bid.bid_no
             if bid_no not in grouped_data:
-                # Use optimized file handling instead of Base64 encoding
+                # Use Base64 encoding for bid documents (same as adverts)
                 bid_document_info = None
+                encoded_bid_document = ""
                 if bid.bid_document:
-                    # Check if file exists and provide metadata
-                    file_path = bid.bid_document
-                    if file_path.startswith('uploads/'):
-                        # File is stored in root directory (BASE_DIR)
-                        full_path = os.path.join(settings.BASE_DIR, file_path)
-                    else:
-                        # File is stored with absolute path
-                        full_path = file_path
-                    
-                    if os.path.exists(full_path):
-                        try:
-                            file_size = os.path.getsize(full_path)
-                            filename = os.path.basename(file_path)
+                    try:
+                        # Construct the correct file path
+                        if bid.bid_document.startswith('uploads/'):
+                            # File is stored in root directory (BASE_DIR)
+                            file_path = os.path.join(settings.BASE_DIR, bid.bid_document)
+                        else:
+                            # File is stored with absolute path
+                            file_path = bid.bid_document
+                        
+                        print(f"🔍 Attempting to read bid document: {file_path}")
+                        print(f"🔍 File exists: {os.path.exists(file_path)}")
+                        
+                        if os.path.exists(file_path):
+                            with open(file_path, 'rb') as f:
+                                file_data = f.read()
+                            encoded_bid_document = base64.b64encode(file_data).decode('utf-8')
+                            print(f"✅ Successfully encoded bid document: {len(encoded_bid_document)} characters")
                             
                             bid_document_info = {
-                                'file_path': file_path,
-                                'filename': filename,
-                                'size': file_size,
-                                'download_url': f"/uploads/{file_path.replace('uploads/', '')}",
-                                'preview_url': f"/api/files/preview/{file_path}/"
+                                'file_path': bid.bid_document,
+                                'filename': os.path.basename(bid.bid_document),
+                                'size': len(file_data),
+                                'download_url': f"/api/files/download/{bid.bid_document}/",
+                                'preview_url': f"/api/files/preview/{bid.bid_document}/"
                             }
-                        except Exception as ex:
-                            print(f"Error getting file info for {file_path}: {ex}")
-                            bid_document_info = {
-                                'file_path': file_path,
-                                'filename': os.path.basename(file_path),
-                                'size': 0,
-                                'download_url': f"/uploads/{file_path.replace('uploads/', '')}",
-                                'preview_url': f"/api/files/preview/{file_path}/"
-                            }
-                    else:
-                        # File not found, but provide path for debugging
+                        else:
+                            print(f"❌ Bid document not found at path: {file_path}")
+                            # Try alternative locations
+                            alt_paths = [
+                                os.path.join(settings.BASE_DIR, bid.bid_document),
+                                os.path.join(settings.BASE_DIR, 'uploads', 'comparative', 'adverts', os.path.basename(bid.bid_document)),
+                                os.path.join(settings.MEDIA_ROOT, 'uploads', 'comparative', 'adverts', os.path.basename(bid.bid_document)),
+                                os.path.join(settings.MEDIA_ROOT, 'uploads', 'purchase_request', os.path.basename(bid.bid_document))
+                            ]
+                            
+                            for alt_path in alt_paths:
+                                if os.path.exists(alt_path):
+                                    print(f"✅ Found bid document at alternative path: {alt_path}")
+                                    with open(alt_path, 'rb') as f:
+                                        file_data = f.read()
+                                    encoded_bid_document = base64.b64encode(file_data).decode('utf-8')
+                                    bid_document_info = {
+                                        'file_path': bid.bid_document,
+                                        'filename': os.path.basename(bid.bid_document),
+                                        'size': len(file_data),
+                                        'download_url': f"/api/files/download/{bid.bid_document}/",
+                                        'preview_url': f"/api/files/preview/{bid.bid_document}/"
+                                    }
+                                    break
+                            else:
+                                print(f"❌ Bid document not found at any alternative location")
+                                bid_document_info = {
+                                    'file_path': bid.bid_document,
+                                    'filename': os.path.basename(bid.bid_document),
+                                    'size': 0,
+                                    'download_url': f"/api/files/download/{bid.bid_document}/",
+                                    'preview_url': f"/api/files/preview/{bid.bid_document}/",
+                                    'error': 'File not found'
+                                }
+                    except Exception as ex:
+                        print(f"Error reading bid document: {ex}")
                         bid_document_info = {
-                            'file_path': file_path,
-                            'filename': os.path.basename(file_path),
+                            'file_path': bid.bid_document,
+                            'filename': os.path.basename(bid.bid_document),
                             'size': 0,
-                            'download_url': f"/media/{file_path}",
-                            'preview_url': f"/api/files/preview/{file_path}/",
-                            'error': 'File not found'
+                            'download_url': f"/api/files/download/{bid.bid_document}/",
+                            'preview_url': f"/api/files/preview/{bid.bid_document}/",
+                            'error': f'Error reading file: {str(ex)}'
                         }
                 
                 grouped_data[bid_no] = {
@@ -4343,6 +4373,7 @@ def api_get_cs_bids_optimized(request, cs_id):
                     'supplier_name': bid.sup_id.name,
                     'bid_date': bid.quote_date,
                     'bid_document_info': bid_document_info,
+                    'encoded_bid_document': encoded_bid_document,
                     'items': []
                 }
             
