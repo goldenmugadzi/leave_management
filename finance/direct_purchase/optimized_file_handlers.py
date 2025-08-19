@@ -96,28 +96,33 @@ class OptimizedFileHandler:
         # Generate metadata
         metadata = self.generate_file_metadata(file)
         
-        # Create directory structure
-        year_month = datetime.now().strftime("%Y/%m")
-        upload_path = f'uploads/comparative_schedules/{year_month}'
+        # Create directory structure (use BASE_DIR since files are not in MEDIA_ROOT)
+        upload_path = os.path.join(settings.BASE_DIR, 'uploads', 'comparative', 'adverts')
+        os.makedirs(upload_path, exist_ok=True)
         
         # Generate unique filename
         timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
         unique_id = hashlib.md5(f"{file.name}{timestamp}".encode()).hexdigest()[:8]
         filename = f"{timestamp}_{unique_id}_{file.name}"
         
-        # Save file using Django's FileSystemStorage
+        # Save file directly (not using FileSystemStorage since it's outside MEDIA_ROOT)
         file_path = os.path.join(upload_path, filename)
-        saved_path = self.fs.save(file_path, file)
+        with open(file_path, 'wb+') as destination:
+            for chunk in file.chunks():
+                destination.write(chunk)
+        
+        # Store relative path for database consistency
+        relative_file_path = os.path.join('uploads', 'comparative', 'adverts', filename)
         
         # Store metadata in cache for quick access
-        cache_key = f"file_metadata_{saved_path}"
+        cache_key = f"file_metadata_{relative_file_path}"
         cache.set(cache_key, metadata, CACHE_TIMEOUT)
         
         return {
-            'file_path': saved_path,
+            'file_path': relative_file_path,
             'metadata': metadata,
-            'download_url': f"/api/cs-files/download/{saved_path}/",
-            'preview_url': f"/api/cs-files/preview/{saved_path}/"
+            'download_url': f"/api/cs-files/download/{relative_file_path}/",
+            'preview_url': f"/api/cs-files/preview/{relative_file_path}/"
         }
     
     def get_file_stream(self, file_path):

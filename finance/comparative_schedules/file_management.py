@@ -42,7 +42,7 @@ class ComparativeScheduleAttachment(models.Model):
     
     # Core fields
     cs = models.ForeignKey('ComparativeSchedules', on_delete=models.CASCADE, related_name='attachments')
-    file = models.FileField(upload_to='uploads/comparative_schedules/%Y/%m/')
+    file = models.CharField(max_length=500)  # Store file path as string since files are in BASE_DIR/uploads
     original_filename = models.CharField(max_length=255)
     file_type = models.CharField(max_length=20, choices=ATTACHMENT_TYPES, default='general')
     
@@ -203,9 +203,8 @@ class SecureFileUploadService:
         ext = os.path.splitext(file.name)[1].lower()
         filename = f"{timestamp}_{unique_id}{ext}"
         
-        # Create directory structure
-        year_month = datetime.now().strftime("%Y/%m")
-        upload_path = f'uploads/comparative_schedules/{year_month}'
+        # Create directory structure (use BASE_DIR since files are not in MEDIA_ROOT)
+        upload_path = os.path.join(settings.BASE_DIR, 'uploads', 'comparative', 'adverts')
         os.makedirs(upload_path, exist_ok=True)
         
         # Save file
@@ -214,10 +213,13 @@ class SecureFileUploadService:
             for chunk in file.chunks():
                 destination.write(chunk)
         
+        # Store relative path in database for consistency with existing models
+        relative_file_path = os.path.join('uploads', 'comparative', 'adverts', filename)
+        
         # Create attachment record
         attachment = ComparativeScheduleAttachment.objects.create(
             cs_id=cs_id,
-            file=file_path,
+            file=relative_file_path,
             original_filename=file.name,
             file_type=file_type,
             file_size=file.size,

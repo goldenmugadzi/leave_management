@@ -1992,7 +1992,7 @@ def get_comperative_schedule_data(request, cs_id):
                     alt_paths = [
                         os.path.join(settings.BASE_DIR, cs.advert),
                         os.path.join(settings.BASE_DIR, 'uploads', 'comparative', 'adverts', os.path.basename(cs.advert)),
-                        os.path.join(settings.MEDIA_ROOT, 'uploads', 'comparative_schedules', os.path.basename(cs.advert)),
+                        os.path.join(settings.MEDIA_ROOT, 'uploads', 'comparative', 'adverts', os.path.basename(cs.advert)),
                         os.path.join(settings.MEDIA_ROOT, 'uploads', 'purchase_request', os.path.basename(cs.advert))
                     ]
                     
