@@ -4004,39 +4004,32 @@ export default function Schedule({
                                                                 getFileDownloadUrl(bid.encoded_bid_document) ||
                                                                 getFileDownloadUrl(bid.bid_document);
                                               
-                                              console.log("📄 Small document click:", {
+                                              console.log("📄 Small Bid Document click:", {
                                                 bid_document_info: bid.bid_document_info ? "present" : "missing",
                                                 bid_document_url: bid.bid_document_url,
                                                 encoded_bid_document: bid.encoded_bid_document ? "present" : "missing",
                                                 bid_document: bid.bid_document ? "present" : "missing",
-                                                generatedUrl: downloadUrl
+                                                generatedUrl: downloadUrl,
+                                                is_blob_url: downloadUrl?.startsWith('blob:') || false
                                               });
                                               
                                               if (downloadUrl) {
-                                                // Create download link
-                                                const link = document.createElement('a');
-                                                link.href = downloadUrl;
-                                                
                                                 // Set filename based on bid data
                                                 const filename = bid.bid_document_info?.filename ||
                                                   getDownloadFilename(
                                                     bid.encoded_bid_document || bid.bid_document,
                                                     `bid_${bid.bid_count}_${bid.supplier_name?.replace(/[^a-zA-Z0-9]/g, '_')}`
                                                   );
-                                                link.download = filename;
                                                 
-                                                // Set target for new tab (in case download fails)
-                                                link.target = '_blank';
-                                                link.rel = 'noopener noreferrer';
-                                                
-                                                // Trigger download
-                                                document.body.appendChild(link);
-                                                link.click();
-                                                document.body.removeChild(link);
-                                                
-                                                console.log(`✅ Download initiated: ${filename}`);
+                                                // Use FileService for consistent download handling (like adverts)
+                                                try {
+                                                  fileService.downloadFile(downloadUrl, filename);
+                                                  console.log(`✅ Small bid download initiated: ${filename}`);
+                                                } catch (error) {
+                                                  console.error("❌ Small bid download failed:", error);
+                                                }
                                               } else {
-                                                console.error("❌ No download URL available");
+                                                console.error("❌ No download URL available for small bid");
                                               }
                                             }}
                                           >
@@ -4146,39 +4139,32 @@ export default function Schedule({
                                                                     getFileDownloadUrl(bid.encoded_bid_document) ||
                                                                     getFileDownloadUrl(bid.bid_document);
                                                   
-                                                  console.log("📄 Document click:", {
+                                                  console.log("📄 Bid Document click:", {
                                                     bid_document_info: bid.bid_document_info ? "present" : "missing",
                                                     bid_document_url: bid.bid_document_url,
                                                     encoded_bid_document: bid.encoded_bid_document ? "present" : "missing",
                                                     bid_document: bid.bid_document ? "present" : "missing",
-                                                    generatedUrl: downloadUrl
+                                                    generatedUrl: downloadUrl,
+                                                    is_blob_url: downloadUrl?.startsWith('blob:') || false
                                                   });
                                                   
                                                   if (downloadUrl) {
-                                                    // Create download link
-                                                    const link = document.createElement('a');
-                                                    link.href = downloadUrl;
-                                                    
                                                     // Set filename based on bid data
                                                     const filename = bid.bid_document_info?.filename ||
                                                       getDownloadFilename(
                                                         bid.encoded_bid_document || bid.bid_document,
                                                         `bid_${bid.bid_count}_${bid.supplier_name?.replace(/[^a-zA-Z0-9]/g, '_')}`
                                                       );
-                                                    link.download = filename;
                                                     
-                                                    // Set target for new tab (in case download fails)
-                                                    link.target = '_blank';
-                                                    link.rel = 'noopener noreferrer';
-                                                    
-                                                    // Trigger download
-                                                    document.body.appendChild(link);
-                                                    link.click();
-                                                    document.body.removeChild(link);
-                                                    
-                                                    console.log(`✅ Download initiated: ${filename}`);
+                                                    // Use FileService for consistent download handling (like adverts)
+                                                    try {
+                                                      fileService.downloadFile(downloadUrl, filename);
+                                                      console.log(`✅ Bid download initiated: ${filename}`);
+                                                    } catch (error) {
+                                                      console.error("❌ Bid download failed:", error);
+                                                    }
                                                   } else {
-                                                    console.error("❌ No download URL available");
+                                                    console.error("❌ No download URL available for bid");
                                                   }
                                                 }}
                                               >
