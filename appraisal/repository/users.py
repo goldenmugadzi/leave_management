@@ -8,3 +8,12 @@ class UserProfileRepository:
             return UserProfile.objects.filter(cost_center__id=cost_center_id)
         except Exception as e:
             raise Exception(f"[UserProfileRepository] fetch_by_cost_center_pk with cost_center_id: {cost_center_id}, failed with error: {e}")
+        
+    def get_by_pk(self, user_id: int)->QuerySet[UserProfile]:
+        try:
+            qr = UserProfile.objects.filter(id=user_id)
+            return qr.first()
+        except Exception as e:
+            raise Exception(f"[UserProfileRepository] get_by_pk with user_id: {user_id}, failed with error: {e}")
+        
+    
