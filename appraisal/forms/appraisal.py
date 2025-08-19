@@ -124,17 +124,18 @@ class AppraisalUpdateForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         appraisee_id = kwargs.pop("appraisee_id", None)
         appraiser_id = kwargs.pop("appraiser_id", None)
+        appraisal_reviewer_id = kwargs.pop("appraisal_reviewer_id", None)
         appraisal_appraisee_id = kwargs.pop("appraisal_appraisee_id", None)
         super().__init__(*args, **kwargs)
         
         if appraisee_id:
-            qr_exclude_appraisee = UserProfile.objects.exclude(id=appraisee_id)
-            self.fields["appraiser"].queryset = qr_exclude_appraisee
+            cost_center_user_qr = get_all_cost_center_users(user_id=appraisee_id)
+            self.fields["appraiser"].queryset = cost_center_user_qr.exclude(id=appraisal_reviewer_id) #exclude reviewer
             self.fields['reviewer'].disabled = True
             self.fields["reviewer"].required = False
         elif appraiser_id:
-            qr_exclude_appraiser = UserProfile.objects.exclude(id=appraiser_id).exclude(id=appraisal_appraisee_id)
-            self.fields["reviewer"].queryset = qr_exclude_appraiser
+            cost_center_user_qr = get_all_cost_center_users(user_id=appraiser_id)
+            self.fields["reviewer"].queryset = cost_center_user_qr.exclude(id=appraisal_appraisee_id) #exclude appraisee
             self.fields['appraiser'].disabled = True
         else:
             self.fields['appraiser'].disabled = True

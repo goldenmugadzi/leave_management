@@ -177,6 +177,7 @@ class AppraisalUpdateView(SuccessMessageMixin, UpdateView):
         appraiser_id = self.is_appraiser_requesting()
         if appraisee_id:
             kwargs["appraisee_id"] = appraisee_id
+            kwargs["appraisal_reviewer_id"] = self.get_object().reviewer.id
         if appraiser_id:
             kwargs["appraiser_id"] = appraiser_id
             kwargs["appraisal_appraisee_id"] = self.get_object().user.id
