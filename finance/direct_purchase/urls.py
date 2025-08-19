@@ -1,8 +1,18 @@
-from django.urls import path, include
+from django.urls import path
 from .views import *
-app_name ='direct_purchase'
+from .optimized_file_handlers import (
+    api_upload_file_optimized,
+    api_download_file_optimized,
+    api_preview_file_optimized,
+    api_get_attachments_optimized,
+    api_get_create_data_optimized,
+    api_get_cs_files_optimized,
+    api_delete_file_optimized,
+)
+app_name = 'comparative_schedules'
 
 urlpatterns = [
+    path('timeline', debug_time, name='timeline'),
     path('schedule/<str:pr_id>', get_create_cs, name='adopt_schedule'),
     path('save_additional_notes', save_additional_notes, name='save_additional_notes'),
     path('save_buyers_notes', save_buyers_notes, name='save_buyers_notes'),
@@ -11,41 +21,8 @@ urlpatterns = [
     path('create_schedule/', create, name='create_schedule'),
     path('add_supplier/<str:tender_id>', cs_add_supplier, name='add_supplier'),
     path('compliance/<str:tender_id>', cs_compliance_table, name="tender_compliance"),
-    
-    path('create_data/<str:pr_id>', get_create_data, name='get_create_data'),
-    path('save', save_comparative_schedule, name='save_schedule'),
-    path('update', update_comparative_schedule, name='update_schedule'),
-        
-    path('save_supplier', save_supplier, name='save_supplier'),
-    path('save_bid', save_cs_bid, name='save_bid'),
-    path('delete_bid', delete_cs_bid, name='delete_cs_bid'),
-    
-    path('save_compliance', save_cs_compliance, name='save_compliance'),
-    
-    path('close_compliance', save_cs_ranking, name='save_cs_ranking'),
-    path('save_committee', save_cs_committee, name='save_cs_committee'),
-    path('delete_committee_member', delete_cs_committee_member, name='delete_cs_committee_member'),
-    path('committee_approve', approve_cs_committee, name='approve_cs_committee'),
-    path('save_decision', save_cs_decision, name='save_cs_decision'),
-    
-    path('approval_approve', approve_cs, name='approve_cs'),
-    
-    path('comperative_schedules', get_comperative_schedules, name='get_comperative_schedules'),
-    path('reports', reports_all_schedules, name='reports_all_schedules'),
-    path('comperative_schedule/<str:cs_id>', get_comperative_schedule, name='get_comperative_schedule'),
-    path('cs_data/<str:cs_id>/', get_comperative_schedule_data, name='get_comperative_schedule_data'),
-    
-    path('update_pritem_ordered', update_pritem_ordered, name='update_pritem_ordered'),
-    path('import_old_dp', import_old_dp, name='import_old_rfq'),
-    
-    path('pending_commitee', get_pending_committee, name='get_pending_committee'),
-    path('your_schedules', your_comperative_schedules, name='your_comperative_schedules'),
-    path('pending_gm_approval', get_pending_gm_approval, name='get_pending_gm_approval'),
-    path('pending_fm_approval', get_pending_fm_approval, name='get_pending_fm_approval'),
-    path('all_schedules', get_all_schedules, name='get_all_schedules'),
-    path('datatables/export', get_csv_export, name='get_csv_export'),
-    path('datatables/<str:view>', datatable_data, name='datatable_data'),
-    
+
+    path('create_data/<str:pr_id>/', get_create_data, name='get_create_data'),
     # New focused APIs
     path('api/pr-basic/<str:pr_id>/', api_get_pr_basic, name='api_get_pr_basic'),
     path('api/pr-items/<str:pr_id>/', api_get_pr_items, name='api_get_pr_items'),
@@ -71,35 +48,46 @@ urlpatterns = [
     path('api/cs-approvals/<str:cs_id>/', api_get_cs_approvals_optimized, name='api_get_cs_approvals_optimized'),
     path('api/cs-rankings/<str:cs_id>/', api_get_cs_rankings_optimized, name='api_get_cs_rankings_optimized'),
     
-    # File upload/download endpoints
-    path('api/upload-file/', api_upload_file, name='api_upload_file'),
-    path('api/download-file/<str:file_id>/', api_download_file, name='api_download_file'),
-    path('api/save-cs-bid-optimized/', api_save_cs_bid_optimized, name='api_save_cs_bid_optimized'),
+    # Optimized File Handling Endpoints (replaces Base64 encoding)
+    path('api/files/upload/', api_upload_file_optimized, name='api_upload_file_optimized'),
+    path('api/files/download/<path:file_path>/', api_download_file_optimized, name='api_download_file_optimized'),
+    path('api/files/preview/<path:file_path>/', api_preview_file_optimized, name='api_preview_file_optimized'),
+    path('api/files/delete/<path:file_path>/', api_delete_file_optimized, name='api_delete_file_optimized'),
+    path('api/files/attachments/<str:pr_id>/', api_get_attachments_optimized, name='api_get_attachments_optimized'),
+    path('api/files/create-data/<str:pr_id>/', api_get_create_data_optimized, name='api_get_create_data_optimized'),
+    path('api/files/cs-files/<str:cs_id>/', api_get_cs_files_optimized, name='api_get_cs_files_optimized'),
     
-    # Advanced Search & Filtering endpoints
-    path('api/advanced-search/', api_advanced_search, name='api_advanced_search'),
-    path('api/fuzzy-search/', api_fuzzy_search, name='api_fuzzy_search'),
-    path('api/search-suggestions/', api_search_suggestions, name='api_search_suggestions'),
-    path('api/search-filters-data/', api_search_filters_data, name='api_search_filters_data'),
-    path('api/test-supplier-search/', api_test_supplier_search, name='api_test_supplier_search'),
-    path('api/test-user-search/', api_test_user_search, name='api_test_user_search'),
+    path('save', save_comparative_schedule, name='save_schedule'),
+    path('update', update_comparative_schedule, name='update_schedule'),
     
-    # Bulk operation endpoints
-    path('api/bulk-update-items/', api_bulk_update_items, name='api_bulk_update_items'),
-    path('api/bulk-approve-committee/', api_bulk_approve_committee, name='api_bulk_approve_committee'),
+    path('save_supplier', save_supplier, name='save_supplier'),
+    path('save_bid', save_cs_bid, name='save_bid'),
+    path('delete_bid', delete_cs_bid, name='delete_cs_bid'),
     
-    # Optimized file handling endpoints (NEW)
-    path('api/dp-files/', include('finance.direct_purchase.optimized_file_urls')),
+    path('save_compliance', save_cs_compliance, name='save_compliance'),
+
+    path('close_compliance', save_cs_ranking, name='save_cs_ranking'),
+    path('save_committee', save_cs_committee, name='save_cs_committee'),
+    path('delete_committee_member', delete_cs_committee_member, name='delete_cs_committee_member'),
+    path('committee_approve', approve_cs_committee, name='approve_cs_committee'),
+    path('save_decision', save_cs_decision, name='save_cs_decision'),
     
-    # Frontend API compatibility endpoints (NEW)
-    path('api/files/create-data/<str:pr_id>/', get_create_data, name='api_files_create_data'),
-    path('api/files/attachments/<str:pr_id>/', api_get_pr_attachments, name='api_files_attachments'),
-    path('api/files/upload/', api_upload_file, name='api_files_upload'),
+    path('approval_approve', approve_cs, name='approve_cs'),
     
-    # Additional file endpoints for frontend compatibility
-    path('api/files/download/<path:file_path>/', api_download_file, name='api_files_download'),
-    path('api/files/preview/<path:file_path>/', api_download_file, name='api_files_preview'),  # Reuse download for now
+    path('comperative_schedules', get_comperative_schedules, name='get_comperative_schedules'),
+    path('reports', reports_all_schedules, name='reports_all_schedules'),
+    path('comperative_schedule/<str:cs_id>', get_comperative_schedule, name='get_comperative_schedule'),
+    path('cs_data/<str:cs_id>/', get_comperative_schedule_data, name='get_comperative_schedule_data'),
     
-    # Test endpoint for debugging
-    path('api/test/<str:pr_id>/', test_api_endpoint, name='test_api_endpoint'),
+    path('update_pritem_ordered', update_pritem_ordered, name='update_pritem_ordered'),
+    # path('import_old_rfq', import_old_rfq, name='import_old_rfq'),
+    path('add_cost_center', add_cost_center, name='add_cost_center'),
+    
+    path('pending_commitee', get_pending_committee, name='get_pending_committee'),
+    path('your_schedules', your_comperative_schedules, name='your_comperative_schedules'),
+    path('pending_gm_approval', get_pending_gm_approval, name='get_pending_gm_approval'),
+    path('pending_fm_approval', get_pending_fm_approval, name='get_pending_fm_approval'),
+    path('all_schedules', get_all_schedules, name='get_all_schedules'),
+    path('datatables/export', get_csv_export, name='get_csv_export'),
+    path('datatables/<str:view>', datatable_data, name='datatable_data'),
 ]

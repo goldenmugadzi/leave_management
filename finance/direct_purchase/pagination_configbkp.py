@@ -1,4 +1,4 @@
-# Pagination Configuration for Comparative Schedules
+# Pagination Configuration for Direct Purchase
 # Stage 2 Optimization: Memory Protection & Performance
 
 # Maximum limits to prevent memory exhaustion

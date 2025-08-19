@@ -884,7 +884,7 @@ export default function Schedule({
           
           // Also try to load existing rankings if they exist
           try {
-            const rankingsResponse = await fetch(`${base_url}/api/cs-rankings/${csId}/`, defaultRequestOptions);
+            const rankingsResponse = await fetch(buildApiUrl(base_url, `/api/cs-rankings/${csId}/`), defaultRequestOptions);
             if (rankingsResponse.ok) {
               const rankingsData = await rankingsResponse.json();
               if (rankingsData && rankingsData.rankings && rankingsData.rankings.length > 0) {
@@ -1261,7 +1261,7 @@ export default function Schedule({
           body: formData,
         };
         
-        await fetchWithRetry(buildApiUrl(base_url, "/committee_approve"), requestOptions);
+        await fetchWithRetry(buildApiUrl(base_url, getApiEndpoints().COMMITTEE_APPROVE), requestOptions);
         
         // Refresh committee data
         const committeeData = await fetchWithRetry(
@@ -1290,7 +1290,7 @@ export default function Schedule({
           body: formData,
         };
         
-        const data = await fetchWithRetry(buildApiUrl(base_url, "/approval_approve"), requestOptions);
+        const data = await fetchWithRetry(buildApiUrl(base_url, getApiEndpoints().APPROVAL_APPROVE), requestOptions);
         
         // Update approval state based on role
         if (role === 'general_manager') {
@@ -1952,7 +1952,11 @@ export default function Schedule({
 
   // Set direct purchase limit
   const onSetDirectPurchaseLimit = useCallback(() => {
-    if (base_url === "/direct_purchase") {
+    // Check if this is a direct purchase module (supports both old and new URL structures)
+    const isDirectPurchase = base_url.includes('/direct_purchase') || 
+                            window.location.pathname.includes('/direct_purchase/');
+    
+    if (isDirectPurchase) {
       const limit = (bids?.length ?? 0) >= 1 ? false : true;
       setDirectPurchaseLimit(limit);
     }
@@ -2197,7 +2201,10 @@ export default function Schedule({
     }
     
     // Direct purchase validation
-    if (base_url === "/direct_purchase" && bids.length >= 1 && !bid_count) {
+    const isDirectPurchase = base_url.includes('/direct_purchase') || 
+                            window.location.pathname.includes('/direct_purchase/');
+    
+    if (isDirectPurchase && bids.length >= 1 && !bid_count) {
       onOpenResponse("Direct Purchase Limit", "Direct purchase allows maximum 1 bid only", false);
       return;
     }
@@ -2248,7 +2255,7 @@ export default function Schedule({
       items_count: bid.items?.length || 0
     });
 
-    fetch(`${base_url}/save_bid`, {
+    fetch(buildApiUrl(base_url, getApiEndpoints().CS_SAVE_BID), {
       method: "POST",
       headers: {
         "X-CSRFToken": csrfToken,
@@ -2498,7 +2505,7 @@ export default function Schedule({
     form_data.append("supplier_name", supplier_name);
     form_data.append("csrfmiddlewaretoken", csrfToken);
 
-    fetch(`${base_url}/delete_bid`, {
+    fetch(buildApiUrl(base_url, getApiEndpoints().CS_DELETE_BID), {
       method: "POST",
       headers: {
         "X-CSRFToken": csrfToken,
@@ -2785,7 +2792,7 @@ export default function Schedule({
     form_data.append("cs_id", csId);
     form_data.append("csrfmiddlewaretoken", csrfToken);
 
-    fetch(`${base_url}/close_compliance`, {
+    fetch(buildApiUrl(base_url, getApiEndpoints().CS_CLOSE_COMPLIANCE), {
       method: "POST",
       headers: {
         "X-CSRFToken": csrfToken,
@@ -2828,7 +2835,7 @@ export default function Schedule({
     form_data.append("additional_notes", additionalNotes);
     form_data.append("csrfmiddlewaretoken", csrfToken);
 
-    fetch(`${base_url}/save_additional_notes`, {
+    fetch(buildApiUrl(base_url, getApiEndpoints().CS_ADDITIONAL_NOTES), {
       method: "POST",
       headers: {
         "X-CSRFToken": csrfToken,
@@ -2868,7 +2875,7 @@ export default function Schedule({
     form_data.append("buyers_notes", buyersNotes);
     form_data.append("csrfmiddlewaretoken", csrfToken);
 
-    fetch(`${base_url}/save_buyers_notes`, {
+    fetch(buildApiUrl(base_url, getApiEndpoints().CS_BUYERS_NOTES), {
       method: "POST",
       headers: {
         "X-CSRFToken": csrfToken,
@@ -3909,7 +3916,7 @@ export default function Schedule({
                       )}
                     </div>
                     
-                    {directPurchaseLimit && base_url === "/direct_purchase" && (
+                    {directPurchaseLimit && (base_url.includes('/direct_purchase') || window.location.pathname.includes('/direct_purchase/')) && (
                       <div className="mt-4 bg-orange-50 border border-orange-200 rounded-lg p-3">
                         <p className="text-orange-800 text-sm">
                           <svg className="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">

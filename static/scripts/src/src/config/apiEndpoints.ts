@@ -57,24 +57,24 @@ export const setCurrentModule = (module: string): void => {
 };
 
 // Function to get base URL (matching main.tsx logic)
+// Updated to support the correct URL structure where each module uses its own endpoints
 export const getBaseUrl = (baseUrl: string, path?: string): string => {
   const currentPath = path || (typeof window !== 'undefined' ? window.location.pathname : '');
   
-  // If baseUrl already contains the module path, don't add it again
-  if (baseUrl.includes('/direct_purchase')) {
-    return baseUrl;
-  }
-  if (baseUrl.includes('/restricted_bidding')) {
-    return baseUrl;
-  }
-  if (baseUrl.includes('/comperative_schedule')) {
+  // If baseUrl already contains the module path, return as-is
+  if (baseUrl.includes('/direct_purchase') || 
+      baseUrl.includes('/comperative_schedule') ||
+      baseUrl.includes('/restricted_bidding')) {
     return baseUrl;
   }
   
-  // Otherwise, determine module and append it
+  // Each module uses its own endpoint structure:
+  // - direct_purchase URLs: /direct_purchase/...
+  // - comperative_schedule URLs: /comperative_schedule/...
+  // - restricted_bidding URLs: /restricted_bidding/...
   switch (true) {
     case currentPath.includes('/direct_purchase/'):
-      return `${baseUrl}/${API_MODULES.DIRECT_PURCHASE}`;
+      return `${baseUrl}/direct_purchase`;
     case currentPath.includes('/restricted_bidding/'):
       return `${baseUrl}/${API_MODULES.RESTRICTED_BIDDING}`;
     case currentPath.includes('/comperative_schedule/'):
@@ -84,7 +84,8 @@ export const getBaseUrl = (baseUrl: string, path?: string): string => {
   }
 };
 
-// API endpoints (without module prefix since base_url already includes it)
+// API endpoints (shared structure but each module uses its own base path)
+// Each module has its own URL space: /direct_purchase/, /comperative_schedule/, /restricted_bidding/
 export const API_ENDPOINTS = {
     // User and Supplier APIs
     USERS: `/api/users/`,
@@ -116,6 +117,8 @@ export const API_ENDPOINTS = {
     
     // Schedule APIs
     CS_SAVE: `/save`,
+    CS_SAVE_BID: `/save_bid`,
+    CS_DELETE_BID: `/delete_bid`,
     CS_UPDATE: () => `/update`,
     CS_UPDATE_ITEMS: () => `/update_pritem_ordered`,
     CS_BIDS_API: (cs_id: string) => `/api_cs_bids/${cs_id}`,
@@ -144,6 +147,8 @@ export const API_ENDPOINTS = {
     
     // Approval APIs
     CS_APPROVAL: (cs_id: string) => `/cs/${cs_id}/approval/`,
+    COMMITTEE_APPROVE: `/committee_approve`,
+    APPROVAL_APPROVE: `/approval_approve`,
     
     // Tab-specific APIs (for optimized loading)
     CS_BIDS_DATA: (cs_id: string) => `/api/cs-bids/${cs_id}/`,
@@ -167,6 +172,7 @@ export const getModuleEndpoint = (module: keyof typeof API_MODULES, path: string
 };
 
 // Configuration object for easy switching between modules
+// Each module uses its own endpoint structure
 export const MODULE_CONFIG = {
   restrictedBidding: {
     users: `/${API_MODULES.RESTRICTED_BIDDING}/api/users/`,
@@ -177,8 +183,9 @@ export const MODULE_CONFIG = {
     suppliers: `/${API_MODULES.COMPARATIVE_SCHEDULES}/api/suppliers/`,
   },
   directPurchase: {
-    users: `/${API_MODULES.DIRECT_PURCHASE}/api/users/`,
-    suppliers: `/${API_MODULES.DIRECT_PURCHASE}/api/suppliers/`,
+    // Direct purchase uses its own endpoints: /direct_purchase/...
+    users: `/direct_purchase/api/users/`,
+    suppliers: `/direct_purchase/api/suppliers/`,
   }
 } as const;
 
