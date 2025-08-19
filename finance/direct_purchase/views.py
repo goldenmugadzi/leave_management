@@ -1,243 +1,383 @@
 import base64
+import copy
 import csv
 import os
-from django.core.files.storage import FileSystemStorage
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
 import json
 from datetime import datetime
 from django.db.models import Sum
+from django.core.files.storage import FileSystemStorage
+from django.conf import settings
 
-from django.contrib.auth.tokens import default_token_generator
-from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
-from django.utils.encoding import force_bytes, force_str
-from django.template.loader import render_to_string
-
-# Add proper logging
-import logging
-logger = logging.getLogger(__name__)
-
-# Import pagination config for Stage 2 optimization
-from .pagination_config import get_safe_page_size, get_pagination_info, DATATABLE_MAX_SIZE, DATATABLE_DEFAULT_SIZE
-
-# Import optimized file handlers
-from .optimized_file_handlers import OptimizedFileHandler, OptimizedAttachmentHandler
-
-from it.users.views import ms_exhange_reset_password_html, ms_exhange_send, ms_exhange_send_html
+from finance.comparative_schedules.models import Currency, ProcPlan
+from finance.comparative_schedules.views import notification_update, notify_user
 from .models import *
 from it.users.models import *
-from finance.purchase_request.models import PurchaseRequest, PrItem, Attachment, \
-    UnitOfMeasurement
+from finance.purchase_request.models import PurchaseRequest, PrItem, Attachment, UnitOfMeasurement
 from ACE2.models import Ace2
-from .models import *
-from django.db.models import Q, Exists, OuterRef, Count, F, Prefetch
+from finance.direct_purchase.models import *
+from django.db.models import Q, Exists, OuterRef, Count, F
 import pandas as pd
-from django.core.paginator import Paginator
-from django.utils import timezone
+from django.utils.timezone import now
 from django.contrib.auth.decorators import login_required
-from django.views.decorators.http import require_http_methods
-import copy
-from django.conf import settings
-# FileSystemStorage no longer needed - file uploads handled by dedicated APIs
-from django.core.cache import cache
 
+from django.core.paginator import Paginator
+
+from django.utils import timezone
 from django.contrib import messages
-
 APP_NAME = "direct_purchases"
-CACHE_TIMEOUT = 300  # 5 minutes
 
-# Helper functions for optimized file handling
-def get_optimized_file_handler(user):
-    """Get optimized file handler instance"""
-    return OptimizedFileHandler(user)
-
-def get_optimized_attachment_handler(user):
-    """Get optimized attachment handler instance"""
-    return OptimizedAttachmentHandler(user)
-
-def save_file_optimized(file, file_type='general', description=None, user=None):
-    """Save file using optimized handler"""
-    if not user:
-        return None
+def import_old_dp(request):
     
-    file_handler = get_optimized_file_handler(user)
-    try:
-        result = file_handler.save_file_optimized(file, file_type, description)
-        return result
-    except Exception as e:
-        logger.error(f"Error saving file optimized: {e}")
-        return None
+    dp = pd.read_csv('direct_purchases.csv')
+    dp_update = pd.read_csv('direct_purchases_update.csv')
 
-def get_attachments_metadata_optimized(attachments, user=None, include_preview=False):
-    """Get attachment metadata without Base64 encoding"""
-    if not user:
-        return []
+    # # save comperative schedules
+    # cs_df = pd.DataFrame(columns=['document_id', 'pr_number', 'status', 'message'])
+    # try:
+    #     # initialize dataframe that records all failied and successfull comperative schedules
+    #     for index, dp_row in dp.iterrows():
+    #         adjid = dp_row['adjid']
+    #         section_code = dp_row['section_code']
+    #         pr_number = dp_row['pr_number']
+    #         print("pr_number: ", pr_number)
+    #         if pr_number:
+    #             pr = PurchaseRequest.objects.filter(pr_no=pr_number).first()
+
+    #             _proc_plan = dp_row['proc_ref']
+    #             proc_plan = DPProcPlan.objects.filter(proc_ref=_proc_plan).first()
+    #             dp_update_data = dp_update[dp_update['adjid'] == adjid]
+    #             if not dp_update_data.empty:
+    #                 dp_update_row = dp_update_data.iloc[0]
+    #             else:
+    #                 dp_update_row = None
+    #             if dp_update_row is not None:
+    #                 created_by = UserProfile.objects.filter(username=dp_update_row['update_user3']).first()
+    #                 if created_by == None: 
+    #                     created_by = UserProfile.objects.filter(username='ze123').first()
+    #                 print("dp_row: ", dp_row['region'])
+    #                 region = None
+    #                 if dp_row['region']:
+    #                     region_name = str(dp_row['region']).upper()
+    #                     region = Regions.objects.filter(region=region_name).first()
+    #                 else:
+    #                     region = Regions.objects.filter(id=1).first()
+                    
+    #                 cost_center = CostCenter.objects.filter(Q(id=section_code) | Q(id="CC"+str(section_code))).first()
+    #                 try:
+    #                     currency = Currency.objects.filter(currency='ZWL').first()
+    #                     dc = timezone.make_aware(datetime.strptime(dp_row['date_created'], "%Y-%m-%d %H:%M:%S")) if (dp_row['date_created'] != '0000-00-00 00:00:00' or dp_row['date_created'] != "") else None
+    #                     cs_query = DirectPurchase(
+    #                         cs_id = adjid,
+    #                         pr_id = pr,
+    #                         proc_plan = proc_plan,
+    #                         scope_of_work = dp_row['description'],
+    #                         currency = currency,
+    #                         advert = dp_row['specifications'],
+    #                         pr_number = pr_number,
+    #                         created_by = created_by,
+    #                         cost_center = cost_center,
+    #                         region = region,
+    #                         created_at = dc,
+    #                     )
+    #                     cs_query.save()
+    #                     cs_df = pd.concat([cs_df, pd.DataFrame({'document_id': [adjid], 'pr_number': [pr_number], 'status': ['Success'], 'message': ['Success']})], ignore_index=True)
+    #                 except Exception as ex:
+    #                     print("Error: ", ex)
+    #                     cs_df = pd.concat([cs_df, pd.DataFrame({'document_id': [adjid], 'pr_number': [pr_number], 'status': ['Failed'], 'message': [ex]})], ignore_index=True)
+    #             else:
+    #                 cs_df = pd.concat([cs_df, pd.DataFrame({'document_id': [adjid], 'pr_number': [pr_number], 'status': ['Failed'], 'message': ['PR Object not found']})], ignore_index=True)
+    #         else:
+    #             cs_df = pd.concat([cs_df, pd.DataFrame({'document_id': [adjid], 'pr_number': [pr_number], 'status': ['Failed'], 'message': ['PR Number not found']})], ignore_index=True)
+    #     cs_df.to_csv('dp_df.csv')
+    #     print("cs_df: ", cs_df)
     
-    attachment_handler = get_optimized_attachment_handler(user)
-    try:
-        return attachment_handler.get_attachments_metadata(attachments, include_preview)
-    except Exception as e:
-        logger.error(f"Error getting attachments metadata: {e}")
-        return []
+    # except Exception as ex:
+    #     print("Error: ", ex)
+        
+    # # save bids
+    # try:
+    #     item_df = pd.DataFrame(columns=['document_id', 'item_id', 'sup_id', 'status', 'message'])
+    #     for index, row in dp.iterrows():
+    #         adjid = row['adjid']
+    #         item1 = row['item1']
+    #         quantity1 = row['quantity1']
+    #         item1_unitprice = row['item1_unitprice']
+    #         item1_total = row['item1_total']
+    #         description = row['description']
+    #         specifications = row['specifications']
+    #         award1 = row['award1']
+    #         pr_number = row['pr_number']
+    #         date_created = row['date_created']
+    #         section_code = row['section_code']
+    #         remarks = row['remarks']
+    #         service_type = row['service_type']
+    #         proc_ref = row['proc_ref']
+    #         region = row['region']
+    #         print("adjid: ", adjid)
+    #         cs_query = DirectPurchase.objects.filter(cs_id=adjid).first()
+    #         print("cs_query: ", cs_query)
+    #         item_id = "Item" + str(datetime.now().strftime("%Y%m%d%I%M%S%p"))
+    #         if cs_query:
+    #             item_query = DPItems(
+    #                 cs_id = cs_query,
+    #                 item_id = item_id,
+    #                 item_name = item1,
+    #                 quantity = quantity1,
+    #                 unit_of_measurement = "",
+    #             )
+    #             item_query.save()    
 
-def get_cs_file_metadata_optimized(cs_instance, file_field_name, user=None):
-    """Get file metadata for DirectPurchase file fields"""
-    if not user:
-        return None
+    #             for i in range(1,3):
+    #                 supplier_quotation_date = row['supplier'+ str(i) +'_quotation_date']
+    #                 supplier_quotation = row['supplier'+ str(i) +'_quotation']
+    #                 supplier_name = row['supplier'+ str(i)]
+    #                 direct_purchase_quote = row['direct_purchase'+ str(i)]
+
+    #                 supplier = None
+    #                 if supplier_name and supplier_name != "None" and supplier_name != "nan" and supplier_name != "N/A":
+    #                     supplier, created = Supplier.objects.get_or_create(name=supplier_name)
+    #                 else:
+    #                     item_df = pd.concat([item_df, pd.DataFrame({'document_id': [cs_query.cs_id], 'item_id': [item1], 'sup_id': [supplier_name], 'status': ['FAILED'], 'message': ['Supplier Not Found']})], ignore_index=True)
+    #                 quote_dc = timezone.now()
+    #                 if supplier_quotation_date != '0000-00-00':
+    #                     quote_dc = timezone.make_aware(datetime.strptime(supplier_quotation_date, "%Y-%m-%d")) if (date_created != '0000-00-00 00:00:00' or date_created != "") else None
+    #                 if supplier:
+    #                     # print("bid_no", supplier)
+    #                     bid = DPBids(
+    #                         cs_id = cs_query,
+    #                         item_id = item_query,
+    #                         sup_id = supplier,
+    #                         unit_price = item1_unitprice,
+    #                         vat = "",
+    #                         quoted_qty = quantity1,
+    #                         bid_no = "1",
+    #                         quote_date = quote_dc,
+    #                         total = item1_total,
+    #                         bid_document = direct_purchase_quote,
+    #                     )
+    #                     bid.save()
+    #                     item_df = pd.concat([item_df, pd.DataFrame({'document_id': [cs_query.cs_id], 'item_id': [""], 'sup_id': [""], 'status': ['SUCCESS'], 'message': ['SUCCESS']})], ignore_index=True)
+    #                 else:
+    #                     item_df = pd.concat([item_df, pd.DataFrame({'document_id': [cs_query.cs_id], 'item_id': [""], 'sup_id': [""], 'status': ['FAILED'], 'message': ['DB Supplier Not Found']})], ignore_index=True)
+                                    
+    #         else:
+    #             item_df = pd.concat([item_df, pd.DataFrame({'document_id': [""], 'item_id': [""], 'sup_id': [""], 'status': ['FAILED'], 'message': ['Schedule Not Found']})], ignore_index=True)
+    # except Exception as ex:
+    #     print("Error: ", ex)          
     
-    attachment_handler = get_optimized_attachment_handler(user)
+    # item_df.to_csv('dp_item_df.csv')
+    
+    # save bid update
+    other_df = pd.DataFrame(columns=['document_id', 'sup_id', 'model', 'status', 'message'])
     try:
-        return attachment_handler.get_cs_file_metadata(cs_instance, file_field_name)
-    except Exception as e:
-        logger.error(f"Error getting CS file metadata: {e}")
-        return None
+        for index, row in dp_update.iterrows():
+            cs_id = row['adjid']
+            cs_query = DirectPurchase.objects.filter(cs_id=cs_id).first()
+            if cs_query:
+                
+                # save ranking
+                try:
+                    for i in range(1, 6):
+                        rank_supplier = row[f'ranking{i}'] if f'ranking{i}' in row else ""
+                        if rank_supplier and rank_supplier != "None" and rank_supplier != "nan" and rank_supplier != "N/A":
+                            supplier = Supplier.objects.filter(name=rank_supplier).first()
+                            
+                            bids = DPBids.objects.filter(cs_id=cs_query).values('sup_id').annotate(total_sum=Sum('total')).order_by('total_sum')
+                            
+                            for bid in bids:
+                                decision = "Awarded " + bid.sup_id.name + " being the lowest bidder having complied with all the requirements is recommended to provide the goods/service at a total cost of " + cs_query.currency.currency + " " + str(total) + " excluding VAT."
 
-def add_cost_center(request):
-    schedules = DirectPurchase.objects.all()
-    for schedule in schedules:
-        cost_center = schedule.created_by.cost_center
-        schedule.cost_center = cost_center
-        schedule.save()
+                                ranking_query = DPRanking(
+                                    cs_id = cs_query,
+                                    supplier_id = supplier,
+                                    rank = bid.bid_no,
+                                    remarks = "",
+                                    decision = decision,
+                                    total = bid.total,
+                                )
+                                ranking_query.save()
+                                print("ranking_query: ", ranking_query)
+                        else:
+                            print("Ranking Supplier not found")
+                    
+                except Exception as ex:
+                    print("Error: ", ex)        
+                # save committee
+                for i in range(1,3):
+                    username = row[f'update_user{i}'] if f'update_user{i}' in row else None
+                    status = row[f'status{i}'] if f'status{i}' in row else None
+                    approved_at = row[f'update_date{i}'] if f'update_date{i}' in row else None
+                    position = ""
+                    if i == 1:
+                        position = "Chairman"
+                    elif i == 2:
+                        position = 'Finance'
+                    elif i == 3:
+                        position = 'Procurement'
+                    elif i == 4:
+                        position = 'User'
+                    else:
+                        position = 'Other'
+                        
+                    if status == 1 and i == 1:
+                        status = "Approved"
+                    elif status == 2 and i == 2:
+                        status = "Approved"
+                    elif status == 3 and i == 3:
+                        status = "Approved"
+                    elif status == 0:
+                        status = ""
+                    else:
+                        status = "Rejected"
+                    
+                    # check if committee exists
+                    if username:
+                        # check if member exists
+                        # get member user profile
+                        member_profile = UserProfile.objects.filter(username=username).first()
+                        if member_profile:
+                            committee_query = DPCommittee(
+                                cs_id = cs_query,
+                                user = member_profile,
+                                committee_name = username,
+                                committee_position = position,
+                                committee_approval = status,
+                                committee_date = timezone.make_aware(datetime.strptime(approved_at, "%Y-%m-%d %H:%M:%S")) if approved_at != '0000-00-00 00:00:00' else None
+                            )
+                            committee_query.save()
+                            other_df = pd.concat([other_df, pd.DataFrame({'document_id': [cs_id], 'sup_id': [username], 'model': ["Committee"], 'status': ['Success'], 'message': ['SUCCESS']})], ignore_index=True)
+                        else:
+                            other_df = pd.concat([other_df, pd.DataFrame({'document_id': [cs_id], 'sup_id': [username], 'model': ["Committee"], 'status': ['Failed'], 'message': ['member profile empty']})], ignore_index=True)
+                    else:
+                        other_df = pd.concat([other_df, pd.DataFrame({'document_id': [cs_id], 'sup_id': [""], 'model': ["Committee"], 'status': ['Failed'], 'message': ['username empty']})], ignore_index=True) 
+                
+                finance_user = row['update_user4']
+                finance_date = row['update_date4']
+                finance_status = row['status4']
+      
+                if finance_status == 4:
+                    finance_status = "Approved"
+                elif finance_status == 0:
+                    finance_status = ""
+                else:
+                    finance_status = "Rejected"
+                
+                if finance_user:
+                    finance_profile = UserProfile.objects.filter(username=finance_user).first()
+                    if finance_profile:
+                        finance_query = DPApproval(
+                            cs_id = cs_query,
+                            user = finance_profile,
+                            approver_role = "finance_manager",
+                            approval = finance_status,
+                            justification = "",
+                            approval_date = timezone.make_aware(datetime.strptime(finance_date, "%Y-%m-%d %H:%M:%S")) if finance_date != '0000-00-00 00:00:00' else None,
+                        )
+                        finance_query.save()
+                        other_df = pd.concat([other_df, pd.DataFrame({'document_id': [cs_id], 'sup_id': [finance_user], 'model': ["DPApproval"], 'status': ['Success'], 'message': ['SUCCESS']})], ignore_index=True)
+                    else:
+                        other_df = pd.concat([other_df, pd.DataFrame({'document_id': [cs_id], 'sup_id': [finance_user], 'model': ["DPApproval"], 'status': ['Failed'], 'message': ['DB finance_user empty']})], ignore_index=True)
+                else:
+                    other_df = pd.concat([other_df, pd.DataFrame({'document_id': [cs_id], 'sup_id': [finance_user], 'model': ["DPApproval"], 'status': ['Failed'], 'message': ['finance_user empty']})], ignore_index=True)
+                
+                gm_user = row['update_user4']
+                gm_date = row['update_date4']
+                gm_status = row['status4']
+      
+                if gm_status == 5:
+                    gm_status = "Approved"
+                elif gm_status == 0:
+                    gm_status = ""
+                else:
+                    gm_status = "Rejected"
+                
+                if gm_user:
+                    gm_profile = UserProfile.objects.filter(username=gm_user).first()
+                    if gm_profile:
+                        gm_query = DPApproval(
+                            cs_id = cs_query,
+                            user = gm_profile,
+                            approver_role = "general_manager",
+                            approval = gm_status,
+                            justification = "",
+                            approval_date = timezone.make_aware(datetime.strptime(gm_date, "%Y-%m-%d %H:%M:%S")) if gm_date != '0000-00-00 00:00:00' else None,
+                        )
+                        gm_query.save()
+                        other_df = pd.concat([other_df, pd.DataFrame({'document_id': [cs_id], 'sup_id': [gm_user], 'model': ["DPApproval"], 'status': ['Success'], 'message': ['SUCCESS GM']})], ignore_index=True)
+                    else:
+                        other_df = pd.concat([other_df, pd.DataFrame({'document_id': [cs_id], 'sup_id': [gm_user], 'model': ["DPApproval"], 'status': ['Failed'], 'message': ['GM DB finance_user empty']})], ignore_index=True)
+                else:
+                    other_df = pd.concat([other_df, pd.DataFrame({'document_id': [cs_id], 'sup_id': [gm_user], 'model': ["DPApproval"], 'status': ['Failed'], 'message': ['GM finance_user empty']})], ignore_index=True)
+            else:
+                print("cs not found")
+                other_df = pd.concat([other_df, pd.DataFrame({'document_id': [cs_id], 'sup_id': [""], 'model': ["Direct Purchase"], 'status': ['Failed'], 'message': ['Schedule not found']})], ignore_index=True)
 
-    return HttpResponse("Cost Center added successfully")
-
-
-def debug_time(request):
-    system_time = datetime.now()
-    aware_system_time = timezone.make_aware(system_time, timezone.get_default_timezone())
-    django_time = timezone.now()
-
-    current_timezone = timezone.get_current_timezone_name()
-    django_time_utc = timezone.now()
-    local_time = django_time_utc.astimezone(timezone.get_current_timezone())
-
-    return HttpResponse(f"System Time: {system_time}<br>"
-                        f"Aware System Time: {aware_system_time}<br>"
-                        f"Django Time: {django_time}<br>"
-                        f"Current Timezone: {current_timezone}<br>"
-                        f"Django Time UTC: {django_time_utc}<br>"
-                        f"Local Time: {local_time}<br>")
-
+    except Exception as ex:
+        print("Error: ", ex)   
+    
+    other_df.to_csv('dp_other_df.csv')    
+      
+    return JsonResponse({
+        "success": True,
+        "message": "Data imported successfully",
+        # "data": other_df.to_json()
+        # "data": cs_df.to_json()
+        # "data": item_df.to_json()
+        }, safe=False)
 
 def clear_approvals(cs_id):
+
     cs_query = DirectPurchase.objects.filter(cs_id=cs_id).first()
     if not cs_query:
         return JsonResponse({
-            "message": "Direct Purchase not found",
+            "message": "Comparative Schedule not found",
             "success": False,
-        }, safe=False)
-
+            }, safe=False)
+        
     committee = DPCommittee.objects.filter(cs_id=cs_query).all()
     if committee:
         for member in committee:
             member.committee_approval = ""
             member.committee_status = ""
+            # member.committee_date = None
             member.save()
-
+    
     approvals = DPApproval.objects.filter(cs_id=cs_query).all()
     if approvals:
         for approval in approvals:
             approval.approval = ""
             approval.justification = ""
-            # approval.approval_date = None
+            approval.approval_date = None
             approval.save()
-
+            
     return True
-
 
 def getUserFMGMRoles(user):
-    print("user: ", user.username, user.id)
     fm_role, gm_role, procurement_role = False, False, False
-
+    
     try:
         user_comparative_schedule_role = user.roles.filter(application=APP_NAME).first()
-        print(f"🔍 User roles for {APP_NAME}:", user_comparative_schedule_role)
-
-        if user_comparative_schedule_role and user_comparative_schedule_role.application == APP_NAME:
-            print(f"🔍 User role: {user_comparative_schedule_role.role}")
+        if user_comparative_schedule_role.application == APP_NAME:
             if user_comparative_schedule_role.role == "check":
                 fm_role = True
-                print("✅ FM role detected")
             if user_comparative_schedule_role.role == "approve":
                 gm_role = True
-                print("✅ GM role detected")
             if user_comparative_schedule_role.role == "procurement":
                 procurement_role = True
-                print("✅ Procurement role detected")
-        else:
-            print(f"❌ No {APP_NAME} role found for user")
-            # Debug: show all user roles
-            all_roles = user.roles.all()
-            print(f"🔍 All user roles: {[f'{r.application}:{r.role}' for r in all_roles]}")
-
     except Exception as ex:
-        # messages.error(request, "Warning: Please not that you do not have the required roles to access this page.")
         print("Error: ", ex)
-
-    print(f"🔍 Final roles - FM: {fm_role}, GM: {gm_role}, Procurement: {procurement_role}")
     return fm_role, gm_role, procurement_role
-
-
-def notify_user(user_, msg, notification_type, url, id, request):
-    try:
-        Notification.objects.create(
-            user=user_,
-            message=msg,
-            notification_type=notification_type,
-            notification_id=id,
-            url=url,
-            created_at=datetime.now(),
-        )
-        print("notification ","email ", user_.email, "msg ", msg, "notification_type ", notification_type, "url ", url, "id ", id)
-        
-        if "direct_purchase" in url:
-            app_base = "direct_purchase/comperative_schedule/"+id
-        elif "comperative_schedule" in url:
-            app_base = "comperative_schedule/comperative_schedule/"+id
-        else:
-            app_base = url
-        
-        email_template_name = 'registration/email.html'
-        # {urlsafe_base64_encode(force_bytes(user.pk))}/{default_token_generator.make_token(user)}
-        c = {
-            "email": user_.email if user_.email else "",
-            "message": msg,
-            "type": notification_type,
-            "redirect_app_base": app_base,
-            "id": id,
-            "domain": request.META['HTTP_HOST'],
-            "site_name": "Zetdc Business Excellence",
-            "uid": urlsafe_base64_encode(force_bytes(user_.pk)),
-            "user": user_,
-            "token": default_token_generator.make_token(user_),
-            "protocol": 'https' if request.is_secure() else 'http',
-        }
-        email = render_to_string(email_template_name, c, request=request)
-        ms_exhange_reset_password_html(subject=notification_type,to_recipients=[user_.email], cc_recipients=[],template=email,
-                                        kwargs={"kwargs": c})
-        return True
-    except Exception as e:
-        print("error: ", str(e))
-        return False
-
-def notification_update(user, id):
-    notification = Notification.objects.filter(user=user, notification_id=id).first()
-    if notification:
-        notification.is_read = True
-        notification.save()
-    return True
-
+ 
 @login_required
 def get_comperative_schedules(request):
+    
     user_id = request.user.id
-    print("user name: ", request.user.username, request.user.id)
     user = UserProfile.objects.filter(id=user_id).first()
-    print("user: ", user.username, user.id)
-
-    fm_role, gm_role, procurement_role = False, False, False
-
+    
+    fm_role, gm_role = False, False
     fm_role, gm_role, procurement_role = getUserFMGMRoles(user)
-    print("roles ,,,, : ", fm_role, gm_role, procurement_role)
 
     if fm_role == True:
         return redirect('/direct_purchase/pending_fm_approval')
@@ -247,72 +387,76 @@ def get_comperative_schedules(request):
         return redirect('/direct_purchase/your_schedules')
     else:
         return redirect('/direct_purchase/pending_commitee')
-
-
+    
 @login_required
 def your_comperative_schedules(request):
     user_id = request.user.id
     user = UserProfile.objects.filter(id=user_id).first()
-
+    
     fm_role, gm_role = False, False
     fm_role, gm_role, procurement_role = getUserFMGMRoles(user)
 
     user_page = 'finance/direct_purchase/cs_schedules.html'
     print("roles: ", fm_role, gm_role)
-    return render(request, user_page, {
-        "fm_role": fm_role,
-        "gm_role": gm_role,
-        "procurement_role": procurement_role,
-        "page_title": "RFQ Comparative Schedules", })
-
+    return render(request, user_page, { 
+            "fm_role": fm_role,
+            "gm_role": gm_role,
+            "procurement_role": procurement_role,
+            "page_title": "Direct Purchases"})
 
 @login_required
 def get_all_schedules(request):
+    
     user_id = request.user.id
     print("user name: ", request.user.username, request.user.id)
     user_profile = UserProfile.objects.filter(id=user_id).first()
     print("user: ", user_profile.username, user_profile.id)
     fm_role, gm_role = False, False
     fm_role, gm_role, procurement_role = getUserFMGMRoles(user_profile)
-
+    
+    print("roles: ", fm_role, gm_role)
     user_page = 'finance/direct_purchase/cs_schedules.html'
     return render(request, user_page, {"fm_role": fm_role, "gm_role": gm_role, "procurement_role": procurement_role,
-                                       "page_title": "RFQ Comparative Schedules"})
+            "page_title": "Direct Purchases"})
 
 
 @login_required
 def reports_all_schedules(request):
+    
     user_id = request.user.id
     print("user name: ", request.user.username, request.user.id)
     user_profile = UserProfile.objects.filter(id=user_id).first()
     print("user: ", user_profile.username, user_profile.id)
     fm_role, gm_role = False, False
     fm_role, gm_role, procurement_role = getUserFMGMRoles(user_profile)
-
+    
+    print("roles: ", fm_role, gm_role)
     user_page = 'finance/direct_purchase/cs_reports.html'
     return render(request, user_page, {"fm_role": fm_role, "gm_role": gm_role, "procurement_role": procurement_role,
-                                       "page_title": "RFQ Comparative Schedules"})
+            "page_title": "Direct Purchases"})
 
 
 @login_required
 def get_pending_committee(request):
+    
     user_id = request.user.id
     user_profile = UserProfile.objects.filter(id=user_id).first()
-
+        
     fm_role, gm_role = False, False
-    fm_role, gm_role, procurement_role = getUserFMGMRoles(user_profile)
-
+    fm_role, gm_role, procurement_role = getUserFMGMRoles(user_profile)   
+        
+    print("roles: ", fm_role, gm_role)
     user_page = 'finance/direct_purchase/cs_schedules.html'
     print("roles: ", fm_role, gm_role)
-    return render(request, user_page, {
-        "fm_role": fm_role,
-        "gm_role": gm_role,
-        "procurement_role": procurement_role,
-        "page_title": "RFQ Comparative Schedules"})
-
+    return render(request, user_page, { 
+            "fm_role": fm_role,
+            "gm_role": gm_role,
+            "procurement_role": procurement_role,
+            "page_title": "Direct Purchases"})
 
 @login_required
 def get_pending_gm_approval(request):
+    
     user_id = request.user.id
     user_profile = UserProfile.objects.filter(id=user_id).first()
 
@@ -320,86 +464,69 @@ def get_pending_gm_approval(request):
     fm_role, gm_role, procurement_role = getUserFMGMRoles(user_profile)
     user_page = 'finance/direct_purchase/cs_schedules.html'
     print("roles: ", fm_role, gm_role)
-    return render(request, user_page, {
-        "fm_role": fm_role,
-        "gm_role": gm_role,
-        "procurement_role": procurement_role,
-        "page_title": "RFQ Comparative Schedules"})
-
+    return render(request, user_page, { 
+            "fm_role": fm_role,
+            "gm_role": gm_role,
+            "procurement_role": procurement_role,
+            "page_title": "Direct Purchases"})
 
 @login_required
 def get_pending_fm_approval(request):
+    
     user_id = request.user.id
     user_profile = UserProfile.objects.filter(id=user_id).first()
-
     fm_role, gm_role = False, False
     fm_role, gm_role, procurement_role = getUserFMGMRoles(user_profile)
-    user_page = 'finance/comparative_schedules/cs_schedules.html'
+    user_page = 'finance/direct_purchase/cs_schedules.html'
     print("roles: ", fm_role, gm_role)
-    return render(request, user_page, {
-        "fm_role": fm_role,
-        "gm_role": gm_role,
-        "procurement_role": procurement_role,
-        "page_title": "RFQ Comparative Schedules"})
+    return render(request, user_page, { 
+            "fm_role": fm_role,
+            "gm_role": gm_role,
+            "procurement_role": procurement_role,
+            "page_title": "Direct Purchases"})
 
 def get_your_schedules(user_id, search_value=None, column_name=None, region=None):
     
-    try:   
-        cs = DirectPurchase.objects.select_related(
-            'created_by', 'region', 'section', 'pr_id'
-        ).prefetch_related(
-            Prefetch('dpcommittee_set', queryset=DPCommittee.objects.select_related('user')),
-            Prefetch('dpapproval_set', queryset=DPApproval.objects.select_related('user'))
-        ).filter(
-            region=region,
-            created_by_id=user_id,
-            cancelled=False
-        )
-
-        # Filter based on search value
-        if search_value:
-            cs = cs.filter(
-                Q(cs_id__icontains=search_value) |
-                Q(scope_of_work__icontains=search_value)
-            )
-        if column_name:
-            cs = cs.order_by(column_name)
-
-        return cs
-    except Exception as ex:
-        print("Error: ", ex)
-        return []
-
-
-def get_pending_committee_table(user_id, search_value=None, column_name=None, region=None):
-    print("user id: ", user_id)
-    # fetch schedules if user exists in the committee and has not yet approved
-    cs = DirectPurchase.objects.select_related(
-        'created_by', 'region', 'section', 'pr_id'
-    ).prefetch_related(
-        Prefetch('dpcommittee_set', queryset=DPCommittee.objects.select_related('user')),
-        Prefetch('dpapproval_set', queryset=DPApproval.objects.select_related('user'))
-    ).filter(
-        Q(dpcommittee__committee_approval=None) | Q(dpcommittee__committee_approval=""),
-        Q(dpcommittee__user_id=user_id),
-        cancelled=False,
+    cs = DirectPurchase.objects.filter(
         region=region,
-    )
+        created_by_id=user_id,
+        cancelled = False,
+    ).all()
 
     # Filter based on search value
     if search_value:
         cs = cs.filter(
-            Q(cs_id__icontains=search_value) |
-            Q(scope_of_work__icontains=search_value)
+        Q(cs_id__icontains=search_value) |
+        Q(scope_of_work__icontains=search_value) 
         )
-
-    if column_name:
+    if column_name:    
         cs = cs.order_by(column_name)
-
     return cs
 
+def get_pending_committee_table(user_id, search_value=None, column_name=None, region=None):
+
+    print("user id: ", user_id)
+    # fetch schedules if user exists in the committee and has not yet approved
+    cs = DirectPurchase.objects.filter(
+        Q(dpcommittee__committee_approval=None) | Q(dpcommittee__committee_approval=""),
+        Q(dpcommittee__user_id=user_id),
+        cancelled = False,
+        region=region
+    ).all()
+
+    # Filter based on search value
+    if search_value:
+        cs = cs.filter(
+        Q(cs_id__icontains=search_value) |
+        Q(scope_of_work__icontains=search_value) 
+        )
+    
+    if column_name:    
+        cs = cs.order_by(column_name)
+    return cs
 
 def get_finance_manager(user_id, search_value=None, column_name=None, region=None):
+    
     cs = DirectPurchase.objects.annotate(
         approved_count=Count('dpcommittee', filter=Q(dpcommittee__committee_approval="Approved")),
         not_approved_count=Count('dpcommittee', filter=Q(dpcommittee__committee_approval="")),
@@ -411,22 +538,19 @@ def get_finance_manager(user_id, search_value=None, column_name=None, region=Non
         not_approved_count=0,
         rejected_count=0,
         dpapproval__approval=None,
-        cancelled=False,
-        region=region
+        region=region, cancelled=False
     ).distinct()
 
     # Filter based on search value
     if search_value:
         cs = cs.filter(
-            Q(cs_id__icontains=search_value) |
-            Q(scope_of_work__icontains=search_value)
+        Q(cs_id__icontains=search_value) |
+        Q(scope_of_work__icontains=search_value) 
         )
-
-    if column_name:
+    
+    if column_name:    
         cs = cs.order_by(column_name)
-
     return cs
-
 
 def get_general_manager(user_id, search_value=None, column_name=None, region=None):
     # fetch all pending approvals
@@ -462,257 +586,236 @@ def get_general_manager(user_id, search_value=None, column_name=None, region=Non
         gm_approved=False,
         dpapproval__approver_role="finance_manager",
         dpapproval__approval="Approved",
-        cancelled=False,
         any_reject=False,
-        region=region
+        region=region, cancelled=False
     ).distinct()
-
+    
     # Filter based on search value
     if search_value:
         cs = cs.filter(
-            Q(cs_id__icontains=search_value) |
-            Q(scope_of_work__icontains=search_value)
+        Q(cs_id__icontains=search_value) |
+        Q(scope_of_work__icontains=search_value) 
         )
-
-    if column_name:
+    
+    if column_name:    
         cs = cs.order_by(column_name)
-
     return cs
-
 
 def get_all_schedules_table(user_id, search_value=None, column_name=None, region=None):
-    cs = DirectPurchase.objects.select_related(
-        'created_by', 'region', 'section', 'pr_id'
-    ).prefetch_related(
-        Prefetch('dpcommittee_set', queryset=DPCommittee.objects.select_related('user')),
-        Prefetch('dpapproval_set', queryset=DPApproval.objects.select_related('user'))
-    ).filter(region=region, cancelled=False)
-
+    cs = DirectPurchase.objects.filter(region=region, cancelled=False).all()
+    
     # Filter based on search value
     if search_value:
         cs = cs.filter(
-            Q(cs_id__icontains=search_value) |
-            Q(scope_of_work__icontains=search_value)
+        Q(cs_id__icontains=search_value) |
+        Q(scope_of_work__icontains=search_value) 
         )
-
-    if column_name:
+    
+    if column_name:    
         cs = cs.order_by(column_name)
-
     return cs
 
 
-def get_filtered_schedules(user_id, search_value, column_name, user_region, status, station, pickStation, start_date,
-                           end_date):
-    print("user id: ", user_id, "search_value: ", search_value, "column_name: ", column_name, "user_region: ",
-          user_region, "status: ", status, "station: ", station, "pickStation: ", pickStation, "start_date: ",
-          start_date, "end_date: ", end_date)
-    cs = DirectPurchase.objects.select_related(
-        'created_by', 'region', 'section', 'pr_id'
-    ).prefetch_related(
-        Prefetch('dpcommittee_set', queryset=DPCommittee.objects.select_related('user')),
-        Prefetch('dpapproval_set', queryset=DPApproval.objects.select_related('user'))
-    ).filter(
-        region=user_region,
-    )
+def get_filtered_schedules(user_id, search_value, column_name, user_region, status, station, pickStation, start_date, end_date):
+        print("user id: ", user_id, "search_value: ", search_value, "column_name: ", column_name, "user_region: ", user_region, "status: ", status, "station: ", station, "pickStation: ", pickStation, "start_date: ", start_date, "end_date: ", end_date)
+        cs = DirectPurchase.objects.filter(
+            region=user_region,
+        ).all()
+        
+        try:
+        
+            if status:
+                if status == "Pending Committee":
+                    cs = cs.filter(
+                        Q(dpcommittee__committee_approval=None) | Q(dpcommittee__committee_approval="")).exclude(
+                            Q(dpcommittee__committee_approval="Rejected"))
+                if status == "Pending Finance":
+                    cs = cs.filter(Q(dpapproval__approval="") | Q(dpapproval__approval=None)).exclude(
+                        Q(dpcommittee__committee_approval=None) | Q(dpcommittee__committee_approval="") | Q(dpcommittee__committee_approval="Rejected")
+                    )
+                    print("cs: ", cs)
+                if status == "Pending General Manager":
+                    cs = cs.filter(Q(dpapproval__approval="Approved"), 
+                            Q(dpapproval__approver_role="finance_manager")
+                        ).exclude(
+                        Q(dpapproval__approval="Rejected") | Q(dpapproval__approver_role="general_manager")
+                    )
+                if status == "Complete":
+                    cs = cs.filter(Q(dpapproval__approval="Approved"), 
+                            Q(dpapproval__approver_role="general_manager")).exclude(
+                        Q(dpapproval__approval="Rejected") | Q(dpapproval__approval="") | Q(dpapproval__approval=None)
+                    )
+                if status == "Rejected":
+                    cs = cs.filter(
+                        Q(dpapproval__approval="Rejected") | Q(dpcommittee__committee_approval="Rejected")
+                    )
+                if status == "Cancelled":
+                    cs = cs.filter(cancelled=True)
 
-    try:
-
-        if status:
-            if status == "Pending Committee":
+            if station and pickStation:
+                if station == "Sections":
+                    section = Sections.objects.filter(id=pickStation).first()
+                    if section:
+                        cs = cs.filter(section=section)
+                    print("cs: ", cs)   
+                if station == "Cost Centre":
+                    cost_center = CostCenter.objects.filter(id=pickStation).first()
+                    if cost_center:
+                        cs = cs.filter(cost_center=cost_center)
+                    print("cs: ", cs)
+                if station == "Region":
+                    region_ = Regions.objects.filter(id=pickStation).first()
+                    print("region: ", region_)
+                    if region_:
+                        cs = cs.filter(region=region_)
+            
+            # Filter based on search value
+            if search_value:
                 cs = cs.filter(
-                    Q(dpcommittee__committee_approval=None) | Q(dpcommittee__committee_approval="")).exclude(
-                    Q(dpcommittee__committee_approval="Rejected"))
-            if status == "Pending Finance":
-                cs = cs.filter(Q(dpapproval__approval="") | Q(dpapproval__approval=None)).exclude(
-                    Q(dpcommittee__committee_approval=None) | Q(dpcommittee__committee_approval="") | Q(
-                        dpcommittee__committee_approval="Rejected")
-                )
-                print("cs: ", cs)
-            if status == "Pending General Manager":
-                cs = cs.filter(Q(dpapproval__approval="Approved"),
-                               Q(dpapproval__approver_role="finance_manager")
-                               ).exclude(
-                    Q(dpapproval__approval="Rejected") | Q(dpapproval__approver_role="general_manager")
-                )
-            if status == "Complete":
-                cs = cs.filter(Q(dpapproval__approval="Approved"),
-                               Q(dpapproval__approver_role="general_manager")).exclude(
-                    Q(dpapproval__approval="Rejected") | Q(dpapproval__approval="") | Q(dpapproval__approval=None)
-                )
-            if status == "Rejected":
-                cs = cs.filter(
-                    Q(dpapproval__approval="Rejected") | Q(dpcommittee__committee_approval="Rejected")
-                )
-            if status == "Cancelled":
-                cs = cs.filter(cancelled=True)
-
-        if station and pickStation:
-            if station == "Sections":
-                section = Sections.objects.filter(id=pickStation).first()
-                if section:
-                    cs = cs.filter(section=section)
-                print("cs: ", cs)
-            if station == "Cost Centre":
-                cost_center = CostCenter.objects.filter(id=pickStation).first()
-                if cost_center:
-                    cs = cs.filter(cost_center=cost_center)
-                print("cs: ", cs)
-            if station == "Region":
-                region_ = Regions.objects.filter(id=pickStation).first()
-                print("region: ", region_)
-                if region_:
-                    cs = cs.filter(region=region_)
-
-        # Filter based on search value
-        if search_value:
-            cs = cs.filter(
                 Q(cs_id__icontains=search_value) |
-                Q(scope_of_work__icontains=search_value)
-            )
-
-        if start_date and end_date:
-            cs = cs.filter(created_at__range=[start_date, end_date])
-
-        if column_name:
-            cs = cs.order_by(column_name)
-    except Exception as ex:
-        print("Error: ", ex)
-
-    return cs
-
+                Q(scope_of_work__icontains=search_value) 
+                )
+                
+            if start_date and end_date:
+                cs = cs.filter(created_at__range=[start_date, end_date])
+            
+            if column_name:
+                cs = cs.order_by(column_name)
+        except Exception as ex:
+            print("Error: ", ex)
+        
+        return cs
 
 def get_csv_export(request):
+    
     print("export csv")
     response = HttpResponse(content_type='text/csv')
     response['Content-Disposition'] = 'attachment; filename="rfq.csv"'
-    try:
+    try:    
         user_id = request.user.id
         try:
             user_region = Regions.objects.filter(region=request.user.region).first()
         except Exception as ex:
             user_region = None
-            print("error: ", ex)
+            print("error: ",  ex)
         status = request.GET.get('status')
         station = request.GET.get('station')
         pickStation = request.GET.get('pick_station')
         start_date = request.GET.get('start_date')
         end_date = request.GET.get('end_date')
-        data = get_filtered_schedules(user_id=user_id, search_value="", column_name="", user_region=user_region,
-                                      status=status, station=station, pickStation=pickStation, start_date=start_date,
-                                      end_date=end_date)
+        data = get_filtered_schedules(user_id=user_id, search_value="", column_name="", user_region=user_region, status=status, station=station, pickStation=pickStation, start_date=start_date, end_date=end_date)
         custom_data = add_details(data)
         # build csv file and return as response
         try:
             writer = csv.writer(response)
-            writer.writerow(
-                ['CS ID', 'PR ID', 'PR Number', 'PR Date', 'Scope of Work', 'Closing Date', 'Closing Time', 'Advert',
-                 'PR Number', 'PR Date', 'CS Opened', 'TAC Date', 'Created By', 'Committee Approval', 'GM Approval',
-                 'FM Approval', 'Section', 'Region', 'Created At'])
+            writer.writerow(['CS ID', 'PR ID', 'PR Number', 'PR Date', 'Scope of Work', 'Closing Date', 'Closing Time', 'Advert', 'PR Number', 'PR Date', 'CS Opened', 'TAC Date', 'Created By', 'Committee Approval', 'GM Approval', 'FM Approval', 'Section', 'Region', 'Created At'])
             for item in custom_data:
                 try:
-                    writer.writerow(
-                        [item['cs_id'], item['pr_id'], item['pr_number'], item['pr_date'], item['scope_of_work'],
-                         item['closing_date'], item['closing_time'], item['advert'], item['pr_number'], item['pr_date'],
-                         item['cs_opened'], item['tac_date'], item['created_by'], item['committee_approval'],
-                         item['gm_approval'], item['fm_approval'], item['section'], item['region'], item['created_at']])
-
+                    writer.writerow([item['cs_id'], item['pr_id'], item['pr_number'], item['pr_date'], item['scope_of_work'], item['closing_date'], item['closing_time'], item['advert'], item['pr_number'], item['pr_date'], item['cs_opened'], item['tac_date'], item['created_by'], item['committee_approval'], item['gm_approval'], item['fm_approval'], item['section'], item['region'], item['created_at']])
+                    
                 except Exception as ex:
                     print("For Writting to CSV: ", ex)
         except Exception as ex:
             print("Error Writting to CSV: ", ex)
     except Exception as ex:
         print("Error: ", ex)
-
+    
+    
     return response
 
 
-def add_details(cs_queryset):
+def add_details(cs):
     cs_list = []
-    
-    for c in cs_queryset:
+    committee_reject_reason = ""
+    for c in cs:
         committee_approval = ""
         gm_approval = None
         fm_approval = None
-        committee_reject_reason = ""
+        committee = DPCommittee.objects.filter(
+                cs_id=c
+        ).all()
         
-        # Use prefetched committee data instead of new queries
-        committee_list = list(c.dpcommittee_set.all())
-        
-        if len(committee_list) > 0:
-            committee_approved = all([comm.committee_approval == "Approved" for comm in committee_list])
+        if len(committee) > 0:            
+            committee_approved = all([c.committee_approval == "Approved" for c in committee])
             if committee_approved:
                 committee_approval = "Approval Complete"
-                # Use prefetched approval data
-                fm_approval = next((app for app in c.dpapproval_set.all() 
-                                  if app.approver_role == "finance_manager"), None)
-                gm_approval = next((app for app in c.dpapproval_set.all() 
-                                  if app.approver_role == "general_manager"), None)
+                fm_approval = DPApproval.objects.filter(
+                    cs_id=c,
+                    approver_role="finance_manager",
+                ).first()
+                    
+                gm_approval = DPApproval.objects.filter(
+                    cs_id=c,
+                    approver_role="general_manager",
+                ).first()
             else:
                 committee_approval = "Pending"
                 fm_approval = None
                 gm_approval = None
+            
+                committee_rejected = DPCommittee.objects.filter(
+                cs_id=c,
+                    committee_approval="Rejected"
+                ).first()
 
-                committee_pending = any(comm.committee_approval in ["", None] for comm in committee_list)
-                if committee_pending:
-                    committee_approval = "Pending"
-
-                committee_rejected = next((comm for comm in committee_list 
-                                        if comm.committee_approval == "Rejected"), None)
                 if committee_rejected:
                     committee_reject_reason = committee_rejected.justification
                     committee_approval = "Rejected"
+                
+                committee_pending = DPCommittee.objects.filter(
+                    cs_id=c,
+                    committee_approval__in=["", None]
+                ).exists()
+
+                if committee_pending:
+                    committee_approval = "Pending"
+                    
         else:
             committee_approval = "Pending"
             fm_approval = None
             gm_approval = None
-
-        try:
-            cs_list.append({
-                "cs_id": c.cs_id,
-                "pr_id": c.pr_id.id if c.pr_id else "",
-                "pr_number": c.pr_number,
-                "pr_date": c.pr_date,
-                "scope_of_work": c.scope_of_work,
-                "closing_date": c.closing_date,
-                "closing_time": c.closing_time,
-                "advert": c.advert,
-                "cs_opened": c.cs_opened,
-                "tac_date": c.tac_date,
-                "created_by": c.created_by.username if c.created_by else None,
-                "committee_approval": committee_approval,
-                "committee_reject_reason": committee_reject_reason,
-                "gm_approval": gm_approval.approval if gm_approval else "Pending",
-                "gm_reject_reason": gm_approval.justification if gm_approval else "",
-                "fm_approval": fm_approval.approval if fm_approval else "Pending",
-                "fm_reject_reason": fm_approval.justification if fm_approval else "",
-                "section": c.section.section if c.section else "",
-                "region": c.region.region if c.region else "",
-                "created_at": c.created_at.strftime("%Y-%m-%d %H:%M") if c.created_at else ""
-            })
-        except Exception as ex:
-            print("Error: ", ex)
+            
+        pr = PurchaseRequest.objects.filter(id=c.pr_id_id).first()
+        user = UserProfile.objects.filter(id=c.created_by_id).first()
+        region = Regions.objects.filter(id=c.region_id).first()
+        section = Sections.objects.filter(id=c.section_id).first()
+        cs_list.append({
+            "cs_id": c.cs_id,
+            "pr_id": pr.id if pr else "",
+            "pr_number": c.pr_number,
+            "pr_date": c.pr_date,
+            "scope_of_work": c.scope_of_work,
+            "closing_date": c.closing_date,
+            "closing_time": c.closing_time,
+            "advert": c.advert,
+            "pr_number": c.pr_number,
+            "pr_date": c.pr_date,
+            "cs_opened": c.cs_opened,
+            "tac_date": c.tac_date,
+            "created_by": user.username if user else "",
+            "committee_approval": committee_approval,
+            "committee_reject_reason": committee_reject_reason,
+            "gm_approval": gm_approval.approval if gm_approval else "Pending",
+            "fm_approval": fm_approval.approval if fm_approval else "Pending",
+            "section": section.section if section else "",
+            "region": region.region if region else "",
+            "created_at": c.created_at.strftime("%Y-%m-%d %H:%M") if c.created_at else ""
+        })
 
     return cs_list
 
-
 def datatable_data(request, view):
+    
     user_id = request.user.id
     try:
         user_region = Regions.objects.filter(region=request.user.region).first()
     except Exception as ex:
         user_region = None
-        print("error: ", ex)
+        print("error: ",  ex)
     draw = int(request.GET.get('draw', default=1))
     start = int(request.GET.get('start', default=0))
-    requested_length = int(request.GET.get('length', default=DATATABLE_DEFAULT_SIZE))
+    length = int(request.GET.get('length', default=10))
     search_value = request.GET.get('search[value]', default='')
-    
-    # Apply safe pagination limits for datatable (Stage 2 optimization)
-    length = get_safe_page_size(requested_length, 'schedules')
-    
-    # Log warning if user requested too large page size
-    if requested_length > length:
-        logger.warning(f"DataTable requested length {requested_length} reduced to {length} for memory protection")
 
     # Sorting
     order_column = request.GET.get('order[0][column]')
@@ -741,18 +844,19 @@ def datatable_data(request, view):
         pickStation = request.GET.get('pick_station')
         start_date = request.GET.get('start_date')
         end_date = request.GET.get('end_date')
-        data = get_filtered_schedules(user_id, search_value, column_name, user_region, status, station, pickStation,
-                                      start_date, end_date)
-
+        data = get_filtered_schedules(user_id, search_value, column_name, user_region, status, station, pickStation, start_date, end_date)
+    
+    
     # Total number of records before filtering
     total = len(data)
+    print("total: ", total)
     # Pagination
     paginator = Paginator(data, length)
     page_number = start // length + 1
     page_obj = paginator.get_page(page_number)
 
     # Prepare response
-    print("adding details: ", page_obj.object_list)
+    print("adding details")
     data = add_details(page_obj.object_list)
     return JsonResponse({
         'draw': draw,
@@ -764,223 +868,318 @@ def datatable_data(request, view):
 
 @login_required
 def get_comperative_schedule(request, cs_id):
+    
     username = request.user.username
     return render(request, 'finance/direct_purchase/dp_create.html', {
         "cs_id": cs_id,
         "username": username,
     })
 
-
 @login_required
 def create_comperative_schedule(request):
+
     username = request.user.username
     return render(request, 'finance/direct_purchase/dp_create.html', {
         "username": username,
     })
 
-
 @login_required
 def get_comperative_schedule_data(request, cs_id):
     
-    try:
-        request_user = request.user
-        request_user_profile = UserProfile.objects.filter(id=request_user.id).first()
-        user_comparative_schedule_role = request_user_profile.get_user_role_for_application(APP_NAME)           
+    request_user = request.user
+    request_user_profile = UserProfile.objects.filter(id=request_user.id).first()
+    user_comparative_schedule_role = request_user_profile.get_user_role_for_application(APP_NAME)
+            
+    cs = DirectPurchase.objects.filter(cs_id=cs_id).first()
+    pr = None
+    proc_plan = ""
+    if cs:
+        try:
+            pr = PurchaseRequest.objects.filter(id=cs.pr_id_id).first()
+            proc_plan = cs.proc_plan if cs.proc_plan else ""
+        except Exception as ex:
+            print("Error: ", ex)
+    
+    proc_plans = DPProcPlan.objects.all()
+    currencies = Currency.objects.all()
+    user = UserProfile.objects.filter(id=cs.created_by_id).first()
+    region = Regions.objects.filter(id=cs.region_id).first()
+    section = Sections.objects.filter(id=cs.section_id).first()
+    items = DPItems.objects.filter(cs_id=cs).all()
+    cs_items = DPRequiredItems.objects.filter(cs_id=cs).all()
+    bids = DPBids.objects.filter(cs_id=cs).all()
+    compliance = DPCompliance.objects.filter(cs_id=cs).all()
+    complianceRemarks = DPComplianceRemarks.objects.filter(cs_id=cs).all()
+    
+    rankings = DPRanking.objects.filter(cs_id=cs).all()
+    committee = DPCommittee.objects.filter(cs_id=cs).all()
+    gm_approval = DPApproval.objects.filter(cs_id=cs, approver_role="general_manager").first()
+    fm_approval = DPApproval.objects.filter(cs_id=cs, approver_role="finance_manager").first()
+    
+    suppliers = Supplier.objects.all()
+    pr_items = PrItem.objects.filter(purchase_request=cs.pr_id_id, ordered=False).all()
+    users = UserProfile.objects.all()
+    
+    items_list = []
+    for item in items:
+        items_list.append({
+            "item_id": item.item_id,
+            "item_required": item.item_name,
+            "quantity": item.quantity,
+            "unit_of_measurement": item.unit_of_measurement,
+            "created_at": item.created_at,
+        })
+        
+    grouped_by_bid = {}
+    grouped_data = {}
+    for bid in bids:
+        print("bid: ", bid.sup_id.name, bid.bid_no)
+        try:
+            bid_no = bid.bid_no
+            if bid_no not in grouped_data:
+                encoded_file_data = ""
+                if bid.bid_document:
+                    try:
+                        with open(bid.bid_document, 'rb') as f:
+                            file_data = f.read()
+                        encoded_file_data = base64.b64encode(file_data).decode('utf-8')
+                    except Exception as ex:
+                        print("Error: ", ex)
+                grouped_data[bid_no] = {
+                    'bid_count': bid.bid_no,
+                    'supplier_name': bid.sup_id.name,
+                    'bid_date': bid.quote_date,
+                    'encoded_bid_document': encoded_file_data,
+                    'bid_document': None,
+                    'items': []
+                }
+            grouped_data[bid_no]['items'].append({
+                'item_id': bid.item_id.item_id,
+                'item_required': bid.item_id.item_name,  # assume this is constant
+                'quantity': bid.item_id.quantity,
+                'unit_of_measurement': bid.item_id.unit_of_measurement,
+                'unit_price': bid.unit_price,
+                'vat': bid.vat,
+                'total_price': bid.total,
+            })
+        except Exception as ex:
+            print("Error: ", ex)
 
-        cs = DirectPurchase.objects.filter(cs_id=cs_id).first()
-        pr = None
-        proc_plan = ""
-        if cs:
+    result = list(grouped_data.values())
+        
+    compliance_list = []
+    for comp in compliance:
+        print("comp: ", comp.supplier_id)
+        compliance_list.append({
+            "supplier_name": comp.supplier_id.name if comp.supplier_id else "",
+            "payment_terms": comp.payment_terms,
+            "bid_validity": comp.bid_validity,
+            "delivery_period": comp.delivery_period,
+            "technical_specifications": comp.technical_specifications,
+            "valid_tax_clearance": comp.valid_tax_clearance,
+            "registered_with_praz": comp.registered_with_praz,
+            "site_visit": comp.site_visit_done,
+            "samples_required": comp.samples_delivered,
+            "decision": comp.decision,
+            "remarks": comp.remarks,
+            "created_at": comp.created_at,
+        })
+    
+    compliance_remarks = []
+    for remark in complianceRemarks:
+        try:
+            compliance_remarks.append({
+            "supplier": remark.supplier_id.id,
+            "supplier_name": remark.supplier_id.name,
+            "remarks": remark.remarks,
+            })
+        except Exception as ex:
+            print("Error: ", ex)
+        
+    rankings_list = []
+    for rank in rankings:
+        try:
+            supplier = Supplier.objects.filter(id=rank.supplier_id.id).first()
+            rankings_list.append({
+                "supplier_name": supplier.name if supplier else "",
+                "rank": rank.rank,
+                "remarks": rank.remarks,
+                "decision": rank.decision,
+                "total": rank.total,
+                "created_at": rank.created_at,
+            })
+        except Exception as ex:
+            print("Error: ", ex)
+        
+    committee_list = []
+    for member in committee:
+        try:
+            if member.user:
+                committee_list.append({
+                    "memberUserName": member.user.username if member.user else "",
+                    "memberName": member.user.first_name + " " + member.user.last_name if member.user else "",
+                    "memberPosition": member.committee_position,
+                    "committeeStatus": member.committee_status,
+                    "memberApproval": member.committee_approval if member.committee_approval else "",
+                    "committeeJustification": member.justification,
+                    "committeeDate": member.committee_date,
+                }) 
+        except Exception as ex:
+            print("commitee_list Error: ", ex)
+    
+    encoded_advert_file = ""
+    try:
+        if cs.advert:
+            with open(cs.advert, 'rb') as f:
+                file_data = f.read()
+            encoded_advert_file = base64.b64encode(file_data).decode('utf-8')
+    except Exception as ex:
+        print("Error: ", ex)
+        
+    cs_owner = UserProfile.objects.filter(id=cs.created_by_id).first()
+    cs_item_list = []
+    for cs_item in cs_items:
+        cs_item_list.append({
+            "id": cs_item.id,
+            "item_required": cs_item.item_name,
+            "quantity": cs_item.quantity,
+            "unit_of_measurement": cs_item.unit_of_measurement,
+            "ordered": True,
+        })
+        
+    pr_item_list = copy.deepcopy(cs_item_list) if cs_item_list else []
+    for pr_item in pr_items:
+        pr_item_list.append({
+            "id": pr_item.id,
+            "item_required": pr_item.item_required,
+            "quantity": pr_item.quantity,
+            "unit_of_measurement": pr_item.unit_of_measurement.name if pr_item.unit_of_measurement else "",
+            "ordered": pr_item.ordered,
+        })
+    
+    pr_attachments = Attachment.objects.filter(purchase_request=pr).all()
+    
+    pr_at_list = []
+    for at in pr_attachments:
+        encoded_file_data = ""
+        if at.file:
             try:
-                pr = PurchaseRequest.objects.filter(id=cs.pr_id_id).first()
-                proc_plan = cs.proc_plan if cs.proc_plan else ""
+                file_data = at.file.read()
+                encoded_file_data = base64.b64encode(file_data).decode('utf-8')
+                pr_at_list.append({
+                    "id": at.id,
+                    "file": encoded_file_data,
+                    "name": os.path.basename(at.file.name),
+                })
             except Exception as ex:
                 print("Error: ", ex)
-                
+    
+    cs_item_list = []
+    for cs_item in cs_items:
+        cs_item_list.append({
+            "id": cs_item.id,
+            "item_required": cs_item.item_name,
+            "quantity": cs_item.quantity,
+            "unit_of_measurement": cs_item.unit_of_measurement,
+            "ordered": True,
+        })
+
+    context = {
+        "requester_role": user_comparative_schedule_role.role if user_comparative_schedule_role else "",
+        "cs_id": cs.cs_id,
+        "cs_owner": cs_owner.username if cs_owner else "",
+        "creator": cs_owner.first_name + " " + cs_owner.last_name if cs_owner else "",
+        "pr_id": pr.id,
+        "pr_number": cs.pr_number,
+        "pr_date": cs.pr_date,
+        "additional_notes": cs.additional_notes,        
+        "scope_of_work": cs.scope_of_work,
+        "closing_date": cs.closing_date,
+        "closing_time": cs.closing_time,
+        "advert": encoded_advert_file,
+        "pr_number": cs.pr_number,
+        "pr_date": cs.pr_date,
+        "ref_date": cs.ref_date,
+        "cs_opened": cs.cs_opened,
+        "tac_date": cs.tac_date,
+        "show_site_visit": cs.show_site_visit,
+        "show_samples_required": cs.show_sample_required,
+        "created_by": user.username,
+        "section": section.section if section else "",
+        "region": region.region if region else "",
+        "created_at": cs.created_at,
+        "proc_plan": {
+            "id": proc_plan.id,
+            "proc_ref": proc_plan.proc_ref,
+            "description": proc_plan.description,
+            } if proc_plan else {},
+        "proc_plans": list(proc_plans.values('id', 'proc_ref', 'description')),
+        "currencies": list(currencies.values('id', 'currency')),
+        "currency": {
+            "id": cs.currency.id,
+            "currency": cs.currency.currency,
+            } if cs.currency else {},
+        "gm_approval": {
+            "id": gm_approval.id,
+            "approver": gm_approval.user.username if gm_approval.user else "",
+            "approver_name": gm_approval.user.first_name + " " + gm_approval.user.last_name if gm_approval.user else "",
+            "approver_role": gm_approval.approver_role,
+            "approval": gm_approval.approval,
+            "justification": gm_approval.justification,
+            "approval_date": gm_approval.approval_date,
+            } if gm_approval else {},
+        "fm_approval": {
+            "id": fm_approval.id,
+            "approver": fm_approval.user.username if fm_approval.user else "",
+            "approver_name": fm_approval.user.first_name + " " + fm_approval.user.last_name if fm_approval.user else "",
+            "approver_role": fm_approval.approver_role,
+            "approval": fm_approval.approval,
+            "justification": fm_approval.justification,
+            "approval_date": fm_approval.approval_date,
+            } if fm_approval else {},
+        
+        "pr_items": pr_item_list,
+        "pr_attachments": pr_at_list,
+        "cs_items": cs_item_list,
+        "proc_plans": list(proc_plans.values('id', 'proc_ref', 'description')),
+        "suppliers": list(suppliers.values('id', 'name')),
+        "users": list(users.values('id', 'username', 'first_name', 'last_name')),
+        "items": items_list,
+        "bids": result,
+        "compliance": compliance_list,
+        "complianceRemarks": compliance_remarks,
+        "rankings": rankings_list,
+        "committee": committee_list,
+    }
+    
+    context = json.dumps(context, default=str)
+    
+    return JsonResponse(context, safe=False)
+
+def save_file(f, file_path):
+    if f:
+        with open(file_path, 'wb+') as destination:
+            for chunk in f.chunks():
+                destination.write(chunk)
+            return True
+    else:
+        return False
+    
+@login_required
+def get_create_data(request, pr_id):
+
+    # check is pr_id started with PR or not
+    if not pr_id.startswith("PR"):
+        pr_id = "PR" + pr_id
+    purchase_request = PurchaseRequest.objects.filter(id=pr_id).first()
+    if purchase_request:
         proc_plans = DPProcPlan.objects.all()
         currencies = Currency.objects.all()
-        # user = UserProfile.objects.filter(id=cs.created_by_id).first()  # Redundant - using cs_owner instead
-        region = Regions.objects.filter(id=cs.region_id).first()
-        section = Sections.objects.filter(id=cs.section_id).first()
-        items = DPItems.objects.filter(cs_id=cs).all()
-        cs_items = DPRequiredItems.objects.filter(cs_id=cs).all()
-        bids = DPBids.objects.filter(cs_id=cs).all()
-
-        compliance = DPCompliance.objects.filter(cs_id=cs).all()
-        complianceRemarks = DPComplianceRemarks.objects.filter(cs_id=cs).all()
-        
-        rankings = DPRanking.objects.filter(cs_id=cs).all()
-        committee = DPCommittee.objects.filter(cs_id=cs).all()
-        gm_approval = DPApproval.objects.filter(cs_id=cs, approver_role="general_manager").first()
-        fm_approval = DPApproval.objects.filter(cs_id=cs, approver_role="finance_manager").first()
-        
         suppliers = Supplier.objects.all()
-        pr_items = PrItem.objects.filter(purchase_request=cs.pr_id_id, ordered=False).all()
-        users = UserProfile.objects.filter(region=cs.region).all() if cs and cs.region else UserProfile.objects.all()
-        
-        items_list = []
-        for item in items:
-            items_list.append({
-                "item_id": item.item_id,
-                "item_required": item.item_name,
-                "quantity": item.quantity,
-                "unit_of_measurement": item.unit_of_measurement,
-                "created_at": item.created_at,
-            })
-            
-        grouped_by_bid = {}
-        grouped_data = {}
-        for bid in bids:
-            print("bid: ", bid.sup_id.name, bid.bid_no)
-            try:
-                bid_no = bid.bid_no
-                if bid_no not in grouped_data:
-                    encoded_file_data = ""
-                    if bid.bid_document:
-                        try:
-                            with open(bid.bid_document, 'rb') as f:
-                                file_data = f.read()
-                            encoded_file_data = base64.b64encode(file_data).decode('utf-8')
-                        except Exception as ex:
-                            print("Error: ", ex)
-                    grouped_data[bid_no] = {
-                        'bid_count': bid.bid_no,
-                        'supplier_name': bid.sup_id.name,
-                        'bid_date': bid.quote_date,
-                        'encoded_bid_document': encoded_file_data,
-                        'bid_document': None,
-                        'items': []
-                    }
-                grouped_data[bid_no]['items'].append({
-                    'item_id': bid.item_id.item_id,
-                    'item_required': bid.item_id.item_name,  # assume this is constant
-                    'quantity': bid.item_id.quantity,
-                    'unit_of_measurement': bid.item_id.unit_of_measurement,
-                    'unit_price': bid.unit_price,
-                    'vat': bid.vat,
-                    'total_price': bid.total,
-                })
-            except Exception as ex:
-                print("Error: ", ex)
-        result = list(grouped_data.values())
-            
-        compliance_list = []
-        for comp in compliance:
-            sup_name = ""
-            try:
-                sup_name = comp.supplier_id.name
-            except Exception as ex:
-                print("Error: ", ex)
-            
-            if sup_name:
-                compliance_list.append({
-                    "supplier_name": sup_name,
-                    "payment_terms": comp.payment_terms,
-                    "bid_validity": comp.bid_validity,
-                    "delivery_period": comp.delivery_period,
-                    "technical_specifications": comp.technical_specifications,
-                    "valid_tax_clearance": comp.valid_tax_clearance,
-                    "registered_with_praz": comp.registered_with_praz,
-                    "site_visit": comp.site_visit_done,
-                    "samples_required": comp.samples_delivered,
-                    "decision": comp.decision,
-                    "remarks": comp.remarks,
-                    "created_at": comp.created_at,
-                })
-        
-        compliance_remarks = []
-        for remark in complianceRemarks:
-            try:
-                compliance_remarks.append({
-                "supplier": remark.supplier_id.id,
-                "supplier_name": remark.supplier_id.name,
-                "remarks": remark.remarks,
-                })
-            except Exception as ex:
-                print("Error: ", ex)
-            
-        rankings_list = []
-        for rank in rankings:
-            try:
-                supplier = Supplier.objects.filter(id=rank.supplier_id.id).first()
-                rankings_list.append({
-                    "supplier_name": supplier.name if supplier else "",
-                    "rank": rank.rank,
-                    "remarks": rank.remarks,
-                    "decision": rank.decision,
-                    "total": rank.total,
-                    "created_at": rank.created_at,
-                })
-            except Exception as ex:
-                print("Error: ", ex)
-            
-        committee_list = []
-        for member in committee:
-            try:
-                if member.user:
-                    committee_list.append({
-                        "memberUserName": member.user.username if member.user else "",
-                        "memberName": member.user.first_name + " " + member.user.last_name if member.user else "",
-                        "memberPosition": member.committee_position,
-                        "committeeStatus": member.committee_status,
-                        "memberApproval": member.committee_approval if member.committee_approval else "",
-                        "committeeJustification": member.justification,
-                        "committeeDate": member.committee_date,
-                    }) 
-            except Exception as ex:
-                print("commitee_list Error: ", ex) 
-        
-        encoded_advert_file = ""
-        try:
-            if cs.advert:
-                # Construct the correct file path
-                if cs.advert.startswith('uploads/'):
-                    # File is stored in root directory (BASE_DIR)
-                    file_path = os.path.join(settings.BASE_DIR, cs.advert)
-                else:
-                    # File is stored with absolute path
-                    file_path = cs.advert
-                
-                print(f"🔍 Attempting to read advert file: {file_path}")
-                print(f"🔍 File exists: {os.path.exists(file_path)}")
-                
-                if os.path.exists(file_path):
-                    with open(file_path, 'rb') as f:
-                        file_data = f.read()
-                    encoded_advert_file = base64.b64encode(file_data).decode('utf-8')
-                    print(f"✅ Successfully encoded advert file: {len(encoded_advert_file)} characters")
-                else:
-                    print(f"❌ Advert file not found at path: {file_path}")
-                    # Try alternative locations
-                    alt_paths = [
-                        os.path.join(settings.BASE_DIR, cs.advert),
-                        os.path.join(settings.BASE_DIR, 'uploads', 'comparative', 'adverts', os.path.basename(cs.advert)),
-                        os.path.join(settings.MEDIA_ROOT, 'uploads', 'comparative', 'adverts', os.path.basename(cs.advert)),
-                        os.path.join(settings.MEDIA_ROOT, 'uploads', 'purchase_request', os.path.basename(cs.advert))
-                    ]
-                    
-                    for alt_path in alt_paths:
-                        if os.path.exists(alt_path):
-                            print(f"✅ Found file at alternative path: {alt_path}")
-                            with open(alt_path, 'rb') as f:
-                                file_data = f.read()
-                            encoded_advert_file = base64.b64encode(file_data).decode('utf-8')
-                            break
-                    else:
-                        print(f"❌ File not found at any alternative location")
-                        
-        except Exception as ex:
-            print(f"Error reading advert file: {ex}")
-            print(f"Advert field value: {cs.advert}")
-            print(f"MEDIA_ROOT: {settings.MEDIA_ROOT}")
-            print(f"BASE_DIR: {settings.BASE_DIR}")
-            
-        cs_owner = UserProfile.objects.filter(id=cs.created_by_id).first() if cs and cs.created_by_id else None
-        if not cs_owner and cs:
-            print(f"CS Owner not found for CS {cs.cs_id}, created_by_id: {cs.created_by_id}")
-        elif not cs:
-            print(f"CS not found for cs_id: {cs_id}")  
-        pr_attachments = Attachment.objects.filter(purchase_request=pr).all()
+        users = UserProfile.objects.all()
+        uom = UnitOfMeasurement.objects.all()
+        pr_items = PrItem.objects.filter(purchase_request=purchase_request, ordered=False).all()
+        pr_attachments = Attachment.objects.filter(purchase_request=purchase_request).all()
         
         pr_at_list = []
         for at in pr_attachments:
@@ -996,149 +1195,6 @@ def get_comperative_schedule_data(request, cs_id):
                     })
                 except Exception as ex:
                     print("Error: ", ex)
-        
-        cs_item_list = []
-        for cs_item in cs_items:
-            cs_item_list.append({
-                "id": cs_item.id,
-                "item_required": cs_item.item_name,
-                "quantity": cs_item.quantity,
-                "unit_of_measurement": cs_item.unit_of_measurement,
-                "ordered": True,
-            })
-            
-        # copy cs_item_list to pr_item_list
-        pr_item_list = copy.deepcopy(cs_item_list) if cs_item_list else []
-        for pr_item in pr_items:
-            pr_item_list.append({
-                "id": pr_item.id,
-                "item_required": pr_item.item_required,
-                "quantity": pr_item.quantity,
-                "unit_of_measurement": pr_item.unit_of_measurement.name if pr_item.unit_of_measurement else "",
-                "ordered": pr_item.ordered,
-            })
-
-        context = {
-            "requester_role": user_comparative_schedule_role.role if user_comparative_schedule_role else "",
-            "cs_id": cs.cs_id,
-            "cs_owner": cs_owner.username if cs_owner else "",
-            "creator": cs_owner.first_name + " " + cs_owner.last_name if cs_owner else "",
-            "pr_id": pr.id,
-            "pr_number": cs.pr_number,
-            "pr_date": cs.pr_date,
-            "additional_notes": cs.additional_notes,        
-            "scope_of_work": cs.scope_of_work,
-            "closing_date": cs.closing_date,
-            "closing_time": cs.closing_time,
-            "advert": encoded_advert_file,
-            "pr_number": cs.pr_number,
-            "pr_date": cs.pr_date,
-            "ref_date": cs.ref_date,
-            "cs_opened": cs.cs_opened,
-            "tac_date": cs.tac_date,
-            "show_site_visit": cs.show_site_visit,
-            "show_samples_required": cs.show_sample_required,
-            "created_by": cs_owner.username if cs_owner else "",
-            "section": section.section if section else "",
-            "region": region.region if region else "",
-            "created_at": cs.created_at,
-            "proc_plan": {
-                "id": proc_plan.id,
-                "proc_ref": proc_plan.proc_ref,
-                "description": proc_plan.description,
-                } if proc_plan else {},
-            "proc_plans": list(proc_plans.values('id', 'proc_ref', 'description')),
-            "currencies": list(currencies.values('id', 'currency')),
-            "currency": {
-                "id": cs.currency.id,
-                "currency": cs.currency.currency,
-                } if cs.currency else {},
-            "gm_approval": {
-                "id": gm_approval.id,
-                "approver": gm_approval.user.username if gm_approval.user else "",
-                "approver_name": gm_approval.user.first_name + " " + gm_approval.user.last_name if gm_approval.user else "",
-                "approver_role": gm_approval.approver_role,
-                "approval": gm_approval.approval,
-                "justification": gm_approval.justification,
-                "approval_date": gm_approval.approval_date,
-                } if gm_approval else {},
-            "fm_approval": {
-                "id": fm_approval.id,
-                "approver": fm_approval.user.username if fm_approval.user else "",
-                "approver_name": fm_approval.user.first_name + " " + fm_approval.user.last_name if fm_approval.user else "",
-                "approver_role": fm_approval.approver_role,
-                "approval": fm_approval.approval,
-                "justification": fm_approval.justification,
-                "approval_date": fm_approval.approval_date,
-                } if fm_approval else {},
-            
-            "pr_items": pr_item_list,
-            "pr_attachments": pr_at_list,
-            "cs_items": cs_item_list,
-            "proc_plans": list(proc_plans.values('id', 'proc_ref', 'description')),
-            "suppliers": list(suppliers.values('id', 'name')),
-            "users": list(users.values('id', 'username', 'first_name', 'last_name')),
-            "items": items_list,
-            "bids": result,
-            "compliance": compliance_list,
-            "complianceRemarks": compliance_remarks,
-            "rankings": rankings_list,
-            "committee": committee_list,
-            "proc_ref": cs.proc_plan.proc_ref if cs.proc_plan else "",
-        }
-        
-        return JsonResponse(context, safe=False)
-    except Exception as ex:
-        print("Wholesome Error: ", ex)
-        return JsonResponse({
-            "message": "Error retrieving Comparative Schedule data",
-            "error": str(ex),
-            "success": False,
-        }, safe=False)
-
-
-def save_file(f, file_path):
-    if f:
-        try:
-            # Ensure the directory exists
-            directory = os.path.dirname(file_path)
-            if directory and not os.path.exists(directory):
-                os.makedirs(directory, exist_ok=True)
-                print(f"✅ Created directory: {directory}")
-            
-            # Save the file
-            with open(file_path, 'wb+') as destination:
-                for chunk in f.chunks():
-                    destination.write(chunk)
-            print(f"✅ File saved successfully: {file_path}")
-            return True
-        except Exception as ex:
-            print(f"❌ Error saving file {file_path}: {ex}")
-            return False
-    else:
-        return False
-
-
-@login_required
-def get_create_data(request, pr_id):
-    # check is pr_id started with PR or not
-    if not pr_id.startswith("PR"):
-        pr_id = "PR" + pr_id
-    purchase_request = PurchaseRequest.objects.filter(id=pr_id).first()
-    if purchase_request:
-        request_user = request.user
-        request_user_profile = UserProfile.objects.filter(id=request_user.id).first()
-        user_comparative_schedule_role = request_user_profile.get_user_role_for_application(APP_NAME)
-        proc_plans = DPProcPlan.objects.all()
-        currencies = Currency.objects.all()
-        suppliers = Supplier.objects.all()
-        users = UserProfile.objects.all()
-        uom = UnitOfMeasurement.objects.all()
-        pr_items = PrItem.objects.filter(purchase_request=purchase_request, ordered=False).all()
-        pr_attachments = Attachment.objects.filter(purchase_request=purchase_request).all()
-
-        # Use optimized file handling instead of Base64 encoding
-        pr_at_list = get_attachments_metadata_optimized(pr_attachments, request_user)
 
         pr_item_list = []
         for pr_item in pr_items:
@@ -1149,64 +1205,52 @@ def get_create_data(request, pr_id):
                 "unit_of_measurement": pr_item.unit_of_measurement.name if pr_item.unit_of_measurement else "",
                 "ordered": pr_item.ordered,
             })
-
-        # get proc plan for PR
-        try:
-            if purchase_request.procurement_plan_reference:
-                proc_ref = "acc" + str(purchase_request.procurement_plan_reference.id)
-            else:
-                proc_ref = ""
-            pr_proc_plan = DPProcPlan.objects.filter(proc_ref=proc_ref).first()
-        except Exception as ex:
-            logger.error(f"Error getting DP proc plan: {ex}")
-            pr_proc_plan = None
-
+        
         return JsonResponse({
-            "success": True,
-            "requester_role": user_comparative_schedule_role.role if user_comparative_schedule_role else "",
-            "message": "PR details retrieved successfully",
-            "pr_id": pr_id,
-            "scope_of_work": purchase_request.scope_of_work if purchase_request.scope_of_work else "",
-            "proc_ref": purchase_request.procurement_plan_reference.id if purchase_request.procurement_plan_reference else "",
-            "proc_plan": {
-                "id": pr_proc_plan.id if pr_proc_plan else "",
-                "proc_ref": pr_proc_plan.proc_ref if pr_proc_plan else "",
-                "description": pr_proc_plan.description if pr_proc_plan else "",
-            } if purchase_request.procurement_plan_reference else {},
-            "pr_date": purchase_request.created_at.strftime("%Y-%m-%d") if purchase_request.created_at else "",
-            "pr_items": pr_item_list,
-            "pr_attachments": pr_at_list,
-            "proc_plans": list(proc_plans.values('id', 'proc_ref', 'description')),
-            "uom": list(uom.values('unit', 'name')),
-            "currencies": list(currencies.values('id', 'currency')),
-            "suppliers": list(suppliers.values('id', 'name')),
-            "users": list(users.values('id', 'username', 'first_name', 'last_name')),
-        }, safe=False)
+                "success": True,
+                "message": "PR details retrieved successfully",
+                "pr_id": pr_id,
+                "scope_of_work": purchase_request.scope_of_work,
+                "proc_ref": purchase_request.procurement_plan_reference.id if purchase_request.procurement_plan_reference else "",
+                "proc_plan": {
+                    "id": purchase_request.procurement_plan_reference.id if purchase_request.procurement_plan_reference else "",
+                    "proc_ref": purchase_request.procurement_plan_reference.id if purchase_request.procurement_plan_reference else "",
+                    "description": purchase_request.procurement_plan_reference.name if purchase_request.procurement_plan_reference else "",
+                } if purchase_request.procurement_plan_reference else {},
+                "pr_date": purchase_request.created_at.strftime("%Y-%m-%d") if purchase_request.created_at else "",
+                "pr_items": pr_item_list,
+                "pr_attachments": pr_at_list,
+                "proc_plans": list(proc_plans.values('id', 'proc_ref', 'description')),
+                "uom": list(uom.values('unit', 'name')),
+                "currencies": list(currencies.values('id', 'currency')),
+                "suppliers": list(suppliers.values('id', 'name')),
+                "users": list(users.values('id', 'username', 'first_name', 'last_name')),
+            }, safe=False)
     else:
         return JsonResponse({
             "success": False,
             "message": "PR not found",
         }, safe=False)
 
-
 @login_required
 def get_create_cs(request, pr_id):
+
     print("get_create_cs pr_id: ", pr_id)
     # get proc plans
     proc_plans = DPProcPlan.objects.all()
     username = request.user.username
-
+    
     return render(request, 'finance/direct_purchase/dp_create.html', {
         "proc_plans": proc_plans,
         "username": username,
         "pr_id": pr_id,
     })
 
-
 @login_required
 def create(request):
+
     if request.method == "POST":
-        tender_id = "CS" + timezone.astimezone(timezone.get_current_timezone()).strftime("%Y%m%d%I%M%S")
+        tender_id = "CS" + datetime.now().strftime("%Y%m%d%I%M%S")
         advert_file = request.FILES['advert']
         bid_document_file = request.FILES['advert']
         item_count = request.POST['item_count']
@@ -1225,281 +1269,197 @@ def create(request):
         supplier_key = request.POST['supplier_key']
         bid_date = request.POST['bid_date']
         bid_no = request.POST['supplier[bid][0]']
-
+        
         # store attachments
         advert_path = ""
         bid_document_path = ""
         try:
             if 'advert' in request.FILES:
                 advert_file = request.FILES['advert']
-                # Use proper media path construction
-                timestamp = timezone.astimezone(timezone.get_current_timezone()).strftime("%Y%m%d%I%M%S%p")
-                filename = f"{timestamp}_{advert_file.name}"
-                advert_path = os.path.join(settings.BASE_DIR, 'uploads', 'comparative', 'adverts', filename)
-                save_file(advert_file, advert_path)
-                # Store relative path in database for consistency
-                advert_path_db = os.path.join('uploads', 'comparative', 'adverts', filename)
-
+                root_dir = os.path.join(settings.BASE_DIR, 'uploads', 'finance', 'cs', 'adverts')
+                fs = FileSystemStorage(location=root_dir)
+                filename_ = fs.save(advert_file.name, advert_file)
+                advert_path = "uploads" + os.path.sep + "finance" + os.path.sep + "cs" + os.path.sep + "adverts" + os.path.sep + filename_
+                # save_file(advert_file, advert_path)
+                
             if 'bid_document' in request.FILES:
                 bid_document_file = request.FILES['bid_document']
-                # Use proper media path construction
-                timestamp = datetime.now().strftime("%Y%m%d%I%M%S%p")
-                filename = f"{timestamp}_{bid_document_file.name}"
-                bid_document_path = os.path.join(settings.BASE_DIR, 'uploads', 'comparative', 'adverts', filename)
-                save_file(bid_document_file, bid_document_path)
-                # Store relative path in database for consistency
-                bid_document_path_db = os.path.join('uploads', 'comparative', 'adverts', filename)
-
+                root_dir = os.path.join(settings.BASE_DIR, 'uploads', 'finance', 'cs', 'bids')
+                fs = FileSystemStorage(location=root_dir)
+                filename_ = fs.save(bid_document_file.name, bid_document_file)
+                bid_document_path = "uploads" + os.path.sep + "finance" + os.path.sep + "cs" + os.path.sep + "bids" + os.path.sep + filename_
+                # save_file(bid_document_file, bid_document_path)
+        
         except Exception as ex:
             print("Error: ", ex)
-
-        for i in range(0, int(item_count)):
+        
+        for i in range(0,int(item_count)):
             item_id = "Item" + datetime.now().strftime("%Y%m%d%I%M%S%p")
-            description = request.POST['supplier[item_name][' + str(i) + ']']
-            quantity = request.POST['supplier[quantity][' + str(i) + ']']
-            unit_of_measurement = request.POST['supplier[unit_of_measurement][' + str(i) + ']']
-            vat = request.POST['supplier[vat][' + str(i) + ']']
-            unit_price = request.POST['supplier[unit_price][' + str(i) + ']']
-            total_price = request.POST['supplier[total_price][' + str(i) + ']']
-
+            description = request.POST['supplier[item_name]['+str(i)+']']
+            quantity = request.POST['supplier[quantity]['+str(i)+']']
+            unit_of_measurement = request.POST['supplier[unit_of_measurement]['+str(i)+']']
+            vat = request.POST['supplier[vat]['+str(i)+']']
+            unit_price = request.POST['supplier[unit_price]['+str(i)+']']
+            total_price = request.POST['supplier[total_price]['+str(i)+']']
+            
             item = DPItems(
-                cs_id=tender_id,
-                item_id=item_id,
-                item_name=description,
-                quantity=quantity,
-                unit_of_measurement=unit_of_measurement,
+                cd_id = tender_id,
+                item_id = item_id,
+                item = description,
+                required_qty = quantity,
+                unit_of_measurement = unit_of_measurement,
             )
             item.save()
-
+            
             supplier_id = ""
             if supplier_key:
                 supplier_id = supplier_key
             else:
                 supplier_id = "SUP" + datetime.now().strftime("%Y%m%d%I%M%S")
             supplier_query = Supplier(
-                sup_id=supplier_id,
-                supplier=supplier_name
+                sup_id = supplier_id,
+                supplier = supplier_name
             )
             supplier_query.save()
-
-            bid = DPBids(
-                cs_id=tender_id,
-                item_id=item_id,
-                sup_id=supplier_id,
-                unit_price=unit_price,
-                vat=vat,
-                quoted_qty=quantity,
-                bid_no=bid_no,
-                quote_date=bid_date,
-                total=total_price,
-                bid_document=bid_document_path_db if 'bid_document_path_db' in locals() else bid_document_path,
+            
+            bid = Bids(
+                document_id = tender_id,
+                item_id = item_id,
+                sup_id = supplier_id,
+                unit_price = unit_price,
+                vat = vat,
+                quoted_qty = quantity,
+                bid_no = bid_no,
+                quote_date = bid_date,
+                rfq_no = rfq_no,
+                total = total_price,
+                bid_document = bid_document_path,
             )
             bid.save()
-
+        
         cs_query = DirectPurchase(
-            document_id=tender_id,
-            rfq_date=rfq_date,
-            scope_of_work=scope,
-            closing_date=closing_date,
-            closing_time=closing_time,
-            rfq_no=rfq,
-            advert=advert_path_db if 'advert_path_db' in locals() else advert_path,
-            date_created=date_tender_opened,
-            pr_number=pr_number,
-            pr_date=pr_date,
-            tender_opened=date_tender_opened,
-            tac_date=tender_adjudication_committee_date,
-            region="",
+            document_id = tender_id,
+            rfq_date = rfq_date,
+            scope_of_work = scope,
+            closing_date = closing_date,
+            closing_time = closing_time,
+            rfq_no = rfq,
+            advert = advert_path,
+            date_created = date_tender_opened,
+            pr_number = pr_number,
+            pr_date = pr_date,
+            tender_opened = date_tender_opened,
+            tac_date = tender_adjudication_committee_date,
+            region = "",
         )
         cs_query.save()
-
+        
         # rfq_query = RFQUPDATE.objects.filter(document_id=rfq).first()
         # if rfq_query:
         #     rfq_query.tender_board = 'yes'
         #     rfq_query.save()
-
+        
         if 'add_supplier' in request.POST:
             return redirect('add_supplier', tender_id=tender_id)
-
+            
         return render(request, 'finance/direct_purchase/dp_create.html', {
             "proc_plans": None,
         })
-
-
+        
 @login_required
 def save_comparative_schedule(request):
-    """
-    Save a new comparative schedule.
-    
-    The advert field should be a file path (string) from a previous file upload API call.
-    File uploads are handled separately by dedicated file upload APIs.
-    """
+
     try:
-        print("save_comparative_schedule request: ", request.POST)
+        
         cs_id = "DP" + datetime.now().strftime("%Y%m%d%I%M%S")
         cs_exists = DirectPurchase.objects.filter(cs_id=cs_id).first()
         # @TODO try random number if cs_id exists or return error
         if cs_exists:
-            cs_id = "CS" + datetime.now().strftime("%Y%m%d%I%M%S")
-
-        # Get advert file path from POST data (file uploads handled separately)
-        advert_path = request.POST.get("advert", "").strip()
+            cs_id = "DP" + datetime.now().strftime("%Y%m%d%I%M%S")
+        advert_files = request.FILES.getlist("advert", None)
+        proc_ref = request.POST.get("proc_ref", "")
+        print("proc plan: ", proc_ref)
+        # check if proc ref has 'acc' prefix
+        if not proc_ref.startswith("acc"):
+            temp_proc_ref = "acc" + proc_ref
+            proc_ref = temp_proc_ref
+            
+        proc_plan = DPProcPlan.objects.filter(proc_ref=proc_ref).first()
+        print("proc_plan: ", proc_plan)
         scope_of_work = request.POST.get("scope_of_work", "")
         pr_number = request.POST.get("pr_number", "")
         pr_date = request.POST.get("pr_date", "")
         ref_date = request.POST.get("ref_date", "")
         currency = request.POST.get("currency", "")
-
+        # quantity = data['quantity']
         closing_date = request.POST.get("closing_date", "")
         closing_time = request.POST.get("closing_time", "")
         date_tender_opened = request.POST.get("date_tender_opened", "")
         tender_adjudication_committee_date = request.POST.get("tender_adjudication_committee_date", "")
         username = request.POST.get("username", "")
-
-        # Validate advert file path if provided
-        if advert_path:
-            print(f"🔍 Validating advert file path: {advert_path}")
-            print(f"🔍 Settings - BASE_DIR: {settings.BASE_DIR}")
-            print(f"🔍 Settings - MEDIA_ROOT: {settings.MEDIA_ROOT}")
-            
-            # Basic path validation
-            if not advert_path.startswith('uploads/'):
-                print(f"Warning: Invalid file path format. Expected 'uploads/...', got: {advert_path}")
-                advert_path = ""
-            else:
-                # Check if the file path exists and is valid
-                # Files are stored in media/uploads/, so we need to check both possible locations
-                base_path = os.path.join(settings.BASE_DIR, advert_path)
-                media_path = os.path.join(settings.MEDIA_ROOT, advert_path)
-                
-                print(f"🔍 Checking file existence:")
-                print(f"  - Base path: {base_path}")
-                print(f"  - Media path: {media_path}")
-                
-                if os.path.exists(base_path):
-                    print(f"✅ File found at base path: {advert_path}")
-                    # Note: File exists in BASE_DIR/uploads/ but should be in MEDIA_ROOT/uploads/
-                    print(f"⚠️  WARNING: File exists in BASE_DIR/uploads/ but should be in MEDIA_ROOT/uploads/")
-                    print(f"⚠️  This indicates a file upload configuration issue")
-                elif os.path.exists(media_path):
-                    print(f"✅ File found at media path: {advert_path}")
-                else:
-                    print(f"❌ File not found at either location")
-                    print(f"  - Base path exists: {os.path.exists(base_path)}")
-                    print(f"  - Media path exists: {os.path.exists(media_path)}")
-                    print(f"⚠️  SUGGESTION: Check if file upload system is saving to correct location")
-                    # Reset to empty if file doesn't exist
-                    advert_path = ""
-        else:
-            print("No advert file path provided")
-
+        
+        # save advert file
+        advert_path = ""
+        try:
+            if advert_files:
+                advert_file = advert_files[0]
+                root_dir = os.path.join(settings.BASE_DIR, 'uploads', 'comparative', 'adverts')
+                fs = FileSystemStorage(location=root_dir)
+                filename_ = fs.save(advert_file.name, advert_file)
+                advert_path = "uploads" + os.path.sep + "comparative" + os.path.sep + "adverts" + os.path.sep + filename_
+        except Exception as ex:
+            print("Error: ", ex)
+        
         # save cs details
         # fetch purchase request
         print("pr number: ", pr_number)
         pr = PurchaseRequest.objects.get(id=pr_number)
-        # Handle both proc_ref and proc_plan_id fields from frontend
-        proc_ref = request.POST.get("proc_ref", "").strip()
-        proc_plan_id = request.POST.get("proc_plan", "").strip()  # Frontend sends this as 'proc_plan'
-        
-        # Debug: Log all POST data to see what's actually being sent
-        print(f"Direct Purchase - All POST data keys: {list(request.POST.keys())}")
-        print(f"Direct Purchase - proc_ref: '{proc_ref}', proc_plan_id: '{proc_plan_id}'")
-        
-        # Determine which field to use for finding the procurement plan
-        proc_plan = None
-        
-        if proc_plan_id and proc_plan_id.strip():
-            # Frontend sent proc_plan_id, try to find by ID first
-            try:
-                if proc_plan_id.startswith('"'):
-                    # Clean the string and convert to integer for ID lookup
-                    cleaned_proc_plan_id = proc_plan_id.strip().replace('"', '').replace("'", "")
-                    print(f"Direct Purchase - Cleaned proc_plan_id: '{cleaned_proc_plan_id}'")
-                    proc_plan_ref = "acc" + cleaned_proc_plan_id
-                    proc_plan = DPProcPlan.objects.filter(proc_ref=proc_plan_ref).first()
-                    print(f"Direct Purchase - Found proc_plan by ID: {proc_plan}")
-                else:
-                    proc_plan = DPProcPlan.objects.filter(id=proc_plan_id).first()
-                    print(f"Direct Purchase - Found proc_plan by ID: {proc_plan}")
-            except (ValueError, TypeError) as e:
-                print(f"Direct Purchase - Invalid proc_plan_id format: '{proc_plan_id}', error: {e}")
-                # If ID lookup fails, try proc_ref as fallback
-                if proc_ref and proc_ref.strip():
-                    if not proc_ref.startswith("acc"):
-                        temp_proc_ref = "acc" + proc_ref
-                        proc_ref = temp_proc_ref
-                    proc_plan = DPProcPlan.objects.filter(proc_ref=proc_ref).first()
-                    print(f"Direct Purchase - Found proc_plan by proc_ref fallback: {proc_plan}")
-        elif proc_ref and proc_ref.strip():
-            # Frontend sent proc_ref, use the original logic
-            if not proc_ref.startswith("acc"):
-                temp_proc_ref = "acc" + proc_ref
-                proc_ref = temp_proc_ref
-            proc_plan = DPProcPlan.objects.filter(proc_ref=proc_ref).first()
-            print(f"Direct Purchase - Found proc_plan by proc_ref: {proc_plan}")
-        else:
-            print("Direct Purchase - No procurement plan reference provided")
-        
+        print("PR: ", pr, pr_number, username)
         # fetch user
         user = UserProfile.objects.filter(username=username).first()
         currency = Currency.objects.filter(id=currency).first() if currency else None
         # region_ = Regions.objects.filter(region=pr.region).first() if 'region' in pr else None
         # section = Sections.objects.filter(section=pr.section).first() if 'section' in pr else None
         cs_query = DirectPurchase(
-            cs_id=cs_id,
-            pr_id_id=pr.id,
-            scope_of_work=scope_of_work,
-            currency=currency,
-            closing_date=closing_date,
-            closing_time=closing_time,
-            advert=advert_path,
-            pr_number=pr_number,
-            pr_date=pr_date,
-            ref_date=ref_date,
-            proc_plan=proc_plan,
-            cs_opened=date_tender_opened,
-            tac_date=tender_adjudication_committee_date,
-            created_by_id=user.id,
-            cost_center=user.cost_center if user.cost_center else None,
-            region_id=user.region_id if user.region_id else None,
+            cs_id = cs_id,
+            pr_id_id = pr.id,
+            scope_of_work = scope_of_work,
+            currency = currency,
+            closing_date = closing_date,
+            closing_time = closing_time,
+            advert = advert_path,
+            pr_number = pr_number,
+            pr_date = pr_date,
+            ref_date = ref_date,
+            proc_plan = proc_plan,
+            cs_opened = date_tender_opened,
+            tac_date = tender_adjudication_committee_date,
+            created_by_id = user.id,
+            cost_center = user.cost_center if user.cost_center else None,
+            region_id = user.region_id if user.region_id else None,
         )
         cs_query.save()
         
-        print(f"✅ Comparative Schedule saved successfully:")
-        print(f"   - CS ID: {cs_id}")
-        print(f"   - Advert path: {advert_path}")
-        print(f"   - Owner: {user.username if user else 'Unknown'}")
-
         return JsonResponse({
             "message": "Comparative Schedule saved successfully",
             "success": True,
             "cs_id": cs_id,
             "cs_owner": user.username if user else "",
-        }, safe=False)
+            }, safe=False)
     except Exception as ex:
         print("Error: ", ex)
         return JsonResponse({
             "message": "Error saving Comparative Schedule",
             "error": str(ex),
             "success": False,
-        }, safe=False)
-
-
+            }, safe=False)
+   
 @login_required
 def update_comparative_schedule(request):
-    """
-    Update an existing comparative schedule.
-    
-    The advert field should be a file path (string) from a previous file upload API call.
-    File uploads are handled separately by dedicated file upload APIs.
-    If no advert path is provided, the existing advert remains unchanged.
-    """
-    try:
 
-        # Get advert file path from POST data (file uploads handled separately)
-        advert_path = request.POST.get("advert", "").strip()
-        print("advert_path from POST: ", advert_path)
+    try:
         
+        advert_files = request.FILES.getlist("advert", None)
         cs_id = request.POST.get("cs_id", "")
         plan_ref = request.POST.get("proc_ref", "")
         # proc_plan = data['proc_plan']
@@ -1515,47 +1475,20 @@ def update_comparative_schedule(request):
         date_tender_opened = request.POST.get("date_tender_opened", "")
         tender_adjudication_committee_date = request.POST.get("tender_adjudication_committee_date", "")
         username = request.POST.get("username", "")
-
-        # Validate advert file path if provided
-        if advert_path:
-            print(f"🔍 Validating advert file path: {advert_path}")
-            print(f"🔍 Settings - BASE_DIR: {settings.BASE_DIR}")
-            print(f"🔍 Settings - MEDIA_ROOT: {settings.MEDIA_ROOT}")
-            
-            # Basic path validation
-            if not advert_path.startswith('uploads/'):
-                print(f"Warning: Invalid file path format. Expected 'uploads/...', got: {advert_path}")
-                advert_path = ""
-            else:
-                # Check if the file path exists and is valid
-                # Files are stored in media/uploads/, so we need to check both possible locations
-                base_path = os.path.join(settings.BASE_DIR, advert_path)
-                media_path = os.path.join(settings.MEDIA_ROOT, advert_path)
-                
-                print(f"🔍 Checking file existence:")
-                print(f"  - Base path: {base_path}")
-                print(f"  - Media path: {media_path}")
-                
-                if os.path.exists(base_path):
-                    print(f"✅ File found at base path: {advert_path}")
-                    # Note: File exists in BASE_DIR/uploads/ but should be in MEDIA_ROOT/uploads/
-                    print(f"⚠️  WARNING: File exists in BASE_DIR/uploads/ but should be in MEDIA_ROOT/uploads/")
-                    print(f"⚠️  This indicates a file upload configuration issue")
-                elif os.path.exists(media_path):
-                    print(f"✅ File found at media path: {advert_path}")
-                else:
-                    print(f"❌ File not found at either location")
-                    print(f"  - Base path exists: {os.path.exists(base_path)}")
-                    print(f"  - Media path exists: {os.path.exists(media_path)}")
-                    print(f"⚠️  SUGGESTION: Check if file upload system is saving to correct location")
-                    # Reset to empty if file doesn't exist
-                    advert_path = ""
-        else:
-            print("No advert file path provided - keeping existing advert unchanged")
+        
+        # save advert file
+        advert_path = ""
+        try:
+            if advert_files:
+                advert_file = advert_files[0]
+                root_dir = os.path.join(settings.BASE_DIR, 'uploads', 'comparative', 'adverts')
+                fs = FileSystemStorage(location=root_dir)
+                filename_ = fs.save(advert_file.name, advert_file)
+                advert_path = "uploads" + os.path.sep + "comparative" + os.path.sep + "adverts" + os.path.sep + filename_
+        except Exception as ex:
+            print("Error: ", ex)
 
         # fetch user
-        print("pr number: ", pr_number)
-        print("currency: ", currency)
         currency = Currency.objects.filter(id=currency).first() if currency else None
         # region_ = Regions.objects.filter(region=pr.region).first() if 'region' in pr else None
         # section = Sections.objects.filter(section=pr.section).first() if 'section' in pr else None
@@ -1566,16 +1499,13 @@ def update_comparative_schedule(request):
             if currency:
                 cs_query.currency = currency
             if scope_of_work:
-                cs_query.scope_of_work = scope_of_work
+                cs_query.scope_of_work = scope_of_work 
             if closing_date:
                 cs_query.closing_date = closing_date
             if closing_time:
                 cs_query.closing_time = closing_time
-            # Only update advert if we have a valid file path
-            if advert_path and advert_path.strip():
+            if advert_path:
                 cs_query.advert = advert_path
-                print(f"Updated advert path: {advert_path}")
-            # Note: If no advert_path is provided, we keep the existing one unchanged
             if pr_number:
                 cs_query.pr_number = pr_number
             if pr_date:
@@ -1588,46 +1518,41 @@ def update_comparative_schedule(request):
                 cs_query.proc_plan = proc_plan_
             if ref_date:
                 cs_query.ref_date = ref_date
-
-            cs_query.save()
             
-            print(f"✅ Comparative Schedule updated successfully:")
-            print(f"   - CS ID: {cs_id}")
-            print(f"   - Advert path: {advert_path}")
-            print(f"   - Updated by: {username}")
+            cs_query.save()
         else:
             print("ComparativeSchedule record not found with cs_id:", cs_id)
-
+        
         return JsonResponse({
             "message": "Comparative Schedule saved successfully",
             "success": True,
             "cs_id": cs_id,
-        }, safe=False)
+            }, safe=False)
     except Exception as ex:
         print("Error: ", ex)
         return JsonResponse({
             "message": "Error saving Comparative Schedule",
             "error": str(ex),
             "success": False,
-        }, safe=False)
-
+            }, safe=False)
 
 @login_required
 def update_pritem_ordered(request):
+    
     cs_id = request.POST.get("cs_id", "")
     cs_query = DirectPurchase.objects.filter(cs_id=cs_id).first()
-
+    
     if cs_query:
         pr_item_id = request.POST.get("pr_id", "")
-        csitems_data = json.loads(request.POST.get("json_data", "{}"))
-        print("csitems_data: ", csitems_data)
-        items = csitems_data.get("cs_items", [])
+        DPitems_data = json.loads(request.POST.get("json_data", "{}"))
+        print("DPitems_data: ", DPitems_data)
+        items = DPitems_data.get("cs_items", [])
         print("items ", items, type(items))
         print("pr_item_id: ", pr_item_id)
         purchase_request = PurchaseRequest.objects.filter(id=pr_item_id).first()
         print("purchase request: ", purchase_request)
         existing_items = DPRequiredItems.objects.filter(cs_id=cs_query).all()
-
+        
         # Convert existing items to a list of dictionaries for easier comparison
         existing_items_list = [
             {
@@ -1663,18 +1588,17 @@ def update_pritem_ordered(request):
         # Add new items
         for item in items_to_add:
             print("item: ", item)
-            pr_item = PrItem.objects.filter(item_required=item['item_required'],
-                                            purchase_request=purchase_request).first()
+            pr_item = PrItem.objects.filter(item_required=item['item_required'], purchase_request=purchase_request).first()
             if pr_item:
                 pr_item.ordered = True
                 pr_item.save()
                 print("item: ", item)
                 cs_required_items = DPRequiredItems(
-                    cs_id=cs_query,
-                    item_id=item['id'],
-                    item_name=item['item_required'],
-                    quantity=item['quantity'],
-                    unit_of_measurement=item['unit_of_measurement'],
+                    cs_id = cs_query,
+                    item_id = item['id'],
+                    item_name = item['item_required'],
+                    quantity = item['quantity'],
+                    unit_of_measurement = item['unit_of_measurement'],
                 )
                 cs_required_items.save()
                 print("added ...")
@@ -1686,104 +1610,99 @@ def update_pritem_ordered(request):
             if pr_item:
                 pr_item.ordered = False
                 pr_item.save()
-                DPRequiredItems.objects.filter(item_name=item, cs_id=cs_query).delete()
+                DPRequiredItems.objects.filter(item_name=item, cs_id=cs_query).delete()        
+
 
         return JsonResponse({
             "message": "PR Item updated successfully",
             "success": True,
-        }, safe=False)
+            }, safe=False)
     else:
         return JsonResponse({
             "message": "Comparative Schedule not found",
             "success": False,
-        }, safe=False)
-
-
+            }, safe=False)
+    
 @login_required
 def save_cs_bid(request):
+
     cs_id = request.POST.get("cs_id", "")
     bid_no = request.POST.get("bid_count", "")
-    print("bid_no: ", bid_no)
-
+    
     bid_docs = request.FILES.get("bid_document", None)
     bid_date = request.POST.get("bid_date", "")
     supplier_name = request.POST.get("supplier_name", "")
     # get items json
     json_data = json.loads(request.POST.get("json_data", "{}"))
     items = json_data.get("items", [])
-
+    
     cs_query = DirectPurchase.objects.filter(cs_id=cs_id).first()
     if not cs_query:
         return JsonResponse({
-            "message": "Direct Purchase not found",
+            "message": "Comparative Schedule not found",
             "success": False,
-        }, safe=False)
-
+            }, safe=False)
+    
     supplier = Supplier.objects.filter(name=supplier_name).first()
     if not supplier:
         supplier_ = Supplier(
-            name=supplier_name
+            name = supplier_name
         )
         supplier_.save()
-        supplier = supplier_
-
-        # check if bid exists
-        bid_query = DPBids.objects.filter(cs_id=cs_query, sup_id=supplier, bid_no=bid_no).all()
-        if bid_query:
-            clear_approvals(cs_id)
-            for bid in bid_query:
-                # delete item
-                item = DPItems.objects.filter(item_id=bid.item_id).first()
-                if item:
-                    item.delete()
-                bid.delete()
-
+        supplier = supplier_   
+        
+    # check if bid exists
+    bid_query = DPBids.objects.filter(cs_id=cs_query, sup_id=supplier, bid_no=bid_no).all()
+    if bid_query:
+        clear_approvals(cs_id)
+        for bid in bid_query:
+            # delete item
+            item = DPItems.objects.filter(item_id=bid.item_id).first()
+            if item:
+                item.delete()
+            bid.delete()
+            
     # save bids
     bid_doc_path = ""
     try:
         if bid_docs:
             bid_doc = bid_docs
-            # Use proper media path construction
-            timestamp = datetime.now().strftime("%Y%m%d%I%M%S")
-            filename = f"{timestamp}_{bid_doc.name}"
             root_dir = os.path.join(settings.BASE_DIR, 'uploads', 'comparative', 'adverts')
             fs = FileSystemStorage(location=root_dir)
-            filename_ = fs.save(filename, bid_doc)
-            bid_doc_path = os.path.join('uploads', 'comparative', 'adverts', filename_)
-            print(f"✅ Bid document saved: {bid_doc_path}")
+            filename_ = fs.save(bid_doc.name, bid_doc)
+            bid_doc_path = "uploads" + os.path.sep + "comparative" + os.path.sep + "adverts" + os.path.sep + filename_
     except Exception as ex:
-        print(f"❌ Error saving bid document: {ex}")
-
+        print("Error: ", ex)
+        
     for item in items:
         item_id = "Item" + datetime.now().strftime("%Y%m%d%I%M%S%p")
         item_query = DPItems(
-            cs_id=cs_query,
-            item_id=item_id,
-            item_name=item['item_required'],
-            quantity=item['quantity'],
-            unit_of_measurement=item['unit_of_measurement'],
+            cs_id = cs_query,
+            item_id = item_id,
+            item_name = item['item_required'],
+            quantity = item['quantity'],
+            unit_of_measurement = item['unit_of_measurement'],
         )
-        item_query.save()
-
+        item_query.save()    
+        
         bid = DPBids(
-            cs_id=cs_query,
-            item_id=item_query,
-            sup_id=supplier,
-            unit_price=item['unit_price'] if 'unit_price' in item else "",
-            vat=item['vat'] if 'vat' in item else "",
-            quoted_qty=item['quantity'] if 'quantity' in item else "",
-            bid_no=bid_no,
-            quote_date=bid_date,
-            total=item['total_price'] if 'total_price' in item else "",
-            bid_document=bid_doc_path,
+            cs_id = cs_query,
+            item_id = item_query,
+            sup_id = supplier,
+            unit_price = item['unit_price'] if 'unit_price' in item else "",
+            vat = item['vat'] if 'vat' in item else "",
+            quoted_qty = item['quantity'] if 'quantity' in item else "",
+            bid_no = bid_no,
+            quote_date = bid_date,
+            total = item['total_price'] if 'total_price' in item else "",
+            bid_document = bid_doc_path,
         )
         bid.save()
-
+        
     return JsonResponse({
         "message": "Bids saved successfully",
         "success": True,
     })
-
 
 @login_required
 def delete_cs_bid(request):
@@ -1793,17 +1712,17 @@ def delete_cs_bid(request):
     cs_query = DirectPurchase.objects.filter(cs_id=cs_id).first()
     if not cs_query:
         return JsonResponse({
-            "message": "Direct Purchase not found",
+            "message": "Comparative Schedule not found",
             "success": False,
-        }, safe=False)
-
+            }, safe=False)
+    
     supplier = Supplier.objects.filter(name=supplier_name).first()
     if not supplier:
         return JsonResponse({
             "message": "Supplier not found",
             "success": False,
-        }, safe=False)
-
+            }, safe=False)
+    
     # check if bid exists
     bid_query = DPBids.objects.filter(cs_id=cs_query, sup_id=supplier).all()
     if bid_query:
@@ -1811,46 +1730,31 @@ def delete_cs_bid(request):
         for bid in bid_query:
             # delete item
             item = bid.item_id if bid.item_id else None
-            print("items: ", item)
+            print("items: ", item) 
             if item:
                 item.delete()
-
+                
             compliance = DPCompliance.objects.filter(cs_id=cs_query, supplier_id=supplier)
             if compliance:
                 compliance.delete()
-
+                
             complianceRemark = DPComplianceRemarks.objects.filter(cs_id=cs_query, supplier_id=supplier)
             if complianceRemark:
                 complianceRemark.delete()
-
+            
             bid.delete()
-        
-        # update bid numbers after all bids are deleted
-        # Get unique suppliers and their current bid numbers
-        from django.db.models import Min
-        supplier_bid_numbers = DPBids.objects.filter(cs_id=cs_query).values('sup_id').annotate(
-            min_bid_no=Min('bid_no')
-        ).order_by('min_bid_no')
-        
-        # Reorder bid numbers for each supplier
-        for index, supplier_bid in enumerate(supplier_bid_numbers, 1):
-            new_bid_no = str(index)
-            # Update all bid records for this supplier to have the new bid number
-            DPBids.objects.filter(cs_id=cs_query, sup_id=supplier_bid['sup_id']).update(bid_no=new_bid_no)
-
+            
     return JsonResponse({
         "message": "Bid deleted successfully",
         "success": True,
     })
-    
-
-
 
 @login_required
 def save_cs_compliance(request):
+
     cs_id = request.POST.get("cs_id", "")
     show_site_visit = request.POST.get("show_site_visit", "")
-    show_sample_required = request.POST.get("show_samples_required", "")
+    show_sample_required = request.POST.get("show_sample_required", "")
     json_data = json.loads(request.POST.get("compliance", "{}"))
 
     compliances = json_data.get("compliance", [])
@@ -1858,24 +1762,24 @@ def save_cs_compliance(request):
     json_data_ = json.loads(request.POST.get("complianceRemarks", "{}"))
 
     compliance_remarks = json_data_.get("complianceRemarks", [])
-
+    
     cs_query = DirectPurchase.objects.filter(cs_id=cs_id).first()
     if not cs_query:
         return JsonResponse({
-            "message": "Direct Purchase not found",
+            "message": "Comparative Schedule not found",
             "success": False,
-        }, safe=False)
-
+            }, safe=False)
+    
     cs_query.show_site_visit = True if show_site_visit == "yes" else False
     cs_query.show_sample_required = True if show_sample_required == "yes" else False
     cs_query.save()
     # check if compliance exists
     compliance_query = DPCompliance.objects.filter(cs_id=cs_query).all()
     if compliance_query:
-        clear_approvals(cs_id)
+        clear_approval = clear_approvals(cs_id)
         for compliance in compliance_query:
             compliance.delete()
-
+    
     for comp in compliances:
         print("comp: ", comp)
         supplier_name = comp['supplier_name'] if 'supplier_name' in comp else False
@@ -1889,82 +1793,79 @@ def save_cs_compliance(request):
         samples_delivered = comp['samples_required'] if 'samples_required' in comp else False
         decision = comp['decision'] if 'decision' in comp else False
         remarks = comp['remarks'] if 'remarks' in comp else False
-
+        
         supplier = Supplier.objects.filter(name=supplier_name).first()
         compliance_query = DPCompliance(
-            cs_id=cs_query,
-            supplier_id=supplier,
-            payment_terms=payment_terms,
-            bid_validity=bid_validity,
-            delivery_period=delivery_period,
-            technical_specifications=technical_specifications,
-            valid_tax_clearance=valid_tax_clearance,
-            registered_with_praz=registered_with_praz,
-            site_visit_done=site_visit_done,
-            samples_delivered=samples_delivered,
-            decision=decision,
-            remarks=remarks,
+            cs_id = cs_query,
+            supplier_id = supplier,
+            payment_terms = payment_terms,
+            bid_validity = bid_validity,
+            delivery_period = delivery_period,
+            technical_specifications = technical_specifications,
+            valid_tax_clearance = valid_tax_clearance,
+            registered_with_praz = registered_with_praz,
+            site_visit_done = site_visit_done,
+            samples_delivered = samples_delivered,
+            decision = decision,
+            remarks = remarks,
         )
         compliance_query.save()
-
+    
     # check if compliance remarks exists
     compliance_remarks_query = DPComplianceRemarks.objects.filter(cs_id=cs_query).all()
     if compliance_remarks_query:
         for remark in compliance_remarks_query:
             remark.delete()
-
+            
     for remark in compliance_remarks:
-        supplier_name = remark['supplier_name'] if 'supplier_name' in remark else ""
-        print("supplier_name: ", supplier_name, cs_query)
-        supplier = Supplier.objects.filter(name=supplier_name).first()
-        print("supplier: ", supplier)
-        _remark = DPComplianceRemarks(
-            cs_id=cs_query,
-            supplier_id=supplier,
-            remarks=remark['remarks'] if 'remarks' in remark else "",
-        )
-        _remark.save()
-
+        if 'remarks' in remark and remark['remarks']:
+            supplier_name = remark['supplier_name'] if 'supplier_name' in remark else ""
+            print("supplier_name: ", supplier_name, cs_query)
+            supplier = Supplier.objects.filter(name=supplier_name).first()
+            print("supplier: ", supplier)
+            _remark = DPComplianceRemarks(
+                cs_id = cs_query,
+                supplier_id = supplier,
+                remarks = remark['remarks'] if 'remarks' in remark else ""
+            )  
+            _remark.save()
+        
     return JsonResponse({
         "message": "Compliance saved successfully",
         "success": True,
     })
-
-
+    
 @login_required
 def save_supplier(request):
-    supplier_name = request.POST.get("supplier_name", "")
 
+    supplier_name = request.POST.get("supplier_name", "")
+    
     supplier_query = Supplier.objects.filter(name=supplier_name).first()
     if not supplier_query:
         supplier_query = Supplier(
-            name=supplier_name
+            name = supplier_name
         )
         supplier_query.save()
-
-    suppliers = Supplier.objects.all()
+        
     return JsonResponse({
         "message": "Supplier saved successfully",
-        "suppliers": list(suppliers.values('id', 'name')),
         "success": True,
     })
-
-
+    
 @login_required
 def save_cs_ranking(request):
     cs_id = request.POST.get("cs_id", "")
     cs_query = DirectPurchase.objects.filter(cs_id=cs_id).first()
-    print("cs_query: ", cs_query)
     if not cs_query:
         return JsonResponse({
-            "message": "Direct Purchase not found",
+            "message": "Comparative Schedule not found",
             "success": False,
-        }, safe=False)
-
+            }, safe=False)
+    
     # check if rankings exists
     ranking_query = DPRanking.objects.filter(cs_id=cs_query).all()
     if ranking_query:
-        clear_approvals(cs_id)
+        clear_approval = clear_approvals(cs_id)
         for ranking in ranking_query:
             ranking.delete()
     # get bids
@@ -1986,18 +1887,18 @@ def save_cs_ranking(request):
         remarks = ""
         decision = ""
         if rank == 1:
-            decision = "Awarded " + supplier.name + cs_query.currency.currency + " " + str(total)
+            decision = "Awarded " + supplier.name + " being the lowest bidder having complied with all the requirements is recommended to provide the goods/service at a total cost of " + cs_query.currency.currency + " " + str(total) + " excluding VAT."
         ranking_query = DPRanking(
-            cs_id=cs_query,
-            supplier_id=supplier,
-            rank=rank,
-            remarks=remarks,
-            decision=decision,
-            total=total,
+            cs_id = cs_query,
+            supplier_id = supplier,
+            rank = rank,
+            remarks = remarks,
+            decision = decision,
+            total = total,
         )
         ranking_query.save()
         rank += 1
-
+        
     # get rankings
     rankings = DPRanking.objects.filter(cs_id=cs_query).all()
     custom_rankings = []
@@ -2018,21 +1919,21 @@ def save_cs_ranking(request):
         "success": True,
         "rankings": list(custom_rankings),
     })
-
-
+    
 @login_required
 def save_cs_committee(request):
-    cs_id = request.POST.get("cs_id", "")
-    json_data = json.loads(request.POST.get("committee", "{}"))
-    committee = json_data.get("committee", [])
+
     try:
+        cs_id = request.POST.get("cs_id", "")
+        json_data = json.loads(request.POST.get("committee", "{}"))
+        committee = json_data.get("committee", [])
         cs_query = DirectPurchase.objects.filter(cs_id=cs_id).first()
         if not cs_query:
             return JsonResponse({
-                "message": "Direct Purchase not found",
+                "message": "Comparative Schedule not found",
                 "success": False,
-            }, safe=False)
-
+                }, safe=False)
+        
         # check if committee exists
         for member in committee:
             # check if member exists
@@ -2041,18 +1942,17 @@ def save_cs_committee(request):
             if member_profile:
                 committee_query = DPCommittee.objects.filter(cs_id=cs_query, user=member_profile).first()
                 if not committee_query:
-                    clear_approvals(cs_id)
                     committee_query = DPCommittee(
-                        cs_id=cs_query,
-                        user=member_profile,
-                        committee_name=member['memberUserName'],
-                        committee_position=member['memberPosition']
+                        cs_id = cs_query,
+                        user = member_profile,
+                        committee_name = member['memberUserName'],
+                        committee_position = member['memberPosition']
                     )
-                    msg = "You have been added to the committee for RFQ " + cs_query.cs_id
-                    url = "/comperative_schedule/comperative_schedule/" + cs_query.cs_id
-                    notify_user(member_profile, msg, "RFQ", url, cs_query.cs_id, request)
-                    committee_query.save()
-
+                    msg = "You have been added to the committee for Direct Purchase " + cs_query.cs_id
+                    url = "/direct_purchase/comperative_schedule/" + cs_query.cs_id
+                    notify_user(member_profile, msg, "Direct Purchase", url, cs_query.cs_id, request)
+                committee_query.save()
+            
         return JsonResponse({
             "message": "Committee saved successfully",
             "success": True,
@@ -2060,11 +1960,9 @@ def save_cs_committee(request):
     except Exception as ex:
         print("Error: ", ex)
         return JsonResponse({
-            "message": "Error saving Committee",
-            "error": str(ex),
+            "message": "Committee saved successfully",
             "success": False,
-        }, safe=False)
-
+        })
 
 @login_required
 def delete_cs_committee_member(request):
@@ -2074,10 +1972,10 @@ def delete_cs_committee_member(request):
     cs_query = DirectPurchase.objects.filter(cs_id=cs_id).first()
     if not cs_query:
         return JsonResponse({
-            "message": "Direct Purchase not found",
+            "message": "Comparative Schedule not found",
             "success": False,
-        }, safe=False)
-
+            }, safe=False)
+    
     member_profile = UserProfile.objects.filter(username=username).first()
     if member_profile:
         committee_query = DPCommittee.objects.filter(cs_id=cs_query, user=member_profile).first()
@@ -2100,43 +1998,40 @@ def delete_cs_committee_member(request):
             "success": False,
         })
 
-
 @login_required
 def approve_cs_committee(request):
     cs_id = request.POST.get("cs_id", "")
     username = request.POST.get("username", "")
+    print("username: ", username)
     approval = request.POST.get("approval", "")
     justification = request.POST.get("justification", "")
-
     cs_query = DirectPurchase.objects.filter(cs_id=cs_id).first()
     if not cs_query:
         return JsonResponse({
-            "message": "Direct Purchase not found",
+            "message": "Comparative Schedule not found",
             "success": False,
-        }, safe=False)
-
+            }, safe=False)
+    
     member_profile = UserProfile.objects.filter(username=username).first()
     if member_profile:
         committee_query = DPCommittee.objects.filter(cs_id=cs_query, user=member_profile).first()
-
         if committee_query:
             committee_query.committee_approval = approval
             committee_query.justification = justification
-            committee_query.committee_date = timezone.now()
+            committee_query.committee_date = now()
             committee_query.save()
             notification_update(member_profile, cs_query.cs_id)
-
+        
         committees = DPCommittee.objects.filter(cs_id=cs_query).all()
         committee_approved = all([c.committee_approval == "Approved" for c in committees])
         if committee_approved:
             fm_role = Roles.objects.filter(name="Finance Manager", application=APP_NAME).first()
             print("fm role: ", fm_role)
-            fm_users = UserProfile.objects.filter(roles=fm_role, region=cs_query.region).all()
-            print("fm user: ", fm_users)
-            msg = "Comperative Schedule is ready for your approval " + cs_query.cs_id
-            url = "/comperative_schedule/comperative_schedule/" + cs_query.cs_id
-            for user_ in fm_users:
-                notify_user(user_, msg, "RFQ", url, cs_query.cs_id, request)
+            fm_user = UserProfile.objects.filter(region=cs_query.region, roles=fm_role).first()
+            print("fm user: ", fm_user.username, fm_user.id)
+            msg = cs_query.cs_id + " Direct Purchase is ready for your approval "
+            url = "/direct_purchase/comperative_schedule/" + cs_query.cs_id
+            notify_user(fm_user, msg, "Direct Purchase", url, cs_query.cs_id, request)
 
         return JsonResponse({
             "message": "Committee member approved successfully",
@@ -2148,12 +2043,12 @@ def approve_cs_committee(request):
                 "committee_approval": approval,
             }
         })
+
     else:
         return JsonResponse({
             "message": "Committee member not found",
             "success": False,
         })
-
 
 @login_required
 def approve_cs(request):
@@ -2165,34 +2060,31 @@ def approve_cs(request):
     cs_query = DirectPurchase.objects.filter(cs_id=cs_id).first()
     if not cs_query:
         return JsonResponse({
-            "message": "Direct Purchase not found",
+            "message": "Comparative Schedule not found",
             "success": False,
-        }, safe=False)
-
-    committees = DPCommittee.objects.filter(cs_id=cs_query).all()
-    user = UserProfile.objects.filter(username=username).first()
+            }, safe=False)
+    
+    committees = DPCommittee.objects.filter(cs_id=cs_query)
+    user = UserProfile.objects.filter(region=cs_query.region, username=username).first()
     if user:
         if role == "general_manager":
             gm_approval = DPApproval(
-                cs_id=cs_query,
-                user=user,
-                approver_role=role,
-                approval=approval,
-                justification=justification,
-                approval_date=timezone.now(),
-                created_at=timezone.now(),
+                cs_id = cs_query,
+                user = user,
+                approver_role = role,
+                approval = approval,
+                justification = justification,
+                approval_date = now(),
+                created_at = now(),
             )
             gm_approval.save()
-            gm_role = Roles.objects.filter(name="General Manager", application=APP_NAME).first()
-            gm_users = UserProfile.objects.filter(roles=gm_role, region=cs_query.region).all()
-            for user_ in gm_users:
-                notification_update(user_, cs_query.cs_id)
-
+            notification_update(user, cs_query.cs_id)
+            
             return JsonResponse({
                 "message": "GM approval saved successfully",
-                "success": True,
+                "success": True, 
                 "role": role,
-                "approval": approval,
+                "approval": approval,           
                 "gm_approval": {
                     "id": gm_approval.id,
                     "approver": gm_approval.user.username if gm_approval.user else "",
@@ -2205,34 +2097,39 @@ def approve_cs(request):
             })
         elif role == "finance_manager":
             fm_approval = DPApproval(
-                cs_id=cs_query,
-                user=user,
-                approver_role=role,
-                approval=approval,
-                justification=justification,
-                approval_date=timezone.now(),
-                created_at=timezone.now(),
+                cs_id = cs_query,
+                user = user,
+                approver_role = role,
+                approval = approval,
+                justification = justification,
+                approval_date = now(),
+                created_at = now(),
             )
             fm_approval.save()
-            gm_role = Roles.objects.filter(name="Finance Manager", application=APP_NAME).first()
-            gm_users = UserProfile.objects.filter(roles=gm_role, region=cs_query.region).all()
-            for user_ in gm_users:
-                notification_update(user_, cs_query.cs_id)
-
+            
+            print("user: ", user, cs_query.id)
+            flag = notification_update(user, cs_query.cs_id)
+            print("flag: ", flag)
+            notification = Notification.objects.filter(user=user, notification_id=cs_query.id).first()
+            if notification:
+                print("notification: ", notification.is_read, notification.notification_type, notification.message)
+                notification.is_read = True
+                notification.save()
+                
             committee_approved = all([c.committee_approval == "Approved" for c in committees])
             if committee_approved and approval == "Approved":
-                gm_role = Roles.objects.filter(name="Finance Manager", application=APP_NAME).first()
+                gm_role = Roles.objects.filter(name="General Manager", application=APP_NAME).first()
                 print("gm role: ", gm_role)
-                gm_users = UserProfile.objects.filter(roles=gm_role, region=cs_query.region).all()
-                for user_ in gm_users:
-                    notify_user(user_, "Comperative Schedule is ready for your approval " + cs_query.cs_id, "RFQ",
-                                "/comperative_schedule/comperative_schedule/" + cs_query.cs_id, cs_query.cs_id, request)
-
+                gm_user = UserProfile.objects.filter(region=cs_query.region, roles=gm_role).first()
+                print("gm user: ", gm_user.username, gm_user.id)
+                notify_user(gm_user, "Direct Purchase is ready for your approval " + cs_query.cs_id, "Direct Purchase", "/direct_purchase/comperative_schedule/" + cs_query.cs_id, cs_query.cs_id, request)
+        
+        
             return JsonResponse({
                 "message": "FM approval saved successfully",
-                "success": True,
+                "success": True, 
                 "role": role,
-                "approval": approval,
+                "approval": approval,          
                 "fm_approval": {
                     "id": fm_approval.id,
                     "approver": fm_approval.user.username if fm_approval.user else "",
@@ -2254,7 +2151,6 @@ def approve_cs(request):
             "success": False,
         })
 
-
 @login_required
 def save_cs_decision(request):
     cs_id = request.POST.get("cs_id", "")
@@ -2263,28 +2159,224 @@ def save_cs_decision(request):
     cs_query = DirectPurchase.objects.filter(cs_id=cs_id).first()
     if not cs_query:
         return JsonResponse({
-            "message": "Direct Purchase not found",
+            "message": "Comparative Schedule not found",
             "success": False,
-        }, safe=False)
-
+            }, safe=False)
+    
     committee_query = DPCommittee.objects.filter(cs_id=cs_query, id=committee_id).first()
     if committee_query:
         if committee_decision == "approve":
             committee_query.committee_status = True
-            committee_query.committee_date = timezone.now()
+            committee_query.committee_date = datetime.now()
             committee_query.save()
         elif committee_decision == "reject":
             committee_query.committee_status = False
-            committee_query.committee_date = timezone.now()
-            committee_query.save()
-
+            committee_query.committee_date = datetime.now()
+            committee_query.save() 
+            
     return JsonResponse({
         "message": "Committee decision saved successfully",
         "success": True,
-    })
-
-
+    })   
+        
 @login_required
+def cs_add_supplier(request, cs_id):
+    
+    if request.method == 'GET':
+        
+        # tender_id = request.GET['tender_id']
+        # get tender bids supplier items
+        tender = DirectPurchase.objects.filter(document_id=tender_id).first()
+        proc_plan = DPProcPlan.objects.filter(proc_ref=tender.pr_number).first()
+        bids = DPBids.objects.filter(document_id=tender_id).order_by('bid_no').all()
+
+        bids_dict = {}
+        for bid in bids:
+            bids_dict.update({bid.bid_no: []})
+            
+        for i in range(0, len(bids_dict)):
+            i = i + 1
+            for bid in bids:
+                if int(bid.bid_no) == i:
+                    supplier = Supplier.objects.filter(sup_id=bid.sup_id).first()
+                    item = DPItems.objects.filter(item_id=bid.item_id).first()
+
+                    if supplier:
+                        print(supplier, supplier.supplier, supplier.sup_id)
+                        supplier_id = supplier.sup_id
+                        supplier_name = supplier.supplier
+                        bids_dict[str(i)].append({
+                            "bid_no": int(bid.bid_no),
+                            "supplier_name": supplier_name,
+                            "supplier_id": supplier_id,
+                            "bid": bid,
+                            "item": item,
+                        })
+                
+        # get proc plans
+        proc_plans = DPProcPlan.objects.all()
+        suppliers = Suppliers.objects.all()
+        supplier_list = {}
+        for supplier in suppliers:
+            supplier_list.update({supplier.sup_id:supplier.supplier})
+            
+        suppliers_json = json.dumps(supplier_list, default=str)
+        
+        return render(request, 'finance/tenders/tenders_add_supplier.html', {
+            "proc_plans": proc_plans,
+            "suppliers": suppliers_json,
+            "tender": tender,
+            "bids_items": bids_dict,
+            "next_bid": len(bids_dict)+1,
+            "proc_plan": proc_plan
+        })
+    elif request.method == "POST":
+        print("request: ", request.POST)
+        print(i)
+        tender_id = request.POST['tender_id']
+        item_count = request.POST['item_count']
+        rfq_no = request.POST['rfq_id']
+        supplier_name = request.POST['supplier_name']
+        supplier_id = request.POST['supplier_key']
+        supplier_key = request.POST['supplier_key']
+        bid_date = request.POST['bid_date']
+        bid_no = request.POST['supplier[bid][0]']
+        # store attachments
+        bid_document_path = ""
+        try:
+                
+            if 'bid_document' in request.FILES:
+                bid_document_file = request.FILES['bid_document']
+                bid_document_path = 'uploads/finance/cs/bids/' + \
+                                  datetime.now().strftime("%Y%m%d%I%M%S") + bid_document_file.name
+                save_file(bid_document_file, bid_document_path)
+        
+        except Exception as ex:
+            print("Error: ", ex)
+        
+        for i in range(0,int(item_count)):
+            item_id = "Item" + datetime.now().strftime("%Y%m%d%I%M%S%p")
+            description = request.POST['supplier[item_name]['+str(i)+']']
+            quantity = request.POST['supplier[quantity]['+str(i)+']']
+            unit_of_measurement = request.POST['supplier[unit_of_measurement]['+str(i)+']']
+            vat = request.POST['supplier[vat]['+str(i)+']']
+            unit_price = request.POST['supplier[unit_price]['+str(i)+']']
+            total_price = request.POST['supplier[total_price]['+str(i)+']']
+            
+            item = DPItems(
+                document_id = tender_id,
+                item_id = item_id,
+                item = description,
+                required_qty = quantity,
+                unit_of_measurement = unit_of_measurement,
+                rfq_no = rfq_no,
+            )
+            item.save()
+            
+            supplier_id = ""
+            if supplier_id:
+                supplier_id = supplier_key
+            else:
+                supplier_id = "SUP" + datetime.now().strftime("%Y%m%d%I%M%S")
+            supplier_query = Suppliers(
+                sup_id = supplier_id,
+                supplier = supplier_name
+            )
+            supplier_query.save()
+            
+            bid = Bids(
+                document_id = tender_id,
+                item_id = item_id,
+                sup_id = supplier_id,
+                unit_price = unit_price,
+                vat = vat,
+                quoted_qty = quantity,
+                bid_no = bid_no,
+                quote_date = bid_date,
+                rfq_no = rfq_no,
+                total = total_price,
+                bid_document = bid_document_path,
+            )
+            bid.save()
+        
+        if 'add_supplier' in request.POST:
+            return redirect('add_supplier', tender_id=tender_id)
+            
+        return render(request, 'finance/tenders/tenders_create.html', {
+            "proc_plans": proc_plans,
+            "suppliers": suppliers_json
+        })
+      
+@login_required
+def cs_compliance_table(request, cs_id):
+    
+    if request.method == 'GET':
+        tender_id = tender_id
+        tender = DirectPurchase.objects.filter(document_id=tender_id).first()
+        bids = DPBids.objects.filter(document_id=tender_id).order_by('bid_no').all()
+
+        bids_dict = {}
+        for bid in bids:
+            bids_dict.update({bid.bid_no: []})
+            
+        for i in range(0, len(bids_dict)):
+            i = i + 1
+            for bid in bids:
+                if int(bid.bid_no) == i:
+                    supplier = Suppliers.objects.filter(sup_id=bid.sup_id).first()
+                    item = DPItems.objects.filter(item_id=bid.item_id).first()
+                    
+                    print(supplier, supplier.supplier, supplier.sup_id)
+                    supplier_id = supplier.sup_id
+                    supplier_name = supplier.supplier
+                    bids_dict[str(i)].append({
+                        "bid_no": int(bid.bid_no),
+                        "supplier_name": supplier_name,
+                        "supplier_id": supplier_id,
+                        "bid": bid,
+                    })
+    elif request.method == 'POST':
+        document_id = request.POST['document_id']
+        rfq_no = request.POST['rfq_no']
+        bid_count = request.POST['bid_count']
+        
+        # get compliance table values
+        for i in range(1,bid_count):
+            supplier_id = request.POST['supplier_id'+i+'']
+            payment_terms = request.POST['payment_terms'+i+'']
+            bid_validity = request.POST['bid_validity'+i+'']
+            delivery_period = request.POST['delivery_period'+i+'']
+            technical_specifications = request.POST['technical_specifications'+i+'']
+            valid_tax_clearance = request.POST['valid_tax_clearance'+i+'']
+            registered_with_praz = request.POST['registered_with_praz'+i+'']
+            site_visit_done = request.POST['site_visit_done'+i+'']
+            samples_delivered = request.POST['samples_delivered'+i+'']
+            decision = request.POST['decision'+i+'']
+            remarks = request.POST['remarks'+i+'']
+            
+            # insert into compliance table
+            tender_compliance = DPCompliance(
+                document_id = document_id,
+                supplier_id = supplier_id,
+                rfq_no = rfq_no,
+                payment_terms = payment_terms,
+                bid_validity = bid_validity,
+                delivery_period = delivery_period,
+                technical_specifications = technical_specifications,
+                valid_tax_clearance = valid_tax_clearance,
+                registered_with_praz = registered_with_praz,
+                site_visit_done = site_visit_done,
+                samples_delivered = samples_delivered,
+                decision = decision,
+                remarks = remarks,
+            )
+            tender_compliance.save()
+            
+        return redirect('tender_compliance', tender_id=document_id)
+
+
+    return render(request, 'finance/direct_purchase/cs_compliance_table.html', {"bids_items": bids_dict})
+
 def save_additional_notes(request):
     cs_id = request.POST.get("cs_id", "")
     additional_notes = request.POST.get("additional_notes", "")
@@ -2298,12 +2390,10 @@ def save_additional_notes(request):
         })
     else:
         return JsonResponse({
-            "message": "Direct Purchase not found",
+            "message": "Comparative Schedule not found",
             "success": False,
         })
 
-
-@login_required
 def save_buyers_notes(request):
     cs_id = request.POST.get("cs_id", "")
     buyers_notes = request.POST.get("buyers_notes", "")
@@ -2311,16 +2401,15 @@ def save_buyers_notes(request):
     cs_query = DirectPurchase.objects.filter(cs_id=cs_id).first()
     if cs_query:
         ranking = DPRanking.objects.filter(cs_id=cs_query, rank=1).first()
-        ranking.remarks = buyers_notes if buyers_notes else ""
+        ranking.remarks = buyers_notes if buyers_notes else "Supplier has been awarded being the lowest bidder having complied with all the requirements is recommended to provide the goods/service"
         ranking.save()
-        print("ranking: ", ranking)
         return JsonResponse({
             "message": "Buyers notes saved successfully",
             "success": True,
         })
     else:
         return JsonResponse({
-            "message": "Direct Purchase not found",
+            "message": "Comparative Schedule not found",
             "success": False,
         })
 
@@ -2346,1538 +2435,6 @@ def cancel_schedule(request, cs_id):
     except Exception as ex:
         print("Error: ", ex)
         messages.error(request, "Error cancelling Comparative Schedule", str(ex))
-
+    
     messages.success(request, "Comparative Schedule cancelled successfully")
     return redirect('/direct_purchase/comperative_schedules')
-
-
-@login_required
-def cs_add_supplier(request, cs_id):
-    if request.method == 'GET':
-
-        # tender_id = request.GET['tender_id']
-        # get tender bids supplier items
-        tender = DirectPurchase.objects.filter(document_id=tender_id).first()
-        proc_plan = DPProcPlan.objects.filter(proc_ref=tender.pr_number).first()
-        bids = DPBids.objects.filter(document_id=tender_id).order_by('bid_no').all()
-
-        bids_dict = {}
-        for bid in bids:
-            bids_dict.update({bid.bid_no: []})
-
-        for i in range(0, len(bids_dict)):
-            i = i + 1
-            for bid in bids:
-                if int(bid.bid_no) == i:
-                    supplier = Supplier.objects.filter(sup_id=bid.sup_id).first()
-                    item = DPItems.objects.filter(item_id=bid.item_id).first()
-
-                    if supplier:
-                        print(supplier, supplier.supplier, supplier.sup_id)
-                        supplier_id = supplier.sup_id
-                        supplier_name = supplier.supplier
-                        bids_dict[str(i)].append({
-                            "bid_no": int(bid.bid_no),
-                            "supplier_name": supplier_name,
-                            "supplier_id": supplier_id,
-                            "bid": bid,
-                            "item": item,
-                        })
-
-        # get proc plans
-        proc_plans = DPProcPlan.objects.all()
-        suppliers = Suppliers.objects.all()
-        supplier_list = {}
-        for supplier in suppliers:
-            supplier_list.update({supplier.sup_id: supplier.supplier})
-
-        suppliers_json = json.dumps(supplier_list, default=str)
-
-        return render(request, 'finance/tenders/tenders_add_supplier.html', {
-            "proc_plans": proc_plans,
-            "suppliers": suppliers_json,
-            "tender": tender,
-            "bids_items": bids_dict,
-            "next_bid": len(bids_dict) + 1,
-            "proc_plan": proc_plan
-        })
-    elif request.method == "POST":
-        print("request: ", request.POST)
-        print(i)
-        tender_id = request.POST['tender_id']
-        item_count = request.POST['item_count']
-        rfq_no = request.POST['rfq_id']
-        supplier_name = request.POST['supplier_name']
-        supplier_id = request.POST['supplier_key']
-        supplier_key = request.POST['supplier_key']
-        bid_date = request.POST['bid_date']
-        bid_no = request.POST['supplier[bid][0]']
-        # store attachments
-        bid_document_path = ""
-        try:
-
-            if 'bid_document' in request.FILES:
-                bid_document_file = request.FILES['bid_document']
-                # Use proper media path construction
-                timestamp = timezone.astimezone(timezone.get_current_timezone()).strftime("%Y%m%d%I%M%S")
-                filename = f"{timestamp}_{bid_document_file.name}"
-                bid_document_path = os.path.join(settings.BASE_DIR, 'uploads', 'comparative', 'adverts', filename)
-                save_file(bid_document_file, bid_document_path)
-                # Store relative path in database for consistency
-                bid_document_path_db = os.path.join('uploads', 'comparative', 'adverts', filename)
-
-        except Exception as ex:
-            print("Error: ", ex)
-
-        for i in range(0, int(item_count)):
-            item_id = "Item" + timezone.astimezone(timezone.get_current_timezone()).strftime("%Y%m%d%I%M%S%p")
-            description = request.POST['supplier[item_name][' + str(i) + ']']
-            quantity = request.POST['supplier[quantity][' + str(i) + ']']
-            unit_of_measurement = request.POST['supplier[unit_of_measurement][' + str(i) + ']']
-            vat = request.POST['supplier[vat][' + str(i) + ']']
-            unit_price = request.POST['supplier[unit_price][' + str(i) + ']']
-            total_price = request.POST['supplier[total_price][' + str(i) + ']']
-
-            item = DPItems(
-                cs_id=tender_id,
-                item_id=item_id,
-                item_name=description,
-                quantity=quantity,
-                unit_of_measurement=unit_of_measurement,
-            )
-            item.save()
-
-            supplier_id = ""
-            if supplier_id:
-                supplier_id = supplier_key
-            else:
-                supplier_id = "SUP" + timezone.astimezone(timezone.get_current_timezone()).strftime("%Y%m%d%I%M%S")
-            supplier_query = Suppliers(
-                sup_id=supplier_id,
-                supplier=supplier_name
-            )
-            supplier_query.save()
-
-            bid = DPBids(
-                cs_id=tender_id,
-                item_id=item_id,
-                sup_id=supplier_id,
-                unit_price=unit_price,
-                vat=vat,
-                quoted_qty=quantity,
-                bid_no=bid_no,
-                quote_date=bid_date,
-                total=total_price,
-                bid_document=bid_document_path_db if 'bid_document_path_db' in locals() else bid_document_path,
-            )
-            bid.save()
-
-        if 'add_supplier' in request.POST:
-            return redirect('add_supplier', tender_id=tender_id)
-
-        return render(request, 'finance/tenders/tenders_create.html', {
-            "proc_plans": proc_plans,
-            "suppliers": suppliers_json
-        })
-
-
-@login_required
-def cs_compliance_table(request, cs_id):
-    if request.method == 'GET':
-        tender_id = tender_id
-        tender = DirectPurchase.objects.filter(document_id=tender_id).first()
-        bids = DPBids.objects.filter(document_id=tender_id).order_by('bid_no').all()
-
-        bids_dict = {}
-        for bid in bids:
-            bids_dict.update({bid.bid_no: []})
-
-        for i in range(0, len(bids_dict)):
-            i = i + 1
-            for bid in bids:
-                if int(bid.bid_no) == i:
-                    supplier = Suppliers.objects.filter(sup_id=bid.sup_id).first()
-                    item = DPItems.objects.filter(item_id=bid.item_id).first()
-
-                    print(supplier, supplier.supplier, supplier.sup_id)
-                    supplier_id = supplier.sup_id
-                    supplier_name = supplier.supplier
-                    bids_dict[str(i)].append({
-                        "bid_no": int(bid.bid_no),
-                        "supplier_name": supplier_name,
-                        "supplier_id": supplier_id,
-                        "bid": bid,
-                    })
-    elif request.method == 'POST':
-        document_id = request.POST['document_id']
-        rfq_no = request.POST['rfq_no']
-        bid_count = request.POST['bid_count']
-
-        # get compliance table values
-        for i in range(1, bid_count):
-            supplier_id = request.POST['supplier_id' + i + '']
-            payment_terms = request.POST['payment_terms' + i + '']
-            bid_validity = request.POST['bid_validity' + i + '']
-            delivery_period = request.POST['delivery_period' + i + '']
-            technical_specifications = request.POST['technical_specifications' + i + '']
-            valid_tax_clearance = request.POST['valid_tax_clearance' + i + '']
-            registered_with_praz = request.POST['registered_with_praz' + i + '']
-            site_visit_done = request.POST['site_visit_done' + i + '']
-            samples_delivered = request.POST['samples_delivered' + i + '']
-            decision = request.POST['decision' + i + '']
-            remarks = request.POST['remarks' + i + '']
-
-            # insert into compliance table
-            tender_compliance = DPCompliance(
-                cs_id=document_id,
-                supplier_id=supplier_id,
-                payment_terms=payment_terms,
-                bid_validity=bid_validity,
-                delivery_period=delivery_period,
-                technical_specifications=technical_specifications,
-                valid_tax_clearance=valid_tax_clearance,
-                registered_with_praz=registered_with_praz,
-                site_visit_done=site_visit_done,
-                samples_delivered=samples_delivered,
-                decision=decision,
-                remarks=remarks,
-            )
-            tender_compliance.save()
-
-        return redirect('tender_compliance', tender_id=document_id)
-
-    return render(request, 'finance/comparative_schedules/cs_compliance_table.html', {"bids_items": bids_dict})
-
-
-# New optimized API endpoints
-
-@login_required
-@require_http_methods(["GET"])
-def api_cs_bids(request, cs_id):
-    """Optimized API endpoint for CS bids only"""
-    cache_key = f'cs_bids_{cs_id}'
-    cached_data = cache.get(cache_key)
-    
-    if cached_data is not None:
-        return JsonResponse(cached_data, safe=False)
-    
-    try:
-        cs = DirectPurchase.objects.select_related().filter(cs_id=cs_id).first()
-        if not cs:
-            return JsonResponse({"error": "CS not found"}, status=404)
-        
-        # Get bids with minimal related data
-        bids = DPBids.objects.select_related('sup_id', 'item_id').filter(cs_id=cs).order_by('bid_no')
-        
-        grouped_data = {}
-        for bid in bids:
-            bid_no = bid.bid_no
-            if bid_no not in grouped_data:
-                grouped_data[bid_no] = {
-                    'bid_count': bid.bid_no,
-                    'supplier_name': bid.sup_id.name,
-                    'bid_date': bid.quote_date,
-                    'has_document': bool(bid.bid_document),
-                    'items': []
-                }
-            
-            grouped_data[bid_no]['items'].append({
-                'item_id': bid.item_id.item_id,
-                'item_required': bid.item_id.item_name,
-                'quantity': bid.item_id.quantity,
-                'unit_of_measurement': bid.item_id.unit_of_measurement,
-                'unit_price': float(bid.unit_price) if bid.unit_price else 0,
-                'vat': float(bid.vat) if bid.vat else 0,
-                'total_price': float(bid.total) if bid.total else 0,
-            })
-        
-        result = list(grouped_data.values())
-        cache.set(cache_key, result, 300)  # Cache for 5 minutes
-        
-        return JsonResponse({"bids": result}, safe=False)
-        
-    except Exception as ex:
-        return JsonResponse({"error": str(ex)}, status=500)
-
-
-@login_required
-@require_http_methods(["GET"])
-def api_cs_compliance(request, cs_id):
-    """Optimized API endpoint for CS compliance only"""
-    cache_key = f'cs_compliance_{cs_id}'
-    cached_data = cache.get(cache_key)
-    
-    if cached_data is not None:
-        return JsonResponse(cached_data, safe=False)
-    
-    try:
-        cs = DirectPurchase.objects.filter(cs_id=cs_id).first()
-        if not cs:
-            return JsonResponse({"error": "CS not found"}, status=404)
-        
-        compliance = DPCompliance.objects.select_related('supplier_id').filter(cs_id=cs)
-        compliance_remarks = DPComplianceRemarks.objects.select_related('supplier_id').filter(cs_id=cs)
-        
-        compliance_list = [
-            {
-                "supplier_name": comp.supplier_id.name if comp.supplier_id else "",
-                "payment_terms": comp.payment_terms,
-                "bid_validity": comp.bid_validity,
-                "delivery_period": comp.delivery_period,
-                "technical_specifications": comp.technical_specifications,
-                "valid_tax_clearance": comp.valid_tax_clearance,
-                "registered_with_praz": comp.registered_with_praz,
-                "site_visit": comp.site_visit_done,
-                "samples_required": comp.samples_delivered,
-                "decision": comp.decision,
-                "remarks": comp.remarks,
-            } for comp in compliance if comp.supplier_id
-        ]
-        
-        remarks_list = [
-            {
-                "supplier": remark.supplier_id.id,
-                "supplier_name": remark.supplier_id.name,
-                "remarks": remark.remarks,
-            } for remark in compliance_remarks if remark.supplier_id
-        ]
-        
-        result = {
-            "compliance": compliance_list,
-            "complianceRemarks": remarks_list,
-            "show_site_visit": cs.show_site_visit,
-            "show_samples_required": cs.show_sample_required
-        }
-        
-        cache.set(cache_key, result, 300)
-        return JsonResponse(result, safe=False)
-        
-    except Exception as ex:
-        return JsonResponse({"error": str(ex)}, status=500)
-
-
-@login_required
-@require_http_methods(["GET"])
-def api_cs_committee(request, cs_id):
-    """Optimized API endpoint for CS committee only"""
-    cache_key = f'cs_committee_{cs_id}'
-    cached_data = cache.get(cache_key)
-    
-    if cached_data is not None:
-        return JsonResponse(cached_data, safe=False)
-    
-    try:
-        cs = DirectPurchase.objects.filter(cs_id=cs_id).first()
-        if not cs:
-            return JsonResponse({"error": "CS not found"}, status=404)
-        
-        committee = DPCommittee.objects.select_related('user').filter(cs_id=cs)
-        
-        committee_list = [
-            {
-                "memberUserName": member.user.username if member.user else "",
-                "memberName": f"{member.user.first_name} {member.user.last_name}" if member.user else "",
-                "memberPosition": member.committee_position,
-                "committeeStatus": member.committee_status,
-                "memberApproval": member.committee_approval if member.committee_approval else "",
-                "committeeJustification": member.justification,
-                "committeeDate": member.committee_date,
-            } for member in committee if member.user
-        ]
-        
-        result = {"committee": committee_list}
-        cache.set(cache_key, result, 180)  # Cache for 3 minutes
-        
-        return JsonResponse(result, safe=False)
-        
-    except Exception as ex:
-        return JsonResponse({"error": str(ex)}, status=500)
-
-
-@login_required
-@require_http_methods(["POST"])
-def api_upload_file(request):
-    """Optimized file upload endpoint with validation - uses optimized handler"""
-    try:
-        if 'file' not in request.FILES:
-            return JsonResponse({"error": "No file provided"}, status=400)
-        
-        file = request.FILES['file']
-        file_type = request.POST.get('file_type', 'general')
-        description = request.POST.get('description', '')
-        
-        # Use optimized file handler
-        result = save_file_optimized(file, file_type, description, request.user)
-        
-        if result:
-            return JsonResponse({
-                "success": True,
-                "file_path": result['file_path'],
-                "metadata": result['metadata'],
-                "download_url": result['download_url'],
-                "preview_url": result['preview_url']
-            })
-        else:
-            return JsonResponse({"error": "File upload failed"}, status=500)
-        
-    except Exception as ex:
-        logger.error(f"File upload error: {ex}")
-        return JsonResponse({"error": "File upload failed"}, status=500)
-
-
-@login_required
-@require_http_methods(["GET"])
-def api_download_file(request, file_id):
-    """Optimized file download with caching headers"""
-    try:
-        # This could be enhanced based on your file tracking model
-        file_path = request.GET.get('path')
-        
-        if not file_path or not os.path.exists(file_path):
-            return JsonResponse({"error": "File not found"}, status=404)
-        
-        # Security check - ensure file is in allowed directory
-        allowed_dirs = ['uploads/comparative/', 'uploads/finance/']
-        if not any(file_path.startswith(dir) for dir in allowed_dirs):
-            return JsonResponse({"error": "Access denied"}, status=403)
-        
-        # Get file info
-        file_size = os.path.getsize(file_path)
-        filename = os.path.basename(file_path)
-        
-        # For small files, encode to base64
-        if file_size < 5 * 1024 * 1024:  # 5MB
-            encoded_data = _encode_file_safely(file_path)
-            return JsonResponse({
-                "filename": filename,
-                "data": encoded_data,
-                "size": file_size
-            })
-        else:
-            # For large files, provide download URL
-            return JsonResponse({
-                "filename": filename,
-                "download_url": f"/uploads/{file_path.replace('uploads/', '')}",
-                "size": file_size
-            })
-            
-    except Exception as ex:
-        return JsonResponse({"error": str(ex)}, status=500)
-
-
-# Optimized save operations with better error handling
-
-@login_required
-@require_http_methods(["POST"])
-def api_save_cs_bid_optimized(request):
-    """Optimized bid saving with transaction management"""
-    from django.db import transaction
-    
-    try:
-        cs_id = request.POST.get("cs_id", "")
-        bid_no = request.POST.get("bid_count", "")
-        bid_date = request.POST.get("bid_date", "")
-        supplier_name = request.POST.get("supplier_name", "")
-        
-        # Parse JSON data
-        json_data = json.loads(request.POST.get("json_data", "{}"))
-        items = json_data.get("items", [])
-        
-        if not cs_id or not supplier_name or not items:
-            return JsonResponse({
-                "message": "Missing required data",
-                "success": False,
-            }, status=400)
-        
-        with transaction.atomic():
-            cs_query = DirectPurchase.objects.select_for_update().filter(cs_id=cs_id).first()
-            if not cs_query:
-                return JsonResponse({
-                    "message": "Direct Purchase not found",
-                    "success": False,
-                }, status=404)
-
-            # Get or create supplier
-            supplier, created = Supplier.objects.get_or_create(name=supplier_name)
-            
-            # Clear existing bids for this supplier and bid number
-            existing_bids = DPBids.objects.filter(cs_id=cs_query, sup_id=supplier, bid_no=bid_no)
-            if existing_bids.exists():
-                clear_approvals(cs_id)
-                # Delete related items first
-                DPItems.objects.filter(id__in=[bid.item_id_id for bid in existing_bids if bid.item_id_id]).delete()
-                existing_bids.delete()
-
-            # Handle file upload
-            bid_doc_path = ""
-            bid_docs = request.FILES.get("bid_document", None)
-            if bid_docs:
-                upload_result = _save_file_optimized(bid_docs, 'bid')
-                if upload_result['success']:
-                    bid_doc_path = upload_result['file_path']
-
-            # Bulk create items and bids
-            items_to_create = []
-            bids_to_create = []
-            
-            for item in items:
-                item_id = f"Item{datetime.now().strftime('%Y%m%d%H%M%S')}{len(items_to_create)}"
-                
-                cs_item = DPItems(
-                    cs_id=cs_query,
-                    item_id=item_id,
-                    item_name=item['item_required'],
-                    quantity=item['quantity'],
-                    unit_of_measurement=item['unit_of_measurement'],
-                )
-                items_to_create.append(cs_item)
-            
-            # Bulk create items
-            created_items = DPItems.objects.bulk_create(items_to_create)
-            
-            # Create bids with references to created items
-            for i, item in enumerate(items):
-                bid = DPBids(
-                    cs_id=cs_query,
-                    item_id=created_items[i],
-                    sup_id=supplier,
-                    unit_price=item.get('unit_price', 0),
-                    vat=item.get('vat', 0),
-                    quoted_qty=item.get('quantity', 0),
-                    bid_no=bid_no,
-                    quote_date=bid_date,
-                    total=item.get('total_price', 0),
-                    bid_document=bid_doc_path,
-                )
-                bids_to_create.append(bid)
-            
-            DPBids.objects.bulk_create(bids_to_create)
-            
-            # Clear related caches
-            cache.delete(f'cs_data_{cs_id}')
-            cache.delete(f'cs_bids_{cs_id}')
-            
-            return JsonResponse({
-                "message": "Bids saved successfully",
-                "success": True,
-            })
-            
-    except Exception as ex:
-        print(f"Error saving bid: {ex}")
-        return JsonResponse({
-            "message": "Error saving bid",
-            "error": str(ex),
-            "success": False,
-        }, status=500)
-
-
-def _save_file_optimized(file, file_type):
-    """Optimized file saving helper"""
-    try:
-        # Validate file
-        if file.size > 10 * 1024 * 1024:  # 10MB limit
-            return {"success": False, "error": "File too large"}
-        
-        allowed_extensions = ['.pdf', '.doc', '.docx', '.xls', '.xlsx', '.jpg', '.jpeg', '.png']
-        file_extension = os.path.splitext(file.name)[1].lower()
-        
-        if file_extension not in allowed_extensions:
-            return {"success": False, "error": "File type not allowed"}
-        
-        # Create directory
-        root_dir = os.path.join(settings.BASE_DIR, 'uploads', 'comparative', file_type)
-        os.makedirs(root_dir, exist_ok=True)
-        
-        # Generate unique filename
-        timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
-        filename = f"{timestamp}_{file.name}"
-        
-        # Save file
-        fs = FileSystemStorage(location=root_dir)
-        saved_filename = fs.save(filename, file)
-        
-        # Return relative path
-        relative_path = os.path.join('uploads', 'comparative', file_type, saved_filename)
-        
-        return {
-            "success": True,
-            "file_path": relative_path,
-            "filename": saved_filename
-        }
-        
-    except Exception as ex:
-        return {"success": False, "error": str(ex)}
-
-
-# New focused API endpoints
-@login_required
-@require_http_methods(["GET"])
-def api_get_pr_basic(request, pr_id):
-    """Get basic PR information only"""
-    if not pr_id.startswith("PR"):
-        pr_id = "PR" + pr_id
-        
-    try:
-        purchase_request = PurchaseRequest.objects.select_related(
-            'procurement_plan_reference', 'section', 'cost_center', 'requested_by'
-        ).get(id=pr_id)
-    except PurchaseRequest.DoesNotExist:
-        return JsonResponse({
-            "success": False,
-            "message": "PR not found",
-        })
-
-    request_user = request.user
-    request_user_profile = UserProfile.objects.select_related().get(id=request_user.id)
-    user_comparative_schedule_role = request_user_profile.get_user_role_for_application(APP_NAME)
-    
-    return JsonResponse({
-        "success": True,
-        "requester_role": user_comparative_schedule_role.role if user_comparative_schedule_role else "",
-        "message": "PR details retrieved successfully",
-        "pr_id": pr_id,
-        "scope_of_work": purchase_request.scope_of_work or "",
-        "proc_ref": purchase_request.procurement_plan_reference.id if purchase_request.procurement_plan_reference else "",
-        "proc_plan": {
-            "id": purchase_request.procurement_plan_reference.id if purchase_request.procurement_plan_reference else "",
-            "proc_ref": purchase_request.procurement_plan_reference.id if purchase_request.procurement_plan_reference else "",
-            "description": purchase_request.procurement_plan_reference.name if purchase_request.procurement_plan_reference else "",
-        } if purchase_request.procurement_plan_reference else {},
-        "pr_date": purchase_request.created_at.strftime("%Y-%m-%d") if purchase_request.created_at else "",
-    })
-
-
-@login_required
-@require_http_methods(["GET"])
-def api_get_pr_items(request, pr_id):
-    """Get PR items with pagination - shows all items with status"""
-    if not pr_id.startswith("PR"):
-        pr_id = "PR" + pr_id
-        
-    try:
-        purchase_request = PurchaseRequest.objects.get(id=pr_id)
-    except PurchaseRequest.DoesNotExist:
-        return JsonResponse({
-            "success": False,
-            "message": "PR not found",
-        })
-
-    # Get pagination parameters with safety limits (Stage 2 optimization)
-    page = int(request.GET.get('page', 1))
-    requested_page_size = int(request.GET.get('page_size', 0))
-    show_all = request.GET.get('show_all', 'true').lower() == 'true'  # Show all items by default
-    
-    # Get total items count for safe page size calculation
-    if show_all:
-        pr_items_query = purchase_request.pritem_set.select_related('unit_of_measurement').all()
-    else:
-        pr_items_query = purchase_request.pritem_set.select_related('unit_of_measurement').filter(ordered=False)
-    
-    total_items = pr_items_query.count()
-    
-    # Apply safe page size limits
-    page_size = get_safe_page_size(requested_page_size, 'pr_items', total_items)
-    
-    # Log warning if user requested too large page size
-    if requested_page_size > page_size:
-        logger.warning(f"User requested page_size {requested_page_size} reduced to {page_size} for memory protection")
-    
-    from django.core.paginator import Paginator
-    
-    # Use the already optimized query from above
-    paginator = Paginator(pr_items_query, page_size)
-    page_obj = paginator.get_page(page)
-    
-    pr_item_list = []
-    for pr_item in page_obj:
-        # Determine the status and availability
-        status = "available"
-        included = True
-        
-        if pr_item.ordered:
-            status = "used_in_other_schedule"
-            included = False  # Don't include by default if already used
-        
-        pr_item_list.append({
-            "id": pr_item.id,
-            "item_required": pr_item.item_required,
-            "quantity": pr_item.quantity,
-            "unit_of_measurement": pr_item.unit_of_measurement.name if pr_item.unit_of_measurement else "",
-            "ordered": pr_item.ordered,
-            "status": status,
-            "included": included,  # Whether to include in this CS by default
-        })
-
-    # Get enhanced pagination info with warnings
-    pagination_info = get_pagination_info(page, page_size, total_items)
-    
-    return JsonResponse({
-        "success": True,
-        "pr_items": pr_item_list,
-        "pagination": pagination_info,
-        "performance_info": {
-            "requested_page_size": requested_page_size,
-            "actual_page_size": page_size,
-            "memory_optimized": requested_page_size != page_size,
-            "total_items": total_items
-        }
-    })
-
-
-@login_required
-@require_http_methods(["GET"])
-def api_get_pr_attachments(request, pr_id):
-    """Get PR attachments - optimized version without Base64 encoding"""
-    if not pr_id.startswith("PR"):
-        pr_id = "PR" + pr_id
-        
-    try:
-        purchase_request = PurchaseRequest.objects.prefetch_related('attachment_set').get(id=pr_id)
-    except PurchaseRequest.DoesNotExist:
-        return JsonResponse({
-            "success": False,
-            "message": "PR not found",
-        })
-
-    # Use optimized file handling instead of Base64 encoding
-    include_preview = request.GET.get('include_preview', 'false').lower() == 'true'
-    pr_at_list = get_attachments_metadata_optimized(
-        purchase_request.attachment_set.all(), 
-        request.user, 
-        include_preview
-    )
-
-    return JsonResponse({
-        "success": True,
-        "pr_attachments": pr_at_list,
-        "total_count": len(pr_at_list)
-    })
-
-
-@login_required
-@require_http_methods(["GET"])
-def api_get_reference_data(request):
-    """Get reference data (suppliers, currencies, etc.)"""
-    try:
-        # Get cached reference data
-        proc_plans_cache_key = 'all_proc_plans'
-        proc_plans = cache.get(proc_plans_cache_key)
-        if proc_plans is None:
-            proc_plans = list(DPProcPlan.objects.values('id', 'proc_ref', 'description'))
-            cache.set(proc_plans_cache_key, proc_plans, CACHE_TIMEOUT * 4)
-
-        currencies_cache_key = 'all_currencies'
-        currencies = cache.get(currencies_cache_key)
-        if currencies is None:
-            currencies = list(Currency.objects.values('id', 'currency'))
-            cache.set(currencies_cache_key, currencies, CACHE_TIMEOUT * 4)
-
-        suppliers_cache_key = 'all_suppliers'
-        suppliers = cache.get(suppliers_cache_key)
-        if suppliers is None:
-            suppliers = list(Supplier.objects.values('id', 'name'))
-            cache.set(suppliers_cache_key, suppliers, CACHE_TIMEOUT * 2)
-
-        users_cache_key = 'all_users'
-        users = cache.get(users_cache_key)
-        if users is None:
-            users = list(UserProfile.objects.values('id', 'username', 'first_name', 'last_name'))
-            cache.set(users_cache_key, users, CACHE_TIMEOUT)
-
-        uom_cache_key = 'all_uom'
-        uom = cache.get(uom_cache_key)
-        if uom is None:
-            uom = list(UnitOfMeasurement.objects.values('unit', 'name'))
-            cache.set(uom_cache_key, uom, CACHE_TIMEOUT * 4)
-
-        return JsonResponse({
-            "success": True,
-            "proc_plans": proc_plans,
-            "uom": uom,
-            "currencies": currencies,
-            "suppliers": suppliers,
-            "users": users,
-        })
-    except Exception as ex:
-        print(f"Error in api_get_reference_data: {ex}")
-        return JsonResponse({
-            "success": False,
-            "error": str(ex)
-        }, status=500)
-
-@login_required 
-@require_http_methods(["GET"])
-def api_get_users(request):
-    """API endpoint to get users for React app with server-side search support"""
-    try:
-        # Get search parameters
-        search_query = request.GET.get('search', '').strip()
-        limit = int(request.GET.get('limit', 100))  # Increased default limit
-        offset = int(request.GET.get('offset', 0))  # For pagination
-        include_inactive = request.GET.get('include_inactive', 'true').lower() == 'true'
-        
-        # Base query - include ALL users like the original API
-        users_query = UserProfile.objects.all()
-        
-        # Optionally filter by active status (default: include all)
-        if not include_inactive:
-            users_query = users_query.filter(is_active=True)
-        
-        # Apply search filter if provided
-        if search_query and len(search_query) >= 2:
-            from django.db.models import Q
-            users_query = users_query.filter(
-                Q(username__icontains=search_query) |
-                Q(first_name__icontains=search_query) |
-                Q(last_name__icontains=search_query) |
-                Q(email__icontains=search_query)
-            )
-        elif not search_query:
-            # If no search query, still apply reasonable limit but higher than before
-            users_query = users_query[:limit]
-        
-        # Apply pagination
-        total_count = users_query.count()
-        users = users_query[offset:offset + limit]
-        
-        users_data = []
-        for user in users:
-            users_data.append({
-                'id': user.id,
-                'username': user.username,
-                'first_name': user.first_name,
-                'last_name': user.last_name,
-                'name': f"{user.first_name} {user.last_name}".strip(),
-                'email': getattr(user, 'email', ''),
-                'is_active': getattr(user, 'is_active', True),
-            })
-        
-        return JsonResponse({
-            'users': users_data,
-            'total_count': total_count,
-            'has_more': (offset + limit) < total_count,
-            'search_query': search_query,
-            'include_inactive': include_inactive
-        }, safe=False)
-    except Exception as ex:
-        print("Error fetching users:", ex)
-        return JsonResponse({'error': str(ex)}, status=500)
-
-@login_required 
-@require_http_methods(["GET"])
-def api_get_suppliers(request):
-    """API endpoint to get suppliers for React app"""
-    try:
-        search_query = request.GET.get('search', '').strip()
-        limit = int(request.GET.get('limit', 100))
-        
-        suppliers = Supplier.objects.all()
-        
-        # Apply search filter if provided
-        if search_query:
-            suppliers = suppliers.filter(
-                Q(name__icontains=search_query)
-            )
-        
-        # Apply limit
-        suppliers = suppliers[:limit]
-        
-        suppliers_data = []
-        for supplier in suppliers:
-            suppliers_data.append({
-                'id': supplier.id,
-                'name': supplier.name,
-                'supplier_name': supplier.name,  # For compatibility
-            })
-        
-        # Return in the format expected by the frontend
-        return JsonResponse({
-            'suppliers': suppliers_data,
-            'count': len(suppliers_data)
-        })
-    except Exception as ex:
-        print("Error fetching suppliers:", ex)
-        return JsonResponse({'error': str(ex)}, status=500)
-
-@login_required 
-@require_http_methods(["GET"])
-def api_get_currencies(request):
-    """API endpoint to get currencies for React app"""
-    try:
-        currencies = Currency.objects.all()
-        currencies_data = []
-        for currency in currencies:
-            currencies_data.append({
-                'id': currency.id,
-                'currency': currency.currency,
-            })
-        return JsonResponse(currencies_data, safe=False)
-    except Exception as ex:
-        print("Error fetching currencies:", ex)
-        return JsonResponse({'error': str(ex)}, status=500)
-
-@login_required 
-@require_http_methods(["GET"])
-def api_get_proc_plans(request):
-    """API endpoint to get procurement plans for React app"""
-    try:
-        proc_plans = DPProcPlan.objects.all()
-        proc_plans_data = []
-        for proc_plan in proc_plans:
-            proc_plans_data.append({
-                'id': proc_plan.id,
-                'proc_ref': proc_plan.proc_ref,
-                'description': proc_plan.description,
-            })
-        return JsonResponse(proc_plans_data, safe=False)
-    except Exception as ex:
-        print("Error fetching procurement plans:", ex)
-        return JsonResponse({'error': str(ex)}, status=500)
-
-@login_required
-@require_http_methods(["GET"])
-def api_get_cs_bids_optimized(request, cs_id):
-    """Get bids data for a specific CS - optimized with proper file handling"""
-    try:
-        cs = DirectPurchase.objects.prefetch_related(
-            Prefetch('dpbids_set', queryset=DPBids.objects.select_related('sup_id', 'item_id'))
-        ).filter(cs_id=cs_id).first()
-        
-        if not cs:
-            return JsonResponse({"success": False, "message": "CS not found"})
-        
-        # Build grouped bids data efficiently
-        bids = list(cs.dpbids_set.all())
-        grouped_data = {}
-        
-        for bid in bids:
-            bid_no = bid.bid_no
-            if bid_no not in grouped_data:
-                # Use optimized file handling instead of Base64 encoding
-                bid_document_info = None
-                if bid.bid_document:
-                    # Check if file exists and provide metadata
-                    file_path = bid.bid_document
-                    if file_path.startswith('uploads/'):
-                        # File is stored in root directory (BASE_DIR)
-                        full_path = os.path.join(settings.BASE_DIR, file_path)
-                    else:
-                        # File is stored with absolute path
-                        full_path = file_path
-                    
-                    if os.path.exists(full_path):
-                        try:
-                            file_size = os.path.getsize(full_path)
-                            filename = os.path.basename(file_path)
-                            
-                            bid_document_info = {
-                                'file_path': file_path,
-                                'filename': filename,
-                                'size': file_size,
-                                'download_url': f"/uploads/{file_path.replace('uploads/', '')}",
-                                'preview_url': f"/api/files/preview/{file_path}/"
-                            }
-                        except Exception as ex:
-                            print(f"Error getting file info for {file_path}: {ex}")
-                            bid_document_info = {
-                                'file_path': file_path,
-                                'filename': os.path.basename(file_path),
-                                'size': 0,
-                                'download_url': f"/uploads/{file_path.replace('uploads/', '')}",
-                                'preview_url': f"/api/files/preview/{file_path}/"
-                            }
-                    else:
-                        # File not found, but provide path for debugging
-                        bid_document_info = {
-                            'file_path': file_path,
-                            'filename': os.path.basename(file_path),
-                            'size': 0,
-                            'download_url': f"/media/{file_path}",
-                            'preview_url': f"/api/files/preview/{file_path}/",
-                            'error': 'File not found'
-                        }
-                
-                grouped_data[bid_no] = {
-                    'bid_count': bid.bid_no,
-                    'supplier_name': bid.sup_id.name,
-                    'bid_date': bid.quote_date,
-                    'bid_document_info': bid_document_info,
-                    'items': []
-                }
-            
-            grouped_data[bid_no]['items'].append({
-                'item_id': bid.item_id.item_id,
-                'item_required': bid.item_id.item_name,
-                'quantity': bid.item_id.quantity,
-                'unit_of_measurement': bid.item_id.unit_of_measurement,
-                'unit_price': bid.unit_price,
-                'vat': bid.vat,
-                'total_price': bid.total,
-            })
-        
-        return JsonResponse({
-            "success": True,
-            "bids": list(grouped_data.values())
-        })
-        
-    except Exception as ex:
-        return JsonResponse({
-            "success": False,
-            "message": f"Error loading bids: {str(ex)}"
-        })
-
-
-@login_required
-@require_http_methods(["GET"])
-def api_get_cs_compliance_optimized(request, cs_id):
-    """Get compliance data for a specific CS - optimized"""
-    try:
-        cs = DirectPurchase.objects.prefetch_related(
-            Prefetch('dpcompliance_set', queryset=DPCompliance.objects.select_related('supplier_id')),
-            Prefetch('dpcomplianceremarks_set', queryset=DPComplianceRemarks.objects.select_related('supplier_id'))
-        ).filter(cs_id=cs_id).first()
-        
-        if not cs:
-            return JsonResponse({"success": False, "message": "CS not found"})
-        
-        compliance = list(cs.dpcompliance_set.all())
-        compliance_remarks = list(cs.dpcomplianceremarks_set.all())
-        
-        # Build compliance list
-        compliance_list = [
-            {
-                "supplier_name": comp.supplier_id.name if comp.supplier_id else "",
-                "payment_terms": comp.payment_terms,
-                "bid_validity": comp.bid_validity,
-                "delivery_period": comp.delivery_period,
-                "technical_specifications": comp.technical_specifications,
-                "valid_tax_clearance": comp.valid_tax_clearance,
-                "registered_with_praz": comp.registered_with_praz,
-                "site_visit": comp.site_visit_done,
-                "samples_required": comp.samples_delivered,
-                "decision": comp.decision,
-                "remarks": comp.remarks,
-                "created_at": comp.created_at,
-            } for comp in compliance if comp.supplier_id
-        ]
-        
-        compliance_remarks_list = [
-            {
-                "supplier": remark.supplier_id.id,
-                "supplier_name": remark.supplier_id.name,
-                "remarks": remark.remarks,
-            } for remark in compliance_remarks if remark.supplier_id
-        ]
-        
-        return JsonResponse({
-            "success": True,
-            "compliance": compliance_list,
-            "complianceRemarks": compliance_remarks_list
-        })
-        
-    except Exception as ex:
-        return JsonResponse({
-            "success": False,
-            "message": f"Error loading compliance: {str(ex)}"
-        })
-
-
-@login_required
-@require_http_methods(["GET"])
-def api_get_cs_committee_optimized(request, cs_id):
-    """Get committee data for a specific CS - optimized"""
-    try:
-        cs = DirectPurchase.objects.prefetch_related(
-            Prefetch('dpcommittee_set', queryset=DPCommittee.objects.select_related('user'))
-        ).filter(cs_id=cs_id).first()
-        
-        if not cs:
-            return JsonResponse({"success": False, "message": "CS not found"})
-        
-        committee = list(cs.dpcommittee_set.all())
-        
-        committee_list = [
-            {
-                "memberUserName": member.user.username if member.user else "",
-                "memberName": f"{member.user.first_name} {member.user.last_name}" if member.user else "",
-                "memberPosition": member.committee_position,
-                "committeeStatus": member.committee_status,
-                "memberApproval": member.committee_approval if member.committee_approval else "",
-                "committeeJustification": member.justification,
-                "committeeDate": member.committee_date,
-            } for member in committee if member.user
-        ]
-        
-        return JsonResponse({
-            "success": True,
-            "committee": committee_list
-        })
-        
-    except Exception as ex:
-        return JsonResponse({
-            "success": False,
-            "message": f"Error loading committee: {str(ex)}"
-        })
-
-
-@login_required
-@require_http_methods(["GET"])
-def api_get_cs_approvals_optimized(request, cs_id):
-    """Get approval data for a specific CS - optimized"""
-    try:
-        cs = DirectPurchase.objects.prefetch_related(
-            Prefetch('dpapproval_set', queryset=DPApproval.objects.select_related('user')),
-            Prefetch('dpranking_set', queryset=DPRanking.objects.select_related('supplier_id'))
-        ).filter(cs_id=cs_id).first()
-        
-        if not cs:
-            return JsonResponse({"success": False, "message": "CS not found"})
-        
-        approvals = {approval.approver_role: approval for approval in cs.dpapproval_set.all()}
-        rankings = list(cs.dpranking_set.all())
-        
-        # Build approval data
-        gm_approval = approvals.get("general_manager")
-        fm_approval = approvals.get("finance_manager")
-        
-        # Get current user's roles for comparative_schedule application
-        current_user = request.user
-        fm_role, gm_role, procurement_role = getUserFMGMRoles(current_user)
-        
-        # Debug logging
-        print(f"🔍 API Debug - User: {current_user.username}, CS: {cs_id}")
-        print(f"🔍 API Debug - Roles: FM={fm_role}, GM={gm_role}, Procurement={procurement_role}")
-        
-        # Additional debugging for the response
-        current_user_roles = {
-            "fm_role": fm_role,
-            "gm_role": gm_role,
-            "procurement_role": procurement_role
-        }
-        print(f"🔍 API Debug - current_user_roles dict: {current_user_roles}")
-        print(f"🔍 API Debug - fm_role type: {type(fm_role)}, value: {fm_role}")
-        
-        rankings_list = [
-            {
-                "supplier_name": rank.supplier_id.name if rank.supplier_id else "",
-                "rank": rank.rank,
-                "remarks": rank.remarks,
-                "decision": rank.decision,
-                "total": rank.total,
-                "created_at": rank.created_at,
-            } for rank in rankings
-        ]
-        
-        response_data = {
-            "success": True,
-            "gm_approval": {
-                "id": gm_approval.id,
-                "approver": gm_approval.user.username if gm_approval.user else "",
-                "approver_name": f"{gm_approval.user.first_name} {gm_approval.user.last_name}" if gm_approval.user else "",
-                "approver_role": gm_approval.approver_role,
-                "approval": gm_approval.approval,
-                "justification": gm_approval.justification,
-                "approval_date": gm_approval.approval_date,
-            } if gm_approval else {},
-            "fm_approval": {
-                "id": fm_approval.id,
-                "approver": fm_approval.user.username if fm_approval.user else "",
-                "approver_name": f"{fm_approval.user.first_name} {fm_approval.user.last_name}" if fm_approval.user else "",
-                "approver_role": fm_approval.approver_role,
-                "approval": fm_approval.approval,
-                "justification": fm_approval.justification,
-                "approval_date": fm_approval.approval_date,
-            } if fm_approval else {},
-            "rankings": rankings_list,
-            "current_user_roles": current_user_roles
-        }
-        
-        print(f"🔍 API Debug - Response current_user_roles: {response_data['current_user_roles']}")
-        
-        return JsonResponse(response_data)
-        
-    except Exception as ex:
-        return JsonResponse({
-            "success": False,
-            "message": f"Error loading approvals: {str(ex)}"
-        })
-
-
-@login_required
-@require_http_methods(["GET"])
-def api_get_cs_rankings_optimized(request, cs_id):
-    """Get rankings data for a specific CS - optimized"""
-    try:
-        cs = DirectPurchase.objects.prefetch_related(
-            Prefetch('dpranking_set', queryset=DPRanking.objects.select_related('supplier_id'))
-        ).filter(cs_id=cs_id).first()
-        
-        if not cs:
-            return JsonResponse({"success": False, "message": "CS not found"})
-        
-        rankings = list(cs.dpranking_set.all())
-        
-        rankings_list = [
-            {
-                "supplier_name": rank.supplier_id.name if rank.supplier_id else "",
-                "rank": rank.rank,
-                "remarks": rank.remarks,
-                "decision": rank.decision,
-                "total": rank.total,
-                "created_at": rank.created_at,
-            } for rank in rankings
-        ]
-        
-        return JsonResponse({
-            "success": True,
-            "rankings": rankings_list
-        })
-        
-    except Exception as ex:
-        return JsonResponse({
-            "success": False,
-            "message": f"Error loading rankings: {str(ex)}"
-        })
-
-
-@login_required
-@require_http_methods(["GET"])
-def api_get_cs_pr_items_management(request, cs_id):
-    """Get PR items data for management tab - only accessible after CS details are saved"""
-    cache_key = f'cs_pr_items_{cs_id}'
-    cached_data = cache.get(cache_key)
-    
-    if cached_data is not None:
-        return JsonResponse(cached_data, safe=False)
-    
-    try:
-        # Get CS with related data
-        cs = DirectPurchase.objects.select_related(
-            'created_by', 'region', 'section', 'currency', 'proc_plan'
-        ).prefetch_related(
-            Prefetch('dprequireditems_set', queryset=DPRequiredItems.objects.all())
-        ).filter(cs_id=cs_id).first()
-        
-        if not cs:
-            return JsonResponse({
-                "success": False,
-                "message": "Comparative Schedule not found"
-            }, status=404)
-        
-        # Check if CS details have been saved (required for PR items tab access)
-        if not cs.cs_id:
-            return JsonResponse({
-                "success": False,
-                "message": "CS details must be saved before managing PR items"
-            }, status=400)
-        
-        # Get PR data
-        pr = None
-        pr_items_list = []
-        pr_attachments_list = []
-        
-        if cs.pr_id_id:
-            pr = PurchaseRequest.objects.select_related().prefetch_related(
-                Prefetch('pritem_set', 
-                        queryset=PrItem.objects.select_related('unit_of_measurement')),
-                Prefetch('attachment_set', 
-                        queryset=Attachment.objects.all())
-            ).filter(id=cs.pr_id_id).first()
-            
-            if pr:
-                # Get existing CS items (already ordered)
-                cs_items = list(cs.dprequireditems_set.all())
-                
-                # Add CS items first (already selected for this CS)
-                pr_items_list.extend([
-                    {
-                        "id": cs_item.id,
-                        "item_required": cs_item.item_name,
-                        "quantity": cs_item.quantity,
-                        "unit_of_measurement": cs_item.unit_of_measurement,
-                        "ordered": True,
-                        "status": "selected_for_this_cs",
-                        "included": True,
-                        "source": "cs_required_items"
-                    } for cs_item in cs_items
-                ])
-                
-                # Add available PR items (not ordered or not in any CS)
-                available_items = pr.pritem_set.filter(ordered=False)
-                pr_items_list.extend([
-                    {
-                        "id": pr_item.id,
-                        "item_required": pr_item.item_required,
-                        "quantity": pr_item.quantity,
-                        "unit_of_measurement": pr_item.unit_of_measurement.name if pr_item.unit_of_measurement else "",
-                        "ordered": pr_item.ordered,
-                        "status": "available",
-                        "included": False,
-                        "source": "pr_items"
-                    } for pr_item in available_items
-                ])
-                
-                # Add items used in other CSs (for reference)
-                used_items = pr.pritem_set.filter(ordered=True).exclude(
-                    id__in=[cs_item.item_id for cs_item in cs_items if cs_item.item_id]
-                )
-                pr_items_list.extend([
-                    {
-                        "id": pr_item.id,
-                        "item_required": pr_item.item_required,
-                        "quantity": pr_item.quantity,
-                        "unit_of_measurement": pr_item.unit_of_measurement.name if pr_item.unit_of_measurement else "",
-                        "ordered": pr_item.ordered,
-                        "status": "used_in_other_schedule",
-                        "included": False,
-                        "source": "pr_items"
-                    } for pr_item in used_items
-                ])
-                
-                # Process attachments
-                for attachment in pr.attachment_set.all():
-                    if attachment.file:
-                        try:
-                            if os.path.exists(attachment.file.path) and attachment.file.size < 5 * 1024 * 1024:  # 5MB limit
-                                file_data = attachment.file.read()
-                                encoded_file_data = base64.b64encode(file_data).decode('utf-8')
-                                pr_attachments_list.append({
-                                    "id": attachment.id,
-                                    "file": encoded_file_data,
-                                    "name": os.path.basename(attachment.file.name),
-                                })
-                        except Exception as ex:
-                            print(f"Error processing attachment {attachment.id}: {ex}")
-                            continue
-
-        # Get unit of measurement options
-        uom_cache_key = 'all_uom'
-        uom = cache.get(uom_cache_key)
-        if uom is None:
-            uom = list(UnitOfMeasurement.objects.values('unit', 'name'))
-            cache.set(uom_cache_key, uom, CACHE_TIMEOUT * 4)
-
-        result_data = {
-            "success": True,
-            "cs_id": cs.cs_id,
-            "pr_id": pr.id if pr else None,
-            "pr_number": cs.pr_number,
-            "scope_of_work": pr.scope_of_work if pr else cs.scope_of_work,
-            "pr_items": pr_items_list,
-            "pr_attachments": pr_attachments_list,
-            "uom": uom,
-            "can_modify": True,  # Add logic here based on user permissions and CS status
-            "total_items": len(pr_items_list),
-            "selected_items": len([item for item in pr_items_list if item['status'] == 'selected_for_this_cs']),
-            "available_items": len([item for item in pr_items_list if item['status'] == 'available']),
-        }
-        
-        # Cache for 5 minutes
-        cache.set(cache_key, result_data, CACHE_TIMEOUT)
-        
-        return JsonResponse(result_data, safe=False)
-        
-    except Exception as ex:
-        print(f"Error loading PR items management data: {ex}")
-        return JsonResponse({
-            "success": False,
-            "message": f"Error loading PR items data: {str(ex)}"
-        }, status=500)
-
-
-@login_required
-@require_http_methods(["POST"])
-def api_update_cs_pr_items(request, cs_id):
-    """Update CS PR items - optimized version for separate tab"""
-    from django.db import transaction
-    
-    try:
-        cs_query = DirectPurchase.objects.filter(cs_id=cs_id).first()
-        if not cs_query:
-            return JsonResponse({
-                "success": False,
-                "message": f"Direct Purchase with ID {cs_id} not found"
-            }, status=404)
-
-        # Parse the data
-        try:
-            json_data = json.loads(request.body)
-            items = json_data.get("cs_items", [])
-            pr_id = json_data.get("pr_id")
-        except json.JSONDecodeError:
-            return JsonResponse({
-                "success": False,
-                "message": "Invalid JSON data"
-            }, status=400)
-        
-        if not pr_id:
-            return JsonResponse({
-                "success": False,
-                "message": "PR ID is required"
-            }, status=400)
-
-        purchase_request = PurchaseRequest.objects.filter(id=pr_id).first()
-        if not purchase_request:
-            return JsonResponse({
-                "success": False,
-                "message": f"Purchase Request with ID {pr_id} not found"
-            }, status=404)
-            
-        with transaction.atomic():
-            # Get existing CS items to compare
-            existing_items = DPRequiredItems.objects.filter(cs_id=cs_query).all()
-            existing_items_map = {item.item_name: item for item in existing_items}
-            
-            # Get items that should be included (from frontend selection)
-            items_to_include = {item['item_required'] for item in items if item.get('included', False)}
-            
-            # Items to add (in items_to_include but not in existing)
-            items_to_add = []
-            for item in items:
-                if item.get('included', False) and item['item_required'] not in existing_items_map:
-                    items_to_add.append(item)
-            
-            # Items to remove (in existing but not in items_to_include)
-            items_to_remove = []
-            for item_name, cs_item in existing_items_map.items():
-                if item_name not in items_to_include:
-                    items_to_remove.append(cs_item)
-
-            # Add new items
-            for item in items_to_add:
-                pr_item = PrItem.objects.filter(
-                    item_required=item['item_required'],
-                    purchase_request=purchase_request
-                ).first()
-                
-                if pr_item:
-                    pr_item.ordered = True
-                    pr_item.save()
-                    
-                    cs_required_items = DPRequiredItems(
-                        cs_id=cs_query,
-                        item_id=item.get('id'),
-                        item_name=item['item_required'],
-                        quantity=item['quantity'],
-                        unit_of_measurement=item['unit_of_measurement'],
-                    )
-                    cs_required_items.save()
-
-            # Remove items
-            for cs_item in items_to_remove:
-                pr_item = PrItem.objects.filter(
-                    item_required=cs_item.item_name, 
-                    purchase_request=purchase_request
-                ).first()
-                
-                if pr_item:
-                    pr_item.ordered = False
-                    pr_item.save()
-                
-                cs_item.delete()
-
-            # Clear approvals if items were modified
-            if items_to_add or items_to_remove:
-                clear_approvals(cs_id)
-                
-                # Clear related caches
-                cache.delete(f'cs_data_{cs_id}')
-                cache.delete(f'cs_pr_items_{cs_id}')
-
-            return JsonResponse({
-                "message": "PR Items updated successfully",
-                "success": True,
-                "stats": {
-                    "added_items": len(items_to_add),
-                    "removed_items": len(items_to_remove),
-                    "total_selected": len(items_to_include)
-                }
-            })
-            
-    except Exception as ex:
-        print(f"Error updating CS PR items: {ex}")
-        return JsonResponse({
-            "message": f"Error updating PR items: {str(ex)}",
-            "success": False,
-        }, status=500)
-
-@login_required 
-@require_http_methods(["GET"])
-def api_get_users_with_roles(request):
-    """API endpoint to get users with their roles for approval table"""
-    try:
-        users = UserProfile.objects.prefetch_related('roles').all()
-        users_data = []
-        
-        for user in users:
-            # Get user's roles for comparative_schedule application
-            user_roles = []
-            for role in user.roles.all():
-                if role.application == 'comparative_schedule':
-                    user_roles.append({
-                        'role': role.role,
-                        'name': role.name,
-                        'description': role.description
-                    })
-            
-            users_data.append({
-                'id': user.id,
-                'username': user.username,
-                'first_name': user.first_name,
-                'last_name': user.last_name,
-                'name': f"{user.first_name} {user.last_name}".strip(),
-                'roles': user_roles,
-                'region': user.region.name if user.region else None,
-                'section': user.section.name if user.section else None
-            })
-        
-        return JsonResponse(users_data, safe=False)
-    except Exception as ex:
-        print("Error fetching users with roles:", ex)
-        return JsonResponse({'error': str(ex)}, status=500)
-
-@login_required 
-@require_http_methods(["GET"])
-def api_get_uom(request):
-    """API endpoint to get UOM for React app with server-side search support"""
-    try:
-        # Get search parameters
-        search_query = request.GET.get('search', '').strip()
-        limit = int(request.GET.get('limit', 100))  # Default limit
-        offset = int(request.GET.get('offset', 0))  # For pagination
-        
-        # Base query
-        uom_query = UnitOfMeasurement.objects.all()
-        
-        # Apply search filter if provided
-        if search_query and len(search_query) >= 2:
-            from django.db.models import Q
-            uom_query = uom_query.filter(
-                Q(name__icontains=search_query) |
-                Q(unit__icontains=search_query)
-            )
-        elif not search_query:
-            # If no search query, apply reasonable limit
-            uom_query = uom_query[:limit]
-        
-        # Apply pagination
-        total_count = uom_query.count()
-        uom_list = uom_query[offset:offset + limit]
-        
-        uom_data = []
-        for uom_item in uom_list:
-            uom_data.append({
-                'id': uom_item.unit,  # Use unit as ID for consistency
-                'unit': uom_item.unit,
-                'name': uom_item.name,
-            })
-        
-        return JsonResponse({
-            'uom': uom_data,
-            'total_count': total_count,
-            'has_more': (offset + limit) < total_count,
-            'search_query': search_query
-        }, safe=False)
-    except Exception as ex:
-        print("Error fetching UOM:", ex)
-        return JsonResponse({'error': str(ex)}, status=500)
