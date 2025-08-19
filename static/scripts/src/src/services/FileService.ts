@@ -24,9 +24,11 @@ export interface IFileValidationResult {
 export class FileService {
   private maxFileSize: number;
   private allowedTypes: string[];
+  private baseUrl: string;
 
-  constructor(maxFileSize: number = 10 * 1024 * 1024) { // Default 10MB
+  constructor(maxFileSize: number = 10 * 1024 * 1024, baseUrl: string = '') { // Default 10MB
     this.maxFileSize = maxFileSize;
+    this.baseUrl = baseUrl;
     this.allowedTypes = [
       'application/pdf',
       'application/msword',
@@ -35,6 +37,13 @@ export class FileService {
       'image/jpg',
       'image/png'
     ];
+  }
+
+  /**
+   * Set the base URL for file operations
+   */
+  setBaseUrl(baseUrl: string): void {
+    this.baseUrl = baseUrl;
   }
 
   /**
@@ -116,8 +125,25 @@ export class FileService {
         if (this.isBase64Data(fileData)) {
           return this.createBlobUrl(fileData);
         } else {
-          // Handle file paths - convert to download URLs
-          return `/comperative_schedule/api/files/download/${fileData}`;
+          // Handle file paths - construct full download URL
+          // If it's already a full URL, return as is
+          if (fileData.startsWith('http://') || fileData.startsWith('https://')) {
+            return fileData;
+          } else if (fileData.startsWith('/')) {
+            // If it starts with /, it's a relative path that needs base URL
+            if (this.baseUrl) {
+              return `${this.baseUrl}${fileData}`;
+            }
+            return fileData;
+          } else {
+            // It's a file path that needs the API endpoint
+            if (this.baseUrl) {
+              return `${this.baseUrl}/api/files/download/${fileData}/`;
+            } else {
+              // Fallback to old behavior for backward compatibility
+              return `/comperative_schedule/api/files/download/${fileData}`;
+            }
+          }
         }
       } else if (fileData && typeof fileData === 'object' && 'download_url' in fileData) {
         // Handle metadata objects with download_url
