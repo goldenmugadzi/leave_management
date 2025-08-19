@@ -76,6 +76,13 @@ class AppraisalCreateView(SuccessMessageMixin, CreateView):
         if user_obj.grade == GRADE_CHOICES[2][1]:
             return "C, D, E and F"
         return ""
+    
+    def has_no_required_profile_information(self):
+        appraisee_object = self.get_user_object()
+        
+        if not appraisee_object.designation or not appraisee_object.cost_center or not appraisee_object.grade:
+            return True
+        return False  
 
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context =  super().get_context_data(**kwargs)
@@ -88,7 +95,12 @@ class AppraisalCreateView(SuccessMessageMixin, CreateView):
         
         context["user_experiences_qr"] = self.get_user_experiences(user_id=user_object.id)
         context["user_qualification_qr"] = self.get_user_qualification(user_id=user_object.id)
-        context["can_mutate"] = True
+        
+        can_make_changes = False
+        
+        if not self.has_no_required_profile_information():
+            can_make_changes = True
+        context["can_mutate"] = can_make_changes
         context["is_update"] = False
         context["appraisee_grade"] = self.appraisee_grade()
         return context
@@ -123,17 +135,12 @@ class AppraisalCreateView(SuccessMessageMixin, CreateView):
                 logger.warning(f"[AppraisalCreateView] get_user_object() with user: {user_object}, not found error")
                 return redirect("object_not_found_error", object_name=slugify("User"))
 
-            if user_object.designation == None or user_object.designation == "":
+            if self.has_no_required_profile_information():
                 messages.error(
                         request,
-                        "<strong>Your designation or position</strong> was not found. Please contact IT to set your designation."
+                        "<strong>Incomplete Appraisee Profile</strong>: The profile is missing required details such as designation, cost center, or grade. Please contact the IT department to complete the profile setup."
                     )
                 
-            if user_object.grade == None or user_object.grade == "":
-                messages.error(
-                        request,
-                        "<strong>Your grade</strong> was not found. Please contact IT to set your designation."
-                    )
             messages.info(
                 request,
                 "<strong>Take Note:</strong> Please ensure your profile is complete — including designation, department, qualifications, and experience — before creating an appraisal. You may add missing details and must set your appraiser as the final step."
@@ -204,7 +211,13 @@ class AppraisalUpdateView(SuccessMessageMixin, UpdateView):
         if user_obj.grade == GRADE_CHOICES[2][1]:
             return "C, D, E and F"
         return ""
+    
+    def has_no_required_profile_information(self):
+        appraisee_object = self.get_object().user
         
+        if not appraisee_object.designation or not appraisee_object.cost_center or not appraisee_object.grade:
+            return True
+        return False       
 
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context =  super().get_context_data(**kwargs)
@@ -225,7 +238,8 @@ class AppraisalUpdateView(SuccessMessageMixin, UpdateView):
         can_make_changes = False
         
         if self.is_appraisee_requesting() or self.is_appraiser_requesting():
-            can_make_changes = True
+            if not self.has_no_required_profile_information():
+                can_make_changes = True
         
         context["can_mutate"] = can_make_changes
         context["is_update"] = True
@@ -268,10 +282,10 @@ class AppraisalUpdateView(SuccessMessageMixin, UpdateView):
                 logger.warning(f"[AppraisalUpdateView] get_object() with appraisal pk: {appraisal_object.id}, not found error")
                 return redirect("object_not_found_error", object_name=slugify("Appraisal"))
 
-            if appraisal_object.user.designation == None or appraisal_object.user.designation == "":
+            if self.has_no_required_profile_information():
                 messages.error(
                         request,
-                        "<strong>Appraisee's designation or position</strong> was not found. Please contact IT to set designation."
+                        "<strong>Incomplete Appraisee Profile</strong>: The profile is missing required details such as designation, cost center, or grade. Please contact the IT department to complete the profile setup."
                     )
             messages.info(
                 request,
