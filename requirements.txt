@@ -3,7 +3,6 @@ asgiref==3.8.1
 Django==5.1.5
 djangorestframework==3.15.2
 djangorestframework-simplejwt==5.3.0
-setuptools<81.0.0
 
 # Database and Storage
 mysqlclient==2.2.4
@@ -39,14 +38,15 @@ cryptography==43.0.1
 cffi==1.16.0
 pycparser==2.21
 pyspnego==0.10.2
-sspilib==0.1.0
+sspilib==0.1.0; platform_system == "Windows"
 
 # File Processing and Data Handling
 openpyxl==3.1.5
 pandas==2.2.3
 numpy==2.2.6
 pillow==10.4.0
-PyMuPDF==1.23.26
+# PyMuPDF wheels may not be available for Python 3.13+ yet
+PyMuPDF==1.24.9; python_version < "3.13"
 pytesseract==0.3.13
 tika==3.1.0
 et-xmlfile==2.0.0
@@ -104,3 +104,7 @@ mcp==1.0.0
 mcp-server-stdio==1.0.0
 mcp-client==1.0.0
 pydantic==2.8.2
+
+# Testing
+pytest==8.3.3
+pytest-django==4.9.0

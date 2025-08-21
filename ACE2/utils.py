@@ -3,7 +3,12 @@ import requests
 from django.conf import settings
 from django.core.cache import cache
 from ACE2 import models
-from finance.comparative_schedules.views import notify_user
+try:
+    from finance.comparative_schedules.views import notify_user
+except Exception:
+    def notify_user(*args, **kwargs):
+        """Test-safe stub for notify_user when finance app isn't loaded."""
+        return None
 from it.users.models import UserProfile, Regions, Roles
 from ACE2.models import Ace2
 

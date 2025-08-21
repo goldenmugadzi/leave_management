@@ -2,7 +2,6 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 
 from approve.models import Process
-from finance.Ace.models import Budget
 from it.users.models import Regions, UserProfile, Sections, Designations
 
 # Create your models here.
