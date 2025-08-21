@@ -502,7 +502,6 @@ def pettycash_awaiting_my_action(request):
     """
     try:
         pettycashs_to_process = []
-        user_roles = request.user.roles.all()
         user_id = request.user.id
         user_profile = UserProfile.objects.filter(id=user_id).first()
 
@@ -556,6 +555,12 @@ def pettycash_awaiting_my_action(request):
                 'error_message': 'Role determination error'
             })
         
+        # Safe roles access via profile AFTER confirming profile exists
+        try:
+            user_roles = user_profile.roles.all()
+        except Exception:
+            user_roles = []
+
         print(pettycash_role)
         requester = 'create'
         current_year = datetime.now(timezone.utc).year
@@ -696,94 +701,93 @@ def pettycash_awaiting_my_action(request):
 @login_required
 def view_all_pettycashs(request):
     try:
-        user_roles = request.user.roles.all()
-        user_id = request.user.id
-        user_profile = UserProfile.objects.prefetch_related('roles').filter(id=user_id).first()
+            user_id = request.user.id
+            user_profile = UserProfile.objects.prefetch_related('roles').filter(id=user_id).first()
         
-        if not user_profile:
-            messages.error(request, "User profile not found. Please contact administrator.")
-            return render(request, 'finance/pettycash/view_all_pettycashs.html', {
-                'pettycashs': [],
-                'pettycash_role': 'none',
-                'requester': 'create',
-                'error_message': 'User profile not found'
-            })
-        
-        try:
-            region = Regions.objects.filter(id=user_profile.region.id).first()
-            if not region:
-                messages.error(request, "User region not found. Please contact administrator.")
+            if not user_profile:
+                messages.error(request, "User profile not found. Please contact administrator.")
                 return render(request, 'finance/pettycash/view_all_pettycashs.html', {
                     'pettycashs': [],
                     'pettycash_role': 'none',
                     'requester': 'create',
-                    'error_message': 'User region not found'
+                    'error_message': 'User profile not found'
                 })
-        except AttributeError:
-            messages.error(request, "User profile is incomplete. Missing region information.")
-            return render(request, 'finance/pettycash/view_all_pettycashs.html', {
-                'pettycashs': [],
-                'pettycash_role': 'none',
-                'requester': 'create',
-                'error_message': 'Incomplete user profile'
-            })
-
-        try:
-            user_groups = user_profile.groups.values_list('name', flat=True)
-        except AttributeError:
-            user_groups = []
-
-        custom_user_roles = {
-            "pettycash": {},
-        }
-
-        roles_ = user_profile.roles.all()
-        pettycash_role = None
         
-        try:
-            for _role in roles_:
-                role = Roles.objects.filter(id=_role.id).first()
-                if role and role.application == "pettycash":
-                    custom_user_roles["pettycash"] = role.role
-                    pettycash_role = str(custom_user_roles["pettycash"])
-                    print("tr ", role.role)
-                    break
-            
-            if pettycash_role is None:
-                messages.warning(request, "You don't have a PettyCash role assigned. Please contact administrator for access.")
+            try:
+                region = Regions.objects.filter(id=user_profile.region.id).first()
+                if not region:
+                    messages.error(request, "User region not found. Please contact administrator.")
+                    return render(request, 'finance/pettycash/view_all_pettycashs.html', {
+                        'pettycashs': [],
+                        'pettycash_role': 'none',
+                        'requester': 'create',
+                        'error_message': 'User region not found'
+                    })
+            except AttributeError:
+                messages.error(request, "User profile is incomplete. Missing region information.")
                 return render(request, 'finance/pettycash/view_all_pettycashs.html', {
                     'pettycashs': [],
                     'pettycash_role': 'none',
                     'requester': 'create',
-                    'error_message': 'No PettyCash role assigned'
+                    'error_message': 'Incomplete user profile'
                 })
+
+            try:
+                user_groups = user_profile.groups.values_list('name', flat=True)
+            except AttributeError:
+                user_groups = []
+
+            custom_user_roles = {
+                "pettycash": {},
+            }
+
+            roles_ = user_profile.roles.all()
+            pettycash_role = None
+        
+            try:
+                for _role in roles_:
+                    role = Roles.objects.filter(id=_role.id).first()
+                    if role and role.application == "pettycash":
+                        custom_user_roles["pettycash"] = role.role
+                        pettycash_role = str(custom_user_roles["pettycash"])
+                        print("tr ", role.role)
+                        break
                 
-        except Exception as e:
-            messages.error(request, f"Error determining user role: {str(e)}")
-            return render(request, 'finance/pettycash/view_all_pettycashs.html', {
-                'pettycashs': [],
-                'pettycash_role': 'none',
-                'requester': 'create',
-                'error_message': 'Role determination error'
-            })
+                if pettycash_role is None:
+                    messages.warning(request, "You don't have a PettyCash role assigned. Please contact administrator for access.")
+                    return render(request, 'finance/pettycash/view_all_pettycashs.html', {
+                        'pettycashs': [],
+                        'pettycash_role': 'none',
+                        'requester': 'create',
+                        'error_message': 'No PettyCash role assigned'
+                    })
+                    
+            except Exception as e:
+                messages.error(request, f"Error determining user role: {str(e)}")
+                return render(request, 'finance/pettycash/view_all_pettycashs.html', {
+                    'pettycashs': [],
+                    'pettycash_role': 'none',
+                    'requester': 'create',
+                    'error_message': 'Role determination error'
+                })
             
-        print("gh ", pettycash_role)
-        requester = "create"
-        current_year = datetime.now(timezone.utc).year
+            print("gh ", pettycash_role)
+            requester = "create"
+            current_year = datetime.now(timezone.utc).year
 
-        # Calculate the starting year
-        starting_year = current_year - 2
+            # Calculate the starting year
+            starting_year = current_year - 2
 
-        if pettycash_role == "create":
-            pettycashs = Pettycash.objects.filter(region=region, requested_by=request.user)
-        elif pettycash_role == "approve":
-            pettycashs = Pettycash.objects.filter(region=region, section=request.user.section).order_by('-date_created',
-                                                                                                        'petty_id')[:800]
-        else:
-            pettycashs = Pettycash.objects.filter(region=region).only('petty_id', 'date_created').order_by('-date_created',
-                                                                                                           'petty_id')[
-                         :1200]
-                         
+            if pettycash_role == "create":
+                pettycashs = Pettycash.objects.filter(region=region, requested_by=request.user)
+            elif pettycash_role == "approve":
+                pettycashs = Pettycash.objects.filter(region=region, section=request.user.section).order_by('-date_created',
+                                                                                                            'petty_id')[:800]
+            else:
+                pettycashs = Pettycash.objects.filter(region=region).only('petty_id', 'date_created').order_by('-date_created',
+                                                                                                               'petty_id')[
+                             :1200]
+        
     except Exception as e:
         messages.error(request, f"System error: {str(e)}")
         return render(request, 'finance/pettycash/view_all_pettycashs.html', {
@@ -1174,7 +1178,12 @@ def receipt(request):
         process = pettycash.process
         latest_approval = process.approval_set.last()
         next_step_num = (latest_approval.step.step + 1) if latest_approval else 1
-        user_roles = request.user.roles.all()
+        # Safe roles access via profile
+        user_profile = UserProfile.objects.filter(id=request.user.id).first()
+        try:
+            user_roles = user_profile.roles.all() if user_profile else []
+        except Exception:
+            user_roles = []
         step_for_user = Step.objects.get(step=next_step_num, workflow=process.workflow, approver__in=user_roles)
         # Create approval record
         Approval.objects.create(
@@ -1459,7 +1468,6 @@ def my_actioned_items(request):
             })
 
         # Get all approvals made by this user
-        user_roles = request.user.roles.all()
         my_approvals = Approval.objects.filter(
             user=request.user
         ).select_related('process', 'step').order_by('-approved_at')
@@ -1474,7 +1482,7 @@ def my_actioned_items(request):
                     # Add approval info to the pettycash object for display
                     pettycash.my_approval = approval
                     actioned_pettycashs.append(pettycash)
-            except Exception as e:
+            except Exception:
                 continue  # Skip if there's an issue with this particular item
 
         # Remove duplicates while preserving order

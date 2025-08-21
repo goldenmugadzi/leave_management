@@ -42,6 +42,24 @@ from django.db.models import Sum, Count
 
 from .utils import notify_head_office_approvers, get_regional_budget_impact_summary
 
+# Safe helper to get a queryset of Roles for the current user without assuming request.user has a direct 'roles' M2M
+def get_user_roles_qs(user):
+    """Return a queryset of Roles for the given user safely.
+    Falls back to looking up UserProfile if needed; returns empty queryset on failure.
+    """
+    try:
+        # If the user model already has roles M2M
+        if hasattr(user, 'roles') and callable(getattr(user, 'roles').all):
+            return user.roles.all()
+        # Fallback via profile lookup
+        if hasattr(user, 'id'):
+            profile = UserProfile.objects.filter(id=user.id).first()
+            if profile and hasattr(profile, 'roles'):
+                return profile.roles.all()
+    except Exception:
+        pass
+    return Roles.objects.none()
+
 # Create your views here.
 @login_required
 def Ace_detail(request, Ace_id2):
@@ -149,7 +167,7 @@ def Ace_detail(request, Ace_id2):
     
     approvalForm = None
     to = None
-    user_roles = request.user.roles.all()  # Accessing the user's roles through the 'roles' attribute
+    user_roles = get_user_roles_qs(request.user)
 
     try:
         last_approved = ace_item.process.approval_set.last().step.step
@@ -875,7 +893,7 @@ def ace_awaiting_my_action(request):
     else:
         # Regional logic for other roles
         aces_to_process = []
-        user_roles = request.user.roles.all()
+        user_roles = get_user_roles_qs(request.user)
 
         user_id = request.user.id
         user_profile = UserProfile.objects.filter(id=user_id).first()
@@ -948,7 +966,7 @@ def ace_awaiting_my_action(request):
 @login_required
 def view_all_aces(request):
     try:
-        user_roles = request.user.roles.all()
+        user_roles = get_user_roles_qs(request.user)
         user_id = request.user.id
         user_profile = UserProfile.objects.filter(id=user_id).first()
         
@@ -1750,7 +1768,7 @@ def virament_detail(request, virament_id):
     print('virament')
     print(virament_item.process)
     to = None
-    user_roles = request.user.roles.all()  # Accessing the user's roles through the 'roles' attribute
+    user_roles = get_user_roles_qs(request.user)
 
     user_id = request.user.id
     user_profile = UserProfile.objects.filter(id=user_id).first()
@@ -1971,7 +1989,7 @@ def viraments_awaiting_my_action(request):
     approver = user.roles.all.
     """
     viraments_to_process = []
-    user_roles = request.user.roles.all()
+    user_roles = get_user_roles_qs(request.user)
 
     user_id = request.user.id
     user_profile = UserProfile.objects.filter(id=user_id).first()
@@ -2026,7 +2044,8 @@ def viraments_awaiting_my_action(request):
         # Only add if the user is the approver for this step
         if step:
             # Optionally, check if the user is in the approver list for this step
-            if step.approver.filter(id__in=request.user.roles.values_list('id', flat=True)).exists():
+            roles_qs = get_user_roles_qs(request.user)
+            if step.approver.filter(id__in=roles_qs.values_list('id', flat=True)).exists():
                 viraments_to_process.append(virement)
 
     return render(request, 'finance/ace2/view_all_viraments.html', {'aces': viraments_to_process,
@@ -3469,7 +3488,7 @@ def migrate_ace_assets(request, ace_id):
         ace = get_object_or_404(Ace2, Ace_id2=ace_id)
         
         # Check permissions (only accounting officers)
-        user_roles = request.user.roles.all()
+        user_roles = get_user_roles_qs(request.user)
         ace_roles = [role.name for role in user_roles if 'accounting_officer' in role.name.lower()]
         
         if not ace_roles:
@@ -3498,7 +3517,7 @@ def remove_enhanced_asset(request, ace_id, asset_id):
         ace_asset = get_object_or_404(AceAssetNumber, id=asset_id, ace=ace)
         
         # Check permissions
-        user_roles = request.user.roles.all()
+        user_roles = get_user_roles_qs(request.user)
         ace_roles = [role.name for role in user_roles if 'accounting_officer' in role.name.lower()]
         
         if not ace_roles:
@@ -3573,7 +3592,7 @@ def bulk_migrate_assets(request):
     
     try:
         # Check permissions
-        user_roles = request.user.roles.all()
+        user_roles = get_user_roles_qs(request.user)
         ace_roles = [role.name for role in user_roles if 'accounting_officer' in role.name.lower() or request.user.is_superuser]
         
         if not ace_roles and not request.user.is_superuser:
