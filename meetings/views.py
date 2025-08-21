@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect
-from .forms import MeetingsForm
+from .forms import MeetingsForm,MeetingsUpdateForm
 from django.contrib import messages
 from django.http import JsonResponse
 from django.db.models import Q
@@ -7,17 +7,25 @@ from .models import Meetings
 
 def create_meeting(request):
     if request.method == 'POST':
-        form = MeetingsForm(request.POST)
+        form = MeetingsForm(request.POST, request.FILES) 
         if form.is_valid():
-            print('form.employees_invited',form.employees_invited)
-            leave = form.save(commit=False)
-            leave.user = request.user  
-            leave.save()
-            messages.success(request, "meeting request submitted successfully.")
-            return redirect('table_meeting') 
+        
+            employees = form.cleaned_data.get('employees_invited')
+            print('employees_invited:', employees)
+
+            meeting = form.save(commit=False)
+            meeting.user = request.user 
+            meeting.confirm_status = 'pending' 
+            meeting.save()
+            
+            form.save_m2m()
+
+            messages.success(request, "Meeting request submitted successfully.")
+            return redirect('table_meeting')
     else:
         form = MeetingsForm()
     return render(request, 'Meetings/create_meeting.html', {'form': form})
+
 
 def meetings_datatable(request):
     draw = int(request.GET.get('draw', 1))
@@ -71,4 +79,22 @@ def meetings_datatable(request):
 
 def table_meetings (request):
   return render(request,'Meetings/table_meetings.html')
+
+def update_meeting(request, id):
+    meetings = Meetings.objects.filter(id=id).first()
+    if not meetings:
+        return render(request, '404.html', status=404)
+
+    if request.method == 'POST':
+        form = MeetingsUpdateForm(request.POST, request.FILES, instance=meetings)
+        if form.is_valid():
+            form.save()
+            return redirect('/table_meeting')  
+    else:
+        form = MeetingsUpdateForm(instance=meetings)
+
+    return render(request, 'Meetings/update_meeting.html', {
+        'form': form,
+        'meetings': meetings,
+    })
 

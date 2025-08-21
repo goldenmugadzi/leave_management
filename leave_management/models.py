@@ -47,6 +47,7 @@ class LeaveRequest(models.Model):
     days_taken = models.PositiveIntegerField(default=0, blank=True, null=True)
     days_encashed = models.PositiveIntegerField(default=0, blank=True, null=True)
     total_days = models.PositiveIntegerField(default=0, blank=True, null=True)
+    attachments = models.FileField(upload_to='leave_management/', blank=True, null=True)
     
 
     def __str__(self):

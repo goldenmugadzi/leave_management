@@ -13,5 +13,6 @@ urlpatterns = [
     path('accumulate_vacation/<int:pk>/<str:employee_type>/', views.accumulate_vacation_leave_view, name='accumulate_vacation_leave'),
     path('approve_leave/<int:pk>/', views.approve_leave, name='approve_leave'),
     path('encashment/', encashment_leave, name='encashment'),
-    
+    path('update_leave/<int:id>/', views.update_leave_request, name='update_leave_request'),
+
 ]

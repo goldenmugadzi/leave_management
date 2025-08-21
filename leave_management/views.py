@@ -8,14 +8,16 @@ from it.users.models import *
 from datetime import timedelta
 from django.http import JsonResponse, Http404
 from django.db import transaction
-
-
+from django.utils import timezone
 
 def leave_create(request):
     if request.method == 'POST':
-        form = LeaveRequestForm(request.POST)
+        form = LeaveRequestForm(request.POST, request.FILES)  
         if form.is_valid():
+            print("FILES:", request.FILES)
+            print("CLEANED DATA:", form.cleaned_data)
             leave = form.save(commit=False)
+            print("LEAVE ATTACHMENTS:", leave.attachments)
             user_profile = request.user
 
             leave.user = user_profile
@@ -61,7 +63,24 @@ def leave_create(request):
                 if current is None:
                     current = 0  
 
-                # Now this will not error
+                # --- Occasional leave rule ---
+                if leave.type_of_leave == 'occassional leave':
+                
+                    if days > 3:
+                        messages.error(request, "You can only apply for a maximum of 3 days per occasional leave application.")
+                        return redirect('leave_types')
+                    
+                    year = timezone.now().year
+                    taken_this_year = LeaveRequest.objects.filter(
+                        user=user_profile,
+                        type_of_leave='occassional leave',
+                        start_date__year=year
+                    ).aggregate(models.Sum('number_of_days'))['number_of_days__sum'] or 0
+                    if taken_this_year + days > 12:
+                        messages.error(request, f"You cannot exceed 12 days of occasional leave per year. Already taken: {taken_this_year}, Requested: {days}")
+                        return redirect('leave_types')
+                # --- End occasional leave rule ---
+
                 if current < days:
                     messages.error(request, f"You do not have enough {leave.type_of_leave} days. Available: {current}, Requested: {days}")
                     return redirect('leave_types')
@@ -133,6 +152,7 @@ def leave_request_datatable(request):
             "number_of_days": leave.number_of_days,
             "region": str(leave.region) if leave.region else "",
             "status": leave.status,
+            "attachments": leave.attachments.url if leave.attachments else "",
         })
 
     return JsonResponse({
@@ -164,7 +184,6 @@ def table_leave(request):
         'pending_count': pending_count,
         'total_count': total_count,
     })
-
 
 def create_leave_types(request):
     if request.method == 'POST':
@@ -286,7 +305,6 @@ def leave_types (request):
         'is_requester': is_requester
     })
 
-
 def accumulate_vacation_leave_view(request, pk, employee_type, months=1):
     leave_types = get_object_or_404(LeaveTypes, pk=pk)
     leave_types.accumulate_vacation_leave(employee_type, months)
@@ -296,3 +314,31 @@ def accumulate_vacation_leave_view(request, pk, employee_type, months=1):
 def approve_leave (request,pk):
     leave = get_object_or_404(LeaveRequest,pk=pk)
     return render(request, 'leave_system/awaiting_my_action.html', {'leave': leave})
+
+def update_leave_request(request, id):
+    leave_request = LeaveRequest.objects.filter(id=id).first()
+    if not leave_request:
+        return render(request, '404.html', status=404)
+
+    if request.method == 'POST':
+        form = LeaveRequestForm(request.POST, request.FILES, instance=leave_request)  # <-- Add request.FILES
+        if form.is_valid():
+            form.save()
+            return redirect('/leave_table')  
+    else:
+        form = LeaveRequestForm(instance=leave_request)
+
+    user_profile = request.user
+    user_info = {
+        'full_name': f"{getattr(user_profile, 'first_name', '')} {getattr(user_profile, 'last_name', '')}",
+        'employee_type': getattr(user_profile, 'employee_types', ''),
+        'section': getattr(user_profile, 'section', ''),
+        'designation': getattr(user_profile, 'designation', ''),
+        'ecnumber': user_profile.username,
+    }
+
+    return render(request, 'leave_system/update_leave.html', {
+        'form': form,
+        'user_info': user_info,
+        'leave_request': leave_request,
+    })
