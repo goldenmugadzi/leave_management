@@ -6,7 +6,7 @@ from django.contrib.auth import get_user_model
 from django.http import HttpResponse
 
 from it.users.models import UserProfile, Regions, Sections, Roles, Application
-from .models import Ace2, AssetBudget, Transactions
+from .models import Ace2, AssetBudget, Transactions, Asset_budget_Virament
 from approve.models import Process, Workflow, Step, Approval
 
 
@@ -124,3 +124,118 @@ class AceApprovalAfterActionTests(TestCase):
         self.budget.refresh_from_db()
         self.assertAlmostEqual(self.budget.balance, 1000)
         self.assertAlmostEqual(self.budget.to_be_withdrawn, 300)
+
+
+class VirementNotificationTests(TestCase):
+    def setUp(self):
+        # Region/Section
+        self.region = Regions.objects.create(region='Test Region')
+        self.section = Sections.objects.create(section='Test Section', code='TS', district_id='D1', region_id='R1')
+
+        # Applications and Roles
+        self.app_v = Application.objects.create(name='virement', fullname='virement')
+        self.role_pass_v = Roles.objects.create(role='pass', name='Section Head', description='Section Head', application='virement', app_id=self.app_v)
+        self.role_gm_v = Roles.objects.create(role='approve', name='GM', description='General Manager', application='virement', app_id=self.app_v)
+
+        # Users
+        self.user_requester = User.objects.create_user(username='req001', password='testpass')
+        self.user_requester.region = self.region
+        self.user_requester.section = self.section
+        self.user_requester.save()
+
+        self.user_sh = User.objects.create_user(username='shv001', password='testpass')
+        self.user_sh.region = self.region
+        self.user_sh.section = self.section
+        self.user_sh.save()
+        self.user_sh.roles.add(self.role_pass_v)
+
+        self.user_gm = User.objects.create_user(username='gmv001', password='testpass')
+        self.user_gm.region = self.region
+        self.user_gm.section = self.section
+        self.user_gm.save()
+        self.user_gm.roles.add(self.role_gm_v)
+
+        # Budgets
+        self.from_budget = AssetBudget.objects.create(
+            budget_name='From Budget', period=2025, region=self.region, balance=1000, to_be_withdrawn=0
+        )
+        self.to_budget = AssetBudget.objects.create(
+            budget_name='To Budget', period=2025, region=self.region, balance=500, to_be_withdrawn=0
+        )
+
+        # Virement workflow
+        self.workflow = Workflow.objects.create(name='virement', application=self.app_v)
+        self.process = Process.objects.create(workflow=self.workflow)
+        self.step1 = Step.objects.create(step=1, workflow=self.workflow, approver=self.role_pass_v, to='GM')
+        self.step2 = Step.objects.create(step=2, workflow=self.workflow, approver=self.role_gm_v, to='END')
+
+        # Create virement
+        self.virement = Asset_budget_Virament.objects.create(
+            requested_by=self.user_requester,
+            from_budget=self.from_budget,
+            to_budget=self.to_budget,
+            amount=200,
+            process=self.process,
+            region=self.region,
+            section=self.section,
+        )
+        # Reserve amount as in creation flow
+        self.from_budget.to_be_withdrawn = 200
+        self.from_budget.save()
+        Transactions.objects.create(
+            virament=self.virement,
+            details_of_expenditure=f"virement of {self.from_budget} to {self.to_budget}",
+            approval_status="created",
+            region=self.region,
+            amount=200,
+            budget=self.from_budget,
+            section=self.section
+        )
+
+    def _approve_step(self, user, step: int):
+        self.client.login(username=user.username, password='testpass')
+        step_obj = Step.objects.get(workflow=self.workflow, step=step)
+        Approval.objects.create(
+            step=step_obj,
+            user=UserProfile.objects.get(id=user.id),
+            process=self.process,
+            approved='Approved'
+        )
+
+    @patch('ACE2.views.notify_user')
+    def test_notify_gm_on_clear_minus(self, mock_notify):
+        # Approve first step to reach clear_minus
+        self._approve_step(self.user_sh, 1)
+        # Access detail to trigger clear_minus notifications (mock render to bypass templates)
+        with patch('ACE2.views.render', side_effect=lambda req, tpl, ctx: HttpResponse('ok')):
+            resp = self.client.get(reverse('Ace:virament_detail', args=[self.virement.virament_id]))
+            self.assertEqual(resp.status_code, 200)
+        # Should notify GM about pending approval
+        self.assertTrue(mock_notify.called)
+
+    @patch('ACE2.views.notify_user')
+    def test_notify_requester_on_final_approval(self, mock_notify):
+        # Approve both steps; final approval will process funds and notify requester
+        self._approve_step(self.user_sh, 1)
+        self._approve_step(self.user_gm, 2)
+        with patch('ACE2.views.render', side_effect=lambda req, tpl, ctx: HttpResponse('ok')):
+            resp = self.client.get(reverse('Ace:virament_detail', args=[self.virement.virament_id]))
+            self.assertEqual(resp.status_code, 200)
+        self.assertTrue(mock_notify.called)
+
+    @patch('ACE2.views.notify_user')
+    def test_notify_requester_on_rejection(self, mock_notify):
+        # Create a rejection approval
+        step_obj = Step.objects.get(workflow=self.workflow, step=1)
+        Approval.objects.create(
+            step=step_obj,
+            user=UserProfile.objects.get(id=self.user_sh.id),
+            process=self.process,
+            approved='Rejected'
+        )
+        # Login and bypass templates
+        self.client.login(username=self.user_sh.username, password='testpass')
+        with patch('ACE2.views.render', side_effect=lambda req, tpl, ctx: HttpResponse('ok')):
+            resp = self.client.get(reverse('Ace:virament_detail', args=[self.virement.virament_id]))
+            self.assertEqual(resp.status_code, 200)
+        self.assertTrue(mock_notify.called)

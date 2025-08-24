@@ -62,6 +62,9 @@ class AppraisalConfig(AppConfig):
         post_migrate.connect(create_kra_roles_handler, sender=self)        
 
         from .tasks import run_back_ground_tasks
-        
-        # Run tasks
-        run_back_ground_tasks()
+        # Run background tasks (idempotent guard inside run_back_ground_tasks)
+        try:
+            # Avoid starting scheduler during migrations or shell_plus etc. if desired.
+            run_back_ground_tasks()
+        except Exception as e:  # pragma: no cover
+            logger.error(f"Failed to initialize background tasks: {e}")

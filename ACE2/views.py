@@ -1793,6 +1793,22 @@ def create_virament(request):
                     transaction.save()
                     
                     messages.success(request, f"Virament {virament.virament_id} created successfully.")
+
+                    # Notify virement section head on creation
+                    try:
+                        v_sh_username = find_virement_section_head(request, virament.section)
+                        if v_sh_username:
+                            v_sh = UserProfile.objects.filter(username=v_sh_username).first()
+                            if v_sh:
+                                msg = (
+                                    f"New virement {virament.virament_id} created: "
+                                    f"{virament.from_budget} → {virament.to_budget} for {virament.amount:,.2f}"
+                                )
+                                url = reverse('Ace:virament_detail', args=[virament.virament_id])
+                                notify_user(v_sh, msg, "VIREMENT", url, str(virament.virament_id), request)
+                    except Exception as _e:
+                        logger.warning(f"Failed to send virement creation notification for {virament.virament_id}: {_e}")
+
                     url = reverse('Ace:virament_detail', args=[virament.virament_id])
                     return redirect(url)
                     
@@ -1852,16 +1868,16 @@ def virament_detail(request, virament_id):
     user_groups = user_profile.groups.values_list('name', flat=True)
 
     custom_user_roles = {
-        "virement": {},
+        "virement": "",
     }
 
     roles_ = user_profile.roles.all()
     for _role in roles_:
         role = Roles.objects.filter(id=_role.id).first()
-
-        if role.application == "virement":
-            custom_user_roles["virement"] = role
-    virement_role = str(custom_user_roles["virement"])
+        if role and role.application == "virement":
+            # Use the string code of the role (e.g., "pass", "approve")
+            custom_user_roles["virement"] = role.role
+    virement_role = str(custom_user_roles["virement"])  # expected: "pass" | "approve" | "create" | "order"
 
     try:
         last_approved = virament_item.process.approval_set.last().step.step if virament_item.process.approval_set.exists() else 0
@@ -1873,15 +1889,20 @@ def virament_detail(request, virament_id):
             clear = True
 
     approval_status = virament_item.process.approval_set.last().approved if virament_item.process.approval_set.last() else ""
+    # Initialize approved_steps early so it's available in any error paths below
+    approved_steps = virament_item.process.approval_set.all().values_list('step__step', flat=True)
     if approval_status != "Rejected":
-
         next_step = last_approved + 1
+        steps_count = virament_item.process.workflow.step_set.count()
         if len(virament_item.process.approval_set.all()) == len(virament_item.process.workflow.step_set.all()):
             approve_now = True
 
         try:
-            newStep = Step.objects.get(step=next_step, workflow=virament_item.process.workflow,
-                                       approver__in=user_roles)
+            newStep = Step.objects.get(
+                step=next_step,
+                workflow=virament_item.process.workflow,
+                approver__in=user_roles
+            )
 
             if virement_role == "pass":
 
@@ -1910,6 +1931,11 @@ def virament_detail(request, virament_id):
                 print(clear)
         except Step.DoesNotExist:
             pass
+
+        # Independent clear_minus computation: if the next required step is the final one,
+        # then we are just before GM (or final approver) and should notify them.
+        if next_step == steps_count:
+            clear_minus = True
 
     print(approve_now)
     if approve_now:
@@ -1966,7 +1992,7 @@ def virament_detail(request, virament_id):
                     # Update source budget - remove from to_be_withdrawn and deduct from balance
                     fbudget.balance = fbudget.balance - virament_item.amount
                     fbudget.withdrawal_date = date.today()
-                    fbudget.withdrawn = fbudget.withdrawn + virament_item.amount
+                    fbudget.withdrawn = (fbudget.withdrawn or 0) + virament_item.amount
                     
                     # Remove from to_be_withdrawn since it's now actually withdrawn
                     if fbudget.to_be_withdrawn is not None and fbudget.to_be_withdrawn >= virament_item.amount:
@@ -1979,7 +2005,7 @@ def virament_detail(request, virament_id):
 
                     # Update destination budget
                     tbudget.balance = tbudget.balance + virament_item.amount
-                    tbudget.allocated = tbudget.allocated + virament_item.amount
+                    tbudget.allocated = (tbudget.allocated or 0) + virament_item.amount
                     tbudget.save()
 
                     # Update transaction status
@@ -1991,6 +2017,18 @@ def virament_detail(request, virament_id):
                     messages.success(request, f"Virament approved successfully. Funds transferred.")
                     
                     print("transaction: ", str(transaction_obj.approval_status))
+
+                    # Notify requester about final approval
+                    try:
+                        requester = virament_item.requested_by
+                        if requester:
+                            msg = (
+                                f"Your virement {virament_item.virament_id} has been approved by the General Manager"
+                            )
+                            url = reverse('Ace:virament_detail', args=[virament_item.virament_id])
+                            notify_user(requester, msg, "VIREMENT", url, str(virament_item.virament_id), request)
+                    except Exception as _e:
+                        logger.warning(f"Failed to send virement approval notification for {virament_item.virament_id}: {_e}")
                 
         except AssetBudget.DoesNotExist as e:
             logger.error(f"Budget not found for virament {virament_item.virament_id}: {e}")
@@ -2013,6 +2051,19 @@ def virament_detail(request, virament_id):
 
     # ace_quantity = range(virament_item.quantity)
     approved_steps = virament_item.process.approval_set.all().values_list('step__step', flat=True)
+
+    # If item is about to reach GM (clear_minus), notify GM their action is needed next
+    if clear_minus:
+        try:
+            gm_username = find_virement_general_manager(request, virament_item.region)
+            if gm_username:
+                gm = UserProfile.objects.filter(username=gm_username).first()
+                if gm:
+                    msg = f"Virement {virament_item.virament_id} requires your final approval"
+                    url = reverse('Ace:virament_detail', args=[virament_item.virament_id])
+                    notify_user(gm, msg, "VIREMENT", url, str(virament_item.virament_id), request)
+        except Exception as _e:
+            logger.warning(f"Failed to send GM pending virement notification for {virament_item.virament_id}: {_e}")
     
     # Handle rejected virements - release reserved funds
     if approval_status == "Rejected":
@@ -2029,6 +2080,16 @@ def virament_detail(request, virament_id):
                     messages.info(request, "Virement rejected. Reserved funds have been released.")
                 else:
                     logger.warning(f"Failed to release reserved amount for rejected virement {virament_item.virament_id}")
+
+                # Notify requester about rejection
+                try:
+                    requester = virament_item.requested_by
+                    if requester:
+                        msg = f"Your virement {virament_item.virament_id} has been rejected. Reserved funds have been released."
+                        url = reverse('Ace:virament_detail', args=[virament_item.virament_id])
+                        notify_user(requester, msg, "VIREMENT", url, str(virament_item.virament_id), request)
+                except Exception as _e:
+                    logger.warning(f"Failed to send virement rejection notification for {virament_item.virament_id}: {_e}")
         except Exception as e:
             logger.error(f"Error handling rejected virement {virament_item.virament_id}: {e}")
 
@@ -2531,6 +2592,44 @@ def find_general_manager(request, region):
 
         else:
             print("no users found")
+
+# @login_required
+def find_virement_section_head(request, section):
+    """Find section head for virement application in a section (role 'pass')."""
+    all_users = UserProfile.objects.filter(section=section).all()
+    if all_users:
+        for user_profile in all_users:
+            custom_user_roles = {"virement": {}}
+            roles_ = user_profile.roles.all()
+            for _role in roles_:
+                role = Roles.objects.filter(id=_role.id).first()
+                if role.application == "virement":
+                    custom_user_roles["virement"] = role.role
+            v_role = str(custom_user_roles["virement"])
+            if v_role == "pass":
+                sh = user_profile.username
+                if sh:
+                    return sh
+    return None
+
+# @login_required
+def find_virement_general_manager(request, region):
+    """Find GM for virement application in a region (role 'approve')."""
+    all_users = UserProfile.objects.filter(region=region).all()
+    if all_users:
+        for user_profile in all_users:
+            custom_user_roles = {"virement": {}}
+            roles_ = user_profile.roles.all()
+            for _role in roles_:
+                role = Roles.objects.filter(id=_role.id).first()
+                if role.application == "virement":
+                    custom_user_roles["virement"] = role.role
+            v_role = str(custom_user_roles["virement"])
+            if v_role == "approve":
+                gm = user_profile.username
+                if gm:
+                    return gm
+    return None
 
 # transactions on a budget
 @login_required

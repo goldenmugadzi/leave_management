@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from decimal import Decimal, InvalidOperation
 from mimetypes import guess_type
 from random import randrange
@@ -16,10 +16,11 @@ try:
 except Exception:  # pragma: no cover - not needed during isolated tests
     Workbook = None
 from django.core.exceptions import ValidationError
-from django.db.models import Sum
+from django.db.models import Sum, Q
 from django.db.models.functions import TruncMonth
 
 from ACE2.utils import find_ace_section_head, find_pettycash_section_head
+from django.utils import timezone as dj_timezone
 from approve.forms import ApprovalForm
 try:
     from approve.views import intiate
@@ -137,7 +138,7 @@ def pettyCash_detail(request, petty_id):
                 try:
                     msg = f"Your Petty Cash {pettycash_item.petty_id} has been captured by Cashier"
                     url = f"/pettycash/pettycash_detail/{pettycash_item.petty_id}"
-                    # notify_user(pettycash_item.requested_by, msg, "PettyCash", url, pettycash_item.petty_id)
+                    notify_user(pettycash_item.requested_by, msg, "PettyCash", url, pettycash_item.petty_id, request)
                 except Exception:
                     pass
 
@@ -459,7 +460,7 @@ def create_pettycash(request):
                                 url = f"/pettycash/pettycash_detail/{pettycash.petty_id}"
                                 section_heads_profile = UserProfile.objects.filter(username=section_heads).first()
                                 if section_heads_profile:
-                                    notify_user(section_heads_profile, msg, "PettyCash", url, pettycash.petty_id)
+                                    notify_user(section_heads_profile, msg, "PettyCash", url, pettycash.petty_id, request)
                                     print("notified", section_heads)
 
                             pettycash_section = pettycash.section
@@ -471,7 +472,7 @@ def create_pettycash(request):
                                 url = f"/pettycash/pettycash_detail/{pettycash.petty_id}"
                                 pettycash_sh_profile = UserProfile.objects.filter(username=pettycash_sh).first()
                                 if pettycash_sh_profile:
-                                    notify_user(pettycash_sh_profile, msg, "PettyCash", url, pettycash.petty_id)
+                                    notify_user(pettycash_sh_profile, msg, "PettyCash", url, pettycash.petty_id, request)
                                     print("notified", pettycash_sh)
                     except Exception as e:
                         print(f"Notification error: {str(e)}")
@@ -1527,3 +1528,72 @@ def my_actioned_items(request):
             'user_profile': None,
             'error_message': f'System error: {str(e)}'
         })
+
+
+def send_uncleared_pettycash_reminders(request, days_overdue: int = 3, limit: int = 200) -> int:
+    """
+    Notify requesters for petty cash items that have been disbursed but not yet cleared (no receipt uploaded)
+    after a grace period (default 3 days). Returns the count of reminders sent.
+
+    Criteria:
+    - pettycash.amount_disbursed is not None
+    - pettycash.receipt_file is None
+    - There exists an Approval on the pettycash.process where step.approver.role == 'disburse'
+      and Approval.approved_at <= now - days_overdue
+    """
+    try:
+        now = dj_timezone.now()
+        cutoff = now - timedelta(days=days_overdue)
+
+        # Fetch candidates with disbursed but not cleared
+        candidates = Pettycash.objects.filter(
+            amount_disbursed__isnull=False,
+        )[:limit]
+
+        sent = 0
+        for pc in candidates:
+            try:
+                process = pc.process
+                if not process:
+                    continue
+                # Skip if already receipted/cleared
+                try:
+                    if getattr(pc, 'receipt_file', None):
+                        # FileField truthiness is True when a file path/name exists
+                        if str(pc.receipt_file):
+                            continue
+                except Exception:
+                    pass
+                # Find the cashier/disburse approval time
+                disb_appr = process.approval_set.filter(
+                    Q(step__approver__role='disburse') | Q(step__step=3)
+                ).order_by('-approved_at').first()
+                if not disb_appr or not disb_appr.approved_at:
+                    continue
+                # Robust comparison: handle naive vs aware datetimes
+                appr_at = disb_appr.approved_at
+                try:
+                    is_overdue = appr_at <= cutoff
+                except TypeError:
+                    appr_at_naive = appr_at.replace(tzinfo=None) if getattr(appr_at, 'tzinfo', None) else appr_at
+                    cutoff_naive = cutoff.replace(tzinfo=None) if getattr(cutoff, 'tzinfo', None) else cutoff
+                    is_overdue = appr_at_naive <= cutoff_naive
+                if is_overdue:
+                    # Build and send reminder
+                    requester = pc.requested_by
+                    if not requester:
+                        continue
+                    msg = f"Reminder: Please clear Petty Cash {pc.petty_id} by uploading your receipt."
+                    url = f"/pettycash/pettycash_detail/{pc.petty_id}"
+                    try:
+                        notify_user(requester, msg, "PettyCash", url, pc.petty_id, request)
+                        sent += 1
+                    except Exception:
+                        # Ignore notification failures
+                        pass
+            except Exception:
+                # Skip problematic items but continue others
+                continue
+        return sent
+    except Exception:
+        return 0
