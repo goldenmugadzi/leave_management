@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fault Locator User Guide - Depot Foreperson</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background-color: #27ae60;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .section {
+            margin-bottom: 30px;
+            border-left: 4px solid #2ecc71;
+            padding-left: 20px;
+        }
+        .step {
+            background-color: #f8f9fa;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .menu-item {
+            background-color: #e8f5e8;
+            padding: 8px 12px;
+            margin: 5px 0;
+            border-radius: 3px;
+            font-weight: bold;
+        }
+        .warning {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .success {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .button {
+            background-color: #28a745;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 4px;
+            display: inline-block;
+            margin: 5px;
+        }
+        h1, h2, h3 {
+            color: #2c3e50;
+        }
+        .toc {
+            background-color: #f1f2f6;
+            padding: 20px;
+            margin-bottom: 30px;
+            border-radius: 8px;
+        }
+        .depot-specific {
+            background-color: #fff9c4;
+            border-left: 4px solid #f39c12;
+            padding: 15px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h1>Fault Locator System</h1>
+    <h2>Depot Foreperson User Guide</h2>
+    <p>Depot-Level Management & Operations Manual</p>
+</div>
+
+<div class="toc">
+    <h3>Table of Contents</h3>
+    <ol>
+        <li><a href="#overview">Role Overview & Depot Responsibilities</a></li>
+        <li><a href="#dashboard">Dashboard Navigation</a></li>
+        <li><a href="#fault-management">Depot Fault Management</a></li>
+        <li><a href="#team-coordination">Team Coordination</a></li>
+        <li><a href="#verification">Fault Verification Process</a></li>
+        <li><a href="#reporting">Reporting & Communication</a></li>
+        <li><a href="#mobile">Mobile Operations</a></li>
+        <li><a href="#troubleshooting">Troubleshooting</a></li>
+    </ol>
+</div>
+
+<div class="section" id="overview">
+    <h2>1. Role Overview & Depot Responsibilities</h2>
+    
+    <div class="depot-specific">
+        <strong>Your Depot Authority:</strong> You have full management authority over fault location activities within your assigned depot area.
+    </div>
+    
+    <h3>Key Responsibilities:</h3>
+    <ul>
+        <li>Manage fault assignments within your depot</li>
+        <li>Coordinate with teams deployed to your area</li>
+        <li>Verify completed fault locations</li>
+        <li>Set fault priorities for your depot</li>
+        <li>Monitor local team performance</li>
+        <li>Communicate with senior management</li>
+    </ul>
+
+    <h3>Access Permissions:</h3>
+    <ul>
+        <li>✅ View all faults at your depot</li>
+        <li>✅ Assign teams to faults in your area</li>
+        <li>✅ Set priority levels for depot faults</li>
+        <li>✅ Verify fault clearances</li>
+        <li>✅ Access depot performance reports</li>
+        <li>✅ Manage teams deployed to your depot</li>
+        <li>❌ Cannot assign teams to other depots</li>
+        <li>❌ Cannot access other depot's faults</li>
+    </ul>
+</div>
+
+<div class="section" id="dashboard">
+    <h2>2. Dashboard Navigation</h2>
+    
+    <h3>Accessing Your Depot Dashboard:</h3>
+    <div class="step">
+        <strong>Step 1:</strong> Log into the system with your credentials
+    </div>
+    <div class="step">
+        <strong>Step 2:</strong> The system automatically directs you to your depot-specific dashboard
+    </div>
+    <div class="step">
+        <strong>Step 3:</strong> Your dashboard shows:
+        <ul>
+            <li>Pending faults at your depot</li>
+            <li>Teams currently deployed to your area</li>
+            <li>Recent fault assignments</li>
+            <li>Verification pending items</li>
+            <li>Priority alerts</li>
+        </ul>
+    </div>
+
+    <h3>Main Navigation Menu:</h3>
+    <div class="menu-item">🏠 Depot Dashboard</div>
+    <p>Overview of all activities at your depot</p>
+    
+    <div class="menu-item">⚡ Fault Management</div>
+    <p>View, assign, and prioritize faults at your depot</p>
+    
+    <div class="menu-item">👥 Team Coordination</div>
+    <p>Manage teams deployed to your depot area</p>
+    
+    <div class="menu-item">✅ Verification Queue</div>
+    <p>Review and verify completed fault locations</p>
+    
+    <div class="menu-item">📊 Depot Reports</div>
+    <p>Performance metrics and status reports</p>
+</div>
+
+<div class="section" id="fault-management">
+    <h2>3. Depot Fault Management</h2>
+    
+    <h3>Viewing Depot Faults:</h3>
+    <div class="step">
+        <strong>Access:</strong> <div class="menu-item">Dashboard → Fault List</div>
+        <ul>
+            <li>See all faults reported at your depot</li>
+            <li>Filter by status (Requested, Assigned, Located)</li>
+            <li>Sort by priority, date, voltage level</li>
+            <li>View fault technical details</li>
+        </ul>
+    </div>
+    
+    <div class="depot-specific">
+        <strong>Depot-Specific View:</strong> You only see faults reported for your assigned depot. This ensures focused management of your area's issues.
+    </div>
+    
+    <h3>Assigning Faults to Teams:</h3>
+    <div class="step">
+        <strong>Simple Assignment:</strong>
+        <ol>
+            <li>From fault list, click <span class="button">Assign</span> next to fault</li>
+            <li>Select available team from dropdown</li>
+            <li>Verify team has working device</li>
+            <li>Add assignment notes if needed</li>
+            <li>Click <span class="button">Assign Fault</span></li>
+        </ol>
+    </div>
+    
+    <div class="step">
+        <strong>Bulk Assignment:</strong>
+        <ol>
+            <li>Go to <div class="menu-item">Advanced Fault Assignment</div></li>
+            <li>Select multiple faults using checkboxes</li>
+            <li>Choose team with capacity</li>
+            <li>Assign all selected faults at once</li>
+        </ol>
+    </div>
+    
+    <h3>Setting Fault Priorities:</h3>
+    <div class="step">
+        <strong>Priority Guidelines for Your Depot:</strong>
+        <ol>
+            <li>Click <span class="button">Change Priority</span> on fault</li>
+            <li>Consider local factors:
+                <ul>
+                    <li>Number of customers affected</li>
+                    <li>Voltage level impact</li>
+                    <li>Available backfeed options</li>
+                    <li>Local VIP customers</li>
+                </ul>
+            </li>
+            <li>Set appropriate priority level</li>
+            <li>Add justification notes</li>
+            <li>Save changes</li>
+        </ol>
+    </div>
+    
+    <div class="warning">
+        <strong>Priority Levels:</strong>
+        <ul>
+            <li><strong>Critical (4):</strong> Immediate assignment required</li>
+            <li><strong>High (3):</strong> Assign within 2 hours</li>
+            <li><strong>Medium (2):</strong> Assign within 4 hours</li>
+            <li><strong>Low (1):</strong> Assign within 8 hours</li>
+        </ul>
+    </div>
+</div>
+
+<div class="section" id="team-coordination">
+    <h2>4. Team Coordination</h2>
+    
+    <h3>Managing Teams at Your Depot:</h3>
+    <div class="step">
+        <strong>Team Overview:</strong>
+        <ol>
+            <li>Navigate to <div class="menu-item">Team Overview</div></li>
+            <li>View teams deployed to your depot</li>
+            <li>Check team status and current assignments</li>
+            <li>Monitor team workload</li>
+        </ol>
+    </div>
+    
+    <h3>Team Communication:</h3>
+    <div class="step">
+        <strong>Coordinating with Teams:</strong>
+        <ul>
+            <li>Teams receive automatic notifications when assigned faults</li>
+            <li>You can add specific instructions in assignment notes</li>
+            <li>Monitor team progress through fault status updates</li>
+            <li>Communicate directly with team leaders as needed</li>
+        </ul>
+    </div>
+    
+    <h3>Workload Management:</h3>
+    <div class="step">
+        <strong>Optimizing Team Efficiency:</strong>
+        <ol>
+            <li>Monitor active assignments per team</li>
+            <li>Balance workload across available teams</li>
+            <li>Consider geographic proximity when assigning</li>
+            <li>Account for fault complexity and priority</li>
+        </ol>
+    </div>
+    
+    <div class="success">
+        <strong>Best Practice:</strong> Limit each team to 3-4 active assignments to maintain quality and response time.
+    </div>
+</div>
+
+<div class="section" id="verification">
+    <h2>5. Fault Verification Process</h2>
+    
+    <h3>Verification Queue:</h3>
+    <div class="step">
+        <strong>Access:</strong> <div class="menu-item">Dashboard → Verification Queue</div>
+        <ul>
+            <li>View faults marked as "Located" by teams</li>
+            <li>Review team reports and location details</li>
+            <li>Verify fault clearance completion</li>
+        </ul>
+    </div>
+    
+    <h3>Verification Process:</h3>
+    <div class="step">
+        <strong>Step-by-Step Verification:</strong>
+        <ol>
+            <li>Open fault marked as "Located"</li>
+            <li>Review team leader's notes and location details</li>
+            <li>Check if fault has been properly cleared</li>
+            <li>Verify customer supply restoration</li>
+            <li>Add your verification notes</li>
+            <li>Mark as "Verified by Foreperson"</li>
+        </ol>
+    </div>
+    
+    <div class="step">
+        <strong>If Issues Found:</strong>
+        <ol>
+            <li>Add detailed notes about concerns</li>
+            <li>Contact team leader for clarification</li>
+            <li>Request additional work if needed</li>
+            <li>Do not verify until satisfied with completion</li>
+        </ol>
+    </div>
+    
+    <div class="warning">
+        <strong>Verification Standards:</strong>
+        <ul>
+            <li>Fault must be completely located</li>
+            <li>Customer supply must be restored</li>
+            <li>Safety procedures must be followed</li>
+            <li>Documentation must be complete</li>
+        </ul>
+    </div>
+</div>
+
+<div class="section" id="reporting">
+    <h2>6. Reporting & Communication</h2>
+    
+    <h3>Depot Performance Reports:</h3>
+    <div class="step">
+        <strong>Accessing Reports:</strong>
+        <ol>
+            <li>Go to <div class="menu-item">Depot Reports</div></li>
+            <li>Select report type:
+                <ul>
+                    <li>Daily summary</li>
+                    <li>Weekly performance</li>
+                    <li>Monthly statistics</li>
+                </ul>
+            </li>
+            <li>Choose date range</li>
+            <li>Generate and review report</li>
+        </ol>
+    </div>
+    
+    <h3>Key Metrics to Monitor:</h3>
+    <div class="step">
+        <strong>Performance Indicators:</strong>
+        <ul>
+            <li>Average assignment time</li>
+            <li>Fault resolution rate</li>
+            <li>Team utilization at your depot</li>
+            <li>Customer impact reduction</li>
+            <li>Priority compliance</li>
+        </ul>
+    </div>
+    
+    <h3>Communication with Senior Management:</h3>
+    <div class="step">
+        <strong>Escalation Procedures:</strong>
+        <ul>
+            <li>Report resource shortages to Senior Foreman</li>
+            <li>Escalate critical faults requiring additional support</li>
+            <li>Communicate depot-specific challenges</li>
+            <li>Request additional team deployments when needed</li>
+        </ul>
+    </div>
+</div>
+
+<div class="section" id="mobile">
+    <h2>7. Mobile Operations</h2>
+    
+    <h3>Mobile-Friendly Features:</h3>
+    <div class="step">
+        <strong>Field Access:</strong> Access system from mobile devices for:
+        <ul>
+            <li>Quick fault status checks</li>
+            <li>Emergency assignments</li>
+            <li>Team communication</li>
+            <li>Priority adjustments</li>
+        </ul>
+    </div>
+    
+    <h3>Quick Actions from Mobile:</h3>
+    <div class="step">
+        <strong>Essential Mobile Functions:</strong>
+        <ol>
+            <li>View pending faults at your depot</li>
+            <li>Assign urgent faults to available teams</li>
+            <li>Update fault priorities</li>
+            <li>Verify completed work</li>
+            <li>Check team status and location</li>
+        </ol>
+    </div>
+    
+    <div class="success">
+        <strong>Mobile Tip:</strong> Bookmark the simple fault list view for quick access during field operations.
+    </div>
+</div>
+
+<div class="section" id="troubleshooting">
+    <h2>8. Troubleshooting</h2>
+    
+    <h3>Common Issues & Solutions:</h3>
+    
+    <div class="step">
+        <strong>Issue:</strong> Cannot see faults from other depots
+        <br><strong>Solution:</strong> This is normal - you only see faults for your assigned depot. Contact Senior Foreman for cross-depot visibility if needed.
+    </div>
+    
+    <div class="step">
+        <strong>Issue:</strong> No teams available for assignment
+        <br><strong>Solution:</strong>
+        <ul>
+            <li>Check if teams are deployed to your depot</li>
+            <li>Contact Senior Foreman to request team deployment</li>
+            <li>Consider adjusting fault priorities based on available resources</li>
+        </ul>
+    </div>
+    
+    <div class="step">
+        <strong>Issue:</strong> Cannot assign team to fault
+        <br><strong>Solution:</strong>
+        <ul>
+            <li>Verify team has working device</li>
+            <li>Check if team is already at capacity</li>
+            <li>Ensure team is deployed to your depot</li>
+        </ul>
+    </div>
+    
+    <div class="step">
+        <strong>Issue:</strong> Fault verification not working
+        <br><strong>Solution:</strong>
+        <ul>
+            <li>Ensure fault status is "Located" before verifying</li>
+            <li>Check that team has provided location details</li>
+            <li>Verify you have foreperson role for the depot</li>
+        </ul>
+    </div>
+    
+    <div class="warning">
+        <strong>Emergency Contacts:</strong>
+        <ul>
+            <li>Senior Foreman: [Contact Info]</li>
+            <li>System Support: [Contact Info]</li>
+            <li>Emergency Operations: [Contact Info]</li>
+        </ul>
+    </div>
+</div>
+
+<div class="success">
+    <h3>Quick Reference for Depot Forepersons:</h3>
+    <ul>
+        <li><strong>Access:</strong> System automatically shows your depot-specific dashboard</li>
+        <li><strong>Priority:</strong> Critical → High → Medium → Low</li>
+        <li><strong>Assignment:</strong> Check team capacity and device status</li>
+        <li><strong>Verification:</strong> Required for all "Located" faults</li>
+        <li><strong>Communication:</strong> Escalate resource needs to Senior Foreman</li>
+        <li><strong>Mobile:</strong> Use simple views for field operations</li>
+    </ul>
+</div>
+
+</body>
+</html>
