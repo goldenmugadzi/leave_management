@@ -2118,70 +2118,122 @@ def view_all_viraments(request):
 @login_required
 def viraments_awaiting_my_action(request):
     """
-    for each ace2.Process ,  let current_step = the last pettycash.process.approval if any else 0 and
-    let next_step =current_step+1 then check if  next_step=step.step for rfq.process.workflow.step_set filtered by
-    approver = user.roles.all.
+    Show virements awaiting the user's action - mirrors ACE awaiting my action logic but uses virement roles
     """
     viraments_to_process = []
     user_roles = get_user_roles_qs(request.user)
 
     user_id = request.user.id
     user_profile = UserProfile.objects.filter(id=user_id).first()
+    
+    if not user_profile:
+        messages.error(request, "User profile not found. Please contact administrator.")
+        return render(request, 'finance/ace2/view_all_viraments.html', {
+            'aces': [],
+            'virement_role': 'none',
+            'requester': 'create',
+            'error_message': 'User profile not found'
+        })
 
-    user_groups = user_profile.groups.values_list('name', flat=True)
+    # Get user's region and section
+    try:
+        region = Regions.objects.filter(id=user_profile.region.id).first()
+        section = Sections.objects.filter(section=user_profile.section).first()
+    except AttributeError:
+        messages.error(request, "User profile is incomplete. Missing region or section information.")
+        return render(request, 'finance/ace2/view_all_viraments.html', {
+            'aces': [],
+            'virement_role': 'none', 
+            'requester': 'create',
+            'error_message': 'Incomplete user profile'
+        })
 
-    custom_user_roles = {
-        "virement": {},
-    }
-
+    # Determine user's virement role
+    custom_user_roles = {"virement": {}}
     roles_ = user_profile.roles.all()
-    for _role in roles_:
-        role = Roles.objects.filter(id=_role.id).first()
-
-        if role.application == "virement":
-            custom_user_roles["virement"] = role
-    virement_role = str(custom_user_roles["virement"])
-    requester = "create"
-
-    print(virement_role)
-
-    if virement_role == "pass":
-        # Only show viraments in the user's section and region
-        viraments_qs = Asset_budget_Virament.objects.filter(
-            section=request.user.section,
-            region=request.user.region
-        )
-    else:
-        # Only show viraments in the user's region
-        viraments_qs = Asset_budget_Virament.objects.filter(
-            region=request.user.region
-        )
-
-    for virement in viraments_qs:
-        process = virement.process
+    virement_role = None
+    
+    try:
+        for _role in roles_:
+            role = Roles.objects.filter(id=_role.id).first()
+            if role and role.application == "virement":
+                custom_user_roles["virement"] = role.role
+                virement_role = str(custom_user_roles["virement"])
+                break
         
-        # Skip if process is None
-        if not process:
-            continue
+        if virement_role is None:
+            messages.warning(request, "You don't have a virement role assigned. Please contact administrator for access.")
+            return render(request, 'finance/ace2/view_all_viraments.html', {
+                'aces': [],
+                'virement_role': 'none',
+                'requester': 'create',
+                'error_message': 'No virement role assigned'
+            })
+            
+    except Exception as e:
+        messages.error(request, f"Error determining user role: {str(e)}")
+        return render(request, 'finance/ace2/view_all_viraments.html', {
+            'aces': [],
+            'virement_role': 'none',
+            'requester': 'create',
+            'error_message': 'Role determination error'
+        })
 
-        # Only show if the user is the correct approver for the next step
-        if process.approval_set.exists():
-            last_approval = process.approval_set.last()
-            current_step = last_approval.step.step
-        else:
-            current_step = 0
+    requester = "create"
+    print("virement role:", virement_role)
 
-        next_step = current_step + 1
-        workflow = process.workflow
-        step = workflow.step_set.filter(step=next_step, approver__in=user_roles).first()
+    # Apply section filtering logic similar to ACE - "pass" role sees only their section
+    if virement_role == "pass":
+        # Section heads only see virements from their own section (like ACE logic)
+        for virement in Asset_budget_Virament.objects.filter(section=section, region=region).order_by('-date_created'):
+            process = virement.process
+            
+            # Skip if process is None
+            if not process:
+                continue
+            
+            # Skip if any approval is "Rejected" (like ACE logic)
+            if process.approval_set.filter(approved="Rejected").exists():
+                continue
 
-        # Only add if the user is the approver for this step
-        if step:
-            # Optionally, check if the user is in the approver list for this step
-            roles_qs = get_user_roles_qs(request.user)
-            # step.approver is a ForeignKey (single Roles instance), so we cannot call .filter on it.
-            # Instead, confirm the FK role is in the user's roles queryset.
-            if roles_qs.filter(id=step.approver_id).exists():
+            # Only show if the user is the correct approver for the next step
+            if process.approval_set.exists():
+                last_approval = process.approval_set.last()
+                current_step = last_approval.step.step
+            else:
+                current_step = 0
+
+            next_step = current_step + 1
+            workflow = process.workflow
+            step = workflow.step_set.filter(step=next_step, approver__in=user_roles).first()
+            
+            if step:
+                viraments_to_process.append(virement)
+    else:
+        # Other roles see region-wide virements (like ACE logic)
+        for virement in Asset_budget_Virament.objects.filter(region=region).order_by('-date_created'):
+            process = virement.process
+            
+            # Skip if process is None
+            if not process:
+                continue
+                
+            # Skip if any approval is "Rejected" (like ACE logic)
+            if process.approval_set.filter(approved="Rejected").exists():
+                continue
+
+            # Only show if the user is the correct approver for the next step
+            if process.approval_set.exists():
+                last_approval = process.approval_set.last()
+                current_step = last_approval.step.step
+            else:
+                current_step = 0
+
+            next_step = current_step + 1
+            workflow = process.workflow
+            step = workflow.step_set.filter(step=next_step, approver__in=user_roles).first()
+            
+            if step:
                 viraments_to_process.append(virement)
 
     return render(request, 'finance/ace2/view_all_viraments.html', {'aces': viraments_to_process,
