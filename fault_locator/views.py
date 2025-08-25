@@ -6,6 +6,8 @@ from django.db.models import F, ExpressionWrapper, DurationField, Sum, Q, Count
 from django.template.loader import render_to_string
 from django.http import JsonResponse
 from django.views.decorators.http import require_http_methods
+from django.db import transaction, IntegrityError
+from django.core.exceptions import ValidationError
 import datetime
 from datetime import timedelta
 from decouple import config
@@ -1129,6 +1131,7 @@ def create_fault(request):
 
 @login_required
 @fault_assignment_required
+@transaction.atomic
 def simple_assign_fault(request, fault_id=None):
     try:
         user_profile = UserProfile.objects.filter(id=request.user.id).first()
@@ -1157,42 +1160,55 @@ def simple_assign_fault(request, fault_id=None):
                 messages.error(request, "Please select both fault and team")
                 return redirect('assign_fault')
             
-            fault = get_object_or_404(Fault, id=fault_id)
-            team = get_object_or_404(FaultLocatorTeam, id=team_id)
-            
-            # Check if team has a device
-            device_assignment = FaultLocatorDeviceAssignment.objects.filter(team=team).first()
-            if not device_assignment:
-                messages.error(request, f"Team '{team.name}' doesn't have a device assigned")
-                return redirect('assign_fault')
-            
-            # Check if assigned device is in working condition
-            if device_assignment.device.status not in ['available', 'assigned']:
-                messages.error(request, f"Team '{team.name}' cannot be assigned faults. Device '{device_assignment.device.serial_number}' is {device_assignment.device.get_status_display()}")
-                return redirect('assign_fault')
-            
-            # Check if fault is already assigned
-            existing_assignment = FaultAssignment.objects.filter(fault=fault, located_at__isnull=True).first()
-            if existing_assignment:
-                messages.error(request, "This fault is already assigned to a team")
+            try:
+                # Use select_for_update to prevent race conditions
+                fault = Fault.objects.select_for_update().get(id=fault_id)
+                team = FaultLocatorTeam.objects.select_for_update().get(id=team_id)
+                
+                # Check if fault is already assigned
+                existing_assignment = FaultAssignment.objects.filter(fault=fault, located_at__isnull=True).first()
+                if existing_assignment:
+                    messages.error(request, "This fault is already assigned to a team")
+                    return redirect('simple_fault_list')
+                
+                # Check if team has a device
+                device_assignment = FaultLocatorDeviceAssignment.objects.filter(team=team).select_related('device').first()
+                if not device_assignment:
+                    messages.error(request, f"Team '{team.name}' doesn't have a device assigned")
+                    return redirect('assign_fault')
+                
+                # Check if assigned device is in working condition
+                if device_assignment.device.status not in ['available', 'assigned']:
+                    messages.error(request, f"Team '{team.name}' cannot be assigned faults. Device '{device_assignment.device.serial_number}' is {device_assignment.device.get_status_display()}")
+                    return redirect('assign_fault')
+                
+                # Create assignment atomically
+                fault_assignment = FaultAssignment.objects.create(
+                    fault=fault,
+                    team=team,
+                    device=device_assignment.device,
+                    assigned_by=user_profile
+                )
+                
+                # Update fault status
+                fault.status = 'assigned'
+                fault.save()
+                
+                # Send notifications
+                notify_fault_assignment(fault_assignment, request)
+                
+                messages.success(request, f"Fault assigned to team '{team.name}' with device '{device_assignment.device.serial_number}'")
                 return redirect('simple_fault_list')
-            
-            # Create assignment
-            fault_assignment = FaultAssignment.objects.create(
-                fault=fault,
-                team=team,
-                device=device_assignment.device
-            )
-            
-            # Update fault status
-            fault.status = 'assigned'
-            fault.save()
-            
-            # Send notifications
-            notify_fault_assignment(fault_assignment, request)
-            
-            messages.success(request, f"Fault assigned to team '{team.name}' with device '{device_assignment.device.serial_number}'")
-            return redirect('simple_fault_list')
+                
+            except Fault.DoesNotExist:
+                messages.error(request, "Fault not found")
+                return redirect('simple_fault_list')
+            except FaultLocatorTeam.DoesNotExist:
+                messages.error(request, "Team not found")
+                return redirect('assign_fault')
+            except IntegrityError as e:
+                messages.error(request, "Assignment conflict occurred. Please try again.")
+                return redirect('assign_fault')
         
         # GET request - show assignment form
         
@@ -1523,6 +1539,7 @@ def team_overview(request):
 
 @login_required
 @require_http_methods(["GET", "POST"])
+@transaction.atomic
 def assign_team_to_depot(request, team_id):
     try:
         user_profile = UserProfile.objects.filter(id=request.user.id).first()
@@ -1532,7 +1549,8 @@ def assign_team_to_depot(request, team_id):
             messages.error(request, "You don't have permission to assign teams to depots.")
             return redirect('team_overview')
         
-        team = get_object_or_404(FaultLocatorTeam, id=team_id)
+        # Use select_for_update to prevent race conditions
+        team = get_object_or_404(FaultLocatorTeam.objects.select_for_update(), id=team_id)
         
         # Check if team has a working device assigned
         is_valid, error_message = validate_team_device_for_deployment(team)
@@ -1558,7 +1576,7 @@ def assign_team_to_depot(request, team_id):
                 deployment_notes = form.cleaned_data.get('deployment_notes', '')
                 
                 try:
-                    # Create deployment
+                    # Create deployment atomically
                     deployment = TeamDeployment.objects.create(
                         team=team,
                         depot=depot,
@@ -1578,8 +1596,12 @@ def assign_team_to_depot(request, team_id):
                     messages.success(request, f"Team '{team.name}' has been successfully deployed to {depot.depot}.")
                     return redirect('team_overview')
                     
-                except Exception as e:
-                    messages.error(request, f"Error deploying team: {str(e)}")
+                except IntegrityError as e:
+                    messages.error(request, "Team deployment conflict occurred. Please try again.")
+                    return redirect('team_overview')
+                except ValidationError as e:
+                    messages.error(request, f"Deployment validation error: {str(e)}")
+                    return redirect('team_overview')
         else:
             form = TeamDepotAssignmentForm(user_region=user_region)
         
@@ -1926,6 +1948,7 @@ def device_detail(request, device_id):
         return redirect('device_list')
 
 @login_required
+@transaction.atomic
 def assign_device_to_team(request):
     try:
         user_profile = UserProfile.objects.filter(id=request.user.id).first()
@@ -1940,25 +1963,49 @@ def assign_device_to_team(request):
         if request.method == "POST":
             form = SeniorForepersonDeviceAssignmentForm(request.POST, user=user_profile)
             if form.is_valid():
-                assignment = form.save()
-                
-                # Notify team members
-                team = assignment.team
-                for member in team.members.all():
-                    if member.email:
-                        message = f"Your team '{team.name}' has been assigned device '{assignment.device.serial_number}'"
-                        url = f"/fault_locator/teams/{team.id}/"
-                        notify_fault_locator_user(
-                            user=member,
-                            message=message,
-                            notification_type="Device Assignment",
-                            url=url,
-                            fault_or_team_id=team.id,
-                            request=request
-                        )
-                
-                messages.success(request, f"Device '{assignment.device.serial_number}' assigned to team '{team.name}'")
-                return redirect('team_overview')
+                try:
+                    # Get device and team with locks to prevent race conditions
+                    device = FaultLocatorDevice.objects.select_for_update().get(id=form.cleaned_data['device'].id)
+                    team = FaultLocatorTeam.objects.select_for_update().get(id=form.cleaned_data['team'].id)
+                    
+                    # Check if device is already assigned
+                    existing_device_assignment = FaultLocatorDeviceAssignment.objects.filter(device=device).first()
+                    if existing_device_assignment:
+                        messages.error(request, f"Device '{device.serial_number}' is already assigned to team '{existing_device_assignment.team.name}'")
+                        return redirect('assign_device_to_team')
+                    
+                    # Check if team already has a device
+                    existing_team_assignment = FaultLocatorDeviceAssignment.objects.filter(team=team).first()
+                    if existing_team_assignment:
+                        messages.error(request, f"Team '{team.name}' already has device '{existing_team_assignment.device.serial_number}' assigned")
+                        return redirect('assign_device_to_team')
+                    
+                    # Create assignment atomically
+                    assignment = FaultLocatorDeviceAssignment.objects.create(
+                        device=device,
+                        team=team,
+                        assigned_by=user_profile,
+                        notes=form.cleaned_data.get('notes', '')
+                    )
+                    
+                    # Notify team members
+                    notify_device_assignment(assignment, request)
+                    
+                    messages.success(request, f"Device '{assignment.device.serial_number}' assigned to team '{team.name}'")
+                    return redirect('team_overview')
+                    
+                except FaultLocatorDevice.DoesNotExist:
+                    messages.error(request, "Device not found")
+                    return redirect('assign_device_to_team')
+                except FaultLocatorTeam.DoesNotExist:
+                    messages.error(request, "Team not found")
+                    return redirect('assign_device_to_team')
+                except IntegrityError as e:
+                    messages.error(request, "Device assignment conflict. Device may already be assigned to another team.")
+                    return redirect('assign_device_to_team')
+                except ValidationError as e:
+                    messages.error(request, f"Assignment validation error: {str(e)}")
+                    return redirect('assign_device_to_team')
         else:
             initial_data = {}
             if team_id:

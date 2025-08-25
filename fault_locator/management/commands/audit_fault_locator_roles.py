@@ -67,7 +67,13 @@ class Command(BaseCommand):
         json_out = options.get('json')
         limit = options.get('limit')
 
-        application = Application.objects.filter(name=FaultLocatorRoleManager.APPLICATION_NAME).first()
+        # Safely handle missing tables
+        try:
+            application = Application.objects.filter(name=FaultLocatorRoleManager.APPLICATION_NAME).first()
+        except Exception as e:
+            self.stdout.write(self.style.ERROR(f"Database not ready (missing tables): {e}"))
+            self.stdout.write(self.style.WARNING("Run 'python manage.py migrate' or ensure custom app migrations are applied."))
+            application = None
 
         if migrate:
             migrated, errors = migrate_legacy_roles()
@@ -85,11 +91,26 @@ class Command(BaseCommand):
         for user in qs:
             central_roles = []
             if application:
-                central_roles = list(user.roles.filter(app_id=application))
+                try:
+                    central_roles = list(user.roles.filter(app_id=application))
+                except Exception:
+                    # Handle missing roles table gracefully
+                    pass
 
-            legacy_roles = list(FaultLocatorRole.objects.filter(user=user, is_active=True))
-            team_leader_team = FaultLocatorTeam.objects.filter(team_leader=user).first()
-            member_teams = list(user.fault_locator_teams.all())
+            try:
+                legacy_roles = list(FaultLocatorRole.objects.filter(user=user, is_active=True))
+            except Exception:
+                legacy_roles = []
+            
+            try:
+                team_leader_team = FaultLocatorTeam.objects.filter(team_leader=user).first()
+            except Exception:
+                team_leader_team = None
+            
+            try:
+                member_teams = list(user.fault_locator_teams.all())
+            except Exception:
+                member_teams = []
             designation_role = infer_designation_role(user)
 
             effective_role = compute_effective_role(
