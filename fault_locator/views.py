@@ -1277,10 +1277,12 @@ def simple_assign_fault(request, fault_id=None):
 
 @login_required
 @team_leader_required
+@login_required
+@transaction.atomic
 def field_update(request, fault_id):
     try:
         user_profile = UserProfile.objects.filter(id=request.user.id).first()
-        fault = get_object_or_404(Fault, id=fault_id)
+        fault = get_object_or_404(Fault.objects.select_for_update(), id=fault_id)
         
         # Check if user can update this fault
         user_teams = user_profile.fault_locator_teams.all() if user_profile else []
@@ -1306,12 +1308,14 @@ def field_update(request, fault_id):
             old_status = fault.status
             
             if action == 'located':
-                fault.status = 'located'
-                fault.save()
-                
-                if current_assignment:
-                    current_assignment.located_at = timezone.now()
-                    current_assignment.save()
+                # Use atomic transaction for fault status update
+                with transaction.atomic():
+                    fault.status = 'located'
+                    fault.save()
+                    
+                    if current_assignment:
+                        current_assignment.located_at = timezone.now()
+                        current_assignment.save()
                 
                 notify_fault_status_update(fault, old_status, 'located', user_profile, request)
                 messages.success(request, f"✅ Fault marked as LOCATED! Great work!")
@@ -1345,6 +1349,12 @@ def field_update(request, fault_id):
         }
         
         return render(request, "fault_locator/field_update.html", context)
+    except (IntegrityError, ValidationError) as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Field update error: {e}")
+        messages.error(request, "An error occurred updating the fault status.")
+        return redirect('fault_locator_dashboard')
     except Exception as e:
         import logging
         logger = logging.getLogger(__name__)
@@ -1623,6 +1633,7 @@ def assign_team_to_depot(request, team_id):
 
 @login_required
 @require_http_methods(["POST"])
+@transaction.atomic
 def recall_team_from_depot(request, team_id):
     try:
         user_profile = UserProfile.objects.filter(id=request.user.id).first()
@@ -1632,7 +1643,8 @@ def recall_team_from_depot(request, team_id):
             messages.error(request, "You don't have permission to recall teams from depots.")
             return redirect('team_overview')
         
-        team = get_object_or_404(FaultLocatorTeam, id=team_id)
+        # Use select_for_update to prevent race conditions
+        team = get_object_or_404(FaultLocatorTeam.objects.select_for_update(), id=team_id)
         
         # Check if team is deployed
         if not team.current_depot:
@@ -1649,54 +1661,64 @@ def recall_team_from_depot(request, team_id):
             if active_assignments.exists() and not request.POST.get('force_recall'):
                 messages.error(request, "Team has active fault assignments. Use force recall if necessary.")
                 return redirect('recall_team', team_id=team.id)
-            # Handle reassign after faults
-            reassign_after_faults = request.POST.get('reassign_after_faults') == 'on'
-            reassign_depot_id = request.POST.get('reassign_depot')
-            recall_notes = request.POST.get('recall_notes', '')
             
-            reassign_depot = None
-            if reassign_after_faults and reassign_depot_id:
-                try:
-                    from it.users.models import Depots
-                    reassign_depot = Depots.objects.get(id=reassign_depot_id)
-                except Depots.DoesNotExist:
-                    reassign_depot = None
-            
-            # Find current deployment
-            current_deployment = TeamDeployment.objects.filter(
-                team=team,
-                recalled_at__isnull=True
-            ).first()
-            
-            if current_deployment:
-                current_deployment.recalled_at = timezone.now()
-                current_deployment.recalled_by = user_profile
+            try:
+                # Handle reassign after faults
+                reassign_after_faults = request.POST.get('reassign_after_faults') == 'on'
+                reassign_depot_id = request.POST.get('reassign_depot')
+                recall_notes = request.POST.get('recall_notes', '')
                 
-                # Store recall notes and reassign intent
-                recall_notes_text = recall_notes
+                reassign_depot = None
+                if reassign_after_faults and reassign_depot_id:
+                    try:
+                        from it.users.models import Depots
+                        reassign_depot = Depots.objects.get(id=reassign_depot_id)
+                    except Depots.DoesNotExist:
+                        reassign_depot = None
+                
+                # Find current deployment
+                current_deployment = TeamDeployment.objects.filter(
+                    team=team,
+                    recalled_at__isnull=True
+                ).first()
+                
+                if current_deployment:
+                    current_deployment.recalled_at = timezone.now()
+                    current_deployment.recalled_by = user_profile
+                    
+                    # Store recall notes and reassign intent
+                    recall_notes_text = recall_notes
+                    if reassign_after_faults and reassign_depot:
+                        reassign_info = f"REASSIGN_TO:{reassign_depot.id}:{reassign_depot.depot}"
+                        recall_notes_text = f"{recall_notes}\n{reassign_info}" if recall_notes else reassign_info
+                    
+                    current_deployment.recall_notes = recall_notes_text
+                    current_deployment.save()
+                
+                # Update team status
+                depot_name = team.current_depot.depot
+                team.current_depot = None
+                team.assigned_at = None
+                team.assigned_by = None
+                team.save()
+                
+                # Send recall notifications
+                notify_team_recall(team, user_profile, request)
+                
+                # Success message
+                success_message = f"Team '{team.name}' recalled from {depot_name}"
                 if reassign_after_faults and reassign_depot:
-                    reassign_info = f"REASSIGN_TO:{reassign_depot.id}:{reassign_depot.depot}"
-                    recall_notes_text = f"{recall_notes}\n{reassign_info}" if recall_notes else reassign_info
+                    success_message += f" and will be redeployed to {reassign_depot.depot} after current faults are completed"
                 
-                current_deployment.recall_notes = recall_notes_text
-                current_deployment.save()
-            # Update team status
-            depot_name = team.current_depot.depot
-            team.current_depot = None
-            team.assigned_at = None
-            team.assigned_by = None
-            team.save()
-            
-            # Send recall notifications
-            notify_team_recall(team, user_profile, request)
-            
-            # Success message
-            success_message = f"Team '{team.name}' recalled from {depot_name}"
-            if reassign_after_faults and reassign_depot:
-                success_message += f" and will be redeployed to {reassign_depot.depot} after current faults are completed"
-            
-            messages.success(request, success_message)
-            return redirect('team_overview')
+                messages.success(request, success_message)
+                return redirect('team_overview')
+                
+            except IntegrityError as e:
+                messages.error(request, "Team recall conflict occurred. Please try again.")
+                return redirect('team_overview')
+            except ValidationError as e:
+                messages.error(request, f"Recall validation error: {str(e)}")
+                return redirect('team_overview')
     
         from it.users.models import Depots
         
@@ -2084,167 +2106,8 @@ def unassign_device(request, device_id):
         messages.error(request, "An error occurred unassigning the device.")
         return redirect('device_list')
 
-# TEAM MANAGEMENT VIEWS
-
 @login_required
-@team_management_required
-def create_team(request):
-    try:
-        user_profile = UserProfile.objects.filter(id=request.user.id).first()
-        
-        # Check permissions
-        if not (is_senior_foreman(user_profile) or can_manage_devices(user_profile)):
-            messages.error(request, "You don't have permission to create teams")
-            return redirect('fault_locator_dashboard')
-        
-        if request.method == "POST":
-            form = FaultLocatorTeamForm(request.POST, user_region=user_profile.region)
-            if form.is_valid():
-                team = form.save()
-                
-                # Notify team members
-                for member in team.members.all():
-                    if member.email:
-                        message = f"You have been added to fault locator team '{team.name}'"
-                        url = f"/fault_locator/teams/{team.id}/"
-                        notify_fault_locator_user(
-                            user=member,
-                            message=message,
-                            notification_type="Team Assignment",
-                            url=url,
-                            fault_or_team_id=team.id,
-                            request=request
-                        )
-                
-                messages.success(request, f"Team '{team.name}' created successfully with {team.members.count()} members!")
-                return redirect('team_overview')
-        else:
-            form = FaultLocatorTeamForm(user_region=user_profile.region)
-        
-        context = {
-            'form': form,
-            'user_profile': user_profile,
-            'page_title': 'Create New Team',
-        }
-        
-        return render(request, "fault_locator/create_team.html", context)
-    except Exception as e:
-        import logging
-        logger = logging.getLogger(__name__)
-        logger.error(f"Create team error: {e}")
-        messages.error(request, "An error occurred creating the team.")
-        return redirect('team_overview')
-
-@login_required
-def unassign_device(request, device_id):
-    try:
-        user_profile = UserProfile.objects.filter(id=request.user.id).first()
-        
-        # Check permissions
-        if not can_manage_devices(user_profile):
-            messages.error(request, "You don't have permission to unassign devices")
-            return redirect('fault_locator_dashboard')
-        
-        device = get_object_or_404(FaultLocatorDevice, id=device_id)
-        assignment = FaultLocatorDeviceAssignment.objects.filter(device=device).first()
-        
-        if not assignment:
-            messages.error(request, "Device is not currently assigned to any team")
-            return redirect('device_list')
-        
-        # Check if device is being used for active fault
-        active_fault = FaultAssignment.objects.filter(device=device, located_at__isnull=True).first()
-        if active_fault:
-            messages.error(request, f"Cannot unassign device - it's currently being used for fault: {active_fault.fault.description}")
-            return redirect('device_list')
-        
-        if request.method == "POST":
-            team = assignment.team
-            assignment.delete()
-            
-            # Notify team members
-            for member in team.members.all():
-                if member.email:
-                    message = f"Device '{device.serial_number}' has been removed from your team '{team.name}'"
-                    url = f"/fault_locator/teams/{team.id}/"
-                    notify_fault_locator_user(
-                        user=member,
-                        message=message,
-                        notification_type="Device Removal",
-                        url=url,
-                        fault_or_team_id=team.id,
-                        request=request
-                    )
-            
-            messages.success(request, f"Device '{device.serial_number}' unassigned from team '{team.name}'")
-            return redirect('device_list')
-        
-        context = {
-            'device': device,
-            'assignment': assignment,
-            'user_profile': user_profile,
-        }
-        
-        return render(request, "fault_locator/unassign_device.html", context)
-    except Exception as e:
-        import logging
-        logger = logging.getLogger(__name__)
-        logger.error(f"Unassign device error: {e}")
-        messages.error(request, "An error occurred unassigning the device.")
-        return redirect('device_list')
-
-# TEAM MANAGEMENT VIEWS
-
-@login_required
-@team_management_required
-def create_team(request):
-    try:
-        user_profile = UserProfile.objects.filter(id=request.user.id).first()
-        
-        # Check permissions
-        if not (is_senior_foreman(user_profile) or can_manage_devices(user_profile)):
-            messages.error(request, "You don't have permission to create teams")
-            return redirect('fault_locator_dashboard')
-        
-        if request.method == "POST":
-            form = FaultLocatorTeamForm(request.POST, user_region=user_profile.region)
-            if form.is_valid():
-                team = form.save()
-                
-                # Notify team members
-                for member in team.members.all():
-                    if member.email:
-                        message = f"You have been added to fault locator team '{team.name}'"
-                        url = f"/fault_locator/teams/{team.id}/"
-                        notify_fault_locator_user(
-                            user=member,
-                            message=message,
-                            notification_type="Team Assignment",
-                            url=url,
-                            fault_or_team_id=team.id,
-                            request=request
-                        )
-                
-                messages.success(request, f"Team '{team.name}' created successfully with {team.members.count()} members!")
-                return redirect('team_overview')
-        else:
-            form = FaultLocatorTeamForm(user_region=user_profile.region)
-        
-        context = {
-            'form': form,
-            'user_profile': user_profile,
-            'page_title': 'Create New Team',
-        }
-        
-        return render(request, "fault_locator/create_team.html", context)
-    except Exception as e:
-        import logging
-        logger = logging.getLogger(__name__)
-        logger.error(f"Create team error: {e}")
-        messages.error(request, "An error occurred creating the team.")
-        return redirect('team_overview')
-
-@login_required
+@transaction.atomic
 def edit_team(request, team_id):
     try:
         user_profile = UserProfile.objects.filter(id=request.user.id).first()
@@ -2254,53 +2117,61 @@ def edit_team(request, team_id):
             messages.error(request, "You don't have permission to edit teams")
             return redirect('fault_locator_dashboard')
         
-        team = get_object_or_404(FaultLocatorTeam, id=team_id)
+        team = get_object_or_404(FaultLocatorTeam.objects.select_for_update(), id=team_id)
         
         if request.method == "POST":
-            # Handle name change
-            if 'update_name' in request.POST:
-                name_form = FaultLocatorTeamNameForm(request.POST, instance=team)
-                if name_form.is_valid():
-                    team = name_form.save()
-                    messages.success(request, f"Team name updated to '{team.name}'")
-                    return redirect('edit_team', team_id=team.id)
-            
-            # Handle member addition
-            elif 'add_member' in request.POST:
-                add_form = AddTeamMemberForm(request.POST, user_region=user_profile.region, team=team)
-                if add_form.is_valid():
-                    member = add_form.cleaned_data['member']
-                    
-                    # Check if member can be added to team
-                    can_add, reason = can_user_be_added_to_team(member, team)
-                    
-                    if not can_add:
-                        messages.error(request, f"Cannot add {member.get_full_name()}: {reason}")
+            try:
+                # Handle name change
+                if 'update_name' in request.POST:
+                    name_form = FaultLocatorTeamNameForm(request.POST, instance=team)
+                    if name_form.is_valid():
+                        team = name_form.save()
+                        messages.success(request, f"Team name updated to '{team.name}'")
                         return redirect('edit_team', team_id=team.id)
-                    
-                    if member not in team.members.all():
-                        team.members.add(member)
+                
+                # Handle member addition
+                elif 'add_member' in request.POST:
+                    add_form = AddTeamMemberForm(request.POST, user_region=user_profile.region, team=team)
+                    if add_form.is_valid():
+                        member = add_form.cleaned_data['member']
                         
-                        # Send team member addition notification
-                        notify_team_member_addition(team, member, user_profile, request)
+                        # Check if member can be added to team
+                        can_add, reason = can_user_be_added_to_team(member, team)
                         
-                        messages.success(request, f"{member.get_full_name()} added to team")
-                    else:
-                        messages.warning(request, f"{member.get_full_name()} is already in this team")
-                    return redirect('edit_team', team_id=team.id)
-            
-            # Handle member removal
-            elif 'remove_member' in request.POST:
-                member_id = request.POST.get('member_id')
-                if member_id:
-                    member = get_object_or_404(UserProfile, id=member_id)
-                    team.members.remove(member)
-                    
-                    # Send team member removal notification
-                    notify_team_member_removal(team, member, user_profile, request)
-                    
-                    messages.success(request, f"{member.get_full_name()} removed from team")
-                    return redirect('edit_team', team_id=team.id)
+                        if not can_add:
+                            messages.error(request, f"Cannot add {member.get_full_name()}: {reason}")
+                            return redirect('edit_team', team_id=team.id)
+                        
+                        if member not in team.members.all():
+                            team.members.add(member)
+                            
+                            # Send team member addition notification
+                            notify_team_member_addition(team, member, user_profile, request)
+                            
+                            messages.success(request, f"{member.get_full_name()} added to team")
+                        else:
+                            messages.warning(request, f"{member.get_full_name()} is already in this team")
+                        return redirect('edit_team', team_id=team.id)
+                
+                # Handle member removal
+                elif 'remove_member' in request.POST:
+                    member_id = request.POST.get('member_id')
+                    if member_id:
+                        member = get_object_or_404(UserProfile, id=member_id)
+                        team.members.remove(member)
+                        
+                        # Send team member removal notification
+                        notify_team_member_removal(team, member, user_profile, request)
+                        
+                        messages.success(request, f"{member.get_full_name()} removed from team")
+                        return redirect('edit_team', team_id=team.id)
+                        
+            except IntegrityError as e:
+                messages.error(request, "Team update conflict occurred. Please try again.")
+                return redirect('edit_team', team_id=team.id)
+            except ValidationError as e:
+                messages.error(request, f"Team validation error: {str(e)}")
+                return redirect('edit_team', team_id=team.id)
     
         # Initialize forms
         name_form = FaultLocatorTeamNameForm(instance=team)
@@ -2337,6 +2208,7 @@ def edit_team(request, team_id):
         return redirect('team_overview')
 
 @login_required
+@transaction.atomic
 def delete_team(request, team_id):
     try:
         user_profile = UserProfile.objects.filter(id=request.user.id).first()
@@ -2346,7 +2218,7 @@ def delete_team(request, team_id):
             messages.error(request, "Only senior forepersons can delete teams")
             return redirect('fault_locator_dashboard')
         
-        team = get_object_or_404(FaultLocatorTeam, id=team_id)
+        team = get_object_or_404(FaultLocatorTeam.objects.select_for_update(), id=team_id)
         
         # Check if team has active assignments or device
         device_assignment = FaultLocatorDeviceAssignment.objects.filter(team=team).first()
@@ -2359,21 +2231,24 @@ def delete_team(request, team_id):
         if request.method == "POST":
             team_name = team.name
             
-            # Notify team members
-            for member in team.members.all():
-                if member.email:
-                    message = f"Fault locator team '{team_name}' has been dissolved"
-                    url = "/fault_locator/"
-                    notify_fault_locator_user(
-                        user=member,
-                        message=message,
-                        notification_type="Team Dissolution",
-                        url=url,
-                        fault_or_team_id=team.id,
-                        request=request
-                    )
+            # Use atomic transaction for team deletion
+            with transaction.atomic():
+                # Notify team members before deletion
+                for member in team.members.all():
+                    if member.email:
+                        message = f"Fault locator team '{team_name}' has been dissolved"
+                        url = "/fault_locator/"
+                        notify_fault_locator_user(
+                            user=member,
+                            message=message,
+                            notification_type="Team Dissolution",
+                            url=url,
+                            fault_or_team_id=team.id,
+                            request=request
+                        )
+                
+                team.delete()
             
-            team.delete()
             messages.success(request, f"Team '{team_name}' deleted successfully")
             return redirect('team_overview')
         
@@ -2383,6 +2258,12 @@ def delete_team(request, team_id):
         }
         
         return render(request, "fault_locator/delete_team.html", context)
+    except (IntegrityError, ValidationError) as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Delete team error: {e}")
+        messages.error(request, "An error occurred deleting the team.")
+        return redirect('team_overview')
     except Exception as e:
         import logging
         logger = logging.getLogger(__name__)
@@ -2602,6 +2483,7 @@ def get_depot_priority_information(user_profile):
         return []
 
 @login_required
+@transaction.atomic
 def deploy_team(request, team_id=None):
     # Force console output to see if view is called
     import sys
@@ -2652,7 +2534,7 @@ def deploy_team(request, team_id=None):
 
         team = None
         if team_id:
-            team = get_object_or_404(FaultLocatorTeam, id=team_id)
+            team = get_object_or_404(FaultLocatorTeam.objects.select_for_update(), id=team_id)
             
             # Check if team already deployed
             if team.current_depot:
@@ -2673,19 +2555,21 @@ def deploy_team(request, team_id=None):
                 
             form = TeamDeploymentForm(request.POST, user_region=user_region)
             if form.is_valid():
-                deployment = form.save(commit=False)
-                deployment.deployed_by = user_profile
-                deployment.save()
-                
-                # Update team's current depot
-                team = deployment.team
-                team.current_depot = deployment.depot
-                team.assigned_at = deployment.deployed_at
-                team.assigned_by = user_profile
-                team.save()
-                
-                # Send notifications
-                notify_team_deployment(deployment, request)
+                # Use atomic transaction for deployment
+                with transaction.atomic():
+                    deployment = form.save(commit=False)
+                    deployment.deployed_by = user_profile
+                    deployment.save()
+                    
+                    # Update team's current depot
+                    team = deployment.team
+                    team.current_depot = deployment.depot
+                    team.assigned_at = deployment.deployed_at
+                    team.assigned_by = user_profile
+                    team.save()
+                    
+                    # Send notifications
+                    notify_team_deployment(deployment, request)
                 
                 messages.success(request, f"Team '{team.name}' deployed to {deployment.depot.depot}")
                 return redirect('team_overview')
@@ -2713,6 +2597,12 @@ def deploy_team(request, team_id=None):
         }
         
         return render(request, "fault_locator/deploy_team.html", context)
+    except (IntegrityError, ValidationError) as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Deploy team error: {e}")
+        messages.error(request, "An error occurred deploying the team.")
+        return redirect('team_overview')
     except Exception as e:
         import logging
         logger = logging.getLogger(__name__)
@@ -2721,6 +2611,7 @@ def deploy_team(request, team_id=None):
         return redirect('team_overview')
 
 @login_required
+@transaction.atomic
 def recall_team(request, team_id):
     try:
         user_profile = UserProfile.objects.filter(id=request.user.id).first()
@@ -2740,7 +2631,7 @@ def recall_team(request, team_id):
             messages.error(request, "You don't have permission to recall this team")
             return redirect('fault_locator_dashboard')
         
-        team = get_object_or_404(FaultLocatorTeam, id=team_id)
+        team = get_object_or_404(FaultLocatorTeam.objects.select_for_update(), id=team_id)
         
         if not team.current_depot:
             messages.warning(request, f"Team '{team.name}' is not currently deployed")
@@ -2769,43 +2660,45 @@ def recall_team(request, team_id):
                 except Depots.DoesNotExist:
                     reassign_depot = None
             
-            # Find current deployment
-            current_deployment = TeamDeployment.objects.filter(
-                team=team,
-                recalled_at__isnull=True
-            ).first()
-            
-            if current_deployment:
-                current_deployment.recalled_at = timezone.now()
-                current_deployment.recalled_by = user_profile
+            # Use atomic transaction for recall operations
+            with transaction.atomic():
+                # Find current deployment
+                current_deployment = TeamDeployment.objects.filter(
+                    team=team,
+                    recalled_at__isnull=True
+                ).first()
                 
-                # Store recall notes and reassign intent
-                recall_notes_text = recall_notes
-                if reassign_after_faults and reassign_depot:
-                    reassign_info = f"REASSIGN_TO:{reassign_depot.id}:{reassign_depot.depot}"
-                    recall_notes_text = f"{recall_notes}\n{reassign_info}" if recall_notes else reassign_info
-                
-                current_deployment.recall_notes = recall_notes_text
-                current_deployment.save()
-            # Update team status
-            depot_name = team.current_depot.depot
-            team.current_depot = None
-            team.assigned_at = None
-            team.assigned_by = None
-            team.save()
-            # Notify team members
-            for member in team.members.all():
-                if member.email:
-                    message = f"Your team '{team.name}' has been recalled from {depot_name}"
-                    url = f"/fault_locator/teams/{team.id}/"
-                    notify_fault_locator_user(
-                        user=member,
-                        message=message,
-                        notification_type="Team Recall",
-                        url=url,
-                        fault_or_team_id=team.id,
-                        request=request
-                    )
+                if current_deployment:
+                    current_deployment.recalled_at = timezone.now()
+                    current_deployment.recalled_by = user_profile
+                    
+                    # Store recall notes and reassign intent
+                    recall_notes_text = recall_notes
+                    if reassign_after_faults and reassign_depot:
+                        reassign_info = f"REASSIGN_TO:{reassign_depot.id}:{reassign_depot.depot}"
+                        recall_notes_text = f"{recall_notes}\n{reassign_info}" if recall_notes else reassign_info
+                    
+                    current_deployment.recall_notes = recall_notes_text
+                    current_deployment.save()
+                # Update team status
+                depot_name = team.current_depot.depot
+                team.current_depot = None
+                team.assigned_at = None
+                team.assigned_by = None
+                team.save()
+                # Notify team members
+                for member in team.members.all():
+                    if member.email:
+                        message = f"Your team '{team.name}' has been recalled from {depot_name}"
+                        url = f"/fault_locator/teams/{team.id}/"
+                        notify_fault_locator_user(
+                            user=member,
+                            message=message,
+                            notification_type="Team Recall",
+                            url=url,
+                            fault_or_team_id=team.id,
+                            request=request
+                        )
             # Success message
             success_message = f"Team '{team.name}' recalled from {depot_name}"
             if reassign_after_faults and reassign_depot:
@@ -2828,6 +2721,12 @@ def recall_team(request, team_id):
             'depots': depots,
         }
         return render(request, "fault_locator/recall_team.html", context)
+    except (IntegrityError, ValidationError) as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Recall team error: {e}")
+        messages.error(request, "An error occurred recalling the team.")
+        return redirect('team_overview')
     except Exception as e:
         import logging
         logger = logging.getLogger(__name__)
@@ -2859,6 +2758,7 @@ def debug_user(request):
 # ADVANCED FAULT ASSIGNMENT
 
 @login_required
+@transaction.atomic
 def advanced_fault_assignment(request):
     try:
         user_profile = UserProfile.objects.filter(id=request.user.id).first()
@@ -2931,46 +2831,60 @@ def advanced_fault_assignment(request):
                 messages.error(request, "Please select faults and a team")
                 return redirect('advanced_fault_assignment')
             
-            team = get_object_or_404(FaultLocatorTeam, id=team_id)
-            device_assignment = FaultLocatorDeviceAssignment.objects.filter(team=team).first()
-            
-            if not device_assignment:
-                messages.error(request, f"Team '{team.name}' doesn't have a device assigned")
-                return redirect('advanced_fault_assignment')
-            
-            # Check if assigned device is in working condition
-            if device_assignment.device.status not in ['available', 'assigned']:
-                messages.error(request, f"Team '{team.name}' cannot be assigned faults. Device '{device_assignment.device.serial_number}' is {device_assignment.device.get_status_display()}")
-                return redirect('advanced_fault_assignment')
-            
-            assigned_count = 0
-            for fault_id in fault_ids:
-                fault = get_object_or_404(Fault, id=fault_id)
+            # Use atomic transaction for bulk assignment operations
+            with transaction.atomic():
+                team = get_object_or_404(FaultLocatorTeam.objects.select_for_update(), id=team_id)
+                device_assignment = FaultLocatorDeviceAssignment.objects.select_for_update().filter(team=team).first()
                 
-                # Check if fault is already assigned
-                existing_assignment = FaultAssignment.objects.filter(fault=fault, located_at__isnull=True).first()
-                if existing_assignment:
-                    continue
+                if not device_assignment:
+                    messages.error(request, f"Team '{team.name}' doesn't have a device assigned")
+                    return redirect('advanced_fault_assignment')
                 
-                # Create assignment
-                fault_assignment = FaultAssignment.objects.create(
-                    fault=fault,
-                    team=team,
-                    device=device_assignment.device
-                )
+                # Check if assigned device is in working condition
+                if device_assignment.device.status not in ['available', 'assigned']:
+                    messages.error(request, f"Team '{team.name}' cannot be assigned faults. Device '{device_assignment.device.serial_number}' is {device_assignment.device.get_status_display()}")
+                    return redirect('advanced_fault_assignment')
                 
-                # Update fault status
-                fault.status = 'assigned'
-                fault.save()
+                assigned_count = 0
+                for fault_id in fault_ids:
+                    try:
+                        # Lock fault for update to prevent concurrent assignments
+                        fault = get_object_or_404(Fault.objects.select_for_update(), id=fault_id)
+                        
+                        # Re-check fault status under lock
+                        if fault.status != 'requested':
+                            continue
+                        
+                        # Check if fault is already assigned
+                        existing_assignment = FaultAssignment.objects.filter(fault=fault, located_at__isnull=True).first()
+                        if existing_assignment:
+                            continue
+                        
+                        # Create assignment
+                        fault_assignment = FaultAssignment.objects.create(
+                            fault=fault,
+                            team=team,
+                            device=device_assignment.device
+                        )
+                        
+                        # Update fault status
+                        fault.status = 'assigned'
+                        fault.save()
+                        
+                        # Send notifications
+                        notify_fault_assignment(fault_assignment, request)
+                        assigned_count += 1
+                    except IntegrityError:
+                        # Fault may have been assigned by another user
+                        continue
+                    except ValidationError:
+                        # Invalid data in assignment
+                        continue
                 
-                # Send notifications
-                notify_fault_assignment(fault_assignment, request)
-                assigned_count += 1
-            
-            if assigned_count > 0:
-                messages.success(request, f"{assigned_count} fault(s) assigned to team '{team.name}'")
-            else:
-                messages.warning(request, "No faults were assigned (they may already be assigned)")
+                if assigned_count > 0:
+                    messages.success(request, f"{assigned_count} fault(s) assigned to team '{team.name}'")
+                else:
+                    messages.warning(request, "No faults were assigned (they may already be assigned)")
             
             return redirect('advanced_fault_assignment')
         
