@@ -12,9 +12,15 @@ class FaultLocatorFullAPITests(APITestCase):
     """Comprehensive integration tests for Fault Locator module."""
 
     def setUp(self):
+        # Regions & Districts required by Depots FK constraints
+        from it.users.models import Regions, Districts
+        self.region_north = Regions.objects.create(region='North', code='N')
+        self.region_south = Regions.objects.create(region='South', code='S')
+        self.district_north = Districts.objects.create(district='North District', code='ND', region_id=self.region_north.id)
+        self.district_south = Districts.objects.create(district='South District', code='SD', region_id=self.region_south.id)
         # Depots
-        self.depot_a = Depots.objects.create(code='DA', depot='Depot A', region='North')
-        self.depot_b = Depots.objects.create(code='DB', depot='Depot B', region='South')
+        self.depot_a = Depots.objects.create(code='DA', depot='Depot A', region=self.region_north, district=self.district_north)
+        self.depot_b = Depots.objects.create(code='DB', depot='Depot B', region=self.region_south, district=self.district_south)
 
         # Users
         self.senior = UserProfile.objects.create(username='senior', first_name='Senior', last_name='One')
@@ -158,7 +164,7 @@ class FaultLocatorFullAPITests(APITestCase):
         # Non-senior should be forbidden
         deny = self.client_leader.post(url, {"user_id": self.team_member.id, "role": "team_member"}, format='json')
         self.assertEqual(deny.status_code, 403)
-        allow = self.client_senior.post(url, {"user_id": self.other_user.id, "role": "team_member"}, format='json')
+        allow = self.client_senior.post(url, {"user_id": self.other_user.id, "role": "team_member", "depot_id": None}, format='json')
         self.assertEqual(allow.status_code, 201, allow.data)
 
     # ========== Negative / Edge Cases ========== #

@@ -6,9 +6,12 @@ from .models import FaultLocatorRole, FaultLocatorDevice, Fault
 
 class FaultLocatorAPITestCase(APITestCase):
     def setUp(self):
-        self.depot = Depots.objects.create(code='X1', depot='Test Depot', region='Test Region')
+        from it.users.models import Regions, Districts
+        self.region = Regions.objects.create(region='Test Region', code='TR')
+        self.district = Districts.objects.create(district='Test District', code='TD', region_id=self.region.id)
+        self.depot = Depots.objects.create(code='X1', depot='Test Depot', region=self.region, district=self.district)
         self.senior = UserProfile.objects.create(username='senior1', first_name='Senior', last_name='User')
-        self.role = FaultLocatorRole.objects.create(user=self.senior, role='senior_foreman')
+        FaultLocatorRole.objects.create(user=self.senior, role='senior_foreman')
         self.token = Token.objects.create(user=self.senior)
         self.client = APIClient()
         self.client.credentials(HTTP_AUTHORIZATION='Token ' + self.token.key)

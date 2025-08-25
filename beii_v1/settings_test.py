@@ -1,68 +1,39 @@
-from .settings import *  # noqafrom pathlib import Path
+"""Clean lightweight settings for running the fault_locator test suite.
 
+Avoids importing production settings to prevent external DB and env dependencies.
+"""
+from pathlib import Path
+from datetime import timedelta
 
-
-# Test-only overrides# Minimal settings for tests
-
-DEBUG = TrueBASE_DIR = Path(__file__).resolve().parent.parent
-
-SECRET_KEY = 'test-secret-key'SECRET_KEY = 'test-secret-key'
-
+BASE_DIR = Path(__file__).resolve().parent.parent
+SECRET_KEY = 'test-secret-key'
 DEBUG = True
+ALLOWED_HOSTS = ['testserver', 'localhost', '127.0.0.1']
 
-# Use in-memory SQLite for speedALLOWED_HOSTS = ['*']
-
-DATABASES = {
-
-    'default': {INSTALLED_APPS = [
-
-        'ENGINE': 'django.db.backends.sqlite3',    'django.contrib.admin',
-
-        'NAME': ':memory:',    'django.contrib.auth',
-
-    }    'django.contrib.contenttypes',
-
-}    'django.contrib.sessions',
-
+INSTALLED_APPS = [
+    'django.contrib.admin',
+    'django.contrib.auth',
+    'django.contrib.contenttypes',
+    'django.contrib.sessions',
     'django.contrib.messages',
-
-# Faster password hashing    'django.contrib.staticfiles',
-
-PASSWORD_HASHERS = [    'rest_framework',
-
-    'django.contrib.auth.hashers.MD5PasswordHasher',    'it.users',
-
-]    'Asset_Register',
-
-    'approve',
-
-EMAIL_BACKEND = 'django.core.mail.backends.locmem.EmailBackend'    'ACE2',
-
-    'finance.PettyCash',
-
-# Disable Prometheus middleware during tests to reduce noise (optional)]
-
-MIDDLEWARE = [m for m in MIDDLEWARE if 'Prometheus' not in m]
-
-MIDDLEWARE = [
-
-# Speed up token lifetimes for tests if needed    'django.middleware.security.SecurityMiddleware',
-
-SIMPLE_JWT['ACCESS_TOKEN_LIFETIME'] = timedelta(minutes=5)  # noqa: F405    'django.contrib.sessions.middleware.SessionMiddleware',
-
-SIMPLE_JWT['REFRESH_TOKEN_LIFETIME'] = timedelta(minutes=10)    'django.middleware.common.CommonMiddleware',
-
-    'django.middleware.csrf.CsrfViewMiddleware',
-
-# Avoid external BASE_URL reliance if not set    'django.contrib.auth.middleware.AuthenticationMiddleware',
-
-BASE_URL = 'http://testserver'    'django.contrib.messages.middleware.MessageMiddleware',
-
-ALLOWED_HOSTS = ['testserver', 'localhost', '127.0.0.1']    'django.middleware.clickjacking.XFrameOptionsMiddleware',
-
+    'django.contrib.staticfiles',
+    'rest_framework',
+    'rest_framework.authtoken',
+    'it.users',
+    'fault_locator',
 ]
 
-# Static/media paths (in-memory / temp not required but keep consistent)
+AUTH_USER_MODEL = 'users.UserProfile'
+
+MIDDLEWARE = [
+    'django.middleware.security.SecurityMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.common.CommonMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware',
+    'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django.contrib.messages.middleware.MessageMiddleware',
+    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+]
 
 ROOT_URLCONF = 'beii_v1.test_urls'
 
@@ -91,11 +62,23 @@ DATABASES = {
     }
 }
 
-AUTH_USER_MODEL = 'users.UserProfile'
-
 PASSWORD_HASHERS = [
     'django.contrib.auth.hashers.MD5PasswordHasher',
 ]
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.TokenAuthentication',
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ]
+}
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=5),
+    'REFRESH_TOKEN_LIFETIME': timedelta(minutes=10),
+}
 
 EMAIL_BACKEND = 'django.core.mail.backends.locmem.EmailBackend'
 
@@ -107,16 +90,12 @@ USE_TZ = True
 STATIC_URL = '/static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+MIGRATION_MODULES = {
+    'fault_locator': None,
+    'users': None,
+}
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': True,
-}
-
-# Disable migrations for apps to simplify test DB setup
-MIGRATION_MODULES = {
-    'ACE2': None,
-    'approve': None,
-    'users': None,
-    'Asset_Register': None,
-    'PettyCash': None,
 }
