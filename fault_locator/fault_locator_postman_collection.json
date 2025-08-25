@@ -13,10 +13,95 @@
     {
       "name": "Devices",
       "item": [
-        {"name": "List Devices", "request": {"method": "GET", "header": [{"key": "Authorization", "value": "Token {{auth_token}}"}], "url": "{{base_url}}/devices/"}},
-        {"name": "Create Device", "request": {"method": "POST", "header": [{"key": "Authorization", "value": "Token {{auth_token}}"},{"key": "Content-Type","value": "application/json"}], "url": "{{base_url}}/devices/", "body": {"mode": "raw", "raw": "{\n  \"serial_number\": \"SN-001\",\n  \"description\": \"Ground probe kit\"\n}"}}},
-        {"name": "Retrieve Device", "request": {"method": "GET", "header": [{"key": "Authorization", "value": "Token {{auth_token}}"}], "url": "{{base_url}}/devices/1/"}},
-        {"name": "Update Device", "request": {"method": "PATCH", "header": [{"key": "Authorization", "value": "Token {{auth_token}}"},{"key": "Content-Type","value": "application/json"}], "url": "{{base_url}}/devices/1/", "body": {"mode": "raw", "raw": "{\n  \"description\": \"Updated description\"\n}"}}}
+        {
+          "name": "List Devices",
+          "request": {
+            "method": "GET",
+            "header": [
+              {"key": "Authorization", "value": "Token {{auth_token}}"}
+            ],
+            "url": "{{base_url}}/devices/"
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {"key": "Content-Type", "value": "application/json"}
+              ],
+              "body": "[\n  {\n    \"id\": 1,\n    \"serial_number\": \"SN-001\",\n    \"description\": \"Ground probe kit\",\n    \"is_active\": true,\n    \"created_at\": \"2025-08-25T10:15:30Z\"\n  }\n]"
+            }
+          ]
+        },
+        {
+          "name": "Create Device",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Authorization", "value": "Token {{auth_token}}"},
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "url": "{{base_url}}/devices/",
+            "body": {"mode": "raw", "raw": "{\n  \"serial_number\": \"SN-001\",\n  \"description\": \"Ground probe kit\"\n}"}
+          },
+          "response": [
+            {
+              "name": "201 Created",
+              "status": "Created",
+              "code": 201,
+              "header": [
+                {"key": "Content-Type", "value": "application/json"}
+              ],
+              "body": "{\n  \"id\": 1,\n  \"serial_number\": \"SN-001\",\n  \"description\": \"Ground probe kit\",\n  \"is_active\": true,\n  \"created_at\": \"2025-08-25T10:15:30Z\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Retrieve Device",
+          "request": {
+            "method": "GET",
+            "header": [
+              {"key": "Authorization", "value": "Token {{auth_token}}"}
+            ],
+            "url": "{{base_url}}/devices/1/"
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {"key": "Content-Type", "value": "application/json"}
+              ],
+              "body": "{\n  \"id\": 1,\n  \"serial_number\": \"SN-001\",\n  \"description\": \"Ground probe kit\",\n  \"is_active\": true,\n  \"created_at\": \"2025-08-25T10:15:30Z\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Update Device",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {"key": "Authorization", "value": "Token {{auth_token}}"},
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "url": "{{base_url}}/devices/1/",
+            "body": {"mode": "raw", "raw": "{\n  \"description\": \"Updated description\"\n}"}
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {"key": "Content-Type", "value": "application/json"}
+              ],
+              "body": "{\n  \"id\": 1,\n  \"serial_number\": \"SN-001\",\n  \"description\": \"Updated description\",\n  \"is_active\": true,\n  \"created_at\": \"2025-08-25T10:15:30Z\"\n}"
+            }
+          ]
+        }
       ]
     },
     {
@@ -31,10 +116,96 @@
     {
       "name": "Faults",
       "item": [
-        {"name": "List Faults", "request": {"method": "GET", "header": [{"key": "Authorization","value": "Token {{auth_token}}"}], "url": "{{base_url}}/faults/"}},
-        {"name": "Create Fault", "request": {"method": "POST", "header": [{"key": "Authorization","value": "Token {{auth_token}}"},{"key": "Content-Type","value":"application/json"}], "url": "{{base_url}}/faults/", "body": {"mode": "raw", "raw": "{\n  \"description\": \"Line down near pole 14\",\n  \"depot_id\": 1\n}"}}},
-        {"name": "Prioritize Fault", "request": {"method": "POST", "header": [{"key": "Authorization","value": "Token {{auth_token}}"},{"key": "Content-Type","value":"application/json"}], "url": "{{base_url}}/faults/1/prioritize/", "body": {"mode": "raw", "raw": "{\n  \"priority\": 4\n}"}}},
-        {"name": "Update Fault Status", "request": {"method": "POST", "header": [{"key": "Authorization","value": "Token {{auth_token}}"},{"key": "Content-Type","value":"application/json"}], "url": "{{base_url}}/faults/1/update_status/", "body": {"mode": "raw", "raw": "{\n  \"status\": \"located\"\n}"}}}
+        {
+          "name": "List Faults",
+          "request": {
+            "method": "GET",
+            "header": [
+              {"key": "Authorization", "value": "Token {{auth_token}}"}
+            ],
+            "url": "{{base_url}}/faults/"
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {"key": "Content-Type", "value": "application/json"}
+              ],
+              "body": "[\n  {\n    \"id\": 17,\n    \"description\": \"Line down near pole 14\",\n    \"status\": \"new\",\n    \"priority\": 3,\n    \"depot\": 1,\n    \"created_at\": \"2025-08-25T11:05:00Z\"\n  }\n]"
+            }
+          ]
+        },
+        {
+          "name": "Create Fault",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Authorization", "value": "Token {{auth_token}}"},
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "url": "{{base_url}}/faults/",
+            "body": {"mode": "raw", "raw": "{\n  \"description\": \"Line down near pole 14\",\n  \"depot_id\": 1\n}"}
+          },
+          "response": [
+            {
+              "name": "201 Created",
+              "status": "Created",
+              "code": 201,
+              "header": [
+                {"key": "Content-Type", "value": "application/json"}
+              ],
+              "body": "{\n  \"id\": 17,\n  \"description\": \"Line down near pole 14\",\n  \"status\": \"new\",\n  \"priority\": 3,\n  \"depot\": 1,\n  \"created_at\": \"2025-08-25T11:05:00Z\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Prioritize Fault",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Authorization", "value": "Token {{auth_token}}"},
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "url": "{{base_url}}/faults/1/prioritize/",
+            "body": {"mode": "raw", "raw": "{\n  \"priority\": 4\n}"}
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {"key": "Content-Type", "value": "application/json"}
+              ],
+              "body": "{\n  \"id\": 17,\n  \"priority\": 4\n}"
+            }
+          ]
+        },
+        {
+          "name": "Update Fault Status",
+          "request": {
+            "method": "POST",
+            "header": [
+              {"key": "Authorization", "value": "Token {{auth_token}}"},
+              {"key": "Content-Type", "value": "application/json"}
+            ],
+            "url": "{{base_url}}/faults/1/update_status/",
+            "body": {"mode": "raw", "raw": "{\n  \"status\": \"located\"\n}"}
+          },
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {"key": "Content-Type", "value": "application/json"}
+              ],
+              "body": "{\n  \"id\": 17,\n  \"status\": \"located\"\n}"
+            }
+          ]
+        }
       ]
     },
     {
@@ -54,16 +225,76 @@
     {
       "name": "Deployments",
       "item": [
-        {"name": "List Deployments", "request": {"method": "GET", "header": [{"key": "Authorization","value": "Token {{auth_token}}"}], "url": "{{base_url}}/deployments/"}},
-        {"name": "Create Deployment", "request": {"method": "POST", "header": [{"key": "Authorization","value": "Token {{auth_token}}"},{"key": "Content-Type","value":"application/json"}], "url": "{{base_url}}/deployments/", "body": {"mode": "raw", "raw": "{\n  \"team_id\": 1,\n  \"depot_id\": 1,\n  \"deployment_notes\": \"Cover outage cluster A\"\n}"}}},
-        {"name": "Recall Deployment", "request": {"method": "POST", "header": [{"key": "Authorization","value": "Token {{auth_token}}"},{"key": "Content-Type","value":"application/json"}], "url": "{{base_url}}/deployments/1/recall/", "body": {"mode": "raw", "raw": "{}"}}}
+        {
+          "name": "List Deployments",
+          "request": {"method": "GET", "header": [{"key": "Authorization","value": "Token {{auth_token}}"}], "url": "{{base_url}}/deployments/"},
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [{"key": "Content-Type", "value": "application/json"}],
+              "body": "[\n  {\n    \"id\": 5,\n    \"team\": 1,\n    \"depot\": 1,\n    \"deployment_notes\": \"Cover outage cluster A\",\n    \"active\": true\n  }\n]"
+            }
+          ]
+        },
+        {
+          "name": "Create Deployment",
+          "request": {"method": "POST", "header": [{"key": "Authorization","value": "Token {{auth_token}}"},{"key": "Content-Type","value":"application/json"}], "url": "{{base_url}}/deployments/", "body": {"mode": "raw", "raw": "{\n  \"team_id\": 1,\n  \"depot_id\": 1,\n  \"deployment_notes\": \"Cover outage cluster A\"\n}"}},
+          "response": [
+            {
+              "name": "201 Created",
+              "status": "Created",
+              "code": 201,
+              "header": [{"key": "Content-Type", "value": "application/json"}],
+              "body": "{\n  \"id\": 5,\n  \"team\": 1,\n  \"depot\": 1,\n  \"deployment_notes\": \"Cover outage cluster A\",\n  \"active\": true\n}"
+            }
+          ]
+        },
+        {
+          "name": "Recall Deployment",
+          "request": {"method": "POST", "header": [{"key": "Authorization","value": "Token {{auth_token}}"},{"key": "Content-Type","value":"application/json"}], "url": "{{base_url}}/deployments/1/recall/", "body": {"mode": "raw", "raw": "{}"}},
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [{"key": "Content-Type", "value": "application/json"}],
+              "body": "{\n  \"id\": 5,\n  \"active\": false,\n  \"recalled_at\": \"2025-08-25T12:00:00Z\"\n}"
+            }
+          ]
+        }
       ]
     },
     {
       "name": "Roles",
       "item": [
-        {"name": "List Roles", "request": {"method": "GET", "header": [{"key": "Authorization","value": "Token {{auth_token}}"}], "url": "{{base_url}}/roles/"}},
-        {"name": "Assign Role", "request": {"method": "POST", "header": [{"key": "Authorization","value": "Token {{auth_token}}"},{"key": "Content-Type","value":"application/json"}], "url": "{{base_url}}/roles/", "body": {"mode": "raw", "raw": "{\n  \"user_id\": 2,\n  \"role\": \"team_leader\"\n}"}}}
+        {
+          "name": "List Roles",
+          "request": {"method": "GET", "header": [{"key": "Authorization","value": "Token {{auth_token}}"}], "url": "{{base_url}}/roles/"},
+          "response": [
+            {
+              "name": "200 OK",
+              "status": "OK",
+              "code": 200,
+              "header": [{"key": "Content-Type", "value": "application/json"}],
+              "body": "[\n  {\n    \"id\": 3,\n    \"user\": 2,\n    \"role\": \"team_leader\"\n  }\n]"
+            }
+          ]
+        },
+        {
+          "name": "Assign Role",
+          "request": {"method": "POST", "header": [{"key": "Authorization","value": "Token {{auth_token}}"},{"key": "Content-Type","value":"application/json"}], "url": "{{base_url}}/roles/", "body": {"mode": "raw", "raw": "{\n  \"user_id\": 2,\n  \"role\": \"team_leader\"\n}"}},
+          "response": [
+            {
+              "name": "201 Created",
+              "status": "Created",
+              "code": 201,
+              "header": [{"key": "Content-Type", "value": "application/json"}],
+              "body": "{\n  \"id\": 3,\n  \"user\": 2,\n  \"role\": \"team_leader\"\n}"
+            }
+          ]
+        }
       ]
     }
   ]
