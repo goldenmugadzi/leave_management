@@ -195,7 +195,7 @@ def approve_step(request, process_id):
                     messages.success(request, "approved successfully")
                     
                     return step
-                elif process.token_set.exists() != None:
+                elif process.token_set.exists():
                     token = process.token_set.last()
 
                     send_notification(request, 'tokens:token', token.type, token, token.id)

@@ -663,8 +663,8 @@ def pettycash_awaiting_my_action(request):
                 pettycashs_to_process.append(pettycash)
 
     else:
-        print(user_profile.region.id, 'region')
-        print(user_profile.designation.id, 'designation')
+        # print(user_profile.region.id, 'region')
+        # print(user_profile.designation.id, 'designation')
         if user_profile.region.id == 4 and user_profile.designation.id == 300:
             sections_to_filter = [416, 415, 414, 413, 412, 411, 410, 407]
             for pettycash in Pettycash.objects.filter(section__id__in=sections_to_filter).order_by(
