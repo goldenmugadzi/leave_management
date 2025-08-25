@@ -213,6 +213,60 @@ class VirementNotificationTests(TestCase):
         # Should notify GM about pending approval
         self.assertTrue(mock_notify.called)
 
+
+class VirementAwaitingMyActionViewTests(TestCase):
+    def setUp(self):
+        # Region/Section
+        self.region = Regions.objects.create(region='RegionX')
+        self.section = Sections.objects.create(section='SectionX', code='SX', district_id='D1', region_id='R1')
+
+        # Application & roles
+        self.app_v = Application.objects.create(name='virement', fullname='virement')
+        self.role_pass_v = Roles.objects.create(role='pass', name='Section Head', description='Section Head', application='virement', app_id=self.app_v)
+        self.role_gm_v = Roles.objects.create(role='approve', name='GM', description='General Manager', application='virement', app_id=self.app_v)
+
+        # Users
+        self.section_head = User.objects.create_user(username='vx_sh', password='testpass')
+        self.section_head.region = self.region
+        self.section_head.section = self.section
+        self.section_head.save()
+        self.section_head.roles.add(self.role_pass_v)
+
+        self.gm_user = User.objects.create_user(username='vx_gm', password='testpass')
+        self.gm_user.region = self.region
+        self.gm_user.section = self.section
+        self.gm_user.save()
+        self.gm_user.roles.add(self.role_gm_v)
+
+        # Budgets
+        self.from_budget = AssetBudget.objects.create(budget_name='FromB', period=2025, region=self.region, balance=1000)
+        self.to_budget = AssetBudget.objects.create(budget_name='ToB', period=2025, region=self.region, balance=300)
+
+        # Workflow & process
+        self.workflow = Workflow.objects.create(name='virement', application=self.app_v)
+        self.process = Process.objects.create(workflow=self.workflow)
+        self.step1 = Step.objects.create(step=1, workflow=self.workflow, approver=self.role_pass_v, to='GM')
+        self.step2 = Step.objects.create(step=2, workflow=self.workflow, approver=self.role_gm_v, to='END')
+
+        # Virement (pending first approval)
+        self.virement = Asset_budget_Virament.objects.create(
+            requested_by=self.section_head,
+            from_budget=self.from_budget,
+            to_budget=self.to_budget,
+            amount=150,
+            process=self.process,
+            region=self.region,
+            section=self.section,
+        )
+
+    def test_section_head_sees_pending_virement(self):
+        self.client.login(username='vx_sh', password='testpass')
+        url = reverse('Ace:viraments_awaiting_my_action')
+        resp = self.client.get(url)
+        self.assertEqual(resp.status_code, 200)
+        # Should contain the virement id somewhere in rendered HTML (simple smoke check)
+        self.assertIn(str(self.virement.virament_id), resp.content.decode())
+
     @patch('ACE2.views.notify_user')
     def test_notify_requester_on_final_approval(self, mock_notify):
         # Approve both steps; final approval will process funds and notify requester

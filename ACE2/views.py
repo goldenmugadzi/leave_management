@@ -2179,7 +2179,9 @@ def viraments_awaiting_my_action(request):
         if step:
             # Optionally, check if the user is in the approver list for this step
             roles_qs = get_user_roles_qs(request.user)
-            if step.approver.filter(id__in=roles_qs.values_list('id', flat=True)).exists():
+            # step.approver is a ForeignKey (single Roles instance), so we cannot call .filter on it.
+            # Instead, confirm the FK role is in the user's roles queryset.
+            if roles_qs.filter(id=step.approver_id).exists():
                 viraments_to_process.append(virement)
 
     return render(request, 'finance/ace2/view_all_viraments.html', {'aces': viraments_to_process,
