@@ -430,8 +430,8 @@ def create_Ace(request):
         if request.method == 'POST':
             form = AceForm(request.POST, request.FILES, user=user_profile)
             formset = QuotationFormSet(request.POST, request.FILES)
-            user_id = request.user.id
-            user_profile = UserProfile.objects.filter(id=user_id).first()
+            # user_id = request.user.id
+            # user_profile = UserProfile.objects.filter(id=user_id).first()
 
             # Validate user profile exists
             if not user_profile:
@@ -530,8 +530,8 @@ def create_Ace(request):
                 print(budget_to_be_withdrawn, 'budget to be withdrawn')
                 print(m_in_tray, 'money in tray')
                 if ace.amount <= budget.balance and budget_to_be_withdrawn <= budget.balance and balance_after_ace > 0 and m_in_tray <= budget.balance:
-                    user_id = request.user.id
-                    user_profile = UserProfile.objects.filter(id=user_id).first()
+                    # user_id = request.user.id
+                    # user_profile = UserProfile.objects.filter(id=user_id).first()
                     
                     if not user_profile:
                         sweetify.error(request, "User profile not found. Please contact your administrator.")
@@ -541,7 +541,7 @@ def create_Ace(request):
                     # Set the requested_by field to the UserProfile object, not request.user
                     ace.requested_by = user_profile
 
-                    user_designation = Designations.objects.filter(id=user_profile.designation.id).first()
+                    user_designation = Designations.objects.filter(id=user_profile.designation.id).first() if user_profile.designation else None
                     if not user_designation:
                         sweetify.error(request, "Please get your designation from It")
                         messages.error(request, 'Please get your designation from It')
@@ -795,18 +795,18 @@ def create_Ace(request):
     except AssetBudget.DoesNotExist:
         messages.error(request, "Selected budget not found. Please choose a valid budget.")
         sweetify.error(request, "Budget not found.")
-        form = AceForm(user=UserProfile.objects.filter(id=request.user.id).first())
+        form = AceForm(user=user_profile)
         return render(request, 'finance/ace2/create_ace.html', {'form': form, 'formset': QuotationFormSet()})
     except Sections.DoesNotExist:
         messages.error(request, "Section configuration error. Please contact your administrator.")
         sweetify.error(request, "Section not found.")
-        form = AceForm(user=UserProfile.objects.filter(id=request.user.id).first())
+        form = AceForm(user=user_profile)
         return render(request, 'finance/ace2/create_ace.html', {'form': form, 'formset': QuotationFormSet()})
     except Exception as e:
         messages.error(request, f"An unexpected error occurred while creating the ACE: {str(e)}. Please try again or contact support.")
         sweetify.error(request, "System error occurred. Please try again.")
         print(f"ACE Creation Error: {str(e)}")  # For debugging
-        form = AceForm(user=UserProfile.objects.filter(id=request.user.id).first())
+        form = AceForm(user=user_profile)
         return render(request, 'finance/ace2/create_ace.html', {'form': form, 'formset': QuotationFormSet()})
 
 
@@ -2589,7 +2589,7 @@ def ace_report_detail_excel(request, report_id2):
     else:
         messages.error(request, "error")
 
-# @login_required
+# # @login_required
 def find_ace_section_head(request, section):
     all_users = UserProfile.objects.filter(section=section).all()
     # section_heads = UserProfile.objects.filter(section=section, role='section_head')
