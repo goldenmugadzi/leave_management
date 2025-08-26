@@ -20,7 +20,7 @@ from approve.forms import ApprovalForm
 from approve.models import Step
 from approve.views import intiate
 from it.users.models import UserProfile, Roles, Designations, Districts, Depots, Notification
-from finance.PettyCash.views import approve_step
+#from finance.PettyCash.views import approve_step
 from finance.comparative_schedules.views import notification_update, notify_user
 
 

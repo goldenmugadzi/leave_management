@@ -57,6 +57,23 @@
   button:hover {
     background: #0056b3;
   }
+  .card-option {
+  background-color: white;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.card-option:hover {
+  background-color: #007bff;
+  color: white;
+  transform: scale(1.02);
+}
+
 </style>
 {% endblock %}
 
@@ -64,13 +81,22 @@
 {% block content %}
 <div class="container">
  <h2 class="dashboard-title">Accident Reporting Forms</h2>
-  <label for="reportType">What are you reporting On ?</label>
-  <select id="reportType" onchange="showForm()">
-    <option value="">Select...</option>
-    <option value="property">Property Damaged</option>
-    <option value="human"> Person Involved</option>
-    <option value="vehicle">Vehicle Accident</option>
-  </select>
+ <label class="dashboard-title mb-4">What are you reporting on?</label>
+<div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+  <div class="card-option" onclick="selectReport('property')">
+    <h3>🏠 Property Damaged</h3>
+  </div>
+  <div class="card-option" onclick="selectReport('human')">
+    <h3>🧍 Member of Staff</h3>
+  </div>
+    <div class="card-option" onclick="selectReport('human')">
+    <h3>🧍 Member of Public</h3>
+  </div>
+  <div class="card-option" onclick="selectReport('vehicle')">
+    <h3>🚗 Vehicle Accident</h3>
+  </div>
+</div>
+
 
   <!-- Property Report Form -->
  <!-- Property Loss Incident Report Form -->
@@ -483,12 +509,20 @@
 
 </div>
 <script>
-  function showForm() {
-    const type = document.getElementById('reportType').value;
-    document.getElementById('propertyForm').style.display = (type === 'property') ? 'block' : 'none';
-    document.getElementById('humanForm').style.display = (type === 'human') ? 'block' : 'none';
-    document.getElementById('vehicleForm').style.display = (type === 'vehicle') ? 'block' : 'none';
-    document.getElementById('accidentForm') && (document.getElementById('accidentForm').style.display = 'none'); // Hide old accidentForm if present
+  function selectReport(type) {
+    const forms = ['propertyForm', 'humanForm', 'vehicleForm'];
+    forms.forEach(form => {
+      document.getElementById(form).style.display = 'none';
+    });
+
+    if (type === 'property') {
+      document.getElementById('propertyForm').style.display = 'block';
+    } else if (type === 'human') {
+      document.getElementById('humanForm').style.display = 'block';
+    } else if (type === 'vehicle') {
+      document.getElementById('vehicleForm').style.display = 'block';
+    }
   }
 </script>
+
 {% endblock %}

@@ -49,7 +49,7 @@ urlpatterns = [
 
     # path('ace/', include('finance.Ace.urls')),
     path('direct_purchases/', include('finance.Direct_purchases.urls')),
-    path('pettycash/', include('finance.PettyCash.urls')),
+    #path('pettycash/', include('finance.PettyCash.urls')),
     path('comperative_schedule/', include('finance.comparative_schedules.urls')),
     path('restricted_bidding/', include('finance.ristricted_bidding.urls')),
     path('direct_purchase/', include('finance.direct_purchase.urls')),

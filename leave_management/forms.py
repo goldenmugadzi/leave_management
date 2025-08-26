@@ -44,9 +44,6 @@ class LeaveRequestForm(forms.ModelForm):
 
             field.widget.attrs['class'] = f"{current_class} {classes}".strip()
 
-
-
-
 class LeaveTypesForm(forms.ModelForm):
     class Meta:
         model = LeaveTypes

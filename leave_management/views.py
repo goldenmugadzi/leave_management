@@ -215,7 +215,7 @@ def encashment_leave(request):
         leave.position = getattr(user_profile, 'designation', None)
         leave.department = getattr(user_profile, 'section', None)
         leave.region = getattr(user_profile, 'region', None)
-        leave.status = 'pending'
+        leave.status = 'waiting for encashment'
         leave.employee_types = getattr(user_profile, 'employee_types', '')
 
         # Calculate number_of_days if needed
@@ -248,7 +248,7 @@ def encashment_leave(request):
         'form': form,
         'leave_requests': leave_requests,
         'show_table': show_table,
-        'vacation_leave': vacation_leave,  # Always pass the updated value
+        'vacation_leave': vacation_leave,  
     })
 
 def leave_types_datatable(request):
@@ -321,9 +321,13 @@ def update_leave_request(request, id):
         return render(request, '404.html', status=404)
 
     if request.method == 'POST':
-        form = LeaveRequestForm(request.POST, request.FILES, instance=leave_request)  # <-- Add request.FILES
+        form = LeaveRequestForm(request.POST, request.FILES, instance=leave_request)
         if form.is_valid():
-            form.save()
+            leave = form.save(commit=False)
+            # If this is an encashment update, set status
+            if leave.type_of_leave == 'vacation' and leave.days_encashed and leave.status == 'waiting for encashment':
+                leave.status = 'encashed'
+            leave.save()
             return redirect('/leave_table')  
     else:
         form = LeaveRequestForm(instance=leave_request)
