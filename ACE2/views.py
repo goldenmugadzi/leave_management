@@ -1721,7 +1721,7 @@ def create_virament(request):
     
     if request.method == 'POST':
         try:
-            form = ViramentForm(request.POST, request.FILES)
+            form = ViramentForm(request.POST, request.FILES, user=user_profile)
             formset = QuotationFormSet(request.POST, request.FILES)
             
             if form.is_valid():
