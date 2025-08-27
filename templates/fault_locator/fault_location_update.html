@@ -1,0 +1,861 @@
+{% extends "base_layout.html" %}
+{% load static %}
+
+{% block title %}Fault Location Update - Fault Locator{% endblock %}
+
+{% block styles %}
+<link href="{% static 'assets/css/tailwind.min.css' %}" rel="stylesheet">
+<style>
+    .location-card {
+        background: white;
+        border-radius: 0.5rem;
+        box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+        border: 1px solid #e5e7eb;
+    }
+    .location-card:hover {
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        transform: translateY(-1px);
+    }
+    .location-card.verified {
+        border-left: 4px solid #10b981;
+        background: linear-gradient(135deg, #f0fdf4 0%, #ffffff 100%);
+    }
+    .location-card.pending {
+        border-left: 4px solid #f59e0b;
+        background: linear-gradient(135deg, #fffbeb 0%, #ffffff 100%);
+    }
+    .location-card.needs-verification {
+        border-left: 4px solid #ef4444;
+        background: linear-gradient(135deg, #fef2f2 0%, #ffffff 100%);
+    }
+    .map-container {
+        height: 400px;
+        background: #f3f4f6;
+        border-radius: 0.5rem;
+        position: relative;
+        overflow: hidden;
+        border: 1px solid #d1d5db;
+    }
+    .map-placeholder {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        color: #6b7280;
+    }
+    .coordinates-display {
+        background: rgba(59, 130, 246, 0.1);
+        border: 1px solid rgba(59, 130, 246, 0.2);
+        border-radius: 0.375rem;
+        padding: 0.75rem;
+        font-family: 'Monaco', 'Menlo', monospace;
+        font-size: 0.875rem;
+    }
+    .photo-upload-area {
+        border: 2px dashed #d1d5db;
+        border-radius: 0.5rem;
+        padding: 2rem;
+        text-align: center;
+        background: #f9fafb;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+    .photo-upload-area:hover {
+        border-color: #3b82f6;
+        background: #eff6ff;
+    }
+    .photo-upload-area.dragover {
+        border-color: #10b981;
+        background: #f0fdf4;
+    }
+    .photo-preview {
+        position: relative;
+        display: inline-block;
+        margin: 0.5rem;
+        border-radius: 0.375rem;
+        overflow: hidden;
+        border: 1px solid #e5e7eb;
+    }
+    .photo-preview img {
+        width: 120px;
+        height: 120px;
+        object-fit: cover;
+    }
+    .photo-remove {
+        position: absolute;
+        top: 0.25rem;
+        right: 0.25rem;
+        background: rgba(239, 68, 68, 0.9);
+        color: white;
+        border-radius: 50%;
+        width: 1.5rem;
+        height: 1.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        font-size: 0.75rem;
+        font-weight: bold;
+    }
+    .accuracy-indicator {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.25rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+    .accuracy-high { background-color: #dcfce7; color: #166534; }
+    .accuracy-medium { background-color: #fef3c7; color: #92400e; }
+    .accuracy-low { background-color: #fecaca; color: #991b1b; }
+    .verification-status {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.25rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+    .status-verified { background-color: #dcfce7; color: #166534; }
+    .status-pending { background-color: #fef3c7; color: #92400e; }
+    .status-failed { background-color: #fecaca; color: #991b1b; }
+    .progress-steps {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 2rem;
+    }
+    .step-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        flex: 1;
+        position: relative;
+    }
+    .step-item:not(:last-child)::after {
+        content: '';
+        position: absolute;
+        top: 1rem;
+        left: calc(50% + 1rem);
+        right: calc(-50% + 1rem);
+        height: 2px;
+        background-color: #e5e7eb;
+        z-index: -1;
+    }
+    .step-item.completed::after {
+        background-color: #10b981;
+    }
+    .step-circle {
+        width: 2rem;
+        height: 2rem;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        color: white;
+        margin-bottom: 0.5rem;
+    }
+    .step-circle.pending { background-color: #e5e7eb; color: #6b7280; }
+    .step-circle.current { background-color: #3b82f6; }
+    .step-circle.completed { background-color: #10b981; }
+    .location-history {
+        background: #f9fafb;
+        border-radius: 0.5rem;
+        padding: 1rem;
+        border: 1px solid #e5e7eb;
+    }
+    .history-item {
+        display: flex;
+        align-items: start;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid #e5e7eb;
+    }
+    .history-item:last-child {
+        border-bottom: none;
+    }
+    .history-icon {
+        width: 2rem;
+        height: 2rem;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 0.75rem;
+        font-size: 0.75rem;
+        color: white;
+        flex-shrink: 0;
+    }
+    .history-icon.update { background-color: #3b82f6; }
+    .history-icon.verification { background-color: #10b981; }
+    .history-icon.correction { background-color: #f59e0b; }
+    .distance-indicator {
+        background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+        border: 1px solid #bfdbfe;
+        border-radius: 0.5rem;
+        padding: 1rem;
+        text-align: center;
+    }
+    .tools-section {
+        background: #f8fafc;
+        border-radius: 0.5rem;
+        padding: 1.5rem;
+        border: 1px solid #e2e8f0;
+    }
+    .tool-button {
+        display: flex;
+        align-items: center;
+        padding: 0.75rem 1rem;
+        background: white;
+        border: 1px solid #d1d5db;
+        border-radius: 0.375rem;
+        text-decoration: none;
+        color: #374151;
+        transition: all 0.2s ease;
+        margin-bottom: 0.5rem;
+    }
+    .tool-button:hover {
+        background: #f3f4f6;
+        border-color: #9ca3af;
+        transform: translateY(-1px);
+    }
+    .tool-button svg {
+        margin-right: 0.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-6">
+    <!-- Header -->
+    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-6">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900">Fault Location Update</h1>
+            <p class="text-gray-600 mt-1">Update and verify precise fault location with GPS and visual confirmation</p>
+            {% if fault %}
+                <div class="mt-2 text-sm text-gray-500">
+                    Fault #{{ fault.id }} - {{ fault.description|truncatechars:50 }}
+                </div>
+            {% endif %}
+        </div>
+        <div class="mt-4 lg:mt-0 flex space-x-2">
+            <button onclick="getCurrentLocation()" 
+                    class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                </svg>
+                Get Current Location
+            </button>
+            <button onclick="verifyLocation()" 
+                    class="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                Verify Location
+            </button>
+        </div>
+    </div>
+
+    <!-- Progress Steps -->
+    <div class="progress-steps">
+        <div class="step-item completed">
+            <div class="step-circle completed">✓</div>
+            <span class="text-sm font-medium text-gray-900">Fault Reported</span>
+        </div>
+        <div class="step-item completed">
+            <div class="step-circle completed">✓</div>
+            <span class="text-sm font-medium text-gray-900">Team Assigned</span>
+        </div>
+        <div class="step-item current">
+            <div class="step-circle current">3</div>
+            <span class="text-sm font-medium text-gray-900">Location Update</span>
+        </div>
+        <div class="step-item pending">
+            <div class="step-circle pending">4</div>
+            <span class="text-sm font-medium text-gray-900">Verification</span>
+        </div>
+        <div class="step-item pending">
+            <div class="step-circle pending">5</div>
+            <span class="text-sm font-medium text-gray-900">Resolution</span>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Left Column: Current Location Information -->
+        <div class="lg:col-span-2">
+            <!-- Fault Information -->
+            <div class="location-card p-6 mb-6">
+                <h2 class="text-xl font-semibold text-gray-900 mb-4">Fault Information</h2>
+                {% if fault %}
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Fault ID</label>
+                            <p class="mt-1 text-sm text-gray-900">#{{ fault.id }}</p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Priority</label>
+                            <p class="mt-1">
+                                {% if fault.vvip %}
+                                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                        VVIP
+                                    </span>
+                                {% else %}
+                                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium 
+                                        {% if fault.priority == 4 %}bg-red-100 text-red-800
+                                        {% elif fault.priority == 3 %}bg-orange-100 text-orange-800
+                                        {% elif fault.priority == 2 %}bg-yellow-100 text-yellow-800
+                                        {% else %}bg-green-100 text-green-800{% endif %}">
+                                        {{ fault.get_priority_display }}
+                                    </span>
+                                {% endif %}
+                            </p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Depot</label>
+                            <p class="mt-1 text-sm text-gray-900">{{ fault.depot.depot }}</p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Reported</label>
+                            <p class="mt-1 text-sm text-gray-900">{{ fault.created_at|date:"M d, Y H:i" }}</p>
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-medium text-gray-700">Description</label>
+                            <p class="mt-1 text-sm text-gray-900">{{ fault.description }}</p>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Map and GPS Location -->
+            <div class="location-card p-6 mb-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-xl font-semibold text-gray-900">GPS Location</h2>
+                    <div class="flex items-center space-x-2">
+                        <span class="accuracy-indicator accuracy-high" id="accuracy-indicator">
+                            High Accuracy (±3m)
+                        </span>
+                        <span class="verification-status status-pending" id="verification-status">
+                            Pending Verification
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Map Container -->
+                <div class="map-container mb-4">
+                    <div class="map-placeholder">
+                        <svg class="w-16 h-16 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-1.447-.894L15 4m0 13V4m-6 3l6-3"></path>
+                        </svg>
+                        <p class="text-lg font-medium mb-2">Interactive Map</p>
+                        <p class="text-sm text-gray-500 mb-4">Click "Get Current Location" to enable GPS</p>
+                        <button onclick="enableMapView()" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                            Enable Map View
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Coordinates Display -->
+                <form method="post" id="locationForm">
+                    {% csrf_token %}
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div>
+                            <label for="latitude" class="block text-sm font-medium text-gray-700 mb-1">Latitude</label>
+                            <input type="number" 
+                                   step="any" 
+                                   name="latitude" 
+                                   id="latitude" 
+                                   value="{{ current_location.latitude|default:'' }}"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                   placeholder="-26.2041">
+                        </div>
+                        <div>
+                            <label for="longitude" class="block text-sm font-medium text-gray-700 mb-1">Longitude</label>
+                            <input type="number" 
+                                   step="any" 
+                                   name="longitude" 
+                                   id="longitude" 
+                                   value="{{ current_location.longitude|default:'' }}"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                   placeholder="28.0473">
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="location_details" class="block text-sm font-medium text-gray-700 mb-1">Detailed Location Description</label>
+                        <textarea name="location_details" 
+                                  id="location_details" 
+                                  rows="3"
+                                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                  placeholder="Describe the exact location of the fault (e.g., next to the blue house, behind the transformer, 50m from the corner)">{{ fault.location_details|default:'' }}</textarea>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="access_instructions" class="block text-sm font-medium text-gray-700 mb-1">Access Instructions</label>
+                        <textarea name="access_instructions" 
+                                  id="access_instructions" 
+                                  rows="2"
+                                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                  placeholder="How to access this location (e.g., use back gate, contact property owner, special equipment needed)">{{ fault.access_instructions|default:'' }}</textarea>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Photo Documentation -->
+            <div class="location-card p-6 mb-6">
+                <h2 class="text-xl font-semibold text-gray-900 mb-4">Photo Documentation</h2>
+                
+                <!-- Photo Upload Area -->
+                <div class="photo-upload-area" 
+                     id="photo-upload-area"
+                     onclick="document.getElementById('photo-input').click()">
+                    <div class="mb-4">
+                        <svg class="w-12 h-12 mx-auto text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                        </svg>
+                    </div>
+                    <p class="text-lg font-medium text-gray-900 mb-2">Add Photos</p>
+                    <p class="text-sm text-gray-500 mb-4">Click to upload or drag and drop photos</p>
+                    <p class="text-xs text-gray-400">Supports: JPG, PNG, WebP (max 10MB per file)</p>
+                    <input type="file" 
+                           id="photo-input" 
+                           multiple 
+                           accept="image/*" 
+                           class="hidden"
+                           onchange="handlePhotoUpload(event)">
+                </div>
+
+                <!-- Photo Previews -->
+                <div id="photo-previews" class="mt-4 hidden">
+                    <h4 class="font-medium text-gray-900 mb-2">Uploaded Photos</h4>
+                    <div id="photo-container" class="flex flex-wrap"></div>
+                </div>
+
+                <!-- Photo Guidelines -->
+                <div class="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                    <h4 class="font-medium text-blue-900 mb-2">📸 Photo Guidelines</h4>
+                    <ul class="text-sm text-blue-800 space-y-1">
+                        <li>• Take photos from multiple angles showing the fault location</li>
+                        <li>• Include nearby landmarks or reference points</li>
+                        <li>• Capture any safety hazards or access restrictions</li>
+                        <li>• Ensure photos are clear and well-lit</li>
+                        <li>• Include close-up shots of the actual fault if visible</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column: Tools and History -->
+        <div class="lg:col-span-1">
+            <!-- Distance Calculator -->
+            <div class="distance-indicator mb-6">
+                <h3 class="font-semibold text-blue-900 mb-2">Distance from Original Report</h3>
+                <div class="text-2xl font-bold text-blue-700" id="distance-display">
+                    Calculating...
+                </div>
+                <p class="text-sm text-blue-600 mt-1">GPS accuracy impact</p>
+            </div>
+
+            <!-- Location Tools -->
+            <div class="tools-section mb-6">
+                <h3 class="font-semibold text-gray-900 mb-3">Location Tools</h3>
+                <div class="space-y-2">
+                    <button onclick="shareLocation()" class="tool-button w-full">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z"></path>
+                        </svg>
+                        Share Location
+                    </button>
+                    
+                    <button onclick="copyCoordinates()" class="tool-button w-full">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                        </svg>
+                        Copy Coordinates
+                    </button>
+                    
+                    <button onclick="openInMaps()" class="tool-button w-full">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                        </svg>
+                        Open in Maps App
+                    </button>
+                    
+                    <button onclick="recordWaypoint()" class="tool-button w-full">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
+                        </svg>
+                        Record Waypoint
+                    </button>
+                </div>
+            </div>
+
+            <!-- Location History -->
+            <div class="location-card p-6 mb-6">
+                <h3 class="font-semibold text-gray-900 mb-4">Location History</h3>
+                <div class="location-history">
+                    <div class="history-item">
+                        <div class="history-icon update">📍</div>
+                        <div class="flex-1">
+                            <div class="text-sm font-medium text-gray-900">Initial Location Reported</div>
+                            <div class="text-xs text-gray-500">{{ fault.created_at|date:"M d, Y H:i" }}</div>
+                            <div class="text-xs text-gray-600">{{ fault.location|default:"General area description" }}</div>
+                        </div>
+                    </div>
+                    
+                    {% if fault.location_updates %}
+                        {% for update in fault.location_updates %}
+                            <div class="history-item">
+                                <div class="history-icon {% if update.verified %}verification{% else %}correction{% endif %}">
+                                    {% if update.verified %}✓{% else %}📝{% endif %}
+                                </div>
+                                <div class="flex-1">
+                                    <div class="text-sm font-medium text-gray-900">
+                                        {% if update.verified %}Location Verified{% else %}Location Updated{% endif %}
+                                    </div>
+                                    <div class="text-xs text-gray-500">{{ update.updated_at|date:"M d, Y H:i" }}</div>
+                                    <div class="text-xs text-gray-600">By: {{ update.updated_by.get_full_name }}</div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="space-y-3">
+                <button onclick="saveLocationUpdate()" 
+                        class="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium">
+                    Save Location Update
+                </button>
+                
+                <button onclick="markAsVerified()" 
+                        class="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium">
+                    Mark as Verified
+                </button>
+                
+                <button onclick="requestVerification()" 
+                        class="w-full px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors font-medium">
+                    Request Verification
+                </button>
+                
+                <a href="{% url 'field_update' fault.id %}" 
+                   class="block w-full px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium text-center">
+                    Back to Fault Details
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Success Modal -->
+<div id="success-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded-lg p-6 max-w-md mx-4 w-full">
+        <div class="text-center">
+            <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+            </div>
+            <h3 class="text-lg font-semibold text-gray-900 mb-2">Location Updated Successfully</h3>
+            <p class="text-sm text-gray-600 mb-6">The fault location has been updated with GPS coordinates and photos.</p>
+            <button onclick="closeSuccessModal()" 
+                    class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                Continue
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize photo upload
+    setupPhotoUpload();
+    
+    // Calculate distance if coordinates are available
+    updateDistanceDisplay();
+    
+    // Set up GPS tracking
+    setupGPSTracking();
+});
+
+function setupPhotoUpload() {
+    const uploadArea = document.getElementById('photo-upload-area');
+    const fileInput = document.getElementById('photo-input');
+    
+    // Drag and drop functionality
+    uploadArea.addEventListener('dragover', function(e) {
+        e.preventDefault();
+        uploadArea.classList.add('dragover');
+    });
+    
+    uploadArea.addEventListener('dragleave', function(e) {
+        e.preventDefault();
+        uploadArea.classList.remove('dragover');
+    });
+    
+    uploadArea.addEventListener('drop', function(e) {
+        e.preventDefault();
+        uploadArea.classList.remove('dragover');
+        
+        const files = e.dataTransfer.files;
+        handlePhotoFiles(files);
+    });
+}
+
+function handlePhotoUpload(event) {
+    const files = event.target.files;
+    handlePhotoFiles(files);
+}
+
+function handlePhotoFiles(files) {
+    const photoContainer = document.getElementById('photo-container');
+    const photoPreviewsSection = document.getElementById('photo-previews');
+    
+    for (let file of files) {
+        if (file.type.startsWith('image/')) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const photoDiv = document.createElement('div');
+                photoDiv.className = 'photo-preview';
+                photoDiv.innerHTML = `
+                    <img src="${e.target.result}" alt="Fault location photo">
+                    <div class="photo-remove" onclick="removePhoto(this)">×</div>
+                `;
+                photoContainer.appendChild(photoDiv);
+                photoPreviewsSection.classList.remove('hidden');
+            };
+            reader.readAsDataURL(file);
+        }
+    }
+}
+
+function removePhoto(button) {
+    const photoDiv = button.parentElement;
+    photoDiv.remove();
+    
+    // Hide previews section if no photos left
+    const photoContainer = document.getElementById('photo-container');
+    if (photoContainer.children.length === 0) {
+        document.getElementById('photo-previews').classList.add('hidden');
+    }
+}
+
+function getCurrentLocation() {
+    if (navigator.geolocation) {
+        showNotification('Getting your current location...', 'info');
+        
+        navigator.geolocation.getCurrentPosition(
+            function(position) {
+                const lat = position.coords.latitude;
+                const lng = position.coords.longitude;
+                const accuracy = position.coords.accuracy;
+                
+                document.getElementById('latitude').value = lat.toFixed(6);
+                document.getElementById('longitude').value = lng.toFixed(6);
+                
+                updateAccuracyIndicator(accuracy);
+                updateDistanceDisplay();
+                
+                showNotification('Location updated successfully', 'success');
+            },
+            function(error) {
+                let message = 'Unable to get location: ';
+                switch(error.code) {
+                    case error.PERMISSION_DENIED:
+                        message += 'Location access denied by user';
+                        break;
+                    case error.POSITION_UNAVAILABLE:
+                        message += 'Location information unavailable';
+                        break;
+                    case error.TIMEOUT:
+                        message += 'Location request timed out';
+                        break;
+                    default:
+                        message += 'Unknown error';
+                }
+                showNotification(message, 'error');
+            },
+            {
+                enableHighAccuracy: true,
+                timeout: 10000,
+                maximumAge: 60000
+            }
+        );
+    } else {
+        showNotification('Geolocation is not supported by this browser', 'error');
+    }
+}
+
+function updateAccuracyIndicator(accuracy) {
+    const indicator = document.getElementById('accuracy-indicator');
+    
+    if (accuracy <= 5) {
+        indicator.className = 'accuracy-indicator accuracy-high';
+        indicator.textContent = `High Accuracy (±${Math.round(accuracy)}m)`;
+    } else if (accuracy <= 15) {
+        indicator.className = 'accuracy-indicator accuracy-medium';
+        indicator.textContent = `Medium Accuracy (±${Math.round(accuracy)}m)`;
+    } else {
+        indicator.className = 'accuracy-indicator accuracy-low';
+        indicator.textContent = `Low Accuracy (±${Math.round(accuracy)}m)`;
+    }
+}
+
+function updateDistanceDisplay() {
+    // This would calculate distance from original report location
+    // For demo purposes, showing a placeholder
+    const distanceDisplay = document.getElementById('distance-display');
+    distanceDisplay.textContent = '127m';
+}
+
+function setupGPSTracking() {
+    // Continuous GPS tracking setup would go here
+    console.log('GPS tracking initialized');
+}
+
+function enableMapView() {
+    showNotification('Map view would be enabled here with your preferred mapping service', 'info');
+}
+
+function shareLocation() {
+    const lat = document.getElementById('latitude').value;
+    const lng = document.getElementById('longitude').value;
+    
+    if (lat && lng) {
+        const shareData = {
+            title: 'Fault Location',
+            text: `Fault location coordinates: ${lat}, ${lng}`,
+            url: `https://maps.google.com/maps?q=${lat},${lng}`
+        };
+        
+        if (navigator.share) {
+            navigator.share(shareData);
+        } else {
+            // Fallback to copying URL
+            navigator.clipboard.writeText(shareData.url);
+            showNotification('Location URL copied to clipboard', 'success');
+        }
+    } else {
+        showNotification('Please get GPS coordinates first', 'warning');
+    }
+}
+
+function copyCoordinates() {
+    const lat = document.getElementById('latitude').value;
+    const lng = document.getElementById('longitude').value;
+    
+    if (lat && lng) {
+        const coordinates = `${lat}, ${lng}`;
+        navigator.clipboard.writeText(coordinates);
+        showNotification('Coordinates copied to clipboard', 'success');
+    } else {
+        showNotification('No coordinates available to copy', 'warning');
+    }
+}
+
+function openInMaps() {
+    const lat = document.getElementById('latitude').value;
+    const lng = document.getElementById('longitude').value;
+    
+    if (lat && lng) {
+        const mapsUrl = `https://maps.google.com/maps?q=${lat},${lng}`;
+        window.open(mapsUrl, '_blank');
+    } else {
+        showNotification('No coordinates available', 'warning');
+    }
+}
+
+function recordWaypoint() {
+    showNotification('Waypoint recorded for navigation reference', 'success');
+}
+
+function saveLocationUpdate() {
+    const lat = document.getElementById('latitude').value;
+    const lng = document.getElementById('longitude').value;
+    const details = document.getElementById('location_details').value;
+    
+    if (!lat || !lng) {
+        showNotification('Please provide GPS coordinates', 'warning');
+        return;
+    }
+    
+    if (!details.trim()) {
+        showNotification('Please provide location details', 'warning');
+        return;
+    }
+    
+    // Submit the form
+    showNotification('Saving location update...', 'info');
+    
+    // Simulate save process
+    setTimeout(() => {
+        document.getElementById('success-modal').classList.remove('hidden');
+    }, 1500);
+}
+
+function markAsVerified() {
+    const lat = document.getElementById('latitude').value;
+    const lng = document.getElementById('longitude').value;
+    
+    if (!lat || !lng) {
+        showNotification('Please provide GPS coordinates first', 'warning');
+        return;
+    }
+    
+    showNotification('Marking location as verified...', 'info');
+    
+    setTimeout(() => {
+        const verificationStatus = document.getElementById('verification-status');
+        verificationStatus.className = 'verification-status status-verified';
+        verificationStatus.textContent = 'Verified';
+        showNotification('Location marked as verified', 'success');
+    }, 1000);
+}
+
+function requestVerification() {
+    showNotification('Verification request sent to supervisor', 'info');
+}
+
+function verifyLocation() {
+    showNotification('Starting location verification process...', 'info');
+    
+    // This would implement a verification workflow
+    setTimeout(() => {
+        showNotification('Location verification completed', 'success');
+    }, 2000);
+}
+
+function closeSuccessModal() {
+    document.getElementById('success-modal').classList.add('hidden');
+}
+
+function showNotification(message, type = 'info') {
+    const notification = document.createElement('div');
+    notification.className = `fixed top-4 right-4 p-4 rounded-lg shadow-lg z-50 max-w-sm ${
+        type === 'success' ? 'bg-green-100 text-green-800 border border-green-200' :
+        type === 'error' ? 'bg-red-100 text-red-800 border border-red-200' :
+        type === 'warning' ? 'bg-yellow-100 text-yellow-800 border border-yellow-200' :
+        'bg-blue-100 text-blue-800 border border-blue-200'
+    }`;
+    notification.innerHTML = `
+        <div class="flex items-center">
+            <div class="flex-1">${message}</div>
+            <button onclick="this.parentElement.parentElement.remove()" class="ml-2 text-sm opacity-70 hover:opacity-100">×</button>
+        </div>
+    `;
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        if (notification.parentElement) {
+            notification.remove();
+        }
+    }, 5000);
+}
+</script>
+{% endblock %}
