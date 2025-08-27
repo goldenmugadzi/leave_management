@@ -24,7 +24,6 @@ class CombinedAssetForm(forms.Form):
     date_purchased = forms.DateField(required=False, widget=forms.DateInput(attrs={'type': 'date'}))
     model = forms.CharField(required=False)
     #warrant = forms.CharField(required=False)
-    #created_by = forms.ModelChoiceField(queryset=UserProfile.objects.all(), required=False)
     supplier = forms.CharField(required=False)
 
     # HumanResource specific

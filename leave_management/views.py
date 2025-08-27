@@ -14,10 +14,7 @@ def leave_create(request):
     if request.method == 'POST':
         form = LeaveRequestForm(request.POST, request.FILES)  
         if form.is_valid():
-            print("FILES:", request.FILES)
-            print("CLEANED DATA:", form.cleaned_data)
             leave = form.save(commit=False)
-            print("LEAVE ATTACHMENTS:", leave.attachments)
             user_profile = request.user
 
             leave.user = user_profile
@@ -39,11 +36,12 @@ def leave_create(request):
             # -----------------------------------------
 
             # Deduct
-            try:
-                user = UserProfile.objects.filter(id=user_profile.id).first()
-                leave_types = LeaveTypes.objects.filter(user=user).first()
-            except LeaveTypes.DoesNotExist:
-                messages.error(request, "Your leave balances are not set up")
+            print('user_profile',user_profile)
+            user = UserProfile.objects.filter(id=user_profile.id).first()
+            print('user',user)
+            leave_types = LeaveTypes.objects.filter(user=user).first()
+            if not leave_types:
+                messages.error(request, "Your leave balances are not set up. Please contact HR.")
                 return redirect('leave_types')
 
             days = leave.number_of_days or 0
@@ -59,13 +57,12 @@ def leave_create(request):
             }
             leave_type_field = leave_type_map.get(leave.type_of_leave)
             if leave_type_field:
-                current = getattr(leave_types, leave_type_field)
+                current = getattr(leave_types, leave_type_field, 0)
                 if current is None:
                     current = 0  
 
                 # --- Occasional leave rule ---
                 if leave.type_of_leave == 'occassional leave':
-                
                     if days > 3:
                         messages.error(request, "You can only apply for a maximum of 3 days per occasional leave application.")
                         return redirect('leave_types')
@@ -108,15 +105,17 @@ def leave_create(request):
     return render(request, 'leave_system/create_leave.html', context)
 
 def leave_request_datatable(request):
-    
     try:
-        user_roles = request.user.get_user_role_for_application("leave management")
+        user = UserProfile.objects.filter(id=request.user.id).first()
+        print('user',user)
+        user_roles = user.get_user_role_for_application("leave management")
+        print('user_roles',user_roles)
         role_name = getattr(user_roles, "name", None)
         print(f"User role for leave management: {role_name}")
     except AttributeError as e:
         print(f"Role error: {e}")
         role_name = None
-        
+
     draw = int(request.GET.get('draw', 1))
     start = int(request.GET.get('start', 0))
     length = int(request.GET.get('length', 10))
@@ -139,10 +138,32 @@ def leave_request_datatable(request):
 
     data = []
     for leave in qs:
+        # Defensive user string extraction
+        try:
+            if leave.user:
+                if hasattr(leave.user, "username"):  # direct User
+                    user_str = leave.user.username
+                elif hasattr(leave.user, "user") and hasattr(leave.user.user, "get_full_name"):  # UserProfile → User
+                    user_str = leave.user.user.username
+                else:
+                    user_str = str(leave.user)
+            else:
+                user_str = ""
+        except Exception as e:
+            user_str = ""
+            print(f"UserProfile error for leave id {leave.id}: {e}")
+
+
+        try:
+            attachments_url = leave.attachments.url if leave.attachments else ""
+        except Exception as e:
+            attachments_url = ""
+            print(f"Attachment error for leave id {leave.id}: {e}")
+
         data.append({
             "id": leave.id,
             "ecnumber": leave.ecnumber,
-            "user": str(leave.user) if leave.user else "",
+            "user": user_str,
             "type_of_leave": leave.type_of_leave,
             "gender": leave.gender,
             "position": str(leave.position) if leave.position else "",
@@ -152,7 +173,7 @@ def leave_request_datatable(request):
             "number_of_days": leave.number_of_days,
             "region": str(leave.region) if leave.region else "",
             "status": leave.status,
-            "attachments": leave.attachments.url if leave.attachments else "",
+            "attachments": attachments_url,
         })
 
     return JsonResponse({
@@ -164,8 +185,14 @@ def leave_request_datatable(request):
 
 def table_leave(request):
     try:
-        user_roles = request.user.get_user_role_for_application("leave management")
+        user = UserProfile.objects.filter(id=request.user.id).first()
+        print('user',user)
+        user_roles = user.get_user_role_for_application("leave management")
+        print('user_roles',user_roles)
+        role_name = getattr(user_roles, "name", None)
+        print(f"User role for leave management: {role_name}")
         is_requester = user_roles.name == 'Requester'
+        print('requester',is_requester)
     except AttributeError as e:
         print(f"Role error: {e}")
         is_requester = False
@@ -345,4 +372,33 @@ def update_leave_request(request, id):
         'form': form,
         'user_info': user_info,
         'leave_request': leave_request,
+    })
+
+def leave_dashboard(request):
+    try:
+        user = UserProfile.objects.filter(id=request.user.id).first()
+        print('user',user)
+        user_roles = user.get_user_role_for_application("leave management")
+        print('user_roles',user_roles)
+        role_name = getattr(user_roles, "name", None)
+        print(f"User role for leave management: {role_name}")
+        is_requester = user_roles.name == 'Requester'
+        print('requester',is_requester)
+    except AttributeError as e:
+        print(f"Role error: {e}")
+        is_requester = False
+
+    user = request.user
+    qs = LeaveRequest.objects.filter(user=user)
+    approved_count = qs.filter(status='approved').count()
+    rejected_count = qs.filter(status='rejected').count()
+    pending_count = qs.filter(status='pending').count()
+    total_count = qs.count()
+
+    return render(request, 'leave_system/leave_dashboard.html', {
+        'is_requester': is_requester,
+        'approved_count': approved_count,
+        'rejected_count': rejected_count,
+        'pending_count': pending_count,
+        'total_count': total_count,
     })

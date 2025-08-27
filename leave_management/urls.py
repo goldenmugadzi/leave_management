@@ -5,6 +5,7 @@ from leave_management.views import encashment_leave
 urlpatterns = [
 
     path('leave/', views.leave_create, name='leave_create'),
+    path('leave_dashboard/', views.leave_dashboard, name='leave_dashboard'),
     path('leave_request_datatable/', views.leave_request_datatable, name='leave_request_datatable'),
     path('leave_table/', views.table_leave, name='table_leave'),
     path('create_leave_types/', views.create_leave_types, name='create_leave_types'),

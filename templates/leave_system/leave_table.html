@@ -160,69 +160,10 @@
 {% block content %}
 <div class="content-wrapper">
   <div class="bg-gulf-blue-100 shadow shadow-gulf-blue-300 text-gulf-blue-900 rounded px-2 py-2">
-    <div class="main-heading">Leave Management System</div>
-    <div class="dashboard-nav-container">
-      <div class="button-grid">
-      {% if is_requester %}
-        <a href="/leave" class="tab-button active bg-blue-600">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-          Apply Leave
-        </a>
-        <a href="/leave_table" class="tab-button active bg-yellow-400">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7h18M3 12h18M3 17h18"/></svg>
-          Leave Overview
-        </a>
-         <a href="/encashment" class="tab-button active bg-red-400">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-          Vacation Leave Encashment
-        </a>
-      {% else %}
-       <a href="/leave" class="tab-button active bg-blue-600">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-          Apply Leave
-        </a>
-        <a href="/leave_table" class="tab-button active bg-yellow-400">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7h18M3 12h18M3 17h18"/></svg>
-          Overview of Leave Taken 
-        </a>
-        <a href="/create_leave_types" class="tab-button active bg-indigo-600">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2a4 4 0 014-4h3m-7 0V7a4 4 0 014-4h3m-7 0h7"/></svg>
-            Create Leave Types
-          </a>
-        <a href="" class="tab-button active bg-green-500">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
-          Approved Leaves
-        </a>
-        <a href="/leave_table" class="tab-button active bg-gray-400">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v0.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5"/></svg>
-          Awaiting my Action
-        </a>
-        <a href="/encashment" class="tab-button active bg-red-400">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6 0a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-          Vacation Leave Encashment
-        </a>
-      {% endif %}
-      </div>
-    </div>
+    <div class="main-heading">Leave Requests</div>
+   
     <!-- Stats Cards -->
-    <div class="stats-cards">
-      <div class="stat-card stat-approved">
-        {{ approved_count }}
-        <div class="stat-label">Approved Leaves</div>
-      </div>
-      <div class="stat-card stat-pending">
-        {{ pending_count }}
-        <div class="stat-label">Pending Leaves</div>
-      </div>
-      <div class="stat-card stat-rejected">
-        {{ rejected_count }}
-        <div class="stat-label">Rejected Leaves</div>
-      </div>
-      <div class="stat-card stat-total">
-        {{ total_count }}
-        <div class="stat-label">Total Applied Leaves</div>
-      </div>
-    </div>
+   
     <!-- Table -->
     <div class="overflow-x-auto">
       <table id="leaveTable" class="display" style="width:100%">

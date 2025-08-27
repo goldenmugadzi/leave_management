@@ -111,7 +111,7 @@ APPLICATIONS = [
         "name": "leave_management",
         "title": "Leave Management System",
         "iconUrl": "assets/images/leave.png",
-        "url": "/leave_types/"
+        "url": "/leave_dashboard/"
     },
 ]
 
