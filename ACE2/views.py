@@ -2254,16 +2254,91 @@ def view_all_transactions(request):
 def transactions_for_budget(request, budget_id):
     user_id = request.user.id
     user_profile = UserProfile.objects.filter(id=user_id).first()
-    # region = Regions.objects.filter(id=user_profile.region.id).first()
-    transactions = Transactions.objects.filter(budget_id=budget_id)
-    if not transactions:
-        messages.error(request, 'No transactions found for this budget.')
+    # All raw transaction records tied directly to this budget
+    transactions_qs = Transactions.objects.filter(budget_id=budget_id).select_related(
+        'Ace_id2', 'virament', 'section', 'region', 'budget'
+    )
+
+    # Budget object (or 404 redirect)
+    budget_obj = AssetBudget.objects.filter(budget_id=budget_id).first()
+    if not budget_obj:
+        messages.error(request, 'Budget not found.')
         return redirect('Ace:list_budgets')
-    else:
-        messages.success(request, 'Transactions found for this budget.')
-        print("transactions:", transactions)
-    
-    return render(request, 'finance/ace2/view_all_transactions.html', {'transactions': transactions})
+
+    # Gather virements where this budget is source or destination
+    outgoing_virements = Asset_budget_Virament.objects.filter(from_budget_id=budget_id).select_related(
+        'from_budget', 'to_budget', 'process'
+    )
+    incoming_virements = Asset_budget_Virament.objects.filter(to_budget_id=budget_id).select_related(
+        'from_budget', 'to_budget', 'process'
+    )
+
+    # Helper to determine status phase of a virement
+    def virement_phase(v):
+        try:
+            if not v.process:
+                return 'draft'
+            approvals = v.process.approval_set.all()
+            if not approvals.exists():
+                return 'pending'
+            last = approvals.last()
+            # If any rejection
+            if approvals.filter(approved='Rejected').exists():
+                return 'rejected'
+            # Completed when steps count == workflow steps and last approved
+            total_steps = v.process.workflow.step_set.count() if v.process.workflow else 0
+            if approvals.count() == total_steps and last.approved == 'Approved':
+                return 'approved'
+            return 'in_progress'
+        except Exception:
+            return 'unknown'
+
+    # Annotate virement data for template
+    def serialize_v(v, direction):
+        return {
+            'id': v.virament_id,
+            'direction': direction,  # 'out' or 'in'
+            'amount': v.amount or 0,
+            'from_budget': getattr(v.from_budget, 'budget_name', ''),
+            'to_budget': getattr(v.to_budget, 'budget_name', ''),
+            'date_created': v.date_created,
+            'status_phase': virement_phase(v),
+            'process': v.process,
+        }
+
+    outgoing_data = [serialize_v(v, 'out') for v in outgoing_virements]
+    incoming_data = [serialize_v(v, 'in') for v in incoming_virements]
+
+    # Reconciliation calculations
+    approved_out_total = sum(v['amount'] for v in outgoing_data if v['status_phase'] == 'approved')
+    pending_out_total = sum(v['amount'] for v in outgoing_data if v['status_phase'] in ('pending', 'in_progress', 'draft'))
+    approved_in_total = sum(v['amount'] for v in incoming_data if v['status_phase'] == 'approved')
+    pending_in_total = sum(v['amount'] for v in incoming_data if v['status_phase'] in ('pending', 'in_progress', 'draft'))
+
+    reserved_field = budget_obj.to_be_withdrawn or 0
+    computed_reserved_out = pending_out_total
+    reserved_discrepancy = reserved_field - computed_reserved_out
+
+    context = {
+        'budget_obj': budget_obj,
+        'transactions': transactions_qs,  # legacy transactions list
+        'outgoing_virements': outgoing_data,
+        'incoming_virements': incoming_data,
+        'approved_out_total': approved_out_total,
+        'pending_out_total': pending_out_total,
+        'approved_in_total': approved_in_total,
+        'pending_in_total': pending_in_total,
+        'reserved_field': reserved_field,
+        'computed_reserved_out': computed_reserved_out,
+        'reserved_discrepancy': reserved_discrepancy,
+        'available_balance': budget_obj.available_balance,
+        'raw_balance': budget_obj.balance,
+        'allocated': budget_obj.allocated,
+        'withdrawn': budget_obj.withdrawn,
+    }
+
+    # Decide which template (create dedicated one later if needed)
+    return render(request, 'finance/ace2/view_all_transactions.html', context)
 
 
 @login_required

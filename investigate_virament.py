@@ -46,5 +46,4 @@ def investigate_virament():
         print("-" * 50)
 
 if __name__ == "__main__":
-    investigate_virament()</content>
-<parameter name="filePath">d:\b\investigate_virament.py
+    investigate_virament()
