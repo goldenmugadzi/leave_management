@@ -2273,6 +2273,11 @@ def transactions_for_budget(request, budget_id):
         'from_budget', 'to_budget', 'process'
     )
 
+    # Gather ACEs that use this budget
+    aces_using_budget = Ace2.objects.filter(budget_id=budget_id).select_related(
+        'requested_by', 'section', 'region', 'process'
+    ).order_by('-date_created')
+
     # Helper to determine status phase of a virement
     def virement_phase(v):
         try:
@@ -2293,6 +2298,26 @@ def transactions_for_budget(request, budget_id):
         except Exception:
             return 'unknown'
 
+    # Helper to determine status phase of an ACE
+    def ace_phase(ace):
+        try:
+            if not ace.process:
+                return 'draft'
+            approvals = ace.process.approval_set.all()
+            if not approvals.exists():
+                return 'pending'
+            last = approvals.last()
+            # If any rejection
+            if approvals.filter(approved='Rejected').exists():
+                return 'rejected'
+            # Completed when steps count == workflow steps and last approved
+            total_steps = ace.process.workflow.step_set.count() if ace.process.workflow else 0
+            if approvals.count() == total_steps and last.approved == 'Approved':
+                return 'approved'
+            return 'in_progress'
+        except Exception:
+            return 'unknown'
+
     # Annotate virement data for template
     def serialize_v(v, direction):
         return {
@@ -2306,14 +2331,32 @@ def transactions_for_budget(request, budget_id):
             'process': v.process,
         }
 
+    # Annotate ACE data for template
+    def serialize_ace(ace):
+        return {
+            'id': ace.Ace_id2,
+            'details_of_expenditure': ace.details_of_expenditure,
+            'amount': ace.amount or 0,
+            'requested_by': getattr(ace.requested_by, 'get_full_name', lambda: '')() if ace.requested_by else '',
+            'section': getattr(ace.section, 'section', '') if ace.section else '',
+            'date_created': ace.date_created,
+            'status_phase': ace_phase(ace),
+            'process': ace.process,
+        }
+
     outgoing_data = [serialize_v(v, 'out') for v in outgoing_virements]
     incoming_data = [serialize_v(v, 'in') for v in incoming_virements]
+    aces_data = [serialize_ace(ace) for ace in aces_using_budget]
 
     # Reconciliation calculations
     approved_out_total = sum(v['amount'] for v in outgoing_data if v['status_phase'] == 'approved')
     pending_out_total = sum(v['amount'] for v in outgoing_data if v['status_phase'] in ('pending', 'in_progress', 'draft'))
     approved_in_total = sum(v['amount'] for v in incoming_data if v['status_phase'] == 'approved')
     pending_in_total = sum(v['amount'] for v in incoming_data if v['status_phase'] in ('pending', 'in_progress', 'draft'))
+
+    # ACE calculations
+    approved_ace_total = sum(ace['amount'] for ace in aces_data if ace['status_phase'] == 'approved')
+    pending_ace_total = sum(ace['amount'] for ace in aces_data if ace['status_phase'] in ('pending', 'in_progress', 'draft'))
 
     reserved_field = budget_obj.to_be_withdrawn or 0
     computed_reserved_out = pending_out_total
@@ -2324,10 +2367,13 @@ def transactions_for_budget(request, budget_id):
         'transactions': transactions_qs,  # legacy transactions list
         'outgoing_virements': outgoing_data,
         'incoming_virements': incoming_data,
+        'aces_using_budget': aces_data,
         'approved_out_total': approved_out_total,
         'pending_out_total': pending_out_total,
         'approved_in_total': approved_in_total,
         'pending_in_total': pending_in_total,
+        'approved_ace_total': approved_ace_total,
+        'pending_ace_total': pending_ace_total,
         'reserved_field': reserved_field,
         'computed_reserved_out': computed_reserved_out,
         'reserved_discrepancy': reserved_discrepancy,
