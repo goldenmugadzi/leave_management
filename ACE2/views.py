@@ -1939,115 +1939,21 @@ def virament_detail(request, virament_id):
 
     print(approve_now)
     if approve_now:
+        # Virement has been fully approved - budget transfer now happens automatically in approval workflow
         balance_before_from = "Actioned"
         balance_before_to = "Actioned"
         balance_after_from = "Actioned"
         balance_after_to = "Actioned"
-
-        # Enhanced budget calculations with proper error handling
-        try:
-            with transaction.atomic():
-                # Lock budgets to prevent concurrent modifications
-                fbudget = AssetBudget.objects.select_for_update().get(budget_id=virament_item.from_budget.budget_id)
-                tbudget = AssetBudget.objects.select_for_update().get(budget_id=virament_item.to_budget.budget_id)
-                
-                print("virament: ", virament_item.virament_id)
-                transaction_obj = Transactions.objects.filter(virament_id=str(virament_item.virament_id)).first()
-                
-                if not transaction_obj:
-                    logger.error(f"No transaction found for virament {virament_item.virament_id}")
-                    messages.error(request, "Transaction record not found.")
-                    return render(request, 'finance/ace2/virament_detail.html', {
-                        'virament': virament_item,
-                        'statements': statements,
-                        'approved_steps': approved_steps,
-                        'error': 'Transaction record missing'
-                    })
-                
-                print("transaction: ", str(transaction_obj.approval_status))
-
-                # Validate available balance before processing (considering to_be_withdrawn)
-                if virament_item.amount > fbudget.available_balance:
-                    logger.error(f"Insufficient available balance for virament {virament_item.virament_id}: "
-                               f"Required {virament_item.amount}, Available {fbudget.available_balance} "
-                               f"(Balance: {fbudget.balance}, To be withdrawn: {fbudget.to_be_withdrawn or 0})")
-                    messages.error(request, 
-                        f"Insufficient available balance in source budget. "
-                        f"Available: {fbudget.available_balance:,.2f} "
-                        f"(Balance: {fbudget.balance:,.2f}, "
-                        f"To be withdrawn: {fbudget.to_be_withdrawn or 0:,.2f}), "
-                        f"Required: {virament_item.amount:,.2f}")
-                    return render(request, 'finance/ace2/virament_detail.html', {
-                        'virament': virament_item,
-                        'statements': statements,
-                        'approved_steps': approved_steps,
-                        'balance_before_to': balance_before_to,
-                        'balance_after_to': balance_after_to,
-                        'balance_before_from': balance_before_from,
-                        'balance_after_from': balance_after_from,
-                        'error': 'Insufficient available balance'
-                    })
-
-                if transaction_obj.approval_status != "approved by General Manager" and virement_role == "approve":
-                    # Update source budget - remove from to_be_withdrawn and deduct from balance
-                    fbudget.balance = fbudget.balance - virament_item.amount
-                    fbudget.withdrawal_date = date.today()
-                    fbudget.withdrawn = (fbudget.withdrawn or 0) + virament_item.amount
-                    
-                    # Remove from to_be_withdrawn since it's now actually withdrawn
-                    if fbudget.to_be_withdrawn is not None and fbudget.to_be_withdrawn >= virament_item.amount:
-                        fbudget.to_be_withdrawn = fbudget.to_be_withdrawn - virament_item.amount
-                    else:
-                        logger.warning(f"to_be_withdrawn ({fbudget.to_be_withdrawn}) less than virement amount ({virament_item.amount}) for budget {fbudget.budget_id}")
-                        fbudget.to_be_withdrawn = max(0, (fbudget.to_be_withdrawn or 0) - virament_item.amount)
-                    
-                    fbudget.save()
-
-                    # Update destination budget
-                    tbudget.balance = tbudget.balance + virament_item.amount
-                    tbudget.allocated = (tbudget.allocated or 0) + virament_item.amount
-                    tbudget.save()
-
-                    # Update transaction status
-                    transaction_obj.approval_status = "approved by General Manager"
-                    transaction_obj.save()
-                    
-                    logger.info(f"Virament {virament_item.virament_id} approved successfully. "
-                              f"Transferred {virament_item.amount} from {fbudget.budget_name} to {tbudget.budget_name}")
-                    messages.success(request, f"Virament approved successfully. Funds transferred.")
-                    
-                    print("transaction: ", str(transaction_obj.approval_status))
-
-                    # Notify requester about final approval
-                    try:
-                        requester = virament_item.requested_by
-                        if requester:
-                            msg = (
-                                f"Your virement {virament_item.virament_id} has been approved by the General Manager"
-                            )
-                            url = reverse('Ace:virament_detail', args=[virament_item.virament_id])
-                            notify_user(requester, msg, "VIREMENT", url, str(virament_item.virament_id), request)
-                    except Exception as _e:
-                        logger.warning(f"Failed to send virement approval notification for {virament_item.virament_id}: {_e}")
-                
-        except AssetBudget.DoesNotExist as e:
-            logger.error(f"Budget not found for virament {virament_item.virament_id}: {e}")
-            messages.error(request, "Budget not found. Please contact support.")
-            return render(request, 'finance/ace2/virament_detail.html', {
-                'virament': virament_item,
-                'statements': statements,
-                'approved_steps': approved_steps,
-                'error': 'Budget not found'
-            })
-        except Exception as e:
-            logger.error(f"Error processing virament approval {virament_item.virament_id}: {e}")
-            messages.error(request, "Error processing approval. Please try again.")
-            return render(request, 'finance/ace2/virament_detail.html', {
-                'virament': virament_item,
-                'statements': statements,
-                'approved_steps': approved_steps,
-                'error': str(e)
-            })
+        
+        # Check transaction status to show appropriate message
+        transaction_obj = Transactions.objects.filter(virament_id=str(virament_item.virament_id)).first()
+        if transaction_obj:
+            if transaction_obj.approval_status == "approved by General Manager":
+                messages.success(request, "Virement has been fully approved and budget transfer completed.")
+            else:
+                messages.info(request, "Virement approved in workflow. Budget transfer will be processed automatically.")
+        else:
+            messages.warning(request, "Virement approved but transaction record not found.")
 
     # ace_quantity = range(virament_item.quantity)
     approved_steps = virament_item.process.approval_set.all().values_list('step__step', flat=True)

@@ -35,7 +35,7 @@ def diagnose_exact_issue():
             last_approval = approvals.last()
             print(f'  Last approval status: {last_approval.approved}')
             print(f'  Last approval step: {last_approval.step.step}')
-            print(f'  Last approval date: {last_approval.date_created}')
+            print(f'  Last approval date: {getattr(last_approval, "date_created", "N/A")}')
             print(f'  Last approver: {last_approval.user.get_full_name() if last_approval.user else "N/A"}')
         
         # Check approve_now logic conditions
@@ -52,7 +52,7 @@ def diagnose_exact_issue():
             print(f'\nTRANSACTION ANALYSIS:')
             print(f'  Current status: {transaction.approval_status}')
             print(f'  Should be updated: {transaction.approval_status != "approved by General Manager"}')
-            print(f'  Created date: {transaction.date_created}')
+            print(f'  Created date: {getattr(transaction, "date_created", getattr(transaction, "created_at", "N/A"))}')
         
         # Check budget status
         from_budget = v.from_budget
@@ -76,7 +76,7 @@ def diagnose_exact_issue():
         print(f'     workflow is 100% complete.')
         print(f'')
         print(f'  📋 WHAT HAPPENED:')
-        print(f'     1. Workflow was completed by Howard Choga on {last_approval.date_created if approvals.exists() else "unknown"}')
+        print(f'     1. Workflow was completed by Howard Choga on {getattr(last_approval, "date_created", "unknown") if approvals.exists() else "unknown"}')
         print(f'     2. But the budget transfer logic requires Howard (or another GM)')
         print(f'        to visit the virement detail page AGAIN after completion')
         print(f'     3. This second visit triggers the approve_now condition')

@@ -57,7 +57,7 @@ def check_virement_workflow_issue():
                 print(f'  ID: {transaction.transaction_id}')
                 print(f'  Status: {transaction.approval_status}')
                 print(f'  Amount: {transaction.amount}')
-                print(f'  Date: {transaction.date_created}')
+                print(f'  Date: {getattr(transaction, "date_created", "N/A")}')
                 
                 # This should be "approved by General Manager" if fully processed
                 if is_fully_approved and transaction.approval_status == "created":
