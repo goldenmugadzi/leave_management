@@ -230,16 +230,24 @@ class UserProfile(AbstractUser):
 
     def get_user_role_for_application(self, application_name):
         # Filter the user's roles for the specific application
+        # Check both the app_id foreign key and the application char field
         application = Application.objects.filter(name=application_name).first()
         print("application: ", application)
+        
         if application:
+            # First try to find roles by app_id foreign key
             user_roles = self.roles.filter(app_id=application.id)
-            print("user_roles: ", user_roles)
-            # Return the roles if any exist
+            print("user_roles by app_id: ", user_roles)
             if user_roles.exists():
                 return user_roles[0]
-        else:
-            return None
+        
+        # If not found by app_id, try by application char field
+        user_roles = self.roles.filter(application=application_name)
+        print("user_roles by application field: ", user_roles)
+        if user_roles.exists():
+            return user_roles[0]
+        
+        return None
 
     def cost_centers_for(self, app_names):
         responsibilities = self.responsibilities.filter(role__app_id__name__in=app_names)

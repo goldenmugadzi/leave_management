@@ -20,6 +20,7 @@ from django.views.decorators.csrf import csrf_exempt
 from graphene_file_upload.django import FileUploadGraphQLView
 from django.contrib import admin
 from django.urls import path, include
+from executive.general_dashboards import views as dashboard_views
 
 
 from rest_framework_simplejwt.views import (
@@ -39,7 +40,8 @@ urlpatterns = [
     path('meter/', include('commecial.tempertockens.urls')),
     path('users/', include('it.users.urls')),
     path('change_requests/', include('it.change_requests.urls')),
-    path('dashboards/', include('executive.exec_dashboards.urls')),
+    path('dashboards/', include('executive.general_dashboards.urls')),
+    path('dashboard_index/', dashboard_views.dashboard_index, name='dashboard_index'),
     path('ims/', include('knowledge_center.urls')),
     path('processes/', include('processes.urls'), name='processes'),
     path('process_risks/', include('process_risks.urls'), name='process_risks'),

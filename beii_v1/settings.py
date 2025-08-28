@@ -103,7 +103,7 @@ INSTALLED_APPS = [
     'it.beii_auth',
     'it.users',
     'it.change_requests',
-    'executive.exec_dashboards',
+    # 'executive.exec_dashboards',
     'executive.general_dashboards',
     'knowledge_center',
     'Docs',

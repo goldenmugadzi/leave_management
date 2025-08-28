@@ -11,8 +11,8 @@ if (domContainer) {
   console.error("Dashboard container element '#dashboard_filters' not found");
 }
 
-// Fallback to localhost if no URL is provided
-const BASE_URL = url || "http://localhost:8000";
+// Only use provided URL, no fallback
+const BASE_URL = url;
 console.log("Dashboard BASE_URL:", BASE_URL);
 class DashboardFilter extends React.Component {
   constructor(props) {
@@ -52,44 +52,43 @@ class DashboardFilter extends React.Component {
       // Metric cards data - will be loaded from API
       metrics: {
         energy_sold: {
-          value: "0",
-          unit: "GWh",
-          target: "0",
-          target_unit: "GWh",
+          value: "",
+          unit: "",
+          target: "",
+          target_unit: "",
           progress: 0
         },
         growth: {
-          value: "0",
-          unit: "Clients",
-          target: "0",
-          target_unit: "Clients",
+          value: "",
+          unit: "",
+          target: "",
+          target_unit: "",
           progress: 0
         },
         revenue_usd: {
-          value: "0",
-          unit: "USD",
-          target: "0",
-          target_unit: "USD",
+          value: "",
+          unit: "",
+          target: "",
+          target_unit: "",
           progress: 0
         },
         revenue_zwl: {
-          value: "0",
-          unit: "ZWL",
-          target: "0",
-          target_unit: "ZWL",
+          value: "",
+          unit: "",
+          target: "",
+          target_unit: "",
           progress: 0
         },
         faults: {
-          value: "0",
-          unit: "Complaints",
-          target: "0",
+          value: "",
+          unit: "",
+          target: "",
           target_unit: "",
           progress: 0
         },
         maintenance: {
-          value: "0",
-          unit: "Maintained",
-          target: "0",
+          value: "",
+          unit: "",
           target_unit: "",
           progress: 0
         }
@@ -109,8 +108,7 @@ class DashboardFilter extends React.Component {
       originalValue: "",
       // Error handling
       error: null,
-      networkError: false,
-      usingFallbackData: false
+      networkError: false
     };
   }
   componentDidMount() {
@@ -162,6 +160,14 @@ class DashboardFilter extends React.Component {
         isLoading: false
       });
     }
+  };
+
+  // Helper function to safely get metric values with defaults
+  getMetricValue = (metricKey, property, defaultValue = '') => {
+    if (!this.state.metrics || !this.state.metrics[metricKey]) {
+      return defaultValue;
+    }
+    return this.state.metrics[metricKey][property] || defaultValue;
   };
 
   // Add CSS styles for percentage adjustment visual feedback and loading spinners
@@ -430,7 +436,9 @@ class DashboardFilter extends React.Component {
         }
         return response.json();
       }).then(data => {
-        console.log("User permissions data: ", data);
+        console.log("Permissions loaded:", data);
+        console.log("User roles:", data.userRoles);
+        console.log("Can edit:", data.canEdit);
         this.setState({
           canEdit: data.canEdit || false,
           userRoles: data.userRoles || [],
@@ -463,9 +471,6 @@ class DashboardFilter extends React.Component {
 
     // Charts have been removed - this method now only handles data initialization
     // All chart-related functionality has been removed as requested
-
-    console.log("Dashboard components initialized successfully");
-    console.log("Focus areas: Weekly Collections, Weekly Revenue Lost, Debtors by Category, and Metrics Cards");
   };
 
   // Get regions data from API
@@ -475,26 +480,24 @@ class DashboardFilter extends React.Component {
         isLoadingRegions: true
       });
       if (!BASE_URL) {
-        console.error("BASE_URL is not available, using fallback regional data");
-        const fallbackData = this.getFallbackRegionalData();
+        console.error("BASE_URL is not available");
         this.setState({
-          regions: fallbackData.regions || [],
-          districts: fallbackData.districts || [],
-          sections: fallbackData.sections || [],
-          depots: fallbackData.depots || [],
-          isLoadingRegions: false
+          regions: [],
+          districts: [],
+          sections: [],
+          depots: [],
+          isLoadingRegions: false,
+          error: "Dashboard configuration error: Base URL not provided. Please contact your administrator."
         });
-        resolve(fallbackData);
+        reject(new Error("BASE_URL not available"));
         return;
       }
-      console.log(`Attempting to fetch regions data from: ${BASE_URL}/dashboards/regions`);
       fetch(`${BASE_URL}/dashboards/regions`).then(response => {
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
         return response.json();
       }).then(data => {
-        console.log("Regions data loaded:", data);
         this.setState({
           regions: data.regions || [],
           districts: data.districts || [],
@@ -502,20 +505,18 @@ class DashboardFilter extends React.Component {
           depots: data.depots || [],
           isLoadingRegions: false
         });
-        console.log(`Loaded ${data.regions?.length || 0} regions, ${data.districts?.length || 0} districts, ${data.depots?.length || 0} depots`);
         resolve(data);
       }).catch(error => {
         console.error("Error loading regions data:", error);
-        // Use fallback data
-        const fallbackData = this.getFallbackRegionalData();
         this.setState({
-          regions: fallbackData.regions || [],
-          districts: fallbackData.districts || [],
-          sections: fallbackData.sections || [],
-          depots: fallbackData.depots || [],
-          isLoadingRegions: false
+          regions: [],
+          districts: [],
+          sections: [],
+          depots: [],
+          isLoadingRegions: false,
+          error: `Failed to load regions data: ${error.message}. Please check your connection and try again.`
         });
-        resolve(fallbackData);
+        reject(error);
       });
     });
   };
@@ -529,12 +530,24 @@ class DashboardFilter extends React.Component {
 
       // Check if BASE_URL is available
       if (!BASE_URL) {
-        console.error("BASE_URL is not available, using fallback data");
-        this.useFallbackData();
-        resolve(null);
+        console.error("BASE_URL is not available");
+        this.setState({
+          pbncs: [],
+          weekly_sales: [],
+          weekly_collections: [],
+          upos: [],
+          weekly_outages: [],
+          weekly_revenue_lost: [],
+          tds: [],
+          weekly_faults_maintenance: [],
+          debtors: [],
+          metrics: this.state.metrics,
+          isLoadingDashboard: false,
+          error: "Dashboard configuration error: Base URL not provided. Please contact your administrator."
+        });
+        reject(new Error("BASE_URL not available"));
         return;
       }
-      console.log(`Attempting to fetch dashboard data from: ${BASE_URL}/dashboards/dashboard_data`);
       fetch(`${BASE_URL}/dashboards/dashboard_data`).then(response => {
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
@@ -545,6 +558,20 @@ class DashboardFilter extends React.Component {
 
         // Format the data for display
         const formattedData = this.formatAllDashboardData(data);
+        
+        // Ensure metrics always have the expected structure by merging with defaults
+        const defaultMetrics = this.state.metrics;
+        const backendMetrics = data.metrics || {};
+        const mergedMetrics = {};
+        
+        // Merge backend metrics with defaults to ensure all expected properties exist
+        Object.keys(defaultMetrics).forEach(key => {
+          mergedMetrics[key] = {
+            ...defaultMetrics[key],
+            ...backendMetrics[key]
+          };
+        });
+        
         this.setState({
           pbncs: data.pbncs || [],
           weekly_sales: data.weekly_sales || [],
@@ -555,7 +582,7 @@ class DashboardFilter extends React.Component {
           tds: data.tds || [],
           weekly_faults_maintenance: data.weekly_faults_maintenance || [],
           debtors: formattedData.debtors || [],
-          metrics: data.metrics || this.state.metrics,
+          metrics: mergedMetrics,
           isLoadingDashboard: false,
           usingFallbackData: false
         });
@@ -568,39 +595,24 @@ class DashboardFilter extends React.Component {
         }, 100);
         resolve(data);
       }).catch(error => {
-        console.warn("Dashboard API endpoint not available, using fallback data:", error);
-        this.useFallbackData();
-        resolve(null);
+        console.error("Error loading dashboard data:", error);
+        this.setState({
+          pbncs: [],
+          weekly_sales: [],
+          weekly_collections: [],
+          upos: [],
+          weekly_outages: [],
+          weekly_revenue_lost: [],
+          tds: [],
+          weekly_faults_maintenance: [],
+          debtors: [],
+          metrics: this.state.metrics, // Keep default metrics structure
+          isLoadingDashboard: false,
+          error: `Failed to load dashboard data: ${error.message}. Please check your connection and try again.`
+        });
+        reject(error);
       });
     });
-  };
-
-  // Helper method to use fallback data
-  useFallbackData = () => {
-    const fallbackData = this.getFallbackDashboardData();
-    const formattedData = this.formatAllDashboardData(fallbackData);
-    this.setState({
-      pbncs: fallbackData.pbncs || [],
-      weekly_sales: fallbackData.weekly_sales || [],
-      weekly_collections: formattedData.weekly_collections || [],
-      upos: fallbackData.upos || [],
-      weekly_outages: fallbackData.weekly_outages || [],
-      weekly_revenue_lost: formattedData.weekly_revenue_lost || [],
-      tds: fallbackData.tds || [],
-      weekly_faults_maintenance: fallbackData.weekly_faults_maintenance || [],
-      debtors: formattedData.debtors || [],
-      metrics: fallbackData.metrics || this.state.metrics,
-      isLoadingDashboard: false,
-      usingFallbackData: true
-    });
-
-    // Initialize components after data is loaded
-    setTimeout(() => {
-      if (this._isMounted) {
-        this.initComponents();
-      }
-    }, 100);
-    console.log("Using fallback dashboard data until API is available");
   };
   getCookie(name) {
     let cookieValue = null;
@@ -617,7 +629,6 @@ class DashboardFilter extends React.Component {
     return cookieValue;
   }
   onServiceSelected = event => {
-    console.log(event);
     const {
       name,
       checked
@@ -633,7 +644,6 @@ class DashboardFilter extends React.Component {
     });
   };
   onInputChange = event => {
-    console.log(event);
     const {
       name,
       value
@@ -649,7 +659,6 @@ class DashboardFilter extends React.Component {
   // Handle filter selection changes
   onFilterSelectCenters = (filterType, event) => {
     const value = event.target.value;
-    console.log(`${filterType} filter changed to:`, value);
     if (filterType === "region") {
       this.setState({
         selectedRegion: value,
@@ -700,6 +709,12 @@ class DashboardFilter extends React.Component {
   // Apply filters to dashboard data
   applyFilters = (filterType, value) => {
     if (!value) return;
+
+    // Check if BASE_URL is available
+    if (!BASE_URL) {
+      this.showToastNotification('Dashboard not properly configured. Cannot apply filters.', 'error', 3000);
+      return;
+    }
     console.log(`Applying ${filterType} filter:`, value);
 
     // Show loading message
@@ -717,7 +732,12 @@ class DashboardFilter extends React.Component {
       headers: {
         'Content-Type': 'application/json'
       }
-    }).then(response => response.json()).then(data => {
+    }).then(response => {
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return response.json();
+    }).then(data => {
       if (data.success) {
         console.log('Filtered data loaded:', data.data);
 
@@ -737,11 +757,11 @@ class DashboardFilter extends React.Component {
         this.showToastNotification('Data filtered successfully', 'success', 2000);
       } else {
         console.error('Filter request failed:', data.error);
-        this.showToastNotification('Failed to filter data', 'error', 3000);
+        this.showToastNotification(`Failed to filter data: ${data.error || 'Unknown error'}`, 'error', 3000);
       }
     }).catch(error => {
       console.error('Error applying filters:', error);
-      this.showToastNotification('Error applying filters', 'error', 3000);
+      this.showToastNotification(`Error applying filters: ${error.message}`, 'error', 3000);
     }).finally(() => {
       this.hideLoadingMessage();
     });
@@ -750,6 +770,12 @@ class DashboardFilter extends React.Component {
   // Save changes to server
   saveChangesToServer = (table, row, field, value) => {
     console.log(`Saving ${table}[${row}].${field} = ${value}`);
+
+    // Check if BASE_URL is available
+    if (!BASE_URL) {
+      this.showToastNotification('Dashboard not properly configured. Cannot save changes.', 'error', 3000);
+      return;
+    }
 
     // Show loading state for the specific cell
     this.showCellLoadingState(table, row, field, true);
@@ -1118,14 +1144,11 @@ class DashboardFilter extends React.Component {
       dataCount: currentState[section] ? currentState[section].length : 0,
       integrated: true // All sections are now integrated with filtering
     }));
-    console.log('Filter integration status for new sections:', integrationStatus);
 
     // Check if any section is missing or has issues
     const issues = integrationStatus.filter(status => !status.hasData);
     if (issues.length > 0) {
       console.warn('Integration issues detected:', issues);
-    } else {
-      console.log('All new data sections are seamlessly integrated with filtering');
     }
     return integrationStatus;
   };
@@ -1203,7 +1226,6 @@ class DashboardFilter extends React.Component {
         originalValue: ""
       });
       this.saveChangesToServer('metrics', metricKey, property, valueToSave);
-      console.log(`Saved metrics.${metricKey}.${property} = ${valueToSave}`);
     } else {
       // Handle table editing with enhanced validation
       const {
@@ -1545,302 +1567,6 @@ class DashboardFilter extends React.Component {
     return warnings;
   };
 
-  // Fallback data methods for when APIs are not available
-  getFallbackRegionalData = () => {
-    return {
-      regions: [{
-        id: 1,
-        region: 'HARARE REGION'
-      }, {
-        id: 2,
-        region: 'BULAWAYO REGION'
-      }, {
-        id: 3,
-        region: 'MUTARE REGION'
-      }, {
-        id: 4,
-        region: 'GWERU REGION'
-      }],
-      districts: [{
-        id: 1,
-        district: 'HARARE DISTRICT',
-        region_id: 1
-      }, {
-        id: 2,
-        district: 'CHITUNGWIZA DISTRICT',
-        region_id: 1
-      }, {
-        id: 3,
-        district: 'EPWORTH DISTRICT',
-        region_id: 1
-      }, {
-        id: 4,
-        district: 'BULAWAYO DISTRICT',
-        region_id: 2
-      }, {
-        id: 5,
-        district: 'MUTARE DISTRICT',
-        region_id: 3
-      }, {
-        id: 6,
-        district: 'GWERU DISTRICT',
-        region_id: 4
-      }],
-      sections: [],
-      depots: [{
-        id: 1,
-        depot: 'HARARE CENTRAL',
-        district_id: 1
-      }, {
-        id: 2,
-        depot: 'CHITUNGWIZA CENTRAL',
-        district_id: 2
-      }, {
-        id: 3,
-        depot: 'EPWORTH CENTRAL',
-        district_id: 3
-      }, {
-        id: 4,
-        depot: 'BULAWAYO CENTRAL',
-        district_id: 4
-      }, {
-        id: 5,
-        depot: 'MUTARE CENTRAL',
-        district_id: 5
-      }, {
-        id: 6,
-        depot: 'GWERU CENTRAL',
-        district_id: 6
-      }]
-    };
-  };
-  getFallbackDashboardData = () => {
-    return {
-      pbncs: [{
-        id: 1,
-        name: 'Transformer Maintenance',
-        amount: '15,000',
-        depot: 'HARARE CENTRAL',
-        district: 'HARARE DISTRICT',
-        region: 'HARARE REGION',
-        created_at: '2025-08-26'
-      }, {
-        id: 2,
-        name: 'Line Repairs',
-        amount: '8,500',
-        depot: 'CHITUNGWIZA CENTRAL',
-        district: 'CHITUNGWIZA DISTRICT',
-        region: 'HARARE REGION',
-        created_at: '2025-08-25'
-      }, {
-        id: 3,
-        name: 'Meter Installation',
-        amount: '12,300',
-        depot: 'EPWORTH CENTRAL',
-        district: 'EPWORTH DISTRICT',
-        region: 'HARARE REGION',
-        created_at: '2025-08-24'
-      }],
-      weekly_sales: [],
-      weekly_collections: [{
-        week: 'Week 1',
-        zwl_millions: '15.50',
-        usd_millions: '2.30'
-      }, {
-        week: 'Week 2',
-        zwl_millions: '18.20',
-        usd_millions: '2.80'
-      }, {
-        week: 'Week 3',
-        zwl_millions: '12.70',
-        usd_millions: '1.90'
-      }, {
-        week: 'Week 4',
-        zwl_millions: '21.10',
-        usd_millions: '3.20'
-      }],
-      upos: [{
-        id: 1,
-        description: 'Emergency Power Restoration',
-        depot: 'HARARE CENTRAL',
-        district: 'HARARE DISTRICT',
-        region: 'HARARE REGION',
-        created_at: '2025-08-26'
-      }, {
-        id: 2,
-        description: 'Scheduled Maintenance',
-        depot: 'CHITUNGWIZA CENTRAL',
-        district: 'CHITUNGWIZA DISTRICT',
-        region: 'HARARE REGION',
-        created_at: '2025-08-25'
-      }, {
-        id: 3,
-        description: 'Customer Service',
-        depot: 'EPWORTH CENTRAL',
-        district: 'EPWORTH DISTRICT',
-        region: 'HARARE REGION',
-        created_at: '2025-08-24'
-      }],
-      weekly_outages: [{
-        week: 'Week 1',
-        outages: 8,
-        resolved: 6,
-        pending: 2
-      }, {
-        week: 'Week 2',
-        outages: 12,
-        resolved: 10,
-        pending: 2
-      }, {
-        week: 'Week 3',
-        outages: 6,
-        resolved: 5,
-        pending: 1
-      }, {
-        week: 'Week 4',
-        outages: 15,
-        resolved: 12,
-        pending: 3
-      }],
-      weekly_revenue_lost: [{
-        week: 'Week 1',
-        faults_mwh: '45.20',
-        maintenance_mwh: '23.80',
-        total_mwh: '69.00'
-      }, {
-        week: 'Week 2',
-        faults_mwh: '38.70',
-        maintenance_mwh: '31.50',
-        total_mwh: '70.20'
-      }, {
-        week: 'Week 3',
-        faults_mwh: '52.10',
-        maintenance_mwh: '18.90',
-        total_mwh: '71.00'
-      }, {
-        week: 'Week 4',
-        faults_mwh: '29.30',
-        maintenance_mwh: '42.70',
-        total_mwh: '72.00'
-      }],
-      tds: [{
-        name: 'Mining Corp A',
-        amount: '45,000'
-      }, {
-        name: 'Industrial Plant B',
-        amount: '32,500'
-      }, {
-        name: 'Commercial Center C',
-        amount: '28,700'
-      }, {
-        name: 'Government Office D',
-        amount: '15,300'
-      }],
-      weekly_faults_maintenance: [{
-        week: 'Week 1',
-        faults: 12,
-        maintenance: 8,
-        completed: 6,
-        pending: 2
-      }, {
-        week: 'Week 2',
-        faults: 15,
-        maintenance: 10,
-        completed: 8,
-        pending: 2
-      }, {
-        week: 'Week 3',
-        faults: 9,
-        maintenance: 12,
-        completed: 10,
-        pending: 2
-      }, {
-        week: 'Week 4',
-        faults: 18,
-        maintenance: 14,
-        completed: 12,
-        pending: 2
-      }],
-      debtors: [{
-        id: 1,
-        category: 'Mining',
-        percentage: '25.50'
-      }, {
-        id: 2,
-        category: 'Domestic',
-        percentage: '35.20'
-      }, {
-        id: 3,
-        category: 'Industry',
-        percentage: '15.80'
-      }, {
-        id: 4,
-        category: 'Commercial',
-        percentage: '12.30'
-      }, {
-        id: 5,
-        category: 'Farming',
-        percentage: '4.70'
-      }, {
-        id: 6,
-        category: 'Government',
-        percentage: '3.20'
-      }, {
-        id: 7,
-        category: 'Parastatal',
-        percentage: '2.10'
-      }, {
-        id: 8,
-        category: 'Local Authority',
-        percentage: '1.20'
-      }],
-      metrics: {
-        energy_sold: {
-          value: "125.5",
-          unit: "GWh",
-          target: "150.0",
-          target_unit: "GWh",
-          progress: 84
-        },
-        growth: {
-          value: "2,847",
-          unit: "Clients",
-          target: "3,500",
-          target_unit: "Clients",
-          progress: 81
-        },
-        revenue_usd: {
-          value: "45.2",
-          unit: "USD",
-          target: "60.0",
-          target_unit: "USD",
-          progress: 75
-        },
-        revenue_zwl: {
-          value: "67.8",
-          unit: "ZWL",
-          target: "80.0",
-          target_unit: "ZWL",
-          progress: 85
-        },
-        faults: {
-          value: "156",
-          unit: "Complaints",
-          target: "200",
-          target_unit: "",
-          progress: 78
-        },
-        maintenance: {
-          value: "89",
-          unit: "Maintained",
-          target: "100",
-          target_unit: "",
-          progress: 89
-        }
-      }
-    };
-  };
-
   // Auto-adjust debtor percentages to maintain 100% total
   autoAdjustDebtorPercentages = (debtorData, changedRowIndex, newPercentage) => {
     const result = {
@@ -1923,31 +1649,6 @@ class DashboardFilter extends React.Component {
       // Add visual highlighting to adjusted cells
       this.highlightAdjustedPercentages(adjustments);
     }
-  };
-
-  // Highlight adjusted percentage cells with visual feedback
-  highlightAdjustedPercentages = adjustments => {
-    adjustments.forEach(adj => {
-      if (Math.abs(adj.change) > 0.01) {
-        // Find the table cell for this category and add temporary highlighting
-        const debtorRows = document.querySelectorAll('#debtors-data tr');
-        debtorRows.forEach(row => {
-          const categoryCell = row.querySelector('td:nth-child(2)'); // Category column
-          if (categoryCell && categoryCell.textContent.toLowerCase().includes(adj.category.toLowerCase())) {
-            const percentageCell = row.querySelector('td:nth-child(3)'); // Percentage column
-            if (percentageCell) {
-              // Add temporary highlight class
-              percentageCell.classList.add('percentage-adjusted');
-
-              // Remove highlight after 3 seconds
-              setTimeout(() => {
-                percentageCell.classList.remove('percentage-adjusted');
-              }, 3000);
-            }
-          }
-        });
-      }
-    });
   };
 
   // Highlight adjusted percentage cells with visual feedback
@@ -3028,15 +2729,67 @@ class DashboardFilter extends React.Component {
         }
       }, "Retry Loading"));
     }
-    return /*#__PURE__*/React.createElement("div", null, this.state.usingFallbackData && /*#__PURE__*/React.createElement("div", {
-      className: "w-auto bg-gradient-to-r from-yellow-50 to-yellow-100 border-l-4 border-yellow-400 p-3 rounded mb-3"
+
+    // Show message when no data is available
+    if (!this.state.isLoading && (!this.state.regions || this.state.regions.length === 0) && (!this.state.pbncs || this.state.pbncs.length === 0) && (!this.state.weekly_collections || this.state.weekly_collections.length === 0) && (!this.state.weekly_revenue_lost || this.state.weekly_revenue_lost.length === 0) && (!this.state.debtors || this.state.debtors.length === 0)) {
+      console.log("No dashboard data available. Current state:", {
+        regions: this.state.regions?.length || 0,
+        pbncs: this.state.pbncs?.length || 0,
+        weekly_collections: this.state.weekly_collections?.length || 0,
+        weekly_revenue_lost: this.state.weekly_revenue_lost?.length || 0,
+        debtors: this.state.debtors?.length || 0,
+        error: this.state.error
+      });
+      return /*#__PURE__*/React.createElement("div", {
+        className: "dashboard-error",
+        style: {
+          margin: '20px',
+          textAlign: 'center'
+        }
+      }, /*#__PURE__*/React.createElement("h3", {
+        style: {
+          marginBottom: '16px'
+        }
+      }, "No Data Available"), /*#__PURE__*/React.createElement("p", null, "No dashboard data is currently available. This could be because:"), /*#__PURE__*/React.createElement("ul", {
+        style: {
+          textAlign: 'left',
+          display: 'inline-block',
+          marginTop: '10px'
+        }
+      }, /*#__PURE__*/React.createElement("li", null, "\u2022 The backend API endpoints are not configured"), /*#__PURE__*/React.createElement("li", null, "\u2022 The database is empty or not accessible"), /*#__PURE__*/React.createElement("li", null, "\u2022 There are no records matching the current filters"), /*#__PURE__*/React.createElement("li", null, "\u2022 The dashboard data tables are empty")), /*#__PURE__*/React.createElement("p", {
+        style: {
+          marginTop: '10px',
+          fontSize: '14px',
+          color: '#6b7280'
+        }
+      }, BASE_URL ? 'The dashboard is properly configured but no data is available. Please ensure the database contains the required data.' : 'The dashboard is not properly configured. Please contact your administrator to set up the required API endpoints.'), /*#__PURE__*/React.createElement("button", {
+        className: "dashboard-error-retry",
+        onClick: () => this.initializeData(),
+        style: {
+          marginTop: '16px'
+        }
+      }, "Retry Loading"));
+    }
+    return /*#__PURE__*/React.createElement("div", null, console.log("Current state:", {
+      canEdit: this.state.canEdit,
+      userRoles: this.state.userRoles,
+      isLoadingPermissions: this.state.isLoadingPermissions
+    }), this.state.isLoadingPermissions && /*#__PURE__*/React.createElement("div", {
+      className: "bg-yellow-100 border-l-4 border-yellow-400 p-3 mb-3"
     }, /*#__PURE__*/React.createElement("div", {
-      className: "flex items-center"
+      className: "flex"
     }, /*#__PURE__*/React.createElement("div", {
-      className: "text-yellow-800 mr-2"
-    }, "\u26A0\uFE0F"), /*#__PURE__*/React.createElement("div", {
-      className: "text-sm text-yellow-800"
-    }, /*#__PURE__*/React.createElement("strong", null, "Fallback Mode:"), " Dashboard is using sample data because the backend API endpoints are not available. Data will automatically switch to live data once the APIs are implemented."))), /*#__PURE__*/React.createElement("div", {
+      className: "text-yellow-800"
+    }, "\uD83D\uDD04 Loading permissions..."))), !this.state.isLoadingPermissions && /*#__PURE__*/React.createElement("div", {
+      className: "bg-gray-100 border-l-4 border-gray-400 p-3 mb-3"
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "flex justify-between items-center"
+    }, /*#__PURE__*/React.createElement("div", {
+      className: "text-gray-800"
+    }, /*#__PURE__*/React.createElement("strong", null, "Debug Info:"), " canEdit: ", this.state.canEdit.toString(), ", Roles: ", this.state.userRoles.join(', ') || 'None', ", Loading: ", this.state.isLoadingPermissions.toString()), /*#__PURE__*/React.createElement("button", {
+      onClick: () => this.getUserPermissions().then(() => console.log("Permissions refreshed")),
+      className: "bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+    }, "\uD83D\uDD04 Refresh Permissions"))), /*#__PURE__*/React.createElement("div", {
       className: "grid grid-cols-1 gap-4 mb-3"
     }, /*#__PURE__*/React.createElement("div", {
       className: `w-auto bg-gradient-to-r ${this.state.canEdit ? 'from-green-50 to-green-100 border-l-4 border-green-400' : 'from-blue-50 to-blue-100 border-l-4 border-blue-400'} p-3 rounded`
@@ -3065,10 +2818,12 @@ class DashboardFilter extends React.Component {
       onChange: event => this.onFilterSelectCenters("region", event),
       disabled: this.state.isLoadingRegions,
       className: "block w-full bg-gulf-blue-50 rounded-md border-0 px-2 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
-    }, this.state.isLoadingRegions ? /*#__PURE__*/React.createElement("option", null, "Loading regions...") : this.state.region ? /*#__PURE__*/React.createElement("option", null, this.state.region) : /*#__PURE__*/React.createElement("option", null, "Select Region"), !this.state.isLoadingRegions && this.state.regions.map(region => /*#__PURE__*/React.createElement("option", {
+    }, this.state.isLoadingRegions ? /*#__PURE__*/React.createElement("option", null, "Loading regions...") : this.state.region ? /*#__PURE__*/React.createElement("option", null, this.state.region) : /*#__PURE__*/React.createElement("option", null, "Select Region"), !this.state.isLoadingRegions && this.state.regions && this.state.regions.length > 0 ? this.state.regions.map(region => /*#__PURE__*/React.createElement("option", {
       key: region.id,
       value: region.id
-    }, region.region))))), /*#__PURE__*/React.createElement("div", {
+    }, region.region)) : /*#__PURE__*/React.createElement("option", {
+      disabled: true
+    }, "No regions available")))), /*#__PURE__*/React.createElement("div", {
       style: {
         flex: 0.25
       },
@@ -3081,10 +2836,12 @@ class DashboardFilter extends React.Component {
       onChange: event => this.onFilterSelectCenters("district", event),
       disabled: this.state.isLoadingRegions,
       className: "block w-full bg-gulf-blue-50 rounded-md border-0 px-2 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
-    }, this.state.isLoadingRegions ? /*#__PURE__*/React.createElement("option", null, "Loading districts...") : this.state.district ? /*#__PURE__*/React.createElement("option", null, this.state.district) : /*#__PURE__*/React.createElement("option", null, "Select district"), !this.state.isLoadingRegions && this.state.districts.map(district => /*#__PURE__*/React.createElement("option", {
+    }, this.state.isLoadingRegions ? /*#__PURE__*/React.createElement("option", null, "Loading districts...") : this.state.district ? /*#__PURE__*/React.createElement("option", null, this.state.district) : /*#__PURE__*/React.createElement("option", null, "Select district"), !this.state.isLoadingRegions && this.state.districts && this.state.districts.length > 0 ? this.state.districts.map(district => /*#__PURE__*/React.createElement("option", {
       key: district.id,
       value: district.id
-    }, district.district))))), /*#__PURE__*/React.createElement("div", {
+    }, district.district)) : /*#__PURE__*/React.createElement("option", {
+      disabled: true
+    }, "No districts available")))), /*#__PURE__*/React.createElement("div", {
       style: {
         flex: 0.25
       },
@@ -3097,10 +2854,12 @@ class DashboardFilter extends React.Component {
       onChange: event => this.onFilterSelectCenters("depot", event),
       disabled: this.state.isLoadingRegions,
       className: "block w-full bg-gulf-blue-50 rounded-md border-0 px-2 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
-    }, this.state.isLoadingRegions ? /*#__PURE__*/React.createElement("option", null, "Loading centres...") : this.state.depot ? /*#__PURE__*/React.createElement("option", null, this.state.depot) : /*#__PURE__*/React.createElement("option", null, "Select Centre"), !this.state.isLoadingRegions && this.state.depots && this.state.depots.map(depot => /*#__PURE__*/React.createElement("option", {
+    }, this.state.isLoadingRegions ? /*#__PURE__*/React.createElement("option", null, "Loading centres...") : this.state.depot ? /*#__PURE__*/React.createElement("option", null, this.state.depot) : /*#__PURE__*/React.createElement("option", null, "Select Centre"), !this.state.isLoadingRegions && this.state.depots && this.state.depots.length > 0 ? this.state.depots.map(depot => /*#__PURE__*/React.createElement("option", {
       key: depot.id,
       value: depot.id
-    }, depot.depot)))))))), /*#__PURE__*/React.createElement("div", {
+    }, depot.depot)) : /*#__PURE__*/React.createElement("option", {
+      disabled: true
+    }, "No depots available"))))))), /*#__PURE__*/React.createElement("div", {
       className: "grid grid-cols-5 gap-4 mt-5"
     }, /*#__PURE__*/React.createElement("div", {
       className: "w-auto bg-gradient-to-r from-gulf-blue-100 to-gulf-blue-300 drop-shadow-md shadow shadow-gulf-blue-300 text-gulf-blue-900 rounded px-2 py-2"
@@ -3132,25 +2891,25 @@ class DashboardFilter extends React.Component {
       className: "text-xs mb-0 text-capitalize font-weight-bold"
     }, "Energy Sold (GWh)"), /*#__PURE__*/React.createElement("h6", {
       className: "font-weight-bolder mb-0"
-    }, this.renderEditableMetric('energy_sold', 'value', this.state.metrics.energy_sold.value), " ", this.state.metrics.energy_sold.unit)), /*#__PURE__*/React.createElement("div", {
+    }, this.renderEditableMetric('energy_sold', 'value', this.getMetricValue('energy_sold', 'value', '')), " ", this.getMetricValue('energy_sold', 'unit', '')), /*#__PURE__*/React.createElement("div", {
       className: "overflow-hidden bg-blue-50 h-1.5 rounded-full w-full"
     }, /*#__PURE__*/React.createElement("span", {
-      className: `h-full w-full block rounded-full transition-all duration-300 ${this.state.canEdit ? 'cursor-pointer' : ''} ${this.getProgressColor(this.calculateProgress(this.state.metrics.energy_sold.value, this.state.metrics.energy_sold.target))}`,
-      style: {
-        width: `${this.calculateProgress(this.state.metrics.energy_sold.value, this.state.metrics.energy_sold.target)}%`
-      },
-      title: `Progress: ${this.calculateProgress(this.state.metrics.energy_sold.value, this.state.metrics.energy_sold.target)}% (${this.state.metrics.energy_sold.value}/${this.state.metrics.energy_sold.target})${this.state.canEdit ? ' - Click to edit' : ''}`,
-      onClick: this.state.canEdit ? () => this.setState({
-        editingCell: {
-          type: 'metric',
-          field: 'energy_sold_progress'
+      className: `h-full w-full block rounded-full transition-all duration-300 ${this.state.canEdit ? 'cursor-pointer' : ''} ${this.getProgressColor(this.calculateProgress(this.getMetricValue('energy_sold', 'value', 0), this.getMetricValue('energy_sold', 'target', 0)))}`,
+              style: {
+          width: `${this.calculateProgress(this.getMetricValue('energy_sold', 'value', 0), this.getMetricValue('energy_sold', 'target', 0))}%`
         },
-        editingValue: this.calculateProgress(this.state.metrics.energy_sold.value, this.state.metrics.energy_sold.target).toString(),
-        originalValue: this.calculateProgress(this.state.metrics.energy_sold.value, this.state.metrics.energy_sold.target).toString()
-      }) : undefined
+              title: `Progress: ${this.calculateProgress(this.getMetricValue('energy_sold', 'value', 0), this.getMetricValue('energy_sold', 'target', 0))}% (${this.getMetricValue('energy_sold', 'value', 0)}/${this.getMetricValue('energy_sold', 'target', 0)})${this.state.canEdit ? ' - Click to edit' : ''}`,
+              onClick: this.state.canEdit ? () => this.setState({
+          editingCell: {
+            type: 'metric',
+            field: 'energy_sold_progress'
+          },
+          editingValue: this.calculateProgress(this.getMetricValue('energy_sold', 'value', 0), this.getMetricValue('energy_sold', 'target', 0)).toString(),
+          originalValue: this.calculateProgress(this.getMetricValue('energy_sold', 'value', 0), this.getMetricValue('energy_sold', 'target', 0)).toString()
+        }) : undefined
     })), /*#__PURE__*/React.createElement("p", {
       className: "text-xs text-muted mt-2 mb-0"
-    }, "Monthly Target: ", this.renderEditableMetric('energy_sold', 'target', this.state.metrics.energy_sold.target), " ", this.state.metrics.energy_sold.target_unit)))))))))))), /*#__PURE__*/React.createElement("div", {
+    }, "Monthly Target: ", this.renderEditableMetric('energy_sold', 'target', this.getMetricValue('energy_sold', 'target', '')), " ", this.getMetricValue('energy_sold', 'target_unit', '')))))))))))), /*#__PURE__*/React.createElement("div", {
       className: "w-auto bg-gradient-to-r from-jade-100 to-jade-300 drop-shadow-md shadow shadow-jade-300 text-jade-900 rounded px-2 py-2"
     }, /*#__PURE__*/React.createElement("div", {
       className: "sm:flex lg:items-center lg:justify-between"
@@ -3180,7 +2939,7 @@ class DashboardFilter extends React.Component {
       className: "text-xs mb-0 text-capitalize font-weight-bold"
     }, "Client Connected"), /*#__PURE__*/React.createElement("h6", {
       className: "font-weight-bolder mb-0"
-    }, this.renderEditableMetric('growth', 'value', this.state.metrics.growth.value))), /*#__PURE__*/React.createElement("div", {
+    }, this.renderEditableMetric('growth', 'value', this.getMetricValue('growth', 'value', ''))), /*#__PURE__*/React.createElement("div", {
       className: "overflow-hidden bg-jade-50 h-1.5 rounded-full w-full"
     }, /*#__PURE__*/React.createElement("span", {
       className: `h-full w-full block rounded-full transition-all duration-300 ${this.state.canEdit ? 'cursor-pointer' : ''} ${this.getProgressColor(this.calculateProgress(this.state.metrics.growth.value, this.state.metrics.growth.target))}`,
