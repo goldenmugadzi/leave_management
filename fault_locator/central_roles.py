@@ -196,6 +196,30 @@ def is_senior_foreman(user_profile):
         print(f"Error checking senior foreman role: {e}")
         return False
 
+def is_depot_foreperson_by_designation(user_profile):
+    """Transitional helper: determine depot foreperson based on designation text.
+
+    This mirrors the legacy designation-based permission logic used in some
+    validation utilities (e.g. depot foreperson assignment validation) prior
+    to full adoption of central role assignments. It purposefully excludes
+    any designation containing 'senior' while including either 'foreperson'
+    or 'foreman'.
+
+    Args:
+        user_profile (UserProfile): Profile to inspect.
+
+    Returns:
+        bool: True if designation indicates a (non-senior) foreperson/foreman.
+    """
+    try:
+        if not user_profile or not hasattr(user_profile, 'designation') or not user_profile.designation:
+            return False
+        designation_desc = str(user_profile.designation.description).lower()
+        # Must contain foreperson/foreman but not senior
+        return ('foreperson' in designation_desc or 'foreman' in designation_desc) and 'senior' not in designation_desc
+    except Exception:
+        return False
+
 def is_depot_foreperson(user_profile, depot_code=None):
     """Check if user is depot foreperson using central roles"""
     try:

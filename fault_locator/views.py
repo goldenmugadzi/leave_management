@@ -2209,6 +2209,50 @@ def edit_team(request, team_id):
 
 @login_required
 @transaction.atomic
+def create_team(request):
+    try:
+        user_profile = UserProfile.objects.filter(id=request.user.id).first()
+
+        # Check permissions
+        if not (is_senior_foreman(user_profile) or can_manage_devices(user_profile)):
+            messages.error(request, "You don't have permission to create teams")
+            return redirect('fault_locator_dashboard')
+
+        if request.method == "POST":
+            try:
+                from .forms import FaultLocatorTeamForm
+                form = FaultLocatorTeamForm(request.POST, user_region=user_profile.region)
+                if form.is_valid():
+                    team = form.save(commit=False)
+                    team.created_by = user_profile
+                    team.save()
+
+                    messages.success(request, f"Team '{team.name}' created successfully")
+                    return redirect('edit_team', team_id=team.id)
+            except Exception as e:
+                messages.error(request, f"Error creating team: {str(e)}")
+                return redirect('create_team')
+
+        # Initialize form
+        from .forms import FaultLocatorTeamForm
+        form = FaultLocatorTeamForm(user_region=user_profile.region)
+
+        context = {
+            'form': form,
+            'user_profile': user_profile,
+            'page_title': 'Create New Team',
+        }
+
+        return render(request, "fault_locator/create_team.html", context)
+    except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Create team error: {e}")
+        messages.error(request, "An error occurred creating the team.")
+        return redirect('team_overview')
+
+@login_required
+@transaction.atomic
 def delete_team(request, team_id):
     try:
         user_profile = UserProfile.objects.filter(id=request.user.id).first()
@@ -2753,6 +2797,46 @@ def debug_user(request):
         logger = logging.getLogger(__name__)
         logger.error(f"Debug user error: {e}")
         messages.error(request, "An error occurred loading debug info.")
+        return redirect('fault_locator_dashboard')
+
+@login_required
+def role_troubleshooting(request):
+    try:
+        user_profile = UserProfile.objects.filter(id=request.user.id).first()
+
+        # Get role information
+        from fault_locator.central_roles import FaultLocatorRoleManager
+        user_role = FaultLocatorRoleManager.get_user_role(user_profile)
+        user_role_display = FaultLocatorRoleManager.get_user_role_display(user_profile)
+        has_any_role = FaultLocatorRoleManager.has_any_role(user_profile)
+
+        # Get available roles
+        available_roles = FaultLocatorRoleManager.get_available_roles()
+
+        # Check permissions
+        permissions = {
+            'is_senior_foreman': is_senior_foreman(user_profile),
+            'can_manage_devices': can_manage_devices(user_profile),
+            'can_deploy_teams': can_deploy_teams(user_profile),
+            'can_create_teams': can_create_teams(user_profile),
+        }
+
+        context = {
+            'user_profile': user_profile,
+            'user_role': user_role,
+            'user_role_display': user_role_display,
+            'has_any_role': has_any_role,
+            'available_roles': available_roles,
+            'permissions': permissions,
+            'page_title': 'Role Troubleshooting',
+        }
+
+        return render(request, "fault_locator/role_troubleshooting.html", context)
+    except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Role troubleshooting error: {e}")
+        messages.error(request, "An error occurred loading role troubleshooting info.")
         return redirect('fault_locator_dashboard')
 
 # ADVANCED FAULT ASSIGNMENT

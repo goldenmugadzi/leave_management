@@ -36,7 +36,7 @@ from django.http import FileResponse, HttpResponseNotFound
 from django.db.models.functions import TruncMonth
 from django.db.models import Sum, Count
 from django.contrib import messages
-from .central_roles import FaultLocatorRoleManager
+from fault_locator.central_roles import FaultLocatorRoleManager
 from it.users.models import UserProfile, Application, Roles
 
 # Create your views here.
