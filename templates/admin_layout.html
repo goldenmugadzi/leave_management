@@ -44,7 +44,7 @@
           if (document.referrer && !document.referrer.includes(loginUrl)) {
             window.history.back();
           } else {
-            window.location.href = "{% url 'dashboard_index' %}";
+            window.location.href = "{% url 'dashboards:dashboard_overview' %}";
           }
         }
     </script>
@@ -123,7 +123,7 @@
               <a
                 id="menu-item"
                 class="flex items-center w-full h-12 px-3 mt-2 rounded hover:bg-gulf-blue-500 hover:shadow-lg"
-                href="{% url 'dashboard_index' %}"
+                href="{% url 'dashboards:dashboard_overview' %}"
               >
                 <svg
                   class="w-6 h-6 stroke-current"

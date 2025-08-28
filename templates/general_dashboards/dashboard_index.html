@@ -1,0 +1,679 @@
+{% extends 'admin_layout.html' %}
+{% load static %}
+
+{% block title %}{{ title }} - Executive Dashboard{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'assets/css/dashboard_sections.css' %}">
+<style>
+    .dashboard-container {
+        padding: 20px;
+        background: #f8fafc;
+        min-height: 100vh;
+    }
+    
+    .dashboard-header {
+        text-align: center;
+        margin-bottom: 30px;
+        padding: 20px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 15px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    }
+    
+    .dashboard-header h1 {
+        margin: 0;
+        font-size: 2.5rem;
+        font-weight: 700;
+    }
+    
+    .dashboard-header p {
+        margin: 10px 0 0 0;
+        font-size: 1.1rem;
+        opacity: 0.9;
+    }
+    
+    #dashboard_filters {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+    
+    .loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(255, 255, 255, 0.95);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+    }
+    
+    .spinner {
+        border: 4px solid #f3f3f3;
+        border-top: 4px solid #3498db;
+        border-radius: 50%;
+        width: 50px;
+        height: 50px;
+        animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    
+    .dashboard-info {
+        margin-top: 2rem;
+    }
+    
+    /* Dashboard Grid Layout */
+    .dashboard-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1.5rem;
+        margin-top: 2rem;
+    }
+    
+    /* Dashboard Sections */
+    .dashboard-section {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        padding: 1.5rem;
+        border: 1px solid #e5e7eb;
+    }
+    
+    .dashboard-section-header {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #1f2937;
+        margin-bottom: 1rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid #e5e7eb;
+    }
+    
+    /* Metric Cards */
+    .metric-card {
+        background: white;
+        border-radius: 10px;
+        padding: 1.5rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        border-left: 4px solid #667eea;
+        margin-bottom: 1rem;
+    }
+    
+    .metric-card h5 {
+        color: #2c3e50;
+        margin-bottom: 10px;
+        font-size: 1.1rem;
+        font-weight: 600;
+    }
+    
+    .metric-card p {
+        color: #7f8c8d;
+        margin: 0;
+        font-size: 0.9rem;
+    }
+    
+    /* Filter Controls */
+    .filter-controls {
+        background: white;
+        border-radius: 10px;
+        padding: 1.5rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        margin-bottom: 1.5rem;
+    }
+    
+    .filter-select {
+        width: 100%;
+        padding: 0.5rem;
+        border: 1px solid #d1d5db;
+        border-radius: 0.375rem;
+        background-color: #f9fafb;
+        color: #374151;
+        font-size: 0.875rem;
+    }
+    
+    .filter-select:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+    
+    /* Data Tables */
+    .data-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 1rem;
+    }
+    
+    .data-table th {
+        background-color: #1f2937;
+        color: white;
+        padding: 0.75rem;
+        text-align: left;
+        font-weight: 600;
+        border: 1px solid #374151;
+    }
+    
+    .data-table td {
+        padding: 0.75rem;
+        border: 1px solid #e5e7eb;
+        background-color: white;
+    }
+    
+    .data-table tr:hover {
+        background-color: #f9fafb;
+    }
+    
+    /* Editable Cells */
+    .editable-cell {
+        cursor: pointer;
+        transition: background-color 0.2s;
+    }
+    
+    .editable-cell:hover {
+        background-color: #f3f4f6;
+    }
+    
+    .non-editable-cell {
+        background-color: #f9fafb;
+        color: #6b7280;
+        cursor: not-allowed;
+    }
+    
+    /* Progress Bars */
+    .progress-bar {
+        width: 100%;
+        height: 0.5rem;
+        background-color: #e5e7eb;
+        border-radius: 0.25rem;
+        overflow: hidden;
+    }
+    
+    .progress-fill {
+        height: 100%;
+        transition: width 0.3s ease;
+        border-radius: 0.25rem;
+    }
+    
+    /* Loading States */
+    .cell-loading {
+        opacity: 0.6;
+        position: relative;
+    }
+    
+    .cell-loading::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 16px;
+        height: 16px;
+        margin: -8px 0 0 -8px;
+        border: 2px solid #e5e7eb;
+        border-top: 2px solid #3b82f6;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+    
+    /* Success and Error States */
+    .cell-success {
+        background-color: #d1fae5 !important;
+        border-color: #10b981 !important;
+        animation: successPulse 0.5s ease-in-out;
+    }
+    
+    .cell-error {
+        background-color: #fee2e2 !important;
+        border-color: #ef4444 !important;
+        animation: errorPulse 0.5s ease-in-out;
+    }
+    
+    @keyframes successPulse {
+        0%, 100% { background-color: #d1fae5; }
+        50% { background-color: #a7f3d0; }
+    }
+    
+    @keyframes errorPulse {
+        0%, 100% { background-color: #fee2e2; }
+        50% { background-color: #fecaca; }
+    }
+    
+    /* Toast Notifications */
+    .toast-container {
+        position: fixed;
+        top: 1rem;
+        right: 1rem;
+        z-index: 50;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .toast {
+        padding: 1rem;
+        border-radius: 0.5rem;
+        color: white;
+        font-weight: 500;
+        max-width: 20rem;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        transform: translateX(100%);
+        transition: transform 0.3s ease;
+    }
+    
+    .toast.show {
+        transform: translateX(0);
+    }
+    
+    .toast-success { background-color: #10b981; }
+    .toast-error { background-color: #ef4444; }
+    .toast-warning { background-color: #f59e0b; }
+    .toast-info { background-color: #3b82f6; }
+    
+    /* Edit Input Styles */
+    .edit-container {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+    
+    .edit-input {
+        width: 60px;
+        padding: 0.25rem;
+        border: 1px solid #3b82f6;
+        border-radius: 0.25rem;
+        font-size: 0.875rem;
+        text-align: center;
+    }
+    
+    .edit-input:focus {
+        outline: none;
+        border-color: #1d4ed8;
+        box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+    }
+    
+    .edit-save-btn,
+    .edit-cancel-btn {
+        padding: 0.25rem 0.5rem;
+        border: none;
+        border-radius: 0.25rem;
+        font-size: 0.75rem;
+        cursor: pointer;
+        transition: background-color 0.2s;
+    }
+    
+    .edit-save-btn {
+        background-color: #10b981;
+        color: white;
+    }
+    
+    .edit-save-btn:hover {
+        background-color: #059669;
+    }
+    
+    .edit-cancel-btn {
+        background-color: #ef4444;
+        color: white;
+    }
+    
+    .edit-cancel-btn:hover {
+        background-color: #dc2626;
+    }
+    
+    /* Grid Layout for Dashboard */
+    .grid {
+        display: grid;
+    }
+    
+    .grid-cols-3 {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+    
+    .grid-cols-5 {
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+    }
+    
+    .gap-4 {
+        gap: 1rem;
+    }
+    
+    .gap-5 {
+        gap: 1.25rem;
+    }
+    
+    /* Utility Classes */
+    .text-center { text-align: center; }
+    .py-8 { padding-top: 2rem; padding-bottom: 2rem; }
+    .mt-4 { margin-top: 1rem; }
+    .mt-5 { margin-top: 1.25rem; }
+    .mt-10 { margin-top: 2.5rem; }
+    .text-gray-600 { color: #4b5563; }
+    .text-gray-500 { color: #6b7280; }
+    .block { display: block; }
+    .text-sm { font-size: 0.875rem; }
+    .text-xl { font-size: 1.25rem; }
+    .text-2xl { font-size: 1.5rem; }
+    .font-medium { font-weight: 500; }
+    .font-bold { font-weight: 700; }
+    .mb-2 { margin-bottom: 0.5rem; }
+    
+    /* Text Colors */
+    .text-blue-600 { color: #2563eb; }
+    .text-green-600 { color: #16a34a; }
+    .text-purple-600 { color: #9333ea; }
+    .text-red-600 { color: #dc2626; }
+    .text-orange-600 { color: #ea580c; }
+    
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .dashboard-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .filter-controls {
+            padding: 1rem;
+        }
+        
+        .data-table {
+            font-size: 0.875rem;
+        }
+        
+        .data-table th,
+        .data-table td {
+            padding: 0.5rem;
+        }
+        
+        .grid-cols-3,
+        .grid-cols-5 {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <div class="dashboard-header">
+        <h1>🏢 Executive Dashboard</h1>
+        <p>Comprehensive overview of business performance and operational metrics</p>
+    </div>
+    
+    <!-- Dashboard Filters Container -->
+    <div id="dashboard_filters" 
+         data-baseurl="{% url 'dashboards:get_regions' %}"
+         data-spid="{{ request.user.id }}"
+         data-region=""
+         data-district=""
+         data-section=""
+         data-depot="">
+        
+        <!-- Filter Controls -->
+        <div class="filter-controls">
+            <div class="grid grid-cols-3 gap-4">
+                <div>
+                    <label for="selectRegion" class="block text-sm font-medium text-gray-700 mb-2">Region</label>
+                    <select id="selectRegion" class="filter-select" onchange="applyFilters()">
+                        <option value="">Select Region</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="selectDistrict" class="block text-sm font-medium text-gray-700 mb-2">District</label>
+                    <select id="selectDistrict" class="filter-select" onchange="applyFilters()">
+                        <option value="">Select District</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="selectDepot" class="block text-sm font-medium text-gray-700 mb-2">Depot</label>
+                    <select id="selectDepot" class="filter-select" onchange="applyFilters()">
+                        <option value="">Select Depot</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Regions Data (hidden, used for populating filters) -->
+        <div id="regions-data" style="display: none;"></div>
+        
+        <!-- Dashboard Data -->
+        <div id="dashboard-data">
+            <!-- This will be populated by HTMX -->
+            <div class="text-center py-8">
+                <div class="loading-spinner"></div>
+                <p class="mt-4 text-gray-600">Loading dashboard data...</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="loading-overlay" style="display: none;">
+        <div class="spinner"></div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<!-- HTMX for dynamic dashboard functionality -->
+<script src="https://unpkg.com/htmx.org@1.9.10"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Hide loading overlay once page is loaded
+    const loadingOverlay = document.getElementById('loading-overlay');
+    if (loadingOverlay) {
+        loadingOverlay.style.display = 'none';
+    }
+    
+    // Wait a bit for the page to fully render, then initialize
+    setTimeout(() => {
+        initializeDashboard();
+    }, 100);
+});
+
+function initializeDashboard() {
+    // Check if required elements exist
+    const regionsSelect = document.getElementById('selectRegion');
+    const dashboardData = document.getElementById('dashboard-data');
+    
+    if (!regionsSelect || !dashboardData) {
+        console.error('Required dashboard elements not found');
+        return;
+    }
+    
+    // Load initial dashboard data
+    loadDashboardData();
+    
+    // Set up auto-refresh every 30 seconds
+    setInterval(loadDashboardData, 30000);
+}
+
+function loadDashboardData() {
+    // Load regions data
+    htmx.ajax('GET', '{% url "dashboards:get_regions" %}', {
+        target: '#regions-data',
+        swap: 'innerHTML'
+    }).catch(error => {
+        console.error('Error loading regions:', error);
+        showToast('Error loading regions data', 'error');
+    });
+    
+    // Load dashboard data
+    htmx.ajax('GET', '{% url "dashboards:get_dashboard_data" %}', {
+        target: '#dashboard-data',
+        swap: 'innerHTML'
+    }).catch(error => {
+        console.error('Error loading dashboard data:', error);
+        showToast('Error loading dashboard data', 'error');
+    });
+}
+
+function applyFilters() {
+    const regionSelect = document.getElementById('selectRegion');
+    const districtSelect = document.getElementById('selectDistrict');
+    const depotSelect = document.getElementById('selectDepot');
+    
+    if (!regionSelect || !districtSelect || !depotSelect) {
+        console.error('Filter elements not found');
+        return;
+    }
+    
+    const region = regionSelect.value;
+    const district = districtSelect.value;
+    const depot = depotSelect.value;
+    
+    // Build filter parameters
+    const params = new URLSearchParams();
+    if (region) params.append('region', region);
+    if (district) params.append('district', district);
+    if (depot) params.append('depot', depot);
+    
+    // Load filtered data
+    htmx.ajax('GET', `{% url "dashboards:get_dashboard_data" %}?${params.toString()}`, {
+        target: '#dashboard-data',
+        swap: 'innerHTML'
+    }).catch(error => {
+        console.error('Error applying filters:', error);
+        showToast('Error applying filters', 'error');
+    });
+}
+
+function startEdit(table, row, field, currentValue) {
+    const cell = document.querySelector(`[data-table="${table}"][data-row="${row}"][data-field="${field}"]`);
+    if (!cell) return;
+    
+    const input = document.createElement('input');
+    input.type = 'number';
+    input.value = currentValue;
+    input.className = 'edit-input';
+    input.step = '0.01';
+    input.min = '0';
+    
+    if (table === 'debtors' && field === 'percentage') {
+        input.max = '100';
+    }
+    
+    const saveBtn = document.createElement('button');
+    saveBtn.textContent = '✓';
+    saveBtn.className = 'edit-save-btn';
+    saveBtn.onclick = () => saveEdit(table, row, field, input.value);
+    
+    const cancelBtn = document.createElement('button');
+    cancelBtn.textContent = '✗';
+    cancelBtn.className = 'edit-cancel-btn';
+    cancelBtn.onclick = () => cancelEdit(table, row, field, currentValue);
+    
+    const editContainer = document.createElement('div');
+    editContainer.className = 'edit-container';
+    editContainer.appendChild(input);
+    editContainer.appendChild(saveBtn);
+    editContainer.appendChild(cancelBtn);
+    
+    cell.innerHTML = '';
+    cell.appendChild(editContainer);
+    input.focus();
+}
+
+function saveEdit(table, row, field, value) {
+    const payload = {
+        table: table,
+        row: parseInt(row),
+        field: field,
+        value: parseFloat(value)
+    };
+    
+    // Show loading state
+    const cell = document.querySelector(`[data-table="${table}"][data-row="${row}"][data-field="${field}"]`);
+    if (cell) {
+        cell.classList.add('cell-loading');
+    }
+    
+    // Save to server
+    htmx.ajax('POST', '{% url "dashboards:save_dashboard_data" %}', {
+        target: '#dashboard-data',
+        swap: 'innerHTML',
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken'),
+            'Content-Type': 'application/json'
+        },
+        values: payload
+    }).then(() => {
+        if (cell) {
+            cell.classList.remove('cell-loading');
+            cell.classList.add('cell-success');
+            setTimeout(() => cell.classList.remove('cell-success'), 2000);
+        }
+        showToast('Data saved successfully', 'success');
+    }).catch(error => {
+        if (cell) {
+            cell.classList.remove('cell-loading');
+            cell.classList.add('cell-error');
+            setTimeout(() => cell.classList.remove('cell-error'), 3000);
+        }
+        showToast('Error saving data', 'error');
+        console.error('Save error:', error);
+    });
+}
+
+function cancelEdit(table, row, field, originalValue) {
+    const cell = document.querySelector(`[data-table="${table}"][data-row="${row}"][data-field="${field}"]`);
+    if (cell) {
+        cell.textContent = formatValue(table, field, originalValue);
+    }
+}
+
+function formatValue(table, field, value) {
+    if (table === 'weekly_collections' && (field === 'zwl_millions' || field === 'usd_millions')) {
+        return `${parseFloat(value).toFixed(1)}M`;
+    } else if (table === 'weekly_revenue_lost' && (field === 'faults_mwh' || field === 'maintenance_mwh' || field === 'total_mwh')) {
+        return `${parseFloat(value).toFixed(1)} MWh`;
+    } else if (table === 'debtors' && field === 'percentage') {
+        return `${parseFloat(value).toFixed(1)}%`;
+    }
+    return value;
+}
+
+function showToast(message, type = 'info') {
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type} show`;
+    toast.textContent = message;
+    
+    const container = document.getElementById('toast-container') || createToastContainer();
+    container.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+}
+
+function createToastContainer() {
+    const container = document.createElement('div');
+    container.id = 'toast-container';
+    container.className = 'toast-container';
+    document.body.appendChild(container);
+    return container;
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === name + '=') {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+</script>
+{% endblock %}
