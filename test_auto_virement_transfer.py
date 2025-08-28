@@ -89,12 +89,14 @@ def run_test():
         process=process,
         region=region,
         section=section,
-        currency='rtgs'
+        # Use a valid currency choice from Ace2.CURRENCY_CHOICES
+        currency='ZWG'
     )
 
     # Create transaction placeholder
     txn = Transactions.objects.create(
-        virament_id=str(virement.virament_id),
+        # Link the transaction to the virement via the foreign key field name
+        virament=virement,
         details_of_expenditure='Auto test virement',
         approval_status='created',
         region=region,
