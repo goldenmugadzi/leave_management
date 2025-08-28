@@ -264,11 +264,55 @@ AUTH_PASSWORD_VALIDATORS = [
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
+            'style': '{',
+        },
+        'dashboard_formatter': {
+            'format': '{asctime} [{levelname}] {name}: {message}',
+            'style': '{',
+        },
+        'performance_formatter': {
+            'format': '{asctime} [PERFORMANCE] {message}',
+            'style': '{',
+        },
+    },
     'handlers': {
         'file': {
             'level': 'DEBUG',
             'class': 'logging.FileHandler',
-            'filename': config('LOG_FILE', default='debug.log')
+            'filename': config('LOG_FILE', default='debug.log'),
+            'formatter': 'verbose',
+        },
+        'dashboard_file': {
+            'level': 'INFO',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': config('DASHBOARD_LOG_FILE', default='dashboard_enhancement.log'),
+            'maxBytes': 10 * 1024 * 1024,  # 10MB
+            'backupCount': 5,
+            'formatter': 'dashboard_formatter',
+        },
+        'performance_file': {
+            'level': 'INFO',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': config('PERFORMANCE_LOG_FILE', default='dashboard_performance.log'),
+            'maxBytes': 10 * 1024 * 1024,  # 10MB
+            'backupCount': 3,
+            'formatter': 'performance_formatter',
+        },
+        'security_file': {
+            'level': 'WARNING',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': config('SECURITY_LOG_FILE', default='security.log'),
+            'maxBytes': 10 * 1024 * 1024,  # 10MB
+            'backupCount': 10,
+            'formatter': 'verbose',
+        },
+        'console': {
+            'level': 'INFO',
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
         },
     },
     'loggers': {
@@ -276,6 +320,26 @@ LOGGING = {
             'handlers': ['file'],
             'level': 'DEBUG',
             'propagate': True,
+        },
+        'dashboard_enhancement': {
+            'handlers': ['dashboard_file', 'console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'dashboard_performance': {
+            'handlers': ['performance_file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'dashboard_security': {
+            'handlers': ['security_file', 'console'],
+            'level': 'WARNING',
+            'propagate': False,
+        },
+        'executive.general_dashboards': {
+            'handlers': ['dashboard_file', 'console'],
+            'level': 'INFO',
+            'propagate': False,
         },
     },
 }

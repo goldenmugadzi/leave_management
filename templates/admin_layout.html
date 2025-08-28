@@ -36,6 +36,7 @@
       href="{% static 'assets/cdn/tailwind.min.css' %}"
       rel="stylesheet"
     />
+    {% block extra_css %}{% endblock %}
     <script src="{% static 'assets/classification.js' %}"></script>
     <script>
         function goBack() {

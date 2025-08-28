@@ -19,7 +19,7 @@ from django.db.models import Q  # Import Q object for complex filtering
 from django.contrib.auth.decorators import login_required
 
 from it.users.models import Sections, UserProfile, Depots, Districts, Regions
-from executive.general_dashboards.models import DashboardMetric, WeeklySales, WeeklyOutage, WeeklyFaultMaintenance, TopDebtor
+from executive.general_dashboards.models import DashboardMetric, WeeklySales, WeeklyOutage, WeeklyFaultMaintenance, TopDebtor, WeeklyCollections, WeeklyRevenueLost, DebtorCategory
 
 MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
 
@@ -319,17 +319,69 @@ def setup_random_data(request):
     print(f"Data has been saved as {filename}")
 
 def get_regions(request):
+    from executive.general_dashboards.models import (
+        WeeklyCollections, WeeklyRevenueLost, DebtorCategory,
+        WeeklySales, WeeklyOutage, WeeklyFaultMaintenance, TopDebtor
+    )
+    
     regions = Regions.objects.all()
     districts = Districts.objects.all()
     sections = Sections.objects.all()
     depots = Depots.objects.all()
     
+    # Get sample data for compatibility
+    pbncs = []  # Add your PBNC data logic here
+    upos = []   # Add your UPO data logic here
+    
+    # Legacy data (for backward compatibility)
+    weekly_sales = list(WeeklySales.objects.filter(
+        region__isnull=True, district__isnull=True, depot__isnull=True
+    ).values('week', 'zwl', 'usd'))
+    
+    weekly_outages = list(WeeklyOutage.objects.filter(
+        region__isnull=True, district__isnull=True, depot__isnull=True
+    ).values('week', 'outages', 'resolved', 'pending'))
+    
+    # tds = list(TopDebtor.objects.filter(
+    #     region__isnull=True, district__isnull=True, depot__isnull=True
+    # ).values('name', 'amount'))
+    tds = []  # Temporary fix for database schema issue
+    
+    weekly_faults_maintenance = list(WeeklyFaultMaintenance.objects.filter(
+        region__isnull=True, district__isnull=True, depot__isnull=True
+    ).values('week', 'faults', 'maintenance', 'completed', 'pending'))
+    
+    # New data sections (default to global data)
+    default_location_filter = {'region__isnull': True, 'district__isnull': True, 'depot__isnull': True}
+    
+    weekly_collections = list(WeeklyCollections.objects.filter(
+        **default_location_filter
+    ).values('week', 'zwl_millions', 'usd_millions'))
+    
+    weekly_revenue_lost = list(WeeklyRevenueLost.objects.filter(
+        **default_location_filter
+    ).values('week', 'faults_mwh', 'maintenance_mwh', 'total_mwh'))
+    
+    debtors = list(DebtorCategory.objects.filter(
+        **default_location_filter
+    ).values('id', 'category', 'percentage'))
+    
     return JsonResponse({
-        "depots": list(depots.values('id', 'depot', 'district_id', 'region_id')),
-        "regions": list(regions.values('id', 'region')),
-        "districts": list(districts.values('id', 'district', 'region_id')),
-        "sections": list(sections.values('id', 'section', 'district_id', 'region_id')),
-        }, safe=False)
+        'regions': list(regions.values('id', 'region')),
+        'districts': list(districts.values('id', 'district', 'region_id')),
+        'sections': list(sections.values('id', 'section', 'district_id', 'region_id')),
+        'depots': list(depots.values('id', 'depot', 'district_id', 'region_id')),
+        'pbncs': pbncs,
+        'weekly_sales': weekly_sales,
+        'upos': upos,
+        'weekly_outages': weekly_outages,
+        'tds': tds,
+        'weekly_faults_maintenance': weekly_faults_maintenance,
+        # New data sections
+        'weekly_collections': weekly_collections,
+        'weekly_revenue_lost': weekly_revenue_lost,
+        'debtors': debtors,
+    })
 
 def get_districts(request):
     districts = Districts.objects.all()
@@ -387,6 +439,19 @@ def dashboard_data(request):
         region__isnull=True, district__isnull=True, depot__isnull=True
     ).values('name', 'amount'))
 
+    # Get new data sections
+    weekly_collections = list(WeeklyCollections.objects.filter(
+        region__isnull=True, district__isnull=True, depot__isnull=True
+    ).values('week', 'zwl_millions', 'usd_millions'))
+    
+    weekly_revenue_lost = list(WeeklyRevenueLost.objects.filter(
+        region__isnull=True, district__isnull=True, depot__isnull=True
+    ).values('week', 'faults_mwh', 'maintenance_mwh', 'total_mwh'))
+    
+    debtors = list(DebtorCategory.objects.filter(
+        region__isnull=True, district__isnull=True, depot__isnull=True
+    ).values('id', 'category', 'percentage'))
+
     data = {
             "pbncs": list(pbncs.values('id', 'name', 'amount', 'depot', 'district', 'region', 'created_at')),
             "tds": top_debtors,  # Use new TopDebtor data instead of old TD data
@@ -400,6 +465,9 @@ def dashboard_data(request):
             "weekly_sales": weekly_sales,
             "weekly_outages": weekly_outages,
             "weekly_faults_maintenance": weekly_faults_maintenance,
+            "weekly_collections": weekly_collections,
+            "weekly_revenue_lost": weekly_revenue_lost,
+            "debtors": debtors,
         }
 
     return JsonResponse(data, safe=False)

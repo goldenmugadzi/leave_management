@@ -24,13 +24,13 @@ def get_inspections(user, month_id):
 
 def get_inspections_bargraph(user, month_id):
     keys_list, values_list = [], []
-    region_ = Regions.objects.filter(id=user.region.id).first() if user.region else None if user.region else None
+    region_ = Regions.objects.filter(id=user.region.id).first() if user.region else None
     district = user.district if user.district else None
     depot = user.section if user.section else None
     if any(role.role == 'fore_person' for role in user.roles.all()):
         depot = user.depot if user.depot else None
-        depots = Depots.objects.filter(id=depot.id).all()
         if depot:
+            depots = Depots.objects.filter(id=depot.id).all()
             inspections = [
             inspection for depot in depots
             for inspection in Inspections.objects.filter(depot=depot.id, created_at__month=month_id).all()
@@ -158,26 +158,9 @@ def get_mmt(user, month_id):
     mtn = {}
     if any(role.role == 'fore_person' for role in user.roles.all()):
         depot = user.section if user.section else None
-        if depot:
-            if depot.id:
-                maintenance_december = Maintenance.objects.filter(depot=depot.id, created_at__month=month_id)
-            maintenance_weekly_count = maintenance_december.annotate(week=ExtractWeek('created_at')).values('week').annotate(count=Count('id')).order_by('week')
-
-            week_count = []
-            for i in range(4):
-                if i < len(maintenance_weekly_count):
-                    week_count.append(maintenance_weekly_count[i]['count'])
-                else:
-                    week_count.append(0)
-                    
-            mtn[depot.section] = week_count
-            
-    if any(role.role == 'district_manager' for role in user.roles.all()):
-        depots = Depots.objects.filter(district_id=user.district.id).all()
-        district = user.district if user.district else None
-        if district and district:
-            for depot in depots:
-                maintenance_december = Maintenance.objects.filter(depot=depot.id, district=district.id, created_at__month=month_id)
+        if depot and depot.id:
+            maintenance_december = Maintenance.objects.filter(depot=depot.id, created_at__month=month_id)
+            if maintenance_december.exists():
                 maintenance_weekly_count = maintenance_december.annotate(week=ExtractWeek('created_at')).values('week').annotate(count=Count('id')).order_by('week')
 
                 week_count = []
@@ -187,14 +170,33 @@ def get_mmt(user, month_id):
                     else:
                         week_count.append(0)
                         
-                mtn[depot.depot] = week_count
+                mtn[depot.section] = week_count
+            
+    if any(role.role == 'district_manager' for role in user.roles.all()):
+        district = user.district if user.district else None
+        if district and district.id:
+            depots = Depots.objects.filter(district_id=district.id).all()
+            for depot in depots:
+                maintenance_december = Maintenance.objects.filter(depot=depot.id, district=district.id, created_at__month=month_id)
+                if maintenance_december.exists():
+                    maintenance_weekly_count = maintenance_december.annotate(week=ExtractWeek('created_at')).values('week').annotate(count=Count('id')).order_by('week')
+
+                    week_count = []
+                    for i in range(4):
+                        if i < len(maintenance_weekly_count):
+                            week_count.append(maintenance_weekly_count[i]['count'])
+                        else:
+                            week_count.append(0)
+                            
+                    mtn[depot.depot] = week_count
             
     if any(role.role == 'executive' for role in user.roles.all()):
-        depots = Depots.objects.filter(region_id=user.region.id).all()
         region = user.region if user.region else None
-        if region and region:
+        if region and region.id:
+            depots = Depots.objects.filter(region_id=region.id).all()
             for depot in depots:
-                    maintenance_december = Maintenance.objects.filter(depot=depot.id, region=region.id, created_at__month=month_id)
+                maintenance_december = Maintenance.objects.filter(depot=depot.id, region=region.id, created_at__month=month_id)
+                if maintenance_december.exists():
                     maintenance_weekly_count = maintenance_december.annotate(week=ExtractWeek('created_at')).values('week').annotate(count=Count('id')).order_by('week')
                     week_count = []
                     for i in range(4):

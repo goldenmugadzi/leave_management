@@ -1,4 +1,10 @@
-{% extends "admin_layout.html" %} {% load static %} {% block content %}
+{% extends "admin_layout.html" %} {% load static %} 
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'assets/css/dashboard_sections.css' %}">
+{% endblock %}
+
+{% block content %}
 
 <div class="">
   {% if page_description %}
