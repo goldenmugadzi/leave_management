@@ -18,6 +18,13 @@ urlpatterns = [
     path('teams/', views.team_overview, name='team_list'),  # Redirect to team_overview
     path('my-work/', views.my_work, name='my_work'),
     
+    # Team management operations
+    path('teams/create/', views.create_team, name='create_team'),
+    path('teams/<int:team_id>/edit/', views.edit_team, name='edit_team'),
+    path('teams/<int:team_id>/delete/', views.delete_team, name='delete_team'),
+    path('teams/<int:team_id>/add-member/', views.add_team_member, name='add_team_member'),
+    path('teams/<int:team_id>/remove-member/<int:member_id>/', views.remove_team_member, name='remove_team_member'),
+    
     # Notifications
     path('notify-unassigned/', views.notify_unassigned_faults, name='notify_unassigned_faults'),
     
@@ -28,7 +35,6 @@ urlpatterns = [
     # Note: These views need to be implemented:
     # - device_list, device_detail, create_device
     # - fault_detail, update_fault_status, create_fault
-    # - create_team, add_team_member, edit_team, remove_team_member
     # - assign_device_to_team, unassign_device, return_device
     # - deploy_team_to_depot, recall_team_from_depot
     # - usage_report

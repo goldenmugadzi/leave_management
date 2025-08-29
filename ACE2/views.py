@@ -1721,7 +1721,7 @@ def create_virament(request):
     
     if request.method == 'POST':
         try:
-            form = ViramentForm(request.POST, request.FILES)
+            form = ViramentForm(request.POST, request.FILES, user=user_profile)
             formset = QuotationFormSet(request.POST, request.FILES)
             
             if form.is_valid():
@@ -1939,115 +1939,21 @@ def virament_detail(request, virament_id):
 
     print(approve_now)
     if approve_now:
+        # Virement has been fully approved - budget transfer now happens automatically in approval workflow
         balance_before_from = "Actioned"
         balance_before_to = "Actioned"
         balance_after_from = "Actioned"
         balance_after_to = "Actioned"
-
-        # Enhanced budget calculations with proper error handling
-        try:
-            with transaction.atomic():
-                # Lock budgets to prevent concurrent modifications
-                fbudget = AssetBudget.objects.select_for_update().get(budget_id=virament_item.from_budget.budget_id)
-                tbudget = AssetBudget.objects.select_for_update().get(budget_id=virament_item.to_budget.budget_id)
-                
-                print("virament: ", virament_item.virament_id)
-                transaction_obj = Transactions.objects.filter(virament_id=str(virament_item.virament_id)).first()
-                
-                if not transaction_obj:
-                    logger.error(f"No transaction found for virament {virament_item.virament_id}")
-                    messages.error(request, "Transaction record not found.")
-                    return render(request, 'finance/ace2/virament_detail.html', {
-                        'virament': virament_item,
-                        'statements': statements,
-                        'approved_steps': approved_steps,
-                        'error': 'Transaction record missing'
-                    })
-                
-                print("transaction: ", str(transaction_obj.approval_status))
-
-                # Validate available balance before processing (considering to_be_withdrawn)
-                if virament_item.amount > fbudget.available_balance:
-                    logger.error(f"Insufficient available balance for virament {virament_item.virament_id}: "
-                               f"Required {virament_item.amount}, Available {fbudget.available_balance} "
-                               f"(Balance: {fbudget.balance}, To be withdrawn: {fbudget.to_be_withdrawn or 0})")
-                    messages.error(request, 
-                        f"Insufficient available balance in source budget. "
-                        f"Available: {fbudget.available_balance:,.2f} "
-                        f"(Balance: {fbudget.balance:,.2f}, "
-                        f"To be withdrawn: {fbudget.to_be_withdrawn or 0:,.2f}), "
-                        f"Required: {virament_item.amount:,.2f}")
-                    return render(request, 'finance/ace2/virament_detail.html', {
-                        'virament': virament_item,
-                        'statements': statements,
-                        'approved_steps': approved_steps,
-                        'balance_before_to': balance_before_to,
-                        'balance_after_to': balance_after_to,
-                        'balance_before_from': balance_before_from,
-                        'balance_after_from': balance_after_from,
-                        'error': 'Insufficient available balance'
-                    })
-
-                if transaction_obj.approval_status != "approved by General Manager" and virement_role == "approve":
-                    # Update source budget - remove from to_be_withdrawn and deduct from balance
-                    fbudget.balance = fbudget.balance - virament_item.amount
-                    fbudget.withdrawal_date = date.today()
-                    fbudget.withdrawn = (fbudget.withdrawn or 0) + virament_item.amount
-                    
-                    # Remove from to_be_withdrawn since it's now actually withdrawn
-                    if fbudget.to_be_withdrawn is not None and fbudget.to_be_withdrawn >= virament_item.amount:
-                        fbudget.to_be_withdrawn = fbudget.to_be_withdrawn - virament_item.amount
-                    else:
-                        logger.warning(f"to_be_withdrawn ({fbudget.to_be_withdrawn}) less than virement amount ({virament_item.amount}) for budget {fbudget.budget_id}")
-                        fbudget.to_be_withdrawn = max(0, (fbudget.to_be_withdrawn or 0) - virament_item.amount)
-                    
-                    fbudget.save()
-
-                    # Update destination budget
-                    tbudget.balance = tbudget.balance + virament_item.amount
-                    tbudget.allocated = (tbudget.allocated or 0) + virament_item.amount
-                    tbudget.save()
-
-                    # Update transaction status
-                    transaction_obj.approval_status = "approved by General Manager"
-                    transaction_obj.save()
-                    
-                    logger.info(f"Virament {virament_item.virament_id} approved successfully. "
-                              f"Transferred {virament_item.amount} from {fbudget.budget_name} to {tbudget.budget_name}")
-                    messages.success(request, f"Virament approved successfully. Funds transferred.")
-                    
-                    print("transaction: ", str(transaction_obj.approval_status))
-
-                    # Notify requester about final approval
-                    try:
-                        requester = virament_item.requested_by
-                        if requester:
-                            msg = (
-                                f"Your virement {virament_item.virament_id} has been approved by the General Manager"
-                            )
-                            url = reverse('Ace:virament_detail', args=[virament_item.virament_id])
-                            notify_user(requester, msg, "VIREMENT", url, str(virament_item.virament_id), request)
-                    except Exception as _e:
-                        logger.warning(f"Failed to send virement approval notification for {virament_item.virament_id}: {_e}")
-                
-        except AssetBudget.DoesNotExist as e:
-            logger.error(f"Budget not found for virament {virament_item.virament_id}: {e}")
-            messages.error(request, "Budget not found. Please contact support.")
-            return render(request, 'finance/ace2/virament_detail.html', {
-                'virament': virament_item,
-                'statements': statements,
-                'approved_steps': approved_steps,
-                'error': 'Budget not found'
-            })
-        except Exception as e:
-            logger.error(f"Error processing virament approval {virament_item.virament_id}: {e}")
-            messages.error(request, "Error processing approval. Please try again.")
-            return render(request, 'finance/ace2/virament_detail.html', {
-                'virament': virament_item,
-                'statements': statements,
-                'approved_steps': approved_steps,
-                'error': str(e)
-            })
+        
+        # Check transaction status to show appropriate message
+        transaction_obj = Transactions.objects.filter(virament_id=str(virament_item.virament_id)).first()
+        if transaction_obj:
+            if transaction_obj.approval_status == "approved by General Manager":
+                messages.success(request, "Virement has been fully approved and budget transfer completed.")
+            else:
+                messages.info(request, "Virement approved in workflow. Budget transfer will be processed automatically.")
+        else:
+            messages.warning(request, "Virement approved but transaction record not found.")
 
     # ace_quantity = range(virament_item.quantity)
     approved_steps = virament_item.process.approval_set.all().values_list('step__step', flat=True)
@@ -2254,16 +2160,137 @@ def view_all_transactions(request):
 def transactions_for_budget(request, budget_id):
     user_id = request.user.id
     user_profile = UserProfile.objects.filter(id=user_id).first()
-    # region = Regions.objects.filter(id=user_profile.region.id).first()
-    transactions = Transactions.objects.filter(budget_id=budget_id)
-    if not transactions:
-        messages.error(request, 'No transactions found for this budget.')
+    # All raw transaction records tied directly to this budget
+    transactions_qs = Transactions.objects.filter(budget_id=budget_id).select_related(
+        'Ace_id2', 'virament', 'section', 'region', 'budget'
+    )
+
+    # Budget object (or 404 redirect)
+    budget_obj = AssetBudget.objects.filter(budget_id=budget_id).first()
+    if not budget_obj:
+        messages.error(request, 'Budget not found.')
         return redirect('Ace:list_budgets')
-    else:
-        messages.success(request, 'Transactions found for this budget.')
-        print("transactions:", transactions)
-    
-    return render(request, 'finance/ace2/view_all_transactions.html', {'transactions': transactions})
+
+    # Gather virements where this budget is source or destination
+    outgoing_virements = Asset_budget_Virament.objects.filter(from_budget_id=budget_id).select_related(
+        'from_budget', 'to_budget', 'process'
+    )
+    incoming_virements = Asset_budget_Virament.objects.filter(to_budget_id=budget_id).select_related(
+        'from_budget', 'to_budget', 'process'
+    )
+
+    # Gather ACEs that use this budget
+    aces_using_budget = Ace2.objects.filter(budget_id=budget_id).select_related(
+        'requested_by', 'section', 'region', 'process'
+    ).order_by('-date_created')
+
+    # Helper to determine status phase of a virement
+    def virement_phase(v):
+        try:
+            if not v.process:
+                return 'draft'
+            approvals = v.process.approval_set.all()
+            if not approvals.exists():
+                return 'pending'
+            last = approvals.last()
+            # If any rejection
+            if approvals.filter(approved='Rejected').exists():
+                return 'rejected'
+            # Completed when steps count == workflow steps and last approved
+            total_steps = v.process.workflow.step_set.count() if v.process.workflow else 0
+            if approvals.count() == total_steps and last.approved == 'Approved':
+                return 'approved'
+            return 'in_progress'
+        except Exception:
+            return 'unknown'
+
+    # Helper to determine status phase of an ACE
+    def ace_phase(ace):
+        try:
+            if not ace.process:
+                return 'draft'
+            approvals = ace.process.approval_set.all()
+            if not approvals.exists():
+                return 'pending'
+            last = approvals.last()
+            # If any rejection
+            if approvals.filter(approved='Rejected').exists():
+                return 'rejected'
+            # Completed when steps count == workflow steps and last approved
+            total_steps = ace.process.workflow.step_set.count() if ace.process.workflow else 0
+            if approvals.count() == total_steps and last.approved == 'Approved':
+                return 'approved'
+            return 'in_progress'
+        except Exception:
+            return 'unknown'
+
+    # Annotate virement data for template
+    def serialize_v(v, direction):
+        return {
+            'id': v.virament_id,
+            'direction': direction,  # 'out' or 'in'
+            'amount': v.amount or 0,
+            'from_budget': getattr(v.from_budget, 'budget_name', ''),
+            'to_budget': getattr(v.to_budget, 'budget_name', ''),
+            'date_created': v.date_created,
+            'status_phase': virement_phase(v),
+            'process': v.process,
+        }
+
+    # Annotate ACE data for template
+    def serialize_ace(ace):
+        return {
+            'id': ace.Ace_id2,
+            'details_of_expenditure': ace.details_of_expenditure,
+            'amount': ace.amount or 0,
+            'requested_by': getattr(ace.requested_by, 'get_full_name', lambda: '')() if ace.requested_by else '',
+            'section': getattr(ace.section, 'section', '') if ace.section else '',
+            'date_created': ace.date_created,
+            'status_phase': ace_phase(ace),
+            'process': ace.process,
+        }
+
+    outgoing_data = [serialize_v(v, 'out') for v in outgoing_virements]
+    incoming_data = [serialize_v(v, 'in') for v in incoming_virements]
+    aces_data = [serialize_ace(ace) for ace in aces_using_budget]
+
+    # Reconciliation calculations
+    approved_out_total = sum(v['amount'] for v in outgoing_data if v['status_phase'] == 'approved')
+    pending_out_total = sum(v['amount'] for v in outgoing_data if v['status_phase'] in ('pending', 'in_progress', 'draft'))
+    approved_in_total = sum(v['amount'] for v in incoming_data if v['status_phase'] == 'approved')
+    pending_in_total = sum(v['amount'] for v in incoming_data if v['status_phase'] in ('pending', 'in_progress', 'draft'))
+
+    # ACE calculations
+    approved_ace_total = sum(ace['amount'] for ace in aces_data if ace['status_phase'] == 'approved')
+    pending_ace_total = sum(ace['amount'] for ace in aces_data if ace['status_phase'] in ('pending', 'in_progress', 'draft'))
+
+    reserved_field = budget_obj.to_be_withdrawn or 0
+    computed_reserved_out = pending_out_total
+    reserved_discrepancy = reserved_field - computed_reserved_out
+
+    context = {
+        'budget_obj': budget_obj,
+        'transactions': transactions_qs,  # legacy transactions list
+        'outgoing_virements': outgoing_data,
+        'incoming_virements': incoming_data,
+        'aces_using_budget': aces_data,
+        'approved_out_total': approved_out_total,
+        'pending_out_total': pending_out_total,
+        'approved_in_total': approved_in_total,
+        'pending_in_total': pending_in_total,
+        'approved_ace_total': approved_ace_total,
+        'pending_ace_total': pending_ace_total,
+        'reserved_field': reserved_field,
+        'computed_reserved_out': computed_reserved_out,
+        'reserved_discrepancy': reserved_discrepancy,
+        'available_balance': budget_obj.available_balance,
+        'raw_balance': budget_obj.balance,
+        'allocated': budget_obj.allocated,
+        'withdrawn': budget_obj.withdrawn,
+    }
+
+    # Decide which template (create dedicated one later if needed)
+    return render(request, 'finance/ace2/view_all_transactions.html', context)
 
 
 @login_required

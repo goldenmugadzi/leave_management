@@ -44,7 +44,7 @@ class AceForm(forms.ModelForm):
                 region_id = Regions.objects.filter(region=region).first()
 
                 self.fields['budget_id'].queryset = AssetBudget.objects.filter(period=2025, region=region)
-                self.fields['section'].queryset = Sections.objects.filter(region_id=region_id.id)
+                self.fields['section'].queryset = Sections.objects.filter(region_id=str(region_id.id))
 
         for field_name, field in self.fields.items():
             field.widget.attrs.update({
@@ -267,7 +267,7 @@ class ViramentForm(forms.ModelForm):
                 print("region", region)
                 self.fields['to_budget'].queryset = AssetBudget.objects.filter(period=2025, region=region)
                 self.fields['from_budget'].queryset = AssetBudget.objects.filter(period=2025, region=region)
-                self.fields['section'].queryset = Sections.objects.filter(region_id=region_id.id)
+                self.fields['section'].queryset = Sections.objects.filter(region_id=str(region_id.id))
 
         for field_name, field in self.fields.items():
             # for the field budget, I want it to display its balance attribute when it selected
