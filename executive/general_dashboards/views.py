@@ -22,8 +22,29 @@ from .serializers import (
 logger = logging.getLogger(__name__)
 
 
-def generate_dashboard_html(collections_data, revenue_lost_data, debtors_data, metrics):
+def generate_dashboard_html(collections_data, revenue_lost_data, debtors_data, metrics, is_authenticated=False):
     """Generate HTML for the dashboard components"""
+    
+    # Add authentication notice if user is not authenticated
+    auth_notice = ''
+    if not is_authenticated:
+        auth_notice = '''
+        <div class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-6" role="alert">
+            <div class="flex">
+                <div class="flex-shrink-0">
+                    <svg class="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                    </svg>
+                </div>
+                <div class="ml-3">
+                    <p class="text-sm">
+                        <strong>Note:</strong> You are viewing the dashboard in read-only mode. 
+                        <a href="/admin/login/" class="font-medium underline hover:text-yellow-600">Log in</a> to edit data.
+                    </p>
+                </div>
+            </div>
+        </div>
+        '''
     
     # Generate metric cards HTML
     metric_cards_html = f'''
@@ -89,7 +110,7 @@ def generate_dashboard_html(collections_data, revenue_lost_data, debtors_data, m
                     </tr>
                 </thead>
                 <tbody>
-                    {generate_collections_table_rows(collections_data)}
+                    {generate_collections_table_rows(collections_data, is_authenticated)}
                 </tbody>
             </table>
         </div>
@@ -106,7 +127,7 @@ def generate_dashboard_html(collections_data, revenue_lost_data, debtors_data, m
                     </tr>
                 </thead>
                 <tbody>
-                    {generate_revenue_lost_table_rows(revenue_lost_data)}
+                    {generate_revenue_lost_table_rows(revenue_lost_data, is_authenticated)}
                 </tbody>
             </table>
         </div>
@@ -122,34 +143,43 @@ def generate_dashboard_html(collections_data, revenue_lost_data, debtors_data, m
                     </tr>
                 </thead>
                 <tbody>
-                    {generate_debtors_table_rows(debtors_data)}
+                    {generate_debtors_table_rows(debtors_data, is_authenticated)}
                 </tbody>
             </table>
         </div>
     </div>
     '''
     
-    return metric_cards_html + tables_html
+    return auth_notice + metric_cards_html + tables_html
 
 
-def generate_collections_table_rows(collections_data):
+def generate_collections_table_rows(collections_data, is_authenticated=False):
     """Generate table rows for weekly collections"""
     if not collections_data:
         return '<tr><td colspan="3" class="text-center text-gray-500">No data available</td></tr>'
     
     rows = ''
     for i, collection in enumerate(collections_data):
-        rows += f'''
-        <tr>
-            <td>{collection.get('week', '')}</td>
-            <td class="editable-cell" data-table="weekly_collections" data-row="{i}" data-field="zwl_millions" onclick="startEdit('weekly_collections', {i}, 'zwl_millions', {collection.get('zwl_millions', 0)})">{collection.get('zwl_millions', 0)}M</td>
-            <td class="editable-cell" data-table="weekly_collections" data-row="{i}" data-field="usd_millions" onclick="startEdit('weekly_collections', {i}, 'usd_millions', {collection.get('usd_millions', 0)})">{collection.get('usd_millions', 0)}M</td>
-        </tr>
-        '''
+        if is_authenticated:
+            rows += f'''
+            <tr>
+                <td>{collection.get('week', '')}</td>
+                <td class="editable-cell" data-table="weekly_collections" data-row="{i}" data-field="zwl_millions" onclick="startEdit('weekly_collections', {i}, 'zwl_millions', {collection.get('zwl_millions', 0)})">{collection.get('zwl_millions', 0)}M</td>
+                <td class="editable-cell" data-table="weekly_collections" data-row="{i}" data-field="usd_millions" onclick="startEdit('weekly_collections', {i}, 'usd_millions', {collection.get('usd_millions', 0)})">{collection.get('usd_millions', 0)}M</td>
+            </tr>
+            '''
+        else:
+            rows += f'''
+            <tr>
+                <td>{collection.get('week', '')}</td>
+                <td class="non-editable-cell">{collection.get('zwl_millions', 0)}M</td>
+                <td class="non-editable-cell">{collection.get('usd_millions', 0)}M</td>
+            </tr>
+            '''
     return rows
 
 
-def generate_revenue_lost_table_rows(revenue_lost_data):
+def generate_revenue_lost_table_rows(revenue_lost_data, is_authenticated=False):
     """Generate table rows for weekly revenue lost"""
     if not revenue_lost_data:
         return '<tr><td colspan="4" class="text-center text-gray-500">No data available</td></tr>'
@@ -167,28 +197,37 @@ def generate_revenue_lost_table_rows(revenue_lost_data):
     return rows
 
 
-def generate_debtors_table_rows(debtors_data):
+def generate_debtors_table_rows(debtors_data, is_authenticated=False):
     """Generate table rows for debtors"""
     if not debtors_data:
         return '<tr><td colspan="3" class="text-center text-gray-500">No data available</td></tr>'
     
     rows = ''
     for i, debtor in enumerate(debtors_data):
-        rows += f'''
-        <tr>
-            <td>{debtor.get('id', i + 1)}</td>
-            <td>{debtor.get('category', '')}</td>
-            <td class="editable-cell" data-table="debtors" data-row="{i}" data-field="percentage" onclick="startEdit('debtors', {i}, 'percentage', {debtor.get('percentage', 0)})">{debtor.get('percentage', 0)}%</td>
-        </tr>
-        '''
+        if is_authenticated:
+            rows += f'''
+            <tr>
+                <td>{debtor.get('id', i + 1)}</td>
+                <td>{debtor.get('category', '')}</td>
+                <td class="editable-cell" data-table="debtors" data-row="{i}" data-field="percentage" onclick="startEdit('debtors', {i}, 'percentage', {debtor.get('percentage', 0)})">{debtor.get('percentage', 0)}%</td>
+            </tr>
+            '''
+        else:
+            rows += f'''
+            <tr>
+                <td>{debtor.get('id', i + 1)}</td>
+                <td>{debtor.get('category', '')}</td>
+                <td class="non-editable-cell">{debtor.get('percentage', 0)}%</td>
+            </tr>
+            '''
     return rows
 
 
-@login_required
 def dashboard_index(request):
     """Main dashboard index view"""
     return render(request, 'general_dashboards/dashboard_index.html', {
-        'title': 'Executive Dashboard'
+        'title': 'Executive Dashboard',
+        'is_authenticated': request.user.is_authenticated
     })
 
 
@@ -245,9 +284,9 @@ def get_regions(request):
 @csrf_exempt
 def get_dashboard_data(request):
     """Get complete dashboard data including new sections"""
-    # Check if user is authenticated via session
-    if not request.user.is_authenticated:
-        return HttpResponse('<p class="text-red-600">Authentication required</p>', content_type='text/html')
+    # Get authentication status from query parameter (passed from frontend)
+    auth_param = request.GET.get('auth', 'false')
+    is_authenticated = auth_param.lower() == 'true'
     
     try:
         # Get filter parameters
@@ -350,7 +389,7 @@ def get_dashboard_data(request):
         }
         
         # Generate HTML for the dashboard
-        html_content = generate_dashboard_html(collections_data, revenue_lost_data, debtors_data, dashboard_data['metrics'])
+        html_content = generate_dashboard_html(collections_data, revenue_lost_data, debtors_data, dashboard_data['metrics'], is_authenticated)
         
         return HttpResponse(html_content, content_type='text/html')
         
@@ -364,15 +403,17 @@ def get_dashboard_data(request):
 @csrf_exempt
 def save_dashboard_data(request):
     """Save dashboard data with support for new sections"""
-    # Check if user is authenticated via session
-    if not request.user.is_authenticated:
+    # Get authentication status from request data (passed from frontend)
+    data = request.data
+    auth_status = data.get('auth', False)
+    
+    if not auth_status:
         return Response({
             'success': False,
             'error': 'Authentication required'
         }, status=status.HTTP_401_UNAUTHORIZED)
     
     try:
-        data = request.data
         table_type = data.get('table')
         row_index = data.get('row')
         field = data.get('field')
@@ -409,10 +450,7 @@ def save_dashboard_data(request):
 
 def save_weekly_collections(request, row_index, field, value):
     """Save weekly collections data"""
-    # Check if user is authenticated
-    if not request.user.is_authenticated:
-        return {'success': False, 'error': 'Authentication required'}
-    
+    # Authentication is already checked in the main save function
     try:
         # Get the record to update
         current_year = timezone.now().year
@@ -422,15 +460,17 @@ def save_weekly_collections(request, row_index, field, value):
         
         collection = collections[row_index]
         
-        # Update the field
+        # Update the field - convert to Decimal to match model field type
+        from decimal import Decimal
         if field == 'zwl_millions':
-            collection.zwl_millions = float(value)
+            collection.zwl_millions = Decimal(str(value))
         elif field == 'usd_millions':
-            collection.usd_millions = float(value)
+            collection.usd_millions = Decimal(str(value))
         else:
             return {'success': False, 'error': f'Invalid field: {field}'}
         
-        collection.updated_by = request.user
+        # Set updated_by to None since we don't have the actual user object in AJAX calls
+        collection.updated_by = None
         collection.save()
         
         return {
@@ -448,10 +488,7 @@ def save_weekly_collections(request, row_index, field, value):
 
 def save_weekly_revenue_lost(request, row_index, field, value):
     """Save weekly revenue lost data"""
-    # Check if user is authenticated
-    if not request.user.is_authenticated:
-        return {'success': False, 'error': 'Authentication required'}
-    
+    # Authentication is already checked in the main save function
     try:
         # Get the record to update
         current_year = timezone.now().year
@@ -461,16 +498,18 @@ def save_weekly_revenue_lost(request, row_index, field, value):
         
         record = revenue_lost[row_index]
         
-        # Update the field
+        # Update the field - convert to Decimal to match model field type
+        from decimal import Decimal
         if field == 'faults_mwh':
-            record.faults_mwh = float(value)
+            record.faults_mwh = Decimal(str(value))
         elif field == 'maintenance_mwh':
-            record.maintenance_mwh = float(value)
+            record.maintenance_mwh = Decimal(str(value))
         else:
             return {'success': False, 'error': f'Invalid field: {field}'}
         
         # Total will be auto-calculated in the model's save method
-        record.updated_by = request.user
+        # Set updated_by to None since we don't have the actual user object in AJAX calls
+        record.updated_by = None
         record.save()
         
         return {
@@ -488,10 +527,7 @@ def save_weekly_revenue_lost(request, row_index, field, value):
 
 def save_debtor_category(request, row_index, field, value):
     """Save debtor category data"""
-    # Check if user is authenticated
-    if not request.user.is_authenticated:
-        return {'success': False, 'error': 'Authentication required'}
-    
+    # Authentication is already checked in the main save function
     try:
         # Get the record to update
         debtors = DebtorCategory.objects.filter(year=2025, month=timezone.now().month).order_by('category')
@@ -500,9 +536,10 @@ def save_debtor_category(request, row_index, field, value):
         
         debtor = debtors[row_index]
         
-        # Update the field
+        # Update the field - convert to Decimal to match model field type
+        from decimal import Decimal
         if field == 'percentage':
-            new_percentage = float(value)
+            new_percentage = Decimal(str(value))
             
             # Validate percentage range
             if new_percentage < 0 or new_percentage > 100:
@@ -527,7 +564,8 @@ def save_debtor_category(request, row_index, field, value):
         else:
             return {'success': False, 'error': f'Invalid field: {field}'}
         
-        debtor.updated_by = request.user
+        # Set updated_by to None since we don't have the actual user object in AJAX calls
+        debtor.updated_by = None
         debtor.save()
         
         return {

@@ -504,8 +504,9 @@ function loadDashboardData() {
         showToast('Error loading regions data', 'error');
     });
     
-    // Load dashboard data
-    htmx.ajax('GET', '{% url "dashboards:get_dashboard_data" %}', {
+    // Load dashboard data with authentication status
+    const authStatus = {{ is_authenticated|yesno:"true,false" }};
+    htmx.ajax('GET', `{% url "dashboards:get_dashboard_data" %}?auth=${authStatus}`, {
         target: '#dashboard-data',
         swap: 'innerHTML'
     }).catch(error => {
@@ -534,7 +535,9 @@ function applyFilters() {
     if (district) params.append('district', district);
     if (depot) params.append('depot', depot);
     
-    // Load filtered data
+    // Load filtered data with authentication status
+    const authStatus = {{ is_authenticated|yesno:"true,false" }};
+    params.append('auth', authStatus);
     htmx.ajax('GET', `{% url "dashboards:get_dashboard_data" %}?${params.toString()}`, {
         target: '#dashboard-data',
         swap: 'innerHTML'
@@ -595,12 +598,16 @@ function saveEdit(table, row, field, value) {
     }
     
     // Save to server using fetch for better control
+    const authStatus = {{ is_authenticated|yesno:"true,false" }};
     fetch('{% url "dashboards:save_dashboard_data" %}', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json'
         },
-        body: JSON.stringify(payload)
+        body: JSON.stringify({
+            ...payload,
+            auth: authStatus
+        })
     })
     .then(response => response.json())
     .then(data => {
