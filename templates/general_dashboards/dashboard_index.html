@@ -594,23 +594,30 @@ function saveEdit(table, row, field, value) {
         cell.classList.add('cell-loading');
     }
     
-    // Save to server
-    htmx.ajax('POST', '{% url "dashboards:save_dashboard_data" %}', {
-        target: '#dashboard-data',
-        swap: 'innerHTML',
+    // Save to server using fetch for better control
+    fetch('{% url "dashboards:save_dashboard_data" %}', {
+        method: 'POST',
         headers: {
-            'X-CSRFToken': getCookie('csrftoken'),
             'Content-Type': 'application/json'
         },
-        values: payload
-    }).then(() => {
+        body: JSON.stringify(payload)
+    })
+    .then(response => response.json())
+    .then(data => {
         if (cell) {
             cell.classList.remove('cell-loading');
-            cell.classList.add('cell-success');
-            setTimeout(() => cell.classList.remove('cell-success'), 2000);
+            if (data.success) {
+                cell.classList.add('cell-success');
+                setTimeout(() => cell.classList.remove('cell-success'), 2000);
+                showToast('Data saved successfully', 'success');
+            } else {
+                cell.classList.add('cell-error');
+                setTimeout(() => cell.classList.remove('cell-error'), 3000);
+                showToast(data.error || 'Error saving data', 'error');
+            }
         }
-        showToast('Data saved successfully', 'success');
-    }).catch(error => {
+    })
+    .catch(error => {
         if (cell) {
             cell.classList.remove('cell-loading');
             cell.classList.add('cell-error');

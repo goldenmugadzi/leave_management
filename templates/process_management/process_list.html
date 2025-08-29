@@ -6,104 +6,314 @@ and Procedures{% endblock %} {% block content %}
       <div class="flex justify-between items-center">
         <h3 class="text-lg font-medium text-gray-900 flex items-center">
           <i class="fas fa-sitemap mr-2 text-blue-600"></i>
-          Processes and Procedures
+          IMS Processes - Harare Region
         </h3>
-        <a href="{% url 'process_management:process_create' %}" 
-           class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm">
-          <i class="fas fa-plus mr-2"></i>Create Process
-        </a>
+        <div class="flex items-center space-x-3">
+          <!-- View Toggle -->
+          <div class="flex bg-gray-100 rounded-lg p-1">
+            <a href="?view=table{% if search_query %}&search={{ search_query }}{% endif %}{% if department_filter %}&department={{ department_filter }}{% endif %}{% if region_filter %}&region={{ region_filter }}{% endif %}" 
+               class="px-3 py-1 rounded-md text-sm font-medium transition-colors {% if view_mode == 'table' %}bg-white text-blue-600 shadow-sm{% else %}text-gray-600 hover:text-gray-900{% endif %}">
+              <i class="fas fa-table mr-1"></i>Table View
+            </a>
+            <a href="?view=departments{% if search_query %}&search={{ search_query }}{% endif %}{% if department_filter %}&department={{ department_filter }}{% endif %}{% if region_filter %}&region={{ region_filter }}{% endif %}" 
+               class="px-3 py-1 rounded-md text-sm font-medium transition-colors {% if view_mode == 'departments' %}bg-white text-blue-600 shadow-sm{% else %}text-gray-600 hover:text-gray-900{% endif %}">
+              <i class="fas fa-th-large mr-1"></i>Departments
+            </a>
+          </div>
+          <a href="{% url 'process_management:process_create' %}" 
+             class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm">
+            <i class="fas fa-plus mr-2"></i>Create Process
+          </a>
+        </div>
       </div>
     </div>
     <div class="p-6">
-      <!-- Search Section -->
-      <div class="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-xl mb-8 border border-blue-100">
-        <div class="mb-4">
-          <h4 class="text-lg font-semibold text-gray-800 flex items-center">
-            <i class="fas fa-search mr-2 text-blue-600"></i>
-            Search Processes
-          </h4>
-          <p class="text-sm text-gray-600 mt-1">Find processes across all departments</p>
-        </div>
-        <form method="get" class="flex flex-col md:flex-row gap-4">
-          <div class="flex-1">
-            <div class="relative">
-              <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <i class="fas fa-search text-gray-400"></i>
+      <!-- Search and Filter Section -->
+      <div class="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-xl mb-6 border border-blue-100">
+        <form method="get" class="space-y-4">
+          <!-- Preserve view mode -->
+          <input type="hidden" name="view" value="{{ view_mode }}">
+          
+          <div class="flex flex-col lg:flex-row gap-4">
+            <!-- Search Input -->
+            <div class="flex-1">
+              <div class="relative">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <i class="fas fa-search text-gray-400"></i>
+                </div>
+                <input
+                  type="text"
+                  name="search"
+                  class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white shadow-sm"
+                  placeholder="Search processes by name, description, or code..."
+                  value="{{ search_query }}"
+                  id="searchInput"
+                />
               </div>
-              <input
-                type="text"
-                name="search"
-                class="w-full pl-10 pr-20 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white shadow-sm"
-                placeholder="Search processes by name, description, or code..."
-                value="{{ search_query }}"
-                id="searchInput"
-              />
+            </div>
+            
+            <!-- Department Filter -->
+            <div class="w-full lg:w-48">
+              <select name="department" class="w-full py-3 px-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white shadow-sm">
+                <option value="">All Departments</option>
+                {% for dept in departments %}
+                <option value="{{ dept.id }}" {% if department_filter == dept.id|stringformat:"s" %}selected{% endif %}>
+                  {{ dept.name }}
+                </option>
+                {% endfor %}
+              </select>
+            </div>
+            
+            <!-- Region Filter -->
+            <div class="w-full lg:w-48">
+              <select name="region" class="w-full py-3 px-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white shadow-sm">
+                <option value="">All Regions</option>
+                {% for region in available_regions %}
+                <option value="{{ region.id }}" {% if region_filter == region.id|stringformat:"s" %}selected{% endif %}>
+                  {{ region.region }}
+                </option>
+                {% endfor %}
+              </select>
+            </div>
+            
+            <!-- Action Buttons -->
+            <div class="flex gap-2">
               <button
                 type="submit"
-                class="absolute right-2 top-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors shadow-sm"
+                class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm whitespace-nowrap"
               >
-                <i class="fas fa-search mr-1"></i> Search
+                <i class="fas fa-search mr-2"></i>Search
               </button>
+              {% if search_query or department_filter or region_filter %}
+              <a
+                href="?view={{ view_mode }}"
+                class="inline-flex items-center px-4 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors shadow-sm whitespace-nowrap"
+              >
+                <i class="fas fa-times mr-2"></i>Clear
+              </a>
+              {% endif %}
             </div>
-          </div>
-          <div class="flex-shrink-0">
-            {% if search_query %}
-            <a
-              href="{% url 'process_management:process_list' %}"
-              class="inline-flex items-center px-4 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors shadow-sm"
-            >
-              <i class="fas fa-times mr-2"></i> Clear Search
-            </a>
-            {% endif %}
           </div>
         </form>
       </div>
 
       <!-- Stats Summary -->
-      <div class="bg-gradient-to-r from-blue-500 to-blue-600 text-white p-4 rounded-lg mb-8 text-center shadow-lg">
-        <div class="flex items-center justify-center space-x-2">
-          <i class="fas fa-chart-bar text-blue-200"></i>
-          <span class="font-semibold text-lg">Total Active Processes: {{ total_processes }}</span>
+      <div class="bg-gradient-to-r from-blue-500 to-blue-600 text-white p-4 rounded-lg mb-6 text-center shadow-lg">
+        <div class="flex items-center justify-center space-x-4">
+          <div class="flex items-center space-x-2">
+            <i class="fas fa-chart-bar text-blue-200"></i>
+            <span class="font-semibold">Total: {{ total_processes }}</span>
+          </div>
+          {% if search_query or department_filter or region_filter %}
+          <div class="flex items-center space-x-2">
+            <i class="fas fa-filter text-blue-200"></i>
+            <span class="font-semibold">Filtered: {{ filtered_count }}</span>
+          </div>
+          {% endif %}
+          {% if view_mode == 'table' %}
+          <div class="flex items-center space-x-2">
+            <i class="fas fa-table text-blue-200"></i>
+            <span class="font-semibold">Table View</span>
+          </div>
+          {% endif %}
         </div>
-        {% if search_query %}
-        <div class="mt-2 text-blue-100">
-          <i class="fas fa-filter mr-1"></i>
-          Search Results: {{ search_results|length }} department(s) found
+      </div>
+
+      {% if view_mode == 'table' %}
+      <!-- Table View -->
+      <div class="bg-white border border-gray-300 rounded-lg overflow-hidden shadow-sm">
+        <div class="overflow-x-auto">
+          <table class="min-w-full border-collapse">
+            <thead>
+              <tr class="bg-blue-600 text-white">
+                <th scope="col" class="px-6 py-4 text-left text-sm font-semibold border-r border-blue-500">
+                  Process Name
+                </th>
+                <th scope="col" class="px-6 py-4 text-center text-sm font-semibold border-r border-blue-500">
+                  Process Map
+                </th>
+                <th scope="col" class="px-6 py-4 text-center text-sm font-semibold border-r border-blue-500">
+                  Procedure
+                </th>
+                <th scope="col" class="px-6 py-4 text-center text-sm font-semibold">
+                  Risk and Opportunity Register
+                </th>
+              </tr>
+            </thead>
+            <tbody class="bg-white">
+              {% for process in processes %}
+              <tr class="border-b border-gray-200 hover:bg-blue-50 transition-colors">
+                <td class="px-6 py-4 border-r border-gray-200">
+                  <div class="flex flex-col">
+                    <div class="text-sm font-medium text-gray-900">
+                      <a href="{% url 'process_management:process_detail' process.id %}" 
+                         class="text-blue-600 hover:text-blue-800 no-underline hover:underline">
+                        {{ process.name }}
+                      </a>
+                    </div>
+                    <div class="text-xs text-gray-500 mt-1">
+                      <i class="fas fa-building mr-1"></i>{{ process.department.name }}
+                      {% if process.region %}
+                        <span class="mx-1">•</span>
+                        <i class="fas fa-map-marker-alt mr-1"></i>{{ process.region.region }}
+                      {% endif %}
+                    </div>
+                  </div>
+                </td>
+                <td class="px-6 py-4 text-center border-r border-gray-200">
+                  {% if process.has_process_map %}
+                    <a href="{% url 'process_management:document_download_by_type' process.id 'process_map' %}" 
+                       class="inline-flex items-center px-4 py-2 bg-green-600 text-white text-sm font-medium rounded hover:bg-green-700 transition-colors shadow-sm">
+                      <i class="fas fa-download mr-2"></i>
+                      Process Map
+                    </a>
+                  {% else %}
+                    <span class="inline-flex items-center px-4 py-2 bg-gray-300 text-gray-600 text-sm font-medium rounded">
+                      <i class="fas fa-minus mr-2"></i>
+                      Not Available
+                    </span>
+                  {% endif %}
+                </td>
+                <td class="px-6 py-4 text-center border-r border-gray-200">
+                  {% if process.has_procedure %}
+                    <a href="{% url 'process_management:document_download_by_type' process.id 'procedure' %}" 
+                       class="inline-flex items-center px-4 py-2 bg-green-600 text-white text-sm font-medium rounded hover:bg-green-700 transition-colors shadow-sm">
+                      <i class="fas fa-download mr-2"></i>
+                      Procedure
+                    </a>
+                  {% else %}
+                    <span class="inline-flex items-center px-4 py-2 bg-gray-300 text-gray-600 text-sm font-medium rounded">
+                      <i class="fas fa-minus mr-2"></i>
+                      Not Available
+                    </span>
+                  {% endif %}
+                </td>
+                <td class="px-6 py-4 text-center">
+                  {% if process.has_risk_register %}
+                    <a href="{% url 'process_management:document_download_by_type' process.id 'risk_register' %}" 
+                       class="inline-flex items-center px-4 py-2 bg-green-600 text-white text-sm font-medium rounded hover:bg-green-700 transition-colors shadow-sm">
+                      <i class="fas fa-download mr-2"></i>
+                      Risk Register
+                    </a>
+                  {% else %}
+                    <span class="inline-flex items-center px-4 py-2 bg-gray-300 text-gray-600 text-sm font-medium rounded">
+                      <i class="fas fa-minus mr-2"></i>
+                      Not Available
+                    </span>
+                  {% endif %}
+                </td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="4" class="px-6 py-12 text-center border-r border-gray-200">
+                  <div class="text-gray-500">
+                    <i class="fas fa-search text-4xl mb-4"></i>
+                    <div class="text-lg font-medium mb-2">No processes found</div>
+                    <div class="text-sm">
+                      {% if search_query or department_filter or region_filter %}
+                        No processes match your current filters.
+                      {% else %}
+                        No processes are available.
+                      {% endif %}
+                    </div>
+                  </div>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        
+        <!-- Pagination -->
+        {% if paginator.num_pages > 1 %}
+        <div class="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
+          <div class="flex-1 flex justify-between sm:hidden">
+            {% if page_obj.has_previous %}
+              <a href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if department_filter %}&department={{ department_filter }}{% endif %}{% if region_filter %}&region={{ region_filter }}{% endif %}&view={{ view_mode }}" 
+                 class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                Previous
+              </a>
+            {% endif %}
+            {% if page_obj.has_next %}
+              <a href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if department_filter %}&department={{ department_filter }}{% endif %}{% if region_filter %}&region={{ region_filter }}{% endif %}&view={{ view_mode }}" 
+                 class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                Next
+              </a>
+            {% endif %}
+          </div>
+          <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+            <div>
+              <p class="text-sm text-gray-700">
+                Showing
+                <span class="font-medium">{{ page_obj.start_index }}</span>
+                to
+                <span class="font-medium">{{ page_obj.end_index }}</span>
+                of
+                <span class="font-medium">{{ paginator.count }}</span>
+                results
+              </p>
+            </div>
+            <div>
+              <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                {% if page_obj.has_previous %}
+                  <a href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if department_filter %}&department={{ department_filter }}{% endif %}{% if region_filter %}&region={{ region_filter }}{% endif %}&view={{ view_mode }}" 
+                     class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                    <i class="fas fa-chevron-left"></i>
+                  </a>
+                {% endif %}
+                
+                {% for num in paginator.page_range %}
+                  {% if page_obj.number == num %}
+                    <span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-blue-50 text-sm font-medium text-blue-600">
+                      {{ num }}
+                    </span>
+                  {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                    <a href="?page={{ num }}{% if search_query %}&search={{ search_query }}{% endif %}{% if department_filter %}&department={{ department_filter }}{% endif %}{% if region_filter %}&region={{ region_filter }}{% endif %}&view={{ view_mode }}" 
+                       class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">
+                      {{ num }}
+                    </a>
+                  {% endif %}
+                {% endfor %}
+                
+                {% if page_obj.has_next %}
+                  <a href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if department_filter %}&department={{ department_filter }}{% endif %}{% if region_filter %}&region={{ region_filter }}{% endif %}&view={{ view_mode }}" 
+                     class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                    <i class="fas fa-chevron-right"></i>
+                  </a>
+                {% endif %}
+              </nav>
+            </div>
+          </div>
         </div>
         {% endif %}
       </div>
 
+      {% elif view_mode == 'departments' %}
+      
       {% if search_query and search_results %}
-      <!-- Search Results -->
+      <!-- Search Results in Department View -->
       <div class="mt-6">
         <h4 class="text-lg font-medium text-gray-900 mb-4 flex items-center">
-          <i class="fas fa-search mr-2"></i> Search Results for "{{ search_query
-          }}"
+          <i class="fas fa-search mr-2"></i> Search Results for "{{ search_query }}"
         </h4>
 
-        {% for department_name, processes in search_results.items %}
+        {% for department_name, dept_processes in search_results.items %}
         <div class="mb-6">
           <h5 class="text-blue-600 font-medium mb-3">
-            {{ department_name }} ({{ processes|length }} process{{
-            processes|length|pluralize }})
+            {{ department_name }} ({{ dept_processes|length }} process{{ dept_processes|length|pluralize }})
           </h5>
 
-          {% for process in processes %}
-          <div
-            class="bg-white border border-gray-200 rounded-lg p-4 mb-3 hover:shadow-md transition-shadow"
-          >
+          {% for process in dept_processes %}
+          <div class="bg-white border border-gray-200 rounded-lg p-4 mb-3 hover:shadow-md transition-shadow">
             <div class="font-semibold text-gray-900 mb-2">
-              <a
-                href="{% url 'process_management:process_detail' process.id %}"
-                class="text-blue-600 hover:text-blue-800 no-underline"
-              >
+              <a href="{% url 'process_management:process_detail' process.id %}" 
+                 class="text-blue-600 hover:text-blue-800 no-underline">
                 {{ process.name }}
               </a>
               {% if process.process_code %}
-              <span
-                class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 ml-2"
-                >{{ process.process_code }}</span
-              >
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 ml-2">
+                {{ process.process_code }}
+              </span>
               {% endif %}
             </div>
             {% if process.description %}
@@ -113,9 +323,10 @@ and Procedures{% endblock %} {% block content %}
             {% endif %}
             <div class="text-sm text-gray-500">
               <i class="fas fa-building mr-1"></i> {{ process.department.name }}
-              {% if process.region %} <span class="mx-2">|</span>
-              <i class="fas fa-map-marker-alt mr-1"></i> {{ process.region.name
-              }} {% endif %}
+              {% if process.region %} 
+                <span class="mx-2">|</span>
+                <i class="fas fa-map-marker-alt mr-1"></i> {{ process.region.region }}
+              {% endif %}
             </div>
           </div>
           {% endfor %}
@@ -127,16 +338,12 @@ and Procedures{% endblock %} {% block content %}
       <!-- No Search Results -->
       <div class="text-center py-12">
         <i class="fas fa-search text-6xl text-gray-400 mb-4"></i>
-        <h4 class="text-xl font-medium text-gray-900 mb-2">
-          No processes found
-        </h4>
+        <h4 class="text-xl font-medium text-gray-900 mb-2">No processes found</h4>
         <p class="text-gray-600 mb-6">
           No processes match your search criteria "{{ search_query }}"
         </p>
-        <a
-          href="{% url 'process_management:process_list' %}"
-          class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-        >
+        <a href="?view=departments" 
+           class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
           <i class="fas fa-list mr-2"></i> View All Departments
         </a>
       </div>
@@ -200,6 +407,8 @@ and Procedures{% endblock %} {% block content %}
         {% endfor %}
       </div>
       {% endif %}
+      
+      {% endif %}
     </div>
   </div>
 </div>
@@ -210,6 +419,22 @@ and Procedures{% endblock %} {% block content %}
     const searchInput = document.getElementById("searchInput");
     if (searchInput && !searchInput.value) {
       searchInput.focus();
+    }
+    
+    // Auto-submit form when filters change
+    const departmentSelect = document.querySelector('select[name="department"]');
+    const regionSelect = document.querySelector('select[name="region"]');
+    
+    if (departmentSelect) {
+      departmentSelect.addEventListener('change', function() {
+        this.form.submit();
+      });
+    }
+    
+    if (regionSelect) {
+      regionSelect.addEventListener('change', function() {
+        this.form.submit();
+      });
     }
   });
 </script>

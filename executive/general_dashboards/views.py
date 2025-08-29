@@ -184,6 +184,7 @@ def generate_debtors_table_rows(debtors_data):
     return rows
 
 
+@login_required
 def dashboard_index(request):
     """Main dashboard index view"""
     return render(request, 'general_dashboards/dashboard_index.html', {
@@ -192,9 +193,14 @@ def dashboard_index(request):
 
 
 @api_view(['GET'])
-# @permission_classes([IsAuthenticated])  # Temporarily disabled for testing
+@permission_classes([])
+@csrf_exempt
 def get_regions(request):
     """Get all regions, districts, and depots for filtering"""
+    # Check if user is authenticated via session
+    if not request.user.is_authenticated:
+        return HttpResponse('<p class="text-red-600">Authentication required</p>', content_type='text/html')
+    
     try:
         from it.users.models import Regions, Districts, Depots
         
@@ -235,9 +241,14 @@ def get_regions(request):
 
 
 @api_view(['GET'])
-# @permission_classes([IsAuthenticated])  # Temporarily disabled for testing
+@permission_classes([])
+@csrf_exempt
 def get_dashboard_data(request):
     """Get complete dashboard data including new sections"""
+    # Check if user is authenticated via session
+    if not request.user.is_authenticated:
+        return HttpResponse('<p class="text-red-600">Authentication required</p>', content_type='text/html')
+    
     try:
         # Get filter parameters
         region_id = request.GET.get('region')
@@ -349,9 +360,17 @@ def get_dashboard_data(request):
 
 
 @api_view(['POST'])
-@permission_classes([IsAuthenticated])
+@permission_classes([])
+@csrf_exempt
 def save_dashboard_data(request):
     """Save dashboard data with support for new sections"""
+    # Check if user is authenticated via session
+    if not request.user.is_authenticated:
+        return Response({
+            'success': False,
+            'error': 'Authentication required'
+        }, status=status.HTTP_401_UNAUTHORIZED)
+    
     try:
         data = request.data
         table_type = data.get('table')
@@ -390,9 +409,14 @@ def save_dashboard_data(request):
 
 def save_weekly_collections(request, row_index, field, value):
     """Save weekly collections data"""
+    # Check if user is authenticated
+    if not request.user.is_authenticated:
+        return {'success': False, 'error': 'Authentication required'}
+    
     try:
         # Get the record to update
-        collections = WeeklyCollections.objects.filter(year=2025).order_by('week_number')
+        current_year = timezone.now().year
+        collections = WeeklyCollections.objects.filter(year=current_year).order_by('week_number')
         if row_index >= len(collections):
             return {'success': False, 'error': 'Invalid row index'}
         
@@ -424,9 +448,14 @@ def save_weekly_collections(request, row_index, field, value):
 
 def save_weekly_revenue_lost(request, row_index, field, value):
     """Save weekly revenue lost data"""
+    # Check if user is authenticated
+    if not request.user.is_authenticated:
+        return {'success': False, 'error': 'Authentication required'}
+    
     try:
         # Get the record to update
-        revenue_lost = WeeklyRevenueLost.objects.filter(year=2025).order_by('week_number')
+        current_year = timezone.now().year
+        revenue_lost = WeeklyRevenueLost.objects.filter(year=current_year).order_by('week_number')
         if row_index >= len(revenue_lost):
             return {'success': False, 'error': 'Invalid row index'}
         
@@ -459,6 +488,10 @@ def save_weekly_revenue_lost(request, row_index, field, value):
 
 def save_debtor_category(request, row_index, field, value):
     """Save debtor category data"""
+    # Check if user is authenticated
+    if not request.user.is_authenticated:
+        return {'success': False, 'error': 'Authentication required'}
+    
     try:
         # Get the record to update
         debtors = DebtorCategory.objects.filter(year=2025, month=timezone.now().month).order_by('category')
@@ -511,9 +544,16 @@ def save_debtor_category(request, row_index, field, value):
 
 
 @api_view(['GET'])
-@permission_classes([IsAuthenticated])
+@permission_classes([])
 def get_user_permissions(request):
     """Get user permissions for dashboard editing"""
+    # Check if user is authenticated via session
+    if not request.user.is_authenticated:
+        return Response({
+            'success': False,
+            'error': 'Authentication required'
+        }, status=status.HTTP_401_UNAUTHORIZED)
+    
     try:
         user = request.user
         
@@ -543,9 +583,17 @@ def get_user_permissions(request):
 
 
 @api_view(['POST'])
-@permission_classes([IsAuthenticated])
+@permission_classes([])
+@csrf_exempt
 def create_sample_data(request):
     """Create sample data for testing the new dashboard sections"""
+    # Check if user is authenticated via session
+    if not request.user.is_authenticated:
+        return Response({
+            'success': False,
+            'error': 'Authentication required'
+        }, status=status.HTTP_401_UNAUTHORIZED)
+    
     try:
         from it.users.models import Regions, Districts, Depots
         

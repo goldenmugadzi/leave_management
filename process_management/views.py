@@ -45,32 +45,62 @@ def log_process_activity(user, action, process=None, document=None, details=None
 @login_required
 def process_list_view(request):
     """
-    Display departmental sections with process counts and search functionality.
+    Display processes in a table format with search functionality.
+    Enhanced to show all processes in a spreadsheet-like view.
     
     Requirements: 1.1, 3.1, 3.3
     """
     search_query = request.GET.get('search', '').strip()
+    department_filter = request.GET.get('department', '')
+    region_filter = request.GET.get('region', '')
+    view_mode = request.GET.get('view', 'table')  # Default to table view as users prefer it
     
     # Log user access
     log_process_activity(request.user, 'view_process_list', details=f"Search query: '{search_query}'" if search_query else None)
     
-    # Get all departments with process counts
+    # Get all departments with process counts for department view
     departments = ProcessDepartment.objects.annotate(
         process_count=Count('processes', filter=Q(processes__is_active=True))
     ).order_by('order', 'name')
     
-    # If search query provided, filter processes and group by department
-    search_results = None
+    # Get all processes for table view
+    processes = Process.objects.filter(is_active=True).select_related(
+        'department', 'region', 'created_by'
+    ).prefetch_related('documents')
+    
+    # Apply filters
     if search_query:
-        # Search across all processes
-        processes = Process.objects.filter(
+        processes = processes.filter(
             Q(name__icontains=search_query) | 
             Q(description__icontains=search_query) |
-            Q(process_code__icontains=search_query),
-            is_active=True
-        ).select_related('department', 'region').order_by('department__order', 'name')
-        
-        # Group search results by department
+            Q(process_code__icontains=search_query)
+        )
+    
+    if department_filter:
+        processes = processes.filter(department_id=department_filter)
+    
+    if region_filter:
+        processes = processes.filter(region_id=region_filter)
+    
+    # Order processes
+    processes = processes.order_by('department__order', 'name')
+    
+    # Get available regions for filters
+    available_regions = Regions.objects.filter(
+        id__in=Process.objects.filter(
+            is_active=True,
+            region__isnull=False
+        ).values_list('region_id', flat=True).distinct()
+    ).order_by('region')
+    
+    # Pagination for table view
+    paginator = Paginator(processes, 25)  # 25 processes per page for table view
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    # For search results in department view
+    search_results = None
+    if search_query and view_mode == 'departments':
         search_results = {}
         for process in processes:
             dept_name = process.department.name
@@ -80,9 +110,18 @@ def process_list_view(request):
     
     context = {
         'departments': departments,
+        'processes': page_obj,
+        'all_processes': processes,
         'search_query': search_query,
+        'department_filter': department_filter,
+        'region_filter': region_filter,
+        'view_mode': view_mode,
         'search_results': search_results,
+        'available_regions': available_regions,
         'total_processes': Process.objects.filter(is_active=True).count(),
+        'filtered_count': processes.count(),
+        'paginator': paginator,
+        'page_obj': page_obj,
     }
     
     return render(request, 'process_management/process_list.html', context)
