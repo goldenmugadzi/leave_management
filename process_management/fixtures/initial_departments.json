@@ -1,0 +1,123 @@
+[
+  {
+    "model": "process_management.processdepartment",
+    "pk": 1,
+    "fields": {
+      "name": "GENERAL MANAGER'S OFFICE",
+      "description": "Processes and procedures related to general management and executive oversight",
+      "order": 1,
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "process_management.processdepartment",
+    "pk": 2,
+    "fields": {
+      "name": "ENGINEERING MANAGER'S OFFICE",
+      "description": "Processes and procedures related to engineering management and technical oversight",
+      "order": 2,
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "process_management.processdepartment",
+    "pk": 3,
+    "fields": {
+      "name": "DISTRICTS",
+      "description": "Processes and procedures related to district operations and management",
+      "order": 3,
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "process_management.processdepartment",
+    "pk": 4,
+    "fields": {
+      "name": "NETWORK DEVELOPMENT",
+      "description": "Processes and procedures related to network development and expansion",
+      "order": 4,
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "process_management.processdepartment",
+    "pk": 5,
+    "fields": {
+      "name": "OPERATIONS AND MAINTENANCE",
+      "description": "Processes and procedures related to operations and maintenance activities",
+      "order": 5,
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "process_management.processdepartment",
+    "pk": 6,
+    "fields": {
+      "name": "COMMERCIAL",
+      "description": "Processes and procedures related to commercial activities and customer service",
+      "order": 6,
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "process_management.processdepartment",
+    "pk": 7,
+    "fields": {
+      "name": "FINANCE",
+      "description": "Processes and procedures related to financial management and accounting",
+      "order": 7,
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "process_management.processdepartment",
+    "pk": 8,
+    "fields": {
+      "name": "PROCUREMENT",
+      "description": "Processes and procedures related to procurement and supply chain management",
+      "order": 8,
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "process_management.processdepartment",
+    "pk": 9,
+    "fields": {
+      "name": "RISK MANAGEMENT",
+      "description": "Processes and procedures related to risk assessment and management",
+      "order": 9,
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "process_management.processdepartment",
+    "pk": 10,
+    "fields": {
+      "name": "HUMAN RESOURCES AND ADMINISTRATION",
+      "description": "Processes and procedures related to human resources and administrative functions",
+      "order": 10,
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T00:00:00Z"
+    }
+  },
+  {
+    "model": "process_management.processdepartment",
+    "pk": 11,
+    "fields": {
+      "name": "INFORMATION AND COMMUNICATION TECHNOLOGY",
+      "description": "Processes and procedures related to IT systems and communication technology",
+      "order": 11,
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T00:00:00Z"
+    }
+  }
+]

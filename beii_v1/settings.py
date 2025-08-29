@@ -103,6 +103,7 @@ INSTALLED_APPS = [
     'it.beii_auth',
     'it.users',
     'it.change_requests',
+    'process_management',
     # 'executive.exec_dashboards',
     'executive.general_dashboards.apps.GeneralDashboardsConfig',
     'knowledge_center',
@@ -145,7 +146,7 @@ INSTALLED_APPS = [
     'leave_management',
     'sanction_for_test',
     'utils',
-    'inspections',
+    'inspections'
 ]
 
 AUTH_USER_MODEL = 'users.UserProfile'
