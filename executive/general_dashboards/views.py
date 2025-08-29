@@ -402,18 +402,25 @@ def get_dashboard_data(request):
 @permission_classes([])
 @csrf_exempt
 def save_dashboard_data(request):
-    """Save dashboard data with support for new sections"""
-    # Get authentication status from request data (passed from frontend)
-    data = request.data
-    auth_status = data.get('auth', False)
-    
-    if not auth_status:
-        return Response({
-            'success': False,
-            'error': 'Authentication required'
-        }, status=status.HTTP_401_UNAUTHORIZED)
-    
+    """Save dashboard data with role-based access control"""
     try:
+        # Check if user is authenticated
+        if not request.user.is_authenticated:
+            return Response({
+                'success': False,
+                'error': 'Authentication required'
+            }, status=status.HTTP_401_UNAUTHORIZED)
+        
+        # Check if user has permission to edit dashboard data
+        can_edit = check_user_can_edit_dashboard(request.user)
+        if not can_edit:
+            return Response({
+                'success': False,
+                'error': 'Insufficient permissions. Only users with Manager role for dashboards can edit data.'
+            }, status=status.HTTP_403_FORBIDDEN)
+        
+        # Get data from request
+        data = request.data
         table_type = data.get('table')
         row_index = data.get('row')
         field = data.get('field')
@@ -457,9 +464,9 @@ def save_weekly_collections(request, row_index, field, value):
         collections = WeeklyCollections.objects.filter(year=current_year).order_by('week_number')
         if row_index >= len(collections):
             return {'success': False, 'error': 'Invalid row index'}
-        
+        print("collections:", collections)
         collection = collections[row_index]
-        
+        print("collection:", collection)
         # Update the field - convert to Decimal to match model field type
         from decimal import Decimal
         if field == 'zwl_millions':
@@ -472,7 +479,7 @@ def save_weekly_collections(request, row_index, field, value):
         # Set updated_by to None since we don't have the actual user object in AJAX calls
         collection.updated_by = None
         collection.save()
-        
+        print("collection saved:", collection)
         return {
             'success': True,
             'message': 'Weekly collections updated successfully',

@@ -617,6 +617,11 @@ function saveEdit(table, row, field, value) {
                 cell.classList.add('cell-success');
                 setTimeout(() => cell.classList.remove('cell-success'), 2000);
                 showToast('Data saved successfully', 'success');
+                
+                // Reload dashboard data to reflect the changes immediately
+                setTimeout(() => {
+                    loadDashboardData();
+                }, 500);
             } else {
                 cell.classList.add('cell-error');
                 setTimeout(() => cell.classList.remove('cell-error'), 3000);
