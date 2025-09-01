@@ -372,6 +372,198 @@
     .text-red-600 { color: #dc2626; }
     .text-orange-600 { color: #ea580c; }
     
+    /* Bulk Upload Section Styles */
+    .bulk-upload-section {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        border: 1px solid #e5e7eb;
+    }
+    
+    .bulk-upload-header {
+        margin-bottom: 1.5rem;
+        text-align: center;
+    }
+    
+    .bulk-upload-header h3 {
+        color: #1f2937;
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin: 0 0 0.5rem 0;
+    }
+    
+    .bulk-upload-header p {
+        color: #6b7280;
+        margin: 0;
+        font-size: 1rem;
+    }
+    
+    .upload-form-container {
+        margin-bottom: 1.5rem;
+    }
+    
+    .upload-form-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .form-group {
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .form-label {
+        font-weight: 600;
+        color: #374151;
+        margin-bottom: 0.5rem;
+        font-size: 0.875rem;
+    }
+    
+    .form-select,
+    .form-input {
+        padding: 0.75rem;
+        border: 1px solid #d1d5db;
+        border-radius: 0.5rem;
+        background-color: #f9fafb;
+        color: #374151;
+        font-size: 0.875rem;
+        transition: all 0.2s;
+    }
+    
+    .form-select:focus,
+    .form-input:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        background-color: white;
+    }
+    
+    .form-help {
+        color: #6b7280;
+        font-size: 0.75rem;
+        margin-top: 0.25rem;
+    }
+    
+    .checkbox-group {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .checkbox-label {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        cursor: pointer;
+        font-size: 0.875rem;
+        color: #374151;
+    }
+    
+    .checkbox-label input[type="checkbox"] {
+        width: 1rem;
+        height: 1rem;
+        accent-color: #3b82f6;
+    }
+    
+    .upload-actions {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+    
+    .btn {
+        padding: 0.75rem 1.5rem;
+        border: none;
+        border-radius: 0.5rem;
+        font-weight: 600;
+        font-size: 0.875rem;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        min-width: 140px;
+        justify-content: center;
+    }
+    
+    .btn-primary {
+        background-color: #3b82f6;
+        color: white;
+    }
+    
+    .btn-primary:hover {
+        background-color: #2563eb;
+        transform: translateY(-1px);
+    }
+    
+    .btn-secondary {
+        background-color: #6b7280;
+        color: white;
+    }
+    
+    .btn-secondary:hover {
+        background-color: #4b5563;
+        transform: translateY(-1px);
+    }
+    
+    .btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+    }
+    
+    .upload-status {
+        background: #f8fafc;
+        border: 1px solid #e5e7eb;
+        border-radius: 0.5rem;
+        padding: 1rem;
+    }
+    
+    .status-content {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    
+    .status-icon {
+        font-size: 2rem;
+    }
+    
+    .status-text h4 {
+        margin: 0 0 0.25rem 0;
+        color: #1f2937;
+        font-size: 1.125rem;
+    }
+    
+    .status-text p {
+        margin: 0;
+        color: #6b7280;
+        font-size: 0.875rem;
+    }
+    
+    .status-success {
+        background: #f0fdf4;
+        border-color: #bbf7d0;
+        color: #166534;
+    }
+    
+    .status-error {
+        background: #fef2f2;
+        border-color: #fecaca;
+        color: #dc2626;
+    }
+    
+    .status-loading {
+        background: #eff6ff;
+        border-color: #bfdbfe;
+        color: #1d4ed8;
+    }
+    
     /* Responsive Design */
     @media (max-width: 768px) {
         .dashboard-grid {
@@ -394,6 +586,20 @@
         .grid-cols-3,
         .grid-cols-5 {
             grid-template-columns: 1fr;
+        }
+        
+        .upload-form-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .upload-actions {
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .btn {
+            width: 100%;
+            max-width: 300px;
         }
     }
 </style>
@@ -439,6 +645,104 @@
             </div>
         </div>
         
+        <!-- Bulk Upload Section -->
+        <div class="bulk-upload-section">
+            <div class="bulk-upload-header">
+                <h3>📁 Bulk Data Import</h3>
+                <p>Upload CSV/Excel files to import dashboard data in bulk</p>
+            </div>
+            
+            <div class="bulk-upload-controls">
+                <div class="upload-form-container">
+                    <form id="bulkUploadForm" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <div class="upload-form-grid">
+                            <div class="form-group">
+                                <label for="dataType" class="form-label">Data Type</label>
+                                <select id="dataType" name="data_type" class="form-select" required>
+                                    <option value="">Select Data Type</option>
+                                    <option value="weekly_collections">Weekly Collections</option>
+                                    <option value="weekly_revenue_lost">Weekly Revenue Lost</option>
+                                    <option value="debtor_categories">Debtor Categories</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="uploadYear" class="form-label">Year</label>
+                                <input type="number" id="uploadYear" name="year" class="form-input" 
+                                       value="2025" min="2020" max="2030" required>
+                            </div>
+                            
+                            <div class="form-group" id="monthGroup" style="display: none;">
+                                <label for="uploadMonth" class="form-label">Month</label>
+                                <select id="uploadMonth" name="month" class="form-select">
+                                    <option value="1">January</option>
+                                    <option value="2">February</option>
+                                    <option value="3">March</option>
+                                    <option value="4">April</option>
+                                    <option value="5">May</option>
+                                    <option value="6">June</option>
+                                    <option value="7">July</option>
+                                    <option value="8">August</option>
+                                    <option value="9">September</option>
+                                    <option value="10">October</option>
+                                    <option value="11">November</option>
+                                    <option value="12">December</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="uploadFile" class="form-label">Upload File</label>
+                                <input type="file" id="uploadFile" name="file" class="form-input" 
+                                       accept=".csv,.xlsx,.xls" required>
+                                <small class="form-help">Supported formats: CSV, Excel (.xlsx, .xls)</small>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="locationType" class="form-label">Location Level</label>
+                                <select id="locationType" name="location_type" class="form-select">
+                                    <option value="depot">Depot Level</option>
+                                    <option value="district">District Level</option>
+                                    <option value="region">Region Level</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Options</label>
+                                <div class="checkbox-group">
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" name="skip_duplicates" id="skipDuplicates">
+                                        <span class="checkmark"></span>
+                                        Skip Duplicates
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="upload-actions">
+                            <button type="submit" class="btn btn-primary" id="uploadBtn">
+                                <span class="btn-text">📤 Upload Data</span>
+                                <span class="btn-loading" style="display: none;">⏳ Uploading...</span>
+                            </button>
+                            <button type="button" class="btn btn-secondary" onclick="downloadTemplate()">
+                                📥 Download Template
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                
+                <div class="upload-status" id="uploadStatus" style="display: none;">
+                    <div class="status-content">
+                        <div class="status-icon">📊</div>
+                        <div class="status-text">
+                            <h4 id="statusTitle">Upload Status</h4>
+                            <p id="statusMessage">Ready to upload</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
         <!-- Regions Data (hidden, used for populating filters) -->
         <div id="regions-data" style="display: none;"></div>
         
@@ -456,6 +760,9 @@
     <div id="loading-overlay" class="loading-overlay" style="display: none;">
         <div class="spinner"></div>
     </div>
+    
+    <!-- Toast Container for Notifications -->
+    <div id="toast-container" class="toast-container"></div>
 </div>
 {% endblock %}
 
@@ -602,14 +909,25 @@ function saveEdit(table, row, field, value) {
     fetch('{% url "dashboards:save_dashboard_data" %}', {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
         },
         body: JSON.stringify({
             ...payload,
             auth: authStatus
         })
     })
-    .then(response => response.json())
+    .then(response => {
+        // Check if the response indicates authentication failure
+        if (response.status === 401) {
+            throw new Error('Authentication required. Please log in and try again.');
+        } else if (response.status === 403) {
+            throw new Error('Access denied. You don\'t have permission to edit this data.');
+        } else if (!response.ok) {
+            throw new Error(`Server error (${response.status}). Please try again.`);
+        }
+        return response.json();
+    })
     .then(data => {
         if (cell) {
             cell.classList.remove('cell-loading');
@@ -635,8 +953,20 @@ function saveEdit(table, row, field, value) {
             cell.classList.add('cell-error');
             setTimeout(() => cell.classList.remove('cell-error'), 3000);
         }
-        showToast('Error saving data', 'error');
+        
+        // Show specific error message
+        const errorMessage = error.message || 'Error saving data';
+        showToast(errorMessage, 'error');
         console.error('Save error:', error);
+        
+        // If it's an authentication error, suggest reloading the page
+        if (error.message && error.message.includes('Authentication')) {
+            setTimeout(() => {
+                if (confirm('Your session may have expired. Would you like to reload the page?')) {
+                    window.location.reload();
+                }
+            }, 2000);
+        }
     });
 }
 
@@ -693,6 +1023,124 @@ function getCookie(name) {
         }
     }
     return cookieValue;
+}
+
+// Bulk Upload Functionality
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize bulk upload form
+    initializeBulkUpload();
+});
+
+function initializeBulkUpload() {
+    const dataTypeSelect = document.getElementById('dataType');
+    const monthGroup = document.getElementById('monthGroup');
+    const uploadForm = document.getElementById('bulkUploadForm');
+    
+    if (dataTypeSelect) {
+        dataTypeSelect.addEventListener('change', function() {
+            if (this.value === 'debtor_categories') {
+                monthGroup.style.display = 'block';
+                document.getElementById('uploadMonth').required = true;
+            } else {
+                monthGroup.style.display = 'none';
+                document.getElementById('uploadMonth').required = false;
+            }
+        });
+    }
+    
+    if (uploadForm) {
+        uploadForm.addEventListener('submit', handleBulkUpload);
+    }
+}
+
+function handleBulkUpload(event) {
+    event.preventDefault();
+    
+    const formData = new FormData(event.target);
+    const uploadBtn = document.getElementById('uploadBtn');
+    const btnText = uploadBtn.querySelector('.btn-text');
+    const btnLoading = uploadBtn.querySelector('.btn-loading');
+    
+    // Show loading state
+    uploadBtn.disabled = true;
+    btnText.style.display = 'none';
+    btnLoading.style.display = 'inline';
+    
+    // Show status
+    showUploadStatus('loading', 'Uploading data...', 'Please wait while we process your file.');
+    
+    // Send upload request
+    fetch('{% url "dashboards:bulk_upload_dashboard_data" %}', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken')
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showUploadStatus('success', 'Upload Successful!', data.message);
+            showToast('Data uploaded successfully', 'success');
+            
+            // Reload dashboard data to show new data
+            setTimeout(() => {
+                loadDashboardData();
+            }, 1000);
+        } else {
+            showUploadStatus('error', 'Upload Failed', data.error || 'Unknown error occurred');
+            showToast(data.error || 'Upload failed', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Upload error:', error);
+        showUploadStatus('error', 'Upload Failed', 'Network error occurred');
+        showToast('Network error occurred', 'error');
+    })
+    .finally(() => {
+        // Reset button state
+        uploadBtn.disabled = false;
+        btnText.style.display = 'inline';
+        btnLoading.style.display = 'none';
+    });
+}
+
+function showUploadStatus(type, title, message) {
+    const statusDiv = document.getElementById('uploadStatus');
+    const statusTitle = document.getElementById('statusTitle');
+    const statusMessage = document.getElementById('statusMessage');
+    
+    if (statusDiv && statusTitle && statusMessage) {
+        statusDiv.style.display = 'block';
+        statusDiv.className = `upload-status status-${type}`;
+        statusTitle.textContent = title;
+        statusMessage.textContent = message;
+        
+        // Auto-hide success messages after 5 seconds
+        if (type === 'success') {
+            setTimeout(() => {
+                statusDiv.style.display = 'none';
+            }, 5000);
+        }
+    }
+}
+
+function downloadTemplate() {
+    const dataType = document.getElementById('dataType').value;
+    if (!dataType) {
+        showToast('Please select a data type first', 'warning');
+        return;
+    }
+    
+    // Create download link
+    const link = document.createElement('a');
+    link.href = `{% url "dashboards:download_csv_template" %}?type=${dataType}`;
+    link.download = `${dataType}_template.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    showToast('Template download started', 'info');
 }
 </script>
 {% endblock %}

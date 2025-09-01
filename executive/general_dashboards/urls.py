@@ -18,4 +18,10 @@ urlpatterns = [
     
     # Utility endpoints
     path('create-sample-data/', views.create_sample_data, name='create_sample_data'),
+    
+    # CSV Import/Export endpoints
+    path('download-template/', views.download_csv_template, name='download_csv_template'),
+    path('bulk-upload/', views.bulk_upload_dashboard_data, name='bulk_upload_dashboard_data'),
+    
+
 ]

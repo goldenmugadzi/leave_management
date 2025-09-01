@@ -18,17 +18,19 @@ from .serializers import (
     WeeklyCollectionsSerializer, WeeklyRevenueLostSerializer, 
     DebtorCategorySerializer, DashboardDataSerializer
 )
+from .forms import DashboardDataBulkImportForm
+from it.users.models import Regions, Districts, Depots
 
 logger = logging.getLogger(__name__)
 
 
-def generate_dashboard_html(collections_data, revenue_lost_data, debtors_data, metrics, is_authenticated=False):
-    """Generate HTML for the dashboard components"""
+def generate_dashboard_html(collections_data, revenue_lost_data, debtors_data, metrics, is_authenticated=False, access_level='none', show_aggregated_view=False):
+    """Generate HTML for the dashboard components with role-based context"""
     
-    # Add authentication notice if user is not authenticated
-    auth_notice = ''
+    # Add access level notice
+    access_notice = ''
     if not is_authenticated:
-        auth_notice = '''
+        access_notice = '''
         <div class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-6" role="alert">
             <div class="flex">
                 <div class="flex-shrink-0">
@@ -40,6 +42,23 @@ def generate_dashboard_html(collections_data, revenue_lost_data, debtors_data, m
                     <p class="text-sm">
                         <strong>Note:</strong> You are viewing the dashboard in read-only mode. 
                         <a href="/admin/login/" class="font-medium underline hover:text-yellow-600">Log in</a> to edit data.
+                    </p>
+                </div>
+            </div>
+        </div>
+        '''
+    elif access_level == 'authenticated_user':
+        access_notice = '''
+        <div class="bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4 mb-6" role="alert">
+            <div class="flex">
+                <div class="flex-shrink-0">
+                    <svg class="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" clip-rule="evenodd" />
+                    </svg>
+                </div>
+                <div class="ml-3">
+                    <p class="text-sm">
+                        <strong>Dashboard View:</strong> You can view data across all regions, districts, and depots. Use the filters to focus on specific locations.
                     </p>
                 </div>
             </div>
@@ -150,7 +169,7 @@ def generate_dashboard_html(collections_data, revenue_lost_data, debtors_data, m
     </div>
     '''
     
-    return auth_notice + metric_cards_html + tables_html
+    return access_notice + metric_cards_html + tables_html
 
 
 def generate_collections_table_rows(collections_data, is_authenticated=False):
@@ -207,7 +226,7 @@ def generate_debtors_table_rows(debtors_data, is_authenticated=False):
         if is_authenticated:
             rows += f'''
             <tr>
-                <td>{debtor.get('id', i + 1)}</td>
+                <td>{i + 1}</td>
                 <td>{debtor.get('category', '')}</td>
                 <td class="editable-cell" data-table="debtors" data-row="{i}" data-field="percentage" onclick="startEdit('debtors', {i}, 'percentage', {debtor.get('percentage', 0)})">{debtor.get('percentage', 0)}%</td>
             </tr>
@@ -232,45 +251,81 @@ def dashboard_index(request):
 
 
 @api_view(['GET'])
-@permission_classes([])
-@csrf_exempt
+@permission_classes([IsAuthenticated])
 def get_regions(request):
-    """Get all regions, districts, and depots for filtering"""
-    # Check if user is authenticated via session
-    if not request.user.is_authenticated:
-        return HttpResponse('<p class="text-red-600">Authentication required</p>', content_type='text/html')
+    """Get regions, districts, and depots based on user's access level"""
     
     try:
-        from it.users.models import Regions, Districts, Depots
+        # Get user's allowed locations and default region
+        allowed_locations = get_user_allowed_locations(request.user)
+        access_level, _ = get_user_dashboard_access_level(request.user)
         
-        # Get all regions
-        regions = Regions.objects.all().values('id', 'region')
+        # Get user's default region for auto-selection
+        from it.users.models import UserProfile
+        try:
+            user_profile = UserProfile.objects.get(id=request.user.id)
+            default_region_id = user_profile.region.id if user_profile.region else None
+            default_district_id = user_profile.district.id if user_profile.district else None
+            default_depot_id = user_profile.depot.id if user_profile.depot else None
+        except UserProfile.DoesNotExist:
+            default_region_id = None
+            default_district_id = None
+            default_depot_id = None
         
-        # Get all districts with region info
-        districts = Districts.objects.all().values('id', 'district', 'region_id')
+        # Build HTML options with default selection
+        regions_html = '<option value="">All Regions</option>'
+        for r in allowed_locations['regions']:
+            selected = 'selected' if r["id"] == default_region_id else ''
+            regions_html += f'<option value="{r["id"]}" {selected}>{r["region"]}</option>'
         
-        # Get all depots with district and region info
-        depots = Depots.objects.all().values('id', 'depot', 'district_id')
+        districts_html = '<option value="">All Districts</option>'
+        for d in allowed_locations['districts']:
+            selected = 'selected' if d["id"] == default_district_id else ''
+            districts_html += f'<option value="{d["id"]}" data-region="{d["region_id"]}" {selected}>{d["district"]}</option>'
         
-        # Return HTML for HTMX to populate the filter dropdowns
-        regions_html = '<option value="">Select Region</option>'
-        for r in regions:
-            regions_html += f'<option value="{r["id"]}">{r["region"]}</option>'
+        depots_html = '<option value="">All Depots</option>'
+        for dep in allowed_locations['depots']:
+            selected = 'selected' if dep["id"] == default_depot_id else ''
+            depots_html += f'<option value="{dep["id"]}" data-district="{dep["district_id"]}" {selected}>{dep["depot"]}</option>'
         
-        districts_html = '<option value="">Select District</option>'
-        for d in districts:
-            districts_html += f'<option value="{d["id"]}" data-region="{d["region_id"]}">{d["district"]}</option>'
+        # Add a simple notice for all authenticated users
+        notice_html = ''
+        if access_level == 'authenticated_user':
+            notice_html = '''
+            <div class="bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-3 mb-4" role="alert">
+                <div class="flex">
+                    <div class="flex-shrink-0">
+                        <svg class="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                    <div class="ml-3">
+                        <p class="text-sm">
+                            <strong>Dashboard View:</strong> You can view data across all regions, districts, and depots. Use the filters above to focus on specific locations.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            '''
         
-        depots_html = '<option value="">Select Depot</option>'
-        for dep in depots:
-            depots_html += f'<option value="{dep["id"]}" data-district="{dep["district_id"]}">{dep["depot"]}</option>'
-        
-        # Return HTML fragment
+        # Return HTML fragment with notice and updated dropdowns
         return HttpResponse(f'''
+        {notice_html}
         <script>
             document.getElementById('selectRegion').innerHTML = `{regions_html}`;
             document.getElementById('selectDistrict').innerHTML = `{districts_html}`;
             document.getElementById('selectDepot').innerHTML = `{depots_html}`;
+            
+            // Trigger filter application if user has a default region selected
+            setTimeout(function() {{
+                if (document.getElementById('selectRegion').value || 
+                    document.getElementById('selectDistrict').value || 
+                    document.getElementById('selectDepot').value) {{
+                    if (typeof applyFilters === 'function') {{
+                        applyFilters();
+                    }}
+                }}
+            }}, 100);
         </script>
         ''', content_type='text/html')
         
@@ -283,62 +338,70 @@ def get_regions(request):
 @permission_classes([])
 @csrf_exempt
 def get_dashboard_data(request):
-    """Get complete dashboard data including new sections"""
+    """Get complete dashboard data including new sections with role-based access control"""
     # Get authentication status from query parameter (passed from frontend)
     auth_param = request.GET.get('auth', 'false')
     is_authenticated = auth_param.lower() == 'true'
     
     try:
-        # Get filter parameters
+        # Get user's access level and default filter
+        if is_authenticated and request.user.is_authenticated:
+            access_level, user_default_filter = get_user_dashboard_access_level(request.user)
+            show_aggregated_view = False  # No special aggregated view needed
+        else:
+            # For unauthenticated users, no access to any specific data
+            access_level = 'none'
+            user_default_filter = Q(pk__isnull=True)
+            show_aggregated_view = False
+        
+        # Get filter parameters from URL
         region_id = request.GET.get('region')
         district_id = request.GET.get('district')
         depot_id = request.GET.get('depot')
         
-        # Build location filter
-        location_filter = Q()
+        # Build requested filter from URL parameters
+        requested_filter = Q()
         if depot_id:
-            location_filter = Q(depot_id=depot_id)
+            requested_filter = Q(depot_id=depot_id)
         elif district_id:
-            location_filter = Q(district_id=district_id)
+            requested_filter = Q(district_id=district_id)
         elif region_id:
-            location_filter = Q(region_id=region_id)
+            requested_filter = Q(region_id=region_id)
+        
+        # For authenticated users, use requested filter if specified, otherwise use their default region
+        if access_level == 'authenticated_user':
+            if requested_filter:
+                location_filter = requested_filter
+            else:
+                location_filter = user_default_filter  # Default to user's region
+        else:
+            # No access users get no data
+            location_filter = Q(pk__isnull=True)
         
         # Get current year and month
         current_year = timezone.now().year
         current_month = timezone.now().month
         
-        # Get weekly collections data
-        if location_filter:
-            weekly_collections = WeeklyCollections.objects.filter(
-                location_filter & Q(year=current_year)
-            ).order_by('week_number')
-        else:
-            # If no location filter, get all data for current year
-            weekly_collections = WeeklyCollections.objects.filter(
-                year=current_year
-            ).order_by('week_number')
+        # Apply location filter to data queries
+        base_collections_query = WeeklyCollections.objects.filter(year=current_year)
+        base_revenue_query = WeeklyRevenueLost.objects.filter(year=current_year)
+        base_debtors_query = DebtorCategory.objects.filter(year=current_year, month=current_month)
         
-        # Get weekly revenue lost data
-        if location_filter:
-            weekly_revenue_lost = WeeklyRevenueLost.objects.filter(
-                location_filter & Q(year=current_year)
-            ).order_by('week_number')
+        if location_filter and access_level == 'authenticated_user':
+            # Apply the location filter (either requested or user's default region)
+            weekly_collections = base_collections_query.filter(location_filter).order_by('week_number')
+            weekly_revenue_lost = base_revenue_query.filter(location_filter).order_by('week_number')
+            debtors = base_debtors_query.filter(location_filter).order_by('category')
+        elif access_level == 'authenticated_user':
+            # If no filter and authenticated, show all data
+            weekly_collections = base_collections_query.order_by('week_number')
+            weekly_revenue_lost = base_revenue_query.order_by('week_number')
+            debtors = base_debtors_query.order_by('category')
         else:
-            # If no location filter, get all data for current year
-            weekly_revenue_lost = WeeklyRevenueLost.objects.filter(
-                year=current_year
-            ).order_by('week_number')
-        
-        # Get debtors data
-        if location_filter:
-            debtors = DebtorCategory.objects.filter(
-                location_filter & Q(year=current_year, month=current_month)
-            ).order_by('category')
-        else:
-            # If no location filter, get all data for current year/month
-            debtors = DebtorCategory.objects.filter(
-                year=current_year, month=current_month
-            ).order_by('category')
+            # Unauthenticated users get no data
+            weekly_collections = base_collections_query.none()
+            weekly_revenue_lost = base_revenue_query.none()
+            debtors = base_debtors_query.none()
         
         # Serialize the data
         collections_data = WeeklyCollectionsSerializer(weekly_collections, many=True).data
@@ -388,8 +451,16 @@ def get_dashboard_data(request):
             'mnt': {}
         }
         
-        # Generate HTML for the dashboard
-        html_content = generate_dashboard_html(collections_data, revenue_lost_data, debtors_data, dashboard_data['metrics'], is_authenticated)
+        # Generate HTML for the dashboard with access level context
+        html_content = generate_dashboard_html(
+            collections_data, 
+            revenue_lost_data, 
+            debtors_data, 
+            dashboard_data['metrics'], 
+            is_authenticated,
+            access_level,
+            show_aggregated_view
+        )
         
         return HttpResponse(html_content, content_type='text/html')
         
@@ -399,18 +470,10 @@ def get_dashboard_data(request):
 
 
 @api_view(['POST'])
-@permission_classes([])
-@csrf_exempt
+@permission_classes([IsAuthenticated])
 def save_dashboard_data(request):
     """Save dashboard data with role-based access control"""
     try:
-        # Check if user is authenticated
-        if not request.user.is_authenticated:
-            return Response({
-                'success': False,
-                'error': 'Authentication required'
-            }, status=status.HTTP_401_UNAUTHORIZED)
-        
         # Check if user has permission to edit dashboard data
         can_edit = check_user_can_edit_dashboard(request.user)
         if not can_edit:
@@ -589,15 +652,9 @@ def save_debtor_category(request, row_index, field, value):
 
 
 @api_view(['GET'])
-@permission_classes([])
+@permission_classes([IsAuthenticated])
 def get_user_permissions(request):
     """Get user permissions for dashboard editing"""
-    # Check if user is authenticated via session
-    if not request.user.is_authenticated:
-        return Response({
-            'success': False,
-            'error': 'Authentication required'
-        }, status=status.HTTP_401_UNAUTHORIZED)
     
     try:
         user = request.user
@@ -628,16 +685,9 @@ def get_user_permissions(request):
 
 
 @api_view(['POST'])
-@permission_classes([])
-@csrf_exempt
+@permission_classes([IsAuthenticated])
 def create_sample_data(request):
     """Create sample data for testing the new dashboard sections"""
-    # Check if user is authenticated via session
-    if not request.user.is_authenticated:
-        return Response({
-            'success': False,
-            'error': 'Authentication required'
-        }, status=status.HTTP_401_UNAUTHORIZED)
     
     try:
         from it.users.models import Regions, Districts, Depots
@@ -730,3 +780,462 @@ def create_sample_data(request):
             'success': False,
             'error': 'Failed to create sample data'
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+def download_csv_template(request):
+    """Download CSV template for dashboard data"""
+    data_type = request.GET.get('type', 'weekly_collections')
+
+    if data_type == 'weekly_collections':
+        template_data = [
+            ['week', 'week_number', 'zwl_millions', 'usd_millions', 'region', 'district', 'depot'],
+            ['Week 1', '1', '5.20', '2.30', 'HARARE REGION', 'HARARE DISTRICT', 'HARARE CENTRAL'],
+            ['Week 2', '2', '5.70', '2.60', 'HARARE REGION', 'HARARE DISTRICT', 'HARARE CENTRAL'],
+            ['Week 3', '3', '6.20', '2.90', 'HARARE REGION', 'HARARE DISTRICT', 'HARARE CENTRAL'],
+        ]
+        filename = 'weekly_collections_template.csv'
+    elif data_type == 'weekly_revenue_lost':
+        template_data = [
+            ['week', 'week_number', 'faults_mwh', 'maintenance_mwh', 'region', 'district', 'depot'],
+            ['Week 1', '1', '12.00', '6.50', 'HARARE REGION', 'HARARE DISTRICT', 'HARARE CENTRAL'],
+            ['Week 2', '2', '14.00', '8.00', 'HARARE REGION', 'HARARE DISTRICT', 'HARARE CENTRAL'],
+            ['Week 3', '3', '16.00', '9.50', 'HARARE REGION', 'HARARE DISTRICT', 'HARARE CENTRAL'],
+        ]
+        filename = 'weekly_revenue_lost_template.csv'
+    elif data_type == 'debtor_categories':
+        template_data = [
+            ['category', 'percentage', 'region', 'district', 'depot'],
+            ['mining', '25.00', 'HARARE REGION', 'HARARE DISTRICT', 'HARARE CENTRAL'],
+            ['domestic', '20.00', 'HARARE REGION', 'HARARE DISTRICT', 'HARARE CENTRAL'],
+            ['industry', '15.00', 'HARARE REGION', 'HARARE DISTRICT', 'HARARE CENTRAL'],
+        ]
+        filename = 'debtor_categories_template.csv'
+    else:
+        return HttpResponse('Invalid data type', status=400)
+    
+    # Create CSV response
+    import csv
+    from io import StringIO
+    
+    output = StringIO()
+    writer = csv.writer(output)
+    writer.writerows(template_data)
+    
+    response = HttpResponse(output.getvalue(), content_type='text/csv')
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    
+    return response
+
+
+def check_user_can_edit_dashboard(user):
+    """Check if user has permission to edit dashboard data - simplified for single role system"""
+    # Check if user has the manager role for dashboards application
+    from it.users.models import UserProfile
+    try:
+        user_profile = UserProfile.objects.get(id=user.id)
+        return user_profile.roles.filter(application='dashboards', role='manager').exists() or user.is_staff
+    except UserProfile.DoesNotExist:
+        return user.is_staff
+
+
+def get_user_dashboard_access_level(user):
+    """
+    Determine user's dashboard access level - now simplified for single role system
+    Returns: ('level', default_location_filter)
+    All authenticated users can view all data but default to their region
+    """
+    from it.users.models import UserProfile, Roles
+    
+    try:
+        user_profile = UserProfile.objects.get(id=user.id)
+        
+        # All authenticated users can view all data, but we return their default region for initial view
+        default_filter = Q()
+        if user_profile.region:
+            default_filter = Q(region_id=user_profile.region.id)
+        elif user_profile.district:
+            default_filter = Q(district_id=user_profile.district.id)
+        elif user_profile.depot:
+            default_filter = Q(depot_id=user_profile.depot.id)
+        
+        return 'authenticated_user', default_filter
+        
+    except UserProfile.DoesNotExist:
+        return 'none', Q(pk__isnull=True)  # No access filter
+
+
+def get_user_allowed_locations(user):
+    """
+    Get locations that user is allowed to filter by
+    Returns: dict with 'regions', 'districts', 'depots' lists
+    Now simplified - all authenticated users can view all locations
+    """
+    from it.users.models import UserProfile, Regions, Districts, Depots
+    
+    try:
+        user_profile = UserProfile.objects.get(id=user.id)
+        
+        # All authenticated users can see all locations
+        return {
+            'regions': list(Regions.objects.all().values('id', 'region')),
+            'districts': list(Districts.objects.all().values('id', 'district', 'region_id')),
+            'depots': list(Depots.objects.all().values('id', 'depot', 'district_id'))
+        }
+            
+    except UserProfile.DoesNotExist:
+        return {
+            'regions': [],
+            'districts': [],
+            'depots': []
+        }
+
+
+def bulk_upload_dashboard_data(request):
+    """Bulk upload dashboard data from CSV/Excel files"""
+    try:
+        # Check if user is authenticated
+        if not request.user.is_authenticated:
+            return JsonResponse({
+                'success': False,
+                'error': 'User not authenticated. Please log in and try again.'
+            }, status=401)
+        
+        # Check permissions
+        if not check_user_can_edit_dashboard(request.user):
+            return JsonResponse({
+                'success': False,
+                'error': 'Insufficient permissions. Only users with Manager role for dashboards can edit data.'
+            }, status=403)
+        
+        # Get form data
+        form = DashboardDataBulkImportForm(request.POST, request.FILES)
+        if not form.is_valid():
+            return JsonResponse({
+                'success': False,
+                'error': 'Invalid form data',
+                'errors': form.errors
+            }, status=400)
+        
+        # Process file
+        try:
+            file = form.cleaned_data['file']
+            data_type = form.cleaned_data['data_type']
+            year = form.cleaned_data['year']
+            
+            # Import data based on type
+            if data_type == 'weekly_collections':
+                result = import_weekly_collections_from_file(file, year, request.user)
+            elif data_type == 'weekly_revenue_lost':
+                result = import_weekly_revenue_lost_from_file(file, year, request.user)
+            elif data_type == 'debtor_categories':
+                month = form.cleaned_data.get('month')
+                if not month:
+                    return JsonResponse({
+                        'success': False,
+                        'error': 'Month is required for debtor categories'
+                    }, status=400)
+                result = import_debtor_categories_from_file(file, year, month, request.user)
+            else:
+                return JsonResponse({
+                    'success': False,
+                    'error': f'Unsupported data type: {data_type}'
+                }, status=400)
+                
+        except KeyError as e:
+            return JsonResponse({
+                'success': False,
+                'error': f'Missing required field: {e}'
+            }, status=400)
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'error': f'Error processing form data: {str(e)}'
+            }, status=400)
+        
+        return JsonResponse(result)
+        
+    except Exception as e:
+        print(f"Error in bulk upload: {str(e)}")
+        return JsonResponse({
+            'success': False,
+            'error': 'Upload failed'
+        }, status=500)
+
+
+def import_weekly_collections_from_file(file, year, user):
+    """Import weekly collections data from uploaded file"""
+    try:
+        import pandas as pd
+        from decimal import Decimal
+        
+        # Read file
+        if file.name.endswith('.csv'):
+            df = pd.read_csv(file)
+        else:
+            df = pd.read_excel(file)
+        
+        # Validate required columns
+        required_cols = ['week', 'week_number', 'zwl_millions', 'usd_millions', 'region', 'district', 'depot']
+        missing_cols = [col for col in required_cols if col not in df.columns]
+        if missing_cols:
+            return {'success': False, 'error': f'Missing required columns: {missing_cols}'}
+        
+        # Process data
+        records_created = 0
+        records_updated = 0
+        errors = []
+        
+        for index, row in df.iterrows():
+            try:
+                # Get or create location objects
+                region, _ = Regions.objects.get_or_create(
+                    region=row['region'],
+                    defaults={'code': row['region'][:2].upper()}
+                )
+                
+                district, _ = Districts.objects.get_or_create(
+                    district=row['district'],
+                    region_id=region.region,
+                    defaults={'code': row['district'][:2].upper()}
+                )
+                
+                depot, _ = Depots.objects.get_or_create(
+                    depot=row['depot'],
+                    district=district,
+                    region=region,
+                    defaults={'code': row['depot'][:2].upper()}
+                )
+                
+                # Check if record exists
+                existing_record = WeeklyCollections.objects.filter(
+                    week=row['week'],
+                    year=year,
+                    week_number=row['week_number'],
+                    region=region,
+                    district=district,
+                    depot=depot
+                ).first()
+                
+                if existing_record:
+                    # Update existing record
+                    existing_record.zwl_millions = Decimal(str(row['zwl_millions']))
+                    existing_record.usd_millions = Decimal(str(row['usd_millions']))
+                    existing_record.updated_by = user
+                    existing_record.save()
+                    records_updated += 1
+                else:
+                    # Create new record
+                    WeeklyCollections.objects.create(
+                        week=row['week'],
+                        year=year,
+                        week_number=row['week_number'],
+                        region=region,
+                        district=district,
+                        depot=depot,
+                        zwl_millions=Decimal(str(row['zwl_millions'])),
+                        usd_millions=Decimal(str(row['usd_millions'])),
+                        updated_by=user
+                    )
+                    records_created += 1
+                    
+            except Exception as e:
+                errors.append(f"Row {index + 1}: {str(e)}")
+        
+        return {
+            'success': True,
+            'message': f'Successfully imported data: {records_created} created, {records_updated} updated',
+            'data': {
+                'created': records_created,
+                'updated': records_updated,
+                'errors': errors
+            }
+        }
+        
+    except Exception as e:
+        return {'success': False, 'error': f'Import failed: {str(e)}'}
+
+
+def import_weekly_revenue_lost_from_file(file, year, user):
+    """Import weekly revenue lost data from uploaded file"""
+    try:
+        import pandas as pd
+        from decimal import Decimal
+        
+        # Read file
+        if file.name.endswith('.csv'):
+            df = pd.read_csv(file)
+        else:
+            df = pd.read_excel(file)
+        
+        # Validate required columns
+        required_cols = ['week', 'week_number', 'faults_mwh', 'maintenance_mwh', 'region', 'district', 'depot']
+        missing_cols = [col for col in required_cols if col not in df.columns]
+        if missing_cols:
+            return {'success': False, 'error': f'Missing required columns: {missing_cols}'}
+        
+        # Process data
+        records_created = 0
+        records_updated = 0
+        errors = []
+        
+        for index, row in df.iterrows():
+            try:
+                # Get or create location objects
+                region, _ = Regions.objects.get_or_create(
+                    region=row['region'],
+                    defaults={'code': row['region'][:2].upper()}
+                )
+                
+                district, _ = Districts.objects.get_or_create(
+                    district=row['district'],
+                    region_id=region.region,
+                    defaults={'code': row['district'][:2].upper()}
+                )
+                
+                depot, _ = Depots.objects.get_or_create(
+                    depot=row['depot'],
+                    district=district,
+                    region=region,
+                    defaults={'code': row['depot'][:2].upper()}
+                )
+                
+                # Check if record exists
+                existing_record = WeeklyRevenueLost.objects.filter(
+                    week=row['week'],
+                    year=year,
+                    week_number=row['week_number'],
+                    region=region,
+                    district=district,
+                    depot=depot
+                ).first()
+                
+                if existing_record:
+                    # Update existing record
+                    existing_record.faults_mwh = Decimal(str(row['faults_mwh']))
+                    existing_record.maintenance_mwh = Decimal(str(row['maintenance_mwh']))
+                    existing_record.updated_by = user
+                    existing_record.save()
+                    records_updated += 1
+                else:
+                    # Create new record
+                    WeeklyRevenueLost.objects.create(
+                        week=row['week'],
+                        year=year,
+                        week_number=row['week_number'],
+                        region=region,
+                        district=district,
+                        depot=depot,
+                        faults_mwh=Decimal(str(row['faults_mwh'])),
+                        maintenance_mwh=Decimal(str(row['maintenance_mwh'])),
+                        updated_by=user
+                    )
+                    records_created += 1
+                    
+            except Exception as e:
+                errors.append(f"Row {index + 1}: {str(e)}")
+        
+        return {
+            'success': True,
+            'message': f'Successfully imported data: {records_created} created, {records_updated} updated',
+            'data': {
+                'created': records_created,
+                'updated': records_updated,
+                'errors': errors
+            }
+        }
+        
+    except Exception as e:
+        return {'success': False, 'error': f'Import failed: {str(e)}'}
+
+
+
+
+
+def import_debtor_categories_from_file(file, year, month, user):
+    """Import debtor categories data from uploaded file"""
+    try:
+        import pandas as pd
+        from decimal import Decimal
+        
+        # Read file
+        if file.name.endswith('.csv'):
+            df = pd.read_csv(file)
+        else:
+            df = pd.read_excel(file)
+        
+        # Validate required columns
+        required_cols = ['category', 'percentage', 'region', 'district', 'depot']
+        missing_cols = [col for col in required_cols if col not in df.columns]
+        if missing_cols:
+            return {'success': False, 'error': f'Missing required columns: {missing_cols}'}
+        
+        # Process data
+        records_created = 0
+        records_updated = 0
+        errors = []
+        
+        for index, row in df.iterrows():
+            try:
+                # Get or create location objects
+                region, _ = Regions.objects.get_or_create(
+                    region=row['region'],
+                    defaults={'code': row['region'][:2].upper()}
+                )
+                
+                district, _ = Districts.objects.get_or_create(
+                    district=row['district'],
+                    region_id=region.region,
+                    defaults={'code': row['district'][:2].upper()}
+                )
+                
+                depot, _ = Depots.objects.get_or_create(
+                    depot=row['depot'],
+                    district=district,
+                    region=region,
+                    defaults={'code': row['depot'][:2].upper()}
+                )
+                
+                # Check if record exists
+                existing_record = DebtorCategory.objects.filter(
+                    category=row['category'],
+                    year=year,
+                    month=month,
+                    region=region,
+                    district=district,
+                    depot=depot
+                ).first()
+                
+                if existing_record:
+                    # Update existing record
+                    existing_record.percentage = Decimal(str(row['percentage']))
+                    existing_record.updated_by = user
+                    existing_record.save()
+                    records_updated += 1
+                else:
+                    # Create new record
+                    DebtorCategory.objects.create(
+                        category=row['category'],
+                        year=year,
+                        month=month,
+                        region=region,
+                        district=district,
+                        depot=depot,
+                        percentage=Decimal(str(row['percentage'])),
+                        updated_by=user
+                    )
+                    records_created += 1
+                    
+            except Exception as e:
+                errors.append(f"Row {index + 1}: {str(e)}")
+        
+        return {
+            'success': True,
+            'message': f'Successfully imported data: {records_created} created, {records_updated} updated',
+            'data': {
+                'created': records_created,
+                'updated': records_updated,
+                'errors': errors
+            }
+        }
+        
+    except Exception as e:
+        return {'success': False, 'error': f'Import failed: {str(e)}'}
