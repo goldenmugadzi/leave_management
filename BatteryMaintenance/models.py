@@ -3,9 +3,10 @@ from it.users.models import Regions,Districts, Depots
 
 class Substation(models.Model):
     name =  models.CharField(max_length=100)
-    region = models.ForeignKey(Regions, on_delete=models.DO_NOTHING)
-    district = models.ForeignKey(Districts, on_delete=models.DO_NOTHING)
-    depot = models.ForeignKey(Depots, on_delete=models.DO_NOTHING)
+    code =  models.CharField(max_length=100)
+    region = models.ForeignKey(Regions, on_delete=models.DO_NOTHING,null=True, blank=True)
+    district = models.ForeignKey(Districts, on_delete=models.DO_NOTHING,null=True, blank=True)
+    depot = models.ForeignKey(Depots, on_delete=models.DO_NOTHING,null=True, blank=True)
 
     def __str__(self):
         return self.name
@@ -14,10 +15,10 @@ class BatteryInstallation(models.Model):
     substation = models.ForeignKey(Substation, on_delete=models.DO_NOTHING,null=True, blank=True)
     battery_name = models.CharField(max_length=100,help_text="type")
     cell_type = models.CharField(max_length=50, blank=True)
-    cell_quantity = models.PositiveIntegerField()
     plates_per_cell = models.PositiveIntegerField(null=True, blank=True)
     date = models.DateField(auto_now_add=True)
     battery_application = models.CharField(max_length=100, blank=True, choices=[("Communication", "Communication"), ("Protection,Control and operation ", "Protection,Control and operation")],default="Communication")
+    comment = models.TextField(blank=True, null=True)
 
     def __str__(self):
         return f"{self.battery_name} ({self.id})"

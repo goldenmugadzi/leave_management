@@ -39,34 +39,54 @@
                     <div class="px-6 py-4">
                         <div class="card border-1 border  border-blue-500 shadow-md  bg-gradient-to-r from-gulf-blue-100 rounded to-blue-400 mb-3">
                                 <h1 class="text-center mb-4 font-bold text-xl rounded  mb-2">Battery Details </h1>
+                            <a class="text-blue-500" href="{% url 'BatteryMaintenance:inspect_battery' installation.id %}">Inspect battery</a>    
+                             <div class="card-body grid grid-cols-2  rounded m-auto ed p-3      rounded  ">
+            <div class=" text-center">
+                <div class=" text-center">
+                    <span class="inline-block font-bold text-start rounded-full text-sm">Battery name:</span>
+                    <span class="inline-block text-end rounded-full text-sm">{{ installation.battery_name|default_if_none:'' }}</span>
+                </div>
+            </div>
+            <div class=" text-center">
+                <div class=" text-center">
+                    <span class="inline-block font-bold text-start rounded-full text-sm">Installation Date:</span>
+                    <span class="inline-block text-end rounded-full text-sm">{{ installation.date|date:"Y-m-d"|default_if_none:'' }}</span>
+                </div>
+            </div>
+            <div class=" text-center">
+                <div class=" text-center">
+                    <span class="inline-block font-bold text-start rounded-full text-sm">{{ installation.substation.region|default_if_none:'' }}</span>
+                    <span class="inline-block text-end rounded-full text-sm">{{ installation.substation.district|default_if_none:'' }}</span>
+                </div>
+            </div>
+            <div class=" text-center">
+                <div class=" text-center">
+                    <span class="inline-block font-bold text-start rounded-full text-sm">Installed at:</span>
+                    <span class="inline-block text-end rounded-full text-sm">{{  installation.substation|default_if_none:'' }}</span>
+                    
+                </div>
+            </div>
+            <div class=" text-center">
+                <div class=" text-center">
+                    <span class="inline-block font-bold text-start rounded-full text-sm">Plates per cell:</span>
+                    <span class="inline-block text-end rounded-full text-sm">{{ installation.plates_per_cell|default_if_none:'' }}</span>
+                </div>
+            </div>  <div class=" text-center">
+                <div class=" text-center">
+                    <span class="inline-block font-bold text-start rounded-full text-sm">Cell type:</span>
+                    <span class="inline-block text-end rounded-full text-sm">{{ installation.cell_type|default_if_none:'' }}</span>
+                </div>
+            </div>
+                <div class=" text-center">
+                <div class=" text-center">
+                    <span class="inline-block font-bold text-start rounded-full text-sm">Battery application:</span>
+                    <span class="inline-block text-end rounded-full text-sm">{{ installation.battery_application|default_if_none:'' }}</span>
+                </div>
+            </div>
+        </div>                                
+                            </div>
+                             <div class="card grid grid-cols-2 gap-2 mb-3">
                                 
-                                <div class="card-body grid grid-cols-2  rounded m-auto ed p-3      rounded  ">
-                                    <div class=" text-center">
-                                        <div class=" text-center">
-                                            <span class="inline-block font-bold text-start rounded-full text-sm">Battery name:</span>
-                                            <span class="inline-block text-end rounded-full text-sm">{{ installation.battery_name|default_if_none:'' }}</span>
-                                        </div>
-                                    </div>
-                                    <div class=" text-center">
-                                        <div class=" text-center">
-                                            <span class="inline-block font-bold text-start rounded-full text-sm">Installation Date:</span>
-                                            <span class="inline-block text-end rounded-full text-sm">{{ installation.date|date:"Y-m-d"|default_if_none:'' }}</span>
-                                        </div>
-                                    </div>
-                                     <div class=" text-center">
-                                        <div class=" text-center">
-                                            <span class="inline-block font-bold text-start rounded-full text-sm">Installed at:</span>
-                                            <span class="inline-block text-end rounded-full text-sm">{{  installation.site_name|default_if_none:'' }}</span>
-                                        </div>
-                                    </div>
-                                    <div class=" text-center">
-                                        <div class=" text-center">
-                                            <span class="inline-block font-bold text-start rounded-full text-sm">Cell quantity</span>
-                                            <span class="inline-block text-end rounded-full text-sm">{{ installation.cell_quantity|default_if_none:'' }}</span>
-                                        </div>
-                                    </div>
-                                </div>                                
-                            </div> <div class="card grid grid-cols-2 gap-2 mb-3">
                             
                             <div class="card-body m-2   px-2 rounded">
                                 {% if installation.cells.exists %}<h1 class="text-center mb-4 font-bold text-xl  mb-2">Battery Cells</h1>{% endif %}

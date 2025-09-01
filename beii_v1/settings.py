@@ -27,7 +27,7 @@ CORS_ALLOW_ALL_ORIGINS = True
 # ]
 
 # CORS_ALLOW_ALL_ORIGINS = True
-CSRF_TRUSTED_ORIGINS = [config('BASE_URL'), config('BASE_URL') + ":" + config('PORT'),"https://d4d74ece50d8.ngrok-free.app"]
+CSRF_TRUSTED_ORIGINS = [config('BASE_URL'), config('BASE_URL') + ":" + config('PORT'),"https://5f8fff96bc4d.ngrok-free.app",]
 
 CORS_ALLOW_HEADERS = ('content-disposition', 'accept-encoding',
                       'content-type', 'accept', 'origin', 'authorization')

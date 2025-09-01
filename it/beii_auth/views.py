@@ -133,6 +133,11 @@ APPLICATIONS = [
         "title": "Commercial Files",
         "iconUrl": "assets/images/customer.png",
         "url": "/commercial/customers"
+    },  {
+        "name": "Battery Maintenance",
+        "title": "Battery Maintenance",
+        "iconUrl": "assets/images/customer.png",
+        "url": "/installations/"
     },
     # {
     #     "name":"fault_locator",

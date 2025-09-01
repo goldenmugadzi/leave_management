@@ -11,7 +11,7 @@ class BatteryInstallationForm(forms.ModelForm):
         model = BatteryInstallation
         fields = [
             'substation', 'battery_name', 'cell_type',
-            'cell_quantity', 'plates_per_cell', 'battery_application'
+             'plates_per_cell', 'battery_application'
         ]
         
     def __init__(self, *args, **kwargs):
@@ -20,6 +20,11 @@ class BatteryInstallationForm(forms.ModelForm):
         
         for field_name, field in self.fields.items():
             field.widget.attrs.update({'class': FIELD_CSS_CLASSES})
+            classes = FIELD_CSS_CLASSES
+            if field_name in ['substation']:
+                classes += ' select2'  # Add select2 for dropdowns
+            field.widget.attrs.update({'class': classes})
+            
         if user and hasattr(user, 'region'):
             self.fields['substation'].queryset = Substation.objects.filter(region=user.region)
 
@@ -38,16 +43,21 @@ class SubstationForm(forms.ModelForm):
     class Meta:
         model = Substation
         fields = ['name', 'region', 'district', 'depot']
-    
+
     def __init__(self, *args, **kwargs):
         user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
-        for field in self.fields.values():
-            field.widget.attrs.update({'class': FIELD_CSS_CLASSES})
-            if hasattr(self, 'user') and hasattr(self.user, 'region'):
-                self.fields['region'].queryset = Regions.objects.filter(id=self.user.region.id)
-                self.fields['district'].queryset = Districts.objects.filter(region=self.user.region)
-                self.fields['depot'].queryset = Depots.objects.filter(region=self.user.region)
+
+        for field_name, field in self.fields.items():
+            classes = FIELD_CSS_CLASSES
+            if field_name in ['region', 'district', 'depot']:
+                classes += ' select2'  # Add select2 for dropdowns
+            field.widget.attrs.update({'class': classes})
+            field.required = False  # Make all fields optional in the form
+
+            self.fields['region'].queryset = Regions.objects.filter(id=user.region.id)
+            self.fields['district'].queryset = Districts.objects.filter(region_id=user.region.id)
+            self.fields['depot'].queryset = Depots.objects.filter(region_id=user.region.id)
 
 CellFormSet = inlineformset_factory(
     BatteryInstallation,
@@ -55,5 +65,13 @@ CellFormSet = inlineformset_factory(
     form=CellForm,
     fields=['specific_gravity', 'voltage'],
     extra=5,
+    can_delete=False
+)
+CellFormSet1 = inlineformset_factory(
+    BatteryInstallation,
+    Cell,
+    form=CellForm,
+    fields=['specific_gravity', 'voltage'],
+    extra=0,
     can_delete=False
 )

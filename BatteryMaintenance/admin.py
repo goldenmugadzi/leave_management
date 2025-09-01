@@ -4,7 +4,7 @@ from django.contrib import admin
 from .models import (BatteryInstallation,Cell,BatteryMaintenance,CellReading,PilotReading,EmergencyDischarge,)
 @admin.register(BatteryInstallation)
 class BatteryInstallationAdmin(admin.ModelAdmin):
-    list_display = ("id", "battery_name",  "cell_quantity", "date")
+    list_display = ("id", "battery_name",  "date")
     list_filter = ("substation", "date", "cell_type")
     search_fields = ("battery_name", "substation__name")
 @admin.register(Cell)

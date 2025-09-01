@@ -10,13 +10,12 @@
     {% csrf_token %}
 
     <div class="m-auto text-center">
-        <h1 class="text-2xl font-bold">Battery Installation Record</h1>
+        <h1 class="text-2xl font-bold">MONTLY RECORD OF CONDITION OF CELLS OPERATING WITH A FLOATTING BATTERY INSTALLATION.</h1>
     </div>
 
     <!-- New Substation -->
     <div class="mx-10 my-3 d-flex col-span-4 gap-2 m-auto bg-gulf-blue-200 "
          id="new_substation_container">
-        <h1 class="text-2xl text-center font-bold">New Substation Details</h1>
         <div class="m-auto grid grid-cols-2 pr-5">
             {% for field in substationForm %}
                 <div class="rounded row text-center py-2 my-3">
@@ -37,54 +36,54 @@
         </div>
     </div>
 
-    <!-- Battery Details -->
-    <div class="mx-10 my-3 d-flex col-span-4 gap-2 m-auto bg-gulf-blue-200">
-        <h1 class="text-2xl text-center font-bold">Battery Details</h1>
-        <div class="m-auto grid grid-cols-2 pr-5">
-            {% for field in form %}
-                <div class="rounded row text-center py-2 my-3">
-                    {% if field.is_hidden %}
-                        {{ field }}
-                    {% else %}
-                        {% if field.name == "substation" %}
-                            <div class="rounded row text-center py-2 my-3">
-                                <div class="mx-10 grid grid-cols-2 gap-2">
-                                    <label>
-                                        <input type="radio" name="substation_choice" value="existing" checked onchange="toggleSubstationVisibility()">
-                                        Existing Substation
-                                    </label>
-                                    <label>
-                                        <input type="radio" name="substation_choice" value="new">
-                                        Add New Substation
-                                    </label>
-                                </div>
-                            </div>
-                            <div class="hidden" id="existing_substation_container">
-                                <div class="m-auto grid grid-cols-2 pr-5">
-                                    <div>
-                                        {{ field.label }}
-                                        <div class="text-blue-500">{{ field.help_text }}</div>
-                                        <div class="text-red-500">{{ field.errors }}</div>
-                                    </div>
-                                    {{ field }}
-                                </div>
-                            </div>
-                        {% else %}
-                            <div class="m-auto grid grid-cols-2 pr-5">
-                                <div>
-                                    {{ field.label }}
-                                    <div class="text-blue-500">{{ field.help_text }}</div>
-                                    <div class="text-red-500">{{ field.errors }}</div>
-                                </div>
-                                {{ field }}
-                            </div>
-                        {% endif %}
-                    {% endif %}
+    <div class="card border-1 border  border-blue-500 shadow-md  bg-gradient-to-r from-gulf-blue-100 rounded to-blue-400 mb-3">
+        <h1 class="text-center mb-4 font-bold text-xl rounded  mb-2">Battery Details </h1>
+        
+        <div class="card-body grid grid-cols-2  rounded m-auto ed p-3      rounded  ">
+            <div class=" text-center">
+                <div class=" text-center">
+                    <span class="inline-block font-bold text-start rounded-full text-sm">Battery name:</span>
+                    <span class="inline-block text-end rounded-full text-sm">{{ installation.battery_name|default_if_none:'' }}</span>
                 </div>
-            {% endfor %}
-        </div>
-    </div>
-
+            </div>
+            <div class=" text-center">
+                <div class=" text-center">
+                    <span class="inline-block font-bold text-start rounded-full text-sm">Installation Date:</span>
+                    <span class="inline-block text-end rounded-full text-sm">{{ installation.date|date:"Y-m-d"|default_if_none:'' }}</span>
+                </div>
+            </div>
+            <div class=" text-center">
+                <div class=" text-center">
+                    <span class="inline-block font-bold text-start rounded-full text-sm">{{ installation.substation.region|default_if_none:'' }}</span>
+                    <span class="inline-block text-end rounded-full text-sm">{{ installation.substation.district|default_if_none:'' }}</span>
+                </div>
+            </div>
+            <div class=" text-center">
+                <div class=" text-center">
+                    <span class="inline-block font-bold text-start rounded-full text-sm">Installed at:</span>
+                    <span class="inline-block text-end rounded-full text-sm">{{  installation.substation|default_if_none:'' }}</span>
+                    
+                </div>
+            </div>
+            <div class=" text-center">
+                <div class=" text-center">
+                    <span class="inline-block font-bold text-start rounded-full text-sm">Plates per cell:</span>
+                    <span class="inline-block text-end rounded-full text-sm">{{ installation.plates_per_cell|default_if_none:'' }}</span>
+                </div>
+            </div>  <div class=" text-center">
+                <div class=" text-center">
+                    <span class="inline-block font-bold text-start rounded-full text-sm">Cell type:</span>
+                    <span class="inline-block text-end rounded-full text-sm">{{ installation.cell_type|default_if_none:'' }}</span>
+                </div>
+            </div>
+                <div class=" text-center">
+                <div class=" text-center">
+                    <span class="inline-block font-bold text-start rounded-full text-sm">Battery application:</span>
+                    <span class="inline-block text-end rounded-full text-sm">{{ installation.battery_application|default_if_none:'' }}</span>
+                </div>
+            </div>
+        </div>                                
+    </div> 
     <!-- Battery Cells -->
     <div class="m-auto text-center">
         <h1 class="text-2xl font-bold">Battery Cells</h1>
