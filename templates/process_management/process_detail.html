@@ -120,7 +120,7 @@
                         <div class="flex items-center">
                             <div class="w-8 h-8 rounded-full flex items-center justify-center mr-3
                                         {% if status.available %}bg-green-100{% else %}bg-red-100{% endif %}">
-                                <i class="fas {% if doc_type == 'process_map' %}fa-sitemap{% elif doc_type == 'procedure' %}fa-list-ol{% else %}fa-exclamation-triangle{% endif %} text-xs
+                                <i class="fas {% if doc_type == 'process_map' %}fa-sitemap{% elif doc_type == 'procedure' %}fa-list-ol{% elif doc_type == 'risk_register' %}fa-exclamation-triangle{% elif doc_type == 'objectives_targets' %}fa-bullseye{% elif doc_type == 'internal_external_issues' %}fa-balance-scale{% elif doc_type == 'stakeholder_needs' %}fa-users{% elif doc_type == 'legal_register' %}fa-gavel{% else %}fa-file{% endif %} text-xs
                                           {% if status.available %}text-green-600{% else %}text-red-600{% endif %}"></i>
                             </div>
                             <span class="text-sm font-medium text-gray-700">{{ status.display_name }}</span>
@@ -182,6 +182,39 @@
                             </div>
                         </div>
                         {% endif %}
+                        {% if process.section %}
+                        <div class="flex items-center p-3 bg-gray-50 rounded-lg">
+                            <div class="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center mr-4">
+                                <i class="fas fa-users text-purple-600"></i>
+                            </div>
+                            <div>
+                                <dt class="text-xs font-medium text-gray-500 uppercase tracking-wide">Section</dt>
+                                <dd class="text-sm font-medium text-gray-900">{{ process.section.name }}</dd>
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% if process.ims_reference %}
+                        <div class="flex items-center p-3 bg-gray-50 rounded-lg">
+                            <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mr-4">
+                                <i class="fas fa-certificate text-blue-600"></i>
+                            </div>
+                            <div>
+                                <dt class="text-xs font-medium text-gray-500 uppercase tracking-wide">IMS Reference</dt>
+                                <dd class="text-sm font-medium text-gray-900">{{ process.ims_reference }}</dd>
+                            </div>
+                        </div>
+                        {% endif %}
+                        {% if process.iso_clause %}
+                        <div class="flex items-center p-3 bg-gray-50 rounded-lg">
+                            <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center mr-4">
+                                <i class="fas fa-award text-green-600"></i>
+                            </div>
+                            <div>
+                                <dt class="text-xs font-medium text-gray-500 uppercase tracking-wide">ISO Clause</dt>
+                                <dd class="text-sm font-medium text-gray-900">{{ process.iso_clause }}</dd>
+                            </div>
+                        </div>
+                        {% endif %}
                         {% if process.created_by %}
                         <div class="flex items-center p-3 bg-gray-50 rounded-lg">
                             <div class="w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center mr-4">
@@ -223,7 +256,7 @@
                 <div class="px-6 py-4 {% if status.available %}bg-green-50 border-b border-green-200{% else %}bg-red-50 border-b border-red-200{% endif %}">
                     <div class="flex justify-between items-center">
                         <div class="flex items-center">
-                            <i class="fas {% if doc_type == 'process_map' %}fa-sitemap{% elif doc_type == 'procedure' %}fa-list-ol{% else %}fa-exclamation-triangle{% endif %} mr-2 {% if status.available %}text-green-600{% else %}text-red-600{% endif %}"></i>
+                            <i class="fas {% if doc_type == 'process_map' %}fa-sitemap{% elif doc_type == 'procedure' %}fa-list-ol{% elif doc_type == 'risk_register' %}fa-exclamation-triangle{% elif doc_type == 'objectives_targets' %}fa-bullseye{% elif doc_type == 'internal_external_issues' %}fa-balance-scale{% elif doc_type == 'stakeholder_needs' %}fa-users{% elif doc_type == 'legal_register' %}fa-gavel{% else %}fa-file{% endif %} mr-2 {% if status.available %}text-green-600{% else %}text-red-600{% endif %}"></i>
                             <span class="font-medium {% if status.available %}text-green-800{% else %}text-red-800{% endif %}">{{ status.display_name }}</span>
                         </div>
                         <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium uppercase
@@ -314,7 +347,7 @@
                         <!-- Document Missing -->
                         <div class="text-center py-12">
                             <div class="text-6xl text-gray-400 mb-4">
-                                <i class="fas {% if doc_type == 'process_map' %}fa-sitemap{% elif doc_type == 'procedure' %}fa-list-ol{% else %}fa-exclamation-triangle{% endif %}"></i>
+                                <i class="fas {% if doc_type == 'process_map' %}fa-sitemap{% elif doc_type == 'procedure' %}fa-list-ol{% elif doc_type == 'risk_register' %}fa-exclamation-triangle{% elif doc_type == 'objectives_targets' %}fa-bullseye{% elif doc_type == 'internal_external_issues' %}fa-balance-scale{% elif doc_type == 'stakeholder_needs' %}fa-users{% elif doc_type == 'legal_register' %}fa-gavel{% else %}fa-file{% endif %}"></i>
                             </div>
                             <h5 class="text-xl font-medium text-gray-900 mb-2">{{ status.display_name }} Not Available</h5>
                             <p class="text-gray-600 mb-4">This process component has not been uploaded yet.</p>
@@ -329,10 +362,34 @@
                                 A procedure document contains detailed step-by-step instructions 
                                 for executing this process.
                             </p>
-                            {% else %}
+                            {% elif doc_type == 'risk_register' %}
                             <p class="text-sm text-gray-500 max-w-md mx-auto">
                                 A risk and opportunity register identifies potential risks and opportunities 
                                 associated with this process.
+                            </p>
+                            {% elif doc_type == 'objectives_targets' %}
+                            <p class="text-sm text-gray-500 max-w-md mx-auto">
+                                Objectives and targets document defines specific, measurable goals 
+                                and performance indicators for this process.
+                            </p>
+                            {% elif doc_type == 'internal_external_issues' %}
+                            <p class="text-sm text-gray-500 max-w-md mx-auto">
+                                Internal and external issues document identifies context factors 
+                                that may affect the process performance.
+                            </p>
+                            {% elif doc_type == 'stakeholder_needs' %}
+                            <p class="text-sm text-gray-500 max-w-md mx-auto">
+                                Stakeholders and their needs document identifies interested parties 
+                                and their requirements for this process.
+                            </p>
+                            {% elif doc_type == 'legal_register' %}
+                            <p class="text-sm text-gray-500 max-w-md mx-auto">
+                                Legal register documents applicable legal and regulatory requirements 
+                                relevant to this process.
+                            </p>
+                            {% else %}
+                            <p class="text-sm text-gray-500 max-w-md mx-auto">
+                                This document contains important information related to this process.
                             </p>
                             {% endif %}
                             

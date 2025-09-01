@@ -20,10 +20,21 @@ and Procedures{% endblock %} {% block content %}
               <i class="fas fa-th-large mr-1"></i>Departments
             </a>
           </div>
-          <a href="{% url 'process_management:process_create' %}" 
-             class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm">
-            <i class="fas fa-plus mr-2"></i>Create Process
-          </a>
+          <!-- IMS Features -->
+          <div class="flex items-center space-x-2">
+            <a href="{% url 'process_management:ims_processes' %}" 
+               class="inline-flex items-center px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors shadow-sm">
+              <i class="fas fa-certificate mr-2"></i>IMS Processes
+            </a>
+            <a href="{% url 'process_management:ims_import' %}" 
+               class="inline-flex items-center px-3 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors shadow-sm">
+              <i class="fas fa-file-import mr-2"></i>IMS Import
+            </a>
+            <a href="{% url 'process_management:process_create' %}" 
+               class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm">
+              <i class="fas fa-plus mr-2"></i>Create Process
+            </a>
+          </div>
         </div>
       </div>
     </div>
@@ -127,7 +138,7 @@ and Procedures{% endblock %} {% block content %}
             <thead>
               <tr class="bg-blue-600 text-white">
                 <th scope="col" class="px-6 py-4 text-left text-sm font-semibold border-r border-blue-500">
-                  Process Name
+                  Process Details
                 </th>
                 <th scope="col" class="px-6 py-4 text-center text-sm font-semibold border-r border-blue-500">
                   Process Map
@@ -135,8 +146,17 @@ and Procedures{% endblock %} {% block content %}
                 <th scope="col" class="px-6 py-4 text-center text-sm font-semibold border-r border-blue-500">
                   Procedure
                 </th>
+                <th scope="col" class="px-6 py-4 text-center text-sm font-semibold border-r border-blue-500">
+                  Risk Register
+                </th>
+                <th scope="col" class="px-6 py-4 text-center text-sm font-semibold border-r border-blue-500">
+                  Objectives
+                </th>
+                <th scope="col" class="px-6 py-4 text-center text-sm font-semibold border-r border-blue-500">
+                  Legal Register
+                </th>
                 <th scope="col" class="px-6 py-4 text-center text-sm font-semibold">
-                  Risk and Opportunity Register
+                  Status
                 </th>
               </tr>
             </thead>
@@ -145,17 +165,38 @@ and Procedures{% endblock %} {% block content %}
               <tr class="border-b border-gray-200 hover:bg-blue-50 transition-colors">
                 <td class="px-6 py-4 border-r border-gray-200">
                   <div class="flex flex-col">
-                    <div class="text-sm font-medium text-gray-900">
+                    <div class="text-sm font-medium text-gray-900 mb-1">
                       <a href="{% url 'process_management:process_detail' process.id %}" 
                          class="text-blue-600 hover:text-blue-800 no-underline hover:underline">
                         {{ process.name }}
                       </a>
+                      {% if process.process_code %}
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800 ml-2">
+                          {{ process.process_code }}
+                        </span>
+                      {% endif %}
                     </div>
-                    <div class="text-xs text-gray-500 mt-1">
-                      <i class="fas fa-building mr-1"></i>{{ process.department.name }}
-                      {% if process.region %}
-                        <span class="mx-1">•</span>
-                        <i class="fas fa-map-marker-alt mr-1"></i>{{ process.region.region }}
+                    <div class="text-xs text-gray-500 space-y-1">
+                      <div>
+                        <i class="fas fa-building mr-1"></i>{{ process.department.name }}
+                        {% if process.region %}
+                          <span class="mx-1">•</span>
+                          <i class="fas fa-map-marker-alt mr-1"></i>{{ process.region.region }}
+                        {% endif %}
+                        {% if process.section %}
+                          <span class="mx-1">•</span>
+                          <i class="fas fa-users mr-1"></i>{{ process.section.name }}
+                        {% endif %}
+                      </div>
+                      {% if process.ims_reference %}
+                      <div class="text-xs text-blue-600">
+                        <i class="fas fa-certificate mr-1"></i>{{ process.ims_reference }}
+                      </div>
+                      {% endif %}
+                      {% if process.iso_clause %}
+                      <div class="text-xs text-green-600">
+                        <i class="fas fa-award mr-1"></i>ISO {{ process.iso_clause }}
+                      </div>
                       {% endif %}
                     </div>
                   </div>
@@ -188,24 +229,65 @@ and Procedures{% endblock %} {% block content %}
                     </span>
                   {% endif %}
                 </td>
-                <td class="px-6 py-4 text-center">
+                <td class="px-6 py-4 text-center border-r border-gray-200">
                   {% if process.has_risk_register %}
                     <a href="{% url 'process_management:document_download_by_type' process.id 'risk_register' %}" 
                        class="inline-flex items-center px-4 py-2 bg-green-600 text-white text-sm font-medium rounded hover:bg-green-700 transition-colors shadow-sm">
                       <i class="fas fa-download mr-2"></i>
-                      Risk Register
+                      Available
                     </a>
                   {% else %}
                     <span class="inline-flex items-center px-4 py-2 bg-gray-300 text-gray-600 text-sm font-medium rounded">
                       <i class="fas fa-minus mr-2"></i>
-                      Not Available
+                      Missing
+                    </span>
+                  {% endif %}
+                </td>
+                <td class="px-6 py-4 text-center border-r border-gray-200">
+                  {% if process.has_objectives_targets %}
+                    <a href="{% url 'process_management:document_download_by_type' process.id 'objectives_targets' %}" 
+                       class="inline-flex items-center px-4 py-2 bg-green-600 text-white text-sm font-medium rounded hover:bg-green-700 transition-colors shadow-sm">
+                      <i class="fas fa-download mr-2"></i>
+                      Available
+                    </a>
+                  {% else %}
+                    <span class="inline-flex items-center px-4 py-2 bg-gray-300 text-gray-600 text-sm font-medium rounded">
+                      <i class="fas fa-minus mr-2"></i>
+                      Missing
+                    </span>
+                  {% endif %}
+                </td>
+                <td class="px-6 py-4 text-center border-r border-gray-200">
+                  {% if process.has_legal_register %}
+                    <a href="{% url 'process_management:document_download_by_type' process.id 'legal_register' %}" 
+                       class="inline-flex items-center px-4 py-2 bg-green-600 text-white text-sm font-medium rounded hover:bg-green-700 transition-colors shadow-sm">
+                      <i class="fas fa-download mr-2"></i>
+                      Available
+                    </a>
+                  {% else %}
+                    <span class="inline-flex items-center px-4 py-2 bg-gray-300 text-gray-600 text-sm font-medium rounded">
+                      <i class="fas fa-minus mr-2"></i>
+                      Missing
+                    </span>
+                  {% endif %}
+                </td>
+                <td class="px-6 py-4 text-center">
+                  {% if process.is_active %}
+                    <span class="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                      <i class="fas fa-check-circle mr-1"></i>
+                      Active
+                    </span>
+                  {% else %}
+                    <span class="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                      <i class="fas fa-times-circle mr-1"></i>
+                      Inactive
                     </span>
                   {% endif %}
                 </td>
               </tr>
               {% empty %}
               <tr>
-                <td colspan="4" class="px-6 py-12 text-center border-r border-gray-200">
+                <td colspan="7" class="px-6 py-12 text-center border-r border-gray-200">
                   <div class="text-gray-500">
                     <i class="fas fa-search text-4xl mb-4"></i>
                     <div class="text-lg font-medium mb-2">No processes found</div>

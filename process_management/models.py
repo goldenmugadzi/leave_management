@@ -3,6 +3,8 @@ from django.core.exceptions import ValidationError
 from django.utils import timezone
 from it.users.models import Regions, UserProfile, Sections
 
+
+
 class ProcessDepartment(models.Model):
     """
     Model representing organizational departments for process categorization.
@@ -32,6 +34,7 @@ class ProcessDepartment(models.Model):
 class Process(models.Model):
     """
     Model representing a business process with departmental and regional relationships.
+    Enhanced with IMS-specific fields for ISO compliance.
     """
     name = models.CharField(max_length=255)
     description = models.TextField(blank=True)
@@ -39,6 +42,8 @@ class Process(models.Model):
     region = models.ForeignKey(Regions, on_delete=models.SET_NULL, null=True, blank=True)
     section = models.ForeignKey(Sections, on_delete=models.SET_NULL, null=True, blank=True)
     process_code = models.CharField(max_length=50, unique=True, blank=True, help_text="Optional process identifier")
+    ims_reference = models.CharField(max_length=100, blank=True, help_text="IMS reference code (e.g., ZETDC-HRE MANAGEMENT 01-001)")
+    iso_clause = models.CharField(max_length=50, blank=True, help_text="Relevant ISO clause reference")
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -87,16 +92,36 @@ class Process(models.Model):
         """Check if process has a current risk register"""
         return self.documents.filter(document_type='risk_register', is_current=True).exists()
 
+    def has_objectives_targets(self):
+        """Check if process has objectives and targets document"""
+        return self.documents.filter(document_type='objectives_targets', is_current=True).exists()
+
+    def has_internal_external_issues(self):
+        """Check if process has internal and external issues document"""
+        return self.documents.filter(document_type='internal_external_issues', is_current=True).exists()
+
+    def has_stakeholder_needs(self):
+        """Check if process has stakeholders and their needs document"""
+        return self.documents.filter(document_type='stakeholder_needs', is_current=True).exists()
+
+    def has_legal_register(self):
+        """Check if process has legal register document"""
+        return self.documents.filter(document_type='legal_register', is_current=True).exists()
+
 
 class ProcessDocument(models.Model):
     """
-    Model representing documents associated with processes (process maps, procedures, risk registers).
-    Enhanced with file system error handling capabilities.
+    Model representing documents associated with processes.
+    Enhanced with IMS-specific document types and compliance tracking.
     """
     DOCUMENT_TYPES = [
         ('process_map', 'Process Map'),
-        ('procedure', 'Procedure'),
+        ('procedure', 'Associated Procedure'),
         ('risk_register', 'Risk and Opportunity Register'),
+        ('objectives_targets', 'Objectives and Targets'),
+        ('internal_external_issues', 'Internal and External Issues'),
+        ('stakeholder_needs', 'Stakeholders and Their Needs'),
+        ('legal_register', 'Legal Register'),
     ]
     
     DOCUMENT_STATUS_CHOICES = [
@@ -110,8 +135,16 @@ class ProcessDocument(models.Model):
         ('error', 'Error'),
     ]
 
+    COMPLIANCE_STATUS_CHOICES = [
+        ('draft', 'Draft'),
+        ('review', 'Under Review'),
+        ('approved', 'Approved'),
+        ('obsolete', 'Obsolete'),
+        ('pending_approval', 'Pending Approval'),
+    ]
+
     process = models.ForeignKey(Process, on_delete=models.CASCADE, related_name='documents')
-    document_type = models.CharField(max_length=20, choices=DOCUMENT_TYPES)
+    document_type = models.CharField(max_length=30, choices=DOCUMENT_TYPES)
     file = models.FileField(upload_to='uploads/processes/', blank=True, null=True)
     filename = models.CharField(max_length=255)
     original_filename = models.CharField(max_length=255, blank=True, help_text="Original filename before sanitization")
@@ -123,6 +156,14 @@ class ProcessDocument(models.Model):
     version = models.CharField(max_length=20, default='1.0')
     is_current = models.BooleanField(default=True)
     is_active = models.BooleanField(default=True, help_text="Whether the document is active and accessible")
+    
+    # IMS-specific fields
+    document_code = models.CharField(max_length=100, unique=True, blank=True, help_text="IMS document code")
+    ims_file_reference = models.CharField(max_length=200, blank=True, help_text="IMS file reference")
+    compliance_status = models.CharField(max_length=20, choices=COMPLIANCE_STATUS_CHOICES, default='draft', help_text="Document compliance status")
+    review_due_date = models.DateField(null=True, blank=True, help_text="Date when document review is due")
+    approval_authority = models.ForeignKey(UserProfile, on_delete=models.SET_NULL, null=True, blank=True, related_name='approved_process_documents', help_text="User authorized to approve this document")
+    
     metadata = models.JSONField(default=dict, blank=True, help_text="Additional metadata including file system check results")
     uploaded_by = models.ForeignKey(UserProfile, on_delete=models.SET_NULL, null=True, blank=True)
     uploaded_at = models.DateTimeField(auto_now_add=True)
@@ -256,6 +297,19 @@ class ProcessDocument(models.Model):
         if self.metadata and 'file_system_check' in self.metadata:
             return self.metadata['file_system_check'].get('sanitization_changes', [])
         return []
+
+    def is_review_overdue(self):
+        """Check if document review is overdue"""
+        if self.review_due_date:
+            return self.review_due_date < timezone.now().date()
+        return False
+
+    def get_compliance_status_display(self):
+        """Get compliance status with overdue indicator"""
+        status = self.get_compliance_status_display()
+        if self.is_review_overdue():
+            return f"{status} (Overdue)"
+        return status
 
 
 class MigrationCheckpoint(models.Model):

@@ -24,4 +24,9 @@ urlpatterns = [
     path('create/', views.process_create_view, name='process_create'),
     path('edit/<int:process_id>/', views.process_edit_view, name='process_edit'),
     path('delete/<int:process_id>/', views.process_delete_view, name='process_delete'),
+    
+    # IMS-specific views
+    path('ims/import/', views.ims_import_view, name='ims_import'),
+    path('ims/processes/', views.ims_processes_view, name='ims_processes'),
+    path('ims/process/<int:process_id>/', views.ims_process_detail_view, name='ims_process_detail'),
 ]

@@ -11,6 +11,7 @@ import mimetypes
 from .models import ProcessDepartment, Process, ProcessDocument
 from it.users.models import UserProfile, Regions
 from approve.decorators import allowed_roles
+from .ims_importer import IMSDocumentImporter
 
 
 # Set up logging for document access
@@ -219,12 +220,33 @@ def process_detail_view(request, process_id):
             'available': process.has_risk_register(),
             'document': documents_by_type.get('risk_register'),
             'display_name': 'Risk and Opportunity Register'
+        },
+        'objectives_targets': {
+            'available': process.has_objectives_targets(),
+            'document': documents_by_type.get('objectives_targets'),
+            'display_name': 'Objectives and Targets'
+        },
+        'internal_external_issues': {
+            'available': process.has_internal_external_issues(),
+            'document': documents_by_type.get('internal_external_issues'),
+            'display_name': 'Internal and External Issues'
+        },
+        'stakeholder_needs': {
+            'available': process.has_stakeholder_needs(),
+            'document': documents_by_type.get('stakeholder_needs'),
+            'display_name': 'Stakeholders and Their Needs'
+        },
+        'legal_register': {
+            'available': process.has_legal_register(),
+            'document': documents_by_type.get('legal_register'),
+            'display_name': 'Legal Register'
         }
     }
     
     # Get all document versions for each type (for version history)
     document_versions = {}
-    for doc_type in ['process_map', 'procedure', 'risk_register']:
+    all_document_types = ['process_map', 'procedure', 'risk_register', 'objectives_targets', 'internal_external_issues', 'stakeholder_needs', 'legal_register']
+    for doc_type in all_document_types:
         versions = ProcessDocument.objects.filter(
             process=process,
             document_type=doc_type
@@ -232,7 +254,7 @@ def process_detail_view(request, process_id):
         document_versions[doc_type] = versions
     
     # Calculate completeness percentage
-    total_components = 3
+    total_components = 7
     available_components = sum(1 for status in document_status.values() if status['available'])
     completeness_percentage = (available_components / total_components) * 100
     
@@ -919,3 +941,192 @@ def process_delete_view(request, process_id):
         'process': process,
     }
     return render(request, 'process_management/process_delete_confirm.html', context)
+
+
+# ===== IMS IMPORT VIEWS =====
+
+@login_required
+# @allowed_roles(['Global Admin', 'System Admin'], ['process_management'])
+def ims_import_view(request):
+    """
+    IMS Document Register import interface.
+    Allows importing processes from Excel files or using predefined data.
+    """
+    if request.method == 'POST':
+        import_type = request.POST.get('import_type')
+        
+        if import_type == 'predefined':
+            # Import predefined IMS processes
+            importer = IMSDocumentImporter()
+            result = importer.populate_predefined_ims_processes()
+            
+            if result['success']:
+                messages.success(request, 
+                    f"Successfully imported IMS processes! "
+                    f"Created: {result['processes_created']}, "
+                    f"Updated: {result['processes_updated']}")
+                
+                # Log the import
+                log_process_activity(
+                    user=request.user,
+                    action='ims_import_predefined',
+                    details=f"Created: {result['processes_created']}, Updated: {result['processes_updated']}"
+                )
+            else:
+                messages.error(request, f"Import failed: {result.get('error', 'Unknown error')}")
+                
+        elif import_type == 'excel' and 'excel_file' in request.FILES:
+            # Import from Excel file
+            excel_file = request.FILES['excel_file']
+            
+            # Save uploaded file temporarily
+            import tempfile
+            with tempfile.NamedTemporaryFile(delete=False, suffix='.xlsx') as tmp_file:
+                for chunk in excel_file.chunks():
+                    tmp_file.write(chunk)
+                temp_path = tmp_file.name
+            
+            try:
+                importer = IMSDocumentImporter()
+                result = importer.import_from_excel(temp_path)
+                
+                if result['success']:
+                    messages.success(request, 
+                        f"Successfully imported from Excel! "
+                        f"Created: {result['processes_created']}, "
+                        f"Updated: {result['processes_updated']}")
+                    
+                    # Log the import
+                    log_process_activity(
+                        user=request.user,
+                        action='ims_import_excel',
+                        details=f"File: {excel_file.name}, Created: {result['processes_created']}"
+                    )
+                else:
+                    messages.error(request, f"Import failed: {result.get('error', 'Unknown error')}")
+                    
+            finally:
+                # Clean up temporary file
+                os.unlink(temp_path)
+        else:
+            messages.error(request, "Please select a valid import option.")
+            
+        return redirect('process_management:ims_import')
+    
+    # GET request - show import form
+    context = {
+        'departments': ProcessDepartment.objects.all().order_by('order'),
+        'total_processes': Process.objects.count(),
+        'ims_processes': Process.objects.filter(ims_reference__startswith='ZETDC-HRE').count(),
+    }
+    return render(request, 'process_management/ims_import.html', context)
+
+
+@login_required
+def ims_processes_view(request):
+    """
+    Display IMS processes organized by department with enhanced features.
+    """
+    # Get search parameters
+    search_query = request.GET.get('search', '').strip()
+    department_filter = request.GET.get('department', '')
+    iso_clause_filter = request.GET.get('iso_clause', '')
+    
+    # Base queryset for IMS processes
+    processes = Process.objects.filter(ims_reference__startswith='ZETDC-HRE').select_related('department')
+    
+    # Apply filters
+    if search_query:
+        processes = processes.filter(
+            Q(name__icontains=search_query) |
+            Q(description__icontains=search_query) |
+            Q(ims_reference__icontains=search_query) |
+            Q(iso_clause__icontains=search_query)
+        )
+    
+    if department_filter:
+        processes = processes.filter(department__name=department_filter)
+        
+    if iso_clause_filter:
+        processes = processes.filter(iso_clause__icontains=iso_clause_filter)
+    
+    # Order by department and name
+    processes = processes.order_by('department__order', 'name')
+    
+    # Group by department
+    departments_data = {}
+    for process in processes:
+        dept_name = process.department.name
+        if dept_name not in departments_data:
+            departments_data[dept_name] = {
+                'department': process.department,
+                'processes': []
+            }
+        departments_data[dept_name]['processes'].append(process)
+    
+    # Get filter options
+    all_departments = ProcessDepartment.objects.all().order_by('order')
+    iso_clauses = Process.objects.filter(
+        ims_reference__startswith='ZETDC-HRE',
+        iso_clause__gt=''
+    ).values_list('iso_clause', flat=True).distinct().order_by('iso_clause')
+    
+    context = {
+        'departments_data': departments_data,
+        'all_departments': all_departments,
+        'iso_clauses': iso_clauses,
+        'search_query': search_query,
+        'department_filter': department_filter,
+        'iso_clause_filter': iso_clause_filter,
+        'total_processes': processes.count(),
+    }
+    
+    return render(request, 'process_management/ims_processes.html', context)
+
+
+@login_required
+def ims_process_detail_view(request, process_id):
+    """
+    Enhanced process detail view for IMS processes with compliance tracking.
+    """
+    process = get_object_or_404(Process, id=process_id)
+    
+    # Log the view
+    log_process_activity(request.user, 'view_ims_process', process=process)
+    
+    # Get all document types and their status
+    document_types = ProcessDocument.DOCUMENT_TYPES
+    document_grid = []
+    
+    for doc_type, doc_type_display in document_types:
+        current_doc = process.documents.filter(
+            document_type=doc_type, 
+            is_current=True
+        ).first()
+        
+        document_grid.append({
+            'type': doc_type,
+            'type_display': doc_type_display,
+            'document': current_doc,
+            'has_document': current_doc is not None,
+            'is_accessible': current_doc.is_active if current_doc else False,
+            'compliance_status': current_doc.compliance_status if current_doc else 'missing',
+            'review_due_date': current_doc.review_due_date if current_doc else None,
+            'is_overdue': current_doc.is_review_overdue() if current_doc else False,
+        })
+    
+    # Calculate compliance metrics
+    total_docs = len(document_types)
+    available_docs = sum(1 for item in document_grid if item['has_document'])
+    compliance_percentage = (available_docs / total_docs * 100) if total_docs > 0 else 0
+    
+    context = {
+        'process': process,
+        'document_grid': document_grid,
+        'compliance_percentage': compliance_percentage,
+        'total_document_types': total_docs,
+        'available_documents': available_docs,
+        'missing_documents': total_docs - available_docs,
+    }
+    
+    return render(request, 'process_management/ims_process_detail.html', context)
