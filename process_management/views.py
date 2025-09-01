@@ -840,7 +840,7 @@ def process_edit_view(request, process_id):
     context = {
         'process': process,
         'departments': ProcessDepartment.objects.all().order_by('order', 'name'),
-        'regions': Regions.objects.all().order_by('name'),
+        'regions': Regions.objects.all().order_by('region'),
 
         'form_title': f'Edit Process: {process.name}',
         'submit_text': 'Update Process',
