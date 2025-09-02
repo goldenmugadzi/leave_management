@@ -354,33 +354,27 @@ def get_dashboard_data(request):
             user_default_filter = Q(pk__isnull=True)
             show_aggregated_view = False
         
+        # Get current year and month first (needed for flexible filtering)
+        current_year = timezone.now().year
+        current_month = timezone.now().month
+
         # Get filter parameters from URL
         region_id = request.GET.get('region')
         district_id = request.GET.get('district')
         depot_id = request.GET.get('depot')
-        
-        # Build requested filter from URL parameters
-        requested_filter = Q()
-        if depot_id:
-            requested_filter = Q(depot_id=depot_id)
-        elif district_id:
-            requested_filter = Q(district_id=district_id)
-        elif region_id:
-            requested_filter = Q(region_id=region_id)
-        
-        # For authenticated users, use requested filter if specified, otherwise use their default region
+
+        # For authenticated users, determine the best filter to use
         if access_level == 'authenticated_user':
-            if requested_filter:
-                location_filter = requested_filter
-            else:
-                location_filter = user_default_filter  # Default to user's region
+            # Try filters in order of specificity, falling back to broader filters if no data found
+            location_filter = _get_flexible_location_filter(
+                region_id, district_id, depot_id, current_year, current_month
+            )
+            if not location_filter:
+                # If no specific filters provided, use user's default region
+                location_filter = user_default_filter
         else:
             # No access users get no data
             location_filter = Q(pk__isnull=True)
-        
-        # Get current year and month
-        current_year = timezone.now().year
-        current_month = timezone.now().month
         
         # Apply location filter to data queries
         base_collections_query = WeeklyCollections.objects.filter(year=current_year)
@@ -824,6 +818,63 @@ def download_csv_template(request):
     response['Content-Disposition'] = f'attachment; filename="{filename}"'
     
     return response
+
+
+def _get_flexible_location_filter(region_id, district_id, depot_id, current_year, current_month):
+    """
+    Get the most appropriate location filter based on available data.
+    Tries filters in order of specificity, falling back to broader filters if no data found.
+
+    Returns Q() if no filters provided, otherwise returns the best filter that has data.
+    """
+    from django.db.models import Q
+
+    # If no filters provided, return empty Q (will use user's default later)
+    if not any([region_id, district_id, depot_id]):
+        return Q()
+
+    # Try depot-level filter first (most specific)
+    if depot_id:
+        depot_filter = Q(depot_id=depot_id)
+        if (_has_dashboard_data(depot_filter, current_year, current_month)):
+            return depot_filter
+
+    # Fall back to district-level filter
+    if district_id:
+        district_filter = Q(district_id=district_id)
+        if (_has_dashboard_data(district_filter, current_year, current_month)):
+            return district_filter
+
+    # Fall back to region-level filter
+    if region_id:
+        region_filter = Q(region_id=region_id)
+        if (_has_dashboard_data(region_filter, current_year, current_month)):
+            return region_filter
+
+    # If no specific filters have data, return the most specific filter provided
+    # This ensures the user sees something rather than an empty dashboard
+    if depot_id:
+        return Q(depot_id=depot_id)
+    elif district_id:
+        return Q(district_id=district_id)
+    elif region_id:
+        return Q(region_id=region_id)
+
+    return Q()
+
+
+def _has_dashboard_data(location_filter, year, month):
+    """
+    Check if there's any dashboard data for the given location filter.
+    Returns True if at least one type of data exists.
+    """
+    from .models import WeeklyCollections, WeeklyRevenueLost, DebtorCategory
+
+    return (
+        WeeklyCollections.objects.filter(location_filter, year=year).exists() or
+        WeeklyRevenueLost.objects.filter(location_filter, year=year).exists() or
+        DebtorCategory.objects.filter(location_filter, year=year, month=month).exists()
+    )
 
 
 def check_user_can_edit_dashboard(user):
