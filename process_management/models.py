@@ -41,7 +41,7 @@ class Process(models.Model):
     department = models.ForeignKey(ProcessDepartment, on_delete=models.CASCADE, related_name='processes')
     region = models.ForeignKey(Regions, on_delete=models.SET_NULL, null=True, blank=True)
     section = models.ForeignKey(Sections, on_delete=models.SET_NULL, null=True, blank=True)
-    process_code = models.CharField(max_length=50, unique=True, blank=True, help_text="Optional process identifier")
+    process_code = models.CharField(max_length=50, blank=True, help_text="Optional process identifier")
     ims_reference = models.CharField(max_length=100, blank=True, help_text="IMS reference code (e.g., ZETDC-HRE MANAGEMENT 01-001)")
     iso_clause = models.CharField(max_length=50, blank=True, help_text="Relevant ISO clause reference")
     is_active = models.BooleanField(default=True)
@@ -62,11 +62,7 @@ class Process(models.Model):
         if not self.name.strip():
             raise ValidationError({'name': 'Process name cannot be empty'})
         
-        # Validate process_code uniqueness only if provided
-        if self.process_code and self.process_code.strip():
-            existing = Process.objects.filter(process_code=self.process_code.strip()).exclude(pk=self.pk)
-            if existing.exists():
-                raise ValidationError({'process_code': 'Process code must be unique'})
+        # Process code validation removed - no longer requires uniqueness
 
     def save(self, *args, **kwargs):
         """Override save to run clean validation"""
@@ -158,7 +154,7 @@ class ProcessDocument(models.Model):
     is_active = models.BooleanField(default=True, help_text="Whether the document is active and accessible")
     
     # IMS-specific fields
-    document_code = models.CharField(max_length=100, unique=True, blank=True, help_text="IMS document code")
+    document_code = models.CharField(max_length=100, blank=True, help_text="IMS document code")
     ims_file_reference = models.CharField(max_length=200, blank=True, help_text="IMS file reference")
     compliance_status = models.CharField(max_length=20, choices=COMPLIANCE_STATUS_CHOICES, default='draft', help_text="Document compliance status")
     review_due_date = models.DateField(null=True, blank=True, help_text="Date when document review is due")

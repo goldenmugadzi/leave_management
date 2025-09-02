@@ -29,4 +29,8 @@ urlpatterns = [
     path('ims/import/', views.ims_import_view, name='ims_import'),
     path('ims/processes/', views.ims_processes_view, name='ims_processes'),
     path('ims/process/<int:process_id>/', views.ims_process_detail_view, name='ims_process_detail'),
+    
+    # Knowledge center integration
+    path('api/knowledge-center/search/', views.knowledge_center_file_search, name='knowledge_center_search'),
+    path('process/<int:process_id>/import-file/', views.import_knowledge_center_file, name='import_knowledge_center_file'),
 ]

@@ -159,16 +159,17 @@ class ProcessModelTest(TestCase):
         expected_str = f"Test Process (Test Department)"
         self.assertEqual(str(process), expected_str)
 
-    def test_process_unique_process_code(self):
-        """Test that process codes must be unique"""
+    def test_process_duplicate_process_code_allowed(self):
+        """Test that duplicate process codes are now allowed"""
         Process.objects.create(**self.process_data)
         
         # Try to create another process with the same process_code
         process_data_2 = self.process_data.copy()
         process_data_2['name'] = 'Another Process'
         
-        with self.assertRaises(ValidationError):
-            Process.objects.create(**process_data_2)
+        # This should now succeed since we removed the unique constraint
+        process2 = Process.objects.create(**process_data_2)
+        self.assertEqual(process2.process_code, self.process_data['process_code'])
 
     def test_process_blank_process_code(self):
         """Test that process_code can be blank"""
@@ -181,7 +182,7 @@ class ProcessModelTest(TestCase):
     def test_process_default_is_active(self):
         """Test that is_active defaults to True"""
         process_data = self.process_data.copy()
-        del process_data['process_code']  # Remove to avoid unique constraint
+        del process_data['process_code']  # Remove to test default behavior
         
         process = Process.objects.create(**process_data)
         self.assertTrue(process.is_active)

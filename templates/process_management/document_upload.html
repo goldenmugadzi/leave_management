@@ -76,33 +76,95 @@
                         </p>
                     </div>
 
-                    <!-- File Upload -->
+                    <!-- File Upload Options -->
                     <div>
-                        <label for="document_file" class="block text-sm font-medium text-gray-700 mb-2">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
                             Document File <span class="text-red-500">*</span>
                         </label>
-                        <input type="file" 
-                               class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
-                               id="document_file" 
-                               name="document_file" 
-                               accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx" 
-                               required>
-                        <p class="mt-1 text-sm text-gray-500">
-                            Allowed formats: PDF, Word, Excel, PowerPoint. Maximum size: 50MB.
-                        </p>
                         
-                        <!-- File Preview -->
-                        <div id="filePreview" class="mt-3 hidden">
-                            <div class="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                                <div class="flex items-center">
-                                    <i class="fas fa-file-alt text-blue-600 mr-3"></i>
-                                    <div>
-                                        <div class="font-medium text-blue-900" id="fileName"></div>
-                                        <div class="text-sm text-blue-700" id="fileSize"></div>
+                        <!-- Upload Method Toggle -->
+                        <div class="mb-4">
+                            <div class="flex space-x-4">
+                                <label class="flex items-center">
+                                    <input type="radio" name="upload_method" value="upload" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300" checked>
+                                    <span class="ml-2 text-sm text-gray-700">Upload New File</span>
+                                </label>
+                                <label class="flex items-center">
+                                    <input type="radio" name="upload_method" value="import" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300">
+                                    <span class="ml-2 text-sm text-gray-700">Import from Knowledge Center</span>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <!-- File Upload Section -->
+                        <div id="uploadSection">
+                            <input type="file" 
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                                   id="document_file" 
+                                   name="document_file" 
+                                   accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx">
+                            <p class="mt-1 text-sm text-gray-500">
+                                Allowed formats: PDF, Word, Excel, PowerPoint. Maximum size: 50MB.
+                            </p>
+                            
+                            <!-- File Preview -->
+                            <div id="filePreview" class="mt-3 hidden">
+                                <div class="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                                    <div class="flex items-center">
+                                        <i class="fas fa-file-alt text-blue-600 mr-3"></i>
+                                        <div>
+                                            <div class="font-medium text-blue-900" id="fileName"></div>
+                                            <div class="text-sm text-blue-700" id="fileSize"></div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
+                        
+                        <!-- Knowledge Center Import Section -->
+                        <div id="importSection" class="hidden">
+                            <div class="relative">
+                                <input type="text" 
+                                       id="knowledgeCenterSearch" 
+                                       placeholder="Search knowledge center files..."
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                <div class="absolute inset-y-0 right-0 flex items-center pr-3">
+                                    <i class="fas fa-search text-gray-400"></i>
+                                </div>
+                            </div>
+                            
+                            <!-- Search Results -->
+                            <div id="searchResults" class="mt-3 hidden">
+                                <div class="border border-gray-200 rounded-md max-h-60 overflow-y-auto">
+                                    <div id="searchResultsList" class="divide-y divide-gray-200"></div>
+                                </div>
+                            </div>
+                            
+                            <!-- Selected File Display -->
+                            <div id="selectedFileDisplay" class="mt-3 hidden">
+                                <div class="p-4 bg-green-50 border border-green-200 rounded-lg">
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center">
+                                            <i class="fas fa-file-alt text-green-600 mr-3"></i>
+                                            <div>
+                                                <div class="font-medium text-green-900" id="selectedFileName"></div>
+                                                <div class="text-sm text-green-700" id="selectedFileInfo"></div>
+                                            </div>
+                                        </div>
+                                        <button type="button" id="clearSelection" class="text-green-600 hover:text-green-800">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <p class="mt-1 text-sm text-gray-500">
+                                Search and select a file from the knowledge center to import.
+                            </p>
+                        </div>
+                        
+                        <!-- Hidden input for selected file ID -->
+                        <input type="hidden" id="selectedFileId" name="selected_file_id">
                     </div>
 
                     <!-- Version -->
@@ -217,6 +279,41 @@ document.addEventListener('DOMContentLoaded', function() {
     const uploadForm = document.getElementById('uploadForm');
     const uploadProgress = document.getElementById('uploadProgress');
     const submitBtn = document.getElementById('submitBtn');
+    
+    // Knowledge center search elements
+    const uploadMethodRadios = document.querySelectorAll('input[name="upload_method"]');
+    const uploadSection = document.getElementById('uploadSection');
+    const importSection = document.getElementById('importSection');
+    const searchInput = document.getElementById('knowledgeCenterSearch');
+    const searchResults = document.getElementById('searchResults');
+    const searchResultsList = document.getElementById('searchResultsList');
+    const selectedFileDisplay = document.getElementById('selectedFileDisplay');
+    const selectedFileName = document.getElementById('selectedFileName');
+    const selectedFileInfo = document.getElementById('selectedFileInfo');
+    const selectedFileId = document.getElementById('selectedFileId');
+    const clearSelectionBtn = document.getElementById('clearSelection');
+    
+    let searchTimeout;
+    let selectedFile = null;
+
+    // Upload method toggle
+    uploadMethodRadios.forEach(radio => {
+        radio.addEventListener('change', function() {
+            if (this.value === 'upload') {
+                uploadSection.classList.remove('hidden');
+                importSection.classList.add('hidden');
+                fileInput.required = true;
+                selectedFileId.value = '';
+                selectedFile = null;
+            } else {
+                uploadSection.classList.add('hidden');
+                importSection.classList.remove('hidden');
+                fileInput.required = false;
+                fileInput.value = '';
+                filePreview.classList.add('hidden');
+            }
+        });
+    });
 
     // File selection preview
     fileInput.addEventListener('change', function(e) {
@@ -230,21 +327,142 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Form submission with progress
-    uploadForm.addEventListener('submit', function(e) {
-        const file = fileInput.files[0];
-        if (file && file.size > 50 * 1024 * 1024) {
-            e.preventDefault();
-            alert('File size exceeds 50MB limit. Please choose a smaller file.');
+    // Knowledge center search with debouncing
+    searchInput.addEventListener('input', function(e) {
+        const query = e.target.value.trim();
+        
+        clearTimeout(searchTimeout);
+        
+        if (query.length < 2) {
+            searchResults.classList.add('hidden');
             return;
         }
+        
+        searchTimeout = setTimeout(() => {
+            searchKnowledgeCenterFiles(query);
+        }, 300);
+    });
 
-        // Show progress and disable submit button
+    // Clear selection
+    clearSelectionBtn.addEventListener('click', function() {
+        selectedFile = null;
+        selectedFileId.value = '';
+        selectedFileDisplay.classList.add('hidden');
+        searchInput.value = '';
+        searchResults.classList.add('hidden');
+    });
+
+    // Form submission with progress
+    uploadForm.addEventListener('submit', function(e) {
+        const uploadMethod = document.querySelector('input[name="upload_method"]:checked').value;
+        
+        if (uploadMethod === 'upload') {
+            // Regular file upload
+            const file = fileInput.files[0];
+            if (!file) {
+                e.preventDefault();
+                alert('Please select a file to upload.');
+                return;
+            }
+            
+            if (file.size > 50 * 1024 * 1024) {
+                e.preventDefault();
+                alert('File size exceeds 50MB limit. Please choose a smaller file.');
+                return;
+            }
+        } else {
+            // Knowledge center import
+            if (!selectedFile) {
+                e.preventDefault();
+                alert('Please select a file from the knowledge center.');
+                return;
+            }
+            
+            // Change form action and method for import
+            uploadForm.action = "{% url 'process_management:import_knowledge_center_file' process.id %}";
+            uploadForm.method = 'POST';
+            
+            // Add selected file ID to form data
+            const fileIdInput = document.createElement('input');
+            fileIdInput.type = 'hidden';
+            fileIdInput.name = 'file_id';
+            fileIdInput.value = selectedFile.id;
+            uploadForm.appendChild(fileIdInput);
+            
+            // For import, we'll let the form submit normally and redirect
+            // No need to prevent default or handle JSON response
+        }
+
+        // Show progress and disable submit button for both upload and import
         uploadProgress.classList.remove('hidden');
         submitBtn.disabled = true;
-        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Uploading...';
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Processing...';
         submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
     });
+
+    // Search knowledge center files
+    function searchKnowledgeCenterFiles(query) {
+        fetch(`{% url 'process_management:knowledge_center_search' %}?q=${encodeURIComponent(query)}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    console.error('Search error:', data.error);
+                    return;
+                }
+                
+                displaySearchResults(data.files);
+            })
+            .catch(error => {
+                console.error('Search failed:', error);
+            });
+    }
+
+    // Display search results
+    function displaySearchResults(files) {
+        if (files.length === 0) {
+            searchResultsList.innerHTML = '<div class="p-4 text-center text-gray-500">No files found</div>';
+        } else {
+            searchResultsList.innerHTML = files.map(file => `
+                <div class="p-3 hover:bg-gray-50 cursor-pointer file-result" data-file-id="${file.id}">
+                    <div class="flex items-center justify-between">
+                        <div class="flex-1">
+                            <div class="font-medium text-gray-900">${file.name}</div>
+                            <div class="text-sm text-gray-500">
+                                ${file.section} • ${file.region}
+                                ${file.folder ? ' • ' + file.folder : ''}
+                            </div>
+                        </div>
+                        <div class="text-xs text-gray-400">
+                            ${file.file_type}
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+            
+            // Add click handlers to results
+            document.querySelectorAll('.file-result').forEach(result => {
+                result.addEventListener('click', function() {
+                    const fileId = this.dataset.fileId;
+                    const file = files.find(f => f.id === fileId);
+                    selectFile(file);
+                });
+            });
+        }
+        
+        searchResults.classList.remove('hidden');
+    }
+
+    // Select a file from search results
+    function selectFile(file) {
+        selectedFile = file;
+        selectedFileId.value = file.id;
+        selectedFileName.textContent = file.name;
+        selectedFileInfo.textContent = `${file.section} • ${file.region}${file.folder ? ' • ' + file.folder : ''}`;
+        
+        selectedFileDisplay.classList.remove('hidden');
+        searchResults.classList.add('hidden');
+        searchInput.value = '';
+    }
 
     function formatFileSize(bytes) {
         if (bytes === 0) return '0 Bytes';

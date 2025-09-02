@@ -4,12 +4,164 @@
 
 The Process Management System provides a modern, relational approach to organizing and accessing organizational processes. It replaces the folder-based system with a structured departmental view that makes finding and managing processes much easier.
 
+## Getting Started
+
+### Prerequisites
+
+Before setting up the Process Management System, ensure you have:
+
+- **Python Environment**: Python 3.8+ installed
+- **Virtual Environment**: Access to the project virtual environment at `/var/www/env-beii/bin/activate`
+- **Database**: PostgreSQL or compatible database configured
+- **Django Project**: Main BEII application properly set up
+- **File Permissions**: Write access to media directories for document uploads
+
+### Initial Setup Commands
+
+#### 1. Activate Virtual Environment
+```bash
+source /var/www/env-beii/bin/activate
+cd /var/www/beii_v1
+```
+
+#### 2. Database Migrations
+Run the database migrations to create the required tables:
+```bash
+python manage.py migrate process_management
+```
+
+#### 3. Load Initial Department Data
+Set up the standard organizational departments:
+```bash
+python manage.py load_departments
+```
+
+**Available options:**
+- `--force`: Force reload if departments already exist
+- This command loads 30 predefined departments including General Manager's Office, Engineering, Operations, Finance, HR, Transport, Safety, Asset Register, and many more
+
+#### 4. Populate IMS Processes (Optional)
+If you have IMS (Integrated Management System) processes to import:
+```bash
+python manage.py populate_ims_processes
+```
+
+**Available options:**
+- `--force`: Force update existing processes
+- `--verbose`: Show detailed output during import
+
+### Migrating from Legacy System
+
+If you're migrating from the existing folder-based knowledge center system:
+
+#### Migration Analysis
+First, analyze what will be migrated:
+```bash
+python manage.py migrate_processes --report-only
+```
+
+#### Dry Run Migration
+Test the migration without making changes:
+```bash
+python manage.py migrate_processes --dry-run
+```
+
+#### Full Migration
+Execute the actual migration:
+```bash
+python manage.py migrate_processes
+```
+
+#### Advanced Migration Options
+```bash
+# Migration with progress tracking
+python manage.py migrate_processes --progress
+
+# Migration with custom batch size (default: 50)
+python manage.py migrate_processes --batch-size=25
+
+# Migration with error threshold (default: 0.1 or 10%)
+python manage.py migrate_processes --error-threshold=0.05
+
+# Resume interrupted migration
+python manage.py migrate_processes --resume
+
+# Skip existing processes
+python manage.py migrate_processes --skip-existing
+
+# Generate detailed migration report
+python manage.py migrate_processes --output-file=migration_report.json
+```
+
+#### Migration Rollback (if needed)
+If you need to undo a migration:
+```bash
+python manage.py migrate_processes --rollback
+```
+
+### Post-Setup Verification
+
+#### Verify Department Setup
+Check that departments were created successfully:
+```bash
+python manage.py shell -c "from process_management.models import ProcessDepartment; print(f'Departments: {ProcessDepartment.objects.count()}'); [print(f'  {d.name}') for d in ProcessDepartment.objects.all()]"
+```
+
+#### Verify Process Data
+Check imported processes:
+```bash
+python manage.py shell -c "from process_management.models import Process; print(f'Processes: {Process.objects.count()}'); print(f'Active: {Process.objects.filter(is_active=True).count()}')"
+```
+
+#### Check Document Migration
+Verify document migration status:
+```bash
+python manage.py shell -c "from process_management.models import ProcessDocument; print(f'Documents: {ProcessDocument.objects.count()}'); print(f'Accessible: {ProcessDocument.objects.filter(status=\"accessible\").count()}')"
+```
+
+#### Test System Access
+Start the development server to test:
+```bash
+python manage.py runserver 0.0.0.0:8000
+```
+
+Then navigate to `http://localhost:8000/process-management/` to verify the system is working.
+
+### Troubleshooting Setup Issues
+
+#### Common Issues
+
+**Migration fails with database errors:**
+```bash
+# Check database connectivity
+python manage.py dbshell
+# Verify migrations are applied
+python manage.py showmigrations process_management
+```
+
+**Department loading fails:**
+```bash
+# Check if departments already exist
+python manage.py load_departments --force
+```
+
+**File system access errors during migration:**
+- Ensure the web server has read access to document directories
+- Check file permissions on media directories
+- Verify document paths are correct in the database
+
+**Memory issues during large migrations:**
+```bash
+# Reduce batch size for memory-constrained systems
+python manage.py migrate_processes --batch-size=10
+```
+
 ## Features
 
 ### For All Users
 
 #### 1. Process Navigation
-- **Departmental View**: Processes are organized by 11 main departments
+- **Departmental View**: Processes are organized by 30 main departments
 - **Process Counts**: Each department shows how many processes it contains
 - **Search Functionality**: Search across all processes by name, description, or process code
 - **Process Details**: View complete process information including maps, procedures, and risk registers

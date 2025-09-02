@@ -5,6 +5,9 @@ from django.http import JsonResponse, FileResponse, HttpResponseNotFound, HttpRe
 from django.core.paginator import Paginator
 from django.contrib import messages
 from django.conf import settings
+from django.core.files.storage import default_storage
+from django.core.files.base import ContentFile
+from django.utils import timezone
 import os
 import logging
 import mimetypes
@@ -12,10 +15,26 @@ from .models import ProcessDepartment, Process, ProcessDocument
 from it.users.models import UserProfile, Regions
 from approve.decorators import allowed_roles
 from .ims_importer import IMSDocumentImporter
+from knowledge_center.models import KnowledgeCenter, KnowldgeCentreFile
 
 
 # Set up logging for document access
 logger = logging.getLogger(__name__)
+
+
+def sanitize_filename(filename):
+    """
+    Sanitize filename by removing or replacing invalid characters.
+    """
+    import re
+    # Remove or replace invalid characters
+    filename = re.sub(r'[<>:"/\\|?*]', '_', filename)
+    # Remove leading/trailing spaces and dots
+    filename = filename.strip(' .')
+    # Ensure filename is not empty
+    if not filename:
+        filename = 'document'
+    return filename
 
 
 def log_process_activity(user, action, process=None, document=None, details=None):
@@ -792,11 +811,7 @@ def handle_process_creation(request):
             messages.error(request, "Invalid department selected.")
             return redirect('process_management:process_create')
         
-        # Validate process code uniqueness if provided
-        if process_code:
-            if Process.objects.filter(process_code=process_code).exists():
-                messages.error(request, f"Process code '{process_code}' already exists.")
-                return redirect('process_management:process_create')
+        # Process code is optional and no longer needs uniqueness validation
         # Create the process
         process = Process.objects.create(
             name=name,
@@ -879,12 +894,7 @@ def handle_process_update(request, process):
             messages.error(request, "Invalid department selected.")
             return redirect('process_management:process_edit', process_id=process.id)
         
-        # Validate process code uniqueness if provided
-        if process_code:
-            existing = Process.objects.filter(process_code=process_code).exclude(id=process.id)
-            if existing.exists():
-                messages.error(request, f"Process code '{process_code}' already exists.")
-                return redirect('process_management:process_edit', process_id=process.id)
+        # Process code is optional and no longer needs uniqueness validation
         
         # Update the process
         process.name = name
@@ -1130,3 +1140,256 @@ def ims_process_detail_view(request, process_id):
     }
     
     return render(request, 'process_management/ims_process_detail.html', context)
+
+
+@login_required
+def knowledge_center_file_search(request):
+    """
+    API endpoint for searching knowledge center files with autocomplete functionality.
+    Returns JSON response with file suggestions for the upload form.
+    
+    Requirements: File import from knowledge center
+    """
+    query = request.GET.get('q', '').strip()
+    
+    if not query or len(query) < 2:
+        return JsonResponse({'files': []})
+    
+    try:
+        # Search in both KnowledgeCenter and KnowldgeCentreFile models
+        # Use Q objects for complex queries with OR conditions
+        search_query = Q()
+        
+        # Search in KnowledgeCenter model (older files)
+        kc_files = KnowledgeCenter.objects.filter(
+            Q(filename__icontains=query),
+            archived=False
+        ).select_related('file_type_id', 'section_id', 'region_id')[:10]
+        
+        # Search in KnowldgeCentreFile model (newer files)
+        kcf_files = KnowldgeCentreFile.objects.filter(
+            Q(filename__icontains=query) | Q(name__icontains=query),
+            archived=False
+        ).select_related('folder', 'section', 'region', 'created_by')
+        
+        results = []
+        
+        # Process KnowledgeCenter results - only include files that exist in filesystem
+        for file in kc_files:
+            # Check if file exists in filesystem before including in results
+            if hasattr(file, 'filepath') and file.filepath and os.path.exists(file.filepath):
+                results.append({
+                    'id': f"kc_{file.id}",
+                    'name': file.filename,
+                    'type': 'knowledge_center',
+                    'file_type': file.file_type if hasattr(file, 'file_type') else 'Unknown',
+                    'section': file.section if hasattr(file, 'section') else 'Unknown',
+                    'region': file.region if hasattr(file, 'region') else 'Unknown',
+                    'created_at': file.created_on.isoformat() if file.created_on else None,
+                    'file_path': file.filepath if hasattr(file, 'filepath') else None,
+                })
+        
+        # Process KnowldgeCentreFile results - only include files that exist in storage
+        for file in kcf_files:
+            # Check if file exists in storage before including in results
+            if file.file and file.file.name and default_storage.exists(file.file.name):
+                results.append({
+                    'id': f"kcf_{file.id}",
+                    'name': file.filename,
+                    'type': 'knowledge_centre_file',
+                    'file_type': 'File',
+                    'section': file.section.section if file.section else 'Unknown',
+                    'region': file.region.region if file.region else 'Unknown',
+                    'created_at': file.created_on.isoformat() if file.created_on else None,
+                    'file_path': file.file.url if file.file else None,
+                    'folder': file.folder.name if file.folder else 'Unknown',
+                })
+        
+        # Sort results by relevance (exact matches first, then by name)
+        results.sort(key=lambda x: (
+            0 if query.lower() in x['name'].lower() else 1,
+            x['name'].lower()
+        ))
+        
+        # Limit to 15 results total
+        results = results[:15]
+        
+        return JsonResponse({
+            'files': results,
+            'query': query,
+            'count': len(results)
+        })
+        
+    except Exception as e:
+        logger.error(f"Error in knowledge center file search: {str(e)}")
+        return JsonResponse({
+            'files': [],
+            'error': 'Search failed. Please try again.'
+        }, status=500)
+
+
+@login_required
+def import_knowledge_center_file(request, process_id):
+    """
+    Import a file from knowledge center and attach it to a process.
+    
+    Requirements: File import from knowledge center
+    """
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+    
+    try:
+        process = get_object_or_404(Process, id=process_id, is_active=True)
+        
+        # Get form data
+        file_id = request.POST.get('file_id')
+        document_type = request.POST.get('document_type')
+        version = request.POST.get('version', '1.0').strip()
+        replace_current = request.POST.get('replace_current') == 'on'
+        
+        # Debug logging
+        logger.info(f"Import request data - file_id: {file_id}, document_type: '{document_type}' (length: {len(document_type) if document_type else 0}), version: {version}, replace_current: {replace_current}")
+        
+        if not file_id or not document_type:
+            return JsonResponse({
+                'error': 'File ID and document type are required.'
+            }, status=400)
+        
+        # Validate document type
+        valid_types = [choice[0] for choice in ProcessDocument.DOCUMENT_TYPES]
+        if document_type not in valid_types:
+            return JsonResponse({
+                'error': 'Invalid document type selected.'
+            }, status=400)
+        
+        # Parse file ID to determine source
+        if file_id.startswith('kc_'):
+            # KnowledgeCenter file
+            kc_id = file_id.replace('kc_', '')
+            source_file = get_object_or_404(KnowledgeCenter, id=kc_id, archived=False)
+            
+            # Get the actual file path
+            if not source_file.filepath or not os.path.exists(source_file.filepath):
+                return JsonResponse({
+                    'error': 'Source file not found or inaccessible.'
+                }, status=404)
+            
+            # Create a copy of the file
+            with open(source_file.filepath, 'rb') as f:
+                file_content = f.read()
+            
+            # Create a new file object for the process document
+            new_filename = sanitize_filename(source_file.filename)
+            uploaded_file = ContentFile(file_content, name=new_filename)
+            
+        elif file_id.startswith('kcf_'):
+            # KnowldgeCentreFile
+            kcf_id = file_id.replace('kcf_', '')
+            source_file = get_object_or_404(KnowldgeCentreFile, id=kcf_id, archived=False)
+            
+            if not source_file.file or not source_file.file.name:
+                return JsonResponse({
+                    'error': 'Source file not found or inaccessible.'
+                }, status=404)
+            
+            # Get the file from storage
+            if not default_storage.exists(source_file.file.name):
+                return JsonResponse({
+                    'error': 'Source file not found in storage.'
+                }, status=404)
+            
+            # Create a copy of the file
+            file_content = default_storage.open(source_file.file.name).read()
+            new_filename = sanitize_filename(source_file.filename)
+            uploaded_file = ContentFile(file_content, name=new_filename)
+            
+        else:
+            return JsonResponse({
+                'error': 'Invalid file ID format.'
+            }, status=400)
+        
+        # Check if current document already exists
+        current_exists = ProcessDocument.objects.filter(
+            process=process,
+            document_type=document_type,
+            is_current=True
+        ).exists()
+        
+        # Handle document versioning and replacement
+        if replace_current:
+            # Mark existing current documents as not current
+            ProcessDocument.objects.filter(
+                process=process,
+                document_type=document_type,
+                is_current=True
+            ).update(is_current=False)
+            is_current = True
+        else:
+            is_current = not current_exists
+        
+        # If there's already a current document and we're not replacing it,
+        # we should update the existing one instead of creating a new one
+        if current_exists and not replace_current:
+            # Update the existing current document
+            existing_doc = ProcessDocument.objects.get(
+                process=process,
+                document_type=document_type,
+                is_current=True
+            )
+            existing_doc.file = uploaded_file
+            existing_doc.filename = new_filename
+            existing_doc.version = version
+            existing_doc.uploaded_by = request.user.userprofile if hasattr(request.user, 'userprofile') else None
+            existing_doc.save()
+            
+            # Log successful update
+            logger.info(f"Document updated from knowledge center: {new_filename} "
+                       f"(ID: {existing_doc.id}) for process '{process.name}' "
+                       f"by user {request.user.username}")
+            
+            # Success response - redirect to process detail page
+            doc_type_display = existing_doc.get_document_type_display()
+            try:
+                messages.success(request, f"{doc_type_display} has been updated successfully.")
+            except:
+                # Messages middleware not available (e.g., in testing)
+                pass
+            
+            return redirect('process_management:process_detail', process_id=process.id)
+        
+        # Create new document record
+        document = ProcessDocument.objects.create(
+            process=process,
+            document_type=document_type,
+            file=uploaded_file,
+            filename=new_filename,
+            version=version,
+            is_current=is_current,
+            uploaded_by=request.user.userprofile if hasattr(request.user, 'userprofile') else None
+        )
+        
+        # Log successful import
+        logger.info(f"Document imported from knowledge center: {new_filename} "
+                   f"(ID: {document.id}) for process '{process.name}' "
+                   f"by user {request.user.username}")
+        
+        # Success response - redirect to process detail page
+        doc_type_display = document.get_document_type_display()
+        try:
+            messages.success(request, f"{doc_type_display} has been imported successfully.")
+        except:
+            # Messages middleware not available (e.g., in testing)
+            pass
+        
+        # Redirect to process detail page
+        return redirect('process_management:process_detail', process_id=process.id)
+        
+    except Exception as e:
+        import traceback
+        error_details = traceback.format_exc()
+        logger.error(f"Error importing knowledge center file: {str(e)}")
+        logger.error(f"Full traceback: {error_details}")
+        return JsonResponse({
+            'error': 'Failed to import file. Please try again.',
+            'debug': str(e) if settings.DEBUG else None
+        }, status=500)
