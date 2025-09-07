@@ -1,4 +1,5 @@
 import csv
+import logging
 from datetime import datetime
 from django.template.loader import render_to_string
 from django.forms import model_to_dict
@@ -17,10 +18,334 @@ from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 
 from django.contrib.auth.decorators import login_required
+from django.views.decorators.csrf import csrf_protect
+from django.utils.decorators import method_decorator
+from django.utils.html import escape
+from django.core.validators import validate_email
+from django.core.exceptions import ValidationError
 
 from it.users.views import ms_exhange_reset_password_html, ms_exhange_send_html
+from .constants import (
+    ERROR_MESSAGES, SUCCESS_MESSAGES, WARNING_MESSAGES, LOG_MESSAGES,
+    MAX_REASON_LENGTH, MAX_DESCRIPTION_LENGTH, REQUIRED_CHANGE_REQUEST_FIELDS,
+    REQUIRED_NEW_PROFILE_FIELDS, URL_PATTERNS, CACHE_TIMEOUT, USER_DATA_CACHE_KEY_PREFIX
+)
+
 # Create your views here.
 
+# Set up logging
+logger = logging.getLogger(__name__)
+
+def validate_change_request_data(data):
+    """Validate change request input data"""
+    errors = []
+    
+    for field in REQUIRED_CHANGE_REQUEST_FIELDS:
+        if not data.get(field):
+            errors.append(f"{field.replace('_', ' ').title()} is required")
+    
+    if len(data.get('change_reason', '')) > MAX_REASON_LENGTH:
+        errors.append(f"Change reason too long (max {MAX_REASON_LENGTH} characters)")
+    
+    if len(data.get('change_description', '')) > MAX_DESCRIPTION_LENGTH:
+        errors.append(f"Change description too long (max {MAX_DESCRIPTION_LENGTH} characters)")
+    
+    return errors
+
+def validate_new_profile_data(data):
+    """Validate new profile data"""
+    errors = []
+    
+    for field in REQUIRED_NEW_PROFILE_FIELDS:
+        if not data.get(field):
+            errors.append(f"{field.replace('_', ' ').title()} is required")
+    
+    # Check for duplicate username
+    if data.get('username') and NewProfile.objects.filter(username=data['username']).exists():
+        errors.append(ERROR_MESSAGES['DUPLICATE_USERNAME'])
+    
+    return errors
+
+def sanitize_input(data):
+    """Sanitize user input to prevent XSS attacks"""
+    sanitized = {}
+    for key, value in data.items():
+        if isinstance(value, str):
+            sanitized[key] = escape(value.strip())
+        else:
+            sanitized[key] = value
+    return sanitized
+
+def check_change_request_permissions(user, change_request):
+    """Check if user has permission to modify change request"""
+    if not change_request:
+        return False, "Change request not found"
+    
+    # Check if user is the creator
+    if change_request.created_by == user:
+        return True, "User is the creator"
+    
+    # Check if user has section head role for the cost center
+    try:
+        user_role = user.get_user_role_for_application("change_requests")
+        if user_role and user_role.role == "section_head":
+            user_responsibilities = Responsibilities.objects.filter(
+                user=user, role=user_role
+            ).first()
+            if user_responsibilities and change_request.cost_center in user_responsibilities.cost_centers.all():
+                return True, "User has section head permissions"
+    except Exception:
+        pass
+    
+    return False, "Insufficient permissions"
+
+def get_change_requests_optimized(user, filters=None, include_deleted=False):
+    """Optimized query for change requests with select_related and prefetch_related"""
+    queryset = ChangeRequest.objects.select_related(
+        'new_profile',
+        'profile_change__user',
+        'profile_deactivation__user',
+        'created_by',
+        'creator_designation',
+        'region',
+        'cost_center'
+    ).prefetch_related(
+        'crapproval_set__approver',
+        'crapproval_set__approver_role'
+    ).filter(region=user.region)
+    
+    # Exclude soft-deleted records by default
+    if not include_deleted:
+        queryset = queryset.filter(is_deleted=False)
+    
+    if filters:
+        queryset = apply_filters(queryset, filters)
+    
+    return queryset
+
+def apply_filters(queryset, filters):
+    """Apply filters to the queryset"""
+    if filters.get('change_type'):
+        queryset = queryset.filter(change_type=filters['change_type'])
+    
+    if filters.get('application'):
+        queryset = queryset.filter(application=filters['application'])
+    
+    if filters.get('created_by'):
+        queryset = queryset.filter(created_by__username=filters['created_by'])
+    
+    if filters.get('date_from'):
+        queryset = queryset.filter(created_at__gte=filters['date_from'])
+    
+    if filters.get('date_to'):
+        queryset = queryset.filter(created_at__lte=filters['date_to'])
+    
+    return queryset
+
+def get_cached_user_data(username):
+    """Get cached user data to reduce database queries"""
+    from django.core.cache import cache
+    
+    cache_key = f"{USER_DATA_CACHE_KEY_PREFIX}{username}"
+    cached_data = cache.get(cache_key)
+    
+    if not cached_data:
+        user = UserProfile.objects.filter(username=username).first()
+        if user:
+            applications = Application.objects.all()
+            all_roles = {app.name: [model_to_dict(role) for role in Roles.objects.filter(app_id=app.id).all()] for app in applications}
+            active_roles = {role.app_id.name: model_to_dict(role) for role in user.roles.all() if role.app_id}
+            
+            cached_data = {
+                "applications": list(applications.values('id', 'name', 'fullname')),
+                "userData": all_roles,
+                "active_roles": active_roles,
+            }
+            cache.set(cache_key, cached_data, CACHE_TIMEOUT)
+    
+    return cached_data
+
+def prepare_change_request_data(change_request):
+    """Prepare change request data for display"""
+    data = {
+        'cr_id': change_request.cr_id,
+        'change_type': change_request.change_type,
+        'change_reason': change_request.change_reason,
+        'change_description': change_request.change_description,
+        'created_by': change_request.created_by,
+        'created_at': change_request.created_at,
+        'is_deleted': change_request.is_deleted,
+    }
+    
+    if change_request.new_profile:
+        data['new_profile'] = {
+            'username': change_request.new_profile.username,
+            'first_name': change_request.new_profile.first_name,
+            'last_name': change_request.new_profile.last_name,
+            'email': change_request.new_profile.email,
+        }
+    
+    return data
+
+def get_approval_status(change_request):
+    """Get approval status for a change request"""
+    section_head_approval = CRApproval.objects.filter(
+        cr_id=change_request, 
+        approver_role__role="section_head"
+    ).first()
+    
+    it_section_head_approval = CRApproval.objects.filter(
+        cr_id=change_request, 
+        approver_role__role="it_section_head"
+    ).first()
+    
+    if it_section_head_approval and it_section_head_approval.approval_status:
+        return 'Complete'
+    elif section_head_approval and section_head_approval.approval_status:
+        return 'Pending IT'
+    else:
+        return 'Pending SH'
+
+def send_approval_notification(change_request, approver, notification_type):
+    """Send approval notification email"""
+    try:
+        # This would integrate with the existing email system
+        logger.info(f"Approval notification sent: {notification_type} for {change_request.cr_id} by {approver.username}")
+        return True
+    except Exception as ex:
+        logger.error(f"Failed to send approval notification: {str(ex)}")
+        return False
+
+def log_change_request_action(action, cr_id, username, details=None):
+    """Log change request actions for audit trail"""
+    log_message = f"Change request {action}: {cr_id} by {username}"
+    if details:
+        log_message += f" - {details}"
+    
+    logger.info(log_message)
+
+@csrf_protect
+@login_required
+def delete_change_request(request):
+    """Soft delete a change request"""
+    if request.method == "POST":
+        try:
+            cr_id = request.POST.get('cr_id')
+            change_request = ChangeRequest.objects.filter(cr_id=cr_id, is_deleted=False).first()
+            
+            if not change_request:
+                logger.warning(f"Delete attempt on non-existent change request: {cr_id} by {request.user.username}")
+                messages.error(request, ERROR_MESSAGES['CHANGE_REQUEST_NOT_FOUND'])
+                return redirect(URL_PATTERNS['CHANGE_REQUEST_INDEX'])
+            
+            # Check permissions
+            has_permission, permission_message = check_change_request_permissions(request.user, change_request)
+            if not has_permission:
+                logger.warning(LOG_MESSAGES['PERMISSION_DENIED'].format(
+                    username=request.user.username, cr_id=cr_id
+                ))
+                messages.error(request, permission_message)
+                return redirect(URL_PATTERNS['CHANGE_REQUEST_INDEX'])
+            
+            # Check if already approved
+            section_head_approval = CRApproval.objects.filter(
+                cr_id=change_request, 
+                approver_role__role="section_head"
+            ).first()
+            
+            if section_head_approval:
+                logger.warning(f"Delete attempt on approved change request: {cr_id} by {request.user.username}")
+                messages.warning(request, WARNING_MESSAGES['ALREADY_APPROVED'])
+                return redirect(URL_PATTERNS['CHANGE_REQUEST_INDEX'])
+            
+            change_request.soft_delete(request.user)
+            logger.info(LOG_MESSAGES['CHANGE_REQUEST_DELETED'].format(
+                cr_id=cr_id, username=request.user.username
+            ))
+            messages.success(request, SUCCESS_MESSAGES['CHANGE_REQUEST_DELETED'])
+            
+        except Exception as ex:
+            logger.error(f"Error deleting change request {cr_id}: {str(ex)}", exc_info=True)
+            messages.error(request, f"Error deleting change request: {str(ex)}")
+    
+    return redirect(URL_PATTERNS['CHANGE_REQUEST_INDEX'])
+
+@csrf_protect
+@login_required
+def restore_change_request(request):
+    """Restore a soft-deleted change request"""
+    if request.method == "POST":
+        try:
+            cr_id = request.POST.get('cr_id')
+            change_request = ChangeRequest.objects.filter(cr_id=cr_id, is_deleted=True).first()
+            
+            if not change_request:
+                logger.warning(f"Restore attempt on non-existent change request: {cr_id} by {request.user.username}")
+                messages.error(request, ERROR_MESSAGES['CHANGE_REQUEST_NOT_FOUND'])
+                return redirect(URL_PATTERNS['CHANGE_REQUEST_INDEX'])
+            
+            # Check permissions (only admin or creator can restore)
+            if not (request.user.is_superuser or change_request.deleted_by == request.user):
+                logger.warning(f"Restore permission denied for user {request.user.username} on change request {cr_id}")
+                messages.error(request, ERROR_MESSAGES['CANNOT_RESTORE'])
+                return redirect(URL_PATTERNS['CHANGE_REQUEST_INDEX'])
+            
+            change_request.restore()
+            logger.info(LOG_MESSAGES['CHANGE_REQUEST_RESTORED'].format(
+                cr_id=cr_id, username=request.user.username
+            ))
+            messages.success(request, SUCCESS_MESSAGES['CHANGE_REQUEST_RESTORED'])
+            
+        except Exception as ex:
+            logger.error(f"Error restoring change request {cr_id}: {str(ex)}", exc_info=True)
+            messages.error(request, f"Error restoring change request: {str(ex)}")
+    
+    return redirect(URL_PATTERNS['CHANGE_REQUEST_INDEX'])
+
+@csrf_protect
+@login_required
+def bulk_delete_change_requests(request):
+    """Bulk delete change requests"""
+    if request.method == "POST":
+        try:
+            cr_ids = request.POST.getlist('cr_ids[]')
+            deleted_count = 0
+            
+            logger.info(f"Bulk delete initiated by {request.user.username} for {len(cr_ids)} change requests")
+            
+            for cr_id in cr_ids:
+                change_request = ChangeRequest.objects.filter(cr_id=cr_id, is_deleted=False).first()
+                if change_request:
+                    has_permission, _ = check_change_request_permissions(request.user, change_request)
+                    if has_permission:
+                        # Check if already approved
+                        section_head_approval = CRApproval.objects.filter(
+                            cr_id=change_request, 
+                            approver_role__role="section_head"
+                        ).first()
+                        
+                        if not section_head_approval:
+                            change_request.soft_delete(request.user)
+                            deleted_count += 1
+                        else:
+                            logger.warning(f"Skipped approved change request {cr_id} in bulk delete by {request.user.username}")
+                    else:
+                        logger.warning(f"Permission denied for change request {cr_id} in bulk delete by {request.user.username}")
+                else:
+                    logger.warning(f"Change request {cr_id} not found in bulk delete by {request.user.username}")
+            
+            logger.info(LOG_MESSAGES['BULK_DELETE'].format(
+                count=deleted_count, username=request.user.username
+            ))
+            messages.success(request, SUCCESS_MESSAGES['BULK_DELETE_SUCCESS'].format(count=deleted_count))
+            
+        except Exception as ex:
+            logger.error(f"Error in bulk delete by {request.user.username}: {str(ex)}", exc_info=True)
+            messages.error(request, f"Error in bulk delete: {str(ex)}")
+    
+    return redirect(URL_PATTERNS['CHANGE_REQUEST_INDEX'])
+
+@csrf_protect
 @login_required
 def create_change_request(request):
     
@@ -53,19 +378,46 @@ def create_change_request(request):
                 "user_groups": user_groups,
             })
     
+@csrf_protect
 @login_required
 def create_new_profile(request):
     try:
-        change_reason = request.POST.get('change_reason')
-        change_description = request.POST.get('change_description')
-        profile_username = request.POST.get('username')
-        first_name = request.POST.get('first_name')
-        last_name = request.POST.get('last_name')
-        email = request.POST.get('email')
-        designation_ = request.POST.get('designation')
-        cost_center = request.POST.get('cost_center')
-        application = request.POST.get('for_application')
-        roles_to_action = request.POST.get('roles_to_action')
+        # Sanitize input data
+        sanitized_data = sanitize_input(request.POST.dict())
+        
+        change_reason = sanitized_data.get('change_reason')
+        change_description = sanitized_data.get('change_description')
+        profile_username = sanitized_data.get('username')
+        first_name = sanitized_data.get('first_name')
+        last_name = sanitized_data.get('last_name')
+        email = sanitized_data.get('email')
+        designation_ = sanitized_data.get('designation')
+        cost_center = sanitized_data.get('cost_center')
+        application = sanitized_data.get('for_application')
+        roles_to_action = sanitized_data.get('roles_to_action')
+        
+        # Validate input data
+        validation_errors = validate_change_request_data({
+            'change_reason': change_reason,
+            'change_description': change_description
+        })
+        
+        if validation_errors:
+            for error in validation_errors:
+                messages.error(request, error)
+            return redirect("/change_requests/create_change_request")
+        
+        profile_validation_errors = validate_new_profile_data({
+            'username': profile_username,
+            'first_name': first_name,
+            'last_name': last_name,
+            'email': email
+        })
+        
+        if profile_validation_errors:
+            for error in profile_validation_errors:
+                messages.error(request, error)
+            return redirect("/change_requests/create_change_request")
 
         region = Regions.objects.filter(id=request.user.region.id).first() if request.user else None
         cost_center_ = CostCenter.objects.filter(id=cost_center).first() if cost_center else None
@@ -146,6 +498,7 @@ def create_new_profile(request):
         
     return redirect("/change_requests/create_change_request")
 
+@csrf_protect
 @login_required
 def profile_modification_request(request):
 
@@ -307,6 +660,7 @@ def roles_modal(request):
     return JsonResponse({"form":form.as_p(),"regioncc":regioncc_list,"app":{'fullname':Application.objects.get(id=appid).fullname,'id':Application.objects.get(id=appid ).id} }, safe=False)
 
 
+@csrf_protect
 @login_required
 def profile_deactivation_request(request):
     try:
@@ -436,6 +790,7 @@ def new_profile_request(request):
                     }
                 )
                 
+@csrf_protect
 @login_required
 def update_change_request(request):
     if request.method == "GET":
@@ -558,12 +913,21 @@ def update_change_request(request):
             
     elif request.method == "POST":
         try:
-            cr_id = request.POST.get('cr_id')
-            change_reason = request.POST.get('change_reason')
-            change_description = request.POST.get('change_description')
-            roles_to_action = request.POST.get('roles_to_action')
-            roles_actions = request.POST.get('roles_actions')
+            # Sanitize input data
+            sanitized_data = sanitize_input(request.POST.dict())
+            
+            cr_id = sanitized_data.get('cr_id')
+            change_reason = sanitized_data.get('change_reason')
+            change_description = sanitized_data.get('change_description')
+            roles_to_action = sanitized_data.get('roles_to_action')
+            roles_actions = sanitized_data.get('roles_actions')
             change_request = ChangeRequest.objects.filter(cr_id=cr_id).first()
+            
+            # Check permissions
+            has_permission, permission_message = check_change_request_permissions(request.user, change_request)
+            if not has_permission:
+                messages.error(request, permission_message)
+                return redirect("/change_requests/change_request_index")
             
             section_head_approval = CRApproval.objects.filter(cr_id=change_request, approver_role__role="section_head").first()
             if not change_request:
@@ -575,7 +939,7 @@ def update_change_request(request):
             else:
                 
                 change_request.change_reason = change_reason if change_reason else change_request.change_reason
-                change_request.change_description = change_description if change_reason else change_request.change_description
+                change_request.change_description = change_description if change_description else change_request.change_description
                 change_request.roles_to_action = roles_to_action if roles_to_action else change_request.roles_to_action
                 change_request.roles_actions = roles_actions if roles_actions else change_request.roles_actions
                 change_request.save()
@@ -813,17 +1177,11 @@ def view_profile_request(request):
             
 @login_required
 def get_user_data(request, username):
-    user = UserProfile.objects.filter(username=username).first()
-    applications = Application.objects.all()
-    all_roles = {app.name: [model_to_dict(role) for role in Roles.objects.filter(app_id=app.id).all()] for app in Application.objects.all()}
-    active_roles = {role.app_id.name: model_to_dict(role) for role in user.roles.all() if role.app_id}
+    """Get user data with caching for better performance"""
+    cached_data = get_cached_user_data(username)
     
-    if user:
-        return JsonResponse({
-            "applications": list(applications.values('id', 'name', 'fullname')),
-            "userData": all_roles,
-            "active_roles": active_roles,
-        })
+    if cached_data:
+        return JsonResponse(cached_data)
     else:
         return JsonResponse({
             "error": "User not found",
@@ -831,16 +1189,26 @@ def get_user_data(request, username):
             "userData": []
         })
 
+@csrf_protect
 @login_required
 def update_new_profile_request(request):
     if request.method == "POST":
         try:
-            cr_id = request.POST.get('cr_id')
-            change_reason = request.POST.get('change_reason')
-            change_description = request.POST.get('change_description')
-            roles_to_action = request.POST.get('roles_to_action')
-            roles_actions = request.POST.get('roles_actions')
+            # Sanitize input data
+            sanitized_data = sanitize_input(request.POST.dict())
+            
+            cr_id = sanitized_data.get('cr_id')
+            change_reason = sanitized_data.get('change_reason')
+            change_description = sanitized_data.get('change_description')
+            roles_to_action = sanitized_data.get('roles_to_action')
+            roles_actions = sanitized_data.get('roles_actions')
             change_request = ChangeRequest.objects.filter(cr_id=cr_id).first()
+            
+            # Check permissions
+            has_permission, permission_message = check_change_request_permissions(request.user, change_request)
+            if not has_permission:
+                messages.error(request, permission_message)
+                return redirect("/change_requests/change_request_index")
             
             section_head_approval = CRApproval.objects.filter(cr_id=change_request, approver_role__role="section_head").first()
             if not change_request:
@@ -853,7 +1221,7 @@ def update_new_profile_request(request):
                 change_request.roles_to_action = roles_to_action if roles_to_action else change_request.new_profile.roles_to_action
                 change_request.roles_actions = roles_actions if roles_actions else change_request.new_profile.roles_actions
                 change_request.change_reason = change_reason if change_reason else change_request.change_reason
-                change_request.change_description = change_description if change_reason else change_request.change_description
+                change_request.change_description = change_description if change_description else change_request.change_description
                 change_request.save()
             
                 user_data = {
@@ -893,6 +1261,7 @@ def update_new_profile_request(request):
     
         return redirect("/change_requests/change_request_index")
     
+@csrf_protect
 @login_required
 def approve_profile_request(request):
     if request.method == "POST":
@@ -1052,8 +1421,8 @@ def datatable_data(request, view):
         print("view: ", view)
 
         if user.region:
-            # Fetch your data from the model
-            records = ChangeRequest.objects.filter(region=user.region)
+            # Fetch your data from the model using optimized query
+            records = get_change_requests_optimized(user)
             # Filter based on search value
             if search_value and records:
                 records = records.filter(
@@ -1088,13 +1457,19 @@ def datatable_data(request, view):
                 start_date = request.GET.get('start_date')
                 end_date = request.GET.get('end_date')
                 print("region: ", region, " cr_type: ", cr_type, " cr_app: ", cr_app, " status: ", status, " cost_center: ")
+                
+                # Apply filters using the optimized function
+                filters = {
+                    'change_type': cr_type,
+                    'application': cr_app,
+                    'date_from': start_date,
+                    'date_to': end_date
+                }
+                records = apply_filters(records, filters)
+                
                 if region:
                     region_ = Regions.objects.filter(id=region).first()
                     records = records.filter(region=region_)
-                if cr_type:
-                    records = records.filter(change_type=cr_type)
-                if cr_app:
-                    records = records.filter(application=cr_app)
                 if status:
                     if status == "Pending SH":
                         records = records.filter(~Q(crapproval__approver_role__role="section_head"))

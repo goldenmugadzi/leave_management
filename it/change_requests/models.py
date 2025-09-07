@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils import timezone
 
 from it.users.models import CostCenter, Depots, Designations, Districts, Regions, Responsibilities, Roles, Sections, UserProfile
 
@@ -67,11 +68,40 @@ class ChangeRequest(models.Model):
     cost_center = models.ForeignKey(CostCenter, on_delete=models.CASCADE, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     
+    # Soft delete fields
+    is_deleted = models.BooleanField(default=False)
+    deleted_at = models.DateTimeField(null=True, blank=True)
+    deleted_by = models.ForeignKey(UserProfile, on_delete=models.SET_NULL, null=True, blank=True, related_name='deleted_change_requests')
+    
     def __str__(self):
         return self.cr_id
+    
+    def soft_delete(self, user):
+        """Soft delete the change request"""
+        self.is_deleted = True
+        self.deleted_at = timezone.now()
+        self.deleted_by = user
+        self.save()
+    
+    def restore(self):
+        """Restore the change request"""
+        self.is_deleted = False
+        self.deleted_at = None
+        self.deleted_by = None
+        self.save()
 
     class Meta:
         app_label = 'change_requests'
+        indexes = [
+            models.Index(fields=['cr_id']),
+            models.Index(fields=['created_at']),
+            models.Index(fields=['change_type']),
+            models.Index(fields=['region', 'cost_center']),
+            models.Index(fields=['created_by']),
+            models.Index(fields=['application']),
+            models.Index(fields=['is_deleted']),
+        ]
+        ordering = ['-created_at']
         
 class CRApproval(models.Model):
     cr_id = models.ForeignKey(ChangeRequest, on_delete=models.CASCADE)
@@ -86,3 +116,10 @@ class CRApproval(models.Model):
 
     class Meta:
         app_label = 'change_requests'
+        indexes = [
+            models.Index(fields=['cr_id']),
+            models.Index(fields=['approver']),
+            models.Index(fields=['approver_role']),
+            models.Index(fields=['approval_status']),
+            models.Index(fields=['approval_date']),
+        ]

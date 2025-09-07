@@ -17,5 +17,8 @@ urlpatterns = [
     path('profile_modification/create', views.profile_modification_request, name='profile_modification_request'),
     path('update_change_request', views.update_change_request, name='update_change_request'),
     path('profile_deactivation_request', views.profile_deactivation_request, name='profile_deactivation_request'),
+    path('delete_change_request', views.delete_change_request, name='delete_change_request'),
+    path('restore_change_request', views.restore_change_request, name='restore_change_request'),
+    path('bulk_delete_change_requests', views.bulk_delete_change_requests, name='bulk_delete_change_requests'),
     
 ]

@@ -35,4 +35,15 @@ urlpatterns = [
     path('user-reports', views.user_reports, name='user_reports'),
     path('api/user-reports', views.user_reports_api, name='user_reports_api'),
     path('export-users-csv', views.export_users_csv, name='export_users_csv'),
+    
+    # Role Delegation URLs
+    path('delegation-dashboard', views.delegation_dashboard, name='delegation_dashboard'),
+    path('delegation/create', views.create_delegation, name='create_delegation'),
+    path('delegation/list', views.delegation_list, name='delegation_list'),
+    path('delegation/<int:delegation_id>/', views.delegation_detail, name='delegation_detail'),
+    path('delegation/<int:delegation_id>/approve', views.approve_delegation, name='approve_delegation'),
+    path('delegation/<int:delegation_id>/cancel', views.cancel_delegation, name='cancel_delegation'),
+    path('delegation/notifications', views.delegation_notifications, name='delegation_notifications'),
+    path('delegation/calendar', views.delegation_calendar, name='delegation_calendar'),
+    path('delegation/get-roles', views.get_delegation_roles, name='get_delegation_roles'),
 ]

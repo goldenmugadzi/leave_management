@@ -262,6 +262,81 @@ class UserProfile(AbstractUser):
         CostCenters = CostCenter.objects.filter(pk=self.cost_center.pk)
         CostCenters |= self.cost_center.get_decendance()
         return CostCenters
+    
+    def get_effective_roles(self, application_name=None):
+        """Get user's effective roles including delegated roles"""
+        from django.utils import timezone
+        
+        # Get user's own roles
+        effective_roles = set(self.roles.all())
+        
+        # Get active delegated roles
+        now = timezone.now()
+        active_delegations = RoleDelegation.objects.filter(
+            delegatee=self,
+            status='ACTIVE',
+            is_active=True,
+            start_date__lte=now,
+            end_date__gte=now
+        )
+        
+        for delegation in active_delegations:
+            if application_name:
+                # Filter by specific application
+                delegated_roles = delegation.roles.filter(
+                    app_id__name=application_name
+                )
+            else:
+                delegated_roles = delegation.roles.all()
+            
+            effective_roles.update(delegated_roles)
+        
+        return list(effective_roles)
+    
+    def has_delegated_role(self, role, application_name=None):
+        """Check if user has a specific role through delegation"""
+        effective_roles = self.get_effective_roles(application_name)
+        return role in effective_roles
+    
+    def get_active_delegations(self):
+        """Get all active delegations for this user"""
+        from django.utils import timezone
+        
+        now = timezone.now()
+        return RoleDelegation.objects.filter(
+            delegatee=self,
+            status='ACTIVE',
+            is_active=True,
+            start_date__lte=now,
+            end_date__gte=now
+        )
+    
+    def get_pending_delegations(self):
+        """Get all pending delegations for this user"""
+        return RoleDelegation.objects.filter(
+            delegatee=self,
+            status='PENDING'
+        )
+    
+    def can_delegate_roles(self):
+        """Check if user can delegate roles (has roles to delegate)"""
+        return self.roles.exists()
+    
+    def can_approve_delegations(self):
+        """Check if user can approve delegations (admin or section head)"""
+        # Check if user has admin or administrator role in users application
+        admin_role = self.roles.filter(
+            role__in=['admin', 'administrator'],
+            application='users'
+        ).exists()
+        
+        # Check if user has section head role in users application
+        section_head_role = self.roles.filter(
+            role='section_head',
+            application='users'
+        ).exists()
+        
+        return admin_role or section_head_role
 
 
 class Notification(models.Model):
@@ -307,6 +382,209 @@ class Responsibilities(models.Model):
     def __str__(self):
         return str(self.role.name)
    
+
+class RoleDelegation(models.Model):
+    """Model for managing temporary role delegations between users"""
+    
+    DELEGATION_STATUS_CHOICES = [
+        ('PENDING', 'Pending Approval'),
+        ('APPROVED', 'Approved'),
+        ('ACTIVE', 'Active'),
+        ('EXPIRED', 'Expired'),
+        ('CANCELLED', 'Cancelled'),
+        ('REJECTED', 'Rejected'),
+    ]
+    
+    delegator = models.ForeignKey(
+        'UserProfile', 
+        on_delete=models.CASCADE, 
+        related_name='delegated_roles',
+        help_text="User who is delegating their roles"
+    )
+    delegatee = models.ForeignKey(
+        'UserProfile', 
+        on_delete=models.CASCADE, 
+        related_name='received_delegations',
+        help_text="User who will receive the delegated roles"
+    )
+    roles = models.ManyToManyField(
+        'Roles', 
+        help_text="Roles being delegated"
+    )
+    applications = models.ManyToManyField(
+        'Application',
+        help_text="Applications for which roles are being delegated"
+    )
+    start_date = models.DateTimeField(
+        help_text="When the delegation becomes active"
+    )
+    end_date = models.DateTimeField(
+        help_text="When the delegation expires"
+    )
+    reason = models.TextField(
+        help_text="Reason for delegation (e.g., leave, training, etc.)"
+    )
+    status = models.CharField(
+        max_length=20, 
+        choices=DELEGATION_STATUS_CHOICES, 
+        default='PENDING',
+        help_text="Current status of the delegation"
+    )
+    approved_by = models.ForeignKey(
+        'UserProfile', 
+        on_delete=models.SET_NULL, 
+        null=True, 
+        blank=True,
+        related_name='approved_delegations',
+        help_text="User who approved the delegation"
+    )
+    approved_at = models.DateTimeField(
+        null=True, 
+        blank=True,
+        help_text="When the delegation was approved"
+    )
+    rejection_reason = models.TextField(
+        null=True, 
+        blank=True,
+        help_text="Reason for rejection if applicable"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    is_active = models.BooleanField(
+        default=True,
+        help_text="Whether the delegation is currently active"
+    )
+    
+    # Audit fields
+    created_by = models.ForeignKey(
+        'UserProfile',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='created_delegations',
+        help_text="User who created this delegation request"
+    )
+    
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['delegator']),
+            models.Index(fields=['delegatee']),
+            models.Index(fields=['status']),
+            models.Index(fields=['start_date', 'end_date']),
+            models.Index(fields=['is_active']),
+        ]
+    
+    def __str__(self):
+        return f"{self.delegator.username} → {self.delegatee.username} ({self.status})"
+    
+    def is_currently_active(self):
+        """Check if delegation is currently active"""
+        now = timezone.now()
+        return (
+            self.status == 'ACTIVE' and 
+            self.is_active and 
+            self.start_date <= now <= self.end_date
+        )
+    
+    def can_be_approved(self):
+        """Check if delegation can be approved"""
+        return self.status == 'PENDING'
+    
+    def can_be_cancelled(self):
+        """Check if delegation can be cancelled"""
+        return self.status in ['PENDING', 'APPROVED', 'ACTIVE']
+    
+    def approve(self, approver):
+        """Approve the delegation"""
+        if self.can_be_approved():
+            self.status = 'APPROVED'
+            self.approved_by = approver
+            self.approved_at = timezone.now()
+            self.save()
+            return True
+        return False
+    
+    def activate(self):
+        """Activate the delegation"""
+        if self.status == 'APPROVED' and timezone.now() >= self.start_date:
+            self.status = 'ACTIVE'
+            self.save()
+            return True
+        return False
+    
+    def expire(self):
+        """Mark delegation as expired"""
+        if self.status == 'ACTIVE':
+            self.status = 'EXPIRED'
+            self.is_active = False
+            self.save()
+            return True
+        return False
+    
+    def cancel(self, reason=None):
+        """Cancel the delegation"""
+        if self.can_be_cancelled():
+            self.status = 'CANCELLED'
+            self.is_active = False
+            if reason:
+                self.rejection_reason = reason
+            self.save()
+            return True
+        return False
+    
+    def reject(self, reason):
+        """Reject the delegation"""
+        if self.status == 'PENDING':
+            self.status = 'REJECTED'
+            self.rejection_reason = reason
+            self.save()
+            return True
+        return False
+
+
+class DelegationNotification(models.Model):
+    """Model for tracking delegation notifications"""
+    
+    NOTIFICATION_TYPES = [
+        ('DELEGATION_CREATED', 'Delegation Created'),
+        ('DELEGATION_APPROVED', 'Delegation Approved'),
+        ('DELEGATION_REJECTED', 'Delegation Rejected'),
+        ('DELEGATION_ACTIVATED', 'Delegation Activated'),
+        ('DELEGATION_EXPIRED', 'Delegation Expired'),
+        ('DELEGATION_CANCELLED', 'Delegation Cancelled'),
+        ('DELEGATION_REMINDER', 'Delegation Reminder'),
+    ]
+    
+    delegation = models.ForeignKey(
+        RoleDelegation, 
+        on_delete=models.CASCADE,
+        related_name='notifications'
+    )
+    recipient = models.ForeignKey(
+        'UserProfile',
+        on_delete=models.CASCADE,
+        related_name='delegation_notifications'
+    )
+    notification_type = models.CharField(
+        max_length=30,
+        choices=NOTIFICATION_TYPES
+    )
+    message = models.TextField()
+    sent_at = models.DateTimeField(auto_now_add=True)
+    is_read = models.BooleanField(default=False)
+    
+    class Meta:
+        ordering = ['-sent_at']
+        indexes = [
+            models.Index(fields=['recipient']),
+            models.Index(fields=['notification_type']),
+            models.Index(fields=['is_read']),
+        ]
+    
+    def __str__(self):
+        return f"{self.notification_type} - {self.recipient.username}"
+
 
 class UserQualification(TimeStamp):
     """_summary_
