@@ -26,6 +26,13 @@ class NewProfile(models.Model):
             return self.username
 
 class ProfileChange(models.Model):
+    STATUS_CHOICES = [
+        ('PENDING', 'Pending'),
+        ('APPROVED', 'Approved'),
+        ('REJECTED', 'Rejected'),
+        ('IMPLEMENTED', 'Implemented'),
+    ]
+    
     user = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
     application = models.CharField(max_length=100, null=True, blank=True, default=None)
     roles_to_action = models.CharField(max_length=300, null=True, blank=True, default=None)
@@ -34,6 +41,7 @@ class ProfileChange(models.Model):
     role_to_remove = models.ManyToManyField(Roles, related_name='role_to_remove', blank=True, default=None)
     change_date = models.DateTimeField()
     changed_by = models.ForeignKey(UserProfile, on_delete=models.CASCADE, related_name='changed_by')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='PENDING')
 
     def __str__(self):
         return self.user

@@ -1,81 +1,137 @@
-<!--users/templates/quotations/index.html-->
-{% extends 'admin_layout.html' %} {% block styles %}
-<link
-  rel="stylesheet"
-  href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css"
-/>
+{% extends 'admin_layout.html' %}
+{% load static %}
+
+{% block styles %}
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css"/>
 <style>
   .dataTables_wrapper .dataTables_length select {
     width: 4rem;
   }
 </style>
-{% endblock styles %} {% block content %}
+{% endblock styles %}
+
+{% block content %}
 <div class="content-wrapper">
-    <div
-      class="bg-gulf-blue-100 shadow-md shadow-gulf-blue-300 text-gulf-blue-900 rounded px-2 py-2"
-    >        
-    <div class="flex justify-between items-center mb-5">
-        <div>
-          <p class="text-lg font-semibold">Change Requests</p>
-        </div>
-        <div class="flex justify-between items-center mb-5">
-          <a
-          id="all_schedules"
-          class="bg-gulf-blue-600 hover:bg-gulf-blue-800 text-white font-bold py-2 px-4 rounded m-2"
-          >
-            ALL
-          </a>
-          <a
-          id="incoming_cr"
-          class="bg-gulf-blue-600 hover:bg-gulf-blue-800 text-white font-bold py-2 px-4 rounded m-2"
-          >
-            AWAITING ACTION
-          </a>
-          <a
-            href="/change_requests/create_change_request"
-            class="bg-gulf-blue-600 hover:bg-gulf-blue-800 text-white font-bold py-2 px-4 rounded"
-            >
-            ADD NEW
-          </a>
-        </div>
+  <div class="bg-gray-50 border border-gray-200 rounded-lg px-6 py-6 max-w-7xl mx-auto">
+    
+    <!-- Header -->
+    <div class="flex justify-between items-center mb-8">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-900">Change Requests Dashboard</h1>
+        <p class="text-gray-600 mt-1">Manage all types of change requests in one place</p>
       </div>
-    <table id="change_request_index" class="display" style="width: 100%">
-      <thead>
-        <tr>
-          <th>ID</th>
-          <th>TYPE</th>
-          <th>REASON</th>
-          <th>APPLICATION</th>
-          <th>APPROVAL STATUS</th>
-          <th>DONE BY</th>
-          <th>DATE</th>
-          <th>ACTION</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-      <tfoot>
-        <tr>
-          <th>ID</th>
-          <th>TYPE</th>
-          <th>REASON</th>
-          <th>APPLICATION</th>
-          <th>APPROVAL STATUS</th>
-          <th>DONE BY</th>
-          <th>DATE</th>
-          <th>ACTION</th>
-        </tr>
-      </tfoot>
-    </table>
+      <a href="/change_requests/create_change_request" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg flex items-center gap-2 transition-colors">
+        <i class="fas fa-plus"></i> Add New Request
+      </a>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div class="bg-white border border-gray-200 rounded-lg p-6 text-center shadow-sm">
+        <h3 id="total-requests" class="text-3xl font-bold text-gray-900 mb-2">-</h3>
+        <p class="text-gray-600 text-sm">Total Requests</p>
+      </div>
+      <div class="bg-white border border-gray-200 rounded-lg p-6 text-center shadow-sm">
+        <h3 id="pending-requests" class="text-3xl font-bold text-gray-900 mb-2">-</h3>
+        <p class="text-gray-600 text-sm">Pending Approval</p>
+      </div>
+      <div class="bg-white border border-gray-200 rounded-lg p-6 text-center shadow-sm">
+        <h3 id="delegation-requests" class="text-3xl font-bold text-gray-900 mb-2">-</h3>
+        <p class="text-gray-600 text-sm">Delegation Requests</p>
+      </div>
+      <div class="bg-white border border-gray-200 rounded-lg p-6 text-center shadow-sm">
+        <h3 id="active-delegations" class="text-3xl font-bold text-gray-900 mb-2">-</h3>
+        <p class="text-gray-600 text-sm">Active Delegations</p>
+      </div>
+    </div>
+
+    <!-- Filter Buttons -->
+    <div class="bg-white border border-gray-200 rounded-lg p-6 mb-6 shadow-sm">
+      <h3 class="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b border-gray-200">Filter Requests</h3>
+      <div class="flex flex-wrap gap-3">
+        <button class="filter-btn bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors" id="all_schedules">All Requests</button>
+        <button class="filter-btn bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors" id="incoming_cr">Awaiting Action</button>
+        <button class="filter-btn bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors" id="delegation_requests">Delegations</button>
+        <button class="filter-btn bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors" id="active_delegations">Active Delegations</button>
+      </div>
+    </div>
+    <!-- Data Table -->
+    <div class="bg-white border border-gray-200 rounded-lg p-6 mb-6 shadow-sm">
+      <h3 class="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b border-gray-200">Change Requests</h3>
+      <table id="change_request_index" class="display w-full" style="width: 100%">
+        <thead class="bg-gray-50">
+          <tr>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">TYPE</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">REASON</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">APPLICATION</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">APPROVAL STATUS</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">DONE BY</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">DATE</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ACTION</th>
+          </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200"></tbody>
+        <tfoot>
+          <tr>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">TYPE</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">REASON</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">APPLICATION</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">APPROVAL STATUS</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">DONE BY</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">DATE</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ACTION</th>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
+      <h3 class="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b border-gray-200">Quick Actions</h3>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+        <a href="/change_requests/create_change_request" class="bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg p-4 text-center transition-colors group">
+          <i class="fas fa-user-plus text-blue-600 text-xl mb-2 group-hover:text-blue-700"></i>
+          <div class="text-sm font-medium text-gray-900">Create New Profile</div>
+        </a>
+        <a href="/change_requests/create_change_request" class="bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg p-4 text-center transition-colors group">
+          <i class="fas fa-user-edit text-blue-600 text-xl mb-2 group-hover:text-blue-700"></i>
+          <div class="text-sm font-medium text-gray-900">Modify Profile</div>
+        </a>
+        <a href="/change_requests/create_change_request" class="bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg p-4 text-center transition-colors group">
+          <i class="fas fa-user-times text-blue-600 text-xl mb-2 group-hover:text-blue-700"></i>
+          <div class="text-sm font-medium text-gray-900">Deactivate Profile</div>
+        </a>
+        <a href="/change_requests/create_change_request" class="bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg p-4 text-center transition-colors group">
+          <i class="fas fa-user-shield text-blue-600 text-xl mb-2 group-hover:text-blue-700"></i>
+          <div class="text-sm font-medium text-gray-900">Create Delegation</div>
+        </a>
+        <a href="/change_requests/change_request_reports" class="bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg p-4 text-center transition-colors group">
+          <i class="fas fa-chart-bar text-blue-600 text-xl mb-2 group-hover:text-blue-700"></i>
+          <div class="text-sm font-medium text-gray-900">View Reports</div>
+        </a>
+        <a href="/change_requests/datatables/export" class="bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg p-4 text-center transition-colors group">
+          <i class="fas fa-download text-blue-600 text-xl mb-2 group-hover:text-blue-700"></i>
+          <div class="text-sm font-medium text-gray-900">Export Data</div>
+        </a>
+      </div>
+    </div>
+
   </div>
 </div>
-{% endblock %} {% block scripts %}
+{% endblock %}
+
+{% block scripts %}
 <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
 <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
 <script>
-
   const user_title = "{{user_title}}"
 
   $(document).ready(function () {
+    // Load dashboard statistics
+    loadDashboardStats();
+    
     var table = $("#change_request_index").DataTable({
       "processing": true,
       "serverSide": true,
@@ -103,27 +159,55 @@
           render: function (data, type, row, meta) {
             let sh_approval = row.section_head_approval
             let it_sh_approval = row.it_section_head_approval
+            let change_type = row.change_type
             let approval_badge = ""
-            if (sh_approval === "Approved" && it_sh_approval !== "Approved"){
-              approval_badge = `
-              <a type="button" class="bg-green-200 text-green-800 rounded px-1 py-2 w-full text-center" href='/change_requests/view_change_request?i=${row.cr_id}' >
-                APPROVED              
-              </a>`
-            } else if (sh_approval === "Approved" && it_sh_approval === "Approved"){
-              approval_badge = `
-              <a type="button" class="bg-green-300 text-green-800 rounded px-1 py-2 w-full text-center" href='/change_requests/view_change_request?i=${row.cr_id}' >
-                APPROVED & IMPLEMENTED              
-              </a>`
-            } else if (sh_approval === "Rejected" || it_sh_approval === "Rejected"){
-              approval_badge = `
-              <a type="button" class="bg-red-300 text-red-800 rounded px-1 py-2 w-full text-center" href='/change_requests/view_change_request?i=${row.cr_id}' >
-                REJECTED              
-              </a>`
+            
+            // Check if this is a delegation request
+            if (change_type === "Temporary Role Delegation") {
+              if (sh_approval === "Approved" && it_sh_approval !== "Approved"){
+                approval_badge = `
+                <a type="button" class="bg-green-200 text-green-800 rounded px-1 py-2 w-full text-center" href='/change_requests/view_change_request?i=${row.cr_id}' >
+                  DELEGATION APPROVED              
+                </a>`
+              } else if (sh_approval === "Approved" && it_sh_approval === "Approved"){
+                approval_badge = `
+                <a type="button" class="bg-green-300 text-green-800 rounded px-1 py-2 w-full text-center" href='/change_requests/view_change_request?i=${row.cr_id}' >
+                  DELEGATION ACTIVE              
+                </a>`
+              } else if (sh_approval === "Rejected" || it_sh_approval === "Rejected"){
+                approval_badge = `
+                <a type="button" class="bg-red-300 text-red-800 rounded px-1 py-2 w-full text-center" href='/change_requests/view_change_request?i=${row.cr_id}' >
+                  DELEGATION REJECTED              
+                </a>`
+              } else {
+                approval_badge = `
+                <a type="button" class="bg-purple-300 text-purple-800 rounded px-1 py-2 w-full text-center" href='/change_requests/view_change_request?i=${row.cr_id}' >
+                  DELEGATION PENDING              
+                </a>`
+              }
             } else {
-              approval_badge = `
-              <a type="button" class="bg-blue-300 text-blue-800 rounded px-1 py-2 w-full text-center" href='/change_requests/view_change_request?i=${row.cr_id}' >
-                PENDING              
-              </a>`
+              // Regular change request
+              if (sh_approval === "Approved" && it_sh_approval !== "Approved"){
+                approval_badge = `
+                <a type="button" class="bg-green-200 text-green-800 rounded px-1 py-2 w-full text-center" href='/change_requests/view_change_request?i=${row.cr_id}' >
+                  APPROVED              
+                </a>`
+              } else if (sh_approval === "Approved" && it_sh_approval === "Approved"){
+                approval_badge = `
+                <a type="button" class="bg-green-300 text-green-800 rounded px-1 py-2 w-full text-center" href='/change_requests/view_change_request?i=${row.cr_id}' >
+                  APPROVED & IMPLEMENTED              
+                </a>`
+              } else if (sh_approval === "Rejected" || it_sh_approval === "Rejected"){
+                approval_badge = `
+                <a type="button" class="bg-red-300 text-red-800 rounded px-1 py-2 w-full text-center" href='/change_requests/view_change_request?i=${row.cr_id}' >
+                  REJECTED              
+                </a>`
+              } else {
+                approval_badge = `
+                <a type="button" class="bg-blue-300 text-blue-800 rounded px-1 py-2 w-full text-center" href='/change_requests/view_change_request?i=${row.cr_id}' >
+                  PENDING              
+                </a>`
+              }
             }
             return approval_badge;
           },
@@ -158,32 +242,87 @@
       order: [[5, 'desc']]
     });
 
-    $("#all_schedules").on("click", function () {
+    // Filter button handlers
+    $(".filter-btn").on("click", function () {
+      // Remove active classes from all buttons
+      $(".filter-btn").removeClass("bg-blue-600").addClass("bg-gray-500 hover:bg-gray-600");
+      // Add active class to clicked button
+      $(this).removeClass("bg-gray-500 hover:bg-gray-600").addClass("bg-blue-600");
+      
       var newUrl = "/change_requests/datatables/all";
-      table.ajax.url(newUrl).load();
-    });
-
-    $("#incoming_cr").on("click", function () {
-      var newUrl = "/change_requests/datatables/incoming_cr";
+      var buttonId = $(this).attr("id");
+      
+      switch(buttonId) {
+        case "all_schedules":
+          newUrl = "/change_requests/datatables/all";
+          break;
+        case "incoming_cr":
+          newUrl = "/change_requests/datatables/incoming_cr";
+          break;
+        case "delegation_requests":
+          newUrl = "/change_requests/datatables/delegation_requests";
+          break;
+        case "active_delegations":
+          newUrl = "/change_requests/datatables/active_delegations";
+          break;
+      }
+      
       table.ajax.url(newUrl).load();
     });
 
   });
+
+  // Dashboard statistics function
+  function loadDashboardStats() {
+    // Load total requests
+    fetch('/change_requests/datatables/all?draw=1&start=0&length=1')
+      .then(response => response.json())
+      .then(data => {
+        document.getElementById('total-requests').textContent = data.recordsTotal || 0;
+      })
+      .catch(error => console.error('Error loading total requests:', error));
+
+    // Load pending requests
+    fetch('/change_requests/datatables/incoming_cr?draw=1&start=0&length=1')
+      .then(response => response.json())
+      .then(data => {
+        document.getElementById('pending-requests').textContent = data.recordsTotal || 0;
+      })
+      .catch(error => console.error('Error loading pending requests:', error));
+
+    // Load delegation requests
+    fetch('/change_requests/datatables/delegation_requests?draw=1&start=0&length=1')
+      .then(response => response.json())
+      .then(data => {
+        document.getElementById('delegation-requests').textContent = data.recordsTotal || 0;
+      })
+      .catch(error => console.error('Error loading delegation requests:', error));
+
+    // Load active delegations
+    fetch('/change_requests/datatables/active_delegations?draw=1&start=0&length=1')
+      .then(response => response.json())
+      .then(data => {
+        document.getElementById('active-delegations').textContent = data.recordsTotal || 0;
+      })
+      .catch(error => console.error('Error loading active delegations:', error));
+  }
 
   const region = document.getElementById('region');
   const cost_center = document.getElementById('cost_center');
 
-  region.addEventListener('change', (e) => {
-    const regionId = e.target.value;
-    fetch(`{{BASE_URL}}/users/filtered_centers/${regionId}`)
-      .then((res) => res.json())
-      .then((data) => {
-        console.log("var: ", data);
-        cost_center.innerHTML = '<option>Select Cost Centre</option>';
-        data.forEach((_cost_center) => {
-          cost_center.innerHTML += `<option value="${_cost_center.id}">${_cost_center.name}</option>`;
+  if (region && cost_center) {
+    region.addEventListener('change', (e) => {
+      const regionId = e.target.value;
+      fetch(`{{BASE_URL}}/users/filtered_centers/${regionId}`)
+        .then((res) => res.json())
+        .then((data) => {
+          console.log("var: ", data);
+          cost_center.innerHTML = '<option>Select Cost Centre</option>';
+          data.forEach((_cost_center) => {
+            cost_center.innerHTML += `<option value="${_cost_center.id}">${_cost_center.name}</option>`;
+          });
         });
-      });
-  });
+    });
+  }
 </script>
 {% endblock scripts %}

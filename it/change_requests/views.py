@@ -25,10 +25,12 @@ from django.core.validators import validate_email
 from django.core.exceptions import ValidationError
 
 from it.users.views import ms_exhange_reset_password_html, ms_exhange_send_html
+from it.users.models import RoleDelegation, DelegationNotification
 from .constants import (
     ERROR_MESSAGES, SUCCESS_MESSAGES, WARNING_MESSAGES, LOG_MESSAGES,
     MAX_REASON_LENGTH, MAX_DESCRIPTION_LENGTH, REQUIRED_CHANGE_REQUEST_FIELDS,
-    REQUIRED_NEW_PROFILE_FIELDS, URL_PATTERNS, CACHE_TIMEOUT, USER_DATA_CACHE_KEY_PREFIX
+    REQUIRED_NEW_PROFILE_FIELDS, URL_PATTERNS, CACHE_TIMEOUT, USER_DATA_CACHE_KEY_PREFIX,
+    PROFILE_CHANGE_STATUS
 )
 
 # Create your views here.
@@ -431,13 +433,13 @@ def create_new_profile(request):
             designation=designation,
             cost_center= cost_center_,
             region=region,
-            created_at=datetime.now(),
+            created_at=timezone.now(),
             roles_to_action=roles_to_action
         )
 
         user.save()
 
-        cr_id = "CR-" + datetime.now().strftime("%Y%m%d%I%M%S")
+        cr_id = "CR-" + timezone.now().strftime("%Y%m%d%I%M%S")
         cr_cost_center = request.user.cost_center
         change_request = ChangeRequest(
             application=application,
@@ -450,7 +452,7 @@ def create_new_profile(request):
             created_by=request.user,
             region=region,
             cost_center=cr_cost_center,
-            created_at=datetime.now()
+            created_at=timezone.now()
         )
         change_request.save()
         messages.success(request, "Change request submitted successfully")
@@ -504,93 +506,360 @@ def profile_modification_request(request):
 
         change_reason = request.POST.get("change_reason")
         change_description = request.POST.get("change_description")
-        profile_username = request.POST.get("user_profile")
+        delegator_username = request.POST.get("delegator")
+        delegatee_username = request.POST.get("delegatee")
         application = request.POST.get("for_application")
         roles_to_action = request.POST.get("roles_to_action")
+        change_type = request.POST.get("change_type", "PERMANENT")
         auth_user = request.user
-        print("username: ", profile_username)
-        user = UserProfile.objects.filter(username=profile_username).first()
-        if user:
-            region, cost_center = None, None
-            try:
-                region = auth_user.region
-                cost_center = auth_user.cost_center
-            except Exception as ex:
-                print("error: ", ex)
-                messages.error(request, "You does not have a region or cost center")
-                return redirect("/change_requests/change_request_index")
+        print("delegator: ", delegator_username, "delegatee: ", delegatee_username)
+        
+        # Get delegator and delegatee users
+        delegator = UserProfile.objects.filter(username=delegator_username).first()
+        delegatee = UserProfile.objects.filter(username=delegatee_username).first()
+        
+        if not delegator:
+            messages.error(request, "Delegator not found")
+            return redirect("/change_requests/change_request_index")
             
+        if not delegatee:
+            messages.error(request, "Delegatee not found")
+            return redirect("/change_requests/change_request_index")
+            
+        region, cost_center = None, None
+        try:
+            region = auth_user.region
+            cost_center = auth_user.cost_center
+        except Exception as ex:
+            print("error: ", ex)
+            messages.error(request, "You does not have a region or cost center")
+            return redirect("/change_requests/change_request_index")
+        
+        # Handle delegation requests
+        if change_type == "TEMPORARY_DELEGATION":
+            # Create ProfileChange with delegation metadata
             profile_mod = ProfileChange(
-                user=user,
-                change_date=datetime.now(),
-                changed_by=user,
-                roles_to_action=roles_to_action
+                user=delegatee,  # The delegatee receives the roles
+                application=application,
+                roles_to_action="TEMPORARY_DELEGATION",
+                change_date=timezone.now(),
+                changed_by=delegator,  # The delegator is the one delegating
+                status=PROFILE_CHANGE_STATUS['PENDING']  # Explicitly set status to PENDING
             )
             profile_mod.save()
             
-            cr_id = "CR-" + datetime.now().strftime("%Y%m%d%I%M%S")
+            # Store delegation details in roles_actions
+            import json
+            delegation_data = {
+                'type': 'DELEGATION',
+                'delegator_id': delegator.id,  # Use delegator ID instead of auth_user
+                'start_date': request.POST.get('delegation_start_date'),
+                'end_date': request.POST.get('delegation_end_date'),
+                'reason': request.POST.get('delegation_reason')
+            }
+            profile_mod.roles_actions = json.dumps(delegation_data)
+            profile_mod.save()
             
-            change_request = ChangeRequest(
-                cr_id=cr_id,
-                application=application,
-                change_type="Profile Modification",
-                profile_change=profile_mod,
-                change_description=change_description,
-                change_reason=change_reason,
-                creator_designation=user.designation,
-                created_by=request.user,
-                region=region if region else None,
-                cost_center= cost_center if cost_center else None,
-                created_at=datetime.now()
-            )
-            change_request.save()
-            
-            messages.success(request, "Change request submitted successfully")
-            
-            try:
-                # Get section head approver for this cost center
-                application = Application.objects.filter(name="Change Requests").first()
-                section_head_role = Roles.objects.filter(role="section_head", app_id=application.id).first()
-                approver_responsibilities = Responsibilities.objects.filter(
-                    role=section_head_role,
-                cost_centers__in=[cost_center]
-                ).first()
-                approver = approver_responsibilities.user if approver_responsibilities else None
-                if not approver:
-                    messages.error(request, "No section head approver found for this cost center")
-                    return redirect("/change_requests/create_change_request")
-                print("Sending email to: ", approver.email)
-                email_template_name = 'registration/email.html'
-                msg = "Profile modification request submitted successfully"
-                type_ = "Profile Modification Request"
-                app_base = "change_requests/profile_modification_request?i="+change_request.cr_id
-                c = {
-                    "email": approver.email if approver.email else "",
-                    "message": msg,
-                    "type": type_,
-                    "redirect_app_base": app_base,
-                    "id": change_request.cr_id,
-                    "domain": request.META['HTTP_HOST'],
-                    "site_name": "Zetdc Business Excellence",
-                    "protocol": 'https' if request.is_secure() else 'http',
-                }
-                email = render_to_string(email_template_name, c, request=request)
-                ms_exhange_reset_password_html(subject=type_,to_recipients=[approver.email], cc_recipients=[],template=email,
-                                                kwargs={"kwargs": c})
-                
-                if approver.section:
-                    messages.success(request, f'Section head approver {approver.first_name} {approver.last_name}, {approver.section.name} notified successfully')
-                else:
-                    messages.success(request, f'Section head approver {approver.first_name} {approver.last_name} notified successfully')
-                    
-            except Exception as ex:
-                print("Error: ", str(ex))
-                # messages.error(request, "An error occurred while sending the email: " + str(ex))
+            # Add roles to be delegated
+            selected_roles = request.POST.getlist('roles')
+            if selected_roles:
+                profile_mod.role_to_assign.set(Roles.objects.filter(id__in=selected_roles))
         else:
-            messages.error(request, "User not found")
+            # Handle regular profile modification
+            profile_mod = ProfileChange(
+                user=delegatee,  # Use delegatee for regular modifications too
+                change_date=timezone.now(),
+                changed_by=delegator,  # Use delegator as the one making the change
+                roles_to_action=roles_to_action,
+                status=PROFILE_CHANGE_STATUS['PENDING']  # Explicitly set status to PENDING
+            )
+            profile_mod.save()
+        
+        cr_id = "CR-" + timezone.now().strftime("%Y%m%d%I%M%S")
+        
+        # Determine change type for the request
+        if change_type == "TEMPORARY_DELEGATION":
+            change_type_display = "Temporary Role Delegation"
+        else:
+            change_type_display = "Profile Modification"
+        
+        change_request = ChangeRequest(
+            cr_id=cr_id,
+            application=application,
+            change_type=change_type_display,
+            profile_change=profile_mod,
+            change_description=change_description,
+            change_reason=change_reason,
+            creator_designation=delegatee.designation,  # Use delegatee's designation
+            created_by=request.user,
+            region=region if region else None,
+            cost_center= cost_center if cost_center else None,
+            created_at=timezone.now()
+        )
+        change_request.save()
+        
+        # Send delegation notifications if this is a delegation request
+        if change_type == "TEMPORARY_DELEGATION":
+            send_delegation_notifications(
+                change_request, 
+                'DELEGATION_CREATED', 
+                f"New delegation request created by {delegator.get_full_name()}"
+            )
+        
+        messages.success(request, "Change request submitted successfully")
+        
+        try:
+            # Get section head approver for this cost center
+            application = Application.objects.filter(name="Change Requests").first()
+            section_head_role = Roles.objects.filter(role="section_head", app_id=application.id).first()
+            approver_responsibilities = Responsibilities.objects.filter(
+                role=section_head_role,
+                cost_centers__in=[cost_center]
+            ).first()
+            approver = approver_responsibilities.user if approver_responsibilities else None
+            if not approver:
+                messages.error(request, "No section head approver found for this cost center")
+                return redirect("/change_requests/create_change_request")
+            print("Sending email to: ", approver.email)
+            email_template_name = 'registration/email.html'
+            msg = "Profile modification request submitted successfully"
+            type_ = "Profile Modification Request"
+            app_base = "change_requests/profile_modification_request?i="+change_request.cr_id
+            c = {
+                "email": approver.email if approver.email else "",
+                "message": msg,
+                "type": type_,
+                "redirect_app_base": app_base,
+                "id": change_request.cr_id,
+                "domain": request.META['HTTP_HOST'],
+                "site_name": "Zetdc Business Excellence",
+                "protocol": 'https' if request.is_secure() else 'http',
+            }
+            email = render_to_string(email_template_name, c, request=request)
+            ms_exhange_reset_password_html(subject=type_,to_recipients=[approver.email], cc_recipients=[],template=email,
+                                            kwargs={"kwargs": c})
+            
+            if approver.section:
+                messages.success(request, f'Section head approver {approver.first_name} {approver.last_name}, {approver.section.name} notified successfully')
+            else:
+                messages.success(request, f'Section head approver {approver.first_name} {approver.last_name} notified successfully')
+                
+        except Exception as ex:
+            print("Error: ", str(ex))
+            # messages.error(request, "An error occurred while sending the email: " + str(ex))
 
     
         return redirect("/change_requests/change_request_index")
+
+def send_delegation_notifications(change_request, notification_type, message):
+    """Send notifications for delegation requests"""
+    try:
+        if change_request.change_type == "Temporary Role Delegation" and change_request.profile_change:
+            import json
+            delegation_data = json.loads(change_request.profile_change.roles_actions) if change_request.profile_change.roles_actions else {}
+            delegator_id = delegation_data.get('delegator_id')
+            delegatee = change_request.profile_change.user
+            
+            if delegator_id:
+                delegator = UserProfile.objects.filter(id=delegator_id).first()
+                if delegator:
+                    # Notify delegator
+                    DelegationNotification.objects.create(
+                        delegation=None,  # No delegation record yet
+                        recipient=delegator,
+                        notification_type=notification_type,
+                        message=message
+                    )
+            
+            # Notify delegatee
+            DelegationNotification.objects.create(
+                delegation=None,  # No delegation record yet
+                recipient=delegatee,
+                notification_type=notification_type,
+                message=message
+            )
+            
+            # Notify approvers
+            role = change_request.created_by.get_user_role_for_application("change_requests")
+            if role and role.role == "section_head":
+                # Notify IT section heads
+                it_section_heads = UserProfile.objects.filter(
+                    roles__role="it_section_head",
+                    roles__application="change_requests"
+                ).distinct()
+                for approver in it_section_heads:
+                    DelegationNotification.objects.create(
+                        delegation=None,
+                        recipient=approver,
+                        notification_type=notification_type,
+                        message=f"New delegation request requires IT approval: {message}"
+                    )
+    except Exception as e:
+        print(f"Error sending delegation notifications: {e}")
+
+def apply_delegation_change_request(change_request):
+    """Apply delegation changes when a delegation change request is approved"""
+    if change_request.profile_change.roles_to_action == "TEMPORARY_DELEGATION":
+        try:
+            # Parse delegation metadata
+            import json
+            metadata = json.loads(change_request.profile_change.roles_actions)
+            
+            # Create RoleDelegation record for tracking
+            delegation = RoleDelegation.objects.create(
+                delegator_id=metadata['delegator_id'],
+                delegatee=change_request.profile_change.user,
+                start_date=datetime.fromisoformat(metadata['start_date']),
+                end_date=datetime.fromisoformat(metadata['end_date']),
+                reason=metadata['reason'],
+                status='ACTIVE',
+                created_by=change_request.created_by
+            )
+            
+            # Add roles to delegation
+            delegation.roles.set(change_request.profile_change.role_to_assign.all())
+            
+            # Add applications to delegation (get from the change request application)
+            if change_request.application:
+                from it.users.models import Application
+                app = Application.objects.filter(name=change_request.application).first()
+                if app:
+                    delegation.applications.add(app)
+            
+            # Create notifications
+            DelegationNotification.objects.create(
+                delegation=delegation,
+                recipient=delegation.delegatee,
+                notification_type='DELEGATION_ACTIVATED',
+                message=f"Role delegation from {delegation.delegator.get_full_name()} is now active"
+            )
+            
+            DelegationNotification.objects.create(
+                delegation=delegation,
+                recipient=delegation.delegator,
+                notification_type='DELEGATION_ACTIVATED',
+                message=f"Your role delegation to {delegation.delegatee.get_full_name()} is now active"
+            )
+            
+            return True, "Delegation activated successfully"
+        except Exception as e:
+            return False, f"Error activating delegation: {str(e)}"
+    return False, "Not a delegation request"
+
+@login_required
+def get_delegation_roles(request):
+    """API endpoint to get roles available for delegation"""
+    if request.method == "GET":
+        try:
+            delegator_id = request.GET.get('delegator_id')
+            application_name = request.GET.get('application', 'users')
+            
+            if not delegator_id:
+                return JsonResponse({'error': 'Delegator ID is required'}, status=400)
+            
+            # Get the delegator
+            delegator = UserProfile.objects.filter(id=delegator_id).first()
+            if not delegator:
+                return JsonResponse({'error': 'Delegator not found'}, status=404)
+            
+            # Get the application
+            application = Application.objects.filter(name=application_name).first()
+            if not application:
+                return JsonResponse({'error': 'Application not found'}, status=404)
+            
+            # Get roles that the delegator has for this application
+            delegator_roles = delegator.roles.filter(app_id=application.id)
+            
+            # Format roles for response
+            roles_data = []
+            for role in delegator_roles:
+                roles_data.append({
+                    'id': role.id,
+                    'name': role.role,
+                    'application': application.fullname
+                })
+            
+            return JsonResponse({
+                'success': True,
+                'roles': roles_data,
+                'delegator': {
+                    'id': delegator.id,
+                    'name': delegator.get_full_name(),
+                    'username': delegator.username
+                }
+            })
+            
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+    
+    return JsonResponse({'error': 'Method not allowed'}, status=405)
+
+@login_required
+def get_delegator_roles_by_app(request):
+    """API endpoint to get all roles grouped by application from selected delegator"""
+    if request.method == "GET":
+        try:
+            delegator_id = request.GET.get('delegator_id')
+            
+            if not delegator_id:
+                return JsonResponse({'error': 'Delegator ID is required'}, status=400)
+            
+            # Get the delegator by ID (not username)
+            try:
+                delegator = UserProfile.objects.get(id=delegator_id)
+            except UserProfile.DoesNotExist:
+                return JsonResponse({'error': 'Delegator not found'}, status=404)
+            
+            # Get all roles that the delegator has
+            delegator_roles = delegator.roles.all()
+            
+            if not delegator_roles.exists():
+                return JsonResponse({
+                    'success': True,
+                    'roles_by_app': {},
+                    'delegator': {
+                        'id': delegator.id,
+                        'name': delegator.get_full_name(),
+                        'username': delegator.username
+                    },
+                    'message': f'{delegator.get_full_name()} has no roles available for delegation'
+                })
+            
+            # Group roles by application
+            roles_by_app = {}
+            for role in delegator_roles:
+                app = role.app_id
+                if app:
+                    app_key = app.name
+                    if app_key not in roles_by_app:
+                        roles_by_app[app_key] = {
+                            'app_id': app.id,
+                            'app_name': app.name,
+                            'app_fullname': app.fullname,
+                            'roles': []
+                        }
+                    
+                    roles_by_app[app_key]['roles'].append({
+                        'id': role.id,
+                        'name': role.role,
+                        'description': getattr(role, 'description', '') or role.role
+                    })
+            
+            return JsonResponse({
+                'success': True,
+                'roles_by_app': roles_by_app,
+                'delegator': {
+                    'id': delegator.id,
+                    'name': delegator.get_full_name(),
+                    'username': delegator.username
+                }
+            })
+            
+        except Exception as e:
+            logger.error(f"Error in get_delegator_roles_by_app: {str(e)}")
+            return JsonResponse({'error': str(e)}, status=500)
+    
+    return JsonResponse({'error': 'Method not allowed'}, status=405)
 
 def remove_duplicates():
     duplicates = (
@@ -619,8 +888,9 @@ def roles_modal(request):
         
         profile_mod = ProfileChange(
             user=user,
-            change_date=datetime.now(),
-            changed_by=user
+            change_date=timezone.now(),
+            changed_by=user,
+            status='PENDING'  # Explicitly set status to PENDING
         )
         profile_mod.save()
         user.add_role(role, app_id)
@@ -678,12 +948,12 @@ def profile_deactivation_request(request):
             profile_deactivation = ProfileDeactivation(
                 user=user,
                 application=application,
-                deactivation_date=datetime.now(),
+                deactivation_date=timezone.now(),
                 deactivated_by=user
             )
             profile_deactivation.save()
 
-            cr_id = "CR-" + datetime.now().strftime("%Y%m%d%I%M%S")
+            cr_id = "CR-" + timezone.now().strftime("%Y%m%d%I%M%S")
             change_request = ChangeRequest(
                 cr_id=cr_id,
                 change_type="Profile Deactivation",
@@ -695,7 +965,7 @@ def profile_deactivation_request(request):
                 created_by=request.user,
                 region=auth_user.region,
                 cost_center=auth_user.cost_center if auth_user.cost_center else None,
-                created_at=datetime.now()
+                created_at=timezone.now()
             )
             change_request.save()
             
@@ -1287,6 +1557,15 @@ def approve_profile_request(request):
                             approval_date=timezone.now()
                         )
                         cr_approval.save()
+                        
+                        # Send delegation notifications if this is a delegation request
+                        if change_request.change_type == "Temporary Role Delegation":
+                            send_delegation_notifications(
+                                change_request, 
+                                'DELEGATION_APPROVED', 
+                                f"Delegation request approved by {request.user.get_full_name()}"
+                            )
+                        
                         messages.success(request, "Change Request approved successfully")
                         try:
                             region = change_request.region
@@ -1329,6 +1608,15 @@ def approve_profile_request(request):
                     approval_date=timezone.now()
                 )
                 cr_approval.save()
+                
+                # Send delegation notifications if this is a delegation request
+                if change_request.change_type == "Temporary Role Delegation":
+                    send_delegation_notifications(
+                        change_request, 
+                        'DELEGATION_REJECTED', 
+                        f"Delegation request rejected by {request.user.get_full_name()}"
+                    )
+                
                 messages.success(request, "Change Request rejected successfully")
                 
                 return redirect("/change_requests/change_request_index")
@@ -1362,6 +1650,15 @@ def approve_profile_request(request):
                         profile_modification.roles_actions = roles_actions
                         profile_modification.save()
                         
+                    # Handle delegation requests
+                    if change_request.change_type == "Temporary Role Delegation":
+                        success, message = apply_delegation_change_request(change_request)
+                        if success:
+                            messages.success(request, message)
+                        else:
+                            messages.error(request, message)
+                            return redirect("/change_requests/change_request_index")
+                    
                     cr_approval = CRApproval(
                         cr_id=change_request,
                         approver=request.user,
@@ -1407,6 +1704,7 @@ def change_request_reports(request):
             "user_title": user_title,
             "regions": regions
         })
+
     
 @login_required
 def datatable_data(request, view):
@@ -1530,6 +1828,18 @@ def datatable_data(request, view):
                     # records = ChangeRequest.objects.filter(~Q(crapproval__approver_role__role="it_section_head")).all()
                     print("it_section_head records: ", records)
                 print("records: ", records)
+            elif view == "delegation_requests":
+                # Filter for delegation requests only
+                records = records.filter(change_type="Temporary Role Delegation").order_by('-created_at')
+                print("delegation_requests: ", records)
+            elif view == "active_delegations":
+                # Filter for active delegation requests (approved by both levels)
+                records = records.filter(
+                    change_type="Temporary Role Delegation",
+                    crapproval__approver_role__role="it_section_head",
+                    crapproval__approval_status=True
+                ).order_by('-created_at')
+                print("active_delegations: ", records)
             # Total number of records before filtering
             total = records.count() if records else 0
 
@@ -1565,6 +1875,23 @@ def datatable_data(request, view):
                         "cost_center": obj.cost_center.name if obj.cost_center else "",
                         "created_at": obj.created_at.strftime("%Y-%m-%d %H:%M"),
                     }
+                    
+                    # Add delegation-specific information if this is a delegation request
+                    if obj.change_type == "Temporary Role Delegation" and obj.profile_change:
+                        try:
+                            import json
+                            delegation_data = json.loads(obj.profile_change.roles_actions) if obj.profile_change.roles_actions else {}
+                            change_requests["delegation_info"] = {
+                                "delegator": delegation_data.get('delegator_id'),
+                                "delegatee": obj.profile_change.user.get_full_name(),
+                                "start_date": delegation_data.get('start_date'),
+                                "end_date": delegation_data.get('end_date'),
+                                "reason": delegation_data.get('reason'),
+                                "roles_count": obj.profile_change.role_to_assign.count()
+                            }
+                        except Exception as e:
+                            print(f"Error parsing delegation data: {e}")
+                            change_requests["delegation_info"] = None
 
                     data.append(change_requests)
                 except Exception as ex:

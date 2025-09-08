@@ -14,6 +14,14 @@ APPROVAL_ROLES = {
     'IT_SECTION_HEAD': 'it_section_head'
 }
 
+# Profile Change Status
+PROFILE_CHANGE_STATUS = {
+    'PENDING': 'PENDING',
+    'APPROVED': 'APPROVED',
+    'REJECTED': 'REJECTED',
+    'IMPLEMENTED': 'IMPLEMENTED'
+}
+
 # Approval Status
 APPROVAL_STATUS = {
     'PENDING': 'Pending',
