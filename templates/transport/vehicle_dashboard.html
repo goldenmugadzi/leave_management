@@ -1,0 +1,248 @@
+{% extends 'admin_layout.html' %}
+
+{% block styles %}
+<style>
+  body {
+    font-family: 'Inter', Arial, sans-serif;
+    margin: 0;
+    background: linear-gradient(135deg, #f7f9fc, #eef1f6);
+    min-height: 100vh;
+  }
+
+  .container {
+    max-width: 1200px;
+    margin: 40px auto;
+    padding: 20px;
+  }
+
+  .dashboard-title {
+    text-align: center;
+    color: #1f2937;
+    font-weight: 700;
+    font-size: 28px;
+    margin-bottom: 30px;
+  }
+
+  /* Stats Grid */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 20px;
+    margin-bottom: 40px;
+  }
+
+  .stat-card {
+    background: white;
+    padding: 24px;
+    border-radius: 16px;
+    box-shadow: 0 6px 15px rgba(0,0,0,0.08);
+    text-align: center;
+  }
+
+  .stat-card h2 {
+    font-size: 28px;
+    font-weight: 700;
+  }
+
+  /* Cards Grid */
+  .cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 20px;
+    margin-bottom: 40px;
+  }
+
+  .card-option {
+    background: rgba(255,255,255,0.85);
+    backdrop-filter: blur(8px);
+    border-radius: 16px;
+    border: 1px solid #e5e7eb;
+    padding: 30px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease-in-out;
+    box-shadow: 0 6px 15px rgba(0,0,0,0.08);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .card-option:hover {
+    transform: translateY(-8px) scale(1.03);
+    background: #007bff;
+    color: white;
+    box-shadow: 0 10px 25px rgba(0,123,255,0.25);
+  }
+
+  .card-option h3 {
+    font-size: 18px;
+    font-weight: 600;
+    margin-top: 10px;
+  }
+
+  /* Management Table */
+  .management-table {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 6px 15px rgba(0,0,0,0.08);
+    padding: 20px;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+  <h2 class="dashboard-title">Transport Dashboard</h2>
+
+ <!-- Unified Statistics Card -->
+<div class="bg-white/90 backdrop-blur-sm rounded-lg shadow-md p-6 mb-10 border border-gray-200">
+  <h2 class="text-xl font-bold text-gray-800 mb-4">Transport Statistics Overview</h2>
+
+  <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+    <!-- Vehicles -->
+    <div class="flex items-center p-4 bg-blue-50 rounded-lg shadow-sm">
+      <div class="text-3xl mr-4">🚐</div>
+      <div>
+        <p class="text-sm font-medium text-gray-600">Total Vehicles</p>
+        <p class="text-2xl font-bold text-blue-600">{{ total_vehicles|default:0 }}</p>
+      </div>
+    </div>
+
+    <!-- Trips -->
+    <div class="flex items-center p-4 bg-green-50 rounded-lg shadow-sm">
+      <div class="text-3xl mr-4">🛣️</div>
+      <div>
+        <p class="text-sm font-medium text-gray-600">Active Trips</p>
+        <p class="text-2xl font-bold text-green-600">{{ active_trips|default:0 }}</p>
+      </div>
+    </div>
+
+    <!-- Allocations -->
+    <div class="flex items-center p-4 bg-indigo-50 rounded-lg shadow-sm">
+      <div class="text-3xl mr-4">📊</div>
+      <div>
+        <p class="text-sm font-medium text-gray-600">Allocations</p>
+        <p class="text-2xl font-bold text-indigo-600">{{ allocation_count|default:0 }}</p>
+      </div>
+    </div>
+
+    <!-- Tyre Issues -->
+    <div class="flex items-center p-4 bg-red-50 rounded-lg shadow-sm">
+      <div class="text-3xl mr-4">🛞</div>
+      <div>
+        <p class="text-sm font-medium text-gray-600">Tyre Issues</p>
+        <p class="text-2xl font-bold text-red-600">{{ tyre_issues|default:0 }}</p>
+      </div>
+    </div>
+
+    <!-- Battery Issues -->
+    <div class="flex items-center p-4 bg-yellow-50 rounded-lg shadow-sm">
+      <div class="text-3xl mr-4">🔋</div>
+      <div>
+        <p class="text-sm font-medium text-gray-600">Battery Issues</p>
+        <p class="text-2xl font-bold text-yellow-600">{{ battery_issues|default:0 }}</p>
+      </div>
+    </div>
+
+    <!-- Hired Vehicles -->
+    <div class="flex items-center p-4 bg-purple-50 rounded-lg shadow-sm">
+      <div class="text-3xl mr-4">📑</div>
+      <div>
+        <p class="text-sm font-medium text-gray-600">Hired Vehicles</p>
+        <p class="text-2xl font-bold text-purple-600">{{ hired_vehicles|default:0 }}</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+ <!-- Quick Access Cards -->
+<p class="text-center text-gray-600 mb-6">Manage Transport Operations</p>
+<div class="cards-grid">
+  
+  <a href="/vehicles" class="card-option flex flex-col items-start hover:shadow-xl hover:-translate-y-1 hover:bg-white transition-all duration-300 border border-nepal-100">
+    <div class="text-4xl mb-3">🚐</div>
+    <h3 class="text-lg font-bold text-nepal-800 mb-1">Vehicle Details</h3>
+    <p class="text-sm text-nepal-600 flex-grow">View and manage all registered vehicles.</p>
+  </a>
+
+  <a href="/trip_list" class="card-option flex flex-col items-start hover:shadow-xl hover:-translate-y-1 hover:bg-white transition-all duration-300 border border-nepal-100">
+    <div class="text-4xl mb-3">🛣️</div>
+    <h3 class="text-lg font-bold text-nepal-800 mb-1">Trip Details</h3>
+    <p class="text-sm text-nepal-600 flex-grow">Monitor active and completed trips.</p>
+  </a>
+
+  <a href="/table_vehicle" class="card-option flex flex-col items-start hover:shadow-xl hover:-translate-y-1 hover:bg-white transition-all duration-300 border border-nepal-100">
+    <div class="text-4xl mb-3">⚙️</div>
+    <h3 class="text-lg font-bold text-nepal-800 mb-1">Vehicle Management</h3>
+    <p class="text-sm text-nepal-600 flex-grow">Schedule service and check fleet condition.</p>
+  </a>
+
+  <a href="/allocations" class="card-option flex flex-col items-start hover:shadow-xl hover:-translate-y-1 hover:bg-white transition-all duration-300 border border-nepal-100">
+    <div class="text-4xl mb-3">📊</div>
+    <h3 class="text-lg font-bold text-nepal-800 mb-1">Allocation Summary</h3>
+    <p class="text-sm text-nepal-600 flex-grow">View driver and vehicle assignments.</p>
+  </a>
+
+  <a href="/tyres" class="card-option flex flex-col items-start hover:shadow-xl hover:-translate-y-1 hover:bg-white transition-all duration-300 border border-nepal-100">
+    <div class="text-4xl mb-3">🛞</div>
+    <h3 class="text-lg font-bold text-nepal-800 mb-1">Tyre Issues</h3>
+    <p class="text-sm text-nepal-600 flex-grow">Track reported tyre issues and fixes.</p>
+  </a>
+
+  <a href="/batteries" class="card-option flex flex-col items-start hover:shadow-xl hover:-translate-y-1 hover:bg-white transition-all duration-300 border border-nepal-100">
+    <div class="text-4xl mb-3">🔋</div>
+    <h3 class="text-lg font-bold text-nepal-800 mb-1">Battery Issues</h3>
+    <p class="text-sm text-nepal-600 flex-grow">Monitor vehicles with battery problems.</p>
+  </a>
+
+  <a href="/hired_vehicles" class="card-option flex flex-col items-start hover:shadow-xl hover:-translate-y-1 hover:bg-white transition-all duration-300 border border-nepal-100">
+    <div class="text-4xl mb-3">📑</div>
+    <h3 class="text-lg font-bold text-nepal-800 mb-1">Hired Vehicles</h3>
+    <p class="text-sm text-nepal-600 flex-grow">Check records of hired/leased vehicles.</p>
+  </a>
+
+</div>
+
+
+  <!-- Management Table -->
+  <div class="management-table mt-10">
+    <h2 class="text-xl font-semibold text-gray-800 mb-4">Recent Transport Activities</h2>
+    <div class="overflow-x-auto">
+      <table class="min-w-full border border-gray-200 rounded-lg">
+        <thead class="bg-gray-100">
+          <tr>
+            <th class="px-4 py-2 text-left text-sm font-semibold text-gray-600">ID</th>
+            <th class="px-4 py-2 text-left text-sm font-semibold text-gray-600">Type</th>
+            <th class="px-4 py-2 text-left text-sm font-semibold text-gray-600">Vehicle</th>
+            <th class="px-4 py-2 text-left text-sm font-semibold text-gray-600">Status</th>
+            <th class="px-4 py-2 text-left text-sm font-semibold text-gray-600">Date</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for record in recent_records %}
+          <tr class="border-t">
+            <td class="px-4 py-2 text-sm text-gray-700">{{ record.id }}</td>
+            <td class="px-4 py-2 text-sm text-gray-700 capitalize">{{ record.type }}</td>
+            <td class="px-4 py-2 text-sm text-gray-700">{{ record.vehicle }}</td>
+            <td class="px-4 py-2 text-sm">
+              <span class="px-3 py-1 rounded-full text-xs font-medium 
+                {% if record.status == 'Ongoing' %} bg-yellow-100 text-yellow-700 
+                {% elif record.status == 'Completed' %} bg-green-100 text-green-700 
+                {% else %} bg-gray-100 text-gray-700 {% endif %}">
+                {{ record.status }}
+              </span>
+            </td>
+            <td class="px-4 py-2 text-sm text-gray-700">{{ record.date|date:"Y-m-d" }}</td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="5" class="text-center text-gray-500 py-4">No records available.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+{% endblock %}

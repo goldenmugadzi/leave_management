@@ -3,7 +3,7 @@ from django.http import HttpResponseRedirect
 from django.contrib.auth import authenticate, login ,logout
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from.models import TransportAssets
+from.models import TransportAssets,Tyres, Battery, Allocation
 import json
 import csv
 from django.http import HttpResponse
@@ -16,7 +16,10 @@ from django.urls import reverse
 from django.template.loader import render_to_string
 from.models import*
 from it.users.models import Regions, Sections, UserProfile,Designations,CostCenter
-from.forms import  TripRecordForm
+from.forms import  TripRecordForm, TripDetailsForm
+from django.shortcuts import render, redirect
+
+
 
 def register_vehicle(request):
    if request.method == 'POST':
@@ -208,3 +211,112 @@ def vehicle_datatable(request):
         "recordsFiltered": total,
         "data": data
     })
+
+def vehicle_dashboard (request):
+  return render(request,'transport/vehicle_dashboard.html')
+
+def add_trip(request):
+    if request.method == "POST":
+        form = TripDetailsForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect("trip_list") 
+    else:
+        form = TripDetailsForm()
+    return render(request, "transport/trip.html", {"form": form})
+
+def trip_list(request):
+    return render(request, 'transport/trip_table.html')
+
+def trip_datatable(request):
+    draw = int(request.GET.get('draw', 1))
+    start = int(request.GET.get('start', 0))
+    length = int(request.GET.get('length', 10))
+    search_value = request.GET.get('search[value]', '')
+
+    qs = TripRecord.objects.all()
+
+    # Search filtering
+    if search_value:
+        qs = qs.filter(
+            Q(vehicle_details__icontains=search_value) |
+            Q(drivers_name__username__icontains=search_value) |
+            Q(stf_number__icontains=search_value) |
+            Q(details_of_journey__icontains=search_value)
+        )
+
+    total = qs.count()
+    qs = qs.order_by('-date')[start:start+length]
+
+    data = []
+    for trip in qs:
+        data.append({
+            "vehicle": str(trip.vehicle_details),
+            "driver": str(trip.drivers_name) if trip.drivers_name else "",
+            "date": trip.date.strftime("%Y-%m-%d %H:%M"),
+            "stf_number": trip.stf_number,
+            "opening_speedo_reading": trip.opening_speedo_reading,
+            "closing_speedo_reading": trip.closing_speedo_reading,
+            "details_of_journey": trip.details_of_journey,
+        })
+
+    return JsonResponse({
+        "draw": draw,
+        "recordsTotal": total,
+        "recordsFiltered": total,
+        "data": data
+    })
+
+def vehicle_datatable(request):
+    draw = int(request.GET.get('draw', 1))
+    start = int(request.GET.get('start', 0))
+    length = int(request.GET.get('length', 10))
+    search_value = request.GET.get('search[value]', '')
+
+    qs = TransportAssets.objects.all()
+
+    # Search filter
+    if search_value:
+        qs = qs.filter(
+            Q(reg_number__icontains=search_value) |
+            Q(fleet_number__icontains=search_value) |
+            Q(make__icontains=search_value) |
+            Q(model__icontains=search_value) |
+            Q(year__icontains=search_value) |
+            Q(fuel_type__icontains=search_value)
+        )
+
+    total = qs.count()
+    qs = qs.order_by('-id')[start:start+length]
+
+    data = []
+    for asset in qs:
+        data.append({
+            "reg_number": asset.reg_number,
+            "fleet_number": asset.fleet_number,
+            "make": asset.make,
+            "model": asset.model,
+            "year": asset.year,
+            "fuel_drawn": asset.fuel_drawn,
+            "oil_drawn": asset.oil_drawn,
+            "fuel_type": asset.fuel_type,
+        })
+
+    return JsonResponse({
+        "draw": draw,
+        "recordsTotal": total,
+        "recordsFiltered": total,
+        "data": data
+    })
+
+def vehicle_list(request):
+    return render(request, 'transport/details.html')
+
+def tyres_list(request):
+    return render(request, 'transport/tyres.html')
+
+def battery_list(request):
+    return render(request, 'transport/battery.html')
+
+def allocation_list(request):
+    return render(request, 'transport/allocation.html')

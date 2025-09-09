@@ -7,6 +7,14 @@ urlpatterns = [
     path('table_vehicle/', views.table_vehicle, name="table_vehicle"),
     path('vehicle_datatable/', views.vehicle_datatable),
     path('update_vehicle/<str:id>/', views.update_vehicle, name="update_vehicle"),
-    path('upload_vehicle/', views.upload_vehicle, name='upload_vehicle')
-    
+    path('upload_vehicle/', views.upload_vehicle, name='upload_vehicle'),
+    path('vehicle_dashboard/', views.vehicle_dashboard, name='vehicle_dashboard'),
+    path('add_trip/', views.add_trip, name=' add_trip'),
+    path('trip_list/', views.trip_list, name='  trip_list'),
+    path('trips/datatable/', views.trip_datatable, name='trip_datatable'),
+    path('vehicles/', views.vehicle_list, name='vehicle_list'),
+    path('vehicles/datatable/', views.vehicle_datatable, name='vehicle_datatable'),
+    path("tyres/", views.tyres_list, name="tyres_list"),
+    path("batteries/", views.battery_list, name="battery_list"),
+    path("allocations/", views.allocation_list, name="allocation_list"),
 ]

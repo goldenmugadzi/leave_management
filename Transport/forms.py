@@ -6,7 +6,7 @@ class  TripRecordForm(forms.ModelForm):
     class Meta:
         model = TripRecord
         fields = '__all__'
-        exclude = ['year','total_km','total_oil','total_fuel','average_consumption','trp_distance']
+        exclude = ['year','total_km','total_oil','total_fuel','average_consumption','trp_distance','designation']
         
         widgets = {
              'date': forms.DateTimeInput(
@@ -34,3 +34,47 @@ class  TripRecordForm(forms.ModelForm):
 
             if isinstance(field.widget, forms.Textarea):
                 field.widget.attrs.update({'rows': '3'})
+                
+from django import forms
+from .models import TripRecord
+
+
+class TripDetailsForm(forms.ModelForm):
+    class Meta:
+        model =  TripRecord
+        fields = [
+            "vehicle_details",
+            "drivers_name",
+            "date",
+            "stf_number",
+            "opening_speedo_reading",
+            "closing_speedo_reading",
+            "details_of_journey",
+           
+        ]
+        widgets = {
+            "vehicle_details": forms.Select(attrs={
+                "class": "w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm"
+            }),
+            "drivers_name": forms.Select(attrs={
+                "class": "w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm"
+            }),
+            "date": forms.DateInput(attrs={
+                "type": "date",
+                "class": "w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm"
+            }),
+            "stf_number": forms.TextInput(attrs={
+                "class": "w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm"
+            }),
+            "opening_speedo_reading": forms.NumberInput(attrs={
+                "class": "w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm"
+            }),
+            "closing_speedo_reading": forms.NumberInput(attrs={
+                "class": "w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm"
+            }),
+            "details_of_journey": forms.Textarea(attrs={
+                "rows": 3,
+                "class": "w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500 text-sm"
+            }),
+        }
+

@@ -98,6 +98,27 @@ class TripRecord(models.Model):
     def __str__(self):
         return f"Trip on {self.date} for {self.vehicle}"
 
+class Tyres(models.Model):
+    quantity = models.CharField(max_length=400)
+    name= models.CharField(max_length=300)
+    size = models.PositiveIntegerField(default=0)
+    date_fitted = models.DateField(default=datetime.today)
 
+    def __str__(self):
+        return f"{self.model} - {self.name}"
+    
+class Battery(models.Model):
+    name= models.CharField(max_length=300)
+    number = models.PositiveIntegerField(default=0)
+    date_fitted = models.DateField(default=datetime.today)
 
+    def __str__(self):
+        return f"{self.model} - {self.name}"
 
+class Allocation(models.Model):
+    kms= models.CharField(max_length=300)
+    job_number = models.PositiveIntegerField(default=0)
+    amount =  models.PositiveIntegerField(default=0)
+
+    def __str__(self):
+        return f"{self.model} - {self.amount}"
