@@ -138,6 +138,11 @@ APPLICATIONS = [
         "title": "Battery Maintenance",
         "iconUrl": "assets/images/customer.png",
         "url": "/installations/"
+    },  {
+        "name": "Tools & Equipment",
+        "title": "Tools & Equipment",
+        "iconUrl": "assets/images/tools&equipment.png",
+        "url": "/tools-and-equipment-list/"
     },
     # {
     #     "name":"fault_locator",
@@ -477,7 +482,7 @@ def home(request):
             "user_title": user_title,
             "user_groups": user_groups,
             "user": custom_user
-        })
+        }) 
 
 
 @login_required(login_url='/accounts/login')
@@ -1288,3 +1293,5 @@ def test_email(request):
     except Exception as e:
         logger.error(f"Test email failed: {str(e)}", exc_info=True)
         return HttpResponse(f"<h1>Email Test Failed</h1><p>Error: {str(e)}</p>")
+
+

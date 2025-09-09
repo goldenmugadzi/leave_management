@@ -15,7 +15,7 @@ class ToolOrEquipment(models.Model):
       
 class ToolsAndEquipmentForm(models.Model):
    id = models.CharField(primary_key=True, max_length=20, editable=False)
-   artisan = models.ForeignKey(UserProfile, on_delete=models.SET_NULL, null=True, related_name='te_forms_toolsandequipment')
+   artisan = models.ForeignKey(UserProfile, on_delete=models.SET_NULL, null=True, related_name='toolsandequipment')
    issued_by = models.ForeignKey(UserProfile, on_delete=models.SET_NULL, null=True, related_name='te_issued_tools_toolsandequipment')
    cost_center = models.ForeignKey(CostCenter, on_delete=models.SET_NULL, null=True, blank=True, related_name='te_toolsandequipment')
    issued_at = models.DateTimeField(auto_now_add=True)
@@ -46,3 +46,15 @@ class AssignedToolOrEquipment(models.Model):
 
     def __str__(self):
         return f"{self.tool_or_equipment.name} ({self.quantity})"
+class Comment(models.Model):
+    assigned_tool_or_equipment = models.ForeignKey(AssignedToolOrEquipment, on_delete=models.CASCADE, related_name='comments')
+    comment = models.TextField()
+    author = models.ForeignKey(UserProfile, on_delete=models.SET_NULL, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Comment"
+        verbose_name_plural = "Comments"
+
+    def __str__(self):
+        return f"Comment on {self.assigned_tool_or_equipment.tool_or_equipment.name} at {self.created_at}"

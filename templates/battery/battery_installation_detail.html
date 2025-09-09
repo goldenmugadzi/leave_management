@@ -62,7 +62,7 @@
             <div class=" text-center">
                 <div class=" text-center">
                     <span class="inline-block font-bold text-start rounded-full text-sm">Installed at:</span>
-                    <span class="inline-block text-end rounded-full text-sm">{{  installation.substation|default_if_none:'' }}</span>
+                    <span class="inline-block text-end rounded-full text-sm">{{  installation.substation.name|default_if_none:'' }} ({{  installation.substation.code|default_if_none:'' }} )</span>
                     
                 </div>
             </div>

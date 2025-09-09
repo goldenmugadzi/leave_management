@@ -1,9 +1,10 @@
-from django.views.generic import View
+from django.views.generic import View, DetailView
 from django.shortcuts import render, redirect
 from django.forms import modelform_factory, inlineformset_factory
 from django.contrib.auth.mixins import LoginRequiredMixin
 from .models import  ToolsAndEquipmentForm, AssignedToolOrEquipment, ToolOrEquipment
-
+import pandas as pd
+from django.core.management.base import BaseCommand
 
 ToolsAndEquipmentFormForm = modelform_factory(ToolsAndEquipmentForm, exclude=["received_by", "issued_by", "issued_at"]) 
 class ToolsAndEquipmentFormCreateView(LoginRequiredMixin, View):
@@ -64,9 +65,11 @@ class ToolsAndEquipmentFormListView(LoginRequiredMixin, View):
     def get(self, request):
         forms = ToolsAndEquipmentForm.objects.all().order_by('-issued_at')
         return render(request, self.template_name, {'teforms': forms})
-# yourapp/management/commands/upload_tools.py
-import pandas as pd
-from django.core.management.base import BaseCommand
+
+class ToolsAndEquipmentDetailView(LoginRequiredMixin, DetailView):
+    model = ToolsAndEquipmentForm
+    template_name = 'ToolsandEquipment/tools_and_equipment_detail.html'
+    context_object_name = 'teform'
 
 class Command(BaseCommand):
     help = 'Upload tools from TOOLS.xls into the ToolOrEquipment model'
