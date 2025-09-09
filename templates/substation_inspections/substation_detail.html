@@ -1,0 +1,256 @@
+{% extends 'admin_layout.html' %}
+{% load static %}
+
+{% block title %}{{ substation.name }}{% endblock %}
+
+{% block content %}
+<div class="content-wrapper">
+  <div class="bg-gray-50 border border-gray-200 rounded-lg px-6 py-6 max-w-7xl mx-auto">
+    
+    <!-- Header -->
+    <div class="flex flex-col lg:flex-row lg:justify-between lg:items-center mb-6">
+      <div class="mb-4 lg:mb-0">
+        <h1 class="text-2xl font-bold text-gray-900">{{ substation.name }}</h1>
+        <p class="text-gray-600 mt-1">Substation Details and Inspection Information</p>
+      </div>
+      <div class="flex space-x-3">
+        <a href="{% url 'substation_inspections:substation_edit' substation.pk %}" 
+           class="inline-flex items-center px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors">
+          <i class="fas fa-pencil mr-2"></i>Edit
+        </a>
+        <a href="{% url 'substation_inspections:substation_list' %}" 
+           class="inline-flex items-center px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors">
+          <i class="fas fa-arrow-left mr-2"></i>Back to List
+        </a>
+      </div>
+    </div>
+
+    <!-- Substation Information -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+      <div class="lg:col-span-2">
+        <div class="bg-white border border-gray-200 rounded-lg shadow-sm">
+          <div class="px-6 py-4 border-b border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-900">Substation Details</h3>
+          </div>
+            <div class="p-6">
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="space-y-4">
+                  <div>
+                    <dt class="text-sm font-medium text-gray-500">Code</dt>
+                    <dd class="mt-1 text-sm text-gray-900">{{ substation.substation_code }}</dd>
+                  </div>
+                  <div>
+                    <dt class="text-sm font-medium text-gray-500">Name</dt>
+                    <dd class="mt-1 text-sm text-gray-900">{{ substation.name }}</dd>
+                  </div>
+                  <div>
+                    <dt class="text-sm font-medium text-gray-500">Type</dt>
+                    <dd class="mt-1 text-sm text-gray-900">{{ substation.get_substation_type_display }}</dd>
+                  </div>
+                  <div>
+                    <dt class="text-sm font-medium text-gray-500">Voltage Level</dt>
+                    <dd class="mt-1 text-sm text-gray-900">{{ substation.get_voltage_level_display }}</dd>
+                  </div>
+                  <div>
+                    <dt class="text-sm font-medium text-gray-500">Location</dt>
+                    <dd class="mt-1 text-sm text-gray-900">{{ substation.location }}</dd>
+                  </div>
+                </div>
+                <div class="space-y-4">
+                  <div>
+                    <dt class="text-sm font-medium text-gray-500">District</dt>
+                    <dd class="mt-1 text-sm text-gray-900">{{ substation.district }}</dd>
+                  </div>
+                  <div>
+                    <dt class="text-sm font-medium text-gray-500">Region</dt>
+                    <dd class="mt-1 text-sm text-gray-900">{{ substation.region }}</dd>
+                  </div>
+                  <div>
+                    <dt class="text-sm font-medium text-gray-500">Status</dt>
+                    <dd class="mt-1">
+                      <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                        {% if substation.is_active %}bg-green-100 text-green-800{% else %}bg-red-100 text-red-800{% endif %}">
+                        {% if substation.is_active %}Active{% else %}Inactive{% endif %}
+                      </span>
+                    </dd>
+                  </div>
+                  <div>
+                    <dt class="text-sm font-medium text-gray-500">Last Inspection</dt>
+                    <dd class="mt-1 text-sm text-gray-900">
+                      {% if substation.last_inspection_date %}
+                        {{ substation.last_inspection_date|date:"M d, Y" }}
+                      {% else %}
+                        <span class="text-gray-400">Never</span>
+                      {% endif %}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt class="text-sm font-medium text-gray-500">Next Scheduled</dt>
+                    <dd class="mt-1 text-sm text-gray-900">
+                      {% if substation.next_scheduled_inspection %}
+                        {{ substation.next_scheduled_inspection|date:"M d, Y" }}
+                      {% else %}
+                        <span class="text-gray-400">Not scheduled</span>
+                      {% endif %}
+                    </dd>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      <!-- Equipment Inventory -->
+      <div>
+        <div class="bg-white border border-gray-200 rounded-lg shadow-sm">
+          <div class="px-6 py-4 border-b border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-900">Equipment Inventory</h3>
+          </div>
+            <div class="p-6">
+              <div class="space-y-6">
+                <div class="text-center">
+                  <div class="text-3xl font-bold text-blue-600">{{ substation.transformers_count }}</div>
+                  <div class="text-sm text-gray-500">Transformers</div>
+                </div>
+                <div class="text-center">
+                  <div class="text-3xl font-bold text-green-600">{{ substation.circuit_breakers_count }}</div>
+                  <div class="text-sm text-gray-500">Circuit Breakers</div>
+                </div>
+                <div class="text-center">
+                  <div class="text-3xl font-bold text-indigo-600">{{ substation.switchgear_count }}</div>
+                  <div class="text-sm text-gray-500">Switchgear</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    <!-- Inspection Statistics -->
+    <div class="bg-white border border-gray-200 rounded-lg mb-8 shadow-sm">
+      <div class="px-6 py-4 border-b border-gray-200">
+        <h3 class="text-lg font-semibold text-gray-900">Inspection Statistics</h3>
+      </div>
+        <div class="p-6">
+          <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+            <div class="text-center">
+              <div class="text-3xl font-bold text-blue-600">{{ total_inspections }}</div>
+              <div class="text-sm text-gray-500">Total Inspections</div>
+            </div>
+            <div class="text-center">
+              <div class="text-3xl font-bold text-green-600">{{ completed_inspections }}</div>
+              <div class="text-sm text-gray-500">Completed</div>
+            </div>
+            <div class="text-center">
+              <div class="text-3xl font-bold text-yellow-600">{{ pending_inspections }}</div>
+              <div class="text-sm text-gray-500">Pending</div>
+            </div>
+            <div class="text-center">
+              <div class="text-3xl font-bold text-indigo-600">
+                {% if total_inspections > 0 %}
+                  {{ completed_inspections|floatformat:0|div:total_inspections|mul:100|floatformat:0 }}%
+                {% else %}
+                  0%
+                {% endif %}
+              </div>
+              <div class="text-sm text-gray-500">Completion Rate</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    <!-- Inspection Schedules and Recent Reports -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <!-- Active Schedules -->
+      <div class="bg-white border border-gray-200 rounded-lg shadow-sm">
+        <div class="px-6 py-4 border-b border-gray-200">
+          <h3 class="text-lg font-semibold text-gray-900">Active Schedules</h3>
+        </div>
+          <div class="p-6">
+            {% if schedules %}
+              <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                  <thead class="bg-gray-50">
+                    <tr>
+                      <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Frequency</th>
+                      <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Day of Month</th>
+                      <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Inspector</th>
+                      <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reminder Days</th>
+                    </tr>
+                  </thead>
+                  <tbody class="bg-white divide-y divide-gray-200">
+                    {% for schedule in schedules %}
+                    <tr class="hover:bg-gray-50">
+                      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ schedule.get_frequency_display }}</td>
+                      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ schedule.day_of_month }}</td>
+                      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ schedule.assigned_inspector.get_full_name|default:"Not Assigned" }}</td>
+                      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ schedule.reminder_days_before }}</td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            {% else %}
+              <div class="text-center py-8 text-gray-500">
+                <i class="fas fa-calendar text-4xl mb-4"></i>
+                <div class="text-sm">No active schedules found</div>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+
+      <!-- Recent Reports -->
+      <div class="bg-white border border-gray-200 rounded-lg shadow-sm">
+        <div class="px-6 py-4 border-b border-gray-200">
+          <h3 class="text-lg font-semibold text-gray-900">Recent Inspection Reports</h3>
+        </div>
+          <div class="p-6">
+            {% if recent_reports %}
+              <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                  <thead class="bg-gray-50">
+                    <tr>
+                      <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Report #</th>
+                      <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                      <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                      <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody class="bg-white divide-y divide-gray-200">
+                    {% for report in recent_reports %}
+                    <tr class="hover:bg-gray-50">
+                      <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{{ report.report_number }}</td>
+                      <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{ report.inspection_date|date:"M d, Y" }}</td>
+                      <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                          {% if report.status == 'completed' %}bg-green-100 text-green-800
+                          {% elif report.status == 'in_progress' %}bg-blue-100 text-blue-800
+                          {% elif report.status == 'overdue' %}bg-red-100 text-red-800
+                          {% else %}bg-yellow-100 text-yellow-800{% endif %}">
+                          {{ report.get_status_display }}
+                        </span>
+                      </td>
+                      <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <a href="{% url 'substation_inspections:inspection_report_detail' report.pk %}" 
+                           class="text-blue-600 hover:text-blue-900">
+                          View
+                        </a>
+                      </td>
+                    </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            {% else %}
+              <div class="text-center py-8 text-gray-500">
+                <i class="fas fa-file-document text-4xl mb-4"></i>
+                <div class="text-sm">No inspection reports found</div>
+              </div>
+            {% endif %}
+          </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

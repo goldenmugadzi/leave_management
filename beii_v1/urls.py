@@ -79,6 +79,7 @@ urlpatterns = [
     path('', include('leave_management.urls')),
     path('sanction_for_test/', include('sanction_for_test.urls')),
     path('inspections/', include('inspections.urls')),
+    path('substation-inspections/', include('substation_inspections.urls')),
     
     path('api-auth/', include('rest_framework.urls')),
     path("gql/", csrf_exempt(FileUploadGraphQLView.as_view(graphiql=True))),  # <-- wrap with csrf_exempt

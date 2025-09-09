@@ -153,7 +153,8 @@ INSTALLED_APPS = [
     'leave_management',
     'sanction_for_test',
     'utils',
-    'inspections'
+    'inspections',
+    'substation_inspections'
 ]
 
 AUTH_USER_MODEL = 'users.UserProfile'
