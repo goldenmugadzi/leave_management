@@ -1,0 +1,47 @@
+<div class="max-w-3xl mx-auto">
+
+    <h1 class="font-bold mb-2">{{ weight_of }} Weight Progress</h1>
+    
+    <!-- Progress Bar Container -->
+    <div class="bg-gray-200 rounded-full h-6 overflow-hidden border-4 border-white">
+      <!-- Covered Weight Progress -->
+      <div 
+        id="covered-progress" 
+        class="bg-blue-500 h-6 rounded-l-full animate-pulse" 
+        style="width: 0%;"
+      ></div>
+      <!-- Remaining Weight Progress -->
+      <div 
+        id="remaining-progress" 
+        class="bg-white h-6" 
+        style="width: 0%;"
+      ></div>
+    </div>
+
+    <!-- Labels -->
+    <div class="mt-2 flex justify-between gap-2 text-sm text-gray-700">
+      <span>Covered: <span id="covered-label">0%</span></span>
+      <span>Remaining: <span id="remaining-label">0%</span></span>
+    </div>
+
+
+  <script>
+    // JavaScript function to update the progress bar
+    function updateProgressBar(weight, coveredWeight, remainWeight) {
+      const coveredPercentage = (coveredWeight / weight) * 100;
+      const remainingPercentage = (remainWeight / weight) * 100;
+
+      document.getElementById('covered-progress').style.width = `${coveredPercentage}%`;
+      document.getElementById('remaining-progress').style.width = `${remainingPercentage}%`;
+      document.getElementById('covered-label').textContent = `${coveredWeight.toFixed(2)}%`;
+      document.getElementById('remaining-label').textContent = `${remainWeight.toFixed(2)}%`;
+    }
+
+    // Call the function with values from Django
+    updateProgressBar(
+      {{ weight }}, 
+      {{ covered_weight }}, 
+      {{ remain_weight }}
+    );
+  </script>
+</div>

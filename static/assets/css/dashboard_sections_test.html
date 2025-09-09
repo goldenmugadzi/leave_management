@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Sections CSS Test</title>
+    <link rel="stylesheet" href="dashboard_sections.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background-color: #f8fafc;
+            padding: 2rem;
+        }
+    </style>
+</head>
+<body>
+    <h1 class="text-3xl font-bold mb-8 text-center">Dashboard Sections CSS Test</h1>
+    
+    <!-- Test Grid Layout -->
+    <div class="dashboard-grid grid grid-cols-3 gap-4 mb-8">
+        
+        <!-- Weekly Collections Section -->
+        <div class="dashboard-section weekly-collections-section">
+            <div class="dashboard-section-header">
+                💰 Weekly Collections
+            </div>
+            <div class="table-container" style="height: 200px; overflow-y: auto;">
+                <table class="editable-table">
+                    <thead>
+                        <tr>
+                            <th>Week</th>
+                            <th>ZWL (M)</th>
+                            <th>USD (M)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="font-semibold">Week 1</td>
+                            <td class="editable-cell currency-value" data-tooltip="Click to edit">5.2M</td>
+                            <td class="editable-cell currency-value" data-tooltip="Click to edit">2.1M</td>
+                        </tr>
+                        <tr>
+                            <td class="font-semibold">Week 2</td>
+                            <td class="editable-cell currency-value" data-tooltip="Click to edit">6.8M</td>
+                            <td class="editable-cell currency-value" data-tooltip="Click to edit">3.4M</td>
+                        </tr>
+                        <tr>
+                            <td class="font-semibold">Week 3</td>
+                            <td class="editable-cell currency-value cell-loading" data-tooltip="Saving...">4.5M</td>
+                            <td class="editable-cell currency-value" data-tooltip="Click to edit">1.8M</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Weekly Revenue Lost Section -->
+        <div class="dashboard-section weekly-revenue-lost-section">
+            <div class="dashboard-section-header">
+                ⚡ Weekly Revenue Lost
+            </div>
+            <div class="table-container" style="height: 200px; overflow-y: auto;">
+                <table class="editable-table">
+                    <thead>
+                        <tr>
+                            <th>Week</th>
+                            <th>Faults (MWh)</th>
+                            <th>Maintenance (MWh)</th>
+                            <th>Total (MWh)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="font-semibold">Week 1</td>
+                            <td class="editable-cell mwh-value" data-tooltip="Click to edit">120.5 MWh</td>
+                            <td class="editable-cell mwh-value" data-tooltip="Click to edit">85.2 MWh</td>
+                            <td class="non-editable-cell auto-calculated" data-tooltip="Auto-calculated">205.7 MWh</td>
+                        </tr>
+                        <tr>
+                            <td class="font-semibold">Week 2</td>
+                            <td class="editable-cell mwh-value cell-success" data-tooltip="Recently saved">95.3 MWh</td>
+                            <td class="editable-cell mwh-value" data-tooltip="Click to edit">110.8 MWh</td>
+                            <td class="non-editable-cell auto-calculated" data-tooltip="Auto-calculated">206.1 MWh</td>
+                        </tr>
+                        <tr>
+                            <td class="font-semibold">Week 3</td>
+                            <td class="editable-cell mwh-value cell-error" data-tooltip="Error occurred">150.0 MWh</td>
+                            <td class="editable-cell mwh-value" data-tooltip="Click to edit">75.5 MWh</td>
+                            <td class="non-editable-cell auto-calculated" data-tooltip="Auto-calculated">225.5 MWh</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Debtors Section -->
+        <div class="dashboard-section debtors-section">
+            <div class="dashboard-section-header">
+                📊 Debtors by Category
+            </div>
+            <div class="table-container" style="height: 200px; overflow-y: auto;">
+                <table class="editable-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Category</th>
+                            <th>Percentage (%)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="font-semibold">1</td>
+                            <td class="font-semibold">Mining</td>
+                            <td class="editable-cell percentage-value" data-tooltip="Click to edit">35.5%</td>
+                        </tr>
+                        <tr>
+                            <td class="font-semibold">2</td>
+                            <td class="font-semibold">Domestic</td>
+                            <td class="editable-cell percentage-value" data-tooltip="Click to edit">28.2%</td>
+                        </tr>
+                        <tr>
+                            <td class="font-semibold">3</td>
+                            <td class="font-semibold">Industry</td>
+                            <td class="editable-cell percentage-value" data-tooltip="Click to edit">20.8%</td>
+                        </tr>
+                        <tr>
+                            <td class="font-semibold">4</td>
+                            <td class="font-semibold">Commercial</td>
+                            <td class="editable-cell percentage-value" data-tooltip="Click to edit">15.5%</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Test Inline Editing -->
+    <div class="mb-8">
+        <h2 class="text-2xl font-bold mb-4">Inline Editing Test</h2>
+        <div class="dashboard-section weekly-collections-section max-w-md">
+            <div class="dashboard-section-header">
+                Inline Edit Demo
+            </div>
+            <div class="table-container">
+                <table class="editable-table">
+                    <thead>
+                        <tr>
+                            <th>Field</th>
+                            <th>Value</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td class="font-semibold">Currency</td>
+                            <td class="p-1">
+                                <input type="text" class="inline-edit-input" value="5.2M" placeholder="Enter amount">
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="font-semibold">Error State</td>
+                            <td class="p-1 relative">
+                                <input type="text" class="inline-edit-input error" value="Invalid" placeholder="Enter value">
+                                <div class="input-error-message">
+                                    Please enter a valid number
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Responsive Test -->
+    <div class="mb-8">
+        <h2 class="text-2xl font-bold mb-4">Responsive Design Test</h2>
+        <p class="text-gray-600 mb-4">Resize your browser window to test responsive behavior</p>
+        <div class="dashboard-grid grid grid-cols-4 gap-4">
+            <div class="dashboard-section weekly-collections-section">
+                <div class="dashboard-section-header">Mobile Test 1</div>
+                <div class="table-container">
+                    <table class="editable-table">
+                        <thead><tr><th>Col 1</th><th>Col 2</th></tr></thead>
+                        <tbody><tr><td class="editable-cell">Data 1</td><td class="editable-cell">Data 2</td></tr></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="dashboard-section weekly-revenue-lost-section">
+                <div class="dashboard-section-header">Mobile Test 2</div>
+                <div class="table-container">
+                    <table class="editable-table">
+                        <thead><tr><th>Col 1</th><th>Col 2</th></tr></thead>
+                        <tbody><tr><td class="editable-cell">Data 1</td><td class="editable-cell">Data 2</td></tr></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="dashboard-section debtors-section">
+                <div class="dashboard-section-header">Mobile Test 3</div>
+                <div class="table-container">
+                    <table class="editable-table">
+                        <thead><tr><th>Col 1</th><th>Col 2</th></tr></thead>
+                        <tbody><tr><td class="editable-cell">Data 1</td><td class="editable-cell">Data 2</td></tr></tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="dashboard-section weekly-collections-section">
+                <div class="dashboard-section-header">Mobile Test 4</div>
+                <div class="table-container">
+                    <table class="editable-table">
+                        <thead><tr><th>Col 1</th><th>Col 2</th></tr></thead>
+                        <tbody><tr><td class="editable-cell">Data 1</td><td class="editable-cell">Data 2</td></tr></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Simple test script to demonstrate interactions
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add click handlers to editable cells
+            document.querySelectorAll('.editable-cell').forEach(cell => {
+                cell.addEventListener('click', function() {
+                    console.log('Clicked editable cell:', this.textContent);
+                    // Simulate loading state
+                    this.classList.add('cell-loading');
+                    setTimeout(() => {
+                        this.classList.remove('cell-loading');
+                        this.classList.add('cell-success');
+                        setTimeout(() => {
+                            this.classList.remove('cell-success');
+                        }, 2000);
+                    }, 1000);
+                });
+            });
+
+            // Test tooltip functionality
+            document.querySelectorAll('[data-tooltip]').forEach(element => {
+                element.classList.add('cell-tooltip');
+            });
+        });
+    </script>
+</body>
+</html>

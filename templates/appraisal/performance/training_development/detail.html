@@ -1,0 +1,26 @@
+{% extends "admin_layout.html" %}
+{% load static %}
+{% load humanize %}
+{% load custom_tags %}
+{% block styles %}
+  <link rel="stylesheet"
+        href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css" />
+  <style>.dataTables_wrapper .dataTables_length select { width: 4rem; }</style>
+{% endblock %}
+{% block content %}
+
+{% include 'appraisal/sections_header.html' with section_header="Section 3: Training and Development Needs" %}
+
+{% include "appraisal/appraisee_info_component.html" with appraisee_object=appraisee_object %}
+
+
+<div class="flex gap-4">
+    
+    <div class="flex-1">
+    {% include "./index.html" with training_objects=training_objects %}
+    </div>
+
+</div>
+
+
+{% endblock %}

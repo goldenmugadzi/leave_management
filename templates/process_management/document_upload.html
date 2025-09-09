@@ -1,0 +1,476 @@
+{% extends 'admin_layout.html' %}
+{% load static %}
+
+{% block title %}Upload Document - {{ process.name }}{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <!-- Breadcrumb -->
+    <div class="bg-gray-100 px-4 py-2 rounded-lg mb-6">
+        <nav class="flex" aria-label="Breadcrumb">
+            <ol class="flex items-center space-x-2">
+                <li>
+                    <a href="{% url 'process_management:process_list' %}" class="text-blue-600 hover:text-blue-800 flex items-center">
+                        <i class="fas fa-home mr-1"></i> Processes
+                    </a>
+                </li>
+                <li class="flex items-center">
+                    <i class="fas fa-chevron-right text-gray-400 mx-2"></i>
+                    <a href="{% url 'process_management:department_processes' process.department.id %}" class="text-blue-600 hover:text-blue-800">
+                        {{ process.department.name }}
+                    </a>
+                </li>
+                <li class="flex items-center">
+                    <i class="fas fa-chevron-right text-gray-400 mx-2"></i>
+                    <a href="{% url 'process_management:process_detail' process.id %}" class="text-blue-600 hover:text-blue-800">
+                        {{ process.name }}
+                    </a>
+                </li>
+                <li class="flex items-center">
+                    <i class="fas fa-chevron-right text-gray-400 mx-2"></i>
+                    <span class="text-gray-700">Upload Document</span>
+                </li>
+            </ol>
+        </nav>
+    </div>
+
+    <!-- Page Header -->
+    <div class="flex justify-between items-center mb-8">
+        <div>
+            <h2 class="text-3xl font-bold text-gray-900">Upload Document</h2>
+            <p class="text-gray-600 mt-2">{{ process.name }}</p>
+        </div>
+        <a href="{% url 'process_management:process_detail' process.id %}" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+            <i class="fas fa-arrow-left mr-2"></i>Back to Process
+        </a>
+    </div>
+
+    <!-- Upload Form -->
+    <div class="max-w-4xl mx-auto">
+        <div class="bg-white shadow-sm rounded-lg border border-gray-200">
+            <div class="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-blue-50 to-indigo-50">
+                <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+                    <i class="fas fa-upload mr-2 text-blue-600"></i>Document Upload
+                </h3>
+            </div>
+            <div class="p-6">
+                <form method="post" enctype="multipart/form-data" id="uploadForm" class="space-y-6">
+                    {% csrf_token %}
+                    
+                    <!-- Document Type Selection -->
+                    <div>
+                        <label for="document_type" class="block text-sm font-medium text-gray-700 mb-2">
+                            Document Type <span class="text-red-500">*</span>
+                        </label>
+                        <select class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                                id="document_type" 
+                                name="document_type" 
+                                required>
+                            <option value="">Select document type...</option>
+                            {% for type_code, type_name in document_types %}
+                                <option value="{{ type_code }}" {% if selected_type == type_code %}selected{% endif %}>{{ type_name }}</option>
+                            {% endfor %}
+                        </select>
+                        <p class="mt-1 text-sm text-gray-500">
+                            Choose the type of document you are uploading.
+                        </p>
+                    </div>
+
+                    <!-- File Upload Options -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Document File <span class="text-red-500">*</span>
+                        </label>
+                        
+                        <!-- Upload Method Toggle -->
+                        <div class="mb-4">
+                            <div class="flex space-x-4">
+                                <label class="flex items-center">
+                                    <input type="radio" name="upload_method" value="upload" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300" checked>
+                                    <span class="ml-2 text-sm text-gray-700">Upload New File</span>
+                                </label>
+                                <label class="flex items-center">
+                                    <input type="radio" name="upload_method" value="import" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300">
+                                    <span class="ml-2 text-sm text-gray-700">Import from Knowledge Center</span>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <!-- File Upload Section -->
+                        <div id="uploadSection">
+                            <input type="file" 
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                                   id="document_file" 
+                                   name="document_file" 
+                                   accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx">
+                            <p class="mt-1 text-sm text-gray-500">
+                                Allowed formats: PDF, Word, Excel, PowerPoint. Maximum size: 50MB.
+                            </p>
+                            
+                            <!-- File Preview -->
+                            <div id="filePreview" class="mt-3 hidden">
+                                <div class="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                                    <div class="flex items-center">
+                                        <i class="fas fa-file-alt text-blue-600 mr-3"></i>
+                                        <div>
+                                            <div class="font-medium text-blue-900" id="fileName"></div>
+                                            <div class="text-sm text-blue-700" id="fileSize"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Knowledge Center Import Section -->
+                        <div id="importSection" class="hidden">
+                            <div class="relative">
+                                <input type="text" 
+                                       id="knowledgeCenterSearch" 
+                                       placeholder="Search knowledge center files..."
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                <div class="absolute inset-y-0 right-0 flex items-center pr-3">
+                                    <i class="fas fa-search text-gray-400"></i>
+                                </div>
+                            </div>
+                            
+                            <!-- Search Results -->
+                            <div id="searchResults" class="mt-3 hidden">
+                                <div class="border border-gray-200 rounded-md max-h-60 overflow-y-auto">
+                                    <div id="searchResultsList" class="divide-y divide-gray-200"></div>
+                                </div>
+                            </div>
+                            
+                            <!-- Selected File Display -->
+                            <div id="selectedFileDisplay" class="mt-3 hidden">
+                                <div class="p-4 bg-green-50 border border-green-200 rounded-lg">
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center">
+                                            <i class="fas fa-file-alt text-green-600 mr-3"></i>
+                                            <div>
+                                                <div class="font-medium text-green-900" id="selectedFileName"></div>
+                                                <div class="text-sm text-green-700" id="selectedFileInfo"></div>
+                                            </div>
+                                        </div>
+                                        <button type="button" id="clearSelection" class="text-green-600 hover:text-green-800">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <p class="mt-1 text-sm text-gray-500">
+                                Search and select a file from the knowledge center to import.
+                            </p>
+                        </div>
+                        
+                        <!-- Hidden input for selected file ID -->
+                        <input type="hidden" id="selectedFileId" name="selected_file_id">
+                    </div>
+
+                    <!-- Version -->
+                    <div>
+                        <label for="version" class="block text-sm font-medium text-gray-700 mb-2">Version</label>
+                        <input type="text" 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                               id="version" 
+                               name="version" 
+                               value="1.0" 
+                               placeholder="e.g., 1.0, 2.1, etc.">
+                        <p class="mt-1 text-sm text-gray-500">
+                            Specify the version number for this document.
+                        </p>
+                    </div>
+
+                    <!-- Replace Current Option -->
+                    <div>
+                        <div class="flex items-center">
+                            <input class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded" 
+                                   type="checkbox" 
+                                   id="replace_current" 
+                                   name="replace_current">
+                            <label for="replace_current" class="ml-2 block text-sm text-gray-700">
+                                Replace current document (if exists)
+                            </label>
+                        </div>
+                        <p class="mt-1 text-sm text-gray-500">
+                            Check this to replace the current active document of this type.
+                        </p>
+                    </div>
+
+                    <!-- Upload Progress -->
+                    <div id="uploadProgress" class="hidden">
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div class="bg-blue-600 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+                        </div>
+                        <p class="text-center mt-2 text-sm text-gray-600">Uploading document...</p>
+                    </div>
+
+                    <!-- Submit Buttons -->
+                    <div class="flex justify-end space-x-3 pt-6 border-t border-gray-200">
+                        <a href="{% url 'process_management:process_detail' process.id %}" 
+                           class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                            Cancel
+                        </a>
+                        <button type="submit" 
+                                class="inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-md shadow-sm text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500" 
+                                id="submitBtn">
+                            <i class="fas fa-upload mr-2"></i>Upload Document
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Upload Guidelines -->
+        <div class="mt-8 bg-white shadow-sm rounded-lg border border-gray-200">
+            <div class="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-green-50 to-blue-50">
+                <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+                    <i class="fas fa-info-circle mr-2 text-green-600"></i>Upload Guidelines
+                </h3>
+            </div>
+            <div class="p-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <h4 class="font-medium text-gray-900 mb-3">Supported File Types:</h4>
+                        <ul class="space-y-2">
+                            <li class="flex items-center text-sm text-gray-600">
+                                <i class="fas fa-file-pdf text-red-500 mr-2"></i>PDF Documents
+                            </li>
+                            <li class="flex items-center text-sm text-gray-600">
+                                <i class="fas fa-file-word text-blue-500 mr-2"></i>Word Documents (.doc, .docx)
+                            </li>
+                            <li class="flex items-center text-sm text-gray-600">
+                                <i class="fas fa-file-excel text-green-500 mr-2"></i>Excel Spreadsheets (.xls, .xlsx)
+                            </li>
+                            <li class="flex items-center text-sm text-gray-600">
+                                <i class="fas fa-file-powerpoint text-orange-500 mr-2"></i>PowerPoint Presentations (.ppt, .pptx)
+                            </li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h4 class="font-medium text-gray-900 mb-3">Important Notes:</h4>
+                        <ul class="space-y-2">
+                            <li class="flex items-center text-sm text-gray-600">
+                                <i class="fas fa-check-circle text-green-500 mr-2"></i>Maximum file size: 50MB
+                            </li>
+                            <li class="flex items-center text-sm text-gray-600">
+                                <i class="fas fa-check-circle text-green-500 mr-2"></i>Files are automatically scanned for security
+                            </li>
+                            <li class="flex items-center text-sm text-gray-600">
+                                <i class="fas fa-check-circle text-green-500 mr-2"></i>Version history is maintained
+                            </li>
+                            <li class="flex items-center text-sm text-gray-600">
+                                <i class="fas fa-check-circle text-green-500 mr-2"></i>Only one current document per type
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const fileInput = document.getElementById('document_file');
+    const filePreview = document.getElementById('filePreview');
+    const fileName = document.getElementById('fileName');
+    const fileSize = document.getElementById('fileSize');
+    const uploadForm = document.getElementById('uploadForm');
+    const uploadProgress = document.getElementById('uploadProgress');
+    const submitBtn = document.getElementById('submitBtn');
+    
+    // Knowledge center search elements
+    const uploadMethodRadios = document.querySelectorAll('input[name="upload_method"]');
+    const uploadSection = document.getElementById('uploadSection');
+    const importSection = document.getElementById('importSection');
+    const searchInput = document.getElementById('knowledgeCenterSearch');
+    const searchResults = document.getElementById('searchResults');
+    const searchResultsList = document.getElementById('searchResultsList');
+    const selectedFileDisplay = document.getElementById('selectedFileDisplay');
+    const selectedFileName = document.getElementById('selectedFileName');
+    const selectedFileInfo = document.getElementById('selectedFileInfo');
+    const selectedFileId = document.getElementById('selectedFileId');
+    const clearSelectionBtn = document.getElementById('clearSelection');
+    
+    let searchTimeout;
+    let selectedFile = null;
+
+    // Upload method toggle
+    uploadMethodRadios.forEach(radio => {
+        radio.addEventListener('change', function() {
+            if (this.value === 'upload') {
+                uploadSection.classList.remove('hidden');
+                importSection.classList.add('hidden');
+                fileInput.required = true;
+                selectedFileId.value = '';
+                selectedFile = null;
+            } else {
+                uploadSection.classList.add('hidden');
+                importSection.classList.remove('hidden');
+                fileInput.required = false;
+                fileInput.value = '';
+                filePreview.classList.add('hidden');
+            }
+        });
+    });
+
+    // File selection preview
+    fileInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            fileName.textContent = file.name;
+            fileSize.textContent = formatFileSize(file.size);
+            filePreview.classList.remove('hidden');
+        } else {
+            filePreview.classList.add('hidden');
+        }
+    });
+
+    // Knowledge center search with debouncing
+    searchInput.addEventListener('input', function(e) {
+        const query = e.target.value.trim();
+        
+        clearTimeout(searchTimeout);
+        
+        if (query.length < 2) {
+            searchResults.classList.add('hidden');
+            return;
+        }
+        
+        searchTimeout = setTimeout(() => {
+            searchKnowledgeCenterFiles(query);
+        }, 300);
+    });
+
+    // Clear selection
+    clearSelectionBtn.addEventListener('click', function() {
+        selectedFile = null;
+        selectedFileId.value = '';
+        selectedFileDisplay.classList.add('hidden');
+        searchInput.value = '';
+        searchResults.classList.add('hidden');
+    });
+
+    // Form submission with progress
+    uploadForm.addEventListener('submit', function(e) {
+        const uploadMethod = document.querySelector('input[name="upload_method"]:checked').value;
+        
+        if (uploadMethod === 'upload') {
+            // Regular file upload
+            const file = fileInput.files[0];
+            if (!file) {
+                e.preventDefault();
+                alert('Please select a file to upload.');
+                return;
+            }
+            
+            if (file.size > 50 * 1024 * 1024) {
+                e.preventDefault();
+                alert('File size exceeds 50MB limit. Please choose a smaller file.');
+                return;
+            }
+        } else {
+            // Knowledge center import
+            if (!selectedFile) {
+                e.preventDefault();
+                alert('Please select a file from the knowledge center.');
+                return;
+            }
+            
+            // Change form action and method for import
+            uploadForm.action = "{% url 'process_management:import_knowledge_center_file' process.id %}";
+            uploadForm.method = 'POST';
+            
+            // Add selected file ID to form data
+            const fileIdInput = document.createElement('input');
+            fileIdInput.type = 'hidden';
+            fileIdInput.name = 'file_id';
+            fileIdInput.value = selectedFile.id;
+            uploadForm.appendChild(fileIdInput);
+            
+            // For import, we'll let the form submit normally and redirect
+            // No need to prevent default or handle JSON response
+        }
+
+        // Show progress and disable submit button for both upload and import
+        uploadProgress.classList.remove('hidden');
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Processing...';
+        submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+    });
+
+    // Search knowledge center files
+    function searchKnowledgeCenterFiles(query) {
+        fetch(`{% url 'process_management:knowledge_center_search' %}?q=${encodeURIComponent(query)}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    console.error('Search error:', data.error);
+                    return;
+                }
+                
+                displaySearchResults(data.files);
+            })
+            .catch(error => {
+                console.error('Search failed:', error);
+            });
+    }
+
+    // Display search results
+    function displaySearchResults(files) {
+        if (files.length === 0) {
+            searchResultsList.innerHTML = '<div class="p-4 text-center text-gray-500">No files found</div>';
+        } else {
+            searchResultsList.innerHTML = files.map(file => `
+                <div class="p-3 hover:bg-gray-50 cursor-pointer file-result" data-file-id="${file.id}">
+                    <div class="flex items-center justify-between">
+                        <div class="flex-1">
+                            <div class="font-medium text-gray-900">${file.name}</div>
+                            <div class="text-sm text-gray-500">
+                                ${file.section} • ${file.region}
+                                ${file.folder ? ' • ' + file.folder : ''}
+                            </div>
+                        </div>
+                        <div class="text-xs text-gray-400">
+                            ${file.file_type}
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+            
+            // Add click handlers to results
+            document.querySelectorAll('.file-result').forEach(result => {
+                result.addEventListener('click', function() {
+                    const fileId = this.dataset.fileId;
+                    const file = files.find(f => f.id === fileId);
+                    selectFile(file);
+                });
+            });
+        }
+        
+        searchResults.classList.remove('hidden');
+    }
+
+    // Select a file from search results
+    function selectFile(file) {
+        selectedFile = file;
+        selectedFileId.value = file.id;
+        selectedFileName.textContent = file.name;
+        selectedFileInfo.textContent = `${file.section} • ${file.region}${file.folder ? ' • ' + file.folder : ''}`;
+        
+        selectedFileDisplay.classList.remove('hidden');
+        searchResults.classList.add('hidden');
+        searchInput.value = '';
+    }
+
+    function formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+});
+</script>
+{% endblock %}

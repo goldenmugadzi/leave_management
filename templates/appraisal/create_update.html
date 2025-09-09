@@ -1,0 +1,131 @@
+{% extends "admin_layout.html" %}
+{% load crispy_forms_tags %}
+
+{% block styles %}
+<link href="https://cdn.jsdelivr.net/npm/tom-select/dist/css/tom-select.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/tom-select/dist/js/tom-select.complete.min.js"></script>
+{% endblock styles %}
+
+{% block content %}
+
+{% include 'appraisal/sections_header.html' with section_header="Section 1 - Personal Details" %}
+
+
+<div class="mx-auto my-8 max-w">
+
+    <div class="grid grid-cols-1">
+        <div class="bg-gray-50 shadow-lg rounded-lg p-6">
+            <div class="flex justify-between">
+                <div>
+                    <h1 class="font-bold text-2xl text-gray-900">Personal Details</h1>
+                    <p class="text-md text-gray-500">
+                        This section includes essential information about the appraisee, <strong>{{user_object}}</strong>, covering personal data, professional experience, academic qualifications, and the designated appraiser and reviewer for this evaluation.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tab Navigation -->
+    <div class="bg-white shadow-lg rounded-lg border-2 border-indigo-400 my-4 p-4">
+        <div class="bg-gray-100 rounded-lg p-1">
+            <ul class="flex flex-wrap gap-2 -mb-px text-md font-medium text-center">
+                <li class="mr-1 border-2 rounded-lg border-2 border-gray-400">
+                    <button class="tab-button inline-block px-4 py-2 border-2 border-transparent rounded-md text-gray-600 bg-transparent hover:bg-gray-200 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 active shadow-sm" data-tab="user-info" aria-selected="true">Basic Details</button>
+                </li>
+                <li class="mr-1 border-2 rounded-lg border-2 border-gray-400">
+                    <button class="tab-button inline-block px-4 py-2 border-2 border-transparent rounded-md text-gray-600 bg-transparent hover:bg-gray-200 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2" data-tab="qualifications" aria-selected="false">Qualifications</button>
+                </li>
+                <li class="mr-1 border-2 rounded-lg border-2 border-gray-400">
+                    <button class="tab-button inline-block px-4 py-2 border-2 border-transparent rounded-md text-gray-600 bg-transparent hover:bg-gray-200 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2" data-tab="experiences" aria-selected="false">Experiences</button>
+                </li>
+                <li class="mr-1 border-2 rounded-lg border-2 border-gray-400">
+                    <button class="tab-button inline-block px-4 py-2 border-2 border-transparent rounded-md text-gray-600 bg-transparent hover:bg-gray-200 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2" data-tab="appraisal" aria-selected="false">Appraiser and Reviewer Selection</button>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- Tab Content -->
+    <div class="tab-content mt-6">
+        <!-- User Information Tab -->
+        <div id="user-info" class="tab-pane active">
+            {% include 'appraisal/appraisee_info_component.html' with appraisee_object=user_object has_no_designation=has_no_designation  is_update=is_update appraiser_object=appraiser_object reviewer_object=reviewer_object assessment_period=assessment_period %}
+        </div>
+
+        <!-- Qualifications Tab -->
+        <div id="qualifications" class="tab-pane hidden">
+            <div class="bg-white shadow-xl rounded-lg border-2 border-indigo-400 p-6" style="max-height: 300px; overflow-y: auto;">
+                <div class="flex justify-between">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">User Qualifications</h3>
+                    <a href="{% url 'qualification_experience_index' user_object.id %}"
+                        class="my-2 bg-blue-500 hover:bg-blue-700 inline-block rounded-full text-white py-2 px-4">
+                        Add New Qualification
+                    </a>
+                </div>
+                <div class="container mx-auto px-4">
+                    {% include 'appraisal/qualification_experience/experiences/index_element.html' with user_experiences_qr=user_experiences_qr can_update=is_my_qualification_experience %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Experiences Tab -->
+        <div id="experiences" class="tab-pane hidden">
+            <div class="bg-white shadow-xl rounded-lg border-2 border-indigo-400 p-6" style="max-height: 300px; overflow-y: auto;">
+                <div class="flex justify-between">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">User Experiences</h3>
+                    <a href="{% url 'qualification_experience_index' user_object.id %}"
+                        class="my-2 bg-blue-500 hover:bg-blue-700 inline-block rounded-full text-white py-2 px-4">
+                        Add New Experience
+                    </a>
+                </div>
+                <div class="container mx-auto px-4">
+                    {% include 'appraisal/qualification_experience/qualifications/index_element.html' with user_qualification_qr=user_qualification_qr can_update=is_my_qualification_experience %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Appraisal Tab -->
+        <div id="appraisal" class="tab-pane hidden">
+            <form method="post" enctype="multipart/form-data" class="space-y-6">
+                {% csrf_token %}
+                <div class="bg-white shadow-xl rounded-lg border-2 border-indigo-400 p-6">
+                    {% include "./roles/set_appraisal_users.html" %}
+                </div>
+
+                {% if can_mutate %}
+                    <div class="flex justify-center mt-6">
+                        <button type="submit" class="w-96 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-6 rounded-full transition duration-200">Save</button>
+                    </div>
+                {% endif %}
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock%}
+{% block scripts %} 
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const tabButtons = document.querySelectorAll('.tab-button');
+        const tabPanes = document.querySelectorAll('.tab-pane');
+
+        tabButtons.forEach(button => {
+            button.addEventListener('click', function () {
+                // Remove active classes
+                tabButtons.forEach(btn => {
+                    btn.classList.remove('active', 'border-indigo-500', 'text-indigo-600');
+                    btn.classList.add('border-transparent', 'text-gray-500', 'hover:text-gray-600', 'hover:border-gray-300');
+                });
+                tabPanes.forEach(pane => pane.classList.add('hidden'));
+
+                // Add active class to clicked button and show corresponding pane
+                this.classList.add('active', 'border-indigo-500', 'text-indigo-600');
+                this.classList.remove('border-transparent', 'hover:text-gray-600', 'hover:border-gray-300');
+                const targetPane = document.getElementById(this.dataset.tab);
+                targetPane.classList.remove('hidden');
+            });
+        });
+    });
+
+</script>
+{% endblock scripts %}

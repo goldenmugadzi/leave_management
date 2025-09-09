@@ -1,0 +1,223 @@
+{% extends 'admin_layout.html' %}
+{% load static %}
+
+{% block title %}E117 Inspection Report - {{ inspection.service_no }}{% endblock %}
+
+{% block content %}
+<div class="content-wrapper">
+  <div class="bg-gulf-blue-100 shadow shadow-gulf-blue-300 text-gulf-blue-900 rounded px-6 py-6">
+    <!-- Header -->
+    <div class="flex justify-between items-center mb-8">
+      <div>
+        <h1 class="text-3xl font-bold text-gulf-blue-900">E117 Inspection Report</h1>
+        <p class="text-sm text-gray-600 mt-2">Service No: {{ inspection.service_no|default:"TBD" }}</p>
+      </div>
+      <div class="flex space-x-3">
+        <span class="inline-flex px-3 py-1 text-sm font-semibold rounded-full 
+          {% if inspection.status == 'pass' %}bg-green-100 text-green-800
+          {% elif inspection.status == 'fail' %}bg-red-100 text-red-800
+          {% else %}bg-yellow-100 text-yellow-800{% endif %}">
+          {{ inspection.get_status_display }}
+        </span>
+        <a href="{% url 'inspections:inspection_list' %}" class="bg-gray-500 hover:bg-gray-600 text-white font-medium py-2 px-4 rounded-lg">
+          Back to List
+        </a>
+      </div>
+    </div>
+
+    <!-- Report Content -->
+    <div class="bg-white rounded-lg shadow-md p-6">
+      <div class="mb-6">
+        <h2 class="text-xl font-semibold text-gray-900 mb-4">INSPECTION REPORT (E117)</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+          <div>
+            <span class="font-medium">Service No:</span> {{ inspection.service_no|default:"Not specified" }}
+          </div>
+          <div>
+            <span class="font-medium">Inspection Date:</span> {{ inspection.inspection_date|date:"M d, Y"|default:"Not specified" }}
+          </div>
+          <div>
+            <span class="font-medium">Reason:</span> {{ inspection.get_reason_for_inspection_display|default:"Not specified" }}
+          </div>
+        </div>
+      </div>
+
+      <!-- General Information -->
+      <div class="mb-8">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4 border-b pb-2">General Information</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <span class="font-medium">Consumer Name:</span> {{ inspection.consumer_name|default:"Not specified" }}
+          </div>
+          <div>
+            <span class="font-medium">Property Supplied:</span> {{ inspection.property_supplied|default:"Not specified" }}
+          </div>
+          <div>
+            <span class="font-medium">Property Owner:</span> {{ inspection.property_owner_name|default:"Not specified" }}
+          </div>
+          <div>
+            <span class="font-medium">Contractor:</span> {{ inspection.contractor|default:"Not specified" }}
+          </div>
+        </div>
+      </div>
+
+      <!-- Installation Details -->
+      <div class="mb-8">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4 border-b pb-2">Installation Details</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <span class="font-medium">Size of Mains:</span> {{ inspection.size_of_mains|default:"Not specified" }}
+          </div>
+          <div>
+            <span class="font-medium">Main Switch Type:</span> {{ inspection.consumer_main_switch_type|default:"Not specified" }}
+          </div>
+          <div>
+            <span class="font-medium">Main Switch Capacity:</span> {{ inspection.consumer_main_switch_capacity|default:"Not specified" }}
+          </div>
+          <div>
+            <span class="font-medium">Earth Electrode:</span> {{ inspection.get_earth_electrode_installed_display|default:"Not specified" }}
+          </div>
+        </div>
+      </div>
+
+      <!-- Safety Checks -->
+      <div class="mb-8">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4 border-b pb-2">Safety Checks</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <span class="font-medium">Equipment Bonded & Earthed:</span> 
+            <span class="{% if inspection.all_equipment_bonded_earthed == 'pass' %}text-green-600{% elif inspection.all_equipment_bonded_earthed == 'fail' %}text-red-600{% else %}text-gray-600{% endif %}">
+              {{ inspection.get_all_equipment_bonded_earthed_display|default:"Not specified" }}
+            </span>
+          </div>
+          <div>
+            <span class="font-medium">Socket Outlets Earthed:</span>
+            <span class="{% if inspection.socket_outlets_earthed == 'pass' %}text-green-600{% elif inspection.socket_outlets_earthed == 'fail' %}text-red-600{% else %}text-gray-600{% endif %}">
+              {{ inspection.get_socket_outlets_earthed_display|default:"Not specified" }}
+            </span>
+          </div>
+          <div>
+            <span class="font-medium">Circuit Conductors Correct Size:</span>
+            <span class="{% if inspection.circuit_conductors_correct_size == 'pass' %}text-green-600{% elif inspection.circuit_conductors_correct_size == 'fail' %}text-red-600{% else %}text-gray-600{% endif %}">
+              {{ inspection.get_circuit_conductors_correct_size_display|default:"Not specified" }}
+            </span>
+          </div>
+          <div>
+            <span class="font-medium">Conduits Bonded to Earth:</span>
+            <span class="{% if inspection.conduits_bonded_earth == 'pass' %}text-green-600{% elif inspection.conduits_bonded_earth == 'fail' %}text-red-600{% else %}text-gray-600{% endif %}">
+              {{ inspection.get_conduits_bonded_earth_display|default:"Not specified" }}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Testing Results -->
+      <div class="mb-8">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4 border-b pb-2">Testing Results</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <span class="font-medium">Insulation Resistance (Between):</span> {{ inspection.insulation_resistance_between|default:"Not specified" }}
+          </div>
+          <div>
+            <span class="font-medium">Insulation Resistance (To Earth):</span> {{ inspection.insulation_resistance_to_earth|default:"Not specified" }}
+          </div>
+          <div>
+            <span class="font-medium">Earth Continuity Resistance:</span> {{ inspection.earth_continuity_resistance|default:"Not specified" }}
+          </div>
+          <div>
+            <span class="font-medium">Polarity Check:</span> {{ inspection.polarity_switches_plugs|default:"Not specified" }}
+          </div>
+        </div>
+      </div>
+
+      <!-- Circuit Details -->
+      <div class="mb-8">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4 border-b pb-2">Circuit Details</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <span class="font-medium">Total Lighting Points:</span> {{ inspection.total_lighting_points|default:"Not specified" }}
+          </div>
+          <div>
+            <span class="font-medium">Total Plug Points:</span> {{ inspection.total_plug_points|default:"Not specified" }}
+          </div>
+          <div>
+            <span class="font-medium">Max Lighting Points per Circuit:</span> {{ inspection.max_lighting_points_per_circuit|default:"Not specified" }}
+          </div>
+          <div>
+            <span class="font-medium">Max Plug Points per Circuit:</span> {{ inspection.max_plug_points_per_circuit|default:"Not specified" }}
+          </div>
+        </div>
+      </div>
+
+      <!-- Overhead Lines -->
+      <div class="mb-8">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4 border-b pb-2">Overhead Lines</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <span class="font-medium">Height Satisfactory:</span>
+            <span class="{% if inspection.overhead_lines_height == 'pass' %}text-green-600{% elif inspection.overhead_lines_height == 'fail' %}text-red-600{% else %}text-gray-600{% endif %}">
+              {{ inspection.get_overhead_lines_height_display|default:"Not specified" }}
+            </span>
+          </div>
+          <div>
+            <span class="font-medium">Conductor Size Satisfactory:</span>
+            <span class="{% if inspection.overhead_lines_conductor_size == 'pass' %}text-green-600{% elif inspection.overhead_lines_conductor_size == 'fail' %}text-red-600{% else %}text-gray-600{% endif %}">
+              {{ inspection.get_overhead_lines_conductor_size_display|default:"Not specified" }}
+            </span>
+          </div>
+          <div>
+            <span class="font-medium">Support Satisfactory:</span>
+            <span class="{% if inspection.overhead_lines_support == 'pass' %}text-green-600{% elif inspection.overhead_lines_support == 'fail' %}text-red-600{% else %}text-gray-600{% endif %}">
+              {{ inspection.get_overhead_lines_support_display|default:"Not specified" }}
+            </span>
+          </div>
+          <div>
+            <span class="font-medium">General Condition:</span>
+            <span class="{% if inspection.overhead_lines_general == 'pass' %}text-green-600{% elif inspection.overhead_lines_general == 'fail' %}text-red-600{% else %}text-gray-600{% endif %}">
+              {{ inspection.get_overhead_lines_general_display|default:"Not specified" }}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Final Status -->
+      <div class="mb-8">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4 border-b pb-2">Final Status</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <span class="font-medium">Supply Status:</span> {{ inspection.supply_connected_disconnected|default:"Not specified" }}
+          </div>
+          <div>
+            <span class="font-medium">Contractor Notified:</span>
+            <span class="{% if inspection.contractor_notified_defects == 'pass' %}text-green-600{% elif inspection.contractor_notified_defects == 'fail' %}text-red-600{% else %}text-gray-600{% endif %}">
+              {{ inspection.get_contractor_notified_defects_display|default:"Not specified" }}
+            </span>
+          </div>
+        </div>
+        
+        {% if inspection.other_features_attention %}
+        <div class="mt-4">
+          <span class="font-medium">Other Features Requiring Attention:</span>
+          <div class="mt-2 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+            {{ inspection.other_features_attention }}
+          </div>
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- Inspector Information -->
+      <div class="border-t pt-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Inspector Information</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <span class="font-medium">Inspector:</span> {{ inspection.inspector.get_full_name|default:inspection.inspector.username|default:"Not assigned" }}
+          </div>
+          <div>
+            <span class="font-medium">Inspection Date:</span> {{ inspection.inspection_date|date:"F d, Y"|default:"Not specified" }}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %} 

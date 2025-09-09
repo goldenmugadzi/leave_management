@@ -1,0 +1,221 @@
+{% extends 'admin_layout.html' %}
+{% load static %}
+
+{% block title %}Archive Process - {{ process.name }}{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <!-- Breadcrumb -->
+    <div class="bg-gray-100 px-4 py-2 rounded-lg mb-6">
+        <nav class="flex" aria-label="Breadcrumb">
+            <ol class="flex items-center space-x-2">
+                <li>
+                    <a href="{% url 'process_management:process_list' %}" class="text-blue-600 hover:text-blue-800 flex items-center">
+                        <i class="fas fa-home mr-1"></i> Processes
+                    </a>
+                </li>
+                <li class="flex items-center">
+                    <i class="fas fa-chevron-right text-gray-400 mx-2"></i>
+                    <a href="{% url 'process_management:department_processes' process.department.id %}" class="text-blue-600 hover:text-blue-800">
+                        {{ process.department.name }}
+                    </a>
+                </li>
+                <li class="flex items-center">
+                    <i class="fas fa-chevron-right text-gray-400 mx-2"></i>
+                    <a href="{% url 'process_management:process_detail' process.id %}" class="text-blue-600 hover:text-blue-800">
+                        {{ process.name }}
+                    </a>
+                </li>
+                <li class="flex items-center">
+                    <i class="fas fa-chevron-right text-gray-400 mx-2"></i>
+                    <span class="text-gray-700">Archive</span>
+                </li>
+            </ol>
+        </nav>
+    </div>
+
+    <!-- Page Header -->
+    <div class="flex justify-between items-center mb-8">
+        <div>
+            <h2 class="text-3xl font-bold text-yellow-600 flex items-center">
+                <i class="fas fa-archive mr-3"></i>Archive Process
+            </h2>
+            <p class="text-gray-600 mt-2">This action will archive the process and make it inactive</p>
+        </div>
+        <a href="{% url 'process_management:process_detail' process.id %}" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+            <i class="fas fa-arrow-left mr-2"></i>Back to Process
+        </a>
+    </div>
+
+    <!-- Confirmation Form -->
+    <div class="max-w-4xl mx-auto">
+        <div class="bg-white shadow-sm rounded-lg border border-yellow-300">
+            <div class="px-6 py-4 border-b border-yellow-200 bg-gradient-to-r from-yellow-50 to-orange-50">
+                <h3 class="text-lg font-semibold text-yellow-800 flex items-center">
+                    <i class="fas fa-exclamation-triangle mr-2"></i>Confirm Archive Action
+                </h3>
+            </div>
+            <div class="p-6 space-y-6">
+                <!-- Warning Alert -->
+                <div class="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                    <div class="flex">
+                        <i class="fas fa-exclamation-triangle text-yellow-600 mr-3 mt-1"></i>
+                        <div>
+                            <h4 class="font-medium text-yellow-800">Warning:</h4>
+                            <p class="text-yellow-700 mt-1">
+                                You are about to archive the following process. This action will make the process inactive 
+                                and it will no longer appear in the main process listings.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Process Information -->
+                <div class="bg-gray-50 rounded-lg p-6">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="md:col-span-2">
+                            <h4 class="text-xl font-semibold text-gray-900 mb-4">{{ process.name }}</h4>
+                            <div class="space-y-2">
+                                <div class="flex items-center text-sm text-gray-600">
+                                    <i class="fas fa-building w-4 mr-2"></i>
+                                    <span class="font-medium">Department:</span>
+                                    <span class="ml-2">{{ process.department.name }}</span>
+                                </div>
+                                {% if process.region %}
+                                <div class="flex items-center text-sm text-gray-600">
+                                    <i class="fas fa-map-marker-alt w-4 mr-2"></i>
+                                    <span class="font-medium">Region:</span>
+                                    <span class="ml-2">{{ process.region.name }}</span>
+                                </div>
+                                {% endif %}
+
+                                {% if process.process_code %}
+                                <div class="flex items-center text-sm text-gray-600">
+                                    <i class="fas fa-tag w-4 mr-2"></i>
+                                    <span class="font-medium">Process Code:</span>
+                                    <span class="ml-2">{{ process.process_code }}</span>
+                                </div>
+                                {% endif %}
+                            </div>
+                            {% if process.description %}
+                            <div class="mt-4">
+                                <span class="font-medium text-gray-700">Description:</span>
+                                <p class="text-gray-600 mt-1">{{ process.description }}</p>
+                            </div>
+                            {% endif %}
+                        </div>
+                        <div class="text-center">
+                            <h5 class="font-medium text-gray-900 mb-3">Documents:</h5>
+                            <div class="flex justify-center space-x-4">
+                                <div class="text-center">
+                                    <div class="w-12 h-12 mx-auto mb-2 rounded-full flex items-center justify-center {% if process.has_process_map %}bg-green-100{% else %}bg-gray-100{% endif %}">
+                                        <i class="fas fa-sitemap {% if process.has_process_map %}text-green-600{% else %}text-gray-400{% endif %}"></i>
+                                    </div>
+                                    <div class="text-xs text-gray-600">Map</div>
+                                </div>
+                                <div class="text-center">
+                                    <div class="w-12 h-12 mx-auto mb-2 rounded-full flex items-center justify-center {% if process.has_procedure %}bg-green-100{% else %}bg-gray-100{% endif %}">
+                                        <i class="fas fa-list-ol {% if process.has_procedure %}text-green-600{% else %}text-gray-400{% endif %}"></i>
+                                    </div>
+                                    <div class="text-xs text-gray-600">Procedure</div>
+                                </div>
+                                <div class="text-center">
+                                    <div class="w-12 h-12 mx-auto mb-2 rounded-full flex items-center justify-center {% if process.has_risk_register %}bg-green-100{% else %}bg-gray-100{% endif %}">
+                                        <i class="fas fa-exclamation-triangle {% if process.has_risk_register %}text-green-600{% else %}text-gray-400{% endif %}"></i>
+                                    </div>
+                                    <div class="text-xs text-gray-600">Risk</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Important Notes -->
+                <div class="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                    <h4 class="font-medium text-blue-900 flex items-center mb-3">
+                        <i class="fas fa-info-circle mr-2"></i>Important Notes:
+                    </h4>
+                    <ul class="space-y-2 text-blue-800">
+                        <li class="flex items-start">
+                            <i class="fas fa-check text-blue-600 mr-2 mt-1"></i>
+                            <span>The process will be marked as inactive but not permanently deleted</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fas fa-check text-blue-600 mr-2 mt-1"></i>
+                            <span>All associated documents will be preserved</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fas fa-check text-blue-600 mr-2 mt-1"></i>
+                            <span>The process can be reactivated by an administrator if needed</span>
+                        </li>
+                        <li class="flex items-start">
+                            <i class="fas fa-check text-blue-600 mr-2 mt-1"></i>
+                            <span>This action can be reversed by updating the process status</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Confirmation Form -->
+                <form method="post" id="archiveForm" class="space-y-6">
+                    {% csrf_token %}
+                    
+                    <div class="flex items-center">
+                        <input class="h-4 w-4 text-yellow-600 focus:ring-yellow-500 border-gray-300 rounded" 
+                               type="checkbox" 
+                               id="confirmArchive" 
+                               required>
+                        <label for="confirmArchive" class="ml-2 block text-sm text-gray-700">
+                            I understand that this action will archive the process "{{ process.name }}"
+                        </label>
+                    </div>
+
+                    <div class="flex justify-end space-x-3 pt-6 border-t border-gray-200">
+                        <a href="{% url 'process_management:process_detail' process.id %}" 
+                           class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                            <i class="fas fa-times mr-2"></i>Cancel
+                        </a>
+                        <button type="submit" 
+                                class="inline-flex items-center px-4 py-2 bg-yellow-600 border border-transparent rounded-md shadow-sm text-sm font-medium text-white hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-500 opacity-50 cursor-not-allowed" 
+                                id="archiveBtn" 
+                                disabled>
+                            <i class="fas fa-archive mr-2"></i>Archive Process
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const confirmCheckbox = document.getElementById('confirmArchive');
+    const archiveBtn = document.getElementById('archiveBtn');
+    const archiveForm = document.getElementById('archiveForm');
+
+    // Enable/disable archive button based on checkbox
+    confirmCheckbox.addEventListener('change', function() {
+        if (this.checked) {
+            archiveBtn.disabled = false;
+            archiveBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+        } else {
+            archiveBtn.disabled = true;
+            archiveBtn.classList.add('opacity-50', 'cursor-not-allowed');
+        }
+    });
+
+    // Form submission confirmation
+    archiveForm.addEventListener('submit', function(e) {
+        if (!confirm('Are you absolutely sure you want to archive this process? This action will make it inactive.')) {
+            e.preventDefault();
+            return;
+        }
+
+        // Show loading state
+        archiveBtn.disabled = true;
+        archiveBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Archiving...';
+        archiveBtn.classList.add('opacity-50', 'cursor-not-allowed');
+    });
+});
+</script>
+{% endblock %}

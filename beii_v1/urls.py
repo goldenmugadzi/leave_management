@@ -22,6 +22,7 @@ from django.contrib import admin
 from django.urls import path, include
 
 
+
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
@@ -39,8 +40,9 @@ urlpatterns = [
     path('meter/', include('commecial.tempertockens.urls')),
     path('users/', include('it.users.urls')),
     path('change_requests/', include('it.change_requests.urls')),
-    path('dashboards/', include('executive.exec_dashboards.urls')),
+    path('dashboards/', include('executive.general_dashboards.urls')),
     path('ims/', include('knowledge_center.urls')),
+    path('ims/processes/', include('process_management.urls')),
     path('processes/', include('processes.urls'), name='processes'),
     path('process_risks/', include('process_risks.urls'), name='process_risks'),
     # path('process_maps/',include('process_maps.urls'), name='process_maps'),
@@ -48,6 +50,9 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     # path('accounts/', include('django.contrib.auth.urls')),
     path('ace/', include('ACE2.urls')),
+    path('appraisal/', include('appraisal.urls')),
+
+    # path('ace/', include('finance.Ace.urls')),
     path('', include('toolsandequipment.urls')),
     path('', include('safety.urls')),   
     path('', include('BatteryMaintenance.urls')),
@@ -69,12 +74,11 @@ urlpatterns = [
     path('search/', include('esearch.urls')),
     path('temp_tokens/', include('commecial.tempertockens.urls')),
     path('competence_building/', include('competence_building.urls')),
-    path('comm_files/', include('comm_files.urls')),
     # path('api/', include('api.urls')),  # Commented out until api.urls exists
     path('', include('meetings.urls')),
     path('', include('leave_management.urls')),
     path('sanction_for_test/', include('sanction_for_test.urls')),
-      
+    path('inspections/', include('inspections.urls')),
     
     path('api-auth/', include('rest_framework.urls')),
     path("gql/", csrf_exempt(FileUploadGraphQLView.as_view(graphiql=True))),  # <-- wrap with csrf_exempt
@@ -84,3 +88,5 @@ urlpatterns = [
 
 ] 
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+# Serve uploads directory for CS bid documents
+urlpatterns += static('/uploads/', document_root=settings.BASE_DIR / 'uploads')

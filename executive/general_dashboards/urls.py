@@ -1,18 +1,27 @@
 from django.urls import path
 from . import views
 
-app_name = 'general_dashboards'
+app_name = 'dashboards'
 
 urlpatterns = [
-    path('', views.action_dashboard, name='action_dashboard'),
-    path('api/', views.dashboard_api, name='dashboard_api'),
-    path('preferences/', views.update_preferences, name='update_preferences'),
+    # Dashboard overview page
+    path('', views.dashboard_index, name='dashboard_overview'),
+    path('overview/', views.dashboard_index, name='dashboard_overview'),
     
-    # New dashboard data endpoints
+    # Data retrieval endpoints
     path('regions/', views.get_regions, name='get_regions'),
-    path('dashboard_data/', views.get_dashboard_data, name='get_dashboard_data'),
-    path('dashboard_filter/', views.dashboard_filter, name='dashboard_filter'),
-    path('save_dashboard_data/', views.save_dashboard_data, name='save_dashboard_data'),
-    path('user_permissions/', views.user_permissions, name='user_permissions'),
-    path('debug_user_roles/', views.debug_user_roles, name='debug_user_roles'),
-] 
+    path('dashboard-data/', views.get_dashboard_data, name='get_dashboard_data'),
+    path('user-permissions/', views.get_user_permissions, name='get_user_permissions'),
+    
+    # Data saving endpoints
+    path('save-dashboard-data/', views.save_dashboard_data, name='save_dashboard_data'),
+    
+    # Utility endpoints
+    path('create-sample-data/', views.create_sample_data, name='create_sample_data'),
+    
+    # CSV Import/Export endpoints
+    path('download-template/', views.download_csv_template, name='download_csv_template'),
+    path('bulk-upload/', views.bulk_upload_dashboard_data, name='bulk_upload_dashboard_data'),
+    
+
+]

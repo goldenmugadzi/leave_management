@@ -13,8 +13,12 @@ urlpatterns = [
     path('attachment/<str:filename>/', download_file, name='attachment'),
     path('attachments/<str:attachment_id>', download_attachment, name='attachments'),
     path('create_pettycash_report', pettycash_report, name='pettycash_report'),
-    path('print_report_csv/<str:report_id>', print_report_excel, name='print_report_csv'),
+    # CSV export
+    path('print_report_csv/<str:report_id>', print_report_csv, name='print_report_csv'),
+    # Excel export
+    path('print_report_xlsx/<str:report_id>', print_report_excel, name='print_report_xlsx'),
     path('receipt_manual', receipt_manual, name='receipt_manual'),
     path('my_actioned_items/', my_actioned_items, name='my_actioned_items'),
+    path('monthly_totals', pettycash_monthly_totals, name='pettycash_monthly_totals'),
     # path('print_report_pdf', print_report_pdf, name='print_report_pdf'),
 ]

@@ -1,4 +1,5 @@
 from django.db import models
+from django.core.exceptions import ValidationError
 from django.db.models import fields
 import random
 import time
@@ -44,6 +45,32 @@ class Pettycash(models.Model):
 
     def __str__(self):
         return self.petty_id
+
+    def clean(self):
+        """
+        Business rule: A cashier cannot disburse more than the requested amount,
+        and the disbursed amount cannot be negative.
+        """
+        super().clean()
+        # Only validate when a disbursement value is provided
+        if self.amount_disbursed is not None:
+            # Guard against missing requested amount
+            if self.amount is None:
+                raise ValidationError({
+                    'amount_disbursed': 'Requested amount is missing; cannot record a disbursement.'
+                })
+
+            # Non-negative check
+            if float(self.amount_disbursed) < 0:
+                raise ValidationError({
+                    'amount_disbursed': 'Amount disbursed cannot be negative.'
+                })
+
+            # Cap at requested amount
+            if float(self.amount_disbursed) > float(self.amount):
+                raise ValidationError({
+                    'amount_disbursed': f'Amount disbursed ({self.amount_disbursed}) cannot exceed requested amount ({self.amount}).'
+                })
 
 class Quotation(models.Model):
     pettycash = models.ForeignKey(Pettycash, on_delete=models.CASCADE)

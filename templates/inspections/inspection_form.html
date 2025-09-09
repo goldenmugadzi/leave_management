@@ -1,0 +1,578 @@
+{% extends 'admin_layout.html' %}
+{% load static %}
+{% load widget_tweaks %}
+
+{% block title %}E117 Inspection Report - {{ inspection.service_no }}{% endblock %}
+
+{% block content %}
+<div class="content-wrapper">
+  <div class="bg-gulf-blue-100 shadow shadow-gulf-blue-300 text-gulf-blue-900 rounded px-6 py-6">
+    <!-- Header Section -->
+    <div class="flex justify-between items-center mb-8">
+      <div>
+        <h1 class="text-3xl font-bold text-gulf-blue-900">E117 Inspection Report</h1>
+        <nav class="flex mt-2" aria-label="Breadcrumb">
+          <ol class="inline-flex items-center space-x-1 md:space-x-3">
+            <li class="inline-flex items-center">
+              <a href="{% url 'inspections:dashboard' %}" class="inline-flex items-center text-sm font-medium text-gulf-blue-600 hover:text-gulf-blue-800">
+                <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"></path>
+                </svg>
+                Inspections
+              </a>
+            </li>
+            <li>
+              <div class="flex items-center">
+                <svg class="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
+                </svg>
+                <a href="{% url 'inspections:inspection_list' %}" class="ml-1 text-sm font-medium text-gulf-blue-600 hover:text-gulf-blue-800 md:ml-2">Inspection Reports</a>
+              </div>
+            </li>
+            <li>
+              <div class="flex items-center">
+                <svg class="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
+                </svg>
+                <span class="ml-1 text-sm font-medium text-gulf-blue-900 md:ml-2">{{ inspection.service_no|default:"E117 Report" }}</span>
+              </div>
+            </li>
+          </ol>
+        </nav>
+      </div>
+      <div class="flex space-x-3">
+        <a href="{% url 'inspections:inspection_list' %}" class="bg-gray-500 hover:bg-gray-600 text-white font-medium py-2 px-4 rounded-lg flex items-center">
+          <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+          </svg>
+          Back to List
+        </a>
+      </div>
+    </div>
+
+    <!-- Status Header -->
+    <div class="bg-white rounded-lg shadow-md mb-6">
+      <div class="p-6 border-b border-gray-200">
+        <div class="flex justify-between items-center">
+          <h2 class="text-xl font-semibold text-gray-900">E117 Inspection Report Details</h2>
+          <div class="flex space-x-2">
+            <span class="inline-flex px-3 py-1 text-sm font-semibold rounded-full 
+              {% if inspection.status == 'pass' %}bg-green-100 text-green-800
+              {% elif inspection.status == 'fail' %}bg-red-100 text-red-800
+              {% else %}bg-yellow-100 text-yellow-800{% endif %}">
+              {{ inspection.get_status_display }}
+            </span>
+            {% if inspection.inspection_date %}
+            <span class="inline-flex px-3 py-1 text-sm font-semibold rounded-full bg-blue-100 text-blue-800">
+              {{ inspection.inspection_date|date:"M d, Y" }}
+            </span>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- E117 Form Content -->
+    <div class="bg-white rounded-lg shadow-md">
+      <div class="p-6 border-b border-gray-200">
+        <h3 class="text-lg font-semibold text-gray-900">INSPECTION REPORT (E117)</h3>
+        <p class="text-sm text-gray-500 mt-1">Service No: {{ inspection.service_no|default:"TBD" }} | Reason: {{ inspection.get_reason_for_inspection_display|default:"Not specified" }}</p>
+      </div>
+
+      <form method="post" novalidate class="space-y-8 p-6">
+        {% csrf_token %}
+        
+        <!-- Basic Information -->
+        <div class="border-b border-gray-200 pb-8">
+          <div class="flex items-center mb-6">
+            <div class="flex-shrink-0">
+              <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                </svg>
+              </div>
+            </div>
+            <div class="ml-4">
+              <h3 class="text-lg font-medium text-gray-900">General Information (Items 1-3)</h3>
+              <p class="text-sm text-gray-500">Basic details about the consumer and property</p>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">1. Name of Consumer</label>
+              <div class="block w-full rounded-md border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-900">
+                {{ inspection.consumer_name|default:"Not specified" }}
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">2a. Property Supplied</label>
+              <div class="block w-full rounded-md border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-900">
+                {{ inspection.property_supplied|default:"Not specified" }}
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">2b. Property Owner's Name</label>
+              <div class="block w-full rounded-md border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-900">
+                {{ inspection.property_owner_name|default:"Not specified" }}
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">2c. Property Owner's Address</label>
+              <div class="block w-full rounded-md border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-900">
+                {{ inspection.property_owner_address|default:"Not specified" }}
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">3a. Contractor</label>
+              <div class="block w-full rounded-md border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-900">
+                {{ inspection.contractor|default:"Not specified" }}
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">3b. Contractor Address</label>
+              <div class="block w-full rounded-md border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-900">
+                {{ inspection.contractor_address|default:"Not specified" }}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Main Installation Details -->
+        <div class="border-b border-gray-200 pb-8">
+          <div class="flex items-center mb-6">
+            <div class="flex-shrink-0">
+              <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+                <svg class="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                </svg>
+              </div>
+            </div>
+            <div class="ml-4">
+              <h3 class="text-lg font-medium text-gray-900">Main Installation Details (Items 4-16)</h3>
+              <p class="text-sm text-gray-500">Electrical installation specifications and safety checks</p>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">4a. Size of Mains</label>
+              <div class="block w-full rounded-md border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-900">
+                {{ inspection.size_of_mains|default:"Not specified" }}
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">4b. Size of Mains Conduit</label>
+              <div class="block w-full rounded-md border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-900">
+                {{ inspection.size_of_mains_conduit|default:"Not specified" }}
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">5a. Consumer's Main Switch Type</label>
+              <div class="block w-full rounded-md border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-900">
+                {{ inspection.consumer_main_switch_type|default:"Not specified" }}
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">5b. Consumer's Main Switch Capacity</label>
+              <div class="block w-full rounded-md border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-900">
+                {{ inspection.consumer_main_switch_capacity|default:"Not specified" }}
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">5c. Consumer's Main Switch Setting</label>
+              <div class="block w-full rounded-md border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-900">
+                {{ inspection.consumer_main_switch_setting|default:"Not specified" }}
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">6a. Are Neutrals Fused?</label>
+              <div class="block w-full rounded-md border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-900">
+                {{ inspection.get_neutrals_fused_display|default:"Not specified" }}
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">6b. Neutral Block Fitted</label>
+              <div class="block w-full rounded-md border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-900">
+                {{ inspection.get_neutral_block_fitted_display|default:"Not specified" }}
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">7a. Consumer's Earth Electrode Installed</label>
+              <div class="block w-full rounded-md border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-900">
+                {{ inspection.get_earth_electrode_installed_display|default:"Not specified" }}
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">7b. Earth Electrode Type</label>
+              <div class="block w-full rounded-md border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-900">
+                {{ inspection.earth_electrode_type|default:"Not specified" }}
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">8. All Equipment Bonded and Earthed</label>
+              <div class="block w-full rounded-md border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-900">
+                {{ inspection.get_all_equipment_bonded_earthed_display|default:"Not specified" }}
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">9a. Insulation Resistance Between</label>
+              <div class="block w-full rounded-md border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-900">
+                {{ inspection.insulation_resistance_between|default:"Not specified" }}
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">9b. Insulation Resistance To Earth</label>
+              <div class="block w-full rounded-md border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-900">
+                {{ inspection.insulation_resistance_to_earth|default:"Not specified" }}
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">10. Earth Continuity Resistance</label>
+              <div class="block w-full rounded-md border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-900">
+                {{ inspection.earth_continuity_resistance|default:"Not specified" }}
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">11. Polarity of Switches/Plugs</label>
+              <div class="block w-full rounded-md border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-900">
+                {{ inspection.polarity_switches_plugs|default:"Not specified" }}
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">12. Socket Outlets Earthed</label>
+              <div class="block w-full rounded-md border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-900">
+                {{ inspection.get_socket_outlets_earthed_display|default:"Not specified" }}
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">13. Socket Outlet Type</label>
+              <div class="block w-full rounded-md border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-900">
+                {{ inspection.socket_outlet_type|default:"Not specified" }}
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">14. Type of Wiring</label>
+              <div class="block w-full rounded-md border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-900">
+                {{ inspection.wiring_type|default:"Not specified" }}
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">15. Circuit Conductors Correct Size</label>
+              <div class="block w-full rounded-md border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-900">
+                {{ inspection.get_circuit_conductors_correct_size_display|default:"Not specified" }}
+              </div>
+            </div>
+
+            <div class="md:col-span-2">
+              <label class="block text-sm font-medium text-gray-700 mb-2">16. Condition of Wiring</label>
+              <div class="block w-full rounded-md border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-900">
+                {{ inspection.wiring_condition|default:"Not specified" }}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Specific Installation Aspects -->
+        <div class="border-b border-gray-200 pb-8">
+          <div class="flex items-center mb-6">
+            <div class="flex-shrink-0">
+              <div class="w-8 h-8 bg-yellow-100 rounded-lg flex items-center justify-center">
+                <svg class="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                </svg>
+              </div>
+            </div>
+            <div class="ml-4">
+              <h3 class="text-lg font-medium text-gray-900">Specific Installation Aspects (Items 17-19)</h3>
+              <p class="text-sm text-gray-500">Special installation requirements and safety considerations</p>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="md:col-span-2">
+              <label class="block text-sm font-medium text-gray-700 mb-2">17. Flexible Cord in Prohibited Positions</label>
+              <div class="block w-full rounded-md border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-900">
+                {{ inspection.flexible_cord_prohibited_positions|default:"Not specified" }}
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">18a. Bathroom Switch Accessible from Bath</label>
+              <div class="block w-full rounded-md border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-900">
+                {{ inspection.get_bathroom_switch_accessible_display|default:"Not specified" }}
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">18b. Unearthed Metal Switches</label>
+              <div class="block w-full rounded-md border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-900">
+                {{ inspection.unearthed_metal_switches|default:"Not specified" }}
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">19a. Conduits Bushed</label>
+              <div class="block w-full rounded-md border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-900">
+                {{ inspection.get_conduits_bushed_display|default:"Not specified" }}
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">19b. Conduits Bonded to Earth</label>
+              <div class="block w-full rounded-md border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-900">
+                {{ inspection.get_conduits_bonded_earth_display|default:"Not specified" }}
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">19c. Conduits Correct Size</label>
+              <div class="block w-full rounded-md border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-900">
+                {{ inspection.get_conduits_correct_size_display|default:"Not specified" }}
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">19d. Conduits Adequately Supported</label>
+              <div class="block w-full rounded-md border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-900">
+                {{ inspection.get_conduits_adequately_supported_display|default:"Not specified" }}
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">19e. Conduits Suitable Type</label>
+              <div class="block w-full rounded-md border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-900">
+                {{ inspection.get_conduits_suitable_type_display|default:"Not specified" }}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Circuit and Point Counts -->
+        <div class="border-b border-gray-200 pb-8">
+          <div class="flex items-center mb-6">
+            <div class="flex-shrink-0">
+              <div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+                <svg class="w-5 h-5 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                </svg>
+              </div>
+            </div>
+            <div class="ml-4">
+              <h3 class="text-lg font-medium text-gray-900">Circuit and Point Counts (Items 20-24)</h3>
+              <p class="text-sm text-gray-500">Circuit specifications and load details</p>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">20a. Max Lighting Points per Circuit</label>
+              <div class="block w-full rounded-md border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-900">
+                {{ inspection.max_lighting_points_per_circuit|default:"Not specified" }}
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">20b. Max Plug Points per Circuit</label>
+              <div class="block w-full rounded-md border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-900">
+                {{ inspection.max_plug_points_per_circuit|default:"Not specified" }}
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">21. Total Lighting Points</label>
+              <div class="block w-full rounded-md border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-900">
+                {{ inspection.total_lighting_points|default:"Not specified" }}
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">22. Total Plug Points</label>
+              <div class="block w-full rounded-md border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-900">
+                {{ inspection.total_plug_points|default:"Not specified" }}
+              </div>
+            </div>
+
+            <div class="md:col-span-2">
+              <label class="block text-sm font-medium text-gray-700 mb-2">23. Details of Appliances and Wattages</label>
+              <div class="block w-full rounded-md border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-900">
+                {{ inspection.appliances_wattages|default:"Not specified" }}
+              </div>
+            </div>
+
+            <div class="md:col-span-2">
+              <label class="block text-sm font-medium text-gray-700 mb-2">24. Number and Size of Motors and Plant Driven</label>
+              <div class="block w-full rounded-md border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-900">
+                {{ inspection.motors_plant_details|default:"Not specified" }}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Overhead Lines and Protection -->
+        <div class="border-b border-gray-200 pb-8">
+          <div class="flex items-center mb-6">
+            <div class="flex-shrink-0">
+              <div class="w-8 h-8 bg-red-100 rounded-lg flex items-center justify-center">
+                <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                </svg>
+              </div>
+            </div>
+            <div class="ml-4">
+              <h3 class="text-lg font-medium text-gray-900">Overhead Lines and Protection (Items 25-30)</h3>
+              <p class="text-sm text-gray-500">Overhead line specifications and protection systems</p>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">25a. Overhead Lines Height</label>
+              <div class="block w-full rounded-md border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-900">
+                {{ inspection.get_overhead_lines_height_display|default:"Not specified" }}
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">25b. Overhead Lines Conductor Size</label>
+              <div class="block w-full rounded-md border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-900">
+                {{ inspection.get_overhead_lines_conductor_size_display|default:"Not specified" }}
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">25c. Overhead Lines Support</label>
+              <div class="block w-full rounded-md border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-900">
+                {{ inspection.get_overhead_lines_support_display|default:"Not specified" }}
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">25d. Overhead Lines General</label>
+              <div class="block w-full rounded-md border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-900">
+                {{ inspection.get_overhead_lines_general_display|default:"Not specified" }}
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">26. Overhead Earthwires Fitted</label>
+              <div class="block w-full rounded-md border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-900">
+                {{ inspection.get_overhead_earthwires_fitted_display|default:"Not specified" }}
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">27. Overhead Lines Protected</label>
+              <div class="block w-full rounded-md border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-900">
+                {{ inspection.get_overhead_lines_protected_display|default:"Not specified" }}
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">28. Outbuildings Protected</label>
+              <div class="block w-full rounded-md border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-900">
+                {{ inspection.get_outbuildings_protected_display|default:"Not specified" }}
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">29. Motor Installations Protected</label>
+              <div class="block w-full rounded-md border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-900">
+                {{ inspection.get_motor_installations_protected_display|default:"Not specified" }}
+              </div>
+            </div>
+
+            <div class="md:col-span-2">
+              <label class="block text-sm font-medium text-gray-700 mb-2">30. Commission's Switch Details</label>
+              <div class="block w-full rounded-md border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-900">
+                {{ inspection.commission_switch_details|default:"Not specified" }}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Final Status and Defects -->
+        <div class="pb-8">
+          <div class="flex items-center mb-6">
+            <div class="flex-shrink-0">
+              <div class="w-8 h-8 bg-indigo-100 rounded-lg flex items-center justify-center">
+                <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+              </div>
+            </div>
+            <div class="ml-4">
+              <h3 class="text-lg font-medium text-gray-900">Final Status and Defects (Items 31-33)</h3>
+              <p class="text-sm text-gray-500">Final inspection status and any defects found</p>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">31. Supply Connected/Disconnected</label>
+              <div class="block w-full rounded-md border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-900">
+                {{ inspection.supply_connected_disconnected|default:"Not specified" }}
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">32. Contractor Notified of Defects</label>
+              <div class="block w-full rounded-md border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-900">
+                {{ inspection.get_contractor_notified_defects_display|default:"Not specified" }}
+              </div>
+            </div>
+
+            <div class="md:col-span-2">
+              <label class="block text-sm font-medium text-gray-700 mb-2">33. Other Features Requiring Attention</label>
+              <div class="block w-full rounded-md border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-900">
+                {{ inspection.other_features_attention|default:"Not specified" }}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Inspector Information -->
+        <div class="border-t border-gray-200 pt-8">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Inspector</label>
+              <div class="block w-full rounded-md border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-900">
+                {{ inspection.inspector.get_full_name|default:inspection.inspector.username|default:"Not assigned" }}
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-sm font-medium text-gray-700 mb-2">Inspection Date</label>
+              <div class="block w-full rounded-md border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-900">
+                {{ inspection.inspection_date|date:"F d, Y"|default:"Not specified" }}
+              </div>
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,57 @@
+
+{% load static %}
+
+    <div class="content-wrapper my-4">
+      <div class="grid grid-cols-1">
+        <div class="bg-gulf-blue-96 shadow-lg rounded-lg p-3">
+          <div class="flex justify-between my-2">           
+            <h3 class="text-center font-bold">Supporting Documents</h3>
+            
+            
+            <a href="{% url 'score_doc_create' target_score_object.performance_dimension.id target_score_object.id %}"
+                class="bg-blue-500 hover:bg-blue-700 inline-block rounded-full text-white py-2 px-4">Add Documents</a>
+            
+          </div>
+          
+            <div style="max-height: 100px; overflow-y: auto; border: 1px solid #ccc;">
+                <table class="min-w-full border-collapse border border-gray-200 shadow-md rounded-lg">
+                    <thead>
+                    <tr class="bg-blue-500 text-white">
+                        <th class="px-6 py-2 text-left text-sm font-semibold">Name</th>
+                        <th class="px-6 py-2 text-left text-sm font-semibold">Qualification Document</th>
+                        
+                    </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                    {% for score_document_obj in score_documents_qr %}
+                        <tr class="hover:bg-gray-100 py-2">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <a 
+                                    href="{% url 'score_doc_update' performance_dimension_id=target_score_object.performance_dimension.id target_score_id=target_score_object.id score_doc_id=score_document_obj.id %}"
+                                    >{{score_document_obj.name}}
+                                </a>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                {% if score_document_obj.documents %}
+                                    <a href="{{ score_document_obj.documents.url }}" target="_blank"
+                                    class="bg-blue-500 hover:bg-blue-700 inline-block rounded-full text-white p-2">
+                                    Preview Document
+                                    </a>
+                                {% else %}
+                                    <span class="bg-gray-500 inline-block rounded-full text-black p-2">
+                                        No Document
+                                    </span>
+                                {% endif %}
+                            </td>
+                            
+
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+          </div>
+        </div>
+      </div>
+

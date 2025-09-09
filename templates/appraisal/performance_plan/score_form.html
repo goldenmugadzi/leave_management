@@ -1,0 +1,66 @@
+{% extends "admin_layout.html" %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+{% include 'appraisal/sections_header.html' with section_header="Section 2 - Performance Plan and Assessment" %}
+
+    <div class="content-wrapper">
+        <div class="grid grid-cols-1">
+            <div class="bg-gray-50 shadow-lg rounded-lg p-6">
+                <div class="flex justify-between">
+                    <div>
+                        <h1 class="font-bold">Form for Scoring {{ score_object.performance_dimension.performance_indicator }} Dimension</h1>
+                        <p class="text-sm text-muted">
+                            Department Output: <strong>{{ score_object.performance_dimension.department_output }}</strong>.
+                            with target of <strong>{{ score_object.performance_dimension.agreed_target }} %</strong> and allowable variance of <strong>{{ score_object.performance_dimension.allowable_variance }} %</strong>
+                        </p>                    
+                    </div>
+                    <div class="flex justify-end">
+                        <div class="flex justify-between gap-2">
+                            <div onclick="openReviewerConfirmationModal()"
+                                class="my-2 bg-blue-500 hover:bg-blue-700 inline-block rounded-full text-white py-2 px-4 rounded"
+                            >
+                                Reviewer Confirmation
+                            </div>
+
+                            <div onclick="openAppraiserConfirmationModal()"
+                                class="my-2 bg-blue-500 hover:bg-blue-700 inline-block rounded-full text-white py-2 px-4 rounded"
+                            >
+                                Appraiser Confirmation
+                            </div>
+                            {% include "appraisal/performance_plan/reviewer_confirmation_modal.htm"%}
+                            {% include "appraisal/performance_plan/appraiser_confirmation_modal.html"%}
+                        </div>
+                        
+                    </div>
+                </div>
+            </div>
+
+            <div class="container my-4">
+                <form method="post" enctype="multipart/form-data">
+                    {%csrf_token%}
+                    <div 
+                        class="flex-1 px-2 shadow-xl rounded-lg border-2"
+                    >
+                        {{ score_form.score|as_crispy_field }}
+                    </div>
+                    
+                    <div>
+                        {% include "appraisal/performance_plan/score_docs/index.html"%}
+                    </div>
+                    
+                    {% if is_within_current_quarter %}
+                        {% if is_appraisee == True %}
+                            <div class="flex justify-center my-2">
+                                <button type="submit" class="w-96 bg-blue-500 hover:bg-blue-700 inline-block rounded-full text-white py-2 px-4" name="appraisee_request">Save</button>
+                            </div>
+                        {% endif %}
+                    {% endif %}
+                </form>
+            </div>
+            
+        </div>
+    </div>
+
+{% endblock %}

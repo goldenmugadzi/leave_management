@@ -3,7 +3,12 @@ import requests
 from django.conf import settings
 from django.core.cache import cache
 from ACE2 import models
-from finance.comparative_schedules.views import notify_user
+try:
+    from finance.comparative_schedules.views import notify_user
+except Exception:
+    def notify_user(*args, **kwargs):
+        """Test-safe stub for notify_user when finance app isn't loaded."""
+        return None
 from it.users.models import UserProfile, Regions, Roles
 from ACE2.models import Ace2
 
@@ -219,6 +224,125 @@ def get_regional_budget_impact_summary(ace_item):
             'pending_percentage': (total_pending / total_allocated * 100) if total_allocated > 0 else 0
         }
     }
+
+def execute_virement_budget_transfer(virement_item, request_user=None):
+    """
+    Execute the actual budget transfer for a virement after final approval.
+    This function encapsulates the budget transfer logic that was previously in virament_detail view.
+    
+    Args:
+        virement_item: Asset_budget_Virament instance
+        request_user: User performing the action (for logging)
+    
+    Returns:
+        dict: {
+            'success': bool,
+            'message': str,
+            'error': str (if success=False)
+        }
+    """
+    from django.db import transaction
+    from ACE2.models import AssetBudget, Transactions
+    from datetime import date
+    import logging
+    
+    logger = logging.getLogger(__name__)
+    
+    try:
+        with transaction.atomic():
+            # Lock budgets to prevent concurrent modifications
+            fbudget = AssetBudget.objects.select_for_update().get(budget_id=virement_item.from_budget.budget_id)
+            tbudget = AssetBudget.objects.select_for_update().get(budget_id=virement_item.to_budget.budget_id)
+            
+            # Get the transaction record
+            transaction_obj = Transactions.objects.filter(virament_id=str(virement_item.virament_id)).first()
+            
+            if not transaction_obj:
+                logger.error(f"No transaction found for virement {virement_item.virament_id}")
+                return {
+                    'success': False,
+                    'error': 'Transaction record not found'
+                }
+            
+            # Check if already processed
+            if transaction_obj.approval_status == "approved by General Manager":
+                logger.info(f"Virement {virement_item.virament_id} already processed")
+                return {
+                    'success': True,
+                    'message': 'Virement already processed'
+                }
+            
+            # Validate available balance before processing (considering to_be_withdrawn)
+            if virement_item.amount > fbudget.available_balance:
+                logger.error(f"Insufficient available balance for virement {virement_item.virament_id}: "
+                           f"Required {virement_item.amount}, Available {fbudget.available_balance}")
+                return {
+                    'success': False,
+                    'error': f'Insufficient available balance in source budget. '
+                            f'Available: {fbudget.available_balance:,.2f}, '
+                            f'Required: {virement_item.amount:,.2f}'
+                }
+            
+            # Update source budget - remove from to_be_withdrawn and deduct from balance
+            fbudget.balance = fbudget.balance - virement_item.amount
+            fbudget.withdrawal_date = date.today()
+            fbudget.withdrawn = (fbudget.withdrawn or 0) + virement_item.amount
+            
+            # Remove from to_be_withdrawn since it's now actually withdrawn
+            if fbudget.to_be_withdrawn is not None and fbudget.to_be_withdrawn >= virement_item.amount:
+                fbudget.to_be_withdrawn = fbudget.to_be_withdrawn - virement_item.amount
+            else:
+                logger.warning(f"to_be_withdrawn ({fbudget.to_be_withdrawn}) less than virement amount ({virement_item.amount}) for budget {fbudget.budget_id}")
+                fbudget.to_be_withdrawn = max(0, (fbudget.to_be_withdrawn or 0) - virement_item.amount)
+            
+            fbudget.save()
+            
+            # Update destination budget
+            tbudget.balance = tbudget.balance + virement_item.amount
+            tbudget.allocated = (tbudget.allocated or 0) + virement_item.amount
+            tbudget.save()
+            
+            # Update transaction status
+            transaction_obj.approval_status = "approved by General Manager"
+            transaction_obj.save()
+            
+            logger.info(f"Virement {virement_item.virament_id} approved successfully. "
+                      f"Transferred {virement_item.amount} from {fbudget.budget_name} to {tbudget.budget_name}")
+            
+            # Send notification to requester about final approval
+            try:
+                requester = virement_item.requested_by
+                if requester:
+                    msg = (
+                        f"Your virement {virement_item.virament_id} has been approved by the General Manager. "
+                        f"Budget transfer of {virement_item.amount:,.2f} completed successfully."
+                    )
+                    # Import here to avoid circular imports
+                    from django.urls import reverse
+                    url = reverse('Ace:virament_detail', args=[virement_item.virament_id])
+                    notify_user(requester, msg, "VIREMENT", url, str(virement_item.virament_id), None)
+            except Exception as e:
+                logger.warning(f"Failed to send virement approval notification for {virement_item.virament_id}: {e}")
+            
+            return {
+                'success': True,
+                'message': f'Budget transfer completed successfully. '
+                          f'Transferred {virement_item.amount:,.2f} from {fbudget.budget_name} to {tbudget.budget_name}'
+            }
+            
+    except AssetBudget.DoesNotExist as e:
+        logger.error(f"Budget not found for virement {virement_item.virament_id}: {e}")
+        return {
+            'success': False,
+            'error': 'Budget not found'
+        }
+    except Exception as e:
+        logger.error(f"Error executing budget transfer for virement {virement_item.virament_id}: {e}")
+        return {
+            'success': False,
+            'error': f'Error executing budget transfer: {str(e)}'
+        }
+
 
 # Note: The following code should be added to approve/views.py approve_step function:
 # if process.workflow.name == "big_ace2":

@@ -13,7 +13,7 @@ MESSAGE_TAGS = {
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-SECRET_KEY = 'django-insecure-7per#nouy422m0!hn0!ecb7ltnq#!^#g!2r5&%^5c%v(!ivv&a'
+SECRET_KEY = config('SECRET_KEY', default='django-insecure-change-in-production')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG', default=False, cast=bool)
@@ -27,13 +27,20 @@ CORS_ALLOW_ALL_ORIGINS = True
 # ]
 
 # CORS_ALLOW_ALL_ORIGINS = True
-CSRF_TRUSTED_ORIGINS = [config('BASE_URL'), config('BASE_URL') + ":" + config('PORT'),"https://5f8fff96bc4d.ngrok-free.app",]
+CSRF_TRUSTED_ORIGINS = [
+    config('BASE_URL'),
+    config('BASE_URL') + ":" + config('PORT'),
+    "https://d4d74ece50d8.ngrok-free.app",
+    # Add your production domain here
+    # "https://your-production-domain.com"
+]
 
 CORS_ALLOW_HEADERS = ('content-disposition', 'accept-encoding',
                       'content-type', 'accept', 'origin', 'authorization')
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework.authentication.SessionAuthentication',
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     )
 }
@@ -103,8 +110,9 @@ INSTALLED_APPS = [
     'it.beii_auth',
     'it.users',
     'it.change_requests',
-    'executive.exec_dashboards',
-    'executive.general_dashboards',
+    'process_management',
+    # 'executive.exec_dashboards',
+    'executive.general_dashboards.apps.GeneralDashboardsConfig',
     'knowledge_center',
     'Docs',
     'approve',
@@ -119,6 +127,8 @@ INSTALLED_APPS = [
     'finance.Direct_purchases',
     'ACE2',
     'esearch',
+    'appraisal.apps.AppraisalConfig',
+
     'toolsandequipment',
     'reports',
     'sweetify',
@@ -126,12 +136,14 @@ INSTALLED_APPS = [
     'tokens',
     'commecial.tempertockens',
     'competence_building.apps.CompetenceBuildingConfig',
+    'crispy_forms',
+    'crispy_tailwind',
     'graphene_django',
     'graphene_file_upload',
     'safety',
     'BatteryMaintenance', 
     'comm_files',
-    'django_prometheus',
+    # 'django_prometheus',  # Temporarily disabled due to import error
     'api.ops_maintenance.safety_operations',
     'Transport',
     'Hardware_Faults',
@@ -140,6 +152,8 @@ INSTALLED_APPS = [
     'meetings',
     'leave_management',
     'sanction_for_test',
+    'utils',
+    'inspections'
 ]
 
 AUTH_USER_MODEL = 'users.UserProfile'
@@ -148,7 +162,6 @@ MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -157,6 +170,11 @@ MIDDLEWARE = [
     'it.beii_auth.inactive_user_middleware.InactiveUserMiddleware',
     'it.beii_auth.session_middleware.LimitConcurrentSessionsMiddleware',
     'it.beii_auth.session_middleware.SessionErrorSessionMiddleware'
+]
+
+# ================= Appraisal Middleware ========================
+MIDDLEWARE += [
+    'appraisal.middleware.LoginRequiredForAppraisalMiddleware',
 ]
 
 ROOT_URLCONF = 'beii_v1.urls'
@@ -180,10 +198,13 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'beii_v1.wsgi.application'
 ASGI_APPLICATION = 'beii_v1.wsgi.application'
-SECURE_SSL_REDIRECT = config('SECURE_SSL_REDIRECT', default=False, cast=bool)
-SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', config('SECURE_PROXY_SSL_HEADER', default='http'))
-CSRF_COOKIE_SECURE = config('CSRF_COOKIE_SECURE', default=False, cast=bool)
-SESSION_COOKIE_SECURE = config('SESSION_COOKIE_SECURE', default=False, cast=bool)
+SECURE_SSL_REDIRECT = config('SECURE_SSL_REDIRECT', default=True, cast=bool)
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', config('SECURE_PROXY_SSL_HEADER', default='https'))
+SECURE_HSTS_SECONDS = config('SECURE_HSTS_SECONDS', default=31536000, cast=int)  # 1 year
+SECURE_HSTS_INCLUDE_SUBDOMAINS = config('SECURE_HSTS_INCLUDE_SUBDOMAINS', default=True, cast=bool)
+SECURE_HSTS_PRELOAD = config('SECURE_HSTS_PRELOAD', default=True, cast=bool)
+CSRF_COOKIE_SECURE = config('CSRF_COOKIE_SECURE', default=True, cast=bool)
+SESSION_COOKIE_SECURE = config('SESSION_COOKIE_SECURE', default=True, cast=bool)
 
 # Set session timeout to 10 minutes (600 seconds)
 SESSION_COOKIE_AGE = 600
@@ -253,11 +274,55 @@ AUTH_PASSWORD_VALIDATORS = [
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
+            'style': '{',
+        },
+        'dashboard_formatter': {
+            'format': '{asctime} [{levelname}] {name}: {message}',
+            'style': '{',
+        },
+        'performance_formatter': {
+            'format': '{asctime} [PERFORMANCE] {message}',
+            'style': '{',
+        },
+    },
     'handlers': {
         'file': {
             'level': 'DEBUG',
             'class': 'logging.FileHandler',
-            'filename': config('LOG_FILE', default='debug.log')
+            'filename': config('LOG_FILE', default='debug.log'),
+            'formatter': 'verbose',
+        },
+        'dashboard_file': {
+            'level': 'INFO',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': config('DASHBOARD_LOG_FILE', default='dashboard_enhancement.log'),
+            'maxBytes': 10 * 1024 * 1024,  # 10MB
+            'backupCount': 5,
+            'formatter': 'dashboard_formatter',
+        },
+        'performance_file': {
+            'level': 'INFO',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': config('PERFORMANCE_LOG_FILE', default='dashboard_performance.log'),
+            'maxBytes': 10 * 1024 * 1024,  # 10MB
+            'backupCount': 3,
+            'formatter': 'performance_formatter',
+        },
+        'security_file': {
+            'level': 'WARNING',
+            'class': 'logging.handlers.RotatingFileHandler',
+            'filename': config('SECURITY_LOG_FILE', default='security.log'),
+            'maxBytes': 10 * 1024 * 1024,  # 10MB
+            'backupCount': 10,
+            'formatter': 'verbose',
+        },
+        'console': {
+            'level': 'INFO',
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
         },
     },
     'loggers': {
@@ -265,6 +330,26 @@ LOGGING = {
             'handlers': ['file'],
             'level': 'DEBUG',
             'propagate': True,
+        },
+        'dashboard_enhancement': {
+            'handlers': ['dashboard_file', 'console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'dashboard_performance': {
+            'handlers': ['performance_file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'dashboard_security': {
+            'handlers': ['security_file', 'console'],
+            'level': 'WARNING',
+            'propagate': False,
+        },
+        'executive.general_dashboards': {
+            'handlers': ['dashboard_file', 'console'],
+            'level': 'INFO',
+            'propagate': False,
         },
     },
 }
@@ -319,3 +404,6 @@ STATICFILES_DIRS = [BASE_DIR / "static", BASE_DIR / "uploads", BASE_DIR / "media
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 LOGIN_REDIRECT_URL = '/dashboards/overview'
+
+CRISPY_ALLOWED_TEMPLATE_PACKS = "tailwind"
+CRISPY_TEMPLATE_PACK = "tailwind"
