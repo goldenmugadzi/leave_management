@@ -503,7 +503,12 @@ def create_new_profile(request):
 @csrf_protect
 @login_required
 def profile_modification_request(request):
-
+    import traceback
+    
+    print("=== PROFILE MODIFICATION REQUEST START ===")
+    print(f"User: {request.user.username}, Method: {request.method}")
+    
+    try:
         change_reason = request.POST.get("change_reason")
         change_description = request.POST.get("change_description")
         delegator_username = request.POST.get("delegator")
@@ -512,70 +517,120 @@ def profile_modification_request(request):
         roles_to_action = request.POST.get("roles_to_action")
         change_type = request.POST.get("change_type", "PERMANENT")
         auth_user = request.user
+        
+        print(f"Form data - delegator: {delegator_username}, delegatee: {delegatee_username}")
+        print(f"Form data - application: {application}, change_type: {change_type}")
+        print(f"Form data - roles_to_action: {roles_to_action}")
         print("delegator: ", delegator_username, "delegatee: ", delegatee_username)
         
         # Get delegator and delegatee users
+        print("Fetching delegator and delegatee users from database")
         delegator = UserProfile.objects.filter(username=delegator_username).first()
         delegatee = UserProfile.objects.filter(username=delegatee_username).first()
         
+        print(f"Delegator found: {delegator is not None}")
+        print(f"Delegatee found: {delegatee is not None}")
+        
         if not delegator:
-            messages.error(request, "Delegator not found")
+            error_msg = f"Delegator '{delegator_username}' not found in database"
+            print(f"ERROR: {error_msg}")
+            messages.error(request, error_msg)
             return redirect("/change_requests/change_request_index")
             
         if not delegatee:
-            messages.error(request, "Delegatee not found")
+            error_msg = f"Delegatee '{delegatee_username}' not found in database"
+            print(f"ERROR: {error_msg}")
+            messages.error(request, error_msg)
             return redirect("/change_requests/change_request_index")
+        
+        print(f"Delegator details: ID={delegator.id}, designation={delegator.designation}")
+        print(f"Delegatee details: ID={delegatee.id}, designation={delegatee.designation}")
             
         region, cost_center = None, None
         try:
             region = auth_user.region
             cost_center = auth_user.cost_center
+            print(f"Auth user region: {region}, cost_center: {cost_center}")
         except Exception as ex:
+            error_msg = f"Error getting region/cost_center for user {auth_user.username}: {str(ex)}"
+            print(f"ERROR: {error_msg}")
             print("error: ", ex)
-            messages.error(request, "You does not have a region or cost center")
+            messages.error(request, error_msg)
             return redirect("/change_requests/change_request_index")
         
         # Handle delegation requests
         if change_type == "TEMPORARY_DELEGATION":
-            # Create ProfileChange with delegation metadata
-            profile_mod = ProfileChange(
-                user=delegatee,  # The delegatee receives the roles
-                application=application,
-                roles_to_action="TEMPORARY_DELEGATION",
-                change_date=timezone.now(),
-                changed_by=delegator,  # The delegator is the one delegating
-                status=PROFILE_CHANGE_STATUS['PENDING']  # Explicitly set status to PENDING
-            )
-            profile_mod.save()
+            print("Creating ProfileChange for TEMPORARY_DELEGATION")
+            try:
+                # Create ProfileChange with delegation metadata
+                profile_mod = ProfileChange(
+                    user=delegatee,  # The delegatee receives the roles
+                    application=application,
+                    roles_to_action="TEMPORARY_DELEGATION",
+                    change_date=timezone.now(),
+                    changed_by=delegator,  # The delegator is the one delegating
+                    status=PROFILE_CHANGE_STATUS['PENDING']  # Explicitly set status to PENDING
+                )
+                print(f"ProfileChange object created, about to save with status: {PROFILE_CHANGE_STATUS['PENDING']}")
+                profile_mod.save()
+                print(f"ProfileChange saved successfully with ID: {profile_mod.id}")
+            except Exception as e:
+                error_msg = f"Error creating ProfileChange: {str(e)}"
+                print(f"ERROR: {error_msg}")
+                print(f"Traceback: {traceback.format_exc()}")
+                messages.error(request, error_msg)
+                return redirect("/change_requests/change_request_index")
             
             # Store delegation details in roles_actions
-            import json
-            delegation_data = {
-                'type': 'DELEGATION',
-                'delegator_id': delegator.id,  # Use delegator ID instead of auth_user
-                'start_date': request.POST.get('delegation_start_date'),
-                'end_date': request.POST.get('delegation_end_date'),
-                'reason': request.POST.get('delegation_reason')
-            }
-            profile_mod.roles_actions = json.dumps(delegation_data)
-            profile_mod.save()
-            
-            # Add roles to be delegated
-            selected_roles = request.POST.getlist('roles')
-            if selected_roles:
-                profile_mod.role_to_assign.set(Roles.objects.filter(id__in=selected_roles))
+            try:
+                import json
+                delegation_data = {
+                    'type': 'DELEGATION',
+                    'delegator_id': delegator.id,  # Use delegator ID instead of auth_user
+                    'start_date': request.POST.get('delegation_start_date'),
+                    'end_date': request.POST.get('delegation_end_date'),
+                    'reason': request.POST.get('delegation_reason')
+                }
+                print(f"Delegation data: {delegation_data}")
+                profile_mod.roles_actions = json.dumps(delegation_data)
+                profile_mod.save()
+                print("Delegation metadata saved successfully")
+                
+                # Add roles to be delegated
+                selected_roles = request.POST.getlist('roles')
+                print(f"Selected roles for delegation: {selected_roles}")
+                if selected_roles:
+                    profile_mod.role_to_assign.set(Roles.objects.filter(id__in=selected_roles))
+                    print("Roles assigned to ProfileChange successfully")
+            except Exception as e:
+                error_msg = f"Error storing delegation data: {str(e)}"
+                print(f"ERROR: {error_msg}")
+                print(f"Traceback: {traceback.format_exc()}")
+                messages.error(request, error_msg)
+                return redirect("/change_requests/change_request_index")
         else:
-            # Handle regular profile modification
-            profile_mod = ProfileChange(
-                user=delegatee,  # Use delegatee for regular modifications too
-                change_date=timezone.now(),
-                changed_by=delegator,  # Use delegator as the one making the change
-                roles_to_action=roles_to_action,
-                status=PROFILE_CHANGE_STATUS['PENDING']  # Explicitly set status to PENDING
-            )
-            profile_mod.save()
+            print("Creating ProfileChange for regular profile modification")
+            try:
+                # Handle regular profile modification
+                profile_mod = ProfileChange(
+                    user=delegatee,  # Use delegatee for regular modifications too
+                    change_date=timezone.now(),
+                    changed_by=delegator,  # Use delegator as the one making the change
+                    roles_to_action=roles_to_action,
+                    status=PROFILE_CHANGE_STATUS['PENDING']  # Explicitly set status to PENDING
+                )
+                print(f"ProfileChange object created, about to save with status: {PROFILE_CHANGE_STATUS['PENDING']}")
+                profile_mod.save()
+                print(f"ProfileChange saved successfully with ID: {profile_mod.id}")
+            except Exception as e:
+                error_msg = f"Error creating regular ProfileChange: {str(e)}"
+                print(f"ERROR: {error_msg}")
+                print(f"Traceback: {traceback.format_exc()}")
+                messages.error(request, error_msg)
+                return redirect("/change_requests/change_request_index")
         
         cr_id = "CR-" + timezone.now().strftime("%Y%m%d%I%M%S")
+        print(f"Generated CR ID: {cr_id}")
         
         # Determine change type for the request
         if change_type == "TEMPORARY_DELEGATION":
@@ -583,20 +638,46 @@ def profile_modification_request(request):
         else:
             change_type_display = "Profile Modification"
         
-        change_request = ChangeRequest(
-            cr_id=cr_id,
-            application=application,
-            change_type=change_type_display,
-            profile_change=profile_mod,
-            change_description=change_description,
-            change_reason=change_reason,
-            creator_designation=delegatee.designation,  # Use delegatee's designation
-            created_by=request.user,
-            region=region if region else None,
-            cost_center= cost_center if cost_center else None,
-            created_at=timezone.now()
-        )
-        change_request.save()
+        print(f"Change type display: {change_type_display}")
+        
+        # Validate required fields before creating ChangeRequest
+        if not delegatee.designation:
+            error_msg = f"Delegatee '{delegatee.username}' must have a designation assigned"
+            print(f"ERROR: {error_msg}")
+            messages.error(request, error_msg)
+            return redirect("/change_requests/change_request_index")
+        
+        if not region:
+            error_msg = f"User '{request.user.username}' must have a region assigned to create change requests"
+            print(f"ERROR: {error_msg}")
+            messages.error(request, error_msg)
+            return redirect("/change_requests/change_request_index")
+        
+        print("Creating ChangeRequest object")
+        try:
+            change_request = ChangeRequest(
+                cr_id=cr_id,
+                application=application,
+                change_type=change_type_display,
+                profile_change=profile_mod,
+                change_description=change_description,
+                change_reason=change_reason,
+                creator_designation=delegatee.designation,
+                created_by=request.user,
+                region=region,
+                cost_center=cost_center,
+                status='PENDING',  # Explicitly set the status
+                created_at=timezone.now()
+            )
+            print(f"ChangeRequest object created, about to save")
+            change_request.save()
+            print(f"ChangeRequest saved successfully with ID: {change_request.cr_id}")
+        except Exception as e:
+            error_msg = f"Error creating ChangeRequest: {str(e)}"
+            print(f"ERROR: {error_msg}")
+            print(f"Traceback: {traceback.format_exc()}")
+            messages.error(request, error_msg)
+            return redirect("/change_requests/change_request_index")
         
         # Send delegation notifications if this is a delegation request
         if change_type == "TEMPORARY_DELEGATION":
@@ -645,10 +726,21 @@ def profile_modification_request(request):
                 messages.success(request, f'Section head approver {approver.first_name} {approver.last_name} notified successfully')
                 
         except Exception as ex:
+            error_msg = f"Error sending notification email: {str(ex)}"
+            print(f"ERROR: {error_msg}")
+            print(f"Traceback: {traceback.format_exc()}")
             print("Error: ", str(ex))
-            # messages.error(request, "An error occurred while sending the email: " + str(ex))
+            # Don't block the process for email errors, just log and continue
 
-    
+        print("=== PROFILE MODIFICATION REQUEST COMPLETED SUCCESSFULLY ===")
+        return redirect("/change_requests/change_request_index")
+        
+    except Exception as e:
+        # Catch-all exception handler for the entire function
+        error_msg = f"Unexpected error in profile_modification_request: {str(e)}"
+        print(f"CRITICAL ERROR: {error_msg}")
+        print(f"Traceback: {traceback.format_exc()}")
+        messages.error(request, f"An unexpected error occurred: {str(e)}")
         return redirect("/change_requests/change_request_index")
 
 def send_delegation_notifications(change_request, notification_type, message):
@@ -1704,6 +1796,124 @@ def change_request_reports(request):
             "user_title": user_title,
             "regions": regions
         })
+
+@login_required
+def api_cost_centers(request):
+    """API endpoint to get cost centers for filter dropdown with server-side search"""
+    from it.users.models import CostCenter
+    from django.http import JsonResponse
+    from django.db.models import Q
+    
+    # Get search term from request
+    search_term = request.GET.get('q', '').strip()
+    page = int(request.GET.get('page', 1))
+    page_size = 20  # Limit results per page
+    
+    # Base queryset
+    queryset = CostCenter.objects.all()
+    
+    # Apply search filter if search term provided
+    if search_term:
+        # Search in name, code, and hierarchy
+        search_query = Q()
+        search_query |= Q(name__icontains=search_term)
+        search_query |= Q(code__icontains=search_term)
+        
+        # Also search in parent names and codes
+        search_query |= Q(parent__name__icontains=search_term)
+        search_query |= Q(parent__code__icontains=search_term)
+        search_query |= Q(parent__parent__name__icontains=search_term)
+        search_query |= Q(parent__parent__code__icontains=search_term)
+        
+        queryset = queryset.filter(search_query)
+    
+    # Order by name and apply pagination
+    queryset = queryset.order_by('name')
+    start = (page - 1) * page_size
+    end = start + page_size
+    cost_centers = queryset[start:end]
+    
+    # Enhance the data with detailed hierarchy information
+    enhanced_centers = []
+    for center in cost_centers:
+        center_data = {
+            'id': center.id,
+            'name': center.name,
+            'code': center.code,
+            'display_name': f"{center.name} ({center.code})" if center.name and center.code else center.name or center.code,
+            'parent_id': center.parent_id
+        }
+        
+        # Build detailed hierarchy with multiple levels
+        hierarchy_parts = []
+        
+        # Get all ancestors
+        try:
+            ancestors = center.get_all_ancestors()
+            
+            # Add ancestors in order (grandparent -> parent -> current)
+            for ancestor in reversed(ancestors):
+                if ancestor.name and ancestor.code:
+                    hierarchy_parts.append(f"{ancestor.name} ({ancestor.code})")
+                elif ancestor.name:
+                    hierarchy_parts.append(ancestor.name)
+                elif ancestor.code:
+                    hierarchy_parts.append(ancestor.code)
+            
+            # Add current center
+            if center.name and center.code:
+                hierarchy_parts.append(f"{center.name} ({center.code})")
+            elif center.name:
+                hierarchy_parts.append(center.name)
+            elif center.code:
+                hierarchy_parts.append(center.code)
+                
+        except Exception:
+            # Fallback if hierarchy fails
+            if center.name and center.code:
+                hierarchy_parts.append(f"{center.name} ({center.code})")
+            elif center.name:
+                hierarchy_parts.append(center.name)
+            elif center.code:
+                hierarchy_parts.append(center.code)
+        
+        # Create hierarchy string
+        center_data['hierarchy'] = ' > '.join(hierarchy_parts) if hierarchy_parts else center.name or center.code
+        
+        # Add additional context information
+        center_data['full_context'] = center_data['hierarchy']
+        center_data['searchable_text'] = f"{center_data['display_name']} {center_data['hierarchy']}"
+        
+        enhanced_centers.append(center_data)
+    
+    # Prepare response with pagination info
+    total_count = queryset.count() if search_term else CostCenter.objects.count()
+    has_more = end < total_count
+    
+    response_data = {
+        'results': enhanced_centers,
+        'pagination': {
+            'more': has_more,
+            'page': page,
+            'total_count': total_count
+        }
+    }
+    
+    return JsonResponse(response_data, safe=False)
+
+@login_required
+def api_applications(request):
+    """API endpoint to get all unique applications for filter dropdown"""
+    from django.http import JsonResponse
+    from django.db.models import Q
+    
+    # Get unique applications from change requests
+    applications = ChangeRequest.objects.filter(
+        Q(application__isnull=False) & 
+        Q(application__gt='')
+    ).values_list('application', flat=True).distinct().order_by('application')
+    
+    return JsonResponse(list(applications), safe=False)
 
     
 @login_required

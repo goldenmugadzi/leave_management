@@ -351,6 +351,11 @@ LOGGING = {
             'level': 'INFO',
             'propagate': False,
         },
+        'it.change_requests.views': {
+            'handlers': ['file', 'console'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
     },
 }
 

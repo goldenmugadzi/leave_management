@@ -62,6 +62,13 @@ class ProfileDeactivation(models.Model):
         app_label = 'change_requests'
 
 class ChangeRequest(models.Model):
+    STATUS_CHOICES = [
+        ('PENDING', 'Pending'),
+        ('APPROVED', 'Approved'),
+        ('REJECTED', 'Rejected'),
+        ('IMPLEMENTED', 'Implemented'),
+    ]
+    
     cr_id = models.CharField(max_length=100, primary_key=True)
     application = models.CharField(max_length=100, null=True, blank=True, default=None)
     change_type = models.CharField(max_length=100)
@@ -74,7 +81,9 @@ class ChangeRequest(models.Model):
     created_by = models.ForeignKey(UserProfile, on_delete=models.CASCADE, related_name='cr_created_by')
     region = models.ForeignKey(Regions, on_delete=models.CASCADE)
     cost_center = models.ForeignKey(CostCenter, on_delete=models.CASCADE, null=True, blank=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='PENDING')
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
     
     # Soft delete fields
     is_deleted = models.BooleanField(default=False)
