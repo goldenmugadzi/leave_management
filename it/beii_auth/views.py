@@ -113,6 +113,14 @@ APPLICATIONS = [
         "iconUrl": "assets/images/leave.png",
         "url": "/leave_dashboard/"
     },
+      {
+        "name": "Safety",
+        "title": "Safety",
+        "iconUrl": "assets/images/leave.png",
+        "url": "/accident_report_dashboard/"
+    }, 
+      
+      
 ]
 
 REPORTS = [

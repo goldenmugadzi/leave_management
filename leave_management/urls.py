@@ -15,5 +15,6 @@ urlpatterns = [
     path('approve_leave/<int:pk>/', views.approve_leave, name='approve_leave'),
     path('encashment/', encashment_leave, name='encashment'),
     path('update_leave/<int:id>/', views.update_leave_request, name='update_leave_request'),
+    path('recent_leave_activity/', views.recent_leave_activity, name='recent_leave_activity'),
 
 ]

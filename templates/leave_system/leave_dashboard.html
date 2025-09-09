@@ -54,7 +54,7 @@
   <div class="accessible-functions mb-8">
     <h2 class="text-2xl font-semibold text-nepal-700 mb-4">Your Tools & Functions</h2>
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-      <!-- Leave Stats Card -->
+      <!-- Leave Stats Card (visible to all) -->
       <div class="function-card bg-white/80 backdrop-blur-sm rounded-lg shadow-md p-6 flex flex-col items-start border border-nepal-100">
         <div class="icon-container text-4xl mb-4">📊</div>
         <h3 class="text-lg font-bold text-nepal-800 mb-2">Your Leave Statistics</h3>
@@ -71,29 +71,33 @@
             <span class="font-semibold text-red-700">Rejected Leaves</span>
             <span class="font-bold text-red-700">{{ rejected_count|default:0 }}</span>
           </div>
+          <div class="flex justify-between text-sm mb-1">
+            <span class="font-semibold text-red-700">Waiting For Encashment</span>
+            <span class="font-bold text-red-700">{{waiting_for_encashment|default:0 }}</span>
+          </div>
+          <div class="flex justify-between text-sm mb-1">
+            <span class="font-semibold text-red-700">Encashed</span>
+            <span class="font-bold text-red-700">{{encashed|default:0 }}</span>
+          </div>
           <div class="flex justify-between text-sm">
             <span class="font-semibold text-blue-700">Total Applied Leaves</span>
             <span class="font-bold text-blue-700">{{ total_count|default:0 }}</span>
           </div>
         </div>
       </div>
-       <a href="/leave_types" class="function-card bg-white/80 backdrop-blur-sm rounded-lg shadow-md p-6 flex flex-col items-start hover:shadow-xl hover:-translate-y-1 hover:bg-white/90 transition-all duration-300 border border-nepal-100">
+
+      <!-- Cards visible to all -->
+      <a href="/leave_types" class="function-card bg-white/80 backdrop-blur-sm rounded-lg shadow-md p-6 flex flex-col items-start hover:shadow-xl hover:-translate-y-1 hover:bg-white/90 transition-all duration-300 border border-nepal-100">
         <div class="icon-container text-4xl mb-4">📋</div>
         <h3 class="text-lg font-bold text-nepal-800 mb-2">Leave Balances And Types</h3>
-        <p class="text-sm text-nepal-600 flex-grow">View your leave balances and types.</p>
+        <p class="text-sm text-nepal-600 flex-grow">View your available leave balances and types.</p>
         <div class="mt-4 text-gulf-blue-600 font-semibold">View Types &rarr;</div>
       </a>
-       <a href="/leave" class="function-card bg-white/80 backdrop-blur-sm rounded-lg shadow-md p-6 flex flex-col items-start hover:shadow-xl hover:-translate-y-1 hover:bg-white/90 transition-all duration-300 border border-nepal-100">
+      <a href="/leave" class="function-card bg-white/80 backdrop-blur-sm rounded-lg shadow-md p-6 flex flex-col items-start hover:shadow-xl hover:-translate-y-1 hover:bg-white/90 transition-all duration-300 border border-nepal-100">
         <div class="icon-container text-4xl mb-4">🗓️</div>
         <h3 class="text-lg font-bold text-nepal-800 mb-2">Leave Application Form</h3>
         <p class="text-sm text-nepal-600 flex-grow">Apply for a new leave and track your application status.</p>
         <div class="mt-4 text-gulf-blue-600 font-semibold">Apply Now &rarr;</div>
-      </a>
-        <a href="/create_leave_types" class="function-card bg-white/80 backdrop-blur-sm rounded-lg shadow-md p-6 flex flex-col items-start hover:shadow-xl hover:-translate-y-1 hover:bg-white/90 transition-all duration-300 border border-nepal-100">
-        <div class="icon-container text-4xl mb-4">➕</div>
-        <h3 class="text-lg font-bold text-nepal-800 mb-2">Create Leave Types</h3>
-        <p class="text-sm text-nepal-600 flex-grow">Add or update leave types for users.</p>
-        <div class="mt-4 text-gulf-blue-600 font-semibold">Manage Leave Types &rarr;</div>
       </a>
       <a href="/leave_table" class="function-card bg-white/80 backdrop-blur-sm rounded-lg shadow-md p-6 flex flex-col items-start hover:shadow-xl hover:-translate-y-1 hover:bg-white/90 transition-all duration-300 border border-nepal-100">
         <div class="icon-container text-4xl mb-4">📝</div>
@@ -101,17 +105,20 @@
         <p class="text-sm text-nepal-600 flex-grow">View and manage all leave requests.</p>
         <div class="mt-4 text-gulf-blue-600 font-semibold">Manage Requests &rarr;</div>
       </a>
-      <a href="" class="function-card bg-white/80 backdrop-blur-sm rounded-lg shadow-md p-6 flex flex-col items-start hover:shadow-xl hover:-translate-y-1 hover:bg-white/90 transition-all duration-300 border border-nepal-100">
+
+      <!-- Cards only for Section Head/Admin -->
+      {% if not is_requester %}
+      <a href="/create_leave_types" class="function-card bg-white/80 backdrop-blur-sm rounded-lg shadow-md p-6 flex flex-col items-start hover:shadow-xl hover:-translate-y-1 hover:bg-white/90 transition-all duration-300 border border-nepal-100">
+        <div class="icon-container text-4xl mb-4">➕</div>
+        <h3 class="text-lg font-bold text-nepal-800 mb-2">Create Leave Types</h3>
+        <p class="text-sm text-nepal-600 flex-grow">Add or update leave types for users.</p>
+        <div class="mt-4 text-gulf-blue-600 font-semibold">Manage Leave Types &rarr;</div>
+      </a>
+      <a href="/recent_leave_activity" class="function-card bg-white/80 backdrop-blur-sm rounded-lg shadow-md p-6 flex flex-col items-start hover:shadow-xl hover:-translate-y-1 hover:bg-white/90 transition-all duration-300 border border-nepal-100">
         <div class="icon-container text-4xl mb-4">🕒</div>
         <h3 class="text-lg font-bold text-nepal-800 mb-2">Recent Leave Activity</h3>
         <p class="text-sm text-nepal-600 flex-grow">Check the latest activities regarding leave requests.</p>
         <div class="mt-4 text-gulf-blue-600 font-semibold">View Activity &rarr;</div>
-      </a>
-      <a href="/encashment" class="function-card bg-white/80 backdrop-blur-sm rounded-lg shadow-md p-6 flex flex-col items-start hover:shadow-xl hover:-translate-y-1 hover:bg-white/90 transition-all duration-300 border border-nepal-100">
-        <div class="icon-container text-4xl mb-4">💸</div>
-        <h3 class="text-lg font-bold text-nepal-800 mb-2">Leave Encashment</h3>
-        <p class="text-sm text-nepal-600 flex-grow">Request encashment for vacation leave.</p>
-        <div class="mt-4 text-gulf-blue-600 font-semibold">Encash Now &rarr;</div>
       </a>
       <a href="" class="function-card bg-white/80 backdrop-blur-sm rounded-lg shadow-md p-6 flex flex-col items-start hover:shadow-xl hover:-translate-y-1 hover:bg-white/90 transition-all duration-300 border border-nepal-100">
         <div class="icon-container text-4xl mb-4">✅</div>
@@ -119,7 +126,15 @@
         <p class="text-sm text-nepal-600 flex-grow">Approve or reject pending leave requests from employees.</p>
         <div class="mt-4 text-gulf-blue-600 font-semibold">Go to Approvals &rarr;</div>
       </a>
-     
+      {% endif %}
+
+      <!-- Encashment visible to all -->
+      <a href="/encashment" class="function-card bg-white/80 backdrop-blur-sm rounded-lg shadow-md p-6 flex flex-col items-start hover:shadow-xl hover:-translate-y-1 hover:bg-white/90 transition-all duration-300 border border-nepal-100">
+        <div class="icon-container text-4xl mb-4">💸</div>
+        <h3 class="text-lg font-bold text-nepal-800 mb-2">Leave Encashment</h3>
+        <p class="text-sm text-nepal-600 flex-grow">Request encashment for vacation leave.</p>
+        <div class="mt-4 text-gulf-blue-600 font-semibold">Encash Now &rarr;</div>
+      </a>
     </div>
   </div>
 </div>

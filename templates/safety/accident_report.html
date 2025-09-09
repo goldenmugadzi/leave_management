@@ -3,99 +3,163 @@
 {% block styles %}
 <style>
   body {
-    font-family: Arial, sans-serif;
-    margin: 30px;
-    background: #f7f7f7;
+    font-family: 'Inter', Arial, sans-serif;
+    margin: 0;
+    background: linear-gradient(135deg, #f7f9fc, #eef1f6);
+    min-height: 100vh;
   }
 
   .container {
-    max-width: 800px;
-    margin: auto;
-    background: gulf_blue;
-    padding: 30px;
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    max-width: 1200px;
+    margin: 40px auto;
+    padding: 20px;
   }
 
   .dashboard-title {
     text-align: center;
-    color: #000;
-    font-weight: bold;
-    font-size: 24px;
-    margin-bottom: 20px;
+    color: #1f2937;
+    font-weight: 700;
+    font-size: 28px;
+    margin-bottom: 30px;
   }
 
+  /* Cards Grid */
+  .cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 20px;
+    margin-bottom: 40px;
+  }
+
+  /* Card Design */
+  .card-option {
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(8px);
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+    padding: 30px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s ease-in-out;
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.08);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .card-option h3 {
+    font-size: 18px;
+    font-weight: 600;
+    color: #374151;
+    margin-top: 10px;
+  }
+
+  .card-option::before {
+    content: "";
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle, rgba(0,123,255,0.2), transparent 70%);
+    transform: scale(0);
+    transition: transform 0.4s ease-in-out;
+  }
+
+  .card-option:hover::before {
+    transform: scale(1);
+  }
+
+  .card-option:hover {
+    transform: translateY(-8px) scale(1.03);
+    box-shadow: 0 10px 25px rgba(0, 123, 255, 0.25);
+    background: #007bff;
+    color: white;
+  }
+
+  .card-option:hover h3 {
+    color: white;
+  }
+
+  /* Forms */
   .form-section {
     display: none;
     margin-top: 20px;
+    background: white;
+    border-radius: 16px;
+    padding: 30px;
+    box-shadow: 0 6px 15px rgba(0,0,0,0.08);
+    animation: fadeIn 0.4s ease-in-out;
   }
 
-  label {
-    display: block;
-    margin: 10px 0 5px;
-  }
-
-  input,
-  select,
-  textarea {
-    width: 100%;
-    padding: 8px;
-    margin-bottom: 12px;
-    border-radius: 4px;
-    border: 1px solid #ccc;
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
   }
 
   button {
-    padding: 10px 20px;
+    padding: 12px 20px;
     border: none;
     background: #007bff;
     color: #fff;
-    border-radius: 4px;
+    border-radius: 8px;
+    font-weight: 600;
     cursor: pointer;
+    transition: all 0.3s ease-in-out;
   }
 
   button:hover {
     background: #0056b3;
+    transform: translateY(-2px);
   }
-  .card-option {
-  background-color: white;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  padding: 20px;
-  text-align: center;
-  cursor: pointer;
-  transition: all 0.2s ease-in-out;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-}
-
-.card-option:hover {
-  background-color: #007bff;
-  color: white;
-  transform: scale(1.02);
-}
 
 </style>
 {% endblock %}
 
-
 {% block content %}
 <div class="container">
- <h2 class="dashboard-title">Accident Reporting Forms</h2>
- <label class="dashboard-title mb-4">What are you reporting on?</label>
-<div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-  <div class="card-option" onclick="selectReport('property')">
-    <h3>🏠 Property Damaged</h3>
+  <h2 class="dashboard-title">Accident Reporting Dashboard</h2>
+
+  <!-- Statistics Section -->
+<div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6 mb-10">
+  <div class="bg-white shadow-lg rounded-2xl p-6 text-center">
+    <p class="text-gray-500 text-sm">Total Accidents</p>
+    <h2 class="text-3xl font-bold text-blue-600">{{ total_accidents }}</h2>
   </div>
-  <div class="card-option" onclick="selectReport('human')">
-    <h3>🧍 Member of Staff</h3>
+  <div class="bg-white shadow-lg rounded-2xl p-6 text-center">
+    <p class="text-gray-500 text-sm">Property Damages</p>
+    <h2 class="text-3xl font-bold text-green-600">{{ property_count }}</h2>
   </div>
-    <div class="card-option" onclick="selectReport('human')">
-    <h3>🧍 Member of Public</h3>
+  <div class="bg-white shadow-lg rounded-2xl p-6 text-center">
+    <p class="text-gray-500 text-sm">Staff Injuries</p>
+    <h2 class="text-3xl font-bold text-red-600">{{ staff_count }}</h2>
   </div>
-  <div class="card-option" onclick="selectReport('vehicle')">
-    <h3>🚗 Vehicle Accident</h3>
+  <div class="bg-white shadow-lg rounded-2xl p-6 text-center">
+    <p class="text-gray-500 text-sm">Vehicle Accidents</p>
+    <h2 class="text-3xl font-bold text-yellow-600">{{ vehicle_count }}</h2>
   </div>
 </div>
+
+  <p class="text-center text-gray-600 mb-6">What are you reporting on ?</p>
+
+  <!-- Card Section -->
+  <div class="cards-grid">
+    <div class="card-option" onclick="selectReport('property')">
+      <div class="text-4xl">🏠</div>
+      <h3>Property Damaged</h3>
+    </div>
+    <div class="card-option" onclick="selectReport('human')">
+      <div class="text-4xl">🧍</div>
+      <h3>Member of Staff</h3>
+    </div>
+    <div class="card-option" onclick="selectReport('human')">
+      <div class="text-4xl">🧍</div>
+      <h3>Member of Public</h3>
+    </div>
+    <div class="card-option" onclick="selectReport('vehicle')">
+      <div class="text-4xl">🚗</div>
+      <h3>Vehicle Accident</h3>
+    </div>
+  </div>
 
 
   <!-- Property Report Form -->
@@ -274,7 +338,7 @@
     Fill all required fields.
   </p>
     <div class="rounded row text-center py-2 grid grid-cols-2 gap-4 my-3">
-      {% for field in form %}
+      {% for field in accident_form %}
         {% if field.is_hidden %}
           {{ field }}
         {% else %}
@@ -294,13 +358,14 @@
 
     <div class="flex mt-6 px-2 py-2 gap-4">
       <div class="w-1/2">
-        <button type="button" onclick="showForm()" class="text-sm font-semibold leading-6 text-gray-900 w-full border border-gray-300 py-2 rounded-md">
+        <button type="button" onclick="showForm()"  class="text-sm font-semibold leading-6 text-gray-900 w-full border border-gray-300 py-2 rounded-md">
           CANCEL
         </button>
       </div>
       <div class="w-1/2">
         <button
           type="submit"
+          name="submit_accident"
           class="w-full rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
         >
           SUBMIT REPORT
@@ -500,12 +565,53 @@
       <button type="button" onclick="showForm()" class="w-1/2 text-sm font-semibold border border-gray-300 text-gray-700 py-2 rounded-md">
         CANCEL
       </button>
-      <button type="submit" class="w-1/2 bg-blue-925 text-white font-semibold py-2 rounded-md hover:bg-blue-600">
+      <button type="submit" name="submit_vehicle" class="w-1/2 bg-blue-925 text-white font-semibold py-2 rounded-md hover:bg-blue-600">
         SUBMIT REPORT
       </button>
     </div>
   </div>
 </form>
+<!-- Accident Management Table -->
+<div class="bg-white shadow-lg rounded-2xl p-6 mt-10">
+  <h2 class="text-xl font-semibold text-gray-800 mb-4">Manage Accident Reports</h2>
+  <div class="overflow-x-auto">
+    <table class="min-w-full border border-gray-200 rounded-lg">
+      <thead class="bg-gray-100">
+        <tr>
+          <th class="px-4 py-2 text-left text-sm font-semibold text-gray-600">ID</th>
+          <th class="px-4 py-2 text-left text-sm font-semibold text-gray-600">Type</th>
+          <th class="px-4 py-2 text-left text-sm font-semibold text-gray-600">Reported By</th>
+          <th class="px-4 py-2 text-left text-sm font-semibold text-gray-600">Date</th>
+          <th class="px-4 py-2 text-left text-sm font-semibold text-gray-600">Status</th>
+          <th class="px-4 py-2 text-center text-sm font-semibold text-gray-600">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for accident in accidents %}
+        <tr class="border-t">
+          <td class="px-4 py-2 text-sm text-gray-700">{{ accident.id }}</td>
+          <td class="px-4 py-2 text-sm text-gray-700 capitalize">{{ accident.type }}</td>
+          <td class="px-4 py-2 text-sm text-gray-700">{{ accident.reported_by }}</td>
+          <td class="px-4 py-2 text-sm text-gray-700">{{ accident.date|date:"Y-m-d" }}</td>
+          <td class="px-4 py-2 text-sm">
+            <span class="px-3 py-1 rounded-full text-xs font-medium 
+              {% if accident.status == 'Pending' %} bg-yellow-100 text-yellow-700 
+              {% elif accident.status == 'Resolved' %} bg-green-100 text-green-700 
+              {% else %} bg-gray-100 text-gray-700 {% endif %}">
+              {{ accident.status }}
+            </span>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="6" class="text-center text-gray-500 py-4">No accident reports available.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
 
 </div>
 <script>
@@ -522,7 +628,8 @@
     } else if (type === 'vehicle') {
       document.getElementById('vehicleForm').style.display = 'block';
     }
+
+    window.scrollTo({ top: 200, behavior: 'smooth' });
   }
 </script>
-
 {% endblock %}

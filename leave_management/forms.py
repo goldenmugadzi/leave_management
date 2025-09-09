@@ -60,6 +60,24 @@ class LeaveTypesForm(forms.ModelForm):
             'user',
         ]
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        base_class = (
+            "block w-full rounded-md border-0 py-2 px-3 text-gray-900 "
+            "shadow-sm ring-1 ring-inset ring-gray-300 "
+            "placeholder:text-gray-400 focus:ring-2 focus:ring-inset "
+            "focus:ring-indigo-600 sm:text-sm sm:leading-6"
+        )
+        select2_fields = ['user']
+        for field_name, field in self.fields.items():
+            current_class = field.widget.attrs.get('class', '')
+            classes = base_class
+            if field_name in select2_fields:
+                classes += " select2"
+            field.widget.attrs['class'] = f"{current_class} {classes}".strip()
+
+
+
 class LeaveRequestFullForm(forms.ModelForm):
     class Meta:
         model = LeaveRequest

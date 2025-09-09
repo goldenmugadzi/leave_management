@@ -146,18 +146,18 @@ def create_accident(request):
             vehicle_form = VehicleAccidentReportForm(request.POST, request.FILES)
             if vehicle_form.is_valid():
                 vehicle_report = vehicle_form.save(commit=False)
-                vehicle_report.user = request.user
+                # vehicle_report.user = request.user
                 vehicle_report.save()
                 messages.success(request, "Vehicle accident report submitted successfully.")
-                return redirect('safety_table')
+                return redirect('accident_report_dashboard')
         elif 'submit_accident' in request.POST:
             accident_form = AccidentReportForm(request.POST)
             if accident_form.is_valid():
                 accident = accident_form.save(commit=False)
-                accident.user = request.user
+                # accident.user = request.user
                 accident.save()
                 messages.success(request, "Human accident report submitted successfully.")
-                return redirect('safety_table')
+                return redirect('accident_report_dashboard')
         elif 'submit_property_loss' in request.POST:
             property_loss_form = PropertyLossIncidentForm(request.POST, request.FILES)
             if property_loss_form.is_valid():
@@ -165,7 +165,7 @@ def create_accident(request):
                 incident.user = request.user
                 incident.save()
                 messages.success(request, "Property loss incident report submitted successfully.")
-                return redirect('safety_table') 
+                return redirect('accident_report_dashboard') 
 
     return render(request, 'safety/accident_report.html', {
         'form': accident_form,
@@ -227,3 +227,61 @@ def accident_reports_datatable(request):
 
 def table_accident(request):
     return render(request, 'safety/table_accident.html')
+
+from .models import AccidentReport, VehicleAccidentReport, PropertyLossIncident
+
+def accident_report_dashboard(request):
+    # Statistics
+    total_accidents = AccidentReport.objects.count() + VehicleAccidentReport.objects.count() + PropertyLossIncident.objects.count()
+    property_count = PropertyLossIncident.objects.count()
+    staff_count = AccidentReport.objects.count()
+    vehicle_count = VehicleAccidentReport.objects.count()
+
+    # Table data: combine all accident types
+    accidents = []
+
+    # Property Loss
+    for incident in PropertyLossIncident.objects.all():
+        accidents.append({
+            'id': incident.id,
+            'type': 'property',
+            'reported_by': incident.reported_by,
+            'date': incident.date_of_report,
+            'status': 'Pending',  # You can add a status field to your model if needed
+        })
+
+    # Human Accident
+    for accident in AccidentReport.objects.all():
+        accidents.append({
+            'id': accident.id,
+            'type': 'human',
+            #'reported_by': getattr(accident.employee_involved, 'user', accident.employee_involved),
+            'date': accident.date_of_accident,
+            'status': 'Pending',  # Add status logic if you have it
+        })
+
+    # Vehicle Accident
+    for vehicle in VehicleAccidentReport.objects.all():
+        accidents.append({
+            'id': vehicle.id,
+            'type': 'vehicle',
+            'reported_by': vehicle.driver_name,
+            'date': getattr(vehicle, 'datetime_for_accident', vehicle.date_submitted),
+            'status': 'Pending',  # Add status logic if you have it
+        })
+
+    # Optionally, sort by date descending
+    accidents = sorted(accidents, key=lambda x: x['date'], reverse=True)
+
+    return render(request, 'safety/accident_report.html', {
+        'total_accidents': total_accidents,
+        'property_count': property_count,
+        'staff_count': staff_count,
+        'vehicle_count': vehicle_count,
+        'accidents': accidents,
+        'form': AccidentReportForm(),
+        'vehicle_form': VehicleAccidentReportForm(),
+        'property_loss_form': PropertyLossIncidentForm(),
+    })
+
+

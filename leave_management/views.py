@@ -141,10 +141,12 @@ def leave_request_datatable(request):
         # Defensive user string extraction
         try:
             if leave.user:
-                if hasattr(leave.user, "username"):  # direct User
-                    user_str = leave.user.username
-                elif hasattr(leave.user, "user") and hasattr(leave.user.user, "get_full_name"):  # UserProfile → User
-                    user_str = leave.user.user.username
+                # If leave.user is a UserProfile with a related User object
+                if hasattr(leave.user, "user") and hasattr(leave.user.user, "get_full_name"):
+                    user_str = leave.user.user.get_full_name()
+                # If leave.user is a User object
+                elif hasattr(leave.user, "get_full_name"):
+                    user_str = leave.user.get_full_name()
                 else:
                     user_str = str(leave.user)
             else:
@@ -394,6 +396,9 @@ def leave_dashboard(request):
     rejected_count = qs.filter(status='rejected').count()
     pending_count = qs.filter(status='pending').count()
     total_count = qs.count()
+    waiting_for_encashment = qs.filter(status='waiting for encashment').count() 
+    encashed = qs.filter(status='encashed').count()
+   
 
     return render(request, 'leave_system/leave_dashboard.html', {
         'is_requester': is_requester,
@@ -401,4 +406,12 @@ def leave_dashboard(request):
         'rejected_count': rejected_count,
         'pending_count': pending_count,
         'total_count': total_count,
+        'waiting_for_encashment': waiting_for_encashment,
+        'encashed': encashed, 
+    })
+
+def recent_leave_activity(request):
+    recent_activities = LeaveRequest.objects.all().order_by('-end_date') 
+    return render(request, 'leave_system/recent_leave_activity.html', {
+        'recent_activities': recent_activities,
     })

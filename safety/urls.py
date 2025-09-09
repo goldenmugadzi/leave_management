@@ -9,5 +9,6 @@ urlpatterns = [
     path('safety_update/<int:id>/', views.safety_update, name='safety_update'),
     path('accident/',views.create_accident, name='create_accident'),
     path('accident_datatable/',views.accident_reports_datatable, name='accident_reports_datatable'),
-    path('table_accident/',views.table_accident, name='table_accident')
+    path('table_accident/',views.table_accident, name='table_accident'),
+    path('accident_report_dashboard/', views.accident_report_dashboard, name=' accident_report_dashboard')
 ]
