@@ -1,0 +1,246 @@
+{% extends 'admin_layout.html' %}
+{% load static %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="content-wrapper">
+  <div class="bg-gray-50 border border-gray-200 rounded-lg px-6 py-6 max-w-7xl mx-auto">
+    
+    <!-- Header -->
+    <div class="flex justify-between items-center mb-8">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-900">{{ title }}</h1>
+        <p class="text-gray-600 mt-1">Create or edit inspection schedule settings</p>
+      </div>
+      <div class="flex space-x-3">
+        <a href="{% url 'substation_inspections:schedule_list' %}" 
+           class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+          <i class="fas fa-arrow-left mr-2"></i>Back to Schedules
+        </a>
+      </div>
+    </div>
+
+    <!-- Form -->
+    <div class="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
+      <form method="post" id="scheduleForm" class="space-y-6">
+        {% csrf_token %}
+        
+        <!-- Basic Information -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label for="{{ form.substation.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+              <i class="fas fa-building mr-2 text-blue-600"></i>Substation *
+            </label>
+            {{ form.substation }}
+            {% if form.substation.errors %}
+              <div class="mt-1 text-red-600 text-sm">
+                {% for error in form.substation.errors %}
+                  <p>{{ error }}</p>
+                {% endfor %}
+              </div>
+            {% endif %}
+          </div>
+          
+          <div>
+            <label for="{{ form.frequency.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+              <i class="fas fa-repeat mr-2 text-blue-600"></i>Frequency *
+            </label>
+            {{ form.frequency }}
+            {% if form.frequency.errors %}
+              <div class="mt-1 text-red-600 text-sm">
+                {% for error in form.frequency.errors %}
+                  <p>{{ error }}</p>
+                {% endfor %}
+              </div>
+            {% endif %}
+          </div>
+        </div>
+        
+        <!-- Schedule Details -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label for="{{ form.day_of_month.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+              <i class="fas fa-calendar-day mr-2 text-blue-600"></i>Day of Month *
+            </label>
+            {{ form.day_of_month }}
+            {% if form.day_of_month.errors %}
+              <div class="mt-1 text-red-600 text-sm">
+                {% for error in form.day_of_month.errors %}
+                  <p>{{ error }}</p>
+                {% endfor %}
+              </div>
+            {% endif %}
+            <p class="mt-1 text-sm text-gray-500">
+              Enter a day between 1-31. For months with fewer days, the inspection will be scheduled on the last day of the month.
+            </p>
+          </div>
+          
+          <div>
+            <label for="{{ form.assigned_inspector.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+              <i class="fas fa-user mr-2 text-blue-600"></i>Assigned Inspector
+            </label>
+            {{ form.assigned_inspector }}
+            {% if form.assigned_inspector.errors %}
+              <div class="mt-1 text-red-600 text-sm">
+                {% for error in form.assigned_inspector.errors %}
+                  <p>{{ error }}</p>
+                {% endfor %}
+              </div>
+            {% endif %}
+            <p class="mt-1 text-sm text-gray-500">
+              Leave unassigned to use auto-assignment later.
+            </p>
+          </div>
+        </div>
+        
+        <!-- Notification Settings -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label for="{{ form.reminder_days_before.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+              <i class="fas fa-bell mr-2 text-blue-600"></i>Reminder Days Before *
+            </label>
+            {{ form.reminder_days_before }}
+            {% if form.reminder_days_before.errors %}
+              <div class="mt-1 text-red-600 text-sm">
+                {% for error in form.reminder_days_before.errors %}
+                  <p>{{ error }}</p>
+                {% endfor %}
+              </div>
+            {% endif %}
+            <p class="mt-1 text-sm text-gray-500">
+              Number of days before the inspection to send reminder notifications.
+            </p>
+          </div>
+          
+          <div>
+            <label for="{{ form.escalation_days_after_due.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+              <i class="fas fa-exclamation-triangle mr-2 text-blue-600"></i>Escalation Days After Due *
+            </label>
+            {{ form.escalation_days_after_due }}
+            {% if form.escalation_days_after_due.errors %}
+              <div class="mt-1 text-red-600 text-sm">
+                {% for error in form.escalation_days_after_due.errors %}
+                  <p>{{ error }}</p>
+                {% endfor %}
+              </div>
+            {% endif %}
+            <p class="mt-1 text-sm text-gray-500">
+              Number of days after the due date to mark as overdue and escalate.
+            </p>
+          </div>
+        </div>
+        
+        <!-- Status -->
+        <div class="flex items-center">
+          <div class="flex items-center h-5">
+            {{ form.is_active }}
+          </div>
+          <div class="ml-3 text-sm">
+            <label for="{{ form.is_active.id_for_label }}" class="font-medium text-gray-700">
+              <i class="fas fa-toggle-on mr-2 text-green-600"></i>Active Schedule
+            </label>
+            <p class="text-gray-500">Inactive schedules will not generate new inspections.</p>
+          </div>
+        </div>
+        {% if form.is_active.errors %}
+          <div class="mt-1 text-red-600 text-sm">
+            {% for error in form.is_active.errors %}
+              <p>{{ error }}</p>
+            {% endfor %}
+          </div>
+        {% endif %}
+        
+        <!-- Info Note -->
+        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <div class="flex">
+            <i class="fas fa-info-circle text-blue-600 mt-1 mr-3"></i>
+            <div>
+              <h4 class="text-sm font-medium text-blue-800">Note</h4>
+              <p class="text-sm text-blue-700 mt-1">
+                After creating the schedule, you can generate monthly inspections using the "Generate Inspections" feature.
+              </p>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Form Actions -->
+        <div class="flex justify-end space-x-3 pt-6 border-t border-gray-200">
+          <a href="{% url 'substation_inspections:schedule_list' %}" 
+             class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded-lg text-sm font-medium transition-colors">
+            <i class="fas fa-times mr-2"></i>Cancel
+          </a>
+          <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg text-sm font-medium transition-colors">
+            <i class="fas fa-save mr-2"></i>Save Schedule
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Form validation
+  const form = document.getElementById('scheduleForm');
+  form.addEventListener('submit', function(e) {
+    const substation = document.getElementById('{{ form.substation.id_for_label }}');
+    const frequency = document.getElementById('{{ form.frequency.id_for_label }}');
+    const dayOfMonth = document.getElementById('{{ form.day_of_month.id_for_label }}');
+    const reminderDays = document.getElementById('{{ form.reminder_days_before.id_for_label }}');
+    const escalationDays = document.getElementById('{{ form.escalation_days_after_due.id_for_label }}');
+    
+    let isValid = true;
+    let errorMessage = '';
+    
+    if (!substation.value) {
+      errorMessage += 'Please select a substation.\n';
+      isValid = false;
+    }
+    
+    if (!frequency.value) {
+      errorMessage += 'Please select a frequency.\n';
+      isValid = false;
+    }
+    
+    if (!dayOfMonth.value || dayOfMonth.value < 1 || dayOfMonth.value > 31) {
+      errorMessage += 'Please enter a valid day of month (1-31).\n';
+      isValid = false;
+    }
+    
+    if (!reminderDays.value || reminderDays.value < 1 || reminderDays.value > 30) {
+      errorMessage += 'Please enter a valid reminder days (1-30).\n';
+      isValid = false;
+    }
+    
+    if (!escalationDays.value || escalationDays.value < 1 || escalationDays.value > 30) {
+      errorMessage += 'Please enter a valid escalation days (1-30).\n';
+      isValid = false;
+    }
+    
+    if (!isValid) {
+      e.preventDefault();
+      alert(errorMessage);
+      return false;
+    }
+  });
+  
+  // Set default values
+  const reminderDaysField = document.getElementById('{{ form.reminder_days_before.id_for_label }}');
+  if (reminderDaysField && !reminderDaysField.value) {
+    reminderDaysField.value = 3;
+  }
+  
+  const escalationDaysField = document.getElementById('{{ form.escalation_days_after_due.id_for_label }}');
+  if (escalationDaysField && !escalationDaysField.value) {
+    escalationDaysField.value = 2;
+  }
+  
+  // Set default day of month to 1st
+  const dayOfMonthField = document.getElementById('{{ form.day_of_month.id_for_label }}');
+  if (dayOfMonthField && !dayOfMonthField.value) {
+    dayOfMonthField.value = 1;
+  }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,240 @@
+{% extends 'home_layout.html' %}
+{% load static %}
+
+{% block title %}Auto Assign Inspections{% endblock %}
+
+{% block extra_css %}
+<style>
+    .assign-header {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 10px;
+        margin-bottom: 2rem;
+    }
+    
+    .assign-card {
+        background: white;
+        border-radius: 10px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        margin-bottom: 1.5rem;
+    }
+    
+    .inspection-item {
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        transition: all 0.2s;
+    }
+    
+    .inspection-item:hover {
+        border-color: #007bff;
+        box-shadow: 0 2px 8px rgba(0, 123, 255, 0.1);
+    }
+    
+    .substation-info {
+        font-weight: 600;
+        color: #2c3e50;
+    }
+    
+    .substation-location {
+        color: #6c757d;
+        font-size: 0.9rem;
+    }
+    
+    .inspection-date {
+        color: #495057;
+        font-size: 0.9rem;
+    }
+    
+    .no-assignments {
+        text-align: center;
+        padding: 3rem;
+        color: #6c757d;
+    }
+    
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+    
+    .stat-card {
+        background: white;
+        border-radius: 8px;
+        padding: 1.5rem;
+        text-align: center;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    
+    .stat-number {
+        font-size: 2rem;
+        font-weight: bold;
+        color: #2c3e50;
+    }
+    
+    .stat-label {
+        color: #6c757d;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="assign-header">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1 class="mb-0">
+                    <i class="fas fa-user-check me-2"></i>
+                    Auto Assign Inspections
+                </h1>
+                <p class="mb-0 mt-2">Automatically assign unassigned inspections to inspectors based on schedules</p>
+            </div>
+            <div class="col-md-4 text-end">
+                <a href="{% url 'substation_inspections:monitoring_dashboard' %}" class="btn btn-light">
+                    <i class="fas fa-arrow-left me-1"></i>Back to Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-number">{{ unassigned_inspections.count }}</div>
+            <div class="stat-label">Unassigned Inspections</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">
+                {% for inspection in unassigned_inspections %}
+                    {% if inspection.substation.inspection_schedules.filter.is_active.True %}
+                        {% if forloop.first %}1{% else %}{{ forloop.counter0|add:1 }}{% endif %}
+                    {% endif %}
+                {% empty %}0{% endfor %}
+            </div>
+            <div class="stat-label">With Schedules</div>
+        </div>
+    </div>
+
+    {% if unassigned_inspections %}
+    <!-- Unassigned Inspections List -->
+    <div class="assign-card">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h4><i class="fas fa-list me-2"></i>Unassigned Inspections</h4>
+            <form method="post" class="d-inline">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-success" onclick="return confirm('Are you sure you want to auto-assign all inspections?')">
+                    <i class="fas fa-magic me-1"></i>Auto Assign All
+                </button>
+            </form>
+        </div>
+        
+        <div class="row">
+            {% for inspection in unassigned_inspections %}
+            <div class="col-md-6">
+                <div class="inspection-item">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <div class="substation-info">{{ inspection.substation.name }}</div>
+                            <div class="substation-location">{{ inspection.substation.location }}</div>
+                            <div class="inspection-date">
+                                <i class="fas fa-calendar me-1"></i>{{ inspection.inspection_date }}
+                            </div>
+                        </div>
+                        <div>
+                            <span class="badge bg-warning">Unassigned</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Check if substation has a schedule -->
+                    {% with schedule=inspection.substation.inspection_schedules.filter.is_active.True.first %}
+                        {% if schedule and schedule.assigned_inspector %}
+                            <div class="mt-2">
+                                <small class="text-success">
+                                    <i class="fas fa-check-circle me-1"></i>
+                                    Will be assigned to: {{ schedule.assigned_inspector.get_full_name }}
+                                </small>
+                            </div>
+                        {% else %}
+                            <div class="mt-2">
+                                <small class="text-warning">
+                                    <i class="fas fa-exclamation-triangle me-1"></i>
+                                    No schedule or inspector configured
+                                </small>
+                            </div>
+                        {% endif %}
+                    {% endwith %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Assignment Preview -->
+    <div class="assign-card">
+        <h4><i class="fas fa-eye me-2"></i>Assignment Preview</h4>
+        <p class="text-muted">The following assignments will be made when you click "Auto Assign All":</p>
+        
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Substation</th>
+                        <th>Inspection Date</th>
+                        <th>Current Status</th>
+                        <th>Will Be Assigned To</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for inspection in unassigned_inspections %}
+                    <tr>
+                        <td>
+                            <strong>{{ inspection.substation.name }}</strong><br>
+                            <small class="text-muted">{{ inspection.substation.location }}</small>
+                        </td>
+                        <td>{{ inspection.inspection_date }}</td>
+                        <td>
+                            <span class="badge bg-warning">Unassigned</span>
+                        </td>
+                        <td>
+                            {% with schedule=inspection.substation.inspection_schedules.filter.is_active.True.first %}
+                                {% if schedule and schedule.assigned_inspector %}
+                                    <span class="text-success">
+                                        <i class="fas fa-user me-1"></i>{{ schedule.assigned_inspector.get_full_name }}
+                                    </span>
+                                {% else %}
+                                    <span class="text-muted">
+                                        <i class="fas fa-times me-1"></i>No assignment possible
+                                    </span>
+                                {% endif %}
+                            {% endwith %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    {% else %}
+    <!-- No Unassigned Inspections -->
+    <div class="assign-card">
+        <div class="no-assignments">
+            <i class="fas fa-check-circle fa-4x text-success mb-3"></i>
+            <h4>All Inspections Assigned</h4>
+            <p>There are currently no unassigned inspections that can be automatically assigned.</p>
+            <a href="{% url 'substation_inspections:monitoring_dashboard' %}" class="btn btn-primary">
+                <i class="fas fa-arrow-left me-1"></i>Back to Dashboard
+            </a>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

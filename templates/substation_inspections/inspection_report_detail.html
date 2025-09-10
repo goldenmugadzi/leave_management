@@ -1,0 +1,326 @@
+{% extends 'admin_layout.html' %}
+{% load static %}
+
+{% block title %}{{ report.report_number }} - Inspection Report{% endblock %}
+
+{% block content %}
+<div class="content-wrapper">
+  <div class="bg-gray-50 border border-gray-200 rounded-lg px-6 py-6 max-w-7xl mx-auto">
+    
+    <!-- Header -->
+    <div class="flex justify-between items-center mb-8">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-900">Inspection Report: {{ report.report_number }}</h1>
+        <p class="text-gray-600 mt-1">Detailed inspection report information</p>
+      </div>
+      <div class="flex space-x-3">
+        <a href="{% url 'substation_inspections:inspection_report_list' %}" 
+           class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+          <i class="fas fa-arrow-left mr-2"></i>Back to Reports
+        </a>
+        {% if report.status != 'completed' %}
+          <a href="{% url 'substation_inspections:inspection_report_edit' report.pk %}" 
+             class="bg-yellow-600 hover:bg-yellow-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+            <i class="fas fa-edit mr-2"></i>Edit Report
+          </a>
+        {% endif %}
+        {% if not report.inspector %}
+          <a href="{% url 'substation_inspections:reassign_inspection' report.pk %}" 
+             class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+            <i class="fas fa-user-plus mr-2"></i>Assign Inspector
+          </a>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Report Information Cards -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+      <!-- Report Information -->
+      <div class="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
+        <h3 class="text-lg font-medium text-gray-900 mb-4">
+          <i class="fas fa-info-circle mr-2 text-blue-600"></i>Report Information
+        </h3>
+        <div class="space-y-3">
+          <div class="flex justify-between">
+            <span class="text-sm font-medium text-gray-500">Report Number:</span>
+            <span class="text-sm text-gray-900 font-mono">{{ report.report_number }}</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-sm font-medium text-gray-500">Substation:</span>
+            <a href="{% url 'substation_inspections:substation_detail' report.substation.pk %}" 
+               class="text-sm text-blue-600 hover:text-blue-800 font-medium">
+              {{ report.substation.substation_code }} - {{ report.substation.name }}
+            </a>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-sm font-medium text-gray-500">Inspection Date:</span>
+            <span class="text-sm text-gray-900">
+              <i class="fas fa-calendar mr-1 text-gray-400"></i>
+              {{ report.inspection_date|date:"F d, Y" }}
+            </span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-sm font-medium text-gray-500">Scheduled Date:</span>
+            <span class="text-sm text-gray-900">
+              <i class="fas fa-clock mr-1 text-gray-400"></i>
+              {{ report.scheduled_date|date:"F d, Y" }}
+            </span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-sm font-medium text-gray-500">Inspector:</span>
+            <span class="text-sm text-gray-900">
+              {% if report.inspector %}
+                <i class="fas fa-user mr-1 text-gray-400"></i>
+                {{ report.inspector.get_full_name|default:report.inspector.username }}
+              {% else %}
+                <span class="text-gray-500 italic">Unassigned</span>
+              {% endif %}
+            </span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-sm font-medium text-gray-500">Status:</span>
+            {% if report.status == 'scheduled' %}
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                <i class="fas fa-clock mr-1"></i>Scheduled
+              </span>
+            {% elif report.status == 'in_progress' %}
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                <i class="fas fa-play mr-1"></i>In Progress
+              </span>
+            {% elif report.status == 'completed' %}
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                <i class="fas fa-check mr-1"></i>Completed
+              </span>
+            {% elif report.status == 'overdue' %}
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                <i class="fas fa-exclamation-triangle mr-1"></i>Overdue
+              </span>
+            {% elif report.status == 'cancelled' %}
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                <i class="fas fa-times mr-1"></i>Cancelled
+              </span>
+            {% endif %}
+          </div>
+          <div class="flex justify-between">
+            <span class="text-sm font-medium text-gray-500">Compliance:</span>
+            {% if report.compliance_status == 'compliant' %}
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                <i class="fas fa-check-circle mr-1"></i>Compliant
+              </span>
+            {% elif report.compliance_status == 'non_compliant' %}
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                <i class="fas fa-times-circle mr-1"></i>Non-Compliant
+              </span>
+            {% elif report.compliance_status == 'requires_attention' %}
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                <i class="fas fa-exclamation-circle mr-1"></i>Requires Attention
+              </span>
+            {% else %}
+              <span class="text-sm text-gray-500">Not Set</span>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <!-- Environmental Conditions -->
+      <div class="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
+        <h3 class="text-lg font-medium text-gray-900 mb-4">
+          <i class="fas fa-cloud-sun mr-2 text-blue-600"></i>Environmental Conditions
+        </h3>
+        <div class="space-y-3">
+          <div class="flex justify-between">
+            <span class="text-sm font-medium text-gray-500">Weather:</span>
+            <span class="text-sm text-gray-900">
+              {% if report.weather_conditions %}
+                <i class="fas fa-cloud-sun mr-1 text-gray-400"></i>
+                {{ report.weather_conditions }}
+              {% else %}
+                <span class="text-gray-500 italic">Not recorded</span>
+              {% endif %}
+            </span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-sm font-medium text-gray-500">Temperature:</span>
+            <span class="text-sm text-gray-900">
+              {% if report.temperature %}
+                <i class="fas fa-thermometer-half mr-1 text-gray-400"></i>
+                {{ report.temperature }}°C
+              {% else %}
+                <span class="text-gray-500 italic">Not recorded</span>
+              {% endif %}
+            </span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-sm font-medium text-gray-500">Humidity:</span>
+            <span class="text-sm text-gray-900">
+              {% if report.humidity %}
+                <i class="fas fa-tint mr-1 text-gray-400"></i>
+                {{ report.humidity }}%
+              {% else %}
+                <span class="text-gray-500 italic">Not recorded</span>
+              {% endif %}
+            </span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-sm font-medium text-gray-500">Created:</span>
+            <span class="text-sm text-gray-900">
+              <i class="fas fa-calendar-plus mr-1 text-gray-400"></i>
+              {{ report.created_at|date:"M d, Y H:i" }}
+            </span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-sm font-medium text-gray-500">Last Updated:</span>
+            <span class="text-sm text-gray-900">
+              <i class="fas fa-calendar-edit mr-1 text-gray-400"></i>
+              {{ report.updated_at|date:"M d, Y H:i" }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Overall Assessment -->
+    <div class="bg-white border border-gray-200 rounded-lg p-6 mb-8 shadow-sm">
+      <h3 class="text-lg font-medium text-gray-900 mb-4">
+        <i class="fas fa-clipboard-check mr-2 text-blue-600"></i>Overall Assessment
+      </h3>
+      
+      {% if report.overall_condition %}
+        <div class="mb-6">
+          <h4 class="text-sm font-medium text-gray-700 mb-2">
+            <i class="fas fa-clipboard-check mr-2 text-green-600"></i>Overall Condition:
+          </h4>
+          <p class="text-gray-700 bg-gray-50 p-4 rounded-lg">{{ report.overall_condition }}</p>
+        </div>
+      {% endif %}
+      
+      {% if report.critical_issues %}
+        <div class="mb-6">
+          <h4 class="text-sm font-medium text-gray-700 mb-2">
+            <i class="fas fa-exclamation-triangle mr-2 text-yellow-600"></i>Critical Issues:
+          </h4>
+          <div class="bg-yellow-50 border border-yellow-200 p-4 rounded-lg">
+            <p class="text-yellow-800 whitespace-pre-line">{{ report.critical_issues }}</p>
+          </div>
+        </div>
+      {% endif %}
+      
+      {% if report.recommendations %}
+        <div class="mb-6">
+          <h4 class="text-sm font-medium text-gray-700 mb-2">
+            <i class="fas fa-lightbulb mr-2 text-blue-600"></i>Recommendations:
+          </h4>
+          <div class="bg-blue-50 border border-blue-200 p-4 rounded-lg">
+            <p class="text-blue-800 whitespace-pre-line">{{ report.recommendations }}</p>
+          </div>
+        </div>
+      {% endif %}
+      
+      {% if not report.overall_condition and not report.critical_issues and not report.recommendations %}
+        <div class="text-center text-gray-500 py-8">
+          <i class="fas fa-clipboard text-4xl mb-4"></i>
+          <p class="text-lg font-medium">No assessment details recorded yet</p>
+        </div>
+      {% endif %}
+    </div>
+
+    <!-- Checklist Items -->
+    {% if responses_by_category %}
+    <div class="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
+      <h3 class="text-lg font-medium text-gray-900 mb-6">
+        <i class="fas fa-list-check mr-2 text-blue-600"></i>Inspection Checklist Items
+      </h3>
+      
+      {% for category, responses in responses_by_category.items %}
+      <div class="mb-8">
+        <h4 class="text-md font-medium text-gray-800 mb-4 pb-2 border-b border-gray-200">
+          <i class="fas fa-folder mr-2 text-blue-600"></i>{{ category }}
+        </h4>
+        <div class="overflow-x-auto">
+          <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+              <tr>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Item Code</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Response</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Observations</th>
+                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Defects</th>
+              </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+              {% for response in responses %}
+              <tr class="hover:bg-gray-50">
+                <td class="px-4 py-4 whitespace-nowrap">
+                  <span class="text-sm font-medium text-gray-900">{{ response.checklist_item.item_code }}</span>
+                </td>
+                <td class="px-4 py-4">
+                  <div class="text-sm font-medium text-gray-900">{{ response.checklist_item.title }}</div>
+                  <div class="text-sm text-gray-500 mt-1">{{ response.checklist_item.description }}</div>
+                </td>
+                <td class="px-4 py-4 whitespace-nowrap">
+                  {% if response.response == 'pass' %}
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                      <i class="fas fa-check mr-1"></i>Pass
+                    </span>
+                  {% elif response.response == 'fail' %}
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                      <i class="fas fa-times mr-1"></i>Fail
+                    </span>
+                  {% elif response.response == 'na' %}
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                      <i class="fas fa-minus mr-1"></i>N/A
+                    </span>
+                  {% elif response.response == 'pending' %}
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                      <i class="fas fa-clock mr-1"></i>Pending
+                    </span>
+                  {% endif %}
+                </td>
+                <td class="px-4 py-4">
+                  <div class="text-sm text-gray-900">
+                    {% if response.observations %}
+                      {{ response.observations|truncatewords:20 }}
+                    {% else %}
+                      <span class="text-gray-500 italic">No observations</span>
+                    {% endif %}
+                  </div>
+                </td>
+                <td class="px-4 py-4 whitespace-nowrap">
+                  {% if response.defect_identified %}
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                      <i class="fas fa-exclamation-triangle mr-1"></i>Defect
+                    </span>
+                    {% if response.defect_severity %}
+                      <div class="text-xs text-gray-500 mt-1">
+                        Severity: {{ response.get_defect_severity_display }}
+                      </div>
+                    {% endif %}
+                  {% else %}
+                    <span class="text-sm text-gray-500 italic">No defects</span>
+                  {% endif %}
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
+      <div class="text-center text-gray-500 py-8">
+        <i class="fas fa-list-check text-4xl mb-4"></i>
+        <p class="text-lg font-medium">No checklist items have been completed yet</p>
+        {% if report.status != 'completed' %}
+          <a href="{% url 'substation_inspections:inspection_report_edit' report.pk %}" 
+             class="mt-4 inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors">
+            <i class="fas fa-edit mr-2"></i>Complete Checklist
+          </a>
+        {% endif %}
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

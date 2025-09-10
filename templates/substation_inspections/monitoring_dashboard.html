@@ -1,0 +1,403 @@
+{% extends 'home_layout.html' %}
+{% load static %}
+
+{% block title %}Inspection Monitoring Dashboard{% endblock %}
+
+{% block extra_css %}
+<style>
+    .dashboard-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 10px;
+        margin-bottom: 2rem;
+    }
+    
+    .stat-card {
+        background: white;
+        border-radius: 10px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        transition: transform 0.2s;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-2px);
+    }
+    
+    .stat-number {
+        font-size: 2.5rem;
+        font-weight: bold;
+        color: #2c3e50;
+    }
+    
+    .stat-label {
+        color: #7f8c8d;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    
+    .monitoring-section {
+        background: white;
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    
+    .inspection-card {
+        border: 1px solid #e9ecef;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-bottom: 1rem;
+        transition: all 0.2s;
+    }
+    
+    .inspection-card:hover {
+        border-color: #007bff;
+        box-shadow: 0 2px 8px rgba(0, 123, 255, 0.1);
+    }
+    
+    .status-badge {
+        padding: 0.25rem 0.75rem;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 500;
+    }
+    
+    .status-scheduled { background-color: #e3f2fd; color: #1976d2; }
+    .status-in_progress { background-color: #fff3e0; color: #f57c00; }
+    .status-completed { background-color: #e8f5e8; color: #388e3c; }
+    .status-overdue { background-color: #ffebee; color: #d32f2f; }
+    
+    .action-buttons {
+        display: flex;
+        gap: 0.5rem;
+        margin-top: 1rem;
+    }
+    
+    .btn-sm {
+        padding: 0.375rem 0.75rem;
+        font-size: 0.875rem;
+    }
+    
+    .workload-table {
+        background: white;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+    
+    .workload-table th {
+        background-color: #f8f9fa;
+        font-weight: 600;
+        color: #495057;
+    }
+    
+    .htmx-indicator {
+        opacity: 0;
+        transition: opacity 0.2s;
+    }
+    
+    .htmx-request .htmx-indicator {
+        opacity: 1;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="dashboard-header">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1 class="mb-0">
+                    <i class="fas fa-tachometer-alt me-2"></i>
+                    Inspection Monitoring Dashboard
+                </h1>
+                <p class="mb-0 mt-2">Real-time monitoring of substation inspection activities</p>
+            </div>
+            <div class="col-md-4 text-end">
+                <div class="btn-group" role="group">
+                    <a href="{% url 'substation_inspections:generate_inspections' %}" class="btn btn-light">
+                        <i class="fas fa-plus me-1"></i>Generate Inspections
+                    </a>
+                    <a href="{% url 'substation_inspections:auto_assign_inspections' %}" class="btn btn-light">
+                        <i class="fas fa-user-check me-1"></i>Auto Assign
+                    </a>
+                    <a href="{% url 'substation_inspections:send_notifications' %}" class="btn btn-light">
+                        <i class="fas fa-bell me-1"></i>Send Notifications
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4" id="stats-container" hx-get="{% url 'substation_inspections:dashboard_stats_partial' %}" hx-trigger="every 30s">
+        <div class="col-md-2">
+            <div class="stat-card text-center">
+                <div class="stat-number">{{ stats.total_substations }}</div>
+                <div class="stat-label">Total Substations</div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="stat-card text-center">
+                <div class="stat-number text-warning">{{ stats.pending_inspections }}</div>
+                <div class="stat-label">Pending</div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="stat-card text-center">
+                <div class="stat-number text-info">{{ stats.in_progress_inspections }}</div>
+                <div class="stat-label">In Progress</div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="stat-card text-center">
+                <div class="stat-number text-success">{{ stats.completed_this_month }}</div>
+                <div class="stat-label">Completed This Month</div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="stat-card text-center">
+                <div class="stat-number text-danger">{{ stats.overdue_inspections }}</div>
+                <div class="stat-label">Overdue</div>
+            </div>
+        </div>
+        <div class="col-md-2">
+            <div class="stat-card text-center">
+                <div class="htmx-indicator">
+                    <i class="fas fa-spinner fa-spin"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Upcoming Inspections -->
+        <div class="col-md-6">
+            <div class="monitoring-section">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h4><i class="fas fa-calendar-alt me-2"></i>Upcoming Inspections</h4>
+                    <span class="badge bg-primary">{{ upcoming_inspections.count }}</span>
+                </div>
+                <div id="upcoming-container" hx-get="{% url 'substation_inspections:upcoming_inspections_partial' %}" hx-trigger="every 30s">
+                    {% for inspection in upcoming_inspections %}
+                    <div class="inspection-card">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h6 class="mb-1">{{ inspection.substation.name }}</h6>
+                                <p class="text-muted mb-1">{{ inspection.substation.location }}</p>
+                                <small class="text-muted">
+                                    <i class="fas fa-calendar me-1"></i>{{ inspection.inspection_date }}
+                                    {% if inspection.inspector %}
+                                    | <i class="fas fa-user me-1"></i>{{ inspection.inspector.get_full_name }}
+                                    {% endif %}
+                                </small>
+                            </div>
+                            <span class="status-badge status-{{ inspection.status }}">
+                                {{ inspection.get_status_display }}
+                            </span>
+                        </div>
+                        <div class="action-buttons">
+                            <a href="{% url 'substation_inspections:inspection_report_detail' inspection.pk %}" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-eye me-1"></i>View
+                            </a>
+                            {% if inspection.inspector %}
+                            <a href="{% url 'substation_inspections:reassign_inspection' inspection.pk %}" class="btn btn-sm btn-outline-secondary">
+                                <i class="fas fa-user-edit me-1"></i>Reassign
+                            </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="text-center text-muted py-4">
+                        <i class="fas fa-calendar-check fa-3x mb-3"></i>
+                        <p>No upcoming inspections</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Overdue Inspections -->
+        <div class="col-md-6">
+            <div class="monitoring-section">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h4><i class="fas fa-exclamation-triangle me-2"></i>Overdue Inspections</h4>
+                    <span class="badge bg-danger">{{ overdue_inspections.count }}</span>
+                </div>
+                <div id="overdue-container" hx-get="{% url 'substation_inspections:overdue_inspections_partial' %}" hx-trigger="every 30s">
+                    {% for inspection in overdue_inspections %}
+                    <div class="inspection-card border-danger">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h6 class="mb-1 text-danger">{{ inspection.substation.name }}</h6>
+                                <p class="text-muted mb-1">{{ inspection.substation.location }}</p>
+                                <small class="text-danger">
+                                    <i class="fas fa-calendar me-1"></i>{{ inspection.inspection_date }}
+                                    {% if inspection.inspector %}
+                                    | <i class="fas fa-user me-1"></i>{{ inspection.inspector.get_full_name }}
+                                    {% endif %}
+                                </small>
+                            </div>
+                            <span class="status-badge status-overdue">
+                                {{ inspection.get_status_display }}
+                            </span>
+                        </div>
+                        <div class="action-buttons">
+                            <a href="{% url 'substation_inspections:inspection_report_detail' inspection.pk %}" class="btn btn-sm btn-danger">
+                                <i class="fas fa-eye me-1"></i>View
+                            </a>
+                            {% if inspection.inspector %}
+                            <a href="{% url 'substation_inspections:reassign_inspection' inspection.pk %}" class="btn btn-sm btn-outline-danger">
+                                <i class="fas fa-user-edit me-1"></i>Reassign
+                            </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="text-center text-muted py-4">
+                        <i class="fas fa-check-circle fa-3x mb-3 text-success"></i>
+                        <p>No overdue inspections</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Inspector Workload -->
+    <div class="row">
+        <div class="col-12">
+            <div class="monitoring-section">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h4><i class="fas fa-users me-2"></i>Inspector Workload</h4>
+                    <a href="{% url 'substation_inspections:inspector_workload' %}" class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-chart-bar me-1"></i>View Details
+                    </a>
+                </div>
+                <div class="workload-table">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Inspector</th>
+                                <th>Total Assigned</th>
+                                <th>Pending</th>
+                                <th>In Progress</th>
+                                <th>Completed This Month</th>
+                                <th>Overdue</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for workload in inspector_workload %}
+                            <tr>
+                                <td>
+                                    <strong>{{ workload.inspector.get_full_name }}</strong>
+                                </td>
+                                <td>
+                                    <span class="badge bg-secondary">{{ workload.total_assigned }}</span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-warning">{{ workload.pending }}</span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-info">{{ workload.in_progress }}</span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-success">{{ workload.completed_this_month }}</span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-danger">{{ workload.overdue }}</span>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6" class="text-center text-muted py-4">
+                                    No inspector workload data available
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Inspections -->
+    <div class="row">
+        <div class="col-12">
+            <div class="monitoring-section">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h4><i class="fas fa-history me-2"></i>Recent Inspections</h4>
+                    <a href="{% url 'substation_inspections:inspection_report_list' %}" class="btn btn-sm btn-outline-primary">
+                        <i class="fas fa-list me-1"></i>View All
+                    </a>
+                </div>
+                <div class="workload-table">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Report Number</th>
+                                <th>Substation</th>
+                                <th>Inspector</th>
+                                <th>Date</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for inspection in recent_inspections %}
+                            <tr>
+                                <td>
+                                    <strong>{{ inspection.report_number }}</strong>
+                                </td>
+                                <td>{{ inspection.substation.name }}</td>
+                                <td>
+                                    {% if inspection.inspector %}
+                                        {{ inspection.inspector.get_full_name }}
+                                    {% else %}
+                                        <span class="text-muted">Unassigned</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ inspection.inspection_date }}</td>
+                                <td>
+                                    <span class="status-badge status-{{ inspection.status }}">
+                                        {{ inspection.get_status_display }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <a href="{% url 'substation_inspections:inspection_report_detail' inspection.pk %}" class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="6" class="text-center text-muted py-4">
+                                    No recent inspections
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://unpkg.com/htmx.org@1.9.10"></script>
+<script>
+    // Auto-refresh every 30 seconds
+    setInterval(function() {
+        htmx.trigger('#stats-container', 'htmx:trigger');
+        htmx.trigger('#upcoming-container', 'htmx:trigger');
+        htmx.trigger('#overdue-container', 'htmx:trigger');
+    }, 30000);
+</script>
+{% endblock %}

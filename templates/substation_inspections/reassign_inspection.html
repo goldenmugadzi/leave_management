@@ -1,0 +1,333 @@
+{% extends 'home_layout.html' %}
+{% load static %}
+
+{% block title %}Reassign Inspection{% endblock %}
+
+{% block extra_css %}
+<style>
+    .reassign-header {
+        background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 10px;
+        margin-bottom: 2rem;
+    }
+    
+    .reassign-card {
+        background: white;
+        border-radius: 10px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        margin-bottom: 1.5rem;
+    }
+    
+    .inspection-info {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .inspection-details {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1rem;
+    }
+    
+    .detail-item {
+        padding: 0.75rem;
+        background: white;
+        border-radius: 6px;
+        border-left: 4px solid #007bff;
+    }
+    
+    .detail-label {
+        font-size: 0.9rem;
+        color: #6c757d;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 0.25rem;
+    }
+    
+    .detail-value {
+        font-weight: 600;
+        color: #2c3e50;
+    }
+    
+    .current-inspector {
+        background: #e3f2fd;
+        border-left-color: #2196f3;
+    }
+    
+    .inspector-select {
+        background: white;
+        border: 2px solid #e9ecef;
+        border-radius: 8px;
+        padding: 1rem;
+        transition: all 0.2s;
+    }
+    
+    .inspector-select:hover {
+        border-color: #007bff;
+        box-shadow: 0 2px 8px rgba(0, 123, 255, 0.1);
+    }
+    
+    .inspector-option {
+        display: flex;
+        align-items: center;
+        padding: 0.75rem;
+        border-radius: 6px;
+        margin-bottom: 0.5rem;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    
+    .inspector-option:hover {
+        background-color: #f8f9fa;
+    }
+    
+    .inspector-option.selected {
+        background-color: #e3f2fd;
+        border: 2px solid #2196f3;
+    }
+    
+    .inspector-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: bold;
+        margin-right: 1rem;
+    }
+    
+    .inspector-info {
+        flex: 1;
+    }
+    
+    .inspector-name {
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 0.25rem;
+    }
+    
+    .inspector-email {
+        color: #6c757d;
+        font-size: 0.9rem;
+    }
+    
+    .reason-textarea {
+        min-height: 100px;
+        resize: vertical;
+    }
+    
+    .action-buttons {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        margin-top: 2rem;
+    }
+    
+    .btn-lg {
+        padding: 0.75rem 2rem;
+        font-size: 1.1rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="reassign-header">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1 class="mb-0">
+                    <i class="fas fa-user-edit me-2"></i>
+                    Reassign Inspection
+                </h1>
+                <p class="mb-0 mt-2">Transfer this inspection to a different inspector</p>
+            </div>
+            <div class="col-md-4 text-end">
+                <a href="{% url 'substation_inspections:inspection_report_detail' inspection.pk %}" class="btn btn-light">
+                    <i class="fas fa-arrow-left me-1"></i>Back to Inspection
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Inspection Information -->
+    <div class="reassign-card">
+        <h4 class="mb-3"><i class="fas fa-info-circle me-2"></i>Inspection Details</h4>
+        <div class="inspection-info">
+            <div class="inspection-details">
+                <div class="detail-item">
+                    <div class="detail-label">Report Number</div>
+                    <div class="detail-value">{{ inspection.report_number }}</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Substation</div>
+                    <div class="detail-value">{{ inspection.substation.name }}</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Location</div>
+                    <div class="detail-value">{{ inspection.substation.location }}</div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Inspection Date</div>
+                    <div class="detail-value">{{ inspection.inspection_date }}</div>
+                </div>
+                <div class="detail-item current-inspector">
+                    <div class="detail-label">Current Inspector</div>
+                    <div class="detail-value">
+                        {% if inspection.inspector %}
+                            {{ inspection.inspector.get_full_name }}
+                        {% else %}
+                            <span class="text-muted">Unassigned</span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="detail-item">
+                    <div class="detail-label">Status</div>
+                    <div class="detail-value">
+                        <span class="badge bg-{% if inspection.status == 'scheduled' %}warning{% elif inspection.status == 'in_progress' %}info{% elif inspection.status == 'completed' %}success{% elif inspection.status == 'overdue' %}danger{% else %}secondary{% endif %}">
+                            {{ inspection.get_status_display }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reassignment Form -->
+    <div class="reassign-card">
+        <h4 class="mb-3"><i class="fas fa-user-friends me-2"></i>Select New Inspector</h4>
+        
+        <form method="post" id="reassignForm">
+            {% csrf_token %}
+            
+            <div class="inspector-select">
+                <h6 class="mb-3">Available Inspectors</h6>
+                <div class="row">
+                    {% for inspector in available_inspectors %}
+                    <div class="col-md-6 mb-3">
+                        <div class="inspector-option" onclick="selectInspector('{{ inspector.id }}', this)">
+                            <div class="inspector-avatar">
+                                {{ inspector.first_name|first }}{{ inspector.last_name|first }}
+                            </div>
+                            <div class="inspector-info">
+                                <div class="inspector-name">{{ inspector.get_full_name }}</div>
+                                <div class="inspector-email">{{ inspector.email }}</div>
+                            </div>
+                            <input type="radio" name="inspector" value="{{ inspector.id }}" id="inspector_{{ inspector.id }}" style="display: none;">
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="col-12 text-center text-muted py-4">
+                        <i class="fas fa-users fa-3x mb-3"></i>
+                        <p>No available inspectors found</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Reason for Reassignment -->
+            <div class="mt-4">
+                <label for="reason" class="form-label">
+                    <i class="fas fa-comment me-2"></i>Reason for Reassignment (Optional)
+                </label>
+                <textarea 
+                    class="form-control reason-textarea" 
+                    id="reason" 
+                    name="reason" 
+                    placeholder="Please provide a reason for reassigning this inspection..."
+                ></textarea>
+                <div class="form-text">This information will be logged for audit purposes.</div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="action-buttons">
+                <button type="submit" class="btn btn-success btn-lg" id="reassignButton" disabled>
+                    <i class="fas fa-user-check me-2"></i>Reassign Inspection
+                </button>
+                <a href="{% url 'substation_inspections:inspection_report_detail' inspection.pk %}" class="btn btn-outline-secondary btn-lg">
+                    <i class="fas fa-times me-2"></i>Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Reassignment Guidelines -->
+    <div class="reassign-card">
+        <h4 class="mb-3"><i class="fas fa-info-circle me-2"></i>Reassignment Guidelines</h4>
+        <div class="row">
+            <div class="col-md-4">
+                <div class="text-center">
+                    <i class="fas fa-exclamation-triangle fa-2x text-warning mb-2"></i>
+                    <h6>Consider Workload</h6>
+                    <p class="text-muted">Check the new inspector's current workload before reassigning.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="text-center">
+                    <i class="fas fa-calendar fa-2x text-info mb-2"></i>
+                    <h6>Check Availability</h6>
+                    <p class="text-muted">Ensure the new inspector is available for the inspection date.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="text-center">
+                    <i class="fas fa-bell fa-2x text-success mb-2"></i>
+                    <h6>Notify Inspector</h6>
+                    <p class="text-muted">The new inspector will be notified of the assignment.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function selectInspector(inspectorId, element) {
+        // Remove selected class from all options
+        document.querySelectorAll('.inspector-option').forEach(el => {
+            el.classList.remove('selected');
+        });
+        
+        // Add selected class to clicked option
+        element.classList.add('selected');
+        
+        // Check the radio button
+        document.getElementById('inspector_' + inspectorId).checked = true;
+        
+        // Enable reassign button
+        document.getElementById('reassignButton').disabled = false;
+    }
+    
+    // Form submission confirmation
+    document.getElementById('reassignForm').addEventListener('submit', function(e) {
+        const selectedInspector = document.querySelector('input[name="inspector"]:checked');
+        if (!selectedInspector) {
+            e.preventDefault();
+            alert('Please select an inspector.');
+            return;
+        }
+        
+        const inspectorName = selectedInspector.closest('.inspector-option').querySelector('.inspector-name').textContent;
+        const currentInspector = '{{ inspection.inspector.get_full_name|default:"Unassigned" }}';
+        
+        if (currentInspector === inspectorName) {
+            e.preventDefault();
+            alert('Please select a different inspector.');
+            return;
+        }
+        
+        if (!confirm(`Are you sure you want to reassign this inspection from ${currentInspector} to ${inspectorName}?`)) {
+            e.preventDefault();
+        }
+    });
+</script>
+{% endblock %}

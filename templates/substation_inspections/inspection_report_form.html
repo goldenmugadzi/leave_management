@@ -1,0 +1,209 @@
+{% extends 'admin_layout.html' %}
+{% load static %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="content-wrapper">
+  <div class="bg-gray-50 border border-gray-200 rounded-lg px-6 py-6 max-w-7xl mx-auto">
+    
+    <!-- Header -->
+    <div class="flex justify-between items-center mb-8">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-900">{{ title }}</h1>
+        <p class="text-gray-600 mt-1">Create or edit inspection report details</p>
+      </div>
+      <div class="flex space-x-3">
+        <a href="{% url 'substation_inspections:inspection_report_list' %}" 
+           class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+          <i class="fas fa-arrow-left mr-2"></i>Back to Reports
+        </a>
+      </div>
+    </div>
+
+    <!-- Form -->
+    <div class="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
+      <form method="post" id="inspectionForm" class="space-y-6">
+        {% csrf_token %}
+        
+        <!-- Basic Information -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label for="{{ form.substation.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+              <i class="fas fa-building mr-2 text-blue-600"></i>Substation *
+            </label>
+            {{ form.substation }}
+            {% if form.substation.errors %}
+              <div class="mt-1 text-red-600 text-sm">
+                {% for error in form.substation.errors %}
+                  <p>{{ error }}</p>
+                {% endfor %}
+              </div>
+            {% endif %}
+          </div>
+          
+          <div>
+            <label for="{{ form.inspection_date.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+              <i class="fas fa-calendar mr-2 text-blue-600"></i>Inspection Date *
+            </label>
+            {{ form.inspection_date }}
+            {% if form.inspection_date.errors %}
+              <div class="mt-1 text-red-600 text-sm">
+                {% for error in form.inspection_date.errors %}
+                  <p>{{ error }}</p>
+                {% endfor %}
+              </div>
+            {% endif %}
+          </div>
+        </div>
+        
+        <!-- Environmental Conditions -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div>
+            <label for="{{ form.weather_conditions.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+              <i class="fas fa-cloud-sun mr-2 text-blue-600"></i>Weather Conditions
+            </label>
+            {{ form.weather_conditions }}
+            {% if form.weather_conditions.errors %}
+              <div class="mt-1 text-red-600 text-sm">
+                {% for error in form.weather_conditions.errors %}
+                  <p>{{ error }}</p>
+                {% endfor %}
+              </div>
+            {% endif %}
+          </div>
+          
+          <div>
+            <label for="{{ form.temperature.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+              <i class="fas fa-thermometer-half mr-2 text-blue-600"></i>Temperature (°C)
+            </label>
+            {{ form.temperature }}
+            {% if form.temperature.errors %}
+              <div class="mt-1 text-red-600 text-sm">
+                {% for error in form.temperature.errors %}
+                  <p>{{ error }}</p>
+                {% endfor %}
+              </div>
+            {% endif %}
+          </div>
+          
+          <div>
+            <label for="{{ form.humidity.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+              <i class="fas fa-tint mr-2 text-blue-600"></i>Humidity (%)
+            </label>
+            {{ form.humidity }}
+            {% if form.humidity.errors %}
+              <div class="mt-1 text-red-600 text-sm">
+                {% for error in form.humidity.errors %}
+                  <p>{{ error }}</p>
+                {% endfor %}
+              </div>
+            {% endif %}
+          </div>
+        </div>
+        
+        <!-- Overall Assessment -->
+        <div>
+          <label for="{{ form.overall_condition.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+            <i class="fas fa-clipboard-check mr-2 text-blue-600"></i>Overall Condition Assessment
+          </label>
+          {{ form.overall_condition }}
+          {% if form.overall_condition.errors %}
+            <div class="mt-1 text-red-600 text-sm">
+              {% for error in form.overall_condition.errors %}
+                <p>{{ error }}</p>
+              {% endfor %}
+            </div>
+          {% endif %}
+        </div>
+        
+        <!-- Critical Issues -->
+        <div>
+          <label for="{{ form.critical_issues.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+            <i class="fas fa-exclamation-triangle mr-2 text-yellow-600"></i>Critical Issues Identified
+          </label>
+          {{ form.critical_issues }}
+          {% if form.critical_issues.errors %}
+            <div class="mt-1 text-red-600 text-sm">
+              {% for error in form.critical_issues.errors %}
+                <p>{{ error }}</p>
+              {% endfor %}
+            </div>
+          {% endif %}
+        </div>
+        
+        <!-- Recommendations -->
+        <div>
+          <label for="{{ form.recommendations.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+            <i class="fas fa-lightbulb mr-2 text-green-600"></i>Recommendations
+          </label>
+          {{ form.recommendations }}
+          {% if form.recommendations.errors %}
+            <div class="mt-1 text-red-600 text-sm">
+              {% for error in form.recommendations.errors %}
+                <p>{{ error }}</p>
+              {% endfor %}
+            </div>
+          {% endif %}
+        </div>
+        
+        <!-- Info Note -->
+        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+          <div class="flex">
+            <i class="fas fa-info-circle text-blue-600 mt-1 mr-3"></i>
+            <div>
+              <h4 class="text-sm font-medium text-blue-800">Note</h4>
+              <p class="text-sm text-blue-700 mt-1">
+                After creating the inspection report, you can add detailed checklist responses and item-specific observations.
+              </p>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Form Actions -->
+        <div class="flex justify-end space-x-3 pt-6 border-t border-gray-200">
+          <a href="{% url 'substation_inspections:inspection_report_list' %}" 
+             class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded-lg text-sm font-medium transition-colors">
+            <i class="fas fa-times mr-2"></i>Cancel
+          </a>
+          <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg text-sm font-medium transition-colors">
+            <i class="fas fa-save mr-2"></i>Save Inspection Report
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Set default inspection date to today
+  const inspectionDateField = document.getElementById('{{ form.inspection_date.id_for_label }}');
+  if (inspectionDateField && !inspectionDateField.value) {
+    const today = new Date().toISOString().split('T')[0];
+    inspectionDateField.value = today;
+  }
+  
+  // Form validation
+  const form = document.getElementById('inspectionForm');
+  form.addEventListener('submit', function(e) {
+    const substation = document.getElementById('{{ form.substation.id_for_label }}');
+    const inspectionDate = document.getElementById('{{ form.inspection_date.id_for_label }}');
+    
+    if (!substation.value) {
+      e.preventDefault();
+      alert('Please select a substation.');
+      substation.focus();
+      return false;
+    }
+    
+    if (!inspectionDate.value) {
+      e.preventDefault();
+      alert('Please select an inspection date.');
+      inspectionDate.focus();
+      return false;
+    }
+  });
+});
+</script>
+{% endblock %}

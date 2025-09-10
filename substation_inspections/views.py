@@ -22,44 +22,30 @@ from .forms import (
     InspectionReportSearchForm,
     BulkInspectionAssignmentForm
 )
+from .services import (
+    InspectionScheduler,
+    InspectionNotificationService,
+    InspectionAssignmentService,
+    InspectionMonitoringService
+)
 
 
 @login_required
 def dashboard(request):
     """Main dashboard for substation inspection administration"""
     
-    # Get statistics
-    total_substations = Substation.objects.filter(is_active=True).count()
-    pending_inspections = MonthlyInspectionReport.objects.filter(status='scheduled').count()
-    in_progress_inspections = MonthlyInspectionReport.objects.filter(status='in_progress').count()
-    completed_this_month = MonthlyInspectionReport.objects.filter(
-        status='completed',
-        inspection_date__month=timezone.now().month,
-        inspection_date__year=timezone.now().year
-    ).count()
-    overdue_inspections = MonthlyInspectionReport.objects.filter(status='overdue').count()
-    
-    # Get recent inspections
-    recent_inspections = MonthlyInspectionReport.objects.select_related(
-        'substation', 'inspector'
-    ).order_by('-created_at')[:10]
-    
-    # Get upcoming inspections (next 7 days)
-    upcoming_date = timezone.now().date() + timedelta(days=7)
-    upcoming_inspections = MonthlyInspectionReport.objects.filter(
-        inspection_date__lte=upcoming_date,
-        inspection_date__gte=timezone.now().date(),
-        status='scheduled'
-    ).select_related('substation', 'inspector')
+    # Use the monitoring service to get dashboard data
+    dashboard_data = InspectionMonitoringService.get_inspection_dashboard_data()
     
     context = {
-        'total_substations': total_substations,
-        'pending_inspections': pending_inspections,
-        'in_progress_inspections': in_progress_inspections,
-        'completed_this_month': completed_this_month,
-        'overdue_inspections': overdue_inspections,
-        'recent_inspections': recent_inspections,
-        'upcoming_inspections': upcoming_inspections,
+        'total_substations': dashboard_data['stats']['total_substations'],
+        'pending_inspections': dashboard_data['stats']['pending_inspections'],
+        'in_progress_inspections': dashboard_data['stats']['in_progress_inspections'],
+        'completed_this_month': dashboard_data['stats']['completed_this_month'],
+        'overdue_inspections': dashboard_data['stats']['overdue_inspections'],
+        'recent_inspections': dashboard_data['recent_inspections'],
+        'upcoming_inspections': dashboard_data['upcoming_inspections'],
+        'overdue_inspections_list': dashboard_data['overdue_inspections'],
     }
     
     return render(request, 'substation_inspections/dashboard.html', context)
@@ -423,9 +409,13 @@ def bulk_assignment(request):
     else:
         form = BulkInspectionAssignmentForm()
     
+    # Get today's date for template
+    today = timezone.now().date()
+    
     return render(request, 'substation_inspections/bulk_assignment.html', {
         'form': form,
-        'title': 'Bulk Assignment'
+        'title': 'Bulk Assignment',
+        'today': today
     })
 
 
@@ -456,15 +446,213 @@ def get_substation_details(request, pk):
 @login_required
 def get_inspection_stats(request):
     """Get inspection statistics as JSON"""
-    stats = {
-        'total_substations': Substation.objects.filter(is_active=True).count(),
-        'pending_inspections': MonthlyInspectionReport.objects.filter(status='scheduled').count(),
-        'in_progress_inspections': MonthlyInspectionReport.objects.filter(status='in_progress').count(),
-        'completed_this_month': MonthlyInspectionReport.objects.filter(
-            status='completed',
-            inspection_date__month=timezone.now().month,
-            inspection_date__year=timezone.now().year
-        ).count(),
-        'overdue_inspections': MonthlyInspectionReport.objects.filter(status='overdue').count(),
+    dashboard_data = InspectionMonitoringService.get_inspection_dashboard_data()
+    return JsonResponse(dashboard_data['stats'])
+
+
+# Phase 2: Scheduling & Monitoring Views
+
+@login_required
+def monitoring_dashboard(request):
+    """Enhanced monitoring dashboard with real-time updates"""
+    dashboard_data = InspectionMonitoringService.get_inspection_dashboard_data()
+    
+    # Get inspector workload data
+    inspector_workload = InspectionMonitoringService.get_inspector_workload()
+    
+    context = {
+        'stats': dashboard_data['stats'],
+        'recent_inspections': dashboard_data['recent_inspections'],
+        'upcoming_inspections': dashboard_data['upcoming_inspections'],
+        'overdue_inspections': dashboard_data['overdue_inspections'],
+        'inspector_workload': inspector_workload,
     }
-    return JsonResponse(stats)
+    
+    return render(request, 'substation_inspections/monitoring_dashboard.html', context)
+
+
+@login_required
+def inspector_workload(request):
+    """View inspector workload and assignments"""
+    inspector_workload = InspectionMonitoringService.get_inspector_workload()
+    
+    context = {
+        'inspector_workload': inspector_workload,
+    }
+    
+    return render(request, 'substation_inspections/inspector_workload.html', context)
+
+
+@login_required
+def auto_assign_inspections(request):
+    """Auto-assign unassigned inspections"""
+    if request.method == 'POST':
+        try:
+            assigned_count = InspectionAssignmentService.auto_assign_inspections()
+            messages.success(request, f'Successfully assigned {assigned_count} inspections.')
+        except Exception as e:
+            messages.error(request, f'Error in auto-assignment: {str(e)}')
+        
+        return redirect('substation_inspections:monitoring_dashboard')
+    
+    # Get unassigned inspections for display
+    unassigned_inspections = MonthlyInspectionReport.objects.filter(
+        status='scheduled',
+        inspector__isnull=True
+    ).select_related('substation')
+    
+    context = {
+        'unassigned_inspections': unassigned_inspections,
+    }
+    
+    return render(request, 'substation_inspections/auto_assign.html', context)
+
+
+@login_required
+def reassign_inspection(request, pk):
+    """Reassign an inspection to a different inspector"""
+    inspection = get_object_or_404(MonthlyInspectionReport, pk=pk)
+    
+    if request.method == 'POST':
+        new_inspector_id = request.POST.get('inspector')
+        reason = request.POST.get('reason', '')
+        
+        if new_inspector_id:
+            from django.contrib.auth import get_user_model
+            User = get_user_model()
+            new_inspector = get_object_or_404(User, pk=new_inspector_id)
+            
+            try:
+                InspectionAssignmentService.reassign_inspection(inspection, new_inspector, reason)
+                messages.success(request, f'Inspection {inspection.report_number} reassigned to {new_inspector.get_full_name()}.')
+                return redirect('substation_inspections:inspection_report_detail', pk=inspection.pk)
+            except Exception as e:
+                messages.error(request, f'Error reassigning inspection: {str(e)}')
+    
+    # Get available inspectors
+    from django.contrib.auth import get_user_model
+    User = get_user_model()
+    available_inspectors = User.objects.filter(is_active=True)
+    
+    context = {
+        'inspection': inspection,
+        'available_inspectors': available_inspectors,
+    }
+    
+    return render(request, 'substation_inspections/reassign_inspection.html', context)
+
+
+@login_required
+def send_notifications(request):
+    """Send inspection notifications"""
+    if request.method == 'POST':
+        notification_type = request.POST.get('notification_type')
+        
+        try:
+            if notification_type == 'reminders':
+                sent_count = InspectionNotificationService.send_inspection_reminders()
+                messages.success(request, f'Sent {sent_count} reminder notifications.')
+            elif notification_type == 'overdue':
+                updated_count, sent_count = InspectionNotificationService.send_overdue_notifications()
+                messages.success(request, f'Updated {updated_count} inspections to overdue, sent {sent_count} overdue notifications.')
+            elif notification_type == 'both':
+                sent_reminders = InspectionNotificationService.send_inspection_reminders()
+                updated_count, sent_overdue = InspectionNotificationService.send_overdue_notifications()
+                messages.success(request, f'Sent {sent_reminders} reminders and {sent_overdue} overdue notifications.')
+        except Exception as e:
+            messages.error(request, f'Error sending notifications: {str(e)}')
+        
+        return redirect('substation_inspections:monitoring_dashboard')
+    
+    # Get counts for display
+    tomorrow = timezone.now().date() + timedelta(days=1)
+    upcoming_count = MonthlyInspectionReport.objects.filter(
+        inspection_date=tomorrow,
+        status='scheduled'
+    ).count()
+    
+    overdue_count = MonthlyInspectionReport.objects.filter(
+        status='overdue'
+    ).count()
+    
+    context = {
+        'upcoming_count': upcoming_count,
+        'overdue_count': overdue_count,
+    }
+    
+    return render(request, 'substation_inspections/send_notifications.html', context)
+
+
+@login_required
+def generate_inspections(request):
+    """Generate monthly inspections"""
+    if request.method == 'POST':
+        try:
+            created_count = InspectionScheduler.generate_monthly_inspections()
+            updated_count = InspectionScheduler.update_substation_inspection_dates()
+            messages.success(request, f'Generated {created_count} inspections and updated {updated_count} substation dates.')
+        except Exception as e:
+            messages.error(request, f'Error generating inspections: {str(e)}')
+        
+        return redirect('substation_inspections:monitoring_dashboard')
+    
+    # Show what would be generated
+    current_date = timezone.now().date()
+    current_month = current_date.month
+    current_year = current_date.year
+    
+    schedules = MonthlyInspectionSchedule.objects.filter(
+        is_active=True,
+        frequency='monthly'
+    ).select_related('substation', 'assigned_inspector')
+    
+    would_create = 0
+    already_exists = 0
+    
+    for schedule in schedules:
+        existing_inspection = MonthlyInspectionReport.objects.filter(
+            substation=schedule.substation,
+            inspection_date__year=current_year,
+            inspection_date__month=current_month
+        ).first()
+        
+        if existing_inspection:
+            already_exists += 1
+        else:
+            would_create += 1
+    
+    context = {
+        'would_create': would_create,
+        'already_exists': already_exists,
+        'total_schedules': schedules.count(),
+    }
+    
+    return render(request, 'substation_inspections/generate_inspections.html', context)
+
+
+# HTMX endpoints for real-time updates
+@login_required
+def dashboard_stats_partial(request):
+    """HTMX endpoint for dashboard stats updates"""
+    dashboard_data = InspectionMonitoringService.get_inspection_dashboard_data()
+    return render(request, 'substation_inspections/partials/dashboard_stats.html', {
+        'stats': dashboard_data['stats']
+    })
+
+
+@login_required
+def upcoming_inspections_partial(request):
+    """HTMX endpoint for upcoming inspections updates"""
+    dashboard_data = InspectionMonitoringService.get_inspection_dashboard_data()
+    return render(request, 'substation_inspections/partials/upcoming_inspections.html', {
+        'upcoming_inspections': dashboard_data['upcoming_inspections']
+    })
+
+
+@login_required
+def overdue_inspections_partial(request):
+    """HTMX endpoint for overdue inspections updates"""
+    dashboard_data = InspectionMonitoringService.get_inspection_dashboard_data()
+    return render(request, 'substation_inspections/partials/overdue_inspections.html', {
+        'overdue_inspections': dashboard_data['overdue_inspections']
+    })

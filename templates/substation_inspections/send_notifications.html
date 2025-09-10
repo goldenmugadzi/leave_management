@@ -1,0 +1,309 @@
+{% extends 'home_layout.html' %}
+{% load static %}
+
+{% block title %}Send Notifications{% endblock %}
+
+{% block extra_css %}
+<style>
+    .notification-header {
+        background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 10px;
+        margin-bottom: 2rem;
+    }
+    
+    .notification-card {
+        background: white;
+        border-radius: 10px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        margin-bottom: 1.5rem;
+    }
+    
+    .notification-type {
+        border: 2px solid #e9ecef;
+        border-radius: 10px;
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+        transition: all 0.2s;
+        cursor: pointer;
+    }
+    
+    .notification-type:hover {
+        border-color: #007bff;
+        box-shadow: 0 2px 8px rgba(0, 123, 255, 0.1);
+    }
+    
+    .notification-type.selected {
+        border-color: #007bff;
+        background-color: #f8f9ff;
+    }
+    
+    .notification-icon {
+        font-size: 2rem;
+        margin-bottom: 1rem;
+    }
+    
+    .notification-count {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: #2c3e50;
+    }
+    
+    .notification-description {
+        color: #6c757d;
+        margin-top: 0.5rem;
+    }
+    
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin-bottom: 2rem;
+    }
+    
+    .stat-card {
+        background: white;
+        border-radius: 8px;
+        padding: 1.5rem;
+        text-align: center;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    
+    .stat-number {
+        font-size: 2rem;
+        font-weight: bold;
+        color: #2c3e50;
+    }
+    
+    .stat-label {
+        color: #6c757d;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    
+    .preview-section {
+        background: #f8f9fa;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-top: 1rem;
+    }
+    
+    .preview-item {
+        display: flex;
+        justify-content-between;
+        align-items: center;
+        padding: 0.5rem 0;
+        border-bottom: 1px solid #dee2e6;
+    }
+    
+    .preview-item:last-child {
+        border-bottom: none;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="notification-header">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1 class="mb-0">
+                    <i class="fas fa-bell me-2"></i>
+                    Send Notifications
+                </h1>
+                <p class="mb-0 mt-2">Send inspection reminders and overdue notifications to inspectors</p>
+            </div>
+            <div class="col-md-4 text-end">
+                <a href="{% url 'substation_inspections:monitoring_dashboard' %}" class="btn btn-light">
+                    <i class="fas fa-arrow-left me-1"></i>Back to Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-number">{{ upcoming_count }}</div>
+            <div class="stat-label">Upcoming Inspections</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-number">{{ overdue_count }}</div>
+            <div class="stat-label">Overdue Inspections</div>
+        </div>
+    </div>
+
+    <!-- Notification Types -->
+    <div class="notification-card">
+        <h4 class="mb-3"><i class="fas fa-envelope me-2"></i>Select Notification Type</h4>
+        
+        <form method="post" id="notificationForm">
+            {% csrf_token %}
+            
+            <div class="row">
+                <!-- Reminder Notifications -->
+                <div class="col-md-4">
+                    <div class="notification-type" onclick="selectNotificationType('reminders')">
+                        <div class="text-center">
+                            <div class="notification-icon text-warning">
+                                <i class="fas fa-clock"></i>
+                            </div>
+                            <div class="notification-count">{{ upcoming_count }}</div>
+                            <h5>Reminder Notifications</h5>
+                            <div class="notification-description">
+                                Send reminders for inspections scheduled tomorrow
+                            </div>
+                        </div>
+                        <input type="radio" name="notification_type" value="reminders" id="reminders" style="display: none;">
+                    </div>
+                </div>
+
+                <!-- Overdue Notifications -->
+                <div class="col-md-4">
+                    <div class="notification-type" onclick="selectNotificationType('overdue')">
+                        <div class="text-center">
+                            <div class="notification-icon text-danger">
+                                <i class="fas fa-exclamation-triangle"></i>
+                            </div>
+                            <div class="notification-count">{{ overdue_count }}</div>
+                            <h5>Overdue Notifications</h5>
+                            <div class="notification-description">
+                                Send urgent notifications for overdue inspections
+                            </div>
+                        </div>
+                        <input type="radio" name="notification_type" value="overdue" id="overdue" style="display: none;">
+                    </div>
+                </div>
+
+                <!-- Both Notifications -->
+                <div class="col-md-4">
+                    <div class="notification-type" onclick="selectNotificationType('both')">
+                        <div class="text-center">
+                            <div class="notification-icon text-primary">
+                                <i class="fas fa-bell"></i>
+                            </div>
+                            <div class="notification-count">{{ upcoming_count|add:overdue_count }}</div>
+                            <h5>Both Types</h5>
+                            <div class="notification-description">
+                                Send both reminder and overdue notifications
+                            </div>
+                        </div>
+                        <input type="radio" name="notification_type" value="both" id="both" style="display: none;">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Preview Section -->
+            <div class="preview-section" id="previewSection" style="display: none;">
+                <h6><i class="fas fa-eye me-2"></i>Preview</h6>
+                <div id="previewContent">
+                    <!-- Preview content will be populated by JavaScript -->
+                </div>
+            </div>
+
+            <!-- Send Button -->
+            <div class="text-center mt-4">
+                <button type="submit" class="btn btn-success btn-lg" id="sendButton" disabled>
+                    <i class="fas fa-paper-plane me-2"></i>Send Notifications
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Recent Notifications -->
+    <div class="notification-card">
+        <h4 class="mb-3"><i class="fas fa-history me-2"></i>Recent Notifications</h4>
+        <div class="text-center text-muted py-4">
+            <i class="fas fa-info-circle fa-3x mb-3"></i>
+            <p>Notification history will be displayed here once notifications are sent.</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function selectNotificationType(type) {
+        // Remove selected class from all notification types
+        document.querySelectorAll('.notification-type').forEach(el => {
+            el.classList.remove('selected');
+        });
+        
+        // Add selected class to clicked type
+        event.currentTarget.classList.add('selected');
+        
+        // Check the radio button
+        document.getElementById(type).checked = true;
+        
+        // Enable send button
+        document.getElementById('sendButton').disabled = false;
+        
+        // Show preview
+        showPreview(type);
+    }
+    
+    function showPreview(type) {
+        const previewSection = document.getElementById('previewSection');
+        const previewContent = document.getElementById('previewContent');
+        
+        previewSection.style.display = 'block';
+        
+        let previewHtml = '';
+        
+        if (type === 'reminders' || type === 'both') {
+            previewHtml += `
+                <div class="preview-item">
+                    <div>
+                        <strong>Reminder Notifications</strong>
+                        <br><small class="text-muted">Inspections scheduled for tomorrow</small>
+                    </div>
+                    <span class="badge bg-warning">{{ upcoming_count }} notifications</span>
+                </div>
+            `;
+        }
+        
+        if (type === 'overdue' || type === 'both') {
+            previewHtml += `
+                <div class="preview-item">
+                    <div>
+                        <strong>Overdue Notifications</strong>
+                        <br><small class="text-muted">Inspections that are past due</small>
+                    </div>
+                    <span class="badge bg-danger">{{ overdue_count }} notifications</span>
+                </div>
+            `;
+        }
+        
+        previewContent.innerHTML = previewHtml;
+    }
+    
+    // Form submission confirmation
+    document.getElementById('notificationForm').addEventListener('submit', function(e) {
+        const selectedType = document.querySelector('input[name="notification_type"]:checked');
+        if (!selectedType) {
+            e.preventDefault();
+            alert('Please select a notification type.');
+            return;
+        }
+        
+        const type = selectedType.value;
+        let message = '';
+        
+        if (type === 'reminders') {
+            message = `Are you sure you want to send {{ upcoming_count }} reminder notifications?`;
+        } else if (type === 'overdue') {
+            message = `Are you sure you want to send {{ overdue_count }} overdue notifications?`;
+        } else if (type === 'both') {
+            message = `Are you sure you want to send {{ upcoming_count|add:overdue_count }} notifications ({{ upcoming_count }} reminders + {{ overdue_count }} overdue)?`;
+        }
+        
+        if (!confirm(message)) {
+            e.preventDefault();
+        }
+    });
+</script>
+{% endblock %}

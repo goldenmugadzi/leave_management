@@ -32,6 +32,19 @@ urlpatterns = [
     # Bulk operations
     path('bulk-assignment/', views.bulk_assignment, name='bulk_assignment'),
     
+    # Phase 2: Scheduling & Monitoring
+    path('monitoring/', views.monitoring_dashboard, name='monitoring_dashboard'),
+    path('inspector-workload/', views.inspector_workload, name='inspector_workload'),
+    path('auto-assign/', views.auto_assign_inspections, name='auto_assign_inspections'),
+    path('reports/<uuid:pk>/reassign/', views.reassign_inspection, name='reassign_inspection'),
+    path('notifications/', views.send_notifications, name='send_notifications'),
+    path('generate-inspections/', views.generate_inspections, name='generate_inspections'),
+    
+    # HTMX endpoints for real-time updates
+    path('htmx/dashboard-stats/', views.dashboard_stats_partial, name='dashboard_stats_partial'),
+    path('htmx/upcoming-inspections/', views.upcoming_inspections_partial, name='upcoming_inspections_partial'),
+    path('htmx/overdue-inspections/', views.overdue_inspections_partial, name='overdue_inspections_partial'),
+    
     # API endpoints
     path('api/substation/<uuid:pk>/', views.get_substation_details, name='api_substation_details'),
     path('api/stats/', views.get_inspection_stats, name='api_inspection_stats'),

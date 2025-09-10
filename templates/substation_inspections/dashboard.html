@@ -50,7 +50,12 @@
     <!-- Quick Actions -->
     <div class="bg-white border border-gray-200 rounded-lg p-6 mb-8 shadow-sm">
       <h3 class="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b border-gray-200">Quick Actions</h3>
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+        <a href="{% url 'substation_inspections:monitoring_dashboard' %}" 
+           class="bg-gradient-to-r from-purple-50 to-blue-50 hover:from-purple-100 hover:to-blue-100 border border-purple-200 rounded-lg p-4 text-center transition-colors group">
+          <i class="fas fa-tachometer-alt text-purple-600 text-xl mb-2 group-hover:text-purple-700"></i>
+          <div class="text-sm font-medium text-gray-900">Monitoring Dashboard</div>
+        </a>
         <a href="{% url 'substation_inspections:substation_create' %}" 
            class="bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg p-4 text-center transition-colors group">
           <i class="fas fa-plus text-blue-600 text-xl mb-2 group-hover:text-blue-700"></i>

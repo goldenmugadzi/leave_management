@@ -1,0 +1,18 @@
+Subject: Inspection Reminder - {{ substation.name }}
+
+Dear {{ inspector.get_full_name }},
+
+This is a reminder that you have a scheduled inspection tomorrow:
+
+Inspection Details:
+- Substation: {{ substation.name }} ({{ substation.substation_code }})
+- Location: {{ substation.location }}
+- Date: {{ inspection.inspection_date }}
+- Report Number: {{ inspection.report_number }}
+
+Please ensure you are prepared for the inspection and have all necessary equipment and documentation.
+
+If you have any questions or need to reschedule, please contact the administration team immediately.
+
+Best regards,
+Substation Inspection Administration System
