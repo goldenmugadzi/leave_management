@@ -90,22 +90,12 @@ class MaintenanceRecord(models.Model):
     previous_report_no = models.CharField(max_length=50, blank=True, null=True, verbose_name="Previous Report No.")  # Reduced from 100
     previous_report_date = models.DateField(blank=True, null=True, verbose_name="Previous Report Date")
     
-    # Equipment details with improved structure
-    equipment_details = models.JSONField(default=dict, blank=True, verbose_name="Equipment Details")
-    
-    # Maintenance checks with predefined structure
-    general_checks = models.JSONField(default=list, blank=True, verbose_name="General Maintenance Checks")
-    mechanism_checks = models.JSONField(default=list, blank=True, verbose_name="Mechanism Checks")
-    ct_checks = models.JSONField(default=list, blank=True, verbose_name="C/T Maintenance Checks")
-    vt_checks = models.JSONField(default=list, blank=True, verbose_name="V/T Maintenance Checks")
-    
-    # Test results with validation
-    test_results = models.JSONField(default=dict, blank=True, verbose_name="Test Results")
-    
     # Environmental conditions
-    weather_conditions = models.CharField(max_length=100, blank=True, null=True, verbose_name="Weather Conditions")  # Reduced from 255
     ambient_temperature = models.DecimalField(
-        max_digits=5, decimal_places=2, null=True, blank=True,
+        max_digits=5,
+        decimal_places=2,
+        null=True,
+        blank=True,
         verbose_name="Ambient Temperature (°C)"
     )
     humidity = models.PositiveIntegerField(
@@ -113,21 +103,15 @@ class MaintenanceRecord(models.Model):
         validators=[MinValueValidator(0), MaxValueValidator(100)],
         verbose_name="Humidity (%)"
     )
-    
     # Safety and compliance
-    safety_precautions_taken = models.JSONField(default=list, blank=True, verbose_name="Safety Precautions Taken")
     environmental_considerations = models.TextField(blank=True, null=True, verbose_name="Environmental Considerations")
-    
     # Personnel and approvals
-    maintenance_team = models.JSONField(default=list, blank=True, verbose_name="Maintenance Team")
     maintenance_carried_out_by = models.CharField(max_length=100, blank=True, null=True, verbose_name="Maintenance Carried Out By")  # Reduced from 255
     protection_test_carried_out_by = models.CharField(max_length=100, blank=True, null=True, verbose_name="Protection Test Carried Out By")  # Reduced from 255
-    
     # Approval workflow
     checked_by = models.CharField(max_length=100, blank=True, null=True, verbose_name="Checked By")  # Reduced from 255
     checked_by_role = models.CharField(max_length=100, blank=True, null=True, verbose_name="Checked By Role")  # Reduced from 255
     checked_date = models.DateTimeField(null=True, blank=True, verbose_name="Checked Date")
-    
     approved_by = models.CharField(max_length=100, blank=True, null=True, verbose_name="Approved By")  # Reduced from 255
     approved_by_role = models.CharField(max_length=100, blank=True, null=True, verbose_name="Approved By Role")  # Reduced from 255
     approved_date = models.DateTimeField(null=True, blank=True, verbose_name="Approved Date")
@@ -160,12 +144,9 @@ class MaintenanceRecord(models.Model):
             models.Index(fields=['date', 'status']),
             models.Index(fields=['circuit_breaker', 'date']),
             models.Index(fields=['status']),
-            models.Index(fields=['priority']),
+            models.Index(fields=['priority'])
             # Note: removed report_no from index since it's already unique
         ]
-    
-    def __str__(self):
-        return f"Report {self.report_no} for CB {self.circuit_breaker.breaker_number} on {self.date}"
     
     def save(self, *args, **kwargs):
         # Auto-generate report number if not provided

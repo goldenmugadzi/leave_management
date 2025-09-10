@@ -5,181 +5,290 @@
 
 {% block content %}
 <div class="content-wrapper">
-  <div class="bg-gray-50 border border-gray-200 rounded-lg px-6 py-6 max-w-7xl mx-auto">
-    
+  <div class="container-fluid">
     <!-- Header -->
-    <div class="flex justify-between items-center mb-8">
-      <div>
+    <div class="flex flex-col lg:flex-row lg:justify-between lg:items-center mb-6">
+      <div class="mb-4 lg:mb-0">
         <h1 class="text-2xl font-bold text-gray-900">{{ title }}</h1>
         <p class="text-gray-600 mt-1">Create or edit inspection checklist item</p>
       </div>
-      <div class="flex space-x-3">
+      <div>
         <a href="{% url 'substation_inspections:checklist_item_list' %}" 
-           class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+           class="inline-flex items-center px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors">
           <i class="fas fa-arrow-left mr-2"></i>Back to Items
         </a>
       </div>
     </div>
 
-    <!-- Form -->
-    <div class="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
+    <!-- Form and Information Panel -->
+    <div class="max-w-6xl mx-auto">
+      <div class="flex flex-col lg:flex-row gap-6">
+        <!-- Form -->
+        <div class="flex-1">
+          <div class="bg-white border border-gray-200 rounded-lg shadow-sm">
+            <div class="px-6 py-4 border-b border-gray-200">
+              <h3 class="text-lg font-medium text-gray-900">
+                Checklist Item Details
+              </h3>
+            </div>
+            <div class="p-6">
       <form method="post" id="checklistItemForm" class="space-y-6">
         {% csrf_token %}
         
         <!-- Basic Information -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="mb-6">
+          <h4 class="text-lg font-medium text-gray-900 mb-4">
+            Basic Information
+          </h4>
+          
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label for="{{ form.item_code.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                <i class="fas fa-tag mr-2 text-blue-600"></i>Item Code <span class="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                name="{{ form.item_code.name }}"
+                id="{{ form.item_code.id_for_label }}"
+                value="{{ form.item_code.value|default:'' }}"
+                class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="e.g., SAF-001, ELE-002"
+              />
+              {% if form.item_code.errors %}
+                <div class="mt-1 text-red-600 text-sm">
+                  {% for error in form.item_code.errors %}
+                    <p>{{ error }}</p>
+                  {% endfor %}
+                </div>
+              {% endif %}
+              <p class="mt-1 text-sm text-gray-500">
+                Unique identifier for this checklist item
+              </p>
+            </div>
+            
+            <div>
+              <label for="{{ form.category.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                <i class="fas fa-folder mr-2 text-blue-600"></i>Category <span class="text-red-500">*</span>
+              </label>
+              <select
+                name="{{ form.category.name }}"
+                id="{{ form.category.id_for_label }}"
+                class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              >
+                <option value="">Select Category</option>
+                {% for choice in form.category.field.choices %}
+                  <option value="{{ choice.0 }}" {% if form.category.value == choice.0 %}selected{% endif %}>
+                    {{ choice.1 }}
+                  </option>
+                {% endfor %}
+              </select>
+              {% if form.category.errors %}
+                <div class="mt-1 text-red-600 text-sm">
+                  {% for error in form.category.errors %}
+                    <p>{{ error }}</p>
+                  {% endfor %}
+                </div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+        
+        <!-- Title and Description -->
+        <div class="mb-6">
+          <h4 class="text-lg font-medium text-gray-900 mb-4">
+            Item Details
+          </h4>
+          
+          <div class="space-y-6">
+            <div>
+              <label for="{{ form.title.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                <i class="fas fa-heading mr-2 text-blue-600"></i>Title <span class="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                name="{{ form.title.name }}"
+                id="{{ form.title.id_for_label }}"
+                value="{{ form.title.value|default:'' }}"
+                class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="Enter checklist item title"
+              />
+              {% if form.title.errors %}
+                <div class="mt-1 text-red-600 text-sm">
+                  {% for error in form.title.errors %}
+                    <p>{{ error }}</p>
+                  {% endfor %}
+                </div>
+              {% endif %}
+            </div>
+            
+            <div>
+              <label for="{{ form.description.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                <i class="fas fa-align-left mr-2 text-blue-600"></i>Description <span class="text-red-500">*</span>
+              </label>
+              <textarea
+                name="{{ form.description.name }}"
+                id="{{ form.description.id_for_label }}"
+                rows="3"
+                class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="Detailed description of what needs to be checked during the inspection"
+              >{{ form.description.value|default:'' }}</textarea>
+              {% if form.description.errors %}
+                <div class="mt-1 text-red-600 text-sm">
+                  {% for error in form.description.errors %}
+                    <p>{{ error }}</p>
+                  {% endfor %}
+                </div>
+              {% endif %}
+              <p class="mt-1 text-sm text-gray-500">
+                Detailed description of what needs to be checked during the inspection.
+              </p>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Severity and Frequency -->
+        <div class="mb-6">
+          <h4 class="text-lg font-medium text-gray-900 mb-4">
+            Classification
+          </h4>
+          
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label for="{{ form.severity.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                <i class="fas fa-exclamation-triangle mr-2 text-blue-600"></i>Severity Level <span class="text-red-500">*</span>
+              </label>
+              <select
+                name="{{ form.severity.name }}"
+                id="{{ form.severity.id_for_label }}"
+                class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              >
+                <option value="">Select Severity</option>
+                {% for choice in form.severity.field.choices %}
+                  <option value="{{ choice.0 }}" {% if form.severity.value == choice.0 %}selected{% endif %}>
+                    {{ choice.1 }}
+                  </option>
+                {% endfor %}
+              </select>
+              {% if form.severity.errors %}
+                <div class="mt-1 text-red-600 text-sm">
+                  {% for error in form.severity.errors %}
+                    <p>{{ error }}</p>
+                  {% endfor %}
+                </div>
+              {% endif %}
+            </div>
+            
+            <div>
+              <label for="{{ form.frequency.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                <i class="fas fa-repeat mr-2 text-blue-600"></i>Frequency <span class="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                name="{{ form.frequency.name }}"
+                id="{{ form.frequency.id_for_label }}"
+                value="{{ form.frequency.value|default:'' }}"
+                class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="e.g., monthly, quarterly, annually"
+              />
+              {% if form.frequency.errors %}
+                <div class="mt-1 text-red-600 text-sm">
+                  {% for error in form.frequency.errors %}
+                    <p>{{ error }}</p>
+                  {% endfor %}
+                </div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+        
+        <!-- Reference Standard -->
+        <div class="mb-6">
+          <h4 class="text-lg font-medium text-gray-900 mb-4">
+            Reference Information
+          </h4>
+          
           <div>
-            <label for="{{ form.item_code.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
-              <i class="fas fa-tag mr-2 text-blue-600"></i>Item Code *
+            <label for="{{ form.reference_standard.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+              <i class="fas fa-book mr-2 text-blue-600"></i>Reference Standard
             </label>
-            {{ form.item_code }}
-            {% if form.item_code.errors %}
+            <input
+              type="text"
+              name="{{ form.reference_standard.name }}"
+              id="{{ form.reference_standard.id_for_label }}"
+              value="{{ form.reference_standard.value|default:'' }}"
+              class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              placeholder="e.g., IEEE 141, IEC 61850, NERC standards"
+            />
+            {% if form.reference_standard.errors %}
               <div class="mt-1 text-red-600 text-sm">
-                {% for error in form.item_code.errors %}
+                {% for error in form.reference_standard.errors %}
                   <p>{{ error }}</p>
                 {% endfor %}
               </div>
             {% endif %}
             <p class="mt-1 text-sm text-gray-500">
-              Unique identifier for this checklist item (e.g., SAF-001, ELE-002).
+              e.g., IEEE 141, IEC 61850, NERC standards
             </p>
           </div>
-          
-          <div>
-            <label for="{{ form.category.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
-              <i class="fas fa-folder mr-2 text-blue-600"></i>Category *
-            </label>
-            {{ form.category }}
-            {% if form.category.errors %}
-              <div class="mt-1 text-red-600 text-sm">
-                {% for error in form.category.errors %}
-                  <p>{{ error }}</p>
-                {% endfor %}
-              </div>
-            {% endif %}
-          </div>
-        </div>
-        
-        <!-- Title and Description -->
-        <div>
-          <label for="{{ form.title.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
-            <i class="fas fa-heading mr-2 text-blue-600"></i>Title *
-          </label>
-          {{ form.title }}
-          {% if form.title.errors %}
-            <div class="mt-1 text-red-600 text-sm">
-              {% for error in form.title.errors %}
-                <p>{{ error }}</p>
-              {% endfor %}
-            </div>
-          {% endif %}
-        </div>
-        
-        <div>
-          <label for="{{ form.description.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
-            <i class="fas fa-align-left mr-2 text-blue-600"></i>Description *
-          </label>
-          {{ form.description }}
-          {% if form.description.errors %}
-            <div class="mt-1 text-red-600 text-sm">
-              {% for error in form.description.errors %}
-                <p>{{ error }}</p>
-              {% endfor %}
-            </div>
-          {% endif %}
-          <p class="mt-1 text-sm text-gray-500">
-            Detailed description of what needs to be checked during the inspection.
-          </p>
-        </div>
-        
-        <!-- Severity and Frequency -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <label for="{{ form.severity.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
-              <i class="fas fa-exclamation-triangle mr-2 text-blue-600"></i>Severity Level *
-            </label>
-            {{ form.severity }}
-            {% if form.severity.errors %}
-              <div class="mt-1 text-red-600 text-sm">
-                {% for error in form.severity.errors %}
-                  <p>{{ error }}</p>
-                {% endfor %}
-              </div>
-            {% endif %}
-          </div>
-          
-          <div>
-            <label for="{{ form.frequency.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
-              <i class="fas fa-repeat mr-2 text-blue-600"></i>Frequency *
-            </label>
-            {{ form.frequency }}
-            {% if form.frequency.errors %}
-              <div class="mt-1 text-red-600 text-sm">
-                {% for error in form.frequency.errors %}
-                  <p>{{ error }}</p>
-                {% endfor %}
-              </div>
-            {% endif %}
-          </div>
-        </div>
-        
-        <!-- Reference Standard -->
-        <div>
-          <label for="{{ form.reference_standard.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
-            <i class="fas fa-book mr-2 text-blue-600"></i>Reference Standard
-          </label>
-          {{ form.reference_standard }}
-          {% if form.reference_standard.errors %}
-            <div class="mt-1 text-red-600 text-sm">
-              {% for error in form.reference_standard.errors %}
-                <p>{{ error }}</p>
-              {% endfor %}
-            </div>
-          {% endif %}
-          <p class="mt-1 text-sm text-gray-500">
-            e.g., IEEE 141, IEC 61850, NERC standards
-          </p>
         </div>
         
         <!-- Status Options -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div class="flex items-center">
-            <div class="flex items-center h-5">
-              {{ form.is_mandatory }}
-            </div>
-            <div class="ml-3 text-sm">
-              <label for="{{ form.is_mandatory.id_for_label }}" class="font-medium text-gray-700">
-                <i class="fas fa-exclamation mr-2 text-red-600"></i>Mandatory Item
-              </label>
-              <p class="text-gray-500">Mandatory items must be completed during every inspection.</p>
-            </div>
-          </div>
-          {% if form.is_mandatory.errors %}
-            <div class="mt-1 text-red-600 text-sm">
-              {% for error in form.is_mandatory.errors %}
-                <p>{{ error }}</p>
-              {% endfor %}
-            </div>
-          {% endif %}
+        <div class="mb-6">
+          <h4 class="text-lg font-medium text-gray-900 mb-4">
+            Status Options
+          </h4>
           
-          <div class="flex items-center">
-            <div class="flex items-center h-5">
-              {{ form.is_active }}
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div class="flex items-center">
+              <div class="flex items-center h-5">
+                <input
+                  type="checkbox"
+                  name="{{ form.is_mandatory.name }}"
+                  id="{{ form.is_mandatory.id_for_label }}"
+                  {% if form.is_mandatory.value %}checked{% endif %}
+                  class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                />
+              </div>
+              <div class="ml-3 text-sm">
+                <label for="{{ form.is_mandatory.id_for_label }}" class="font-medium text-gray-700">
+                  <i class="fas fa-exclamation mr-2 text-red-600"></i>Mandatory Item
+                </label>
+                <p class="text-gray-500">Mandatory items must be completed during every inspection.</p>
+              </div>
             </div>
-            <div class="ml-3 text-sm">
-              <label for="{{ form.is_active.id_for_label }}" class="font-medium text-gray-700">
-                <i class="fas fa-toggle-on mr-2 text-green-600"></i>Active Item
-              </label>
-              <p class="text-gray-500">Inactive items will not appear in new inspections.</p>
+            {% if form.is_mandatory.errors %}
+              <div class="mt-1 text-red-600 text-sm">
+                {% for error in form.is_mandatory.errors %}
+                  <p>{{ error }}</p>
+                {% endfor %}
+              </div>
+            {% endif %}
+            
+            <div class="flex items-center">
+              <div class="flex items-center h-5">
+                <input
+                  type="checkbox"
+                  name="{{ form.is_active.name }}"
+                  id="{{ form.is_active.id_for_label }}"
+                  {% if form.is_active.value %}checked{% endif %}
+                  class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                />
+              </div>
+              <div class="ml-3 text-sm">
+                <label for="{{ form.is_active.id_for_label }}" class="font-medium text-gray-700">
+                  <i class="fas fa-toggle-on mr-2 text-green-600"></i>Active Item
+                </label>
+                <p class="text-gray-500">Inactive items will not appear in new inspections.</p>
+              </div>
             </div>
+            {% if form.is_active.errors %}
+              <div class="mt-1 text-red-600 text-sm">
+                {% for error in form.is_active.errors %}
+                  <p>{{ error }}</p>
+                {% endfor %}
+              </div>
+            {% endif %}
           </div>
-          {% if form.is_active.errors %}
-            <div class="mt-1 text-red-600 text-sm">
-              {% for error in form.is_active.errors %}
-                <p>{{ error }}</p>
-              {% endfor %}
-            </div>
-          {% endif %}
         </div>
         
         <!-- Info Note -->
@@ -198,14 +307,53 @@
         <!-- Form Actions -->
         <div class="flex justify-end space-x-3 pt-6 border-t border-gray-200">
           <a href="{% url 'substation_inspections:checklist_item_list' %}" 
-             class="bg-gray-500 hover:bg-gray-600 text-white px-6 py-2 rounded-lg text-sm font-medium transition-colors">
-            <i class="fas fa-times mr-2"></i>Cancel
+             class="inline-flex items-center px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors">
+            Cancel
           </a>
-          <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg text-sm font-medium transition-colors">
+          <button type="submit" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
             <i class="fas fa-save mr-2"></i>Save Checklist Item
           </button>
         </div>
       </form>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Important Information Panel -->
+        <div class="lg:w-80 flex-shrink-0">
+          <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 sticky top-6">
+            <div class="flex">
+              <div class="flex-shrink-0">
+                <i class="fas fa-info-circle text-blue-400"></i>
+              </div>
+              <div class="ml-3">
+                <h3 class="text-sm font-medium text-blue-800">
+                  Important Information
+                </h3>
+                <div class="mt-2 text-sm text-blue-700">
+                  <ul class="list-disc list-inside space-y-1">
+                    <li>
+                      After creating the checklist item, it will be available for selection in new inspection reports
+                    </li>
+                    <li>
+                      Mandatory items must be completed during every inspection
+                    </li>
+                    <li>
+                      Use clear, descriptive titles and detailed descriptions
+                    </li>
+                    <li>
+                      Reference standards help ensure compliance
+                    </li>
+                    <li>
+                      Inactive items will not appear in new inspections
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </div>

@@ -146,6 +146,12 @@ APPLICATIONS = [
         "iconUrl": "assets/images/customer.png",
         "url": "/inspections/"
     },
+    {
+        "name": "substation_inspections",
+        "title": "Substation Inspections",
+        "iconUrl": "assets/images/customer.png",
+        "url": "/substation-inspections/"
+    },
     # {
     #     "name":"fault_locator",
     #     "title": "Fault Locator",
