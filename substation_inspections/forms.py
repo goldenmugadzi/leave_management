@@ -14,6 +14,16 @@ User = get_user_model()
 class SubstationForm(forms.ModelForm):
     """Form for creating and editing substations"""
     
+    # Override region field to use ModelChoiceField
+    region = forms.ModelChoiceField(
+        queryset=None,  # Will be set in __init__
+        empty_label="Select a region",
+        required=False,
+        widget=forms.Select(attrs={
+            'class': 'block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
+        })
+    )
+    
     class Meta:
         model = Substation
         fields = [
@@ -46,10 +56,6 @@ class SubstationForm(forms.ModelForm):
                 'class': 'form-control',
                 'placeholder': 'District name'
             }),
-            'region': forms.TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'Region name'
-            }),
             'transformers_count': forms.NumberInput(attrs={
                 'class': 'form-control',
                 'min': '0'
@@ -69,6 +75,10 @@ class SubstationForm(forms.ModelForm):
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        # Set region queryset
+        from it.users.models import Regions
+        self.fields['region'].queryset = Regions.objects.all()
+        
         # Make substation_code required for new instances
         if not self.instance.pk:
             self.fields['substation_code'].required = True
@@ -128,7 +138,7 @@ class MonthlyInspectionForm(forms.ModelForm):
     class Meta:
         model = MonthlyInspectionReport
         fields = [
-            'substation', 'inspection_date', 'weather_conditions',
+            'substation', 'inspection_date', 'scheduled_date', 'weather_conditions',
             'temperature', 'humidity', 'overall_condition',
             'critical_issues', 'recommendations'
         ]
@@ -141,9 +151,12 @@ class MonthlyInspectionForm(forms.ModelForm):
                 'class': 'form-control',
                 'type': 'date'
             }),
-            'weather_conditions': forms.TextInput(attrs={
+            'scheduled_date': forms.DateInput(attrs={
                 'class': 'form-control',
-                'placeholder': 'e.g., Clear, Rainy, Cloudy'
+                'type': 'date'
+            }),
+            'weather_conditions': forms.Select(attrs={
+                'class': 'form-control'
             }),
             'temperature': forms.NumberInput(attrs={
                 'class': 'form-control',
@@ -156,10 +169,8 @@ class MonthlyInspectionForm(forms.ModelForm):
                 'max': '100',
                 'placeholder': 'Humidity percentage'
             }),
-            'overall_condition': forms.Textarea(attrs={
-                'class': 'form-control',
-                'rows': 4,
-                'placeholder': 'Overall condition assessment...'
+            'overall_condition': forms.Select(attrs={
+                'class': 'form-control'
             }),
             'critical_issues': forms.Textarea(attrs={
                 'class': 'form-control',
@@ -177,6 +188,16 @@ class MonthlyInspectionForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         # Filter active substations
         self.fields['substation'].queryset = Substation.objects.filter(is_active=True)
+        
+        # Add empty labels for select fields
+        self.fields['weather_conditions'].empty_label = "Select weather conditions"
+        self.fields['overall_condition'].empty_label = "Select overall condition"
+        
+        # Set default scheduled_date to inspection_date for new instances
+        if not self.instance.pk:
+            from datetime import date
+            self.fields['scheduled_date'].initial = date.today()
+            self.fields['inspection_date'].initial = date.today()
 
 
 class InspectionChecklistItemForm(forms.ModelForm):
@@ -185,7 +206,7 @@ class InspectionChecklistItemForm(forms.ModelForm):
     class Meta:
         model = InspectionChecklistItem
         fields = [
-            'item_code', 'title', 'description', 'category', 'severity',
+            'item_code', 'title', 'description', 'equipment_type', 'category', 'severity',
             'is_mandatory', 'is_active', 'reference_standard', 'frequency'
         ]
         
@@ -202,6 +223,9 @@ class InspectionChecklistItemForm(forms.ModelForm):
                 'class': 'form-control',
                 'rows': 3,
                 'placeholder': 'Detailed description of what to check...'
+            }),
+            'equipment_type': forms.Select(attrs={
+                'class': 'form-control'
             }),
             'category': forms.Select(attrs={
                 'class': 'form-control'

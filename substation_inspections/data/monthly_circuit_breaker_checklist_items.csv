@@ -1,0 +1,20 @@
+item_code,title,description,equipment_type,category,severity,is_mandatory,is_active,reference_standard,frequency
+CB-001,CB Make,Record circuit breaker manufacturer and model,circuit_breaker,documentation,medium,true,true,IEEE 141,monthly
+CB-002,CB Type,Record circuit breaker type and specifications,circuit_breaker,documentation,medium,true,true,IEEE 141,monthly
+CB-003,Counter reading,Record circuit breaker operation counter reading,circuit_breaker,electrical,high,true,true,IEEE 141,monthly
+CB-004,Check oil level,Inspect circuit breaker oil level,circuit_breaker,electrical,high,true,true,IEEE 141,monthly
+CB-005,Check SF6 Gas,Inspect SF6 gas pressure and condition,circuit_breaker,electrical,high,true,true,IEEE 141,monthly
+CB-006,Paintwork,Inspect circuit breaker paintwork condition,circuit_breaker,mechanical,low,true,true,IEEE 141,monthly
+CB-007,Oil leaks,Check for oil leaks and identify source,circuit_breaker,electrical,high,true,true,IEEE 141,monthly
+CB-008,Check CTs (outdoor only),Inspect current transformers for outdoor circuit breakers,circuit_breaker,electrical,high,true,true,IEEE 141,monthly
+CB-009,Check Ammeters,Inspect ammeter readings and functionality,circuit_breaker,electrical,medium,true,true,IEEE 141,monthly
+CB-010,MDI,Check Maximum Demand Indicator readings,circuit_breaker,electrical,medium,true,true,IEEE 141,monthly
+CB-011,Reset MDI,Reset Maximum Demand Indicator,circuit_breaker,electrical,medium,true,true,IEEE 141,monthly
+CB-012,Relay flags reset,Reset all relay flags and indicators,circuit_breaker,electrical,high,true,true,IEEE 141,monthly
+CB-013,Relay power supply on,Verify relay power supply is operational,circuit_breaker,electrical,high,true,true,IEEE 141,monthly
+CB-014,Check VTs (outdoor only),Inspect voltage transformers for outdoor circuit breakers,circuit_breaker,electrical,high,true,true,IEEE 141,monthly
+CB-015,Check Voltmeters,Inspect voltmeter readings and functionality,circuit_breaker,electrical,medium,true,true,IEEE 141,monthly
+CB-016,Earthing intact,Check earthing system integrity,circuit_breaker,electrical,high,true,true,IEEE 141,monthly
+CB-017,Spring charging,Check spring charging mechanism operation,circuit_breaker,mechanical,high,true,true,IEEE 141,monthly
+CB-018,Status indication,Verify status indication lights and displays,circuit_breaker,electrical,medium,true,true,IEEE 141,monthly
+CB-019,CB panel covers replaced,Check circuit breaker panel covers are properly replaced,circuit_breaker,electrical,high,true,true,IEEE 141,monthly

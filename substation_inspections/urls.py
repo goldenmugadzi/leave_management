@@ -48,4 +48,5 @@ urlpatterns = [
     # API endpoints
     path('api/substation/<uuid:pk>/', views.get_substation_details, name='api_substation_details'),
     path('api/stats/', views.get_inspection_stats, name='api_inspection_stats'),
+    path('api/regions/', views.get_regions_api, name='api_regions'),
 ]

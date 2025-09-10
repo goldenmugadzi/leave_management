@@ -322,6 +322,7 @@ def checklist_item_list(request):
     """List all inspection checklist items"""
     search_query = request.GET.get('search', '')
     category = request.GET.get('category', '')
+    equipment_type = request.GET.get('equipment_type', '')
     
     items = InspectionChecklistItem.objects.all()
     
@@ -335,8 +336,11 @@ def checklist_item_list(request):
     if category:
         items = items.filter(category=category)
     
+    if equipment_type:
+        items = items.filter(equipment_type=equipment_type)
+    
     # Pagination
-    paginator = Paginator(items, 20)
+    paginator = Paginator(items, 10)  # Reduced from 20 to 10 items per page
     page_number = request.GET.get('page')
     items = paginator.get_page(page_number)
     
@@ -344,6 +348,7 @@ def checklist_item_list(request):
         'items': items,
         'search_query': search_query,
         'category': category,
+        'equipment_type': equipment_type,
     }
     
     return render(request, 'substation_inspections/checklist_item_list.html', context)
@@ -432,7 +437,8 @@ def get_substation_details(request, pk):
         'voltage_level': substation.get_voltage_level_display(),
         'location': substation.location,
         'district': substation.district,
-        'region': substation.region,
+        'region': substation.region.region if substation.region else None,
+        'region_id': substation.region.id if substation.region else None,
         'transformers_count': substation.transformers_count,
         'circuit_breakers_count': substation.circuit_breakers_count,
         'switchgear_count': substation.switchgear_count,
@@ -608,6 +614,8 @@ def generate_inspections(request):
     
     would_create = 0
     already_exists = 0
+    schedules_to_create = []
+    schedules_existing = []
     
     for schedule in schedules:
         existing_inspection = MonthlyInspectionReport.objects.filter(
@@ -618,16 +626,37 @@ def generate_inspections(request):
         
         if existing_inspection:
             already_exists += 1
+            schedules_existing.append({
+                'schedule': schedule,
+                'existing_inspection': existing_inspection
+            })
         else:
             would_create += 1
+            schedules_to_create.append({
+                'schedule': schedule,
+                'existing_inspection': None
+            })
     
     context = {
         'would_create': would_create,
         'already_exists': already_exists,
         'total_schedules': schedules.count(),
+        'schedules_to_create': schedules_to_create,
+        'schedules_existing': schedules_existing,
+        'now': timezone.now(),
+        'page_title': 'Generate Monthly Inspections',
     }
     
     return render(request, 'substation_inspections/generate_inspections.html', context)
+
+
+# API endpoints for AJAX requests
+@login_required
+def get_regions_api(request):
+    """Get regions from database as JSON"""
+    from it.users.models import Regions
+    regions = Regions.objects.all()
+    return JsonResponse(list(regions.values('id', 'region')), safe=False)
 
 
 # HTMX endpoints for real-time updates

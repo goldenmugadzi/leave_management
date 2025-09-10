@@ -29,7 +29,7 @@ class Substation(models.Model):
     voltage_level = models.CharField(max_length=10, choices=VOLTAGE_LEVEL_CHOICES)
     location = models.CharField(max_length=255)
     district = models.CharField(max_length=100)
-    region = models.CharField(max_length=100)
+    region = models.ForeignKey('users.Regions', on_delete=models.SET_NULL, null=True, blank=True)
     
     # Equipment inventory
     transformers_count = models.PositiveIntegerField(default=0)
@@ -108,6 +108,27 @@ class MonthlyInspectionReport(models.Model):
         ('requires_attention', 'Requires Attention'),
     ]
     
+    WEATHER_CONDITIONS_CHOICES = [
+        ('clear', 'Clear'),
+        ('cloudy', 'Cloudy'),
+        ('rainy', 'Rainy'),
+        ('stormy', 'Stormy'),
+        ('foggy', 'Foggy'),
+        ('windy', 'Windy'),
+        ('hot', 'Hot'),
+        ('cold', 'Cold'),
+        ('humid', 'Humid'),
+        ('dry', 'Dry'),
+    ]
+    
+    OVERALL_CONDITION_CHOICES = [
+        ('excellent', 'Excellent - No issues identified'),
+        ('good', 'Good - Minor issues, within acceptable limits'),
+        ('fair', 'Fair - Some issues requiring attention'),
+        ('poor', 'Poor - Multiple issues requiring immediate attention'),
+        ('critical', 'Critical - Serious safety or operational concerns'),
+    ]
+    
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     report_number = models.CharField(max_length=50, unique=True)
     substation = models.ForeignKey(Substation, on_delete=models.CASCADE, related_name='monthly_reports')
@@ -116,7 +137,7 @@ class MonthlyInspectionReport(models.Model):
     inspector = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True)
     
     # Weather and environmental conditions
-    weather_conditions = models.CharField(max_length=100, blank=True, null=True)
+    weather_conditions = models.CharField(max_length=20, choices=WEATHER_CONDITIONS_CHOICES, blank=True, null=True)
     temperature = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True)
     humidity = models.PositiveIntegerField(null=True, blank=True)
     
@@ -125,7 +146,7 @@ class MonthlyInspectionReport(models.Model):
     compliance_status = models.CharField(max_length=20, choices=COMPLIANCE_STATUS_CHOICES, blank=True, null=True)
     
     # Overall assessment
-    overall_condition = models.TextField(blank=True, null=True)
+    overall_condition = models.CharField(max_length=20, choices=OVERALL_CONDITION_CHOICES, blank=True, null=True)
     critical_issues = models.TextField(blank=True, null=True)
     recommendations = models.TextField(blank=True, null=True)
     
@@ -153,6 +174,16 @@ class MonthlyInspectionReport(models.Model):
 class InspectionChecklistItem(models.Model):
     """Model for individual inspection checklist items"""
     
+    EQUIPMENT_TYPE_CHOICES = [
+        ('substation', 'Substation'),
+        ('transformer', 'Transformer'),
+        ('circuit_breaker', 'Circuit Breaker'),
+        ('switchgear', 'Switchgear'),
+        ('protection', 'Protection Equipment'),
+        ('auxiliary', 'Auxiliary Equipment'),
+        ('general', 'General'),
+    ]
+    
     CATEGORY_CHOICES = [
         ('safety', 'Safety'),
         ('electrical', 'Electrical Equipment'),
@@ -173,6 +204,7 @@ class InspectionChecklistItem(models.Model):
     item_code = models.CharField(max_length=20, unique=True)
     title = models.CharField(max_length=255)
     description = models.TextField()
+    equipment_type = models.CharField(max_length=20, choices=EQUIPMENT_TYPE_CHOICES, default='general')
     category = models.CharField(max_length=20, choices=CATEGORY_CHOICES)
     severity = models.CharField(max_length=10, choices=SEVERITY_CHOICES)
     is_mandatory = models.BooleanField(default=True)
@@ -186,7 +218,7 @@ class InspectionChecklistItem(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     
     class Meta:
-        ordering = ['category', 'item_code']
+        ordering = ['equipment_type', 'category', 'item_code']
         verbose_name = 'Inspection Checklist Item'
         verbose_name_plural = 'Inspection Checklist Items'
     

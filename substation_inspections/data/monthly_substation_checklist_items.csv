@@ -1,0 +1,22 @@
+item_code,title,description,equipment_type,category,severity,is_mandatory,is_active,reference_standard,frequency
+SUB-001,Perimeter wall/fencing,Check perimeter wall and fencing for integrity and security,substation,security,medium,true,true,IEEE 141,monthly
+SUB-002,Access road,Inspect access road condition and accessibility,substation,environmental,low,true,true,IEEE 141,monthly
+SUB-003,Substation gates and doors,Check gates and doors for proper operation and condition,substation,security,medium,true,true,IEEE 141,monthly
+SUB-004,Locks applied to gates and doors,Verify all locks are properly applied and functional,substation,security,high,true,true,IEEE 141,monthly
+SUB-005,Substation lighting,Check lighting system functionality and coverage,substation,electrical,medium,true,true,IEEE 141,monthly
+SUB-006,Vegetation growth in s/s yard and switchyard,Inspect and control vegetation growth in substation areas,substation,environmental,low,true,true,IEEE 141,monthly
+SUB-007,Fireguard around switchyard and perimeter wall/fence,Check fireguard clearance and condition,substation,environmental,high,true,true,IEEE 141,monthly
+SUB-008,Check substation yard for dumped materials & decommissioned plant,Inspect yard for unauthorized materials and equipment,substation,environmental,medium,true,true,IEEE 141,monthly
+SUB-009,Control building integrity,Check for cracks broken window panes painting roof leaks etc,substation,mechanical,high,true,true,IEEE 141,monthly
+SUB-010,Substation stone cover and drainage,Inspect stone cover and drainage system,substation,environmental,medium,true,true,IEEE 141,monthly
+SUB-011,Availability of portable water supply,Check portable water supply availability,substation,environmental,low,true,true,IEEE 141,monthly
+SUB-012,Cleanliness and function of toilets,Inspect toilet facilities for cleanliness and functionality,substation,environmental,low,true,true,IEEE 141,monthly
+SUB-013,Firefighting equipment,Check firefighting equipment availability and condition,substation,environmental,high,true,true,IEEE 141,monthly
+SUB-014,Application of floor polish in Control building,Check floor polish application in control building,substation,environmental,low,true,true,IEEE 141,monthly
+SUB-015,Check trench covers,Inspect trench covers for proper installation and condition,substation,mechanical,medium,true,true,IEEE 141,monthly
+SUB-016,C & R Panel covers replaced & cubicle doors closed,Check control and relay panel covers and doors,substation,electrical,high,true,true,IEEE 141,monthly
+SUB-017,Missing equipment identity numbers,Verify all equipment has proper identification numbers,substation,documentation,medium,true,true,IEEE 141,monthly
+SUB-018,Availability of charging handles,Check availability of charging handles for equipment,substation,electrical,medium,true,true,IEEE 141,monthly
+SUB-019,Battery Banks & Chargers 110V,Inspect 110V battery banks and chargers,substation,electrical,high,true,true,IEEE 141,monthly
+SUB-020,Battery Banks & Chargers 48V,Inspect 48V battery banks and chargers,substation,electrical,high,true,true,IEEE 141,monthly
+SUB-021,Battery Banks & Chargers 30V,Inspect 30V battery banks and chargers,substation,electrical,high,true,true,IEEE 141,monthly

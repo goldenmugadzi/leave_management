@@ -25,6 +25,23 @@ from django.db import IntegrityError
 # Add this at the top with other imports
 logger = logging.getLogger(__name__)
 
+# Integration helpers
+def get_circuit_breaker_checklist_items():
+    """Get circuit breaker checklist items from substation inspections module"""
+    try:
+        from substation_inspections.models import InspectionChecklistItem
+        return InspectionChecklistItem.objects.filter(equipment_type='circuit_breaker')
+    except ImportError:
+        return None
+
+def get_regions_choices():
+    """Get region choices for filtering"""
+    try:
+        from it.users.models import Regions
+        return [(region.id, region.region) for region in Regions.objects.all()]
+    except ImportError:
+        return []
+
 @login_required
 def circuit_breaker_list(request):
     """List all circuit breakers with filtering and search"""
@@ -33,6 +50,7 @@ def circuit_breaker_list(request):
     # Get filter parameters
     substation_filter = request.GET.get('substation')
     status_filter = request.GET.get('status')
+    region_filter = request.GET.get('region')
     search_query = request.GET.get('search')
     
     # Apply filters
@@ -43,6 +61,9 @@ def circuit_breaker_list(request):
         circuit_breakers = circuit_breakers.filter(is_active=True)
     elif status_filter == 'inactive':
         circuit_breakers = circuit_breakers.filter(is_active=False)
+    
+    if region_filter:
+        circuit_breakers = circuit_breakers.filter(region_id=region_filter)
     
     # Apply search
     if search_query:
@@ -56,10 +77,13 @@ def circuit_breaker_list(request):
     # Annotate with maintenance count and add explicit ordering
     circuit_breakers = circuit_breakers.annotate(
         maintenance_count=Count('maintenancerecord')
-    ).select_related().order_by('sub_station', 'breaker_number')  # Add this ordering
+    ).select_related('region').order_by('sub_station', 'breaker_number')  # Add this ordering
     
     # Get unique substations for filter dropdown
     substations = CircuitBreaker.objects.values_list('sub_station', flat=True).distinct().order_by('sub_station')
+    
+    # Get regions for filter dropdown
+    regions = get_regions_choices()
     
     # Pagination
     paginator = Paginator(circuit_breakers, 25)
@@ -69,8 +93,10 @@ def circuit_breaker_list(request):
     context = {
         'page_obj': page_obj,
         'substations': substations,
+        'regions': regions,
         'current_substation': substation_filter,
         'current_status': status_filter,
+        'current_region': region_filter,
         'search_query': search_query,
         'total_count': circuit_breakers.count(),
     }
@@ -974,3 +1000,30 @@ def maintenance_record_edit(request, pk):
     }
     
     return render(request, 'circuit_breaker_maintenance/maintenance_record_form.html', context)
+
+# API endpoints for integration
+@login_required
+def get_regions_api(request):
+    """Get regions from database as JSON"""
+    try:
+        from it.users.models import Regions
+        regions = Regions.objects.all()
+        return JsonResponse(list(regions.values('id', 'region')), safe=False)
+    except ImportError:
+        return JsonResponse([], safe=False)
+
+@login_required
+def get_circuit_breaker_checklist_api(request):
+    """Get circuit breaker inspection checklist items from substation inspections module"""
+    try:
+        checklist_items = get_circuit_breaker_checklist_items()
+        if checklist_items:
+            items = list(checklist_items.values(
+                'id', 'item_code', 'title', 'description', 'category', 'severity',
+                'is_mandatory', 'reference_standard'
+            ))
+            return JsonResponse(items, safe=False)
+        else:
+            return JsonResponse([], safe=False)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)

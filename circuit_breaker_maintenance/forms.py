@@ -4,6 +4,16 @@ from .models import CircuitBreaker, MaintenanceRecord
 import re
 
 class CircuitBreakerForm(forms.ModelForm):
+    # Override region field to use ModelChoiceField
+    region = forms.ModelChoiceField(
+        queryset=None,  # Will be set in __init__
+        empty_label="Select a region",
+        required=False,
+        widget=forms.Select(attrs={
+            'class': 'form-control'
+        })
+    )
+    
     class Meta:
         model = CircuitBreaker
         fields = '__all__'
@@ -59,6 +69,14 @@ class CircuitBreakerForm(forms.ModelForm):
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        # Set region queryset
+        try:
+            from it.users.models import Regions
+            self.fields['region'].queryset = Regions.objects.all()
+        except ImportError:
+            # If the users app is not available, hide the region field
+            del self.fields['region']
+        
         # Make form fields more user-friendly
         self.fields['breaker_number'].help_text = "Unique identifier for the circuit breaker"
         self.fields['serial_number'].help_text = "Manufacturer's serial number"
@@ -545,8 +563,7 @@ class MaintenanceRecordQuickForm(forms.ModelForm):
         model = MaintenanceRecord
         fields = [
             'circuit_breaker', 'date', 'status', 'priority', 
-            'maintenance_carried_out_by', 'remarks',
-            'general_checks', 'test_results'  # Add these fields to enable clean methods
+            'maintenance_carried_out_by', 'remarks'
         ]
         widgets = {
             'circuit_breaker': forms.Select(attrs={'class': 'form-control', 'required': True}),
@@ -554,10 +571,7 @@ class MaintenanceRecordQuickForm(forms.ModelForm):
             'status': forms.Select(attrs={'class': 'form-control'}),
             'priority': forms.Select(attrs={'class': 'form-control'}),
             'maintenance_carried_out_by': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Technician name'}),
-            'remarks': forms.Textarea(attrs={'class': 'form-control', 'rows': 4, 'placeholder': 'Brief description of work performed and any observations'}),
-            # Add widgets for the JSON fields (hidden in quick mode)
-            'general_checks': forms.Textarea(attrs={'class': 'form-control', 'rows': 8, 'style': 'display: none;'}),
-            'test_results': forms.Textarea(attrs={'class': 'form-control', 'rows': 8, 'style': 'display: none;'})
+            'remarks': forms.Textarea(attrs={'class': 'form-control', 'rows': 4, 'placeholder': 'Brief description of work performed and any observations'})
         }
     
     def __init__(self, *args, **kwargs):
@@ -597,57 +611,3 @@ class MaintenanceRecordQuickForm(forms.ModelForm):
                 raise ValidationError("Maintenance date seems too old. Please verify.")
         
         return date
-    
-    def clean_general_checks(self):
-        """Clean and convert general_checks to JSON format, accepting both JSON and plain text"""
-        general_checks = self.cleaned_data.get('general_checks')
-        
-        if not general_checks:
-            return []
-        
-        # If it's already a list or dict, return as is
-        if isinstance(general_checks, (list, dict)):
-            return general_checks
-        
-        # If it's a string, convert to simple list format
-        if isinstance(general_checks, str):
-            general_checks = general_checks.strip()
-            if not general_checks:
-                return []
-            
-            # Try JSON parsing first
-            try:
-                import json
-                return json.loads(general_checks)
-            except (json.JSONDecodeError, ValueError):
-                # Convert plain text to list
-                return [line.strip() for line in general_checks.split('\n') if line.strip()]
-        
-        return []
-    
-    def clean_test_results(self):
-        """Clean and convert test_results to JSON format, accepting both JSON and plain text"""
-        test_results = self.cleaned_data.get('test_results')
-        
-        if not test_results:
-            return {}
-        
-        # If it's already a dict or list, return as is
-        if isinstance(test_results, (dict, list)):
-            return test_results
-        
-        # If it's a string, convert to simple dict format
-        if isinstance(test_results, str):
-            test_results = test_results.strip()
-            if not test_results:
-                return {}
-            
-            # Try JSON parsing first
-            try:
-                import json
-                return json.loads(test_results)
-            except (json.JSONDecodeError, ValueError):
-                # Convert plain text to simple dict
-                return {"notes": test_results}
-        
-        return {}

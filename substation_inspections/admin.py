@@ -130,10 +130,10 @@ class MonthlyInspectionReportAdmin(admin.ModelAdmin):
 @admin.register(InspectionChecklistItem)
 class InspectionChecklistItemAdmin(admin.ModelAdmin):
     list_display = [
-        'item_code', 'title', 'category', 'severity', 'is_mandatory',
+        'item_code', 'title', 'equipment_type', 'category', 'severity', 'is_mandatory',
         'is_active', 'frequency'
     ]
-    list_filter = ['category', 'severity', 'is_mandatory', 'is_active', 'frequency']
+    list_filter = ['equipment_type', 'category', 'severity', 'is_mandatory', 'is_active', 'frequency']
     search_fields = ['item_code', 'title', 'description', 'reference_standard']
     list_editable = ['is_mandatory', 'is_active']
     readonly_fields = ['created_at', 'updated_at']
@@ -143,7 +143,7 @@ class InspectionChecklistItemAdmin(admin.ModelAdmin):
             'fields': ('item_code', 'title', 'description')
         }),
         ('Classification', {
-            'fields': ('category', 'severity', 'is_mandatory', 'is_active')
+            'fields': ('equipment_type', 'category', 'severity', 'is_mandatory', 'is_active')
         }),
         ('Reference Information', {
             'fields': ('reference_standard', 'frequency')

@@ -19,6 +19,8 @@ urlpatterns = [
     # path('circuit-breakers/<int:pk>/deactivation-reasons/', views.circuit_breaker_deactivation_reasons, name='circuit_breaker_deactivation_reasons'),
     
     # AJAX endpoints
+    path('api/regions/', views.get_regions_api, name='get_regions_api'),
+    path('api/checklist/', views.get_circuit_breaker_checklist_api, name='get_checklist_api'),
     # path('api/substations/', views.get_substations_ajax, name='get_substations_ajax'),
     # path('api/suggestions/', views.get_circuit_breaker_suggestions, name='get_suggestions'),
     
@@ -27,4 +29,8 @@ urlpatterns = [
     path('maintenance/create/', views.maintenance_record_create, name='record_create'),
     path('maintenance/<uuid:pk>/', views.maintenance_record_detail, name='record_detail'),
     path('maintenance/<uuid:pk>/edit/', views.maintenance_record_edit, name='record_edit'),
+    
+    # API endpoints
+    path('api/regions/', views.get_regions_api, name='api_regions'),
+    path('api/checklist/', views.get_circuit_breaker_checklist_api, name='api_checklist'),
 ]

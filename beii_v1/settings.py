@@ -154,7 +154,8 @@ INSTALLED_APPS = [
     'sanction_for_test',
     'utils',
     'inspections',
-    'substation_inspections'
+    'substation_inspections',
+    'circuit_breaker_maintenance',
 ]
 
 AUTH_USER_MODEL = 'users.UserProfile'

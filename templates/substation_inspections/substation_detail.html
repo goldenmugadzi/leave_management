@@ -148,7 +148,7 @@
             <div class="text-center">
               <div class="text-3xl font-bold text-indigo-600">
                 {% if total_inspections > 0 %}
-                  {{ completed_inspections|floatformat:0|div:total_inspections|mul:100|floatformat:0 }}%
+                  {% widthratio completed_inspections total_inspections 100 %}%
                 {% else %}
                   0%
                 {% endif %}
