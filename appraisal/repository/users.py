@@ -17,3 +17,11 @@ class UserProfileRepository:
             raise Exception(f"[UserProfileRepository] get_by_pk with user_id: {user_id}, failed with error: {e}")
         
     
+    def get_by_username(self, username: str)->UserProfile|None:
+        try:
+            qr = UserProfile.objects.filter(username=username)
+            return qr.first()
+        except Exception as e:
+            raise Exception(f"[UserProfileRepository] get_by_username with username: {username}, failed with error: {e}")
+        
+    

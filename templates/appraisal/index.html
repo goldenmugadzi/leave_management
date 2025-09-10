@@ -24,7 +24,7 @@
         <div class="flex justify-between">
           <h1 class="text-center font-bold mt-7">{{heading_name}}</h1>
                         
-          <div class="flex">
+          <div class="flex gap-2">
               <div class="flex-1">
                 <form>
                       {%csrf_token%}
@@ -38,6 +38,15 @@
                       </div>
                   </form>
               </div>
+              <div>
+                <div onclick="openAddUserQualifications()"
+                    class="mt-7 bg-blue-500 hover:bg-blue-700 inline-block rounded-full text-white py-2 px-4 rounded"
+                    >
+                    Upload New Qualifications
+                </div>
+                {% include "appraisal/qualification_upload_modal.html"%}
+              </div>
+
               <div class="relative inline-block text-left mt-7">
                 <div>
                   <button type="button" class="inline-flex justify-between w-48 rounded-2xl border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2" id="conf-menu-button" aria-expanded="true" aria-haspopup="true">

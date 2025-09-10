@@ -300,6 +300,18 @@ class Responsibilities(models.Model):
         return str(self.role.name)
    
 
+QUALIFICATION_TYPE = [
+    ("Ordinary Levels", "Ordinary Levels"),
+    ("Advanced Levels", "Advanced Levels"),
+    ("Certificate", "Certificate"),
+    ("Diploma", "Diploma"),
+    ("Higher National Diploma", "Higher National Diploma"),
+    ("Professional Membership", "Professional Membership"),
+    ("Degree", "Degree"),
+    ("Masters", "Masters"),
+    ("PHD", "PHD"),
+]
+
 class UserQualification(TimeStamp):
     """_summary_
 
@@ -307,7 +319,8 @@ class UserQualification(TimeStamp):
         TimeStamp (_type_): _description_
     """
     user = models.ForeignKey(UserProfile, on_delete=models.PROTECT)
-    name = models.CharField(max_length=255, null=False, blank=False)
+    name = models.CharField(max_length=30, null=False, blank=False, choices=QUALIFICATION_TYPE)
+    description = models.CharField(max_length=255, null=True, default=None)
     file = models.FileField(upload_to='uploads/appraisal/user_qualification', null=True, blank=True)
     
     def __str__(self) -> str:

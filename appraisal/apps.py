@@ -57,7 +57,7 @@ class AppraisalConfig(AppConfig):
         post_migrate.connect(load_strength_weakness_handler, sender=self)
         post_migrate.connect(load_personal_attributes_handler, sender=self)
         from .signals.kra import create_kra_roles_handler
-        from .signals.appraisal import set_appraisal_dependencies
+        from .signals.appraisal import set_appraisal_dependencies, create_training_development_post_save_handler
         from .signals.departmental_output import create_output_performance_dimensions
         post_migrate.connect(create_kra_roles_handler, sender=self)        
 

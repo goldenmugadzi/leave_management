@@ -9,11 +9,13 @@ from django.utils.text import slugify
 
 from django.shortcuts import redirect, render, get_object_or_404
 from django.contrib.messages.views import SuccessMessageMixin
+from django.http import HttpResponseRedirect
 from django.contrib import messages
 
 from ..models import Appraisal, AppraiseePersonalAttribute
 from it.users.models import UserProfile, GRADE_CHOICES
 from ..forms import AppraisalForm, AppraisalRoleFilterForm, AppraisalUpdateForm
+from ..forms.qualification_experiences import UserQualificationsUploadForm
 from ..helpers.types.kra import RoleFilterChoices
 from ..repository import UserQualificationRepository, AppraisalExperienceRepository, ExperienceRepository, AppraisalRepository
 from ..repository.appraisal import AppraiseePersonalAttributeRepository
@@ -317,6 +319,30 @@ class AppraisalTemplateView(TemplateView):
         form = AppraisalRoleFilterForm(initial={"role_filter": self.get_role_filter()})
         return {"role_filter_form": form}
     
+    def get_user_qualification_upload_form(self):
+        return UserQualificationsUploadForm(self.request.GET)
+
+    def handle_user_qualification_upload_form(self):
+        form = UserQualificationsUploadForm(self.request.POST, self.request.FILES)
+        if form.is_valid():
+            qualifications_file = form.cleaned_data['qualifications_file']
+            
+            # ✅ Here you can process the Excel file
+            
+            messages.success(self.request, "Qualifications file uploaded successfully.")
+            return True
+        else:
+            messages.error(self.request, "Invalid file upload. Please upload a valid Excel file.")
+            return False
+
+    def post(self, request, *args, **kwargs):
+        """Handle file upload via POST request."""
+        if 'qualifications_file' in request.FILES:
+            success = self.handle_user_qualification_upload_form()
+            if success:
+                return HttpResponseRedirect(reverse('appraisal_index'))
+        return self.get(request, *args, **kwargs)
+    
     def get_appraisals(self)->List[Appraisal]:
         appraisal_service_handler = AppraisalService(
             appraisal_experience_repository=AppraisalExperienceRepository(),
@@ -341,7 +367,11 @@ class AppraisalTemplateView(TemplateView):
         context.update(self.get_role_filter_form())
         context.update({"heading_name": self.get_heading_name()})
         context.update(self.get_appraisals())
+        context.update({"qualification_upload_form": self.get_user_qualification_upload_form()})
+
         return context
+    
+    
 
 
 def internal_server_error_view(request):
