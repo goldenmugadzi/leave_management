@@ -73,6 +73,7 @@ urlpatterns = [
     # path('meetings/', include('meetings.urls')),
     path('search/', include('esearch.urls')),
     path('temp_tokens/', include('commecial.tempertockens.urls')),
+    path('', include('EquipTracker.urls')),
     path('competence_building/', include('competence_building.urls')),
     # path('api/', include('api.urls')),  # Commented out until api.urls exists
     path('', include('meetings.urls')),

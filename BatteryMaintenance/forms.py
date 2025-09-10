@@ -1,6 +1,7 @@
 from django import forms
 from django.forms.models import inlineformset_factory
-from .models import BatteryInstallation, Cell, Substation, Regions, Districts, Depots
+from .models import BatteryInstallation, Cell, Substation
+from it.users.models import Regions, Districts, Depots
 
 # Shared Tailwind-style class
 FIELD_CSS_CLASSES = "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"

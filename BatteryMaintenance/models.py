@@ -1,18 +1,10 @@
 from django.db import models
-from it.users.models import Regions,Districts, Depots
-
-class Substation(models.Model):
-    name =  models.CharField(max_length=100)
-    code =  models.CharField(max_length=100)
-    region = models.ForeignKey(Regions, on_delete=models.DO_NOTHING,null=True, blank=True)
-    district = models.ForeignKey(Districts, on_delete=models.DO_NOTHING,null=True, blank=True)
-    depot = models.ForeignKey(Depots, on_delete=models.DO_NOTHING,null=True, blank=True)
-
-    def __str__(self):
-        return self.name
+from it.users.models import Substation
+from EquipTracker.models import TrackEquipment
 
 class BatteryInstallation(models.Model):
     substation = models.ForeignKey(Substation, on_delete=models.DO_NOTHING,null=True, blank=True)
+    equipment_tracker = models.ForeignKey(TrackEquipment, on_delete=models.CASCADE ,default=1, related_name='batteries')
     battery_name = models.CharField(max_length=100,help_text="type")
     cell_type = models.CharField(max_length=50, blank=True)
     plates_per_cell = models.PositiveIntegerField(null=True, blank=True)

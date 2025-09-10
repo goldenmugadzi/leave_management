@@ -70,6 +70,15 @@ class Depots(models.Model):
     def __str__(self):
         return self.depot
 
+class Substation(models.Model):
+    name =  models.CharField(max_length=100)
+    code =  models.CharField(max_length=100)
+    region = models.ForeignKey(Regions, on_delete=models.DO_NOTHING,null=True, blank=True)
+    district = models.ForeignKey(Districts, on_delete=models.DO_NOTHING,null=True, blank=True)
+    depot = models.ForeignKey(Depots, on_delete=models.DO_NOTHING,null=True, blank=True)
+
+    def __str__(self):
+        return self.name
 
 class Application(models.Model):
     name = models.CharField(max_length=100, unique=True)

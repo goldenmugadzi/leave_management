@@ -8,13 +8,14 @@ from .forms import BatteryInstallationForm, CellFormSet, CellFormSet1
 from django.contrib.auth.mixins import LoginRequiredMixin
 import csv
 from django.http import HttpResponse
-from .models import Regions, Districts, Depots, Substation
-from it.users.models import Notification
+from .models import Substation
+from it.users.models import Notification, Regions, Districts, Depots
 from django.contrib import messages
 import os
-
-# views.py
 from django.contrib.auth.decorators import login_required
+
+from .forms import BatteryInstallationForm, CellFormSet, SubstationForm
+from .models import Substation
 
 @login_required
 def clear_notifications(request):
@@ -88,12 +89,6 @@ def import_substations_from_csv(request):
 
     return HttpResponse(f"Imported {created} substations. Skipped {skipped} rows.")
 
-
-from django.contrib.auth.mixins import LoginRequiredMixin
-from django.views import View
-from django.shortcuts import render, redirect
-from .forms import BatteryInstallationForm, CellFormSet, SubstationForm
-from .models import Substation
 
 
 class InstallBattery(LoginRequiredMixin, View):
@@ -177,7 +172,8 @@ class BatteryInstallationListView(ListView):
     model = BatteryInstallation
     template_name = "battery/battery_installation_list.html"
     context_object_name = "installations"
-    paginate_by = 20  # optional
+    paginate_by = 20
+    ordering = ['-date']  # or any field you want to order by
 
 
 class BatteryInstallationDetailView(DetailView):
