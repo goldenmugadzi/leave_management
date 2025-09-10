@@ -6,7 +6,8 @@ app_name = 'substation_inspections'
 urlpatterns = [
     # Dashboard
     path('', views.dashboard, name='dashboard'),
-    
+    path('unified/', views.unified_dashboard, name='unified_dashboard'),
+
     # Substation management
     path('substations/', views.substation_list, name='substation_list'),
     path('substations/create/', views.substation_create, name='substation_create'),
@@ -18,6 +19,7 @@ urlpatterns = [
     path('reports/create/', views.inspection_report_create, name='inspection_report_create'),
     path('reports/<uuid:pk>/', views.inspection_report_detail, name='inspection_report_detail'),
     path('reports/<uuid:pk>/edit/', views.inspection_report_edit, name='inspection_report_edit'),
+    path('reports/<uuid:pk>/complete-checklist/', views.complete_checklist, name='complete_checklist'),
     
     # Inspection schedules
     path('schedules/', views.schedule_list, name='schedule_list'),

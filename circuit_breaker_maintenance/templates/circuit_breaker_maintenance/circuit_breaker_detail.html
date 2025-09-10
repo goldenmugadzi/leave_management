@@ -468,7 +468,7 @@
                         {{ circuit_breaker.breaker_number }}
                     </div>
                     <div class="breaker-subtitle">
-                        {{ circuit_breaker.sub_station }} | {{ circuit_breaker.make_type }} | {{ circuit_breaker.voltage_capacity }}
+                        {{ circuit_breaker.sub_station }}{% if circuit_breaker.region %} - {{ circuit_breaker.region.region }}{% endif %} | {{ circuit_breaker.make_type }} | {{ circuit_breaker.voltage_capacity }}
                     </div>
                     <div class="status-indicator {% if circuit_breaker.is_active %}active{% else %}inactive{% endif %}">
                         <i class="fas fa-{% if circuit_breaker.is_active %}check-circle{% else %}pause-circle{% endif %}"></i>
@@ -528,6 +528,17 @@
                         
                         <dt>Substation</dt>
                         <dd>{{ circuit_breaker.sub_station }}</dd>
+                        
+                        <dt>Region</dt>
+                        <dd>
+                            {% if circuit_breaker.region %}
+                                <span class="badge bg-info">
+                                    <i class="fas fa-map-marker-alt me-1"></i>{{ circuit_breaker.region.region }}
+                                </span>
+                            {% else %}
+                                <span class="text-muted">Not assigned</span>
+                            {% endif %}
+                        </dd>
                         
                         <dt>Make/Type</dt>
                         <dd>{{ circuit_breaker.make_type }}</dd>

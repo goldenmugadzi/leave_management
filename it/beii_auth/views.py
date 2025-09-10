@@ -152,6 +152,13 @@ APPLICATIONS = [
         "iconUrl": "assets/images/customer.png",
         "url": "/substation-inspections/"
     },
+    # circuit breakers
+    {
+        "name": "circuit_breaker_maintenance",
+        "title": "Circuit Breaker Maintenance",
+        "iconUrl": "assets/images/circuit_breaker.png",
+        "url": "/circuit-breakers/circuit-breakers/"
+    }
     # {
     #     "name":"fault_locator",
     #     "title": "Fault Locator",

@@ -33,10 +33,10 @@ from .services import (
 @login_required
 def dashboard(request):
     """Main dashboard for substation inspection administration"""
-    
+
     # Use the monitoring service to get dashboard data
     dashboard_data = InspectionMonitoringService.get_inspection_dashboard_data()
-    
+
     context = {
         'total_substations': dashboard_data['stats']['total_substations'],
         'pending_inspections': dashboard_data['stats']['pending_inspections'],
@@ -47,8 +47,29 @@ def dashboard(request):
         'upcoming_inspections': dashboard_data['upcoming_inspections'],
         'overdue_inspections_list': dashboard_data['overdue_inspections'],
     }
-    
+
     return render(request, 'substation_inspections/dashboard.html', context)
+
+
+@login_required
+def unified_dashboard(request):
+    """Unified dashboard combining overview, monitoring, and management features"""
+
+    # Use the monitoring service to get dashboard data
+    dashboard_data = InspectionMonitoringService.get_inspection_dashboard_data()
+
+    # Get inspector workload data
+    inspector_workload = InspectionMonitoringService.get_inspector_workload()
+
+    context = {
+        'stats': dashboard_data['stats'],
+        'recent_inspections': dashboard_data['recent_inspections'],
+        'upcoming_inspections': dashboard_data['upcoming_inspections'],
+        'overdue_inspections': dashboard_data['overdue_inspections'],
+        'inspector_workload': inspector_workload,
+    }
+
+    return render(request, 'substation_inspections/unified_dashboard.html', context)
 
 
 @login_required
@@ -685,3 +706,106 @@ def overdue_inspections_partial(request):
     return render(request, 'substation_inspections/partials/overdue_inspections.html', {
         'overdue_inspections': dashboard_data['overdue_inspections']
     })
+
+
+@login_required
+def complete_checklist(request, pk):
+    """Complete checklist items for an inspection report"""
+    report = get_object_or_404(MonthlyInspectionReport, pk=pk)
+    
+    # Only allow completion if not already completed
+    if report.status == 'completed':
+        messages.error(request, 'Cannot modify completed inspection reports.')
+        return redirect('substation_inspections:inspection_report_detail', pk=report.pk)
+    
+    # Get all checklist items
+    checklist_items = InspectionChecklistItem.objects.filter(is_active=True).order_by('equipment_type', 'category', 'item_code')
+    
+    # Get existing responses for this report
+    existing_responses = {
+        response.checklist_item.id: response 
+        for response in report.item_responses.all()
+    }
+    
+    if request.method == 'POST':
+        # Process form submission
+        updated_count = 0
+        created_count = 0
+        
+        for item in checklist_items:
+            response_key = f'response_{item.id}'
+            observations_key = f'observations_{item.id}'
+            defect_key = f'defect_{item.id}'
+            defect_desc_key = f'defect_desc_{item.id}'
+            defect_severity_key = f'defect_severity_{item.id}'
+            corrective_action_key = f'corrective_action_{item.id}'
+            corrective_desc_key = f'corrective_desc_{item.id}'
+            target_date_key = f'target_date_{item.id}'
+            
+            response_value = request.POST.get(response_key)
+            observations_value = request.POST.get(observations_key, '')
+            defect_identified = request.POST.get(defect_key) == 'on'
+            defect_description = request.POST.get(defect_desc_key, '')
+            defect_severity = request.POST.get(defect_severity_key)
+            corrective_required = request.POST.get(corrective_action_key) == 'on'
+            corrective_description = request.POST.get(corrective_desc_key, '')
+            target_completion_date = request.POST.get(target_date_key)
+            
+            if response_value:
+                # Update or create response
+                if item.id in existing_responses:
+                    response_obj = existing_responses[item.id]
+                    response_obj.response = response_value
+                    response_obj.observations = observations_value
+                    response_obj.defect_identified = defect_identified
+                    response_obj.defect_description = defect_description
+                    response_obj.defect_severity = defect_severity
+                    response_obj.corrective_action_required = corrective_required
+                    response_obj.corrective_action_description = corrective_description
+                    if target_completion_date:
+                        from datetime import datetime
+                        response_obj.target_completion_date = datetime.strptime(target_completion_date, '%Y-%m-%d').date()
+                    response_obj.save()
+                    updated_count += 1
+                else:
+                    response_obj = InspectionItemResponse.objects.create(
+                        inspection_report=report,
+                        checklist_item=item,
+                        response=response_value,
+                        observations=observations_value,
+                        defect_identified=defect_identified,
+                        defect_description=defect_description,
+                        defect_severity=defect_severity,
+                        corrective_action_required=corrective_required,
+                        corrective_action_description=corrective_description,
+                        target_completion_date=datetime.strptime(target_completion_date, '%Y-%m-%d').date() if target_completion_date else None
+                    )
+                    created_count += 1
+        
+        # Update report status to in_progress if it was scheduled
+        if report.status == 'scheduled':
+            report.status = 'in_progress'
+            report.save()
+        
+        messages.success(request, f'Checklist completed successfully. {created_count} new responses created, {updated_count} responses updated.')
+        return redirect('substation_inspections:inspection_report_detail', pk=report.pk)
+    
+    # Group checklist items by equipment type
+    items_by_category = {}
+    for item in checklist_items:
+        equipment_type = item.get_equipment_type_display()
+        if equipment_type not in items_by_category:
+            items_by_category[equipment_type] = []
+        items_by_category[equipment_type].append({
+            'item': item,
+            'response': existing_responses.get(item.id)
+        })
+    
+    context = {
+        'report': report,
+        'items_by_category': items_by_category,
+        'response_choices': InspectionItemResponse.RESPONSE_CHOICES,
+        'severity_choices': InspectionChecklistItem.SEVERITY_CHOICES,
+    }
+    
+    return render(request, 'substation_inspections/complete_checklist.html', context)
