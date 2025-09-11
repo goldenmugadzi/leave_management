@@ -25,14 +25,13 @@ class TrainingAndDevelopmentService:
 
     def create_for_all_quarters(self, appraisal_object: Appraisal, year_quarter_qr: List[YearQuarter])->None:
         try:
-            training_development_repo_handler = TrainingAndDevelopmentRepository()
             training_development_service_handler = TrainingAndDevelopmentService(training_dev_repo=training_development_repo_handler)
 
             with transaction.atomic():
                 for year_quarter_obj in year_quarter_qr:
                     logger.info(f"[ TrainingAndDevelopmentService ]: create with year obj {year_quarter_obj} for user id: {appraisal_object.user.id} and appraisal pk: {appraisal_object.id} ....")
                     try:
-                        training_development_service_handler.create_use_case(
+                        self.create_use_case(
                             appraisal_object=appraisal_object,
                             quarter_obj=year_quarter_obj
                         )
