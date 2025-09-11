@@ -404,12 +404,14 @@
                     <p>Comprehensive management of SF6 circuit breaker inventory and maintenance scheduling</p>
                 </div>
                 <div class="col-md-4 text-md-end">
-                    <div class="d-flex flex-column flex-md-row gap-2">
-                        <a href="{% url 'circuit_breaker_maintenance:circuit_breaker_create' %}" class="btn btn-light btn-lg">
-                            <i class="fas fa-plus me-2"></i>Add New Breaker
+                    <div class="flex flex-col md:flex-row gap-3">
+                        <a href="{% url 'circuit_breaker_maintenance:circuit_breaker_create' %}" class="bg-white text-blue-600 px-6 py-3 rounded-lg font-semibold transition-all duration-300 hover:bg-blue-50 inline-flex items-center space-x-2">
+                            <i class="fas fa-plus"></i>
+                            <span>Add New Breaker</span>
                         </a>
-                        <a href="{% url 'circuit_breaker_maintenance:circuit_breaker_status_report' %}" class="btn btn-outline-light btn-lg">
-                            <i class="fas fa-chart-bar me-2"></i>Status Report
+                        <a href="{% url 'circuit_breaker_maintenance:circuit_breaker_status_report' %}" class="bg-white/20 hover:bg-white/30 text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 inline-flex items-center space-x-2 backdrop-blur-sm border border-white/20">
+                            <i class="fas fa-chart-bar"></i>
+                            <span>Status Report</span>
                         </a>
                     </div>
                 </div>

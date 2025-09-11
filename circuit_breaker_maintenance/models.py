@@ -5,17 +5,47 @@ from django.db import models
 from django.utils import timezone
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.core.exceptions import ValidationError
+from it.users.models import Regions
 import uuid
 
 class CircuitBreaker(models.Model):
-    """Separate model for circuit breaker assets"""
+    """Enhanced model for circuit breaker assets supporting different types"""
+    
+    # Circuit Breaker Types
+    BREAKER_TYPES = [
+        ('sf6', 'SF6 Circuit Breaker'),
+        ('vacuum', 'Vacuum Circuit Breaker'),
+        ('oil', 'Oil Circuit Breaker'),
+        ('air_blast', 'Air Blast Circuit Breaker'),
+        ('minimum_oil', 'Minimum Oil Circuit Breaker'),
+        ('other', 'Other'),
+    ]
+    
+    # Basic Information
     breaker_number = models.CharField(max_length=50, unique=True, verbose_name="Circuit Breaker No.")
+    breaker_type = models.CharField(max_length=20, choices=BREAKER_TYPES, default='sf6', verbose_name="Breaker Type")
     make_type = models.CharField(max_length=100, verbose_name="Make/Type")
     voltage_capacity = models.CharField(max_length=20, verbose_name="Voltage Capacity")
+    current_rating = models.CharField(max_length=20, blank=True, null=True, verbose_name="Current Rating")
+    breaking_capacity = models.CharField(max_length=20, blank=True, null=True, verbose_name="Breaking Capacity")
+    
+    # Technical Specifications
     serial_number = models.CharField(max_length=50, blank=True, null=True, verbose_name="Serial Number")
     installation_date = models.DateField(null=True, blank=True, verbose_name="Installation Date")
-    sub_station = models.CharField(max_length=100, verbose_name="Sub-Station")  # Reduced from 255
-    region = models.ForeignKey('users.Regions', on_delete=models.SET_NULL, null=True, blank=True, verbose_name="Region")
+    sub_station = models.CharField(max_length=100, verbose_name="Sub-Station")
+    bay_position = models.CharField(max_length=50, blank=True, null=True, verbose_name="Bay Position")
+    
+    # V/T and C/T Information (from forms)
+    vt_make_type = models.CharField(max_length=100, blank=True, null=True, verbose_name="V/T Make/Type")
+    vt_volt_ratio_rating = models.CharField(max_length=50, blank=True, null=True, verbose_name="V/T Volt Ratio Rating")
+    vt_serial_no = models.CharField(max_length=50, blank=True, null=True, verbose_name="V/T Serial No.")
+    
+    ct_make_type = models.CharField(max_length=100, blank=True, null=True, verbose_name="C/T Make/Type")
+    ct_ratio = models.CharField(max_length=50, blank=True, null=True, verbose_name="C/T Ratio")
+    ct_serial_no = models.CharField(max_length=50, blank=True, null=True, verbose_name="C/T Serial No.")
+    
+    # Administrative
+    region = models.ForeignKey(Regions, on_delete=models.SET_NULL, null=True, blank=True, verbose_name="Region")
     is_active = models.BooleanField(default=True, verbose_name="Active")
     
     # Audit fields
@@ -41,6 +71,10 @@ class CircuitBreaker(models.Model):
             models.CheckConstraint(
                 check=models.Q(voltage_capacity__isnull=False) & ~models.Q(voltage_capacity=''),
                 name='voltage_capacity_not_empty'
+            ),
+            models.CheckConstraint(
+                check=models.Q(breaker_type__in=['sf6', 'vacuum', 'oil', 'air_blast', 'minimum_oil', 'other']),
+                name='valid_breaker_type'
             ),
         ]
     
@@ -604,3 +638,590 @@ class SafetyPrecaution(models.Model):
     
     def __str__(self):
         return f"{self.description} - {self.maintenance_record.report_no}"
+
+class InsulationResistanceTest(models.Model):
+    """Insulation Resistance Tests (Megger Tests) - From the forms"""
+    PHASE_CHOICES = [
+        ('red', 'Red Phase'),
+        ('yellow', 'Yellow Phase'),
+        ('blue', 'Blue Phase'),
+    ]
+    
+    TEST_TYPES = [
+        ('open_contact', 'Open Contact'),
+        ('top_e', 'Top-E'),
+        ('bottom_e', 'Bottom-E'),
+        ('phase_next', 'Phase-Next'),
+        ('before_maintenance', 'Before Maintenance'),
+        ('after_maintenance', 'After Maintenance'),
+    ]
+    
+    maintenance_record = models.ForeignKey(MaintenanceRecord, on_delete=models.CASCADE, related_name='insulation_tests')
+    phase = models.CharField(max_length=10, choices=PHASE_CHOICES, verbose_name="Phase")
+    test_type = models.CharField(max_length=20, choices=TEST_TYPES, verbose_name="Test Type")
+    resistance_value = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, verbose_name="Resistance (MΩ)")
+    test_voltage = models.CharField(max_length=20, blank=True, null=True, verbose_name="Test Voltage")
+    temperature = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True, verbose_name="Temperature (°C)")
+    humidity = models.PositiveIntegerField(null=True, blank=True, verbose_name="Humidity (%)")
+    result_status = models.CharField(max_length=10, choices=[
+        ('pass', 'Pass'),
+        ('fail', 'Fail'),
+        ('warning', 'Warning')
+    ], default='pass', verbose_name="Result Status")
+    tested_by = models.CharField(max_length=100, blank=True, null=True, verbose_name="Tested By")
+    test_date = models.DateTimeField(null=True, blank=True, verbose_name="Test Date")
+    comments = models.TextField(blank=True, null=True, verbose_name="Comments")
+    
+    class Meta:
+        verbose_name = "Insulation Resistance Test"
+        verbose_name_plural = "Insulation Resistance Tests"
+        unique_together = ['maintenance_record', 'phase', 'test_type']
+        indexes = [
+            models.Index(fields=['maintenance_record', 'phase']),
+            models.Index(fields=['result_status']),
+        ]
+    
+    def __str__(self):
+        return f"{self.phase} {self.test_type} - {self.maintenance_record.report_no}"
+
+class ContactResistanceTest(models.Model):
+    """Contact Resistance Tests - From the forms"""
+    PHASE_CHOICES = [
+        ('red', 'Red Phase'),
+        ('yellow', 'Yellow Phase'), 
+        ('blue', 'Blue Phase'),
+    ]
+    
+    TEST_CONDITIONS = [
+        ('before_maintenance', 'Before Maintenance'),
+        ('after_maintenance', 'After Maintenance'),
+    ]
+    
+    maintenance_record = models.ForeignKey(MaintenanceRecord, on_delete=models.CASCADE, related_name='contact_resistance_tests')
+    phase = models.CharField(max_length=10, choices=PHASE_CHOICES, verbose_name="Phase")
+    test_condition = models.CharField(max_length=20, choices=TEST_CONDITIONS, verbose_name="Test Condition")
+    resistance_microohms = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, verbose_name="Resistance (μΩ)")
+    test_current = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True, verbose_name="Test Current (A)")
+    temperature = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True, verbose_name="Temperature (°C)")
+    result_status = models.CharField(max_length=10, choices=[
+        ('pass', 'Pass'),
+        ('fail', 'Fail'),
+        ('warning', 'Warning')
+    ], default='pass', verbose_name="Result Status")
+    tested_by = models.CharField(max_length=100, blank=True, null=True, verbose_name="Tested By")
+    test_date = models.DateTimeField(null=True, blank=True, verbose_name="Test Date")
+    comments = models.TextField(blank=True, null=True, verbose_name="Comments")
+    
+    class Meta:
+        verbose_name = "Contact Resistance Test"
+        verbose_name_plural = "Contact Resistance Tests"
+        unique_together = ['maintenance_record', 'phase', 'test_condition']
+        indexes = [
+            models.Index(fields=['maintenance_record', 'phase']),
+            models.Index(fields=['result_status']),
+        ]
+    
+    def __str__(self):
+        return f"{self.phase} {self.test_condition} - {self.maintenance_record.report_no}"
+
+class TimingTest(models.Model):
+    """Timing Tests - From the forms"""
+    PHASE_CHOICES = [
+        ('red', 'Red Phase'),
+        ('yellow', 'Yellow Phase'),
+        ('blue', 'Blue Phase'),
+    ]
+    
+    OPERATION_TYPES = [
+        ('closing', 'Closing Operation'),
+        ('opening', 'Opening Operation'),
+        ('close_open', 'Close-Open Operation'),
+        ('open_close_open', 'Open-Close-Open Operation'),
+    ]
+    
+    maintenance_record = models.ForeignKey(MaintenanceRecord, on_delete=models.CASCADE, related_name='timing_tests')
+    phase = models.CharField(max_length=10, choices=PHASE_CHOICES, verbose_name="Phase")
+    operation_type = models.CharField(max_length=20, choices=OPERATION_TYPES, verbose_name="Operation Type")
+    
+    # Multiple operation phases for complex operations
+    phu1_time = models.DecimalField(max_digits=8, decimal_places=3, null=True, blank=True, verbose_name="Phu1 Time (ms)")
+    phu2_time = models.DecimalField(max_digits=8, decimal_places=3, null=True, blank=True, verbose_name="Phu2 Time (ms)")
+    operation_1_close_time = models.DecimalField(max_digits=8, decimal_places=3, null=True, blank=True, verbose_name="1st Operation Close (ms)")
+    operation_2_open_time = models.DecimalField(max_digits=8, decimal_places=3, null=True, blank=True, verbose_name="2nd Operation Open (ms)")
+    operation_3_close_time = models.DecimalField(max_digits=8, decimal_places=3, null=True, blank=True, verbose_name="3rd Operation Close (ms)")
+    repeat_1st_operation = models.DecimalField(max_digits=8, decimal_places=3, null=True, blank=True, verbose_name="Repeat 1st Operation (ms)")
+    repeat_2nd_operation = models.DecimalField(max_digits=8, decimal_places=3, null=True, blank=True, verbose_name="Repeat 2nd Operation (ms)")
+    
+    # Overall results
+    result_status = models.CharField(max_length=10, choices=[
+        ('pass', 'Pass'),
+        ('fail', 'Fail'),
+        ('warning', 'Warning')
+    ], default='pass', verbose_name="Result Status")
+    tested_by = models.CharField(max_length=100, blank=True, null=True, verbose_name="Tested By")
+    test_date = models.DateTimeField(null=True, blank=True, verbose_name="Test Date")
+    comments = models.TextField(blank=True, null=True, verbose_name="Comments")
+    
+    class Meta:
+        verbose_name = "Timing Test"
+        verbose_name_plural = "Timing Tests"
+        unique_together = ['maintenance_record', 'phase', 'operation_type']
+        indexes = [
+            models.Index(fields=['maintenance_record', 'phase']),
+            models.Index(fields=['result_status']),
+        ]
+    
+    def __str__(self):
+        return f"{self.phase} {self.operation_type} - {self.maintenance_record.report_no}"
+
+class InterlockTest(models.Model):
+    """Interlock Tests - From the forms"""
+    INTERLOCK_TYPES = [
+        ('hv_cb', 'HV CB'),
+        ('lv_cb', 'LV CB'), 
+        ('oltc', 'OLTC'),
+        ('mechanical', 'Mechanical Interlock'),
+        ('electrical', 'Electrical Interlock'),
+        ('remote_local', 'Remote/Local Operation'),
+    ]
+    
+    maintenance_record = models.ForeignKey(MaintenanceRecord, on_delete=models.CASCADE, related_name='interlock_tests')
+    interlock_type = models.CharField(max_length=20, choices=INTERLOCK_TYPES, verbose_name="Interlock Type")
+    description = models.CharField(max_length=200, verbose_name="Test Description")
+    is_checked = models.BooleanField(default=False, verbose_name="Checked")
+    result_status = models.CharField(max_length=10, choices=[
+        ('pass', 'Pass'),
+        ('fail', 'Fail'),
+        ('na', 'Not Applicable')
+    ], default='pass', verbose_name="Result Status")
+    tested_by = models.CharField(max_length=100, blank=True, null=True, verbose_name="Tested By")
+    test_date = models.DateTimeField(null=True, blank=True, verbose_name="Test Date")
+    comments = models.TextField(blank=True, null=True, verbose_name="Comments")
+    
+    class Meta:
+        verbose_name = "Interlock Test"
+        verbose_name_plural = "Interlock Tests"
+        indexes = [
+            models.Index(fields=['maintenance_record', 'interlock_type']),
+            models.Index(fields=['result_status']),
+        ]
+    
+    def __str__(self):
+        return f"{self.interlock_type} - {self.maintenance_record.report_no}"
+
+class ContactTravelTest(models.Model):
+    """Contact Travel and Velocity Tests - From the forms"""
+    PHASE_CHOICES = [
+        ('red', 'Red Phase'),
+        ('yellow', 'Yellow Phase'),
+        ('blue', 'Blue Phase'),
+    ]
+    
+    maintenance_record = models.ForeignKey(MaintenanceRecord, on_delete=models.CASCADE, related_name='contact_travel_tests')
+    phase = models.CharField(max_length=10, choices=PHASE_CHOICES, verbose_name="Phase")
+    contact_travel_mm = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True, verbose_name="Contact Travel (mm)")
+    velocity_ms = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True, verbose_name="Velocity (m/s)")
+    result_status = models.CharField(max_length=10, choices=[
+        ('pass', 'Pass'),
+        ('fail', 'Fail'),
+        ('warning', 'Warning')
+    ], default='pass', verbose_name="Result Status")
+    tested_by = models.CharField(max_length=100, blank=True, null=True, verbose_name="Tested By")
+    test_date = models.DateTimeField(null=True, blank=True, verbose_name="Test Date")
+    comments = models.TextField(blank=True, null=True, verbose_name="Comments")
+    
+    class Meta:
+        verbose_name = "Contact Travel Test"
+        verbose_name_plural = "Contact Travel Tests"
+        unique_together = ['maintenance_record', 'phase']
+        indexes = [
+            models.Index(fields=['maintenance_record', 'phase']),
+            models.Index(fields=['result_status']),
+        ]
+    
+    def __str__(self):
+        return f"{self.phase} Contact Travel - {self.maintenance_record.report_no}"
+
+class DuctorTest(models.Model):
+    """Ductor Tests (Low Resistance Tests) - From the forms"""
+    PHASE_CHOICES = [
+        ('red', 'Red Phase'),
+        ('yellow', 'Yellow Phase'),
+        ('blue', 'Blue Phase'),
+    ]
+    
+    maintenance_record = models.ForeignKey(MaintenanceRecord, on_delete=models.CASCADE, related_name='ductor_tests')
+    phase = models.CharField(max_length=10, choices=PHASE_CHOICES, verbose_name="Phase")
+    current_amps = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True, verbose_name="Current (A)")
+    volt_drop_mv = models.DecimalField(max_digits=8, decimal_places=3, null=True, blank=True, verbose_name="Volt Drop (mV)")
+    resistance_microohms = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, verbose_name="Resistance (μΩ)")
+    result_status = models.CharField(max_length=10, choices=[
+        ('pass', 'Pass'),
+        ('fail', 'Fail'),
+        ('warning', 'Warning')
+    ], default='pass', verbose_name="Result Status")
+    tested_by = models.CharField(max_length=100, blank=True, null=True, verbose_name="Tested By")
+    test_date = models.DateTimeField(null=True, blank=True, verbose_name="Test Date")
+    comments = models.TextField(blank=True, null=True, verbose_name="Comments")
+    
+    class Meta:
+        verbose_name = "Ductor Test"
+        verbose_name_plural = "Ductor Tests"
+        unique_together = ['maintenance_record', 'phase']
+        indexes = [
+            models.Index(fields=['maintenance_record', 'phase']),
+            models.Index(fields=['result_status']),
+        ]
+    
+    def __str__(self):
+        return f"{self.phase} Ductor Test - {self.maintenance_record.report_no}"
+
+class ProtectionTest(models.Model):
+    """Protection System Tests - From the forms"""
+    PROTECTION_TYPES = [
+        ('overcurrent_r', 'O/C R'),
+        ('overcurrent_y', 'O/C Y'),
+        ('overcurrent_b', 'O/C B'),
+        ('earth_fault', 'E'),
+        ('instantaneous_r', 'INST R'),
+        ('instantaneous_y', 'INST Y'),
+        ('instantaneous_b', 'INST B'),
+        ('distance_protection_r', 'Distance Protection R'),
+        ('distance_protection_y', 'Distance Protection Y'),
+        ('distance_protection_b', 'Distance Protection B'),
+        ('vt_fail', 'V/T Fail'),
+        ('dc_fail', 'DC Fail'),
+        ('springs_discharged', 'Springs Discharged'),
+    ]
+    
+    maintenance_record = models.ForeignKey(MaintenanceRecord, on_delete=models.CASCADE, related_name='protection_tests')
+    protection_type = models.CharField(max_length=30, choices=PROTECTION_TYPES, verbose_name="Protection Type")
+    action_taken = models.CharField(max_length=200, blank=True, null=True, verbose_name="Action Taken")
+    alarm_status = models.BooleanField(null=True, blank=True, verbose_name="Alarm")
+    trip_status = models.BooleanField(null=True, blank=True, verbose_name="Trip")
+    result_status = models.CharField(max_length=10, choices=[
+        ('pass', 'Pass'),
+        ('fail', 'Fail'),
+        ('na', 'Not Applicable')
+    ], default='pass', verbose_name="Result Status")
+    tested_by = models.CharField(max_length=100, blank=True, null=True, verbose_name="Tested By")
+    test_date = models.DateTimeField(null=True, blank=True, verbose_name="Test Date")
+    comments = models.TextField(blank=True, null=True, verbose_name="Comments")
+    
+    class Meta:
+        verbose_name = "Protection Test"
+        verbose_name_plural = "Protection Tests"
+        unique_together = ['maintenance_record', 'protection_type']
+        indexes = [
+            models.Index(fields=['maintenance_record', 'protection_type']),
+            models.Index(fields=['result_status']),
+        ]
+    
+    def __str__(self):
+        return f"{self.protection_type} - {self.maintenance_record.report_no}"
+
+class RelayOperationTest(models.Model):
+    """Relay Operation Tests - From the forms"""
+    RELAY_TYPES = [
+        ('distance_protection_annunciate', 'Distance Protection Annunciate'),
+        ('j_relay_auto_trip_vt_dc', 'J Relay Auto Trip VT/DC'),
+        ('distance_repeat', 'Distance Repeat'),
+        ('trip_relay', 'Trip Relay'),
+        ('master_trip_relay', 'Master Trip Relay'),
+        ('time_delay_relay', 'Time Delay Relay'),
+        ('transformer_alarm_relay', 'Transformer Alarm Relay'),
+        ('alarm_repeat_relay', 'Alarm Repeat Relay'),
+        ('all_relays_reset_correctly', 'All Relays Reset Correctly'),
+        ('discrepancy_trip_correct', 'Discrepancy Trip Correct'),
+    ]
+    
+    maintenance_record = models.ForeignKey(MaintenanceRecord, on_delete=models.CASCADE, related_name='relay_operation_tests')
+    relay_type = models.CharField(max_length=40, choices=RELAY_TYPES, verbose_name="Relay Type")
+    action_taken = models.CharField(max_length=200, blank=True, null=True, verbose_name="Action Taken")
+    alarm_status = models.BooleanField(null=True, blank=True, verbose_name="Alarm")
+    trip_status = models.BooleanField(null=True, blank=True, verbose_name="Trip")
+    result_status = models.CharField(max_length=10, choices=[
+        ('pass', 'Pass'),
+        ('fail', 'Fail'),
+        ('na', 'Not Applicable')
+    ], default='pass', verbose_name="Result Status")
+    tested_by = models.CharField(max_length=100, blank=True, null=True, verbose_name="Tested By")
+    test_date = models.DateTimeField(null=True, blank=True, verbose_name="Test Date")
+    comments = models.TextField(blank=True, null=True, verbose_name="Comments")
+    
+    class Meta:
+        verbose_name = "Relay Operation Test"
+        verbose_name_plural = "Relay Operation Tests"
+        unique_together = ['maintenance_record', 'relay_type']
+        indexes = [
+            models.Index(fields=['maintenance_record', 'relay_type']),
+            models.Index(fields=['result_status']),
+        ]
+    
+    def __str__(self):
+        return f"{self.relay_type} - {self.maintenance_record.report_no}"
+
+class AutoRecloseTest(models.Model):
+    """Auto Reclose Tests - From the forms"""
+    maintenance_record = models.ForeignKey(MaintenanceRecord, on_delete=models.CASCADE, related_name='auto_reclose_tests')
+    reclose_operation_correct = models.BooleanField(null=True, blank=True, verbose_name="Reclose Operation Correct")
+    lockout_operation_correct = models.BooleanField(null=True, blank=True, verbose_name="Lockout Operation Correct")
+    result_status = models.CharField(max_length=10, choices=[
+        ('pass', 'Pass'),
+        ('fail', 'Fail'),
+        ('na', 'Not Applicable')
+    ], default='pass', verbose_name="Result Status")
+    tested_by = models.CharField(max_length=100, blank=True, null=True, verbose_name="Tested By")
+    test_date = models.DateTimeField(null=True, blank=True, verbose_name="Test Date")
+    comments = models.TextField(blank=True, null=True, verbose_name="Comments")
+    
+    class Meta:
+        verbose_name = "Auto Reclose Test"
+        verbose_name_plural = "Auto Reclose Tests"
+        indexes = [
+            models.Index(fields=['maintenance_record']),
+            models.Index(fields=['result_status']),
+        ]
+    
+    def __str__(self):
+        return f"Auto Reclose Test - {self.maintenance_record.report_no}"
+
+class VacuumBreakerChecks(models.Model):
+    """Vacuum Circuit Breaker Specific Checks - From the Vacuum CB form"""
+    maintenance_record = models.OneToOneField(MaintenanceRecord, on_delete=models.CASCADE, related_name='vacuum_checks')
+    
+    # Gearing checks
+    gearing_checked = models.BooleanField(default=False, verbose_name="Gearing Checked")
+    lubrication_checked = models.BooleanField(default=False, verbose_name="Lubrication Checked")
+    auxiliary_contacts_checked = models.BooleanField(default=False, verbose_name="Auxiliary Contacts Checked")
+    motor_checked = models.BooleanField(default=False, verbose_name="Motor Checked")
+    springs_close_open_checked = models.BooleanField(default=False, verbose_name="Springs (Close/Open) Checked")
+    cb_insulators_checked = models.BooleanField(default=False, verbose_name="C/B Insulators Checked")
+    cts_checked = models.BooleanField(default=False, verbose_name="CTS Checked")
+    porcelain_checked = models.BooleanField(default=False, verbose_name="Porcelain Checked")
+    local_remote_operation_checked = models.BooleanField(default=False, verbose_name="Local/Remote Operation Checked")
+    vacuum_check_performed = models.BooleanField(default=False, verbose_name="Vacuum Check Performed")
+    
+    # Ductor Tests - Three phases
+    red_phase_ductor = models.CharField(max_length=20, blank=True, null=True, verbose_name="Red Phase Ductor")
+    yellow_phase_ductor = models.CharField(max_length=20, blank=True, null=True, verbose_name="Yellow Phase Ductor")
+    blue_phase_ductor = models.CharField(max_length=20, blank=True, null=True, verbose_name="Blue Phase Ductor")
+    
+    # Additional vacuum-specific checks
+    vacuum_level_satisfactory = models.BooleanField(default=False, verbose_name="Vacuum Level Satisfactory")
+    contacts_condition = models.CharField(max_length=20, choices=[
+        ('excellent', 'Excellent'),
+        ('good', 'Good'),
+        ('fair', 'Fair'),
+        ('poor', 'Poor'),
+        ('replace', 'Needs Replacement')
+    ], blank=True, null=True, verbose_name="Contacts Condition")
+    
+    # Timing tests specific data
+    timing_tests_attached = models.BooleanField(default=False, verbose_name="Timing Tests - See Attached Results")
+    
+    comments = models.TextField(blank=True, null=True, verbose_name="Additional Comments")
+    
+    class Meta:
+        verbose_name = "Vacuum Breaker Checks"
+        verbose_name_plural = "Vacuum Breaker Checks"
+    
+    def __str__(self):
+        return f"Vacuum CB Checks - {self.maintenance_record.report_no}"
+
+class OilBreakerChecks(models.Model):
+    """Oil Circuit Breaker Specific Checks - From the Oil CB form"""
+    maintenance_record = models.OneToOneField(MaintenanceRecord, on_delete=models.CASCADE, related_name='oil_checks')
+    
+    # Basic oil checks
+    oil_level_checked = models.BooleanField(default=False, verbose_name="Oil Level Checked")
+    oil_quality_checked = models.BooleanField(default=False, verbose_name="Oil Quality Checked")
+    oil_leakage_checked = models.BooleanField(default=False, verbose_name="Oil Leakage Checked")
+    
+    # Oil condition assessment
+    oil_condition = models.CharField(max_length=20, choices=[
+        ('excellent', 'Excellent'),
+        ('good', 'Good'),
+        ('fair', 'Fair'),
+        ('poor', 'Poor'),
+        ('replace', 'Needs Replacement')
+    ], blank=True, null=True, verbose_name="Oil Condition")
+    
+    oil_dielectric_strength = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True, verbose_name="Oil Dielectric Strength (kV)")
+    oil_moisture_content = models.DecimalField(max_digits=8, decimal_places=2, null=True, blank=True, verbose_name="Oil Moisture Content (ppm)")
+    oil_acidity = models.DecimalField(max_digits=8, decimal_places=4, null=True, blank=True, verbose_name="Oil Acidity (mg KOH/g)")
+    
+    # Mechanical checks
+    contacts_inspection = models.BooleanField(default=False, verbose_name="Contacts Inspection")
+    arcing_contacts_condition = models.CharField(max_length=20, choices=[
+        ('excellent', 'Excellent'),
+        ('good', 'Good'),
+        ('fair', 'Fair'),
+        ('poor', 'Poor'),
+        ('replace', 'Needs Replacement')
+    ], blank=True, null=True, verbose_name="Arcing Contacts Condition")
+    
+    # Tank and sealing
+    tank_condition = models.CharField(max_length=20, choices=[
+        ('excellent', 'Excellent'),
+        ('good', 'Good'),
+        ('fair', 'Fair'),
+        ('poor', 'Poor')
+    ], blank=True, null=True, verbose_name="Tank Condition")
+    
+    gasket_seals_condition = models.CharField(max_length=20, choices=[
+        ('excellent', 'Excellent'),
+        ('good', 'Good'),
+        ('fair', 'Fair'),
+        ('poor', 'Poor'),
+        ('replace', 'Needs Replacement')
+    ], blank=True, null=True, verbose_name="Gasket/Seals Condition")
+    
+    # Oil analysis results
+    oil_analysis_required = models.BooleanField(default=False, verbose_name="Oil Analysis Required")
+    oil_analysis_date = models.DateField(null=True, blank=True, verbose_name="Oil Analysis Date")
+    oil_analysis_results = models.TextField(blank=True, null=True, verbose_name="Oil Analysis Results")
+    
+    comments = models.TextField(blank=True, null=True, verbose_name="Additional Comments")
+    
+    class Meta:
+        verbose_name = "Oil Breaker Checks"
+        verbose_name_plural = "Oil Breaker Checks"
+    
+    def __str__(self):
+        return f"Oil CB Checks - {self.maintenance_record.report_no}"
+
+class TransformerMaintenanceRecord(models.Model):
+    """Transformer Annual Maintenance Record - From the transformer forms"""
+    
+    # Status choices
+    STATUS_CHOICES = [
+        ('draft', 'Draft'),
+        ('in_progress', 'In Progress'),
+        ('completed', 'Completed'),
+        ('approved', 'Approved'),
+        ('rejected', 'Rejected'),
+    ]
+    
+    # Primary identification
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    report_no = models.CharField(max_length=50, unique=True, verbose_name="Report No.")
+    
+    # Transformer details
+    substation = models.CharField(max_length=100, verbose_name="Substation")
+    transformer_number = models.CharField(max_length=50, verbose_name="Transformer Number")
+    make_manufacturer = models.CharField(max_length=100, blank=True, null=True, verbose_name="Make/Manufacturer")
+    serial_no = models.CharField(max_length=50, blank=True, null=True, verbose_name="Serial No.")
+    rating_mva = models.CharField(max_length=20, blank=True, null=True, verbose_name="Rating (MVA)")
+    voltage_ratio = models.CharField(max_length=50, blank=True, null=True, verbose_name="Voltage Ratio")
+    year_of_manufacture = models.PositiveIntegerField(null=True, blank=True, verbose_name="Year of Manufacture")
+    
+    # Administrative
+    date = models.DateField(default=timezone.now, verbose_name="Date of Maintenance")
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='draft', verbose_name="Status")
+    
+    # Maintenance carried out by
+    maintenance_carried_out_by = models.CharField(max_length=100, blank=True, null=True, verbose_name="Maintenance Carried Out By")
+    protection_test_carried_out_by = models.CharField(max_length=100, blank=True, null=True, verbose_name="Protection Test Carried Out By")
+    checked_by = models.CharField(max_length=100, blank=True, null=True, verbose_name="Checked By")
+    engineer = models.CharField(max_length=100, blank=True, null=True, verbose_name="Engineer")
+    ops_and_maint_engineer = models.CharField(max_length=100, blank=True, null=True, verbose_name="Ops and Maint Engineer")
+    
+    # Dates
+    maintenance_date = models.DateField(null=True, blank=True, verbose_name="Maintenance Date")
+    protection_test_date = models.DateField(null=True, blank=True, verbose_name="Protection Test Date")
+    checked_date = models.DateField(null=True, blank=True, verbose_name="Checked Date")
+    engineer_date = models.DateField(null=True, blank=True, verbose_name="Engineer Date")
+    ops_maint_date = models.DateField(null=True, blank=True, verbose_name="Ops and Maint Date")
+    
+    # Remarks
+    remarks = models.TextField(blank=True, null=True, verbose_name="Remarks")
+    
+    # Audit fields
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name = "Transformer Maintenance Record"
+        verbose_name_plural = "Transformer Maintenance Records"
+        ordering = ['-date', 'transformer_number']
+        indexes = [
+            models.Index(fields=['date', 'status']),
+            models.Index(fields=['substation', 'transformer_number']),
+            models.Index(fields=['status']),
+        ]
+    
+    def __str__(self):
+        return f"Report {self.report_no} for Transformer {self.transformer_number} on {self.date}"
+
+class TransformerCheckItem(models.Model):
+    """Individual maintenance check items for transformers"""
+    TRANSFORMER_CHECK_CATEGORIES = [
+        ('visual_inspection', 'Visual Inspection'),
+        ('cooling_system', 'Cooling System'),
+        ('protection_system', 'Protection System'),
+        ('electrical_tests', 'Electrical Tests'),
+        ('oil_analysis', 'Oil Analysis'),
+        ('buchholz_relay', 'Buchholz Relay'),
+        ('tap_changer', 'Tap Changer'),
+        ('bushings', 'Bushings'),
+        ('general', 'General'),
+    ]
+    
+    # Pre-defined check items based on the form
+    PREDEFINED_CHECKS = [
+        ('warn_control_of_earthing_operations', 'Warn control of earthing operations and'),
+        ('isolation_assemble_earthing', 'Isolation, assemble earthing'),
+        ('examine_all_external_accessories', 'Examine all external accessories,'),
+        ('service_and_test_protection_ac', 'Service and test protection a.c. main billing'),
+        ('check_winding_to_earth_lv_ct_and_lv_ct', 'Check winding to earth LV CT and LV CT'),
+        ('examine_all_main_lv_omg_injection_covers', 'Examine all main LV omg, injection covers'),
+        ('etc', 'etc.'),
+        ('examine_at_main_lv_omg_injection_covers', 'Examine at main LV omg, injection covers'),
+        ('examine_and_clean_it_bushings_check', 'Examine and clean it bushings, check'),
+        ('examine_and_clean_lv_bushings_check', 'Examine and clean LV bushings, check'),
+        ('examine_and_clean_hv_bushing_check', 'Examine and clean HV bushing, check'),
+        ('hv_winding_to_earth', 'HV winding to earth'),
+        ('lv_winding_to_earth', 'LV winding to earth'),
+        ('hv_winding_to_lv_winding', 'HV winding to LV winding'),
+        ('tap_changer_alarm', 'Tap changer alarm'),
+        ('temp_winding_temp_alarm', 'Temp Winding Temp alarm'),
+        ('uv_winding_temp_alarm', 'UV Winding Temp alarm'),
+        ('temp_winding_trip', 'Temp Winding Trip'),
+        ('uv_winding_trip', 'UV Winding Trip'),
+        ('top_oil_temp_alarm', 'Top Oil Temp Alarm'),
+        ('temp_winding_temp_alarm', 'Temp Winding Temp alarm'),
+        ('uv_cooler_control', 'UV Cooler control'),
+        ('hv_cooler_control', 'HV Cooler control'),
+        ('top_oil_temp_alarm', 'Top Oil Temp Alarm'),
+        ('main_buchholz_trip', 'Main Buchholz Trip'),
+        ('cable_oil_pressure_abnormal', 'Cable Oil pressure abnormal'),
+    ]
+    
+    transformer_record = models.ForeignKey(TransformerMaintenanceRecord, on_delete=models.CASCADE, related_name='check_items')
+    category = models.CharField(max_length=30, choices=TRANSFORMER_CHECK_CATEGORIES, verbose_name="Check Category")
+    item_name = models.CharField(max_length=200, verbose_name="Check Item")
+    is_completed = models.BooleanField(default=False, verbose_name="Completed")
+    result_status = models.CharField(max_length=10, choices=[
+        ('pass', 'Pass'),
+        ('fail', 'Fail'),
+        ('na', 'Not Applicable')
+    ], default='pass', verbose_name="Result Status")
+    comments = models.TextField(blank=True, null=True, verbose_name="Comments")
+    checked_by = models.CharField(max_length=100, blank=True, null=True, verbose_name="Checked By")
+    checked_date = models.DateTimeField(null=True, blank=True, verbose_name="Checked Date")
+    
+    # Order for display
+    order = models.PositiveIntegerField(default=0, verbose_name="Display Order")
+    
+    class Meta:
+        verbose_name = "Transformer Check Item"
+        verbose_name_plural = "Transformer Check Items"
+        ordering = ['category', 'order', 'item_name']
+        indexes = [
+            models.Index(fields=['transformer_record', 'category']),
+            models.Index(fields=['result_status']),
+        ]
+    
+    def __str__(self):
+        return f"{self.item_name} - {self.transformer_record.report_no}"

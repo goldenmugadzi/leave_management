@@ -1,0 +1,421 @@
+{% extends 'admin_layout.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Operation Detail - {{ operation.form_number }}{% endblock %}
+
+{% block styles %}
+<style>
+  .detail-card {
+    background: #ffffff;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 25px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  }
+  
+  .detail-card h5 {
+    color: #495057;
+    border-bottom: 2px solid #e9ecef;
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+  }
+  
+  .status-badge {
+    padding: 8px 16px;
+    border-radius: 25px;
+    font-size: 0.9em;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  
+  .status-draft { background-color: #f8f9fa; color: #6c757d; border: 2px solid #6c757d; }
+  .status-submitted { background-color: #fff3cd; color: #856404; border: 2px solid #856404; }
+  .status-approved { background-color: #d1ecf1; color: #0c5460; border: 2px solid #0c5460; }
+  .status-completed { background-color: #d4edda; color: #155724; border: 2px solid #155724; }
+  .status-cancelled { background-color: #f8d7da; color: #721c24; border: 2px solid #721c24; }
+  
+  .operation-type-badge {
+    padding: 6px 12px;
+    border-radius: 15px;
+    font-size: 0.85em;
+    font-weight: 500;
+  }
+  
+  .type-installation { background-color: #e3f2fd; color: #1565c0; }
+  .type-removal { background-color: #ffebee; color: #c62828; }
+  .type-change { background-color: #f3e5f5; color: #7b1fa2; }
+  .type-repair { background-color: #fff8e1; color: #ef6c00; }
+  .type-maintenance { background-color: #e8f5e8; color: #2e7d32; }
+  
+  .info-item {
+    margin-bottom: 15px;
+    padding: 10px 0;
+    border-bottom: 1px solid #f8f9fa;
+  }
+  
+  .info-item:last-child {
+    border-bottom: none;
+  }
+  
+  .info-label {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 5px;
+  }
+  
+  .info-value {
+    color: #6c757d;
+  }
+  
+  .document-item {
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+    padding: 15px;
+    margin-bottom: 10px;
+  }
+  
+  .timeline-item {
+    border-left: 3px solid #007bff;
+    padding-left: 20px;
+    margin-bottom: 20px;
+    position: relative;
+  }
+  
+  .timeline-item::before {
+    content: '';
+    position: absolute;
+    left: -6px;
+    top: 0;
+    width: 12px;
+    height: 12px;
+    background: #007bff;
+    border-radius: 50%;
+  }
+  
+  .equipment-info {
+    background: #f8f9fa;
+    border-left: 4px solid #007bff;
+    padding: 15px;
+    margin: 10px 0;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <!-- Page Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="page-title">
+                        <i class="fas fa-clipboard-list"></i>
+                        Operation {{ operation.form_number }}
+                    </h1>
+                    <p class="page-subtitle">Form E114 - Installation/Removal/Change of Equipment</p>
+                </div>
+                <div>
+                    <span class="status-badge status-{{ operation.status }}">
+                        {{ operation.get_status_display }}
+                    </span>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="mb-4">
+                <a href="{% url 'equipment_management:operation_list' %}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to Operations
+                </a>
+                {% if operation.status == 'draft' or operation.status == 'submitted' %}
+                    <a href="{% url 'equipment_management:operation_edit' operation.pk %}" class="btn btn-primary">
+                        <i class="fas fa-edit"></i> Edit Operation
+                    </a>
+                {% endif %}
+                <button class="btn btn-info" onclick="window.print()">
+                    <i class="fas fa-print"></i> Print
+                </button>
+            </div>
+
+            <div class="row">
+                <!-- Main Operation Details -->
+                <div class="col-lg-8">
+                    <!-- Basic Information -->
+                    <div class="detail-card">
+                        <h5><i class="fas fa-info-circle"></i> Basic Information</h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="info-item">
+                                    <div class="info-label">Form Number</div>
+                                    <div class="info-value">{{ operation.form_number }}</div>
+                                </div>
+                                <div class="info-item">
+                                    <div class="info-label">Operation Type</div>
+                                    <div class="info-value">
+                                        <span class="operation-type-badge type-{{ operation.operation_type }}">
+                                            {{ operation.get_operation_type_display }}
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="info-item">
+                                    <div class="info-label">Operation Date</div>
+                                    <div class="info-value">{{ operation.operation_date|date:"F d, Y" }}</div>
+                                </div>
+                                <div class="info-item">
+                                    <div class="info-label">Estimated Duration</div>
+                                    <div class="info-value">{{ operation.estimated_duration_hours }} hours</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="info-item">
+                                    <div class="info-label">Status</div>
+                                    <div class="info-value">{{ operation.get_status_display }}</div>
+                                </div>
+                                <div class="info-item">
+                                    <div class="info-label">Created By</div>
+                                    <div class="info-value">{{ operation.created_by.get_full_name|default:operation.created_by.username }}</div>
+                                </div>
+                                <div class="info-item">
+                                    <div class="info-label">Created At</div>
+                                    <div class="info-value">{{ operation.created_at|date:"F d, Y H:i" }}</div>
+                                </div>
+                                {% if operation.cost_estimate %}
+                                <div class="info-item">
+                                    <div class="info-label">Cost Estimate</div>
+                                    <div class="info-value">${{ operation.cost_estimate|floatformat:2 }}</div>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Location Information -->
+                    <div class="detail-card">
+                        <h5><i class="fas fa-map-marker-alt"></i> Location Information</h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="info-item">
+                                    <div class="info-label">Consumer Name</div>
+                                    <div class="info-value">{{ operation.consumer_name }}</div>
+                                </div>
+                                {% if operation.consumer_account_number %}
+                                <div class="info-item">
+                                    <div class="info-label">Account Number</div>
+                                    <div class="info-value">{{ operation.consumer_account_number }}</div>
+                                </div>
+                                {% endif %}
+                                <div class="info-item">
+                                    <div class="info-label">Substation</div>
+                                    <div class="info-value">{{ operation.substation_name }}</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="info-item">
+                                    <div class="info-label">District</div>
+                                    <div class="info-value">{{ operation.district }}</div>
+                                </div>
+                                {% if operation.substation_name %}
+                                <div class="info-item">
+                                    <div class="info-label">Location Details</div>
+                                    <div class="info-value">{{ operation.substation_name }}</div>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Equipment Information -->
+                    {% if operation.equipment_installed or operation.equipment_removed %}
+                    <div class="detail-card">
+                        <h5><i class="fas fa-cogs"></i> Equipment Information</h5>
+                        
+                        {% if operation.equipment_installed %}
+                        <div class="equipment-info">
+                            <h6 class="text-success"><i class="fas fa-plus-circle"></i> Equipment to be Installed</h6>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <strong>Serial Number:</strong> {{ operation.equipment_installed.serial_number }}
+                                </div>
+                                <div class="col-md-6">
+                                    <strong>Make:</strong> {{ operation.equipment_installed.make }}
+                                </div>
+                            </div>
+                            <div class="row mt-2">
+                                <div class="col-md-6">
+                                    <strong>Type:</strong> {{ operation.equipment_installed.get_equipment_type_display }}
+                                </div>
+                                <div class="col-md-6">
+                                    <strong>Status:</strong> {{ operation.equipment_installed.get_status_display }}
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        {% if operation.equipment_removed %}
+                        <div class="equipment-info mt-3">
+                            <h6 class="text-danger"><i class="fas fa-minus-circle"></i> Equipment to be Removed</h6>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <strong>Serial Number:</strong> {{ operation.equipment_removed.serial_number }}
+                                </div>
+                                <div class="col-md-6">
+                                    <strong>Make:</strong> {{ operation.equipment_removed.make }}
+                                </div>
+                            </div>
+                            <div class="row mt-2">
+                                <div class="col-md-6">
+                                    <strong>Type:</strong> {{ operation.equipment_removed.get_equipment_type_display }}
+                                </div>
+                                <div class="col-md-6">
+                                    <strong>Status:</strong> {{ operation.equipment_removed.get_status_display }}
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+
+                    <!-- Operation Details -->
+                    <div class="detail-card">
+                        <h5><i class="fas fa-clipboard-check"></i> Operation Details</h5>
+                        <div class="info-item">
+                            <div class="info-label">Reason for Operation</div>
+                            <div class="info-value">{{ operation.reason|linebreaks }}</div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="info-item">
+                                    <div class="info-label">Operator Name</div>
+                                    <div class="info-value">{{ operation.operator_name }}</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="info-item">
+                                    <div class="info-label">Operator Designation</div>
+                                    <div class="info-value">{{ operation.operator_designation }}</div>
+                                </div>
+                            </div>
+                        </div>
+                        {% if operation.notes %}
+                        <div class="info-item">
+                            <div class="info-label">Additional Notes</div>
+                            <div class="info-value">{{ operation.notes|linebreaks }}</div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Sidebar -->
+                <div class="col-lg-4">
+                    <!-- Quick Actions -->
+                    <div class="detail-card">
+                        <h5><i class="fas fa-tasks"></i> Quick Actions</h5>
+                        <div class="d-grid gap-2">
+                            {% if operation.status == 'draft' %}
+                                <a href="{% url 'equipment_management:operation_edit' operation.pk %}" class="btn btn-primary">
+                                    <i class="fas fa-edit"></i> Edit & Submit
+                                </a>
+                            {% elif operation.status == 'submitted' %}
+                                <button class="btn btn-success" onclick="alert('Approval functionality coming soon')">
+                                    <i class="fas fa-check"></i> Approve Operation
+                                </button>
+                                <button class="btn btn-warning" onclick="alert('Rejection functionality coming soon')">
+                                    <i class="fas fa-times"></i> Reject Operation
+                                </button>
+                            {% elif operation.status == 'approved' %}
+                                <button class="btn btn-info" onclick="alert('Mark as completed functionality coming soon')">
+                                    <i class="fas fa-flag-checkered"></i> Mark Completed
+                                </button>
+                            {% endif %}
+                            <button class="btn btn-outline-primary" onclick="window.print()">
+                                <i class="fas fa-print"></i> Print Form
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Documents -->
+                    {% if documents %}
+                    <div class="detail-card">
+                        <h5><i class="fas fa-file-alt"></i> Related Documents</h5>
+                        {% for document in documents %}
+                        <div class="document-item">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h6 class="mb-1">{{ document.get_document_type_display }}</h6>
+                                    {% if document.description %}
+                                        <p class="text-muted small mb-2">{{ document.description }}</p>
+                                    {% endif %}
+                                    <small class="text-muted">
+                                        Uploaded {{ document.uploaded_at|naturaltime }}
+                                    </small>
+                                </div>
+                                <a href="{{ document.file.url }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-download"></i>
+                                </a>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+
+                    <!-- Operation Timeline -->
+                    <div class="detail-card">
+                        <h5><i class="fas fa-history"></i> Operation Timeline</h5>
+                        <div class="timeline">
+                            <div class="timeline-item">
+                                <h6>Operation Created</h6>
+                                <p class="text-muted mb-1">{{ operation.created_at|date:"F d, Y H:i" }}</p>
+                                <small class="text-muted">by {{ operation.created_by.get_full_name|default:operation.created_by.username }}</small>
+                            </div>
+                            
+                            {% if operation.status != 'draft' %}
+                            <div class="timeline-item">
+                                <h6>Operation Submitted</h6>
+                                <p class="text-muted mb-1">{{ operation.updated_at|date:"F d, Y H:i" }}</p>
+                                <small class="text-muted">Status changed to submitted</small>
+                            </div>
+                            {% endif %}
+                            
+                            {% if operation.status == 'approved' or operation.status == 'completed' %}
+                            <div class="timeline-item">
+                                <h6>Operation Approved</h6>
+                                <p class="text-muted mb-1">{{ operation.updated_at|date:"F d, Y H:i" }}</p>
+                                <small class="text-muted">Approved for execution</small>
+                            </div>
+                            {% endif %}
+                            
+                            {% if operation.status == 'completed' %}
+                            <div class="timeline-item">
+                                <h6>Operation Completed</h6>
+                                <p class="text-muted mb-1">{{ operation.updated_at|date:"F d, Y H:i" }}</p>
+                                <small class="text-muted">Operation successfully completed</small>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Print styles
+    window.addEventListener('beforeprint', function() {
+        document.querySelectorAll('.btn, .page-title').forEach(function(element) {
+            element.style.display = 'none';
+        });
+    });
+    
+    window.addEventListener('afterprint', function() {
+        document.querySelectorAll('.btn, .page-title').forEach(function(element) {
+            element.style.display = '';
+        });
+    });
+</script>
+{% endblock %}

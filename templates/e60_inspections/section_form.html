@@ -1,0 +1,200 @@
+{% extends "e60_inspections/base.html" %}
+{% load crispy_forms_tags %}
+{% load static %}
+
+{% block page_content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <!-- Section Header -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
+        <div class="px-6 py-4">
+            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                <div class="flex-1">
+                    <h4 class="text-2xl font-semibold text-gray-900">{{ title }}</h4>
+                    <p class="text-gray-600 mt-1">{{ inspection.report_number }} - {{ inspection.substation_name }}</p>
+                </div>
+                <div>
+                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium status-{{ inspection.status }}">
+                        {{ inspection.get_status_display }}
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="lg:col-span-2">
+            <!-- Section Form -->
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h5 class="text-xl font-semibold text-gray-900 flex items-center">
+                        <i class="fas fa-edit text-blue-600 mr-3"></i>{{ section_title }}
+                    </h5>
+                </div>
+                <div class="px-6 py-6">
+                    <form method="post" action="" class="space-y-6">
+                        {% csrf_token %}
+                        {% crispy form %}
+                        
+                        <div class="flex flex-col sm:flex-row sm:justify-between items-start sm:items-center gap-4 pt-6 border-t border-gray-200">
+                            <a href="{% url 'e60_inspections:e60_inspection_detail' inspection.pk %}" 
+                               class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+                                <i class="fas fa-arrow-left mr-2"></i>Back to Inspection
+                            </a>
+                            <button type="submit" class="inline-flex items-center px-6 py-2 bg-blue-600 border border-transparent rounded-md text-sm font-medium text-white hover:bg-blue-700 transition-colors">
+                                <i class="fas fa-save mr-2"></i>Save Section
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="space-y-6">
+            <!-- Inspection Navigation -->
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h6 class="text-lg font-semibold text-gray-900 flex items-center">
+                        <i class="fas fa-list text-blue-600 mr-3"></i>Inspection Sections
+                    </h6>
+                </div>
+                <div class="divide-y divide-gray-200">
+                    <a href="{% url 'e60_inspections:e60_transformer_edit' inspection.pk %}" 
+                       class="flex items-center px-6 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors {% if 'transformer' in request.resolver_match.url_name %}bg-blue-50 text-blue-700 border-r-4 border-blue-600{% endif %}">
+                        <i class="fas fa-bolt mr-3 {% if 'transformer' in request.resolver_match.url_name %}text-blue-600{% else %}text-gray-400{% endif %}"></i>Section A: Transformers
+                    </a>
+                    <a href="{% url 'e60_inspections:e60_circuit_breaker_edit' inspection.pk %}" 
+                       class="flex items-center px-6 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors {% if 'circuit-breaker' in request.resolver_match.url_name %}bg-blue-50 text-blue-700 border-r-4 border-blue-600{% endif %}">
+                        <i class="fas fa-power-off mr-3 {% if 'circuit-breaker' in request.resolver_match.url_name %}text-blue-600{% else %}text-gray-400{% endif %}"></i>Section B: Circuit Breaker
+                    </a>
+                    <a href="{% url 'e60_inspections:e60_metering_edit' inspection.pk %}" 
+                       class="flex items-center px-6 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors {% if 'metering' in request.resolver_match.url_name %}bg-blue-50 text-blue-700 border-r-4 border-blue-600{% endif %}">
+                        <i class="fas fa-tachometer-alt mr-3 {% if 'metering' in request.resolver_match.url_name %}text-blue-600{% else %}text-gray-400{% endif %}"></i>Section C: Metering
+                    </a>
+                    <a href="{% url 'e60_inspections:e60_housing_edit' inspection.pk %}" 
+                       class="flex items-center px-6 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors {% if 'housing' in request.resolver_match.url_name %}bg-blue-50 text-blue-700 border-r-4 border-blue-600{% endif %}">
+                        <i class="fas fa-home mr-3 {% if 'housing' in request.resolver_match.url_name %}text-blue-600{% else %}text-gray-400{% endif %}"></i>Section D: Housing
+                    </a>
+                    <a href="{% url 'e60_inspections:e60_fuse_edit' inspection.pk %}" 
+                       class="flex items-center px-6 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors {% if 'fuse' in request.resolver_match.url_name %}bg-blue-50 text-blue-700 border-r-4 border-blue-600{% endif %}">
+                        <i class="fas fa-plug mr-3 {% if 'fuse' in request.resolver_match.url_name %}text-blue-600{% else %}text-gray-400{% endif %}"></i>Section E: Fuses
+                    </a>
+                    <a href="{% url 'e60_inspections:e60_surge_arrestor_edit' inspection.pk %}" 
+                       class="flex items-center px-6 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors {% if 'surge-arrestor' in request.resolver_match.url_name %}bg-blue-50 text-blue-700 border-r-4 border-blue-600{% endif %}">
+                        <i class="fas fa-shield-alt mr-3 {% if 'surge-arrestor' in request.resolver_match.url_name %}text-blue-600{% else %}text-gray-400{% endif %}"></i>Sections F & G: Surge Arrestors
+                    </a>
+                    <a href="{% url 'e60_inspections:e60_general_state_edit' inspection.pk %}" 
+                       class="flex items-center px-6 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors {% if 'general-state' in request.resolver_match.url_name %}bg-blue-50 text-blue-700 border-r-4 border-blue-600{% endif %}">
+                        <i class="fas fa-clipboard-check mr-3 {% if 'general-state' in request.resolver_match.url_name %}text-blue-600{% else %}text-gray-400{% endif %}"></i>Section J: General State
+                    </a>
+                    <a href="{% url 'e60_inspections:e60_safety_edit' inspection.pk %}" 
+                       class="flex items-center px-6 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors {% if 'safety' in request.resolver_match.url_name %}bg-blue-50 text-blue-700 border-r-4 border-blue-600{% endif %}">
+                        <i class="fas fa-hard-hat mr-3 {% if 'safety' in request.resolver_match.url_name %}text-blue-600{% else %}text-gray-400{% endif %}"></i>Section K: Safety
+                    </a>
+                    <a href="{% url 'e60_inspections:e60_consumer_installation_edit' inspection.pk %}" 
+                       class="flex items-center px-6 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors {% if 'consumer-installation' in request.resolver_match.url_name %}bg-blue-50 text-blue-700 border-r-4 border-blue-600{% endif %}">
+                        <i class="fas fa-user-cog mr-3 {% if 'consumer-installation' in request.resolver_match.url_name %}text-blue-600{% else %}text-gray-400{% endif %}"></i>Section L: Consumer Installation
+                    </a>
+                </div>
+            </div>
+
+            <!-- Section Guidelines -->
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h6 class="text-lg font-semibold text-gray-900 flex items-center">
+                        <i class="fas fa-info-circle text-blue-600 mr-3"></i>Section Guidelines
+                    </h6>
+                </div>
+                <div class="px-6 py-6">
+                    {% if 'transformer' in request.resolver_match.url_name %}
+                    <h6 class="text-base font-medium text-gray-900 mb-3">Transformer Inspection:</h6>
+                    <ul class="text-sm text-gray-700 space-y-2">
+                        <li class="flex items-start">
+                            <span class="inline-block w-2 h-2 bg-blue-600 rounded-full mt-2 mr-3 flex-shrink-0"></span>
+                            Check transformer specifications and ratings
+                        </li>
+                        <li class="flex items-start">
+                            <span class="inline-block w-2 h-2 bg-blue-600 rounded-full mt-2 mr-3 flex-shrink-0"></span>
+                            Verify proper bonding and earthing
+                        </li>
+                        <li class="flex items-start">
+                            <span class="inline-block w-2 h-2 bg-blue-600 rounded-full mt-2 mr-3 flex-shrink-0"></span>
+                            Assess oil condition and leaks
+                        </li>
+                        <li class="flex items-start">
+                            <span class="inline-block w-2 h-2 bg-blue-600 rounded-full mt-2 mr-3 flex-shrink-0"></span>
+                            Record megger test results
+                        </li>
+                        <li class="flex items-start">
+                            <span class="inline-block w-2 h-2 bg-blue-600 rounded-full mt-2 mr-3 flex-shrink-0"></span>
+                            Check tap settings and positions
+                        </li>
+                    </ul>
+                    {% elif 'circuit-breaker' in request.resolver_match.url_name %}
+                    <h6 class="text-base font-medium text-gray-900 mb-3">Circuit Breaker Inspection:</h6>
+                    <ul class="text-sm text-gray-700 space-y-2">
+                        <li class="flex items-start">
+                            <span class="inline-block w-2 h-2 bg-blue-600 rounded-full mt-2 mr-3 flex-shrink-0"></span>
+                            Verify breaker type and ratings
+                        </li>
+                        <li class="flex items-start">
+                            <span class="inline-block w-2 h-2 bg-blue-600 rounded-full mt-2 mr-3 flex-shrink-0"></span>
+                            Check trip settings
+                        </li>
+                        <li class="flex items-start">
+                            <span class="inline-block w-2 h-2 bg-blue-600 rounded-full mt-2 mr-3 flex-shrink-0"></span>
+                            Assess oil and contact condition
+                        </li>
+                        <li class="flex items-start">
+                            <span class="inline-block w-2 h-2 bg-blue-600 rounded-full mt-2 mr-3 flex-shrink-0"></span>
+                            Ensure all connections are tight
+                        </li>
+                    </ul>
+                    {% elif 'metering' in request.resolver_match.url_name %}
+                    <h6 class="text-base font-medium text-gray-900 mb-3">Metering Inspection:</h6>
+                    <ul class="text-sm text-gray-700 space-y-2">
+                        <li class="flex items-start">
+                            <span class="inline-block w-2 h-2 bg-blue-600 rounded-full mt-2 mr-3 flex-shrink-0"></span>
+                            Record meter specifications
+                        </li>
+                        <li class="flex items-start">
+                            <span class="inline-block w-2 h-2 bg-blue-600 rounded-full mt-2 mr-3 flex-shrink-0"></span>
+                            Check CT and VT ratios
+                        </li>
+                        <li class="flex items-start">
+                            <span class="inline-block w-2 h-2 bg-blue-600 rounded-full mt-2 mr-3 flex-shrink-0"></span>
+                            Verify phase rotation
+                        </li>
+                        <li class="flex items-start">
+                            <span class="inline-block w-2 h-2 bg-blue-600 rounded-full mt-2 mr-3 flex-shrink-0"></span>
+                            Ensure proper sealing
+                        </li>
+                        <li class="flex items-start">
+                            <span class="inline-block w-2 h-2 bg-blue-600 rounded-full mt-2 mr-3 flex-shrink-0"></span>
+                            Check earthing connections
+                        </li>
+                    </ul>
+                    {% else %}
+                    <p class="text-sm text-gray-600">
+                        Complete this section according to E60 form requirements. 
+                        Ensure all relevant fields are filled accurately.
+                    </p>
+                    {% endif %}
+                    
+                    <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mt-6">
+                        <div class="flex items-start">
+                            <i class="fas fa-exclamation-triangle text-yellow-600 mt-0.5 mr-3"></i>
+                            <div>
+                                <h6 class="text-sm font-medium text-yellow-800">Note:</h6>
+                                <p class="text-sm text-yellow-700 mt-1">
+                                    All condition assessments should follow standard inspection criteria. 
+                                    Document any defects or issues in the remarks section.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -23,7 +23,7 @@
     <link
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
-      integrity="sha512-"
+      integrity="sha512-9usAa10IRO0HhonpyAIVpjrylPvoDwiPUiKdWk5t3PyolY1cOd4DSE0Ga+ri4AuTroPR5aQvXU9xC6qOPnzFeg=="
       crossorigin="anonymous"
     />
     <link
@@ -37,7 +37,6 @@
       rel="stylesheet"
     />
     {% block extra_css %}{% endblock %}
-    <script src="{% static 'assets/classification.js' %}"></script>
     <script>
         function goBack() {
           const loginUrl = '/accounts/login';
@@ -724,6 +723,7 @@
       src="{% static 'assets/cdn/select2.min.js' %}"
     ></script>
     {% block scripts %} {% endblock scripts %}
+    <script src="{% static 'assets/classification.js' %}"></script>
     <script></script>
     {% load sweetify %} {% sweetify %}
     <script>

@@ -10,7 +10,7 @@ urlpatterns = [
     path('circuit-breakers/quick-create/', views.circuit_breaker_quick_create, name='circuit_breaker_quick_create'),  # Uncomment this
     path('circuit-breakers/bulk-import/', views.circuit_breaker_bulk_import, name='circuit_breaker_bulk_import'),  # And this
     # path('circuit-breakers/bulk-status-change/', views.circuit_breaker_bulk_status_change, name='circuit_breaker_bulk_status_change'),
-    # path('circuit-breakers/status-report/', views.circuit_breaker_status_report, name='circuit_breaker_status_report'),
+    path('circuit-breakers/status-report/', views.circuit_breaker_status_report, name='circuit_breaker_status_report'),
     path('circuit-breakers/<int:pk>/', views.circuit_breaker_detail, name='circuit_breaker_detail'),
     path('circuit-breakers/<int:pk>/edit/', views.circuit_breaker_edit, name='circuit_breaker_edit'),
     path('circuit-breakers/<int:pk>/toggle-status/', views.circuit_breaker_toggle_status, name='circuit_breaker_toggle_status'),
@@ -27,8 +27,23 @@ urlpatterns = [
     # Maintenance Record URLs
     path('', views.maintenance_record_list, name='record_list'),
     path('maintenance/create/', views.maintenance_record_create, name='record_create'),
+    path('maintenance/create/type/<str:breaker_type>/', views.maintenance_record_create_typed, name='record_create_typed'),
     path('maintenance/<uuid:pk>/', views.maintenance_record_detail, name='record_detail'),
     path('maintenance/<uuid:pk>/edit/', views.maintenance_record_edit, name='record_edit'),
+    path('maintenance/<uuid:pk>/tests/', views.maintenance_tests_view, name='maintenance_tests'),
+    
+    # Test-specific URLs
+    path('maintenance/<uuid:pk>/insulation-tests/', views.insulation_test_manage, name='insulation_tests'),
+    path('maintenance/<uuid:pk>/contact-resistance-tests/', views.contact_resistance_test_manage, name='contact_resistance_tests'),
+    path('maintenance/<uuid:pk>/timing-tests/', views.timing_test_manage, name='timing_tests'),
+    path('maintenance/<uuid:pk>/vacuum-checks/', views.vacuum_checks_manage, name='vacuum_checks'),
+    path('maintenance/<uuid:pk>/oil-checks/', views.oil_checks_manage, name='oil_checks'),
+    
+    # Transformer maintenance URLs
+    path('transformers/', views.transformer_maintenance_list, name='transformer_list'),
+    path('transformers/create/', views.transformer_maintenance_create, name='transformer_create'),
+    path('transformers/<uuid:pk>/', views.transformer_maintenance_detail, name='transformer_detail'),
+    path('transformers/<uuid:pk>/edit/', views.transformer_maintenance_edit, name='transformer_edit'),
     
     # API endpoints
     path('api/regions/', views.get_regions_api, name='api_regions'),

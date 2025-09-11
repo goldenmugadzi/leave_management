@@ -1,6 +1,12 @@
 from django import forms
 from django.core.exceptions import ValidationError
-from .models import CircuitBreaker, MaintenanceRecord
+from .models import (
+    CircuitBreaker, MaintenanceRecord, InsulationResistanceTest, 
+    ContactResistanceTest, TimingTest, InterlockTest, ContactTravelTest,
+    DuctorTest, ProtectionTest, RelayOperationTest, AutoRecloseTest,
+    VacuumBreakerChecks, OilBreakerChecks, TransformerMaintenanceRecord,
+    TransformerCheckItem
+)
 import re
 
 class CircuitBreakerForm(forms.ModelForm):
@@ -24,12 +30,21 @@ class CircuitBreakerForm(forms.ModelForm):
                 'pattern': '[A-Za-z0-9-]+',
                 'title': 'Use letters, numbers, and hyphens only'
             }),
+            'breaker_type': forms.Select(attrs={'class': 'form-control'}),
             'make_type': forms.TextInput(attrs={
                 'class': 'form-control', 
                 'placeholder': 'e.g., ABB SF6, Siemens 3AP1',
                 'list': 'make_types'
             }),
             'voltage_capacity': forms.Select(attrs={'class': 'form-control'}),
+            'current_rating': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'e.g., 1000A, 2000A'
+            }),
+            'breaking_capacity': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'e.g., 31.5kA, 40kA'
+            }),
             'serial_number': forms.TextInput(attrs={
                 'class': 'form-control',
                 'placeholder': 'Manufacturer serial number'
@@ -43,6 +58,36 @@ class CircuitBreakerForm(forms.ModelForm):
                 'class': 'form-control', 
                 'placeholder': 'Enter substation name',
                 'list': 'substations'
+            }),
+            'bay_position': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'e.g., Bay 1, Feeder 3'
+            }),
+            # V/T fields
+            'vt_make_type': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'V/T Make/Type'
+            }),
+            'vt_volt_ratio_rating': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'e.g., 132kV/110V'
+            }),
+            'vt_serial_no': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'V/T Serial Number'
+            }),
+            # C/T fields
+            'ct_make_type': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'C/T Make/Type'
+            }),
+            'ct_ratio': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'e.g., 600/5A, 1000/1A'
+            }),
+            'ct_serial_no': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'C/T Serial Number'
             }),
             'is_active': forms.CheckboxInput(attrs={'class': 'form-check-input'})
         }
@@ -80,6 +125,7 @@ class CircuitBreakerForm(forms.ModelForm):
         # Make form fields more user-friendly
         self.fields['breaker_number'].help_text = "Unique identifier for the circuit breaker"
         self.fields['serial_number'].help_text = "Manufacturer's serial number"
+        self.fields['breaker_type'].help_text = "Select the type of circuit breaker"
         
     def clean_breaker_number(self):
         """Validate breaker number format and uniqueness"""
@@ -611,3 +657,366 @@ class MaintenanceRecordQuickForm(forms.ModelForm):
                 raise ValidationError("Maintenance date seems too old. Please verify.")
         
         return date
+
+class InsulationResistanceTestForm(forms.ModelForm):
+    """Form for individual insulation resistance tests"""
+    class Meta:
+        model = InsulationResistanceTest
+        exclude = ['maintenance_record']
+        widgets = {
+            'phase': forms.Select(attrs={'class': 'form-control'}),
+            'test_type': forms.Select(attrs={'class': 'form-control'}),
+            'resistance_value': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'step': '0.01',
+                'placeholder': 'MΩ'
+            }),
+            'test_voltage': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'e.g., 1000V, 2500V'
+            }),
+            'temperature': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'step': '0.1',
+                'placeholder': '°C'
+            }),
+            'humidity': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'min': 0,
+                'max': 100,
+                'placeholder': '%'
+            }),
+            'result_status': forms.Select(attrs={'class': 'form-control'}),
+            'tested_by': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Technician name'
+            }),
+            'test_date': forms.DateTimeInput(attrs={
+                'type': 'datetime-local',
+                'class': 'form-control'
+            }),
+            'comments': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 2
+            })
+        }
+
+class ContactResistanceTestForm(forms.ModelForm):
+    """Form for contact resistance tests"""
+    class Meta:
+        model = ContactResistanceTest
+        exclude = ['maintenance_record']
+        widgets = {
+            'phase': forms.Select(attrs={'class': 'form-control'}),
+            'test_condition': forms.Select(attrs={'class': 'form-control'}),
+            'resistance_microohms': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'step': '0.01',
+                'placeholder': 'μΩ'
+            }),
+            'test_current': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'step': '0.01',
+                'placeholder': 'A'
+            }),
+            'temperature': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'step': '0.1',
+                'placeholder': '°C'
+            }),
+            'result_status': forms.Select(attrs={'class': 'form-control'}),
+            'tested_by': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Technician name'
+            }),
+            'test_date': forms.DateTimeInput(attrs={
+                'type': 'datetime-local',
+                'class': 'form-control'
+            }),
+            'comments': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 2
+            })
+        }
+
+class TimingTestForm(forms.ModelForm):
+    """Form for timing tests"""
+    class Meta:
+        model = TimingTest
+        exclude = ['maintenance_record']
+        widgets = {
+            'phase': forms.Select(attrs={'class': 'form-control'}),
+            'operation_type': forms.Select(attrs={'class': 'form-control'}),
+            'phu1_time': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'step': '0.001',
+                'placeholder': 'ms'
+            }),
+            'phu2_time': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'step': '0.001',
+                'placeholder': 'ms'
+            }),
+            'operation_1_close_time': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'step': '0.001',
+                'placeholder': 'ms'
+            }),
+            'operation_2_open_time': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'step': '0.001',
+                'placeholder': 'ms'
+            }),
+            'operation_3_close_time': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'step': '0.001',
+                'placeholder': 'ms'
+            }),
+            'repeat_1st_operation': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'step': '0.001',
+                'placeholder': 'ms'
+            }),
+            'repeat_2nd_operation': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'step': '0.001',
+                'placeholder': 'ms'
+            }),
+            'result_status': forms.Select(attrs={'class': 'form-control'}),
+            'tested_by': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Technician name'
+            }),
+            'test_date': forms.DateTimeInput(attrs={
+                'type': 'datetime-local',
+                'class': 'form-control'
+            }),
+            'comments': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 2
+            })
+        }
+
+class VacuumBreakerChecksForm(forms.ModelForm):
+    """Form for vacuum circuit breaker specific checks"""
+    class Meta:
+        model = VacuumBreakerChecks
+        exclude = ['maintenance_record']
+        widgets = {
+            'gearing_checked': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'lubrication_checked': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'auxiliary_contacts_checked': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'motor_checked': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'springs_close_open_checked': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'cb_insulators_checked': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'cts_checked': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'porcelain_checked': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'local_remote_operation_checked': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'vacuum_check_performed': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'red_phase_ductor': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Ductor test result'
+            }),
+            'yellow_phase_ductor': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Ductor test result'
+            }),
+            'blue_phase_ductor': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Ductor test result'
+            }),
+            'vacuum_level_satisfactory': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'contacts_condition': forms.Select(attrs={'class': 'form-control'}),
+            'timing_tests_attached': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'comments': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 3,
+                'placeholder': 'Additional comments about vacuum CB maintenance'
+            })
+        }
+
+class OilBreakerChecksForm(forms.ModelForm):
+    """Form for oil circuit breaker specific checks"""
+    class Meta:
+        model = OilBreakerChecks
+        exclude = ['maintenance_record']
+        widgets = {
+            'oil_level_checked': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'oil_quality_checked': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'oil_leakage_checked': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'oil_condition': forms.Select(attrs={'class': 'form-control'}),
+            'oil_dielectric_strength': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'step': '0.01',
+                'placeholder': 'kV'
+            }),
+            'oil_moisture_content': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'step': '0.01',
+                'placeholder': 'ppm'
+            }),
+            'oil_acidity': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'step': '0.0001',
+                'placeholder': 'mg KOH/g'
+            }),
+            'contacts_inspection': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'arcing_contacts_condition': forms.Select(attrs={'class': 'form-control'}),
+            'tank_condition': forms.Select(attrs={'class': 'form-control'}),
+            'gasket_seals_condition': forms.Select(attrs={'class': 'form-control'}),
+            'oil_analysis_required': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'oil_analysis_date': forms.DateInput(attrs={
+                'type': 'date',
+                'class': 'form-control'
+            }),
+            'oil_analysis_results': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 3,
+                'placeholder': 'Oil analysis results'
+            }),
+            'comments': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 3,
+                'placeholder': 'Additional comments about oil CB maintenance'
+            })
+        }
+
+class TransformerMaintenanceRecordForm(forms.ModelForm):
+    """Form for transformer maintenance records"""
+    class Meta:
+        model = TransformerMaintenanceRecord
+        exclude = ['id', 'report_no', 'created_at', 'updated_at']
+        widgets = {
+            'substation': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Substation name'
+            }),
+            'transformer_number': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Transformer number/identifier'
+            }),
+            'make_manufacturer': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Manufacturer name'
+            }),
+            'serial_no': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Serial number'
+            }),
+            'rating_mva': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'e.g., 25MVA, 100MVA'
+            }),
+            'voltage_ratio': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'e.g., 132/11kV, 220/132kV'
+            }),
+            'year_of_manufacture': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'min': 1950,
+                'max': 2025,
+                'placeholder': 'Year'
+            }),
+            'date': forms.DateInput(attrs={
+                'type': 'date',
+                'class': 'form-control',
+                'required': True
+            }),
+            'status': forms.Select(attrs={'class': 'form-control'}),
+            'maintenance_carried_out_by': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Technician/Team name'
+            }),
+            'protection_test_carried_out_by': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Protection engineer name'
+            }),
+            'checked_by': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Checker name'
+            }),
+            'engineer': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Engineer name'
+            }),
+            'ops_and_maint_engineer': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'O&M Engineer name'
+            }),
+            'maintenance_date': forms.DateInput(attrs={
+                'type': 'date',
+                'class': 'form-control'
+            }),
+            'protection_test_date': forms.DateInput(attrs={
+                'type': 'date',
+                'class': 'form-control'
+            }),
+            'checked_date': forms.DateInput(attrs={
+                'type': 'date',
+                'class': 'form-control'
+            }),
+            'engineer_date': forms.DateInput(attrs={
+                'type': 'date',
+                'class': 'form-control'
+            }),
+            'ops_maint_date': forms.DateInput(attrs={
+                'type': 'date',
+                'class': 'form-control'
+            }),
+            'remarks': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 4,
+                'placeholder': 'Maintenance remarks and observations'
+            })
+        }
+
+class AutoRecloseTestForm(forms.ModelForm):
+    """Form for auto reclose tests"""
+    class Meta:
+        model = AutoRecloseTest
+        exclude = ['maintenance_record']
+        widgets = {
+            'reclose_operation_correct': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'lockout_operation_correct': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
+            'result_status': forms.Select(attrs={'class': 'form-control'}),
+            'tested_by': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Technician name'
+            }),
+            'test_date': forms.DateTimeInput(attrs={
+                'type': 'datetime-local',
+                'class': 'form-control'
+            }),
+            'comments': forms.Textarea(attrs={
+                'class': 'form-control',
+                'rows': 2,
+                'placeholder': 'Test comments and observations'
+            })
+        }
+
+# Inline Formsets for managing related test data
+from django.forms import inlineformset_factory
+
+InsulationTestFormSet = inlineformset_factory(
+    MaintenanceRecord, 
+    InsulationResistanceTest,
+    form=InsulationResistanceTestForm,
+    extra=3,  # Default to 3 phases
+    can_delete=True
+)
+
+ContactResistanceTestFormSet = inlineformset_factory(
+    MaintenanceRecord,
+    ContactResistanceTest,
+    form=ContactResistanceTestForm,
+    extra=3,  # Default to 3 phases
+    can_delete=True
+)
+
+TimingTestFormSet = inlineformset_factory(
+    MaintenanceRecord,
+    TimingTest,
+    form=TimingTestForm,
+    extra=3,  # Default to 3 phases  
+    can_delete=True
+)

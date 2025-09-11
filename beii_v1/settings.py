@@ -148,6 +148,7 @@ INSTALLED_APPS = [
     'Transport',
     'Hardware_Faults',
     'Asset_Register',
+    'equipment_management',
     'widget_tweaks',
     'meetings',
     'leave_management',
@@ -155,6 +156,7 @@ INSTALLED_APPS = [
     'utils',
     'inspections',
     'substation_inspections',
+    'e60_inspections',
     'circuit_breaker_maintenance',
 ]
 

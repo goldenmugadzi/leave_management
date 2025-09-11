@@ -3,152 +3,67 @@
 
 {% block title %}{{ action }} Maintenance Record{% endblock %}
 
-{% block extra_css %}
-<style>
-    .form-section {
-        background: #f8f9fa;
-        border-radius: 8px;
-        padding: 1.5rem;
-        margin-bottom: 1.5rem;
-        border-left: 4px solid #0d6efd;
-    }
-    
-    .form-section h5 {
-        color: #0d6efd;
-        margin-bottom: 1rem;
-        font-weight: 600;
-    }
-    
-    .quick-info {
-        background: linear-gradient(135deg, #e3f2fd, #bbdefb);
-        border-radius: 8px;
-        padding: 1rem;
-        margin-bottom: 1.5rem;
-        border-left: 4px solid #2196f3;
-    }
-    
-    .record-preview {
-        background: #fff;
-        border: 1px solid #dee2e6;
-        border-radius: 8px;
-        padding: 1rem;
-        margin-bottom: 1rem;
-    }
-    
-    .status-badge {
-        padding: 4px 12px;
-        border-radius: 20px;
-        font-size: 0.8rem;
-        font-weight: 600;
-    }
-    
-    .json-help {
-        font-size: 0.875rem;
-        color: #6c757d;
-        margin-top: 0.5rem;
-        padding: 0.75rem;
-        background: linear-gradient(135deg, #f8f9fa, #e9ecef);
-        border-left: 4px solid #28a745;
-        border-radius: 0.375rem;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    }
-    
-    .json-help strong {
-        color: #495057;
-    }
-    
-    .json-help ul {
-        margin: 0.5rem 0 0.5rem 1rem;
-        padding-left: 0;
-    }
-    
-    .json-help li {
-        margin-bottom: 0.25rem;
-        color: #6c757d;
-    }
-    
-    .json-help .text-muted {
-        font-style: italic;
-        margin-top: 0.5rem;
-        display: block;
-    }
-    
-    .json-help i {
-        color: #28a745;
-        margin-right: 0.5rem;
-    }
-    
-    .required-asterisk {
-        color: #dc3545;
-    }
-</style>
-{% endblock %}
-
 {% block content %}
-<div class="container-fluid">
-    <div class="row justify-content-center">
-        <div class="col-lg-10">
-            <!-- Header -->
-            <div class="card">
-                <div class="card-header">
-                    <div class="row align-items-center">
-                        <div class="col">
-                            <h3 class="card-title mb-0">
-                                <i class="fas fa-clipboard-check"></i> 
-                                {{ action }} Maintenance Record
-                                {% if record %}
-                                    - {{ record.report_no }}
-                                {% endif %}
-                                {% if quick_mode %}
-                                    <span class="badge bg-info ms-2">Quick Mode</span>
-                                {% endif %}
-                            </h3>
-                        </div>
-                        <div class="col-auto">
-                            <div class="btn-group">
-                                {% if not quick_mode and action == 'Create' %}
-                                <a href="?quick=1{% if circuit_breaker_id %}&circuit_breaker={{ circuit_breaker_id }}{% endif %}" 
-                                   class="btn btn-outline-info btn-sm">
-                                    <i class="fas fa-bolt"></i> Quick Mode
-                                </a>
-                                {% elif quick_mode %}
-                                <a href="?{% if circuit_breaker_id %}circuit_breaker={{ circuit_breaker_id }}{% endif %}" 
-                                   class="btn btn-outline-primary btn-sm">
-                                    <i class="fas fa-cogs"></i> Full Form
-                                </a>
-                                {% endif %}
-                                <a href="{% if record %}{% url 'circuit_breaker_maintenance:record_detail' record.pk %}{% else %}{% url 'circuit_breaker_maintenance:record_list' %}{% endif %}" 
-                                   class="btn btn-outline-secondary btn-sm">
-                                    <i class="fas fa-arrow-left"></i> Back
-                                </a>
-                            </div>
-                        </div>
-                    </div>
+<div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+    <!-- Header -->
+    <div class="bg-white rounded-lg shadow-lg overflow-hidden mb-8">
+        <div class="bg-gray-50 px-6 py-4 border-b border-gray-200">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                    <h3 class="text-xl font-semibold text-gray-900 flex items-center">
+                        <i class="fas fa-clipboard-check text-blue-600 mr-3"></i>
+                        {{ action }} Maintenance Record
+                        {% if record %}
+                            <span class="text-gray-600 ml-2">- {{ record.report_no }}</span>
+                        {% endif %}
+                        {% if quick_mode %}
+                            <span class="ml-3 inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">Quick Mode</span>
+                        {% endif %}
+                    </h3>
+                </div>
+                <div class="mt-3 sm:mt-0 flex flex-wrap gap-2">
+                    {% if not quick_mode and action == 'Create' %}
+                    <a href="?quick=1{% if circuit_breaker_id %}&circuit_breaker={{ circuit_breaker_id }}{% endif %}" 
+                       class="bg-blue-100 hover:bg-blue-200 text-blue-700 px-4 py-2 rounded-md text-sm font-medium transition-colors duration-200 inline-flex items-center">
+                        <i class="fas fa-bolt mr-2"></i>Quick Mode
+                    </a>
+                    {% elif quick_mode %}
+                    <a href="?{% if circuit_breaker_id %}circuit_breaker={{ circuit_breaker_id }}{% endif %}" 
+                       class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-md text-sm font-medium transition-colors duration-200 inline-flex items-center">
+                        <i class="fas fa-cogs mr-2"></i>Full Form
+                    </a>
+                    {% endif %}
+                    <a href="{% if record %}{% url 'circuit_breaker_maintenance:record_detail' record.pk %}{% else %}{% url 'circuit_breaker_maintenance:record_list' %}{% endif %}" 
+                       class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors duration-200 inline-flex items-center">
+                        <i class="fas fa-arrow-left mr-2"></i>Back
+                    </a>
                 </div>
             </div>
+        </div>
+    </div>
 
-            <!-- Circuit Breaker Info -->
-            {% if circuit_breaker %}
-            <div class="quick-info">
-                <div class="row align-items-center">
-                    <div class="col-md-8">
-                        <h6 class="mb-1">
-                            <i class="fas fa-bolt me-2"></i>
-                            Creating maintenance record for: <strong>{{ circuit_breaker.breaker_number }}</strong>
-                        </h6>
-                        <small class="text-muted">
-                            {{ circuit_breaker.sub_station }} | {{ circuit_breaker.make_type }} | {{ circuit_breaker.voltage_capacity }}
-                        </small>
-                    </div>
-                    <div class="col-md-4 text-end">
-                        <a href="{% url 'circuit_breaker_maintenance:circuit_breaker_detail' circuit_breaker.pk %}" 
-                           class="btn btn-outline-primary btn-sm">
-                            <i class="fas fa-eye"></i> View Circuit Breaker
-                        </a>
-                    </div>
-                </div>
+    <!-- Circuit Breaker Info -->
+    {% if circuit_breaker %}
+    <div class="bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-200 rounded-lg p-6 mb-8 border-l-4 border-l-blue-500">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between">
+            <div>
+                <h6 class="text-lg font-semibold text-blue-900 mb-2 flex items-center">
+                    <i class="fas fa-bolt mr-2 text-blue-600"></i>
+                    Creating maintenance record for: <strong class="text-blue-800">{{ circuit_breaker.breaker_number }}</strong>
+                </h6>
+                <p class="text-blue-700">
+                    {{ circuit_breaker.sub_station }} | {{ circuit_breaker.make_type }} | {{ circuit_breaker.voltage_capacity }}
+                </p>
             </div>
-            {% endif %}
+            <div class="mt-4 md:mt-0">
+                <a href="{% url 'circuit_breaker_maintenance:circuit_breaker_detail' circuit_breaker.pk %}" 
+                   class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors duration-200 inline-flex items-center">
+                    <i class="fas fa-eye mr-2"></i>View Circuit Breaker
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
 
             <!-- Warning for editing completed records -->
             {% if action == 'Edit' and record.status in 'approved,completed' %}

@@ -1,0 +1,188 @@
+{% extends 'admin_layout.html' %}
+{% load static %}
+
+{% block title %}Maintenance Tests - {{ maintenance_record.report_no }}{% endblock %}
+
+{% block content %}
+<div class="content-wrapper">
+  <div class="bg-gray-50 border border-gray-200 rounded-lg px-6 py-6 max-w-7xl mx-auto">
+    
+    <!-- Header -->
+    <div class="flex justify-between items-center mb-8">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-900">
+          <i class="fas fa-clipboard-check mr-2"></i>
+          Maintenance Tests - {{ maintenance_record.report_no }}
+        </h1>
+        <p class="text-gray-600 mt-1">Comprehensive testing and validation for circuit breaker maintenance</p>
+      </div>
+      <a href="{% url 'circuit_breaker_maintenance:record_detail' maintenance_record.pk %}" class="bg-gray-500 hover:bg-gray-600 text-white font-medium py-2 px-4 rounded-lg flex items-center gap-2 transition-colors">
+        <i class="fas fa-arrow-left"></i> Back to Record
+      </a>
+    </div>
+
+    <!-- Circuit Breaker Information Panel -->
+    <div class="bg-white border border-gray-200 rounded-lg p-6 mb-6 shadow-sm">
+      <h3 class="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b border-gray-200">Circuit Breaker Information</h3>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div>
+          <h5 class="text-lg font-medium text-gray-900 flex items-center">
+            <i class="fas fa-bolt text-blue-600 mr-2"></i> 
+            {{ maintenance_record.circuit_breaker.breaker_number }}
+          </h5>
+          <p class="text-gray-600 mt-1">{{ maintenance_record.circuit_breaker.make_type }}</p>
+          <p class="text-gray-600">{{ maintenance_record.circuit_breaker.voltage_capacity }}</p>
+        </div>
+        <div>
+          <p class="text-sm font-medium text-gray-700">Substation</p>
+          <p class="text-gray-900">{{ maintenance_record.circuit_breaker.sub_station }}</p>
+        </div>
+        <div class="text-right">
+          <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-{{ maintenance_record.status|default:'gray' }}-100 text-{{ maintenance_record.status|default:'gray' }}-800">
+            {{ maintenance_record.get_status_display }}
+          </span>
+          <p class="text-gray-600 mt-2">{{ maintenance_record.date }}</p>
+        </div>
+      </div>
+    </div>
+    <!-- Test Categories -->
+    <div class="bg-white border border-gray-200 rounded-lg p-6 mb-6 shadow-sm">
+      <h3 class="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b border-gray-200">Test Categories</h3>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        
+        <!-- Insulation Resistance Tests -->
+        <div class="bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg p-4 text-center transition-colors group">
+          <div class="text-blue-600 text-2xl mb-3 group-hover:text-blue-700">
+            <i class="fas fa-zap"></i>
+          </div>
+          <h6 class="text-lg font-medium text-gray-900 mb-2">Insulation Resistance Tests</h6>
+          <p class="text-gray-600 text-sm mb-4">{{ insulation_tests|length }} test(s)</p>
+          <a href="{% url 'circuit_breaker_maintenance:insulation_tests' maintenance_record.pk %}" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors">
+            <i class="fas fa-edit"></i> Manage Tests
+          </a>
+        </div>
+
+        <!-- Contact Resistance Tests -->
+        <div class="bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg p-4 text-center transition-colors group">
+          <div class="text-green-600 text-2xl mb-3 group-hover:text-green-700">
+            <i class="fas fa-link"></i>
+          </div>
+          <h6 class="text-lg font-medium text-gray-900 mb-2">Contact Resistance Tests</h6>
+          <p class="text-gray-600 text-sm mb-4">{{ contact_resistance_tests|length }} test(s)</p>
+          <a href="{% url 'circuit_breaker_maintenance:contact_resistance_tests' maintenance_record.pk %}" class="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors">
+            <i class="fas fa-edit"></i> Manage Tests
+          </a>
+        </div>
+
+        <!-- Timing Tests -->
+        <div class="bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg p-4 text-center transition-colors group">
+          <div class="text-cyan-600 text-2xl mb-3 group-hover:text-cyan-700">
+            <i class="fas fa-clock"></i>
+          </div>
+          <h6 class="text-lg font-medium text-gray-900 mb-2">Timing Tests</h6>
+          <p class="text-gray-600 text-sm mb-4">{{ timing_tests|length }} test(s)</p>
+          <a href="{% url 'circuit_breaker_maintenance:timing_tests' maintenance_record.pk %}" class="bg-cyan-600 hover:bg-cyan-700 text-white font-medium py-2 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors">
+            <i class="fas fa-edit"></i> Manage Tests
+          </a>
+        </div>
+
+        <!-- Breaker Type Specific Checks -->
+        {% if maintenance_record.circuit_breaker.breaker_type == 'vacuum' %}
+        <div class="bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg p-4 text-center transition-colors group">
+          <div class="text-yellow-600 text-2xl mb-3 group-hover:text-yellow-700">
+            <i class="fas fa-vacuum"></i>
+          </div>
+          <h6 class="text-lg font-medium text-gray-900 mb-2">Vacuum CB Checks</h6>
+          <p class="text-gray-600 text-sm mb-4">Vacuum-specific maintenance</p>
+          <a href="{% url 'circuit_breaker_maintenance:vacuum_checks' maintenance_record.pk %}" class="bg-yellow-600 hover:bg-yellow-700 text-white font-medium py-2 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors">
+            <i class="fas fa-edit"></i> Manage Checks
+          </a>
+        </div>
+        {% endif %}
+
+        {% if maintenance_record.circuit_breaker.breaker_type == 'oil' %}
+        <div class="bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg p-4 text-center transition-colors group">
+          <div class="text-gray-600 text-2xl mb-3 group-hover:text-gray-700">
+            <i class="fas fa-oil-can"></i>
+          </div>
+          <h6 class="text-lg font-medium text-gray-900 mb-2">Oil CB Checks</h6>
+          <p class="text-gray-600 text-sm mb-4">Oil analysis and checks</p>
+          <a href="{% url 'circuit_breaker_maintenance:oil_checks' maintenance_record.pk %}" class="bg-gray-600 hover:bg-gray-700 text-white font-medium py-2 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors">
+            <i class="fas fa-edit"></i> Manage Checks
+          </a>
+        </div>
+        {% endif %}
+
+        <!-- Additional Tests -->
+        <div class="bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg p-4 text-center transition-colors group">
+          <div class="text-purple-600 text-2xl mb-3 group-hover:text-purple-700">
+            <i class="fas fa-cogs"></i>
+          </div>
+          <h6 class="text-lg font-medium text-gray-900 mb-2">Other Tests</h6>
+          <div class="text-gray-600 text-sm mb-4">
+            <div>Interlock Tests: {{ interlock_tests|length }}</div>
+            <div>Contact Travel: {{ contact_travel_tests|length }}</div>
+            <div>Ductor Tests: {{ ductor_tests|length }}</div>
+            <div>Protection Tests: {{ protection_tests|length }}</div>
+          </div>
+          <button class="bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-lg flex items-center justify-center gap-2 transition-colors w-full">
+            <i class="fas fa-list"></i> View All
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Test Overview -->
+    <div class="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
+      <h3 class="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b border-gray-200">
+        <i class="fas fa-chart-pie mr-2"></i>Test Overview
+      </h3>
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Test Category</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Tests</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Completed</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+            </tr>
+          </thead>
+          <tbody class="bg-white divide-y divide-gray-200">
+            <tr>
+              <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Insulation Resistance</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ insulation_tests|length }}</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">-</td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                  Pending
+                </span>
+              </td>
+            </tr>
+            <tr>
+              <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Contact Resistance</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ contact_resistance_tests|length }}</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">-</td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                  Pending
+                </span>
+              </td>
+            </tr>
+            <tr>
+              <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Timing Tests</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ timing_tests|length }}</td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">-</td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                  Pending
+                </span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

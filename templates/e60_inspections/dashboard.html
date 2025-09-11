@@ -1,0 +1,199 @@
+{% extends "e60_inspections/base.html" %}
+{% load static %}
+
+{% block page_content %}
+<div class="row">
+    <!-- Statistics Cards -->
+    <div class="col-lg-3 col-md-6 mb-4">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <h6 class="card-title text-uppercase text-white-50 mb-2">Total Inspections</h6>
+                        <h2 class="mb-0">{{ total_inspections }}</h2>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-clipboard-list fa-2x text-white-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-3 col-md-6 mb-4">
+        <div class="card bg-warning text-white">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <h6 class="card-title text-uppercase text-white-50 mb-2">Pending</h6>
+                        <h2 class="mb-0">{{ pending_inspections }}</h2>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-clock fa-2x text-white-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-3 col-md-6 mb-4">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <h6 class="card-title text-uppercase text-white-50 mb-2">Completed</h6>
+                        <h2 class="mb-0">{{ completed_inspections }}</h2>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-check-circle fa-2x text-white-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-3 col-md-6 mb-4">
+        <div class="card bg-info text-white">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <h6 class="card-title text-uppercase text-white-50 mb-2">Approved</h6>
+                        <h2 class="mb-0">{{ approved_inspections }}</h2>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-certificate fa-2x text-white-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Recent Inspections -->
+    <div class="col-lg-8 mb-4">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-history me-2"></i>Recent Inspections
+                </h5>
+                <a href="{% url 'e60_inspections:e60_inspection_list' %}" class="btn btn-outline-primary btn-sm">
+                    View All
+                </a>
+            </div>
+            <div class="card-body">
+                {% if recent_inspections %}
+                    <div class="table-responsive">
+                        <table class="table table-hover table-sm">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Report Number</th>
+                                    <th>Substation</th>
+                                    <th>Date</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for inspection in recent_inspections %}
+                                <tr>
+                                    <td>
+                                        <a href="{% url 'e60_inspections:e60_inspection_detail' inspection.pk %}" 
+                                           class="text-decoration-none">
+                                            {{ inspection.report_number }}
+                                        </a>
+                                    </td>
+                                    <td>{{ inspection.substation_name }}</td>
+                                    <td>{{ inspection.inspection_date|date:"M d, Y" }}</td>
+                                    <td>
+                                        <span class="badge status-{{ inspection.status }}">
+                                            {{ inspection.get_status_display }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <a href="{% url 'e60_inspections:e60_inspection_detail' inspection.pk %}" 
+                                           class="btn btn-outline-primary btn-sm">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-clipboard-list fa-3x text-muted mb-3"></i>
+                        <h6 class="text-muted">No inspections recorded yet</h6>
+                        <a href="{% url 'e60_inspections:e60_inspection_create' %}" class="btn btn-e60">
+                            <i class="fas fa-plus me-2"></i>Create First Inspection
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="col-lg-4 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-bolt me-2"></i>Quick Actions
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{% url 'e60_inspections:e60_inspection_create' %}" class="btn btn-e60">
+                        <i class="fas fa-plus me-2"></i>New E60 Inspection
+                    </a>
+                    <a href="{% url 'e60_inspections:e60_inspection_list' %}" class="btn btn-outline-primary">
+                        <i class="fas fa-list me-2"></i>View All Inspections
+                    </a>
+                    <a href="{% url 'e60_inspections:e60_analytics' %}" class="btn btn-outline-info">
+                        <i class="fas fa-chart-bar me-2"></i>Analytics & Reports
+                    </a>
+                </div>
+                
+                <hr class="my-3">
+                
+                <h6 class="mb-3">Filter by Status:</h6>
+                <div class="d-grid gap-1">
+                    <a href="{% url 'e60_inspections:e60_inspection_list' %}?status=draft" 
+                       class="btn btn-outline-warning btn-sm">
+                        <i class="fas fa-clock me-2"></i>Draft ({{ pending_inspections }})
+                    </a>
+                    <a href="{% url 'e60_inspections:e60_inspection_list' %}?status=completed" 
+                       class="btn btn-outline-success btn-sm">
+                        <i class="fas fa-check me-2"></i>Completed ({{ completed_inspections }})
+                    </a>
+                    <a href="{% url 'e60_inspections:e60_inspection_list' %}?status=approved" 
+                       class="btn btn-outline-info btn-sm">
+                        <i class="fas fa-certificate me-2"></i>Approved ({{ approved_inspections }})
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- E60 Form Info -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h6 class="card-title mb-0">
+                    <i class="fas fa-info-circle me-2"></i>About E60 Form
+                </h6>
+            </div>
+            <div class="card-body">
+                <p class="small text-muted mb-2">
+                    The E60 form is used for comprehensive inspection and overhaul 
+                    of consumer substations according to ZETDC standards.
+                </p>
+                <p class="small text-muted mb-0">
+                    <strong>Sections include:</strong> Transformers, Circuit Breakers, 
+                    Metering, Housing, Fuses, Surge Arrestors, General State, Safety, 
+                    and Consumer Installation assessments.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
