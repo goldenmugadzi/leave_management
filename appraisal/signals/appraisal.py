@@ -91,23 +91,19 @@ def create_performance_review_post_save_handler(sender, instance, created, **kwa
 def create_training_development_post_save_handler(sender, instance, created, **kwargs):
     if created:
         try:
+            logger.info(f"[Signal]: create_training_development_post_save_handler for appraisal pk: {instance.id} init ..... ")
             training_development_repo_handler = TrainingAndDevelopmentRepository()
             training_development_service_handler = TrainingAndDevelopmentService(training_dev_repo=training_development_repo_handler)
 
-            with transaction.atomic():
+            year_quarter_qr = YearQuarter.objects.filter(year=instance.created_date.year)
 
-                year_quarter_qr = YearQuarter.objects.filter(year=datetime.now().year)
-
-                for year_quarter_obj in year_quarter_qr:
-                    logger.info(f"[ TrainingAndDevelopment ]: create instance {year_quarter_obj} quart signal for {instance.user} appraisal ....")
-                    training_development_service_handler.create_use_case(
+            training_development_service_handler.create_for_all_quarters(
                         appraisal_object=instance,
-                        quarter_obj=year_quarter_obj
+                        year_quarter_qr=year_quarter_qr
                     )
-                    logger.success(f"[ TrainingAndDevelopment ]: instance {year_quarter_obj} quarter for {instance.user} appraisal created :) ")
-
+            logger.success(f"[Signal]: create_training_development_post_save_handler for appraisal pk: {instance.id}, created successfully")
         except Exception as e:
-            logger.error(f"[TrainingAndDevelopment]: creating training and development instances failed for {instance.user} appraisal, with error: {e} ")
+            logger.error(f"[Signal]: create_training_development_post_save_handler for appraisal pk: {instance.id} , with error: {e} ")
 
 @receiver(post_save, sender=Appraisal, dispatch_uid="send-appraiser-email")
 def send_appraiser_email_post_save_handler(sender, instance, created, **kwargs):
