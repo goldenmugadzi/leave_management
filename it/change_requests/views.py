@@ -103,6 +103,8 @@ def check_change_request_permissions(user, change_request):
 
 def get_change_requests_optimized(user, filters=None, include_deleted=False):
     """Optimized query for change requests with select_related and prefetch_related"""
+    from it.users.models import Responsibilities
+    
     queryset = ChangeRequest.objects.select_related(
         'new_profile',
         'profile_change__user',
@@ -120,10 +122,72 @@ def get_change_requests_optimized(user, filters=None, include_deleted=False):
     if not include_deleted:
         queryset = queryset.filter(is_deleted=False)
     
+    # Get user role for change requests application
+    user_role = user.get_user_role_for_application("change_requests")
+    user_role_name = user_role.role if user_role else None
+    
+    # Apply role-based filtering
+    if user_role_name in ["section_head", "it_section_head"]:
+        # Users with approval roles see awaiting action records first
+        # This will be handled in the datatable_data function for specific views
+        pass
+    else:
+        # General users see only records they created or from their cost center
+        user_responsibilities = Responsibilities.objects.filter(user=user, role=user_role).first() if user_role else None
+        if user_responsibilities:
+            cost_centers = user_responsibilities.cost_centers.all()
+            queryset = queryset.filter(
+                Q(created_by=user) | Q(cost_center__in=cost_centers)
+            )
+        else:
+            # If no responsibilities, only show records they created
+            queryset = queryset.filter(created_by=user)
+    
+    # Default ordering by creation date (newest first)
+    queryset = queryset.order_by('-created_at')
+    
     if filters:
         queryset = apply_filters(queryset, filters)
     
     return queryset
+
+def get_filtered_records(user, view_type, additional_filters=None):
+    """
+    Simplified filtering logic for different view types.
+    Reduces complexity and improves maintainability.
+    """
+    from it.users.models import Responsibilities
+    
+    base_queryset = get_change_requests_optimized(user)
+    
+    if view_type == "incoming_cr":
+        # Show records awaiting user's approval
+        role = user.get_user_role_for_application("change_requests")
+        if role and role.role == "section_head":
+            user_responsibilities = Responsibilities.objects.filter(user=user, role=role).first()
+            if user_responsibilities:
+                cost_centers = user_responsibilities.cost_centers.all()
+                return base_queryset.filter(
+                    ~Q(crapproval__approver_role__role="section_head"),
+                    cost_center__in=cost_centers
+                )
+        elif role and role.role == "it_section_head":
+            return base_queryset.filter(
+                Q(crapproval__approver_role__role="section_head", crapproval__approval_status=True),
+                ~Q(crapproval__approver_role__role="it_section_head")
+            )
+    
+    elif view_type == "delegation_requests":
+        return base_queryset.filter(change_type="Temporary Role Delegation")
+    
+    elif view_type == "active_delegations":
+        return base_queryset.filter(
+            change_type="Temporary Role Delegation",
+            crapproval__approver_role__role="it_section_head",
+            crapproval__approval_status=True
+        )
+    
+    return base_queryset
 
 def apply_filters(queryset, filters):
     """Apply filters to the queryset"""
@@ -1929,127 +1993,55 @@ def datatable_data(request, view):
         print("view: ", view)
 
         if user.region:
-            # Fetch your data from the model using optimized query
-            records = get_change_requests_optimized(user)
-            # Filter based on search value
-            if search_value and records:
+            # Use optimized filtering function
+            records = get_filtered_records(user, view)
+            
+            # Apply search filter
+            if search_value:
                 records = records.filter(
-                Q(change_reason__icontains=search_value) |
-                Q(change_description__icontains=search_value) |
-                Q(application__icontains=search_value) |
-                Q(new_profile__first_name__icontains=search_value) |
-                Q(new_profile__last_name__icontains=search_value) |
-                Q(new_profile__email__icontains=search_value) |
-                Q(new_profile__username__icontains=search_value)
+                    Q(change_reason__icontains=search_value) |
+                    Q(change_description__icontains=search_value) |
+                    Q(application__icontains=search_value) |
+                    Q(new_profile__first_name__icontains=search_value) |
+                    Q(new_profile__last_name__icontains=search_value) |
+                    Q(new_profile__email__icontains=search_value) |
+                    Q(new_profile__username__icontains=search_value)
                 )
             
-            # Sorting
+            # Apply sorting
             order_column = request.GET.get('order[0][column]')
             order = request.GET.get('order[0][dir]')
             if order_column:
                 column_name = request.GET.get(f'columns[{order_column}][data]')
-                if column_name != "it_section_head_approval" and column_name != "section_head_approval":
-                    column_name = f'{column_name}'
+                if column_name not in ["it_section_head_approval", "section_head_approval"]:
+                    if order == 'desc':
+                        column_name = f'-{column_name}'
                 else:
-                    column_name = "created_at"
-                if order == 'desc' and column_name != 'it_section_head_approval' and column_name != 'section_head_approval':
-                    column_name = f'-{column_name}'
+                    column_name = "created_at" if order == 'asc' else "-created_at"
                 records = records.order_by(column_name)
+            else:
+                records = records.order_by('-created_at')
             
+            # Apply additional filters for filter view
             if view == "filter":
-                region = request.GET.get('region')
-                cr_type = request.GET.get('cr_type')
-                cr_app = request.GET.get('cr_app')
-                status = request.GET.get('status')
-                cost_center = request.GET.get('cost_center')
-                start_date = request.GET.get('start_date')
-                end_date = request.GET.get('end_date')
-                print("region: ", region, " cr_type: ", cr_type, " cr_app: ", cr_app, " status: ", status, " cost_center: ")
-                
-                # Apply filters using the optimized function
                 filters = {
-                    'change_type': cr_type,
-                    'application': cr_app,
-                    'date_from': start_date,
-                    'date_to': end_date
+                    'change_type': request.GET.get('cr_type'),
+                    'application': request.GET.get('cr_app'),
+                    'date_from': request.GET.get('start_date'),
+                    'date_to': request.GET.get('end_date')
                 }
                 records = apply_filters(records, filters)
                 
-                if region:
-                    region_ = Regions.objects.filter(id=region).first()
-                    records = records.filter(region=region_)
-                if status:
-                    if status == "Pending SH":
-                        records = records.filter(~Q(crapproval__approver_role__role="section_head"))
-                    if status == "Pending IT":
-                        records = records.filter(
-                                Q(crapproval__approver_role__role="section_head") & 
-                                Q(crapproval__approval_status=True)
-                            ).exclude(
-                                Q(crapproval__approver_role__role="it_section_head") & 
-                                Q(crapproval__approval_status=True)
-                            )
-                    if status == "Complete":
-                        records = records.filter(
-                            Q(crapproval__approver_role__role="it_section_head") & 
-                            Q(crapproval__approval_status=True)
-                        )
-                    if status == "Rejected":
-                        records = records.filter(
-                                (Q(crapproval__approver_role__role="section_head") & 
-                                Q(crapproval__approval_status=False)) |
-                                Q(crapproval__approver_role__role="it_section_head") & 
-                                Q(crapproval__approval_status=False)
-                            )
-                if cost_center:
-                    cost_center_ = CostCenter.objects.filter(id=cost_center).first()
-                    records = records.filter(cost_center=cost_center_)  
-                if start_date and end_date:
-                    start_date = datetime.strptime(start_date, "%Y-%m-%d")
-                    end_date = datetime.strptime(end_date, "%Y-%m-%d")
-                    records = records.filter(created_at__range=[start_date, end_date])
-            
-            elif view == "incoming_cr":
-                role = user.get_user_role_for_application("change_requests")
-                user_role = role.role if role else None
-                print("user_role: ", user_role)
-                user_responsibilities = Responsibilities.objects.filter(user=user, role=role).first() if role else None
-                print("user_responsibilities: ", user_responsibilities)
-                cost_centers = user_responsibilities.cost_centers.all() if user_responsibilities else []
-                print("cost_centers: ", cost_centers)
-                if user_role == "section_head":
-                    records = records.filter(
-                        ~Q(crapproval__approver_role__role="section_head"),
-                        cost_center__in=cost_centers
-                        ).order_by('-created_at')
-                    print("section_head records: ", records)
-                elif user_role == "it_section_head":
-                    # Filter for records approved by section head and not yet handled by IT section head
-                    # Exclude records rejected by section head
-                    records = records.filter(
-                        Q(crapproval__approver_role__role="section_head") & 
-                        Q(crapproval__approval_status=True)
-                    ).exclude(
-                        Q(crapproval__approver_role__role="section_head") &
-                        Q(crapproval__approval_status=False)
-                    ).exclude(
-                        Q(crapproval__approver_role__role="it_section_head")
-                    )
-                    # records = ChangeRequest.objects.filter(~Q(crapproval__approver_role__role="it_section_head")).all()
-                    print("it_section_head records: ", records)
-                print("records: ", records)
-            elif view == "delegation_requests":
-                # Filter for delegation requests only
-                records = records.filter(change_type="Temporary Role Delegation").order_by('-created_at')
-                print("delegation_requests: ", records)
-            elif view == "active_delegations":
-                # Filter for active delegation requests (approved by both levels)
-                records = records.filter(
-                    change_type="Temporary Role Delegation",
-                    crapproval__approver_role__role="it_section_head",
-                    crapproval__approval_status=True
-                ).order_by('-created_at')
-                print("active_delegations: ", records)
+                # Handle other filters
+                if request.GET.get('region'):
+                    region_ = Regions.objects.filter(id=request.GET.get('region')).first()
+                    if region_:
+                        records = records.filter(region=region_)
+                
+                if request.GET.get('cost_center'):
+                    cost_center_ = CostCenter.objects.filter(id=request.GET.get('cost_center')).first()
+                    if cost_center_:
+                        records = records.filter(cost_center=cost_center_)
             # Total number of records before filtering
             total = records.count() if records else 0
 
@@ -2058,27 +2050,19 @@ def datatable_data(request, view):
             page_number = start // length + 1
             page_obj = paginator.get_page(page_number)
 
-            # Prepare response
+            # Prepare response data
             data = []
             for obj in page_obj:
                 try:
-                    section_head_approval = CRApproval.objects.filter(cr_id=obj, approver_role__role="section_head").first()
-                    it_section_head_approval = CRApproval.objects.filter(cr_id=obj, approver_role__role="it_section_head").first()
-                    
-                    sh_status = "Pending"
-                    if section_head_approval:
-                        sh_status = "Approved" if section_head_approval.approval_status else "Rejected"
-                    itsh = "Pending"
-                    if it_section_head_approval:
-                        itsh = "Approved" if it_section_head_approval.approval_status else "Rejected"
                     change_requests = {
                         "cr_id": obj.cr_id,
                         "change_type": obj.change_type,
                         "change_description": obj.change_description,
                         "change_reason": obj.change_reason,
                         "application": obj.application,
-                        "section_head_approval": sh_status,
-                        "it_section_head_approval": itsh,
+                        "overall_status": obj.overall_status,  # Use computed property
+                        "status_display": obj.status_display,  # Use computed property
+                        "status_color_class": obj.status_color_class,  # Use computed property
                         "creator_designation": obj.creator_designation.description,
                         "created_by": obj.created_by.first_name + " " + obj.created_by.last_name,
                         "region": obj.region.region,

@@ -94,6 +94,85 @@ class ChangeRequestModelTestCase(TestCase):
         self.assertEqual(change_requests[0], change_request2)  # Most recent first
         self.assertEqual(change_requests[1], self.change_request)
 
+    def test_overall_status_pending_sh(self):
+        """Test overall_status when no section head approval exists"""
+        self.assertEqual(self.change_request.overall_status, "pending_sh")
+    
+    def test_overall_status_rejected_sh(self):
+        """Test overall_status when section head rejects"""
+        # Create section head role
+        application = Application.objects.create(name='Test App', fullname='Test Application')
+        sh_role = Roles.objects.create(
+            app_id=application,
+            role="section_head",
+            description='Section Head Role'
+        )
+        
+        # Create rejection
+        CRApproval.objects.create(
+            cr_id=self.change_request,
+            approver=self.user_profile,
+            approver_role=sh_role,
+            approval_status=False,
+            approval_date=timezone.now()
+        )
+        
+        self.assertEqual(self.change_request.overall_status, "rejected_sh")
+    
+    def test_overall_status_approved_complete(self):
+        """Test overall_status when both approvals exist and are positive"""
+        # Create roles
+        application = Application.objects.create(name='Test App', fullname='Test Application')
+        sh_role = Roles.objects.create(
+            app_id=application,
+            role="section_head",
+            description='Section Head Role'
+        )
+        it_role = Roles.objects.create(
+            app_id=application,
+            role="it_section_head",
+            description='IT Section Head Role'
+        )
+        
+        # Create approvals
+        CRApproval.objects.create(
+            cr_id=self.change_request,
+            approver=self.user_profile,
+            approver_role=sh_role,
+            approval_status=True,
+            approval_date=timezone.now()
+        )
+        
+        CRApproval.objects.create(
+            cr_id=self.change_request,
+            approver=self.user_profile,
+            approver_role=it_role,
+            approval_status=True,
+            approval_date=timezone.now()
+        )
+        
+        self.assertEqual(self.change_request.overall_status, "approved_complete")
+    
+    def test_status_display(self):
+        """Test status_display property"""
+        self.assertEqual(self.change_request.status_display, "Pending Section Head")
+    
+    def test_status_color_class(self):
+        """Test status_color_class property"""
+        self.assertEqual(self.change_request.status_color_class, "bg-yellow-100 text-yellow-800")
+    
+    def test_change_type_config(self):
+        """Test change_type_config property"""
+        config = self.change_request.change_type_config
+        self.assertEqual(config['icon'], 'fa-question')
+        self.assertEqual(config['color'], 'text-gray-600')
+        
+        # Test with known change type
+        self.change_request.change_type = "New Profile"
+        config = self.change_request.change_type_config
+        self.assertEqual(config['icon'], 'fa-user-plus')
+        self.assertEqual(config['color'], 'text-green-600')
+
 
 class NewProfileModelTestCase(TestCase):
     """Test cases for NewProfile model"""

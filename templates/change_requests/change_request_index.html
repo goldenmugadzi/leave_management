@@ -89,6 +89,66 @@
     height: 36px;
     right: 8px;
   }
+  
+  /* Enhanced status badge styling */
+  .status-badge {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+  }
+  
+  .status-pending-sh {
+    @apply bg-yellow-100 text-yellow-800;
+  }
+  
+  .status-pending-it {
+    @apply bg-blue-100 text-blue-800;
+  }
+  
+  .status-approved {
+    @apply bg-green-100 text-green-800;
+  }
+  
+  .status-rejected {
+    @apply bg-red-100 text-red-800;
+  }
+  
+  /* Enhanced type indicator styling */
+  .type-indicator {
+    @apply flex items-center;
+  }
+  
+  .type-icon {
+    @apply mr-2;
+  }
+  
+  .type-new-profile {
+    @apply text-green-600;
+  }
+  
+  .type-profile-modification {
+    @apply text-blue-600;
+  }
+  
+  .type-profile-deactivation {
+    @apply text-red-600;
+  }
+  
+  .type-delegation {
+    @apply text-purple-600;
+  }
+  
+  /* Responsive table styling */
+  @media (max-width: 768px) {
+    .dataTables_wrapper .dataTables_length,
+    .dataTables_wrapper .dataTables_filter,
+    .dataTables_wrapper .dataTables_info,
+    .dataTables_wrapper .dataTables_paginate {
+      @apply text-sm;
+    }
+    
+    .dataTables_wrapper .dataTables_length select {
+      @apply text-sm py-1 px-2;
+    }
+  }
 </style>
 {% endblock styles %}
 
@@ -287,6 +347,23 @@
         },
         {
           data: "change_type",
+          render: function (data, type, row, meta) {
+            const typeConfig = {
+              'New Profile': { icon: 'fa-user-plus', color: 'text-green-600' },
+              'Profile Modification': { icon: 'fa-user-edit', color: 'text-blue-600' },
+              'Profile Deactivation': { icon: 'fa-user-times', color: 'text-red-600' },
+              'Temporary Role Delegation': { icon: 'fa-user-shield', color: 'text-purple-600' }
+            };
+            
+            const config = typeConfig[data] || { icon: 'fa-question', color: 'text-gray-600' };
+            
+            return `
+              <div class="flex items-center">
+                <i class="fas ${config.icon} ${config.color} mr-2"></i>
+                <span class="text-sm font-medium">${data}</span>
+              </div>
+            `;
+          }
         },
         {
           data: "change_reason",
@@ -298,64 +375,26 @@
           data: "cost_center",
         },
         {
-          data: "section_head_approval",
+          data: "overall_status",  // Use computed property
           orderable: false,
           searchable: false,
           render: function (data, type, row, meta) {
-            let sh_approval = row.section_head_approval
-            let it_sh_approval = row.it_section_head_approval
-            let change_type = row.change_type
-            let approval_badge = ""
+            const statusConfig = {
+              'pending_sh': { class: 'bg-yellow-100 text-yellow-800', text: 'Pending SH' },
+              'pending_it': { class: 'bg-blue-100 text-blue-800', text: 'Pending IT' },
+              'approved_complete': { class: 'bg-green-100 text-green-800', text: 'Complete' },
+              'rejected_sh': { class: 'bg-red-100 text-red-800', text: 'Rejected' },
+              'rejected_it': { class: 'bg-red-100 text-red-800', text: 'Rejected' }
+            };
             
-            // Check if this is a delegation request
-            if (change_type === "Temporary Role Delegation") {
-              if (sh_approval === "Approved" && it_sh_approval !== "Approved"){
-                approval_badge = `
-                <a type="button" class="bg-green-200 text-green-800 rounded px-1 py-2 w-full text-center" href='/change_requests/view_change_request?i=${row.cr_id}' >
-                  DELEGATION APPROVED              
-                </a>`
-              } else if (sh_approval === "Approved" && it_sh_approval === "Approved"){
-                approval_badge = `
-                <a type="button" class="bg-green-300 text-green-800 rounded px-1 py-2 w-full text-center" href='/change_requests/view_change_request?i=${row.cr_id}' >
-                  DELEGATION ACTIVE              
-                </a>`
-              } else if (sh_approval === "Rejected" || it_sh_approval === "Rejected"){
-                approval_badge = `
-                <a type="button" class="bg-red-300 text-red-800 rounded px-1 py-2 w-full text-center" href='/change_requests/view_change_request?i=${row.cr_id}' >
-                  DELEGATION REJECTED              
-                </a>`
-              } else {
-                approval_badge = `
-                <a type="button" class="bg-purple-300 text-purple-800 rounded px-1 py-2 w-full text-center" href='/change_requests/view_change_request?i=${row.cr_id}' >
-                  DELEGATION PENDING              
-                </a>`
-              }
-            } else {
-              // Regular change request
-              if (sh_approval === "Approved" && it_sh_approval !== "Approved"){
-                approval_badge = `
-                <a type="button" class="bg-green-200 text-green-800 rounded px-1 py-2 w-full text-center" href='/change_requests/view_change_request?i=${row.cr_id}' >
-                  APPROVED              
-                </a>`
-              } else if (sh_approval === "Approved" && it_sh_approval === "Approved"){
-                approval_badge = `
-                <a type="button" class="bg-green-300 text-green-800 rounded px-1 py-2 w-full text-center" href='/change_requests/view_change_request?i=${row.cr_id}' >
-                  APPROVED & IMPLEMENTED              
-                </a>`
-              } else if (sh_approval === "Rejected" || it_sh_approval === "Rejected"){
-                approval_badge = `
-                <a type="button" class="bg-red-300 text-red-800 rounded px-1 py-2 w-full text-center" href='/change_requests/view_change_request?i=${row.cr_id}' >
-                  REJECTED              
-                </a>`
-              } else {
-                approval_badge = `
-                <a type="button" class="bg-blue-300 text-blue-800 rounded px-1 py-2 w-full text-center" href='/change_requests/view_change_request?i=${row.cr_id}' >
-                  PENDING              
-                </a>`
-              }
-            }
-            return approval_badge;
-          },
+            const config = statusConfig[data] || { class: 'bg-gray-100 text-gray-800', text: 'Unknown' };
+            
+            return `
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${config.class}">
+                ${config.text}
+              </span>
+            `;
+          }
         },
         {
           data: "created_by",
@@ -384,7 +423,7 @@
           },
         }
       ],
-      order: [[6, 'desc']]
+      order: [[7, 'desc']]
     });
 
     // Load filter options

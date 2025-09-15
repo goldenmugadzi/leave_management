@@ -107,6 +107,87 @@ class ChangeRequest(models.Model):
         self.deleted_by = None
         self.save()
 
+    @property
+    def overall_status(self):
+        """
+        Get overall approval status based on section head and IT approvals.
+        Returns standardized status string for consistent handling.
+        """
+        sh_approval = self.crapproval_set.filter(approver_role__role="section_head").first()
+        it_approval = self.crapproval_set.filter(approver_role__role="it_section_head").first()
+        
+        if not sh_approval:
+            return "pending_sh"
+        elif sh_approval.approval_status == False:
+            return "rejected_sh"
+        elif not it_approval:
+            return "pending_it"
+        elif it_approval.approval_status == False:
+            return "rejected_it"
+        else:
+            return "approved_complete"
+    
+    @property
+    def status_display(self):
+        """
+        Get human-readable status for display purposes.
+        """
+        status_map = {
+            "pending_sh": "Pending Section Head",
+            "rejected_sh": "Rejected by Section Head", 
+            "pending_it": "Pending IT",
+            "rejected_it": "Rejected by IT",
+            "approved_complete": "Complete"
+        }
+        return status_map.get(self.overall_status, "Unknown")
+    
+    @property
+    def status_color_class(self):
+        """
+        Get CSS class for status badge styling.
+        """
+        color_map = {
+            "pending_sh": "bg-yellow-100 text-yellow-800",
+            "rejected_sh": "bg-red-100 text-red-800",
+            "pending_it": "bg-blue-100 text-blue-800",
+            "rejected_it": "bg-red-100 text-red-800",
+            "approved_complete": "bg-green-100 text-green-800"
+        }
+        return color_map.get(self.overall_status, "bg-gray-100 text-gray-800")
+    
+    @property
+    def change_type_config(self):
+        """
+        Get configuration for change type display.
+        """
+        type_config = {
+            'New Profile': {
+                'icon': 'fa-user-plus',
+                'color': 'text-green-600',
+                'bg_color': 'bg-green-50'
+            },
+            'Profile Modification': {
+                'icon': 'fa-user-edit',
+                'color': 'text-blue-600',
+                'bg_color': 'bg-blue-50'
+            },
+            'Profile Deactivation': {
+                'icon': 'fa-user-times',
+                'color': 'text-red-600',
+                'bg_color': 'bg-red-50'
+            },
+            'Temporary Role Delegation': {
+                'icon': 'fa-user-shield',
+                'color': 'text-purple-600',
+                'bg_color': 'bg-purple-50'
+            }
+        }
+        return type_config.get(self.change_type, {
+            'icon': 'fa-question',
+            'color': 'text-gray-600',
+            'bg_color': 'bg-gray-50'
+        })
+
     class Meta:
         app_label = 'change_requests'
         indexes = [
