@@ -191,13 +191,24 @@ class ChangeRequest(models.Model):
     class Meta:
         app_label = 'change_requests'
         indexes = [
+            # Single field indexes
             models.Index(fields=['cr_id']),
             models.Index(fields=['created_at']),
             models.Index(fields=['change_type']),
-            models.Index(fields=['region', 'cost_center']),
             models.Index(fields=['created_by']),
             models.Index(fields=['application']),
             models.Index(fields=['is_deleted']),
+            
+            # Composite indexes for common query patterns
+            models.Index(fields=['region', 'is_deleted', 'created_at']),  # Main listing query
+            models.Index(fields=['region', 'cost_center', 'is_deleted']),  # Cost center filtering
+            models.Index(fields=['change_type', 'region', 'is_deleted']),  # Type filtering
+            models.Index(fields=['created_by', 'region', 'is_deleted']),  # User's requests
+            models.Index(fields=['application', 'region', 'is_deleted']),  # Application filtering
+            models.Index(fields=['created_at', 'region', 'is_deleted']),   # Date range queries
+            
+            # Performance indexes for computed properties
+            models.Index(fields=['region', 'is_deleted', 'change_type', 'created_at']),  # Complex filtering
         ]
         ordering = ['-created_at']
         
@@ -215,9 +226,17 @@ class CRApproval(models.Model):
     class Meta:
         app_label = 'change_requests'
         indexes = [
+            # Single field indexes
             models.Index(fields=['cr_id']),
             models.Index(fields=['approver']),
             models.Index(fields=['approver_role']),
             models.Index(fields=['approval_status']),
             models.Index(fields=['approval_date']),
+            
+            # Composite indexes for approval queries
+            models.Index(fields=['cr_id', 'approver_role']),  # Most common query pattern
+            models.Index(fields=['approver_role', 'approval_status']),  # Status filtering by role
+            models.Index(fields=['cr_id', 'approver_role', 'approval_status']),  # Complex approval queries
+            models.Index(fields=['approver_role', 'approval_date']),  # Date-based approval queries
+            models.Index(fields=['approver', 'approver_role', 'approval_status']),  # User's approval history
         ]

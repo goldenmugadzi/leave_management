@@ -158,26 +158,96 @@
                     </div>
                   </div>
 
-                  {% comment %} roles to action {% endcomment %}
+                  {% comment %} roles to action - Dynamic based on CR type {% endcomment %}
+                  {% if cr.cr_context.requires_roles %}
                   <div class="mt-3 grid grid-cols-1 gap-4">
                     <div>
                       <label
                         for="roles_to_action"
                         class="block text-sm font-medium leading-6 text-gray-900"
-                        >Roles to Action</label>
+                        >{% if cr.delegation_info.display_type == 'delegation' %}Delegation Details{% else %}{{ cr.cr_context.roles_label }}{% endif %}</label>
                       <div class="mt-2">
-                        <textarea
-                          disabled
-                          type="text"
-                          name="roles_to_action"
-                          id="roles_to_action"
-                          autocomplete="roles_to_action"
-                          class="block w-full bg-gulf-blue-50 rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                        >
-                        {% if cr.user.roles_to_action %}
-                        {{cr.user.roles_to_action}}
+                        {% if cr.delegation_info.display_type == 'delegation' %}
+                          <div class="bg-blue-50 border border-blue-200 rounded-md p-4">
+                            <h4 class="font-semibold text-blue-800 mb-3">TEMPORARY ROLE DELEGATION</h4>
+                            <div class="grid grid-cols-2 gap-4 text-sm">
+                              <div>
+                                <span class="font-medium text-gray-700">Delegator:</span>
+                                <span class="text-gray-900">{{ cr.delegation_info.delegator_name }}</span>
+                              </div>
+                              <div>
+                                <span class="font-medium text-gray-700">Start Date:</span>
+                                <span class="text-gray-900">{{ cr.delegation_info.start_date }}</span>
+                              </div>
+                              <div>
+                                <span class="font-medium text-gray-700">End Date:</span>
+                                <span class="text-gray-900">{{ cr.delegation_info.end_date }}</span>
+                              </div>
+                              <div>
+                                <span class="font-medium text-gray-700">Reason:</span>
+                                <span class="text-gray-900">{{ cr.delegation_info.reason }}</span>
+                              </div>
+                            </div>
+                            {% if cr.delegation_info.roles %}
+                              <div class="mt-3">
+                                <span class="font-medium text-gray-700">{{ cr.cr_context.roles_label }}:</span>
+                                <div class="mt-1">
+                                  {% for role in cr.delegation_info.roles %}
+                                    <span class="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full mr-2 mb-1">
+                                      {{ role.name }}
+                                    </span>
+                                  {% endfor %}
+                                </div>
+                              </div>
+                            {% endif %}
+                          </div>
+                        {% elif cr.cr_context.is_business_excellence %}
+                          <!-- Business Excellence - Show role badges -->
+                          <div class="bg-green-50 border border-green-200 rounded-md p-4">
+                            <h4 class="font-semibold text-green-800 mb-3">{{ cr.cr_context.roles_label|upper }}</h4>
+                            {% if cr.delegation_info.roles %}
+                              <div class="flex flex-wrap gap-2">
+                                {% for role in cr.delegation_info.roles %}
+                                  <span class="inline-block bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
+                                    {{ role.name }}
+                                  </span>
+                                {% endfor %}
+                              </div>
+                            {% else %}
+                              <p class="text-gray-500 text-sm">No roles assigned</p>
+                            {% endif %}
+                          </div>
+                        {% else %}
+                          <!-- Other Applications - Show text area for role designation -->
+                          <div class="bg-yellow-50 border border-yellow-200 rounded-md p-4">
+                            <h4 class="font-semibold text-yellow-800 mb-3">{{ cr.cr_context.roles_label|upper }}</h4>
+                            <div class="space-y-2">
+                              {% if cr.delegation_info.roles %}
+                                <div class="text-sm">
+                                  <span class="font-medium text-gray-700">System Roles:</span>
+                                  <div class="flex flex-wrap gap-2 mt-1">
+                                    {% for role in cr.delegation_info.roles %}
+                                      <span class="inline-block bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full">
+                                        {{ role.name }}
+                                      </span>
+                                    {% endfor %}
+                                  </div>
+                                </div>
+                              {% endif %}
+                              {% if cr.delegation_info.roles_text %}
+                                <div class="text-sm">
+                                  <span class="font-medium text-gray-700">Additional Roles/Designations:</span>
+                                  <div class="mt-1 bg-white rounded border p-2 text-gray-900">
+                                    {{ cr.delegation_info.roles_text }}
+                                  </div>
+                                </div>
+                              {% endif %}
+                              {% if not cr.delegation_info.roles and not cr.delegation_info.roles_text %}
+                                <p class="text-gray-500 text-sm">No roles or designations specified</p>
+                              {% endif %}
+                            </div>
+                          </div>
                         {% endif %}
-                      </textarea>
                       </div>
                     </div>
 
@@ -185,15 +255,68 @@
                       <label
                         for="roles_actions"
                         class="block text-sm font-medium leading-6 text-gray-900"
-                        >Roles Implemented</label>
+                        >{{ cr.cr_context.implementation_label }}</label>
                       <div class="mt-2">
-                        <textarea {% if requestor_role == "it_section_head" and it_section_head_awaiting_action and section_head_awaiting_action == False%} required {% else %} disabled {% endif %} type="text" name="roles_actions" id="roles_actions" autocomplete="roles_actions" class="block w-full rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">
-                        {% if cr.user.roles_actions %}
-                        {{cr.user.roles_actions}}
+                        {% if cr.delegation_info.display_type == 'delegation' %}
+                          <div class="space-y-2">
+                            <div class="text-sm">
+                              <span class="font-medium">Status:</span>
+                              <span class="text-gray-700">{% if cr.user.roles_actions and cr.user.roles_actions != 'null' %}{{ cr.user.roles_actions }}{% else %}Pending Implementation{% endif %}</span>
+                            </div>
+                            <textarea {% if requestor_role == "it_section_head" and it_section_head_awaiting_action and section_head_awaiting_action == False%} required {% else %} disabled {% endif %} 
+                              type="text" 
+                              name="roles_actions" 
+                              id="roles_actions" 
+                              autocomplete="roles_actions" 
+                              placeholder="Enter delegation implementation notes or status update..."
+                              class="block w-full rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">{% if requestor_role == "it_section_head" and it_section_head_awaiting_action and section_head_awaiting_action == False%}{% else %}{% if cr.user.roles_actions and cr.user.roles_actions != 'null' %}{{ cr.user.roles_actions }}{% endif %}{% endif %}</textarea>
+                          </div>
+                        {% elif cr.delegation_info.display_type == 'deactivation' %}
+                          <div class="space-y-2">
+                            <div class="text-sm">
+                              <span class="font-medium">Deactivation Status:</span>
+                              <span class="text-gray-700">{% if cr.user.roles_actions and cr.user.roles_actions != 'null' %}{{ cr.user.roles_actions }}{% else %}Pending Deactivation{% endif %}</span>
+                            </div>
+                            <textarea {% if requestor_role == "it_section_head" and it_section_head_awaiting_action and section_head_awaiting_action == False%} required {% else %} disabled {% endif %} 
+                              type="text" 
+                              name="roles_actions" 
+                              id="roles_actions" 
+                              autocomplete="roles_actions" 
+                              placeholder="Enter deactivation completion notes..."
+                              class="block w-full rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">{% if requestor_role == "it_section_head" and it_section_head_awaiting_action and section_head_awaiting_action == False%}{% else %}{% if cr.user.roles_actions and cr.user.roles_actions != 'null' %}{{ cr.user.roles_actions }}{% endif %}{% endif %}</textarea>
+                          </div>
+                        {% elif cr.cr_context.is_business_excellence %}
+                          <div class="space-y-2">
+                            <div class="text-sm">
+                              <span class="font-medium">Implementation Status:</span>
+                              <span class="text-gray-700">{% if cr.user.roles_actions and cr.user.roles_actions != 'null' %}{{ cr.user.roles_actions }}{% else %}Pending Implementation{% endif %}</span>
+                            </div>
+                            <textarea {% if requestor_role == "it_section_head" and it_section_head_awaiting_action and section_head_awaiting_action == False%} required {% else %} disabled {% endif %} 
+                              type="text" 
+                              name="roles_actions" 
+                              id="roles_actions" 
+                              autocomplete="roles_actions" 
+                              placeholder="Enter role assignment implementation status..."
+                              class="block w-full rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">{% if requestor_role == "it_section_head" and it_section_head_awaiting_action and section_head_awaiting_action == False%}{% else %}{% if cr.user.roles_actions and cr.user.roles_actions != 'null' %}{{ cr.user.roles_actions }}{% endif %}{% endif %}</textarea>
+                          </div>
+                        {% else %}
+                          <div class="space-y-2">
+                            <div class="text-sm">
+                              <span class="font-medium">Designation Status:</span>
+                              <span class="text-gray-700">{% if cr.user.roles_actions and cr.user.roles_actions != 'null' %}{{ cr.user.roles_actions }}{% else %}Pending Designation{% endif %}</span>
+                            </div>
+                            <textarea {% if requestor_role == "it_section_head" and it_section_head_awaiting_action and section_head_awaiting_action == False%} required {% else %} disabled {% endif %} 
+                              type="text" 
+                              name="roles_actions" 
+                              id="roles_actions" 
+                              autocomplete="roles_actions" 
+                              placeholder="Enter role designation implementation status..."
+                              class="block w-full rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6">{% if requestor_role == "it_section_head" and it_section_head_awaiting_action and section_head_awaiting_action == False%}{% else %}{% if cr.user.roles_actions and cr.user.roles_actions != 'null' %}{{ cr.user.roles_actions }}{% endif %}{% endif %}</textarea>
+                          </div>
                         {% endif %}
-                        </textarea>
                       </div>
                     </div>
+                    {% endif %} {# End requires_roles check #}
                     
                   </div>
   

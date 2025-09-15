@@ -25,4 +25,10 @@ urlpatterns = [
     path('api/cost_centers/', views.api_cost_centers, name='api_cost_centers'),
     path('api/applications/', views.api_applications, name='api_applications'),
     
+    # Optimized API endpoints - Phase 3 Performance Enhancement
+    path('api/v2/change_requests/', views.api_change_requests_optimized, name='api_change_requests_optimized'),
+    path('api/v2/stats/', views.api_change_request_stats, name='api_change_request_stats'),
+    path('api/v2/change_requests/<str:cr_id>/', views.api_change_request_detail, name='api_change_request_detail'),
+    path('api/v2/metrics/', views.api_performance_metrics, name='api_performance_metrics'),
+    
 ]

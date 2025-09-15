@@ -151,24 +151,50 @@
                 </p>
               </div>
 
-              <!-- Roles to Action -->
+              <!-- Roles to Action (Dynamic based on Application) -->
               <div class="mb-6">
                 <label
                   for="roles_to_action"
                   class="block text-sm font-medium text-gray-700 mb-2"
+                  id="roles-label"
                 >
                   Roles to Action
                 </label>
-                <textarea
-                  name="roles_to_action"
-                  id="roles_to_action"
-                  rows="2"
-                  class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Specify roles that need to be acted upon"
-                ></textarea>
-                <p class="mt-1 text-sm text-gray-500">
-                  List any specific roles or permissions that need attention
-                </p>
+                
+                <!-- Business Excellence - Show role selection -->
+                <div id="business-excellence-roles" class="hidden">
+                  <div class="space-y-2">
+                    <p class="text-sm text-gray-600 mb-3">Select specific system roles to assign:</p>
+                    {% for role in user_roles %}
+                    <div class="flex items-center">
+                      <input
+                        type="checkbox"
+                        id="role_{{ role.id }}"
+                        name="selected_roles"
+                        value="{{ role.id }}"
+                        class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                      />
+                      <label for="role_{{ role.id }}" class="ml-2 block text-sm text-gray-900">
+                        {{ role.name }} - {{ role.description|default:"System Role" }}
+                      </label>
+                    </div>
+                    {% endfor %}
+                  </div>
+                </div>
+                
+                <!-- Other Applications - Show text area for role designation -->
+                <div id="other-app-roles">
+                  <textarea
+                    name="roles_to_action"
+                    id="roles_to_action"
+                    rows="3"
+                    class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Specify roles, responsibilities or designations that need to be assigned"
+                  ></textarea>
+                  <p class="mt-1 text-sm text-gray-500" id="roles-help-text">
+                    List any specific roles, responsibilities or designations that need attention
+                  </p>
+                </div>
               </div>
             </div>
 
@@ -566,6 +592,7 @@
     // Handle operation type change
     $("#operation_type").on("change", function () {
       const operationType = $(this).val();
+      const application = $("#for_application").val();
 
       // Hide all operation-specific fields
       $(
@@ -584,6 +611,9 @@
           $("#profile-deactivation-fields").removeClass("hidden");
           break;
       }
+      
+      // Update roles section based on operation type
+      updateRolesSection(application, operationType);
     });
 
     // Handle change type change for profile modification
@@ -609,6 +639,10 @@
     $("#for_application").on("change", function () {
       const application = $(this).val();
       const changeType = $("#change_type").val();
+      const operationType = $("#operation_type").val();
+      
+      // Update roles section based on application
+      updateRolesSection(application, operationType);
       
       // If delegation is selected and application is changed
       if (changeType === "TEMPORARY_DELEGATION") {
@@ -623,6 +657,58 @@
           }
         }
       }
+    });
+    
+    // Function to update roles section based on application and operation type
+    function updateRolesSection(application, operationType) {
+      const rolesLabel = $("#roles-label");
+      const businessExcellenceRoles = $("#business-excellence-roles");
+      const otherAppRoles = $("#other-app-roles");
+      const rolesHelpText = $("#roles-help-text");
+      
+      if (operationType === "profile_deactivation") {
+        // Hide roles section for deactivations
+        rolesLabel.parent().hide();
+        return;
+      } else {
+        // Show roles section for other operations
+        rolesLabel.parent().show();
+      }
+      
+      if (application === "BUSINESS EXCELLENCE") {
+        // Show role checkboxes for Business Excellence
+        businessExcellenceRoles.removeClass("hidden");
+        otherAppRoles.addClass("hidden");
+        
+        if (operationType === "profile_modification") {
+          rolesLabel.text("Roles to Assign");
+        } else {
+          rolesLabel.text("Roles to Assign");
+        }
+      } else {
+        // Show text area for other applications
+        businessExcellenceRoles.addClass("hidden");
+        otherAppRoles.removeClass("hidden");
+        
+        if (operationType === "profile_modification") {
+          rolesLabel.text("Roles to Designate");
+          $("#roles_to_action").attr("placeholder", "Specify roles, responsibilities or designations that need to be assigned");
+          rolesHelpText.text("List specific roles, responsibilities or designations that need attention");
+        } else {
+          rolesLabel.text("Roles to Designate");
+          $("#roles_to_action").attr("placeholder", "Specify roles, responsibilities or designations for the new user");
+          rolesHelpText.text("List specific roles, responsibilities or designations for the new user profile");
+        }
+      }
+    }
+    
+    // Handle operation type change
+    $("#operation_type").on("change", function () {
+      const application = $("#for_application").val();
+      const operationType = $(this).val();
+      
+      // Update roles section
+      updateRolesSection(application, operationType);
     });
 
     // Handle delegator selection change
