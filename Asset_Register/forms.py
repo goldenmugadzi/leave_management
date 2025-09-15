@@ -1,16 +1,18 @@
 from django import forms
-from .models import ZetdcAssets, HumanResource, ProductType, UserProfile, Designations, CostCenter, Sections, Regions
+from Asset_Register.models import ZetdcAssets, HumanResource, ProductType, UserProfile, Designations, CostCenter, Sections, Regions
 
-class CombinedAssetForm(forms.Form):
-    TYPE_CHOICES = (
-        ('asset', 'IT Asset'),
-        ('hr', 'HR Asset'),
-    )
-    asset_type = forms.ChoiceField(choices=TYPE_CHOICES, label="Asset Type")
+class CombinedAssetForm(forms.ModelForm):
+    class Meta:
+        model = ZetdcAssets
+        fields = [
+            'product_type', 'asset_state', 'asset_number', 'serial_number', 'user',
+            'department', 'regions', 'designation', 'cost_center', 'model',
+            'date_purchased', 'supplier', 'warrant'
+        ]
 
     # Common fields
     assetnumber = forms.CharField(required=False, label="Asset Number")
-    asset_state = forms.CharField(required=False, label="Asset State")
+    asset_state = forms.ChoiceField(choices=ZetdcAssets._meta.get_field('asset_state').choices, required=False, label="Asset State")
     user = forms.ModelChoiceField(queryset=UserProfile.objects.all(), required=False)
     department = forms.ModelChoiceField(queryset=Sections.objects.all(), required=False)
     regions = forms.ModelChoiceField(queryset=Regions.objects.all(), required=False)
@@ -23,7 +25,6 @@ class CombinedAssetForm(forms.Form):
     purchase_cost = forms.DecimalField(required=False)
     date_purchased = forms.DateField(required=False, widget=forms.DateInput(attrs={'type': 'date'}))
     model = forms.CharField(required=False)
-    #warrant = forms.CharField(required=False)
     supplier = forms.CharField(required=False)
 
     # HumanResource specific
@@ -31,45 +32,6 @@ class CombinedAssetForm(forms.Form):
     descriptionofitem = forms.CharField(required=False)
     lastchecked_at = forms.DateField(required=False, widget=forms.DateInput(attrs={'type': 'date'}))
 
-    def save(self):
-        cleaned = self.cleaned_data
-        if cleaned['asset_type'] == 'asset':
-            asset = ZetdcAssets(
-                product_type=cleaned['product_type'],
-                serial_number=cleaned['serial_number'],
-                asset_number=cleaned['assetnumber'],
-                asset_state=cleaned['asset_state'],
-                user=cleaned['user'],
-                regions=cleaned['regions'],
-                purchase_cost=cleaned['purchase_cost'] or 0,
-                designation=cleaned['designation'],
-                department=cleaned['department'],
-                date_purchased=cleaned['date_purchased'],
-                model=cleaned['model'],
-                #warrant=cleaned['warrant'],
-                cost_center=cleaned['cost_center'],
-                #created_by=cleaned['created_by'],
-                supplier=cleaned['supplier'],
-            )
-            asset.save()
-            return asset
-        else:
-            hr = HumanResource(
-                assetnumber=cleaned['assetnumber'],
-                designation=cleaned['designation'],
-                cost_center=cleaned['cost_center'],
-                department=cleaned['department'],
-                officenumber=cleaned['officenumber'],
-                assetstate=cleaned['asset_state'],
-                regions=cleaned['regions'],
-                descriptionofitem=cleaned['descriptionofitem'],
-                user=cleaned['user'],
-                lastchecked_at=cleaned['lastchecked_at'] or None,
-            )
-            hr.save()
-            return hr
-        
-        
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         for field_name, field in self.fields.items():

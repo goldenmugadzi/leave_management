@@ -3,7 +3,7 @@ from django.http import HttpResponseRedirect
 from django.contrib.auth import authenticate, login ,logout
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
-from.models import TransportAssets,Tyres, Battery, Allocation
+from.models import TransportAssets,Tyres, Battery, Allocation, TripRecord
 import json
 import csv
 from django.http import HttpResponse
@@ -16,10 +16,8 @@ from django.urls import reverse
 from django.template.loader import render_to_string
 from.models import*
 from it.users.models import Regions, Sections, UserProfile,Designations,CostCenter
-from.forms import  TripRecordForm, TripDetailsForm
+from.forms import  TripRecordForm, TripDetailsForm,TyresForm, BatteryForm, AllocationForm
 from django.shortcuts import render, redirect
-
-
 
 def register_vehicle(request):
    if request.method == 'POST':
@@ -34,7 +32,6 @@ def register_vehicle(request):
         form = TripRecordForm()
 
    return render(request, "transport/register_vehicle.html", {"form": form})
-
 
 def table_vehicle (request):
   return render(request,'transport/table_vehicle.html')
@@ -162,55 +159,64 @@ def vehicle_datatable(request):
     start = int(request.GET.get('start', 0))
     length = int(request.GET.get('length', 10))
     search_value = request.GET.get('search[value]', '')
+    
+    print("=== DATATABLE REQUEST ===")
+    print("draw:", draw, "start:", start, "length:", length, "search_value:", search_value)
 
-    qs = TransportAssets.objects.all()
-
+    qs = TripRecord.objects.select_related(
+        "vehicle_details", "drivers_name", "region", "department", "depot", "cost_center"
+    )
+    
+    print("Initial QS count:", qs.count())
+    
     if search_value:
         qs = qs.filter(
-            Q(stf__icontains=search_value) |
-            Q(fleet_number__icontains=search_value) |
-            Q(reg_number__icontains=search_value) |
-            Q(make__icontains=search_value) |
             Q(details_of_journey__icontains=search_value) |
             Q(defects_and_repairs_carried_out__icontains=search_value)
         )
+        print("Filtered QS count after search:", qs.count())
 
-    total = qs.count()
+    total = TripRecord.objects.count()
+    filtered = qs.count() 
+    print("Total records:", total, "Filtered records:", filtered)
+
     qs = qs.order_by('-id')[start:start+length]
+    print("QS after pagination:", qs.count())
 
     data = []
-    for asset in qs:
+    for triprecord in qs:
+        vehicle_str = f"{triprecord.vehicle_details.fleet_number} / {triprecord.vehicle_details.make} / {triprecord.vehicle_details.reg_number}" if triprecord.vehicle_details else ""
+        driver_str = str(triprecord.drivers_name) if triprecord.drivers_name else ""
         data.append({
-            "id": asset.id,
-            "date": asset.date,
-            "depot": str(asset.depot) if asset.depot else "",
-            "stf": asset.stf,
-            "fleet_number": asset.fleet_number,
-            "reg_number": asset.reg_number,
-            "opening_speedo_reading": asset.opening_speedo_reading,
-            "driver": str(asset.driver) if asset.driver else "",
-            "closing_speedo_reading": asset.closing_speedo_reading,
-            "make": asset.make,
-            "region": str(asset.region) if asset.region else "",
-            "trip_distance": asset.trip_distance,
-            "designation": str(asset.designation) if asset.designation else "",
-            "fuel_drawn": asset.fuel_drawn,
-            "department": str(asset.department) if asset.department else "",
-            "fuel_type": asset.fuel_type,
-            "details_of_journey": asset.details_of_journey,
-            "cost_center": str(asset.cost_center) if asset.cost_center else "",
-            "model": asset.model,
-            "oil_drawn": asset.oil_drawn,
-            "place_drawn": asset.place_drawn,
-            "defects_and_repairs_carried_out": asset.defects_and_repairs_carried_out,
+            "id": triprecord.id,
+            "date": triprecord.date.strftime("%Y-%m-%d %H:%M") if triprecord.date else "",
+            "depot": str(triprecord.depot) if triprecord.depot else "",
+            "vehicle_details": vehicle_str,
+            "drivers_name": driver_str,
+            "opening_speedo_reading": triprecord.opening_speedo_reading,
+            "closing_speedo_reading": triprecord.closing_speedo_reading,
+            "trip_distance": triprecord.trip_distance,
+            "region": str(triprecord.region) if triprecord.region else "",
+            "department": str(triprecord.department) if triprecord.department else "",
+            "allocation_code": triprecord.allocation_code,
+            "cost_center": str(triprecord.cost_center) if triprecord.cost_center else "",
+            "fuel_drawn": triprecord.fuel_drawn,
+            "oil_drawn": triprecord.oil_drawn,
+            "place_drawn": triprecord.place_drawn,
+            "details_of_journey": triprecord.details_of_journey,
+            "defects_and_repairs_carried_out": triprecord.defects_and_repairs_carried_out,
         })
+    
+    print("Prepared data length:", len(data))
+    print("Sample data:", data[:1] if data else "No data")
 
     return JsonResponse({
         "draw": draw,
         "recordsTotal": total,
-        "recordsFiltered": total,
+        "recordsFiltered": filtered,
         "data": data
     })
+
 
 def vehicle_dashboard (request):
   return render(request,'transport/vehicle_dashboard.html')
@@ -250,11 +256,12 @@ def trip_datatable(request):
 
     data = []
     for trip in qs:
+        vehicle_str = f"{trip.vehicle_details.fleet_number} / {trip.vehicle_details.make} / {trip.vehicle_details.reg_number}" if trip.vehicle_details else ""
         data.append({
-            "vehicle": str(trip.vehicle_details),
+            "vehicle_details": vehicle_str,
             "driver": str(trip.drivers_name) if trip.drivers_name else "",
             "date": trip.date.strftime("%Y-%m-%d %H:%M"),
-            "stf_number": trip.stf_number,
+            "allocation_code": trip.allocation_code,
             "opening_speedo_reading": trip.opening_speedo_reading,
             "closing_speedo_reading": trip.closing_speedo_reading,
             "details_of_journey": trip.details_of_journey,
@@ -267,7 +274,7 @@ def trip_datatable(request):
         "data": data
     })
 
-def vehicle_datatable(request):
+def vehicle_datatables(request):
     draw = int(request.GET.get('draw', 1))
     start = int(request.GET.get('start', 0))
     length = int(request.GET.get('length', 10))
@@ -320,3 +327,36 @@ def battery_list(request):
 
 def allocation_list(request):
     return render(request, 'transport/allocation.html')
+
+
+def add_tyres(request):
+    if request.method == "POST":
+        form = TyresForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect("tyres") 
+    else:
+        form = TyresForm()
+    return render(request, "transport/add_tyres.html", {"form": form})
+
+
+def add_battery(request):
+    if request.method == "POST":
+        form = BatteryForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect("batteries")
+    else:
+        form = BatteryForm()
+    return render(request, "transport/add_battery.html", {"form": form})
+
+
+def add_allocation(request):
+    if request.method == "POST":
+        form = AllocationForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect("allocations")
+    else:
+        form = AllocationForm()
+    return render(request, "transport/add_allocations.html", {"form": form})

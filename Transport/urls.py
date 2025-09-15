@@ -13,8 +13,12 @@ urlpatterns = [
     path('trip_list/', views.trip_list, name='  trip_list'),
     path('trips/datatable/', views.trip_datatable, name='trip_datatable'),
     path('vehicles/', views.vehicle_list, name='vehicle_list'),
-    path('vehicles/datatable/', views.vehicle_datatable, name='vehicle_datatable'),
+    path('vehicles/datatable/', views.vehicle_datatables, name='vehicle_datatable'),
     path("tyres/", views.tyres_list, name="tyres_list"),
     path("batteries/", views.battery_list, name="battery_list"),
     path("allocations/", views.allocation_list, name="allocation_list"),
+    path("add_tyres/", views.add_tyres, name="add_tyres"), 
+    path("add_batteries/", views.add_battery, name="add_battery"),
+    path("add_allocation/", views.add_allocation, name="add_allocation"),
+    
 ]

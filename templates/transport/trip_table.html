@@ -41,10 +41,10 @@
     <table id="tripTable" class="min-w-full table-auto">
       <thead>
         <tr class="bg-gray-100">
-          <th>Vehicle</th>
+          <th>Vehicle Details</th>
           <th>Driver</th>
           <th>Date</th>
-          <th>STF Number</th>
+          <th>Allocation Code</th>
           <th>Opening Speedo</th>
           <th>Closing Speedo</th>
           <th>Journey Details</th>
@@ -65,10 +65,10 @@ $(document).ready(function () {
         "serverSide": true,
         "ajax": "{% url 'trip_datatable' %}",
         "columns": [
-            {"data": "vehicle"},
+            { data: "vehicle_details"},
             {"data": "driver"},
             {"data": "date"},
-            {"data": "stf_number"},
+            {"data": "allocation_code"},
             {"data": "opening_speedo_reading"},
             {"data": "closing_speedo_reading"},
             {"data": "details_of_journey"}

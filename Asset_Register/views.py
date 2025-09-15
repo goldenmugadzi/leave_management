@@ -150,80 +150,44 @@ def update_asset(request, asset_type, asset_id):
     if asset_type == 'asset':
         instance = get_object_or_404(ZetdcAssets, id=asset_id)
         initial = {
-            'asset_type': 'asset',
             'product_type': instance.product_type,
-            'serial_number': instance.serial_number,
-            'assetnumber': instance.asset_number,
             'asset_state': instance.asset_state,
+            'asset_number': instance.asset_number,
+            'serial_number': instance.serial_number,
             'user': instance.user,
-            'regions': instance.regions,
-            'purchase_cost': instance.purchase_cost,
-            'designation': instance.designation,
             'department': instance.department,
-            'date_purchased': instance.date_purchased,
-            'model': instance.model,
-            'warrant': instance.warrant,
+            'designation': instance.designation,
             'cost_center': instance.cost_center,
-            #'created_by': instance.created_by,
-            'supplier': instance.supplier,
+            'model': instance.model,
+            'date_purchased': instance.date_purchased,
+            #'supplier': instance.supplier,
+            'warrant': instance.warrant,
         }
     elif asset_type == 'hr':
         instance = get_object_or_404(HumanResource, id=asset_id)
         initial = {
-            'asset_type': 'hr',
-            'assetnumber': instance.assetnumber,
+            'asset_number': instance.assetnumber,
             'designation': instance.designation,
             'cost_center': instance.cost_center,
             'department': instance.department,
-            'officenumber': instance.officenumber,
-            'asset_state': instance.assetstate,
-            'regions': instance.regions,
-            'descriptionofitem': instance.descriptionofitem,
             'user': instance.user,
-            'lastchecked_at': instance.lastchecked_at,
+            'model': instance.model,
+            'date_purchased': instance.date_purchased,
+            #'supplier': instance.supplier,
+            'warrant': instance.warrant,
         }
     else:
         return render(request, '404.html', status=404)
-
     if request.method == 'POST':
-        form = CombinedAssetForm(request.POST)
+        form = CombinedAssetForm(request.POST, instance=instance)
         if form.is_valid():
-            cleaned = form.cleaned_data
-            if asset_type == 'asset':
-                instance.product_type = cleaned['product_type']
-                instance.serial_number = cleaned['serial_number']
-                instance.asset_number = cleaned['assetnumber']
-                instance.asset_state = cleaned['asset_state']
-                instance.user = cleaned['user']
-                instance.regions = cleaned['regions']
-                instance.purchase_cost = cleaned['purchase_cost'] or 0
-                instance.designation = cleaned['designation']
-                instance.department = cleaned['department']
-                instance.date_purchased = cleaned['date_purchased']
-                instance.model = cleaned['model']
-                instance.warrant = cleaned['warrant']
-                instance.cost_center = cleaned['cost_center']
-                #instance.created_by = cleaned['created_by']
-                instance.supplier = cleaned['supplier']
-            else:
-                instance.assetnumber = cleaned['assetnumber']
-                instance.designation = cleaned['designation']
-                instance.cost_center = cleaned['cost_center']
-                instance.department = cleaned['department']
-                instance.officenumber = cleaned['officenumber']
-                instance.assetstate = cleaned['asset_state']
-                instance.regions = cleaned['regions']
-                instance.descriptionofitem = cleaned['descriptionofitem']
-                instance.user = cleaned['user']
-                instance.lastchecked_at = cleaned['lastchecked_at'] or None
-            instance.save()
+            form.save()
             messages.success(request, "Asset updated successfully!")
             return redirect('/tab/')
         else:
             messages.error(request, "Please correct the errors below.")
     else:
-        form = CombinedAssetForm(initial=initial)
-
+        form = CombinedAssetForm(initial=initial, instance=instance)
     template = 'asset_register/update_asset.html' if asset_type == 'asset' else 'asset_register/update_hr_asset.html'
     return render(request, template, {'form': form, 'asset': instance})
 
@@ -488,175 +452,155 @@ def export_csv(request):
 def upload_asset(request):
     if request.method == 'POST':
         csvfile = request.FILES.get('uploaded_csv')
-        
         if not csvfile:
             return render(request, 'asset_register/upload_asset.html', {'error': 'No file uploaded'})
-        
+
         try:
             decoded_file = csvfile.read().decode('utf-8').splitlines()
             reader = csv.DictReader(decoded_file)
-            
+
             success_count = 0
             error_messages = []
-            created_users = set()
-            duplicate_users = set()  
 
             for row_num, row in enumerate(reader, start=1):
                 print(f"Processing row {row_num}: {row}")
                 try:
                     with transaction.atomic():
+                        # Normalize keys and convert empty strings to None
+                        row = {k.lower(): (v.strip() if v.strip() else None) for k, v in row.items()}
+
                         # Parse date
-                        date_string = row.get('date purchased', '').strip()
                         parsed_date = None
-                        
-                        if date_string:
+                        if row.get('date purchased'):
                             try:
-                                parsed_date = datetime.strptime(date_string, "%A, %B %d, %Y").date()
+                                parsed_date = datetime.strptime(row['date purchased'], "%A, %B %d, %Y").date()
                             except ValueError:
                                 try:
-                                    parsed_date = datetime.strptime(date_string, "%d-%b-%y").date()
+                                    parsed_date = datetime.strptime(row['date purchased'], "%d-%b-%y").date()
                                 except ValueError:
-                                    raise ValueError("Invalid date format")
+                                    parsed_date = None
 
-                        product_type, _ = ProductType.objects.get_or_create(
-                            product_type=row.get('product type', '').strip())
-                        
-                        row = {k.lower(): v for k, v in row.items()}
-                        section_name = row.get('section', '').strip()
-                        if not section_name:
-                            raise ValueError("Section is required")
-                        section, _ = Sections.objects.get_or_create(section=section_name)
+                        # Use get_or_create for all fields that may exist or be duplicated
+                        product_type, _ = ProductType.objects.get_or_create(product_type=row.get('product type') or 'Unknown')
+                        section, _ = Sections.objects.get_or_create(section=row.get('section') or 'Unknown')
+                        designation_name = row.get('designation') or 'Unknown'
+                        designation = Designations.objects.filter(description=designation_name).first()
+                        if not designation:
+                            # Create a new one if it doesn't exist
+                            designation = Designations.objects.create(description=designation_name)
+                        region, _ = Regions.objects.get_or_create(region=row.get('region') or 'Unknown')
+                        # Handle cost center safely
+                        cost_center_name = row.get('cost center')
+                        cost_center_code = row.get('cost center code') or ''
+                        parent_cost_center = None
 
-                        region_name = row.get('region', '').strip()
-                        if not region_name:
-                            raise ValueError("Region is required")
-                        region, _ = Regions.objects.get_or_create(region=region_name)
+                        # Validate cost center name
+                        valid_cost_centers = set(CostCenter.objects.values_list('name', flat=True))
+                        if not cost_center_name or cost_center_name not in valid_cost_centers:
+                            cost_center_name = 'IT'
+                        cost_center, created = CostCenter.objects.get_or_create(
+                            name=cost_center_name,
+                            defaults={
+                                'id': uuid.uuid4().hex[:20],
+                                'code': cost_center_code,
+                                'parent': parent_cost_center
+                            }
+                        )
 
-                        username = row.get('user', '').strip()
-                        if not username:
-                            raise ValueError("User is required")
-                        
-                        name_parts = username.split()
-                        first_name = name_parts[0] if len(name_parts) > 0 else username
-                        last_name = ' '.join(name_parts[1:]) if len(name_parts) > 1 else ''
-                        
-                        try:
-                            user_profile, created = UserProfile.objects.get_or_create(
-                                username=username[:150],  
-                                defaults={
-                                    'first_name': first_name[:30],
-                                    'last_name': last_name[:30],
-                                    'email': f"{username.lower().replace(' ', '.')[:50]}@example.com",
-                                }
-                            )
-                            
-                            if created:
-                                created_users.add(username)
-                                
-                        except IntegrityError:
-                            duplicate_users.add(username)
-                            raise ValueError(f"Username '{username}' already exists (truncated)")
+                        # User: only existing, else None
+                        user_profile = None
+                        if row.get('user'):
+                            user_profile = UserProfile.objects.filter(username=row['user']).first()
 
-                       
-                        asset_state = row.get('asset state', '').strip()
+                        # Asset state default
+                        asset_state = row.get('asset state') or 'Awaiting New User'
                         valid_states = dict(ZetdcAssets._meta.get_field('asset_state').choices)
-
-                        if not asset_state:
-                            asset_state = 'Awaiting New User'
                         if asset_state not in valid_states:
-                            raise ValueError(f"Invalid asset state: {asset_state}. Valid options are: {', '.join(valid_states.keys())}")
+                            asset_state = 'Awaiting New User'
 
+                        # Create asset
                         asset = ZetdcAssets(
                             product_type=product_type,
                             asset_state=asset_state,
-                            serial_number=row.get('serial number', '').strip(),
-                            asset_number=row.get('asset number', '').strip(),
+                            serial_number=row.get('serial number'),
+                            asset_number=row.get('asset number'),
                             user=user_profile,
                             date_purchased=parsed_date or date.today(),
                             department=section,
+                            designation=designation,
                             regions=region,
-                            model=row.get('model', '').strip(),
-                            purchase_cost=row.get('purchase_cost', 0),
-                            warrant=row.get('warrant', '') or None,
-                            supplier=row.get('supplier', '') or None,
-                            
+                            model=row.get('model'),
+                            #purchase_cost=row.get('purchase_cost') or 0,
+                            warrant=row.get('warrant'),
+                            supplier=row.get('supplier'),
+                            cost_center=CostCenter.objects.filter(id=142).first(),
                         )
-                        
-                        asset.full_clean() 
+                        # Skip full_clean() to allow duplicates
                         asset.save()
                         success_count += 1
 
                 except Exception as e:
                     error_msg = f"Row {row_num}: {str(e)}"
-                    print(error_msg)  # <--- Add this line
-                    if "duplicate" in str(e).lower():
-                        duplicate_users.add(username)
-                        error_msg = f"Row {row_num}: User '{username}' already exists"
+                    print(error_msg)
                     error_messages.append(error_msg)
                     continue
 
             if success_count > 0:
                 messages.success(request, f"Successfully imported {success_count} assets")
-                if created_users:
-                    messages.info(request, f"Created {len(created_users)} new user profiles")
-                if duplicate_users:
-                    messages.warning(request, f"Skipped {len(duplicate_users)} duplicate users")
                 return redirect('/tab/')
-            
+
             return render(request, 'asset_register/upload_asset.html', {
                 'error': "No assets were imported",
                 'error_count': len(error_messages),
                 'detailed_errors': error_messages[:20],
-                'created_users': sorted(created_users),
-                'duplicate_users': sorted(duplicate_users),
             })
-            
+
         except Exception as e:
-            print("Outer exception:", str(e))
-            return render(request, 'asset_register/upload_asset.html', {
-                'error': f"File processing error: {str(e)}"
-            })
+            print("Outer exception:", e)
+            return render(request, 'asset_register/upload_asset.html', {'error': f"File processing error: {e}"})
 
     return render(request, 'asset_register/upload_asset.html', {})
 
+
+import uuid
+from django.http import JsonResponse
+from django.db.models import Q
+from django.core.serializers.json import DjangoJSONEncoder
+
 def combined_assets_datatable(request):
-    
     try:
         print("\n===== NEW REQUEST =====")
         print(f"User: {request.user.first_name} {request.user.last_name} ({request.user.username})")
 
-        assets_qs = []
-        assets = ZetdcAssets.objects.all()
-        print(f"assets count: {assets.count()}")
-        
-        hr = HumanResource.objects.all()
+        # Start with ZetdcAssets queryset
+        assets = ZetdcAssets.objects.select_related(
+            "product_type", "user", "department", "regions", "designation", "cost_center"
+        ).all()
 
-    
+        print(f"Initial assets count: {assets.count()}")
+
+        # Apply cost center restrictions
         cost_centers = request.user.cost_centers_for(["IT Asset Register"])
         if cost_centers:
             print(f"Filtering by cost centers: {cost_centers}")
             assets = assets.filter(cost_center__in=cost_centers)
-            print(f"After cost center filtering: {assets.count()}")
         else:
             descendents = request.user.cost_center_and_decendace()
             print(f"Filtering by cost center descendents: {descendents}")
             assets = assets.filter(cost_center__in=descendents)
-            print(f"After descendents filtering: {assets.count()}")
-    
-    
-        draw = int(request.GET.get('draw', 1))
-        start = int(request.GET.get('start', 0))
-        length = int(request.GET.get('length', 10))
-        search_value = request.GET.get('search[value]', '')
-        department_filter = request.GET.get('department', '')
 
-        # assets_qs = ZetdcAssets.objects.all()
-        # hr_qs = HumanResource.objects.all()
-        
+        print(f"After filtering: {assets.count()}")
 
-        # Filtering by search
+        # DataTables request params
+        draw = int(request.GET.get("draw", 1))
+        start = int(request.GET.get("start", 0))
+        length = int(request.GET.get("length", 10))
+        search_value = request.GET.get("search[value]", "")
+        department_filter = request.GET.get("department", "")
+
+        # Apply search filter
         if search_value:
-            assets_qs = assets.filter(
+            assets = assets.filter(
                 Q(product_type__product_type__icontains=search_value) |
                 Q(asset_state__icontains=search_value) |
                 Q(asset_number__icontains=search_value) |
@@ -664,63 +608,39 @@ def combined_assets_datatable(request):
                 Q(user__first_name__icontains=search_value) |
                 Q(user__last_name__icontains=search_value) |
                 Q(department__section__icontains=search_value) |
-                Q(regions__region__icontains=search_value)
-            )
-            hr_qs = hr.filter(
-                Q(descriptionofitem__icontains=search_value) |
-                Q(assetnumber__icontains=search_value) |
-                Q(assetstate__icontains=search_value) |
-                Q(user__first_name__icontains=search_value) |
-                Q(user__last_name__icontains=search_value) |
-                Q(department__section__icontains=search_value) |
-                Q(regions__region__icontains=search_value)
+                Q(regions__region__icontains=search_value) |
+                Q(designation__designation__icontains=search_value) |
+                Q(cost_center__cost_center__icontains=search_value) |
+                Q(model__icontains=search_value)
             )
 
-        # Filtering by department (optional)
+        # Apply department filter
         if department_filter:
-            assets_qs = assets.filter(department__section__icontains=department_filter)
-            hr_qs = hr.filter(department__section__icontains=department_filter)
+            assets = assets.filter(department__section__icontains=department_filter)
 
-        # Build asset list
-        print("total",assets)
-        assets_list = [{
-            "id": a.id,
-            "product_type": a.product_type.product_type if a.product_type else "",
-            "descriptionofitem": "", 
-            "asset_state": a.asset_state,
-            "asset_number": a.asset_number,
-            "serial_number": a.serial_number if hasattr(a, "serial_number") else "",
-            "user": f"{a.user.first_name} {a.user.last_name}" if a.user else "",
-            "officenumber": "",  
-            "department": a.department.section if a.department else "",
-            "regions": a.regions.region if a.regions else "",
-            "designation": a.designation.description if a.designation else "",
-            "lastchecked_at": "",  
-            "cost_center": a.cost_center.name if a.cost_center else "",
-            "model": a.model if hasattr(a, "model") else "",
-        } for a in assets]
-        
+        # Build asset list (fields aligned with CSV upload)
+        assets_list = []
+        for a in assets:
+            assets_list.append({
+                "id": a.id,
+                "product_type": a.product_type.product_type if a.product_type else "",
+                "asset_state": a.asset_state or "",
+                "asset_number": a.asset_number or "",
+                "serial_number": a.serial_number or "",
+                "user": f"{a.user.first_name} {a.user.last_name}" if a.user else "",
+                "section": a.department.section if a.department else "",
+                "region": a.regions.region if a.regions else "",
+                "designation": a.designation.description if a.designation else "",
+                "cost_center": a.cost_center.name if a.cost_center else "",
+                "model": a.model or "",
+                "date_purchased": a.date_purchased.strftime("%Y-%m-%d") if a.date_purchased else "",
+                #"purchase_cost": str(a.purchase_cost) if a.purchase_cost else "0.00",
+                "supplier": a.supplier or "",
+                "warrant": a.warrant or "",
+            })
 
-        #Build HR list
-        hr_list = [{
-            "id": h.id,
-            "product_type": "", 
-            "descriptionofitem": h.descriptionofitem if h.descriptionofitem else "",
-            "asset_state": h.assetstate,
-            "asset_number": h.assetnumber,
-            "serial_number": "", 
-            "user": f"{h.user.first_name} {h.user.last_name}" if h.user else "",
-            "officenumber": h.officenumber if h.officenumber else "",
-            "department": h.department.section if h.department else "",
-            "regions": h.regions.region if h.regions else "",
-            "designation": h.designation.description if h.designation else "",
-            "lastchecked_at": h.lastchecked_at.strftime('%Y-%m-%d') if h.lastchecked_at else "",
-            "cost_center": h.cost_center.name if h.cost_center else "",
-            "model": "", 
-        } for h in hr]
-
-        combined = assets_list
-        combined_sorted = sorted(combined, key=lambda x: x['id'], reverse=True)
+        # Sorting & pagination
+        combined_sorted = sorted(assets_list, key=lambda x: x["id"], reverse=True)
         total = len(combined_sorted)
         paginated = combined_sorted[start:start+length]
 
@@ -728,8 +648,9 @@ def combined_assets_datatable(request):
             "draw": draw,
             "recordsTotal": total,
             "recordsFiltered": total,
-            "data": paginated
-        })
+            "data": paginated,
+        }, encoder=DjangoJSONEncoder)
+
     except Exception as ex:
         print("Combined datatable error:", ex)
         return JsonResponse({
@@ -737,9 +658,9 @@ def combined_assets_datatable(request):
             "recordsTotal": 0,
             "recordsFiltered": 0,
             "data": [],
-            "error": str(ex)
+            "error": str(ex),
         }, status=500)
-        
+
         
 def show_combined_assets(request):
     try:
