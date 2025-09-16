@@ -38,6 +38,8 @@ APPRAISAL_KRA_REVIEWER_STATUS_CHOICES = [
     ("REJECT", "REJECT"),
 ]
 
+
+
 class AppraisalOutPutPerformanceDimensionScore(TimeStamp):
     appraisal_department_output = models.ForeignKey(AppraisalDepartmentOutput, on_delete=models.RESTRICT, related_name="appraisal_department_output_obj", null=True, blank=True)
     performance_dimension = models.ForeignKey(OutPutPerformanceDimension, on_delete=models.RESTRICT, related_name="performance_dimension", null=True, blank=True)

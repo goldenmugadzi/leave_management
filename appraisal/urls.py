@@ -39,7 +39,9 @@ from .view import (
     ScoreDocumentCreateView,
     ScoreDocumentUpdateView,
     AppraiseePersonalAttributesDetailView, 
-    AppraiseePersonalAttributesUpdateView
+    AppraiseePersonalAttributesUpdateView,
+    JobCompetencyTemplateView,
+    JobCompetencyUpdateDetailView
 )
 
 urlpatterns = [
@@ -94,6 +96,11 @@ urlpatterns = [
     path('departmental-outputs/<int:departmental_objective_id>/list', DepartmentOutputTemplateView.as_view(), name='departmental_output_index'),
     path('departmental-outputs/<int:departmental_objective_id>/designation/<int:designation_id>/create', DepartmentOutputCreateView.as_view(), name='departmental_output_create'),
     path('departmental-outputs/designation/<int:designation_id>/output/<int:department_output_id>', DepartmentOutputDetailUpdateView.as_view(), name='departmental_output_detail_update'),
+    
+    # ========================== Job Competency =========================
+    path('departmental-outputs/job-competency/<int:designation_id>/<int:year>', JobCompetencyTemplateView.as_view(), name='job_competency_index'),
+    path('departmental-outputs/job-competency/<int:job_competency_id>', JobCompetencyUpdateDetailView.as_view(), name='job_competency_detail_update'),
+
     
     # ========================== Output Performance Dimension ===========================
     path('departmental-output/<int:department_output_id>/performance-dimension', OutPutPerformanceDimensionTemplateView.as_view(), name='output_perf_dimension_index'),

@@ -92,11 +92,18 @@ def create_training_development_post_save_handler(sender, instance, created, **k
     if created:
         try:
             logger.info(f"[Signal]: create_training_development_post_save_handler for appraisal pk: {instance.id} init ..... ")
+            
             training_development_repo_handler = TrainingAndDevelopmentRepository()
             training_development_service_handler = TrainingAndDevelopmentService(training_dev_repo=training_development_repo_handler)
 
             year_quarter_qr = YearQuarter.objects.filter(year=instance.created_date.year)
-
+            
+            year_quarters_count = year_quarter_qr.count()
+            total_year_quarters_count = 4
+            
+            if year_quarters_count != total_year_quarters_count:
+                raise ValueError(f"year quarters: {year_quarters_count} is not {total_year_quarters_count}")
+            
             training_development_service_handler.create_for_all_quarters(
                         appraisal_object=instance,
                         year_quarter_qr=year_quarter_qr

@@ -95,6 +95,7 @@ class AppraisalDependanciesInitialisationService:
         apprasee_personal_attr_repo = AppraiseePersonalAttributeRepository()
         return apprasee_personal_attr_repo.bulk_create(appraisee_personal_attr_list=appraisee_personal_attr_objs_list)
     
+    
     def create_all_dependencies(self, appraisal_id: int, year: int)->bool|None:
         try:
             with transaction.atomic():
@@ -124,6 +125,8 @@ class AppraisalDependanciesInitialisationService:
                                     appraisal_department_output_obj=appraisal_department_output_obj,
                                     department_output_id=department_output_obj.id
                                 )
+                                
+                            # =============== 
                         
                     # ======================== create appraisee personal attributes ====================>>
                     self.create_appraisee_personal_attr(appraisal_object=appraisal_obj)

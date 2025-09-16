@@ -204,6 +204,12 @@ class AppraisalDepartmentOutputRepository:
         except Exception as e:
             raise Exception(f"[AppraisalDepartmentOutputRepository] fetch_by_appraisal_id_and_year, appraisal id: {appraisal_id} and year: {year}, failed with error: {e}")
     
+    def fetch_by_appraisal_id(self, appraisal_id: int)->QuerySet[AppraisalDepartmentOutput]:
+        try:
+            return AppraisalDepartmentOutput.objects.filter(appraisal__id=appraisal_id)
+        except Exception as e:
+            raise Exception(f"[AppraisalDepartmentOutputRepository] fetch_by_appraisal_id, appraisal id: {appraisal_id}, failed with error: {e}")
+    
     def get_by_id(self, appraisal_department_output_id: int)->AppraisalDepartmentOutput:
         try:
             qr = AppraisalDepartmentOutput.objects.filter(id=appraisal_department_output_id).select_related('appraisal', 'department_output', 'appraisal__user')

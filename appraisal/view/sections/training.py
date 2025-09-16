@@ -12,7 +12,7 @@ from ...helpers.types.training import TrainingAndDevelopmentCreateUpdateType
 from ...helpers.getters import ApprovalStagesHandler
 from it.users.models import UserProfile, GRADE_CHOICES
 
-from ...forms import InterventionStrategyFormSet, ActionsForm, CompetencyFormSet
+from ...forms import InterventionStrategyFormSet, ActionsForm
 from ...models import TrainingAndDevelopment, InterventionStrategy, AppraisalExperience
 from ...repository import TrainingAndDevelopmentRepository
 from ...repository.kra import AppraisalOutPutPerformanceDimensionScoreRepository
@@ -26,22 +26,6 @@ class TrainingAndDevelopmentUpdateView(SuccessMessageMixin, CreateView):
     form_class = ActionsForm
     template_name = "appraisal/performance/training_development/update.html"
     success_message = "Training and Development set successfully"
-    
-    def get_competency_form(self, training_object):
-        initial_data = []
-        
-        for comp in training_object.required_competencies.all():
-            initial_data.append({"required_competency": comp.name})
-        
-        for gap in training_object.competency_gaps.all():
-            initial_data.append({"competency_gap": gap.name})
-
-        form = CompetencyFormSet(
-            self.request.POST or None,
-            initial=initial_data,
-            prefix="competency"
-        )
-        return form
     
     def get_intervention_strategy_form(self, training_object):
         initial_data = [
@@ -58,24 +42,32 @@ class TrainingAndDevelopmentUpdateView(SuccessMessageMixin, CreateView):
         )
         return form
     
-    def get_actions_form(self, training_object):
-        initial_data = {
-            "action_recommended": training_object.action_recommended,
-            "action_taken": training_object.action_taken,
-        }
-        form = ActionsForm(
-            self.request.POST or None,
-            initial=initial_data,
-            prefix="action"
-        )
-        return form
-    
     def get_training_object(self)->TrainingAndDevelopment:
         training_repo_handler = TrainingAndDevelopmentRepository()
         appraisal_id = self.kwargs.get("appraisal_id")
         quarter = self.kwargs.get("quarter_id")
         return training_repo_handler.get_by_appraisal_id_quarter(appraisal_id=appraisal_id, quarter_id=quarter)
 
+    
+    def get_actions_form(self, training_object):
+        initial_data = {
+            "existence_competencies": list(training_object.existence_competencies.values_list("id", flat=True)),
+            "action_recommended": training_object.action_recommended,
+            "action_taken": training_object.action_taken,
+        }
+        training_object = self.get_training_object()
+        form = ActionsForm(
+            self.request.POST or None,
+            designation_id=training_object.appraisal.user.designation.id,
+            year=training_object.appraisal.created_date.year,
+            initial=initial_data,
+            prefix="action"
+        )
+        return form
+    
+    def get_competency_gaps(self):
+        repo = TrainingAndDevelopmentRepository()
+        return repo.fetch_competency_gaps(training_dev_obj=self.get_training_object())
     
     def approval_user_roles(self)->Dict[str, bool]:
         appraisal_object = self.get_training_object().appraisal
@@ -90,7 +82,6 @@ class TrainingAndDevelopmentUpdateView(SuccessMessageMixin, CreateView):
         try:
             training_object = self.get_training_object()
             data = {
-                "competency_forms": self.get_competency_form(training_object=training_object),
                 "intervention_strategy_forms": self.get_intervention_strategy_form(training_object=training_object),
                 "action_form": self.get_actions_form(training_object=training_object)
             }
@@ -120,7 +111,7 @@ class TrainingAndDevelopmentUpdateView(SuccessMessageMixin, CreateView):
         context["is_quarter_scored"] = self.is_quarter_scored()
         context["quarter_obj"] = quarter_obj
         context["is_within_current_quarter"] = self.is_current_date_in_current_quarter(quarter_obj=quarter_obj)
-
+        context["competency_gaps"] = self.get_competency_gaps()
         return context
     
     def get(self, request, *args, **kwargs):
@@ -137,41 +128,33 @@ class TrainingAndDevelopmentUpdateView(SuccessMessageMixin, CreateView):
             logger.error(f"[TrainingAndDevelopmentUpdateView] get_training_object pk-{self.kwargs.get('appraisal_id')}, failed with error: {e}")
             return redirect("server_error_view")
     
-    def build_payload(self)->TrainingAndDevelopmentCreateUpdateType:
+    def build_payload(self) -> TrainingAndDevelopmentCreateUpdateType:
         payload = self.request.POST
-        required_competencies = [
-            {
-                "name": payload.get(f"competency-{i}-required_competency")
-            }
-            for i in range(int(payload.get("competency-MAX_NUM_FORMS", 0)))
-            if payload.get(f"competency-{i}-required_competency")
-            
+
+        # Existence competencies (MultiSelect sends IDs)
+        existence_competencies = [
+            {"id": int(comp_id)}
+            for comp_id in payload.getlist("action-existence_competencies")
+            if comp_id
         ]
-        competency_gaps = [
-            {
-                "name": payload.get(f"competency-{i}-competency_gap")
-            }
-            for i in range(int(payload.get("competency-MAX_NUM_FORMS", 0)))
-            if payload.get(f"competency-{i}-competency_gap")
-        ]
-        
+
+        # Intervention strategies (formset)
         intervention_strategies = [
             {
                 "description": payload.get(f"intervention_strategy-{i}-description"),
-                "category": payload.get(f"intervention_strategy-{i}-category")
+                "category": payload.get(f"intervention_strategy-{i}-category"),
             }
-            for i in range(int(payload.get("intervention_strategy-MAX_NUM_FORMS", 0)))
+            for i in range(int(payload.get("intervention_strategy-TOTAL_FORMS", 0)))
             if payload.get(f"intervention_strategy-{i}-description")
         ]
-        data = TrainingAndDevelopmentCreateUpdateType(
-            required_competencies=required_competencies,
-            competency_gaps=competency_gaps,
+
+        return TrainingAndDevelopmentCreateUpdateType(
+            existence_competencies=existence_competencies,
             intervention_strategies=intervention_strategies,
             action_recommended=payload.get("action-action_recommended"),
-            action_taken=payload.get("action-action_taken")
+            action_taken=payload.get("action-action_taken"),
         )
-        return data
-    
+
     def form_valid(self, form):
         payload = self.build_payload()
         training_repo_handler = TrainingAndDevelopmentRepository()
@@ -185,10 +168,17 @@ class TrainingAndDevelopmentUpdateView(SuccessMessageMixin, CreateView):
             updated_training_object.is_completed = True
             updated_training_object.save()
             
-        return super().form_valid(form)
+        # Add the success message manually (SuccessMessageMixin normally does this in form_valid)
+        if hasattr(self, "success_message") and self.success_message:
+            messages.success(self.request, self.success_message)
+
+        return redirect(self.get_success_url())
     
     def get_success_url(self) -> str:
-        return reverse('performance_review_detail', args=(self.kwargs.get("appraisal_id"),))
+        return reverse('training_development_update', kwargs={
+            "appraisal_id": self.kwargs.get("appraisal_id"),
+            "quarter_id": self.kwargs.get("quarter_id")
+        })
     
         
 class TrainingAndDevelopmentTemplateView(TemplateView):

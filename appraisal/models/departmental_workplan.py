@@ -34,6 +34,14 @@ PERFORMANCE_INDICATOR = [
     ]
 
 
+class DepartmentOutputCompetency(TimeStamp):
+    department_output = models.ForeignKey(DepartmentOutput, on_delete=models.RESTRICT, related_name="dept_output_competency", null=True)
+    required_competency = models.CharField(max_length=255)
+    
+    def __str__(self):
+        return f"{self.department_output} - {self.required_competency}"
+
+
 class OutPutPerformanceDimension(TimeStamp):
     created_by = models.ForeignKey(User, on_delete=models.RESTRICT, related_name="dept_perf_dimension_creator", null=True)
     updated_by = models.ForeignKey(User, on_delete=models.RESTRICT, related_name="dept_perf_dimension_updater", null=True, blank=True)

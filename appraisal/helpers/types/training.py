@@ -3,7 +3,8 @@ from pydantic import BaseModel, Field
 
 
 class CompetencyType(BaseModel):
-    name: str = Field(..., description="The competency name of the job.")
+    id: int = Field(..., description="The ID of the competency.")
+    
 
 class InterventionStrategyType(BaseModel):
     description: str = Field(..., description="The description of intervention strategy.")
@@ -11,8 +12,7 @@ class InterventionStrategyType(BaseModel):
 
 
 class TrainingAndDevelopmentCreateUpdateType(BaseModel):
-    required_competencies: Optional[List[CompetencyType]] = Field(..., description="The list of required competencies")
-    competency_gaps: Optional[List[CompetencyType]] = Field(..., description="The list of competency gaps")
+    existence_competencies: Optional[List[CompetencyType]] = Field(..., description="The list of required competencies")
     intervention_strategies: Optional[List[InterventionStrategyType]] = Field(..., description="The list of intervention strategies")
     action_recommended: Optional[str] = Field(..., description="The description of action recommended.")
     action_taken: Optional[str] = Field(..., description="The description of action taken.")
