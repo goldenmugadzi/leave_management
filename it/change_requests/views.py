@@ -1757,6 +1757,12 @@ def view_profile_modification_request(request, change_request, permissions, appr
     # Get base template context
     context = get_base_template_context(request, change_request)
     
+    # Add debugging logs for troubleshooting
+    logger.info(f"Change Request Application: {change_request.application}")
+    logger.info(f"Profile Change roles_to_action: {profile_change.roles_to_action}")
+    logger.info(f"Profile Change roles_actions: {profile_change.roles_actions}")
+    logger.info(f"Change request ID: {change_request.cr_id}")
+    
     # Add specific context for profile modification request
     context.update({
         "section_head_allowed": permissions['section_head_allowed'],
@@ -1765,6 +1771,8 @@ def view_profile_modification_request(request, change_request, permissions, appr
         "it_section_head_awaiting_action": approval_status['it_section_head_awaiting_action'],
         "cr_approvals": approval_status['cr_approvals'],
         "cr": cr,
+        # Add the application directly to context for the template
+        "selected_application": change_request.application,
     })
     
     logger.info(f"Profile modification request - section_head_awaiting_action: {approval_status['section_head_awaiting_action']}")
@@ -2235,9 +2243,31 @@ def approve_profile_request(request):
                             profile_modification = change_request.profile_modification
                             profile_modification.roles_actions = roles_actions if roles_actions else profile_modification.roles_actions
                             profile_modification.save()
+                    
+                    # Check if there are roles to assign/designate
+                    has_roles_to_assign = False
+                    if change_request.change_type == "new_profile":
+                        new_profile = change_request.new_profile
+                        has_roles_to_assign = bool(new_profile.roles_to_action and new_profile.roles_to_action.strip() and 
+                                                   new_profile.roles_to_action.strip() not in ['No roles or designations specified', 'None', ''])
+                    elif change_request.change_type == "profile_modification":
+                        profile_modification = change_request.profile_modification
+                        has_roles_to_assign = bool(profile_modification.roles_to_action and profile_modification.roles_to_action.strip() and 
+                                                   profile_modification.roles_to_action.strip() not in ['No roles or designations specified', 'None', ''])
+                    
+                    # Allow approval even when no roles_actions if there are no roles to assign
                     if not roles_actions:
-                        messages.error(request, "Please enter the roles implemented")
-                        return redirect("/change_requests/change_request_index")
+                        if has_roles_to_assign:
+                            messages.error(request, "Please enter the roles implemented")
+                            return redirect("/change_requests/change_request_index")
+                        else:
+                            # No roles to assign, allow approval but with warning
+                            roles_actions = "No roles applied - no roles were specified for assignment"
+                            messages.warning(request, WARNING_MESSAGES['NO_ROLES_TO_ASSIGN'])
+                            logger.warning(LOG_MESSAGES['NO_ROLES_APPROVAL'].format(
+                                cr_id=change_request.cr_id, 
+                                username=request.user.get_full_name()
+                            ))
                     if change_request.change_type == "new_profile":
                         new_profile = change_request.new_profile
                         print("new_profile: ", new_profile)

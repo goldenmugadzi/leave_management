@@ -71,6 +71,7 @@ SUCCESS_MESSAGES = {
 WARNING_MESSAGES = {
     'ALREADY_APPROVED': 'Change request has already been approved by the section head. You cannot update it',
     'NO_CHANGES_MADE': 'No changes were made to the change request',
+    'NO_ROLES_TO_ASSIGN': 'Change request approved with no role changes - no roles were specified for assignment',
 }
 
 # Application Names
@@ -135,4 +136,5 @@ LOG_MESSAGES = {
     'PERMISSION_DENIED': 'Permission denied for user {username} on change request {cr_id}',
     'VALIDATION_ERROR': 'Validation error for user {username}: {errors}',
     'APPROVAL_ACTION': 'Approval action: {action} on {cr_id} by {username}',
+    'NO_ROLES_APPROVAL': 'IT approved change request {cr_id} with no roles to assign by {username}',
 }
