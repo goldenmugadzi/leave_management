@@ -250,7 +250,7 @@ def view_notifications(request):
         request, "risk/nonconformity/inbox.html", {"notifications": notifications}
     )
 
-
+ 
 @login_required
 def view_nonconformities(request):
     nonconformities = Nonconformity.objects.all()

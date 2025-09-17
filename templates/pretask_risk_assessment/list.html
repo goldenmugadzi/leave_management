@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Pretask Risk Assessments</h2>
+<ul>
+  {% for assessment in assessments %}
+    <li>
+      <a href="{% url 'pretask_risk_assessment:detail' assessment.id %}">{{ assessment.task_name }} ({{ assessment.risk_level }})</a>
+    </li>
+  {% endfor %}
+</ul>
+<a href="{% url 'pretask_risk_assessment:create' %}">Add New Assessment</a>
+{% endblock %}

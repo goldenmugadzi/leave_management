@@ -3,19 +3,16 @@
 from django.shortcuts import render, redirect
 from django.views import View
 from django.views.generic import DetailView, ListView
-from .models import BatteryInstallation, Substation
-from .forms import BatteryInstallationForm, CellFormSet, CellFormSet1
+from .models import BatteryInstallation, Substation,BatteryMaintenance
+from .forms import BatteryInstallationForm, CellFormSet1,  CellFormSet, SubstationForm
 from django.contrib.auth.mixins import LoginRequiredMixin
 import csv
 from django.http import HttpResponse
-from .models import Substation
 from it.users.models import Notification, Regions, Districts, Depots
 from django.contrib import messages
 import os
 from django.contrib.auth.decorators import login_required
-
-from .forms import BatteryInstallationForm, CellFormSet, SubstationForm
-from .models import Substation
+from EquipTracker.models import addEquipment ,addEquipmentChange
 
 @login_required
 def clear_notifications(request):
@@ -128,11 +125,20 @@ class InstallBattery(LoginRequiredMixin, View):
                     "formset": formset,
                     "substationForm": substationForm,
                 })
-
+            equipment_id = addEquipment("Battery")
             battery = form.save(commit=False)
+            battery.equipment_tracker = equipment_id
             battery.substation = substation
             battery.save()
-
+            addEquipmentChange(
+                district=substation.district.district,
+                substation=substation,
+                equipment_tracker=equipment_id,
+                action_taken="Insalation",
+                date=battery.date,
+                reason="Insalation of new battery",
+                signed_by=request.user,
+            )
             cells = formset.save(commit=False)
             for cell in cells:
                 cell.installation = battery
@@ -180,3 +186,8 @@ class BatteryInstallationDetailView(DetailView):
     model = BatteryInstallation
     template_name = "battery/battery_installation_detail.html"
     context_object_name = "installation"
+
+class DetailedBatteryInfo(LoginRequiredMixin, DetailView):
+    model = BatteryMaintenance
+    template_name = "battery/detailed_battery_info.html"
+    context_object_name = "battery"

@@ -214,6 +214,7 @@ class UserProfile(AbstractUser):
         else:
             return f"{self.username}"
 
+
     def add_role(self, role, app_id):
         existing_role = self.roles.filter(app_id__fullname=app_id).first()
         if existing_role:

@@ -1,0 +1,58 @@
+import graphene
+from graphene_django.types import DjangoObjectType
+from .models import Job, Teammember, PretaskRiskAssessment
+from .types import JobType, TeammemberType, PretaskRiskAssessmentType
+from django.contrib.auth import get_user_model
+
+class Query(graphene.ObjectType):
+    jobs_for_user = graphene.List(JobType)
+
+    def resolve_jobs_for_user(self, info):
+        user = info.context.user
+        if user.is_authenticated:
+            return Job.objects.filter(issuing_senior_authorised_person=user)
+        return Job.objects.none()
+
+class CreatePretaskRiskAssessment(graphene.Mutation):
+    class Arguments:
+        job_id = graphene.ID(required=True)
+        equipment_id = graphene.ID(required=True)
+        harzard = graphene.String(required=True)
+        control_measures = graphene.String(required=True)
+
+    assessment = graphene.Field(PretaskRiskAssessmentType)
+
+    def mutate(self, info, job_id, equipment_id, harzard, control_measures):
+        job = Job.objects.get(pk=job_id)
+        equipment = None
+        from toolsandequipment.model import ToolOrEquipment
+        try:
+            equipment = ToolOrEquipment.objects.get(pk=equipment_id)
+        except ToolOrEquipment.DoesNotExist:
+            raise Exception("Equipment not found")
+        assessment = PretaskRiskAssessment.objects.create(
+            job=job,
+            equipment=equipment,
+            harzard=harzard,
+            control_measures=control_measures
+        )
+        return CreatePretaskRiskAssessment(assessment=assessment)
+
+class UpdateTeammemberAgreed(graphene.Mutation):
+    class Arguments:
+        teammember_id = graphene.ID(required=True)
+        agreed = graphene.String(required=True)
+
+    teammember = graphene.Field(TeammemberType)
+
+    def mutate(self, info, teammember_id, agreed):
+        teammember = Teammember.objects.get(pk=teammember_id)
+        teammember.agreed = agreed
+        teammember.save()
+        return UpdateTeammemberAgreed(teammember=teammember)
+
+class Mutation(graphene.ObjectType):
+    create_pretask_risk_assessment = CreatePretaskRiskAssessment.Field()
+    update_teammember_agreed = UpdateTeammemberAgreed.Field()
+
+schema = graphene.Schema(query=Query, mutation=Mutation)

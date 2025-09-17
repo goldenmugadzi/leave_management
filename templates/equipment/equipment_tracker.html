@@ -32,12 +32,12 @@
               <tr class="h-1">
                 <td><a class="text-blue-500" href="{% url 'EquipTracker:equipment_tracker' equipment.id %}">{{ equipment.id|default_if_none:'' }}</a></td>
                 <td>{{ equipment.type_of_equipment|default_if_none:'' }}</td>
-               <td>{{ equipment.reason|default_if_none:'' }}</td>
+                <td>{{ equipment.reason|default_if_none:'' }}</td>
                 <td>{{ equipment.created_at|date }}</td>
                 <td>{{ equipment.cost_center }}</td>
                 <td>{{ equipment.customer.name|default_if_none:'' }}</td>
                 <td><span title="{{ equipment.meter.meter_type }}">{{ equipment.meter.number }}</span></td>
-                <td>{{ equipment.process.approval_set.last|default_if_none:"No Approval" }}</td> 
+                <td>{{ equipment.process.approval_set.last|default_if_none:"No Approval" }}</td>
               </tr>
             {% endfor %}
           </tbody>

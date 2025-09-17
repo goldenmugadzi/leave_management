@@ -7,13 +7,10 @@ from it.users.models import Regions, Districts, Depots
 FIELD_CSS_CLASSES = "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
 
 class BatteryInstallationForm(forms.ModelForm):  
-   
     class Meta:
         model = BatteryInstallation
-        fields = [
-            'substation', 'battery_name', 'cell_type',
-             'plates_per_cell', 'battery_application'
-        ]
+        fields = "__all__"
+        exclude = ['equipment_tracker']
         
     def __init__(self, *args, **kwargs):
         user = kwargs.pop('user', None)
@@ -25,6 +22,7 @@ class BatteryInstallationForm(forms.ModelForm):
             if field_name in ['substation']:
                 classes += ' select2'  # Add select2 for dropdowns
             field.widget.attrs.update({'class': classes})
+            if isinstance(field.widget, forms.Textarea):field.widget.attrs.update({'rows': '3'})
             
         if user and hasattr(user, 'region'):
             self.fields['substation'].queryset = Substation.objects.filter(region=user.region)
@@ -59,6 +57,7 @@ class SubstationForm(forms.ModelForm):
             self.fields['region'].queryset = Regions.objects.filter(id=user.region.id)
             self.fields['district'].queryset = Districts.objects.filter(region_id=user.region.id)
             self.fields['depot'].queryset = Depots.objects.filter(region_id=user.region.id)
+
 
 CellFormSet = inlineformset_factory(
     BatteryInstallation,

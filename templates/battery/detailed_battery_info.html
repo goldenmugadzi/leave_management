@@ -168,11 +168,11 @@
               </h1>
               {% endif %}
               <div class="scrollable-div">
-                {% for cell in installation.batterymaintenance.all %}
+                {% for cell in installation.cells.all %}
                 
                 <a
               class="text-blue-500 button"
-              href="{% url 'BatteryMaintenance:detailed_battery_info' cell.id %}"
+              href="{% url 'BatteryMaintenance:inspect_battery' installation.id %}"
               >  <div class="card-body rounded-lg rounded-md rounded-sm">
                   <div
                     class="card mb-3 row rounded py-4 border-3 border bg-green-200 border-red-200 p-3 m-auto container grid grid-cols-3 text-center"
@@ -202,7 +202,6 @@
                 </div>
                </a>   {% endfor %}
               </div>
-            <!-- zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz -->
       </div>
       </div>
 </div>
