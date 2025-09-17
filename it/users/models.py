@@ -310,6 +310,7 @@ QUALIFICATION_TYPE = [
     ("Degree", "Degree"),
     ("Masters", "Masters"),
     ("PHD", "PHD"),
+    ("Other", "Other"),
 ]
 
 class UserQualification(TimeStamp):
