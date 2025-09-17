@@ -645,12 +645,251 @@ urlpatterns = [
 3. **Pagination**: Use pagination for large datasets
 4. **File Uploads**: Optimize image and document upload handling
 
+## Mobile Application Features for Field Operations
+
+### Overview
+The mobile application serves as a field companion to the web-based inspection system, focusing on data collection, real-time updates, and field worker productivity while maintaining seamless integration with the existing inspection workflow.
+
+### Core Mobile Features
+
+#### 1. Field Inspection Data Collection
+```python
+# Mobile-optimized inspection workflow
+- Real-time E117 and E60 form completion
+- Offline data collection with automatic sync
+- Step-by-step guided inspection process
+- Conditional form fields based on inspection type
+- Progress tracking and save draft functionality
+```
+
+#### 2. Assignment Management
+Based on `ApplicationAssignment` model:
+- **Push Notifications**: New assignments and updates
+- **Assignment Workflow**: Accept/reject assignments with one tap
+- **Due Date Management**: Visual alerts for approaching deadlines
+- **Status Updates**: Real-time progress reporting to supervisors
+- **Priority Handling**: Urgent assignment highlighting
+
+#### 3. Document and Media Management
+Enhanced `ApplicationAttachment` functionality:
+- **Camera Integration**: Direct photo capture for defects and installations
+- **File Categorization**: Automatic categorization (E21, E22, E25, other)
+- **Offline Queue**: File uploads queued when offline
+- **Compression**: Automatic image optimization for bandwidth efficiency
+- **PDF Generation**: Generate inspection reports on-device
+
+#### 4. Contractor and Customer Data
+Mobile-optimized access to existing models:
+- **Quick Lookup**: Search customers and contractors by ID or name
+- **Contact Integration**: Click-to-call functionality
+- **Information Verification**: Customer signature capture
+- **QR Code Scanning**: Quick property/customer identification
+
+### Mobile-Specific API Endpoints
+
+#### Inspection Management APIs
+```python
+# RESTful endpoints for mobile app integration
+GET    /api/mobile/inspections/assigned/          # Get assigned inspections
+POST   /api/mobile/inspections/{pk}/start/        # Start inspection
+PUT    /api/mobile/inspections/{pk}/update/       # Update inspection data
+POST   /api/mobile/inspections/{pk}/complete/     # Submit completed inspection
+POST   /api/mobile/inspections/photos/upload/     # Upload inspection photos
+GET    /api/mobile/inspections/{pk}/attachments/  # Get inspection attachments
+```
+
+#### Assignment APIs
+```python
+# Assignment management for field officers
+GET    /api/mobile/assignments/my/                # Get my assignments
+POST   /api/mobile/assignments/{pk}/accept/       # Accept assignment
+POST   /api/mobile/assignments/{pk}/complete/     # Complete assignment
+PUT    /api/mobile/assignments/{pk}/status/       # Update assignment status
+```
+
+#### Synchronization APIs
+```python
+# Data sync endpoints for offline capability
+POST   /api/mobile/sync/inspections/              # Sync inspection data
+POST   /api/mobile/sync/assignments/              # Sync assignment updates
+GET    /api/mobile/sync/master-data/              # Get updated master data
+POST   /api/mobile/sync/conflicts/resolve/        # Resolve data conflicts
+```
+
+### Offline Capabilities
+
+#### 1. Local Data Storage
+- **SQLite Database**: Local storage for inspection data
+- **Master Data Caching**: Customer, contractor, and reference data
+- **Conflict Resolution**: Handle concurrent updates when syncing
+- **Data Integrity**: Ensure data consistency across offline sessions
+
+#### 2. Sync Management
+```python
+# Offline sync service architecture
+class MobileDataSyncService:
+    def queue_inspection_update(inspection_id, mobile_data)
+    def sync_when_online()
+    def resolve_conflicts(server_data, local_data)
+    def validate_sync_integrity()
+```
+
+#### 3. Offline Form Completion
+- Complete inspection forms without internet connection
+- Auto-save form progress at regular intervals
+- Visual indicators for sync status
+- Conflict resolution interface for data discrepancies
+
+### Location-Based Features
+
+#### 1. GPS Integration
+- **Location Verification**: Verify inspection location accuracy
+- **Route Optimization**: Suggest optimal routes for multiple assignments
+- **Geofencing**: Automatic check-in/check-out for inspection sites
+- **Location History**: Track inspector movement for audit purposes
+
+#### 2. Map Integration
+- **Site Navigation**: Turn-by-turn directions to inspection sites
+- **Nearby Assignments**: Show assignments in current area
+- **Coverage Areas**: Display inspector's assigned territories
+- **Emergency Services**: Quick access to emergency contacts
+
+### Enhanced Inspection Workflows
+
+#### 1. E117 Mobile Workflow
+From `InspectionReport` model:
+- **Progressive Disclosure**: Show relevant fields based on inspection type
+- **Smart Validation**: Real-time validation with helpful error messages
+- **Photo Integration**: Associate photos with specific inspection items
+- **Signature Capture**: Digital signature for report completion
+
+#### 2. E60 Mobile Workflow
+Enhanced for mobile use:
+- **Section-by-Section**: Break down complex form into manageable sections
+- **Quick Actions**: Common defect reporting shortcuts
+- **Photo Documentation**: Associate photos with specific equipment items
+- **Condition Comparison**: Side-by-side "As Found" vs "As Left" interface
+
+#### 3. Application Processing
+Based on `ClientApplication` model:
+- **New Application Creation**: Create applications directly from field
+- **Contractor Verification**: Scan contractor licenses and certifications
+- **Priority Assessment**: Mark urgent applications for immediate attention
+- **Installation Type Selection**: Quick selection with visual guides
+
+### User Experience Features
+
+#### 1. Authentication and Security
+- **Single Sign-On**: Integration with existing BEII authentication
+- **Biometric Login**: Fingerprint/face recognition for quick access
+- **Session Management**: Secure session handling with automatic logout
+- **Data Encryption**: End-to-end encryption for sensitive data
+
+#### 2. Dashboard and Analytics
+Mobile version of web `dashboard` view:
+- **Personal Metrics**: Individual performance statistics
+- **Assignment Overview**: Visual representation of workload
+- **Completion Rates**: Track inspection completion rates
+- **Due Date Tracking**: Visual countdown for approaching deadlines
+
+#### 3. Communication Features
+- **In-App Messaging**: Communicate with supervisors and colleagues
+- **Issue Escalation**: Quick escalation workflow for problems
+- **Customer Communication**: Log customer interactions
+- **Photo Sharing**: Share inspection photos with team members
+
+### Technical Architecture
+
+#### 1. Cross-Platform Development
+```javascript
+// React Native or Flutter implementation
+- Single codebase for iOS and Android
+- Native performance for camera and GPS features
+- Platform-specific UI optimizations
+- Push notification integration
+```
+
+#### 2. Data Architecture
+```python
+# Mobile app data models (simplified versions of Django models)
+class MobileInspectionReport:
+    def __init__(self):
+        self.sync_status = 'pending'  # pending, synced, conflict
+        self.offline_id = uuid4()     # Local identifier
+        self.photos = []              # Local photo references
+        self.gps_location = None      # GPS coordinates
+```
+
+#### 3. Security Implementation
+- **Certificate Pinning**: Secure API communication
+- **Local Data Encryption**: Encrypt sensitive data on device
+- **Token Management**: Secure JWT token handling
+- **Audit Logging**: Track all user actions for compliance
+
+### Integration with Web System
+
+#### 1. Real-Time Updates
+- **WebSocket Integration**: Real-time status updates
+- **Push Notifications**: Immediate notification of assignment changes
+- **Live Dashboard**: Real-time updates on web dashboard
+- **Status Synchronization**: Instant status changes across platforms
+
+#### 2. Report Generation
+- **PDF Export**: Generate and share inspection reports
+- **Email Integration**: Direct email delivery of completed inspections
+- **Print Support**: Print reports from mobile device
+- **Template Consistency**: Maintain consistent formatting with web reports
+
+#### 3. Workflow Integration
+- **Assignment Distribution**: Seamless assignment from web to mobile
+- **Approval Workflows**: Mobile notifications for approval requests
+- **Escalation Handling**: Automatic escalation based on mobile inputs
+- **Compliance Tracking**: Ensure mobile activities meet compliance requirements
+
+### Implementation Phases
+
+#### Phase 1: Core Mobile Features (4-6 weeks)
+1. Authentication and basic UI
+2. Offline data storage setup
+3. Basic inspection form completion
+4. Photo capture and local storage
+5. Assignment list and acceptance
+
+#### Phase 2: Advanced Features (4-6 weeks)
+1. GPS integration and location verification
+2. Advanced offline sync capabilities
+3. Complete inspection workflows (E117, E60)
+4. Push notification system
+5. Report generation and sharing
+
+#### Phase 3: Integration and Optimization (3-4 weeks)
+1. Real-time web system integration
+2. Performance optimization
+3. Security hardening
+4. User acceptance testing
+5. App store deployment preparation
+
+### Deployment and Maintenance
+
+#### 1. App Store Deployment
+- **Enterprise Distribution**: Internal distribution for ZETDC staff
+- **Version Management**: Staged rollout with rollback capability
+- **Update Strategy**: Over-the-air updates for critical fixes
+- **Device Management**: MDM integration for corporate devices
+
+#### 2. Training and Support
+- **User Training**: Field officer training on mobile app usage
+- **Documentation**: Mobile app user guides and troubleshooting
+- **Support System**: Help desk integration for mobile app issues
+- **Feedback Collection**: In-app feedback system for continuous improvement
+
 ## Future Enhancements
 
-1. **Mobile App**: Develop mobile application for field inspections
-2. **Offline Capability**: Support offline data entry and sync
-3. **GPS Integration**: Add location tracking for inspections
-4. **AI Integration**: Implement AI-powered defect detection
-5. **Workflow Automation**: Add automated approval workflows
+1. **AI Integration**: Implement AI-powered defect detection from photos
+2. **Predictive Maintenance**: Use inspection data for predictive analytics
+3. **Voice Commands**: Voice-to-text for hands-free data entry
+4. **AR Integration**: Augmented reality for equipment identification
+5. **IoT Integration**: Direct integration with smart inspection equipment
+6. **Advanced Analytics**: Machine learning for inspection pattern analysis
 
-This implementation provides a comprehensive solution for managing E60 Consumer Substation Inspection and Overhaul forms while maintaining consistency with the existing BEII system architecture and patterns.
+This implementation provides a comprehensive solution for managing E60 Consumer Substation Inspection and Overhaul forms while maintaining consistency with the existing BEII system architecture and patterns, enhanced with robust mobile capabilities for field operations.
