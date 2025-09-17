@@ -130,7 +130,9 @@ class AppraisalUpdateForm(forms.ModelForm):
         
         if appraisee_id:
             cost_center_user_qr = get_all_cost_center_users(user_id=appraisee_id)
-            self.fields["appraiser"].queryset = cost_center_user_qr.exclude(id=appraisal_reviewer_id) #exclude reviewer
+            
+            if appraisal_reviewer_id is not None:
+                self.fields["appraiser"].queryset = cost_center_user_qr.exclude(id=appraisal_reviewer_id) #exclude reviewer
             self.fields['reviewer'].disabled = True
             self.fields["reviewer"].required = False
         elif appraiser_id:

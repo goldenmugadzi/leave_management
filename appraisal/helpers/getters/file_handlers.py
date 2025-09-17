@@ -14,7 +14,7 @@ class FileHandlerStrategyInterface(Protocol):
             dict: Prepared data
         """
         pass
-  
+
 class UserQualificationStrategy:
     
     def __load_all_sheets(self):

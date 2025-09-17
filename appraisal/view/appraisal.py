@@ -85,7 +85,7 @@ class AppraisalCreateView(SuccessMessageMixin, CreateView):
         if not appraisee_object.designation or not appraisee_object.cost_center or not appraisee_object.grade:
             return True
         return False  
-
+    
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context =  super().get_context_data(**kwargs)
         user_object = self.get_user_object()
@@ -184,9 +184,15 @@ class AppraisalUpdateView(SuccessMessageMixin, UpdateView):
         kwargs = super().get_form_kwargs()
         appraisee_id = self.is_appraisee_requesting()
         appraiser_id = self.is_appraiser_requesting()
+        reviewer = self.get_object().reviewer
+        
         if appraisee_id:
             kwargs["appraisee_id"] = appraisee_id
-            kwargs["appraisal_reviewer_id"] = self.get_object().reviewer.id
+            
+            reviewer_id = None
+            if reviewer is not None:
+                reviewer_id = reviewer.id
+            kwargs["appraisal_reviewer_id"] = reviewer_id
         if appraiser_id:
             kwargs["appraiser_id"] = appraiser_id
             kwargs["appraisal_appraisee_id"] = self.get_object().user.id
@@ -219,13 +225,24 @@ class AppraisalUpdateView(SuccessMessageMixin, UpdateView):
         
         if not appraisee_object.designation or not appraisee_object.cost_center or not appraisee_object.grade:
             return True
-        return False       
+        return False   
+    
+    def get_approval_stages(self):
+        try:
+            appraisal_object = self.get_object()
+            handler = ApprovalStagesHandler(appraisal_id=appraisal_object.id)
+            return handler.get_stages_info()
+        except Exception as e:
+            logger.error(f"[AppraisalUpdateView] get_approval_stages for Appraisal pk: {appraisal_object.id} failed with error: {e}")
+            return None    
 
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context =  super().get_context_data(**kwargs)
         appraisal_object = self.get_object()
         appraisee_object = appraisal_object.user
+        
         context[self.context_object_name] = context.get("form")
+        context.update(self.get_approval_stages())
         
         context["appraiser_object"] = appraisal_object.appraiser
         context["reviewer_object"] = appraisal_object.reviewer
