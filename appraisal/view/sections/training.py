@@ -198,11 +198,12 @@ class TrainingAndDevelopmentTemplateView(TemplateView):
     
     def get_approval_stages(self):
         try:
-            handler = ApprovalStagesHandler(appraisal_id=self.kwargs.get("appraisal_id"))
+            appraisal_object = self.get_appraisal_object()
+            handler = ApprovalStagesHandler(appraisal_id=appraisal_object.id)
             return handler.get_stages_info()
         except Exception as e:
-            logger.error(f"[TrainingAndDevelopmentTemplateView] for Appraisal - {self.get_appraisal_object()} failed with error: {e}")
-            return None
+            logger.error(f"[AppraisalUpdateView] get_approval_stages for Appraisal pk: {appraisal_object.id} failed with error: {e}")
+            return None    
         
     def get_current_date_assessment(self):
         appraisal_created_date = self.get_appraisal_object().created_date

@@ -30,7 +30,82 @@ class AppraisalKraAndYearQuarterHandler:
         """
         return YearQuarter.objects.filter(year=year).order_by("quarter")
 
+
+class ReviewersStatusHandler:
+    
+    def __get_unaccepted_status_qr(self, appraisal_id: int, year_quarter_id: int):
+        repo = ApprasialKraReviewerStatusRepository()
+        qr = repo.fetch_by_appraisal_id_quarter_year(
+            year_q_id=year_quarter_id,
+            appraisal_id=appraisal_id
+        ).filter(
+            (Q(confirmation_status=APPRAISAL_KRA_REVIEWER_STATUS_CHOICES[0][0])|Q(confirmation_status=APPRAISAL_KRA_REVIEWER_STATUS_CHOICES[2][0]))
+        )
+        return qr
+    
+    def __get_for_appraiser(self, appraisal_id: int, year_quarter_id: int):
+        unaccepted_qr = self.__get_unaccepted_status_qr(
+            appraisal_id=appraisal_id,
+            year_quarter_id=year_quarter_id
+        )
+        return unaccepted_qr.filter(
+            reviewer=REVIEWERS_CONFIRMATION_STATUS[0][0]
+        )
+    
+    def __get_for_reviewer(self, appraisal_id: int, year_quarter_id: int):
+        unaccepted_qr = self.__get_unaccepted_status_qr(
+            appraisal_id=appraisal_id,
+            year_quarter_id=year_quarter_id
+        )
+        return unaccepted_qr.filter(
+            reviewer=REVIEWERS_CONFIRMATION_STATUS[1][0]
+        )
         
+    def __get_for_hr(self, appraisal_id: int, year_quarter_id: int):
+        unaccepted_qr = self.__get_unaccepted_status_qr(
+            appraisal_id=appraisal_id,
+            year_quarter_id=year_quarter_id
+        )
+        return unaccepted_qr.filter(
+            reviewer=REVIEWERS_CONFIRMATION_STATUS[2][0]
+        )
+        
+    
+    def get_quarters_approval(self, appraisal_kra_id: int, for_appraiser: bool, for_reviewer: bool, for_hr: bool)->List[ApprovedQuartersType]:
+        appraisal_year_quarter_handler = AppraisalKraAndYearQuarterHandler()
+        appraisal_dept_output_qr = appraisal_year_quarter_handler.get_appraisal_kra_obj(appraisal_id=appraisal_kra_id)
+        appraisal_dept_output = appraisal_dept_output_qr.first()
+        year_quarter_qr = appraisal_year_quarter_handler.get_year_quarter_queryset(year=appraisal_dept_output.year_quarter.year)
+        result = []
+        
+        for year_quarter_obj in year_quarter_qr:
+            year_quarter_name = year_quarter_obj.__str__()
+            if for_appraiser:
+                not_accepted_review_status_qr = self.__get_for_appraiser(
+                    appraisal_id=appraisal_dept_output.appraisal.id,
+                    year_quarter_id=year_quarter_obj.id
+                )
+            elif for_reviewer:
+                not_accepted_review_status_qr = self.__get_for_reviewer(
+                    appraisal_id=appraisal_dept_output.appraisal.id,
+                    year_quarter_id=year_quarter_obj.id
+                )
+            elif for_hr:
+                not_accepted_review_status_qr = self.__get_for_hr(
+                    appraisal_id=appraisal_dept_output.appraisal.id,
+                    year_quarter_id=year_quarter_obj.id
+                )
+            else:
+                logger.error(f"[ReviewersStatusHandler] get_quarters_approval has no reviewer specified")
+                return result
+            
+            approved_quarter_type_obj = None
+            if not_accepted_review_status_qr.exists():
+                approved_quarter_type_obj = ApprovedQuartersType(appraisal_kra_id=appraisal_kra_id, quarter_name=year_quarter_name, is_approved=False)
+            else:
+                approved_quarter_type_obj = ApprovedQuartersType(appraisal_kra_id=appraisal_kra_id, quarter_name=year_quarter_name, is_approved=True)
+            result.append(approved_quarter_type_obj)
+        return result
 
 @dataclass
 class ApprovalStagesHandler:
@@ -133,41 +208,39 @@ class ScoringStageStrategy:
                 approved_quarter_type_obj = ApprovedQuartersType(appraisal_kra_id=appraisal_kra_id, quarter_name=year_quarter_name, is_approved=True)
             result.append(approved_quarter_type_obj)
         return result
-
+    
 class AppraiserReviewStageStrategy:
-    
-    def __get_unaccepted_status_qr(self, appraisal_id: int, year_quarter_id: int):
-        repo = ApprasialKraReviewerStatusRepository()
-        qr = repo.fetch_by_appraisal_id_quarter_year(
-            year_q_id=year_quarter_id,
-            appraisal_id=appraisal_id
-        ).filter(
-            (Q(confirmation_status=APPRAISAL_KRA_REVIEWER_STATUS_CHOICES[0][0])|Q(confirmation_status=APPRAISAL_KRA_REVIEWER_STATUS_CHOICES[2][0]))
-        )
-        # print("===========", qr.first.confirmation_status)
-        return qr
-    
-    def get_approved_quarters(self, appraisal_kra_id: int)->List[ApprovedQuartersType]:
-        appraisal_year_quarter_handler = AppraisalKraAndYearQuarterHandler()
-        appraisal_dept_output_qr = appraisal_year_quarter_handler.get_appraisal_kra_obj(appraisal_id=appraisal_kra_id)
-        appraisal_dept_output = appraisal_dept_output_qr.first()
-        year_quarter_qr = appraisal_year_quarter_handler.get_year_quarter_queryset(year=appraisal_dept_output.year_quarter.year)
-        result = []
         
-        for year_quarter_obj in year_quarter_qr:
-            year_quarter_name = year_quarter_obj.__str__()
-            not_accepted_review_status_qr = self.__get_unaccepted_status_qr(
-                appraisal_id=appraisal_dept_output.appraisal.id,
-                year_quarter_id=year_quarter_obj.id
-            )
-            
-            approved_quarter_type_obj = None
-            if not_accepted_review_status_qr.exists():
-                approved_quarter_type_obj = ApprovedQuartersType(appraisal_kra_id=appraisal_kra_id, quarter_name=year_quarter_name, is_approved=False)
-            else:
-                approved_quarter_type_obj = ApprovedQuartersType(appraisal_kra_id=appraisal_kra_id, quarter_name=year_quarter_name, is_approved=True)
-            result.append(approved_quarter_type_obj)
-        return result
+    def get_approved_quarters(self, appraisal_kra_id: int)->List[ApprovedQuartersType]:
+        reviewers_status_handler = ReviewersStatusHandler()
+        return reviewers_status_handler.get_quarters_approval(
+            appraisal_kra_id=appraisal_kra_id,
+            for_appraiser=True,
+            for_reviewer=False,
+            for_hr=False
+        )
+        
+class ReviewerReviewStageStrategy:
+        
+    def get_approved_quarters(self, appraisal_kra_id: int)->List[ApprovedQuartersType]:
+        reviewers_status_handler = ReviewersStatusHandler()
+        return reviewers_status_handler.get_quarters_approval(
+            appraisal_kra_id=appraisal_kra_id,
+            for_appraiser=False,
+            for_reviewer=True,
+            for_hr=False
+        )
+        
+class HrReviewStageStrategy:
+        
+    def get_approved_quarters(self, appraisal_kra_id: int)->List[ApprovedQuartersType]:
+        reviewers_status_handler = ReviewersStatusHandler()
+        return reviewers_status_handler.get_quarters_approval(
+            appraisal_kra_id=appraisal_kra_id,
+            for_appraiser=False,
+            for_reviewer=False,
+            for_hr=True
+        )
 
 class PerformanceReviewStageStrategy:
     
@@ -192,7 +265,7 @@ class PerformanceReviewStageStrategy:
     
     def get_approved_quarters(self, appraisal_kra_id: int)->List[ApprovedQuartersType]:
         appraisal_year_quarter_handler = AppraisalKraAndYearQuarterHandler()
-        appraisal_kra_obj = appraisal_year_quarter_handler.get_appraisal_kra_obj(appraisal_id=appraisal_kra_id)
+        appraisal_kra_obj = appraisal_year_quarter_handler.get_appraisal_kra_obj(appraisal_id=appraisal_kra_id).first()
         year_quarter_qr = appraisal_year_quarter_handler.get_year_quarter_queryset(year=appraisal_kra_obj.year_quarter.year)
 
         result = []
@@ -231,7 +304,7 @@ class TrainingAndDevelopmentStageStrategy:
     
     def get_approved_quarters(self, appraisal_kra_id: int)->List[ApprovedQuartersType]:
         appraisal_year_quarter_handler = AppraisalKraAndYearQuarterHandler()
-        appraisal_kra_obj = appraisal_year_quarter_handler.get_appraisal_kra_obj(appraisal_id=appraisal_kra_id)
+        appraisal_kra_obj = appraisal_year_quarter_handler.get_appraisal_kra_obj(appraisal_id=appraisal_kra_id).first()
         year_quarter_qr = appraisal_year_quarter_handler.get_year_quarter_queryset(year=appraisal_kra_obj.year_quarter.year)
 
         result = []
