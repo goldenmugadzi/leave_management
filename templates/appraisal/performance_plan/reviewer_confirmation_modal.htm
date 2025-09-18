@@ -20,7 +20,7 @@
 
             <div class="flex justify-end mt-2 mr-8 gap-2">
                 {% if is_reviewer == True %}
-                    {% if score_object.is_scored %}
+                    {% if all_scored %}
                         <button type="submit" class="w-96 bg-blue-500 hover:bg-blue-700 inline-block rounded-full text-white py-2 px-4" name="reviewer_request">Save</button>
                     {% endif %}
                 {% endif %}

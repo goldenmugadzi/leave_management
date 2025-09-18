@@ -9,8 +9,9 @@
     <div class="content-wrapper">
         <div class="grid grid-cols-1">
             <div class="bg-gray-50 shadow-lg rounded-lg p-6">
-                <div class="flex justify-between">
-                    <div>
+                <div class="flex items-start justify-between w-full gap-6">
+                    <!-- Left Section -->
+                    <div class="flex-1">
                         <h1 class="font-bold text-2xl text-gray-900">
                             {% if is_grade_c_and_above %}
                                 OUTPUT PERFORMANCE
@@ -18,10 +19,36 @@
                                 ACTIVITY PERFORMANCE
                             {% endif %}
                         </h1>
-                        <p class="text-lg font-bold text-gray-500">Department Output: {{department_output_obj}} with Weight: {{department_output_obj.weight}}%</p>
-                        <p class="text-md text-gray-500">This section provides a brief summary of the evaluated performance dimensions, highlighting their respective scores to offer a clear overview of overall performance.</p>
+                        <p class="text-lg font-bold text-gray-500">
+                            Department Output: {{department_output_obj}} with Weight: {{department_output_obj.weight}}%
+                        </p>
+                        <p class="text-md text-gray-500">
+                            This section provides a brief summary of the evaluated performance dimensions,
+                            highlighting their respective scores to offer a clear overview of overall performance.
+                        </p>
                     </div>
-                    
+
+                    <!-- Right Section (Buttons) -->
+                    <div class="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+                        <div onclick="openReviewerConfirmationModal()"
+                            class="my-2 bg-blue-500 hover:bg-blue-700 rounded-full text-white py-2 px-4 cursor-pointer shadow">
+                            Reviewer Confirmation
+                        </div>
+
+                        <div onclick="openAppraiserConfirmationModal()"
+                            class="my-2 bg-blue-500 hover:bg-blue-700 rounded-full text-white py-2 px-4 cursor-pointer shadow">
+                            Appraiser Confirmation
+                        </div>
+
+                        <div onclick="openHrConfirmationModal()"
+                            class="my-2 bg-blue-500 hover:bg-blue-700 rounded-full text-white py-2 px-4 cursor-pointer shadow">
+                            Hr Confirmation
+                        </div>
+
+                        {% include "appraisal/performance_plan/reviewer_confirmation_modal.htm"%}
+                        {% include "appraisal/performance_plan/appraiser_confirmation_modal.html"%}
+                        {% include "appraisal/performance_plan/hr_confirmation_modal.html"%}
+                    </div>
                 </div>
             </div>
 

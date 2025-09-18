@@ -305,6 +305,13 @@ class AppraisalOutPutPerformanceDimensionScoreRepository:
 
         except Exception as e:
             raise Exception(f"[AppraisalOutPutPerformanceDimensionScoreRepository] fetch_by_appraisal_id Repo with pk: {appraisal_id}, failed with error: {e}")
+    
+    def fetch_by_appraisal_department_output_id(self, appraisal_department_output_id)->QuerySet[AppraisalOutPutPerformanceDimensionScore]:
+        try:
+            return AppraisalOutPutPerformanceDimensionScore.objects.filter(appraisal_department_output__id=appraisal_department_output_id)
+
+        except Exception as e:
+            raise Exception(f"[AppraisalOutPutPerformanceDimensionScoreRepository] fetch_by_appraisal_department_output_id Repo with pk: {appraisal_department_output_id}, failed with error: {e}")
 
 class ScoreDocumentRepository:
     def create(self, performance_dimension_score: AppraisalOutPutPerformanceDimensionScore, name: str, documents: str)->ScoreDocument:
@@ -388,10 +395,33 @@ class ApprasialKraReviewerStatusRepository:
         except Exception as e:
             raise Exception(f"ApprasialKraReviewerStatusRepository get_by_appraisal_department_output_id repo with appraisee_performance_dimension_score_id: {appraisal_department_output_id}, failed with error: {e}")
 
+    def get_by_appraisal_department_output_id_for_appraiser(self, appraisal_department_output_id: int)->AppraisalDepartmentOutputReviewerStatus:
+        try:
+            qr = AppraisalDepartmentOutputReviewerStatus.objects.filter(appraisal_department_output__id=appraisal_department_output_id, reviewer=REVIEWERS_CONFIRMATION_STATUS[0][0])
+            return qr.first()
+        except Exception as e:
+            raise Exception(f"ApprasialKraReviewerStatusRepository get_by_appraisal_department_output_id_for_appraiser repo with appraisee_performance_dimension_score_id: {appraisal_department_output_id}, failed with error: {e}")
+    
+    def get_by_appraisal_department_output_id_for_reviewer(self, appraisal_department_output_id: int)->AppraisalDepartmentOutputReviewerStatus:
+        try:
+            qr = AppraisalDepartmentOutputReviewerStatus.objects.filter(appraisal_department_output__id=appraisal_department_output_id, reviewer=REVIEWERS_CONFIRMATION_STATUS[1][0])
+            return qr.first()
+        except Exception as e:
+            raise Exception(f"ApprasialKraReviewerStatusRepository get_by_appraisal_department_output_id_for_reviewer repo with appraisee_performance_dimension_score_id: {appraisal_department_output_id}, failed with error: {e}")
+    
+    def get_by_appraisal_department_output_id_for_hr(self, appraisal_department_output_id: int)->AppraisalDepartmentOutputReviewerStatus:
+        try:
+            qr = AppraisalDepartmentOutputReviewerStatus.objects.filter(appraisal_department_output__id=appraisal_department_output_id, reviewer=REVIEWERS_CONFIRMATION_STATUS[2][0])
+            return qr.first()
+        except Exception as e:
+            raise Exception(f"ApprasialKraReviewerStatusRepository get_by_appraisal_department_output_id_for_hr repo with appraisee_performance_dimension_score_id: {appraisal_department_output_id}, failed with error: {e}")
+
     def update(self, reviewer_status_obj: AppraisalDepartmentOutputReviewerStatus, confirmation_status: str, reviewer: str, comment: str = None)->AppraisalDepartmentOutputReviewerStatus:
         try:
             is_changed = False
             
+            print("==========>>>>>>> confirmation_status", reviewer_status_obj.confirmation_status, "new  ",confirmation_status)
+            print("==========>>>>>>> reviewer", reviewer_status_obj.reviewer, "new  ",reviewer)
             if reviewer_status_obj.confirmation_status != confirmation_status:
                 reviewer_status_obj.confirmation_status = confirmation_status
                 is_changed = True
@@ -402,6 +432,7 @@ class ApprasialKraReviewerStatusRepository:
                 reviewer_status_obj.comment = comment
                 is_changed = True
             if is_changed:
+                print("==========>>>>>>> change", )
                 reviewer_status_obj.save()
             return reviewer_status_obj
         except Exception as e:
@@ -413,3 +444,10 @@ class ApprasialKraReviewerStatusRepository:
             return qr
         except Exception as e:
             raise Exception(f"ApprasialKraReviewerStatusRepository fetch_by_quarter_year repo failed with error: {e}")
+    
+    def fetch_by_appraisal_id_quarter_year(self, year_q_id: int, appraisal_id: int)->QuerySet[AppraisalDepartmentOutputReviewerStatus]:
+        try:
+            qr = AppraisalDepartmentOutputReviewerStatus.objects.filter(appraisal_department_output__appraisal__id=appraisal_id, appraisal_department_output__year_quarter__id=year_q_id)
+            return qr
+        except Exception as e:
+            raise Exception(f"ApprasialKraReviewerStatusRepository fetch_by_appraisal_id_quarter_year year_q_id: {year_q_id} appraisal id: {appraisal_id}, repo failed with error: {e}")
