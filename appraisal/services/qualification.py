@@ -5,6 +5,7 @@ from ..repository import UserQualificationRepository
 from ..repository.users import UserProfileRepository
 from ..helpers.getters.file_handlers import FileHandlerStrategyContext, UserQualificationStrategy
 from it.users.models import UserQualification, UserProfile
+from django.db.models import Q
 import pandas as pd
 class UserQualificationServiceError(Exception):
     pass
@@ -38,12 +39,21 @@ class UserQualificationService:
         except Exception as e:
             raise UserQualificationServiceError(f"Failed to retrieve user qualification by pk with error: {e}")
     
-    def get_user(self, username: str)->UserProfile:
+    def get_user(self, username: str) -> UserProfile:
         try:
-            qr = UserProfile.objects.filter(username=username)
+            # Normalize input (remove prefix if present)
+            username_normalized = username.strip().lower()
+            
+            # Query: match with or without "ze" prefix, case-insensitive
+            qr = UserProfile.objects.filter(
+                Q(username__iexact=username_normalized) | 
+                Q(username__iexact=f"ze{username_normalized}")
+            )
             return qr.first()
         except Exception as e:
-            raise UserQualificationServiceError(f"Failed to retrieve user by pk with error: {e}")
+            raise UserQualificationServiceError(
+                f"Failed to retrieve user by username '{username}' with error: {e}"
+            )
 
     
     def create_in_bulk_use_case(self, file: UploadedFile) -> bool:
@@ -86,6 +96,9 @@ class UserQualificationService:
                 user = self.get_user(username=ec_no_str)
                 if not user:
                     print(f"[WARN] No user found with EC No.: {ec_no_str}, skipping qualifications")
+                    continue
+                
+                if ec_no_str == "9168945":
                     continue
 
                 # Loop through all qualification sub-columns
