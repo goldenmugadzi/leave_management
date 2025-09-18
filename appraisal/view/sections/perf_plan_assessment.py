@@ -116,22 +116,48 @@ class AppraisalDepartmentPerformanceDimensionTemplateView(SuccessMessageMixin, U
         }
         return data
     
-    def get_reviewer_form(self):
+    
+    def get_appraiser_review_status_obj(self):
         repo = ApprasialKraReviewerStatusRepository()
-        obj = repo.get_by_appraisal_department_output_id_for_reviewer(appraisal_department_output_id=self.get_object().id)
+        print("====>>> ", repo.fetch_by_appraisal_department_output(appraisal_department_output_id=self.get_object().id))
+        return repo.get_by_appraisal_department_output_id_for_appraiser(appraisal_department_output_id=self.get_object().id)
+
+    def get_reviewer_status_obj(self):
+        repo = ApprasialKraReviewerStatusRepository()
+        return repo.get_by_appraisal_department_output_id_for_reviewer(appraisal_department_output_id=self.get_object().id)
+
+    def get_hr_review_status_obj(self):
+        repo = ApprasialKraReviewerStatusRepository()
+        return repo.get_by_appraisal_department_output_id_for_hr(appraisal_department_output_id=self.get_object().id)
+
+    def get_reviewer_form(self):
+        obj = self.get_reviewer_status_obj()
         return AppraisalDepartmentOutputReviewerStatusForm(instance=obj)
     
     def get_appraiser_form(self):
-        repo = ApprasialKraReviewerStatusRepository()
-        obj = repo.get_by_appraisal_department_output_id_for_appraiser(appraisal_department_output_id=self.get_object().id)
-        
+        obj = self.get_appraiser_review_status_obj()
         return AppraisalDepartmentOutputReviewerStatusForm(instance=obj)
     
     def get_hr_form(self):
-        repo = ApprasialKraReviewerStatusRepository()
-        obj = repo.get_by_appraisal_department_output_id_for_hr(appraisal_department_output_id=self.get_object().id)
+        obj = self.get_hr_review_status_obj()
         return AppraisalDepartmentOutputReviewerStatusForm(instance=obj)
 
+    def reviewers_status_workflow(self):
+        appraiser_status_review_obj = self.get_appraiser_review_status_obj()
+        reviewer_status_review_obj = self.get_reviewer_status_obj()
+        hr_status_review_obj = self.get_hr_review_status_obj()
+        
+        accept_status = APPRAISAL_KRA_REVIEWER_STATUS_CHOICES[1][0]
+        is_appraiser_review_and_confirm = appraiser_status_review_obj.confirmation_status == accept_status
+        is_reviewer_review_and_confirm = reviewer_status_review_obj.confirmation_status == accept_status
+        is_hr_review_and_confirm = hr_status_review_obj.confirmation_status == accept_status
+        
+        return {
+            "is_appraiser_review_and_confirm": is_appraiser_review_and_confirm,
+            "is_reviewer_review_and_confirm": is_reviewer_review_and_confirm,
+            "is_hr_review_and_confirm": is_hr_review_and_confirm,
+        }
+    
     def is_appraiser_request(self):
         if "appraiser_request" in self.request.POST:
             return True
@@ -161,8 +187,8 @@ class AppraisalDepartmentPerformanceDimensionTemplateView(SuccessMessageMixin, U
         is_all_scored = False
         if not unscored_dimension.exists():
             is_all_scored = True
-        
         context.update(self.requesters())
+        context.update(self.reviewers_status_workflow())
         context["appraisee_object"] = appraisee_object
         context["department_output_obj"] = self.get_appraisal_department_output_obj().department_output
         context["is_grade_c_and_above"] = appraisee_object.grade == GRADE_CHOICES[2][0]
@@ -176,7 +202,7 @@ class AppraisalDepartmentPerformanceDimensionTemplateView(SuccessMessageMixin, U
         context["all_scored"] = is_all_scored
         return context
     
-    def reviewer_status_handler(self, form, reviewer_role):
+    def reviewer_status_handler(self, form, reviewer_status_obj):
         try:
             if form.is_valid():
                 confirmation_status = form.cleaned_data.get("confirmation_status")
@@ -187,13 +213,10 @@ class AppraisalDepartmentPerformanceDimensionTemplateView(SuccessMessageMixin, U
                     return self.form_invalid(form)
             
                 repo = ApprasialKraReviewerStatusRepository()
-                obj = repo.get_by_appraisal_department_output_id(
-                    appraisal_department_output_id=self.get_object().id
-                )
+
                 return repo.update(
-                    reviewer_status_obj=obj,
+                    reviewer_status_obj=reviewer_status_obj,
                     confirmation_status=confirmation_status,
-                    reviewer=reviewer_role,
                     comment=comment
                 )
             else:
@@ -209,11 +232,14 @@ class AppraisalDepartmentPerformanceDimensionTemplateView(SuccessMessageMixin, U
     def form_valid(self, form):
         try:
             if self.is_appraiser_request():
-                updated_object = self.reviewer_status_handler(form, REVIEWERS_CONFIRMATION_STATUS[0][0])
+                appraiser_review_status_obj = self.get_appraiser_review_status_obj()
+                updated_object = self.reviewer_status_handler(form, appraiser_review_status_obj)
             elif self.is_reviewer_request():
-                updated_object = self.reviewer_status_handler(form, REVIEWERS_CONFIRMATION_STATUS[1][0])
+                reviewer_status_obj = self.get_reviewer_status_obj()
+                updated_object = self.reviewer_status_handler(form, reviewer_status_obj)
             elif self.is_hr_request():
-                updated_object = self.reviewer_status_handler(form, REVIEWERS_CONFIRMATION_STATUS[2][0])
+                hr_review_status_object = self.get_hr_review_status_obj()
+                updated_object = self.reviewer_status_handler(form, hr_review_status_object)
             else:
                 raise Exception("Request not allowed, only 'appraiser_request' , 'reviewer_request' and 'hr_request' allowed")
             form.instance = updated_object

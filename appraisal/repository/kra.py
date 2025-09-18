@@ -415,24 +415,23 @@ class ApprasialKraReviewerStatusRepository:
             return qr.first()
         except Exception as e:
             raise Exception(f"ApprasialKraReviewerStatusRepository get_by_appraisal_department_output_id_for_hr repo with appraisee_performance_dimension_score_id: {appraisal_department_output_id}, failed with error: {e}")
+    
+    def fetch_by_appraisal_department_output(self, appraisal_department_output_id: int)->AppraisalDepartmentOutputReviewerStatus:
+        try:
+            return AppraisalDepartmentOutputReviewerStatus.objects.filter(appraisal_department_output__id=appraisal_department_output_id)
+        except Exception as e:
+            raise Exception(f"ApprasialKraReviewerStatusRepository fetch_by_appraisal_department_output repo with appraisee_performance_dimension_score_id: {appraisal_department_output_id}, failed with error: {e}")
 
-    def update(self, reviewer_status_obj: AppraisalDepartmentOutputReviewerStatus, confirmation_status: str, reviewer: str, comment: str = None)->AppraisalDepartmentOutputReviewerStatus:
+    def update(self, reviewer_status_obj: AppraisalDepartmentOutputReviewerStatus, confirmation_status: str, comment: str = None)->AppraisalDepartmentOutputReviewerStatus:
         try:
             is_changed = False
-            
-            print("==========>>>>>>> confirmation_status", reviewer_status_obj.confirmation_status, "new  ",confirmation_status)
-            print("==========>>>>>>> reviewer", reviewer_status_obj.reviewer, "new  ",reviewer)
             if reviewer_status_obj.confirmation_status != confirmation_status:
                 reviewer_status_obj.confirmation_status = confirmation_status
-                is_changed = True
-            if reviewer_status_obj.reviewer != reviewer:
-                reviewer_status_obj.reviewer = reviewer
                 is_changed = True
             if reviewer_status_obj.comment != comment:
                 reviewer_status_obj.comment = comment
                 is_changed = True
             if is_changed:
-                print("==========>>>>>>> change", )
                 reviewer_status_obj.save()
             return reviewer_status_obj
         except Exception as e:

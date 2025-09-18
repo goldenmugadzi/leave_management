@@ -1,7 +1,7 @@
 from django import template
 from ..helpers.getters.approval import ApprovalStagesHandler
 from ..helpers.data.approval_stage import ApprovalStageData
-from ..helpers.getters.approval import ApprovalWorkflowQuarterStagesStrategyContext, ScoringStageStrategy, PerformanceReviewStageStrategy, TrainingAndDevelopmentStageStrategy, ReviewStageStrategy
+from ..helpers.getters.approval import ApprovalWorkflowQuarterStagesStrategyContext, ScoringStageStrategy, PerformanceReviewStageStrategy, TrainingAndDevelopmentStageStrategy, ReviewStageStrategy, AppraiserReviewStageStrategy
 from loguru import logger
 
 register = template.Library()
@@ -42,7 +42,7 @@ def get_stage_data(stage_name: str, appraisal_kra_id: int):
         case ApprovalStageData.scoring.value:
             data = ApprovalWorkflowQuarterStagesStrategyContext(strategy=ScoringStageStrategy()).get_stage_quarters_approval(appraisal_kra_id=appraisal_kra_id)
         case ApprovalStageData.appraiser_review.value:
-            data = ApprovalWorkflowQuarterStagesStrategyContext(strategy=TrainingAndDevelopmentStageStrategy()).get_stage_quarters_approval(appraisal_kra_id=appraisal_kra_id)
+            data = ApprovalWorkflowQuarterStagesStrategyContext(strategy=AppraiserReviewStageStrategy()).get_stage_quarters_approval(appraisal_kra_id=appraisal_kra_id)
         case ApprovalStageData.section_head_review.value:
             data = ApprovalWorkflowQuarterStagesStrategyContext(strategy=TrainingAndDevelopmentStageStrategy()).get_stage_quarters_approval(appraisal_kra_id=appraisal_kra_id)
         case ApprovalStageData.set_training_and_development_needs.value:
