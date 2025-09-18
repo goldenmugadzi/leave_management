@@ -76,12 +76,17 @@ def get_all_cost_center_users(user_id):
         cost_center_user_qr = cost_center_user_qr.exclude(id=user_id)
     return cost_center_user_qr
 
+def get_regional_hrs(region_id):
+    repo = UserProfileRepository()
+    return repo.fetch_by_region_id_hr_section(region_id=region_id)
+
+
 
 class AppraisalForm(forms.ModelForm):
     
     class Meta:
         model = Appraisal
-        fields = ["appraiser", "reviewer"]
+        fields = ["appraiser", "reviewer", "hr"]
         
     def __init__(self, *args, **kwargs):
         appraisee_id = kwargs.pop("appraisee_id", None)
@@ -93,7 +98,8 @@ class AppraisalForm(forms.ModelForm):
         
         self.fields["appraiser"].required = True
         self.fields["reviewer"].required = False
-        self.fields['reviewer'].disabled = True
+        self.fields['hr'].disabled = True
+        self.fields['hr'].required = False
         
 class AppraisalOverallCommentForm(forms.ModelForm):
     class Meta:
@@ -119,7 +125,7 @@ class AppraisalUpdateForm(forms.ModelForm):
         
     class Meta:
         model = Appraisal
-        fields = ["appraiser", "reviewer"]
+        fields = ["appraiser", "reviewer", "hr"]
         
     def __init__(self, *args, **kwargs):
         appraisee_id = kwargs.pop("appraisee_id", None)
@@ -135,13 +141,20 @@ class AppraisalUpdateForm(forms.ModelForm):
                 self.fields["appraiser"].queryset = cost_center_user_qr.exclude(id=appraisal_reviewer_id) #exclude reviewer
             self.fields['reviewer'].disabled = True
             self.fields["reviewer"].required = False
+            
+            self.fields["hr"].required = False
+            self.fields["hr"].disabled = True
         elif appraiser_id:
             cost_center_user_qr = get_all_cost_center_users(user_id=appraiser_id)
+            user_obj = cost_center_user_qr.first()
+            
+            self.fields["hr"].queryset = get_regional_hrs(region_id=user_obj.region.id)
             self.fields["reviewer"].queryset = cost_center_user_qr.exclude(id=appraisal_appraisee_id) #exclude appraisee
             self.fields['appraiser'].disabled = True
         else:
             self.fields['appraiser'].disabled = True
             self.fields['reviewer'].disabled = True
+            self.fields["hr"].disabled = True
         
 
 class ExperienceForm(forms.ModelForm):

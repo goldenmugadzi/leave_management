@@ -1,0 +1,44 @@
+{% load crispy_forms_tags %}
+
+<!-- Modal -->
+<div id="HrConfirmationModal" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 hidden z-50">
+    <div class="bg-white p-6 rounded-lg shadow-lg w-1/3 max-h-[90vh] overflow-y-auto">
+        <h2 class="my-2 texxt-lg font-semibold">Hr Confirmation</h2>
+        <form method="post">
+            {%csrf_token%}
+            <div 
+                class="flex-1 px-2 shadow-xl rounded-lg border-2 my-2 "
+                >
+                    {{ hr_form.confirmation_status|as_crispy_field }}
+            </div>
+
+            <div
+                class="flex-1 px-2 shadow-xl rounded-lg border-2"
+                >
+                {{ hr_form.comment|as_crispy_field }}
+            </div>
+
+            <div class="flex justify-end mt-2 mr-8 gap-2">
+                {% if is_hr == True %}
+                    {% if score_object.is_scored %}
+                        <button type="submit" class="w-96 bg-blue-500 hover:bg-blue-700 inline-block rounded-full text-white py-2 px-4" name="hr_request">Save</button>
+                    {% endif %}
+                {% endif %}
+                <button type="button" onclick="closeHrConfirmationModal()" class="px-4 py-2 text-white bg-red-500 rounded-lg">Close</button>
+            </div> 
+        </form>
+
+    </div>
+</div>
+
+
+<script>
+    function openHrConfirmationModal() {
+        const modal = document.getElementById("HrConfirmationModal");
+        modal.classList.remove("hidden");
+    }
+
+    function closeHrConfirmationModal() {
+        document.getElementById("HrConfirmationModal").classList.add("hidden");
+    }
+</script>

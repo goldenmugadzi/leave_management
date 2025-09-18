@@ -13,6 +13,7 @@ class Appraisal(TimeStamp):
     appraiser = models.ForeignKey(User, on_delete=models.PROTECT, related_name="appraiser", null=True)
     reviewer = models.ForeignKey(User, on_delete=models.PROTECT, related_name="reviewer", null=True)
     is_accepted = models.BooleanField(default=False)
+    hr = models.ForeignKey(User, on_delete=models.PROTECT, related_name="hr", null=True)
     appraiser_comment = models.TextField(null=True, blank=True)
     reviewer_comment = models.TextField(null=True, blank=True)
     

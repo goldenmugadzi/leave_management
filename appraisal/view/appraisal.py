@@ -21,7 +21,9 @@ from ..repository import UserQualificationRepository, AppraisalExperienceReposit
 from ..repository.appraisal import AppraiseePersonalAttributeRepository
 from ..repository.kra import AppraisalOutPutPerformanceDimensionScoreRepository
 from ..repository.qualification_experience import UserExperienceRepository
+from ..repository.users import UserProfileRepository
 from ..services import AppraisalService, AppraisalExperienceService
+from ..services.qualification import UserQualificationService
 from ..helpers.types.kra import KraRolesType
 from ..helpers.getters.approval import ApprovalStagesHandler
 
@@ -282,12 +284,14 @@ class AppraisalUpdateView(SuccessMessageMixin, UpdateView):
         
         appraiser_object = form.cleaned_data.get("appraiser")
         reviewer_object = form.cleaned_data.get("reviewer")
+        hr_obj = form.cleaned_data.get("hr")
         
         repo = AppraisalRepository()
         appraisal_object = repo.update(
             appraisal_object=appraisal_object,
             appraiser_object=appraiser_object,
-            reviewer_obj=reviewer_object
+            reviewer_obj=reviewer_object,
+            hr_object=hr_obj
         )
         form.instance = appraisal_object
         
@@ -344,7 +348,16 @@ class AppraisalTemplateView(TemplateView):
         if form.is_valid():
             qualifications_file = form.cleaned_data['qualifications_file']
             
-            # ✅ Here you can process the Excel file
+            try:
+                service = UserQualificationService(
+                    user_qualification_repo=UserQualificationRepository()
+                )
+                service.create_in_bulk_use_case(
+                    file=qualifications_file
+                ) 
+            except Exception as e:
+                logger.error(f"[AppraisalTemplateView] qualification failed with error: {e}")
+                # ✅ Here you can process the Excel file
             
             messages.success(self.request, "Qualifications file uploaded successfully.")
             return True
@@ -376,7 +389,7 @@ class AppraisalTemplateView(TemplateView):
             case RoleFilterChoices.APPRAISALS_FOR_REVIEW.value:
                 return {"appraisals": appraisal_service_handler.get_appraisal_by_reviewer_use_case(reviewer_id=self.request.user.id)}
             case RoleFilterChoices.ALL_APPRAISALS.value:
-                return {"appraisals": appraisal_service_handler.get_all_use_case()}
+                return {"appraisals": appraisal_service_handler.get_all_use_case(hr_id=self.request.user.id)}
     
     def get_context_data(self, **kwargs: Any) -> Dict[str, Any]:
         context =  super().get_context_data(**kwargs)

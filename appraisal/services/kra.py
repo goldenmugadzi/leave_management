@@ -4,7 +4,7 @@ from django.db import transaction
 from django.db.models.query import QuerySet
 from decimal import Decimal
 
-from ..repository.kra import KRARepository, AppraisalDepartmentOutputRepository, AppraisalOutPutPerformanceDimensionScoreRepository, YearQuarterRepository
+from ..repository.kra import KRARepository, AppraisalDepartmentOutputRepository, AppraisalOutPutPerformanceDimensionScoreRepository, YearQuarterRepository, ApprasialKraReviewerStatusRepository
 from ..repository.departmental_workplan import OutPutPerformanceDimensionRepository, DepartmentalOutRepository
 from ..repository.appraisal import AppraisalRepository, PersonalAttributeRepository, AppraiseePersonalAttributeRepository
 from it.users.models import Designations
@@ -99,6 +99,8 @@ class AppraisalDependanciesInitialisationService:
     def create_all_dependencies(self, appraisal_id: int, year: int)->bool|None:
         try:
             with transaction.atomic():
+                logger.info(f"[AppraisalDependanciesInitialisationService] with with appraisal pk: {appraisal_id}, year: {year}, process started ...")
+                
                 appraisal_obj = self.appraisal_repo.get_appraisal_by_pk(appraisal_id=appraisal_id)
                 designation_obj = appraisal_obj.user.designation
                 
@@ -106,8 +108,8 @@ class AppraisalDependanciesInitialisationService:
                     year_quarter_qr = self.year_quarter_repo.fetch_by_year(year=year)
                     year_quarter_objects = year_quarter_qr.count()
                     if year_quarter_objects != 4:
-                        logger.warning(f"[AppraisalDependanciesInitialisationService] create_all_dependencies, with pk: {appraisal_id}, has {year_quarter_objects} - not 4 required.")
-                        return False
+                        raise Exception(f"create_all_dependencies, with pk: {appraisal_id}, has {year_quarter_objects} - 4 instances required.")
+                        
                     
                     department_output_qr = self.department_output_repo.fetch_by_designation_id(designation_id=designation_obj.id)
                     
@@ -119,19 +121,31 @@ class AppraisalDependanciesInitialisationService:
                             appraisal_department_output_obj = self.create_appraisal_department_output(appraisal_object=appraisal_obj, department_output_obj=department_output_obj, year_quarter=year_quarter_obj)
                             
                             if appraisal_department_output_obj is not None:
+                                logger.success(f"AppraisalDepartmentOutput object created successfully")
                                 
                                 # ========== create AppraisalOutPutPerformanceDimensionScore objects ==========
                                 self.create_output_perf_dimension(
                                     appraisal_department_output_obj=appraisal_department_output_obj,
                                     department_output_id=department_output_obj.id
                                 )
+                                logger.success(f"AppraisalOutPutPerformanceDimensionScore objects created successfully")
+
                                 
-                            # =============== 
-                        
+                                # =============== AppraisalDepartmentOutputReviewerStatus ===================
+                                try:
+                                    repo = ApprasialKraReviewerStatusRepository()
+                                    repo.create(appraisal_department_output_obj=appraisal_department_output_obj)
+                                    logger.success(f"AppraisalDepartmentOutputReviewerStatus objects created successfully")
+
+                                except Exception as e:
+                                    raise Exception(f"reviewers status creation failed with error: {e}")
+                    
                     # ======================== create appraisee personal attributes ====================>>
                     self.create_appraisee_personal_attr(appraisal_object=appraisal_obj)
+                    logger.success(f"appraisee personal attributes created successfully")
                 else:
-                    logger.warning(f"[AppraisalDependanciesInitialisationService] create_all_dependencies, with pk: {appraisal_id}, has no designation")
+                    raise Exception(f"appraisee with appraisal id: {appraisal_id}. has no designation")
+            
             return True
         except Exception as e:
             raise KRAErr(f"[AppraisalDependanciesInitialisationService] create service, failed with error: {e}")

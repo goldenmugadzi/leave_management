@@ -2,6 +2,7 @@
 {% load static %}
 {% load humanize %}
 {% load custom_tags %}
+{% load quarter %}
 {% load approval_stages %}
 {% load crispy_forms_tags %}
 {% block styles %}
@@ -79,6 +80,7 @@
               <th>Reviewer</th>
               <th>Create at</th>
               <th>Approval Stage Status</th>
+              <th>Current Quarter</th>
               <th></th>
             </tr>
           </thead>
@@ -96,34 +98,35 @@
                         <p class="flex justify-center py-2">
                           {{data.current_stage.stage_name}} stage
                         </p>
-                      
+                    
                     {% endif %}
                   {% endwith %}
                 </td>
-                  <td>
-                    <div class="relative inline-block text-left">
-                      <div>
-                        <button type="button" 
-                            class="section-menu-button inline-flex justify-between w-48 rounded-2xl border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
-                            Select Section
-                            <svg class="-mr-1 ml-2 h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                            </svg>
-                        </button>
-                      </div>
-                      
-                      <!-- Dropdown menu -->
-                      <div class="dropdown-section-menu absolute z-10 mt-2 w-72 origin-top-right rounded-2xl bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none hidden">
-                        <div class="py-1" role="none">
-                          <a href="{% url 'update_appraisal' appraisal.id %}" class="text-gray-700 block px-4 py-2 text-sm hover:bg-indigo-100 hover:text-indigo-700 rounded-md" role="menuitem">Section 1 - Personal Details</a>
-                          <a href="{% url 'appraisal_dept_output_index' appraisal.id %}" class="text-gray-700 block px-4 py-2 text-sm hover:bg-indigo-100 hover:text-indigo-700 rounded-md" role="menuitem">Section 2 - Performance Plan and Assessment</a>
-                          <a href="{% url 'training_development_index' appraisal.id %}" class="text-gray-700 block px-4 py-2 text-sm hover:bg-indigo-100 hover:text-indigo-700 rounded-md" role="menuitem">Section 3 - Training and Development Needs</a>
-                          <a href="{% url 'performance_review_detail' appraisal.id %}" class="text-gray-700 block px-4 py-2 text-sm hover:bg-indigo-100 hover:text-indigo-700 rounded-md" role="menuitem">Section 4 - Performance Progress Reviews</a>
-                          <a href="{% url 'appraisal_final_result_index' appraisal.id %}" class="text-gray-700 block px-4 py-2 text-sm hover:bg-indigo-100 hover:text-indigo-700 rounded-md" role="menuitem">Section 5 - Final Performance Assessment and Rating</a>
-                        </div>
+                <td>{{ appraisal.id|get_current_quarter }}</td>
+                <td>
+                  <div class="relative inline-block text-left">
+                    <div>
+                      <button type="button" 
+                          class="section-menu-button inline-flex justify-between w-48 rounded-2xl border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
+                          Select Section
+                          <svg class="-mr-1 ml-2 h-5 w-5 text-gray-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                          </svg>
+                      </button>
+                    </div>
+                    
+                    <!-- Dropdown menu -->
+                    <div class="dropdown-section-menu absolute z-10 mt-2 w-72 origin-top-right rounded-2xl bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none hidden">
+                      <div class="py-1" role="none">
+                        <a href="{% url 'update_appraisal' appraisal.id %}" class="text-gray-700 block px-4 py-2 text-sm hover:bg-indigo-100 hover:text-indigo-700 rounded-md" role="menuitem">Section 1 - Personal Details</a>
+                        <a href="{% url 'appraisal_dept_output_index' appraisal.id %}" class="text-gray-700 block px-4 py-2 text-sm hover:bg-indigo-100 hover:text-indigo-700 rounded-md" role="menuitem">Section 2 - Performance Plan and Assessment</a>
+                        <a href="{% url 'training_development_index' appraisal.id %}" class="text-gray-700 block px-4 py-2 text-sm hover:bg-indigo-100 hover:text-indigo-700 rounded-md" role="menuitem">Section 3 - Training and Development Needs</a>
+                        <a href="{% url 'performance_review_detail' appraisal.id %}" class="text-gray-700 block px-4 py-2 text-sm hover:bg-indigo-100 hover:text-indigo-700 rounded-md" role="menuitem">Section 4 - Performance Progress Reviews</a>
+                        <a href="{% url 'appraisal_final_result_index' appraisal.id %}" class="text-gray-700 block px-4 py-2 text-sm hover:bg-indigo-100 hover:text-indigo-700 rounded-md" role="menuitem">Section 5 - Final Performance Assessment and Rating</a>
                       </div>
                     </div>
-                  </td>
+                  </div>
+                </td>
               </tr>
             {% endfor %}
           </tbody>

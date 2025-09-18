@@ -9,6 +9,15 @@ class UserProfileRepository:
         except Exception as e:
             raise Exception(f"[UserProfileRepository] fetch_by_cost_center_pk with cost_center_id: {cost_center_id}, failed with error: {e}")
         
+    def fetch_by_region_id_hr_section(self, region_id: int)->QuerySet[UserProfile]:
+        try:
+            return UserProfile.objects.filter(
+                region__id=region_id,
+                section__section__icontains="human resources"
+                ).select_related('cost_center', 'section')        
+        except Exception as e:
+            raise Exception(f"[UserProfileRepository] fetch_by_region_id_hr_section with region id: {region_id}, failed with error: {e}")
+        
     def get_by_pk(self, user_id: int)->UserProfile|None:
         try:
             qr = UserProfile.objects.filter(id=user_id)
@@ -23,5 +32,5 @@ class UserProfileRepository:
             return qr.first()
         except Exception as e:
             raise Exception(f"[UserProfileRepository] get_by_username with username: {username}, failed with error: {e}")
-        
+    
     

@@ -28,6 +28,12 @@ class AppraisalRepository:
         except Exception as e:
             raise Exception(f"Appraisal fetch_by_reviewer_id Repo with reviewer pk: {reviewer__id}, failed with error: {e}")
 
+    def fetch_by_hr_id(self, hr_id: int) -> List[Appraisal]:
+        try:
+            return Appraisal.objects.filter(hr__id=hr_id)
+        except Exception as e:
+            raise Exception(f"Appraisal fetch_by_hr_id Repo with hr pk: {hr_id}, failed with error: {e}")
+
     def get_appraisal_by_pk(self, appraisal_id: int)->Appraisal:
         try:
             qr = Appraisal.objects.filter(id=appraisal_id).select_related("user", "appraiser", "reviewer")
@@ -62,7 +68,7 @@ class AppraisalRepository:
             raise Exception(f"Appraisal update_final_comment Repo with appraisal pk: {appraisal_object.id}, failed with error: {e}")
 
 
-    def update(self, appraisal_object: Appraisal, appraiser_object: UserProfile, reviewer_obj: UserProfile, is_accepted_by_appraiser_reviewer: bool=False)->Appraisal:
+    def update(self, appraisal_object: Appraisal, appraiser_object: UserProfile, reviewer_obj: UserProfile, hr_object: UserProfile, is_accepted_by_appraiser_reviewer: bool=False)->Appraisal:
         try:
             is_changed = False
             
@@ -72,6 +78,10 @@ class AppraisalRepository:
             
             if appraisal_object.reviewer != reviewer_obj:
                 appraisal_object.reviewer = reviewer_obj
+                is_changed = True
+                
+            if appraisal_object.hr != hr_object:
+                appraisal_object.hr = hr_object
                 is_changed = True
                 
             if appraisal_object.is_accepted != is_accepted_by_appraiser_reviewer:

@@ -78,12 +78,18 @@ class AppraisalWorkflow(TimeStamp):
             )
         ]
 
+REVIEWERS_CONFIRMATION_STATUS = [
+    ("appraiser", "appraiser"),
+    ("reviewer", "reviewer"),
+    ("hr", "hr"),
+]
 
 class AppraisalDepartmentOutputReviewerStatus(TimeStamp):
-    performance_dimension_score = models.OneToOneField(AppraisalOutPutPerformanceDimensionScore, on_delete=models.RESTRICT, related_name="appraisal_department_output_reviewer_status", null=True)
-    status = models.CharField(max_length=10, choices=APPRAISAL_KRA_REVIEWER_STATUS_CHOICES, default=APPRAISAL_KRA_REVIEWER_STATUS_CHOICES[0][0])
+    appraisal_department_output = models.ForeignKey(AppraisalDepartmentOutput, on_delete=models.RESTRICT, related_name="reviewer_appraisal_department_output_obj", null=True, blank=True)
+    confirmation_status = models.CharField(max_length=10, choices=APPRAISAL_KRA_REVIEWER_STATUS_CHOICES, default=APPRAISAL_KRA_REVIEWER_STATUS_CHOICES[0][0])
+    reviewer = models.CharField(max_length=10, choices=REVIEWERS_CONFIRMATION_STATUS)
     comment = models.TextField(null=True, blank=True)
-
+    
     def __str__(self):
-        return f"{self.performance_dimension_score}"
+        return f"{self.appraisal_department_output} - {self.reviewer}"
 

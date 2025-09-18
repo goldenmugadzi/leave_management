@@ -38,49 +38,118 @@ class UserQualificationService:
         except Exception as e:
             raise UserQualificationServiceError(f"Failed to retrieve user qualification by pk with error: {e}")
     
-    def create_in_bulk_use_case(self, file: UploadedFile, user_repo: UserProfileRepository)->bool:
+    def get_user(self, username: str)->UserProfile:
+        try:
+            qr = UserProfile.objects.filter(username=username)
+            return qr.first()
+        except Exception as e:
+            raise UserQualificationServiceError(f"Failed to retrieve user by pk with error: {e}")
+
+    
+    def create_in_bulk_use_case(self, file: UploadedFile) -> bool:
         try:
             context = FileHandlerStrategyContext(strategy=UserQualificationStrategy())
-            df = context.data(file=file)
-            
+            df = context.data(file=file)   # merged DataFrame
+
+            # Detect EC No. column
             ec_no_col = next(
                 (col for col in df.columns if "ec no" in str(col).lower().replace(".", "").strip()),
                 None
             )
-
             if ec_no_col is None:
                 raise ValueError(
                     f"Could not find 'EC No.' column in the merged table. Available columns: {list(df.columns)}"
                 )
 
-            # Get all qualification sub-columns
+            # Get all qualification sub-columns (under QUALIFICATIONS multi-header)
             qualification_cols = [
                 col for col in df.columns
-                if str(col).lower().startswith("qualifications")
+                if any(key in str(col).lower() for key in [
+                    "o' levels", "a levels", "certificate", "diploma",
+                    "hnd", "prof membership", "degree", "masters", "phd"
+                ])
             ]
 
+            objs_to_create = []
             num = 0
+
             for _, row in df.iterrows():
                 ec_no = row[ec_no_col]
                 if pd.isna(ec_no):
                     continue
 
-                if isinstance(ec_no, float):
-                    ec_no = int(ec_no)
-                print(f"EC No.: {ec_no}")
+                # Convert EC No. from float to int if needed
+                # Normalize EC No.
+                ec_no_str = str(int(ec_no)) if isinstance(ec_no, float) else str(ec_no).strip()
 
+                # Find user
+                user = self.get_user(username=ec_no_str)
+                if not user:
+                    print(f"[WARN] No user found with EC No.: {ec_no_str}, skipping qualifications")
+                    continue
+
+                # Loop through all qualification sub-columns
                 for col in qualification_cols:
                     val = row[col]
 
+                    # Skip nil/empty
                     if isinstance(val, str) and val.strip().lower() == "nil":
                         continue
+                    if pd.isna(val):
+                        continue
 
-                    if pd.notna(val):
-                        print(f"{col}: {val}")
+                    # Default classification
+                    q_name = "Other"
+
+                    col_clean = str(col).lower()
+                    val_clean = str(val).lower()
+
+                    # Map sub-column to qualification type
+                    if "o' levels" in col_clean or "o levels" in col_clean:
+                        if "level" in val_clean:
+                            q_name = "Ordinary Levels"
+                    elif "a levels" in col_clean:
+                        if "level" in val_clean:
+                            q_name = "Advanced Levels"
+                    elif "certificate" in col_clean:
+                        q_name = "Certificate"
+                    elif "diploma" in col_clean:
+                        q_name = "Diploma"
+                    elif "hnd" in col_clean:
+                        q_name = "Higher National Diploma"
+                    elif "prof membership" in col_clean:
+                        q_name = "Professional Membership"
+                    elif "degree" in col_clean:
+                        q_name = "Degree"
+                    elif "masters" in col_clean:
+                        q_name = "Masters"
+                    elif "phd" in col_clean:
+                        q_name = "PHD"
+
+                    # Create qualification object
+                    objs_to_create.append(
+                        UserQualification(
+                            user=user,
+                            name=q_name,
+                            description=str(val),
+                            file=file
+                        )
+                    )
 
                 num += 1
-                print("---------------")
-            print("============>>>>>>>> Total: ", num)
+                print(f"Processed EC No.: {ec_no}")
+                print("---------------------")
+
+            # Bulk insert into DB
+            if objs_to_create:
+                self.user_qualification_repo.create_in_bulk(objs=objs_to_create)
+
+            print(f"============>>>>>>>> Total Users Processed: {num}")
+            print(f"============>>>>>>>> Total Qualifications Created: {len(objs_to_create)}")
+
+            return True
+
         except Exception as e:
-            raise UserQualificationServiceError(f"[UserQualificationService] create_in_bulk_use_case failed with error: {e}")
-    
+            raise UserQualificationServiceError(
+                f"[UserQualificationService] create_in_bulk_use_case failed with error: {e}"
+            )

@@ -14,7 +14,7 @@ from django.http.response import HttpResponseRedirect
 from ...repository.appraisal import AppraisalRepository
 from ...repository.kra import AppraisalDepartmentOutputRepository, AppraisalOutPutPerformanceDimensionScoreRepository, ScoreDocumentRepository,ApprasialKraReviewerStatusRepository
 from ...services.kra import AppraisalDepartmentOutputService
-from ...models.kra import AppraisalOutPutPerformanceDimensionScore, ScoreDocument, APPRAISAL_KRA_REVIEWER_STATUS_CHOICES
+from ...models.kra import AppraisalOutPutPerformanceDimensionScore, ScoreDocument, APPRAISAL_KRA_REVIEWER_STATUS_CHOICES, REVIEWERS_CONFIRMATION_STATUS
 from ...forms.kra import AppraisalOutPutPerformanceDimensionScoreForm, ScoreDocumentForm, AppraisalDepartmentOutputReviewerStatusForm, AppraiserConfirmationForm
 from ..helper import build_payload_score
 from ..helper import is_within_current_quarter
@@ -153,21 +153,29 @@ class AppraisalDepartmentPerformanceDimensionScoreUpdateView(SuccessMessageMixin
         is_appraiser = self.request.user == appraisal_object.appraiser
         is_appraisee = self.request.user == appraisal_object.user
         is_reviewer = self.request.user == appraisal_object.reviewer
-        
+        is_hr = self.request.user == appraisal_object.hr
         data = {
             "is_appraiser": is_appraiser,
             "is_appraisee": is_appraisee,
-            "is_reviewer": is_reviewer
+            "is_reviewer": is_reviewer,
+            "is_hr": is_hr
         }
         return data
     
     def get_reviewer_form(self):
         repo = ApprasialKraReviewerStatusRepository()
-        obj = repo.get_by_appraisee_performance_dimension_score_id(appraisee_performance_dimension_score_id=self.kwargs.get("performance_dimension_id"))
+        obj = repo.get_by_appraisal_department_output_id(appraisal_department_output_id=self.get_object().appraisal_department_output.appraisal.id)
         return AppraisalDepartmentOutputReviewerStatusForm(instance=obj)
     
     def get_appraiser_form(self):
-        return AppraiserConfirmationForm(instance=self.get_object())
+        repo = ApprasialKraReviewerStatusRepository()
+        obj = repo.get_by_appraisal_department_output_id(appraisal_department_output_id=self.get_object().appraisal_department_output.appraisal.id)
+        return AppraisalDepartmentOutputReviewerStatusForm(instance=obj)
+    
+    def get_hr_form(self):
+        repo = ApprasialKraReviewerStatusRepository()
+        obj = repo.get_by_appraisal_department_output_id(appraisal_department_output_id=self.get_object().appraisal_department_output.appraisal.id)
+        return AppraisalDepartmentOutputReviewerStatusForm(instance=obj)
     
     def appraisee_grade(self):
         user_obj = self.get_object().appraisal_department_output.appraisal.user
@@ -192,9 +200,10 @@ class AppraisalDepartmentPerformanceDimensionScoreUpdateView(SuccessMessageMixin
         
         context["is_within_current_quarter"] = self.is_current_date_in_current_quarter()
         context["score_object"] = score_obj
-        context["reviewer_form"] = self.get_reviewer_form()
-        context["appraiser_form"] = self.get_appraiser_form()
         context["appraisee_grade"] = self.appraisee_grade()
+        context["appraiser_form"] = self.get_appraiser_form()
+        context["reviewer_form"] = self.get_reviewer_form()
+        context["hr_form"] = self.get_hr_form()
         return context
     
     def is_appraisee_request(self):
@@ -212,20 +221,89 @@ class AppraisalDepartmentPerformanceDimensionScoreUpdateView(SuccessMessageMixin
             return True
         return False
     
+    def is_hr_request(self):
+        if "hr_request" in self.request.POST:
+            return True
+        return False
+    
     def reviewer_form_handler(self, form):
         try:
             if form.is_valid():
-                status = form.cleaned_data.get("status")
+                confirmation_status = form.cleaned_data.get("confirmation_status")
                 comment = form.cleaned_data.get("comment")
             
-                if (status == APPRAISAL_KRA_REVIEWER_STATUS_CHOICES[2][0]) and (comment == "" or comment == None):
+                if (confirmation_status == APPRAISAL_KRA_REVIEWER_STATUS_CHOICES[2][0]) and (comment == "" or comment == None):
                     messages.error(self.request, "Please provide the reason for your rejection in the comment field before proceeding.")
                     return self.form_invalid(form) 
             
                 repo = ApprasialKraReviewerStatusRepository()
-                repo.create(
-                    performance_dimension_score_obj=self.get_object(),
-                    status=status,
+                obj = repo.get_by_appraisal_department_output_id(appraisal_department_output_id=self.get_object().appraisal_department_output.id)
+                repo.update(
+                    reviewer_status_obj=obj,
+                    confirmation_status=confirmation_status,
+                    reviewer=REVIEWERS_CONFIRMATION_STATUS[1][0],
+                    comment=comment
+                )
+            else:
+                error_messages = ""
+                for error_message in form.errors:
+                    msg = f"{error_message['msg']}: '{error_message['loc'][0]}'"
+                    error_messages.join(msg)
+                messages.error(self.request, error_messages)
+
+        except Exception as e:
+            logger.error(f"[AppraisalDepartmentPerformanceDimensionScoreUpdateView] reviewer_form_handler request with performance dimension pk-{self.kwargs.get('performance_dimension_id')}, failed with error: {e}")
+            messages.error(self.request, "Supporting document deletion failed, please try again")
+        
+        return HttpResponseRedirect(self.get_success_url())
+    
+    def appraiser_form_handler(self, form):
+        try:
+            if form.is_valid():
+                confirmation_status = form.cleaned_data.get("confirmation_status")
+                comment = form.cleaned_data.get("comment")
+            
+                if (confirmation_status == APPRAISAL_KRA_REVIEWER_STATUS_CHOICES[2][0]) and (comment == "" or comment == None):
+                    messages.error(self.request, "Please provide the reason for your rejection in the comment field before proceeding.")
+                    return self.form_invalid(form) 
+            
+                repo = ApprasialKraReviewerStatusRepository()
+                obj = repo.get_by_appraisal_department_output_id(appraisal_department_output_id=self.get_object().appraisal_department_output.id)
+                repo.update(
+                    reviewer_status_obj=obj,
+                    confirmation_status=confirmation_status,
+                    reviewer=REVIEWERS_CONFIRMATION_STATUS[0][0],
+                    comment=comment
+                )
+            else:
+                error_messages = ""
+                for error_message in form.errors:
+                    msg = f"{error_message['msg']}: '{error_message['loc'][0]}'"
+                    error_messages.join(msg)
+                messages.error(self.request, error_messages)
+
+        except Exception as e:
+            logger.error(f"[AppraisalDepartmentPerformanceDimensionScoreUpdateView] reviewer_form_handler request with performance dimension pk-{self.kwargs.get('performance_dimension_id')}, failed with error: {e}")
+            messages.error(self.request, "Supporting document deletion failed, please try again")
+        
+        return HttpResponseRedirect(self.get_success_url())
+    
+    def hr_form_handler(self, form):
+        try:
+            if form.is_valid():
+                confirmation_status = form.cleaned_data.get("confirmation_status")
+                comment = form.cleaned_data.get("comment")
+            
+                if (confirmation_status == APPRAISAL_KRA_REVIEWER_STATUS_CHOICES[2][0]) and (comment == "" or comment == None):
+                    messages.error(self.request, "Please provide the reason for your rejection in the comment field before proceeding.")
+                    return self.form_invalid(form) 
+            
+                repo = ApprasialKraReviewerStatusRepository()
+                obj = repo.get_by_appraisal_department_output_id(appraisal_department_output_id=self.get_object().appraisal_department_output.id)
+                repo.update(
+                    reviewer_status_obj=obj,
+                    confirmation_status=confirmation_status,
+                    reviewer=REVIEWERS_CONFIRMATION_STATUS[2][0],
                     comment=comment
                 )
             else:
@@ -281,7 +359,9 @@ class AppraisalDepartmentPerformanceDimensionScoreUpdateView(SuccessMessageMixin
         if self.is_reviewer_request():
             form = AppraisalDepartmentOutputReviewerStatusForm(self.request.POST)  
         if self.is_appraiser_request():   
-            form = AppraiserConfirmationForm(self.request.POST)
+            form = AppraisalDepartmentOutputReviewerStatusForm(self.request.POST)
+        if self.is_hr_request():   
+            form = AppraisalDepartmentOutputReviewerStatusForm(self.request.POST)
         else:
             form = self.get_form()
         
@@ -299,6 +379,8 @@ class AppraisalDepartmentPerformanceDimensionScoreUpdateView(SuccessMessageMixin
                 updated_object = self.appraiser_form_handler(form=form)
             elif self.is_reviewer_request():
                 return self.reviewer_form_handler(form=form)
+            elif self.is_hr_request():
+                return self.hr_form_handler(form=form)
             else:
                 raise Exception("Request not allowed, only 'appraisee_request' and 'appraiser_request' allowed")
             form.instance = updated_object

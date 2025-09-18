@@ -30,5 +30,6 @@ def get_all_quarter_ratings_per_appraiser(year: int, appraisal_id: int)->Tuple[L
         
         final_score = final_score + total_score
         quarters.append(final_rating_type)
-        
+    
+    final_score = final_score/4
     return quarters, final_score

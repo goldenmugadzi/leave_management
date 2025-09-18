@@ -181,7 +181,7 @@ def set_appraisal_approval_workflow(sender, instance, created, **kwargs):
         
 @receiver(post_save, sender=Appraisal, dispatch_uid="appraisal_approval_workflow_acceptance_complete")
 def set_appraisal_acceptance_stage_completed(sender, instance, created, **kwargs):
-    if not created and instance.reviewer is not None:
+    if not created and (instance.reviewer is not None and instance.hr is not None):
         try:
             logger.info(f"[Approval Workflow stage] Accept Appraisal: {instance} handler initialized ...")
             repo = AppraisalWorkflowRepository()

@@ -101,6 +101,11 @@
             </form>
         </div>
     </div>
+
+    <div class="mt-6">
+        {% include "appraisal/approval/detail.html" with stages=stages last_stage_num=last_stage_number %}
+    </div>
+
 </div>
 {% endblock%}
 {% block scripts %} 

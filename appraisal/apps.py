@@ -49,6 +49,17 @@ def load_personal_attributes_handler(sender, **kwargs):
         logger.error(f"load_personal_attributes_handler failed with error: {e}")
 
 
+def set_quarter_year(sender, **kwargs):
+    from datetime import datetime
+    from appraisal.models.helpers import YearQuarter
+    from appraisal.tasks import create_year_quarter_obj
+    
+    current_year = datetime.now().year
+    quarter_year_qr = YearQuarter.objects.filter(year=current_year)
+    
+    if not quarter_year_qr.exists():
+        create_year_quarter_obj()
+
 class AppraisalConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
     name = 'appraisal'
@@ -56,8 +67,10 @@ class AppraisalConfig(AppConfig):
     def ready(self) -> None:
         post_migrate.connect(load_strength_weakness_handler, sender=self)
         post_migrate.connect(load_personal_attributes_handler, sender=self)
+        post_migrate.connect(set_quarter_year, sender=self)
+        
         from .signals.kra import create_kra_roles_handler
-        from .signals.appraisal import set_appraisal_dependencies, create_training_development_post_save_handler
+        from .signals.appraisal import set_appraisal_dependencies, create_training_development_post_save_handler, set_appraisal_acceptance_stage_completed
         from .signals.departmental_output import create_output_performance_dimensions
         post_migrate.connect(create_kra_roles_handler, sender=self)        
 
