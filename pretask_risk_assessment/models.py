@@ -1,8 +1,8 @@
 from django.db import models
 from it.users.models import Substation,UserProfile
-from toolsandequipment.model import ToolOrEquipment
+from toolsandequipment.models import ToolOrEquipment
 
-class Job(models.model):
+class Job(models.Model):
     issuing_senior_authorised_person = models.ForeignKey(UserProfile, on_delete=models.DO_NOTHING,null=True, blank=True, related_name="jobs")
     competent_person = models.ForeignKey(UserProfile, on_delete=models.DO_NOTHING,null=True, blank=True,related_name="person_jobs" )
     substation = models.ForeignKey(Substation, on_delete=models.DO_NOTHING,null=True, blank=True)
@@ -11,7 +11,7 @@ class Job(models.model):
     created_at = models.DateTimeField(auto_now_add=True)
 
 
-class Teammember(models.model):
+class Teammember(models.Model):
     job = models.ForeignKey(Job, on_delete=models.DO_NOTHING,null=True, blank=True)
     person = models.ForeignKey(UserProfile, on_delete=models.DO_NOTHING,null=True, blank=True)
     agreed = models.CharField(max_length=100, blank=True, choices=[("Yes", "Yes"), ("No", "No"), ("Unknown", "Unknown")],default="Unknown")

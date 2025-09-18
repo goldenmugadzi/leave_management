@@ -3,5 +3,5 @@ from .models import PretaskRiskAssessment
 
 @admin.register(PretaskRiskAssessment)
 class PretaskRiskAssessmentAdmin(admin.ModelAdmin):
-    list_display = ('task_name', 'risk_level', 'created_at')
-    search_fields = ('task_name', 'risk_level')
+    list_display = ('job', 'equipment', 'harzard', 'control_measures', 'created_at')
+    search_fields = ('harzard', 'control_measures')

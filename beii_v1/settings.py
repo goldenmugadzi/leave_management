@@ -30,7 +30,7 @@ CORS_ALLOW_ALL_ORIGINS = True
 CSRF_TRUSTED_ORIGINS = [
     config('BASE_URL'),
     config('BASE_URL') + ":" + config('PORT'),
-    "https://d4d74ece50d8.ngrok-free.app",
+    " https://baaaba0d842e.ngrok-free.app",
     # Add your production domain here
     # "https://your-production-domain.com"
 ]
@@ -154,7 +154,8 @@ INSTALLED_APPS = [
     'sanction_for_test',
     'utils',
     'inspections',
-    'EquipTracker'
+    'EquipTracker',
+    'pretask_risk_assessment',
 ]
 
 AUTH_USER_MODEL = 'users.UserProfile'
