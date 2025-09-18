@@ -97,9 +97,7 @@ class UserQualificationService:
                 if not user:
                     print(f"[WARN] No user found with EC No.: {ec_no_str}, skipping qualifications")
                     continue
-                
-                if ec_no_str == "9168945":
-                    continue
+
 
                 # Loop through all qualification sub-columns
                 for col in qualification_cols:
