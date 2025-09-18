@@ -1,221 +1,290 @@
 from django.db import models
-from it.users.models import UserProfile, Roles, Application
+from django.core.validators import MinValueValidator, MaxValueValidator
 from django.utils import timezone
+from it.users.models import Regions, Districts, Depots, UserProfile
 
 
-class DashboardPreference(models.Model):
-    """Store user dashboard preferences and settings"""
-    user = models.OneToOneField(UserProfile, on_delete=models.CASCADE, related_name='dashboard_preferences')
-    default_priority_filter = models.CharField(
-        max_length=20, 
-        choices=[('all', 'All'), ('urgent', 'Urgent'), ('high', 'High'), ('medium', 'Medium'), ('low', 'Low')],
-        default='all'
+class WeeklyCollections(models.Model):
+    """Weekly collections data in both ZWL and USD currencies"""
+    
+    week = models.CharField(max_length=20, help_text="Week identifier (e.g., 'Week 1', 'Week 2')")
+    zwl_millions = models.DecimalField(
+        max_digits=10, 
+        decimal_places=2,
+        validators=[MinValueValidator(0)],
+        help_text="Collections in ZWL millions (e.g., 5.2 = 5.2 million ZWL)"
     )
-    items_per_page = models.IntegerField(default=10)
-    show_completed_actions = models.BooleanField(default=False)
-    email_notifications = models.BooleanField(default=True)
-    dashboard_layout = models.JSONField(default=dict, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    def __str__(self):
-        return f"Dashboard preferences for {self.user.username}"
-
-
-class ActionItemMetrics(models.Model):
-    """Store metrics for action items to track performance"""
-    user = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
-    application = models.CharField(max_length=50)
-    item_type = models.CharField(max_length=50)  # 'ace', 'pettycash', 'token', etc.
-    item_id = models.CharField(max_length=100)
-    action_taken = models.CharField(
-        max_length=20,
-        choices=[('approved', 'Approved'), ('rejected', 'Rejected'), ('forwarded', 'Forwarded')]
+    usd_millions = models.DecimalField(
+        max_digits=10, 
+        decimal_places=2,
+        validators=[MinValueValidator(0)],
+        help_text="Collections in USD millions (e.g., 5.2 = 5.2 million USD)"
     )
-    time_to_action = models.DurationField(help_text="Time from creation to action")
-    action_date = models.DateTimeField(auto_now_add=True)
-    comments = models.TextField(blank=True, null=True)
-
-    class Meta:
-        ordering = ['-action_date']
-
-    def __str__(self):
-        return f"{self.user.username} {self.action_taken} {self.item_type} {self.item_id}"
-
-
-class DashboardWidget(models.Model):
-    """Define reusable dashboard widgets"""
-    name = models.CharField(max_length=100, unique=True)
-    title = models.CharField(max_length=200)
-    widget_type = models.CharField(
-        max_length=50,
-        choices=[
-            ('chart', 'Chart'),
-            ('table', 'Table'),
-            ('card', 'Card'),
-            ('list', 'List'),
-            ('metric', 'Metric')
-        ]
+    
+    # Location-based filtering (consistent with existing models)
+    region = models.ForeignKey(
+        Regions, 
+        on_delete=models.CASCADE, 
+        null=True, 
+        blank=True,
+        help_text="Associated region for location-based filtering"
     )
-    description = models.TextField(blank=True)
-    config = models.JSONField(default=dict, help_text="Widget configuration as JSON")
-    required_roles = models.ManyToManyField(Roles, blank=True)
-    is_active = models.BooleanField(default=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return self.title
-
-
-class UserWidgetPreference(models.Model):
-    """User-specific widget preferences"""
-    user = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
-    widget = models.ForeignKey(DashboardWidget, on_delete=models.CASCADE)
-    position = models.IntegerField(default=0, help_text="Position on dashboard")
-    is_visible = models.BooleanField(default=True)
-    custom_config = models.JSONField(default=dict, blank=True)
-
-    class Meta:
-        unique_together = ['user', 'widget']
-        ordering = ['position']
-
-    def __str__(self):
-        return f"{self.user.username} - {self.widget.name}"
-
-
-class DashboardMetric(models.Model):
-    """Store dashboard metric card data"""
-    METRIC_TYPES = [
-        ('energy_sold', 'Energy Sold'),
-        ('growth', 'Growth'),
-        ('revenue_usd', 'Revenue USD'),
-        ('revenue_zwl', 'Revenue ZWL'),
-        ('faults', 'Faults'),
-        ('maintenance', 'Maintenance'),
-    ]
-    
-    metric_type = models.CharField(max_length=20, choices=METRIC_TYPES, unique=True)
-    value = models.CharField(max_length=50, help_text="Current value")
-    unit = models.CharField(max_length=20, help_text="Unit of measurement")
-    target = models.CharField(max_length=50, help_text="Target value")
-    target_unit = models.CharField(max_length=20, help_text="Target unit")
-    progress = models.FloatField(default=0, help_text="Progress percentage")
-    
-    # Location-based filtering
-    region = models.ForeignKey('users.Regions', on_delete=models.CASCADE, null=True, blank=True)
-    district = models.ForeignKey('users.Districts', on_delete=models.CASCADE, null=True, blank=True)
-    depot = models.ForeignKey('users.Depots', on_delete=models.CASCADE, null=True, blank=True)
-    
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    updated_by = models.ForeignKey(UserProfile, on_delete=models.SET_NULL, null=True)
-
-    class Meta:
-        unique_together = ['metric_type', 'region', 'district', 'depot']
-
-    def __str__(self):
-        location = f" - {self.region or self.district or self.depot or 'Global'}"
-        return f"{self.get_metric_type_display()}{location}"
-
-
-class WeeklySales(models.Model):
-    """Store weekly sales data"""
-    week = models.CharField(max_length=20)
-    zwl = models.CharField(max_length=50)
-    usd = models.CharField(max_length=50)
-    
-    # Location-based filtering
-    region = models.ForeignKey('users.Regions', on_delete=models.CASCADE, null=True, blank=True)
-    district = models.ForeignKey('users.Districts', on_delete=models.CASCADE, null=True, blank=True)
-    depot = models.ForeignKey('users.Depots', on_delete=models.CASCADE, null=True, blank=True)
+    district = models.ForeignKey(
+        Districts, 
+        on_delete=models.CASCADE, 
+        null=True, 
+        blank=True,
+        help_text="Associated district for location-based filtering"
+    )
+    depot = models.ForeignKey(
+        Depots, 
+        on_delete=models.CASCADE, 
+        null=True, 
+        blank=True,
+        help_text="Associated depot for location-based filtering"
+    )
     
     # Time tracking
-    year = models.IntegerField(default=2024)
-    week_number = models.IntegerField()
+    year = models.IntegerField(default=2025, help_text="Year for the weekly data")
+    week_number = models.IntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(53)],
+        help_text="Week number within the year (1-53)"
+    )
     
+        # Audit fields
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-
+    updated_by = models.ForeignKey(
+        UserProfile,
+        on_delete=models.SET_NULL, 
+        null=True,
+        help_text="User who last updated this record"
+    )
+    
     class Meta:
-        unique_together = ['week_number', 'year', 'region', 'district', 'depot']
-        ordering = ['week_number']
-
+        db_table = 'general_dashboards_weeklycollections'
+        verbose_name = 'Weekly Collections'
+        verbose_name_plural = 'Weekly Collections'
+        ordering = ['year', 'week_number']
+        unique_together = ['year', 'week_number', 'region', 'district', 'depot']
+        indexes = [
+            models.Index(fields=['year', 'week_number']),
+            models.Index(fields=['region', 'district', 'depot']),
+        ]
+    
     def __str__(self):
-        return f"{self.week} - {self.region or self.district or self.depot or 'Global'}"
+        location = self.get_location_display()
+        return f"Week {self.week_number} ({self.year}) - {location} - ZWL: {self.zwl_millions}M, USD: {self.usd_millions}M"
+    
+    def get_location_display(self):
+        """Get a human-readable location string"""
+        if self.depot:
+            return f"{self.depot.district.district} - {self.depot.depot}"
+        elif self.district:
+            return f"{self.district.region.region} - {self.district.district}"
+        elif self.region:
+            return self.region.region
+        else:
+            return "All Locations"
 
 
-class WeeklyOutage(models.Model):
-    """Store weekly power outage data"""
-    week = models.CharField(max_length=20)
-    outages = models.IntegerField(default=0)
-    resolved = models.IntegerField(default=0)
-    pending = models.IntegerField(default=0)
+class WeeklyRevenueLost(models.Model):
+    """Weekly revenue lost data categorized by faults and maintenance"""
     
-    # Location-based filtering
-    region = models.ForeignKey('users.Regions', on_delete=models.CASCADE, null=True, blank=True)
-    district = models.ForeignKey('users.Districts', on_delete=models.CASCADE, null=True, blank=True)
-    depot = models.ForeignKey('users.Depots', on_delete=models.CASCADE, null=True, blank=True)
+    week = models.CharField(max_length=20, help_text="Week identifier (e.g., 'Week 1', 'Week 2')")
+    faults_mwh = models.DecimalField(
+        max_digits=10, 
+        decimal_places=2,
+        validators=[MinValueValidator(0)],
+        help_text="Revenue lost due to faults in MWh"
+    )
+    maintenance_mwh = models.DecimalField(
+        max_digits=10, 
+        decimal_places=2,
+        validators=[MinValueValidator(0)],
+        help_text="Revenue lost due to maintenance in MWh"
+    )
+    total_mwh = models.DecimalField(
+        max_digits=10, 
+        decimal_places=2,
+        validators=[MinValueValidator(0)],
+        help_text="Total revenue lost (auto-calculated: faults + maintenance)"
+    )
     
-    year = models.IntegerField(default=2024)
-    week_number = models.IntegerField()
+    # Location and time fields (same pattern as WeeklyCollections)
+    region = models.ForeignKey(
+        Regions, 
+        on_delete=models.CASCADE, 
+        null=True, 
+        blank=True
+    )
+    district = models.ForeignKey(
+        Districts, 
+        on_delete=models.CASCADE, 
+        null=True, 
+        blank=True
+    )
+    depot = models.ForeignKey(
+        Depots, 
+        on_delete=models.CASCADE, 
+        null=True, 
+        blank=True
+    )
     
+    year = models.IntegerField(default=2025)
+    week_number = models.IntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(53)]
+    )
+    
+    # Audit fields
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-
+    updated_by = models.ForeignKey(
+        UserProfile, 
+        on_delete=models.SET_NULL, 
+        null=True
+    )
+    
     class Meta:
-        unique_together = ['week_number', 'year', 'region', 'district', 'depot']
-        ordering = ['week_number']
-
+        db_table = 'general_dashboards_weeklyrevenuelost'
+        verbose_name = 'Weekly Revenue Lost'
+        verbose_name_plural = 'Weekly Revenue Lost'
+        ordering = ['year', 'week_number']
+        unique_together = ['year', 'week_number', 'region', 'district', 'depot']
+        indexes = [
+            models.Index(fields=['year', 'week_number']),
+            models.Index(fields=['region', 'district', 'depot']),
+        ]
+    
     def __str__(self):
-        return f"{self.week} - {self.region or self.district or self.depot or 'Global'}"
+        location = self.get_location_display()
+        return f"Week {self.week_number} ({self.year}) - {location} - Total: {self.total_mwh} MWh"
+    
+    def get_location_display(self):
+        """Get a human-readable location string"""
+        if self.depot:
+            return f"{self.depot.district.district} - {self.depot.depot}"
+        elif self.district:
+            return f"{self.district.region.region} - {self.district.district}"
+        elif self.region:
+            return self.region.region
+        else:
+            return "All Locations"
+    
+    def save(self, *args, **kwargs):
+        """Auto-calculate total MWh before saving"""
+        if self.faults_mwh is not None and self.maintenance_mwh is not None:
+            self.total_mwh = self.faults_mwh + self.maintenance_mwh
+        super().save(*args, **kwargs)
 
 
-class WeeklyFaultMaintenance(models.Model):
-    """Store weekly faults and maintenance data"""
-    week = models.CharField(max_length=20)
-    faults = models.IntegerField(default=0)
-    maintenance = models.IntegerField(default=0)
-    completed = models.IntegerField(default=0)
-    pending = models.IntegerField(default=0)
+class DebtorCategory(models.Model):
+    """Debtor information categorized by customer type with percentage breakdowns"""
     
-    # Location-based filtering
-    region = models.ForeignKey('users.Regions', on_delete=models.CASCADE, null=True, blank=True)
-    district = models.ForeignKey('users.Districts', on_delete=models.CASCADE, null=True, blank=True)
-    depot = models.ForeignKey('users.Depots', on_delete=models.CASCADE, null=True, blank=True)
+    CATEGORY_CHOICES = [
+        ('mining', 'Mining'),
+        ('domestic', 'Domestic'),
+        ('industry', 'Industry'),
+        ('commercial', 'Commercial'),
+        ('farming', 'Farming'),
+        ('government', 'Government'),
+        ('parastatal', 'Parastatal'),
+        ('local_authority', 'Local Authority'),
+    ]
     
-    year = models.IntegerField(default=2024)
-    week_number = models.IntegerField()
+    category = models.CharField(
+        max_length=20, 
+        choices=CATEGORY_CHOICES,
+        unique=True,
+        help_text="Customer category for debt classification"
+    )
+    percentage = models.DecimalField(
+        max_digits=5, 
+        decimal_places=2,
+        validators=[MinValueValidator(0), MaxValueValidator(100)],
+        help_text="Percentage of total debt for this category (0.00 to 100.00)"
+    )
     
+    # Location fields for location-based filtering
+    region = models.ForeignKey(
+        Regions, 
+        on_delete=models.CASCADE, 
+        null=True, 
+        blank=True
+    )
+    district = models.ForeignKey(
+        Districts, 
+        on_delete=models.CASCADE, 
+        null=True, 
+        blank=True
+    )
+    depot = models.ForeignKey(
+        Depots, 
+        on_delete=models.CASCADE, 
+        null=True, 
+        blank=True
+    )
+    
+    # Time tracking
+    year = models.IntegerField(default=2025)
+    month = models.IntegerField(
+        validators=[MinValueValidator(1), MaxValueValidator(12)],
+        help_text="Month number (1-12)"
+    )
+    
+    # Audit fields
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-
+    updated_by = models.ForeignKey(
+        UserProfile, 
+        on_delete=models.SET_NULL, 
+        null=True
+    )
+    
     class Meta:
-        unique_together = ['week_number', 'year', 'region', 'district', 'depot']
-        ordering = ['week_number']
-
+        db_table = 'general_dashboards_debtorcategory'
+        verbose_name = 'Debtor Category'
+        verbose_name_plural = 'Debtor Categories'
+        ordering = ['category']
+        unique_together = ['category', 'year', 'month', 'region', 'district', 'depot']
+        indexes = [
+            models.Index(fields=['year', 'month']),
+            models.Index(fields=['region', 'district', 'depot']),
+        ]
+    
     def __str__(self):
-        return f"{self.week} - {self.region or self.district or self.depot or 'Global'}"
-
-
-class TopDebtor(models.Model):
-    """Store top debtors data"""
-    name = models.CharField(max_length=200)
-    amount = models.CharField(max_length=50)
+        location = self.get_location_display()
+        return f"{self.get_category_display()} - {self.percentage}% - {location}"
     
-    # Location-based filtering
-    region = models.ForeignKey('users.Regions', on_delete=models.CASCADE, null=True, blank=True)
-    district = models.ForeignKey('users.Districts', on_delete=models.CASCADE, null=True, blank=True)
-    depot = models.ForeignKey('users.Depots', on_delete=models.CASCADE, null=True, blank=True)
+    def get_location_display(self):
+        """Get a human-readable location string"""
+        if self.depot:
+            return f"{self.depot.district.district} - {self.depot.depot}"
+        elif self.district:
+            return f"{self.district.region.region} - {self.district.district}"
+        elif self.region:
+            return self.region.region
+        else:
+            return "All Locations"
     
-    # Ranking
-    rank = models.IntegerField(default=1)
-    
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        unique_together = ['rank', 'region', 'district', 'depot']
-        ordering = ['rank']
-
-    def __str__(self):
-        return f"{self.rank}. {self.name} - {self.amount}"
+    def clean(self):
+        """Validate that percentages sum to 100% for the same location and time period"""
+        from django.core.exceptions import ValidationError
+        
+        # Get other categories for the same location and time period
+        other_categories = DebtorCategory.objects.filter(
+            year=self.year,
+            month=self.month,
+            region=self.region,
+            district=self.district,
+            depot=self.depot
+        ).exclude(pk=self.pk)
+        
+        # Calculate total percentage including this category
+        total_percentage = sum([cat.percentage for cat in other_categories]) + self.percentage
+        
+        if total_percentage > 100:
+            raise ValidationError(
+                f'Total percentage for this location and time period cannot exceed 100%. '
+                f'Current total: {total_percentage}%'
+            )

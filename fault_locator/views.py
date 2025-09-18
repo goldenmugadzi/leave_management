@@ -981,6 +981,215 @@ def my_work(request):
     
     return render(request, "fault_locator/my_work.html", context)
 
+# Team Management Views
+@login_required
+def create_team(request):
+    """Create a new fault locator team"""
+    user_profile = UserProfile.objects.filter(id=request.user.id).first()
+    
+    # Check permissions
+    from .central_roles import can_create_teams
+    if not can_create_teams(user_profile):
+        messages.error(request, "You don't have permission to create teams.")
+        return redirect('team_overview')
+    
+    if request.method == 'POST':
+        form = FaultLocatorTeamForm(request.POST)
+        if form.is_valid():
+            team = form.save()
+            messages.success(request, f"Team '{team.name}' created successfully.")
+            return redirect('team_overview')
+    else:
+        form = FaultLocatorTeamForm()
+    
+    context = {
+        'form': form,
+        'user_profile': user_profile,
+        'title': 'Create New Team',
+    }
+    return render(request, "fault_locator/create_team.html", context)
+
+@login_required
+def edit_team(request, team_id):
+    """Edit an existing fault locator team"""
+    user_profile = UserProfile.objects.filter(id=request.user.id).first()
+    
+    # Check permissions
+    from .central_roles import can_create_teams
+    if not can_create_teams(user_profile):
+        messages.error(request, "You don't have permission to edit teams.")
+        return redirect('team_overview')
+    
+    try:
+        team = FaultLocatorTeam.objects.get(id=team_id)
+    except FaultLocatorTeam.DoesNotExist:
+        messages.error(request, "Team not found.")
+        return redirect('team_overview')
+    
+    if request.method == 'POST':
+        form = FaultLocatorTeamForm(request.POST, instance=team)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f"Team '{team.name}' updated successfully.")
+            return redirect('team_overview')
+    else:
+        form = FaultLocatorTeamForm(instance=team)
+    
+    # Get team members for display
+    members = team.members.all()
+    
+    context = {
+        'form': form,
+        'team': team,
+        'members': members,
+        'user_profile': user_profile,
+        'title': f'Edit Team: {team.name}',
+    }
+    return render(request, "fault_locator/edit_team.html", context)
+
+@login_required
+def add_team_member(request, team_id):
+    """Add a member to a team"""
+    user_profile = UserProfile.objects.filter(id=request.user.id).first()
+    
+    # Check permissions
+    from .central_roles import can_create_teams
+    if not can_create_teams(user_profile):
+        messages.error(request, "You don't have permission to manage team members.")
+        return redirect('team_overview')
+    
+    try:
+        team = FaultLocatorTeam.objects.get(id=team_id)
+    except FaultLocatorTeam.DoesNotExist:
+        messages.error(request, "Team not found.")
+        return redirect('team_overview')
+    
+    if request.method == 'POST':
+        form = AddTeamMemberForm(request.POST)
+        if form.is_valid():
+            member = form.cleaned_data['member']
+            
+            # Check if member is already in the team
+            if team.members.filter(id=member.id).exists():
+                messages.warning(request, f"{member.get_full_name()} is already a member of this team.")
+            else:
+                team.members.add(member)
+                messages.success(request, f"{member.get_full_name()} added to team '{team.name}'.")
+            
+            return redirect('edit_team', team_id=team.id)
+    else:
+        form = AddTeamMemberForm()
+    
+    context = {
+        'form': form,
+        'team': team,
+        'user_profile': user_profile,
+        'title': f'Add Member to {team.name}',
+    }
+    return render(request, "fault_locator/add_team_member.html", context)
+
+@login_required
+def remove_team_member(request, team_id, member_id):
+    """Remove a member from a team"""
+    user_profile = UserProfile.objects.filter(id=request.user.id).first()
+    
+    # Check permissions
+    from .central_roles import can_create_teams
+    if not can_create_teams(user_profile):
+        messages.error(request, "You don't have permission to manage team members.")
+        return redirect('team_overview')
+    
+    try:
+        team = FaultLocatorTeam.objects.get(id=team_id)
+        member = UserProfile.objects.get(id=member_id)
+    except (FaultLocatorTeam.DoesNotExist, UserProfile.DoesNotExist):
+        messages.error(request, "Team or member not found.")
+        return redirect('team_overview')
+    
+    # Check if member is actually in the team
+    if not team.members.filter(id=member.id).exists():
+        messages.warning(request, f"{member.get_full_name()} is not a member of this team.")
+        return redirect('edit_team', team_id=team.id)
+    
+    # Check if member is the team leader
+    if team.team_leader and team.team_leader.id == member.id:
+        messages.error(request, "Cannot remove the team leader. Please assign a new leader first.")
+        return redirect('edit_team', team_id=team.id)
+    
+    if request.method == 'POST':
+        team.members.remove(member)
+        messages.success(request, f"{member.get_full_name()} removed from team '{team.name}'.")
+        return redirect('edit_team', team_id=team.id)
+    
+    context = {
+        'team': team,
+        'member': member,
+        'user_profile': user_profile,
+        'title': f'Remove Member from {team.name}',
+    }
+    return render(request, "fault_locator/remove_team_member.html", context)
+
+@login_required
+def delete_team(request, team_id):
+    """Delete a team with safety checks"""
+    user_profile = UserProfile.objects.filter(id=request.user.id).first()
+    
+    # Check permissions
+    from .central_roles import can_create_teams
+    if not can_create_teams(user_profile):
+        messages.error(request, "You don't have permission to delete teams.")
+        return redirect('team_overview')
+    
+    try:
+        team = FaultLocatorTeam.objects.get(id=team_id)
+    except FaultLocatorTeam.DoesNotExist:
+        messages.error(request, "Team not found.")
+        return redirect('team_overview')
+    
+    # Safety checks before deletion
+    safety_issues = []
+    
+    # Check for active deployments
+    active_deployments = TeamDeployment.objects.filter(
+        team=team, 
+        recalled_at__isnull=True
+    )
+    if active_deployments.exists():
+        safety_issues.append(f"Team is currently deployed to {active_deployments.first().depot.depot}")
+    
+    # Check for active fault assignments
+    active_assignments = FaultAssignment.objects.filter(
+        team=team,
+        located_at__isnull=True
+    )
+    if active_assignments.exists():
+        safety_issues.append(f"Team has {active_assignments.count()} active fault assignment(s)")
+    
+    # Check for device assignments
+    device_assignments = FaultLocatorDeviceAssignment.objects.filter(team=team)
+    if device_assignments.exists():
+        safety_issues.append(f"Team has {device_assignments.count()} device assignment(s) that must be unassigned first")
+    
+    if request.method == 'POST':
+        if safety_issues:
+            messages.error(request, "Cannot delete team due to safety issues: " + "; ".join(safety_issues))
+            return redirect('edit_team', team_id=team.id)
+        
+        # Proceed with deletion
+        team_name = team.name
+        team.delete()
+        messages.success(request, f"Team '{team_name}' deleted successfully.")
+        return redirect('team_overview')
+    
+    context = {
+        'team': team,
+        'safety_issues': safety_issues,
+        'can_delete': len(safety_issues) == 0,
+        'user_profile': user_profile,
+        'title': f'Delete Team: {team.name}',
+    }
+    return render(request, "fault_locator/delete_team.html", context)
+
 # Keep existing utility functions
 def can_create_device(user_profile):
     """Check if user has permission to create devices"""

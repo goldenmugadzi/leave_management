@@ -1,1 +1,1 @@
-# Management package for general_dashboards 
+# Management package

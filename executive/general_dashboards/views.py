@@ -1,1075 +1,1292 @@
-from django.shortcuts import render, get_object_or_404
-from django.contrib.auth.decorators import login_required
-from django.http import JsonResponse
-from django.utils import timezone
-from django.urls import reverse
-from django.db.models import Q, Count, Avg, Max
-from datetime import datetime, timedelta
-import json
-from django.views.decorators.csrf import csrf_exempt
-from django.utils.decorators import method_decorator
+from django.shortcuts import render
+from django.http import JsonResponse, HttpResponse
 from django.views.decorators.http import require_http_methods
+from django.views.decorators.csrf import csrf_exempt
+from django.contrib.auth.decorators import login_required
+from django.db.models import Q, Sum
+from django.core.exceptions import ValidationError
+from django.utils import timezone
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework import status
+import json
+import logging
 
-# Import models from various apps
-from it.users.models import UserProfile, Roles, Application
-from approve.models import Process, Step, Approval, Workflow
-from ACE2.models import Ace2
-from finance.PettyCash.models import Pettycash
-from tokens.models import Token
-from finance.purchase_request.models import PurchaseRequest
-from it.change_requests.models import ChangeRequest
-from safety.models import SafetyMonthlyReport
-from Asset_Register.models import ZetdcAssets
-from Hardware_Faults.models import Employee as HardwareFault
-from Transport.models import TransportAssets
-from .models import (
-    DashboardPreference, ActionItemMetrics, DashboardWidget,
-    DashboardMetric, WeeklySales, WeeklyOutage, WeeklyFaultMaintenance, TopDebtor
+from .models import WeeklyCollections, WeeklyRevenueLost, DebtorCategory
+from .serializers import (
+    WeeklyCollectionsSerializer, WeeklyRevenueLostSerializer, 
+    DebtorCategorySerializer, DashboardDataSerializer
 )
+from .forms import DashboardDataBulkImportForm
+from it.users.models import Regions, Districts, Depots
+
+logger = logging.getLogger(__name__)
 
 
-@login_required
-def action_dashboard(request):
-    """
-    Main action dashboard showing role-based applications and pending actions
-    """
-    user = request.user
-    user_profile = get_object_or_404(UserProfile, id=user.id)
-    user_roles = user_profile.roles.all()
+def generate_dashboard_html(collections_data, revenue_lost_data, debtors_data, metrics, is_authenticated=False, access_level='none', show_aggregated_view=False):
+    """Generate HTML for the dashboard components with role-based context"""
     
-    # Get or create dashboard preferences
-    preferences, created = DashboardPreference.objects.get_or_create(user=user_profile)
+    # Add access level notice
+    access_notice = ''
+    if not is_authenticated:
+        access_notice = '''
+        <div class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-6" role="alert">
+            <div class="flex">
+                <div class="flex-shrink-0">
+                    <svg class="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+                    </svg>
+                </div>
+                <div class="ml-3">
+                    <p class="text-sm">
+                        <strong>Note:</strong> You are viewing the dashboard in read-only mode. 
+                        <a href="/admin/login/" class="font-medium underline hover:text-yellow-600">Log in</a> to edit data.
+                    </p>
+                </div>
+            </div>
+        </div>
+        '''
+    elif access_level == 'authenticated_user':
+        access_notice = '''
+        <div class="bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-4 mb-6" role="alert">
+            <div class="flex">
+                <div class="flex-shrink-0">
+                    <svg class="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" clip-rule="evenodd" />
+                    </svg>
+                </div>
+                <div class="ml-3">
+                    <p class="text-sm">
+                        <strong>Dashboard View:</strong> You can view data across all regions, districts, and depots. Use the filters to focus on specific locations.
+                    </p>
+                </div>
+            </div>
+        </div>
+        '''
     
-    # Get all applications the user has access to with metrics
-    accessible_apps = get_user_applications_with_metrics(user_roles, user_profile)
-    
-    # Get pending actions for each application
-    pending_actions = get_pending_actions(user, user_roles, user_profile)
-    
-    # Get recently actioned items
-    recent_actions = get_recent_actions(user, user_profile)
-    
-    # Get workflow metrics
-    workflow_metrics = get_workflow_metrics(user_roles, user_profile)
-    
-    # Get dashboard widgets
-    widgets = get_user_widgets(user_profile)
-    
-    # Calculate summary metrics
-    total_pending = sum(len(items) for items in pending_actions.values())
-    total_actioned = sum(app['actioned_count'] for app in accessible_apps.values())
-    total_applications = len(accessible_apps)
-    
-    context = {
-        'user_profile': user_profile,
-        'accessible_apps': accessible_apps,
-        'pending_actions': pending_actions,
-        'recent_actions': recent_actions,
-        'workflow_metrics': workflow_metrics,
-        'user_roles': user_roles,
-        'preferences': preferences,
-        'widgets': widgets,
-        'total_pending': total_pending,
-        'total_actioned': total_actioned,
-        'total_applications': total_applications,
-    }
-    
-    return render(request, 'general_dashboards/action_dashboard.html', context)
-
-
-def get_user_applications(user_roles):
-    """Get all applications the user has roles for with metrics"""
-    apps = {}
-    
-    app_icons = {
-        'ace': 'fas fa-dollar-sign',
-        'pettycash': 'fas fa-coins',
-        'tokens': 'fas fa-ticket-alt',
-        'purchase_request': 'fas fa-shopping-cart',
-        'change_requests': 'fas fa-code-branch',
-        'safety': 'fas fa-shield-alt',
-        'assets': 'fas fa-laptop',
-        'transport': 'fas fa-truck',
-        'users': 'fas fa-users',
-        'knowledge_center': 'fas fa-book',
-        'direct_purchase': 'fas fa-file-invoice',
-        'comparative_schedule': 'fas fa-chart-bar',
-        'restricted_bidding': 'fas fa-gavel',
-        'direct_purchases': 'fas fa-shopping-bag',
-        'temper': 'fas fa-thermometer-half',
-        'clear_credit': 'fas fa-credit-card',
-        'virement': 'fas fa-exchange-alt',
-        'dashboards': 'fas fa-tachometer-alt',
-    }
-    
-    app_colors = {
-        'ace': 'bg-green-500',
-        'pettycash': 'bg-blue-500',
-        'tokens': 'bg-purple-500',
-        'purchase_request': 'bg-orange-500',
-        'change_requests': 'bg-indigo-500',
-        'safety': 'bg-red-500',
-        'assets': 'bg-gray-500',
-        'transport': 'bg-yellow-500',
-        'users': 'bg-pink-500',
-        'knowledge_center': 'bg-teal-500',
-        'direct_purchase': 'bg-cyan-500',
-        'comparative_schedule': 'bg-lime-500',
-        'restricted_bidding': 'bg-amber-500',
-        'direct_purchases': 'bg-emerald-500',
-        'temper': 'bg-rose-500',
-        'clear_credit': 'bg-violet-500',
-        'virement': 'bg-sky-500',
-        'dashboards': 'bg-slate-500',
-    }
-    
-    for role in user_roles:
-        app_name = role.application
-        if app_name not in apps:
-            apps[app_name] = {
-                'name': app_name,
-                'roles': [],
-                'icon': app_icons.get(app_name, 'fas fa-cog'),
-                'color': app_colors.get(app_name, 'bg-gray-500'),
-                'pending_count': 0,
-                'actioned_count': 0,
-                'total_items': 0
-            }
-        apps[app_name]['roles'].append({
-            'role': role.role,
-            'name': role.name,
-            'description': role.description
-        })
-    
-    return apps
-
-
-def get_user_applications_with_metrics(user_roles, user_profile):
-    """Get applications with detailed metrics"""
-    apps = get_user_applications(user_roles)
-    
-    # Calculate metrics for each application
-    for app_name in apps.keys():
-        pending_count, actioned_count, total_items = get_application_metrics(app_name, user_roles, user_profile)
-        apps[app_name]['pending_count'] = pending_count
-        apps[app_name]['actioned_count'] = actioned_count
-        apps[app_name]['total_items'] = total_items
+    # Generate metric cards HTML
+    metric_cards_html = f'''
+    <div class="grid grid-cols-5 gap-5 mt-5">
+        <div class="metric-card">
+            <h5>ENERGY SOLD</h5>
+            <p class="text-2xl font-bold text-blue-600">{metrics['energy_sold']['value']} {metrics['energy_sold']['unit']}</p>
+            <p class="text-sm text-gray-600">Target: {metrics['energy_sold']['target']} {metrics['energy_sold']['target_unit']}</p>
+            <div class="progress-bar mt-2">
+                <div class="progress-fill bg-blue-600" style="width: {metrics['energy_sold']['progress']}%"></div>
+            </div>
+        </div>
         
-        # Calculate percentage if there are items
-        if total_items > 0:
-            apps[app_name]['actioned_percentage'] = round((actioned_count / total_items) * 100, 1)
+        <div class="metric-card">
+            <h5>GROWTH</h5>
+            <p class="text-2xl font-bold text-green-600">{metrics['growth']['value']} {metrics['growth']['unit']}</p>
+            <p class="text-sm text-gray-600">Target: {metrics['growth']['target']} {metrics['growth']['target_unit']}</p>
+            <div class="progress-bar mt-2">
+                <div class="progress-fill bg-green-600" style="width: {metrics['growth']['progress']}%"></div>
+            </div>
+        </div>
+        
+        <div class="metric-card">
+            <h5>REVENUE COLLECTION</h5>
+            <p class="text-xl font-bold text-purple-600">USD {metrics['revenue_usd']['value']}M</p>
+            <p class="text-xl font-bold text-purple-600">ZWL {metrics['revenue_zwl']['value']}M</p>
+            <div class="progress-bar mt-2">
+                <div class="progress-fill bg-purple-600" style="width: {metrics['revenue_usd']['progress']}%"></div>
+            </div>
+        </div>
+        
+        <div class="metric-card">
+            <h5>FAULTS</h5>
+            <p class="text-2xl font-bold text-red-600">{metrics['faults']['value']} {metrics['faults']['unit']}</p>
+            <p class="text-sm text-gray-600">Target: {metrics['faults']['target']} {metrics['faults']['target_unit']}</p>
+            <div class="progress-bar mt-2">
+                <div class="progress-fill bg-red-600" style="width: {metrics['faults']['progress']}%"></div>
+            </div>
+        </div>
+        
+        <div class="metric-card">
+            <h5>MAINTENANCE</h5>
+            <p class="text-2xl font-bold text-orange-600">{metrics['maintenance']['value']} {metrics['maintenance']['unit']}</p>
+            <p class="text-sm text-gray-600">Target: {metrics['maintenance']['target']} {metrics['maintenance']['target_unit']}</p>
+            <div class="progress-bar mt-2">
+                <div class="progress-fill bg-orange-600" style="width: {metrics['maintenance']['progress']}%"></div>
+            </div>
+        </div>
+    </div>
+    '''
+    
+    # Generate data tables HTML
+    tables_html = f'''
+    <div class="dashboard-grid grid grid-cols-3 gap-4 mt-10">
+        <div class="dashboard-section">
+            <div class="dashboard-section-header">💰 Weekly Collections</div>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Week</th>
+                        <th>ZWL (M)</th>
+                        <th>USD (M)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {generate_collections_table_rows(collections_data, is_authenticated)}
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="dashboard-section">
+            <div class="dashboard-section-header">⚡ Weekly Revenue Lost</div>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Week</th>
+                        <th>Faults (MWh)</th>
+                        <th>Maintenance (MWh)</th>
+                        <th>Total (MWh)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {generate_revenue_lost_table_rows(revenue_lost_data, is_authenticated)}
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="dashboard-section">
+            <div class="dashboard-section-header">📊 Debtors by Category</div>
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Category</th>
+                        <th>Percentage (%)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {generate_debtors_table_rows(debtors_data, is_authenticated)}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    '''
+    
+    return access_notice + metric_cards_html + tables_html
+
+
+def generate_collections_table_rows(collections_data, is_authenticated=False):
+    """Generate table rows for weekly collections"""
+    if not collections_data:
+        return '<tr><td colspan="3" class="text-center text-gray-500">No data available</td></tr>'
+    
+    rows = ''
+    for i, collection in enumerate(collections_data):
+        if is_authenticated:
+            rows += f'''
+            <tr>
+                <td>{collection.get('week', '')}</td>
+                <td class="editable-cell" data-table="weekly_collections" data-row="{i}" data-field="zwl_millions" onclick="startEdit('weekly_collections', {i}, 'zwl_millions', {collection.get('zwl_millions', 0)})">{collection.get('zwl_millions', 0)}M</td>
+                <td class="editable-cell" data-table="weekly_collections" data-row="{i}" data-field="usd_millions" onclick="startEdit('weekly_collections', {i}, 'usd_millions', {collection.get('usd_millions', 0)})">{collection.get('usd_millions', 0)}M</td>
+            </tr>
+            '''
         else:
-            apps[app_name]['actioned_percentage'] = 0
+            rows += f'''
+            <tr>
+                <td>{collection.get('week', '')}</td>
+                <td class="non-editable-cell">{collection.get('zwl_millions', 0)}M</td>
+                <td class="non-editable-cell">{collection.get('usd_millions', 0)}M</td>
+            </tr>
+            '''
+    return rows
+
+
+def generate_revenue_lost_table_rows(revenue_lost_data, is_authenticated=False):
+    """Generate table rows for weekly revenue lost"""
+    if not revenue_lost_data:
+        return '<tr><td colspan="4" class="text-center text-gray-500">No data available</td></tr>'
     
-    return apps
+    rows = ''
+    for i, revenue in enumerate(revenue_lost_data):
+        rows += f'''
+        <tr>
+            <td>{revenue.get('week', '')}</td>
+            <td class="editable-cell" data-table="weekly_revenue_lost" data-row="{i}" data-field="faults_mwh" onclick="startEdit('weekly_revenue_lost', {i}, 'faults_mwh', {revenue.get('faults_mwh', 0)})">{revenue.get('faults_mwh', 0)} MWh</td>
+            <td class="editable-cell" data-table="weekly_revenue_lost" data-row="{i}" data-field="maintenance_mwh" onclick="startEdit('weekly_revenue_lost', {i}, 'maintenance_mwh', {revenue.get('maintenance_mwh', 0)})">{revenue.get('maintenance_mwh', 0)} MWh</td>
+            <td class="non-editable-cell">{revenue.get('total_mwh', 0)} MWh</td>
+        </tr>
+        '''
+    return rows
 
 
-def get_application_metrics(app_name, user_roles, user_profile):
-    """Calculate metrics for a specific application"""
-    pending_count = 0
-    actioned_count = 0
-    total_items = 0
+def generate_debtors_table_rows(debtors_data, is_authenticated=False):
+    """Generate table rows for debtors"""
+    if not debtors_data:
+        return '<tr><td colspan="3" class="text-center text-gray-500">No data available</td></tr>'
     
-    try:
-        if app_name == 'ace':
-            # ACE metrics
-            ace_pending = get_ace_pending_actions(None, user_roles, user_profile)
-            pending_count = len(ace_pending)
-            
-            # Count actioned ACEs (where user has approved/rejected)
-            actioned_aces = Approval.objects.filter(
-                user=user_profile,
-                process__ace2_set__isnull=False
-            ).count()
-            actioned_count = actioned_aces
-            
-        elif app_name == 'pettycash':
-            # PettyCash metrics
-            petty_pending = get_pettycash_pending_actions(None, user_roles, user_profile)
-            pending_count = len(petty_pending)
-            
-            # Count actioned PettyCash items
-            actioned_petty = Approval.objects.filter(
-                user=user_profile,
-                process__pettycash_set__isnull=False
-            ).count()
-            actioned_count = actioned_petty
-            
-        elif app_name == 'tokens':
-            # Token metrics
-            token_pending = get_token_pending_actions(None, user_roles, user_profile)
-            pending_count = len(token_pending)
-            
-            # Count actioned Tokens
-            actioned_tokens = Approval.objects.filter(
-                user=user_profile,
-                process__token_set__isnull=False
-            ).count()
-            actioned_count = actioned_tokens
-            
-        elif app_name == 'change_requests':
-            # Change Request metrics
-            try:
-                from it.change_requests.models import ChangeRequest, CRApproval
-                # Count pending change requests for user
-                pending_crs = ChangeRequest.objects.filter(
-                    # Add conditions based on your change request workflow
-                    status__in=['pending', 'in_review']
-                ).count()
-                pending_count = pending_crs
-                
-                # Count actioned change requests
-                actioned_crs = CRApproval.objects.filter(
-                    approver=user_profile
-                ).count()
-                actioned_count = actioned_crs
-            except Exception as e:
-                print(f"Error calculating change request metrics: {e}")
-                
-        elif app_name == 'direct_purchase':
-            # Direct Purchase metrics
-            try:
-                from finance.direct_purchase.models import DirectPurchase, DPApproval
-                # Count pending direct purchases
-                pending_dp = DirectPurchase.objects.filter(
-                    # Add conditions based on your workflow
-                ).count()
-                pending_count = pending_dp
-                
-                # Count actioned direct purchases
-                actioned_dp = DPApproval.objects.filter(
-                    user=user_profile
-                ).count()
-                actioned_count = actioned_dp
-            except Exception as e:
-                print(f"Error calculating direct purchase metrics: {e}")
-                
-        elif app_name == 'comparative_schedule':
-            # Comparative Schedule metrics
-            try:
-                from finance.comparative_schedules.models import ComparativeSchedules, CSApproval
-                pending_cs = ComparativeSchedules.objects.filter(
-                    # Add conditions based on your workflow
-                ).count()
-                pending_count = pending_cs
-                
-                actioned_cs = CSApproval.objects.filter(
-                    user=user_profile
-                ).count()
-                actioned_count = actioned_cs
-            except Exception as e:
-                print(f"Error calculating comparative schedule metrics: {e}")
-                
-        elif app_name == 'restricted_bidding':
-            # Restricted Bidding metrics
-            try:
-                from finance.ristricted_bidding.models import RistricedBiddings, RBApproval
-                pending_rb = RistricedBiddings.objects.filter(
-                    # Add conditions based on your workflow
-                ).count()
-                pending_count = pending_rb
-                
-                actioned_rb = RBApproval.objects.filter(
-                    user=user_profile
-                ).count()
-                actioned_count = actioned_rb
-            except Exception as e:
-                print(f"Error calculating restricted bidding metrics: {e}")
-                
-        elif app_name == 'safety':
-            # Safety metrics
-            try:
-                from safety.models import SafetyMonthlyReport
-                # Count pending safety reports that need review
-                pending_safety = SafetyMonthlyReport.objects.filter(
-                    # Add conditions for reports pending review
-                ).count()
-                pending_count = pending_safety
-                
-                # Count safety reports the user has worked on
-                actioned_safety = SafetyMonthlyReport.objects.filter(
-                    user=user_profile
-                ).count()
-                actioned_count = actioned_safety
-            except Exception as e:
-                print(f"Error calculating safety metrics: {e}")
-                
-        total_items = pending_count + actioned_count
-        
-    except Exception as e:
-        print(f"Error calculating metrics for {app_name}: {e}")
-    
-    return pending_count, actioned_count, total_items
+    rows = ''
+    for i, debtor in enumerate(debtors_data):
+        if is_authenticated:
+            rows += f'''
+            <tr>
+                <td>{i + 1}</td>
+                <td>{debtor.get('category', '')}</td>
+                <td class="editable-cell" data-table="debtors" data-row="{i}" data-field="percentage" onclick="startEdit('debtors', {i}, 'percentage', {debtor.get('percentage', 0)})">{debtor.get('percentage', 0)}%</td>
+            </tr>
+            '''
+        else:
+            rows += f'''
+            <tr>
+                <td>{debtor.get('id', i + 1)}</td>
+                <td>{debtor.get('category', '')}</td>
+                <td class="non-editable-cell">{debtor.get('percentage', 0)}%</td>
+            </tr>
+            '''
+    return rows
 
 
-def get_pending_actions(user, user_roles, user_profile):
-    """Get all pending items requiring user action across all applications"""
-    pending_items = {
-        'urgent': [],
-        'high': [],
-        'medium': [],
-        'low': []
-    }
-    
-    # ACE Approvals
-    ace_pending = get_ace_pending_actions(user, user_roles, user_profile)
-    
-    # PettyCash Approvals
-    petty_pending = get_pettycash_pending_actions(user, user_roles, user_profile)
-    
-    # Token Approvals
-    token_pending = get_token_pending_actions(user, user_roles, user_profile)
-    
-    # Purchase Request Approvals
-    pr_pending = get_purchase_request_pending_actions(user, user_roles, user_profile)
-    
-    # Change Request Approvals
-    cr_pending = get_change_request_pending_actions(user, user_roles, user_profile)
-    
-    # Safety Report Reviews
-    safety_pending = get_safety_pending_actions(user, user_roles, user_profile)
-    
-    # Asset Management Actions
-    asset_pending = get_asset_pending_actions(user, user_roles, user_profile)
-    
-    # Categorize by priority
-    all_pending = [
-        *ace_pending, *petty_pending, *token_pending, 
-        *pr_pending, *cr_pending, *safety_pending, *asset_pending
-    ]
-    
-    for item in all_pending:
-        priority = calculate_priority(item)
-        pending_items[priority].append(item)
-    
-    return pending_items
+def dashboard_index(request):
+    """Main dashboard index view"""
+    return render(request, 'general_dashboards/dashboard_index.html', {
+        'title': 'Executive Dashboard',
+        'is_authenticated': request.user.is_authenticated
+    })
 
 
-def get_ace_pending_actions(user, user_roles, user_profile):
-    """Get pending ACE items for approval"""
-    pending_aces = []
-    region = user_profile.region
-    
-    if not region:
-        return pending_aces
-    
-    # Get ACEs where user is next approver
-    try:
-        for ace in Ace2.objects.filter(region=region):
-            process = ace.process
-            if not process:
-                continue
-                
-            # Skip rejected items
-            if process.approval_set.filter(approved="Rejected").exists():
-                continue
-                
-            # Get next step
-            if process.approval_set.exists():
-                last_approval = process.approval_set.last()
-                next_step = last_approval.step.step + 1
-            else:
-                next_step = 1
-                
-            # Check if user is next approver
-            try:
-                step = Step.objects.get(
-                    step=next_step, 
-                    workflow=process.workflow, 
-                    approver__in=user_roles
-                )
-                
-                days_pending = (timezone.now().date() - ace.date_created).days if ace.date_created else 0
-                
-                pending_aces.append({
-                    'type': 'ACE',
-                    'id': ace.Ace_id2,
-                    'title': f"ACE {ace.Ace_id2}",
-                    'description': ace.details_of_expenditure or 'No description',
-                    'amount': ace.amount or 0,
-                    'requester': ace.requested_by or 'Unknown',
-                    'date_created': ace.date_created,
-                    'current_step': next_step,
-                    'days_pending': days_pending,
-                    'url': reverse('Ace:ace_detail', args=[ace.Ace_id2]),
-                    'action_required': step.approver.name,
-                    'urgency': get_urgency_level(ace.amount or 0, ace.date_created)
-                })
-            except Step.DoesNotExist:
-                continue
-    except Exception as e:
-        print(f"Error getting ACE pending actions: {e}")
-            
-    return pending_aces
-
-
-def get_pettycash_pending_actions(user, user_roles, user_profile):
-    """Get pending PettyCash items for approval"""
-    pending_petty = []
-    region = user_profile.region
-    
-    if not region:
-        return pending_petty
-    
-    try:
-        for petty in Pettycash.objects.filter(region=region):
-            process = petty.process
-            if not process:
-                continue
-                
-            # Skip rejected items
-            if process.approval_set.filter(approved="Rejected").exists():
-                continue
-                
-            # Get next step
-            if process.approval_set.exists():
-                last_approval = process.approval_set.last()
-                next_step = last_approval.step.step + 1
-            else:
-                next_step = 1
-                
-            # Check if user is next approver
-            try:
-                step = Step.objects.get(
-                    step=next_step, 
-                    workflow=process.workflow, 
-                    approver__in=user_roles
-                )
-                
-                days_pending = (timezone.now().date() - petty.date_created).days if petty.date_created else 0
-                
-                pending_petty.append({
-                    'type': 'PettyCash',
-                    'id': petty.petty_id,
-                    'title': f"Petty Cash {petty.petty_id}",
-                    'description': petty.description or 'No description',
-                    'amount': petty.amount or 0,
-                    'requester': petty.requested_by.get_full_name() if petty.requested_by else 'Unknown',
-                    'date_created': petty.date_created,
-                    'current_step': next_step,
-                    'days_pending': days_pending,
-                    'url': reverse('pettycash:pettycash_detail', args=[petty.petty_id]),
-                    'action_required': step.approver.name,
-                    'urgency': get_urgency_level(petty.amount or 0, petty.date_created)
-                })
-            except Step.DoesNotExist:
-                continue
-    except Exception as e:
-        print(f"Error getting PettyCash pending actions: {e}")
-            
-    return pending_petty
-
-
-def get_token_pending_actions(user, user_roles, user_profile):
-    """Get pending Token items for approval"""
-    pending_tokens = []
-    
-    try:
-        for token in Token.objects.all():
-            process = token.process
-            if not process:
-                continue
-                
-            # Skip rejected items
-            if process.approval_set.filter(approved="Rejected").exists():
-                continue
-                
-            # Get next step
-            if process.approval_set.exists():
-                last_approval = process.approval_set.last()
-                next_step = last_approval.step.step + 1
-            else:
-                next_step = 1
-                
-            # Check if user is next approver
-            try:
-                step = Step.objects.get(
-                    step=next_step, 
-                    workflow=process.workflow, 
-                    approver__in=user_roles
-                )
-                
-                days_pending = (timezone.now().date() - token.created_at.date()).days if token.created_at else 0
-                
-                pending_tokens.append({
-                    'type': 'Token',
-                    'id': token.id,
-                    'title': f"Token {token.id}",
-                    'description': token.reason or 'No description',
-                    'amount': 0,  # Tokens don't have amounts
-                    'requester': token.created_by.get_full_name() if token.created_by else 'Unknown',
-                    'date_created': token.created_at.date() if token.created_at else None,
-                    'current_step': next_step,
-                    'days_pending': days_pending,
-                    'url': reverse('tokens:token', args=[token.id]),
-                    'action_required': step.approver.name,
-                    'urgency': get_urgency_level(0, token.created_at.date() if token.created_at else None)
-                })
-            except Step.DoesNotExist:
-                continue
-    except Exception as e:
-        print(f"Error getting Token pending actions: {e}")
-            
-    return pending_tokens
-
-
-def get_purchase_request_pending_actions(user, user_roles, user_profile):
-    """Get pending Purchase Request items"""
-    # Implementation depends on your purchase request workflow
-    return []
-
-
-def get_change_request_pending_actions(user, user_roles, user_profile):
-    """Get pending Change Request items"""
-    # Implementation for change requests
-    return []
-
-
-def get_safety_pending_actions(user, user_roles, user_profile):
-    """Get pending Safety items"""
-    # Implementation for safety reports
-    return []
-
-
-def get_asset_pending_actions(user, user_roles, user_profile):
-    """Get pending Asset Management items"""
-    # Implementation for asset management
-    return []
-
-
-def get_recent_actions(user, user_profile):
-    """Get recently actioned items by the user"""
-    recent_actions = []
-    
-    try:
-        # Get recent approvals
-        recent_approvals = Approval.objects.filter(
-            user=user_profile
-        ).order_by('-approved_at')[:10]
-        
-        for approval in recent_approvals:
-            process = approval.process
-            item_title = "Unknown Item"
-            item_url = "#"
-            
-            # Determine the item type and get details
-            if hasattr(process, 'ace2_set') and process.ace2_set.exists():
-                ace = process.ace2_set.last()
-                item_title = f"ACE {ace.Ace_id2}"
-                item_url = reverse('Ace:ace_detail', args=[ace.Ace_id2])
-            elif hasattr(process, 'pettycash_set') and process.pettycash_set.exists():
-                petty = process.pettycash_set.last()
-                item_title = f"Petty Cash {petty.petty_id}"
-                item_url = reverse('pettycash:pettycash_detail', args=[petty.petty_id])
-            elif hasattr(process, 'token_set') and process.token_set.exists():
-                token = process.token_set.last()
-                item_title = f"Token {token.id}"
-                item_url = reverse('tokens:token', args=[token.id])
-            
-            recent_actions.append({
-                'title': item_title,
-                'action': approval.approved,
-                'date': approval.approved_at,
-                'url': item_url,
-                'status_color': 'bg-green-500' if approval.approved == 'Approved' else 'bg-red-500'
-            })
-    except Exception as e:
-        print(f"Error getting recent actions: {e}")
-    
-    return recent_actions
-
-
-def get_workflow_metrics(user_roles, user_profile):
-    """Get workflow performance metrics"""
-    metrics = {
-        'total_pending': 0,
-        'avg_approval_time': 0,
-        'approval_rate': 0,
-        'workload_distribution': {}
-    }
-    
-    try:
-        # Calculate metrics for different workflow types
-        workflows = ['ace', 'pettycash', 'tokens', 'purchase_request']
-        
-        for workflow_name in workflows:
-            try:
-                workflow = Workflow.objects.get(name=workflow_name)
-                
-                # Count pending items for this workflow
-                pending_count = Process.objects.filter(
-                    workflow=workflow,
-                    approval_set__step__approver__in=user_roles
-                ).exclude(
-                    approval_set__approved="Rejected"
-                ).count()
-                
-                metrics['workload_distribution'][workflow_name] = {
-                    'pending_count': pending_count,
-                    'name': workflow_name.title()
-                }
-                
-                metrics['total_pending'] += pending_count
-                
-            except Workflow.DoesNotExist:
-                metrics['workload_distribution'][workflow_name] = {
-                    'pending_count': 0,
-                    'name': workflow_name.title()
-                }
-    except Exception as e:
-        print(f"Error calculating workflow metrics: {e}")
-    
-    return metrics
-
-
-def get_user_widgets(user_profile):
-    """Get dashboard widgets for the user based on their roles"""
-    # Implementation for dashboard widgets
-    return []
-
-
-def calculate_priority(item):
-    """Calculate priority based on amount, age, and type"""
-    days_pending = item.get('days_pending', 0)
-    amount = item.get('amount', 0)
-    item_type = item.get('type', '')
-    
-    # Urgent: High amount + old + critical type
-    if (amount > 100000 and days_pending > 7) or days_pending > 14:
-        return 'urgent'
-    elif amount > 50000 or days_pending > 5:
-        return 'high'
-    elif amount > 10000 or days_pending > 3:
-        return 'medium'
-    else:
-        return 'low'
-
-
-def get_urgency_level(amount, date_created):
-    """Get urgency level for an item"""
-    if not date_created:
-        return 'medium'
-    
-    days_old = (timezone.now().date() - date_created).days
-    
-    if amount > 100000 or days_old > 14:
-        return 'urgent'
-    elif amount > 50000 or days_old > 7:
-        return 'high'
-    elif amount > 10000 or days_old > 3:
-        return 'medium'
-    else:
-        return 'low'
-
-
-@login_required
-def dashboard_api(request):
-    """API endpoint for dashboard data"""
-    user = request.user
-    user_profile = get_object_or_404(UserProfile, id=user.id)
-    user_roles = user_profile.roles.all()
-    
-    # Get data based on request parameters
-    data_type = request.GET.get('type', 'all')
-    
-    if data_type == 'pending_actions':
-        pending_actions = get_pending_actions(user, user_roles, user_profile)
-        return JsonResponse(pending_actions)
-    elif data_type == 'workflow_metrics':
-        metrics = get_workflow_metrics(user_roles, user_profile)
-        return JsonResponse(metrics)
-    elif data_type == 'recent_actions':
-        recent_actions = get_recent_actions(user, user_profile)
-        return JsonResponse({'recent_actions': recent_actions})
-    
-    return JsonResponse({'error': 'Invalid data type'}, status=400)
-
-
-@login_required
-def update_preferences(request):
-    """Update user dashboard preferences"""
-    if request.method == 'POST':
-        user_profile = get_object_or_404(UserProfile, id=request.user.id)
-        preferences, created = DashboardPreference.objects.get_or_create(user=user_profile)
-        
-        # Update preferences from form data
-        preferences.default_priority_filter = request.POST.get('priority_filter', 'all')
-        preferences.items_per_page = int(request.POST.get('items_per_page', 10))
-        preferences.show_completed_actions = request.POST.get('show_completed') == 'on'
-        preferences.email_notifications = request.POST.get('email_notifications') == 'on'
-        
-        preferences.save()
-        
-        return JsonResponse({'status': 'success'})
-    
-    return JsonResponse({'error': 'Method not allowed'}, status=405)
-
-
-# =================== NEW DASHBOARD DATA API VIEWS ===================
-
-@csrf_exempt
-@require_http_methods(["GET"])
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
 def get_regions(request):
-    """Get all regions, districts, sections, and depots for filters"""
-    from it.users.models import Regions, Districts, Sections, Depots
+    """Get regions, districts, and depots based on user's access level"""
     
-    regions = list(Regions.objects.values('id', 'region'))
-    districts = list(Districts.objects.values('id', 'district', 'region_id'))
-    sections = list(Sections.objects.values('id', 'section', 'district_id', 'region_id'))
-    depots = list(Depots.objects.values('id', 'depot', 'district_id', 'region_id'))
-    
-    # Get sample data for compatibility
-    pbncs = []  # Add your PBNC data logic here
-    upos = []   # Add your UPO data logic here
-    weekly_sales = list(WeeklySales.objects.filter(
-        region__isnull=True, district__isnull=True, depot__isnull=True
-    ).values('week', 'zwl', 'usd'))
-    
-    weekly_outages = list(WeeklyOutage.objects.filter(
-        region__isnull=True, district__isnull=True, depot__isnull=True
-    ).values('week', 'outages', 'resolved', 'pending'))
-    
-    tds = list(TopDebtor.objects.filter(
-        region__isnull=True, district__isnull=True, depot__isnull=True
-    ).values('name', 'amount'))
-    
-    weekly_faults_maintenance = list(WeeklyFaultMaintenance.objects.filter(
-        region__isnull=True, district__isnull=True, depot__isnull=True
-    ).values('week', 'faults', 'maintenance', 'completed', 'pending'))
-    
-    return JsonResponse({
-        'regions': regions,
-        'districts': districts,
-        'sections': sections,
-        'depots': depots,
-        'pbncs': pbncs,
-        'weekly_sales': weekly_sales,
-        'upos': upos,
-        'weekly_outages': weekly_outages,
-        'tds': tds,
-        'weekly_faults_maintenance': weekly_faults_maintenance,
-    })
+    try:
+        # Get user's allowed locations and default region
+        allowed_locations = get_user_allowed_locations(request.user)
+        access_level, _ = get_user_dashboard_access_level(request.user)
+        
+        # Get user's default region for auto-selection
+        from it.users.models import UserProfile
+        try:
+            user_profile = UserProfile.objects.get(id=request.user.id)
+            default_region_id = user_profile.region.id if user_profile.region else None
+            default_district_id = user_profile.district.id if user_profile.district else None
+            default_depot_id = user_profile.depot.id if user_profile.depot else None
+        except UserProfile.DoesNotExist:
+            default_region_id = None
+            default_district_id = None
+            default_depot_id = None
+        
+        # Build HTML options with default selection
+        regions_html = '<option value="">All Regions</option>'
+        for r in allowed_locations['regions']:
+            selected = 'selected' if r["id"] == default_region_id else ''
+            regions_html += f'<option value="{r["id"]}" {selected}>{r["region"]}</option>'
+        
+        districts_html = '<option value="">All Districts</option>'
+        for d in allowed_locations['districts']:
+            selected = 'selected' if d["id"] == default_district_id else ''
+            districts_html += f'<option value="{d["id"]}" data-region="{d["region_id"]}" {selected}>{d["district"]}</option>'
+        
+        depots_html = '<option value="">All Depots</option>'
+        for dep in allowed_locations['depots']:
+            selected = 'selected' if dep["id"] == default_depot_id else ''
+            depots_html += f'<option value="{dep["id"]}" data-district="{dep["district_id"]}" {selected}>{dep["depot"]}</option>'
+        
+        # Add a simple notice for all authenticated users
+        notice_html = ''
+        if access_level == 'authenticated_user':
+            notice_html = '''
+            <div class="bg-blue-100 border-l-4 border-blue-500 text-blue-700 p-3 mb-4" role="alert">
+                <div class="flex">
+                    <div class="flex-shrink-0">
+                        <svg class="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+                        </svg>
+                    </div>
+                    <div class="ml-3">
+                        <p class="text-sm">
+                            <strong>Dashboard View:</strong> You can view data across all regions, districts, and depots. Use the filters above to focus on specific locations.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            '''
+        
+        # Return HTML fragment with notice and updated dropdowns
+        return HttpResponse(f'''
+        {notice_html}
+        <script>
+            document.getElementById('selectRegion').innerHTML = `{regions_html}`;
+            document.getElementById('selectDistrict').innerHTML = `{districts_html}`;
+            document.getElementById('selectDepot').innerHTML = `{depots_html}`;
+            
+            // Trigger filter application if user has a default region selected
+            setTimeout(function() {{
+                if (document.getElementById('selectRegion').value || 
+                    document.getElementById('selectDistrict').value || 
+                    document.getElementById('selectDepot').value) {{
+                    if (typeof applyFilters === 'function') {{
+                        applyFilters();
+                    }}
+                }}
+            }}, 100);
+        </script>
+        ''', content_type='text/html')
+        
+    except Exception as e:
+        logger.error(f"Error getting regions: {str(e)}")
+        return HttpResponse(f'<p class="text-red-600">Error loading regions data: {str(e)}</p>', content_type='text/html')
 
 
+@api_view(['GET'])
+@permission_classes([])
 @csrf_exempt
-@require_http_methods(["GET"])
 def get_dashboard_data(request):
-    """Get initial dashboard data"""
-    # Get metrics
-    metrics = {}
-    for metric in DashboardMetric.objects.filter(region__isnull=True, district__isnull=True, depot__isnull=True):
-        metrics[metric.metric_type] = {
-            'value': metric.value,
-            'unit': metric.unit,
-            'target': metric.target,
-            'target_unit': metric.target_unit,
-            'progress': metric.progress
+    """Get complete dashboard data including new sections with role-based access control"""
+    # Get authentication status from query parameter (passed from frontend)
+    auth_param = request.GET.get('auth', 'false')
+    is_authenticated = auth_param.lower() == 'true'
+    
+    try:
+        # Get user's access level and default filter
+        if is_authenticated and request.user.is_authenticated:
+            access_level, user_default_filter = get_user_dashboard_access_level(request.user)
+            show_aggregated_view = False  # No special aggregated view needed
+        else:
+            # For unauthenticated users, no access to any specific data
+            access_level = 'none'
+            user_default_filter = Q(pk__isnull=True)
+            show_aggregated_view = False
+        
+        # Get current year and month first (needed for flexible filtering)
+        current_year = timezone.now().year
+        current_month = timezone.now().month
+
+        # Get filter parameters from URL
+        region_id = request.GET.get('region')
+        district_id = request.GET.get('district')
+        depot_id = request.GET.get('depot')
+
+        # For authenticated users, determine the best filter to use
+        if access_level == 'authenticated_user':
+            # Try filters in order of specificity, falling back to broader filters if no data found
+            location_filter = _get_flexible_location_filter(
+                region_id, district_id, depot_id, current_year, current_month
+            )
+            if not location_filter:
+                # If no specific filters provided, use user's default region
+                location_filter = user_default_filter
+        else:
+            # No access users get no data
+            location_filter = Q(pk__isnull=True)
+        
+        # Apply location filter to data queries
+        base_collections_query = WeeklyCollections.objects.filter(year=current_year)
+        base_revenue_query = WeeklyRevenueLost.objects.filter(year=current_year)
+        base_debtors_query = DebtorCategory.objects.filter(year=current_year, month=current_month)
+        
+        if location_filter and access_level == 'authenticated_user':
+            # Apply the location filter (either requested or user's default region)
+            weekly_collections = base_collections_query.filter(location_filter).order_by('week_number')
+            weekly_revenue_lost = base_revenue_query.filter(location_filter).order_by('week_number')
+            debtors = base_debtors_query.filter(location_filter).order_by('category')
+        elif access_level == 'authenticated_user':
+            # If no filter and authenticated, show all data
+            weekly_collections = base_collections_query.order_by('week_number')
+            weekly_revenue_lost = base_revenue_query.order_by('week_number')
+            debtors = base_debtors_query.order_by('category')
+        else:
+            # Unauthenticated users get no data
+            weekly_collections = base_collections_query.none()
+            weekly_revenue_lost = base_revenue_query.none()
+            debtors = base_debtors_query.none()
+        
+        # Serialize the data
+        collections_data = WeeklyCollectionsSerializer(weekly_collections, many=True).data
+        revenue_lost_data = WeeklyRevenueLostSerializer(weekly_revenue_lost, many=True).data
+        debtors_data = DebtorCategorySerializer(debtors, many=True).data
+        
+        # Debug logging
+        logger.info(f"Found {len(collections_data)} collections, {len(revenue_lost_data)} revenue lost, {len(debtors_data)} debtors")
+        if collections_data:
+            logger.info(f"Sample collection: {collections_data[0]}")
+        
+        # Calculate metrics from actual data
+        total_zwl = sum(float(c.get('zwl_millions', 0)) for c in collections_data) if collections_data else 0
+        total_usd = sum(float(c.get('usd_millions', 0)) for c in collections_data) if collections_data else 0
+        total_faults = sum(float(r.get('faults_mwh', 0)) for r in revenue_lost_data) if revenue_lost_data else 0
+        total_maintenance = sum(float(r.get('maintenance_mwh', 0)) for r in revenue_lost_data) if revenue_lost_data else 0
+        
+        # Prepare response with existing dashboard structure
+        dashboard_data = {
+            'weekly_collections': collections_data,
+            'weekly_revenue_lost': revenue_lost_data,
+            'debtors': debtors_data,
+            
+            # Include existing dashboard sections (empty for now)
+            'pbncs': [],
+            'weekly_sales': [],
+            'upos': [],
+            'weekly_outages': [],
+            'tds': [],
+            'weekly_faults_maintenance': [],
+            
+            # Metrics data calculated from actual data
+            'metrics': {
+                'energy_sold': {'value': f'{total_zwl:.1f}', 'unit': 'M ZWL', 'target': '1000.0', 'target_unit': 'M ZWL', 'progress': min(100, int((total_zwl / 1000.0) * 100))},
+                'growth': {'value': f'{len(collections_data)}', 'unit': 'Weeks', 'target': '52', 'target_unit': 'Weeks', 'progress': min(100, int((len(collections_data) / 52.0) * 100))},
+                'revenue_usd': {'value': f'{total_usd:.1f}', 'unit': 'M', 'target': '500.0', 'target_unit': 'M', 'progress': min(100, int((total_usd / 500.0) * 100))},
+                'revenue_zwl': {'value': f'{total_zwl:.1f}', 'unit': 'M', 'target': '1000.0', 'target_unit': 'M', 'progress': min(100, int((total_zwl / 1000.0) * 100))},
+                'faults': {'value': f'{total_faults:.1f}', 'unit': 'MWh', 'target': '100.0', 'target_unit': 'MWh', 'progress': min(100, int((total_faults / 100.0) * 100))},
+                'maintenance': {'value': f'{total_maintenance:.1f}', 'unit': 'MWh', 'target': '50.0', 'target_unit': 'MWh', 'progress': min(100, int((total_maintenance / 50.0) * 100))}
+            },
+            
+            # Chart data
+            'inspection_locations': '[]',
+            'inspections_count': '[]',
+            'maintenance_locations': '[]',
+            'maintenance_count': '[]',
+            'mnt': {}
         }
-    
-    # Get chart data (mock for now)
-    inspection_locations = json.dumps(['Location A', 'Location B', 'Location C'])
-    inspections_count = json.dumps([10, 15, 8])
-    maintenance_locations = json.dumps(['Site 1', 'Site 2', 'Site 3'])
-    maintenance_count = json.dumps([5, 12, 7])
-    mtn = {'Site 1': [1, 2, 3, 4], 'Site 2': [2, 3, 1, 5]}
-    
-    # Get table data
-    weekly_sales = list(WeeklySales.objects.filter(
-        region__isnull=True, district__isnull=True, depot__isnull=True
-    ).values('week', 'zwl', 'usd'))
-    
-    weekly_outages = list(WeeklyOutage.objects.filter(
-        region__isnull=True, district__isnull=True, depot__isnull=True
-    ).values('week', 'outages', 'resolved', 'pending'))
-    
-    weekly_faults_maintenance = list(WeeklyFaultMaintenance.objects.filter(
-        region__isnull=True, district__isnull=True, depot__isnull=True
-    ).values('week', 'faults', 'maintenance', 'completed', 'pending'))
-    
-    tds = list(TopDebtor.objects.filter(
-        region__isnull=True, district__isnull=True, depot__isnull=True
-    ).values('name', 'amount'))
-    
-    return JsonResponse({
-        'inspection_locations': inspection_locations,
-        'inspections_count': inspections_count,
-        'maintenance_locations': maintenance_locations,
-        'maintenance_count': maintenance_count,
-        'mtn': mtn,
-        'metrics': metrics,
-        'pbncs': [],
-        'weekly_sales': weekly_sales,
-        'upos': [],
-        'weekly_outages': weekly_outages,
-        'tds': tds,
-        'weekly_faults_maintenance': weekly_faults_maintenance,
-    })
+        
+        # Generate HTML for the dashboard with access level context
+        html_content = generate_dashboard_html(
+            collections_data, 
+            revenue_lost_data, 
+            debtors_data, 
+            dashboard_data['metrics'], 
+            is_authenticated,
+            access_level,
+            show_aggregated_view
+        )
+        
+        return HttpResponse(html_content, content_type='text/html')
+        
+    except Exception as e:
+        logger.error(f"Error getting dashboard data: {str(e)}")
+        return HttpResponse('<p class="text-red-600">Error loading dashboard data</p>', content_type='text/html')
 
 
-@csrf_exempt
-@require_http_methods(["GET"])
-def user_permissions(request):
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def save_dashboard_data(request):
+    """Save dashboard data with role-based access control"""
+    try:
+        # Check if user has permission to edit dashboard data
+        can_edit = check_user_can_edit_dashboard(request.user)
+        if not can_edit:
+            return Response({
+                'success': False,
+                'error': 'Insufficient permissions. Only users with Manager role for dashboards can edit data.'
+            }, status=status.HTTP_403_FORBIDDEN)
+        
+        # Get data from request
+        data = request.data
+        table_type = data.get('table')
+        row_index = data.get('row')
+        field = data.get('field')
+        value = data.get('value')
+        
+        if not all([table_type, field, value is not None]):
+            return Response({
+                'success': False,
+                'error': 'Missing required parameters'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Handle different table types
+        if table_type == 'weekly_collections':
+            result = save_weekly_collections(request, row_index, field, value)
+        elif table_type == 'weekly_revenue_lost':
+            result = save_weekly_revenue_lost(request, row_index, field, value)
+        elif table_type == 'debtors':
+            result = save_debtor_category(request, row_index, field, value)
+        else:
+            return Response({
+                'success': False,
+                'error': f'Unsupported table type: {table_type}'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        return Response(result)
+        
+    except Exception as e:
+        logger.error(f"Error saving dashboard data: {str(e)}")
+        return Response({
+            'success': False,
+            'error': 'Failed to save data'
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+def save_weekly_collections(request, row_index, field, value):
+    """Save weekly collections data"""
+    # Authentication is already checked in the main save function
+    try:
+        # Get the record to update
+        current_year = timezone.now().year
+        collections = WeeklyCollections.objects.filter(year=current_year).order_by('week_number')
+        if row_index >= len(collections):
+            return {'success': False, 'error': 'Invalid row index'}
+        print("collections:", collections)
+        collection = collections[row_index]
+        print("collection:", collection)
+        # Update the field - convert to Decimal to match model field type
+        from decimal import Decimal
+        if field == 'zwl_millions':
+            collection.zwl_millions = Decimal(str(value))
+        elif field == 'usd_millions':
+            collection.usd_millions = Decimal(str(value))
+        else:
+            return {'success': False, 'error': f'Invalid field: {field}'}
+        
+        # Set updated_by to None since we don't have the actual user object in AJAX calls
+        collection.updated_by = None
+        collection.save()
+        print("collection saved:", collection)
+        return {
+            'success': True,
+            'message': 'Weekly collections updated successfully',
+            'data': WeeklyCollectionsSerializer(collection).data
+        }
+        
+    except (ValueError, ValidationError) as e:
+        return {'success': False, 'error': f'Validation error: {str(e)}'}
+    except Exception as e:
+        logger.error(f"Error saving weekly collections: {str(e)}")
+        return {'success': False, 'error': 'Failed to save weekly collections'}
+
+
+def save_weekly_revenue_lost(request, row_index, field, value):
+    """Save weekly revenue lost data"""
+    # Authentication is already checked in the main save function
+    try:
+        # Get the record to update
+        current_year = timezone.now().year
+        revenue_lost = WeeklyRevenueLost.objects.filter(year=current_year).order_by('week_number')
+        if row_index >= len(revenue_lost):
+            return {'success': False, 'error': 'Invalid row index'}
+        
+        record = revenue_lost[row_index]
+        
+        # Update the field - convert to Decimal to match model field type
+        from decimal import Decimal
+        if field == 'faults_mwh':
+            record.faults_mwh = Decimal(str(value))
+        elif field == 'maintenance_mwh':
+            record.maintenance_mwh = Decimal(str(value))
+        else:
+            return {'success': False, 'error': f'Invalid field: {field}'}
+        
+        # Total will be auto-calculated in the model's save method
+        # Set updated_by to None since we don't have the actual user object in AJAX calls
+        record.updated_by = None
+        record.save()
+        
+        return {
+            'success': True,
+            'message': 'Weekly revenue lost updated successfully',
+            'data': WeeklyRevenueLostSerializer(record).data
+        }
+        
+    except (ValueError, ValidationError) as e:
+        return {'success': False, 'error': f'Validation error: {str(e)}'}
+    except Exception as e:
+        logger.error(f"Error saving weekly revenue lost: {str(e)}")
+        return {'success': False, 'error': 'Failed to save weekly revenue lost'}
+
+
+def save_debtor_category(request, row_index, field, value):
+    """Save debtor category data"""
+    # Authentication is already checked in the main save function
+    try:
+        # Get the record to update
+        debtors = DebtorCategory.objects.filter(year=2025, month=timezone.now().month).order_by('category')
+        if row_index >= len(debtors):
+            return {'success': False, 'error': 'Invalid row index'}
+        
+        debtor = debtors[row_index]
+        
+        # Update the field - convert to Decimal to match model field type
+        from decimal import Decimal
+        if field == 'percentage':
+            new_percentage = Decimal(str(value))
+            
+            # Validate percentage range
+            if new_percentage < 0 or new_percentage > 100:
+                return {'success': False, 'error': 'Percentage must be between 0 and 100'}
+            
+            # Get other categories for the same location and time period
+            other_categories = DebtorCategory.objects.filter(
+                year=debtor.year,
+                month=debtor.month,
+                region=debtor.region,
+                district=debtor.district,
+                depot=debtor.depot
+            ).exclude(pk=debtor.pk)
+            
+            # Calculate total percentage including this category
+            total_percentage = sum([cat.percentage for cat in other_categories]) + new_percentage
+            
+            if total_percentage > 100:
+                return {'success': False, 'error': f'Total percentage cannot exceed 100%. Current total: {total_percentage}%'}
+            
+            debtor.percentage = new_percentage
+        else:
+            return {'success': False, 'error': f'Invalid field: {field}'}
+        
+        # Set updated_by to None since we don't have the actual user object in AJAX calls
+        debtor.updated_by = None
+        debtor.save()
+        
+        return {
+            'success': True,
+            'message': 'Debtor category updated successfully',
+            'data': DebtorCategorySerializer(debtor).data
+        }
+        
+    except (ValueError, ValidationError) as e:
+        return {'success': False, 'error': f'Validation error: {str(e)}'}
+    except Exception as e:
+        logger.error(f"Error saving debtor category: {str(e)}")
+        return {'success': False, 'error': 'Failed to save debtor category'}
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_user_permissions(request):
     """Get user permissions for dashboard editing"""
+    
     try:
         user = request.user
-        user_profile = get_object_or_404(UserProfile, id=user.id)
         
-        print(f"DEBUG: Checking permissions for user: {user.username} (ID: {user.id})")
+        # Check if user can edit dashboard data
+        can_edit = user.is_staff or user.groups.filter(name__in=['admin', 'editor', 'manager']).exists()
         
-        # Check if user has the 'maintain' role for 'general_dashboards' application
-        can_edit = False
-        user_roles = []
+        # Get user roles
+        user_roles = list(user.groups.values_list('name', flat=True))
         
-        try:
-            # Debug: Check if application exists
-            from it.users.models import Application
-            app = Application.objects.filter(name="general_dashboards").first()
-            print(f"DEBUG: Application 'general_dashboards' exists: {app}")
-            if app:
-                print(f"DEBUG: Application ID: {app.id}, Name: {app.name}, Fullname: {app.fullname}")
-            
-            # Debug: Check user's roles
-            all_user_roles = user_profile.roles.all()
-            print(f"DEBUG: User's all roles: {list(all_user_roles.values('id', 'role', 'name', 'application', 'app_id'))}")
-            
-            # Get the user's role for the general_dashboards application
-            user_role = user.get_user_role_for_application("general_dashboards")
-            print(f"DEBUG: User role for general_dashboards: {user_role}")
-            
-            if user_role:
-                print(f"DEBUG: Role details - role: {user_role.role}, name: {user_role.name}")
-                if user_role.role == 'maintain':
-                    can_edit = True
-                user_roles = [user_role.name]
-            else:
-                print("DEBUG: No role found for general_dashboards application")
-                
-        except AttributeError as e:
-            print(f"DEBUG: AttributeError in role checking: {e}")
-            # Fallback: check if user is superuser or staff
-            can_edit = user.is_superuser or user.is_staff
-            user_roles = ['superuser'] if user.is_superuser else (['staff'] if user.is_staff else [])
-            print(f"DEBUG: Using fallback - can_edit: {can_edit}, user_roles: {user_roles}")
-        
-        print(f"DEBUG: Final result - can_edit: {can_edit}, user_roles: {user_roles}")
-        
-        return JsonResponse({
+        return Response({
+            'success': True,
             'canEdit': can_edit,
             'userRoles': user_roles,
             'user': {
                 'username': user.username,
-                'first_name': user.first_name,
-                'last_name': user.last_name,
-                'is_staff': user.is_staff,
-                'is_superuser': user.is_superuser
+                'firstName': getattr(user, 'first_name', ''),
+                'lastName': getattr(user, 'last_name', '')
             }
         })
-    except Exception as e:
-        print(f"Error in user_permissions: {e}")
-        import traceback
-        traceback.print_exc()
-        return JsonResponse({
-            'canEdit': False,
-            'userRoles': [],
-            'user': {},
-            'error': str(e)
-        })
-
-
-@csrf_exempt
-@require_http_methods(["POST"])
-def dashboard_filter(request):
-    """Filter dashboard data by location"""
-    data = json.loads(request.body)
-    region_id = data.get('region')
-    district_id = data.get('district')
-    depot_id = data.get('depot')
-    
-    # Build filter conditions
-    filter_kwargs = {}
-    if depot_id:
-        filter_kwargs['depot_id'] = depot_id
-    elif district_id:
-        filter_kwargs['district_id'] = district_id
-    elif region_id:
-        filter_kwargs['region_id'] = region_id
-    
-    # Get filtered data
-    weekly_sales = list(WeeklySales.objects.filter(**filter_kwargs).values('week', 'zwl', 'usd'))
-    weekly_outages = list(WeeklyOutage.objects.filter(**filter_kwargs).values('week', 'outages', 'resolved', 'pending'))
-    weekly_faults_maintenance = list(WeeklyFaultMaintenance.objects.filter(**filter_kwargs).values('week', 'faults', 'maintenance', 'completed', 'pending'))
-    tds = list(TopDebtor.objects.filter(**filter_kwargs).values('name', 'amount'))
-    
-    # Mock chart data for now
-    inspection_locations = json.dumps(['Filtered Location A', 'Filtered Location B'])
-    inspections_count = json.dumps([5, 8])
-    maintenance_locations = json.dumps(['Filtered Site 1', 'Filtered Site 2'])
-    maintenance_count = json.dumps([3, 9])
-    mtn = {'Filtered Site 1': [1, 2, 1, 3], 'Filtered Site 2': [2, 1, 2, 4]}
-    
-    return JsonResponse({
-        'inspection_locations': inspection_locations,
-        'inspections_count': inspections_count,
-        'maintenance_locations': maintenance_locations,
-        'maintenance_count': maintenance_count,
-        'mtn': mtn,
-        'pbncs': [],
-        'weekly_sales': weekly_sales,
-        'upos': [],
-        'weekly_outages': weekly_outages,
-        'tds': tds,
-        'weekly_faults_maintenance': weekly_faults_maintenance,
-    })
-
-
-@csrf_exempt
-@require_http_methods(["POST"])
-def save_dashboard_data(request):
-    """Save edited dashboard data"""
-    if not request.user.is_authenticated:
-        return JsonResponse({'success': False, 'error': 'Authentication required'})
-    
-    # Check if user has permission to edit dashboard data
-    try:
-        user_role = request.user.get_user_role_for_application("general_dashboards")
-        can_edit = user_role and user_role.role == 'maintain'
-    except AttributeError:
-        # Fallback: check if user is superuser or staff
-        can_edit = request.user.is_superuser or request.user.is_staff
-    
-    if not can_edit:
-        return JsonResponse({'success': False, 'error': 'Insufficient permissions to edit dashboard data'})
-    
-    try:
-        data = json.loads(request.body)
-        table = data.get('table')
-        row = data.get('row')
-        field = data.get('field')
-        value = data.get('value')
         
-        if table == 'metrics':
-            # Handle metric updates
-            metric_key = row  # row contains the metric key
-            property_name = field  # field contains the property name
-            
-            metric, created = DashboardMetric.objects.get_or_create(
-                metric_type=metric_key,
-                region__isnull=True,
-                district__isnull=True,
-                depot__isnull=True,
-                defaults={'value': '0', 'unit': '', 'target': '0', 'target_unit': '', 'progress': 0}
+    except Exception as e:
+        logger.error(f"Error getting user permissions: {str(e)}")
+        return Response({
+            'success': False,
+            'error': 'Failed to retrieve user permissions'
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def create_sample_data(request):
+    """Create sample data for testing the new dashboard sections"""
+    
+    try:
+        from it.users.models import Regions, Districts, Depots
+        
+        # Get or create sample location
+        region, _ = Regions.objects.get_or_create(region="HARARE REGION")
+        district, _ = Districts.objects.get_or_create(
+            district="HARARE DISTRICT",
+            region=region
+        )
+        depot, _ = Depots.objects.get_or_create(
+            depot="HARARE CENTRAL",
+            district=district
+        )
+        
+        current_year = timezone.now().year
+        current_month = timezone.now().month
+        
+        # Create sample weekly collections data
+        for week_num in range(1, 7):
+            WeeklyCollections.objects.get_or_create(
+                week=f"Week {week_num}",
+                year=current_year,
+                week_number=week_num,
+                region=region,
+                district=district,
+                depot=depot,
+                defaults={
+                    'zwl_millions': round(5.0 + week_num * 0.5, 2),
+                    'usd_millions': round(2.0 + week_num * 0.3, 2),
+                    'updated_by': request.user
+                }
             )
-            
-            setattr(metric, property_name, value)
-            metric.updated_by = request.user
-            metric.save()
-            
-        elif table == 'weekly_sales':
-            # Handle weekly sales updates
-            sales_items = list(WeeklySales.objects.filter(
-                region__isnull=True, district__isnull=True, depot__isnull=True
-            ).order_by('week_number'))
-            
-            if row < len(sales_items):
-                sales_item = sales_items[row]
-                setattr(sales_item, field, value)
-                sales_item.save()
-                
-        elif table == 'weekly_outages':
-            # Handle weekly outages updates
-            outage_items = list(WeeklyOutage.objects.filter(
-                region__isnull=True, district__isnull=True, depot__isnull=True
-            ).order_by('week_number'))
-            
-            if row < len(outage_items):
-                outage_item = outage_items[row]
-                setattr(outage_item, field, int(value) if field in ['outages', 'resolved', 'pending'] else value)
-                outage_item.save()
-                
-        elif table == 'weekly_faults_maintenance':
-            # Handle weekly faults/maintenance updates
-            fault_items = list(WeeklyFaultMaintenance.objects.filter(
-                region__isnull=True, district__isnull=True, depot__isnull=True
-            ).order_by('week_number'))
-            
-            if row < len(fault_items):
-                fault_item = fault_items[row]
-                setattr(fault_item, field, int(value) if field in ['faults', 'maintenance', 'completed', 'pending'] else value)
-                fault_item.save()
-                
-        elif table == 'tds':
-            # Handle top debtors updates
-            debtor_items = list(TopDebtor.objects.filter(
-                region__isnull=True, district__isnull=True, depot__isnull=True
-            ).order_by('rank'))
-            
-            if row < len(debtor_items):
-                debtor_item = debtor_items[row]
-                setattr(debtor_item, field, value)
-                debtor_item.save()
         
-        return JsonResponse({'success': True})
+        # Create sample weekly revenue lost data
+        for week_num in range(1, 7):
+            WeeklyRevenueLost.objects.get_or_create(
+                week=f"Week {week_num}",
+                year=current_year,
+                week_number=week_num,
+                region=region,
+                district=district,
+                depot=depot,
+                defaults={
+                    'faults_mwh': round(10.0 + week_num * 2.0, 2),
+                    'maintenance_mwh': round(5.0 + week_num * 1.5, 2),
+                    'updated_by': request.user
+                }
+            )
+        
+        # Create sample debtor categories
+        categories = [
+            ('mining', 25.0),
+            ('domestic', 20.0),
+            ('industry', 15.0),
+            ('commercial', 12.0),
+            ('farming', 10.0),
+            ('government', 8.0),
+            ('parastatal', 6.0),
+            ('local_authority', 4.0)
+        ]
+        
+        for category, percentage in categories:
+            DebtorCategory.objects.get_or_create(
+                category=category,
+                year=current_year,
+                month=current_month,
+                region=region,
+                district=district,
+                depot=depot,
+                defaults={
+                    'percentage': percentage,
+                    'updated_by': request.user
+                }
+            )
+        
+        return Response({
+            'success': True,
+            'message': 'Sample data created successfully',
+            'data': {
+                'weekly_collections_count': 6,
+                'weekly_revenue_lost_count': 6,
+                'debtor_categories_count': 8
+            }
+        })
         
     except Exception as e:
-        return JsonResponse({'success': False, 'error': str(e)})
+        logger.error(f"Error creating sample data: {str(e)}")
+        return Response({
+            'success': False,
+            'error': 'Failed to create sample data'
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+def download_csv_template(request):
+    """Download CSV template for dashboard data"""
+    data_type = request.GET.get('type', 'weekly_collections')
+
+    if data_type == 'weekly_collections':
+        template_data = [
+            ['week', 'week_number', 'zwl_millions', 'usd_millions', 'region', 'district', 'depot'],
+            ['Week 1', '1', '5.20', '2.30', 'HARARE REGION', 'HARARE DISTRICT', 'HARARE CENTRAL'],
+            ['Week 2', '2', '5.70', '2.60', 'HARARE REGION', 'HARARE DISTRICT', 'HARARE CENTRAL'],
+            ['Week 3', '3', '6.20', '2.90', 'HARARE REGION', 'HARARE DISTRICT', 'HARARE CENTRAL'],
+        ]
+        filename = 'weekly_collections_template.csv'
+    elif data_type == 'weekly_revenue_lost':
+        template_data = [
+            ['week', 'week_number', 'faults_mwh', 'maintenance_mwh', 'region', 'district', 'depot'],
+            ['Week 1', '1', '12.00', '6.50', 'HARARE REGION', 'HARARE DISTRICT', 'HARARE CENTRAL'],
+            ['Week 2', '2', '14.00', '8.00', 'HARARE REGION', 'HARARE DISTRICT', 'HARARE CENTRAL'],
+            ['Week 3', '3', '16.00', '9.50', 'HARARE REGION', 'HARARE DISTRICT', 'HARARE CENTRAL'],
+        ]
+        filename = 'weekly_revenue_lost_template.csv'
+    elif data_type == 'debtor_categories':
+        template_data = [
+            ['category', 'percentage', 'region', 'district', 'depot'],
+            ['mining', '25.00', 'HARARE REGION', 'HARARE DISTRICT', 'HARARE CENTRAL'],
+            ['domestic', '20.00', 'HARARE REGION', 'HARARE DISTRICT', 'HARARE CENTRAL'],
+            ['industry', '15.00', 'HARARE REGION', 'HARARE DISTRICT', 'HARARE CENTRAL'],
+        ]
+        filename = 'debtor_categories_template.csv'
+    else:
+        return HttpResponse('Invalid data type', status=400)
+    
+    # Create CSV response
+    import csv
+    from io import StringIO
+    
+    output = StringIO()
+    writer = csv.writer(output)
+    writer.writerows(template_data)
+    
+    response = HttpResponse(output.getvalue(), content_type='text/csv')
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    
+    return response
 
 
-@csrf_exempt
-@require_http_methods(["GET"])
-def debug_user_roles(request):
-    """Debug endpoint to check user roles and applications"""
+def _get_flexible_location_filter(region_id, district_id, depot_id, current_year, current_month):
+    """
+    Get the most appropriate location filter based on available data.
+    Tries filters in order of specificity, falling back to broader filters if no data found.
+
+    Returns Q() if no filters provided, otherwise returns the best filter that has data.
+    """
+    from django.db.models import Q
+
+    # If no filters provided, return empty Q (will use user's default later)
+    if not any([region_id, district_id, depot_id]):
+        return Q()
+
+    # Try depot-level filter first (most specific)
+    if depot_id:
+        depot_filter = Q(depot_id=depot_id)
+        if (_has_dashboard_data(depot_filter, current_year, current_month)):
+            return depot_filter
+
+    # Fall back to district-level filter
+    if district_id:
+        district_filter = Q(district_id=district_id)
+        if (_has_dashboard_data(district_filter, current_year, current_month)):
+            return district_filter
+
+    # Fall back to region-level filter
+    if region_id:
+        region_filter = Q(region_id=region_id)
+        if (_has_dashboard_data(region_filter, current_year, current_month)):
+            return region_filter
+
+    # If no specific filters have data, return the most specific filter provided
+    # This ensures the user sees something rather than an empty dashboard
+    if depot_id:
+        return Q(depot_id=depot_id)
+    elif district_id:
+        return Q(district_id=district_id)
+    elif region_id:
+        return Q(region_id=region_id)
+
+    return Q()
+
+
+def _has_dashboard_data(location_filter, year, month):
+    """
+    Check if there's any dashboard data for the given location filter.
+    Returns True if at least one type of data exists.
+    """
+    from .models import WeeklyCollections, WeeklyRevenueLost, DebtorCategory
+
+    return (
+        WeeklyCollections.objects.filter(location_filter, year=year).exists() or
+        WeeklyRevenueLost.objects.filter(location_filter, year=year).exists() or
+        DebtorCategory.objects.filter(location_filter, year=year, month=month).exists()
+    )
+
+
+def check_user_can_edit_dashboard(user):
+    """Check if user has permission to edit dashboard data - simplified for single role system"""
+    # Check if user has the manager role for dashboards application
+    from it.users.models import UserProfile
     try:
-        user = request.user
-        user_profile = get_object_or_404(UserProfile, id=user.id)
+        user_profile = UserProfile.objects.get(id=user.id)
+        return user_profile.roles.filter(application='dashboards', role='manager').exists() or user.is_staff
+    except UserProfile.DoesNotExist:
+        return user.is_staff
+
+
+def get_user_dashboard_access_level(user):
+    """
+    Determine user's dashboard access level - now simplified for single role system
+    Returns: ('level', default_location_filter)
+    All authenticated users can view all data but default to their region
+    """
+    from it.users.models import UserProfile, Roles
+    
+    try:
+        user_profile = UserProfile.objects.get(id=user.id)
         
-        # Get all applications
-        from it.users.models import Application
-        all_apps = list(Application.objects.all().values('id', 'name', 'fullname'))
+        # All authenticated users can view all data, but we return their default region for initial view
+        default_filter = Q()
+        if user_profile.region:
+            default_filter = Q(region_id=user_profile.region.id)
+        elif user_profile.district:
+            default_filter = Q(district_id=user_profile.district.id)
+        elif user_profile.depot:
+            default_filter = Q(depot_id=user_profile.depot.id)
         
-        # Get all user roles
-        all_user_roles = list(user_profile.roles.all().values('id', 'role', 'name', 'description', 'application', 'app_id'))
+        return 'authenticated_user', default_filter
         
-        # Check for general_dashboards specifically
-        general_dashboards_app = Application.objects.filter(name="general_dashboards").first()
+    except UserProfile.DoesNotExist:
+        return 'none', Q(pk__isnull=True)  # No access filter
+
+
+def get_user_allowed_locations(user):
+    """
+    Get locations that user is allowed to filter by
+    Returns: dict with 'regions', 'districts', 'depots' lists
+    Now simplified - all authenticated users can view all locations
+    """
+    from it.users.models import UserProfile, Regions, Districts, Depots
+    
+    try:
+        user_profile = UserProfile.objects.get(id=user.id)
         
-        debug_info = {
-            'user_info': {
-                'username': user.username,
-                'id': user.id,
-                'is_staff': user.is_staff,
-                'is_superuser': user.is_superuser
-            },
-            'all_applications': all_apps,
-            'user_roles': all_user_roles,
-            'general_dashboards_app': {
-                'exists': bool(general_dashboards_app),
-                'id': general_dashboards_app.id if general_dashboards_app else None,
-                'name': general_dashboards_app.name if general_dashboards_app else None,
-                'fullname': general_dashboards_app.fullname if general_dashboards_app else None
-            } if general_dashboards_app else {'exists': False},
-            'role_check_result': None
+        # All authenticated users can see all locations
+        return {
+            'regions': list(Regions.objects.all().values('id', 'region')),
+            'districts': list(Districts.objects.all().values('id', 'district', 'region_id')),
+            'depots': list(Depots.objects.all().values('id', 'depot', 'district_id'))
+        }
+            
+    except UserProfile.DoesNotExist:
+        return {
+            'regions': [],
+            'districts': [],
+            'depots': []
+        }
+
+
+def bulk_upload_dashboard_data(request):
+    """Bulk upload dashboard data from CSV/Excel files"""
+    try:
+        # Check if user is authenticated
+        if not request.user.is_authenticated:
+            return JsonResponse({
+                'success': False,
+                'error': 'User not authenticated. Please log in and try again.'
+            }, status=401)
+        
+        # Check permissions
+        if not check_user_can_edit_dashboard(request.user):
+            return JsonResponse({
+                'success': False,
+                'error': 'Insufficient permissions. Only users with Manager role for dashboards can edit data.'
+            }, status=403)
+        
+        # Get form data
+        form = DashboardDataBulkImportForm(request.POST, request.FILES)
+        if not form.is_valid():
+            return JsonResponse({
+                'success': False,
+                'error': 'Invalid form data',
+                'errors': form.errors
+            }, status=400)
+        
+        # Process file
+        try:
+            file = form.cleaned_data['file']
+            data_type = form.cleaned_data['data_type']
+            year = form.cleaned_data['year']
+            
+            # Import data based on type
+            if data_type == 'weekly_collections':
+                result = import_weekly_collections_from_file(file, year, request.user)
+            elif data_type == 'weekly_revenue_lost':
+                result = import_weekly_revenue_lost_from_file(file, year, request.user)
+            elif data_type == 'debtor_categories':
+                month = form.cleaned_data.get('month')
+                if not month:
+                    return JsonResponse({
+                        'success': False,
+                        'error': 'Month is required for debtor categories'
+                    }, status=400)
+                result = import_debtor_categories_from_file(file, year, month, request.user)
+            else:
+                return JsonResponse({
+                    'success': False,
+                    'error': f'Unsupported data type: {data_type}'
+                }, status=400)
+                
+        except KeyError as e:
+            return JsonResponse({
+                'success': False,
+                'error': f'Missing required field: {e}'
+            }, status=400)
+        except Exception as e:
+            return JsonResponse({
+                'success': False,
+                'error': f'Error processing form data: {str(e)}'
+            }, status=400)
+        
+        return JsonResponse(result)
+        
+    except Exception as e:
+        print(f"Error in bulk upload: {str(e)}")
+        return JsonResponse({
+            'success': False,
+            'error': 'Upload failed'
+        }, status=500)
+
+
+def import_weekly_collections_from_file(file, year, user):
+    """Import weekly collections data from uploaded file"""
+    try:
+        import pandas as pd
+        from decimal import Decimal
+        
+        # Read file
+        if file.name.endswith('.csv'):
+            df = pd.read_csv(file)
+        else:
+            df = pd.read_excel(file)
+        
+        # Validate required columns
+        required_cols = ['week', 'week_number', 'zwl_millions', 'usd_millions', 'region', 'district', 'depot']
+        missing_cols = [col for col in required_cols if col not in df.columns]
+        if missing_cols:
+            return {'success': False, 'error': f'Missing required columns: {missing_cols}'}
+        
+        # Process data
+        records_created = 0
+        records_updated = 0
+        errors = []
+        
+        for index, row in df.iterrows():
+            try:
+                # Get or create location objects
+                region, _ = Regions.objects.get_or_create(
+                    region=row['region'],
+                    defaults={'code': row['region'][:2].upper()}
+                )
+                
+                district, _ = Districts.objects.get_or_create(
+                    district=row['district'],
+                    region_id=region.region,
+                    defaults={'code': row['district'][:2].upper()}
+                )
+                
+                depot, _ = Depots.objects.get_or_create(
+                    depot=row['depot'],
+                    district=district,
+                    region=region,
+                    defaults={'code': row['depot'][:2].upper()}
+                )
+                
+                # Check if record exists
+                existing_record = WeeklyCollections.objects.filter(
+                    week=row['week'],
+                    year=year,
+                    week_number=row['week_number'],
+                    region=region,
+                    district=district,
+                    depot=depot
+                ).first()
+                
+                if existing_record:
+                    # Update existing record
+                    existing_record.zwl_millions = Decimal(str(row['zwl_millions']))
+                    existing_record.usd_millions = Decimal(str(row['usd_millions']))
+                    existing_record.updated_by = user
+                    existing_record.save()
+                    records_updated += 1
+                else:
+                    # Create new record
+                    WeeklyCollections.objects.create(
+                        week=row['week'],
+                        year=year,
+                        week_number=row['week_number'],
+                        region=region,
+                        district=district,
+                        depot=depot,
+                        zwl_millions=Decimal(str(row['zwl_millions'])),
+                        usd_millions=Decimal(str(row['usd_millions'])),
+                        updated_by=user
+                    )
+                    records_created += 1
+                    
+            except Exception as e:
+                errors.append(f"Row {index + 1}: {str(e)}")
+        
+        return {
+            'success': True,
+            'message': f'Successfully imported data: {records_created} created, {records_updated} updated',
+            'data': {
+                'created': records_created,
+                'updated': records_updated,
+                'errors': errors
+            }
         }
         
-        # Test the role checking method
-        try:
-            user_role = user.get_user_role_for_application("general_dashboards")
-            debug_info['role_check_result'] = {
-                'found_role': bool(user_role),
-                'role_details': {
-                    'role': user_role.role,
-                    'name': user_role.name,
-                    'app_id': user_role.app_id.id if user_role.app_id else None
-                } if user_role else None
-            }
-        except Exception as e:
-            debug_info['role_check_result'] = {
-                'error': str(e)
-            }
+    except Exception as e:
+        return {'success': False, 'error': f'Import failed: {str(e)}'}
+
+
+def import_weekly_revenue_lost_from_file(file, year, user):
+    """Import weekly revenue lost data from uploaded file"""
+    try:
+        import pandas as pd
+        from decimal import Decimal
         
-        return JsonResponse(debug_info, indent=2)
+        # Read file
+        if file.name.endswith('.csv'):
+            df = pd.read_csv(file)
+        else:
+            df = pd.read_excel(file)
+        
+        # Validate required columns
+        required_cols = ['week', 'week_number', 'faults_mwh', 'maintenance_mwh', 'region', 'district', 'depot']
+        missing_cols = [col for col in required_cols if col not in df.columns]
+        if missing_cols:
+            return {'success': False, 'error': f'Missing required columns: {missing_cols}'}
+        
+        # Process data
+        records_created = 0
+        records_updated = 0
+        errors = []
+        
+        for index, row in df.iterrows():
+            try:
+                # Get or create location objects
+                region, _ = Regions.objects.get_or_create(
+                    region=row['region'],
+                    defaults={'code': row['region'][:2].upper()}
+                )
+                
+                district, _ = Districts.objects.get_or_create(
+                    district=row['district'],
+                    region_id=region.region,
+                    defaults={'code': row['district'][:2].upper()}
+                )
+                
+                depot, _ = Depots.objects.get_or_create(
+                    depot=row['depot'],
+                    district=district,
+                    region=region,
+                    defaults={'code': row['depot'][:2].upper()}
+                )
+                
+                # Check if record exists
+                existing_record = WeeklyRevenueLost.objects.filter(
+                    week=row['week'],
+                    year=year,
+                    week_number=row['week_number'],
+                    region=region,
+                    district=district,
+                    depot=depot
+                ).first()
+                
+                if existing_record:
+                    # Update existing record
+                    existing_record.faults_mwh = Decimal(str(row['faults_mwh']))
+                    existing_record.maintenance_mwh = Decimal(str(row['maintenance_mwh']))
+                    existing_record.updated_by = user
+                    existing_record.save()
+                    records_updated += 1
+                else:
+                    # Create new record
+                    WeeklyRevenueLost.objects.create(
+                        week=row['week'],
+                        year=year,
+                        week_number=row['week_number'],
+                        region=region,
+                        district=district,
+                        depot=depot,
+                        faults_mwh=Decimal(str(row['faults_mwh'])),
+                        maintenance_mwh=Decimal(str(row['maintenance_mwh'])),
+                        updated_by=user
+                    )
+                    records_created += 1
+                    
+            except Exception as e:
+                errors.append(f"Row {index + 1}: {str(e)}")
+        
+        return {
+            'success': True,
+            'message': f'Successfully imported data: {records_created} created, {records_updated} updated',
+            'data': {
+                'created': records_created,
+                'updated': records_updated,
+                'errors': errors
+            }
+        }
         
     except Exception as e:
-        return JsonResponse({
-            'error': str(e),
-            'traceback': str(e.__traceback__)
-        })
+        return {'success': False, 'error': f'Import failed: {str(e)}'}
+
+
+
+
+
+def import_debtor_categories_from_file(file, year, month, user):
+    """Import debtor categories data from uploaded file"""
+    try:
+        import pandas as pd
+        from decimal import Decimal
+        
+        # Read file
+        if file.name.endswith('.csv'):
+            df = pd.read_csv(file)
+        else:
+            df = pd.read_excel(file)
+        
+        # Validate required columns
+        required_cols = ['category', 'percentage', 'region', 'district', 'depot']
+        missing_cols = [col for col in required_cols if col not in df.columns]
+        if missing_cols:
+            return {'success': False, 'error': f'Missing required columns: {missing_cols}'}
+        
+        # Process data
+        records_created = 0
+        records_updated = 0
+        errors = []
+        
+        for index, row in df.iterrows():
+            try:
+                # Get or create location objects
+                region, _ = Regions.objects.get_or_create(
+                    region=row['region'],
+                    defaults={'code': row['region'][:2].upper()}
+                )
+                
+                district, _ = Districts.objects.get_or_create(
+                    district=row['district'],
+                    region_id=region.region,
+                    defaults={'code': row['district'][:2].upper()}
+                )
+                
+                depot, _ = Depots.objects.get_or_create(
+                    depot=row['depot'],
+                    district=district,
+                    region=region,
+                    defaults={'code': row['depot'][:2].upper()}
+                )
+                
+                # Check if record exists
+                existing_record = DebtorCategory.objects.filter(
+                    category=row['category'],
+                    year=year,
+                    month=month,
+                    region=region,
+                    district=district,
+                    depot=depot
+                ).first()
+                
+                if existing_record:
+                    # Update existing record
+                    existing_record.percentage = Decimal(str(row['percentage']))
+                    existing_record.updated_by = user
+                    existing_record.save()
+                    records_updated += 1
+                else:
+                    # Create new record
+                    DebtorCategory.objects.create(
+                        category=row['category'],
+                        year=year,
+                        month=month,
+                        region=region,
+                        district=district,
+                        depot=depot,
+                        percentage=Decimal(str(row['percentage'])),
+                        updated_by=user
+                    )
+                    records_created += 1
+                    
+            except Exception as e:
+                errors.append(f"Row {index + 1}: {str(e)}")
+        
+        return {
+            'success': True,
+            'message': f'Successfully imported data: {records_created} created, {records_updated} updated',
+            'data': {
+                'created': records_created,
+                'updated': records_updated,
+                'errors': errors
+            }
+        }
+        
+    except Exception as e:
+        return {'success': False, 'error': f'Import failed: {str(e)}'}

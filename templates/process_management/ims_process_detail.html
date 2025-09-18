@@ -1,0 +1,272 @@
+{% extends 'general_layout.html' %}
+{% load static %}
+
+{% block title %}{{ process.name }} - IMS Process{% endblock %}
+
+{% block page_name %}{{ process.name }}{% endblock %}
+
+{% block page_content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-12">
+            <!-- Process Header -->
+            <div class="card mb-4">
+                <div class="card-header 
+                    {% if process.department.name == 'MANAGEMENT' %}bg-info text-white
+                    {% elif process.department.name == 'TRANSPORT' %}bg-success text-white
+                    {% elif process.department.name == 'DISTRICTS' %}bg-warning text-dark
+                    {% else %}bg-secondary text-white{% endif %}">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h4 class="mb-2">
+                                <i class="fas fa-certificate me-2"></i>
+                                {{ process.name }}
+                            </h4>
+                            <div class="row">
+                                <div class="col-auto">
+                                    <small><strong>Department:</strong> {{ process.department.name }}</small>
+                                </div>
+                                <div class="col-auto">
+                                    <small><strong>IMS Reference:</strong> <code>{{ process.ims_reference }}</code></small>
+                                </div>
+                                {% if process.iso_clause %}
+                                <div class="col-auto">
+                                    <small><strong>ISO Clause:</strong> {{ process.iso_clause }}</small>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="text-end">
+                            <div class="mb-2">
+                                <span class="badge bg-light text-dark fs-6">
+                                    {{ compliance_percentage|floatformat:1 }}% Complete
+                                </span>
+                            </div>
+                            <div class="progress" style="width: 150px; height: 8px;">
+                                <div class="progress-bar 
+                                    {% if compliance_percentage >= 80 %}bg-success
+                                    {% elif compliance_percentage >= 50 %}bg-warning
+                                    {% else %}bg-danger{% endif %}" 
+                                     style="width: {{ compliance_percentage }}%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% if process.description %}
+                <div class="card-body">
+                    <p class="mb-0 text-muted">{{ process.description }}</p>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Compliance Summary -->
+            <div class="row mb-4">
+                <div class="col-md-3">
+                    <div class="card bg-primary text-white">
+                        <div class="card-body text-center">
+                            <h3 class="mb-1">{{ total_document_types }}</h3>
+                            <p class="mb-0">Required Documents</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-success text-white">
+                        <div class="card-body text-center">
+                            <h3 class="mb-1">{{ available_documents }}</h3>
+                            <p class="mb-0">Available</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-danger text-white">
+                        <div class="card-body text-center">
+                            <h3 class="mb-1">{{ missing_documents }}</h3>
+                            <p class="mb-0">Missing</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card bg-warning text-dark">
+                        <div class="card-body text-center">
+                            <h3 class="mb-1">
+                                {% for item in document_grid %}
+                                    {% if item.is_overdue %}{{ forloop.counter0|add:1 }}{% endif %}
+                                {% empty %}0{% endfor %}
+                            </h3>
+                            <p class="mb-0">Overdue Reviews</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Document Grid -->
+            <div class="card">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="fas fa-folder-open me-2"></i>
+                        IMS Document Requirements Grid
+                    </h5>
+                    <p class="text-muted mb-0 mt-1">All documents required for ISO compliance</p>
+                </div>
+                
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th style="width: 25%">Document Type</th>
+                                    <th style="width: 15%" class="text-center">Status</th>
+                                    <th style="width: 15%" class="text-center">Compliance</th>
+                                    <th style="width: 15%" class="text-center">Review Due</th>
+                                    <th style="width: 20%" class="text-center">File Info</th>
+                                    <th style="width: 10%" class="text-center">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in document_grid %}
+                                <tr class="{% if item.is_overdue %}table-warning{% endif %}">
+                                    <td>
+                                        <strong>{{ item.type_display }}</strong>
+                                        {% if item.is_overdue %}
+                                            <i class="fas fa-exclamation-triangle text-warning ms-2" 
+                                               title="Review overdue"></i>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-center">
+                                        {% if item.has_document %}
+                                            {% if item.is_accessible %}
+                                                <span class="badge bg-success">
+                                                    <i class="fas fa-check me-1"></i>Available
+                                                </span>
+                                            {% else %}
+                                                <span class="badge bg-warning">
+                                                    <i class="fas fa-exclamation-triangle me-1"></i>Inaccessible
+                                                </span>
+                                            {% endif %}
+                                        {% else %}
+                                            <span class="badge bg-danger">
+                                                <i class="fas fa-times me-1"></i>Missing
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-center">
+                                        {% if item.has_document %}
+                                            {% if item.compliance_status == 'approved' %}
+                                                <span class="badge bg-success">Approved</span>
+                                            {% elif item.compliance_status == 'review' %}
+                                                <span class="badge bg-info">Under Review</span>
+                                            {% elif item.compliance_status == 'draft' %}
+                                                <span class="badge bg-secondary">Draft</span>
+                                            {% elif item.compliance_status == 'obsolete' %}
+                                                <span class="badge bg-danger">Obsolete</span>
+                                            {% else %}
+                                                <span class="badge bg-warning">{{ item.compliance_status|title }}</span>
+                                            {% endif %}
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-center">
+                                        {% if item.review_due_date %}
+                                            <small class="{% if item.is_overdue %}text-danger fw-bold{% else %}text-muted{% endif %}">
+                                                {{ item.review_due_date|date:"M d, Y" }}
+                                            </small>
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-center">
+                                        {% if item.document %}
+                                            <small class="text-muted">
+                                                {{ item.document.filename|truncatechars:20 }}<br>
+                                                <span class="badge bg-light text-dark">
+                                                    {{ item.document.get_file_size_display }}
+                                                </span>
+                                            </small>
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-center">
+                                        <div class="btn-group btn-group-sm" role="group">
+                                            {% if item.document and item.is_accessible %}
+                                                <a href="{% url 'process_management:document_download' item.document.id %}" 
+                                                   class="btn btn-outline-primary" title="Download">
+                                                    <i class="fas fa-download"></i>
+                                                </a>
+                                            {% endif %}
+                                            <a href="{% url 'process_management:document_upload' process.id %}?type={{ item.type }}" 
+                                               class="btn btn-outline-success" 
+                                               title="{% if item.has_document %}Replace{% else %}Upload{% endif %}">
+                                                <i class="fas fa-{% if item.has_document %}sync{% else %}upload{% endif %}"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Navigation -->
+            <div class="row mt-4">
+                <div class="col-md-12">
+                    <div class="card">
+                        <div class="card-body text-center">
+                            <div class="btn-group" role="group">
+                                <a href="{% url 'process_management:process_detail' process.id %}" 
+                                   class="btn btn-outline-primary">
+                                    <i class="fas fa-cog me-2"></i>Manage Process
+                                </a>
+                                <a href="{% url 'process_management:document_upload' process.id %}" 
+                                   class="btn btn-outline-success">
+                                    <i class="fas fa-upload me-2"></i>Upload Documents
+                                </a>
+                                <a href="{% url 'process_management:ims_processes' %}" 
+                                   class="btn btn-outline-secondary">
+                                    <i class="fas fa-arrow-left me-2"></i>Back to IMS Processes
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.progress {
+    border-radius: 0.5rem;
+}
+
+.table th {
+    border-top: none;
+    font-weight: 600;
+    background-color: #f8f9fa;
+}
+
+.badge {
+    font-size: 0.8em;
+}
+
+.btn-group-sm .btn {
+    padding: 0.25rem 0.5rem;
+}
+
+.card {
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    border: 1px solid rgba(0, 0, 0, 0.125);
+}
+
+.table-warning {
+    background-color: rgba(255, 193, 7, 0.1);
+}
+
+code {
+    font-size: 0.9em;
+}
+</style>
+{% endblock %}

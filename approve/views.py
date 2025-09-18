@@ -195,7 +195,7 @@ def approve_step(request, process_id):
                     messages.success(request, "approved successfully")
                     
                     return step
-                elif process.token_set.exists() != None:
+                elif process.token_set.exists():
                     token = process.token_set.last()
 
                     send_notification(request, 'tokens:token', token.type, token, token.id)
@@ -238,6 +238,44 @@ def approve_step(request, process_id):
                         "pettycash:pettycash_detail",
                         process.pettycash_set.last().petty_id,
                     )
+                elif process.workflow.name == "virement":
+                    # Handle virement workflow with automatic budget transfer on final approval
+                    from ACE2.utils import execute_virement_budget_transfer
+                    from ACE2.models import Asset_budget_Virament
+                    
+                    approval_status = approval.approved
+                    
+                    # Get the virement item
+                    try:
+                        virement_item = Asset_budget_Virament.objects.filter(process=process).last()
+                        if not virement_item:
+                            messages.error(request, "Virement item not found")
+                            return redirect("approve:workflow_detail", process.workflow.id)
+                    except Asset_budget_Virament.DoesNotExist:
+                        messages.error(request, "Virement item not found")
+                        return redirect("approve:workflow_detail", process.workflow.id)
+                    
+                    if approval_status == "Approved":
+                        # Check if this is the final approval step
+                        total_steps = process.workflow.step_set.count()
+                        current_step = approval.step.step
+                        
+                        if current_step == total_steps:
+                            # This is the final approval - execute budget transfer automatically
+                            transfer_result = execute_virement_budget_transfer(virement_item, request.user)
+                            
+                            if transfer_result['success']:
+                                messages.success(request, f"Virement approved successfully. {transfer_result['message']}")
+                            else:
+                                messages.error(request, f"Virement approved but budget transfer failed: {transfer_result['error']}")
+                        else:
+                            messages.success(request, "Virement approved successfully")
+                    elif approval_status == "Rejected":
+                        messages.warning(request, "Virement rejected successfully")
+                    else:
+                        messages.success(request, "Virement actioned successfully")
+                    
+                    return redirect("Ace:virament_detail", virement_item.virament_id)
                 # Check for tokens only if no specific workflow matched
                 elif process.token_set.exists():
                     token = process.token_set.last()
@@ -265,6 +303,16 @@ def approve_step(request, process_id):
                         "pettycash:pettycash_detail",
                         process.pettycash_set.last().petty_id,
                     )
+                elif process.workflow.name == "virement":
+                    from ACE2.models import Asset_budget_Virament
+                    try:
+                        virement_item = Asset_budget_Virament.objects.filter(process=process).last()
+                        if virement_item:
+                            messages.info(request, "Returning to Virement detail page. Please provide a comment for rejection.")
+                            return redirect("Ace:virament_detail", virement_item.virament_id)
+                    except Asset_budget_Virament.DoesNotExist:
+                        pass
+                    return redirect("approve:workflow_detail", process.workflow.id)
                 elif process.workflow.name == "tokens":
                     return (
                         False  # redirect('tokens:token', process.token_set.last().id)
@@ -286,6 +334,15 @@ def approve_step(request, process_id):
             return redirect(
                 "pettycash:pettycash_detail", process.pettycash_set.last().petty_id
             )
+        elif process.workflow.name == "virement":
+            from ACE2.models import Asset_budget_Virament
+            try:
+                virement_item = Asset_budget_Virament.objects.filter(process=process).last()
+                if virement_item:
+                    return redirect("Ace:virament_detail", virement_item.virament_id)
+            except Asset_budget_Virament.DoesNotExist:
+                pass
+            return redirect("approve:workflow_detail", process.workflow.id)
         elif process.workflow.name == "tokens":
             return redirect("tokens:token", process.token_set.last().id)
         else:
@@ -305,6 +362,15 @@ def approve_step(request, process_id):
         return redirect(
             "pettycash:pettycash_detail", process.pettycash_set.last().petty_id
         )
+    elif process.workflow.name == "virement":
+        from ACE2.models import Asset_budget_Virament
+        try:
+            virement_item = Asset_budget_Virament.objects.filter(process=process).last()
+            if virement_item:
+                return redirect("Ace:virament_detail", virement_item.virament_id)
+        except Asset_budget_Virament.DoesNotExist:
+            pass
+        return redirect("approve:workflow_detail", process.workflow.id)
     elif process.workflow.name == "tokens":
         return redirect("tokens:token", process.token_set.last().id)
     else:

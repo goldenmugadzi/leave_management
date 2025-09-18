@@ -1,0 +1,190 @@
+{% extends 'general_layout.html' %}
+{% load static %}
+
+{% block title %}IMS Document Register Import{% endblock %}
+
+{% block page_name %}IMS Document Register Import{% endblock %}
+
+{% block page_content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-12">
+            <!-- Page Header -->
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-file-import me-2"></i>
+                        IMS Document Register Import
+                    </h4>
+                    <p class="mb-0 mt-2">Import IMS processes from Excel files or use predefined process structure</p>
+                </div>
+            </div>
+
+            <!-- Current Status -->
+            <div class="row mb-4">
+                <div class="col-md-4">
+                    <div class="card bg-info text-white">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h3 class="mb-1">{{ total_processes }}</h3>
+                                    <p class="mb-0">Total Processes</p>
+                                </div>
+                                <div class="align-self-center">
+                                    <i class="fas fa-list fa-2x"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card bg-success text-white">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h3 class="mb-1">{{ ims_processes }}</h3>
+                                    <p class="mb-0">IMS Processes</p>
+                                </div>
+                                <div class="align-self-center">
+                                    <i class="fas fa-certificate fa-2x"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card bg-warning text-white">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between">
+                                <div>
+                                    <h3 class="mb-1">{{ departments.count }}</h3>
+                                    <p class="mb-0">Departments</p>
+                                </div>
+                                <div class="align-self-center">
+                                    <i class="fas fa-building fa-2x"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Import Options -->
+            <div class="row">
+                <div class="col-md-6">
+                    <!-- Predefined Import -->
+                    <div class="card">
+                        <div class="card-header bg-success text-white">
+                            <h5 class="mb-0">
+                                <i class="fas fa-database me-2"></i>
+                                Import Predefined IMS Processes
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <p class="text-muted">
+                                Import the complete set of predefined IMS processes including:
+                            </p>
+                            <ul class="list-unstyled">
+                                <li><i class="fas fa-check text-success me-2"></i>10 Management Processes</li>
+                                <li><i class="fas fa-check text-success me-2"></i>9 Transport Processes</li>
+                                <li><i class="fas fa-check text-success me-2"></i>21 District Processes</li>
+                                <li><i class="fas fa-check text-success me-2"></i>ISO 9001/14001/45001 compliance</li>
+                            </ul>
+                            
+                            <form method="post" class="mt-3">
+                                {% csrf_token %}
+                                <input type="hidden" name="import_type" value="predefined">
+                                <button type="submit" class="btn btn-success btn-lg w-100" 
+                                        onclick="return confirm('This will create/update IMS processes. Continue?')">
+                                    <i class="fas fa-download me-2"></i>
+                                    Import Predefined Processes
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <!-- Excel Import -->
+                    <div class="card">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="mb-0">
+                                <i class="fas fa-file-excel me-2"></i>
+                                Import from Excel File
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <p class="text-muted">
+                                Upload an Excel file containing IMS document register data.
+                            </p>
+                            
+                            <div class="alert alert-info">
+                                <h6><i class="fas fa-info-circle me-2"></i>Excel Format Requirements:</h6>
+                                <ul class="mb-0 small">
+                                    <li>Process Name column</li>
+                                    <li>Department column (MANAGEMENT, TRANSPORT, DISTRICTS)</li>
+                                    <li>IMS Reference column (ZETDC-HRE format)</li>
+                                    <li>ISO Clause column (optional)</li>
+                                    <li>Description column (optional)</li>
+                                </ul>
+                            </div>
+                            
+                            <form method="post" enctype="multipart/form-data" class="mt-3">
+                                {% csrf_token %}
+                                <input type="hidden" name="import_type" value="excel">
+                                
+                                <div class="mb-3">
+                                    <label for="excel_file" class="form-label">Select Excel File</label>
+                                    <input type="file" class="form-control" id="excel_file" name="excel_file" 
+                                           accept=".xlsx,.xls" required>
+                                </div>
+                                
+                                <button type="submit" class="btn btn-primary btn-lg w-100">
+                                    <i class="fas fa-upload me-2"></i>
+                                    Import from Excel
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Navigation Links -->
+            <div class="row mt-4">
+                <div class="col-md-12">
+                    <div class="card">
+                        <div class="card-body text-center">
+                            <h5 class="card-title">Next Steps</h5>
+                            <p class="text-muted">After importing processes, you can:</p>
+                            <div class="btn-group" role="group">
+                                <a href="{% url 'process_management:ims_processes' %}" class="btn btn-outline-primary">
+                                    <i class="fas fa-list me-2"></i>View IMS Processes
+                                </a>
+                                <a href="{% url 'process_management:process_list' %}" class="btn btn-outline-secondary">
+                                    <i class="fas fa-arrow-left me-2"></i>Back to Process Management
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.card {
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    border: 1px solid rgba(0, 0, 0, 0.125);
+}
+
+.card-header {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.125);
+}
+
+.btn-lg {
+    padding: 0.75rem 1.5rem;
+    font-size: 1.1rem;
+}
+</style>
+{% endblock %}

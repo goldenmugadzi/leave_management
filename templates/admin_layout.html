@@ -36,6 +36,7 @@
       href="{% static 'assets/cdn/tailwind.min.css' %}"
       rel="stylesheet"
     />
+    {% block extra_css %}{% endblock %}
     <script src="{% static 'assets/classification.js' %}"></script>
     <script>
         function goBack() {
@@ -43,7 +44,7 @@
           if (document.referrer && !document.referrer.includes(loginUrl)) {
             window.history.back();
           } else {
-            window.location.href = "{% url 'dashboard_index' %}";
+            window.location.href = "{% url 'dashboards:dashboard_overview' %}";
           }
         }
     </script>
@@ -122,7 +123,7 @@
               <a
                 id="menu-item"
                 class="flex items-center w-full h-12 px-3 mt-2 rounded hover:bg-gulf-blue-500 hover:shadow-lg"
-                href="{% url 'dashboard_index' %}"
+                href="{% url 'dashboards:dashboard_overview' %}"
               >
                 <svg
                   class="w-6 h-6 stroke-current"
@@ -221,6 +222,28 @@
               <a
                 id="menu-item"
                 class="flex items-center w-full h-12 px-3 mt-2 rounded hover:bg-gulf-blue-500 hover:shadow-lg"
+                href="/ims/processes/"
+              >
+                <svg
+                  class="w-6 h-6 stroke-current"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                  />
+                </svg>
+                <span class="ml-2 text-sm font-medium"
+                  >Processes and Procedures</span>
+              </a>
+              <a
+                id="menu-item"
+                class="flex items-center w-full h-12 px-3 mt-2 rounded hover:bg-gulf-blue-500 hover:shadow-lg"
                 href="/ims/root_folders/processes_and_procedures"
               >
                 <svg
@@ -238,7 +261,7 @@
                   />
                 </svg>
                 <span class="ml-2 text-sm font-medium"
-                  >Processes and Procedures</span
+                  >Legacy Processes</span
                 >
               </a>
               <a

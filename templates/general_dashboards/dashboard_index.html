@@ -1,0 +1,1146 @@
+{% extends 'admin_layout.html' %}
+{% load static %}
+
+{% block title %}{{ title }} - Executive Dashboard{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'assets/css/dashboard_sections.css' %}">
+<style>
+    .dashboard-container {
+        padding: 20px;
+        background: #f8fafc;
+        min-height: 100vh;
+    }
+    
+    .dashboard-header {
+        text-align: center;
+        margin-bottom: 30px;
+        padding: 20px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 15px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    }
+    
+    .dashboard-header h1 {
+        margin: 0;
+        font-size: 2.5rem;
+        font-weight: 700;
+    }
+    
+    .dashboard-header p {
+        margin: 10px 0 0 0;
+        font-size: 1.1rem;
+        opacity: 0.9;
+    }
+    
+    #dashboard_filters {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        padding: 20px;
+        margin-bottom: 20px;
+    }
+    
+    .loading-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(255, 255, 255, 0.95);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+    }
+    
+    .spinner {
+        border: 4px solid #f3f3f3;
+        border-top: 4px solid #3498db;
+        border-radius: 50%;
+        width: 50px;
+        height: 50px;
+        animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    
+    .dashboard-info {
+        margin-top: 2rem;
+    }
+    
+    /* Dashboard Grid Layout */
+    .dashboard-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1.5rem;
+        margin-top: 2rem;
+    }
+    
+    /* Dashboard Sections */
+    .dashboard-section {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        padding: 1.5rem;
+        border: 1px solid #e5e7eb;
+    }
+    
+    .dashboard-section-header {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #1f2937;
+        margin-bottom: 1rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid #e5e7eb;
+    }
+    
+    /* Metric Cards */
+    .metric-card {
+        background: white;
+        border-radius: 10px;
+        padding: 1.5rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        border-left: 4px solid #667eea;
+        margin-bottom: 1rem;
+    }
+    
+    .metric-card h5 {
+        color: #2c3e50;
+        margin-bottom: 10px;
+        font-size: 1.1rem;
+        font-weight: 600;
+    }
+    
+    .metric-card p {
+        color: #7f8c8d;
+        margin: 0;
+        font-size: 0.9rem;
+    }
+    
+    /* Filter Controls */
+    .filter-controls {
+        background: white;
+        border-radius: 10px;
+        padding: 1.5rem;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        margin-bottom: 1.5rem;
+    }
+    
+    .filter-select {
+        width: 100%;
+        padding: 0.5rem;
+        border: 1px solid #d1d5db;
+        border-radius: 0.375rem;
+        background-color: #f9fafb;
+        color: #374151;
+        font-size: 0.875rem;
+    }
+    
+    .filter-select:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+    
+    /* Data Tables */
+    .data-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 1rem;
+    }
+    
+    .data-table th {
+        background-color: #1f2937;
+        color: white;
+        padding: 0.75rem;
+        text-align: left;
+        font-weight: 600;
+        border: 1px solid #374151;
+    }
+    
+    .data-table td {
+        padding: 0.75rem;
+        border: 1px solid #e5e7eb;
+        background-color: white;
+    }
+    
+    .data-table tr:hover {
+        background-color: #f9fafb;
+    }
+    
+    /* Editable Cells */
+    .editable-cell {
+        cursor: pointer;
+        transition: background-color 0.2s;
+    }
+    
+    .editable-cell:hover {
+        background-color: #f3f4f6;
+    }
+    
+    .non-editable-cell {
+        background-color: #f9fafb;
+        color: #6b7280;
+        cursor: not-allowed;
+    }
+    
+    /* Progress Bars */
+    .progress-bar {
+        width: 100%;
+        height: 0.5rem;
+        background-color: #e5e7eb;
+        border-radius: 0.25rem;
+        overflow: hidden;
+    }
+    
+    .progress-fill {
+        height: 100%;
+        transition: width 0.3s ease;
+        border-radius: 0.25rem;
+    }
+    
+    /* Loading States */
+    .cell-loading {
+        opacity: 0.6;
+        position: relative;
+    }
+    
+    .cell-loading::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 16px;
+        height: 16px;
+        margin: -8px 0 0 -8px;
+        border: 2px solid #e5e7eb;
+        border-top: 2px solid #3b82f6;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+    }
+    
+    /* Success and Error States */
+    .cell-success {
+        background-color: #d1fae5 !important;
+        border-color: #10b981 !important;
+        animation: successPulse 0.5s ease-in-out;
+    }
+    
+    .cell-error {
+        background-color: #fee2e2 !important;
+        border-color: #ef4444 !important;
+        animation: errorPulse 0.5s ease-in-out;
+    }
+    
+    @keyframes successPulse {
+        0%, 100% { background-color: #d1fae5; }
+        50% { background-color: #a7f3d0; }
+    }
+    
+    @keyframes errorPulse {
+        0%, 100% { background-color: #fee2e2; }
+        50% { background-color: #fecaca; }
+    }
+    
+    /* Toast Notifications */
+    .toast-container {
+        position: fixed;
+        top: 1rem;
+        right: 1rem;
+        z-index: 50;
+        display: flex;
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    
+    .toast {
+        padding: 1rem;
+        border-radius: 0.5rem;
+        color: white;
+        font-weight: 500;
+        max-width: 20rem;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        transform: translateX(100%);
+        transition: transform 0.3s ease;
+    }
+    
+    .toast.show {
+        transform: translateX(0);
+    }
+    
+    .toast-success { background-color: #10b981; }
+    .toast-error { background-color: #ef4444; }
+    .toast-warning { background-color: #f59e0b; }
+    .toast-info { background-color: #3b82f6; }
+    
+    /* Edit Input Styles */
+    .edit-container {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+    
+    .edit-input {
+        width: 60px;
+        padding: 0.25rem;
+        border: 1px solid #3b82f6;
+        border-radius: 0.25rem;
+        font-size: 0.875rem;
+        text-align: center;
+    }
+    
+    .edit-input:focus {
+        outline: none;
+        border-color: #1d4ed8;
+        box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+    }
+    
+    .edit-save-btn,
+    .edit-cancel-btn {
+        padding: 0.25rem 0.5rem;
+        border: none;
+        border-radius: 0.25rem;
+        font-size: 0.75rem;
+        cursor: pointer;
+        transition: background-color 0.2s;
+    }
+    
+    .edit-save-btn {
+        background-color: #10b981;
+        color: white;
+    }
+    
+    .edit-save-btn:hover {
+        background-color: #059669;
+    }
+    
+    .edit-cancel-btn {
+        background-color: #ef4444;
+        color: white;
+    }
+    
+    .edit-cancel-btn:hover {
+        background-color: #dc2626;
+    }
+    
+    /* Grid Layout for Dashboard */
+    .grid {
+        display: grid;
+    }
+    
+    .grid-cols-3 {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+    
+    .grid-cols-5 {
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+    }
+    
+    .gap-4 {
+        gap: 1rem;
+    }
+    
+    .gap-5 {
+        gap: 1.25rem;
+    }
+    
+    /* Utility Classes */
+    .text-center { text-align: center; }
+    .py-8 { padding-top: 2rem; padding-bottom: 2rem; }
+    .mt-4 { margin-top: 1rem; }
+    .mt-5 { margin-top: 1.25rem; }
+    .mt-10 { margin-top: 2.5rem; }
+    .text-gray-600 { color: #4b5563; }
+    .text-gray-500 { color: #6b7280; }
+    .block { display: block; }
+    .text-sm { font-size: 0.875rem; }
+    .text-xl { font-size: 1.25rem; }
+    .text-2xl { font-size: 1.5rem; }
+    .font-medium { font-weight: 500; }
+    .font-bold { font-weight: 700; }
+    .mb-2 { margin-bottom: 0.5rem; }
+    
+    /* Text Colors */
+    .text-blue-600 { color: #2563eb; }
+    .text-green-600 { color: #16a34a; }
+    .text-purple-600 { color: #9333ea; }
+    .text-red-600 { color: #dc2626; }
+    .text-orange-600 { color: #ea580c; }
+    
+    /* Bulk Upload Section Styles */
+    .bulk-upload-section {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        border: 1px solid #e5e7eb;
+    }
+    
+    .bulk-upload-header {
+        margin-bottom: 1.5rem;
+        text-align: center;
+    }
+    
+    .bulk-upload-header h3 {
+        color: #1f2937;
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin: 0 0 0.5rem 0;
+    }
+    
+    .bulk-upload-header p {
+        color: #6b7280;
+        margin: 0;
+        font-size: 1rem;
+    }
+    
+    .upload-form-container {
+        margin-bottom: 1.5rem;
+    }
+    
+    .upload-form-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .form-group {
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .form-label {
+        font-weight: 600;
+        color: #374151;
+        margin-bottom: 0.5rem;
+        font-size: 0.875rem;
+    }
+    
+    .form-select,
+    .form-input {
+        padding: 0.75rem;
+        border: 1px solid #d1d5db;
+        border-radius: 0.5rem;
+        background-color: #f9fafb;
+        color: #374151;
+        font-size: 0.875rem;
+        transition: all 0.2s;
+    }
+    
+    .form-select:focus,
+    .form-input:focus {
+        outline: none;
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        background-color: white;
+    }
+    
+    .form-help {
+        color: #6b7280;
+        font-size: 0.75rem;
+        margin-top: 0.25rem;
+    }
+    
+    .checkbox-group {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    
+    .checkbox-label {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        cursor: pointer;
+        font-size: 0.875rem;
+        color: #374151;
+    }
+    
+    .checkbox-label input[type="checkbox"] {
+        width: 1rem;
+        height: 1rem;
+        accent-color: #3b82f6;
+    }
+    
+    .upload-actions {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+    
+    .btn {
+        padding: 0.75rem 1.5rem;
+        border: none;
+        border-radius: 0.5rem;
+        font-weight: 600;
+        font-size: 0.875rem;
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        min-width: 140px;
+        justify-content: center;
+    }
+    
+    .btn-primary {
+        background-color: #3b82f6;
+        color: white;
+    }
+    
+    .btn-primary:hover {
+        background-color: #2563eb;
+        transform: translateY(-1px);
+    }
+    
+    .btn-secondary {
+        background-color: #6b7280;
+        color: white;
+    }
+    
+    .btn-secondary:hover {
+        background-color: #4b5563;
+        transform: translateY(-1px);
+    }
+    
+    .btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+    }
+    
+    .upload-status {
+        background: #f8fafc;
+        border: 1px solid #e5e7eb;
+        border-radius: 0.5rem;
+        padding: 1rem;
+    }
+    
+    .status-content {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+    
+    .status-icon {
+        font-size: 2rem;
+    }
+    
+    .status-text h4 {
+        margin: 0 0 0.25rem 0;
+        color: #1f2937;
+        font-size: 1.125rem;
+    }
+    
+    .status-text p {
+        margin: 0;
+        color: #6b7280;
+        font-size: 0.875rem;
+    }
+    
+    .status-success {
+        background: #f0fdf4;
+        border-color: #bbf7d0;
+        color: #166534;
+    }
+    
+    .status-error {
+        background: #fef2f2;
+        border-color: #fecaca;
+        color: #dc2626;
+    }
+    
+    .status-loading {
+        background: #eff6ff;
+        border-color: #bfdbfe;
+        color: #1d4ed8;
+    }
+    
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .dashboard-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .filter-controls {
+            padding: 1rem;
+        }
+        
+        .data-table {
+            font-size: 0.875rem;
+        }
+        
+        .data-table th,
+        .data-table td {
+            padding: 0.5rem;
+        }
+        
+        .grid-cols-3,
+        .grid-cols-5 {
+            grid-template-columns: 1fr;
+        }
+        
+        .upload-form-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .upload-actions {
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .btn {
+            width: 100%;
+            max-width: 300px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <div class="dashboard-header">
+        <h1>🏢 Executive Dashboard</h1>
+        <p>Comprehensive overview of business performance and operational metrics</p>
+    </div>
+    
+    <!-- Dashboard Filters Container -->
+    <div id="dashboard_filters" 
+         data-baseurl="{% url 'dashboards:get_regions' %}"
+         data-spid="{{ request.user.id }}"
+         data-region=""
+         data-district=""
+         data-section=""
+         data-depot="">
+        
+        <!-- Filter Controls -->
+        <div class="filter-controls">
+            <div class="grid grid-cols-3 gap-4">
+                <div>
+                    <label for="selectRegion" class="block text-sm font-medium text-gray-700 mb-2">Region</label>
+                    <select id="selectRegion" class="filter-select" onchange="applyFilters()">
+                        <option value="">Select Region</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="selectDistrict" class="block text-sm font-medium text-gray-700 mb-2">District</label>
+                    <select id="selectDistrict" class="filter-select" onchange="applyFilters()">
+                        <option value="">Select District</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="selectDepot" class="block text-sm font-medium text-gray-700 mb-2">Depot</label>
+                    <select id="selectDepot" class="filter-select" onchange="applyFilters()">
+                        <option value="">Select Depot</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Bulk Upload Section -->
+        <div class="bulk-upload-section">
+            <div class="bulk-upload-header">
+                <h3>📁 Bulk Data Import</h3>
+                <p>Upload CSV/Excel files to import dashboard data in bulk</p>
+            </div>
+            
+            <div class="bulk-upload-controls">
+                <div class="upload-form-container">
+                    <form id="bulkUploadForm" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <div class="upload-form-grid">
+                            <div class="form-group">
+                                <label for="dataType" class="form-label">Data Type</label>
+                                <select id="dataType" name="data_type" class="form-select" required>
+                                    <option value="">Select Data Type</option>
+                                    <option value="weekly_collections">Weekly Collections</option>
+                                    <option value="weekly_revenue_lost">Weekly Revenue Lost</option>
+                                    <option value="debtor_categories">Debtor Categories</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="uploadYear" class="form-label">Year</label>
+                                <input type="number" id="uploadYear" name="year" class="form-input" 
+                                       value="2025" min="2020" max="2030" required>
+                            </div>
+                            
+                            <div class="form-group" id="monthGroup" style="display: none;">
+                                <label for="uploadMonth" class="form-label">Month</label>
+                                <select id="uploadMonth" name="month" class="form-select">
+                                    <option value="1">January</option>
+                                    <option value="2">February</option>
+                                    <option value="3">March</option>
+                                    <option value="4">April</option>
+                                    <option value="5">May</option>
+                                    <option value="6">June</option>
+                                    <option value="7">July</option>
+                                    <option value="8">August</option>
+                                    <option value="9">September</option>
+                                    <option value="10">October</option>
+                                    <option value="11">November</option>
+                                    <option value="12">December</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="uploadFile" class="form-label">Upload File</label>
+                                <input type="file" id="uploadFile" name="file" class="form-input" 
+                                       accept=".csv,.xlsx,.xls" required>
+                                <small class="form-help">Supported formats: CSV, Excel (.xlsx, .xls)</small>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="locationType" class="form-label">Location Level</label>
+                                <select id="locationType" name="location_type" class="form-select">
+                                    <option value="depot">Depot Level</option>
+                                    <option value="district">District Level</option>
+                                    <option value="region">Region Level</option>
+                                </select>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Options</label>
+                                <div class="checkbox-group">
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" name="skip_duplicates" id="skipDuplicates">
+                                        <span class="checkmark"></span>
+                                        Skip Duplicates
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="upload-actions">
+                            <button type="submit" class="btn btn-primary" id="uploadBtn">
+                                <span class="btn-text">📤 Upload Data</span>
+                                <span class="btn-loading" style="display: none;">⏳ Uploading...</span>
+                            </button>
+                            <button type="button" class="btn btn-secondary" onclick="downloadTemplate()">
+                                📥 Download Template
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                
+                <div class="upload-status" id="uploadStatus" style="display: none;">
+                    <div class="status-content">
+                        <div class="status-icon">📊</div>
+                        <div class="status-text">
+                            <h4 id="statusTitle">Upload Status</h4>
+                            <p id="statusMessage">Ready to upload</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Regions Data (hidden, used for populating filters) -->
+        <div id="regions-data" style="display: none;"></div>
+        
+        <!-- Dashboard Data -->
+        <div id="dashboard-data">
+            <!-- This will be populated by HTMX -->
+            <div class="text-center py-8">
+                <div class="loading-spinner"></div>
+                <p class="mt-4 text-gray-600">Loading dashboard data...</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="loading-overlay" style="display: none;">
+        <div class="spinner"></div>
+    </div>
+    
+    <!-- Toast Container for Notifications -->
+    <div id="toast-container" class="toast-container"></div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<!-- HTMX for dynamic dashboard functionality -->
+<script src="https://unpkg.com/htmx.org@1.9.10"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Hide loading overlay once page is loaded
+    const loadingOverlay = document.getElementById('loading-overlay');
+    if (loadingOverlay) {
+        loadingOverlay.style.display = 'none';
+    }
+    
+    // Wait a bit for the page to fully render, then initialize
+    setTimeout(() => {
+        initializeDashboard();
+    }, 100);
+});
+
+function initializeDashboard() {
+    // Check if required elements exist
+    const regionsSelect = document.getElementById('selectRegion');
+    const dashboardData = document.getElementById('dashboard-data');
+    
+    if (!regionsSelect || !dashboardData) {
+        console.error('Required dashboard elements not found');
+        return;
+    }
+    
+    // Load initial dashboard data
+    loadDashboardData();
+    
+    // Set up auto-refresh every 30 seconds
+    setInterval(loadDashboardData, 30000);
+}
+
+function loadDashboardData() {
+    // Load regions data
+    htmx.ajax('GET', '{% url "dashboards:get_regions" %}', {
+        target: '#regions-data',
+        swap: 'innerHTML'
+    }).catch(error => {
+        console.error('Error loading regions:', error);
+        showToast('Error loading regions data', 'error');
+    });
+    
+    // Load dashboard data with authentication status
+    const authStatus = {{ is_authenticated|yesno:"true,false" }};
+    htmx.ajax('GET', `{% url "dashboards:get_dashboard_data" %}?auth=${authStatus}`, {
+        target: '#dashboard-data',
+        swap: 'innerHTML'
+    }).catch(error => {
+        console.error('Error loading dashboard data:', error);
+        showToast('Error loading dashboard data', 'error');
+    });
+}
+
+function applyFilters() {
+    const regionSelect = document.getElementById('selectRegion');
+    const districtSelect = document.getElementById('selectDistrict');
+    const depotSelect = document.getElementById('selectDepot');
+    
+    if (!regionSelect || !districtSelect || !depotSelect) {
+        console.error('Filter elements not found');
+        return;
+    }
+    
+    const region = regionSelect.value;
+    const district = districtSelect.value;
+    const depot = depotSelect.value;
+    
+    // Build filter parameters
+    const params = new URLSearchParams();
+    if (region) params.append('region', region);
+    if (district) params.append('district', district);
+    if (depot) params.append('depot', depot);
+    
+    // Load filtered data with authentication status
+    const authStatus = {{ is_authenticated|yesno:"true,false" }};
+    params.append('auth', authStatus);
+    htmx.ajax('GET', `{% url "dashboards:get_dashboard_data" %}?${params.toString()}`, {
+        target: '#dashboard-data',
+        swap: 'innerHTML'
+    }).catch(error => {
+        console.error('Error applying filters:', error);
+        showToast('Error applying filters', 'error');
+    });
+}
+
+function startEdit(table, row, field, currentValue) {
+    const cell = document.querySelector(`[data-table="${table}"][data-row="${row}"][data-field="${field}"]`);
+    if (!cell) return;
+    
+    const input = document.createElement('input');
+    input.type = 'number';
+    input.value = currentValue;
+    input.className = 'edit-input';
+    input.step = '0.01';
+    input.min = '0';
+    
+    if (table === 'debtors' && field === 'percentage') {
+        input.max = '100';
+    }
+    
+    const saveBtn = document.createElement('button');
+    saveBtn.textContent = '✓';
+    saveBtn.className = 'edit-save-btn';
+    saveBtn.onclick = () => saveEdit(table, row, field, input.value);
+    
+    const cancelBtn = document.createElement('button');
+    cancelBtn.textContent = '✗';
+    cancelBtn.className = 'edit-cancel-btn';
+    cancelBtn.onclick = () => cancelEdit(table, row, field, currentValue);
+    
+    const editContainer = document.createElement('div');
+    editContainer.className = 'edit-container';
+    editContainer.appendChild(input);
+    editContainer.appendChild(saveBtn);
+    editContainer.appendChild(cancelBtn);
+    
+    cell.innerHTML = '';
+    cell.appendChild(editContainer);
+    input.focus();
+}
+
+function saveEdit(table, row, field, value) {
+    const payload = {
+        table: table,
+        row: parseInt(row),
+        field: field,
+        value: parseFloat(value)
+    };
+    
+    // Show loading state
+    const cell = document.querySelector(`[data-table="${table}"][data-row="${row}"][data-field="${field}"]`);
+    if (cell) {
+        cell.classList.add('cell-loading');
+    }
+    
+    // Save to server using fetch for better control
+    const authStatus = {{ is_authenticated|yesno:"true,false" }};
+    fetch('{% url "dashboards:save_dashboard_data" %}', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': getCookie('csrftoken')
+        },
+        body: JSON.stringify({
+            ...payload,
+            auth: authStatus
+        })
+    })
+    .then(response => {
+        // Check if the response indicates authentication failure
+        if (response.status === 401) {
+            throw new Error('Authentication required. Please log in and try again.');
+        } else if (response.status === 403) {
+            throw new Error('Access denied. You don\'t have permission to edit this data.');
+        } else if (!response.ok) {
+            throw new Error(`Server error (${response.status}). Please try again.`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (cell) {
+            cell.classList.remove('cell-loading');
+            if (data.success) {
+                cell.classList.add('cell-success');
+                setTimeout(() => cell.classList.remove('cell-success'), 2000);
+                showToast('Data saved successfully', 'success');
+                
+                // Reload dashboard data to reflect the changes immediately
+                setTimeout(() => {
+                    loadDashboardData();
+                }, 500);
+            } else {
+                cell.classList.add('cell-error');
+                setTimeout(() => cell.classList.remove('cell-error'), 3000);
+                showToast(data.error || 'Error saving data', 'error');
+            }
+        }
+    })
+    .catch(error => {
+        if (cell) {
+            cell.classList.remove('cell-loading');
+            cell.classList.add('cell-error');
+            setTimeout(() => cell.classList.remove('cell-error'), 3000);
+        }
+        
+        // Show specific error message
+        const errorMessage = error.message || 'Error saving data';
+        showToast(errorMessage, 'error');
+        console.error('Save error:', error);
+        
+        // If it's an authentication error, suggest reloading the page
+        if (error.message && error.message.includes('Authentication')) {
+            setTimeout(() => {
+                if (confirm('Your session may have expired. Would you like to reload the page?')) {
+                    window.location.reload();
+                }
+            }, 2000);
+        }
+    });
+}
+
+function cancelEdit(table, row, field, originalValue) {
+    const cell = document.querySelector(`[data-table="${table}"][data-row="${row}"][data-field="${field}"]`);
+    if (cell) {
+        cell.textContent = formatValue(table, field, originalValue);
+    }
+}
+
+function formatValue(table, field, value) {
+    if (table === 'weekly_collections' && (field === 'zwl_millions' || field === 'usd_millions')) {
+        return `${parseFloat(value).toFixed(1)}M`;
+    } else if (table === 'weekly_revenue_lost' && (field === 'faults_mwh' || field === 'maintenance_mwh' || field === 'total_mwh')) {
+        return `${parseFloat(value).toFixed(1)} MWh`;
+    } else if (table === 'debtors' && field === 'percentage') {
+        return `${parseFloat(value).toFixed(1)}%`;
+    }
+    return value;
+}
+
+function showToast(message, type = 'info') {
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type} show`;
+    toast.textContent = message;
+    
+    const container = document.getElementById('toast-container') || createToastContainer();
+    container.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+}
+
+function createToastContainer() {
+    const container = document.createElement('div');
+    container.id = 'toast-container';
+    container.className = 'toast-container';
+    document.body.appendChild(container);
+    return container;
+}
+
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+        const cookies = document.cookie.split(';');
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === name + '=') {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+// Bulk Upload Functionality
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize bulk upload form
+    initializeBulkUpload();
+});
+
+function initializeBulkUpload() {
+    const dataTypeSelect = document.getElementById('dataType');
+    const monthGroup = document.getElementById('monthGroup');
+    const uploadForm = document.getElementById('bulkUploadForm');
+    
+    if (dataTypeSelect) {
+        dataTypeSelect.addEventListener('change', function() {
+            if (this.value === 'debtor_categories') {
+                monthGroup.style.display = 'block';
+                document.getElementById('uploadMonth').required = true;
+            } else {
+                monthGroup.style.display = 'none';
+                document.getElementById('uploadMonth').required = false;
+            }
+        });
+    }
+    
+    if (uploadForm) {
+        uploadForm.addEventListener('submit', handleBulkUpload);
+    }
+}
+
+function handleBulkUpload(event) {
+    event.preventDefault();
+    
+    const formData = new FormData(event.target);
+    const uploadBtn = document.getElementById('uploadBtn');
+    const btnText = uploadBtn.querySelector('.btn-text');
+    const btnLoading = uploadBtn.querySelector('.btn-loading');
+    
+    // Show loading state
+    uploadBtn.disabled = true;
+    btnText.style.display = 'none';
+    btnLoading.style.display = 'inline';
+    
+    // Show status
+    showUploadStatus('loading', 'Uploading data...', 'Please wait while we process your file.');
+    
+    // Send upload request
+    fetch('{% url "dashboards:bulk_upload_dashboard_data" %}', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': getCookie('csrftoken')
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showUploadStatus('success', 'Upload Successful!', data.message);
+            showToast('Data uploaded successfully', 'success');
+            
+            // Reload dashboard data to show new data
+            setTimeout(() => {
+                loadDashboardData();
+            }, 1000);
+        } else {
+            showUploadStatus('error', 'Upload Failed', data.error || 'Unknown error occurred');
+            showToast(data.error || 'Upload failed', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Upload error:', error);
+        showUploadStatus('error', 'Upload Failed', 'Network error occurred');
+        showToast('Network error occurred', 'error');
+    })
+    .finally(() => {
+        // Reset button state
+        uploadBtn.disabled = false;
+        btnText.style.display = 'inline';
+        btnLoading.style.display = 'none';
+    });
+}
+
+function showUploadStatus(type, title, message) {
+    const statusDiv = document.getElementById('uploadStatus');
+    const statusTitle = document.getElementById('statusTitle');
+    const statusMessage = document.getElementById('statusMessage');
+    
+    if (statusDiv && statusTitle && statusMessage) {
+        statusDiv.style.display = 'block';
+        statusDiv.className = `upload-status status-${type}`;
+        statusTitle.textContent = title;
+        statusMessage.textContent = message;
+        
+        // Auto-hide success messages after 5 seconds
+        if (type === 'success') {
+            setTimeout(() => {
+                statusDiv.style.display = 'none';
+            }, 5000);
+        }
+    }
+}
+
+function downloadTemplate() {
+    const dataType = document.getElementById('dataType').value;
+    if (!dataType) {
+        showToast('Please select a data type first', 'warning');
+        return;
+    }
+    
+    // Create download link
+    const link = document.createElement('a');
+    link.href = `{% url "dashboards:download_csv_template" %}?type=${dataType}`;
+    link.download = `${dataType}_template.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    showToast('Template download started', 'info');
+}
+</script>
+{% endblock %}

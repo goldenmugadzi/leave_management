@@ -1,7 +1,11 @@
 
-from apscheduler.schedulers.background import BackgroundScheduler
-from apscheduler.triggers.cron import CronTrigger
-from apscheduler.events import EVENT_JOB_ERROR
+try:  # noqa: SIM105
+    from apscheduler.schedulers.background import BackgroundScheduler  # type: ignore
+    from apscheduler.triggers.cron import CronTrigger  # type: ignore
+    from apscheduler.events import EVENT_JOB_ERROR  # type: ignore
+    _APSCHEDULER_AVAILABLE = True
+except ImportError:  # pragma: no cover - defensive guard
+    _APSCHEDULER_AVAILABLE = False
 
 from django.db import IntegrityError
 from loguru import logger
@@ -9,19 +13,37 @@ from .models.helpers import YearQuarter, QuarterChoices
 from datetime import datetime
 import time
 
+# Idempotent guard to prevent multiple scheduler startups (e.g., Django autoreload)
+_SCHEDULER_STARTED = False
+
 def run_back_ground_tasks():
-    tasks = BackgroundScheduler()
-    trigger = CronTrigger(month="1", day="17", hour="15", minute="56")
-    tasks.add_job(
-        func=create_year_quarter_obj,
-        trigger=trigger,
-        max_instances=1,
-        coalesce=True,
-        misfire_grace_time=30,
-        replace_existing=True
-    )
-    tasks.add_listener(lambda event: handle_failure(event, tasks), EVENT_JOB_ERROR)
-    tasks.start()
+    global _SCHEDULER_STARTED
+    if _SCHEDULER_STARTED:
+        logger.debug("Background scheduler already started; skipping duplicate initialization.")
+        return
+
+    if not _APSCHEDULER_AVAILABLE:
+        logger.warning("APScheduler is not installed; background tasks will not run. Install APScheduler to enable.")
+        return
+
+    try:
+        tasks = BackgroundScheduler()
+        # TODO: Adjust CronTrigger schedule to production needs. Currently placeholder.
+        trigger = CronTrigger(month="1", day="17", hour="15", minute="56")
+        tasks.add_job(
+            func=create_year_quarter_obj,
+            trigger=trigger,
+            max_instances=1,
+            coalesce=True,
+            misfire_grace_time=30,
+            replace_existing=True
+        )
+        tasks.add_listener(lambda event: handle_failure(event, tasks), EVENT_JOB_ERROR)
+        tasks.start()
+        _SCHEDULER_STARTED = True
+        logger.success("Background scheduler started successfully.")
+    except Exception as e:  # pragma: no cover
+        logger.error(f"Failed to start background scheduler: {e}")
 
 
 def handle_failure(event, scheduler):
