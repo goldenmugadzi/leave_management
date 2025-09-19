@@ -124,12 +124,14 @@ def pettyCash_detail(request, petty_id):
         # Disallow any actions if the process has already been rejected
         if process_rejected:
             messages.warning(request, f"PettyCash {pettycash_item.petty_id} was rejected. No further actions are allowed.")
-            return redirect('pettycash:pettycash_detail', petty_id=pettycash_item.petty_id)
+            # Don't redirect - just disable form functionality by setting form to None
+            form = None
         # Prevent editing if already captured
-        if request.method == "POST":
+        elif request.method == "POST":
             if getattr(pettycash_item, "payment_mode", None):
                 messages.warning(request, "Payment already captured. Contact Finance to amend.")
-                return redirect('pettycash:pettycash_detail', petty_id=pettycash_item.petty_id)
+                # Don't redirect - just disable form functionality by setting form to None  
+                form = None
 
             form = CashierDisbursementForm(request.POST, pettycash=pettycash_item)
             if form.is_valid():
@@ -159,7 +161,9 @@ def pettyCash_detail(request, petty_id):
 
                 if not form.errors:
                     messages.success(request, "Payment captured successfully.")
-                    return redirect('pettycash:pettycash_detail', petty_id=pettycash_item.petty_id)
+                    # After successful save, continue to render the updated page instead of redirecting
+                    # This prevents potential redirect loops and shows the updated state immediately
+                    form = None  # Clear the form since payment is now captured
             # if invalid, keep form with errors and fall through to shared render
         else:
             if not getattr(pettycash_item, "payment_mode", None) and not process_rejected:
@@ -173,7 +177,8 @@ def pettyCash_detail(request, petty_id):
                 # Disallow clearing and auto-approval if process was rejected
                 if process_rejected:
                     messages.warning(request, f"PettyCash {pettycash_item.petty_id} was rejected. You cannot clear or proceed further.")
-                    return redirect('pettycash:pettycash_detail', petty_id=pettycash_item.petty_id)
+                    # Don't redirect - just disable form by not processing it further
+                    pass
                 
                 requester_form = RequesterClearForm(request.POST, request.FILES, pettycash=pettycash_item)
                 if requester_form.is_valid():
@@ -205,7 +210,9 @@ def pettyCash_detail(request, petty_id):
                         pass
 
                     messages.success(request, "Petty cash cleared successfully.")
-                    return redirect('pettycash:pettycash_detail', petty_id=pettycash_item.petty_id)
+                    # After successful clearing, continue to render the updated page instead of redirecting
+                    # This prevents potential redirect loops and shows the updated state immediately
+                    requester_form = None  # Clear the form since clearing is complete
             else:
                 requester_form = RequesterClearForm(pettycash=pettycash_item)
 

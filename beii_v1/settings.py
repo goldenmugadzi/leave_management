@@ -393,7 +393,7 @@ LANGUAGE_CODE = 'en-us'
 
 USE_I18N = True
 
-LOGIN_REDIRECT_URL = '/'
+LOGIN_REDIRECT_URL = '/dashboards/overview'
 LOGIN_URL = '/accounts/login'
 
 os.environ['TIKA_SERVER_JAR'] = os.path.join(BASE_DIR,'static','tika','tika-server-standard-2.9.2.jar')
