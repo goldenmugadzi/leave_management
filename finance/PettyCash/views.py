@@ -49,6 +49,14 @@ except Exception:  # Safe no-op during tests
         return None
 
 
+def is_process_rejected(process) -> bool:
+    """Return True if any approval on the process is marked as Rejected."""
+    try:
+        return bool(process and process.approval_set.filter(approved='Rejected').exists())
+    except Exception:
+        return False
+
+
 @login_required
 def pettyCash_detail(request, petty_id):
     global payment_mode
@@ -106,10 +114,17 @@ def pettyCash_detail(request, petty_id):
     quotations = Quotation.objects.filter(pettycash=pettycash_item).all()
     # print(quotations.count())
 
+    # Check if process has been rejected at any point
+    process_rejected = is_process_rejected(pettycash_item.process)
+
     # REPLACE the current raw POST handling under pettycash_role == "disburse"
     # with the safer form-based flow below.
 
     if pettycash_role == "disburse":
+        # Disallow any actions if the process has already been rejected
+        if process_rejected:
+            messages.warning(request, f"PettyCash {pettycash_item.petty_id} was rejected. No further actions are allowed.")
+            return redirect('pettycash:pettycash_detail', petty_id=pettycash_item.petty_id)
         # Prevent editing if already captured
         if request.method == "POST":
             if getattr(pettycash_item, "payment_mode", None):
@@ -147,7 +162,7 @@ def pettyCash_detail(request, petty_id):
                     return redirect('pettycash:pettycash_detail', petty_id=pettycash_item.petty_id)
             # if invalid, keep form with errors and fall through to shared render
         else:
-            if not getattr(pettycash_item, "payment_mode", None):
+            if not getattr(pettycash_item, "payment_mode", None) and not process_rejected:
                 form = CashierDisbursementForm(pettycash=pettycash_item)
 
     # Requester clear flow (inline form, similar to cashier)
@@ -155,6 +170,11 @@ def pettyCash_detail(request, petty_id):
         # Eligible only after cashier disburses and when not yet receipted
         if pettycash_item.amount_disbursed is not None and pettycash_item.payment_mode is not None and not pettycash_item.receipt_file:
             if request.method == "POST" and request.POST.get("action") == "requester_clear":
+                # Disallow clearing and auto-approval if process was rejected
+                if process_rejected:
+                    messages.warning(request, f"PettyCash {pettycash_item.petty_id} was rejected. You cannot clear or proceed further.")
+                    return redirect('pettycash:pettycash_detail', petty_id=pettycash_item.petty_id)
+                
                 requester_form = RequesterClearForm(request.POST, request.FILES, pettycash=pettycash_item)
                 if requester_form.is_valid():
                     pettycash_item.receipt_file = requester_form.cleaned_data["receipt_file"]
@@ -163,6 +183,10 @@ def pettyCash_detail(request, petty_id):
 
                     # Auto-approve requester step if permitted
                     try:
+                        # Double-check rejection state before auto-approval
+                        if is_process_rejected(pettycash_item.process):
+                            raise Exception("Process rejected; skipping auto-approval")
+                        
                         process = pettycash_item.process
                         latest_approval = process.approval_set.last()
                         next_step_num = (latest_approval.step.step + 1) if latest_approval else 1
@@ -208,7 +232,8 @@ def pettyCash_detail(request, petty_id):
 
     approval_status = pettycash_item.process.approval_set.last().approved if pettycash_item.process.approval_set.last() else ""
     print("last approved", approval_status)
-    if approval_status != "Rejected":
+    # Do not offer approval actions if any prior rejection exists
+    if not process_rejected:
         next_step = last_approved + 1
         if len(pettycash_item.process.approval_set.all()) == len(pettycash_item.process.workflow.step_set.all()):
             print('approval set')
@@ -253,7 +278,7 @@ def pettyCash_detail(request, petty_id):
         cashier = None
 
     # Ensure cashier form is available on final render when needed
-    if pettycash_role == "disburse" and not getattr(pettycash_item, "payment_mode", None) and form is None:
+    if pettycash_role == "disburse" and not getattr(pettycash_item, "payment_mode", None) and form is None and not process_rejected:
         try:
             form = CashierDisbursementForm(pettycash=pettycash_item)
         except Exception:
@@ -639,7 +664,7 @@ def pettycash_awaiting_my_action(request):
             workflow = process.workflow
             step = workflow.step_set.filter(step=next_step, approver__in=user_roles).first()
 
-            if step:
+            if step and not is_process_rejected(process):
                 pettycashs_to_process.append(pettycash)
     elif pettycash_role == requester:
         for pettycash in Pettycash.objects.filter(section=request.user.section, region=region,
@@ -659,7 +684,7 @@ def pettycash_awaiting_my_action(request):
             workflow = process.workflow
             step = workflow.step_set.filter(step=next_step, approver__in=user_roles).first()
 
-            if step:
+            if step and not is_process_rejected(process):
                 pettycashs_to_process.append(pettycash)
 
     else:
@@ -682,7 +707,7 @@ def pettycash_awaiting_my_action(request):
                 workflow = process.workflow
                 step = workflow.step_set.filter(step=next_step, approver__in=user_roles).first()
 
-                if step:
+                if step and not is_process_rejected(process):
                     pettycashs_to_process.append(pettycash)
                 print('phakathi')
         else:
@@ -700,7 +725,7 @@ def pettycash_awaiting_my_action(request):
                 workflow = process.workflow
                 step = workflow.step_set.filter(step=next_step, approver__in=user_roles).first()
 
-                if step:
+                if step and not is_process_rejected(process):
                     pettycashs_to_process.append(pettycash)
                 print('outside')
 
@@ -1108,6 +1133,12 @@ def import_pettycash(request):
 def approve_step(process_id, user_id, date_approved):
     process = Process.objects.get(id=process_id)
     user = UserProfile.objects.get(username=user_id)
+    
+    # Do not append approvals if the process has already been rejected
+    if is_process_rejected(process):
+        print('process already rejected; skipping approval append')
+        return False
+    
     # parse the date into year, month and day
     if date_approved != '0000-00-00 00:00:00':
         print('setting date approved to', date_approved)
@@ -1157,6 +1188,13 @@ def receipt(request):
     # Authorization: only requester can clear
     if request.user != pettycash.requested_by:
         return JsonResponse({'success': False, 'error': 'Not authorized to clear this petty cash.'}, status=403)
+
+    # Block any actions if process is already rejected
+    try:
+        if is_process_rejected(pettycash.process):
+            return JsonResponse({'success': False, 'error': 'This petty cash was rejected. No further actions are allowed.'}, status=400)
+    except Exception:
+        pass
 
     # Require cashier disbursement first
     if pettycash.amount_disbursed is None or pettycash.payment_mode is None:
