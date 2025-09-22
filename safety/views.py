@@ -1,6 +1,6 @@
-from django.views.generic import View
+from django.views.generic import View, CreateView, ListView
 from django.shortcuts import render, redirect
-from .models import SafetyMonthlyReport,AccidentReport,VehicleAccidentReport, PropertyLossIncident
+from .models import SafetyMonthlyReport,AccidentReport,VehicleAccidentReport, PropertyLossIncident, ControllersInstructionForm
 from .forms import SafetyMonthlyReportForm,AccidentReportForm, VehicleAccidentReportForm, PropertyLossIncidentForm
 from django.contrib import messages
 from django.http import JsonResponse
@@ -284,5 +284,26 @@ def accident_report_dashboard(request):
         'vehicle_form': VehicleAccidentReportForm(),
         'property_loss_form': PropertyLossIncidentForm(),
     })
+
+
+class ControllersInstructionFormCreateView(CreateView):
+    """Create view for Controller's Instruction Form"""
+    model = ControllersInstructionForm
+    fields = ['district_station', 'received_by']
+    template_name = 'safety/instruction_form.html'
+    success_url = '/safety/instruction_forms/'
+    
+    def form_valid(self, form):
+        form.instance.issued_by = self.request.user
+        return super().form_valid(form)
+
+
+class ControllersInstructionFormListView(ListView):
+    """List view for Controller's Instruction Forms"""
+    model = ControllersInstructionForm
+    template_name = 'safety/instruction_form_list.html'
+    context_object_name = 'instruction_forms'
+    paginate_by = 20
+    ordering = ['-issued_at']
 
 

@@ -153,12 +153,6 @@ INSTALLED_APPS = [
     'comm_files',
     # 'django_prometheus',  # Temporarily disabled due to import error
     'api.ops_maintenance.safety_operations',
-    'Transport',
-    'Hardware_Faults',
-    'Asset_Register',
-    'widget_tweaks',
-    'meetings',
-    'leave_management',
     'sanction_for_test',
     'utils',
     'inspections'

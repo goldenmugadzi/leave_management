@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import ControllersInstructionFormCreateView, ControllersInstructionFormListView
+from . import views
 
 urlpatterns = [
     path('safety_table/', views.safety_table, name='safety_table'),
