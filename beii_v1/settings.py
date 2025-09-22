@@ -136,7 +136,6 @@ INSTALLED_APPS = [
     'register',
     'asset_transfer',
     'widget_tweaks',
-    'safety.apps.SafetyConfig',
     'meetings',
     'leave_management',
     'reports',
