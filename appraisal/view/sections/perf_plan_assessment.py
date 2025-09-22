@@ -368,10 +368,11 @@ class AppraisalDepartmentPerformanceDimensionScoreUpdateView(SuccessMessageMixin
     def appraisee_form_handler(self, form):
         payload = build_payload_score(request=self.request, form=form, is_appraisee=True)
         repo = AppraisalOutPutPerformanceDimensionScoreRepository()
-        is_scored = False
-        if payload.score > 0:
-            is_scored = True
         
+        is_scored = False
+        if payload.score > 0 or self.get_object().performance_dimension.weight == 0:
+            is_scored = True
+            
         current_score_object = self.get_object()
         updated_score_object = repo.update(
                                     appraisal_perf_dimension=self.get_object(), 

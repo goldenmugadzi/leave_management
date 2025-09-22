@@ -73,9 +73,14 @@ class AppraisalDependanciesInitialisationService:
         appraisal_output_perf_dimension_objs_list = []
         
         for output_perf_dimension_obj in output_perf_dimension_qr:
+            is_scored = False
+            if output_perf_dimension_obj.weight == 0:
+                is_scored = True
+            
             appraisal_output_perf_dimension_obj = AppraisalOutPutPerformanceDimensionScore(
                 appraisal_department_output=appraisal_department_output_obj,
-                performance_dimension=output_perf_dimension_obj
+                performance_dimension=output_perf_dimension_obj,
+                is_scored=is_scored
             )
             appraisal_output_perf_dimension_objs_list.append(appraisal_output_perf_dimension_obj)
             
