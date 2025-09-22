@@ -57,7 +57,7 @@ urlpatterns = [
     path('', include('safety.urls')),   
     path('', include('BatteryMaintenance.urls')),
     path('direct_purchases/', include('finance.Direct_purchases.urls')),
-    path('pettycash/', include('finance.PettyCash.urls')),
+    #path('pettycash/', include('finance.PettyCash.urls')),
     path('comperative_schedule/', include('finance.comparative_schedules.urls')),
     path('restricted_bidding/', include('finance.ristricted_bidding.urls')),
     path('direct_purchase/', include('finance.direct_purchase.urls')),
@@ -77,6 +77,8 @@ urlpatterns = [
     # path('api/', include('api.urls')),  # Commented out until api.urls exists
     path('', include('meetings.urls')),
     path('', include('leave_management.urls')),
+    path('', include('asset_transfer.urls')),
+    path('', include('register.urls')),
     path('sanction_for_test/', include('sanction_for_test.urls')),
     path('inspections/', include('inspections.urls')),
     
