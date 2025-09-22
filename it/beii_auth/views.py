@@ -128,18 +128,18 @@ APPLICATIONS = [
         "iconUrl": "assets/images/register.png",
         "url": "/tab/"
     },
-      {
-        "name": "leave_management",
-        "title": "Leave Management System",
-        "iconUrl": "assets/images/leave.png",
-        "url": "/leave_dashboard/"
-    },
-      {
-        "name": "Safety",
-        "title": "Safety",
-        "iconUrl": "assets/images/leave.png",
-        "url": "/accident_report_dashboard/"
-    }, 
+    #   {
+    #     "name": "leave_management",
+    #     "title": "Leave Management System",
+    #     "iconUrl": "assets/images/leave.png",
+    #     "url": "/leave_dashboard/"
+    # },
+    #   {
+    #     "name": "Safety",
+    #     "title": "Safety",
+    #     "iconUrl": "assets/images/leave.png",
+    #     "url": "/accident_report_dashboard/"
+    # }, 
       
       
 ]
@@ -181,12 +181,13 @@ REPORTS = [
         "iconUrl": "assets/images/change.png",
         "url": "/change_requests/change_request_reports"
     },
+    #   {
+    #     "name": "asset reports",
+    #     "title": "Asset Reports",
+    #     "iconUrl": "assets/images/reports.png",
+    #     "url": "/asset_report/"
+    # }, 
       {
-        "name": "asset reports",
-        "title": "Asset Reports",
-        "iconUrl": "assets/images/reports.png",
-        "url": "/asset_report/"
-    },  {
         "name": "Token",
         "title": "Tokens",
         "iconUrl": "assets/images/token.png",
@@ -292,21 +293,13 @@ def login_user(request):
 
 
 
-@login_required(login_url='/accounts/login')
 def index(request):
     if request.user.is_authenticated:
-        user_title = request.user.get_full_name()
-        l = request.user.groups.values_list('name', flat=True)  # QuerySet Object
-        user_groups = list(l)
-
-        return redirect(
-            '/dashboards/overview',
-            user_title,
-            request,
-            user_groups
-        )
-
-    return redirect('/accounts/login')
+        # For authenticated users, redirect to dashboard
+        return redirect('/dashboards/overview')
+    else:
+        # For unauthenticated users, show login page
+        return redirect('/accounts/login')
 
 
 @login_required(login_url='/accounts/login')

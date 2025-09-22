@@ -48,7 +48,7 @@ class SessionErrorSessionMiddleware(SessionMiddleware):
                     request.session.flush()
                 except:
                     pass
-                return HttpResponseRedirect(reverse('login'))
+                return HttpResponseRedirect('/accounts/login/')
             
             # For other errors, try to continue normally
             return response
