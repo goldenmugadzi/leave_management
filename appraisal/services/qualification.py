@@ -117,24 +117,51 @@ class UserQualificationService:
 
                     # Map sub-column to qualification type
                     if "o' levels" in col_clean or "o levels" in col_clean:
+                        if self.user_qualification_repo.get_by_user(user_object=user).name == "Ordinary Levels":
+                            print(f"============>>>>>>>> User with pk: {user.id}, O levels already exists...")
+                            continue
                         if "level" in val_clean:
                             q_name = "Ordinary Levels"
-                    elif "a levels" in col_clean:
+                    elif "a' levels" in col_clean:
+                        if self.user_qualification_repo.get_by_user(user_object=user).name == "Advanced Levels":
+                            print(f"============>>>>>>>> User with pk: {user.id}, Advanced Levels already exists...")
+                            continue
                         if "level" in val_clean:
                             q_name = "Advanced Levels"
                     elif "certificate" in col_clean:
+                        if self.user_qualification_repo.get_by_user(user_object=user).name == "Certificate" and (self.user_qualification_repo.get_by_user(user_object=user).description.strip().lower() == val.strip().lower()):
+                            print(f"============>>>>>>>> User with pk: {user.id}, Certificate - {val} already exists...")
+                            continue
                         q_name = "Certificate"
                     elif "diploma" in col_clean:
+                        if self.user_qualification_repo.get_by_user(user_object=user).name == "Diploma" and (self.user_qualification_repo.get_by_user(user_object=user).description.strip().lower() == val.strip().lower()):
+                            print(f"============>>>>>>>> User with pk: {user.id}, Diploma - {val} already exists...")
+                            continue
                         q_name = "Diploma"
                     elif "hnd" in col_clean:
+                        if self.user_qualification_repo.get_by_user(user_object=user).name == "Higher National Diploma" and (self.user_qualification_repo.get_by_user(user_object=user).description.strip().lower() == val.strip().lower()):
+                            print(f"============>>>>>>>> User with pk: {user.id}, Higher National Diploma - {val} already exists...")
+                            continue
                         q_name = "Higher National Diploma"
                     elif "prof membership" in col_clean:
+                        if self.user_qualification_repo.get_by_user(user_object=user).name == "Professional Membership" and (self.user_qualification_repo.get_by_user(user_object=user).description.strip().lower() == val.strip().lower()):
+                            print(f"============>>>>>>>> User with pk: {user.id}, Professional Membership - {val} already exists...")
+                            continue
                         q_name = "Professional Membership"
                     elif "degree" in col_clean:
+                        if self.user_qualification_repo.get_by_user(user_object=user).name == "Degree" and (self.user_qualification_repo.get_by_user(user_object=user).description.strip().lower() == val.strip().lower()):
+                            print(f"============>>>>>>>> User with pk: {user.id}, Degree - {val} already exists...")
+                            continue
                         q_name = "Degree"
                     elif "masters" in col_clean:
+                        if self.user_qualification_repo.get_by_user(user_object=user).name == "Masters" and (self.user_qualification_repo.get_by_user(user_object=user).description.strip().lower() == val.strip().lower()):
+                            print(f"============>>>>>>>> User with pk: {user.id}, Masters - {val} already exists...")
+                            continue
                         q_name = "Masters"
                     elif "phd" in col_clean:
+                        if self.user_qualification_repo.get_by_user(user_object=user).name == "PHD" and (self.user_qualification_repo.get_by_user(user_object=user).description.strip().lower() == val.strip().lower()):
+                            print(f"============>>>>>>>> User with pk: {user.id}, PHD - {val} already exists...")
+                            continue
                         q_name = "PHD"
 
                     # Create qualification object
@@ -143,7 +170,7 @@ class UserQualificationService:
                             user=user,
                             name=q_name,
                             description=str(val),
-                            file=file
+                            file=None
                         )
                     )
 

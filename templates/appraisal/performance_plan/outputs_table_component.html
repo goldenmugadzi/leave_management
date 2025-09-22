@@ -23,7 +23,9 @@
                         <tr class="hover:bg-blue-100">
                             <td class="px-6 py-4 text-md text-blue-900 truncate max-w-xs">{{appraisal_dept_output_obj.department_output.output_description}}</td>
                             <td class="px-6 py-4 text-md text-blue-900">{{appraisal_dept_output_obj.department_output.weight}}</td>
-                            <td class="px-6 py-4 text-md text-blue-900">{{appraisal_dept_output_obj.id|get_output_total_score}}</td>
+                            <td class="px-6 py-4 text-md text-blue-900">
+                                {{appraisal_dept_output_obj.id|get_output_total_score}}
+                            </td>
                             <td>
                                 <div class="flex gap-2 justify-center">
                                     <a 

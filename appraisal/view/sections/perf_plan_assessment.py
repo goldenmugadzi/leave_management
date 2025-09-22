@@ -210,6 +210,7 @@ class AppraisalDepartmentPerformanceDimensionTemplateView(SuccessMessageMixin, U
         context.update(self.get_approval_stages())
         context["appraisee_object"] = appraisee_object
         context["department_output_obj"] = self.get_appraisal_department_output_obj().department_output
+        context["appraisal_department_output_obj"] = self.get_appraisal_department_output_obj()
         context["is_grade_c_and_above"] = appraisee_object.grade == GRADE_CHOICES[2][0]
         context["performance_dimensions_qr"] = perf_dimension_qr
         context["appraisee_grade"] = self.appraisee_grade()
