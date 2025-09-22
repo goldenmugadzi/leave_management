@@ -1,0 +1,229 @@
+{% extends 'admin_layout.html' %}
+{% load static %}
+{% load widget_tweaks %}
+
+{% block title %}Assign Application{% endblock %}
+
+{% block content %}
+<div class="content-wrapper">
+  <div class="bg-gulf-blue-100 shadow shadow-gulf-blue-300 text-gulf-blue-900 rounded px-6 py-6">
+    <!-- Header Section -->
+    <div class="flex justify-between items-center mb-8">
+      <div>
+        <h1 class="text-3xl font-bold text-gulf-blue-900">
+          Assign Application
+        </h1>
+        <nav class="flex mt-2" aria-label="Breadcrumb">
+          <ol class="inline-flex items-center space-x-1 md:space-x-3">
+            <li class="inline-flex items-center">
+              <a href="{% url 'inspections:dashboard' %}" class="inline-flex items-center text-sm font-medium text-gulf-blue-600 hover:text-gulf-blue-800">
+                <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                  <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"></path>
+                </svg>
+                Inspections
+              </a>
+            </li>
+            <li>
+              <div class="flex items-center">
+                <svg class="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
+                </svg>
+                <a href="{% url 'inspections:assignment_list' %}" class="ml-1 text-sm font-medium text-gulf-blue-600 hover:text-gulf-blue-800 md:ml-2">Assignments</a>
+              </div>
+            </li>
+            <li>
+              <div class="flex items-center">
+                <svg class="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
+                </svg>
+                <span class="ml-1 text-sm font-medium text-gulf-blue-900 md:ml-2">Create Assignment</span>
+              </div>
+            </li>
+          </ol>
+        </nav>
+      </div>
+      <a href="{% url 'inspections:assignment_list' %}" class="bg-gray-500 hover:bg-gray-600 text-white font-medium py-2 px-4 rounded-lg flex items-center">
+        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+        </svg>
+        Back to List
+      </a>
+    </div>
+
+    <!-- Form Section -->
+    <div class="bg-white rounded-lg shadow-md p-6">
+      <form method="post" novalidate class="space-y-8">
+        {% csrf_token %}
+        
+        <!-- Assignment Information -->
+        <div class="border-b border-gray-200 pb-8">
+          <div class="flex items-center mb-6">
+            <div class="flex-shrink-0">
+              <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                </svg>
+              </div>
+            </div>
+            <div class="ml-4">
+              <h3 class="text-lg font-medium text-gray-900">Assignment Details</h3>
+              <p class="text-sm text-gray-500">Assign an application to a field officer for inspection</p>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label for="{{ form.application.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                Application <span class="text-red-500">*</span>
+              </label>
+              {{ form.application|add_class:"w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gulf-blue-500 focus:border-gulf-blue-500" }}
+              {% if form.application.errors %}
+                <p class="mt-1 text-sm text-red-600">{{ form.application.errors.0 }}</p>
+              {% endif %}
+            </div>
+
+            <div>
+              <label for="{{ form.assigned_to.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                Assign to Inspector <span class="text-red-500">*</span>
+              </label>
+              {{ form.assigned_to }}
+              {% if form.assigned_to.errors %}
+                <p class="mt-1 text-sm text-red-600">{{ form.assigned_to.errors.0 }}</p>
+              {% endif %}
+              {% if form.assigned_to.help_text %}
+                <p class="mt-1 text-xs text-gray-500">{{ form.assigned_to.help_text }}</p>
+              {% endif %}
+              
+            </div>
+
+            <div>
+              <label for="{{ form.due_date.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                Due Date
+              </label>
+              {{ form.due_date|add_class:"w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gulf-blue-500 focus:border-gulf-blue-500" }}
+              {% if form.due_date.errors %}
+                <p class="mt-1 text-sm text-red-600">{{ form.due_date.errors.0 }}</p>
+              {% endif %}
+            </div>
+
+            <div class="md:col-span-2">
+              <label for="{{ form.assignment_notes.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                Assignment Notes
+              </label>
+              {{ form.assignment_notes|add_class:"w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-gulf-blue-500 focus:border-gulf-blue-500" }}
+              {% if form.assignment_notes.errors %}
+                <p class="mt-1 text-sm text-red-600">{{ form.assignment_notes.errors.0 }}</p>
+              {% endif %}
+              <p class="mt-1 text-xs text-gray-500">Any specific instructions or notes for the assigned inspector</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Submit Button -->
+        <div class="flex justify-end space-x-4">
+          <a href="{% url 'inspections:assignment_list' %}" class="bg-gray-500 hover:bg-gray-600 text-white font-medium py-2 px-6 rounded-lg">
+            Cancel
+          </a>
+          <button type="submit" class="bg-gulf-blue-600 hover:bg-gulf-blue-700 text-white font-medium py-2 px-6 rounded-lg flex items-center">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+            </svg>
+            Create Assignment
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Set default due date to 7 days from now
+  const dueDateInput = document.getElementById('{{ form.due_date.id_for_label }}');
+  if (dueDateInput && !dueDateInput.value) {
+    const now = new Date();
+    now.setDate(now.getDate() + 7);
+    const localDateTime = now.toISOString().slice(0, 16);
+    dueDateInput.value = localDateTime;
+  }
+
+  // Initialize Select2 for inspector field
+  console.log('Initializing Select2 for inspector field...');
+  
+  // Wait a bit to ensure DOM is fully loaded
+  setTimeout(function() {
+    const inspectorSelect = $('.select2-inspector');
+    console.log('Found inspector select elements:', inspectorSelect.length);
+    
+    if (inspectorSelect.length > 0) {
+      console.log('Inspector select options before Select2:', inspectorSelect.find('option').length);
+      inspectorSelect.find('option').each(function(index, option) {
+        console.log('Option ' + index + ':', $(option).text(), 'Value:', $(option).val());
+      });
+      
+      inspectorSelect.select2({
+        placeholder: 'Search and select an inspector...',
+        allowClear: true,
+        width: '100%',
+        theme: 'default',
+        language: {
+          noResults: function() {
+            return "No inspectors found";
+          },
+          searching: function() {
+            return "Searching inspectors...";
+          }
+        }
+      });
+      
+      console.log('Select2 initialized successfully');
+    } else {
+      console.error('No inspector select element found with class select2-inspector');
+    }
+  }, 100);
+
+  // Add custom CSS for Select2 styling to match the form
+  $('<style>')
+    .prop('type', 'text/css')
+    .html(`
+      .select2-container--default .select2-selection--single {
+        height: 42px;
+        border: 1px solid #d1d5db;
+        border-radius: 0.375rem;
+        padding: 0.5rem 0.75rem;
+      }
+      .select2-container--default .select2-selection--single .select2-selection__rendered {
+        line-height: 1.5;
+        padding-left: 0;
+        padding-right: 0;
+      }
+      .select2-container--default .select2-selection--single .select2-selection__placeholder {
+        color: #9ca3af;
+      }
+      .select2-container--default .select2-selection--single:focus {
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+      }
+      .select2-container--default.select2-container--focus .select2-selection--single {
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+      }
+      .select2-dropdown {
+        border: 1px solid #d1d5db;
+        border-radius: 0.375rem;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+      }
+      .select2-container--default .select2-results__option--highlighted[aria-selected] {
+        background-color: #3b82f6;
+        color: white;
+      }
+      .select2-result-inspector__details {
+        font-size: 0.875rem;
+        color: #6b7280;
+        margin-top: 2px;
+      }
+    `)
+    .appendTo('head');
+});
+</script>
+{% endblock %}

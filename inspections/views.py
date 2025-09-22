@@ -592,6 +592,14 @@ def assignment_create(request):
             return redirect('inspections:assignment_list')
     else:
         form = ApplicationAssignmentForm()
+        # Pre-select application if provided in URL parameter
+        application_id = request.GET.get('application')
+        if application_id:
+            try:
+                application = get_object_or_404(ClientApplication, pk=application_id)
+                form.initial['application'] = application
+            except:
+                pass  # If invalid application ID, just ignore
     
     context = {
         'form': form,

@@ -22,17 +22,13 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
 
         # Add other profile data
         try:
-
-            user_profile = UserProfile.objects.get(user_id=user.id)
-            district = Districts.objects.get(code=user_profile.district) if user_profile.district else ""
-            section = Sections.objects.get(code=user_profile.section) if user_profile.section else ""
-            depot = Depots.objects.get(code=user_profile.depot) if user_profile.depot else ""
-            region = Regions.objects.get(id=user_profile.region) if user_profile.region else ""
-
-            token['district'] = district.district if district else ""
-            token['section'] = section.section if section else ""
-            token['depot'] = depot.depot if depot else ""
-            token['region'] = region.region if region else ""
+            user_profile = UserProfile.objects.get(user=user)
+            
+            # Access ForeignKey fields properly
+            token['district'] = user_profile.district.district if user_profile.district else ""
+            token['section'] = user_profile.section.section if user_profile.section else ""
+            token['depot'] = user_profile.depot.depot if user_profile.depot else ""
+            token['region'] = user_profile.region.region if user_profile.region else ""
 
         except Exception as ex:
             print("Error in getting the details of user", ex, "for token")
