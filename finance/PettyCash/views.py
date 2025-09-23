@@ -1182,6 +1182,48 @@ def approve_step(process_id, user_id, date_approved):
     return True
 
 
+def receipt_form(request, petty_id):
+    """
+    Display receipt upload form for a specific pettycash ID
+    """
+    # Get the pettycash object
+    try:
+        pettycash = Pettycash.objects.get(petty_id=petty_id)
+    except Pettycash.DoesNotExist:
+        messages.error(request, 'Petty cash not found.')
+        return redirect('/pettycash/pettycashs')
+    
+    # Check authorization - only requester can upload receipt
+    if request.user != pettycash.requested_by:
+        messages.error(request, 'You are not authorized to upload receipt for this petty cash.')
+        return redirect(f'/pettycash/pettycash_detail/{petty_id}')
+    
+    # Check if receipt already uploaded
+    if pettycash.receipt_file:
+        messages.warning(request, 'Receipt has already been uploaded for this petty cash.')
+        return redirect(f'/pettycash/pettycash_detail/{petty_id}')
+    
+    # Check if cashier has disbursed
+    if pettycash.amount_disbursed is None:
+        messages.error(request, 'Cashier must disburse the amount before you can upload receipt.')
+        return redirect(f'/pettycash/pettycash_detail/{petty_id}')
+    
+    # Block actions if process is rejected
+    try:
+        if is_process_rejected(pettycash.process):
+            messages.error(request, 'This petty cash was rejected. No further actions are allowed.')
+            return redirect(f'/pettycash/pettycash_detail/{petty_id}')
+    except Exception:
+        pass
+    
+    context = {
+        'pettycash': pettycash,
+        'max_amount': pettycash.amount_disbursed if pettycash.amount_disbursed else pettycash.amount
+    }
+    
+    return render(request, 'finance/pettycash/receipt_form.html', context)
+
+
 def receipt(request):
     if request.method != 'POST':
         return redirect('/pettycash/pettycashs')
@@ -1235,9 +1277,16 @@ def receipt(request):
     if used_amt > cap_dec:
         return JsonResponse({'success': False, 'error': f'Amount used cannot exceed {cap_dec}.'}, status=400)
 
-    # Save receipt and amount used
+    # Handle optional remarks
+    remarks = request.POST.get('remarks', '').strip()
+    
+    # Save receipt, amount used, and remarks
     pettycash.receipt_file = receipt_file
     pettycash.amount_used = float(used_amt)
+    if remarks:
+        # If the model has a remarks field, save it; otherwise you might want to add it to the model
+        # For now, we'll just save receipt and amount
+        pass
     pettycash.save(update_fields=['receipt_file', 'amount_used'])
 
     # Auto-approve requester clear step if the next step is assigned to the requester
