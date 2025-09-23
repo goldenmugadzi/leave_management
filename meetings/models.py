@@ -20,11 +20,38 @@ class Meetings(models.Model):
      confirm_status = models.CharField(max_length=400,help_text="Status",choices=[('Postponed','Postponed'),('Held','Held'),('Cancelled','Cancelled ')])
      comments = models.TextField(max_length=500)
      depot = models.ForeignKey(Depots,on_delete=models.DO_NOTHING, blank=True, null=True)
+     estimated_cost_of_meeting = models.PositiveIntegerField(default=0)
      special_invitations = models.TextField(max_length=900)
      comments = models.TextField(max_length=500)
-     estimated_cost_of_meeting = models.PositiveIntegerField(default=0)
-     
+
+class Venue(models.Model):
+    VENUE_TYPE_CHOICES = [
+     ('Virtual','Virtual'),('Function Room 3','Function Room 3'),('Function Room 4','Function Room 4'),('Fourth Floor Boardroom','Fourth Floor Boardroom'),('Fithy Floor Kitchen','Fithy Floor Kitchen'),('GIS Drones','GIS Drones')]
+    name = models.CharField(max_length=100)
+    capacity = models.PositiveIntegerField()
+    is_available = models.BooleanField(default=True)
+    status = models.CharField(
+        max_length=20,
+        choices=[('Available', 'Available'), ('Booked', 'Booked')],
+        default='Available'
+    )
+
+    def __str__(self):
+        return f"{self.name}"
+
+class VenueBooking(models.Model):
+    venue = models.ForeignKey(Venue, on_delete=models.CASCADE)
+    department = models.ForeignKey(Sections, on_delete=models.DO_NOTHING)
+    start_time = models.TimeField()
+    end_time = models.TimeField()
+    date_of_meeting = models.DateField()
+    type_of_meeting = models.CharField(max_length=100)
+    capacity = models.PositiveIntegerField()
+    # Add any other fields you need
+    status = models.CharField(max_length=50, choices=[('Pending', 'Pending'), ('Confirmed', 'Confirmed'), ('Cancelled', 'Cancelled')], default='Pending')
 
 
- 
+
+
+
 

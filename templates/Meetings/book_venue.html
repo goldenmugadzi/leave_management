@@ -1,0 +1,115 @@
+{% extends 'admin_layout.html' %}
+{% load static %}
+{% block content %}
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+<div class="content-wrapper">
+  <div class="bg-gulf-blue-100 shadow shadow-gulf-blue-300 text-gulf-blue-900 rounded p-6">
+    <form method="post">
+      {% csrf_token %}
+      
+      <!-- Form Header -->
+      <div class="mb-8 border-b border-gulf-blue-300 pb-4">
+        <h1 class="text-2xl font-bold text-gulf-blue-900">Venue Booking Form</h1>
+        <p class="mt-2 text-sm leading-6 text-gulf-blue-700">Please complete all required fields to book a venue.</p>
+      </div>
+      
+      <!-- Schedule FIRST -->
+      <div class="mb-8">
+        <h2 class="text-lg font-semibold text-gulf-blue-900 mb-4 bg-gulf-blue-200 p-2 rounded">Schedule</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gulf-blue-900 mb-2">{{ form.date_of_meeting.label }}</label>
+            {{ form.date_of_meeting }}
+            {% if form.date_of_meeting.errors %}<p class="mt-1 text-xs text-red-500">{{ form.date_of_meeting.errors }}</p>{% endif %}
+          </div>
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gulf-blue-900 mb-2">{{ form.start_time.label }}</label>
+            {{ form.start_time }}
+            {% if form.start_time.errors %}<p class="mt-1 text-xs text-red-500">{{ form.start_time.errors }}</p>{% endif %}
+          </div>
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gulf-blue-900 mb-2">{{ form.end_time.label }}</label>
+            {{ form.end_time }}
+            {% if form.end_time.errors %}<p class="mt-1 text-xs text-red-500">{{ form.end_time.errors }}</p>{% endif %}
+          </div>
+        </div>
+      </div>
+      
+      <!-- Venue SECOND -->
+      <div class="mb-8">
+        <h2 class="text-lg font-semibold text-gulf-blue-900 mb-4 bg-gulf-blue-200 p-2 rounded">Venue Details</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gulf-blue-900 mb-2">{{ form.venue.label }}</label>
+            <select name="venue" id="id_venue" class="select2 form-control">
+              {% for venue in form.fields.venue.queryset %}
+                <option value="{{ venue.pk }}" data-capacity="{{ venue.capacity }}"
+                  {% if form.data.venue|stringformat:"s" == venue.pk|stringformat:"s" or form.initial.venue|stringformat:"s" == venue.pk|stringformat:"s" %}selected{% endif %}>
+                  {{ venue.name }} ({{ venue.venue_type }}) - Capacity: {{ venue.capacity }}
+                </option>
+              {% endfor %}
+            </select>
+            {% if form.venue.errors %}<p class="mt-1 text-xs text-red-500">{{ form.venue.errors }}</p>{% endif %}
+          </div>
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gulf-blue-900 mb-2">{{ form.capacity.label }}</label>
+            {{ form.capacity }}
+            {% if form.capacity.errors %}<p class="mt-1 text-xs text-red-500">{{ form.capacity.errors }}</p>{% endif %}
+          </div>
+        </div>
+      </div>
+      
+      <!-- Booking Info LAST -->
+      <div class="mb-8">
+        <h2 class="text-lg font-semibold text-gulf-blue-900 mb-4 bg-gulf-blue-200 p-2 rounded">Booking Information</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gulf-blue-900 mb-2">{{ form.department.label }}</label>
+            {{ form.department }}
+            {% if form.department.errors %}<p class="mt-1 text-xs text-red-500">{{ form.department.errors }}</p>{% endif %}
+          </div>
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-gulf-blue-900 mb-2">{{ form.type_of_meeting.label }}</label>
+            {{ form.type_of_meeting }}
+            {% if form.type_of_meeting.errors %}<p class="mt-1 text-xs text-red-500">{{ form.type_of_meeting.errors }}</p>{% endif %}
+          </div>
+        </div>
+      </div>
+      
+      <!-- Form Actions -->
+      <div class="flex flex-col sm:flex-row gap-4 mt-10 border-t border-gulf-blue-300 pt-6">
+        <button type="button" class="bg-white border border-gulf-blue-300 hover:bg-gray-100 text-gulf-blue-900 py-2 px-4 rounded-md shadow-sm font-medium transition-colors">CANCEL</button>
+        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md shadow-sm font-medium transition-colors">BOOK VENUE</button>
+      </div>
+      
+      {% if form.errors %}
+        <div class="bg-red-100 text-red-700 p-2 mb-4 rounded">
+          {{ form.errors }}
+        </div>
+      {% endif %}
+    </form>
+  </div>
+</div>
+
+<script>
+$(document).ready(function() {
+  $('select').select2({ width: '100%' });
+
+  function setCapacityFromVenue() {
+    var selected = $('#id_venue').find('option:selected');
+    var capacity = selected.data('capacity');
+    if(capacity) {
+      $('#id_capacity').val(capacity);
+    }
+  }
+
+  $('#id_venue').on('change', setCapacityFromVenue);
+
+  // Set capacity on page load if a venue is already selected
+  setCapacityFromVenue();
+});
+</script>
+{% endblock %}

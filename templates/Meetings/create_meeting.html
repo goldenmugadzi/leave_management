@@ -8,57 +8,208 @@
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
 <div class="content-wrapper">
-  <div class="bg-gulf-blue-100 shadow shadow-gulf-blue-300 text-gulf-blue-900 rounded px-2 py-2">
+  <div class="bg-gulf-blue-100 shadow shadow-gulf-blue-300 text-gulf-blue-900 rounded p-6">
     <form method="post" enctype="multipart/form-data">
       {% csrf_token %}
-      <h1 class="text-base font-semibold leading-7 text-gulf-blue-900">
-        Meeting Registration Form
-      </h1>
-      <p class="mt-1 text-sm leading-6 text-gulf-blue-900">
-        Fill all required fields.
-      </p>
-      <div class="rounded row text-center py-2 grid grid-cols-2 my-3">
-        {% for field in form %}
-          {% if field.name == "employees_invited" %}
-            <div class="mb-5 grid grid-cols-2 text-center pr-5">
-              <div>
-                {{ field.label_tag }}
-                <div class="text-blue-500 text-center">{{ field.help_text }}</div>
-                <div class="text-red-500 text-center">{{ field.errors }}</div>
-              </div>
-              <div>
-                {{ field }}
-              </div>
-            </div>
-          {% elif not field.is_hidden %}
-            <div class="mb-5 grid grid-cols-2 text-center pr-5">
-              <div>
-                {{ field.label_tag }}
-                <div class="text-blue-500 text-center">{{ field.help_text }}</div>
-                <div class="text-red-500 text-center">{{ field.errors }}</div>
-              </div>
-              <div>
-                {{ field }}
-              </div>
-            </div>
-          {% endif %}
-        {% endfor %}
+      
+      <!-- Form Header -->
+      <div class="mb-8 border-b border-gulf-blue-300 pb-4">
+        <h1 class="text-2xl font-bold text-gulf-blue-900">
+          Meeting Registration Form
+        </h1>
+        <p class="mt-2 text-sm leading-6 text-gulf-blue-700">
+          Please complete all required fields to register a new meeting.
+        </p>
       </div>
-      <div class="flex mt-10 px-3 py-3">
-        <div style="width: 50%;">
-          <button style="width: 100%;" class="text-sm font-semibold leading-6 text-gray-900" type="button">
-            CANCEL
-          </button>
+      
+      <!-- Meeting Details Section -->
+      <div class="mb-8">
+        <h2 class="text-lg font-semibold text-gulf-blue-900 mb-4 bg-gulf-blue-200 p-2 rounded">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+          </svg>
+          Meeting Details
+        </h2>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {% for field in form %}
+            {% if field.name == "title" or field.name == "description" or field.name == "meeting_type" or field.name == "agenda" %}
+              <div class="mb-4">
+                <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-gulf-blue-900 mb-2">
+                  {{ field.label }}{% if field.field.required %}<span class="text-red-500">*</span>{% endif %}
+                </label>
+                {{ field }}
+                {% if field.help_text %}
+                  <p class="mt-1 text-xs text-blue-600">{{ field.help_text }}</p>
+                {% endif %}
+                {% if field.errors %}
+                  <p class="mt-1 text-xs text-red-500">{{ field.errors }}</p>
+                {% endif %}
+              </div>
+            {% endif %}
+          {% endfor %}
         </div>
-        <div style="width: 50%;">
-          <button
-            style="width: 100%;"
-            type="submit"
-            class="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-          >
-            SAVE USER
-          </button>
+      </div>
+      
+      <!-- Schedule Information Section -->
+      <div class="mb-8">
+        <h2 class="text-lg font-semibold text-gulf-blue-900 mb-4 bg-gulf-blue-200 p-2 rounded">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+          Schedule Information
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+          {% for field in form %}
+            {% if field.name == "date_of_meeting" or field.name == "start_time" or field.name == "end_time" %}
+              <div class="mb-4">
+                <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-gulf-blue-900 mb-2">
+                  {{ field.label }}{% if field.field.required %}<span class="text-red-500">*</span>{% endif %}
+                </label>
+                {{ field }}
+                {% if field.help_text %}
+                  <p class="mt-1 text-xs text-blue-600">{{ field.help_text }}</p>
+                {% endif %}
+                {% if field.errors %}
+                  <p class="mt-1 text-xs text-red-500">{{ field.errors }}</p>
+                {% endif %}
+              </div>
+            {% endif %}
+          {% endfor %}
         </div>
+      </div>
+      
+      <!-- Organization Information Section -->
+      <div class="mb-8">
+        <h2 class="text-lg font-semibold text-gulf-blue-900 mb-4 bg-gulf-blue-200 p-2 rounded">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+          </svg>
+          Organization Information
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+          {% for field in form %}
+            {% if field.name == "regions" or field.name == "cost_center" or field.name == "depot" or field.name == "department" %}
+              <div class="mb-4">
+                <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-gulf-blue-900 mb-2">
+                  {{ field.label }}{% if field.field.required %}<span class="text-red-500">*</span>{% endif %}
+                </label>
+                {{ field }}
+                {% if field.help_text %}
+                  <p class="mt-1 text-xs text-blue-600">{{ field.help_text }}</p>
+                {% endif %}
+                {% if field.errors %}
+                  <p class="mt-1 text-xs text-red-500">{{ field.errors }}</p>
+                {% endif %}
+              </div>
+            {% endif %}
+          {% endfor %}
+        </div>
+      </div>
+      
+      <!-- Location Information Section -->
+      <div class="mb-8">
+        <h2 class="text-lg font-semibold text-gulf-blue-900 mb-4 bg-gulf-blue-200 p-2 rounded">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+          Location Information
+        </h2>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {% for field in form %}
+            {% if field.name == "location" or field.name == "room" or field.name == "is_virtual" or field.name == "meeting_link" or field.name == "venue" %}
+              <div class="mb-4">
+                <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-gulf-blue-900 mb-2">
+                  {{ field.label }}{% if field.field.required %}<span class="text-red-500">*</span>{% endif %}
+                </label>
+                {{ field }}
+                {% if field.help_text %}
+                  <p class="mt-1 text-xs text-blue-600">{{ field.help_text }}</p>
+                {% endif %}
+                {% if field.errors %}
+                  <p class="mt-1 text-xs text-red-500">{{ field.errors }}</p>
+                {% endif %}
+              </div>
+            {% endif %}
+          {% endfor %}
+        </div>
+      </div>
+      
+      <!-- Attendee Information Section -->
+      <div class="mb-8">
+        <h2 class="text-lg font-semibold text-gulf-blue-900 mb-4 bg-gulf-blue-200 p-2 rounded">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+          </svg>
+          Attendee Information
+        </h2>
+        
+        <div class="grid grid-cols-1 gap-6">
+          {% for field in form %}
+            {% if field.name == "employees_invited" or field.name == "host" or field.name == "expected_attendees" %}
+              <div class="mb-4">
+                <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-gulf-blue-900 mb-2">
+                  {{ field.label }}{% if field.field.required %}<span class="text-red-500">*</span>{% endif %}
+                </label>
+                {{ field }}
+                {% if field.help_text %}
+                  <p class="mt-1 text-xs text-blue-600">{{ field.help_text }}</p>
+                {% endif %}
+                {% if field.errors %}
+                  <p class="mt-1 text-xs text-red-500">{{ field.errors }}</p>
+                {% endif %}
+              </div>
+            {% endif %}
+          {% endfor %}
+        </div>
+      </div>
+      
+      <!-- Additional Information Section -->
+      <div class="mb-8">
+        <h2 class="text-lg font-semibold text-gulf-blue-900 mb-4 bg-gulf-blue-200 p-2 rounded">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          Additional Information
+        </h2>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {% for field in form %}
+            {% if field.name != "title" and field.name != "description" and field.name != "meeting_type" and field.name != "agenda" and field.name != "meeting_date" and field.name != "date_of_meeting" and field.name != "start_time" and field.name != "end_time" and field.name != "duration" and field.name != "timezone" and field.name != "location" and field.name != "room" and field.name != "is_virtual" and field.name != "meeting_link" and field.name != "employees_invited" and field.name != "host" and field.name != "department" and field.name != "expected_attendees" and field.name != "regions" and field.name != "cost_center" and field.name != "depot" and field.name != "venue" and not field.is_hidden %}
+              <div class="mb-4">
+                <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-gulf-blue-900 mb-2">
+                  {{ field.label }}{% if field.field.required %}<span class="text-red-500">*</span>{% endif %}
+                </label>
+                {{ field }}
+                {% if field.help_text %}
+                  <p class="mt-1 text-xs text-blue-600">{{ field.help_text }}</p>
+                {% endif %}
+                {% if field.errors %}
+                  <p class="mt-1 text-xs text-red-500">{{ field.errors }}</p>
+                {% endif %}
+              </div>
+            {% endif %}
+          {% endfor %}
+        </div>
+      </div>
+      
+      <!-- Hidden Fields -->
+      {% for field in form %}
+        {% if field.is_hidden %}
+          {{ field }}
+        {% endif %}
+      {% endfor %}
+      
+      <!-- Form Actions -->
+      <div class="flex flex-col sm:flex-row gap-4 mt-10 border-t border-gulf-blue-300 pt-6">
+        <button type="button" class="bg-white border border-gulf-blue-300 hover:bg-gray-100 text-gulf-blue-900 py-2 px-4 rounded-md shadow-sm font-medium transition-colors">
+          CANCEL
+        </button>
+        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md shadow-sm font-medium transition-colors">
+          SAVE MEETING
+        </button>
       </div>
     </form>
   </div>
@@ -69,6 +220,11 @@ $(document).ready(function() {
   $('.select2').select2({
     width: '100%',
     //placeholder: "Select employees"
+  });
+  
+  // Fix Select2 z-index issue with fixed elements
+  $(document).on('select2:open', () => {
+    document.querySelector('.select2-container--open .select2-search__field').focus();
   });
 });
 </script>
