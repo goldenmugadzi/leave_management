@@ -453,7 +453,7 @@ class AppraiseePersonalAttributesDetailView(TemplateView):
             )
         return form
     
-    def get_quarterly_total_score(self)->Tuple[List, Decimal]:
+    def get_quarterly_total_score(self):
         appraisal_object = self.get_appraisal_object()
         appraisal_created_year = appraisal_object.created_date.year
         return get_all_quarter_ratings_per_appraiser(year=appraisal_created_year, appraisal_id=appraisal_object.id)
@@ -484,13 +484,13 @@ class AppraiseePersonalAttributesDetailView(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        quarter_ratings, final_score = self.get_quarterly_total_score()
+        final_rating_type = self.get_quarterly_total_score()
 
         context.update(self.requesters())
         context["appraisal_object"] = self.get_appraisal_object()
         context["appraisee_personal_attr_qr"] = self.get_apraisee_personal_attrs()
-        context["quarter_ratings"] = quarter_ratings
-        context["final_score"] = final_score
+        context["quarter_ratings"] = final_rating_type.rating
+        context["final_score"] = final_rating_type.final_score
         context["final_comment_form"] = self.get_final_comment_form(None)
         context["appraisee_grade"] = self.appraisee_grade()
         context["is_within_current_quarter"] = self.is_current_date_in_current_quarter()
@@ -680,4 +680,38 @@ class AppraiseePersonalAttributesUpdateView(TemplateView):
             return redirect("server_error_view")
         return super().get(request, *args, **kwargs)
     
+
+class AppraisalDetailView(TemplateView):
+    template_name = 'appraisal/detail.html'
     
+    def get_appraisal_obj(self):
+        repo = AppraisalRepository()
+        return repo.get_appraisal_by_pk(appraisal_id=self.kwargs.get('appraisal_id'))
+
+    def get_steps(self):
+        steps = [
+                (1, "Personal Details"),
+                (2, "Performance Plan and Assessment"),
+                (3, "Training and Development Needs"),
+                (4, "Performance Progress Review"),
+                (5, "Final Performance Assessment and Rating"),
+            ]
+        return steps
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["steps"] = self.get_steps()
+        return context
+    
+    def get(self, request, *args, **kwargs):
+        try:
+            self.object = None
+            appraisal_object = self.get_appraisal_obj()
+            if appraisal_object is None:
+                logger.warning(f"[AppraisalDetailView] get_appraisal_obj() with appraisal pk: {appraisal_object.id}, not found error")
+                return redirect("object_not_found_error", object_name=slugify("Appraisal"))
+
+        except Exception as e:
+            logger.error(f"[AppraisalDetailView]  get_appraisal_obj() with appraisal pk: {appraisal_object.id}, failed with error: {e}")
+            return redirect("server_error_view")
+        return super().get(request, *args, **kwargs)

@@ -41,7 +41,8 @@ from .view import (
     AppraiseePersonalAttributesDetailView, 
     AppraiseePersonalAttributesUpdateView,
     JobCompetencyTemplateView,
-    JobCompetencyUpdateDetailView
+    JobCompetencyUpdateDetailView,
+    AppraisalDetailView
 )
 
 urlpatterns = [
@@ -49,6 +50,7 @@ urlpatterns = [
     path('', AppraisalTemplateView.as_view(), name='appraisal_index'),
     path('create/', AppraisalCreateView.as_view(), name='create_appraisal'),
     path('update/<int:appraisal_id>', AppraisalUpdateView.as_view(), name='update_appraisal'),
+    path('detail/<int:appraisal_id>', AppraisalDetailView.as_view(), name='appraisal_detail'),
     
     # ================= Final Results ==============================
     path('<int:appraisal_id>/final-result', AppraiseePersonalAttributesDetailView.as_view(), name='appraisal_final_result_index'),

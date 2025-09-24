@@ -19,4 +19,3 @@ class FinalRatingType(BaseModel):
     total_score: Annotated[Decimal, Field(max_digits=5, decimal_places=2)] = Field(
         ..., description="Quarterly total score."
     )
-    

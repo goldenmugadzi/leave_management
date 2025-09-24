@@ -47,6 +47,17 @@ class DepartmentalObjectiveRepository:
             raise Exception(f"DepartmentalObjectiveRepository fetch_by_cost_center_year with cost_center pk: {cost_center_id}, failed with error: {e}")
     
         
+    def fetch_by_cost_center_kra(self, cost_center_id: int, kra_id: int)->QuerySet[DepartmentObjective]:
+        try:
+            qr = DepartmentObjective.objects.filter(
+                cost_center__id=cost_center_id,
+                key_result_area__id=kra_id
+                )
+            return qr
+        except Exception as e:
+            raise Exception(f"DepartmentalObjectiveRepository fetch_by_cost_center_kra with cost_center pk: {cost_center_id} and kra pk: {kra_id}, failed with error: {e}")
+    
+        
     def fetch_by_designation_year(self, designation_id: int, year: int)->QuerySet[DepartmentObjective]:
         try:
             qr = DepartmentObjective.objects.filter(designation__id=designation_id, created_date__year=year)
