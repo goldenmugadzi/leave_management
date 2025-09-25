@@ -1,7 +1,6 @@
 from django.core.management.base import BaseCommand
-from django.db.models import Sum, Q
-from ACE2.models import AssetBudget, Ace2
-from ACE2.views import ace_phase
+from django.db.models import Sum
+from ACE2.models import AssetBudget, Ace2, Asset_budget_Virament
 
 class Command(BaseCommand):
     help = "Recalculate AssetBudget.to_be_withdrawn from current pending ACEs and pending outgoing virements"
@@ -20,21 +19,53 @@ class Command(BaseCommand):
 
         updated = 0
         for budget in qs:
-            # Compute pending ACEs for this budget (exclude rejected/approved)
-            aces = Ace2.objects.filter(budget_id=budget)
-            pending_total = 0
-            for ace in aces.select_related('process'):
-                phase = 'unknown'
-                try:
-                    # reuse same logic as views to classify status
-                    from ACE2.views import ace_phase as _ace_phase  # lazy import
-                    phase = _ace_phase(ace)
-                except Exception:
-                    phase = 'unknown'
-                if phase in ('pending', 'in_progress', 'draft'):
-                    pending_total += ace.amount or 0
+            # Compute pending ACEs for this budget (exclude rejected, exclude fully approved)
+            aces = Ace2.objects.filter(budget_id=budget).select_related('process')
+            pending_ace_total = 0
+            for ace in aces:
+                process = getattr(ace, 'process', None)
+                if not process:
+                    # Drafts count as pending
+                    pending_ace_total += ace.amount or 0
+                    continue
+                approvals = process.approval_set.all()
+                if approvals.filter(approved='Rejected').exists():
+                    continue  # excluded
+                if approvals.exists():
+                    last = approvals.last()
+                    total_steps = process.workflow.step_set.count() if process.workflow else 0
+                    if approvals.count() == total_steps and getattr(last, 'approved', '') == 'Approved':
+                        continue  # fully approved, not pending
+                    # otherwise, in_progress is pending
+                    pending_ace_total += ace.amount or 0
+                else:
+                    # no approvals yet => pending
+                    pending_ace_total += ace.amount or 0
 
+            # Compute pending outgoing virements from this budget as source
+            virements = Asset_budget_Virament.objects.filter(from_budget=budget).select_related('process')
+            pending_virement_total = 0
+            for v in virements:
+                process = getattr(v, 'process', None)
+                if not process:
+                    pending_virement_total += v.amount or 0
+                    continue
+                approvals = process.approval_set.all()
+                if approvals.filter(approved='Rejected').exists():
+                    continue
+                if approvals.exists():
+                    last = approvals.last()
+                    total_steps = process.workflow.step_set.count() if process.workflow else 0
+                    if approvals.count() == total_steps and getattr(last, 'approved', '') == 'Approved':
+                        continue
+                    pending_virement_total += v.amount or 0
+                else:
+                    pending_virement_total += v.amount or 0
+
+            pending_total = (pending_ace_total or 0) + (pending_virement_total or 0)
             old_val = budget.to_be_withdrawn or 0
+            # Clamp to non-negative
+            pending_total = max(0, pending_total)
             if old_val != pending_total:
                 self.stdout.write(self.style.WARNING(
                     f"Budget {budget.budget_id} ({budget.budget_name}): to_be_withdrawn {old_val} -> {pending_total}"
