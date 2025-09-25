@@ -2,38 +2,169 @@
 {% block styles %}
 <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css"/>
 <style>
-  .dataTables_wrapper .dataTables_length select { width: 4rem; }
-  .tab-button {
-    padding: 0.5rem 1rem;
-    border: 2px solid transparent;
-    border-radius: 0.375rem;
-    cursor: pointer;
-    transition: background-color 0.3s, color 0.3s;
-    text-align: center;
-  }
-  .tab-button.active {
-    background-color: #1d4ed8;
-    color: white;
-    border-color: #1d4ed8;
-  }
-  .tab-button:hover {
-    background-color: #2563eb;
-    color: white;
-  }
+    .main-heading {
+        font-size: 2rem;
+        font-weight: bold;
+        color: #17191e;
+        margin-bottom: 2rem;
+        text-align: center;
+        width: 100%;
+        letter-spacing: 1px;
+    }
+    .dashboard-nav-container {
+        background: #fff;
+        border-radius: 1.5rem;
+        box-shadow: 0 4px 24px rgba(30,41,59,0.10);
+        padding: 1.5rem 1rem 1rem 1rem;
+        margin-bottom: 2rem;
+        max-width: 1200px; /* wider for all buttons in one row */
+        margin-left: auto;
+        margin-right: auto;
+    }
+    .button-grid {
+        display: flex;
+        flex-direction: row;
+        gap: 1rem;
+        justify-content: center;
+        align-items: stretch;
+        /* flex-wrap: wrap;  <-- REMOVE THIS LINE */
+    }
+    .tab-button {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: flex-start;
+        padding: 0.5rem 1rem;
+        border-radius: 0.75rem;
+        font-size: 1rem;
+        font-weight: 600;
+        box-shadow: 0 2px 8px rgba(30,41,59,0.08);
+        text-decoration: none;
+        transition: transform 0.15s, box-shadow 0.15s;
+        border: none;
+        min-height: 48px;
+        background: #fff;
+        gap: 0.5rem;
+        min-width: 170px;
+    }
+    .tab-button svg {
+        width: 1.3rem;
+        height: 1.3rem;
+        margin-bottom: 0;
+        opacity: 0.85;
+    }
+    .tab-button.bg-blue-600 { background: linear-gradient(90deg, #2563eb 80%, #3b82f6 100%); color: #fff; }
+    .tab-button.bg-indigo-600 { background: linear-gradient(90deg, #4f46e5 80%, #6366f1 100%); color: #fff; }
+    .tab-button.bg-yellow-400 { background: linear-gradient(90deg, #f59e42 80%, #fde68a 100%); color: #17191e; }
+    .tab-button.bg-green-500 { background: linear-gradient(90deg, #16a34a 80%, #22c55e 100%); color: #fff; }
+    .tab-button.bg-gray-400 { background: linear-gradient(90deg, #6b7280 80%, #9ca3af 100%); color: #fff; }
+    .tab-button.bg-red-400 { background: linear-gradient(90deg, #dc2626 80%, #ef4444 100%); color: #fff; }
+    .tab-button:hover {
+        transform: translateY(-2px) scale(1.02);
+        box-shadow: 0 4px 16px rgba(30,41,59,0.16);
+        text-decoration: none;
+    }
+    .stats-cards {
+        display: flex;
+        gap: 2.5rem;
+        justify-content: center;
+        margin-bottom: 2.5rem;
+        flex-wrap: wrap;
+    }
+    .stat-card {
+        border-radius: 1rem;
+        box-shadow: 0 4px 16px rgba(30,41,59,0.12);
+        padding: 2rem 3rem;
+        min-width: 200px;
+        text-align: center;
+        font-weight: 700;
+        font-size: 2rem;
+        color: #fff;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        margin: 0 0.5rem;
+        position: relative;
+        overflow: hidden;
+    }
+    .stat-label {
+        font-size: 1.1rem;
+        color: #f3f4f6;
+        margin-top: 0.75rem;
+        font-weight: 400;
+        letter-spacing: 0.5px;
+    }
+    .stat-approved { background: linear-gradient(135deg, #16a34a 80%, #22c55e 100%); }
+    .stat-rejected { background: linear-gradient(135deg, #dc2626 80%, #ef4444 100%); }
+    .stat-pending { background: linear-gradient(135deg, #6b7280 80%, #9ca3af 100%); }
+    .stat-total { background: linear-gradient(135deg, #2563eb 80%, #3b82f6 100%); }
+
+    /* Table Styling */
+    .dataTables_wrapper .dataTables_length select { width: 4rem; }
+    .dataTables_wrapper .dataTables_filter input {
+        border-radius: 0.5rem;
+        border: 1px solid #d1d5db;
+        padding: 0.5rem 1rem;
+        margin-left: 0.5rem;
+        font-size: 1rem;
+    }
+    table.display {
+        background: #fff;
+        border-radius: 1rem;
+        box-shadow: 0 2px 8px rgba(30,41,59,0.08);
+        overflow: hidden;
+    }
+    table.display thead th {
+        background: #2563eb;
+        color: #fff;
+        font-size: 1rem;
+        font-weight: 600;
+        border-bottom: 2px solid #3b82f6;
+        padding: 1rem 0.75rem;
+        letter-spacing: 0.5px;
+    }
+    table.display tbody td {
+        padding: 0.75rem 0.5rem;
+        font-size: 1rem;
+        color: #17191e;
+        border-bottom: 1px solid #e5e7eb;
+        vertical-align: middle;
+    }
+    table.display tbody tr:nth-child(even) {
+        background: #f3f4f6;
+    }
+    table.display tbody tr:hover {
+        background: #e0e7ff;
+        transition: background 0.2s;
+    }
+    .btn-info {
+        background: #2563eb;
+        color: #fff;
+        border-radius: 9999px;
+        padding: 0.5rem 1rem;
+        font-weight: 500;
+        transition: background 0.2s;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        border: none;
+        box-shadow: 0 2px 8px rgba(30,41,59,0.08);
+    }
+    .btn-info:hover {
+        background: #1d4ed8;
+        color: #fff;
+    }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="content-wrapper">
   <div class="bg-gulf-blue-100 shadow shadow-gulf-blue-300 text-gulf-blue-900 rounded px-2 py-2">
-    <div class="flex justify-between items-center mb-5">
-      <span class="text-lg font-bold text-black">Leave Requests</span>
-      
-      <div class="mb-4 flex space-x-4 p-2 bg-white rounded-lg shadow-md">
-        <a href="/leave" class="tab-button active">Create Leave</a>
-      </div>
-      
-    </div>
+    <div class="main-heading">Leave Requests</div>
+   
+    <!-- Stats Cards -->
+   
+    <!-- Table -->
     <div class="overflow-x-auto">
       <table id="leaveTable" class="display" style="width:100%">
         <thead>
@@ -49,26 +180,12 @@
             <th>Department</th>
             <th>Number of Days</th>
             <th>Region</th>
+            <th>Attachment</th>
+            <th>Status</th>
             <th>Action</th>
           </tr>
         </thead>
         <tbody></tbody>
-        <tfoot>
-          <tr>
-            <th>ID</th>
-            <th>EC Number</th>
-            <th>User</th>
-            <th>Type of Leave</th>
-            <th>Gender</th>
-            <th>Position</th>
-            <th>Start Date</th>
-            <th>End Date</th>
-            <th>Department</th>
-            <th>Number of Days</th>
-            <th>Region</th>
-            <th>Action</th>
-          </tr>
-        </tfoot>
       </table>
     </div>
   </div>
@@ -102,6 +219,28 @@ $(document).ready(function () {
       { data: "department" },
       { data: "number_of_days" },
       { data: "region" },
+        { // Attachments column
+        data: "attachments",
+        render: function(data, type, row) {
+          if (data) {
+            return `<a href="${data}" target="_blank" class="text-blue-600 underline">View</a>`;
+          } else {
+            return '<span class="text-gray-400 italic">None</span>';
+          }
+        }
+      },
+      {
+        data: "status",
+        render: function(data, type, row) {
+          let color = "bg-gray-400 text-white";
+          if (data === "approved") color = "bg-green-500 text-white";
+          else if (data === "rejected") color = "bg-red-500 text-white";
+          else if (data === "pending") color = "bg-yellow-400 text-gray-900";
+          return `<span class="inline-block px-3 py-1 rounded-full text-xs font-semibold ${color}">${data.charAt(0).toUpperCase() + data.slice(1)}</span>`;
+        }
+      },
+      
+       
       {
         data: "id",
         render: function(data, type, row) {
@@ -114,7 +253,6 @@ $(document).ready(function () {
     ],
     order: [[0, 'desc']]
   });
-  });
-
+});
 </script>
 {% endblock %}

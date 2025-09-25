@@ -1,6 +1,7 @@
 {% extends 'admin_layout.html' %}
 {% block styles %}
 <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css"/>
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 <style>
   .dataTables_wrapper .dataTables_length select {
     width: 5rem;
@@ -35,73 +36,40 @@
 <div class="content-wrapper">
   <div class="bg-gulf-blue-100 shadow shadow-gulf-blue-300 text-gulf-blue-900 rounded px-2 py-2">
     <div class="p-8">
-      <div class="mb-4 flex space-x-4 p-2 bg-white rounded-lg shadow-md">
-        <a href="/register_vehicle" class="flex-1 py-2 px-4 rounded-md focus:outline-none focus:shadow-outline-blue transition-all duration-300 bg-blue-600 text-white text-center">
-          Register Vehicle
-        </a>
-        <a href="/upload_vehicle" class="flex-1 py-2 px-4 rounded-md focus:outline-none focus:shadow-outline-blue transition-all duration-300 bg-blue-600 text-white text-center">
-          Upload File
+      <div class="mb-4 flex space-x-4 p-2 shadow-md">
+      <a href="/register_vehicle"
+          class="ml-auto py-2 px-4 rounded-md bg-blue-600 text-white text-center 
+                  focus:outline-none focus:shadow-outline-blue transition-all duration-300">
+         + Register Vehicle
         </a>
       </div>
     </div>
     <div class="table-responsive">
       <table id="vehicleTable" class="display" style="width: 100%">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Date</th>
-            <th>Depot</th>
-            <th>STF</th>
-            <th>Fleet Number</th>
-            <th>Reg Number</th>
-            <th>Opening Speedo</th>
-            <th>Driver</th>
-            <th>Closing Speedo</th>
-            <th>Make</th>
-            <th>Region</th>
-            <th>Trip Distance</th>
-            <th>Designation</th>
-            <th>Fuel Drawn</th>
-            <th>Department</th>
-            <th>Fuel Type</th>
-            <th>Details of Journey</th>
-            <th>Cost Center</th>
-            <th>Model</th>
-            <th>Oil Drawn</th>
-            <th>Place Drawn</th>
-            <th>Defects/Repairs</th>
-            <th>Action</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-        <tfoot>
-          <tr>
-            <th>ID</th>
-            <th>Date</th>
-            <th>Depot</th>
-            <th>STF</th>
-            <th>Fleet Number</th>
-            <th>Reg Number</th>
-            <th>Opening Speedo</th>
-            <th>Driver</th>
-            <th>Closing Speedo</th>
-            <th>Make</th>
-            <th>Region</th>
-            <th>Trip Distance</th>
-            <th>Designation</th>
-            <th>Fuel Drawn</th>
-            <th>Department</th>
-            <th>Fuel Type</th>
-            <th>Details of Journey</th>
-            <th>Cost Center</th>
-            <th>Model</th>
-            <th>Oil Drawn</th>
-            <th>Place Drawn</th>
-            <th>Defects/Repairs</th>
-            <th>Action</th>
-          </tr>
-        </tfoot>
-      </table>
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Date</th>
+      <th>Drivers Name</th>
+      <th>Vehicle Details</th>
+      <th>Opening Speedo</th>
+      <th>Closing Speedo</th>
+      <th>Trip Distance</th>
+      <th>Region</th>
+      <th>Department</th>
+      <th>Depot</th>
+      <th>Cost Center</th>
+      <th>Fuel Drawn</th>
+      <th>Oil Drawn</th>
+      <th>Place Drawn</th>
+      <th>Details of Journey</th>
+      <th>Allocation Code</th>
+      <th>Defects/Repairs</th>
+      <th>Action</th>
+    </tr>
+  </thead>
+</table>
+
     </div>
   </div>
 </div>
@@ -116,45 +84,41 @@
 <script type="text/javascript" charset="utf8" src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.36/pdfmake.min.js"></script>
 <script type="text/javascript" charset="utf8" src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.36/vfs_fonts.js"></script>
 <script type="text/javascript" charset="utf8" src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script>
   $(document).ready(function () {
+    $('.select2').select2();
     $("#vehicleTable").DataTable({
-      "processing": true,
-      "serverSide": true,
-      "ajax": {
-        "url": "/vehicle_datatable",
+      processing: true,
+      serverSide: true,
+      ajax: {
+        url: "/vehicle_datatable",
       },
       columns: [
         { data: "id" },
         { data: "date" },
-        { data: "depot" },
-        { data: "stf" },
-        { data: "fleet_number" },
-        { data: "reg_number" },
+        { data: "drivers_name" },
+        { data: "vehicle_details" },
         { data: "opening_speedo_reading" },
-        { data: "driver" },
         { data: "closing_speedo_reading" },
-        { data: "make" },
-        { data: "region" },
         { data: "trip_distance" },
-        { data: "designation" },
-        { data: "fuel_drawn" },
+        { data: "region" },
         { data: "department" },
-        { data: "fuel_type" },
-        { data: "details_of_journey" },
+        { data: "depot" },
         { data: "cost_center" },
-        { data: "model" },
+        { data: "fuel_drawn" },
         { data: "oil_drawn" },
         { data: "place_drawn" },
+        { data: "details_of_journey" },
+        { data: "allocation_code" },
         { data: "defects_and_repairs_carried_out" },
         {
           data: "id",
           orderable: false,
           searchable: false,
-          render: function(data, type, row) {
+          render: function (data, type, row) {
             return `
               <span style="display: inline-flex; gap: 0.5rem;">
-
                 <a href="/safety_update/${data}/" class="btn btn-info" title="Edit">
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
@@ -164,8 +128,13 @@
             `;
           }
         }
-      ]
+      ],
+      pageLength: 10,
+      lengthMenu: [5, 10, 25, 50],
+      order: [[0, "desc"]],
+      responsive: true,
     });
-});
+  });
 </script>
+
 {% endblock %}

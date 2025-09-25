@@ -166,9 +166,16 @@ def approve_step(request, process_id):
     
     if not process.approval_set.filter(approved="Rejected"):
         if request.method == "POST":
-            form = ApprovalForm(request.POST)
+            # Get the approved value from the button click
+            approved_value = request.POST.get('approved')
+            
+            # Create form data with the approved value
+            form_data = request.POST.copy()
+            form_data['approved'] = approved_value
+            
+            form = ApprovalForm(form_data)
             if form.is_valid():
-                approval = ApprovalForm(request.POST).save(commit=False)
+                approval = form.save(commit=False)
                 approval.user = request.user
                 approval.process = process
                 approval.step = step

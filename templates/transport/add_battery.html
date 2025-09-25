@@ -1,0 +1,49 @@
+{% extends 'admin_layout.html' %}
+
+{% block content %}
+<div class="content-wrapper">
+  <div class="bg-gulf-blue-100 shadow shadow-gulf-blue-300 text-gulf-blue-900 rounded px-2 py-2">
+    <form method="post">
+      {% csrf_token %}
+      <h1 class="text-base font-semibold leading-7 text-gulf-blue-900">
+        ADD BATTERY
+      </h1>
+      <p class="mt-1 text-sm leading-6 text-gulf-blue-900">
+        Fill all required fields.
+      </p>
+
+      <div class="rounded row text-center py-2 grid grid-cols-3 gap-4 my-3">
+        {% for field in form %}
+          {% if field.is_hidden %}
+            {{ field }}
+          {% else %}
+            <div class="mb-5">
+              <div>
+                {{ field.label }}
+                <div class="text-blue-500 text-center">{{ field.help_text }}</div>
+                <div class="text-red-500 text-center ">{{ field.errors }}</div>
+              </div>
+              {{ field }}
+            </div>
+          {% endif %}
+        {% endfor %}
+      </div>
+
+      <div class="flex mt-10 px-3 py-3">
+        <div style="width: 50%;">
+          <button style="width: 100%;" class="text-sm font-semibold leading-6 text-gray-900">
+            CANCEL
+          </button>
+        </div>
+        <div style="width: 50%;">
+          <button type="submit"
+            style="width: 100%;"
+            class="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+            SAVE
+          </button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

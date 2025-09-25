@@ -129,35 +129,19 @@ APPLICATIONS = [
         "url": "/tab/"
     },
     #   {
-    #     "name": "safety",
-    #     "title": "Safety.Health.Wellbeing",
-    #     "iconUrl": "assets/images/health.png",
-    #     "url": "/safety_table/"
+    #     "name": "leave_management",
+    #     "title": "Leave Management System",
+    #     "iconUrl": "assets/images/leave.png",
+    #     "url": "/leave_dashboard/"
     # },
-    {
-        "name": "comm_files",
-        "title": "Commercial Files",
-        "iconUrl": "assets/images/customer.png",
-        "url": "/commercial/customers"
-    },
-    {
-        "name": "inspections",
-        "title": "Inspections",
-        "iconUrl": "assets/images/customer.png",
-        "url": "/inspections/"
-    },
-    # {
-    #     "name":"fault_locator",
-    #     "title": "Fault Locator",
-    #     "iconUrl": "assets/images/fault_locator.png",
-    #     "url": "/fault_locator/"
-    # },
-    # {
-    #     "name": "sanction_for_test",
-    #     "title": "Sanction For Test",
-    #     "iconUrl": "assets/images/sanction_for_test.png",
-    #     "url": "/sanction_for_test/"
-    # },
+    #   {
+    #     "name": "Safety",
+    #     "title": "Safety",
+    #     "iconUrl": "assets/images/leave.png",
+    #     "url": "/accident_report_dashboard/"
+    # }, 
+      
+      
 ]
 
 REPORTS = [
@@ -197,12 +181,13 @@ REPORTS = [
         "iconUrl": "assets/images/change.png",
         "url": "/change_requests/change_request_reports"
     },
+    #   {
+    #     "name": "asset reports",
+    #     "title": "Asset Reports",
+    #     "iconUrl": "assets/images/reports.png",
+    #     "url": "/asset_report/"
+    # }, 
       {
-        "name": "asset reports",
-        "title": "Asset Reports",
-        "iconUrl": "assets/images/reports.png",
-        "url": "/asset_report/"
-    },  {
         "name": "Token",
         "title": "Tokens",
         "iconUrl": "assets/images/token.png",
@@ -308,21 +293,13 @@ def login_user(request):
 
 
 
-@login_required(login_url='/accounts/login')
 def index(request):
     if request.user.is_authenticated:
-        user_title = request.user.get_full_name()
-        l = request.user.groups.values_list('name', flat=True)  # QuerySet Object
-        user_groups = list(l)
-
-        return redirect(
-            '/dashboards/overview',
-            user_title,
-            request,
-            user_groups
-        )
-
-    return redirect('/accounts/login')
+        # For authenticated users, redirect to dashboard
+        return redirect('/dashboards/overview')
+    else:
+        # For unauthenticated users, show login page
+        return redirect('/accounts/login')
 
 
 @login_required(login_url='/accounts/login')
