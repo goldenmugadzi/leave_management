@@ -66,11 +66,11 @@ class AppraisalExperienceUpdateForm(forms.ModelForm):
 
 
 def get_all_cost_center_users(user_id):
-    service_handler = UserProfileService(user_profile_repo=UserProfileRepository())
+    service_handler = UserProfileService(UserProfileRepository())
     cost_center_user_qr = service_handler.fetch_cost_center_users_from_user_id(user_id=user_id)
     
     if cost_center_user_qr is None:
-        cost_center_user_qr = UserProfile.objects.none
+        cost_center_user_qr = UserProfile.objects.none()
     else:
         # exclude this user instance
         cost_center_user_qr = cost_center_user_qr.exclude(id=user_id)
@@ -149,8 +149,10 @@ class AppraisalUpdateForm(forms.ModelForm):
             self.fields["hr"].required = False
             self.fields["hr"].disabled = True
         elif appraiser_id:
-            regional_user_qr = get_regional_users(user_id=appraiser_id)
-            user_obj = regional_user_qr.first()
+            cost_center_user_qr = get_all_cost_center_users(user_id=appraiser_id)
+
+            user_obj = cost_center_user_qr.first()
+            regional_user_qr = get_regional_users(region_id=user_obj.region.id)
             
             self.fields["hr"].queryset = get_regional_hrs(region_id=user_obj.region.id)
             self.fields["reviewer"].queryset = regional_user_qr.exclude(id=appraisal_appraisee_id) #exclude appraisee
