@@ -3,6 +3,8 @@ from graphene import ObjectType, Field, List, ID, Int, InputObjectType, String, 
 from graphql_jwt.decorators import login_required
 from approve.views import gql_initiate_approval_process, gql_send_notification
 from .models import Substation, BatteryInstallation, Cell, BatteryMaintenance, CellReading
+from pretask_risk_assessment.types import ToolOrEquipmentType
+from toolsandequipment.models import ToolOrEquipment
 from .types import SubstationType, BatteryInstallationType, CellType, BatteryMaintenanceType, CellReadingType
 from django.db.models import Q
 
@@ -24,6 +26,7 @@ class Query(graphene.ObjectType):
     battery_maintenance = Field(BatteryMaintenanceType, id=ID(required=True))
     maintenances_by_battery = List(BatteryMaintenanceType, battery_id=ID(required=True))
     cell_readings_by_maintenance = List(CellReadingType, maintenance_id=ID(required=True))
+    equipment_for_substation = graphene.List(ToolOrEquipmentType,substation_id=graphene.ID(required=True))
 
     def resolve_all_substations(self, info):
         return Substation.objects.all()
@@ -32,10 +35,14 @@ class Query(graphene.ObjectType):
         print("Region")  # Debugging line
         substations = Substation.objects.filter(region__id=region).order_by('name')
         print(substations)
-        return Substation.objects.filter(region__id=region).order_by('name')
+        return Substation.objects.filter(region__id=region).order_by('name') 
 
     def resolve_substations_by_district(self, info, district):
         return Substation.objects.filter(district__district__icontains=district)
+        
+    def resolve_equipment_for_substation(self, info, substation_id):
+        return ToolOrEquipment.objects.filter(substation__id=substation_id)
+
 
     def resolve_substations_by_depot(self, info, depot):
         return Substation.objects.filter(depot__depot__icontains=depot).order_by('name')
@@ -63,59 +70,71 @@ class Query(graphene.ObjectType):
         )
     def resolve_battery_installation_for_substation(self, info, substation_id):
         return BatteryInstallation.objects.filter(substation_id=substation_id)
-class MaintainBattery(Mutation):
+
+# Updated mutation to match AddBatteryMaintenance signature and return structure
+class AddBatteryMaintenance(Mutation):
     class Arguments:
         battery_id = ID(required=True)
-        volts_high = Float()
-        volts_low = Float()
-        volts_avg = Float()
-        sg_high = Float()
-        sg_low = Float()
-        sg_avg = Float()
-        reading_type = String()
+        reading_type = String(required=True)
         water_used = Float()
-        cell_readings = List(CellReadingInput)  # <-- Use the input type class here
+        cell_readings = List(CellReadingInput, required=True)
+        total_volts = Float()
+        # volts_high, volts_low, volts_avg, sg_high, sg_low, sg_avg removed from arguments
 
-    battery_maintenance = Field(BatteryMaintenanceType)
-    message = String()
+    id = ID()
+    reading_type = String()
+    water_used = Float()
+    cellreading_set = List(CellReadingType)
+    total_volts = Float()
+    # volts_high, volts_low, volts_avg, sg_high, sg_low, sg_avg removed from output fields
 
     @login_required
-    def mutate(self, info, battery_id, volts_high=None, volts_low=None, volts_avg=None,
-                sg_high=None, sg_low=None, sg_avg=None, reading_type="monthly",
-                water_used=None, cell_readings=None):
+    def mutate(self, info, battery_id, reading_type, water_used=None, cell_readings=None, total_volts=None,
+               volts_high=None, volts_low=None, volts_avg=None, sg_high=None, sg_low=None, sg_avg=None):
+        print("[DEBUG] AddBatteryMaintenance called with:")
+        print(f"  battery_id={battery_id}")
+        print(f"  reading_type={reading_type}")
+        print(f"  water_used={water_used}")
+        print(f"  total_volts={total_volts}")
+        print(f"  cell_readings={cell_readings}")
         user = info.context.user
         try:
             battery = BatteryInstallation.objects.get(pk=battery_id)
         except BatteryInstallation.DoesNotExist:
-            return MaintainBattery(message="Battery installation not found.")
+            print("[ERROR] Battery installation not found.")
+            raise Exception("Battery installation not found.")
 
         maintenance = BatteryMaintenance.objects.create(
             battery=battery,
-            volts_high=volts_high,
-            volts_low=volts_low,
-            volts_avg=volts_avg,
-            sg_high=sg_high,
-            sg_low=sg_low,
-            sg_avg=sg_avg,
             reading_type=reading_type,
-            water_used=water_used
+            water_used=water_used,
+            total_volts=total_volts
+            # volts_high, volts_low, volts_avg, sg_high, sg_low, sg_avg can still be set in the model if needed, but not returned
         )
 
-        if cell_readings:
-            for cr in cell_readings:
-                try:
-                    cell = Cell.objects.get(pk=cr.cell_id, installation=battery)
-                    CellReading.objects.create(
-                        battery_maintenance=maintenance,
-                        cell=cell,
-                        specific_gravity=cr.specific_gravity,
-                        voltage=cr.voltage
-                    )
-                except Cell.DoesNotExist:
-                    continue
+        cellreading_objs = []
+        for cr in cell_readings or []:
+            try:
+                print(f"[DEBUG] Processing cell reading: {cr}")
+                cell = Cell.objects.get(pk=cr.cell_id, installation=battery)
+                cellreading = CellReading.objects.create(
+                    battery_maintenance=maintenance,
+                    cell=cell,
+                    specific_gravity=cr.specific_gravity,
+                    voltage=cr.voltage
+                )
+                cellreading_objs.append(cellreading)
+            except Cell.DoesNotExist:
+                print(f"[ERROR] Cell with id {cr.cell_id} does not exist for battery {battery_id}")
+                continue
 
-        return MaintainBattery(battery_maintenance=maintenance, message="Battery maintenance recorded successfully.")
-
+        return AddBatteryMaintenance(
+            id=maintenance.id,
+            reading_type=maintenance.reading_type,
+            water_used=maintenance.water_used,
+            cellreading_set=cellreading_objs,
+            total_volts=maintenance.total_volts
+        )
 class CreateSubstation(graphene.Mutation):
     class Arguments:
         name = graphene.String(required=True)
@@ -147,5 +166,5 @@ class CreateSubstation(graphene.Mutation):
         return CreateSubstation(substation=substation, message="Substation created successfully.")
 
 class Mutation(ObjectType):
-    maintain_battery = MaintainBattery.Field()
+    add_battery_maintenance = AddBatteryMaintenance.Field()
     create_substation = CreateSubstation.Field()

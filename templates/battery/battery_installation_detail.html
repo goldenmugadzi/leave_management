@@ -46,7 +46,7 @@
                 <div class="text-center">
                   <span
                     class="inline-block font-bold text-start rounded-full text-sm"
-                    >Battery name:</span
+                    >Battery name/make :</span
                   >
                   <span class="inline-block text-end rounded-full text-sm"
                     >{{ installation.battery_name|default_if_none:'' }}</span
@@ -145,7 +145,7 @@
                     </span>
                     <span class="inline-block rounded-full text-sm">
                       {% if cell.voltage %}
-                      <p class="card-text">Voltage: {{ cell.voltage }}</p>
+                      <p class="card-text">Specific gravity: {{ cell.specific_gravity }}</p>
                       {% endif %}
                     </span>
                   </div>
@@ -168,41 +168,60 @@
               </h1>
               {% endif %}
               <div class="scrollable-div">
-                {% for cell in installation.batterymaintenance.all %}
-                
-                <a
-              class="text-blue-500 button"
-              href="{% url 'BatteryMaintenance:detailed_battery_info' cell.id %}"
-              >  <div class="card-body rounded-lg rounded-md rounded-sm">
-                  <div
-                    class="card mb-3 row rounded py-4 border-3 border bg-green-200 border-red-200 p-3 m-auto container grid grid-cols-3 text-center"
-                  >
-                    <span class="inline-block rounded-full text-sm">
-                      {% if cell.specific_gravity %}
-                      <p class="card-text">
-                         {{ installation.date|date|default_if_none:''}}
-                      </p>
-                      {% endif %}
-                    </span>
-                    <span class="inline-block rounded-full text-sm">
-                      {% if cell.voltage %}
-                      <p class="card-text">Water used: {{ cell.voltage }}l</p>
-                      {% endif %}
-                    </span>
-                    <span class="inline-block rounded-full text-sm">
-                      {% if cell.voltage %}
-                      <p class="card-text">
-                        Total Volts Across cells : {{ cell.voltage }}
-                         <!-- at the end
-                        of charge when charging at {{ cell.specific_gravity }} -->
-                      </p>
-                      {% endif %}
-                    </span>
-                  </div>
-                </div>
-               </a>   {% endfor %}
+{% for maintenance in installation.batterymaintenance_set.all %}
+    {% comment %} <div class="modal-content bg-white p-6 rounded-lg w-full  max-w-2xl relative"> {% endcomment %}
+  <button class="open-modal-btn modal-content bg-white p-6 rounded-lg w-full mb-2  max-w-2xl relative" data-modal="modal-{{ maintenance.id }}">
+    {{ maintenance.date|date }}
+  </button>
+{% comment %} </div> {% endcomment %}
+  <br/>
+
+  <div id="modal-{{ maintenance.id }}" class="modal hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="modal-content bg-white p-6 rounded-lg w-full max-w-2xl relative">
+      <button class="close-modal absolute top-2 right-2 text-xl font-bold">&times;</button>
+      <h2 class="text-center font-bold text-lg mb-4">Battery Maintenance Record</h2>
+      <table class="w-full border border-gray-300 mb-4">
+        <tr>
+          <th class="border px-2 py-1">Maintenance ID</th>
+          <td class="border px-2 py-1">{{ maintenance.id }}</td>
+        </tr>
+        <tr>
+          <th class="border px-2 py-1">Reading Type</th>
+          <td class="border px-2 py-1">{{ maintenance.reading_type }}</td>
+        </tr>
+        <tr>
+          <th class="border px-2 py-1">Water Used (L)</th>
+          <td class="border px-2 py-1">{{ maintenance.water_used }}</td>
+        </tr>
+
+      </table>
+      <h3 class="font-bold mb-2">Cell Readings</h3>
+      <table class="w-full border border-gray-300">
+        <thead>
+          <tr>
+            <th class="border px-2 py-1">Cell ID</th>
+            <th class="border px-2 py-1">Specific Gravity</th>
+            <th class="border px-2 py-1">Voltage</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for reading in maintenance.cellreading_set.all %}
+            <tr>
+              <td class="border px-2 py-1">{{ reading.cell.id }}</td>
+              <td class="border px-2 py-1">{{ reading.specific_gravity }}</td>
+              <td class="border px-2 py-1">{{ reading.voltage }}</td>
+            </tr>
+          {% empty %}
+            <tr>
+              <td colspan="3" class="border px-2 py-1 text-center">No cell readings</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+{% endfor %}
               </div>
-            <!-- zzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzz -->
       </div>
       </div>
 </div>
@@ -212,4 +231,19 @@
               >Inspect battery</a
             >
 </div>
+
   {% endblock content %}
+{% block scripts%}
+<script>
+  document.querySelectorAll('.open-modal-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+      document.getElementById(this.dataset.modal).classList.remove('hidden');
+    });
+  });
+  document.querySelectorAll('.close-modal').forEach(btn => {
+    btn.addEventListener('click', function() {
+      this.closest('.modal').classList.add('hidden');
+    });
+  });
+</script>
+{% endblock scripts%}

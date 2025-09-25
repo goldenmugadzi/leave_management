@@ -1,7 +1,7 @@
 import graphene
 from graphene_django.types import DjangoObjectType
 from .models import Job, Teammember, PretaskRiskAssessment
-from .types import JobType, TeammemberType, PretaskRiskAssessmentType
+from .types import JobType, TeammemberType, PretaskRiskAssessmentType, ToolOrEquipmentType
 from django.contrib.auth import get_user_model
 
 from toolsandequipment.models import ToolOrEquipment
@@ -10,7 +10,7 @@ from it.users.models import Substation
 class Query(graphene.ObjectType):
     jobs_for_user = graphene.List(JobType)
     equipment_for_substation = graphene.List(
-        graphene.Field(lambda: PretaskRiskAssessmentType),
+        ToolOrEquipmentType,
         substation_id=graphene.ID(required=True)
     )
 

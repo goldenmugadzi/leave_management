@@ -9,8 +9,15 @@ FIELD_CSS_CLASSES = "block w-full rounded-md border-0 py-1.5 text-gray-900 shado
 class BatteryInstallationForm(forms.ModelForm):  
     class Meta:
         model = BatteryInstallation
-        fields = "__all__"
-        exclude = ['equipment_tracker']
+        exclude = [
+            'volts_high',
+            'volts_low',
+            'volts_avg',
+            'sg_high',
+            'sg_low',
+            'sg_avg',
+            'equipment_tracker'
+        ]
         
     def __init__(self, *args, **kwargs):
         user = kwargs.pop('user', None)
@@ -27,7 +34,6 @@ class BatteryInstallationForm(forms.ModelForm):
         if user and hasattr(user, 'region'):
             self.fields['substation'].queryset = Substation.objects.filter(region=user.region)
 
- 
 
 class CellForm(forms.ModelForm):
     class Meta:

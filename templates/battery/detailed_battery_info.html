@@ -164,13 +164,15 @@
           >  <div class="card-body m-2 px-2 rounded">
               {% if installation.cells.exists %}
               <h1 class="text-center mb-4 font-bold text-xl mb-2">
-                Battery Maintanences Done
+                Battery Maintanences Done ASDF
               </h1>
               {% endif %}
               <div class="scrollable-div">
-                {% for cell in installation.cells.all %}
-                
+                {{ installation.batterymaintenance_set.all }}
+                {% for cell in installation.batterymaintenance_set.all %}
+                {{ cell.id}}
                 <a
+
               class="text-blue-500 button"
               href="{% url 'BatteryMaintenance:inspect_battery' installation.id %}"
               >  <div class="card-body rounded-lg rounded-md rounded-sm">

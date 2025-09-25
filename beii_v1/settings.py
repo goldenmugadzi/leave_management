@@ -30,7 +30,7 @@ CORS_ALLOW_ALL_ORIGINS = True
 CSRF_TRUSTED_ORIGINS = [
     config('BASE_URL'),
     config('BASE_URL') + ":" + config('PORT'),
-    " https://baaaba0d842e.ngrok-free.app",
+    "https://65600443401e.ngrok-free.app",
     # Add your production domain here
     # "https://your-production-domain.com"
 ]

@@ -1,6 +1,7 @@
 import graphene
 from graphene_django import DjangoObjectType
 from .models import Job, Teammember, PretaskRiskAssessment
+from toolsandequipment.models import ToolOrEquipment
 
 class JobType(DjangoObjectType):
     class Meta:
@@ -15,4 +16,9 @@ class TeammemberType(DjangoObjectType):
 class PretaskRiskAssessmentType(DjangoObjectType):
     class Meta:
         model = PretaskRiskAssessment
+        fields = '__all__'
+
+class ToolOrEquipmentType(DjangoObjectType):
+    class Meta:
+        model = ToolOrEquipment
         fields = '__all__'

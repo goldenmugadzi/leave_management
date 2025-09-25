@@ -111,15 +111,12 @@ class InstallBattery(LoginRequiredMixin, View):
         substationForm = SubstationForm(request.POST, user=request.user)
 
         if form.is_valid() and formset.is_valid():
-            # Use selected substation or create new one
             existing_sub = form.cleaned_data.get("substation")
-
             if existing_sub:
                 substation = existing_sub
             elif substationForm.is_valid():
                 substation = substationForm.save()
             else:
-                # SubstationForm invalid → re-render with errors
                 return render(request, self.template_name, {
                     "form": form,
                     "formset": formset,
@@ -145,10 +142,23 @@ class InstallBattery(LoginRequiredMixin, View):
                 if cell.voltage is not None:
                     cell.save()
 
+            # Calculate summary fields after all cells are saved
+            all_cells = battery.cells.all()
+            voltages = [cell.voltage for cell in all_cells if cell.voltage is not None]
+            sgs = [cell.specific_gravity for cell in all_cells if cell.specific_gravity is not None]
+            if voltages:
+                battery.volts_high = max(voltages)
+                battery.volts_low = min(voltages)
+                battery.volts_avg = sum(voltages) / len(voltages)
+            if sgs:
+                battery.sg_high = max(sgs)
+                battery.sg_low = min(sgs)
+                battery.sg_avg = sum(sgs) / len(sgs)
+            battery.save()
+
             messages.success(request, "Battery installation submitted successfully.")
             return redirect("BatteryMaintenance:install_battery")
 
-        # If any form is invalid
         return render(request, self.template_name, {
             "form": form,
             "formset": formset,
@@ -191,3 +201,4 @@ class DetailedBatteryInfo(LoginRequiredMixin, DetailView):
     model = BatteryMaintenance
     template_name = "battery/detailed_battery_info.html"
     context_object_name = "battery"
+

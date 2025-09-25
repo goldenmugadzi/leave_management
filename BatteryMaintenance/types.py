@@ -20,3 +20,4 @@ class BatteryMaintenanceType(DjangoObjectType):
 class CellReadingType(DjangoObjectType):
     class Meta:
         model = CellReading
+        
