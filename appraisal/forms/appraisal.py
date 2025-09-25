@@ -80,6 +80,10 @@ def get_regional_hrs(region_id):
     repo = UserProfileRepository()
     return repo.fetch_by_region_id_hr_section(region_id=region_id)
 
+def get_regional_users(region_id):
+    repo = UserProfileRepository()
+    return repo.fetch_by_region_id(region_id=region_id)
+
 
 
 class AppraisalForm(forms.ModelForm):
@@ -145,11 +149,11 @@ class AppraisalUpdateForm(forms.ModelForm):
             self.fields["hr"].required = False
             self.fields["hr"].disabled = True
         elif appraiser_id:
-            cost_center_user_qr = get_all_cost_center_users(user_id=appraiser_id)
-            user_obj = cost_center_user_qr.first()
+            regional_user_qr = get_regional_users(user_id=appraiser_id)
+            user_obj = regional_user_qr.first()
             
             self.fields["hr"].queryset = get_regional_hrs(region_id=user_obj.region.id)
-            self.fields["reviewer"].queryset = cost_center_user_qr.exclude(id=appraisal_appraisee_id) #exclude appraisee
+            self.fields["reviewer"].queryset = regional_user_qr.exclude(id=appraisal_appraisee_id) #exclude appraisee
             self.fields['appraiser'].disabled = True
         else:
             self.fields['appraiser'].disabled = True
