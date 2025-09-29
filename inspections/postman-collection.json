@@ -1,0 +1,329 @@
+{
+  "info": {
+    "name": "BEApp Inspection Sync API",
+    "description": "Complete API collection for BEApp mobile inspection synchronization",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "beii-sync-api"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{auth_token}}",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "https://your-api-domain.com/inspections/sync",
+      "type": "string"
+    },
+    {
+      "key": "auth_token",
+      "value": "your-jwt-token-here",
+      "type": "string"
+    },
+    {
+      "key": "inspection_id",
+      "value": "00000000-0000-0000-0000-000000000000",
+      "type": "string"
+    },
+    {
+      "key": "conflict_id",
+      "value": "00000000-0000-0000-0000-000000000000",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Inspection Sync Operations",
+      "item": [
+        {
+          "name": "Sync Single Inspection",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"consumer_name\": \"John Smith\",\n  \"inspection_date\": \"2025-01-15\",\n  \"service_no\": \"SVC-001\",\n  \"reason_for_inspection\": \"new_installation\",\n  \"property_supplied\": \"123 Main Street, Test City\",\n  \"property_owner_name\": \"John Smith\",\n  \"property_owner_address\": \"123 Main Street, Test City\",\n  \"contractor\": \"ABC Electrical Ltd\",\n  \"contractor_address\": \"456 Contractor Ave, Test City\",\n  \"size_of_mains\": \"16mm\",\n  \"size_of_mains_conduit\": \"20mm PVC\",\n  \"consumer_main_switch_type\": \"MCB\",\n  \"consumer_main_switch_capacity\": \"60A\",\n  \"consumer_main_switch_setting\": \"60A\",\n  \"neutrals_fused\": \"pass\",\n  \"neutral_block_fitted\": \"pass\",\n  \"earth_electrode_installed\": \"pass\",\n  \"earth_electrode_type\": \"Copper rod\",\n  \"all_equipment_bonded_earthed\": \"pass\",\n  \"insulation_resistance_between\": \"500V > 1MΩ\",\n  \"insulation_resistance_to_earth\": \"500V > 1MΩ\",\n  \"earth_continuity_resistance\": \"<0.5Ω\",\n  \"polarity_switches_plugs\": \"All correct\",\n  \"socket_outlets_earthed\": \"pass\",\n  \"socket_outlet_type\": \"13A BS1363\",\n  \"wiring_type\": \"PVC singles in conduit\",\n  \"circuit_conductors_correct_size\": \"pass\",\n  \"wiring_condition\": \"Good condition\",\n  \"flexible_cord_prohibited_positions\": \"None found\",\n  \"bathroom_switch_accessible\": \"pass\",\n  \"unearthed_metal_switches\": \"None found\",\n  \"conduits_bushed\": \"pass\",\n  \"conduits_bonded_earth\": \"pass\",\n  \"conduits_correct_size\": \"pass\",\n  \"conduits_adequately_supported\": \"pass\",\n  \"conduits_suitable_type\": \"pass\",\n  \"max_lighting_points_per_circuit\": 8,\n  \"max_plug_points_per_circuit\": 4,\n  \"total_lighting_points\": 12,\n  \"total_plug_points\": 6,\n  \"appliances_wattages\": \"Lights: 100W each, Sockets: 3000W total\",\n  \"motors_plant_details\": \"None\",\n  \"overhead_lines_height\": \"pass\",\n  \"overhead_lines_conductor_size\": \"pass\",\n  \"overhead_lines_support\": \"pass\",\n  \"overhead_lines_general\": \"pass\",\n  \"overhead_earthwires_fitted\": \"pass\",\n  \"overhead_lines_protected\": \"pass\",\n  \"outbuildings_protected\": \"pass\",\n  \"motor_installations_protected\": \"pass\",\n  \"commission_switch_details\": \"Commissioned by inspector\",\n  \"supply_connected_disconnected\": \"Connected\",\n  \"contractor_notified_defects\": \"pass\",\n  \"other_features_attention\": \"None\",\n  \"status\": \"pending\",\n  \"client_application_id\": \"{{application_id}}\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/sync-inspection/",
+              "host": ["{{base_url}}"],
+              "path": ["sync-inspection", ""]
+            },
+            "description": "Create or update a single inspection record"
+          },
+          "response": [
+            {
+              "name": "Success Response",
+              "originalRequest": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{base_url}}/sync-inspection/",
+                  "host": ["{{base_url}}"],
+                  "path": ["sync-inspection", ""]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "_postman_previewlanguage": "json",
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "cookie": [],
+              "body": "{\n  \"success\": true,\n  \"action\": \"created\",\n  \"inspection_id\": \"00000000-0000-0000-0000-000000000000\",\n  \"sync_operation\": \"00000000-0000-0000-0000-000000000000\"\n}"
+            }
+          ]
+        },
+        {
+          "name": "Sync Inspection Batch",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"inspections\": [\n    {\n      \"consumer_name\": \"John Smith\",\n      \"inspection_date\": \"2025-01-15\",\n      \"service_no\": \"SVC-001\",\n      \"status\": \"pending\",\n      \"client_application_id\": \"{{application_id}}\",\n      \"all_equipment_bonded_earthed\": \"pass\",\n      \"socket_outlets_earthed\": \"pass\",\n      \"circuit_conductors_correct_size\": \"pass\"\n    },\n    {\n      \"id\": \"{{inspection_id}}\",\n      \"consumer_name\": \"Jane Doe\",\n      \"inspection_date\": \"2025-01-16\",\n      \"service_no\": \"SVC-002\",\n      \"status\": \"in_progress\",\n      \"client_application_id\": \"{{application_id}}\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/sync-inspection-batch/",
+              "host": ["{{base_url}}"],
+              "path": ["sync-inspection-batch", ""]
+            },
+            "description": "Sync multiple inspection records in batch"
+          }
+        },
+        {
+          "name": "Download Inspection Batch",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/download-inspection-batch/?ids={{inspection_id}},00000000-0000-0000-0000-000000000001",
+              "host": ["{{base_url}}"],
+              "path": ["download-inspection-batch", ""],
+              "query": [
+                {
+                  "key": "ids",
+                  "value": "{{inspection_id}},00000000-0000-0000-0000-000000000001"
+                }
+              ]
+            },
+            "description": "Download multiple inspection records by IDs"
+          }
+        },
+        {
+          "name": "Incremental Sync",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"since_timestamp\": \"2025-01-15T10:00:00Z\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/incremental-sync/",
+              "host": ["{{base_url}}"],
+              "path": ["incremental-sync", ""]
+            },
+            "description": "Perform incremental sync since timestamp"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Conflict Resolution",
+      "item": [
+        {
+          "name": "Get Inspection Conflicts",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/inspection-conflicts/",
+              "host": ["{{base_url}}"],
+              "path": ["inspection-conflicts", ""]
+            },
+            "description": "Get all unresolved inspection conflicts for current user"
+          }
+        },
+        {
+          "name": "Resolve Conflict - Server Wins",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"resolution\": \"server_wins\",\n  \"notes\": \"Resolved by choosing server data\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/resolve-conflict/{{conflict_id}}/",
+              "host": ["{{base_url}}"],
+              "path": ["resolve-conflict", "{{conflict_id}}", ""]
+            },
+            "description": "Resolve conflict by accepting server data"
+          }
+        },
+        {
+          "name": "Resolve Conflict - Local Wins",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"resolution\": \"local_wins\",\n  \"notes\": \"Resolved by choosing local data\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/resolve-conflict/{{conflict_id}}/",
+              "host": ["{{base_url}}"],
+              "path": ["resolve-conflict", "{{conflict_id}}", ""]
+            },
+            "description": "Resolve conflict by accepting local data"
+          }
+        },
+        {
+          "name": "Resolve Conflict - Merged",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"resolution\": \"merged\",\n  \"resolved_data\": {\n    \"consumer_name\": \"John Smith\",\n    \"status\": \"completed\",\n    \"all_equipment_bonded_earthed\": \"pass\"\n  },\n  \"notes\": \"Manually merged conflicting data\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/resolve-conflict/{{conflict_id}}/",
+              "host": ["{{base_url}}"],
+              "path": ["resolve-conflict", "{{conflict_id}}", ""]
+            },
+            "description": "Resolve conflict with manually merged data"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Sync Status & Dashboard",
+      "item": [
+        {
+          "name": "Get Sync Status Summary",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/status-summary/",
+              "host": ["{{base_url}}"],
+              "path": ["status-summary", ""]
+            },
+            "description": "Get sync status summary for current user"
+          }
+        },
+        {
+          "name": "Get Sync Dashboard Data",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/dashboard/",
+              "host": ["{{base_url}}"],
+              "path": ["dashboard", ""]
+            },
+            "description": "Get comprehensive sync dashboard information"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Queue Management",
+      "item": [
+        {
+          "name": "Get Upload Queue",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/queue/",
+              "host": ["{{base_url}}"],
+              "path": ["queue", ""]
+            },
+            "description": "Get user's upload queue items"
+          }
+        },
+        {
+          "name": "Process Queue",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"batch_size\": 10\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/queue/process_queue/",
+              "host": ["{{base_url}}"],
+              "path": ["queue", "process_queue", ""]
+            },
+            "description": "Manually trigger queue processing"
+          }
+        }
+      ]
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "// Set current timestamp for requests",
+          "pm.collectionVariables.set('timestamp', new Date().toISOString());",
+          "",
+          "// Validate required variables",
+          "if (!pm.collectionVariables.get('auth_token')) {",
+          "    throw new Error('auth_token variable is required. Please set it in the collection variables.');",
+          "}"
+        ]
+      }
+    }
+  ]
+}

@@ -1,4 +1,4 @@
-from django.urls import path
+from django.urls import path, include
 from . import views
 from . import mobile_api_views
 
@@ -60,4 +60,7 @@ urlpatterns = [
     path('api/v1/applications/<uuid:application_id>/status/', mobile_api_views.update_assignment_status, name='mobile_api_update_status'),
     path('api/v1/applications/<uuid:application_id>/complete/', mobile_api_views.complete_assignment, name='mobile_api_complete_assignment'),
     path('api/v1/applications/<uuid:application_id>/attachments/', mobile_api_views.get_application_attachments, name='mobile_api_application_attachments'),
+
+    # Sync API Endpoints
+    path('sync/', include('inspections.sync.urls')),
 ] 
