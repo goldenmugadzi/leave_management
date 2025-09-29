@@ -53,11 +53,30 @@ class StepForm(forms.ModelForm):
          
 
 class ApprovalForm(forms.ModelForm):
+    APPROVAL_CHOICES = [
+        ('Approved', 'Approved'),
+        ('Rejected', 'Rejected'),
+    ]
+
+    approved = forms.ChoiceField(
+        choices=APPROVAL_CHOICES,
+        widget=forms.HiddenInput(),  # Hidden since we use button values
+        required=True
+    )
+
+    comment = forms.CharField(
+        widget=forms.Textarea(attrs={
+            'placeholder': 'Please provide comments for your decision. Comments are required for rejections.',
+            'rows': 4
+        }),
+        required=False,  # We'll validate this in clean() method based on approval status
+        help_text='Comments are required when rejecting items.'
+    )
+
     class Meta:
         model = Approval
-        fields = "__all__"
-        exclude =('step', 'user', 'process',  )
-        
+        fields = ['approved', 'comment']
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -67,17 +86,14 @@ class ApprovalForm(forms.ModelForm):
             })
             if isinstance(field.widget, forms.Textarea):
                 field.widget.attrs.update({'rows': '4'})
-                
 
-                
-
-         
     def clean(self):
         cleaned_data = super().clean()
         approved = cleaned_data.get('approved')
         comment = cleaned_data.get('comment')
 
-        if approved == 'Rejected' and not comment:
-            self.add_error('comment', 'A reason must be provided for rejecting the nonconformity.')
+        if approved == 'Rejected':
+            if not comment or not comment.strip():
+                self.add_error('comment', 'A comment must be provided when rejecting a petty cash request.')
 
         return cleaned_data

@@ -10,10 +10,7 @@
 
 <script>
   $(document).ready(function() {
-    $("#datepurchased").datepicker({ 
-      dateFormat: "yy-mm-dd",  
-      minDate: 0  
-    });
+    $("#id_date_purchased").datepicker({ dateFormat: "yy-mm-dd" });
     
     // Initialize Select2 for select elements
     $('select').select2({
@@ -47,30 +44,30 @@
           <div class="space-y-4">
             <h2 class="text-lg font-medium text-gray-900">Asset Details</h2>
             <div class="form-group">
-              <label class="block text-sm font-medium text-gray-700">{{ form.asset_type.label }}</label>
-              {{ form.asset_type }}
-            </div>
-            <div class="form-group">
-              <label class="block text-sm font-medium text-gray-700">{{ form.assetnumber.label }}</label>
-              {{ form.assetnumber }}
+              <label class="block text-sm font-medium text-gray-700">{{ form.product_type.label }}</label>
+              {{ form.product_type }}
             </div>
             <div class="form-group">
               <label class="block text-sm font-medium text-gray-700">{{ form.asset_state.label }}</label>
               {{ form.asset_state }}
             </div>
             <div class="form-group">
-              <label class="block text-sm font-medium text-gray-700">{{ form.product_type.label }}</label>
-              {{ form.product_type }}
+              <label class="block text-sm font-medium text-gray-700">{{ form.asset_number.label }}</label>
+              {{ form.asset_number }}
             </div>
             <div class="form-group">
               <label class="block text-sm font-medium text-gray-700">{{ form.serial_number.label }}</label>
               {{ form.serial_number }}
             </div>
+            <div class="form-group">
+              <label class="block text-sm font-medium text-gray-700">{{ form.model.label }}</label>
+              {{ form.model }}
+            </div>
           </div>
           
           <!-- User Information Section -->
           <div class="space-y-4">
-            <h2 class="text-lg font-medium text-gray-900">User Information</h2>
+            <h2 class="text-lg font-medium text-gray-900">User & Organization</h2>
             <div class="form-group">
               <label class="block text-sm font-medium text-gray-700">{{ form.user.label }}</label>
               {{ form.user }}
@@ -80,74 +77,39 @@
               {{ form.department }}
             </div>
             <div class="form-group">
+              <label class="block text-sm font-medium text-gray-700">{{ form.regions.label }}</label>
+              {{ form.regions }}
+            </div>
+            <div class="form-group">
               <label class="block text-sm font-medium text-gray-700">{{ form.designation.label }}</label>
               {{ form.designation }}
             </div>
             <div class="form-group">
-              <label class="block text-sm font-medium text-gray-700">{{ form.officenumber.label }}</label>
-              {{ form.officenumber }}
-            </div>
-            <div class="form-group">
-              <label class="block text-sm font-medium text-gray-700">{{ form.regions.label }}</label>
-              {{ form.regions }}
-            </div>
-          </div>
-          
-          <!-- Financial & Other Details -->
-          <div class="space-y-4">
-            <h2 class="text-lg font-medium text-gray-900">Financial & Other Details</h2>
-            <div class="form-group">
               <label class="block text-sm font-medium text-gray-700">{{ form.cost_center.label }}</label>
               {{ form.cost_center }}
             </div>
-            <div class="form-group">
-              <label class="block text-sm font-medium text-gray-700">{{ form.purchase_cost.label }}</label>
-              {{ form.purchase_cost }}
-            </div>
+          </div>
+          
+          <!-- Financial & Warranty Details -->
+          <div class="space-y-4">
+            <h2 class="text-lg font-medium text-gray-900">Financial & Warranty</h2>
             <div class="form-group">
               <label class="block text-sm font-medium text-gray-700">{{ form.date_purchased.label }}</label>
               {{ form.date_purchased }}
-            </div>
-            <div class="form-group">
-              <label class="block text-sm font-medium text-gray-700">{{ form.model.label }}</label>
-              {{ form.model }}
             </div>
             <div class="form-group">
               <label class="block text-sm font-medium text-gray-700">{{ form.warrant.label }}</label>
               {{ form.warrant }}
             </div>
           </div>
-          
-          <!-- Additional Information -->
-          <div class="space-y-4 lg:col-span-3">
-            <h2 class="text-lg font-medium text-gray-900">Additional Information</h2>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div class="form-group">
-                <label class="block text-sm font-medium text-gray-700">{{ form.supplier.label }}</label>
-                {{ form.supplier }}
-              </div>
-              <div class="form-group">
-                <label class="block text-sm font-medium text-gray-700">{{ form.created_by.label }}</label>
-                {{ form.created_by }}
-              </div>
-              <div class="form-group">
-                <label class="block text-sm font-medium text-gray-700">{{ form.lastchecked_at.label }}</label>
-                {{ form.lastchecked_at }}
-              </div>
-            </div>
-            <div class="form-group">
-              <label class="block text-sm font-medium text-gray-700">{{ form.descriptionofitem.label }}</label>
-              {{ form.descriptionofitem }}
-            </div>
-          </div>
         </div>
         
         <!-- Form Actions -->
         <div class="mt-8 pt-5 border-t border-gray-200 flex justify-end gap-3">
-          <button type="button" class="inline-flex justify-center py-2 px-4 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+          <button type="button" class="inline-flex justify-center py-2 px-4 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
             Cancel
           </button>
-          <button type="submit" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
+          <button type="submit" class="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700">
             Save Asset
           </button>
         </div>
@@ -172,12 +134,6 @@
   input:focus, select:focus, textarea:focus {
     outline: none;
     border-color: #6366f1;
-    ring-width: 1px;
-    ring-color: #6366f1;
-  }
-  
-  textarea {
-    min-height: 100px;
   }
   
   .select2-container--default .select2-selection--single {

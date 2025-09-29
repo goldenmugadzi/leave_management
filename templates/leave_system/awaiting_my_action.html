@@ -1,0 +1,124 @@
+{% extends 'admin_layout.html' %}
+{% load static %}
+{% load custom_filters %}
+{% block content %}
+
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+<div class="content-wrapper">
+  <div class="bg-gulf-blue-100 shadow shadow-gulf-blue-300 text-gulf-blue-900 rounded px-2 py-2">
+
+    <!-- Leave Approval Card -->
+    <div class="max-w-3xl mx-auto  bg-shadow-gulf-blue-300 rounded-lg shadow-lg p-6 my-8">
+      <div class="flex items-center justify-between mb-6">
+        <h2 class="text-2xl font-bold text-gray-800">Leave Request Details</h2>
+        <span class="px-4 py-1 rounded-full text-sm font-semibold
+          {% if leave.status == 'approved' %}bg-green-500 text-white
+          {% elif leave.status == 'pending' %}bg-yellow-500 text-white
+          {% elif leave.status == 'rejected' %}bg-red-500 text-white
+          {% endif %}">
+          {{ leave.status|upper }}
+        </span>
+      </div>
+      
+      <div class="border-t border-b border-gray-200 py-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <!-- Column 1 -->
+          <div class="space-y-4">
+            <div>
+              <div class="text-sm text-gray-500 font-medium">EC Number</div>
+              <div class="font-semibold text-gray-900 text-lg">{{ leave.ecnumber }}</div>
+            </div>
+            
+            <div>
+              <div class="text-sm text-gray-500 font-medium">Employee</div>
+              <div class="font-semibold text-gray-900 text-lg">{{ leave.user.get_full_name }}</div>
+            </div>
+            
+            <div>
+              <div class="text-sm text-gray-500 font-medium">Position</div>
+              <div class="font-semibold text-gray-900">{{ leave.position }}</div>
+            </div>
+            
+            <div>
+              <div class="text-sm text-gray-500 font-medium">Department</div>
+              <div class="font-semibold text-gray-900">{{ leave.department}}</div>
+            </div>
+            
+            <div>
+              <div class="text-sm text-gray-500 font-medium">Employment Type</div>
+              <div class="font-semibold text-gray-900">{{ leave.employee_types|capfirst }}</div>
+            </div>
+          </div>
+          
+          <!-- Column 2 -->
+          <div class="space-y-4">
+            <div>
+              <div class="text-sm text-gray-500 font-medium">Leave Type</div>
+              <div class="font-semibold text-gray-900 text-lg">{{ leave.type_of_leave|capfirst }}</div>
+            </div>
+            
+            <div>
+              <div class="text-sm text-gray-500 font-medium">Gender</div>
+              <div class="font-semibold text-gray-900">{{ leave.gender|capfirst }}</div>
+            </div>
+            
+            <div>
+              <div class="text-sm text-gray-500 font-medium">Region</div>
+              <div class="font-semibold text-gray-900">{{ leave.region }}</div>
+            </div>
+            
+            <div>
+              <div class="text-sm text-gray-500 font-medium">Dates</div>
+              <div class="font-semibold text-gray-900">
+                {{ leave.start_date|date:"M d, Y" }} to {{ leave.end_date|date:"M d, Y" }}
+              </div>
+            </div>
+            
+            <div>
+              <div class="text-sm text-gray-500 font-medium">Duration</div>
+              <div class="font-semibold text-gray-900">
+                {{ leave.number_of_days }} day{{ leave.number_of_days|pluralize }}
+                ({{ leave.start_date }})
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Approval/Reject buttons (only show for pending requests) -->
+      {% if leave.status == 'pending' %}
+      <div class="mt-6 flex gap-4">
+        <form method="post" action="">
+          {% csrf_token %}
+          <button type="submit" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded font-semibold">Approve</button>
+        </form>
+        <form method="post" action="">
+          {% csrf_token %}
+          <button type="submit" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded font-semibold">Reject</button>
+        </form>
+      </div>
+      {% endif %}
+
+      <!-- Additional information for approved/rejected status -->
+      {% if leave.status != 'pending' %}
+      <div class="mt-6 p-4 bg-gray-50 rounded-lg">
+        <div class="text-sm text-gray-700">
+          This request was 
+          {% if leave.status == 'approved' %}
+            <span class="text-green-600 font-semibold">approved</span>
+          {% else %}
+            <span class="text-red-600 font-semibold">rejected</span>
+          {% endif %}
+          on {{ leave.updated_at|date:"M d, Y" }}.
+        </div>
+      </div>
+      {% endif %}
+    </div>
+    <!-- End Leave Approval Card -->
+
+  </div>
+</div>
+{% endblock %}

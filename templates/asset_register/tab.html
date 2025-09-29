@@ -47,41 +47,41 @@
       <table id="assetTable" class="display" style="width: 100%">
         <thead>
           <tr>
-            <th>ID</th>
+           <th>ID</th>
             <th>Product Type</th>
-            <th>Description of Item</th>
             <th>Asset State</th>
             <th>Asset Number</th>
             <th>Serial Number</th>
             <th>User</th>
-            <th>Office Number</th>
             <th>Department</th>
             <th>Region</th>
             <th>Designation</th>
-            <th>Lastchecked At</th>
             <th>Cost Center</th>
             <th>Model</th>
+            <th>Date Purchased</th>
+            <th>Warrant</th>
             <th>Action</th>
+
           </tr>
         </thead>
         <tbody></tbody>
         <tfoot>
           <tr>
-            <th>ID</th>
+           <th>ID</th>
             <th>Product Type</th>
-            <th>Description of Item</th>
             <th>Asset State</th>
             <th>Asset Number</th>
             <th>Serial Number</th>
             <th>User</th>
-            <th>Office Number</th>
             <th>Department</th>
             <th>Region</th>
             <th>Designation</th>
-            <th>Lastchecked At</th>
             <th>Cost Center</th>
             <th>Model</th>
+            <th>Date Purchased</th>
+            <th>Warrant</th>
             <th>Action</th>
+
           </tr>
         </tfoot>
       </table>
@@ -115,21 +115,20 @@ $(document).ready(function () {
       }
     },
     columns: [
-      { data: "id" },
-      { data: "product_type" },
-      { data: "descriptionofitem" },
-      { data: "asset_state" },
-      { data: "asset_number" },
-      { data: "serial_number" },
-      { data: "user" },
-      { data: "officenumber" },
-      { data: "department" },
-      { data: "regions" },
-      { data: "designation" },
-      { data: "lastchecked_at" },
-      { data: "cost_center" },
-      { data: "model" },
-      {
+         { data: "id" },
+        { data: "product_type" }, // mapping Description of Item to product_type
+        { data: "asset_state" },
+        { data: "asset_number" },
+        { data: "serial_number" },
+        { data: "user" }, // mapping Office Number to asset_number
+        { data: "section" },      // Department
+        { data: "region" },       // Region
+        { data: "designation" },
+        { data: "cost_center" },
+        { data: "model" },
+        { data: "date_purchased" },
+        { data: "warrant" },
+        {
         data: "id",
         render: function(data, type, row) {
           let assetType = row.product_type ? "asset" : "hr";

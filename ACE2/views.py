@@ -160,8 +160,9 @@ def Ace_detail(request, Ace_id2):
             transaction = Transactions.objects.filter(Ace_id2=ace_item).first()
             # print("Transaction found:", transaction)
             if transaction and transaction.approval_status != "Rejected":
-                # Reverse the budget allocation by returning the amount
-                budget.to_be_withdrawn = budget.to_be_withdrawn - ace_item.amount
+                # Reverse the budget allocation by returning the amount (clamp to zero)
+                current_tbw = budget.to_be_withdrawn or 0
+                budget.to_be_withdrawn = max(0, current_tbw - (ace_item.amount or 0))
                 budget.save()
                 
                 # Mark transaction as rejected to prevent repeated reversal
@@ -298,7 +299,9 @@ def Ace_detail(request, Ace_id2):
 
         if transaction and transaction.approval_status != "approved by General Manager":
             budget.balance = budget.balance - ace_item.amount
-            budget.to_be_withdrawn = budget.to_be_withdrawn - ace_item.amount
+            # Remove reserved amount for this ACE (clamp to zero)
+            current_tbw = budget.to_be_withdrawn or 0
+            budget.to_be_withdrawn = max(0, current_tbw - (ace_item.amount or 0))
             budget.withdrawal_date = date.today()
             budget.withdrawn = budget.withdrawn + ace_item.amount
             budget.save()
@@ -1150,28 +1153,38 @@ def add_project_details(request, Ace_id2):
             ace.total_connection_fee = total_connection_fee
             ace.amount = total_connection_fee + ace.amount  # Update ACE amount
 
-            # Update related transaction amount
+            # Update related transaction amount (add only the delta introduced by project details)
             transaction = Transactions.objects.filter(Ace_id2=ace).first()
             if transaction:
-                transaction.amount = transaction.amount + total_connection_fee
+                previous_amount = transaction.amount or 0
+                delta = total_connection_fee  # extra amount to reserve/commit
+                transaction.amount = previous_amount + delta
 
-            # Update floating cost (to_be_withdrawn) in budget
+            # Update floating cost (to_be_withdrawn) in budget by ONLY the delta
             if ace.budget_id:
                 budget = ace.budget_id
-                # Optionally, recalculate to_be_withdrawn as sum of all ACEs for this budget
-                budget.to_be_withdrawn = budget.to_be_withdrawn + transaction.amount
+
+                # Validate we can still accommodate the extra reservation considering existing reservations
+                # Use available_balance which already accounts for to_be_withdrawn
+                if delta is None:
+                    delta = 0
+
+                if delta > 0 and delta > budget.available_balance:
+                    messages.error(request, "Insufficient available budget balance for the added project details.")
+                    sweetify.error(request, "Insufficient available budget balance for the added project details.")
+                    return redirect('Ace:ace_detail', Ace_id2=ace.Ace_id2)
+
+                # Reserve only the incremental amount
+                budget.to_be_withdrawn = (budget.to_be_withdrawn or 0) + (delta or 0)
                 budget.withdrawal_date = date.today()  # Update withdrawal date
 
-                if budget.to_be_withdrawn > budget.balance:
-                    messages.error(request, "Insufficient budget balance for this ACE.")
-                    sweetify.error(request, "Insufficient budget balance for this ACE.")
-                    return redirect('Ace:ace_detail', Ace_id2=ace.Ace_id2)
-                else:
-                    budget.save()
-                    ace.save()
+                # Persist updates
+                budget.save()
+                ace.save()
+                if transaction:
                     transaction.save()
-                    messages.success(request, "Project details updated successfully.")
-                    sweetify.success(request, "Project details updated successfully.")
+                messages.success(request, "Project details updated successfully.")
+                sweetify.success(request, "Project details updated successfully.")
 
             url = reverse('Ace:ace_detail', args=[ace.Ace_id2])
             return redirect(url)

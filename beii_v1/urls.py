@@ -78,6 +78,8 @@ urlpatterns = [
     # path('api/', include('api.urls')),  # Commented out until api.urls exists
     path('', include('meetings.urls')),
     path('', include('leave_management.urls')),
+    path('', include('asset_transfer.urls')),
+    path('', include('register.urls')),
     path('sanction_for_test/', include('sanction_for_test.urls')),
     path('inspections/', include('inspections.urls')),
     
