@@ -45,7 +45,7 @@ class AppraisalPersonalDetailsStrategy:
         appraisee_experiences = []
         appraisee_experiences_qr = experiences_repo.fetch_by_user_id(user_id=appraisee_user_object.id)
         for appraisee_exp_obj in appraisee_experiences_qr:
-            exp_name = appraisee_exp_obj.name
+            exp_name = f"{appraisee_exp_obj.name} ({appraisee_exp_obj.years_of_experience})"
             appraisee_experiences.append(exp_name)
         
         return appraisee_qualification, appraisee_experiences
@@ -223,3 +223,11 @@ class FinalPerformanceAssStrategy:
             final_score=final_score_obj,
             personal_attributes=self.__get_personal_attr(appraisal_id=appraisal_object.id)
         )
+        
+class AppraisalDependanciesStrategyContext:
+    def __init__(self, strategy: AppraisalDependanciesStrategyInterface):
+        self.strategy = strategy
+        
+    def get_dependance(self):
+        return self.strategy.dependance()
+        

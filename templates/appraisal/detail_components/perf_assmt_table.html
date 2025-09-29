@@ -1,0 +1,60 @@
+{% load kra_calculations %}
+
+<div style="max-height: 280px; overflow-y: auto;">
+    <table 
+        class="w-full border border-blue-800 rounded-lg shadow-lg"
+    >
+        <thead class="bg-blue-800 text-white">
+            <tr>
+                <th class="px-6 py-3 text-left text-md font-semibold">Key Result Area</th>
+                <th class="px-6 py-3 text-left text-md font-semibold">Departmental objective</th>
+                <th class="px-6 py-3 text-left text-md font-semibold">Departmental output</th>
+                <th class="px-6 py-3 text-left text-md font-semibold">Performance Indicator</th>
+                <th class="px-6 py-3 text-left text-md font-semibold">Activity description</th>
+                <th class="px-6 py-3 text-left text-md font-semibold">Weight</th>
+                <th class="px-6 py-3 text-left text-md font-semibold">Agreed Target</th>
+                <th class="px-6 py-3 text-left text-md font-semibold">Allowable Variance</th>
+                <th class="px-6 py-3 text-left text-md font-semibold">Actual Performance</th>
+                <th class="px-6 py-3 text-left text-md font-semibold">Actual Variance</th>
+                <th class="px-6 py-3 text-left text-md font-semibold">Rating</th>
+                <th class="px-6 py-3 text-left text-md font-semibold">Weighted Score</th>
+                <th></th>
+            </tr>
+        </thead>
+
+        <tbody class="divide-y divide-blue-300 bg-blue-50">
+            {% for perf_assessment in perf_assessment_data %}
+                <tr class="border-b border-black">
+                    <td rowspan="{{ perf_assessment.total_objectives }}" class="border-r border-gray-300 bg-apple-200 p-4 font-bold font-black">{{ perf_assessment.kra }}</td>  
+
+                    {% for appraisal_departmental_dep in perf_assessment.appraisal_departmental_dep %}
+                        {% if appraisal_departmental_dep.quarter == quarter_number %}
+                            <tr class="hover:bg-blue-100">
+                                <td rowspan="{{ appraisal_departmental_dep.total_outputs }}" class="border-r border-gray-300 bg-apple-200 p-4 font-bold font-black">{{ appraisal_departmental_dep.department_objective }}</td>  
+                                
+                                {% for appraisal_output in appraisal_departmental_dep.appraisal_dept_outputs %}
+                                    <tr class="hover:bg-blue-100">
+                                        <td rowspan="4" class="border-r border-gray-300 bg-apple-200 p-4 font-bold font-black">{{ appraisal_output.appraisal_department_output.department_output }}</td>  
+                                
+                                        <td class="px-6 py-4 text-md text-blue-900 truncate max-w-xs">{{appraisal_output.performance_dimension.performance_indicator}}</td>
+                                        <td class="px-6 py-4 text-md text-blue-900 truncate max-w-xs">{{appraisal_output.performance_dimension.description}}</td>
+                                        <td class="px-6 py-4 text-md text-blue-900 truncate max-w-xs">{{appraisal_output.performance_dimension.weight}}</td>
+                                        <td class="px-6 py-4 text-md text-blue-900 truncate max-w-xs">{{appraisal_output.performance_dimension.agreed_target}}</td>
+                                        <td class="px-6 py-4 text-md text-blue-900 truncate max-w-xs">{{appraisal_output.performance_dimension.allowable_variance}}</td>
+                                        <td class="px-6 py-4 text-md text-blue-900 truncate max-w-xs">{{appraisal_output.performance_dimension.score}}</td>
+                                        <td class="px-6 py-4 text-md text-blue-900 truncate max-w-xs">{{appraisal_output.performance_dimension.id|get_performance_dimension_actual_variance}}</td>
+                                        <td class="px-6 py-4 text-md text-blue-900 truncate max-w-xs">{{appraisal_output.performance_dimension.id|get_performance_dimension_rating}}</td>
+                                        <td class="px-6 py-4 text-md text-blue-900 truncate max-w-xs">{{appraisal_output.performance_dimension.id|get_performance_dimension_weighted_score}}</td>
+                                        
+                                    </tr>
+                                {% endfor %}
+                            </tr>
+                        {% endif %}
+                    {% endfor %}
+                </tr>
+            {% endfor %}
+            
+        </tbody>
+    </table>
+
+</div>

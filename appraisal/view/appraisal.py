@@ -26,7 +26,7 @@ from ..services import AppraisalService, AppraisalExperienceService
 from ..services.qualification import UserQualificationService
 from ..helpers.types.kra import KraRolesType
 from ..helpers.getters.approval import ApprovalStagesHandler
-
+from ..helpers.getters.appraisal import AppraisalDependanciesStrategyContext, AppraisalPersonalDetailsStrategy, TrainingAndDevStrategy, PerformanceAssessmentStrategy
 
 from approve.views import intiate,approve_step
 from approve.forms import ApprovalForm
@@ -697,10 +697,39 @@ class AppraisalDetailView(TemplateView):
                 (5, "Final Performance Assessment and Rating"),
             ]
         return steps
+    
+    def get_personal_details(self):
+        personal_detail_strg = AppraisalPersonalDetailsStrategy(appraisal_object=self.get_appraisal_obj())
+        handler = AppraisalDependanciesStrategyContext(
+            strategy=personal_detail_strg
+        )
+        return handler.get_dependance()
+    
+    def get_current_date_assessment(self):
+        appraisal_created_date = self.get_appraisal_obj().created_date
+        return get_assessment_period(date_object=appraisal_created_date)
+    
+    def get_training_dev(self):
+        training_dev_strg = TrainingAndDevStrategy(appraisal_object=self.get_appraisal_obj())
+        handler = AppraisalDependanciesStrategyContext(
+            strategy=training_dev_strg
+        )
+        return handler.get_dependance()
+    
+    def get_perf_assmt(self):
+        perf_assmt_strg = PerformanceAssessmentStrategy(appraisal_object=self.get_appraisal_obj())
+        handler = AppraisalDependanciesStrategyContext(
+            strategy=perf_assmt_strg
+        )
+        return handler.get_dependance()
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["steps"] = self.get_steps()
+        context["personal_details"] = self.get_personal_details()
+        context["assessment_period"] = self.get_current_date_assessment()
+        context["training_dev_data"] = self.get_training_dev()
+        context["perf_assessment_data"] = self.get_perf_assmt()
         return context
     
     def get(self, request, *args, **kwargs):

@@ -2,6 +2,7 @@ from typing import List, Optional
 from pydantic import BaseModel, Field, ConfigDict
 from django.core.files.uploadedfile import UploadedFile
 from ...models import KeyResultArea, AppraisalOutPutPerformanceDimensionScore, DepartmentObjective, TrainingAndDevelopment, PerformanceProgressReview, AppraiseePersonalAttribute, Appraisal
+from it.users.models import Designations, Regions, Sections
 from ..types.final_results import FinalRatingType
 
 class QualificationsType(BaseModel):
@@ -53,19 +54,21 @@ class AppraisalPayloadType(BaseModel):
 
 class AppraisalPersonalDetails(BaseModel):
     appraisee_name: str
-    appraisee_position: str
+    appraisee_position: Designations|None
     appraisee_qualifications: List[str]
     appraisee_experiance: List[str]
-    appraisee_national_id: str
+    appraisee_national_id: str|None
     appraisee_ec_no: str
-    appraisee_date_of_appointment: str
-    appraisee_position_appointment_date: str
-    appraisee_department: str
-    appraisee_station: str
+    appraisee_date_of_appointment: str|None
+    appraisee_position_appointment_date: str|None
+    appraisee_department: Sections|None
+    appraisee_station: Regions|None
     appraiser_name: str
-    appraiser_position: str
+    appraiser_position: Designations|None
     reviewer_name: str
-    reviewer_position: str
+    reviewer_position: Designations|None
+    
+    model_config = ConfigDict(arbitrary_types_allowed=True)
 
 class AppraisalDepartmentObjectivesDependencies(BaseModel):
     department_objective: DepartmentObjective

@@ -14,7 +14,7 @@
                 <div>
                     <h1 class="font-bold text-2xl text-gray-900">Appraisal Detail View</h1>
                     <p class="text-md text-gray-500">
-                        Appraisal <strong>PERIOD OF ASSESSMENT: FROM: 01.01.2019 TO:31.12.2019</strong>
+                        Appraisal <strong>PERIOD OF ASSESSMENT: {{assessment_period}}</strong>
                     </p>
                 </div>
             </div>
@@ -46,15 +46,18 @@
     <div class="bg-white shadow-md rounded-xl p-6 border border-gray-100">
         <div class="step-content" data-step="1">
             <p class="text-gray-700 font-bold text-xl underline">Section 1: Personal Details</p>
+            {% include 'appraisal/detail_components/personal_detail.html' %}
             
         </div>
-
+        
         <div class="step-content hidden" data-step="2">
             <p class="text-gray-700 font-bold text-xl underline">Section 2: Performance Plan and Assessment</p>
+            {% include 'appraisal/detail_components/perf_assmt.html' %}
         </div>
-
+        
         <div class="step-content hidden" data-step="3">
             <p class="text-gray-700 font-bold text-xl underline">Section 3: Training and Development Needs</p>
+            {% include 'appraisal/detail_components/training_dev.html' %}
         </div>
 
         <div class="step-content hidden" data-step="4">
