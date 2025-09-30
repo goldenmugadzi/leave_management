@@ -7,44 +7,41 @@ from .models import Meetings, VenueBooking, Venue
 from django.shortcuts import render, get_object_or_404, redirect
 from django.utils.timezone import now
 
+
 def create_meeting(request, booking_id=None):
     booking = None
+    meeting_instance = None
+
     if booking_id:
-        booking = VenueBooking.objects.filter(id=booking_id).first()
+        booking = get_object_or_404(VenueBooking, id=booking_id)
+        
+        meeting_instance = Meetings(
+            venue=booking.venue,
+            department=booking.department,
+            date_of_meeting=booking.date_of_meeting,
+            start_time=booking.start_time,
+            end_time=booking.end_time,
+            type_of_meeting=booking.type_of_meeting
+        )
 
     if request.method == 'POST':
-        form = MeetingsForm(request.POST, request.FILES)
+        form = MeetingsForm(request.POST, request.FILES, instance=meeting_instance)
         if form.is_valid():
-            employees = form.cleaned_data.get('employees_invited')
-            print('employees_invited:', employees)
-
             meeting = form.save(commit=False)
-            meeting.user = request.user 
-            meeting.confirm_status = 'pending' 
+            meeting.user = request.user
+            meeting.confirm_status = 'Pending'
             meeting.save()
-            
             form.save_m2m()
-
             messages.success(request, "Meeting request submitted successfully.")
-            return redirect('table_meeting')
+            return redirect('meetings_dashboard')
     else:
-        
-        initial_data = {}
-        if booking:
-            initial_data = {
-                'venue': booking.venue.name,
-                'department': booking.department,
-                'date_of_meeting': booking.date_of_meeting,
-                'start_time': booking.start_time,
-                'end_time': booking.end_time,
-                'type_of_meeting': booking.type_of_meeting,
-            }
-        form = MeetingsForm(initial=initial_data)
+        form = MeetingsForm(instance=meeting_instance)
 
     return render(request, 'Meetings/create_meeting.html', {
         'form': form,
         'booking': booking
     })
+
 
 
 def meetings_datatable(request):
@@ -53,7 +50,10 @@ def meetings_datatable(request):
     length = int(request.GET.get('length', 10))
     search_value = request.GET.get('search[value]', '')
 
-    qs = Meetings.objects.all()
+    qs_all = Meetings.objects.all()
+    records_total = qs_all.count()
+
+    qs = qs_all
     if search_value:
         qs = qs.filter(
             Q(employees_invited__user__username__icontains=search_value) |
@@ -62,47 +62,48 @@ def meetings_datatable(request):
             Q(department__section__icontains=search_value) |
             Q(regions__region__icontains=search_value) |
             Q(type_of_meeting__icontains=search_value) |
-            Q(list_of_invited_attendees__icontains=search_value) |
             Q(list_of_agenda_items__icontains=search_value)
         ).distinct()
 
-    total = qs.count()
+    records_filtered = qs.count()
     qs = qs.order_by('-date_of_meeting')[start:start+length]
+
 
     data = []
     for meeting in qs:
-        employees = meeting.employees_invited.all()
-        employees_str = ", ".join([
-            emp.user.get_full_name() or emp.user.username
-            for emp in employees
-        ]) if employees.exists() else "None"
+            employees = meeting.employees_invited.all()
+            # Adjust depending on your model structure
+            employees_str = ", ".join([
+                getattr(e.user, 'get_full_name', lambda: str(e))() if hasattr(e, 'user') else str(e)
+                for e in employees
+            ]) if employees.exists() else "None"
 
-        data.append({
-            "id": meeting.id,
-            "employees_invited": employees_str,
-            "department": str(meeting.department) if meeting.department else "",
-            "regions": str(meeting.regions) if meeting.regions else "",
-            "type_of_meeting": meeting.type_of_meeting,
-            "date_of_meeting": meeting.date_of_meeting.strftime('%Y-%m-%d') if meeting.date_of_meeting else "",
-            "start_time": meeting.start_time.strftime('%H:%M') if meeting.start_time else "",
-            "end_time": meeting.end_time.strftime('%H:%M') if meeting.end_time else "",
-            "venue": meeting.venue,
-            "attach_previous_minutes": meeting.attach_previous_minutes.url if meeting.attach_previous_minutes else "",
-            "list_of_invited_attendees": meeting.list_of_invited_attendees,
-            "list_of_agenda_items": meeting.list_of_agenda_items,
-            "cost_center": str(meeting.cost_center) if meeting.cost_center else "",
-            "confirm_status": meeting.confirm_status,
-            "comments": meeting.comments,
-            "depot": str(meeting.depot) if meeting.depot else "",
-        })
+            data.append({
+                "id": meeting.id,
+                "employees_invited": employees_str,
+                "department": str(meeting.department) if meeting.department else "",
+                "regions": str(meeting.regions) if meeting.regions else "",
+                "type_of_meeting": meeting.type_of_meeting,
+                "date_of_meeting": meeting.date_of_meeting.strftime('%Y-%m-%d') if meeting.date_of_meeting else "",
+                "start_time": meeting.start_time.strftime('%H:%M') if meeting.start_time else "",
+                "end_time": meeting.end_time.strftime('%H:%M') if meeting.end_time else "",
+                "venue": str(meeting.venue) if meeting.venue else "",  
+                "attach_previous_minutes": meeting.attach_previous_minutes.url if meeting.attach_previous_minutes else "",
+                "list_of_agenda_items": meeting.list_of_agenda_items,
+                "cost_center": str(meeting.cost_center) if meeting.cost_center else "",
+                "confirm_status": meeting.confirm_status,
+                "comments": meeting.comments,
+                "depot": str(meeting.depot) if meeting.depot else "",
+            })
+
 
     return JsonResponse({
         "draw": draw,
-        "recordsTotal": total,
-        "recordsFiltered": total,
+       "recordsTotal": records_total,
+       "recordsFiltered": records_filtered,
         "data": data
     })
-    
+   
 def table_meetings (request):
   return render(request,'Meetings/table_meetings.html')
 
@@ -119,7 +120,7 @@ def update_meeting(request, id):
     else:
         form = MeetingsUpdateForm(instance=meetings)
 
-    return render(request, 'Meetings/meetings_dashboard.html', {
+    return render(request, 'Meetings/create_meeting.html', {
         'form': form,
         'meetings': meetings,
     })

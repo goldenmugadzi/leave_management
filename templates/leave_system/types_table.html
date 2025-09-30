@@ -148,7 +148,7 @@ $(document).ready(function () {
     processing: true,
     serverSide: true,
     ajax: {
-      url: "{% url 'leave_types_datatable' %}",
+      url: "{% url 'leave_management:leave_types_datatable' %}",
       type: "GET"
     },
     columns: [

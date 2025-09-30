@@ -10,6 +10,7 @@
     #scheduled_meetings { min-width: 1200px; }
   </style>
 {% endblock styles %}
+
 {% block content %}
 <div class="content-wrapper p-6">
   <!-- Page Header -->
@@ -40,7 +41,7 @@
     </a>
     <a href="/booked_venue" class="bg-yellow-500 text-white rounded-lg shadow p-6 flex items-center justify-between hover:bg-yellow-600 transition">
       <div>
-        <h2 class="text-lg font-semibold">Booked Venue</h2>
+        <h2 class="text-lg font-semibold">Booked Venues</h2>
         <p class="text-sm text-yellow-100">View Booked venue</p>
       </div>
       <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" stroke-width="2"
@@ -99,6 +100,7 @@
   </div>
 </div>
 {% endblock %}
+
 {% block scripts %}
 <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
 <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
@@ -108,9 +110,10 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.36/pdfmake.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.36/vfs_fonts.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
+
 <script>
 $(document).ready(function () {
-  // Available Venues Table (keep as is or update as needed)
+  // Available Venues Table
   $('#venues_table').DataTable({
     ajax: {
       url: "{% url 'venues_datatable' %}",
@@ -132,15 +135,16 @@ $(document).ready(function () {
       { 
          data: "status",
          render: function(data) {
-         let badgeClass = data === "Available"
-        ? "status-badge bg-green-200 text-green-800" 
-        : "status-badge bg-red-200 text-red-800";
-      return `<span class="${badgeClass}">${data}</span>`;
-        }
+           let badgeClass = data === "Available"
+             ? "status-badge bg-green-200 text-green-800" 
+             : "status-badge bg-red-200 text-red-800";
+           return `<span class="${badgeClass}">${data}</span>`;
+         }
       }
     ]
   });
-  // Scheduled Meetings Table styled like meetings_index
+
+  // Scheduled Meetings Table
   $('#scheduled_meetings').DataTable({
     processing: true,
     serverSide: true,
@@ -161,7 +165,7 @@ $(document).ready(function () {
       { 
         data: "attach_previous_minutes",
         render: function(data) {
-          return data ? `<a href="${data}"target="_blank" class="text-blue-600 underline">View</a>` : "";
+          return data ? `<a href="${data}" target="_blank" class="text-blue-600 underline">View</a>` : "";
         }
       },
       { data: "list_of_agenda_items" },
@@ -173,17 +177,11 @@ $(document).ready(function () {
         render: function(data) {
           let badgeClass = "";
           let text = data ? data.trim().toLowerCase() : "";
-          if (text === "pending") {
-            badgeClass = "bg-yellow-200 text-yellow-800";
-          } else if (text === "approved") {
-            badgeClass = "bg-green-200 text-green-800";
-          } else if (text === "cancelled") {
-            badgeClass = "bg-red-200 text-red-800";
-          } else if (text === "postponed") {
-            badgeClass = "bg-orange-200 text-orange-800";
-          } else {
-            badgeClass = "bg-gray-200 text-gray-800"; 
-          }
+          if (text === "pending") badgeClass = "bg-yellow-200 text-yellow-800";
+          else if (text === "approved") badgeClass = "bg-green-200 text-green-800";
+          else if (text === "cancelled") badgeClass = "bg-red-200 text-red-800";
+          else if (text === "postponed") badgeClass = "bg-orange-200 text-orange-800";
+          else badgeClass = "bg-gray-200 text-gray-800"; 
           return `<span class="status-badge ${badgeClass}">${data}</span>`;
         }
       },
@@ -191,7 +189,7 @@ $(document).ready(function () {
         data: "id",
         orderable: false,
         searchable: false,
-        render: function(data, type, row) {
+        render: function(data) {
           return `
             <span style="display: inline-flex; gap: 0.5rem;">
               <a href="/update_meeting/${data}/" class="btn btn-info" title="Edit">
@@ -205,10 +203,6 @@ $(document).ready(function () {
       }
     ],
   });
-    setInterval(function () {
-    venuesTable.ajax.reload(null, false);
-    bookedTable.ajax.reload(null, false);
-  }, 60000);
 });
 </script>
 {% endblock %}

@@ -13,7 +13,7 @@ class Meetings(models.Model):
      list_of_invited_attendees= models.CharField(max_length=900)
      list_of_agenda_items=models.CharField(max_length=900)
      cost_center = models.ForeignKey(CostCenter, on_delete=models.CASCADE, blank=True, null=True)
-     venue = models.CharField(max_length=100,help_text="Type of venue" , choices=[('Virtual','Virtual'),('Function Room 3','Function Room 3'),('Function Room 4','Function Room 4'),('Fourth Floor Boardroom','Fourth Floor Boardroom'),('Fithy Floor Kitchen','Fithy Floor Kitchen'),('GIS Drones','GIS Drones')])
+     venue = models.ForeignKey('Venue', on_delete=models.SET_NULL, null=True, blank=True)
      start_time =models.TimeField()
      attach_previous_minutes = models.FileField(upload_to='meetings/', blank=True, null=True)
      end_time =models.TimeField()
@@ -45,7 +45,7 @@ class VenueBooking(models.Model):
     start_time = models.TimeField()
     end_time = models.TimeField()
     date_of_meeting = models.DateField()
-    type_of_meeting = models.CharField(max_length=100)
+    type_of_meeting = models.CharField(max_length=100,help_text="Meeting Type",  choices=[('RMT Meeting', 'RMT Meeting') ,('Emergency Meeting', 'Emergency Meeting'), ('SHE Meeting', 'SHE Meeting'),('Section Meeting', 'Section Meeting'), ('DMT Meeting', 'DMT Meeting'),('Productivity Meeting', 'Productivity Meeting'),('Works Council Meeting', 'Works Council Meeting'),('Operational Meeting', 'Operational Meeting'), ('Depot Morning Meeting', 'Depot Morning Meeting'), ('Audit Meeting', 'Audit Meeting'), ('Other Meeting', 'Other Meeting'),])
     capacity = models.PositiveIntegerField()
     # Add any other fields you need
     status = models.CharField(max_length=50, choices=[('Pending', 'Pending'), ('Confirmed', 'Confirmed'), ('Cancelled', 'Cancelled')], default='Pending')
