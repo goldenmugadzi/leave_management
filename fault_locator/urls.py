@@ -4,6 +4,9 @@ from . import role_views
 from . import central_role_views
 from . import senior_foreman_views
 
+# Enable namespacing for this app's URL patterns
+app_name = 'fault_locator'
+
 urlpatterns = [
     # Dashboard and home - redirect to role-based dashboard
     path('', role_views.role_based_dashboard, name='fault_locator_home'),

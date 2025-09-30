@@ -46,7 +46,8 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     # path('accounts/', include('django.contrib.auth.urls')),
     path('ace/', include('ACE2.urls')),
-    path('fault_locator/', include('fault_locator.urls')),
+    # Namespaced include so templates can reverse with 'fault_locator:<name>'
+    path('fault_locator/', include(('fault_locator.urls', 'fault_locator'), namespace='fault_locator')),
    
 
     # path('ace/', include('finance.Ace.urls')),
