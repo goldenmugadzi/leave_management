@@ -934,6 +934,61 @@ def simple_fault_list(request):
     return redirect('fault_locator:fault_locator_dashboard')
 
 @login_required
+def field_update(request, fault_id):
+    """Minimal fault detail/update view used by multiple templates and URLs.
+    Renders fault_location_update page and allows safe updates to location details when permitted.
+    """
+    try:
+        user_profile = UserProfile.objects.filter(id=request.user.id).first()
+        fault = get_object_or_404(Fault, id=fault_id)
+
+        # Determine permissions
+        can_edit = is_senior_foreman(user_profile) or is_depot_foreperson(user_profile, fault.depot)
+        current_assignment = FaultAssignment.objects.filter(
+            fault=fault, located_at__isnull=True
+        ).select_related('team').first()
+
+        in_assigned_team = False
+        if current_assignment and user_profile:
+            in_assigned_team = (
+                current_assignment.team.members.filter(id=user_profile.id).exists()
+                or current_assignment.team.team_leader_id == user_profile.id
+            )
+
+        # Handle basic POST to save location details only
+        if request.method == 'POST':
+            location_details = request.POST.get('location_details', '')
+            if (can_edit or in_assigned_team):
+                try:
+                    fault.location_details = location_details or ''
+                    fault.save(update_fields=['location_details'])
+                    messages.success(request, 'Location details updated.')
+                except Exception as e:
+                    messages.error(request, 'Failed to update location details.')
+                return redirect('fault_locator:field_update', fault_id=fault.id)
+            else:
+                messages.error(request, "You don't have permission to update this fault.")
+                return redirect('fault_locator:field_update', fault_id=fault.id)
+
+        context = {
+            'fault': fault,
+            'current_location': {
+                'latitude': None,
+                'longitude': None,
+            },
+            'user_profile': user_profile,
+            'can_update': can_edit or in_assigned_team,
+        }
+
+        return render(request, 'fault_locator/fault_location_update.html', context)
+    except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Field update error: {e}")
+        messages.error(request, "An error occurred loading the fault details.")
+        return redirect('fault_locator:simple_fault_list')
+
+@login_required
 def quick_fault_report(request):
     try:
         user_profile = UserProfile.objects.filter(id=request.user.id).first()
@@ -1539,6 +1594,44 @@ def create_device(request):
         messages.error(request, "An error occurred creating the device.")
     return redirect('fault_locator:device_list')
 
+# Team membership helper
+def can_user_be_added_to_team(user: UserProfile, team: FaultLocatorTeam = None):
+    """Check whether a user can be added to a (given) team.
+    Rules:
+    - Must be active
+    - Cannot be a depot foreperson or senior foreperson
+    - Cannot already belong to another team (excluding provided team)
+    - Cannot be a leader of another team (excluding provided team)
+    Returns tuple (can_add: bool, reason: str)
+    """
+    try:
+        if not user or not getattr(user, 'is_active', False):
+            return False, 'Inactive user'
+
+        # Role restrictions
+        if is_depot_foreperson(user) or is_senior_foreman(user):
+            return False, 'Forepersons cannot be team members'
+
+        # Already a member of another team
+        if team:
+            if user.fault_locator_teams.exclude(pk=team.pk).exists():
+                return False, 'Already a member of another team'
+        else:
+            if user.fault_locator_teams.exists():
+                return False, 'Already a member of a team'
+
+        # Already a team leader elsewhere
+        if team:
+            if FaultLocatorTeam.objects.filter(team_leader=user).exclude(pk=team.pk).exists():
+                return False, 'Already a leader of another team'
+        else:
+            if FaultLocatorTeam.objects.filter(team_leader=user).exists():
+                return False, 'Already a leader of a team'
+
+        return True, 'OK'
+    except Exception:
+        return False, 'Validation error'
+
 @login_required
 def edit_device(request, device_id):
     try:
@@ -1618,6 +1711,331 @@ def device_detail(request, device_id):
         logger.error(f"Device detail error: {e}")
         messages.error(request, "An error occurred loading device details.")
     return redirect('fault_locator:device_list')
+
+# --- Minimal placeholder views to satisfy URL routing ---
+@login_required
+def fault_reporter_dashboard(request):
+    messages.info(request, 'Redirected to Quick Fault Report (dashboard placeholder)')
+    return redirect('fault_locator:quick_fault_report')
+
+@login_required
+def bulk_fault_report(request):
+    messages.info(request, 'Redirected to Quick Fault Report (bulk placeholder)')
+    return redirect('fault_locator:quick_fault_report')
+
+@login_required
+def my_fault_reports(request):
+    messages.info(request, 'Redirected to fault list (my reports placeholder)')
+    return redirect('fault_locator:fault_list')
+
+@login_required
+def team_overview(request):
+    """Team overview page showing teams, members, device status, and deployment state."""
+    user_profile = UserProfile.objects.filter(id=request.user.id).first()
+
+    teams = FaultLocatorTeam.objects.all().prefetch_related('members')
+
+    team_data = []
+    for team in teams:
+        device_assignment = FaultLocatorDeviceAssignment.objects.filter(team=team).select_related('device').first()
+        has_device = device_assignment is not None
+        device = device_assignment.device if device_assignment else None
+
+        is_deployed = team.current_depot is not None
+        current_deployment = TeamDeployment.objects.filter(team=team, recalled_at__isnull=True).select_related('depot', 'deployed_by').first()
+
+        status = 'deployed' if is_deployed else ('available' if has_device else 'no_device')
+        status_class = 'text-green-600' if status == 'deployed' else ('text-blue-600' if status == 'available' else 'text-gray-500')
+
+        active_assignments = FaultAssignment.objects.filter(team=team, located_at__isnull=True).select_related('fault')
+
+        team_data.append({
+            'team': team,
+            'status': status,
+            'status_class': status_class,
+            'location': team.current_depot.depot if team.current_depot else 'Not deployed',
+            'actual_member_count': team.members.count(),
+            'actual_active_assignments': active_assignments.count(),
+            'team_leader_name': team.get_team_leader_name(),
+            'team_members': [
+                {
+                    'name': m.get_full_name(),
+                    'email': m.email
+                } for m in team.members.all()
+            ],
+            'deployment_info': {
+                'depot_name': current_deployment.depot.depot if current_deployment else None,
+                'assigned_at': current_deployment.deployed_at if current_deployment else None,
+                'assigned_by': current_deployment.deployed_by.get_full_name() if (current_deployment and current_deployment.deployed_by) else None,
+            },
+            'has_device': has_device,
+            'device_serial': device.serial_number if device else None,
+            'device': device,
+            'is_deployed': is_deployed,
+            'can_interact_with_team': is_senior_foreman(user_profile),
+            'actions': [],
+        })
+
+    summary_stats = {
+        'total_teams': teams.count(),
+        'deployed_teams': FaultLocatorTeam.objects.filter(current_depot__isnull=False).count(),
+        'teams_with_devices': FaultLocatorDeviceAssignment.objects.values('team').distinct().count(),
+        'active_assignments': FaultAssignment.objects.filter(located_at__isnull=True).count(),
+    }
+
+    context = {
+        'user_profile': user_profile,
+        'team_data': team_data,
+        'summary_stats': summary_stats,
+        'is_senior_foreman': is_senior_foreman(user_profile),
+        'can_create_team': can_create_teams(user_profile),
+        'page_title': 'Team Overview',
+    }
+
+    return render(request, 'fault_locator/team_overview.html', context)
+
+@login_required
+def my_work(request):
+    messages.info(request, 'My work placeholder. Redirecting to fault list.')
+    return redirect('fault_locator:fault_list')
+
+@login_required
+@transaction.atomic
+def deploy_team(request, team_id=None):
+    """Render deployment page and handle deployment submission."""
+    user_profile = UserProfile.objects.filter(id=request.user.id).first()
+    if not is_senior_foreman(user_profile):
+        messages.error(request, "You don't have permission to deploy teams.")
+        return redirect('fault_locator:team_overview')
+
+    # Prepare form limited to teams with devices and not deployed (form also filters)
+    if request.method == 'POST':
+        form = TeamDeploymentForm(request.POST, user_region=getattr(user_profile, 'region', None))
+        selected_team = None
+        if form.is_valid():
+            team = form.cleaned_data['team']
+            depot = form.cleaned_data['depot']
+            notes = form.cleaned_data.get('deployment_notes', '')
+
+            # Ensure team still valid
+            if FaultLocatorDeviceAssignment.objects.filter(team=team).first() is None:
+                messages.error(request, f"Team '{team.name}' must have a device assigned before deployment.")
+                return redirect('fault_locator:deploy_team')
+            if team.current_depot:
+                messages.error(request, f"Team '{team.name}' is already deployed to {team.current_depot.depot}.")
+                return redirect('fault_locator:deploy_team')
+
+            deployment = TeamDeployment.objects.create(
+                team=team,
+                depot=depot,
+                deployed_by=user_profile,
+                deployment_notes=notes
+            )
+            team.current_depot = depot
+            team.assigned_at = deployment.deployed_at
+            team.assigned_by = user_profile
+            team.save()
+
+            try:
+                notify_team_deployment(deployment, request)
+            except Exception:
+                pass
+
+            messages.success(request, f"Team '{team.name}' deployed to {depot.depot}.")
+            return redirect('fault_locator:team_overview')
+    else:
+        form = TeamDeploymentForm(user_region=getattr(user_profile, 'region', None))
+        selected_team = None
+        if team_id:
+            selected_team = FaultLocatorTeam.objects.filter(id=team_id).first()
+
+    # Build depot priority info for the template
+    depots = Depots.objects.all()
+    if getattr(user_profile, 'region', None):
+        depots = depots.filter(region=user_profile.region)
+
+    depot_priority_info = []
+    for depot in depots:
+        pending_faults = Fault.objects.filter(depot=depot, status='requested').count()
+        in_progress_faults = Fault.objects.filter(depot=depot, status='assigned').count()
+        critical_faults = Fault.objects.filter(depot=depot, priority__gte=3, status__in=['requested', 'assigned']).count()
+        team_count = FaultLocatorTeam.objects.filter(current_depot=depot).count()
+        oldest_fault = Fault.objects.filter(depot=depot, status__in=['requested', 'assigned']).order_by('reported_at').first()
+        oldest_fault_hours = None
+        if oldest_fault:
+            delta = timezone.now() - oldest_fault.reported_at
+            oldest_fault_hours = int(delta.total_seconds() // 3600)
+
+        # Simple weighted workload score
+        workload_score = pending_faults * 2 + in_progress_faults + critical_faults * 3 - team_count * 2
+        if workload_score >= 10 or critical_faults >= 2:
+            level = 'CRITICAL'; pclass = 'bg-red-100 text-red-800'; icon = '🚨'
+        elif workload_score >= 6:
+            level = 'HIGH'; pclass = 'bg-orange-100 text-orange-800'; icon = '⚠️'
+        elif workload_score >= 3:
+            level = 'MEDIUM'; pclass = 'bg-yellow-100 text-yellow-800'; icon = '⚡'
+        else:
+            level = 'LOW'; pclass = 'bg-green-100 text-green-800'; icon = '✅'
+
+        depot_priority_info.append({
+            'depot': depot,
+            'pending_faults': pending_faults,
+            'in_progress_faults': in_progress_faults,
+            'critical_faults': critical_faults,
+            'team_count': team_count,
+            'oldest_fault_hours': oldest_fault_hours,
+            'workload_score': workload_score,
+            'priority_level': level,
+            'priority_class': pclass,
+            'priority_icon': icon,
+            'needs_team': team_count == 0 and (pending_faults > 0 or in_progress_faults > 0),
+            'overwhelmed': team_count > 0 and (pending_faults + in_progress_faults) / max(team_count, 1) >= 5,
+            'team_details': [
+                {
+                    'name': t.name,
+                    'active_assignments': FaultAssignment.objects.filter(team=t, located_at__isnull=True).count(),
+                    'status': 'busy' if FaultAssignment.objects.filter(team=t, located_at__isnull=True).exists() else 'idle'
+                } for t in FaultLocatorTeam.objects.filter(current_depot=depot)
+            ]
+        })
+
+    context = {
+        'user_profile': user_profile,
+        'form': form,
+        'selected_team': selected_team,
+        'depot_priority_info': depot_priority_info,
+        'page_title': 'Deploy Team to Depot',
+    }
+    return render(request, 'fault_locator/deploy_team.html', context)
+
+@login_required
+def recall_team(request, team_id):
+    messages.info(request, 'Recall team placeholder.')
+    return redirect('fault_locator:team_overview')
+
+@login_required
+@transaction.atomic
+def assign_team_to_depot(request, team_id):
+    """Assign a team to a depot (deployment)."""
+    user_profile = UserProfile.objects.filter(id=request.user.id).first()
+    if not is_senior_foreman(user_profile):
+        messages.error(request, "You don't have permission to deploy teams.")
+        return redirect('fault_locator:team_overview')
+
+    team = get_object_or_404(FaultLocatorTeam.objects.select_for_update(), id=team_id)
+
+    # Ensure team has a device
+    device_assignment = FaultLocatorDeviceAssignment.objects.filter(team=team).first()
+    if not device_assignment:
+        messages.error(request, f"Team '{team.name}' must have a device assigned before deployment.")
+        return redirect('fault_locator:team_overview')
+
+    if request.method == 'POST':
+        form = TeamDepotAssignmentForm(request.POST, user_region=getattr(user_profile, 'region', None))
+        if form.is_valid():
+            depot = form.cleaned_data['depot']
+            notes = form.cleaned_data.get('deployment_notes', '')
+
+            if team.current_depot:
+                messages.error(request, f"Team '{team.name}' is already deployed to {team.current_depot.depot}.")
+                return redirect('fault_locator:team_overview')
+
+            deployment = TeamDeployment.objects.create(
+                team=team,
+                depot=depot,
+                deployed_by=user_profile,
+                deployment_notes=notes,
+            )
+            team.current_depot = depot
+            team.assigned_at = deployment.deployed_at
+            team.assigned_by = user_profile
+            team.save()
+
+            # Notify
+            try:
+                notify_team_deployment(deployment, request)
+            except Exception:
+                pass
+
+            messages.success(request, f"Team '{team.name}' deployed to {depot.depot}.")
+            return redirect('fault_locator:team_overview')
+    else:
+        form = TeamDepotAssignmentForm(user_region=getattr(user_profile, 'region', None))
+
+    return render(request, 'fault_locator/assign_team_to_depot.html', {
+        'form': form,
+        'team': team,
+        'user_profile': user_profile,
+        'page_title': f"Assign '{team.name}' to Depot",
+    })
+
+@login_required
+@transaction.atomic
+def recall_team_from_depot(request, team_id):
+    """Recall a deployed team from a depot (POST)."""
+    user_profile = UserProfile.objects.filter(id=request.user.id).first()
+    if not is_senior_foreman(user_profile):
+        messages.error(request, "You don't have permission to recall teams.")
+        return redirect('fault_locator:team_overview')
+
+    team = get_object_or_404(FaultLocatorTeam.objects.select_for_update(), id=team_id)
+
+    if request.method != 'POST':
+        messages.error(request, 'Invalid request method.')
+        return redirect('fault_locator:team_overview')
+
+    if not team.current_depot:
+        messages.error(request, f"Team '{team.name}' is not currently deployed.")
+        return redirect('fault_locator:team_overview')
+
+    # Ensure no active assignments
+    active_assignments = FaultAssignment.objects.filter(team=team, located_at__isnull=True)
+    if active_assignments.exists():
+        messages.error(request, f"Team has {active_assignments.count()} active fault assignments. Cannot recall.")
+        return redirect('fault_locator:team_overview')
+
+    # Update current deployment record
+    current_deployment = TeamDeployment.objects.filter(team=team, recalled_at__isnull=True).first()
+    if current_deployment:
+        current_deployment.recalled_at = timezone.now()
+        current_deployment.recalled_by = user_profile
+        current_deployment.recall_notes = 'Recalled via team overview'
+        current_deployment.save()
+
+    depot_name = team.current_depot.depot
+    team.current_depot = None
+    team.assigned_at = None
+    team.assigned_by = None
+    team.save()
+
+    try:
+        notify_team_recall(team, user_profile, request)
+    except Exception:
+        pass
+
+    messages.success(request, f"Team '{team.name}' recalled from {depot_name}.")
+    return redirect('fault_locator:team_overview')
+
+@login_required
+def advanced_fault_assignment(request):
+    messages.info(request, 'Advanced assignment placeholder. Redirecting to simple assign.')
+    return redirect('fault_locator:assign_fault')
+
+@login_required
+def change_fault_priority(request, fault_id):
+    messages.info(request, 'Change priority placeholder.')
+    return redirect('fault_locator:field_update', fault_id=fault_id)
+
+@login_required
+def debug_user(request):
+    user_profile = UserProfile.objects.filter(id=request.user.id).first()
+    from django.http import HttpResponse
+    return HttpResponse(f"User: {user_profile.get_full_name() if user_profile else 'Unknown'}")
+
+@login_required
+def role_troubleshooting(request):
+    messages.info(request, 'Role troubleshooting placeholder.')
+    return redirect('fault_locator:fault_locator_dashboard')
 
 @login_required
 @transaction.atomic
