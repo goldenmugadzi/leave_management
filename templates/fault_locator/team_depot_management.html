@@ -60,9 +60,9 @@
             <div class="text-sm text-gray-600">
               <p>{{ team.member_count }} members • 
                 {% if team.device_count > 0 %}
-                <span class="text-green-600">Device assigned</span>
+                <span class="text-green-600">Gear assigned</span>
                 {% else %}
-                <span class="text-red-600">No device</span>
+                <span class="text-red-600">No gear</span>
                 {% endif %}
               </p>
               {% if team.current_depot %}
@@ -86,7 +86,7 @@
             </button>
             {% else %}
             <span class="bg-gray-300 text-gray-600 px-3 py-1 rounded text-sm">
-              Need Device
+              Need Gear
             </span>
             {% endif %}
             {% endif %}

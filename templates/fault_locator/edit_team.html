@@ -63,11 +63,11 @@
         </form>
       </div>
 
-      <!-- Device Assignment Card -->
+  <!-- Gear Assignment Card -->
       <div class="bg-white rounded-lg shadow-md p-6">
         <h2 class="text-xl font-bold text-gray-900 mb-4 flex items-center gap-2">
           <span class="text-green-600">📱</span>
-          Device Assignment
+          Gear Assignment
         </h2>
         
         {% if device_assignment %}
@@ -79,7 +79,7 @@
                 {% if device_assignment.device.description %}
                   {{ device_assignment.device.description }}
                 {% else %}
-                  Fault locator device
+                  Fault locator gear
                 {% endif %}
               </p>
             </div>
@@ -92,17 +92,17 @@
           </p>
           <a href="{% url 'fault_locator:unassign_device' device_assignment.device.id %}" 
              class="inline-block px-4 py-2 bg-yellow-500 text-white rounded-md font-medium hover:bg-yellow-600 transition-colors">
-            🔄 Unassign Device
+            🔄 Unassign Gear
           </a>
         </div>
         {% else %}
         <div class="p-4 bg-yellow-50 border border-yellow-200 rounded-lg text-center">
           <div class="text-4xl mb-2">⚠️</div>
-          <h3 class="font-semibold text-yellow-800 mb-2">No Device Assigned</h3>
-          <p class="text-sm text-yellow-700 mb-4">This team needs a device before deployment.</p>
+          <h3 class="font-semibold text-yellow-800 mb-2">No Gear Assigned</h3>
+          <p class="text-sm text-yellow-700 mb-4">This team needs gear before deployment.</p>
           <a href="{% url 'fault_locator:assign_device_to_team' %}?team_id={{ team.id }}" 
              class="inline-block px-4 py-2 bg-yellow-500 text-white rounded-md font-medium hover:bg-yellow-600 transition-colors">
-            🔧 Assign Device
+            🔧 Assign Gear
           </a>
         </div>
         {% endif %}
@@ -317,7 +317,7 @@
           </div>
           {% else %}
           <!-- Team is available for deployment -->
-          {% if device_assignment %}
+            {% if device_assignment %}
           <div class="p-4 bg-green-50 border border-green-200 rounded-lg">
             <div class="flex items-center gap-3 mb-3">
               <div class="w-10 h-10 bg-green-500 rounded-lg flex items-center justify-center text-white">
@@ -325,7 +325,7 @@
               </div>
               <div>
                 <h3 class="font-semibold text-green-800">Ready for Deployment</h3>
-                <p class="text-sm text-green-600">Team has device and can be deployed</p>
+                <p class="text-sm text-green-600">Team has gear and can be deployed</p>
               </div>
             </div>
             {% if is_senior_foreman or can_manage_devices %}

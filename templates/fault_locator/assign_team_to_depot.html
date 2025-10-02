@@ -64,7 +64,7 @@
           </div>
         </div>
         
-        <!-- Device Information -->
+  <!-- Gear Information -->
         <div class="space-y-3">
           {% if device %}
           <div class="flex items-center gap-3">
@@ -82,7 +82,7 @@
               ⚡
             </div>
             <div>
-              <div class="text-sm text-nepal-600">Device Status</div>
+              <div class="text-sm text-nepal-600">Gear Status</div>
               <div class="font-semibold text-nepal-800">{{ device.get_status_display }}</div>
             </div>
           </div>
@@ -100,8 +100,8 @@
           {% endif %}
           {% else %}
           <div class="p-4 bg-gradient-to-r from-pomegranate-50 to-scarlet-red-50 border border-pomegranate-200 rounded-xl">
-            <div class="text-pomegranate-800 font-semibold">⚠️ No Device Assigned</div>
-            <div class="text-sm text-pomegranate-600 mt-1">Team needs a device before deployment</div>
+            <div class="text-pomegranate-800 font-semibold">⚠️ No Gear Assigned</div>
+            <div class="text-sm text-pomegranate-600 mt-1">Team needs gear before deployment</div>
           </div>
           {% endif %}
         </div>

@@ -104,7 +104,7 @@ def team_member_required(view_func):
 
 def device_management_required(view_func):
     """
-    Decorator to restrict access to users who can manage devices.
+    Decorator to restrict access to users who can manage gear.
     """
     @wraps(view_func)
     @fault_locator_access_required
@@ -112,7 +112,7 @@ def device_management_required(view_func):
         user_profile = UserProfile.objects.filter(id=request.user.id).first()
         
         if not can_manage_devices(user_profile):
-            messages.error(request, "You do not have permission to manage devices.")
+            messages.error(request, "You do not have permission to manage gear.")
             return redirect('fault_locator:fault_locator_dashboard')
         
         return view_func(request, *args, **kwargs)

@@ -65,11 +65,11 @@
     </div>
     
     <div class="bg-white rounded-lg shadow-md p-6">
-      <h3 class="text-lg font-semibold text-gray-800 mb-2">Device Utilization</h3>
+  <h3 class="text-lg font-semibold text-gray-800 mb-2">Gear Utilization</h3>
       <p class="text-3xl font-bold text-orange-600">
         {% for device in device_utilization %}{% if device.usage_count > 0 %}{{ forloop.counter0|add:"1" }}{% endif %}{% endfor %}
       </p>
-      <p class="text-sm text-gray-500">Devices used</p>
+  <p class="text-sm text-gray-500">Gear used</p>
     </div>
   </div>
 
@@ -234,9 +234,9 @@
     </div>
   </div>
 
-  <!-- Device Utilization Analysis -->
+  <!-- Gear Utilization Analysis -->
   <div class="bg-white rounded-lg shadow-md p-6 mb-6">
-    <h3 class="text-lg font-semibold text-gray-800 mb-4">Device Utilization Analysis</h3>
+  <h3 class="text-lg font-semibold text-gray-800 mb-4">Gear Utilization Analysis</h3>
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       {% for device in device_utilization %}
       <div class="bg-gray-50 rounded-lg p-4">
@@ -288,7 +288,7 @@
       </div>
       {% empty %}
       <div class="col-span-full text-center py-8">
-        <p class="text-gray-500">No device utilization data available for this period</p>
+  <p class="text-gray-500">No gear utilization data available for this period</p>
       </div>
       {% endfor %}
     </div>

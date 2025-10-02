@@ -91,7 +91,7 @@
               </div>
             </div>
             
-            <!-- Device Assignment with Advanced Visual Feedback -->
+            <!-- Gear Assignment with Advanced Visual Feedback -->
             <div class="mb-6">
               <h4 class="text-sm font-bold text-gray-700 mb-3 uppercase tracking-wide">Equipment</h4>
               {% with assignment=team.faultlocatordeviceassignment_set.first %}
@@ -104,7 +104,7 @@
                       </div>
                       <div>
                         <p class="font-bold text-emerald-800">{{ assignment.device.serial_number }}</p>
-                        <p class="text-xs text-emerald-600">Fault Locator Device</p>
+                        <p class="text-xs text-emerald-600">Fault Locator Gear</p>
                       </div>
                     </div>
                   </div>
@@ -116,7 +116,7 @@
                         ⚠️
                       </div>
                       <div>
-                        <p class="font-bold text-amber-800">No device assigned</p>
+                        <p class="font-bold text-amber-800">No gear assigned</p>
                         <p class="text-xs text-amber-600">Requires equipment</p>
                       </div>
                     </div>

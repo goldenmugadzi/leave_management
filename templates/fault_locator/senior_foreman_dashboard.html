@@ -36,11 +36,11 @@
       </div>
     </div>
 
-    <!-- Devices Card -->
+  <!-- Gear Card -->
     <div class="bg-white rounded-lg shadow-md p-6">
       <div class="flex items-center justify-between">
         <div>
-          <h3 class="text-lg font-semibold text-gray-800">Devices</h3>
+          <h3 class="text-lg font-semibold text-gray-800">Gear</h3>
           <p class="text-2xl font-bold text-green-600">{{ stats.total_devices }}</p>
           <p class="text-sm text-gray-500">{{ stats.assigned_devices }} assigned</p>
         </div>
@@ -50,7 +50,7 @@
         <div class="bg-gray-200 rounded-full h-2">
           <div class="bg-green-500 h-2 rounded-full" style="width: {{ stats.device_utilization }}%"></div>
         </div>
-        <p class="text-xs text-gray-600 mt-1">{{ stats.device_utilization }}% utilized</p>
+  <p class="text-xs text-gray-600 mt-1">{{ stats.device_utilization }}% utilized</p>
       </div>
     </div>
 
@@ -113,24 +113,24 @@
       </div>
     </div>
 
-    <!-- Device Management -->
+  <!-- Gear Management -->
     <div class="bg-white rounded-lg shadow-md p-6">
       <h3 class="text-lg font-semibold text-gray-800 mb-4">
-        <span class="text-green-500">📱</span> Device Management
+  <span class="text-green-500">📱</span> Gear Management
       </h3>
-      <p class="text-gray-600 mb-4">Assign devices to teams and track utilization</p>
+  <p class="text-gray-600 mb-4">Assign gear to teams and track utilization</p>
       <div class="space-y-2">
         <a href="{% url 'fault_locator:device_team_management' %}" 
            class="block w-full bg-green-600 text-white text-center py-2 px-4 rounded-md hover:bg-green-700 transition">
-          Manage Device Assignments
+          Manage Gear Assignments
         </a>
         <a href="{% url 'fault_locator:create_device' %}" 
            class="block w-full bg-blue-600 text-white text-center py-2 px-4 rounded-md hover:bg-blue-700 transition">
-          Add New Device
+          Add New Gear
         </a>
         <a href="{% url 'fault_locator:device_list' %}" 
            class="block w-full bg-gray-600 text-white text-center py-2 px-4 rounded-md hover:bg-gray-700 transition">
-          View All Devices
+          View All Gear
         </a>
       </div>
     </div>
@@ -180,11 +180,11 @@
           <div class="text-right">
             {% if team.device_count > 0 %}
             <span class="inline-block bg-green-100 text-green-800 text-xs px-2 py-1 rounded">
-              Device Assigned
+              Gear Assigned
             </span>
             {% else %}
             <span class="inline-block bg-red-100 text-red-800 text-xs px-2 py-1 rounded">
-              No Device
+              No Gear
             </span>
             {% endif %}
             {% if team.active_assignments > 0 %}
@@ -343,11 +343,11 @@ function quickDeploy(teamId, teamName) {
 function quickAssign(deviceId, deviceName) {
   const content = `
     <div class="space-y-4">
-      <p>Assign device "${deviceName}" to team:</p>
+  <p>Assign gear "${deviceName}" to team:</p>
       <select id="teamSelect" class="w-full p-2 border rounded-md">
         <option value="">Select team...</option>
         {% for team in teams_data %}
-        {% if team.device_count == 0 %}
+  {% if team.device_count == 0 %}
         <option value="{{ team.id }}">{{ team.name }} ({{ team.member_count }} members)</option>
         {% endif %}
         {% endfor %}
@@ -355,7 +355,7 @@ function quickAssign(deviceId, deviceName) {
     </div>
   `;
   
-  openModal('Assign Device', content);
+  openModal('Assign Gear', content);
   
   document.getElementById('modalAction').onclick = function() {
     const teamId = document.getElementById('teamSelect').value;

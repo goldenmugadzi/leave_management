@@ -23,7 +23,7 @@
             </div>
             <div class="text-center">
               <div class="font-bold text-tory-blue-600 text-lg">{{ summary_stats.teams_with_devices }}</div>
-              <div class="text-nepal-500">With Devices</div>
+              <div class="text-nepal-500">With Gear</div>
             </div>
             <div class="text-center">
               <div class="font-bold text-pomegranate-primary text-lg">{{ summary_stats.active_assignments }}</div>
@@ -60,7 +60,7 @@
             {% elif item.status == 'available' %}
               ✅ Available
             {% else %}
-              ⚠️ No Device
+              ⚠️ No Gear
             {% endif %}
           </div>
         </div>
@@ -140,10 +140,10 @@
           </div>
           {% endif %}
 
-          <!-- Device Assignment -->
+          <!-- Gear Assignment -->
           {% if item.has_device %}
           <div class="mb-4 p-3 rounded-xl bg-gradient-to-r from-jade-50 to-apple-50 border border-jade-200/50">
-            <div class="text-xs text-jade-600 uppercase tracking-wide mb-1">Assigned Device</div>
+            <div class="text-xs text-jade-600 uppercase tracking-wide mb-1">Assigned Gear</div>
             <div class="font-semibold text-jade-800">{{ item.device_serial }}</div>
             {% if item.device.description %}
             <div class="text-sm text-jade-600">{{ item.device.description }}</div>
@@ -152,9 +152,9 @@
           </div>
           {% else %}
           <div class="mb-4 p-3 rounded-xl bg-gradient-to-r from-pomegranate-50 to-scarlet-red-50 border border-pomegranate-200/50">
-            <div class="text-xs text-pomegranate-600 uppercase tracking-wide mb-1">Device Status</div>
-            <div class="text-pomegranate-800 italic">No device assigned</div>
-            <div class="text-xs text-pomegranate-600 mt-1">Team needs device to be deployed</div>
+            <div class="text-xs text-pomegranate-600 uppercase tracking-wide mb-1">Gear Status</div>
+            <div class="text-pomegranate-800 italic">No gear assigned</div>
+            <div class="text-xs text-pomegranate-600 mt-1">Team needs gear to be deployed</div>
           </div>
           {% endif %}
 
@@ -168,7 +168,7 @@
             </a>
             {% endfor %}
             
-            <!-- Add Assign to Depot button for teams with devices but not deployed -->
+            <!-- Add Assign to Depot button for teams with gear but not deployed -->
             {% if item.has_device and not item.is_deployed and is_senior_foreman %}
             <a href="{% url 'fault_locator:assign_team_to_depot' item.team.id %}" 
                class="inline-flex items-center px-4 py-2 btn-primary btn-sm rounded-xl text-sm font-medium transition-all duration-300 hover:shadow-lg hover:scale-105">
@@ -231,12 +231,12 @@
     <div class="mt-8 glass-card p-6 rounded-3xl backdrop-blur-xl bg-white/40 border border-white/30">
       <h3 class="text-lg font-bold text-nepal-800 mb-4">Quick Actions</h3>
       <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <a href="{% url 'fault_locator:device_list' %}" 
+  <a href="{% url 'fault_locator:device_list' %}" 
            class="flex items-center gap-3 p-4 rounded-xl bg-white/50 hover:bg-white/70 border border-white/30 transition-all duration-300 hover:scale-105">
           <div class="w-10 h-10 bg-gradient-to-r from-gulf-blue-500 to-tory-blue-primary rounded-xl flex items-center justify-center text-white font-bold">📱</div>
           <div>
-            <div class="font-semibold text-nepal-800">Manage Devices</div>
-            <div class="text-sm text-nepal-600">View and assign devices</div>
+            <div class="font-semibold text-nepal-800">Manage Gear</div>
+            <div class="text-sm text-nepal-600">View and assign gear</div>
           </div>
         </a>
         

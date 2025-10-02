@@ -1180,15 +1180,15 @@ def simple_assign_fault(request, fault_id=None):
                     messages.error(request, "This fault is already assigned to a team")
                     return redirect('fault_locator:simple_fault_list')
                 
-                # Check if team has a device
+                # Check if team has gear
                 device_assignment = FaultLocatorDeviceAssignment.objects.filter(team=team).select_related('device').first()
                 if not device_assignment:
-                    messages.error(request, f"Team '{team.name}' doesn't have a device assigned")
+                    messages.error(request, f"Team '{team.name}' doesn't have gear assigned")
                     return redirect('fault_locator:assign_fault')
                 
-                # Check if assigned device is in working condition
+                # Check if assigned gear is in working condition
                 if device_assignment.device.status not in ['available', 'assigned']:
-                    messages.error(request, f"Team '{team.name}' cannot be assigned faults. Device '{device_assignment.device.serial_number}' is {device_assignment.device.get_status_display()}")
+                    messages.error(request, f"Team '{team.name}' cannot be assigned faults. Gear '{device_assignment.device.serial_number}' is {device_assignment.device.get_status_display()}")
                     return redirect('fault_locator:assign_fault')
                 
                 # Create assignment atomically
@@ -1206,7 +1206,7 @@ def simple_assign_fault(request, fault_id=None):
                 # Send notifications
                 notify_fault_assignment(fault_assignment, request)
                 
-                messages.success(request, f"Fault assigned to team '{team.name}' with device '{device_assignment.device.serial_number}'")
+                messages.success(request, f"Fault assigned to team '{team.name}' with gear '{device_assignment.device.serial_number}'")
                 return redirect('fault_locator:simple_fault_list')
                 
             except Fault.DoesNotExist:
@@ -1518,7 +1518,7 @@ def device_list(request):
         
         # Check permissions
         if not can_manage_devices(user_profile):
-            messages.error(request, "You don't have permission to manage devices")
+            messages.error(request, "You don't have permission to manage gear")
             return redirect('fault_locator:fault_locator_dashboard')
         
         # Get all devices with assignment status
@@ -1573,7 +1573,7 @@ def create_device(request):
             form = FaultLocatorDeviceForm(request.POST)
             if form.is_valid():
                 device = form.save()
-                messages.success(request, f"Device '{device.serial_number}' created successfully!")
+                messages.success(request, f"Gear '{device.serial_number}' created successfully!")
                 return redirect('fault_locator:device_list')
         else:
             form = FaultLocatorDeviceForm()
@@ -1581,15 +1581,15 @@ def create_device(request):
         context = {
             'form': form,
             'user_profile': user_profile,
-            'page_title': 'Create New Device',
+            'page_title': 'Create New Gear',
         }
         
         return render(request, "fault_locator/create_device.html", context)
     except Exception as e:
         import logging
         logger = logging.getLogger(__name__)
-        logger.error(f"Create device error: {e}")
-        messages.error(request, "An error occurred creating the device.")
+    logger.error(f"Create device error: {e}")
+    messages.error(request, "An error occurred creating the gear.")
     return redirect('fault_locator:device_list')
 
 # Team membership helper
@@ -1637,7 +1637,7 @@ def edit_device(request, device_id):
         
         # Check permissions
         if not can_manage_devices(user_profile):
-            messages.error(request, "You don't have permission to edit devices")
+            messages.error(request, "You don't have permission to edit gear")
             return redirect('fault_locator:fault_locator_dashboard')
         
         device = get_object_or_404(FaultLocatorDevice, id=device_id)
@@ -1646,7 +1646,7 @@ def edit_device(request, device_id):
             form = FaultLocatorDeviceForm(request.POST, instance=device)
             if form.is_valid():
                 device = form.save()
-                messages.success(request, f"Device '{device.serial_number}' updated successfully!")
+                messages.success(request, f"Gear '{device.serial_number}' updated successfully!")
                 return redirect('fault_locator:device_list')
         else:
             form = FaultLocatorDeviceForm(instance=device)
@@ -1661,7 +1661,7 @@ def edit_device(request, device_id):
             'current_assignment': current_assignment,
             'active_fault': active_fault,
             'user_profile': user_profile,
-            'page_title': f'Edit Device: {device.serial_number}',
+            'page_title': f'Edit Gear: {device.serial_number}',
             'can_delete': not current_assignment and not active_fault,
         }
         
@@ -1669,8 +1669,8 @@ def edit_device(request, device_id):
     except Exception as e:
         import logging
         logger = logging.getLogger(__name__)
-        logger.error(f"Edit device error: {e}")
-        messages.error(request, "An error occurred editing the device.")
+    logger.error(f"Edit device error: {e}")
+    messages.error(request, "An error occurred editing the gear.")
     return redirect('fault_locator:device_list')
 
 @login_required
@@ -1706,8 +1706,8 @@ def device_detail(request, device_id):
     except Exception as e:
         import logging
         logger = logging.getLogger(__name__)
-        logger.error(f"Device detail error: {e}")
-        messages.error(request, "An error occurred loading device details.")
+    logger.error(f"Device detail error: {e}")
+    messages.error(request, "An error occurred loading gear details.")
     return redirect('fault_locator:device_list')
 
 # --- Minimal placeholder views to satisfy URL routing ---

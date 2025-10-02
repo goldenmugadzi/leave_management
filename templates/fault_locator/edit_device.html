@@ -9,7 +9,7 @@
       <div class="flex justify-between items-start">
         <div>
           <h1 class="text-2xl font-bold text-gray-800 mb-2">{{ page_title }}</h1>
-          <p class="text-gray-600">Modify device information and manage assignments</p>
+          <p class="text-gray-600">Modify gear information and manage assignments</p>
         </div>
         <div class="flex space-x-2">
           <a href="{% url 'fault_locator:device_detail' device.id %}" 
@@ -28,7 +28,7 @@
       <!-- Edit Form -->
       <div class="form-section">
         <div class="form-card bg-white rounded-lg shadow-lg p-6">
-          <h2 class="text-lg font-semibold text-gray-800 mb-4">Device Information</h2>
+          <h2 class="text-lg font-semibold text-gray-800 mb-4">Gear Information</h2>
           
           <form method="post" class="space-y-6">
             {% csrf_token %}
@@ -76,20 +76,20 @@
                 {% if can_delete %}
                 <button type="button" onclick="confirmDelete()" 
                         class="px-4 py-2 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-lg font-bold hover:from-red-700 hover:to-red-800 transition-all duration-300 hover:scale-105 shadow-md hover:shadow-lg transform hover:-translate-y-1 border border-red-500 hover:border-red-400">
-                  🗑️ Delete Device
+                  🗑️ Delete Gear
                 </button>
                 {% endif %}
               </div>
               <button type="submit" 
                       class="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl font-bold text-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-300 hover:scale-105 shadow-xl hover:shadow-2xl transform hover:-translate-y-1 border-2 border-blue-500 hover:border-blue-400 ring-2 ring-blue-200 hover:ring-blue-300">
-                ✏️ Update Device
+                ✏️ Update Gear
               </button>
             </div>
           </form>
         </div>
       </div>
 
-      <!-- Device Status -->
+  <!-- Gear Status -->
       <div class="status-section">
         <div class="status-card bg-white rounded-lg shadow-lg p-6">
           <h2 class="text-lg font-semibold text-gray-800 mb-4">Current Status</h2>
@@ -167,10 +167,10 @@
           <div class="flex">
             <div class="text-yellow-400">⚠️</div>
             <div class="ml-3">
-              <h3 class="text-sm font-medium text-yellow-800">Cannot Delete Device</h3>
+              <h3 class="text-sm font-medium text-yellow-800">Cannot Delete Gear</h3>
               <p class="mt-1 text-sm text-yellow-700">
-                This device cannot be deleted because it's currently assigned to a team or being used for an active fault.
-                Please unassign the device first.
+                This gear cannot be deleted because it's currently assigned to a team or being used for an active fault.
+                Please unassign the gear first.
               </p>
             </div>
           </div>
@@ -187,7 +187,7 @@
   <div class="bg-white rounded-lg p-6 max-w-md mx-auto">
     <h3 class="text-lg font-semibold text-gray-800 mb-4">Confirm Delete</h3>
     <p class="text-gray-600 mb-6">
-      Are you sure you want to delete device <strong>{{ device.serial_number }}</strong>? 
+  Are you sure you want to delete gear <strong>{{ device.serial_number }}</strong>? 
       This action cannot be undone.
     </p>
     <div class="flex justify-end space-x-2">
@@ -199,7 +199,7 @@
         {% csrf_token %}
         <button type="submit" 
                 class="px-6 py-3 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-xl font-bold text-lg hover:from-red-700 hover:to-red-800 transition-all duration-300 hover:scale-105 shadow-xl hover:shadow-2xl transform hover:-translate-y-1 border-2 border-red-500 hover:border-red-400 ring-2 ring-red-200 hover:ring-red-300">
-          🗑️ Delete Device
+          🗑️ Delete Gear
         </button>
       </form>
     </div>
