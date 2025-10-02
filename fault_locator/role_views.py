@@ -230,6 +230,10 @@ def role_based_dashboard(request):
         'is_senior_foreman': is_senior_foreman(user_profile),
         'is_depot_foreperson': is_depot_foreperson(user_profile),
         'is_team_leader': is_team_leader(user_profile),
+        # Provide defaults to avoid template resolution logging errors
+        'recent_deployments': [],
+        'my_assignments': [],
+        'completed_today': [],
     }
     
     # Role-specific context and actions
@@ -296,21 +300,21 @@ def get_senior_foreman_context(user_profile):
                 'title': 'Deploy Team to Depot',
                 'description': f'Deploy {available_teams.count()} available teams',
                 'url': '/fault_locator/teams/deploy/',
-                'icon': '🚀',
+                'icon_class': 'fas fa-rocket',
                 'priority': 'high' if available_teams.count() > 0 else 'medium'
             },
             {
                 'title': 'Assign Devices to Teams',
                 'description': f'Assign {unassigned_devices.count()} available devices',
                 'url': '/fault_locator/assign-device-to-team/',
-                'icon': '📱',
+                'icon_class': 'fas fa-mobile-screen-button',
                 'priority': 'high' if unassigned_devices.count() > 0 else 'medium'
             },
             {
                 'title': 'Monitor Critical Faults',
                 'description': f'Review {critical_faults.count()} high priority faults',
                 'url': '/fault_locator/simple-faults/?priority=3',
-                'icon': '🔥',
+                'icon_class': 'fas fa-fire',
                 'priority': 'critical' if critical_faults.count() > 0 else 'low'
             }
         ],
@@ -319,91 +323,91 @@ def get_senior_foreman_context(user_profile):
                 'title': 'Team Overview',
                 'description': 'View all teams and their status',
                 'url': '/fault_locator/team-overview/',
-                'icon': '👥',
+                'icon_class': 'fas fa-users',
                 'priority': 'medium'
             },
             {
                 'title': 'Device Management',
                 'description': 'Manage fault locator devices',
                 'url': '/fault_locator/devices/',
-                'icon': '🔧',
+                'icon_class': 'fas fa-wrench',
                 'priority': 'medium'
             },
             {
                 'title': 'Create New Team',
                 'description': 'Create and configure new teams',
                 'url': '/fault_locator/teams/create/',
-                'icon': '➕',
+                'icon_class': 'fas fa-plus',
                 'priority': 'medium'
             },
             {
                 'title': 'Advanced Fault Assignment',
                 'description': 'Bulk assign faults to teams',
                 'url': '/fault_locator/advanced-assign/',
-                'icon': '⚡',
+                'icon_class': 'fas fa-bolt',
                 'priority': 'medium'
             },
             {
                 'title': 'Performance Monitoring',
                 'description': 'View system performance metrics',
                 'url': '/fault_locator/performance-monitoring/',
-                'icon': '📊',
+                'icon_class': 'fas fa-chart-line',
                 'priority': 'medium'
             },
             {
                 'title': 'Role Management',
                 'description': 'Manage user roles and permissions',
                 'url': '/fault_locator/manage-roles/',
-                'icon': '👤',
+                'icon_class': 'fas fa-user-shield',
                 'priority': 'medium'
             },
             {
                 'title': 'Team-Depot Management',
                 'description': 'Manage team deployments to depots',
                 'url': '/fault_locator/team-depot-management/',
-                'icon': '🏢',
+                'icon_class': 'fas fa-building',
                 'priority': 'medium'
             },
             {
                 'title': 'Device-Team Management',
                 'description': 'Manage device assignments to teams',
                 'url': '/fault_locator/device-team-management/',
-                'icon': '📱',
+                'icon_class': 'fas fa-mobile-screen',
                 'priority': 'medium'
             },
             {
                 'title': 'Depot Assignments',
                 'description': 'Manage depot foreperson assignments',
                 'url': '/fault_locator/depot-assignments/',
-                'icon': '🏭',
+                'icon_class': 'fas fa-industry',
                 'priority': 'medium'
             },
             {
                 'title': 'System Notifications',
                 'description': 'Send notifications for unassigned faults',
                 'url': '/fault_locator/notify-unassigned/',
-                'icon': '📢',
+                'icon_class': 'fas fa-bullhorn',
                 'priority': 'low'
             },
             {
                 'title': 'Role Assignment History',
                 'description': 'View role assignment history',
                 'url': '/fault_locator/role-history/',
-                'icon': '📜',
+                'icon_class': 'fas fa-scroll',
                 'priority': 'low'
             },
             {
                 'title': 'Legacy Role Migration',
                 'description': 'Migrate legacy roles to new system',
                 'url': '/fault_locator/migrate-legacy-roles/',
-                'icon': '🔄',
+                'icon_class': 'fas fa-arrows-rotate',
                 'priority': 'low'
             },
             {
                 'title': 'Senior Foreman Dashboard',
                 'description': 'Access dedicated senior foreman interface',
                 'url': '/fault_locator/senior-dashboard/',
-                'icon': '👨‍💼',
+                'icon_class': 'fas fa-user-tie',
                 'priority': 'medium'
             }
         ]
@@ -504,21 +508,21 @@ def get_depot_foreperson_context(user_profile):
                 'title': 'Assign Pending Faults',
                 'description': f'Assign {pending_faults.count()} pending faults to teams',
                 'url': '/fault_locator/simple-assign/',
-                'icon': '👉',
+                'icon_class': 'fas fa-hand-point-right',
                 'priority': 'high' if pending_faults.count() > 0 else 'low'
             },
             {
                 'title': 'Report New Fault',
                 'description': 'Report a new fault at your depot',
                 'url': '/fault_locator/quick-report/',
-                'icon': '📝',
+                'icon_class': 'fas fa-pen-to-square',
                 'priority': 'medium'
             },
             {
                 'title': 'Monitor Team Progress',
                 'description': f'Check progress of {active_faults.count()} active faults',
                 'url': '/fault_locator/simple-faults/?status=assigned',
-                'icon': '👁️',
+                'icon_class': 'fas fa-eye',
                 'priority': 'medium' if active_faults.count() > 0 else 'low'
             }
         ],
@@ -527,56 +531,56 @@ def get_depot_foreperson_context(user_profile):
                 'title': 'My Work Overview',
                 'description': 'View your assigned work and progress',
                 'url': '/fault_locator/my-work/',
-                'icon': '🛠️',
+                'icon_class': 'fas fa-screwdriver-wrench',
                 'priority': 'medium'
             },
             {
                 'title': 'All Faults at Depot',
                 'description': 'View all faults at your depot',
                 'url': '/fault_locator/simple-faults/',
-                'icon': '📋',
+                'icon_class': 'fas fa-clipboard-list',
                 'priority': 'medium'
             },
             {
                 'title': 'Create Fault Report',
                 'description': 'Create detailed fault report',
                 'url': '/fault_locator/create-fault/',
-                'icon': '�',
+                'icon_class': 'fas fa-file-circle-plus',
                 'priority': 'medium'
             },
             {
                 'title': 'Team Management',
                 'description': 'View teams at your depot',
                 'url': '/fault_locator/team-overview/',
-                'icon': '👥',
+                'icon_class': 'fas fa-users',
                 'priority': 'medium'
             },
             {
                 'title': 'Advanced Assignment',
                 'description': 'Use advanced fault assignment features',
                 'url': '/fault_locator/advanced-assign/',
-                'icon': '⚡',
+                'icon_class': 'fas fa-bolt',
                 'priority': 'medium'
             },
             {
                 'title': 'Fault Priority Management',
                 'description': 'Change fault priorities',
                 'url': '/fault_locator/simple-faults/',
-                'icon': '🔥',
+                'icon_class': 'fas fa-fire',
                 'priority': 'medium'
             },
             {
                 'title': 'Team Deployment',
                 'description': 'Deploy teams to your depot',
                 'url': '/fault_locator/teams/deploy/',
-                'icon': '🚀',
+                'icon_class': 'fas fa-rocket',
                 'priority': 'medium'
             },
             {
                 'title': 'Device Assignment',
                 'description': 'Assign devices to teams',
                 'url': '/fault_locator/assign-device-to-team/',
-                'icon': '📱',
+                'icon_class': 'fas fa-mobile-screen-button',
                 'priority': 'medium'
             }
         ]
@@ -631,21 +635,21 @@ def get_team_leader_context(user_profile):
                 'title': 'Report Fault Located',
                 'description': f'Update status for {current_assignments.count()} active assignments',
                 'url': '/fault_locator/my-work/',
-                'icon': '✅',
+                'icon_class': 'fas fa-check-circle',
                 'priority': 'high' if current_assignments.count() > 0 else 'medium'
             },
             {
                 'title': 'Update Work Progress',
                 'description': 'Add progress notes to ongoing work',
                 'url': '/fault_locator/my-work/',
-                'icon': '📊',
+                'icon_class': 'fas fa-chart-line',
                 'priority': 'medium'
             },
             {
                 'title': 'Request Assistance',
                 'description': 'Request help from depot foreperson',
                 'url': '/fault_locator/request-help/',
-                'icon': '🆘',
+                'icon_class': 'fas fa-life-ring',
                 'priority': 'low'
             }
         ],
@@ -654,42 +658,42 @@ def get_team_leader_context(user_profile):
                 'title': 'Field Updates',
                 'description': 'Update fault status from field',
                 'url': '/fault_locator/field-update/',
-                'icon': '🔄',
+                'icon_class': 'fas fa-arrows-rotate',
                 'priority': 'medium'
             },
             {
                 'title': 'Team Overview',
                 'description': 'View your team details and members',
                 'url': '/fault_locator/team-overview/',
-                'icon': '👥',
+                'icon_class': 'fas fa-users',
                 'priority': 'medium'
             },
             {
                 'title': 'Simple Fault List',
                 'description': 'View all faults in simple format',
                 'url': '/fault_locator/simple-faults/',
-                'icon': '📋',
+                'icon_class': 'fas fa-clipboard-list',
                 'priority': 'medium'
             },
             {
                 'title': 'Current Assignments',
                 'description': 'View detailed assignment information',
                 'url': '/fault_locator/my-assignments/',
-                'icon': '📝',
+                'icon_class': 'fas fa-list-check',
                 'priority': 'medium'
             },
             {
                 'title': 'Quick Fault Report',
                 'description': 'Quick fault reporting interface',
                 'url': '/fault_locator/quick-report/',
-                'icon': '📝',
+                'icon_class': 'fas fa-pen-to-square',
                 'priority': 'medium'
             },
             {
                 'title': 'Team Management',
                 'description': 'Manage team members and settings',
                 'url': '/fault_locator/teams/',
-                'icon': '⚙️',
+                'icon_class': 'fas fa-gear',
                 'priority': 'medium'
             }
         ]
@@ -735,14 +739,14 @@ def get_team_member_context(user_profile):
                 'title': 'View Current Work',
                 'description': f'Check {current_assignments.count()} active assignments',
                 'url': '/fault_locator/my-work/',
-                'icon': '🛠️',
+                'icon_class': 'fas fa-screwdriver-wrench',
                 'priority': 'high' if current_assignments.count() > 0 else 'medium'
             },
             {
                 'title': 'Contact Team Leader',
                 'description': f'Message {team_leader.get_full_name() if team_leader else "Team Leader"}',
                 'url': '/fault_locator/contact-leader/',
-                'icon': '📞',
+                'icon_class': 'fas fa-phone',
                 'priority': 'medium'
             }
         ],
@@ -751,35 +755,35 @@ def get_team_member_context(user_profile):
                 'title': 'Team Overview',
                 'description': 'View team details and members',
                 'url': '/fault_locator/team-overview/',
-                'icon': '👥',
+                'icon_class': 'fas fa-users',
                 'priority': 'medium'
             },
             {
                 'title': 'Simple Fault List',
                 'description': 'View all faults in simple format',
                 'url': '/fault_locator/simple-faults/',
-                'icon': '📋',
+                'icon_class': 'fas fa-clipboard-list',
                 'priority': 'medium'
             },
             {
                 'title': 'Team Work',
                 'description': 'View your team\'s current work',
                 'url': '/fault_locator/team-work/',
-                'icon': '🔧',
+                'icon_class': 'fas fa-wrench',
                 'priority': 'medium'
             },
             {
                 'title': 'Quick Fault Report',
                 'description': 'Quick fault reporting interface',
                 'url': '/fault_locator/quick-report/',
-                'icon': '📝',
+                'icon_class': 'fas fa-pen-to-square',
                 'priority': 'medium'
             },
             {
                 'title': 'Simple Fault Updates',
                 'description': 'Update fault status from field',
                 'url': '/fault_locator/field-update/',
-                'icon': '📲',
+                'icon_class': 'fas fa-mobile-screen',
                 'priority': 'medium'
             }
         ]

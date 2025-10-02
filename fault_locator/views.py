@@ -1897,7 +1897,7 @@ def edit_device(request, device_id):
         # Check permissions
         if not can_manage_devices(user_profile):
             messages.error(request, "You don't have permission to edit devices")
-            return redirect('fault_locator_dashboard')
+            return redirect('fault_locator:fault_locator_dashboard')
         
         device = get_object_or_404(FaultLocatorDevice, id=device_id)
         
@@ -2090,7 +2090,7 @@ def unassign_device(request, device_id):
                     )
             
             messages.success(request, f"Device '{device.serial_number}' unassigned from team '{team.name}'")
-            return redirect('device_list')
+            return redirect('fault_locator:device_list')
         
         context = {
             'device': device,
@@ -2115,7 +2115,7 @@ def edit_team(request, team_id):
         # Check permissions
         if not (is_senior_foreman(user_profile) or can_manage_devices(user_profile)):
             messages.error(request, "You don't have permission to edit teams")
-            return redirect('fault_locator_dashboard')
+            return redirect('fault_locator:fault_locator_dashboard')
         
         team = get_object_or_404(FaultLocatorTeam.objects.select_for_update(), id=team_id)
         

@@ -2,6 +2,33 @@
 {% load static %}
 
 {% block title %}{{ role_display }} Dashboard{% endblock %}
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-gulf-blue-50 via-white to-jade-50 p-6">
+    <div class="max-w-7xl mx-auto">
+        <!-- Header Section -->
+        <div class="glass-header mb-8 p-6 rounded-3xl backdrop-blur-xl bg-white/30 border border-white/20 shadow-2xl">
+    <!-- Error Message -->
+    {% if error|default:'' %}
+    <div class="mb-6">
+    <!-- Primary Actions Section -->
+    {% if primary_actions %}
+    <div class="mb-8">
+                    <div class="action-icon mb-4 text-4xl">
+                        <i class="{{ action.icon_class|default:'' }}"></i>
+                    </div>
+                    <div class="action-icon mb-4 text-4xl">
+                        <i class="{{ action.icon_class|default:'' }}"></i>
+                    </div>
+                    <div class="action-icon mb-4 text-4xl">
+                        <i class="{{ action.icon_class|default:'' }}"></i>
+                    </div>
+                            <small class="text-jade-600">Completed</small>
+                            <small class="text-jade-600">Completed</small>
+                            <small class="text-jade-600">Completed</small>
+{% extends "admin_layout.html" %}
+{% load static %}
+
+{% block title %}{{ role_display }} Dashboard{% endblock %}
 
 {% block content %}
 <div class="min-h-screen bg-gradient-to-br from-gulf-blue-50 via-white to-jade-50 p-6">
@@ -49,7 +76,7 @@
                         <div class="glass-card group relative overflow-hidden rounded-3xl backdrop-blur-xl bg-white/40 border border-white/30 shadow-2xl hover:shadow-3xl transition-all duration-500 hover:scale-105 hover:bg-white/50 priority-{{ action.priority|default:'medium' }}">
                             <div class="p-6 text-center">
                                 <div class="action-icon mb-4 text-4xl">
-                                    {{ action.icon }}
+                                 <i class="{{ action.icon_class|default:'' }}"></i>
                                 </div>
                                 <h5 class="text-xl font-bold text-nepal-800 mb-3 group-hover:text-gulf-blue-600 transition-colors duration-300">{{ action.title }}</h5>
                                 <p class="text-nepal-600 mb-4">{{ action.description }}</p>
@@ -63,7 +90,7 @@
                         <div class="glass-card group relative overflow-hidden rounded-3xl backdrop-blur-xl bg-white/40 border border-white/30 shadow-2xl hover:shadow-3xl transition-all duration-500 hover:scale-105 hover:bg-white/50 priority-{{ action.priority|default:'medium' }}">
                             <div class="p-6 text-center">
                                 <div class="action-icon mb-4 text-4xl">
-                                    {{ action.icon }}
+                                 <i class="{{ action.icon_class|default:'' }}"></i>
                                 </div>
                                 <h5 class="text-xl font-bold text-nepal-800 mb-3 group-hover:text-gulf-blue-600 transition-colors duration-300">{{ action.title }}</h5>
                                 <p class="text-nepal-600 mb-4">{{ action.description }}</p>
@@ -77,7 +104,7 @@
                         <div class="glass-card group relative overflow-hidden rounded-3xl backdrop-blur-xl bg-white/40 border border-white/30 shadow-2xl hover:shadow-3xl transition-all duration-500 hover:scale-105 hover:bg-white/50 priority-{{ action.priority|default:'medium' }}">
                             <div class="p-6 text-center">
                                 <div class="action-icon mb-4 text-4xl">
-                                    {{ action.icon }}
+                                 <i class="{{ action.icon_class|default:'' }}"></i>
                                 </div>
                                 <h5 class="text-xl font-bold text-nepal-800 mb-3 group-hover:text-gulf-blue-600 transition-colors duration-300">{{ action.title }}</h5>
                                 <p class="text-nepal-600 mb-4">{{ action.description }}</p>
@@ -91,7 +118,7 @@
                         <div class="glass-card group relative overflow-hidden rounded-3xl backdrop-blur-xl bg-white/40 border border-white/30 shadow-2xl hover:shadow-3xl transition-all duration-500 hover:scale-105 hover:bg-white/50 priority-{{ action.priority|default:'medium' }}">
                             <div class="p-6 text-center">
                                 <div class="action-icon mb-4 text-4xl">
-                                    {{ action.icon }}
+                                 <i class="{{ action.icon_class|default:'' }}"></i>
                                 </div>
                                 <h5 class="text-xl font-bold text-nepal-800 mb-3 group-hover:text-gulf-blue-600 transition-colors duration-300">{{ action.title }}</h5>
                                 <p class="text-nepal-600 mb-4">{{ action.description }}</p>
@@ -105,7 +132,7 @@
                         <div class="glass-card group relative overflow-hidden rounded-3xl backdrop-blur-xl bg-white/40 border border-white/30 shadow-2xl hover:shadow-3xl transition-all duration-500 hover:scale-105 hover:bg-white/50 priority-{{ action.priority|default:'medium' }}">
                             <div class="p-6 text-center">
                                 <div class="action-icon mb-4 text-4xl">
-                                    {{ action.icon }}
+                                 <i class="{{ action.icon_class|default:'' }}"></i>
                                 </div>
                                 <h5 class="text-xl font-bold text-nepal-800 mb-3 group-hover:text-gulf-blue-600 transition-colors duration-300">{{ action.title }}</h5>
                                 <p class="text-nepal-600 mb-4">{{ action.description }}</p>
@@ -119,7 +146,7 @@
                         <div class="glass-card group relative overflow-hidden rounded-3xl backdrop-blur-xl bg-white/40 border border-white/30 shadow-2xl hover:shadow-3xl transition-all duration-500 hover:scale-105 hover:bg-white/50 priority-{{ action.priority|default:'medium' }}">
                             <div class="p-6 text-center">
                                 <div class="action-icon mb-4 text-4xl">
-                                    {{ action.icon }}
+                                 <i class="{{ action.icon_class|default:'' }}"></i>
                                 </div>
                                 <h5 class="text-xl font-bold text-nepal-800 mb-3 group-hover:text-gulf-blue-600 transition-colors duration-300">{{ action.title }}</h5>
                                 <p class="text-nepal-600 mb-4">{{ action.description }}</p>
@@ -133,7 +160,7 @@
                         <div class="glass-card group relative overflow-hidden rounded-3xl backdrop-blur-xl bg-white/40 border border-white/30 shadow-2xl hover:shadow-3xl transition-all duration-500 hover:scale-105 hover:bg-white/50 priority-{{ action.priority|default:'medium' }}">
                             <div class="p-6 text-center">
                                 <div class="action-icon mb-4 text-4xl">
-                                    {{ action.icon }}
+                                 <i class="{{ action.icon_class|default:'' }}"></i>
                                 </div>
                                 <h5 class="text-xl font-bold text-nepal-800 mb-3 group-hover:text-gulf-blue-600 transition-colors duration-300">{{ action.title }}</h5>
                                 <p class="text-nepal-600 mb-4">{{ action.description }}</p>
@@ -147,7 +174,7 @@
                         <div class="glass-card group relative overflow-hidden rounded-3xl backdrop-blur-xl bg-white/40 border border-white/30 shadow-2xl hover:shadow-3xl transition-all duration-500 hover:scale-105 hover:bg-white/50 priority-{{ action.priority|default:'medium' }}">
                             <div class="p-6 text-center">
                                 <div class="action-icon mb-4 text-4xl">
-                                    {{ action.icon }}
+                                 <i class="{{ action.icon_class|default:'' }}"></i>
                                 </div>
                                 <h5 class="text-xl font-bold text-nepal-800 mb-3 group-hover:text-gulf-blue-600 transition-colors duration-300">{{ action.title }}</h5>
                                 <p class="text-nepal-600 mb-4">{{ action.description }}</p>
@@ -161,7 +188,7 @@
                         <div class="glass-card group relative overflow-hidden rounded-3xl backdrop-blur-xl bg-white/40 border border-white/30 shadow-2xl hover:shadow-3xl transition-all duration-500 hover:scale-105 hover:bg-white/50 priority-{{ action.priority|default:'medium' }}">
                             <div class="p-6 text-center">
                                 <div class="action-icon mb-4 text-4xl">
-                                    {{ action.icon }}
+                                    <i class="{{ action.icon_class|default:'' }}"></i>
                                 </div>
                                 <h5 class="text-xl font-bold text-nepal-800 mb-3 group-hover:text-gulf-blue-600 transition-colors duration-300">{{ action.title }}</h5>
                                 <p class="text-nepal-600 mb-4">{{ action.description }}</p>
@@ -175,7 +202,7 @@
                         <div class="glass-card group relative overflow-hidden rounded-3xl backdrop-blur-xl bg-white/40 border border-white/30 shadow-2xl hover:shadow-3xl transition-all duration-500 hover:scale-105 hover:bg-white/50 priority-{{ action.priority|default:'medium' }}">
                             <div class="p-6 text-center">
                                 <div class="action-icon mb-4 text-4xl">
-                                    {{ action.icon }}
+                                    <i class="{{ action.icon_class|default:'' }}"></i>
                                 </div>
                                 <h5 class="text-xl font-bold text-nepal-800 mb-3 group-hover:text-gulf-blue-600 transition-colors duration-300">{{ action.title }}</h5>
                                 <p class="text-nepal-600 mb-4">{{ action.description }}</p>
@@ -189,7 +216,7 @@
                         <div class="glass-card group relative overflow-hidden rounded-3xl backdrop-blur-xl bg-white/40 border border-white/30 shadow-2xl hover:shadow-3xl transition-all duration-500 hover:scale-105 hover:bg-white/50 priority-{{ action.priority|default:'medium' }}">
                             <div class="p-6 text-center">
                                 <div class="action-icon mb-4 text-4xl">
-                                    {{ action.icon }}
+                                    <i class="{{ action.icon_class|default:'' }}"></i>
                                 </div>
                                 <h5 class="text-xl font-bold text-nepal-800 mb-3 group-hover:text-gulf-blue-600 transition-colors duration-300">{{ action.title }}</h5>
                                 <p class="text-nepal-600 mb-4">{{ action.description }}</p>
@@ -217,7 +244,7 @@
                 <div class="glass-card group relative overflow-hidden rounded-xl backdrop-blur-xl bg-white/30 border border-white/20 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 hover:bg-white/40">
                     <div class="p-4 text-center">
                         <div class="action-icon mb-2 text-2xl">
-                            {{ action.icon }}
+                             <i class="{{ action.icon_class|default:'' }}"></i>
                         </div>
                         <h6 class="text-lg font-semibold text-nepal-800 mb-2 group-hover:text-gulf-blue-600 transition-colors duration-300">{{ action.title }}</h6>
                         <p class="text-nepal-600 text-sm mb-3">{{ action.description }}</p>
