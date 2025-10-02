@@ -1649,7 +1649,7 @@ def recall_team_from_depot(request, team_id):
         # Check if team is deployed
         if not team.current_depot:
             messages.error(request, f"Team '{team.name}' is not currently deployed.")
-            return redirect('team_overview')
+            return redirect('fault_locator:team_overview')
         
         # Check for active assignments (not yet located)
         active_assignments = FaultAssignment.objects.filter(
@@ -1660,7 +1660,7 @@ def recall_team_from_depot(request, team_id):
         if request.method == "POST":
             if active_assignments.exists() and not request.POST.get('force_recall'):
                 messages.error(request, "Team has active fault assignments. Use force recall if necessary.")
-                return redirect('recall_team', team_id=team.id)
+                return redirect('fault_locator:recall_team', team_id=team.id)
             
             try:
                 # Handle reassign after faults
@@ -1711,7 +1711,7 @@ def recall_team_from_depot(request, team_id):
                     success_message += f" and will be redeployed to {reassign_depot.depot} after current faults are completed"
                 
                 messages.success(request, success_message)
-                return redirect('team_overview')
+                return redirect('fault_locator:team_overview')
                 
             except IntegrityError as e:
                 messages.error(request, "Team recall conflict occurred. Please try again.")
@@ -1733,13 +1733,13 @@ def recall_team_from_depot(request, team_id):
             'user_profile': user_profile,
             'depots': depots,
         }
-        return render(request, "fault_locator/recall_team.html", context)
+    return render(request, "fault_locator/recall_team.html", context)
     except Exception as e:
         import logging
         logger = logging.getLogger(__name__)
         logger.error(f"Recall team from depot error: {e}")
         messages.error(request, "An error occurred recalling the team from depot.")
-        return redirect('team_overview')
+    return redirect('fault_locator:team_overview')
 
 @login_required
 def my_work(request):
@@ -2205,7 +2205,7 @@ def edit_team(request, team_id):
         logger = logging.getLogger(__name__)
         logger.error(f"Edit team error: {e}")
         messages.error(request, "An error occurred editing the team.")
-        return redirect('team_overview')
+    return redirect('fault_locator:team_overview')
 
 @login_required
 @transaction.atomic
@@ -2216,7 +2216,7 @@ def create_team(request):
         # Check permissions
         if not (is_senior_foreman(user_profile) or can_manage_devices(user_profile)):
             messages.error(request, "You don't have permission to create teams")
-            return redirect('fault_locator_dashboard')
+            return redirect('fault_locator:fault_locator_dashboard')
 
         if request.method == "POST":
             try:
@@ -2228,10 +2228,10 @@ def create_team(request):
                     team.save()
 
                     messages.success(request, f"Team '{team.name}' created successfully")
-                    return redirect('edit_team', team_id=team.id)
+                    return redirect('fault_locator:edit_team', team_id=team.id)
             except Exception as e:
                 messages.error(request, f"Error creating team: {str(e)}")
-                return redirect('create_team')
+                return redirect('fault_locator:create_team')
 
         # Initialize form
         from .forms import FaultLocatorTeamForm
@@ -2249,7 +2249,7 @@ def create_team(request):
         logger = logging.getLogger(__name__)
         logger.error(f"Create team error: {e}")
         messages.error(request, "An error occurred creating the team.")
-        return redirect('team_overview')
+        return redirect('fault_locator:team_overview')
 
 @login_required
 @transaction.atomic
