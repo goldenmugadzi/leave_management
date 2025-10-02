@@ -1,0 +1,75 @@
+{% extends "admin_layout.html" %}
+{% load static %}
+{% load humanize %}
+{% load custom_tags %}
+{% block styles %}
+  <link rel="stylesheet"
+        href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css" />
+  <style>.dataTables_wrapper .dataTables_length select { width: 4rem; }</style>
+{% endblock %}
+{% block content %}
+  <title> Equipment</title>
+  <div class="content-wrapper">
+    <div class="grid grid-cols-1">
+      <div class="bg-gulf-blue-100 shadow-lg rounded-lg p-6">
+      
+
+        <table id="equipments" class="table table-striped stripe mt-3 table-bordered">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Type</th>
+              <th>Description</th>
+              <th>Date</th>
+              <th>Cost Center</th>
+              <th>Customer</th>
+              <th>Meter number</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for equipment in equipments %}
+              <tr class="h-1">
+                <td><a class="text-blue-500" href="{% url 'EquipTracker:equipment_tracker' equipment.id %}">{{ equipment.id|default_if_none:'' }}</a></td>
+                <td>{{ equipment.type_of_equipment|default_if_none:'' }}</td>
+               <td>{{ equipment.reason|default_if_none:'' }}</td>
+                <td>{{ equipment.created_at|date }}</td>
+                <td>{{ equipment.cost_center }}</td>
+                <td>{{ equipment.customer.name|default_if_none:'' }}</td>
+                <td><span title="{{ equipment.meter.meter_type }}">{{ equipment.meter.number }}</span></td>
+                <td>{{ equipment.process.approval_set.last|default_if_none:"No Approval" }}</td> 
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        <div class=" container text-center ">
+          {% if roles %}
+            {% for app_roles in roles %}
+              <span class="text-blue-400  mx-4 rounded border-2 border border-red-300 px-1  font-bold rounded">{{ app_roles }}</span>
+            {% endfor %}
+          {% endif %}
+        </div>
+        <div class=" container text-center mt-3">
+
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}
+{% block scripts %}
+  <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
+  <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+  <script>
+  $(document).ready(function () {
+    $("#equipments").DataTable({
+      "pageLength": 10,
+      "columnDefs": [{ "orderable": true, "targets": [0, 1, 2,3,4] }],
+      "responsive": true,
+      "searching": true,
+      language: {
+        search: "Filter results:"
+    }
+    });
+  });
+  </script>
+{% endblock %}

@@ -85,14 +85,14 @@ class Attachment(models.Model):
     nonconformity = models.ForeignKey(Nonconformity, on_delete=models.CASCADE)
     attachment = models.FileField(upload_to='nonconformity/attachments/', blank=True, null=True, verbose_name='Attachment')
     def __str__(self):
-        return self.attachment.name
+        return  str(self.id)
 class RejectionAttachment(models.Model):
     rejection = models.ForeignKey(Rejection, on_delete=models.CASCADE)
     attachment = models.FileField(upload_to='nonconformity/rejection_attachments/', blank=True, null=True, verbose_name='Attachment')
     def __str__(self):
-        return self.attachment.name
+        return  str(self.id)
 class AcceptanceAttachment(models.Model):
     acceptance = models.ForeignKey(Acceptance, on_delete=models.CASCADE)
     attachment = models.FileField(upload_to='nonconformity/acceptance_attachments/', blank=True, null=True, verbose_name='Attachment')
     def __str__(self):
-        return self.attachment.name
+        return  str(self.id) 

@@ -30,6 +30,7 @@ from rest_framework_simplejwt.views import (
 )
 
 urlpatterns = [
+    path('', include('pretask_risk_assessment.urls')),
     path('', include('it.beii_auth.urls')),
     path('', include('Docs.urls')),
     path('', include('tokens.urls')),
@@ -66,13 +67,13 @@ urlpatterns = [
     path('', include('Hardware_Faults.urls')),
     path('', include('Asset_Register.urls')),
 
-    # Add the comm_files app URLs
     path('commercial/', include('comm_files.urls')),
     path('', include('Transport.urls')),
     # path('', include('safety.urls')),
     # path('meetings/', include('meetings.urls')),
     path('search/', include('esearch.urls')),
     path('temp_tokens/', include('commecial.tempertockens.urls')),
+    path('', include('EquipTracker.urls')),
     path('competence_building/', include('competence_building.urls')),
     # path('api/', include('api.urls')),  # Commented out until api.urls exists
     path('', include('meetings.urls')),
@@ -83,7 +84,7 @@ urlpatterns = [
     path('inspections/', include('inspections.urls')),
     
     path('api-auth/', include('rest_framework.urls')),
-    path("gql/", csrf_exempt(FileUploadGraphQLView.as_view(graphiql=True))),  # <-- wrap with csrf_exempt
+    path("gql/", csrf_exempt(FileUploadGraphQLView.as_view(graphiql=True))),  
     path('api/auth/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/auth/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('api/auth/token/verify/', TokenVerifyView.as_view(), name='token_verify'),

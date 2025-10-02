@@ -284,7 +284,7 @@ def approve_step(request, process_id):
                     
                     return redirect("Ace:virament_detail", virement_item.virament_id)
                 # Check for tokens only if no specific workflow matched
-                elif process.token_set.exists():
+                elif process.token_set.exists(): 
                     token = process.token_set.last()
                     send_notification(request, 'tokens:token', token.type, token, token.id)
                     print('------------------------------got here-----------------------------------', str(token.id))

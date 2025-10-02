@@ -21,21 +21,21 @@
         <table id="tokens" class="table table-striped stripe mt-3 table-bordered">
           <thead>
             <tr>
-               <th >ID</th>
-          <th >Battery Name</th>
-          <th >Site Name</th>
-          <th >Cell Quantity</th>
-          <th >Date Installed</th> 
+              <th >ID</th>
+              <th >Battery Name</th>
+              <th >lacated at </th>
+              <th >Plates per Cell</th>z
+              <th >Date Installed</th> 
             </tr>
         </thead>
           <tbody>
             {% for installation in installations %}
               <tr class="h-1">
                 <td><a class="text-blue-500" href="{% url 'BatteryMaintenance:installation' installation.id %}">{{ installation.id|default_if_none:'' }}</a></td>
-            <td >{{ installation.battery_name }}</td>
-            <td >{{ installation.site_name }}</td>
-            <td >{{ installation.cell_quantity }}</td>
-            <td >{{ installation.date|date:"Y-m-d" }}</td>
+                <td >{{ installation.battery_name }}</td>
+                <td >{{ installation.substation.name }}</td>
+                <td >{{ installation.plates_per_cell }}</td>
+                <td >{{ installation.date|date:"Y-m-d" }}</td>
               </tr>
             {% endfor %}
           </tbody>
@@ -51,7 +51,7 @@
   $(document).ready(function () {
     $("#tokens").DataTable({
       "pageLength": 10,
-      "columnDefs": [{ "orderable": true, "targets": [0, 1, 2,3,4] }],
+      "columnDefs": [{ "orderable": true, "targets": [0, 1, 2] }],
       "responsive": true,
       "searching": true,
       language: {

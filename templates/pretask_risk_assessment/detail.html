@@ -1,0 +1,8 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>{{ assessment.task_name }}</h2>
+<p>Risk Level: {{ assessment.risk_level }}</p>
+<p>Description: {{ assessment.description }}</p>
+<p>Created At: {{ assessment.created_at }}</p>
+<a href="{% url 'pretask_risk_assessment:list' %}">Back to List</a>
+{% endblock %}
