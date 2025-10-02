@@ -383,27 +383,6 @@ def get_senior_foreman_context(user_profile):
                 'priority': 'medium'
             },
             {
-                'title': 'System Notifications',
-                'description': 'Send notifications for unassigned faults',
-                'url': '/fault_locator/notify-unassigned/',
-                'icon_class': 'fas fa-bullhorn',
-                'priority': 'low'
-            },
-            {
-                'title': 'Role Assignment History',
-                'description': 'View role assignment history',
-                'url': '/fault_locator/role-history/',
-                'icon_class': 'fas fa-scroll',
-                'priority': 'low'
-            },
-            {
-                'title': 'Legacy Role Migration',
-                'description': 'Migrate legacy roles to new system',
-                'url': '/fault_locator/migrate-legacy-roles/',
-                'icon_class': 'fas fa-arrows-rotate',
-                'priority': 'low'
-            },
-            {
                 'title': 'Senior Foreman Dashboard',
                 'description': 'Access dedicated senior foreman interface',
                 'url': '/fault_locator/senior-dashboard/',

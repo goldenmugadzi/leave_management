@@ -31,13 +31,11 @@ urlpatterns = [
     path('manage-roles/', central_role_views.manage_fault_locator_roles, name='manage_fault_locator_roles'),
     path('assign-role-ajax/', central_role_views.assign_fault_locator_role_ajax, name='assign_fault_locator_role_ajax'),
     path('remove-role-ajax/', central_role_views.remove_fault_locator_role_ajax, name='remove_fault_locator_role_ajax'),
-    path('role-history/', central_role_views.role_assignment_history, name='role_assignment_history'),
     
     # Depot Assignment Management
     path('depot-assignments/', central_role_views.depot_assignment_overview, name='depot_assignment_overview'),
     path('assign-depot-foreperson-ajax/', central_role_views.assign_depot_foreperson_ajax, name='assign_depot_foreperson_ajax'),
     path('remove-depot-foreperson-ajax/', central_role_views.remove_depot_foreperson_ajax, name='remove_depot_foreperson_ajax'),
-    path('migrate-legacy-roles/', central_role_views.migrate_legacy_roles_view, name='migrate_legacy_roles'),
     
     # Simplified mobile-friendly views (these exist)
     path('simple-faults/', views.simple_fault_list, name='simple_fault_list'),
@@ -56,9 +54,6 @@ urlpatterns = [
     path('team-overview/', views.team_overview, name='team_overview'),
     path('teams/', views.team_overview, name='team_list'),  # Redirect to team_overview
     path('my-work/', views.my_work, name='my_work'),
-    
-    # Notifications
-    path('notify-unassigned/', views.notify_unassigned_faults, name='notify_unassigned_faults'),
     
     # Device Management
     path('devices/', views.device_list, name='device_list'),

@@ -230,52 +230,6 @@ def notify_high_priority_fault(fault, request):
         for foreperson in depot_forepersons:
             notify_fault_locator_user(foreperson, message, notification_type, url, fault.id, request)
 
-def notify_unassigned_faults(request):
-    """Daily notification function for unassigned faults (to be called by scheduler)"""
-    from datetime import timedelta
-    
-    # Get faults that are unassigned for more than 2 hours
-    two_hours_ago = timezone.now() - timedelta(hours=2)
-    unassigned_faults = Fault.objects.filter(
-        status='requested',
-        reported_at__lt=two_hours_ago
-    ).select_related('depot', 'reported_by')
-    
-    if unassigned_faults.exists():
-        # Group faults by depot
-        depot_faults = {}
-        for fault in unassigned_faults:
-            depot_code = fault.depot.code
-            if depot_code not in depot_faults:
-                depot_faults[depot_code] = []
-            depot_faults[depot_code].append(fault)
-        
-        # Notify depot forepersons about unassigned faults at their depot
-        for depot_code, faults in depot_faults.items():
-            depot_forepersons = UserProfile.objects.filter(
-                depot=depot_code,
-                designation__description__icontains='foreperson'
-            )
-            
-            fault_list = ", ".join([f"#{fault.id}" for fault in faults])
-            message = f"⏰ {len(faults)} fault(s) have been unassigned for over 2 hours: {fault_list}. Please assign them to teams."
-            url = "/fault_locator/assign-fault/"
-            notification_type = "Unassigned Faults Alert"
-            
-            for foreperson in depot_forepersons:
-                notify_fault_locator_user(foreperson, message, notification_type, url, depot_code, request)
-        
-        # Also notify senior forepersons about overall unassigned faults
-        senior_forepersons = UserProfile.objects.filter(
-            designation__description__icontains='senior foreperson'
-        )
-        
-        total_unassigned = unassigned_faults.count()
-        senior_message = f"⚠️ System Alert: {total_unassigned} fault(s) have been unassigned for over 2 hours across all depots."
-        
-        for senior in senior_forepersons:
-            notify_fault_locator_user(senior, senior_message, "System Alert", url, "system", request)
-
 def notify_device_assignment(device_assignment, request):
     """Notify team members when a device is assigned to their team"""
     team = device_assignment.team
