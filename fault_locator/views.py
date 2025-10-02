@@ -1298,9 +1298,7 @@ def create_team(request):
             return redirect('fault_locator:team_overview')
         
         if request.method == 'POST':
-            # Use the updated form
-            from .forms import FaultLocatorTeamForm
-            
+            # Use the updated form (imported at module level)
             form = FaultLocatorTeamForm(request.POST, user_region=user_profile.region)
             if form.is_valid():
                 team = form.save(commit=False)
