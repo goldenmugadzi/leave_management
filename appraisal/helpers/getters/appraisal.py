@@ -1,7 +1,7 @@
 from dataclasses import dataclass
-from typing import Protocol
+from typing import Protocol, List
 from ...models.appraisal import Appraisal
-from ...repository.kra import YearQuarterRepository, AppraisalOutPutPerformanceDimensionScoreRepository, KRARepository
+from ...repository.kra import YearQuarterRepository, AppraisalDepartmentOutputRepository, AppraisalOutPutPerformanceDimensionScoreRepository
 from ...repository.departmental_workplan import DepartmentalObjectiveRepository
 from ...repository.qualification_experience import UserQualificationRepository, UserExperienceRepository
 from ...repository.training import TrainingAndDevelopmentRepository
@@ -9,7 +9,7 @@ from ...repository.performance import PerformanceReviewRepository
 from ...repository.appraisal import AppraiseePersonalAttributeRepository
 from .quarter import get_all_quarter_ratings_per_appraiser
 
-from ...helpers.types.appraisal import AppraisalPersonalDetails, AppraisalDepartmentObjectivesDependencies, AppraisalPerformanceAssessmentType, TrainingAndDevType, PerformanceProgressReviewType, FinalPerformanceAssType
+from ...helpers.types.appraisal import AppraisalPersonalDetails, AppraisalOutputType, AppraisalPerformanceAssessmentType, TrainingAndDevType, PerformanceProgressReviewType, FinalPerformanceAssType
 
 
 class AppraisalDependanciesStrategyInterface(Protocol):
@@ -89,68 +89,70 @@ class AppraisalPersonalDetailsStrategy:
         )
 
 @dataclass   
+@dataclass
 class PerformanceAssessmentStrategy:
     appraisal_object: Appraisal
     
-    def __get_appraisal_departmental_dep(self, kra_id: int):
-        appraisal_obj = self.appraisal_object
-        department_obj_repo = DepartmentalObjectiveRepository()
-        department_obj_qr = department_obj_repo.fetch_by_cost_center_kra(
-            cost_center_id=appraisal_obj.user.cost_center.id,
-            kra_id=kra_id
-            )
+    
+    def __get_appraisal_outputs(self, quarter_id: int):
         
-        appraisal_departmental_dep = []  
-        
-        if not department_obj_qr.exists():
-            return appraisal_departmental_dep
-        
-        appraisal_year = appraisal_obj.created_date.year
-        year_quarter_repo = YearQuarterRepository()
-        appraisal_year_quarter_qr = year_quarter_repo.fetch_by_year(appraisal_year)
-        
-        for department_obj in department_obj_qr:
-            dimension_repo = AppraisalOutPutPerformanceDimensionScoreRepository()
-            dimension_qr = dimension_repo.fetch_by_department_objective_id(
-                department_objective_id=department_obj.id
-            )
-            
-            if not dimension_qr.exists():
-                continue
+        repo = AppraisalDepartmentOutputRepository()
+        return repo.fetch_by_appraisal_id_quarter(
+            appraisal_id=self.appraisal_object.id,
+            quarter_id=quarter_id
+        )
 
-            for year_quarter_obj in appraisal_year_quarter_qr:
-                dimension_quarter_qr = dimension_qr.filter(appraisal_department_output__year_quarter__id=year_quarter_obj.id)
-                total_dimension_quarter = dimension_qr.count()
-                total_outputs = total_dimension_quarter / 4
-                appraisal_department_objectives = AppraisalDepartmentObjectivesDependencies(
-                    department_objective=department_obj,
-                    quarter= year_quarter_obj.quarter,
-                    total_outputs=total_outputs,
-                    appraisal_dept_outputs=dimension_quarter_qr
-                    
+    def __get_perf_dimension(self, output_id: int):
+        """
+        Fetch all performance dimension scores for a given appraisal department output.
+
+        Args:
+            output_id (int): The ID of the AppraisalDepartmentOutput.
+
+        Returns:
+            QuerySet[AppraisalOutPutPerformanceDimensionScore]: A queryset of 
+            performance dimension scores linked to the output.
+        """
+        repo = AppraisalOutPutPerformanceDimensionScoreRepository()
+        return repo.fetch_by_department_output_id(
+            appraisal_department_output_id=output_id
+        )
+    
+    def __get_quarters(self):
+        """
+        Fetch all quarters for the appraisal year.
+
+        Returns:
+            QuerySet[YearQuarter]: A queryset of quarters associated 
+            with the appraisal year.
+        """
+        repo = YearQuarterRepository()
+        return repo.fetch_by_year(year=self.appraisal_object.created_date.year)
+    
+    def dependance(self) -> List[AppraisalPerformanceAssessmentType]:
+        
+        appraisal_assessments_list: List[AppraisalPerformanceAssessmentType] = []
+
+        for quarter_obj in self.__get_quarters():
+            appraisal_output_qr = self.__get_appraisal_outputs(quarter_id=quarter_obj.id)
+            
+            appraisal_output_types_list = []
+            for output_obj in appraisal_output_qr:
+                appraisal_output_type = AppraisalOutputType(
+                    output_obj=output_obj,
+                    performance_dimensions=self.__get_perf_dimension(output_id=output_obj.id)
                 )
-                appraisal_departmental_dep.append(appraisal_department_objectives)
-                
-        return appraisal_departmental_dep
-
-    def dependance(self):
-        kra_repo = KRARepository()
-        kra_qr = kra_repo.fetch_all()
-        appraisal_perf_ass_list = []
-        for kra_obj in kra_qr:
-            appraisal_departmental_dep_list = self.__get_appraisal_departmental_dep(kra_id=kra_obj.id)
+                appraisal_output_types_list.append(appraisal_output_type)
             
-            if len(appraisal_departmental_dep_list) == 0:
-                continue
-            
-            appraisal_perf_ass_obj = AppraisalPerformanceAssessmentType(
-                kra=kra_obj,
-                total_objectives=len(appraisal_departmental_dep_list),
-                appraisal_departmental_dep=appraisal_departmental_dep_list
+            appraisal_assessment = AppraisalPerformanceAssessmentType(
+                quarter=quarter_obj.quarter,
+                dept_outputs=appraisal_output_types_list
             )
-            appraisal_perf_ass_list.append(appraisal_perf_ass_obj)
-            
-        return appraisal_perf_ass_list
+            appraisal_assessments_list.append(appraisal_assessment)
+
+        return appraisal_assessments_list
+
+
     
 @dataclass
 class TrainingAndDevStrategy:
@@ -171,7 +173,8 @@ class TrainingAndDevStrategy:
             
             training_dev_type = TrainingAndDevType(
                 quarter=year_quarter_obj.quarter,
-                quarter_training_dev=training_dev_obj
+                quarter_training_dev=training_dev_obj,
+                competency_gap=training_dev_repo.fetch_competency_gaps(training_dev_obj=training_dev_obj)
             )
             quarters_training_dev.append(training_dev_type)
             

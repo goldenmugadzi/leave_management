@@ -4,16 +4,16 @@
                 <div class="bg-gray-100 rounded-lg p-1">
                     <ul class="flex flex-wrap gap-4 -mb-px text-md font-medium text-center">
                         <li class="mr-1 border-2 rounded-lg border-2 border-gray-400">
-                            <button class="training-dev-tab-button inline-block px-4 py-2 border-2 border-transparent rounded-md text-gray-600 bg-transparent hover:bg-gray-200 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 active shadow-sm" data-tab="first-quarter" aria-selected="true">First Quarter</button>
+                            <button class="training-dev-tab-button inline-block px-4 py-2 border-2 border-transparent rounded-md text-gray-600 bg-transparent hover:bg-gray-200 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 active shadow-sm" data-tab="first-quarter-training-dev" aria-selected="true">First Quarter</button>
                         </li>
                         <li class="mr-1 border-2 rounded-lg border-2 border-gray-400">
-                            <button class="training-dev-tab-button inline-block px-4 py-2 border-2 border-transparent rounded-md text-gray-600 bg-transparent hover:bg-gray-200 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2" data-tab="second-quarter" aria-selected="false">Second Quarter</button>
+                            <button class="training-dev-tab-button inline-block px-4 py-2 border-2 border-transparent rounded-md text-gray-600 bg-transparent hover:bg-gray-200 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2" data-tab="second-quarter-training-dev" aria-selected="false">Second Quarter</button>
                         </li>
                         <li class="mr-1 border-2 rounded-lg border-2 border-gray-400">
-                            <button class="training-dev-tab-button inline-block px-4 py-2 border-2 border-transparent rounded-md text-gray-600 bg-transparent hover:bg-gray-200 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2" data-tab="third-quarter" aria-selected="false">Third Quarter</button>
+                            <button class="training-dev-tab-button inline-block px-4 py-2 border-2 border-transparent rounded-md text-gray-600 bg-transparent hover:bg-gray-200 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2" data-tab="third-quarter-training-dev" aria-selected="false">Third Quarter</button>
                         </li>
                         <li class="mr-1 border-2 rounded-lg border-2 border-gray-400">
-                            <button class="training-dev-tab-button inline-block px-4 py-2 border-2 border-transparent rounded-md text-gray-600 bg-transparent hover:bg-gray-200 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2" data-tab="fourth-quarter" aria-selected="false">Fourth Quarter</button>
+                            <button class="training-dev-tab-button inline-block px-4 py-2 border-2 border-transparent rounded-md text-gray-600 bg-transparent hover:bg-gray-200 hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2" data-tab="fourth-quarter-training-dev" aria-selected="false">Fourth Quarter</button>
                         </li>
                     </ul>
                 </div>
@@ -21,7 +21,7 @@
                 <!-- Tab Content -->
                 <div class="tab-content mt-6">
                     <!-- first-quarter Tab -->
-                    <div id="first-quarter" class="training-dev-tab-pane active">
+                    <div id="first-quarter-training-dev" class="training-dev-tab-pane active">
                         <div class="bg-white shadow-xl rounded-lg border-2 border-indigo-400 p-6">
                             <div class="flex justify-between">
                                 <h3 class="text-lg font-semibold text-gray-900 mb-4">First Quarter</h3>
@@ -35,32 +35,44 @@
                     </div>
                     
                     <!-- second-quarter Tab -->
-                    <div id="second-quarter" class="training-dev-tab-pane hidden">
+                    <div id="second-quarter-training-dev" class="training-dev-tab-pane hidden">
                         <div class="bg-white shadow-xl rounded-lg border-2 border-indigo-400 p-6">
                             <div class="flex justify-between">
                                 <h3 class="text-lg font-semibold text-gray-900 mb-4">Second Quarter</h3>
                             </div>
-                            
+                            {% for data in training_dev_data %}
+                                {% if data.quarter == 2 %}
+                                    {% include "appraisal/detail_components/training_dev_quarter.html" with quarter_data=data.quarter_training_dev %}
+                                {% endif %}
+                            {% endfor %}
                         </div>
                     </div>
 
                     <!-- third-quarter Tab -->
-                    <div id="third-quarter" class="training-dev-tab-pane hidden">
+                    <div id="third-quarter-training-dev" class="training-dev-tab-pane hidden">
                         <div class="bg-white shadow-xl rounded-lg border-2 border-indigo-400 p-6">
                             <div class="flex justify-between">
                                 <h3 class="text-lg font-semibold text-gray-900 mb-4">Third Quarter</h3>
                             </div>
-                            
+                            {% for data in training_dev_data %}
+                                {% if data.quarter == 3 %}
+                                    {% include "appraisal/detail_components/training_dev_quarter.html" with quarter_data=data.quarter_training_dev %}
+                                {% endif %}
+                            {% endfor %}
                         </div>
                     </div>
 
                     <!-- fourth-quarter Tab -->
-                    <div id="fourth-quarter" class="training-dev-tab-pane hidden">
+                    <div id="fourth-quarter-training-dev" class="training-dev-tab-pane hidden">
                         <div class="bg-white shadow-xl rounded-lg border-2 border-indigo-400 p-6">
                             <div class="flex justify-between">
                                 <h3 class="text-lg font-semibold text-gray-900 mb-4">Fourth Quarter</h3>
                             </div>
-                            
+                            {% for data in training_dev_data %}
+                                {% if data.quarter == 4 %}
+                                    {% include "appraisal/detail_components/training_dev_quarter.html" with quarter_data=data.quarter_training_dev %}
+                                {% endif %}
+                            {% endfor %}
                         </div>
                     </div>
     

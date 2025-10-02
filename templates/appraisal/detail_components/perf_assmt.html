@@ -36,7 +36,8 @@
                             <div class="flex justify-between">
                                 <h3 class="text-lg font-semibold text-gray-900 mb-4">Second Quarter</h3>
                             </div>
-                            
+                            {% include 'appraisal/detail_components/perf_assmt_table.html' with quarter_number=2 %}
+
                         </div>
                     </div>
 
@@ -46,7 +47,7 @@
                             <div class="flex justify-between">
                                 <h3 class="text-lg font-semibold text-gray-900 mb-4">Third Quarter</h3>
                             </div>
-                            
+                            {% include 'appraisal/detail_components/perf_assmt_table.html' with quarter_number=3 %}
                         </div>
                     </div>
 
@@ -56,13 +57,12 @@
                             <div class="flex justify-between">
                                 <h3 class="text-lg font-semibold text-gray-900 mb-4">Fourth Quarter</h3>
                             </div>
-                            
+                            {% include 'appraisal/detail_components/perf_assmt_table.html' with quarter_number=4 %}
                         </div>
                     </div>
     
                     
                 </div>
-            </div>
     </div>
 </div>
 

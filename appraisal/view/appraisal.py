@@ -26,7 +26,7 @@ from ..services import AppraisalService, AppraisalExperienceService
 from ..services.qualification import UserQualificationService
 from ..helpers.types.kra import KraRolesType
 from ..helpers.getters.approval import ApprovalStagesHandler
-from ..helpers.getters.appraisal import AppraisalDependanciesStrategyContext, AppraisalPersonalDetailsStrategy, TrainingAndDevStrategy, PerformanceAssessmentStrategy
+from ..helpers.getters.appraisal import AppraisalDependanciesStrategyContext, AppraisalPersonalDetailsStrategy, TrainingAndDevStrategy, PerformanceAssessmentStrategy, PerformanceProgressReviewStrategy, FinalPerformanceAssStrategy
 
 from approve.views import intiate,approve_step
 from approve.forms import ApprovalForm
@@ -722,14 +722,31 @@ class AppraisalDetailView(TemplateView):
             strategy=perf_assmt_strg
         )
         return handler.get_dependance()
+    
+    def get_perf_progress_rev(self):
+        perf_progress_rev_strg = PerformanceProgressReviewStrategy(appraisal_object=self.get_appraisal_obj())
+        handler = AppraisalDependanciesStrategyContext(
+            strategy=perf_progress_rev_strg
+        )
+        return handler.get_dependance()
+    
+    def get_final_score(self):
+        perf_progress_rev_strg = FinalPerformanceAssStrategy(appraisal_object=self.get_appraisal_obj())
+        handler = AppraisalDependanciesStrategyContext(
+            strategy=perf_progress_rev_strg
+        )
+        return handler.get_dependance()
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        context["appraisal_obj"] = self.get_appraisal_obj()
         context["steps"] = self.get_steps()
         context["personal_details"] = self.get_personal_details()
         context["assessment_period"] = self.get_current_date_assessment()
         context["training_dev_data"] = self.get_training_dev()
         context["perf_assessment_data"] = self.get_perf_assmt()
+        context["perf_progress_data"] = self.get_perf_progress_rev()
+        context["final_stage_data"] = self.get_final_score()
         return context
     
     def get(self, request, *args, **kwargs):
