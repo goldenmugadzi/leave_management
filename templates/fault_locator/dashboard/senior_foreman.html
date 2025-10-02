@@ -39,7 +39,7 @@
                         <strong>{{ deployment.team.name }}</strong><br>
                         <small class="text-muted">📍 {{ deployment.depot.depot }}</small>
                     </div>
-                    <a href="{% url 'recall_team' deployment.team.id %}" class="btn btn-warning btn-sm">
+                    <a href="{% url 'fault_locator:recall_team' deployment.team.id %}" class="btn btn-warning btn-sm">
                         Recall
                     </a>
                 </div>
@@ -68,7 +68,7 @@
                         <small class="text-muted">{{ device.description|default:"No description" }}</small>
                     </div>
                     {% if can_manage_devices %}
-                    <a href="{% url 'assign_device_to_team' %}?device_id={{ device.id }}" class="btn btn-success btn-sm">
+                    <a href="{% url 'fault_locator:assign_device_to_team' %}?device_id={{ device.id }}" class="btn btn-success btn-sm">
                         Assign
                     </a>
                     {% endif %}
@@ -92,7 +92,7 @@
                         <span class="badge bg-danger ms-2">{{ fault.get_priority_display }}</span>
                     </div>
                     {% if can_assign_faults %}
-                    <a href="{% url 'assign_fault' %}?fault_id={{ fault.id }}" class="btn btn-danger btn-sm">
+                    <a href="{% url 'fault_locator:assign_fault' %}?fault_id={{ fault.id }}" class="btn btn-danger btn-sm">
                         Assign Now
                     </a>
                     {% endif %}
@@ -143,3 +143,4 @@
         </div>
     </div>
 </div>
+

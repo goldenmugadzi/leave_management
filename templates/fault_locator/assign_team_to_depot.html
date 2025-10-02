@@ -13,7 +13,7 @@
           </h1>
           <p class="text-nepal-600">Deploy team to a depot for field operations</p>
         </div>
-        <a href="{% url 'team_overview' %}" 
+        <a href="{% url 'fault_locator:team_overview' %}" 
            class="px-4 py-2 bg-nepal-500 text-white rounded-xl hover:bg-nepal-600 transition-colors duration-300">
           ← Back to Teams
         </a>
@@ -150,7 +150,7 @@
             🚀 Deploy Team
           </button>
           
-          <a href="{% url 'team_overview' %}" 
+          <a href="{% url 'fault_locator:team_overview' %}" 
              class="flex-1 px-8 py-4 bg-gradient-to-r from-gray-600 to-gray-700 text-white rounded-xl font-bold text-lg hover:from-gray-700 hover:to-gray-800 transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl transform hover:-translate-y-1 text-center">
             ← Cancel
           </a>
@@ -190,3 +190,4 @@
 }
 </style>
 {% endblock %}
+

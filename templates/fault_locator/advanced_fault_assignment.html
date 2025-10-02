@@ -10,7 +10,7 @@
         <p class="text-gray-600">Assign multiple faults to teams with filtering and bulk operations</p>
       </div>
       <div class="action-buttons space-x-2">
-        <a href="{% url 'assign_fault' %}" 
+        <a href="{% url 'fault_locator:assign_fault' %}" 
            class="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition">
           Simple Assignment
         </a>
@@ -80,7 +80,7 @@
               <button type="submit" class="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700 transition">
                 Filter
               </button>
-              <a href="{% url 'advanced_fault_assignment' %}" 
+              <a href="{% url 'fault_locator:advanced_fault_assignment' %}" 
                  class="ml-2 px-3 py-1 bg-gray-600 text-white rounded text-sm hover:bg-gray-700 transition">
                 Clear
               </a>
@@ -332,3 +332,4 @@ document.addEventListener('DOMContentLoaded', function() {
 }
 </style>
 {% endblock %}
+

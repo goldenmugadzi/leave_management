@@ -12,7 +12,7 @@
           <p class="text-gray-600">Recall deployed fault locator teams from field locations</p>
         </div>
         <div class="action-buttons space-x-2">
-          <a href="{% url 'team_overview' %}" 
+          <a href="{% url 'fault_locator:team_overview' %}" 
              class="px-4 py-2 bg-gray-600 text-white rounded-lg font-medium hover:bg-gray-700 transition">
             ← Back to Teams
           </a>
@@ -78,7 +78,7 @@
             
             <!-- Action Buttons -->
             <div class="form-actions flex justify-between pt-6">
-              <a href="{% url 'team_overview' %}" 
+              <a href="{% url 'fault_locator:team_overview' %}" 
                  class="px-6 py-2 bg-gray-600 text-white rounded-lg font-medium hover:bg-gray-700 transition">
                 Cancel
               </a>
@@ -277,3 +277,4 @@
 }
 </style>
 {% endblock %}
+

@@ -33,7 +33,7 @@
           </div>
           
           <div class="flex gap-4">
-            <a href="{% url 'device_list' %}" 
+            <a href="{% url 'fault_locator:device_list' %}" 
                class="group relative overflow-hidden px-8 py-4 bg-gradient-to-r from-slate-600 to-gray-700 text-white rounded-2xl font-bold shadow-2xl hover:shadow-slate-500/25 transition-all duration-500 hover:scale-110">
               <span class="relative z-10 flex items-center gap-3">
                 <span class="group-hover:-translate-x-2 transition-transform duration-300">←</span>
@@ -42,7 +42,7 @@
               <div class="absolute inset-0 bg-gradient-to-r from-slate-700 to-gray-800 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
             </a>
             
-            <a href="{% url 'edit_device' device.id %}" 
+            <a href="{% url 'fault_locator:edit_device' device.id %}" 
                class="group relative overflow-hidden px-8 py-4 bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-2xl font-bold shadow-2xl hover:shadow-blue-500/25 transition-all duration-500 hover:scale-110">
               <span class="relative z-10 flex items-center gap-3">
                 <span class="group-hover:rotate-12 transition-transform duration-300">✏️</span>
@@ -253,7 +253,7 @@
             
             <!-- Action Buttons -->
             <div class="action-buttons space-y-3">
-              <a href="{% url 'unassign_device' device.id %}" 
+              <a href="{% url 'fault_locator:unassign_device' device.id %}" 
                  class="group/unassign w-full relative overflow-hidden px-8 py-4 bg-gradient-to-r from-amber-600 to-orange-700 text-white rounded-xl font-bold text-lg hover:from-amber-700 hover:to-orange-800 transition-all duration-300 hover:scale-105 shadow-xl hover:shadow-2xl transform hover:-translate-y-1 border-2 border-amber-500 hover:border-amber-400 ring-2 ring-amber-200 hover:ring-amber-300 text-center block">
                 <span class="relative z-10 flex items-center justify-center gap-3">
                   <span class="group-hover/unassign:rotate-180 transition-transform duration-500">🔄</span>
@@ -303,7 +303,7 @@
                   </div>
                 </div>
                 
-                <a href="{% url 'assign_device_to_team' %}?device_id={{ device.id }}" 
+                <a href="{% url 'fault_locator:assign_device_to_team' %}?device_id={{ device.id }}" 
                    class="group/assign relative overflow-hidden inline-block px-8 py-4 bg-gradient-to-r from-emerald-600 to-green-700 text-white rounded-xl font-bold text-lg hover:from-emerald-700 hover:to-green-800 transition-all duration-300 hover:scale-105 shadow-xl hover:shadow-2xl transform hover:-translate-y-1 border-2 border-emerald-500 hover:border-emerald-400 ring-2 ring-emerald-200 hover:ring-emerald-300">
                   <span class="relative z-10 flex items-center gap-3">
                     <span class="group-hover/assign:rotate-180 transition-transform duration-500">🔧</span>

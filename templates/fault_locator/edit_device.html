@@ -12,11 +12,11 @@
           <p class="text-gray-600">Modify device information and manage assignments</p>
         </div>
         <div class="flex space-x-2">
-          <a href="{% url 'device_detail' device.id %}" 
+          <a href="{% url 'fault_locator:device_detail' device.id %}" 
              class="px-4 py-2 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700 transition">
             👁️ View Details
           </a>
-          <a href="{% url 'device_list' %}" 
+          <a href="{% url 'fault_locator:device_list' %}" 
              class="px-4 py-2 bg-gray-600 text-white rounded-lg font-medium hover:bg-gray-700 transition">
             ← Back to List
           </a>
@@ -107,7 +107,7 @@
                   Since: {{ current_assignment.assigned_at|date:"M d, Y H:i" }}
                 </p>
               </div>
-              <a href="{% url 'unassign_device' device.id %}" 
+              <a href="{% url 'fault_locator:unassign_device' device.id %}" 
                  class="px-3 py-1 bg-yellow-100 text-yellow-700 rounded text-sm font-medium hover:bg-yellow-200 transition">
                 Unassign
               </a>
@@ -115,7 +115,7 @@
             {% else %}
             <div class="bg-green-50 border border-green-200 rounded-lg p-3">
               <p class="text-sm font-medium text-green-800">✅ Available for assignment</p>
-              <a href="{% url 'assign_device_to_team' %}?device_id={{ device.id }}" 
+              <a href="{% url 'fault_locator:assign_device_to_team' %}?device_id={{ device.id }}" 
                  class="inline-block mt-2 px-3 py-1 bg-green-100 text-green-700 rounded text-sm font-medium hover:bg-green-200 transition">
                 Assign to Team
               </a>
@@ -195,7 +195,7 @@
               class="px-4 py-2 bg-gray-300 text-gray-700 rounded-lg hover:bg-gray-400 transition">
         Cancel
       </button>
-      <form method="post" action="{% url 'delete_device' device.id %}" class="inline">
+      <form method="post" action="{% url 'fault_locator:delete_device' device.id %}" class="inline">
         {% csrf_token %}
         <button type="submit" 
                 class="px-6 py-3 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-xl font-bold text-lg hover:from-red-700 hover:to-red-800 transition-all duration-300 hover:scale-105 shadow-xl hover:shadow-2xl transform hover:-translate-y-1 border-2 border-red-500 hover:border-red-400 ring-2 ring-red-200 hover:ring-red-300">
@@ -237,3 +237,4 @@ function closeDeleteModal() {
 }
 </script>
 {% endblock %}
+

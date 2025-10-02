@@ -65,7 +65,7 @@
         <div class="text-4xl text-red-500">⚠️</div>
       </div>
       <div class="mt-4">
-        <a href="{% url 'simple_fault_list' %}" class="text-sm text-blue-600 hover:text-blue-800">
+        <a href="{% url 'fault_locator:simple_fault_list' %}" class="text-sm text-blue-600 hover:text-blue-800">
           View All Faults →
         </a>
       </div>
@@ -102,11 +102,11 @@
            class="block w-full bg-blue-600 text-white text-center py-2 px-4 rounded-md hover:bg-blue-700 transition">
           Manage Team Deployments
         </a>
-        <a href="{% url 'create_team' %}" 
+        <a href="{% url 'fault_locator:create_team' %}" 
            class="block w-full bg-green-600 text-white text-center py-2 px-4 rounded-md hover:bg-green-700 transition">
           Create New Team
         </a>
-        <a href="{% url 'team_overview' %}" 
+        <a href="{% url 'fault_locator:team_overview' %}" 
            class="block w-full bg-gray-600 text-white text-center py-2 px-4 rounded-md hover:bg-gray-700 transition">
           View All Teams
         </a>
@@ -124,11 +124,11 @@
            class="block w-full bg-green-600 text-white text-center py-2 px-4 rounded-md hover:bg-green-700 transition">
           Manage Device Assignments
         </a>
-        <a href="{% url 'create_device' %}" 
+        <a href="{% url 'fault_locator:create_device' %}" 
            class="block w-full bg-blue-600 text-white text-center py-2 px-4 rounded-md hover:bg-blue-700 transition">
           Add New Device
         </a>
-        <a href="{% url 'device_list' %}" 
+        <a href="{% url 'fault_locator:device_list' %}" 
            class="block w-full bg-gray-600 text-white text-center py-2 px-4 rounded-md hover:bg-gray-700 transition">
           View All Devices
         </a>
@@ -146,11 +146,11 @@
            class="block w-full bg-purple-600 text-white text-center py-2 px-4 rounded-md hover:bg-purple-700 transition">
           View Performance Dashboard
         </a>
-        <a href="{% url 'advanced_fault_assignment' %}" 
+        <a href="{% url 'fault_locator:advanced_fault_assignment' %}" 
            class="block w-full bg-orange-600 text-white text-center py-2 px-4 rounded-md hover:bg-orange-700 transition">
           Advanced Fault Assignment
         </a>
-        <a href="{% url 'simple_fault_list' %}" 
+        <a href="{% url 'fault_locator:simple_fault_list' %}" 
            class="block w-full bg-gray-600 text-white text-center py-2 px-4 rounded-md hover:bg-gray-700 transition">
           View All Faults
         </a>
@@ -391,3 +391,4 @@ function quickAssign(deviceId, deviceName) {
 }
 </script>
 {% endblock %}
+

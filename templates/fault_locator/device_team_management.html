@@ -13,7 +13,7 @@
          class="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700 transition">
         ← Back to Dashboard
       </a>
-      <a href="{% url 'assign_device_to_team' %}" 
+      <a href="{% url 'fault_locator:assign_device_to_team' %}" 
          class="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition">
         Assign Device
       </a>
@@ -436,8 +436,9 @@ document.getElementById('confirmAssign').onclick = function() {
 
 // Unassign device confirmation
 document.getElementById('confirmUnassign').onclick = function() {
-  window.location.href = `{% url 'unassign_device' 0 %}`.replace('0', selectedDeviceId);
+  window.location.href = `{% url 'fault_locator:unassign_device' 0 %}`.replace('0', selectedDeviceId);
   closeUnassignModal();
 };
 </script>
 {% endblock %}
+
