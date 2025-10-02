@@ -1735,6 +1735,20 @@ def team_overview(request):
 
     teams = FaultLocatorTeam.objects.all().prefetch_related('members')
 
+    # Senior foreperson should see teams in their region only (by members, leader, or current depot region)
+    user_region = getattr(user_profile, 'region', None)
+    if is_senior_foreman(user_profile) and user_region:
+        from it.users.models import UserProfile as ItUserProfile
+        users_in_region = ItUserProfile.objects.filter(
+            region=user_region,
+            is_active=True
+        ).values_list('id', flat=True)
+        teams = teams.filter(
+            Q(members__in=users_in_region) |
+            Q(team_leader__in=users_in_region) |
+            Q(current_depot__region=user_region)
+        ).distinct()
+
     team_data = []
     for team in teams:
         device_assignment = FaultLocatorDeviceAssignment.objects.filter(team=team).select_related('device').first()
@@ -1776,11 +1790,13 @@ def team_overview(request):
             'actions': [],
         })
 
+    # Scope summary to filtered teams
+    team_ids = list(teams.values_list('id', flat=True))
     summary_stats = {
-        'total_teams': teams.count(),
-        'deployed_teams': FaultLocatorTeam.objects.filter(current_depot__isnull=False).count(),
-        'teams_with_devices': FaultLocatorDeviceAssignment.objects.values('team').distinct().count(),
-        'active_assignments': FaultAssignment.objects.filter(located_at__isnull=True).count(),
+        'total_teams': len(team_ids),
+        'deployed_teams': teams.filter(current_depot__isnull=False).count(),
+        'teams_with_devices': FaultLocatorDeviceAssignment.objects.filter(team_id__in=team_ids).values('team').distinct().count(),
+        'active_assignments': FaultAssignment.objects.filter(team_id__in=team_ids, located_at__isnull=True).count(),
     }
 
     context = {
@@ -1809,8 +1825,13 @@ def deploy_team(request, team_id=None):
         return redirect('fault_locator:team_overview')
 
     # Prepare form limited to teams with devices and not deployed (form also filters)
+    # Teams: senior foremen see all teams (no region filter); others filtered by their region
+    team_region = None if is_senior_foreman(user_profile) else getattr(user_profile, 'region', None)
+    # Depots: always restrict to user's region if available (per request)
+    depot_region = getattr(user_profile, 'region', None)
+
     if request.method == 'POST':
-        form = TeamDeploymentForm(request.POST, user_region=getattr(user_profile, 'region', None))
+        form = TeamDeploymentForm(request.POST, team_region=team_region, depot_region=depot_region)
         selected_team = None
         if form.is_valid():
             team = form.cleaned_data['team']
@@ -1844,15 +1865,16 @@ def deploy_team(request, team_id=None):
             messages.success(request, f"Team '{team.name}' deployed to {depot.depot}.")
             return redirect('fault_locator:team_overview')
     else:
-        form = TeamDeploymentForm(user_region=getattr(user_profile, 'region', None))
+        form = TeamDeploymentForm(team_region=team_region, depot_region=depot_region)
         selected_team = None
         if team_id:
             selected_team = FaultLocatorTeam.objects.filter(id=team_id).first()
 
     # Build depot priority info for the template
+    # Depot list for priority panel: restrict to user's region as well
     depots = Depots.objects.all()
-    if getattr(user_profile, 'region', None):
-        depots = depots.filter(region=user_profile.region)
+    if depot_region:
+        depots = depots.filter(region=depot_region)
 
     depot_priority_info = []
     for depot in depots:

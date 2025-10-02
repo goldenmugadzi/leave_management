@@ -317,7 +317,14 @@ class TeamDeploymentForm(forms.ModelForm):
         fields = ['team', 'depot', 'deployment_notes']
     
     def __init__(self, *args, **kwargs):
-        user_region = kwargs.pop('user_region', None)
+        # Support independent filtering for teams vs depots
+        user_region = kwargs.pop('user_region', None)  # Backward-compat: used if specific regions not provided
+        team_region = kwargs.pop('team_region', None)
+        depot_region = kwargs.pop('depot_region', None)
+        # If only user_region provided, apply to both (legacy behavior)
+        if user_region and team_region is None and depot_region is None:
+            team_region = user_region
+            depot_region = user_region
         super().__init__(*args, **kwargs)
         
         # Only show teams that have devices assigned and are not currently deployed
@@ -329,12 +336,12 @@ class TeamDeploymentForm(forms.ModelForm):
             current_depot__isnull=True
         )
         
-        # Apply regional filtering if user_region is provided
-        if user_region:
+        # Apply regional filtering for teams if team_region is provided
+        if team_region:
             # Filter teams by members from the same region
             from it.users.models import UserProfile
             users_in_region = UserProfile.objects.filter(
-                region=user_region,
+                region=team_region,
                 is_active=True
             ).values_list('id', flat=True)
             
@@ -344,10 +351,10 @@ class TeamDeploymentForm(forms.ModelForm):
         
         self.fields['team'].queryset = team_queryset
         
-        # Filter depots by region if user_region is provided
-        if user_region:
+        # Filter depots by region if depot_region is provided
+        if depot_region:
             self.fields['depot'].queryset = self.fields['depot'].queryset.filter(
-                region=user_region
+                region=depot_region
             )
         
         self.fields['team'].widget.attrs.update({
@@ -383,21 +390,8 @@ class SeniorForepersonDeviceAssignmentForm(forms.ModelForm):
         
         # Show teams based on user permissions and region
         if user and self.is_senior_foreperson(user):
-            team_queryset = FaultLocatorTeam.objects.all()
-            
-            # Apply regional filtering for teams if user has a region
-            if user.region:
-                from it.users.models import UserProfile
-                users_in_region = UserProfile.objects.filter(
-                    region=user.region,
-                    is_active=True
-                ).values_list('id', flat=True)
-                
-                team_queryset = team_queryset.filter(
-                    members__in=users_in_region
-                ).distinct()
-            
-            self.fields['team'].queryset = team_queryset
+            # Senior foremen can assign devices to any team (no regional restriction)
+            self.fields['team'].queryset = FaultLocatorTeam.objects.all()
         else:
             # For non-senior forepersons, show all teams (can be restricted later if needed)
             self.fields['team'].queryset = FaultLocatorTeam.objects.all()
