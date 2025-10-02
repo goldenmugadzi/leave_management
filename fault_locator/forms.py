@@ -56,11 +56,14 @@ class FaultLocatorDeviceForm(forms.ModelForm):
 class FaultLocatorTeamForm(forms.ModelForm):
     class Meta:
         model = FaultLocatorTeam
-        fields = ['name', 'members']
+        fields = ['name', 'team_leader', 'members']
         widgets = {
             'name': forms.TextInput(attrs={
                 'class': 'block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200',
                 'placeholder': 'e.g., Alpha Team, North District Crew'
+            }),
+            'team_leader': forms.Select(attrs={
+                'class': 'block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all duration-200',
             }),
             'members': Select2MultipleWidget(attrs={
                 'class': 'w-full',
@@ -74,6 +77,12 @@ class FaultLocatorTeamForm(forms.ModelForm):
         user_region = kwargs.pop('user_region', None)
         super().__init__(*args, **kwargs)
         
+        # Populate team_leader choices
+        if self.instance and self.instance.pk:
+            self.fields['team_leader'].queryset = self.instance.members.all()
+        else:
+            self.fields['team_leader'].queryset = UserProfile.objects.none()
+
         # Filter members by user's region and exclude those who can't be added to teams
         if user_region:
             # Import here to avoid circular imports
@@ -91,11 +100,17 @@ class FaultLocatorTeamForm(forms.ModelForm):
             valid_members = []
             for user in base_queryset:
                 # Check if user is already in a team
-                if user.fault_locator_teams.exists():
+                if self.instance and self.instance.pk:
+                    if user.fault_locator_teams.exclude(pk=self.instance.pk).exists():
+                        continue
+                elif user.fault_locator_teams.exists():
                     continue
                 
                 # Check if user is a team leader
-                if FaultLocatorTeam.objects.filter(team_leader=user).exists():
+                if self.instance and self.instance.pk:
+                    if FaultLocatorTeam.objects.filter(team_leader=user).exclude(pk=self.instance.pk).exists():
+                        continue
+                elif FaultLocatorTeam.objects.filter(team_leader=user).exists():
                     continue
                 
                 # Check if user is a depot foreperson or senior foreperson
@@ -122,11 +137,17 @@ class FaultLocatorTeamForm(forms.ModelForm):
             valid_members = []
             for user in base_queryset:
                 # Check if user is already in a team
-                if user.fault_locator_teams.exists():
+                if self.instance and self.instance.pk:
+                    if user.fault_locator_teams.exclude(pk=self.instance.pk).exists():
+                        continue
+                elif user.fault_locator_teams.exists():
                     continue
                 
                 # Check if user is a team leader
-                if FaultLocatorTeam.objects.filter(team_leader=user).exists():
+                if self.instance and self.instance.pk:
+                    if FaultLocatorTeam.objects.filter(team_leader=user).exclude(pk=self.instance.pk).exists():
+                        continue
+                elif FaultLocatorTeam.objects.filter(team_leader=user).exists():
                     continue
                 
                 # Check if user is a depot foreperson or senior foreperson
@@ -138,6 +159,8 @@ class FaultLocatorTeamForm(forms.ModelForm):
             self.fields['members'].queryset = base_queryset.filter(
                 id__in=valid_members
             ).order_by('last_name', 'first_name')
+        
+        self.fields['team_leader'].required = False
     
     def clean_members(self):
         """Validate that selected members can be added to teams"""

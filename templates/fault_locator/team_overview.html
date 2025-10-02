@@ -187,6 +187,17 @@
               </button>
             </form>
             {% endif %}
+
+            {% if is_senior_foreman %}
+            <a href="{% url 'fault_locator:edit_team' item.team.id %}"
+              class="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl font-bold text-sm hover:from-blue-700 hover:to-blue-800 transition-all duration-300 hover:shadow-lg hover:scale-105 transform hover:-translate-y-1 border border-blue-500 hover:border-blue-400">
+              ✏️ Edit Team
+            </a>
+            <a href="{% url 'fault_locator:delete_team' item.team.id %}"
+              class="inline-flex items-center px-4 py-2 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-xl font-bold text-sm hover:from-red-700 hover:to-red-800 transition-all duration-300 hover:shadow-lg hover:scale-105 transform hover:-translate-y-1 border border-red-500 hover:border-red-400">
+              🗑️ Delete Team
+            </a>
+            {% endif %}
           </div>
           {% endif %}
         </div>
