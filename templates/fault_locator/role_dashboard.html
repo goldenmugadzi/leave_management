@@ -2,39 +2,27 @@
 {% load static %}
 
 {% block title %}{{ role_display }} Dashboard{% endblock %}
-{% block content %}
-<div class="min-h-screen bg-gradient-to-br from-gulf-blue-50 via-white to-jade-50 p-6">
-    <div class="max-w-7xl mx-auto">
-        <!-- Header Section -->
-        <div class="glass-header mb-8 p-6 rounded-3xl backdrop-blur-xl bg-white/30 border border-white/20 shadow-2xl">
-    <!-- Error Message -->
-    {% if error|default:'' %}
-    <div class="mb-6">
-    <!-- Primary Actions Section -->
-    {% if primary_actions %}
-    <div class="mb-8">
-                    <div class="action-icon mb-4 text-4xl">
-                        <i class="{{ action.icon_class|default:'' }}"></i>
-                    </div>
-                    <div class="action-icon mb-4 text-4xl">
-                        <i class="{{ action.icon_class|default:'' }}"></i>
-                    </div>
-                    <div class="action-icon mb-4 text-4xl">
-                        <i class="{{ action.icon_class|default:'' }}"></i>
-                    </div>
-                            <small class="text-jade-600">Completed</small>
-                            <small class="text-jade-600">Completed</small>
-                            <small class="text-jade-600">Completed</small>
-{% extends "admin_layout.html" %}
-{% load static %}
-
-{% block title %}{{ role_display }} Dashboard{% endblock %}
 
 {% block content %}
 <div class="min-h-screen bg-gradient-to-br from-gulf-blue-50 via-white to-jade-50 p-6">
     <div class="max-w-7xl mx-auto">
         <!-- Header Section -->
         <div class="glass-header mb-8 p-6 rounded-3xl backdrop-blur-xl bg-white/30 border border-white/20 shadow-2xl">
+            <div class="flex flex-col lg:flex-row items-center justify-between gap-6">
+                <div class="text-center lg:text-left">
+                    <h1 class="text-4xl font-black bg-gradient-to-r from-gulf-blue-600 via-tory-blue-primary to-gulf-blue-900 bg-clip-text text-transparent mb-2 animate-fade-in">
+                        <i class="fas fa-tools text-gulf-blue-600 mr-3"></i>
+                        Fault Locator System
+                    </h1>
+                    <p class="text-nepal-600 text-lg">{{ role_display }} Dashboard - {{ user_profile.get_full_name }}</p>
+                </div>
+                <div class="text-center lg:text-right">
+                    <span class="inline-flex items-center px-4 py-2 rounded-full text-sm font-bold bg-gradient-to-r from-gulf-blue-600 to-tory-blue-primary text-white shadow-lg">
+                        {{ user_role|upper }}
+                    </span>
+                </div>
+            </div>
+        </div>
             <div class="flex flex-col lg:flex-row items-center justify-between gap-6">
                 <div class="text-center lg:text-left">
                     <h1 class="text-4xl font-black bg-gradient-to-r from-gulf-blue-600 via-tory-blue-primary to-gulf-blue-900 bg-clip-text text-transparent mb-2 animate-fade-in">
@@ -328,7 +316,7 @@
                     <div class="flex justify-between items-center py-3 border-b border-nepal-200/50 last:border-b-0">
                         <div>
                             <strong class="text-nepal-800">{{ assignment.fault.description|truncatechars:50 }}</strong><br>
-                            <small class="text-jade-600">✅ Completed</small>
+                            <small class="text-jade-600">Completed</small>
                         </div>
                         <small class="text-nepal-500">{{ assignment.located_at|date:"H:i" }}</small>
                     </div>
