@@ -9,7 +9,7 @@
       <p class="text-gray-600">Assign devices to teams and track utilization</p>
     </div>
     <div class="flex space-x-2">
-      <a href="{% url 'senior_foreman_dashboard' %}" 
+      <a href="{% url 'fault_locator:senior_foreman_dashboard' %}" 
          class="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700 transition">
         ← Back to Dashboard
       </a>
@@ -441,4 +441,5 @@ document.getElementById('confirmUnassign').onclick = function() {
 };
 </script>
 {% endblock %}
+
 

@@ -96,13 +96,13 @@
           </a>
           {% endif %}
           
-          <a href="{% url 'fault_detail' fault.id %}" 
+          <a href="{% url 'fault_locator:fault_detail' fault.id %}" 
              class="px-4 py-2 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg font-bold text-sm hover:from-green-700 hover:to-green-800 transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl">
             📱 View/Update
           </a>
           
           {% if fault.reported_by == user_profile and fault.status not in 'closed,resolved' %}
-          <a href="{% url 'change_fault_priority' fault.id %}" 
+          <a href="{% url 'fault_locator:change_fault_priority' fault.id %}" 
              class="px-4 py-2 bg-gradient-to-r from-purple-600 to-purple-700 text-white rounded-lg font-bold text-sm hover:from-purple-700 hover:to-purple-800 transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl">
             � Change Priority
           </a>

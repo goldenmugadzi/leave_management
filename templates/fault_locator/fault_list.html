@@ -185,11 +185,11 @@
               
               <!-- Actions -->
               <td class="px-6 py-4 text-sm font-medium">
-                <a href="{% url 'fault_detail' fault.id %}" class="inline-block px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-700 text-white rounded-lg font-bold hover:from-blue-700 hover:to-indigo-800 transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl transform hover:-translate-y-1 text-sm">
+                <a href="{% url 'fault_locator:fault_detail' fault.id %}" class="inline-block px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-700 text-white rounded-lg font-bold hover:from-blue-700 hover:to-indigo-800 transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl transform hover:-translate-y-1 text-sm">
                   👁️ View
                 </a>
                 {% if is_depot_foreperson and fault.depot.code == user_profile.depot %}
-                  <a href="{% url 'depot_fault_priority' fault.depot.id %}" class="ml-2 inline-block px-4 py-2 bg-gradient-to-r from-green-600 to-emerald-700 text-white rounded-lg font-bold hover:from-green-700 hover:to-emerald-800 transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl transform hover:-translate-y-1 text-sm">
+                  <a href="{% url 'fault_locator:depot_fault_priority' fault.depot.id %}" class="ml-2 inline-block px-4 py-2 bg-gradient-to-r from-green-600 to-emerald-700 text-white rounded-lg font-bold hover:from-green-700 hover:to-emerald-800 transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl transform hover:-translate-y-1 text-sm">
                     🔧 Prioritize
                   </a>
                 {% endif %}
@@ -208,3 +208,4 @@
   </div>
 </div>
 {% endblock %}
+

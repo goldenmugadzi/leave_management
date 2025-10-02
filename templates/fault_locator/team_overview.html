@@ -170,7 +170,7 @@
             
             <!-- Add Assign to Depot button for teams with devices but not deployed -->
             {% if item.has_device and not item.is_deployed and is_senior_foreman %}
-            <a href="{% url 'assign_team_to_depot' item.team.id %}" 
+            <a href="{% url 'fault_locator:assign_team_to_depot' item.team.id %}" 
                class="inline-flex items-center px-4 py-2 btn-primary btn-sm rounded-xl text-sm font-medium transition-all duration-300 hover:shadow-lg hover:scale-105">
               🏢 Assign to Depot
             </a>
@@ -178,7 +178,7 @@
             
             <!-- Add Recall from Depot button for deployed teams -->
             {% if item.is_deployed and item.can_interact_with_team %}
-            <form method="post" action="{% url 'recall_team_from_depot' item.team.id %}" class="inline-block">
+            <form method="post" action="{% url 'fault_locator:recall_team_from_depot' item.team.id %}" class="inline-block">
               {% csrf_token %}
               <button type="submit" 
                       onclick="return confirm('Are you sure you want to recall this team from {{ item.deployment_info.depot_name }}?')"
@@ -229,7 +229,7 @@
           </div>
         </a>
         
-        <a href="{% url 'fault_list' %}" 
+        <a href="{% url 'fault_locator:fault_list' %}" 
            class="flex items-center gap-3 p-4 rounded-xl bg-white/50 hover:bg-white/70 border border-white/30 transition-all duration-300 hover:scale-105">
           <div class="w-10 h-10 bg-gradient-to-r from-pomegranate-primary to-scarlet-red-primary rounded-xl flex items-center justify-center text-white font-bold">⚡</div>
           <div>
@@ -300,4 +300,5 @@
 }
 </style>
 {% endblock %}
+
 

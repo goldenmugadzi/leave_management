@@ -82,7 +82,7 @@
                 </div>
                 
                 <div class="member-actions">
-                  <form method="post" action="{% url 'manage_team_members' team.id %}" class="inline">
+                  <form method="post" action="{% url 'fault_locator:manage_team_members' team.id %}" class="inline">
                     {% csrf_token %}
                     <input type="hidden" name="action" value="remove">
                     <input type="hidden" name="user_id" value="{{ member.id }}">
@@ -167,7 +167,7 @@
                 </div>
                 
                 <div class="user-actions">
-                  <form method="post" action="{% url 'manage_team_members' team.id %}" class="inline">
+                  <form method="post" action="{% url 'fault_locator:manage_team_members' team.id %}" class="inline">
                     {% csrf_token %}
                     <input type="hidden" name="action" value="add">
                     <input type="hidden" name="user_id" value="{{ user.id }}">
@@ -344,4 +344,5 @@ button:disabled {
 }
 </style>
 {% endblock %}
+
 
