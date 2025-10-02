@@ -1733,7 +1733,7 @@ def recall_team_from_depot(request, team_id):
             'user_profile': user_profile,
             'depots': depots,
         }
-    return render(request, "fault_locator/recall_team.html", context)
+        return render(request, "fault_locator/recall_team.html", context)
     except Exception as e:
         import logging
         logger = logging.getLogger(__name__)
@@ -2127,7 +2127,7 @@ def edit_team(request, team_id):
                     if name_form.is_valid():
                         team = name_form.save()
                         messages.success(request, f"Team name updated to '{team.name}'")
-                        return redirect('edit_team', team_id=team.id)
+                        return redirect('fault_locator:edit_team', team_id=team.id)
                 
                 # Handle member addition
                 elif 'add_member' in request.POST:
@@ -2140,7 +2140,7 @@ def edit_team(request, team_id):
                         
                         if not can_add:
                             messages.error(request, f"Cannot add {member.get_full_name()}: {reason}")
-                            return redirect('edit_team', team_id=team.id)
+                            return redirect('fault_locator:edit_team', team_id=team.id)
                         
                         if member not in team.members.all():
                             team.members.add(member)
@@ -2151,7 +2151,7 @@ def edit_team(request, team_id):
                             messages.success(request, f"{member.get_full_name()} added to team")
                         else:
                             messages.warning(request, f"{member.get_full_name()} is already in this team")
-                        return redirect('edit_team', team_id=team.id)
+                        return redirect('fault_locator:edit_team', team_id=team.id)
                 
                 # Handle member removal
                 elif 'remove_member' in request.POST:
@@ -2164,14 +2164,14 @@ def edit_team(request, team_id):
                         notify_team_member_removal(team, member, user_profile, request)
                         
                         messages.success(request, f"{member.get_full_name()} removed from team")
-                        return redirect('edit_team', team_id=team.id)
+                        return redirect('fault_locator:edit_team', team_id=team.id)
                         
             except IntegrityError as e:
                 messages.error(request, "Team update conflict occurred. Please try again.")
-                return redirect('edit_team', team_id=team.id)
+                return redirect('fault_locator:edit_team', team_id=team.id)
             except ValidationError as e:
                 messages.error(request, f"Team validation error: {str(e)}")
-                return redirect('edit_team', team_id=team.id)
+                return redirect('fault_locator:edit_team', team_id=team.id)
     
         # Initialize forms
         name_form = FaultLocatorTeamNameForm(instance=team)
@@ -2270,7 +2270,7 @@ def delete_team(request, team_id):
         
         if device_assignment or active_faults:
             messages.error(request, "Cannot delete team - it has active assignments or assigned devices")
-            return redirect('edit_team', team_id=team.id)
+            return redirect('fault_locator:edit_team', team_id=team.id)
         
         if request.method == "POST":
             team_name = team.name
