@@ -1366,6 +1366,8 @@ def field_update(request, fault_id):
 def team_overview(request):
     try:
         user_profile = UserProfile.objects.filter(id=request.user.id).first()
+        # Determine user's depot once for reuse
+        user_depot = get_user_depot(user_profile)
         
         # Get teams based on user role with optimized queries
         teams = FaultLocatorTeam.objects.select_related(
@@ -1384,9 +1386,8 @@ def team_overview(request):
         if not is_senior_foreman(user_profile):
             # Only filter by depot if user is specifically a depot foreperson with a depot
             if user_profile and hasattr(user_profile, 'depot') and user_profile.depot:
-                depot = get_user_depot(user_profile)
-                if depot and is_depot_foreperson(user_profile, depot):
-                    teams = teams.filter(current_depot=depot)
+                if user_depot and is_depot_foreperson(user_profile, user_depot):
+                    teams = teams.filter(current_depot=user_depot)
         # If user has no depot or is not a depot foreperson, show all teams
         # This allows team members and other users to see all teams
     
@@ -1400,7 +1401,6 @@ def team_overview(request):
             actions = []
             
             # Only show permitted actions
-            user_depot = get_user_depot(user_profile)
             can_interact_with_team = False
             
             # Determine if user can interact with this team
@@ -2219,23 +2219,26 @@ def create_team(request):
             return redirect('fault_locator:fault_locator_dashboard')
 
         if request.method == "POST":
-            try:
-                from .forms import FaultLocatorTeamForm
-                form = FaultLocatorTeamForm(request.POST, user_region=user_profile.region)
-                if form.is_valid():
+            from .forms import FaultLocatorTeamForm
+            form = FaultLocatorTeamForm(request.POST, user_region=user_profile.region)
+            if form.is_valid():
+                try:
                     team = form.save(commit=False)
                     team.created_by = user_profile
                     team.save()
-
+                    # Save many-to-many members
+                    form.save_m2m()
                     messages.success(request, f"Team '{team.name}' created successfully")
                     return redirect('fault_locator:edit_team', team_id=team.id)
-            except Exception as e:
-                messages.error(request, f"Error creating team: {str(e)}")
-                return redirect('fault_locator:create_team')
+                except (IntegrityError, ValidationError) as e:
+                    messages.error(request, f"Team creation error: {str(e)}")
+            # If invalid, fall through to re-render the form with errors
 
         # Initialize form
         from .forms import FaultLocatorTeamForm
-        form = FaultLocatorTeamForm(user_region=user_profile.region)
+        # If POST and form exists with errors, keep it; else initialize a fresh one
+        if request.method != "POST":
+            form = FaultLocatorTeamForm(user_region=user_profile.region)
 
         context = {
             'form': form,
