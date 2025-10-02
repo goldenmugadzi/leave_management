@@ -3049,16 +3049,9 @@ def get_user_fault_locator_role(user_profile):
     return None
 
 def is_senior_foreman(user_profile):
-    """Check if user is a senior foreman/foreperson - can delegate machines to depots"""
-    if not user_profile or not hasattr(user_profile, 'designation') or not user_profile.designation:
-        return False
-    
+    """Central roles: senior foreman permission check."""
     try:
-        designation_desc = str(user_profile.designation.description).lower()
-        # Check for senior + (foreman OR foreperson)
-        has_senior = 'senior' in designation_desc
-        has_foreman_role = ('foreman' in designation_desc or 'foreperson' in designation_desc)
-        return has_senior and has_foreman_role
+        return FaultLocatorRoleManager.has_role(user_profile, FaultLocatorRoleManager.SENIOR_FOREMAN)
     except Exception:
         return False
 
@@ -3074,24 +3067,18 @@ def is_depot_foreperson_by_designation(user_profile):
         return False
 
 def is_depot_foreperson(user_profile, depot_code=None):
-    """Check if user is foreperson for specific depot or their assigned depot"""
-    if not user_profile:
+    """Central roles: depot foreperson, with optional depot match."""
+    try:
+        has_role = FaultLocatorRoleManager.has_role(user_profile, FaultLocatorRoleManager.DEPOT_FOREPERSON)
+        if not has_role:
+            return False
+        if depot_code:
+            if hasattr(user_profile, 'depot') and user_profile.depot:
+                return (user_profile.depot.code == depot_code) if isinstance(depot_code, str) else (user_profile.depot == depot_code)
+            return False
+        return True
+    except Exception:
         return False
-    
-    # Check by designation first
-    if not is_depot_foreperson_by_designation(user_profile):
-        return False
-    
-    # If depot_code is provided, check if user is assigned to that depot
-    if depot_code:
-        if hasattr(user_profile, 'depot') and user_profile.depot:
-            if isinstance(depot_code, str):
-                return user_profile.depot.code == depot_code
-            else:
-                return user_profile.depot == depot_code
-    
-    # If no specific depot, just check if they are a foreperson
-    return True
 
 def can_assign_faults(user_profile, depot=None):
     """Check if user can assign faults at given depot"""
@@ -3109,25 +3096,24 @@ def can_deploy_teams(user_profile):
     return is_senior_foreman(user_profile)
 
 def can_manage_devices(user_profile):
-    """Check if user can manage fault locator devices"""
-    # Senior foremen can manage all devices
-    if is_senior_foreman(user_profile):
-        return True
-    
-    # IT personnel can manage devices
-    if hasattr(user_profile, 'section') and user_profile.section:
-        try:
-            section_name = str(user_profile.section.section).lower()
-            if 'it' in section_name or 'information technology' in section_name:
-                return True
-        except Exception:
-            pass
-    
-    return False
+    """Allow senior foremen (central role) or designated IT users to manage devices."""
+    try:
+        if is_senior_foreman(user_profile):
+            return True
+        # Preserve IT fallback
+        if hasattr(user_profile, 'section') and user_profile.section:
+            section_name = str(user_profile.section.section or '').lower()
+            return 'it' in section_name or 'information technology' in section_name
+        return False
+    except Exception:
+        return False
 
 def can_create_teams(user_profile):
-    """Check if user can create and manage teams"""
-    return is_senior_foreman(user_profile) or can_manage_devices(user_profile)
+    """Create/manage teams: senior foremen (central role) and IT (fallback)."""
+    try:
+        return is_senior_foreman(user_profile) or can_manage_devices(user_profile)
+    except Exception:
+        return False
 
 def is_team_leader(user_profile):
     """Check if user is a team leader"""
