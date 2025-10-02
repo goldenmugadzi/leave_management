@@ -851,7 +851,7 @@ def fault_locator_dashboard(request):
         logger = logging.getLogger(__name__)
         logger.error(f"Dashboard error: {e}")
         messages.error(request, "An error occurred loading the dashboard.")
-        return redirect('simple_fault_list')
+    return redirect('fault_locator:simple_fault_list')
 
 @login_required
 def simple_fault_list(request):
@@ -977,7 +977,7 @@ def simple_fault_list(request):
         logger = logging.getLogger(__name__)
         logger.error(f"Fault list error: {e}")
         messages.error(request, "An error occurred loading the fault list.")
-        return redirect('fault_locator_dashboard')
+    return redirect('fault_locator:fault_locator_dashboard')
 
 @login_required
 def quick_fault_report(request):
@@ -995,12 +995,12 @@ def quick_fault_report(request):
         
         if not can_report:
             messages.error(request, "You don't have permission to report faults. Contact your supervisor to get the appropriate role.")
-            return redirect('fault_locator_dashboard')
+            return redirect('fault_locator:fault_locator_dashboard')
         
         # Check depot assignment for fault reporters
         if is_fault_reporter(user_profile) and (not hasattr(user_profile, 'depot') or not user_profile.depot):
             messages.error(request, "You must be assigned to a depot before you can report faults.")
-            return redirect('fault_locator_dashboard')
+            return redirect('fault_locator:fault_locator_dashboard')
         
         if request.method == "POST":
             # Determine form parameters based on user role and region
@@ -1031,9 +1031,9 @@ def quick_fault_report(request):
                 # Redirect based on user role
                 if is_depot_foreperson(user_profile, fault.depot):
                     messages.info(request, "As depot foreperson, you can now assign this fault to a team")
-                    return redirect('simple_assign_fault', fault_id=fault.id)
+                    return redirect('fault_locator:simple_assign_fault', fault_id=fault.id)
                 else:
-                    return redirect('simple_fault_list')
+                    return redirect('fault_locator:simple_fault_list')
             else:
                 # Form has errors, it will be displayed with errors
                 for field, errors in form.errors.items():
@@ -1067,7 +1067,7 @@ def quick_fault_report(request):
         logger = logging.getLogger(__name__)
         logger.error(f"Quick fault report error: {e}")
         messages.error(request, "An error occurred reporting the fault.")
-        return redirect('fault_locator_dashboard')
+    return redirect('fault_locator:fault_locator_dashboard')
 
 @login_required
 def create_fault(request):
@@ -1085,7 +1085,7 @@ def create_fault(request):
         
         if not can_report:
             messages.error(request, "You don't have permission to report faults. Contact your supervisor to get the appropriate role.")
-            return redirect('fault_locator_dashboard')
+            return redirect('fault_locator:fault_locator_dashboard')
         
         if request.method == "POST":
             form = FaultForm(request.POST)
@@ -1103,9 +1103,9 @@ def create_fault(request):
                 # Redirect based on user role
                 if is_depot_foreperson(user_profile, fault.depot):
                     messages.info(request, "As depot foreperson, you can now assign this fault to a team")
-                    return redirect('simple_assign_fault', fault_id=fault.id)
+                    return redirect('fault_locator:simple_assign_fault', fault_id=fault.id)
                 else:
-                    return redirect('simple_fault_list')
+                    return redirect('fault_locator:simple_fault_list')
         else:
             form = FaultForm()
             
@@ -1127,7 +1127,7 @@ def create_fault(request):
         logger = logging.getLogger(__name__)
         logger.error(f"Create fault error: {e}")
         messages.error(request, "An error occurred creating the fault.")
-        return redirect('fault_locator_dashboard')
+    return redirect('fault_locator:fault_locator_dashboard')
 
 @login_required
 @fault_assignment_required
@@ -1139,7 +1139,7 @@ def simple_assign_fault(request, fault_id=None):
         # Check permissions
         if not (is_senior_foreman(user_profile) or is_depot_foreperson(user_profile, user_profile.depot if user_profile and hasattr(user_profile, 'depot') and user_profile.depot else None)):
             messages.error(request, "You don't have permission to assign faults")
-            return redirect('simple_fault_list')
+            return redirect('fault_locator:simple_fault_list')
         
         # Get fault if specified
         fault = None
@@ -1150,7 +1150,7 @@ def simple_assign_fault(request, fault_id=None):
                 user_depot = Depots.objects.filter(code=user_profile.depot).first()
                 if fault.depot != user_depot:
                     messages.error(request, "You can only assign faults at your depot")
-                    return redirect('simple_fault_list')
+                    return redirect('fault_locator:simple_fault_list')
         
         if request.method == "POST":
             fault_id = request.POST.get('fault_id')
@@ -1158,7 +1158,7 @@ def simple_assign_fault(request, fault_id=None):
             
             if not fault_id or not team_id:
                 messages.error(request, "Please select both fault and team")
-                return redirect('assign_fault')
+                return redirect('fault_locator:assign_fault')
             
             try:
                 # Use select_for_update to prevent race conditions
@@ -1169,18 +1169,18 @@ def simple_assign_fault(request, fault_id=None):
                 existing_assignment = FaultAssignment.objects.filter(fault=fault, located_at__isnull=True).first()
                 if existing_assignment:
                     messages.error(request, "This fault is already assigned to a team")
-                    return redirect('simple_fault_list')
+                    return redirect('fault_locator:simple_fault_list')
                 
                 # Check if team has a device
                 device_assignment = FaultLocatorDeviceAssignment.objects.filter(team=team).select_related('device').first()
                 if not device_assignment:
                     messages.error(request, f"Team '{team.name}' doesn't have a device assigned")
-                    return redirect('assign_fault')
+                    return redirect('fault_locator:assign_fault')
                 
                 # Check if assigned device is in working condition
                 if device_assignment.device.status not in ['available', 'assigned']:
                     messages.error(request, f"Team '{team.name}' cannot be assigned faults. Device '{device_assignment.device.serial_number}' is {device_assignment.device.get_status_display()}")
-                    return redirect('assign_fault')
+                    return redirect('fault_locator:assign_fault')
                 
                 # Create assignment atomically
                 fault_assignment = FaultAssignment.objects.create(
@@ -1198,17 +1198,17 @@ def simple_assign_fault(request, fault_id=None):
                 notify_fault_assignment(fault_assignment, request)
                 
                 messages.success(request, f"Fault assigned to team '{team.name}' with device '{device_assignment.device.serial_number}'")
-                return redirect('simple_fault_list')
+                return redirect('fault_locator:simple_fault_list')
                 
             except Fault.DoesNotExist:
                 messages.error(request, "Fault not found")
-                return redirect('simple_fault_list')
+                return redirect('fault_locator:simple_fault_list')
             except FaultLocatorTeam.DoesNotExist:
                 messages.error(request, "Team not found")
-                return redirect('assign_fault')
+                return redirect('fault_locator:assign_fault')
             except IntegrityError as e:
                 messages.error(request, "Assignment conflict occurred. Please try again.")
-                return redirect('assign_fault')
+                return redirect('fault_locator:assign_fault')
         
         # GET request - show assignment form
         
@@ -1273,7 +1273,7 @@ def simple_assign_fault(request, fault_id=None):
         logger = logging.getLogger(__name__)
         logger.error(f"Assign fault error: {e}")
         messages.error(request, "An error occurred assigning the fault.")
-        return redirect('fault_locator_dashboard')
+        return redirect('fault_locator:fault_locator_dashboard')
 
 @login_required
 @team_leader_required
@@ -1299,7 +1299,7 @@ def field_update(request, fault_id):
         
         if not can_update:
             messages.error(request, "You don't have permission to update this fault")
-            return redirect('simple_fault_list')
+            return redirect('fault_locator:simple_fault_list')
         
         if request.method == "POST":
             action = request.POST.get('action')
@@ -1354,13 +1354,13 @@ def field_update(request, fault_id):
         logger = logging.getLogger(__name__)
         logger.error(f"Field update error: {e}")
         messages.error(request, "An error occurred updating the fault status.")
-        return redirect('fault_locator_dashboard')
+        return redirect('fault_locator:fault_locator_dashboard')
     except Exception as e:
         import logging
         logger = logging.getLogger(__name__)
         logger.error(f"Field update error: {e}")
         messages.error(request, "An error occurred updating the fault status.")
-        return redirect('fault_locator_dashboard')
+        return redirect('fault_locator:fault_locator_dashboard')
 
 @login_required
 def team_overview(request):
@@ -1545,7 +1545,7 @@ def team_overview(request):
         logger = logging.getLogger(__name__)
         logger.error(f"Team overview error: {e}")
         messages.error(request, "An error occurred loading the team overview.")
-        return redirect('fault_locator_dashboard')
+    return redirect('fault_locator:fault_locator_dashboard')
 
 @login_required
 @require_http_methods(["GET", "POST"])
@@ -1557,7 +1557,7 @@ def assign_team_to_depot(request, team_id):
         # Check permissions
         if not (is_senior_foreman(user_profile) or can_manage_devices(user_profile)):
             messages.error(request, "You don't have permission to assign teams to depots.")
-            return redirect('team_overview')
+            return redirect('fault_locator:team_overview')
         
         # Use select_for_update to prevent race conditions
         team = get_object_or_404(FaultLocatorTeam.objects.select_for_update(), id=team_id)
@@ -1566,7 +1566,7 @@ def assign_team_to_depot(request, team_id):
         is_valid, error_message = validate_team_device_for_deployment(team)
         if not is_valid:
             messages.error(request, error_message)
-            return redirect('team_overview')
+            return redirect('fault_locator:team_overview')
         
         # Get the device assignment for context
         device_assignment = FaultLocatorDeviceAssignment.objects.filter(team=team).first()
@@ -1574,7 +1574,7 @@ def assign_team_to_depot(request, team_id):
         # Check if team is already deployed
         if team.current_depot:
             messages.error(request, f"Team '{team.name}' is already deployed to {team.current_depot.depot}.")
-            return redirect('team_overview')
+            return redirect('fault_locator:team_overview')
         
         # Get user region for filtering depots
         user_region = user_profile.region if user_profile else None
@@ -1604,14 +1604,14 @@ def assign_team_to_depot(request, team_id):
                     notify_team_deployment(deployment, request)
                     
                     messages.success(request, f"Team '{team.name}' has been successfully deployed to {depot.depot}.")
-                    return redirect('team_overview')
+                    return redirect('fault_locator:team_overview')
                     
                 except IntegrityError as e:
                     messages.error(request, "Team deployment conflict occurred. Please try again.")
-                    return redirect('team_overview')
+                    return redirect('fault_locator:team_overview')
                 except ValidationError as e:
                     messages.error(request, f"Deployment validation error: {str(e)}")
-                    return redirect('team_overview')
+                    return redirect('fault_locator:team_overview')
         else:
             form = TeamDepotAssignmentForm(user_region=user_region)
         
@@ -1629,7 +1629,7 @@ def assign_team_to_depot(request, team_id):
         logger = logging.getLogger(__name__)
         logger.error(f"Assign team to depot error: {e}")
         messages.error(request, "An error occurred assigning the team to depot.")
-        return redirect('team_overview')
+    return redirect('fault_locator:team_overview')
 
 @login_required
 @require_http_methods(["POST"])
@@ -1641,7 +1641,7 @@ def recall_team_from_depot(request, team_id):
         # Check permissions
         if not (is_senior_foreman(user_profile) or can_manage_devices(user_profile)):
             messages.error(request, "You don't have permission to recall teams from depots.")
-            return redirect('team_overview')
+            return redirect('fault_locator:team_overview')
         
         # Use select_for_update to prevent race conditions
         team = get_object_or_404(FaultLocatorTeam.objects.select_for_update(), id=team_id)
@@ -1804,7 +1804,7 @@ def my_work(request):
         logger = logging.getLogger(__name__)
         logger.error(f"My work error: {e}")
         messages.error(request, "An error occurred loading your work assignments.")
-        return redirect('fault_locator_dashboard')
+    return redirect('fault_locator:fault_locator_dashboard')
 
 # DEVICE MANAGEMENT VIEWS
 
@@ -1816,7 +1816,7 @@ def device_list(request):
         # Check permissions
         if not can_manage_devices(user_profile):
             messages.error(request, "You don't have permission to manage devices")
-            return redirect('fault_locator_dashboard')
+            return redirect('fault_locator:fault_locator_dashboard')
         
         # Get all devices with assignment status
         devices = FaultLocatorDevice.objects.all().order_by('serial_number')
@@ -1864,14 +1864,14 @@ def create_device(request):
         # Check permissions
         if not can_manage_devices(user_profile):
             messages.error(request, "You don't have permission to create devices")
-            return redirect('fault_locator_dashboard')
+            return redirect('fault_locator:fault_locator_dashboard')
         
         if request.method == "POST":
             form = FaultLocatorDeviceForm(request.POST)
             if form.is_valid():
                 device = form.save()
                 messages.success(request, f"Device '{device.serial_number}' created successfully!")
-                return redirect('device_list')
+                return redirect('fault_locator:device_list')
         else:
             form = FaultLocatorDeviceForm()
         
@@ -1887,7 +1887,7 @@ def create_device(request):
         logger = logging.getLogger(__name__)
         logger.error(f"Create device error: {e}")
         messages.error(request, "An error occurred creating the device.")
-        return redirect('device_list')
+    return redirect('fault_locator:device_list')
 
 @login_required
 def edit_device(request, device_id):
@@ -1930,7 +1930,7 @@ def edit_device(request, device_id):
         logger = logging.getLogger(__name__)
         logger.error(f"Edit device error: {e}")
         messages.error(request, "An error occurred editing the device.")
-        return redirect('device_list')
+    return redirect('fault_locator:device_list')
 
 @login_required
 def device_detail(request, device_id):
@@ -1967,7 +1967,7 @@ def device_detail(request, device_id):
         logger = logging.getLogger(__name__)
         logger.error(f"Device detail error: {e}")
         messages.error(request, "An error occurred loading device details.")
-        return redirect('device_list')
+    return redirect('fault_locator:device_list')
 
 @login_required
 @transaction.atomic
@@ -1994,13 +1994,13 @@ def assign_device_to_team(request):
                     existing_device_assignment = FaultLocatorDeviceAssignment.objects.filter(device=device).first()
                     if existing_device_assignment:
                         messages.error(request, f"Device '{device.serial_number}' is already assigned to team '{existing_device_assignment.team.name}'")
-                        return redirect('assign_device_to_team')
+                        return redirect('fault_locator:assign_device_to_team')
                     
                     # Check if team already has a device
                     existing_team_assignment = FaultLocatorDeviceAssignment.objects.filter(team=team).first()
                     if existing_team_assignment:
                         messages.error(request, f"Team '{team.name}' already has device '{existing_team_assignment.device.serial_number}' assigned")
-                        return redirect('assign_device_to_team')
+                        return redirect('fault_locator:assign_device_to_team')
                     
                     # Create assignment atomically
                     assignment = FaultLocatorDeviceAssignment.objects.create(
@@ -2014,20 +2014,20 @@ def assign_device_to_team(request):
                     notify_device_assignment(assignment, request)
                     
                     messages.success(request, f"Device '{assignment.device.serial_number}' assigned to team '{team.name}'")
-                    return redirect('team_overview')
+                    return redirect('fault_locator:team_overview')
                     
                 except FaultLocatorDevice.DoesNotExist:
                     messages.error(request, "Device not found")
-                    return redirect('assign_device_to_team')
+                    return redirect('fault_locator:assign_device_to_team')
                 except FaultLocatorTeam.DoesNotExist:
                     messages.error(request, "Team not found")
-                    return redirect('assign_device_to_team')
+                    return redirect('fault_locator:assign_device_to_team')
                 except IntegrityError as e:
                     messages.error(request, "Device assignment conflict. Device may already be assigned to another team.")
-                    return redirect('assign_device_to_team')
+                    return redirect('fault_locator:assign_device_to_team')
                 except ValidationError as e:
                     messages.error(request, f"Assignment validation error: {str(e)}")
-                    return redirect('assign_device_to_team')
+                    return redirect('fault_locator:assign_device_to_team')
         else:
             initial_data = {}
             if team_id:
@@ -2046,7 +2046,7 @@ def assign_device_to_team(request):
         logger = logging.getLogger(__name__)
         logger.error(f"Assign device to team error: {e}")
         messages.error(request, "An error occurred assigning the device to team.")
-        return redirect('device_list')
+    return redirect('fault_locator:device_list')
 
 @login_required
 def unassign_device(request, device_id):
@@ -2056,20 +2056,20 @@ def unassign_device(request, device_id):
         # Check permissions
         if not can_manage_devices(user_profile):
             messages.error(request, "You don't have permission to unassign devices")
-            return redirect('fault_locator_dashboard')
+            return redirect('fault_locator:fault_locator_dashboard')
         
         device = get_object_or_404(FaultLocatorDevice, id=device_id)
         assignment = FaultLocatorDeviceAssignment.objects.filter(device=device).first()
         
         if not assignment:
             messages.error(request, "Device is not currently assigned to any team")
-            return redirect('device_list')
+            return redirect('fault_locator:device_list')
         
         # Check if device is being used for active fault
         active_fault = FaultAssignment.objects.filter(device=device, located_at__isnull=True).first()
         if active_fault:
             messages.error(request, f"Cannot unassign device - it's currently being used for fault: {active_fault.fault.description}")
-            return redirect('device_list')
+            return redirect('fault_locator:device_list')
         
         if request.method == "POST":
             team = assignment.team
@@ -2104,7 +2104,7 @@ def unassign_device(request, device_id):
         logger = logging.getLogger(__name__)
         logger.error(f"Unassign device error: {e}")
         messages.error(request, "An error occurred unassigning the device.")
-        return redirect('device_list')
+    return redirect('fault_locator:device_list')
 
 @login_required
 @transaction.atomic
