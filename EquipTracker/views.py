@@ -17,10 +17,7 @@ class EquipmentListView(LoginRequiredMixin, ListView):
 
     def get_queryset(self):
         user_region_id = self.request.user.region.id
-        # Get all TrackEquipment records of type 'Battery' with EquipmentChange in user's region
-        print( "" )
-        equipment_ids = EquipmentChange.objects.filter(
-            substation__region_id=user_region_id).values_list('equipment_tracker_id', flat=True)
+        equipment_ids = EquipmentChange.objects.filter(substation__region_id=user_region_id).values_list('equipment_tracker_id', flat=True)
         for a in equipment_ids: print("qqqqqqqqq",a)
         return TrackEquipment.objects.filter(id__in=equipment_ids, type_of_equipment='Battery').order_by('-id')
         
@@ -32,7 +29,6 @@ class EquipmentDetailView(LoginRequiredMixin, DetailView):
 
     def get_object(self, queryset=None):
         obj = super().get_object(queryset)
-        # Optionally, add region-based access control here
         return obj
 class EquipmentChangeView(LoginRequiredMixin, View):
     template_name = 'equipment/equipment_change.html'

@@ -3,73 +3,114 @@
 {% load humanize %}
 {% load custom_tags %}
 {% block styles %}
-  <link rel="stylesheet"
-        href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css" />
-  <style>.dataTables_wrapper .dataTables_length select { width: 4rem; }</style>
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css" />
+  <style>
+    .content-wrapper {
+      padding: 20px;
+      background: #f9f9f9;
+    }
+    .header {
+      text-align: center;
+      background: #e3e3e3;
+      padding: 10px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+    .header h2 {
+      margin: 0;
+      font-weight: bold;
+    }
+    .header p {
+      margin: 5px 0;
+    }
+    .table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 20px;
+    }
+    .table th, .table td {
+      padding: 8px;
+      text-align: left;
+      border: 1px solid #ddd;
+    }
+    .table th {
+      background-color: #4CAF50;
+      color: white;
+    }
+    .footer {
+      text-align: center;
+      font-weight: bold;
+      margin-top: 20px;
+    }
+  </style>
 {% endblock %}
+
 {% block content %}
-  <title> Equipment</title>
   <div class="content-wrapper">
-    <div class="grid grid-cols-1">
-      <div class="bg-gulf-blue-100 shadow-lg rounded-lg p-6">
-      
+    <div class="header">
+      <h2>Equipment Tracker</h2>
+      <p>ZIMBABWE ELECTRICITY SUPPLY AUTHORITY</p>
+      <p>DISTRICT: OPS AND MAINT</p>
+      <p>INSTALLATION/REMOVAL/CHANGE OF EQUIPMENT</p>
+    </div>
 
-        <table id="equipments" class="table table-striped stripe mt-3 table-bordered">
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Type</th>
-              <th>Description</th>
-              <th>Date</th>
-              <th>Cost Center</th>
-              <th>Customer</th>
-              <th>Meter number</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for equipment in equipments %}
-              <tr class="h-1">
-                <td><a class="text-blue-500" href="{% url 'EquipTracker:equipment_tracker' equipment.id %}">{{ equipment.id|default_if_none:'' }}</a></td>
-                <td>{{ equipment.type_of_equipment|default_if_none:'' }}</td>
-                <td>{{ equipment.reason|default_if_none:'' }}</td>
-                <td>{{ equipment.created_at|date }}</td>
-                <td>{{ equipment.cost_center }}</td>
-                <td>{{ equipment.customer.name|default_if_none:'' }}</td>
-                <td><span title="{{ equipment.meter.meter_type }}">{{ equipment.meter.number }}</span></td>
-                <td>{{ equipment.process.approval_set.last|default_if_none:"No Approval" }}</td>
-              </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-        <div class=" container text-center ">
-          {% if roles %}
-            {% for app_roles in roles %}
-              <span class="text-blue-400  mx-4 rounded border-2 border border-red-300 px-1  font-bold rounded">{{ app_roles }}</span>
-            {% endfor %}
-          {% endif %}
-        </div>
-        <div class=" container text-center mt-3">
+    <table id="equipments" class="table">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Type</th>
+          <th>Description</th>
+          <th>Date</th>
+          <th>Cost Center</th>
+          <th>Customer</th>
+          <th>Meter Number</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for equipment in equipments %}
+          <tr>
+            <td><a class="text-blue-500" href="{% url 'EquipTracker:equipment_tracker' equipment.id %}">{{ equipment.id|default_if_none:'' }}</a></td>
+            <td>{{ equipment.type_of_equipment|default_if_none:'' }}</td>
+            <td>{{ equipment.reason|default_if_none:'' }}</td>
+            <td>{{ equipment.created_at|date }}</td>
+            <td>{{ equipment.cost_center }}</td>
+            <td>{{ equipment.customer.name|default_if_none:'' }}</td>
+            <td><span title="{{ equipment.meter.meter_type }}">{{ equipment.meter.number }}</span></td>
+            <td>{{ equipment.process.approval_set.last|default_if_none:"No Approval" }}</td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="8" class="text-center">No equipment found.</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
 
-        </div>
-      </div>
+    <div class="footer">
+      {% if roles %}
+        {% for app_roles in roles %}
+          <span class="text-blue-400 mx-4 rounded border-2 border border-red-300 px-1 font-bold">{{ app_roles }}</span>
+        {% endfor %}
+      {% endif %}
     </div>
   </div>
 {% endblock %}
+
 {% block scripts %}
   <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
   <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
   <script>
-  $(document).ready(function () {
-    $("#equipments").DataTable({
-      "pageLength": 10,
-      "columnDefs": [{ "orderable": true, "targets": [0, 1, 2,3,4] }],
-      "responsive": true,
-      "searching": true,
-      language: {
-        search: "Filter results:"
-    }
+    $(document).ready(function () {
+      $("#equipments").DataTable({
+        "pageLength": 10,
+        "columnDefs": [{ "orderable": true, "targets": [0, 1, 2] }],
+        "responsive": true,
+        "searching": true,
+        language: {
+          search: "Filter results:"
+        }
+      });
     });
-  });
   </script>
 {% endblock %}
