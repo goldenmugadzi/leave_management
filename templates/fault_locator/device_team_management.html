@@ -406,7 +406,7 @@ document.getElementById('confirmAssign').onclick = function() {
     return;
   }
   
-  fetch('{% url "quick_assign_device" %}', {
+  fetch('{% url "fault_locator:quick_assign_device" %}', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

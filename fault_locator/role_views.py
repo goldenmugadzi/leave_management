@@ -246,6 +246,46 @@ def role_based_dashboard(request):
     elif user_role == 'team_member':
         context.update(get_team_member_context(user_profile))
     
+    # Build dashboard actions (only if not already set by role-specific context)
+    # Get existing actions from context if they exist
+    primary_actions = context.get('primary_actions', [])
+    secondary_actions = context.get('secondary_actions', [])
+
+    # Determine if this user can report faults (aligned with quick_fault_report view)
+    can_report_faults = (
+        user_role == 'fault_reporter' or
+        is_team_member(user_profile) or
+        is_team_leader(user_profile) or
+        is_depot_foreperson(user_profile) or
+        is_senior_foreman(user_profile)
+    )
+
+    # Highlighted primary action for depot foreperson (matches template condition)
+    # Only add if primary_actions is still empty (not set by role context)
+    if is_depot_foreperson(user_profile) and not primary_actions:
+        primary_actions.append({
+            'title': 'Report New Fault',
+            'description': 'Quickly log a new fault at your depot.',
+            'url': '/fault_locator/quick-report/',
+            'icon_class': 'fas fa-bolt',
+            'priority': 'high'
+        })
+
+    # General quick access for anyone allowed to report
+    # Only add if secondary_actions is still empty (not set by role context)
+    if can_report_faults and not secondary_actions:
+        secondary_actions.append({
+            'title': 'Report a Fault',
+            'description': 'Open the quick fault report form.',
+            'url': '/fault_locator/quick-report/',
+            'icon_class': 'fas fa-clipboard-check',
+        })
+
+    if primary_actions:
+        context['primary_actions'] = primary_actions
+    if secondary_actions:
+        context['secondary_actions'] = secondary_actions
+
     return render(request, 'fault_locator/role_dashboard.html', context)
 
 def get_senior_foreman_context(user_profile):
@@ -327,8 +367,8 @@ def get_senior_foreman_context(user_profile):
                 'priority': 'medium'
             },
             {
-                'title': 'Gear Management',
-                'description': 'Manage fault locator gear',
+                'title': 'Device Management',
+                'description': 'Manage fault locator devices',
                 'url': '/fault_locator/devices/',
                 'icon_class': 'fas fa-wrench',
                 'priority': 'medium'
@@ -369,8 +409,8 @@ def get_senior_foreman_context(user_profile):
                 'priority': 'medium'
             },
             {
-                'title': 'Gear-Team Management',
-                'description': 'Manage gear assignments to teams',
+                'title': 'Device-Team Management',
+                'description': 'Manage device assignments to teams',
                 'url': '/fault_locator/device-team-management/',
                 'icon_class': 'fas fa-mobile-screen',
                 'priority': 'medium'

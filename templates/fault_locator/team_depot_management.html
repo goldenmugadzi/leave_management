@@ -311,7 +311,7 @@ document.getElementById('confirmDeploy').onclick = function() {
     return;
   }
   
-  fetch('{% url "quick_deploy_team" %}', {
+  fetch('{% url "fault_locator:quick_deploy_team" %}', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -344,7 +344,7 @@ document.getElementById('confirmDeploy').onclick = function() {
 document.getElementById('confirmRecall').onclick = function() {
   const notes = document.getElementById('recallNotesInput').value;
   
-  fetch('{% url "quick_recall_team" %}', {
+  fetch('{% url "fault_locator:quick_recall_team" %}', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

@@ -464,7 +464,7 @@ def fault_locator_dashboard(request):
         accessible_functions = {}
 
         # Senior Foreperson & IT/Admin Functions
-        if is_senior or user_can_manage_devices:
+        if is_senior:
             if can_manage_devices(user_profile):
                 accessible_functions['device_list'] = {
                     'title': 'Gear Management',
@@ -486,6 +486,39 @@ def fault_locator_dashboard(request):
                 'description': 'Complete management interface for team deployment, gear assignment, and performance monitoring.',
                 'url_name': 'senior_foreman_dashboard',
                 'icon': '📊'
+            }
+            # Quick create actions
+            accessible_functions['create_team'] = {
+                'title': 'Create Team',
+                'description': 'Create and configure a new fault locator team.',
+                'url_name': 'create_team',
+                'icon': '👥➕'
+            }
+            if can_manage_devices(user_profile):
+                accessible_functions['create_device'] = {
+                    'title': 'Create Gear',
+                    'description': 'Register new fault locator gear.',
+                    'url_name': 'create_device',
+                    'icon': '🧰➕'
+                }
+            # Expose focused management areas as direct tiles for convenience
+            accessible_functions['team_depot_management'] = {
+                'title': 'Team–Depot Management',
+                'description': 'View depot workloads and manage which teams are deployed where.',
+                'url_name': 'team_depot_management',
+                'icon': '🏭'
+            }
+            accessible_functions['device_team_management'] = {
+                'title': 'Gear ⇄ Team Assignment',
+                'description': 'Assign and review gear allocation across teams.',
+                'url_name': 'device_team_management',
+                'icon': '🧰'
+            }
+            accessible_functions['performance_monitoring'] = {
+                'title': 'Performance Monitoring',
+                'description': 'Track deployment efficiency and resolution performance.',
+                'url_name': 'performance_monitoring',
+                'icon': '📈'
             }
             if can_deploy_teams(user_profile):
                 accessible_functions['deploy_team'] = {
@@ -557,21 +590,9 @@ def fault_locator_dashboard(request):
                 'icon': '📄'
             }
 
-        # Only show functions user can access
-        context['accessible_functions'] = [
-            func for func in accessible_functions.values()
-            if func['url_name'] == 'quick_fault_report'
-            or (func['url_name'] == 'fault_reporter_dashboard' and is_fault_rep)
-            or (func['url_name'] == 'bulk_fault_report' and is_fault_rep)
-            or (func['url_name'] == 'my_work' and is_team_member)
-            or (func['url_name'] == 'device_list' and can_manage_devices(user_profile))
-            or (func['url_name'] == 'team_overview' and can_create_teams(user_profile))
-            or (func['url_name'] == 'senior_foreman_dashboard' and is_senior)
-            or (func['url_name'] == 'deploy_team' and can_deploy_teams(user_profile))
-            or (func['url_name'] == 'advanced_fault_assignment' and can_assign_faults(user_profile))
-            or (func['url_name'] == 'simple_fault_list' and (is_senior or is_depot_fp))
-            or (func['url_name'] == 'assign_faults' and can_assign_faults(user_profile))
-        ]
+        # Only show functions user can access - just pass through the dictionary
+        # The functions were already filtered when added to accessible_functions above
+        context['accessible_functions'] = list(accessible_functions.values())
 
         # MY ACTIONS - What can I do right now?
         my_actions = []
@@ -1710,11 +1731,121 @@ def device_detail(request, device_id):
         messages.error(request, "An error occurred loading gear details.")
         return redirect('fault_locator:device_list')
 
-# --- Minimal placeholder views to satisfy URL routing ---
+# --- Fault Reporter dashboard ---
 @login_required
 def fault_reporter_dashboard(request):
-    messages.info(request, 'Redirected to Quick Fault Report (dashboard placeholder)')
-    return redirect('fault_locator:quick_fault_report')
+    """Dashboard for Fault Reporters.
+    - Allows quick navigation to report a new fault
+    - Shows faults in the user's depot with simple filters
+    - Provides summary stats of the reporter's own submissions
+    """
+    try:
+        user_profile = UserProfile.objects.filter(id=request.user.id).first()
+
+        # Must be a fault reporter
+        if not is_fault_reporter(user_profile):
+            messages.error(request, "You don't have access to the Fault Reporter dashboard.")
+            return redirect('fault_locator:fault_locator_dashboard')
+
+        # Must have a depot to view depot faults
+        if not getattr(user_profile, 'depot', None):
+            messages.error(request, 'You must be assigned to a depot to view depot faults.')
+            return redirect('fault_locator:fault_locator_dashboard')
+
+        # Base queryset for this depot
+        faults = Fault.objects.select_related('depot', 'prioritized_by').prefetch_related(
+            'faultassignment_set__team',
+            'faultassignment_set__device'
+        ).filter(depot=user_profile.depot)
+
+        # Filters
+        status_filter = request.GET.get('status', 'all')
+        priority_filter = request.GET.get('priority', 'all')
+
+        if status_filter != 'all':
+            faults = faults.filter(status=status_filter)
+        if priority_filter != 'all':
+            try:
+                faults = faults.filter(priority=int(priority_filter))
+            except Exception:
+                pass
+
+        # Ordering (same priority scheme as simple list)
+        faults = faults.order_by(
+            '-vvip',
+            '-voltage',
+            '-clients_affected',
+            'reported_at',
+            '-priority',
+        )
+
+        # Build list items for template
+        fault_data = []
+        for fault in faults:
+            current_assignment = fault.faultassignment_set.filter(located_at__isnull=True).first()
+
+            # Hours elapsed since report
+            delta = timezone.now() - fault.reported_at
+            hours_elapsed = int(delta.total_seconds() // 3600)
+
+            # Urgency tag
+            urgency = 'normal'
+            if fault.priority >= 3:
+                urgency = 'critical'
+            elif hours_elapsed > 4:
+                urgency = 'urgent'
+
+            fault_data.append({
+                'fault': fault,
+                'current_assignment': current_assignment,
+                'hours_elapsed': hours_elapsed,
+                'urgency': urgency,
+            })
+
+        # Stats for reporter's own submissions
+        my_qs = Fault.objects.filter(reported_by=user_profile)
+        stats = {
+            'total_reported': my_qs.count(),
+            'pending': my_qs.filter(status='requested').count(),
+            'in_progress': my_qs.filter(status='assigned').count(),
+            'located': my_qs.filter(status='located').count(),
+            'completed': my_qs.filter(status='closed').count(),
+            'high_priority': my_qs.filter(priority__gte=3).count(),
+        }
+
+        status_options = [
+            ('all', 'All Statuses'),
+            ('requested', 'Needs Assignment'),
+            ('assigned', 'In Progress'),
+            ('located', 'Located'),
+            ('closed', 'Completed'),
+        ]
+        priority_options = [
+            ('all', 'All Priorities'),
+            (1, 'Low'),
+            (2, 'Medium'),
+            (3, 'High'),
+            (4, 'Critical'),
+        ]
+
+        context = {
+            'user_profile': user_profile,
+            'fault_data': fault_data,
+            'total_count': len(fault_data),
+            'status_filter': status_filter,
+            'priority_filter': priority_filter,
+            'status_options': status_options,
+            'priority_options': priority_options,
+            'stats': stats,
+        }
+
+        return render(request, 'fault_locator/fault_reporter_dashboard.html', context)
+    except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Fault reporter dashboard error: {e}")
+        messages.error(request, 'An error occurred loading your dashboard.')
+        return redirect('fault_locator:fault_locator_dashboard')
 
 @login_required
 def bulk_fault_report(request):

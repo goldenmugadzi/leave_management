@@ -38,6 +38,13 @@ class FaultForm(forms.ModelForm):
         self.fields['depot'].queryset = Depots.objects.all().order_by('depot')
         self.fields['depot'].empty_label = "Select a depot..."
         
+        # Ensure voltage choices are available (defensive in case of widget overrides)
+        try:
+            self.fields['voltage'].choices = [('', 'Select voltage level...')] + list(Fault.VOLTAGE_CHOICES)
+        except Exception:
+            # If for some reason voltage field isn't present, skip silently
+            pass
+
         # Add field labels and help text
         self.fields['vvip'].label = 'VVIP Fault'
         self.fields['vvip'].help_text = 'Check if this is a VVIP fault (takes absolute priority over all other faults)'
@@ -676,6 +683,13 @@ class QuickFaultReportForm(forms.ModelForm):
         # Add field labels and help text
         self.fields['vvip'].label = 'VVIP Fault'
         self.fields['vvip'].help_text = 'Check if this is a VVIP fault (takes absolute priority)'
+        
+        # Ensure voltage choices are explicitly set and include a prompt
+        try:
+            self.fields['voltage'].choices = [('', 'Select voltage level...')] + list(Fault.VOLTAGE_CHOICES)
+        except Exception:
+            pass
+        
         self.fields['voltage'].label = 'Voltage Level'
         self.fields['voltage'].help_text = 'Select the voltage level for this fault'
         self.fields['backfeed'].label = 'Backfeed Available'

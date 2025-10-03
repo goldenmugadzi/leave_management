@@ -314,7 +314,7 @@ function quickDeploy(teamId, teamName) {
       return;
     }
     
-    fetch('{% url "quick_deploy_team" %}', {
+  fetch('{% url "fault_locator:quick_deploy_team" %}', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -365,7 +365,7 @@ function quickAssign(deviceId, deviceName) {
       return;
     }
     
-    fetch('{% url "quick_assign_device" %}', {
+  fetch('{% url "fault_locator:quick_assign_device" %}', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
