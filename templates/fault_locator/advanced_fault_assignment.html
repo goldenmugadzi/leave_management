@@ -177,7 +177,7 @@
               </div>
               
               <div class="team-details text-sm text-gray-600">
-                <p>🔧 <strong>Device:</strong> {{ data.device.serial_number }}</p>
+                <p>🔧 <strong>Gear:</strong> {{ data.device.serial_number }}</p>
                 <p>👥 <strong>Members:</strong> {{ data.team.members.count }}</p>
                 <p>📍 <strong>Location:</strong> {{ data.location }}</p>
                 {% if data.current_assignments > 0 %}
@@ -198,7 +198,7 @@
           {% else %}
             <div class="empty-state text-center py-8">
               <div class="text-4xl mb-2">👥</div>
-              <p class="text-gray-600">No teams with devices available</p>
+              <p class="text-gray-600">No teams with gear available</p>
             </div>
           {% endif %}
         </div>

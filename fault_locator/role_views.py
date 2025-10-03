@@ -304,8 +304,8 @@ def get_senior_foreman_context(user_profile):
                 'priority': 'high' if available_teams.count() > 0 else 'medium'
             },
             {
-                'title': 'Assign Devices to Teams',
-                'description': f'Assign {unassigned_devices.count()} available devices',
+                'title': 'Assign Gear to Teams',
+                'description': f'Assign {unassigned_devices.count()} available gear',
                 'url': '/fault_locator/assign-device-to-team/',
                 'icon_class': 'fas fa-mobile-screen-button',
                 'priority': 'high' if unassigned_devices.count() > 0 else 'medium'
@@ -327,8 +327,8 @@ def get_senior_foreman_context(user_profile):
                 'priority': 'medium'
             },
             {
-                'title': 'Device Management',
-                'description': 'Manage fault locator devices',
+                'title': 'Gear Management',
+                'description': 'Manage fault locator gear',
                 'url': '/fault_locator/devices/',
                 'icon_class': 'fas fa-wrench',
                 'priority': 'medium'
@@ -369,8 +369,8 @@ def get_senior_foreman_context(user_profile):
                 'priority': 'medium'
             },
             {
-                'title': 'Device-Team Management',
-                'description': 'Manage device assignments to teams',
+                'title': 'Gear-Team Management',
+                'description': 'Manage gear assignments to teams',
                 'url': '/fault_locator/device-team-management/',
                 'icon_class': 'fas fa-mobile-screen',
                 'priority': 'medium'
@@ -556,8 +556,8 @@ def get_depot_foreperson_context(user_profile):
                 'priority': 'medium'
             },
             {
-                'title': 'Device Assignment',
-                'description': 'Assign devices to teams',
+                'title': 'Gear Assignment',
+                'description': 'Assign gear to teams',
                 'url': '/fault_locator/assign-device-to-team/',
                 'icon_class': 'fas fa-mobile-screen-button',
                 'priority': 'medium'
@@ -592,7 +592,7 @@ def get_team_leader_context(user_profile):
         'active_assignments': current_assignments.count(),
         'completed_today': completed_today.count(),
         'team_location': my_team.current_depot.depot if my_team.current_depot else 'Not Deployed',
-        'device_assigned': team_device.device.serial_number if team_device else 'No Device',
+    'device_assigned': team_device.device.serial_number if team_device else 'No Gear',
         'team_members': my_team.members.count(),
     }
     
@@ -703,7 +703,7 @@ def get_team_member_context(user_profile):
         'team_name': my_team.name,
         'team_leader': team_leader.get_full_name() if team_leader else 'No Leader Assigned',
         'current_location': my_team.current_depot.depot if my_team.current_depot else 'Not Deployed',
-        'device': team_device.device.serial_number if team_device else 'No Device',
+    'device': team_device.device.serial_number if team_device else 'No Gear',
         'active_work': current_assignments.count(),
     }
     

@@ -2,7 +2,7 @@
 Senior Foreman specific views for fault locator system
 Provides comprehensive management interface for:
 - Team deployment to depots
-- Device assignment to teams
+- Gear assignment to teams
 - Performance monitoring
 """
 
@@ -38,7 +38,7 @@ def senior_foreman_dashboard(request):
     # Get teams and their current status
     teams_data = get_teams_overview()
     
-    # Get devices and their assignment status
+    # Get gear and their assignment status
     devices_data = get_devices_overview()
     
     # Get depot deployment status
@@ -106,16 +106,16 @@ def team_depot_management(request):
 @login_required
 @senior_foreman_required
 def device_team_management(request):
-    """Device to Team Assignment Management"""
+    """Gear to Team Assignment Management"""
     user_profile = UserProfile.objects.filter(id=request.user.id).first()
     
-    # Get all devices with assignment status
+    # Get all gear with assignment status
     devices = FaultLocatorDevice.objects.annotate(
         assignment_count=Count('faultlocatordeviceassignment'),
         active_faults=Count('faultassignment', filter=Q(faultassignment__located_at__isnull=True))
     ).prefetch_related('faultlocatordeviceassignment_set__team')
     
-    # Get all teams with device assignment status
+    # Get all teams with gear assignment status
     teams = FaultLocatorTeam.objects.annotate(
         device_count=Count('faultlocatordeviceassignment'),
         member_count=Count('members')
@@ -131,7 +131,7 @@ def device_team_management(request):
         'devices': devices,
         'teams': teams,
         'recent_assignments': recent_assignments,
-        'page_title': 'Device Team Management',
+    'page_title': 'Gear Team Management',
     }
     
     return render(request, "fault_locator/device_team_management.html", context)
@@ -158,7 +158,7 @@ def performance_monitoring(request):
     # Depot Performance
     depot_performance = get_depot_performance_data(start_date, end_date, user_profile)
     
-    # Device Utilization
+    # Gear Utilization
     device_utilization = get_device_utilization_data(start_date, end_date)
     
     # Fault Resolution Trends
@@ -212,12 +212,12 @@ def quick_deploy_team(request):
                     'message': f"Team '{team.name}' is already deployed to {team.current_depot.depot}"
                 })
             
-            # Check if team has device
+            # Check if team has gear
             device_assignment = FaultLocatorDeviceAssignment.objects.filter(team=team).first()
             if not device_assignment:
                 return JsonResponse({
                     'success': False,
-                    'message': f"Team '{team.name}' must have a device assigned before deployment"
+                    'message': f"Team '{team.name}' must have gear assigned before deployment"
                 })
             
             # Create deployment
@@ -252,7 +252,7 @@ def quick_deploy_team(request):
 @login_required
 @senior_foreman_required
 def quick_assign_device(request):
-    """Quick AJAX endpoint for device assignment"""
+    """Quick AJAX endpoint for gear assignment"""
     if request.method == 'POST':
         try:
             data = json.loads(request.body)
@@ -267,7 +267,7 @@ def quick_assign_device(request):
             if FaultLocatorDeviceAssignment.objects.filter(device=device).exists():
                 return JsonResponse({
                     'success': False,
-                    'message': f"Device '{device.serial_number}' is already assigned"
+                    'message': f"Gear '{device.serial_number}' is already assigned"
                 })
             
             # Create assignment
@@ -279,7 +279,7 @@ def quick_assign_device(request):
             
             return JsonResponse({
                 'success': True,
-                'message': f"Device '{device.serial_number}' assigned to team '{team.name}'"
+                'message': f"Gear '{device.serial_number}' assigned to team '{team.name}'"
             })
             
         except Exception as e:
@@ -370,7 +370,7 @@ def get_system_statistics():
         'available_devices': total_devices - assigned_devices,
         'active_faults': active_faults,
         'deployment_rate': round((deployed_teams / total_teams * 100) if total_teams > 0 else 0, 1),
-        'device_utilization': round((assigned_devices / total_devices * 100) if total_devices > 0 else 0, 1),
+    'device_utilization': round((assigned_devices / total_devices * 100) if total_devices > 0 else 0, 1),
     }
 
 
@@ -384,7 +384,7 @@ def get_teams_overview():
 
 
 def get_devices_overview():
-    """Get detailed devices overview"""
+    """Get detailed gear overview"""
     return FaultLocatorDevice.objects.annotate(
         assignment_count=Count('faultlocatordeviceassignment'),
         active_faults=Count('faultassignment', filter=Q(faultassignment__located_at__isnull=True))
@@ -449,7 +449,7 @@ def get_recent_activities():
             'user': deployment.deployed_by.get_full_name() if deployment.deployed_by else 'System'
         })
     
-    # Recent device assignments
+    # Recent gear assignments
     recent_assignments = FaultLocatorDeviceAssignment.objects.select_related(
         'device', 'team', 'assigned_by'
     ).order_by('-assigned_at')[:5]
@@ -457,7 +457,7 @@ def get_recent_activities():
     for assignment in recent_assignments:
         activities.append({
             'type': 'assignment',
-            'description': f"Device '{assignment.device.serial_number}' assigned to team '{assignment.team.name}'",
+            'description': f"Gear '{assignment.device.serial_number}' assigned to team '{assignment.team.name}'",
             'timestamp': assignment.assigned_at,
             'user': assignment.assigned_by.get_full_name() if assignment.assigned_by else 'System'
         })
@@ -503,7 +503,7 @@ def get_depot_performance_data(start_date, end_date, user_profile=None):
 
 
 def get_device_utilization_data(start_date, end_date):
-    """Get device utilization data for the specified period"""
+    """Get gear utilization data for the specified period"""
     devices = FaultLocatorDevice.objects.annotate(
         usage_count=Count('faultassignment', filter=Q(
             faultassignment__assigned_at__date__range=[start_date, end_date]

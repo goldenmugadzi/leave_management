@@ -24,7 +24,7 @@
                 <h1 class="text-5xl font-black bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 bg-clip-text text-transparent mb-3 animate-fade-in">
                   {{ device.serial_number }}
                 </h1>
-                <p class="text-xl text-gray-600">Advanced Fault Locator Device</p>
+                <p class="text-xl text-gray-600">Advanced Fault Locator Gear</p>
                 {% if device.description %}
                 <p class="text-gray-500 mt-2">{{ device.description }}</p>
                 {% endif %}
@@ -37,7 +37,7 @@
                class="group relative overflow-hidden px-8 py-4 bg-gradient-to-r from-slate-600 to-gray-700 text-white rounded-2xl font-bold shadow-2xl hover:shadow-slate-500/25 transition-all duration-500 hover:scale-110">
               <span class="relative z-10 flex items-center gap-3">
                 <span class="group-hover:-translate-x-2 transition-transform duration-300">←</span>
-                Back to Devices
+                Back to Gear
               </span>
               <div class="absolute inset-0 bg-gradient-to-r from-slate-700 to-gray-800 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
             </a>
@@ -70,10 +70,10 @@
         <div class="relative z-10 p-8">
           <h2 class="text-3xl font-bold text-gray-800 mb-8 flex items-center gap-4">
             <span class="text-violet-600 animate-pulse text-4xl">📊</span>
-            Device Information
+            Gear Information
           </h2>
           
-          <!-- Device Specifications Grid -->
+          <!-- Gear Specifications Grid -->
           <div class="specs-grid grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
             
             <!-- Serial Number -->
@@ -87,11 +87,11 @@
                   <h3 class="text-lg font-bold text-blue-800">Serial Number</h3>
                 </div>
                 <p class="text-2xl font-black text-blue-600">{{ device.serial_number }}</p>
-                <p class="text-blue-500 text-sm mt-1">Unique device identifier</p>
+                <p class="text-blue-500 text-sm mt-1">Unique gear identifier</p>
               </div>
             </div>
             
-            <!-- Device Type -->
+            <!-- Gear Type -->
             <div class="spec-item group/spec p-6 bg-gradient-to-br from-emerald-50/80 to-green-50/80 border border-emerald-200/50 rounded-2xl hover:scale-105 transition-all duration-300 relative overflow-hidden">
               <div class="absolute inset-0 bg-gradient-to-br from-emerald-400/5 to-green-400/5 opacity-0 group-hover/spec:opacity-100 transition-opacity duration-300"></div>
               <div class="relative z-10">
@@ -99,7 +99,7 @@
                   <div class="spec-icon w-10 h-10 bg-gradient-to-br from-emerald-500 to-green-600 rounded-xl flex items-center justify-center text-white shadow-lg">
                     🔧
                   </div>
-                  <h3 class="text-lg font-bold text-emerald-800">Device Type</h3>
+                  <h3 class="text-lg font-bold text-emerald-800">Gear Type</h3>
                 </div>
                 <p class="text-xl font-bold text-emerald-600">Fault Locator</p>
                 <p class="text-emerald-500 text-sm mt-1">Advanced diagnostic equipment</p>
@@ -181,7 +181,7 @@
           </h2>
           
           {% if assignment %}
-          <!-- Device is assigned -->
+          <!-- Gear is assigned -->
           <div class="assignment-info space-y-6">
             
             <!-- Team Assignment -->
@@ -257,7 +257,7 @@
                  class="group/unassign w-full relative overflow-hidden px-8 py-4 bg-gradient-to-r from-amber-600 to-orange-700 text-white rounded-xl font-bold text-lg hover:from-amber-700 hover:to-orange-800 transition-all duration-300 hover:scale-105 shadow-xl hover:shadow-2xl transform hover:-translate-y-1 border-2 border-amber-500 hover:border-amber-400 ring-2 ring-amber-200 hover:ring-amber-300 text-center block">
                 <span class="relative z-10 flex items-center justify-center gap-3">
                   <span class="group-hover/unassign:rotate-180 transition-transform duration-500">🔄</span>
-                  Unassign Device
+                  Unassign Gear
                 </span>
                 <div class="absolute inset-0 bg-gradient-to-r from-amber-700 to-orange-800 opacity-0 group-hover/unassign:opacity-100 transition-opacity duration-300"></div>
               </a>
@@ -275,7 +275,7 @@
             </div>
           </div>
           {% else %}
-          <!-- Device is available -->
+          <!-- Gear is available -->
           <div class="availability-info">
             <div class="available-status p-8 bg-gradient-to-br from-emerald-50 to-green-50 border border-emerald-200 rounded-2xl text-center relative overflow-hidden">
               <div class="absolute inset-0 bg-gradient-to-br from-emerald-400/10 to-green-400/10 animate-pulse"></div>
@@ -283,9 +283,9 @@
                 <div class="status-icon w-20 h-20 bg-gradient-to-br from-emerald-500 to-green-600 rounded-full flex items-center justify-center text-white text-4xl shadow-2xl mx-auto mb-6 animate-bounce">
                   ✅
                 </div>
-                <h3 class="text-2xl font-bold text-emerald-800 mb-4">Device Available</h3>
+                <h3 class="text-2xl font-bold text-emerald-800 mb-4">Gear Available</h3>
                 <p class="text-emerald-600 mb-6 leading-relaxed">
-                  This device is ready for assignment to a team for fault location activities.
+                  This gear is ready for assignment to a team for fault location activities.
                 </p>
                 
                 <div class="capabilities grid grid-cols-1 gap-3 mb-6">

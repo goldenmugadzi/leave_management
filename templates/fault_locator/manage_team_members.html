@@ -213,14 +213,14 @@
           </div>
           
           <div class="status-item flex items-center justify-between">
-            <span class="text-sm text-gray-700">Device Assignment:</span>
+            <span class="text-sm text-gray-700">Gear Assignment:</span>
             {% with device_assignment=team.faultlocatordeviceassignment_set.first %}
             {% if device_assignment %}
             <span class="text-sm font-medium text-green-600">
               ✅ {{ device_assignment.device.serial_number }}
             </span>
             {% else %}
-            <span class="text-sm font-medium text-red-600">❌ No device assigned</span>
+            <span class="text-sm font-medium text-red-600">❌ No gear assigned</span>
             {% endif %}
             {% endwith %}
           </div>
@@ -271,8 +271,8 @@
           <div class="guideline-item flex items-start">
             <div class="text-blue-500 mr-2">📱</div>
             <div>
-              <h4 class="text-sm font-medium text-blue-800">Device Assignment</h4>
-              <p class="text-sm text-blue-600">Team must have a fault locator device before deployment</p>
+              <h4 class="text-sm font-medium text-blue-800">Gear Assignment</h4>
+              <p class="text-sm text-blue-600">Team must have fault locator gear before deployment</p>
             </div>
           </div>
           
@@ -280,7 +280,7 @@
             <div class="text-blue-500 mr-2">🚀</div>
             <div>
               <h4 class="text-sm font-medium text-blue-800">Deployment Ready</h4>
-              <p class="text-sm text-blue-600">Teams with device and minimum members can be deployed</p>
+              <p class="text-sm text-blue-600">Teams with gear and minimum members can be deployed</p>
             </div>
           </div>
         </div>

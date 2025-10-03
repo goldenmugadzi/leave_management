@@ -374,7 +374,7 @@
                             </td>
                         </tr>
                         <tr>
-                            <td class="py-2">Manage Devices</td>
+                            <td class="py-2">Manage Gear</td>
                             <td class="text-center py-2">{% if user_profile.role in 'depot_foreperson,senior_foreman' %}✓{% else %}✗{% endif %}</td>
                             <td class="text-center py-2">{% if perms.fault_locator.change_faultlocatordevice %}✓{% else %}✗{% endif %}</td>
                             <td class="text-center py-2">
@@ -465,11 +465,11 @@
                             </span>
                         </div>
                         <div class="p-4 bg-gray-50 rounded-lg">
-                            <h4 class="font-medium">Device Access</h4>
+                            <h4 class="font-medium">Gear Access</h4>
                             {% if team_device %}
                                 <span class="test-result pass">{{ team_device.serial_number }}</span>
                             {% else %}
-                                <span class="test-result warning">NO DEVICE</span>
+                                <span class="test-result warning">NO GEAR</span>
                             {% endif %}
                         </div>
                     </div>
@@ -495,7 +495,7 @@
                             <span class="test-result info">{{ depot_team_count|default:"0" }} Teams</span>
                         </div>
                         <div class="p-4 bg-gray-50 rounded-lg">
-                            <h4 class="font-medium">Device Management</h4>
+                            <h4 class="font-medium">Gear Management</h4>
                             <span class="test-result {% if perms.fault_locator.change_faultlocatordevice %}pass{% else %}fail{% endif %}">
                                 {% if perms.fault_locator.change_faultlocatordevice %}PASS{% else %}FAIL{% endif %}
                             </span>

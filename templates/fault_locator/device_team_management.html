@@ -5,8 +5,8 @@
   <!-- Header -->
   <div class="flex justify-between items-center mb-6">
     <div>
-      <h1 class="text-2xl font-bold text-gray-800">Device Team Management</h1>
-      <p class="text-gray-600">Assign devices to teams and track utilization</p>
+      <h1 class="text-2xl font-bold text-gray-800">Gear Team Management</h1>
+  <p class="text-gray-600">Assign gear to teams and track utilization</p>
     </div>
     <div class="flex space-x-2">
       <a href="{% url 'fault_locator:senior_foreman_dashboard' %}" 
@@ -23,7 +23,7 @@
   <!-- Device Assignment Overview -->
   <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
     <div class="bg-white rounded-lg shadow-md p-6">
-      <h3 class="text-lg font-semibold text-gray-800 mb-2">Total Devices</h3>
+  <h3 class="text-lg font-semibold text-gray-800 mb-2">Total Gear</h3>
       <p class="text-3xl font-bold text-blue-600">{{ devices|length }}</p>
       <p class="text-sm text-gray-500">In inventory</p>
     </div>
@@ -33,7 +33,7 @@
       <p class="text-3xl font-bold text-green-600">
         {% for device in devices %}{% if device.assignment_count > 0 %}{{ forloop.counter0|add:"1" }}{% endif %}{% endfor %}
       </p>
-      <p class="text-sm text-gray-500">Devices in use</p>
+  <p class="text-sm text-gray-500">Gear in use</p>
     </div>
     
     <div class="bg-white rounded-lg shadow-md p-6">
@@ -49,15 +49,15 @@
       <p class="text-3xl font-bold text-red-600">
         {% for device in devices %}{% if device.active_faults > 0 %}{{ forloop.counter0|add:"1" }}{% endif %}{% endfor %}
       </p>
-      <p class="text-sm text-gray-500">Devices on faults</p>
+  <p class="text-sm text-gray-500">Gear on faults</p>
     </div>
   </div>
 
   <!-- Devices and Teams -->
   <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-    <!-- Devices List -->
+  <!-- Gear List -->
     <div class="bg-white rounded-lg shadow-md p-6">
-      <h3 class="text-lg font-semibold text-gray-800 mb-4">Devices Status</h3>
+  <h3 class="text-lg font-semibold text-gray-800 mb-4">Gear Status</h3>
       <div class="space-y-3 max-h-96 overflow-y-auto">
         {% for device in devices %}
         <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
@@ -94,7 +94,7 @@
           </div>
         </div>
         {% empty %}
-        <p class="text-gray-500 text-center py-8">No devices available</p>
+  <p class="text-gray-500 text-center py-8">No gear available</p>
         {% endfor %}
       </div>
     </div>
@@ -114,18 +114,18 @@
               <p class="text-green-600 font-medium">📱 {{ assignment.device.serial_number }}</p>
               {% endfor %}
               {% else %}
-              <p class="text-red-600">⚠️ No device assigned</p>
+              <p class="text-red-600">⚠️ No gear assigned</p>
               {% endif %}
             </div>
           </div>
           <div class="text-right">
             {% if team.device_count > 0 %}
             <span class="inline-block bg-green-100 text-green-800 text-xs px-2 py-1 rounded">
-              Device Ready
+              Gear Ready
             </span>
             {% else %}
             <span class="inline-block bg-red-100 text-red-800 text-xs px-2 py-1 rounded">
-              Needs Device
+              Needs Gear
             </span>
             {% endif %}
             {% if team.current_depot %}
@@ -142,15 +142,15 @@
     </div>
   </div>
 
-  <!-- Device Assignment Matrix -->
+  <!-- Gear Assignment Matrix -->
   <div class="bg-white rounded-lg shadow-md p-6 mb-6">
-    <h3 class="text-lg font-semibold text-gray-800 mb-4">Device Assignment Matrix</h3>
+  <h3 class="text-lg font-semibold text-gray-800 mb-4">Gear Assignment Matrix</h3>
     <div class="overflow-x-auto">
       <table class="min-w-full divide-y divide-gray-200">
         <thead class="bg-gray-50">
           <tr>
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Device
+              Gear
             </th>
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               Status
@@ -233,7 +233,7 @@
           {% empty %}
           <tr>
             <td colspan="6" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">
-              No devices available
+              No gear available
             </td>
           </tr>
           {% endfor %}
@@ -250,7 +250,7 @@
         <thead class="bg-gray-50">
           <tr>
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Device
+              Gear
             </th>
             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               Team
@@ -302,11 +302,11 @@
   </div>
 </div>
 
-<!-- Assign Device Modal -->
+<!-- Assign Gear Modal -->
 <div id="assignModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden z-50">
   <div class="flex items-center justify-center min-h-screen">
     <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-      <h3 class="text-lg font-semibold mb-4">Assign Device</h3>
+  <h3 class="text-lg font-semibold mb-4">Assign Gear</h3>
       <div id="assignContent">
         <div class="space-y-4">
           <p id="assignDeviceName"></p>
@@ -323,7 +323,7 @@
           </div>
           <div class="bg-blue-50 border border-blue-200 rounded-md p-3">
             <p class="text-sm text-blue-800">
-              💡 Only teams without devices are shown. Teams with devices must first have their current device unassigned.
+              💡 Only teams without gear are shown. Teams with gear must first have their current gear unassigned.
             </p>
           </div>
         </div>
@@ -335,25 +335,25 @@
         </button>
         <button id="confirmAssign" 
                 class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">
-          Assign Device
+          Assign Gear
         </button>
       </div>
     </div>
   </div>
 </div>
 
-<!-- Unassign Device Modal -->
+<!-- Unassign Gear Modal -->
 <div id="unassignModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden z-50">
   <div class="flex items-center justify-center min-h-screen">
     <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-      <h3 class="text-lg font-semibold mb-4">Unassign Device</h3>
+  <h3 class="text-lg font-semibold mb-4">Unassign Gear</h3>
       <div id="unassignContent">
         <div class="space-y-4">
           <p id="unassignDeviceName"></p>
           <div class="bg-yellow-50 border border-yellow-200 rounded-md p-3">
             <p class="text-sm text-yellow-800">
-              ⚠️ This will remove the device from its current team. 
-              Make sure the device is not being used for active fault assignments.
+              ⚠️ This will remove the gear from its current team. 
+              Make sure the gear is not being used for active fault assignments.
             </p>
           </div>
         </div>
@@ -365,7 +365,7 @@
         </button>
         <button id="confirmUnassign" 
                 class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700">
-          Unassign Device
+          Unassign Gear
         </button>
       </div>
     </div>
@@ -377,13 +377,13 @@ let selectedDeviceId = null;
 
 function assignDevice(deviceId, deviceName) {
   selectedDeviceId = deviceId;
-  document.getElementById('assignDeviceName').textContent = `Assign device "${deviceName}" to team:`;
+  document.getElementById('assignDeviceName').textContent = `Assign gear "${deviceName}" to team:`;
   document.getElementById('assignModal').classList.remove('hidden');
 }
 
 function unassignDevice(deviceId, deviceName) {
   selectedDeviceId = deviceId;
-  document.getElementById('unassignDeviceName').textContent = `Unassign device "${deviceName}" from its current team?`;
+  document.getElementById('unassignDeviceName').textContent = `Unassign gear "${deviceName}" from its current team?`;
   document.getElementById('unassignModal').classList.remove('hidden');
 }
 

@@ -78,17 +78,17 @@
         </div>
     </div>
 
-    <!-- Device Management -->
+    <!-- Gear Management -->
     <div class="flex flex-col">
         <h4 class="mb-3">
             <i class="fas fa-mobile-alt text-success me-2"></i>
-            Device Management
+            Gear Management
         </h4>
         
         {% if can_manage_devices and unassigned_devices %}
         <div class="card border-0 shadow-sm mb-3 h-100">
             <div class="card-header bg-light">
-                <h6 class="mb-0">Unassigned Devices ({{ unassigned_devices.count }})</h6>
+                <h6 class="mb-0">Unassigned Gear ({{ unassigned_devices.count }})</h6>
             </div>
             <div class="card-body">
                 {% for device in unassigned_devices %}
@@ -142,10 +142,10 @@
         <div class="card border-0 shadow-sm h-100">
             <div class="card-body">
                 <div class="stat-strip d-flex flex-nowrap flex-md-wrap gap-2 overflow-auto">
-                    <div class="stat-tile stat-compact stat-blue" title="Total Devices">
+                    <div class="stat-tile stat-compact stat-blue" title="Total Gear">
                         <div class="stat-icon"><i class="fas fa-microchip"></i></div>
                         <div class="stat-value">{{ stats.total_devices }}</div>
-                        <div class="stat-label">Devices</div>
+                        <div class="stat-label">Gear</div>
                     </div>
                     <div class="stat-tile stat-compact stat-green" title="Total Teams">
                         <div class="stat-icon"><i class="fas fa-users"></i></div>

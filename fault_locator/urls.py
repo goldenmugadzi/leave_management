@@ -55,7 +55,7 @@ urlpatterns = [
     path('teams/', views.team_overview, name='team_list'),  # Redirect to team_overview
     path('my-work/', views.my_work, name='my_work'),
     
-    # Device Management
+    # Gear Management
     path('devices/', views.device_list, name='device_list'),
     path('devices/create/', views.create_device, name='create_device'),
     path('devices/<int:device_id>/', views.device_detail, name='device_detail'),

@@ -106,7 +106,7 @@ def notify_fault_assignment(fault_assignment, request):
     device = fault_assignment.device
     
     url = f"/fault_locator/faults/{fault.id}/"
-    message = f"Fault #{fault.id} has been assigned to your team '{team.name}'. Location: {fault.location_description}. Device: {device.serial_number}"
+    message = f"Fault #{fault.id} has been assigned to your team '{team.name}'. Location: {fault.location_description}. Gear: {device.serial_number}"
     notification_type = "Fault Assignment"
     
     # Notify all team members
@@ -231,23 +231,23 @@ def notify_high_priority_fault(fault, request):
             notify_fault_locator_user(foreperson, message, notification_type, url, fault.id, request)
 
 def notify_device_assignment(device_assignment, request):
-    """Notify team members when a device is assigned to their team"""
+    """Notify team members when gear is assigned to their team"""
     team = device_assignment.team
     device = device_assignment.device
     
     url = f"/fault_locator/team_overview/"
-    message = f"Your team '{team.name}' has been assigned device '{device.serial_number}'. You can now be deployed for field work."
-    notification_type = "Device Assignment"
+    message = f"Your team '{team.name}' has been assigned gear '{device.serial_number}'. You can now be deployed for field work."
+    notification_type = "Gear Assignment"
     
     # Notify all team members
     for member in team.members.all():
         notify_fault_locator_user(member, message, notification_type, url, team.id, request)
 
 def notify_device_removal(team, device, removed_by, request):
-    """Notify team members when a device is removed from their team"""
+    """Notify team members when gear is removed from their team"""
     url = f"/fault_locator/team_overview/"
-    message = f"Device '{device.serial_number}' has been removed from your team '{team.name}' by {removed_by.get_full_name()}."
-    notification_type = "Device Removal"
+    message = f"Gear '{device.serial_number}' has been removed from your team '{team.name}' by {removed_by.get_full_name()}."
+    notification_type = "Gear Removal"
     
     # Notify all team members
     for member in team.members.all():
@@ -467,8 +467,8 @@ def fault_locator_dashboard(request):
         if is_senior or user_can_manage_devices:
             if can_manage_devices(user_profile):
                 accessible_functions['device_list'] = {
-                    'title': 'Device Management',
-                    'description': 'View, create, edit, and assign all fault locator devices.',
+                    'title': 'Gear Management',
+                    'description': 'View, create, edit, and assign all fault locator gear.',
                     'url_name': 'device_list',
                     'icon': '📱'
                 }
@@ -483,7 +483,7 @@ def fault_locator_dashboard(request):
         if is_senior:
             accessible_functions['senior_foreman_dashboard'] = {
                 'title': 'Senior Foreman Dashboard',
-                'description': 'Complete management interface for team deployment, device assignment, and performance monitoring.',
+                'description': 'Complete management interface for team deployment, gear assignment, and performance monitoring.',
                 'url_name': 'senior_foreman_dashboard',
                 'icon': '📊'
             }
@@ -677,7 +677,7 @@ def fault_locator_dashboard(request):
             if available_teams > 0:
                 my_actions.append({
                     'title': f'Deploy {available_teams} Available Team{"s" if available_teams != 1 else ""}',
-                    'description': 'Teams with devices ready for deployment',
+                    'description': 'Teams with gear ready for deployment',
                     'url': '/fault_locator/deploy-team/',
                     'priority': 'medium',
                     'type': 'deployment',
@@ -705,7 +705,7 @@ def fault_locator_dashboard(request):
                 'Total Faults': Fault.objects.count(),
                 'Active Faults': Fault.objects.filter(status__in=['requested', 'assigned']).count(),
                 'Teams Deployed': TeamDeployment.objects.filter(recalled_at__isnull=True).count(),
-                'Devices Active': FaultLocatorDeviceAssignment.objects.count(),
+                'Active Gear': FaultLocatorDeviceAssignment.objects.count(),
             }
         elif is_depot_fp and user_depot:
             # Depot-specific stats
@@ -1509,7 +1509,7 @@ def remove_team_member(request, team_id, member_id):
         messages.error(request, "An error occurred removing the team member.")
     return redirect('fault_locator:team_overview')
 
-# DEVICE MANAGEMENT VIEWS
+# GEAR MANAGEMENT VIEWS
 
 @login_required
 def device_list(request):
@@ -1554,8 +1554,8 @@ def device_list(request):
     except Exception as e:
         import logging
         logger = logging.getLogger(__name__)
-        logger.error(f"Device list error: {e}")
-        messages.error(request, "An error occurred loading the device list.")
+        logger.error(f"Gear list error: {e}")
+        messages.error(request, "An error occurred loading the gear list.")
         return redirect('fault_locator:fault_locator_dashboard')
 
 @login_required
@@ -1566,7 +1566,7 @@ def create_device(request):
         
         # Check permissions
         if not can_manage_devices(user_profile):
-            messages.error(request, "You don't have permission to create devices")
+            messages.error(request, "You don't have permission to create gear")
             return redirect('fault_locator:fault_locator_dashboard')
         
         if request.method == "POST":
@@ -1588,9 +1588,9 @@ def create_device(request):
     except Exception as e:
         import logging
         logger = logging.getLogger(__name__)
-    logger.error(f"Create device error: {e}")
-    messages.error(request, "An error occurred creating the gear.")
-    return redirect('fault_locator:device_list')
+        logger.error(f"Create gear error: {e}")
+        messages.error(request, "An error occurred creating the gear.")
+        return redirect('fault_locator:device_list')
 
 # Team membership helper
 def can_user_be_added_to_team(user: UserProfile, team: FaultLocatorTeam = None):
@@ -1651,7 +1651,7 @@ def edit_device(request, device_id):
         else:
             form = FaultLocatorDeviceForm(instance=device)
         
-        # Check if device is currently in use
+    # Check if gear is currently in use
         current_assignment = FaultLocatorDeviceAssignment.objects.filter(device=device).first()
         active_fault = FaultAssignment.objects.filter(device=device, located_at__isnull=True).first()
         
@@ -1669,9 +1669,9 @@ def edit_device(request, device_id):
     except Exception as e:
         import logging
         logger = logging.getLogger(__name__)
-    logger.error(f"Edit device error: {e}")
-    messages.error(request, "An error occurred editing the gear.")
-    return redirect('fault_locator:device_list')
+        logger.error(f"Edit gear error: {e}")
+        messages.error(request, "An error occurred editing the gear.")
+        return redirect('fault_locator:device_list')
 
 @login_required
 def device_detail(request, device_id):
@@ -1706,9 +1706,9 @@ def device_detail(request, device_id):
     except Exception as e:
         import logging
         logger = logging.getLogger(__name__)
-    logger.error(f"Device detail error: {e}")
-    messages.error(request, "An error occurred loading gear details.")
-    return redirect('fault_locator:device_list')
+        logger.error(f"Gear detail error: {e}")
+        messages.error(request, "An error occurred loading gear details.")
+        return redirect('fault_locator:device_list')
 
 # --- Minimal placeholder views to satisfy URL routing ---
 @login_required
@@ -1728,7 +1728,7 @@ def my_fault_reports(request):
 
 @login_required
 def team_overview(request):
-    """Team overview page showing teams, members, device status, and deployment state."""
+    """Team overview page showing teams, members, gear status, and deployment state."""
     user_profile = UserProfile.objects.filter(id=request.user.id).first()
 
     teams = FaultLocatorTeam.objects.all().prefetch_related('members')
@@ -1838,7 +1838,7 @@ def deploy_team(request, team_id=None):
 
             # Ensure team still valid
             if FaultLocatorDeviceAssignment.objects.filter(team=team).first() is None:
-                messages.error(request, f"Team '{team.name}' must have a device assigned before deployment.")
+                messages.error(request, f"Team '{team.name}' must have gear assigned before deployment.")
                 return redirect('fault_locator:deploy_team')
             if team.current_depot:
                 messages.error(request, f"Team '{team.name}' is already deployed to {team.current_depot.depot}.")
@@ -1944,10 +1944,10 @@ def assign_team_to_depot(request, team_id):
 
     team = get_object_or_404(FaultLocatorTeam.objects.select_for_update(), id=team_id)
 
-    # Ensure team has a device
+    # Ensure team has gear
     device_assignment = FaultLocatorDeviceAssignment.objects.filter(team=team).first()
     if not device_assignment:
-        messages.error(request, f"Team '{team.name}' must have a device assigned before deployment.")
+        messages.error(request, f"Team '{team.name}' must have gear assigned before deployment.")
         return redirect('fault_locator:team_overview')
 
     if request.method == 'POST':
@@ -2065,7 +2065,7 @@ def assign_device_to_team(request):
         
         # Check permissions
         if not can_manage_devices(user_profile):
-            messages.error(request, "You don't have permission to assign devices")
+            messages.error(request, "You don't have permission to assign gear")
             return redirect('fault_locator:fault_locator_dashboard')
         
         team_id = request.GET.get('team_id')
@@ -2078,16 +2078,16 @@ def assign_device_to_team(request):
                     device = FaultLocatorDevice.objects.select_for_update().get(id=form.cleaned_data['device'].id)
                     team = FaultLocatorTeam.objects.select_for_update().get(id=form.cleaned_data['team'].id)
                     
-                    # Check if device is already assigned
+                    # Check if gear is already assigned
                     existing_device_assignment = FaultLocatorDeviceAssignment.objects.filter(device=device).first()
                     if existing_device_assignment:
-                        messages.error(request, f"Device '{device.serial_number}' is already assigned to team '{existing_device_assignment.team.name}'")
+                        messages.error(request, f"Gear '{device.serial_number}' is already assigned to team '{existing_device_assignment.team.name}'")
                         return redirect('fault_locator:assign_device_to_team')
                     
-                    # Check if team already has a device
+                    # Check if team already has gear
                     existing_team_assignment = FaultLocatorDeviceAssignment.objects.filter(team=team).first()
                     if existing_team_assignment:
-                        messages.error(request, f"Team '{team.name}' already has device '{existing_team_assignment.device.serial_number}' assigned")
+                        messages.error(request, f"Team '{team.name}' already has gear '{existing_team_assignment.device.serial_number}' assigned")
                         return redirect('fault_locator:assign_device_to_team')
                     
                     # Create assignment atomically
@@ -2101,17 +2101,17 @@ def assign_device_to_team(request):
                     # Notify team members
                     notify_device_assignment(assignment, request)
                     
-                    messages.success(request, f"Device '{assignment.device.serial_number}' assigned to team '{team.name}'")
+                    messages.success(request, f"Gear '{assignment.device.serial_number}' assigned to team '{team.name}'")
                     return redirect('fault_locator:team_overview')
                     
                 except FaultLocatorDevice.DoesNotExist:
-                    messages.error(request, "Device not found")
+                    messages.error(request, "Gear not found")
                     return redirect('fault_locator:assign_device_to_team')
                 except FaultLocatorTeam.DoesNotExist:
                     messages.error(request, "Team not found")
                     return redirect('fault_locator:assign_device_to_team')
                 except IntegrityError as e:
-                    messages.error(request, "Device assignment conflict. Device may already be assigned to another team.")
+                    messages.error(request, "Gear assignment conflict. Gear may already be assigned to another team.")
                     return redirect('fault_locator:assign_device_to_team')
                 except ValidationError as e:
                     messages.error(request, f"Assignment validation error: {str(e)}")
@@ -2131,16 +2131,16 @@ def assign_device_to_team(request):
         context = {
             'form': form,
             'user_profile': user_profile,
-            'page_title': 'Assign Device to Team',
+            'page_title': 'Assign Gear to Team',
         }
         
         return render(request, "fault_locator/assign_device_to_team.html", context)
     except Exception as e:
         import logging
         logger = logging.getLogger(__name__)
-        logger.error(f"Assign device to team error: {e}")
-        messages.error(request, "An error occurred assigning the device to team.")
-    return redirect('fault_locator:device_list')
+        logger.error(f"Assign gear to team error: {e}")
+        messages.error(request, "An error occurred assigning the gear to team.")
+        return redirect('fault_locator:device_list')
 
 @login_required
 def unassign_device(request, device_id):
@@ -2149,7 +2149,7 @@ def unassign_device(request, device_id):
         
         # Check permissions
         if not can_manage_devices(user_profile):
-            messages.error(request, "You don't have permission to unassign devices")
+            messages.error(request, "You don't have permission to unassign gear")
             return redirect('fault_locator:fault_locator_dashboard')
         
         device = get_object_or_404(FaultLocatorDevice, id=device_id)
@@ -2159,10 +2159,10 @@ def unassign_device(request, device_id):
             messages.error(request, "Device is not currently assigned to any team")
             return redirect('fault_locator:device_list')
         
-        # Check if device is being used for active fault
+    # Check if gear is being used for active fault
         active_fault = FaultAssignment.objects.filter(device=device, located_at__isnull=True).first()
         if active_fault:
-            messages.error(request, f"Cannot unassign device - it's currently being used for fault: {active_fault.fault.description}")
+            messages.error(request, f"Cannot unassign gear - it's currently being used for fault: {active_fault.fault.description}")
             return redirect('fault_locator:device_list')
         
         if request.method == "POST":
@@ -2172,18 +2172,18 @@ def unassign_device(request, device_id):
             # Notify team members
             for member in team.members.all():
                 if member.email:
-                    message = f"Device '{device.serial_number}' has been removed from your team '{team.name}'"
+                    message = f"Gear '{device.serial_number}' has been removed from your team '{team.name}'"
                     url = f"/fault_locator/teams/{team.id}/"
                     notify_fault_locator_user(
                         user=member,
                         message=message,
-                        notification_type="Device Removal",
+                        notification_type="Gear Removal",
                         url=url,
                         fault_or_team_id=team.id,
                         request=request
                     )
             
-            messages.success(request, f"Device '{device.serial_number}' unassigned from team '{team.name}'")
+            messages.success(request, f"Gear '{device.serial_number}' unassigned from team '{team.name}'")
             return redirect('fault_locator:device_list')
         
         context = {
@@ -2196,9 +2196,9 @@ def unassign_device(request, device_id):
     except Exception as e:
         import logging
         logger = logging.getLogger(__name__)
-        logger.error(f"Unassign device error: {e}")
-        messages.error(request, "An error occurred unassigning the device.")
-    return redirect('fault_locator:device_list')
+        logger.error(f"Unassign gear error: {e}")
+        messages.error(request, "An error occurred unassigning the gear.")
+        return redirect('fault_locator:device_list')
 
 @login_required
 @transaction.atomic
