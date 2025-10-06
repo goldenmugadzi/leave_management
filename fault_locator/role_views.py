@@ -367,8 +367,8 @@ def get_senior_foreman_context(user_profile):
                 'priority': 'medium'
             },
             {
-                'title': 'Device Management',
-                'description': 'Manage fault locator devices',
+                'title': 'Gear Management',
+                'description': 'Manage fault locator Gear',
                 'url': '/fault_locator/devices/',
                 'icon_class': 'fas fa-wrench',
                 'priority': 'medium'
@@ -409,8 +409,8 @@ def get_senior_foreman_context(user_profile):
                 'priority': 'medium'
             },
             {
-                'title': 'Device-Team Management',
-                'description': 'Manage device assignments to teams',
+                'title': 'Gear-Team Management',
+                'description': 'Manage gear assignments to teams',
                 'url': '/fault_locator/device-team-management/',
                 'icon_class': 'fas fa-mobile-screen',
                 'priority': 'medium'
