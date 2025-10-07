@@ -149,7 +149,6 @@ class ApprovalStagesHandler:
             data["current_stage"] = current_stage_obj
             data["next_stage"] = self.__get_next_stage_obj__(current_stage_obj.stage_num)
             return data
-        
         return data
 
     
@@ -157,11 +156,11 @@ class ApprovalStagesHandler:
         """Retrieve all stages along with current and next stage information."""
         qr = self.get_approval_queryset()
         last_stage_number = qr.last().stage_num if qr and qr.exists() else None
-
+        current_nxt_stage_data = self.get_current_and_next_stage()
         return {
             "stages": qr,
             "last_stage_number": last_stage_number,
-            **self.get_current_and_next_stage()
+            **current_nxt_stage_data
         }
 
 

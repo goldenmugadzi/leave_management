@@ -6,6 +6,7 @@ uploads/*
 media/temp/*
 
 debug.log
+loguru.py
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
