@@ -79,7 +79,6 @@
               <th>Appraiser</th>
               <th>Reviewer</th>
               <th>Create at</th>
-              <th>Approval Stage Status</th>
               <th>Current Quarter</th>
               <th></th>
             </tr>
@@ -91,17 +90,6 @@
                 <td>{{ appraisal.appraiser }}</td>
                 <td>{{ appraisal.reviewer }}</td>
                 <td>{{ appraisal.created_date|date }}</td>
-                <td>
-                  {% with data=appraisal.id|get_current_approval_stage %}
-                    {% if data.current_stage != None %}
-                      
-                        <p class="flex justify-center py-2">
-                          {{data.current_stage.stage_name}} stage
-                        </p>
-                    
-                    {% endif %}
-                  {% endwith %}
-                </td>
                 <td>{{ appraisal.id|get_current_quarter }}</td>
                 <td>
                   <div class="flex justify-center gap-2">
