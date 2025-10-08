@@ -439,18 +439,22 @@ class CraneTruckForm(forms.ModelForm):
             'number_plate': forms.TextInput(attrs={'class': 'form-control'}),
             'mileage_km': forms.NumberInput(attrs={'class': 'form-control', 'min': '0'}),
             'status': forms.Select(attrs={'class': 'form-select'}),
-            'operator': forms.Select(attrs={'class': 'form-select'}),
+            # add select2 for searching operators
+            'operator': forms.Select(attrs={'class': 'form-select select2', 'data-placeholder': 'Search operator...'}),
         }
 
     def __init__(self, *args, **kwargs):
+        # Accept user_region to scope operator options
+        user_region = kwargs.pop('user_region', None)
         super().__init__(*args, **kwargs)
-        # Optional: filter operators by role if central roles exist
-        try:
-            from .central_roles import is_crane_operator
-            self.fields['operator'].queryset = UserProfile.objects.filter(is_active=True)
-            # We could filter to only known crane operators by checking each user, but that may be heavy.
-        except Exception:
-            pass
+        # Filter operators by region when provided; fall back to all active users
+        qs = UserProfile.objects.filter(is_active=True)
+        if user_region:
+            qs = qs.filter(region=user_region)
+        self.fields['operator'].queryset = qs.order_by('last_name', 'first_name')
+        # Ensure widget keeps select2 class if replaced elsewhere
+        self.fields['operator'].widget.attrs.setdefault('class', 'form-select select2')
+        self.fields['operator'].empty_label = '---------'
 
 class CraneRequestForm(forms.ModelForm):
     class Meta:
@@ -479,12 +483,18 @@ class CraneAssignmentForm(forms.ModelForm):
         fields = ['assigned_truck', 'assigned_operator', 'status']
 
     def __init__(self, *args, **kwargs):
+        # Accept user_region to scope operator options
+        user_region = kwargs.pop('user_region', None)
         super().__init__(*args, **kwargs)
         # Only available/in_service trucks
         self.fields['assigned_truck'].queryset = CraneTruck.objects.filter(status__in=['available', 'in_service'])
         self.fields['assigned_truck'].widget.attrs.update({'class': 'form-select'})
-        self.fields['assigned_operator'].queryset = UserProfile.objects.filter(is_active=True)
-        self.fields['assigned_operator'].widget.attrs.update({'class': 'form-select'})
+        # Operators filtered by region if provided
+        op_qs = UserProfile.objects.filter(is_active=True)
+        if user_region:
+            op_qs = op_qs.filter(region=user_region)
+        self.fields['assigned_operator'].queryset = op_qs.order_by('last_name', 'first_name')
+        self.fields['assigned_operator'].widget.attrs.update({'class': 'form-select select2', 'data-placeholder': 'Search operator...'})
         self.fields['status'].widget.attrs.update({'class': 'form-select'})
 
 class CraneJobReportForm(forms.ModelForm):

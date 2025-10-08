@@ -21,6 +21,7 @@ from .central_roles import (
     is_depot_foreperson, 
     is_team_leader,
     is_team_member,
+    is_transport_manager,
     can_assign_faults,
     can_deploy_teams,
     can_manage_devices,
@@ -245,6 +246,8 @@ def role_based_dashboard(request):
         context.update(get_team_leader_context(user_profile))
     elif user_role == 'team_member':
         context.update(get_team_member_context(user_profile))
+    elif user_role == 'transport_manager' or is_transport_manager(user_profile):
+        context.update(get_transport_manager_context(user_profile))
     
     # Build dashboard actions (only if not already set by role-specific context)
     # Get existing actions from context if they exist
@@ -287,6 +290,80 @@ def role_based_dashboard(request):
         context['secondary_actions'] = secondary_actions
 
     return render(request, 'fault_locator/role_dashboard.html', context)
+
+def get_transport_manager_context(user_profile):
+    """Get context data for Transport Manager dashboard (crane management)."""
+    # Import crane models via existing wildcard import, but keep references explicit
+    from .models import CraneTruck, CraneRequest
+    from django.utils import timezone
+
+    # Truck stats
+    total_trucks = CraneTruck.objects.count()
+    trucks_available = CraneTruck.objects.filter(status='available').count()
+    trucks_in_service = CraneTruck.objects.filter(status='in_service').count()
+
+    # Request stats
+    pending_requests_qs = CraneRequest.objects.filter(status='pending')
+    assigned_requests = CraneRequest.objects.filter(status='assigned').count()
+    completed_today = CraneRequest.objects.filter(
+        status='completed',
+        job_report__completed_at__date=timezone.now().date()
+    ).count()
+
+    stats = {
+        'total_trucks': total_trucks,
+        'trucks_available': trucks_available,
+        'trucks_in_service': trucks_in_service,
+        'pending_requests': pending_requests_qs.count(),
+        'assigned_requests': assigned_requests,
+        'completed_today': completed_today,
+    }
+
+    # Lists for dashboard panels
+    pending_requests = pending_requests_qs.select_related('depot', 'requested_by').order_by('-requested_date')[:10]
+    available_trucks = CraneTruck.objects.filter(status__in=['available', 'in_service']).select_related('operator')
+
+    primary_actions = [
+        {
+            'title': 'Review Crane Requests',
+            'description': f'Review and assign {stats["pending_requests"]} pending requests',
+            'url': '/fault_locator/cranes/requests/',
+            'icon_class': 'fas fa-clipboard-list',
+            'priority': 'high' if stats['pending_requests'] > 0 else 'medium'
+        },
+        {
+            'title': 'Manage Crane Trucks',
+            'description': f'Manage {total_trucks} trucks and operators',
+            'url': '/fault_locator/cranes/trucks/',
+            'icon_class': 'fas fa-truck-moving',
+            'priority': 'medium'
+        },
+    ]
+
+    secondary_actions = [
+        {
+            'title': 'Create Crane Truck',
+            'description': 'Register a new crane truck',
+            'url': '/fault_locator/cranes/trucks/create/',
+            'icon_class': 'fas fa-plus',
+            'priority': 'medium'
+        },
+        {
+            'title': 'Request Crane (on behalf)',
+            'description': 'Log a crane request for a depot',
+            'url': '/fault_locator/cranes/requests/create/',
+            'icon_class': 'fas fa-anchor',
+            'priority': 'low'
+        },
+    ]
+
+    return {
+        'stats': stats,
+        'pending_requests': pending_requests,
+        'available_trucks': available_trucks,
+        'primary_actions': primary_actions,
+        'secondary_actions': secondary_actions,
+    }
 
 def get_senior_foreman_context(user_profile):
     """Get context data for senior foreman dashboard"""

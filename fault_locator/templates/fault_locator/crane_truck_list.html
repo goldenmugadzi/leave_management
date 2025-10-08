@@ -1,24 +1,43 @@
-{% extends 'fault_locator/team_overview.html' %}
+{% extends 'admin_layout.html' %}
 {% block content %}
-<div class="container">
-  <h2>Crane Trucks</h2>
-  <a class="btn btn-primary" href="{% url 'fault_locator:crane_truck_create' %}">Add Truck</a>
-  <table class="table mt-3">
-    <thead><tr><th>Fleet #</th><th>Plate</th><th>Mileage (km)</th><th>Status</th><th>Operator</th><th></th></tr></thead>
-    <tbody>
-      {% for t in trucks %}
-      <tr>
-        <td>{{ t.fleet_number }}</td>
-        <td>{{ t.number_plate }}</td>
-        <td>{{ t.mileage_km }}</td>
-        <td>{{ t.get_status_display }}</td>
-        <td>{{ t.operator.get_full_name|default:'-' }}</td>
-        <td><a href="{% url 'fault_locator:crane_truck_edit' t.id %}">Edit</a></td>
-      </tr>
-      {% empty %}
-      <tr><td colspan="6">No trucks yet.</td></tr>
-      {% endfor %}
-    </tbody>
-  </table>
+<div class="container mx-auto px-4 py-8">
+  <div class="max-w-6xl mx-auto bg-white p-6 rounded-lg shadow-md">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-2xl font-bold text-gray-800">Crane Trucks</h2>
+      <a class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700" href="{% url 'fault_locator:crane_truck_create' %}">Add Truck</a>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="min-w-full">
+        <thead>
+          <tr class="bg-gray-50">
+            <th class="px-5 py-3 text-left text-sm font-semibold text-gray-700">Fleet #</th>
+            <th class="px-5 py-3 text-left text-sm font-semibold text-gray-700">Plate</th>
+            <th class="px-5 py-3 text-left text-sm font-semibold text-gray-700">Mileage (km)</th>
+            <th class="px-5 py-3 text-left text-sm font-semibold text-gray-700">Status</th>
+            <th class="px-5 py-3 text-left text-sm font-semibold text-gray-700">Operator</th>
+            <th class="px-5 py-3 text-right text-sm font-semibold text-gray-700"></th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-200">
+          {% for t in trucks %}
+          <tr class="hover:bg-gray-50">
+            <td class="px-5 py-3 font-medium text-gray-800">{{ t.fleet_number }}</td>
+            <td class="px-5 py-3">{{ t.number_plate }}</td>
+            <td class="px-5 py-3">{{ t.mileage_km }}</td>
+            <td class="px-5 py-3">{{ t.get_status_display }}</td>
+            <td class="px-5 py-3">{{ t.operator.get_full_name|default:'-' }}</td>
+            <td class="px-5 py-3 text-right">
+              <a class="px-3 py-1.5 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300" href="{% url 'fault_locator:crane_truck_edit' t.id %}">Edit</a>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="6" class="px-5 py-6 text-center text-gray-500">No trucks yet.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
 </div>
 {% endblock %}

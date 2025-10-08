@@ -1,46 +1,56 @@
-{% extends 'fault_locator/team_overview.html' %}
+{% extends 'admin_layout.html' %}
 {% block content %}
-<div class="container">
-  <h2>Crane Requests</h2>
-  <div class="mb-2">
-    <a class="btn btn-primary" href="{% url 'fault_locator:crane_request_create' %}">New Request</a>
+<div class="container mx-auto px-4 py-8">
+  <div class="max-w-7xl mx-auto bg-white p-6 rounded-lg shadow-md">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-2xl font-bold text-gray-800">Crane Requests</h2>
+      <a class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700" href="{% url 'fault_locator:crane_request_create' %}">New Request</a>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="min-w-full">
+        <thead>
+          <tr class="bg-gray-50">
+            <th class="px-5 py-3 text-left text-sm font-semibold text-gray-700">ID</th>
+            <th class="px-5 py-3 text-left text-sm font-semibold text-gray-700">Depot</th>
+            <th class="px-5 py-3 text-left text-sm font-semibold text-gray-700">Purpose</th>
+            <th class="px-5 py-3 text-left text-sm font-semibold text-gray-700">Location</th>
+            <th class="px-5 py-3 text-left text-sm font-semibold text-gray-700">Date</th>
+            <th class="px-5 py-3 text-left text-sm font-semibold text-gray-700">Status</th>
+            <th class="px-5 py-3 text-left text-sm font-semibold text-gray-700">Truck</th>
+            <th class="px-5 py-3 text-left text-sm font-semibold text-gray-700">Operator</th>
+            <th class="px-5 py-3 text-right text-sm font-semibold text-gray-700"></th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-200">
+          {% for r in requests %}
+          <tr class="hover:bg-gray-50">
+            <td class="px-5 py-3 font-medium text-gray-800">{{ r.id }}</td>
+            <td class="px-5 py-3">{{ r.depot.depot }}</td>
+            <td class="px-5 py-3">{{ r.purpose }}</td>
+            <td class="px-5 py-3">{{ r.location }}</td>
+            <td class="px-5 py-3">{{ r.requested_date }}</td>
+            <td class="px-5 py-3">{{ r.get_status_display }}</td>
+            <td class="px-5 py-3">{{ r.assigned_truck.fleet_number|default:'-' }}</td>
+            <td class="px-5 py-3">{{ r.assigned_operator.get_full_name|default:'-' }}</td>
+            <td class="px-5 py-3 text-right space-x-2">
+              {% if r.status != 'completed' %}
+                {% if (r.status == 'pending' or r.status == 'approved' or r.status == 'assigned') and r.assigned_operator_id %}
+                  <a class="px-3 py-1.5 bg-green-600 text-white rounded-md hover:bg-green-700" href="{% url 'fault_locator:crane_job_report' r.id %}">Submit Report</a>
+                {% endif %}
+                {% if r.status == 'pending' or r.status == 'approved' %}
+                  <a class="px-3 py-1.5 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300" href="{% url 'fault_locator:crane_request_assign' r.id %}">Assign</a>
+                {% endif %}
+              {% endif %}
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="9" class="px-5 py-6 text-center text-gray-500">No requests yet.</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
   </div>
-  <table class="table">
-    <thead>
-      <tr><th>ID</th><th>Depot</th><th>Purpose</th><th>Location</th><th>Date</th><th>Status</th><th>Truck</th><th>Operator</th><th></th></tr>
-    </thead>
-    <tbody>
-      {% for r in requests %}
-      <tr>
-        <td>{{ r.id }}</td>
-        <td>{{ r.depot.depot }}</td>
-        <td>{{ r.purpose }}</td>
-        <td>{{ r.location }}</td>
-        <td>{{ r.requested_date }}</td>
-        <td>{{ r.get_status_display }}</td>
-        <td>{{ r.assigned_truck.fleet_number|default:'-' }}</td>
-        <td>{{ r.assigned_operator.get_full_name|default:'-' }}</td>
-        <td>
-          {% if user_profile|yesno:'1,0' and (user_profile|yesno:'1,0') %}{% endif %}
-          {% if user_profile and (user_profile|yesno:'1,0') %}{% endif %}
-          {% if user_profile and (user_profile|yesno:'1,0') %}{% endif %}
-          {% comment %} Controls {% endcomment %}
-          {% if user_profile and (user_profile|yesno:'1,0') %}{% endif %}
-          {% if user_profile and (user_profile.roles.all|length) %}{% endif %}
-          {% if r.status != 'completed' %}
-            {% if r.status in 'pending,approved,assigned' and r.assigned_operator_id %}
-              <a class="btn btn-sm btn-success" href="{% url 'fault_locator:crane_job_report' r.id %}">Submit Report</a>
-            {% endif %}
-            {% if r.status in 'pending,approved' %}
-              <a class="btn btn-sm btn-secondary" href="{% url 'fault_locator:crane_request_assign' r.id %}">Assign</a>
-            {% endif %}
-          {% endif %}
-        </td>
-      </tr>
-      {% empty %}
-      <tr><td colspan="9">No requests yet.</td></tr>
-      {% endfor %}
-    </tbody>
-  </table>
 </div>
 {% endblock %}

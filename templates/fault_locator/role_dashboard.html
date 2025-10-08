@@ -275,6 +275,8 @@
             {% include 'fault_locator/dashboard/team_leader.html' %}
         {% elif user_role == 'team_member' %}
             {% include 'fault_locator/dashboard/team_member.html' %}
+        {% elif user_role == 'transport_manager' %}
+            {% include 'fault_locator/dashboard/transport_manager.html' %}
         {% endif %}
 
         <!-- Recent Activity Section -->

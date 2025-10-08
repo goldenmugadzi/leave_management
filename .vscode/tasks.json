@@ -140,6 +140,13 @@
 			"type": "shell",
 			"command": "python manage.py test finance.PettyCash -v 2 --settings=beii_v1.settings_test",
 			"group": "build"
+		},
+		{
+			"label": "Run ACE2 tests after crane UI updates",
+			"type": "shell",
+			"command": "python manage.py test fault_locator.tests_crane --settings=beii_v1.settings_test -v 2",
+			"isBackground": false,
+			"group": "build"
 		}
 	]
 }

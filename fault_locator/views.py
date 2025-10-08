@@ -2505,7 +2505,7 @@ def crane_truck_create(request):
         except Exception:
             return redirect('fault_locator_dashboard')
     if request.method == 'POST':
-        form = CraneTruckForm(request.POST)
+        form = CraneTruckForm(request.POST, user_region=getattr(user_profile, 'region', None))
         if form.is_valid():
             form.save()
             messages.success(request, 'Crane truck saved.')
@@ -2514,7 +2514,7 @@ def crane_truck_create(request):
             except Exception:
                 return redirect('crane_truck_list')
     else:
-        form = CraneTruckForm()
+        form = CraneTruckForm(user_region=getattr(user_profile, 'region', None))
     return render(request, 'fault_locator/crane_truck_form.html', {'form': form, 'user_profile': user_profile})
 
 @login_required
@@ -2528,7 +2528,7 @@ def crane_truck_edit(request, truck_id):
             return redirect('fault_locator_dashboard')
     truck = get_object_or_404(CraneTruck, id=truck_id)
     if request.method == 'POST':
-        form = CraneTruckForm(request.POST, instance=truck)
+        form = CraneTruckForm(request.POST, instance=truck, user_region=getattr(user_profile, 'region', None))
         if form.is_valid():
             form.save()
             messages.success(request, 'Crane truck updated.')
@@ -2537,7 +2537,7 @@ def crane_truck_edit(request, truck_id):
             except Exception:
                 return redirect('crane_truck_list')
     else:
-        form = CraneTruckForm(instance=truck)
+        form = CraneTruckForm(instance=truck, user_region=getattr(user_profile, 'region', None))
     return render(request, 'fault_locator/crane_truck_form.html', {'form': form, 'truck': truck, 'user_profile': user_profile})
 
 @login_required
@@ -2585,7 +2585,7 @@ def crane_request_assign(request, request_id):
             return redirect('fault_locator_dashboard')
     cr = get_object_or_404(CraneRequest, id=request_id)
     if request.method == 'POST':
-        form = CraneAssignmentForm(request.POST, instance=cr)
+        form = CraneAssignmentForm(request.POST, instance=cr, user_region=getattr(user_profile, 'region', None))
         if form.is_valid():
             assignment = form.save(commit=False)
             assignment.transport_manager = user_profile
@@ -2599,7 +2599,7 @@ def crane_request_assign(request, request_id):
             except Exception:
                 return redirect('crane_request_list')
     else:
-        form = CraneAssignmentForm(instance=cr)
+        form = CraneAssignmentForm(instance=cr, user_region=getattr(user_profile, 'region', None))
     return render(request, 'fault_locator/crane_request_assign.html', {'form': form, 'request_obj': cr, 'user_profile': user_profile})
 
 @login_required
