@@ -1,0 +1,12 @@
+{% extends 'fault_locator/team_overview.html' %}
+{% block content %}
+<div class="container">
+  <h2>Assign Crane - Request #{{ request_obj.id }}</h2>
+  <p><strong>Depot:</strong> {{ request_obj.depot.depot }} | <strong>Purpose:</strong> {{ request_obj.purpose }} | <strong>Date:</strong> {{ request_obj.requested_date }}</p>
+  <form method="post">{% csrf_token %}
+    {{ form.as_p }}
+    <button class="btn btn-primary" type="submit">Save</button>
+    <a class="btn btn-secondary" href="{% url 'fault_locator:crane_request_list' %}">Back</a>
+  </form>
+</div>
+{% endblock %}

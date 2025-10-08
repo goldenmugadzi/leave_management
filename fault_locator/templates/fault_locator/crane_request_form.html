@@ -1,0 +1,11 @@
+{% extends 'fault_locator/team_overview.html' %}
+{% block content %}
+<div class="container">
+  <h2>Request Crane</h2>
+  <form method="post">{% csrf_token %}
+    {{ form.as_p }}
+    <button class="btn btn-primary" type="submit">Submit</button>
+    <a class="btn btn-secondary" href="{% url 'fault_locator:crane_request_list' %}">Cancel</a>
+  </form>
+</div>
+{% endblock %}

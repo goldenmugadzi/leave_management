@@ -1,0 +1,46 @@
+{% extends 'fault_locator/team_overview.html' %}
+{% block content %}
+<div class="container">
+  <h2>Crane Requests</h2>
+  <div class="mb-2">
+    <a class="btn btn-primary" href="{% url 'fault_locator:crane_request_create' %}">New Request</a>
+  </div>
+  <table class="table">
+    <thead>
+      <tr><th>ID</th><th>Depot</th><th>Purpose</th><th>Location</th><th>Date</th><th>Status</th><th>Truck</th><th>Operator</th><th></th></tr>
+    </thead>
+    <tbody>
+      {% for r in requests %}
+      <tr>
+        <td>{{ r.id }}</td>
+        <td>{{ r.depot.depot }}</td>
+        <td>{{ r.purpose }}</td>
+        <td>{{ r.location }}</td>
+        <td>{{ r.requested_date }}</td>
+        <td>{{ r.get_status_display }}</td>
+        <td>{{ r.assigned_truck.fleet_number|default:'-' }}</td>
+        <td>{{ r.assigned_operator.get_full_name|default:'-' }}</td>
+        <td>
+          {% if user_profile|yesno:'1,0' and (user_profile|yesno:'1,0') %}{% endif %}
+          {% if user_profile and (user_profile|yesno:'1,0') %}{% endif %}
+          {% if user_profile and (user_profile|yesno:'1,0') %}{% endif %}
+          {% comment %} Controls {% endcomment %}
+          {% if user_profile and (user_profile|yesno:'1,0') %}{% endif %}
+          {% if user_profile and (user_profile.roles.all|length) %}{% endif %}
+          {% if r.status != 'completed' %}
+            {% if r.status in 'pending,approved,assigned' and r.assigned_operator_id %}
+              <a class="btn btn-sm btn-success" href="{% url 'fault_locator:crane_job_report' r.id %}">Submit Report</a>
+            {% endif %}
+            {% if r.status in 'pending,approved' %}
+              <a class="btn btn-sm btn-secondary" href="{% url 'fault_locator:crane_request_assign' r.id %}">Assign</a>
+            {% endif %}
+          {% endif %}
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="9">No requests yet.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

@@ -1,0 +1,24 @@
+{% extends 'fault_locator/team_overview.html' %}
+{% block content %}
+<div class="container">
+  <h2>Crane Trucks</h2>
+  <a class="btn btn-primary" href="{% url 'fault_locator:crane_truck_create' %}">Add Truck</a>
+  <table class="table mt-3">
+    <thead><tr><th>Fleet #</th><th>Plate</th><th>Mileage (km)</th><th>Status</th><th>Operator</th><th></th></tr></thead>
+    <tbody>
+      {% for t in trucks %}
+      <tr>
+        <td>{{ t.fleet_number }}</td>
+        <td>{{ t.number_plate }}</td>
+        <td>{{ t.mileage_km }}</td>
+        <td>{{ t.get_status_display }}</td>
+        <td>{{ t.operator.get_full_name|default:'-' }}</td>
+        <td><a href="{% url 'fault_locator:crane_truck_edit' t.id %}">Edit</a></td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="6">No trucks yet.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

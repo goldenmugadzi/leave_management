@@ -1,0 +1,12 @@
+{% extends 'fault_locator/team_overview.html' %}
+{% block content %}
+<div class="container">
+  <h2>Crane Job Report - Request #{{ request_obj.id }}</h2>
+  <p><strong>Truck:</strong> {{ request_obj.assigned_truck.fleet_number|default:'-' }} | <strong>Operator:</strong> {{ request_obj.assigned_operator.get_full_name|default:'-' }}</p>
+  <form method="post">{% csrf_token %}
+    {{ form.as_p }}
+    <button class="btn btn-success" type="submit">Submit Report</button>
+    <a class="btn btn-secondary" href="{% url 'fault_locator:crane_request_list' %}">Cancel</a>
+  </form>
+</div>
+{% endblock %}
