@@ -49,6 +49,16 @@ class Command(BaseCommand):
                     'role': 'fault_reporter',
                     'name': 'Fault Reporter',
                     'description': 'Can report new faults and view fault status reports.'
+                },
+                {
+                    'role': 'transport_manager',
+                    'name': 'Transport Manager',
+                    'description': 'Manages crane trucks and approves/assigns crane requests.'
+                },
+                {
+                    'role': 'crane_operator',
+                    'name': 'Crane Operator',
+                    'description': 'Operates crane truck and submits job completion reports.'
                 }
             ]
 

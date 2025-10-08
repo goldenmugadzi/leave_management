@@ -17,6 +17,8 @@ class FaultLocatorRoleManager:
     TEAM_LEADER = 'team_leader'
     TEAM_MEMBER = 'team_member'
     FAULT_REPORTER = 'fault_reporter'
+    TRANSPORT_MANAGER = 'transport_manager'
+    CRANE_OPERATOR = 'crane_operator'
     
     @classmethod
     def get_application(cls):
@@ -260,6 +262,26 @@ def is_team_member(user_profile):
         return FaultLocatorRoleManager.has_role(user_profile, FaultLocatorRoleManager.TEAM_MEMBER)
     except Exception as e:
         print(f"Error checking team member role: {e}")
+        return False
+
+def is_transport_manager(user_profile):
+    """Check if user is a transport manager using central roles"""
+    try:
+        if not user_profile:
+            return False
+        return FaultLocatorRoleManager.has_role(user_profile, FaultLocatorRoleManager.TRANSPORT_MANAGER)
+    except Exception as e:
+        print(f"Error checking transport manager role: {e}")
+        return False
+
+def is_crane_operator(user_profile):
+    """Check if user is a crane operator using central roles"""
+    try:
+        if not user_profile:
+            return False
+        return FaultLocatorRoleManager.has_role(user_profile, FaultLocatorRoleManager.CRANE_OPERATOR)
+    except Exception as e:
+        print(f"Error checking crane operator role: {e}")
         return False
 
 def is_fault_reporter(user_profile, depot_code=None):

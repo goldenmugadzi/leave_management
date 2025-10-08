@@ -14,9 +14,8 @@ from decouple import config
 
 from it.users.helpers import DEPOTS
 from .models import *
-from .forms import FaultForm, FaultLocatorDeviceForm, FaultLocatorTeamForm, FaultLocatorTeamNameForm, AddTeamMemberForm, AssignDeviceToTeamForm, AssignFaultForm, TeamDeploymentForm, SeniorForepersonDeviceAssignmentForm, QuickFaultReportForm, TeamDepotAssignmentForm, FaultPriorityForm
+from .forms import FaultForm, FaultLocatorDeviceForm, FaultLocatorTeamForm, FaultLocatorTeamNameForm, AddTeamMemberForm, AssignDeviceToTeamForm, AssignFaultForm, TeamDeploymentForm, SeniorForepersonDeviceAssignmentForm, QuickFaultReportForm, TeamDepotAssignmentForm, FaultPriorityForm, CraneTruckForm, CraneRequestForm, CraneAssignmentForm, CraneJobReportForm
 from it.users.models import UserProfile, Notification
-from it.users.views import ms_exhange_send_html
 from .central_roles import (
     FaultLocatorRoleManager,
     is_senior_foreman,
@@ -29,7 +28,9 @@ from .central_roles import (
     can_deploy_teams,
     can_manage_devices,
     can_create_teams,
-    has_fault_locator_permissions
+    has_fault_locator_permissions,
+    is_transport_manager,
+    is_crane_operator
 )
 from .decorators import (
     fault_locator_access_required,
@@ -60,6 +61,11 @@ def notify_fault_locator_user(user, message, notification_type, url, fault_or_te
         
         # Send email notification if user has email
         if user.email:
+            # Lazy import to avoid cross-app import issues during tests
+            try:
+                from it.users.views import ms_exhange_send_html  # type: ignore
+            except Exception:
+                ms_exhange_send_html = None
             # Build full URL for email
             domain = request.get_host()
             protocol = 'https' if request.is_secure() else 'http'
@@ -78,22 +84,22 @@ def notify_fault_locator_user(user, message, notification_type, url, fault_or_te
             
             subject = f"{greeting} - Fault Locator: {notification_type}"
             
-            response = ms_exhange_send_html(
-                subject=subject,
-                to_recipients=[user.email],
-                cc_recipients=[],
-                template='email/email_template.html',
-                kwargs={"kwargs": {
-                    "redirect_url": redirect_url,
-                    "type": notification_type,
-                    "user_fullname": user.get_full_name(),
-                    "message": message
-                }}
-            )
-            
-            # Log email response for debugging
-            if hasattr(response, 'status_code') and response.status_code != 200:
-                print(f"Email notification failed for {user.email}: {response.content}")
+            if callable(ms_exhange_send_html):
+                response = ms_exhange_send_html(
+                    subject=subject,
+                    to_recipients=[user.email],
+                    cc_recipients=[],
+                    template='email/email_template.html',
+                    kwargs={"kwargs": {
+                        "redirect_url": redirect_url,
+                        "type": notification_type,
+                        "user_fullname": user.get_full_name(),
+                        "message": message
+                    }}
+                )
+                # Log email response for debugging
+                if hasattr(response, 'status_code') and response.status_code != 200:
+                    print(f"Email notification failed for {user.email}: {response.content}")
             
     except Exception as e:
         # Log error but don't break the workflow
@@ -574,6 +580,30 @@ def fault_locator_dashboard(request):
             'url_name': 'quick_fault_report',
             'icon': '📝'
         }
+
+        # Crane management access
+        if is_transport_manager(user_profile):
+            accessible_functions['crane_truck_list'] = {
+                'title': 'Crane Trucks',
+                'description': 'Manage crane trucks and operators',
+                'url_name': 'crane_truck_list',
+                'icon': '🚚'
+            }
+            accessible_functions['crane_request_list'] = {
+                'title': 'Crane Requests',
+                'description': 'Approve and assign crane jobs',
+                'url_name': 'crane_request_list',
+                'icon': '📋'
+            }
+        else:
+            # Allow creating crane requests for forepersons/team leaders/senior
+            if is_depot_foreperson(user_profile) or is_team_leader(user_profile) or is_senior_foreman(user_profile):
+                accessible_functions['crane_request_create'] = {
+                    'title': 'Request Crane',
+                    'description': 'Request a crane from Transport Manager',
+                    'url_name': 'crane_request_create',
+                    'icon': '🪝'
+                }
 
         # Fault Reporter Functions  
         if is_fault_rep:
@@ -2445,3 +2475,162 @@ def delete_team(request, team_id):
         'page_title': 'Delete Team'
     }
     return render(request, 'fault_locator/delete_team.html', context)
+
+# =====================
+# Crane Management Views
+# =====================
+
+@login_required
+def crane_truck_list(request):
+    user_profile = UserProfile.objects.filter(id=request.user.id).first()
+    if not (is_transport_manager(user_profile) or is_senior_foreman(user_profile)):
+        messages.error(request, "Only Transport Manager or Senior Foreman can view crane trucks.")
+        try:
+            return redirect('fault_locator:fault_locator_dashboard')
+        except Exception:
+            return redirect('fault_locator_dashboard')
+    trucks = CraneTruck.objects.all().order_by('fleet_number')
+    return render(request, 'fault_locator/crane_truck_list.html', {
+        'trucks': trucks,
+        'user_profile': user_profile,
+    })
+
+@login_required
+def crane_truck_create(request):
+    user_profile = UserProfile.objects.filter(id=request.user.id).first()
+    if not (is_transport_manager(user_profile) or is_senior_foreman(user_profile)):
+        messages.error(request, "Only Transport Manager or Senior Foreman can create crane trucks.")
+        try:
+            return redirect('fault_locator:fault_locator_dashboard')
+        except Exception:
+            return redirect('fault_locator_dashboard')
+    if request.method == 'POST':
+        form = CraneTruckForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Crane truck saved.')
+            try:
+                return redirect('fault_locator:crane_truck_list')
+            except Exception:
+                return redirect('crane_truck_list')
+    else:
+        form = CraneTruckForm()
+    return render(request, 'fault_locator/crane_truck_form.html', {'form': form, 'user_profile': user_profile})
+
+@login_required
+def crane_truck_edit(request, truck_id):
+    user_profile = UserProfile.objects.filter(id=request.user.id).first()
+    if not (is_transport_manager(user_profile) or is_senior_foreman(user_profile)):
+        messages.error(request, "Only Transport Manager or Senior Foreman can edit crane trucks.")
+        try:
+            return redirect('fault_locator:fault_locator_dashboard')
+        except Exception:
+            return redirect('fault_locator_dashboard')
+    truck = get_object_or_404(CraneTruck, id=truck_id)
+    if request.method == 'POST':
+        form = CraneTruckForm(request.POST, instance=truck)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Crane truck updated.')
+            try:
+                return redirect('fault_locator:crane_truck_list')
+            except Exception:
+                return redirect('crane_truck_list')
+    else:
+        form = CraneTruckForm(instance=truck)
+    return render(request, 'fault_locator/crane_truck_form.html', {'form': form, 'truck': truck, 'user_profile': user_profile})
+
+@login_required
+def crane_request_list(request):
+    user_profile = UserProfile.objects.filter(id=request.user.id).first()
+    if is_transport_manager(user_profile) or is_senior_foreman(user_profile):
+        qs = CraneRequest.objects.select_related('depot', 'assigned_truck', 'assigned_operator', 'requested_by').order_by('-created_at')
+    else:
+        qs = CraneRequest.objects.filter(requested_by=user_profile).select_related('depot', 'assigned_truck', 'assigned_operator').order_by('-created_at')
+    return render(request, 'fault_locator/crane_request_list.html', {'requests': qs, 'user_profile': user_profile})
+
+@login_required
+def crane_request_create(request):
+    user_profile = UserProfile.objects.filter(id=request.user.id).first()
+    if not (is_depot_foreperson(user_profile, getattr(user_profile, 'depot', None)) or is_team_leader(user_profile) or is_senior_foreman(user_profile)):
+        messages.error(request, "Only Forepersons, Team Leaders, or Senior Foremen can request a crane.")
+        try:
+            return redirect('fault_locator:fault_locator_dashboard')
+        except Exception:
+            return redirect('fault_locator_dashboard')
+    if request.method == 'POST':
+        form = CraneRequestForm(request.POST, user_region=getattr(user_profile, 'region', None))
+        if form.is_valid():
+            obj = form.save(commit=False)
+            obj.requested_by = user_profile
+            obj.status = 'pending'
+            obj.save()
+            messages.success(request, 'Crane request submitted.')
+            try:
+                return redirect('fault_locator:crane_request_list')
+            except Exception:
+                return redirect('crane_request_list')
+    else:
+        form = CraneRequestForm(user_region=getattr(user_profile, 'region', None))
+    return render(request, 'fault_locator/crane_request_form.html', {'form': form, 'user_profile': user_profile})
+
+@login_required
+def crane_request_assign(request, request_id):
+    user_profile = UserProfile.objects.filter(id=request.user.id).first()
+    if not (is_transport_manager(user_profile) or is_senior_foreman(user_profile)):
+        messages.error(request, "Only Transport Manager or Senior Foreman can approve/assign crane requests.")
+        try:
+            return redirect('fault_locator:fault_locator_dashboard')
+        except Exception:
+            return redirect('fault_locator_dashboard')
+    cr = get_object_or_404(CraneRequest, id=request_id)
+    if request.method == 'POST':
+        form = CraneAssignmentForm(request.POST, instance=cr)
+        if form.is_valid():
+            assignment = form.save(commit=False)
+            assignment.transport_manager = user_profile
+            if assignment.status == 'rejected':
+                assignment.assigned_truck = None
+                assignment.assigned_operator = None
+            assignment.save()
+            messages.success(request, 'Crane request updated.')
+            try:
+                return redirect('fault_locator:crane_request_list')
+            except Exception:
+                return redirect('crane_request_list')
+    else:
+        form = CraneAssignmentForm(instance=cr)
+    return render(request, 'fault_locator/crane_request_assign.html', {'form': form, 'request_obj': cr, 'user_profile': user_profile})
+
+@login_required
+def crane_job_report(request, request_id):
+    user_profile = UserProfile.objects.filter(id=request.user.id).first()
+    cr = get_object_or_404(CraneRequest, id=request_id)
+    if not (is_senior_foreman(user_profile) or is_crane_operator(user_profile) or (cr.assigned_operator_id == getattr(user_profile, 'id', None))):
+        messages.error(request, "You are not allowed to submit this job report.")
+        try:
+            return redirect('fault_locator:crane_request_list')
+        except Exception:
+            return redirect('crane_request_list')
+    report = getattr(cr, 'job_report', None)
+    if request.method == 'POST':
+        form = CraneJobReportForm(request.POST, instance=report)
+        if form.is_valid():
+            job = form.save(commit=False)
+            job.request = cr
+            job.completed_by = user_profile
+            job.save()
+            cr.status = 'completed'
+            cr.save(update_fields=['status'])
+            if cr.assigned_truck and job.end_mileage_km is not None:
+                if job.end_mileage_km > (cr.assigned_truck.mileage_km or 0):
+                    cr.assigned_truck.mileage_km = job.end_mileage_km
+                    cr.assigned_truck.save(update_fields=['mileage_km'])
+            messages.success(request, 'Job report submitted.')
+            try:
+                return redirect('fault_locator:crane_request_list')
+            except Exception:
+                return redirect('crane_request_list')
+    else:
+        form = CraneJobReportForm(instance=report)
+    return render(request, 'fault_locator/crane_job_report_form.html', {'form': form, 'request_obj': cr, 'user_profile': user_profile})

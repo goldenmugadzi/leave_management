@@ -222,3 +222,74 @@ class FaultLocatorRole(models.Model):
     def __str__(self):
         depot_info = f" at {self.depot.depot}" if self.depot else ""
         return f"{self.user.get_full_name()} - {self.get_role_display()}{depot_info}"
+
+# -----------------
+# Crane Management
+# -----------------
+
+class CraneTruck(models.Model):
+    """Represents the crane truck managed by Transport Manager."""
+    STATUS_CHOICES = [
+        ("available", "Available"),
+        ("in_service", "In Service"),
+        ("maintenance", "Under Maintenance"),
+        ("unavailable", "Unavailable"),
+    ]
+
+    fleet_number = models.CharField(max_length=50, unique=True)
+    number_plate = models.CharField(max_length=50, unique=True)
+    mileage_km = models.PositiveIntegerField(default=0)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="available")
+    operator = models.ForeignKey(UserProfile, null=True, blank=True, on_delete=models.SET_NULL, related_name="operated_cranes")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"{self.fleet_number} ({self.number_plate})"
+
+class CraneRequest(models.Model):
+    """Forepersons (or team leaders) request a crane; Transport Manager approves/assigns."""
+    STATUS_CHOICES = [
+        ("pending", "Pending"),
+        ("approved", "Approved"),
+        ("rejected", "Rejected"),
+        ("assigned", "Assigned"),
+        ("completed", "Completed"),
+    ]
+
+    requested_by = models.ForeignKey(UserProfile, on_delete=models.CASCADE, related_name="crane_requests")
+    depot = models.ForeignKey(Depots, on_delete=models.CASCADE)
+    purpose = models.CharField(max_length=255)
+    location = models.CharField(max_length=255)
+    requested_date = models.DateField()
+    time_window = models.CharField(max_length=100, blank=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="pending")
+    transport_manager = models.ForeignKey(UserProfile, null=True, blank=True, on_delete=models.SET_NULL, related_name="managed_crane_requests")
+    assigned_truck = models.ForeignKey('CraneTruck', null=True, blank=True, on_delete=models.SET_NULL, related_name="assignments")
+    assigned_operator = models.ForeignKey(UserProfile, null=True, blank=True, on_delete=models.SET_NULL, related_name="crane_jobs")
+    notes = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"CraneRequest #{self.id} for {self.depot.depot} on {self.requested_date}"
+
+class CraneJobReport(models.Model):
+    """Operator submits completion report; updates truck mileage optionally."""
+    request = models.OneToOneField(CraneRequest, on_delete=models.CASCADE, related_name="job_report")
+    completed_by = models.ForeignKey(UserProfile, on_delete=models.CASCADE, related_name="submitted_crane_reports")
+    completion_notes = models.TextField(blank=True)
+    started_at = models.DateTimeField(null=True, blank=True)
+    completed_at = models.DateTimeField(auto_now_add=True)
+    start_mileage_km = models.PositiveIntegerField(null=True, blank=True)
+    end_mileage_km = models.PositiveIntegerField(null=True, blank=True)
+
+    def clean(self):
+        # Basic validation
+        if self.end_mileage_km is not None and self.start_mileage_km is not None:
+            if self.end_mileage_km < self.start_mileage_km:
+                from django.core.exceptions import ValidationError
+                raise ValidationError("End mileage cannot be less than start mileage")
+
+    def __str__(self):
+        return f"CraneJobReport for request #{self.request_id}"

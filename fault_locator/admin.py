@@ -4,6 +4,9 @@ from .models import *
 # admin.site.register(Depot)
 admin.site.register(FaultLocatorTeam)
 admin.site.register(FaultAssignment)
+admin.site.register(CraneTruck)
+admin.site.register(CraneRequest)
+admin.site.register(CraneJobReport)
 
 @admin.register(Fault)
 class FaultAdmin(admin.ModelAdmin):

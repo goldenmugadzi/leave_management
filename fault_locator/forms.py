@@ -1,5 +1,6 @@
 from django import forms
 from .models import Fault, FaultLocatorDevice, FaultLocatorTeam, FaultLocatorDeviceAssignment, FaultAssignment, TeamDeployment, FaultLocatorRole
+from .models import CraneTruck, CraneRequest, CraneJobReport
 from it.users.models import UserProfile, Depots
 from django_select2.forms import Select2MultipleWidget
 
@@ -428,6 +429,74 @@ class FaultPriorityForm(forms.ModelForm):
         self.fields['priority'].widget.attrs.update({
             'class': 'form-select'
         })
+
+class CraneTruckForm(forms.ModelForm):
+    class Meta:
+        model = CraneTruck
+        fields = ['fleet_number', 'number_plate', 'mileage_km', 'status', 'operator']
+        widgets = {
+            'fleet_number': forms.TextInput(attrs={'class': 'form-control'}),
+            'number_plate': forms.TextInput(attrs={'class': 'form-control'}),
+            'mileage_km': forms.NumberInput(attrs={'class': 'form-control', 'min': '0'}),
+            'status': forms.Select(attrs={'class': 'form-select'}),
+            'operator': forms.Select(attrs={'class': 'form-select'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Optional: filter operators by role if central roles exist
+        try:
+            from .central_roles import is_crane_operator
+            self.fields['operator'].queryset = UserProfile.objects.filter(is_active=True)
+            # We could filter to only known crane operators by checking each user, but that may be heavy.
+        except Exception:
+            pass
+
+class CraneRequestForm(forms.ModelForm):
+    class Meta:
+        model = CraneRequest
+        fields = ['depot', 'purpose', 'location', 'requested_date', 'time_window', 'notes']
+        widgets = {
+            'depot': forms.Select(attrs={'class': 'form-select'}),
+            'purpose': forms.TextInput(attrs={'class': 'form-control'}),
+            'location': forms.TextInput(attrs={'class': 'form-control'}),
+            'requested_date': forms.DateInput(attrs={'class': 'form-control', 'type': 'date'}),
+            'time_window': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g., 09:00-12:00'}),
+            'notes': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        user_region = kwargs.pop('user_region', None)
+        super().__init__(*args, **kwargs)
+        qs = Depots.objects.all()
+        if user_region:
+            qs = qs.filter(region=user_region)
+        self.fields['depot'].queryset = qs.order_by('depot')
+
+class CraneAssignmentForm(forms.ModelForm):
+    class Meta:
+        model = CraneRequest
+        fields = ['assigned_truck', 'assigned_operator', 'status']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Only available/in_service trucks
+        self.fields['assigned_truck'].queryset = CraneTruck.objects.filter(status__in=['available', 'in_service'])
+        self.fields['assigned_truck'].widget.attrs.update({'class': 'form-select'})
+        self.fields['assigned_operator'].queryset = UserProfile.objects.filter(is_active=True)
+        self.fields['assigned_operator'].widget.attrs.update({'class': 'form-select'})
+        self.fields['status'].widget.attrs.update({'class': 'form-select'})
+
+class CraneJobReportForm(forms.ModelForm):
+    class Meta:
+        model = CraneJobReport
+        fields = ['completion_notes', 'started_at', 'start_mileage_km', 'end_mileage_km']
+        widgets = {
+            'completion_notes': forms.Textarea(attrs={'class': 'form-control', 'rows': 4}),
+            'started_at': forms.DateTimeInput(attrs={'class': 'form-control', 'type': 'datetime-local'}),
+            'start_mileage_km': forms.NumberInput(attrs={'class': 'form-control', 'min': '0'}),
+            'end_mileage_km': forms.NumberInput(attrs={'class': 'form-control', 'min': '0'}),
+        }
 
 class FaultLocatorRoleForm(forms.ModelForm):
     """Form for assigning fault locator roles to users"""

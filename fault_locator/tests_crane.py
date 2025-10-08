@@ -23,7 +23,7 @@ class CraneWorkflowTests(TestCase):
         for code, name in [
             (FaultLocatorRoleManager.TRANSPORT_MANAGER, 'Transport Manager'),
             (FaultLocatorRoleManager.CRANE_OPERATOR, 'Crane Operator'),
-            (FaultLocatorRoleManager.DEPOT_FOREPERSON, 'Depot Foreperson'),
+            (FaultLocatorRoleManager.TEAM_LEADER, 'Team Leader'),
         ]:
             Roles.objects.get_or_create(
                 role=code,
@@ -45,7 +45,7 @@ class CraneWorkflowTests(TestCase):
         cls.fp.region = cls.region
         cls.fp.depot = cls.depot
         cls.fp.save()
-        FaultLocatorRoleManager.assign_role(cls.fp, FaultLocatorRoleManager.DEPOT_FOREPERSON)
+        FaultLocatorRoleManager.assign_role(cls.fp, FaultLocatorRoleManager.TEAM_LEADER)
 
         cls.op = UserProfile.objects.create_user(username='op1', password='Passw0rd!')
         cls.op.region = cls.region
@@ -55,7 +55,7 @@ class CraneWorkflowTests(TestCase):
     def test_full_crane_job_flow(self):
         # Manager creates a crane truck
         self.client.login(username='tm1', password='Passw0rd!')
-        create_truck_url = reverse('fault_locator:crane_truck_create')
+        create_truck_url = reverse('crane_truck_create')
         resp = self.client.post(create_truck_url, {
             'fleet_number': 'FLT-001',
             'number_plate': 'ABC-123',
@@ -69,7 +69,7 @@ class CraneWorkflowTests(TestCase):
         # Foreperson submits a crane request
         self.client.logout()
         self.client.login(username='fp1', password='Passw0rd!')
-        create_req_url = reverse('fault_locator:crane_request_create')
+        create_req_url = reverse('crane_request_create')
         today = timezone.now().date().isoformat()
         resp = self.client.post(create_req_url, {
             'depot': self.depot.id,
@@ -88,7 +88,7 @@ class CraneWorkflowTests(TestCase):
         # Manager assigns truck and operator
         self.client.logout()
         self.client.login(username='tm1', password='Passw0rd!')
-        assign_url = reverse('fault_locator:crane_request_assign', args=[req.id])
+        assign_url = reverse('crane_request_assign', args=[req.id])
         resp = self.client.post(assign_url, {
             'assigned_truck': truck.id,
             'assigned_operator': self.op.id,
@@ -103,7 +103,7 @@ class CraneWorkflowTests(TestCase):
         # Operator submits job report with mileage update
         self.client.logout()
         self.client.login(username='op1', password='Passw0rd!')
-        report_url = reverse('fault_locator:crane_job_report', args=[req.id])
+        report_url = reverse('crane_job_report', args=[req.id])
         resp = self.client.post(report_url, {
             'completion_notes': 'Completed safely',
             'started_at': timezone.now().isoformat(timespec='minutes'),
@@ -119,7 +119,7 @@ class CraneWorkflowTests(TestCase):
     def test_permissions_truck_list_denied_for_non_manager(self):
         # Foreperson should not access truck list
         self.client.login(username='fp1', password='Passw0rd!')
-        url = reverse('fault_locator:crane_truck_list')
+        url = reverse('crane_truck_list')
         resp = self.client.get(url)
         # Expect redirect to dashboard due to permission check
         self.assertEqual(resp.status_code, 302)

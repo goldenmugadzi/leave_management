@@ -103,3 +103,14 @@ urlpatterns = [
     # Role troubleshooting
     path('troubleshoot/', views.role_troubleshooting, name='role_troubleshooting'),
 ]
+
+# Crane management URLs
+urlpatterns += [
+    path('cranes/trucks/', views.crane_truck_list, name='crane_truck_list'),
+    path('cranes/trucks/create/', views.crane_truck_create, name='crane_truck_create'),
+    path('cranes/trucks/<int:truck_id>/edit/', views.crane_truck_edit, name='crane_truck_edit'),
+    path('cranes/requests/', views.crane_request_list, name='crane_request_list'),
+    path('cranes/requests/create/', views.crane_request_create, name='crane_request_create'),
+    path('cranes/requests/<int:request_id>/assign/', views.crane_request_assign, name='crane_request_assign'),
+    path('cranes/requests/<int:request_id>/report/', views.crane_job_report, name='crane_job_report'),
+]
