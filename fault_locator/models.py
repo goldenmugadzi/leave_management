@@ -247,6 +247,25 @@ class CraneTruck(models.Model):
     def __str__(self):
         return f"{self.fleet_number} ({self.number_plate})"
 
+    def clean(self):
+        """Ensure fleet_number and number_plate are immutable after creation."""
+        from django.core.exceptions import ValidationError
+        if self.pk:
+            try:
+                original = CraneTruck.objects.get(pk=self.pk)
+            except CraneTruck.DoesNotExist:
+                original = None
+            if original:
+                changed = []
+                if self.fleet_number != original.fleet_number:
+                    changed.append('fleet number')
+                if self.number_plate != original.number_plate:
+                    changed.append('number plate')
+                if changed:
+                    raise ValidationError(
+                        f"You cannot change {', '.join(changed)} once a truck is created."
+                    )
+
 class CraneRequest(models.Model):
     """Forepersons (or team leaders) request a crane; Transport Manager approves/assigns."""
     STATUS_CHOICES = [

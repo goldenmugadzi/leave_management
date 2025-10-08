@@ -147,6 +147,27 @@
 			"command": "python manage.py test fault_locator.tests_crane --settings=beii_v1.settings_test -v 2",
 			"isBackground": false,
 			"group": "build"
+		},
+		{
+			"label": "Run crane tests after operator filtering",
+			"type": "shell",
+			"command": "python manage.py test fault_locator.tests_crane --settings=beii_v1.settings_test -v 2",
+			"isBackground": false,
+			"group": "build"
+		},
+		{
+			"label": "Run all fault_locator tests after immutability guard",
+			"type": "shell",
+			"command": "python manage.py test fault_locator -q --settings=beii_v1.settings_test",
+			"isBackground": false,
+			"group": "build"
+		},
+		{
+			"label": "Run crane tests with role-filtered operators",
+			"type": "shell",
+			"command": "python manage.py test fault_locator.tests_crane --settings=beii_v1.settings_test -v 2",
+			"isBackground": false,
+			"group": "build"
 		}
 	]
 }

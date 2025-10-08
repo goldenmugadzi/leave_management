@@ -448,13 +448,38 @@ class CraneTruckForm(forms.ModelForm):
         user_region = kwargs.pop('user_region', None)
         super().__init__(*args, **kwargs)
         # Filter operators by region when provided; fall back to all active users
-        qs = UserProfile.objects.filter(is_active=True)
+        # Start with users who have the Crane Operator role in central roles
+        try:
+            from .central_roles import FaultLocatorRoleManager
+            qs = FaultLocatorRoleManager.get_users_with_role(FaultLocatorRoleManager.CRANE_OPERATOR)
+            qs = qs.filter(is_active=True)
+        except Exception:
+            # Fallback to all active users if central roles unavailable
+            qs = UserProfile.objects.filter(is_active=True)
         if user_region:
             qs = qs.filter(region=user_region)
         self.fields['operator'].queryset = qs.order_by('last_name', 'first_name')
         # Ensure widget keeps select2 class if replaced elsewhere
         self.fields['operator'].widget.attrs.setdefault('class', 'form-select select2')
         self.fields['operator'].empty_label = '---------'
+
+        # Make identifiers read-only when editing existing instance
+        if self.instance and self.instance.pk:
+            self.fields['fleet_number'].disabled = True
+            self.fields['number_plate'].disabled = True
+
+    def clean(self):
+        """Extra guard to prevent duplicates and changes of identifiers."""
+        cleaned = super().clean()
+        fleet_number = cleaned.get('fleet_number')
+        number_plate = cleaned.get('number_plate')
+        # If creating new, enforce uniqueness explicitly for friendlier error
+        if not (self.instance and self.instance.pk):
+            if fleet_number and CraneTruck.objects.filter(fleet_number__iexact=fleet_number).exists():
+                self.add_error('fleet_number', 'A truck with this fleet number already exists.')
+            if number_plate and CraneTruck.objects.filter(number_plate__iexact=number_plate).exists():
+                self.add_error('number_plate', 'A truck with this number plate already exists.')
+        return cleaned
 
 class CraneRequestForm(forms.ModelForm):
     class Meta:
@@ -490,7 +515,12 @@ class CraneAssignmentForm(forms.ModelForm):
         self.fields['assigned_truck'].queryset = CraneTruck.objects.filter(status__in=['available', 'in_service'])
         self.fields['assigned_truck'].widget.attrs.update({'class': 'form-select'})
         # Operators filtered by region if provided
-        op_qs = UserProfile.objects.filter(is_active=True)
+        try:
+            from .central_roles import FaultLocatorRoleManager
+            op_qs = FaultLocatorRoleManager.get_users_with_role(FaultLocatorRoleManager.CRANE_OPERATOR)
+            op_qs = op_qs.filter(is_active=True)
+        except Exception:
+            op_qs = UserProfile.objects.filter(is_active=True)
         if user_region:
             op_qs = op_qs.filter(region=user_region)
         self.fields['assigned_operator'].queryset = op_qs.order_by('last_name', 'first_name')
