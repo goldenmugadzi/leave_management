@@ -229,7 +229,7 @@ def create_leave_types(request):
         form = LeaveTypesForm(request.POST)
         if form.is_valid():
             form.save()
-            return redirect('leave_types') 
+            return redirect('leave_management:leave_types') 
     else:
         form = LeaveTypesForm()
     return render(request, 'leave_system/create.html', {'form': form})

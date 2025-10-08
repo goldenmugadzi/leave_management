@@ -85,30 +85,22 @@
                             <p class="font-bold mb-2">Region: {{ leave.region }}</p>
                             <p class="font-bold mb-2">Start Date: {{ leave.start_date }}</p>
                             <p class="font-bold mb-2">End Date: {{ leave.end_date }}</p>
-
-                            <!-- Attachments -->
-                            <p class="font-bold mb-2">Attachments:</p>
-                            {% if leave.documents.all %}
-                                {% for doc in leave.documents.all %}
-                                    <a href="/media/{{ doc.file }}">
-                                        <button class="bg-red-500 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded mb-2">
-                                            {{ doc.file.name|basename }}
-                                        </button>
+                            <p class="font-bold mb-2">
+                                Attachments: 
+                                {% if leave.attachments %}
+                                    <a href="{{ leave.attachments.url }}" target="_blank" class="text-blue-600 underline">
+                                        {{ leave.attachments.name|default:"View File" }}
                                     </a>
-                                    {% if doc.description %}
-                                        <span class="ml-2 italic text-sm">({{ doc.description }})</span>
-                                    {% endif %}
-                                    <br>
-                                {% endfor %}
-                            {% else %}
-                                <p class="italic">No attachments uploaded yet.</p>
-                            {% endif %}
+                                {% else %}
+                                    No attachments
+                                {% endif %}
+                            </p>
 
-                            <!-- Upload Supporting Document -->
-                            <button id="open-modal" class="bg-gulf-blue-600 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded mt-2">
-                                Upload Supporting Document
-                            </button>
 
+                           
+
+                            
+                            
                             <!-- Modal -->
                             <div id="modal" class="modal">
                                 <div class="modal-content">

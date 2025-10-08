@@ -18,7 +18,7 @@ class LeaveRequest(models.Model):
    
     EMPLOYEE_TYPES  = [
         ('Permanent','Permanent'),
-        ('Apis','Apis'),
+        ('Apprentice','Apprentice'),
         ('PGT','PGT'),
         ('Contract','Contract'),
     ]
