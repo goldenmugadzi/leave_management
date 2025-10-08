@@ -265,6 +265,9 @@ class CraneTruck(models.Model):
                     raise ValidationError(
                         f"You cannot change {', '.join(changed)} once a truck is created."
                     )
+            # Mileage should not decrease
+            if self.mileage_km is not None and original and self.mileage_km < (original.mileage_km or 0):
+                raise ValidationError("Mileage cannot decrease from the recorded value.")
 
 class CraneRequest(models.Model):
     """Forepersons (or team leaders) request a crane; Transport Manager approves/assigns."""

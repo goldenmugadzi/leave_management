@@ -168,6 +168,20 @@
 			"command": "python manage.py test fault_locator.tests_crane --settings=beii_v1.settings_test -v 2",
 			"isBackground": false,
 			"group": "build"
+		},
+		{
+			"label": "Run fault_locator tests after operator dashboard and mileage rule",
+			"type": "shell",
+			"command": "python manage.py test fault_locator -q --settings=beii_v1.settings_test",
+			"isBackground": false,
+			"group": "build"
+		},
+		{
+			"label": "Run crane tests after depot foreperson permission",
+			"type": "shell",
+			"command": "python manage.py test fault_locator.tests_crane --settings=beii_v1.settings_test -v 2",
+			"isBackground": false,
+			"group": "build"
 		}
 	]
 }

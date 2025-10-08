@@ -496,11 +496,27 @@ class CraneRequestForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         user_region = kwargs.pop('user_region', None)
+        user_depot = kwargs.pop('user_depot', None)
+        lock_depot = kwargs.pop('lock_depot', False)
         super().__init__(*args, **kwargs)
         qs = Depots.objects.all()
         if user_region:
             qs = qs.filter(region=user_region)
+        # If a depot foreperson is creating the request, lock to their depot
+        if user_depot:
+            qs = qs.filter(id=user_depot.id)
         self.fields['depot'].queryset = qs.order_by('depot')
+        # Disable the field if locked
+        if lock_depot and user_depot:
+            self.fields['depot'].initial = user_depot
+            self.fields['depot'].disabled = True
+        # Friendlier labels
+        self.fields['purpose'].label = 'Job to be done'
+        self.fields['purpose'].help_text = 'What task should the crane perform at the depot?'
+        self.fields['location'].label = 'Work location (at depot/nearby)'
+        self.fields['requested_date'].label = 'Preferred date'
+        self.fields['time_window'].label = 'Preferred time window'
+        self.fields['notes'].label = 'Additional notes'
 
 class CraneAssignmentForm(forms.ModelForm):
     class Meta:
@@ -530,12 +546,11 @@ class CraneAssignmentForm(forms.ModelForm):
 class CraneJobReportForm(forms.ModelForm):
     class Meta:
         model = CraneJobReport
-        fields = ['completion_notes', 'started_at', 'start_mileage_km', 'end_mileage_km']
+        fields = ['completion_notes', 'started_at', 'start_mileage_km']
         widgets = {
             'completion_notes': forms.Textarea(attrs={'class': 'form-control', 'rows': 4}),
             'started_at': forms.DateTimeInput(attrs={'class': 'form-control', 'type': 'datetime-local'}),
             'start_mileage_km': forms.NumberInput(attrs={'class': 'form-control', 'min': '0'}),
-            'end_mileage_km': forms.NumberInput(attrs={'class': 'form-control', 'min': '0'}),
         }
 
 class FaultLocatorRoleForm(forms.ModelForm):

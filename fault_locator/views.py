@@ -2552,14 +2552,20 @@ def crane_request_list(request):
 @login_required
 def crane_request_create(request):
     user_profile = UserProfile.objects.filter(id=request.user.id).first()
-    if not (is_depot_foreperson(user_profile, getattr(user_profile, 'depot', None)) or is_team_leader(user_profile) or is_senior_foreman(user_profile)):
+    is_df = is_depot_foreperson(user_profile, getattr(user_profile, 'depot', None))
+    if not (is_df or is_team_leader(user_profile) or is_senior_foreman(user_profile)):
         messages.error(request, "Only Forepersons, Team Leaders, or Senior Foremen can request a crane.")
         try:
             return redirect('fault_locator:fault_locator_dashboard')
         except Exception:
             return redirect('fault_locator_dashboard')
     if request.method == 'POST':
-        form = CraneRequestForm(request.POST, user_region=getattr(user_profile, 'region', None))
+        form = CraneRequestForm(
+            request.POST,
+            user_region=getattr(user_profile, 'region', None),
+            user_depot=getattr(user_profile, 'depot', None) if is_df else None,
+            lock_depot=is_df,
+        )
         if form.is_valid():
             obj = form.save(commit=False)
             obj.requested_by = user_profile
@@ -2571,7 +2577,11 @@ def crane_request_create(request):
             except Exception:
                 return redirect('crane_request_list')
     else:
-        form = CraneRequestForm(user_region=getattr(user_profile, 'region', None))
+        form = CraneRequestForm(
+            user_region=getattr(user_profile, 'region', None),
+            user_depot=getattr(user_profile, 'depot', None) if is_df else None,
+            lock_depot=is_df,
+        )
     return render(request, 'fault_locator/crane_request_form.html', {'form': form, 'user_profile': user_profile})
 
 @login_required
@@ -2606,7 +2616,14 @@ def crane_request_assign(request, request_id):
 def crane_job_report(request, request_id):
     user_profile = UserProfile.objects.filter(id=request.user.id).first()
     cr = get_object_or_404(CraneRequest, id=request_id)
-    if not (is_senior_foreman(user_profile) or is_crane_operator(user_profile) or (cr.assigned_operator_id == getattr(user_profile, 'id', None))):
+    # Allow: senior foreman, any crane operator, the assigned operator,
+    # or the depot foreperson for the request's depot
+    if not (
+        is_senior_foreman(user_profile)
+        or is_crane_operator(user_profile)
+        or (cr.assigned_operator_id == getattr(user_profile, 'id', None))
+        or is_depot_foreperson(user_profile, cr.depot)
+    ):
         messages.error(request, "You are not allowed to submit this job report.")
         try:
             return redirect('fault_locator:crane_request_list')
@@ -2619,6 +2636,9 @@ def crane_job_report(request, request_id):
             job = form.save(commit=False)
             job.request = cr
             job.completed_by = user_profile
+            # Automatically set end mileage to current truck mileage
+            if cr.assigned_truck:
+                job.end_mileage_km = cr.assigned_truck.mileage_km or 0
             job.save()
             cr.status = 'completed'
             cr.save(update_fields=['status'])
@@ -2633,4 +2653,7 @@ def crane_job_report(request, request_id):
                 return redirect('crane_request_list')
     else:
         form = CraneJobReportForm(instance=report)
+        # Pre-populate start mileage with current truck mileage if not already set
+        if cr.assigned_truck and not report:
+            form.initial['start_mileage_km'] = cr.assigned_truck.mileage_km or 0
     return render(request, 'fault_locator/crane_job_report_form.html', {'form': form, 'request_obj': cr, 'user_profile': user_profile})

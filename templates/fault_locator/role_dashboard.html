@@ -144,6 +144,20 @@
                             </div>
                             <div class="absolute inset-0 bg-gradient-to-br from-gulf-blue-600/10 to-tory-blue-primary/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-3xl pointer-events-none"></div>
                         </div>
+                    {% elif action.title == 'Request Crane' and is_depot_foreperson %}
+                        <div class="glass-card group relative overflow-hidden rounded-3xl backdrop-blur-xl bg-white/40 border border-white/30 shadow-2xl hover:shadow-3xl transition-all duration-500 hover:scale-105 hover:bg-white/50 priority-{{ action.priority|default:'medium' }}">
+                            <div class="p-6 text-center">
+                                <div class="action-icon mb-4 text-4xl">
+                                 <i class="{{ action.icon_class|default:'' }}"></i>
+                                </div>
+                                <h5 class="text-xl font-bold text-nepal-800 mb-3 group-hover:text-gulf-blue-600 transition-colors duration-300">{{ action.title }}</h5>
+                                <p class="text-nepal-600 mb-4">{{ action.description }}</p>
+                                <a href="{{ action.url }}" class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-gulf-blue-600 to-tory-blue-primary text-white rounded-xl font-medium hover:shadow-lg transition-all duration-300 hover:scale-105">
+                                    Take Action
+                                </a>
+                            </div>
+                            <div class="absolute inset-0 bg-gradient-to-br from-gulf-blue-600/10 to-tory-blue-primary/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-3xl pointer-events-none"></div>
+                        </div>
                     {% elif action.title == 'Report Fault Located' and is_team_leader %}
                         <div class="glass-card group relative overflow-hidden rounded-3xl backdrop-blur-xl bg-white/40 border border-white/30 shadow-2xl hover:shadow-3xl transition-all duration-500 hover:scale-105 hover:bg-white/50 priority-{{ action.priority|default:'medium' }}">
                             <div class="p-6 text-center">
@@ -277,6 +291,8 @@
             {% include 'fault_locator/dashboard/team_member.html' %}
         {% elif user_role == 'transport_manager' %}
             {% include 'fault_locator/dashboard/transport_manager.html' %}
+        {% elif user_role == 'crane_operator' %}
+            {% include 'fault_locator/dashboard/crane_operator.html' %}
         {% endif %}
 
         <!-- Recent Activity Section -->

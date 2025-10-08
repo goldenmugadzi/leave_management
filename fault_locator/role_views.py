@@ -248,6 +248,8 @@ def role_based_dashboard(request):
         context.update(get_team_member_context(user_profile))
     elif user_role == 'transport_manager' or is_transport_manager(user_profile):
         context.update(get_transport_manager_context(user_profile))
+    elif user_role == 'crane_operator':
+        context.update(get_crane_operator_context(user_profile))
     
     # Build dashboard actions (only if not already set by role-specific context)
     # Get existing actions from context if they exist
@@ -363,6 +365,46 @@ def get_transport_manager_context(user_profile):
         'available_trucks': available_trucks,
         'primary_actions': primary_actions,
         'secondary_actions': secondary_actions,
+    }
+
+def get_crane_operator_context(user_profile):
+    """Context for Crane Operator: show assigned jobs and quick actions."""
+    from .models import CraneRequest
+    from django.utils import timezone
+
+    assigned_qs = CraneRequest.objects.filter(
+        assigned_operator=user_profile,
+        status='assigned'
+    ).select_related('depot', 'assigned_truck').order_by('requested_date', 'id')
+
+    completed_today = CraneRequest.objects.filter(
+        assigned_operator=user_profile,
+        status='completed',
+        job_report__completed_at__date=timezone.now().date()
+    ).count()
+
+    stats = {
+        'assigned_jobs': assigned_qs.count(),
+        'pending_reports': assigned_qs.exclude(job_report__isnull=False).count(),
+        'completed_today': completed_today,
+    }
+
+    primary_actions = []
+    if assigned_qs.exists():
+        # Point to first pending job's report form
+        first_job = assigned_qs.first()
+        primary_actions.append({
+            'title': 'Submit Job Report',
+            'description': f'Report for request #{first_job.id} at {first_job.depot.depot}',
+            'url': f"/fault_locator/cranes/requests/{first_job.id}/report/",
+            'icon_class': 'fas fa-clipboard-check',
+            'priority': 'high'
+        })
+
+    return {
+        'stats': stats,
+        'operator_assigned_requests': assigned_qs,
+        'primary_actions': primary_actions,
     }
 
 def get_senior_foreman_context(user_profile):
@@ -599,6 +641,7 @@ def get_depot_foreperson_context(user_profile):
         'completed_today': completed_today,  # Pass as queryset for template iteration
         'stats': stats,
         'can_assign_faults': can_assign_faults(user_profile),
+        'is_depot_foreperson': is_depot_foreperson(user_profile),
         'primary_actions': [
             {
                 'title': 'Assign Pending Faults',
@@ -606,6 +649,13 @@ def get_depot_foreperson_context(user_profile):
                 'url': '/fault_locator/simple-assign/',
                 'icon_class': 'fas fa-hand-point-right',
                 'priority': 'high' if pending_faults.count() > 0 else 'low'
+            },
+            {
+                'title': 'Request Crane',
+                'description': 'Request a crane for a job at your depot',
+                'url': '/fault_locator/cranes/requests/create/',
+                'icon_class': 'fas fa-truck-monster',
+                'priority': 'medium'
             },
             {
                 'title': 'Report New Fault',
