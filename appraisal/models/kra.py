@@ -93,3 +93,11 @@ class AppraisalDepartmentOutputReviewerStatus(TimeStamp):
     def __str__(self):
         return f"{self.appraisal_department_output} - {self.reviewer}"
 
+
+class AppraisalApprovalWorkFlowQuarter(TimeStamp):
+    appraisal_workflow = models.OneToOneField(AppraisalWorkflow, on_delete=models.RESTRICT)
+    year_quarter = models.ForeignKey(YearQuarter, on_delete=models.RESTRICT, related_name="quarter_workflow")
+    is_completed = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"{self.appraisal_workflow.stage_name} - {self.year_quarter}"

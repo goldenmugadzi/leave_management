@@ -102,9 +102,11 @@ class AppraisalForm(forms.ModelForm):
         
         self.fields["appraiser"].required = True
         self.fields["reviewer"].required = False
+        self.fields["reviewer"].disabled = True
         self.fields['hr'].disabled = True
         self.fields['hr'].required = False
         
+
 class AppraisalOverallCommentForm(forms.ModelForm):
     class Meta:
         model = Appraisal

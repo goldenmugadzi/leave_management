@@ -6,8 +6,9 @@ from ..models import Appraisal, AppraisalWorkflow
 from ..services import PerformanceReviewService, TrainingAndDevelopmentService
 from ..services.kra import AppraisalDependanciesInitialisationService
 from ..repository import PerformanceReviewRepository, TrainingAndDevelopmentRepository, AppraisalWorkflowRepository, AppraisalRepository
-from ..repository.kra import KRARepository, AppraisalDepartmentOutputRepository, AppraisalOutPutPerformanceDimensionScoreRepository, YearQuarterRepository
+from ..repository.kra import AppraisalDepartmentOutputRepository, AppraisalOutPutPerformanceDimensionScoreRepository, YearQuarterRepository
 from ..repository.departmental_workplan import OutPutPerformanceDimensionRepository, DepartmentalOutRepository
+from ..repository.approval import AppraisalApprovalWorkFlowQuarterRepository, AppraisalWorkflowRepository
 from ..helpers.types.kra import KraRolesType
 from ..helpers.notifications import send_appraisal_notifications
 from ..helpers.setters import set_approval_process
@@ -171,10 +172,24 @@ def set_appraisal_approval_workflow(sender, instance, created, **kwargs):
                 for index, stage in enumerate(ApprovalStageData)
             ]
             
-            with transaction.atomic():
-                AppraisalWorkflow.objects.bulk_create(workflow_entries)
+            AppraisalWorkflow.objects.bulk_create(workflow_entries)
+            logger.success("[Creating Appraisal Approval] AppraisalWorkflow objs creates")
             
-            logger.success("[Creating Appraisal Approval] completed")
+            appraisal_workflow_repo = AppraisalWorkflowRepository()
+            appraisal_workflow_qr = appraisal_workflow_repo.retrieve_by_appraisal(appraisal_id=instance.id)
+            
+            logger.info("[Creating Appraisal Approval] AppraisalWorkflowQuarter creation init ...")
+            for appraisal_workflow_obj in appraisal_workflow_qr:
+                year_q_repo = YearQuarterRepository()
+                
+                for year_q_obj in year_q_repo.fetch_by_year(year=instance.created_date.year):
+                    quarter_workflow_repo = AppraisalApprovalWorkFlowQuarterRepository()
+                    quarter_workflow_repo.create(
+                        appraisal_workflow_obj=appraisal_workflow_obj,
+                        year_quarter_obj=year_q_obj
+                    )
+
+            logger.success("[Creating Appraisal Approval] AppraisalWorkflowQuarter created successfully.")
         except Exception as e:
             logger.error(f"[Creating Appraisal Approval]-failed with error: {e}")
             return

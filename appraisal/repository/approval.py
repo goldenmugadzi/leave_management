@@ -1,7 +1,8 @@
 from typing import List
 from django.db.models.query import QuerySet
-from ..models import AppraisalWorkflow
+from ..models import AppraisalWorkflow, AppraisalApprovalWorkFlowQuarter
 from it.users.models import UserProfile
+from ..models.helpers import YearQuarter
 from loguru import logger
 
 class AppraisalWorkflowRepository:
@@ -29,3 +30,13 @@ class AppraisalWorkflowRepository:
         except Exception as e:
             raise Exception(f"AppraisalWorkflowRepository update handler failed with error: {e}")
 
+
+class AppraisalApprovalWorkFlowQuarterRepository:
+    def create(self, appraisal_workflow_obj: AppraisalWorkflow, year_quarter_obj: YearQuarter)->AppraisalApprovalWorkFlowQuarter:
+        try:
+            return AppraisalApprovalWorkFlowQuarter.objects.create(
+                appraisal_workflow=appraisal_workflow_obj,
+                year_quarter = year_quarter_obj
+            )
+        except Exception as e:
+            raise Exception(f"[AppraisalApprovalWorkFlowQuarterRepository] create repo with appraisal_workflow pk: {appraisal_workflow_obj.id}, failed with error: {e}")

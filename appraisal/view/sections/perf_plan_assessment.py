@@ -15,6 +15,7 @@ from ...repository.appraisal import AppraisalRepository
 from ...repository.kra import AppraisalDepartmentOutputRepository, AppraisalOutPutPerformanceDimensionScoreRepository, ScoreDocumentRepository,ApprasialKraReviewerStatusRepository
 from ...services.kra import AppraisalDepartmentOutputService
 from ...models.kra import AppraisalOutPutPerformanceDimensionScore, ScoreDocument, APPRAISAL_KRA_REVIEWER_STATUS_CHOICES, REVIEWERS_CONFIRMATION_STATUS, AppraisalDepartmentOutput
+from ...models.departmental_workplan import PERFORMANCE_INDICATOR
 from ...forms.kra import AppraisalOutPutPerformanceDimensionScoreForm, ScoreDocumentForm, AppraisalDepartmentOutputReviewerStatusForm, AppraiserConfirmationForm
 from ..helper import build_payload_score
 from ..helper import is_within_current_quarter
@@ -368,12 +369,20 @@ class AppraisalDepartmentPerformanceDimensionScoreUpdateView(SuccessMessageMixin
     def appraisee_form_handler(self, form):
         payload = build_payload_score(request=self.request, form=form, is_appraisee=True)
         repo = AppraisalOutPutPerformanceDimensionScoreRepository()
+        current_score_object = self.get_object()
         
         is_scored = False
-        if payload.score > 0 or self.get_object().performance_dimension.weight == 0:
+        obj = self.get_object().performance_dimension
+
+        if obj.performance_indicator == PERFORMANCE_INDICATOR[1][1] and payload.score not in [0, 100]:
+            messages.error(request=self.request, message="Quality is absolute — it’s either 100% or nothing.")
+            return current_score_object
+        else:
+            is_scored = True
+        
+        if payload.score > 0 or obj.weight == 0:
             is_scored = True
             
-        current_score_object = self.get_object()
         updated_score_object = repo.update(
                                     appraisal_perf_dimension=self.get_object(), 
                                     score=payload.score, 
