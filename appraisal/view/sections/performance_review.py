@@ -14,6 +14,7 @@ from ...services import (AppraisalService, PerformanceReviewService,
 from ...repository import (AppraisalRepository, UserQualificationRepository, AppraisalExperienceRepository, 
                           ExperienceRepository, PerformanceReviewRepository,
                           TrainingAndDevelopmentRepository)
+from ...repository.kra import AppraisalOutPutPerformanceDimensionScoreRepository
 from ...helpers.getters import ApprovalStagesHandler
 
 
@@ -71,6 +72,15 @@ class PerformancePlanAndAssessmentTemplateView(TemplateView):
         if user_obj.grade == GRADE_CHOICES[2][1]:
             return "C, D, E and F"
         return ""
+    
+    def get_approval_stages(self):
+        try:
+            appraisal_object = self.get_appraisal_object()
+            handler = ApprovalStagesHandler(appraisal_id=appraisal_object.id)
+            return handler.get_stages_info()
+        except Exception as e:
+            logger.error(f"[AppraisalUpdateView] get_approval_stages for Appraisal pk: {appraisal_object.id} failed with error: {e}")
+            return None  
 
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
@@ -80,6 +90,7 @@ class PerformancePlanAndAssessmentTemplateView(TemplateView):
         performance_plan_info = self.get_performance_plan_info(appraisal_id=appraisal_id)
         
         context.update(performance_plan_info)
+        context.update(self.get_approval_stages())
         context["appraisal_object"] = appraisal_object
         context["appraisal_object"] = appraisal_object
         context["appraisee_object"] = appraisal_object.user
@@ -156,9 +167,9 @@ class PerformanceReviewsApprovalView(SuccessMessageMixin, TemplateView):
         return data
     
     def is_quarter_scored(self)->bool:
-        repo = PerformanceReviewRepository()
-        qr = repo.fetch_performance_by_appraisal_id_quarter(quarter_id=self.kwargs.get("quarter_id"), appraisal_id=self.kwargs.get("appraisal_id"))
-        unscored_qr = qr.filter(is_completed=False)
+        repo = AppraisalOutPutPerformanceDimensionScoreRepository()
+        qr = repo.fetch_by_appraisal_id_year_quarter_id(year_quarter_id=self.kwargs.get("quarter_id"), appraisal_id=self.kwargs.get("appraisal_id"))
+        unscored_qr = qr.filter(is_scored=False)
         if unscored_qr.exists():
             return False
         return True

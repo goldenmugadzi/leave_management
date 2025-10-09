@@ -21,7 +21,7 @@
     </div>
 
     <div class="bg-gulf-blue-100 shadow-lg rounded-lg p-6 my-6">
-        <div class="flex justify-end items-start gap-4 mb-4">
+        <div class="flex justify-between items-start gap-4 mb-4">
             <div>
                 <form method="get" class="flex items-end gap-2">
                     {% csrf_token %}
@@ -39,11 +39,16 @@
                 </form>
               </div>
             
-            <div class="mt-10">
-                <a href="{% url 'departmental_output_create' departmental_objective_id=department_objective.id designation_id=designation_obj.id %}" 
-                   class="bg-blue-500 hover:bg-blue-700 text-white py-2 px-4 rounded-full transition-colors duration-200 whitespace-nowrap">
-                  Create New
-                </a>
+            <div class="flex justify-between mt-8 gap-1">
+                    <a href="{% url 'departmental_output_create' departmental_objective_id=department_objective.id designation_id=designation_obj.id %}" 
+                       class="bg-blue-500 hover:bg-blue-700 text-white py-2 px-4 rounded-full transition-colors duration-200 whitespace-nowrap">
+                      Create New Designation
+                    </a>
+
+                    <a href="{% url 'job_competency_index' designation_id=designation_obj.id year=department_objective.created_date.year %}" 
+                       class="bg-blue-300 hover:bg-blue-700 text-white py-2 px-4 rounded-full transition-colors duration-200 whitespace-nowrap">
+                        Job Competency
+                    </a>
             </div>
           </div>
       <div style="max-height: 280px; overflow-y: auto;">

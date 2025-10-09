@@ -63,8 +63,8 @@
                         Add New Qualification
                     </a>
                 </div>
+                    {% include 'appraisal/qualification_experience/qualifications/index_element.html' with user_qualification_qr=user_qualification_qr can_update=is_my_qualification_experience %}
                 <div class="container mx-auto px-4">
-                    {% include 'appraisal/qualification_experience/experiences/index_element.html' with user_experiences_qr=user_experiences_qr can_update=is_my_qualification_experience %}
                 </div>
             </div>
         </div>
@@ -75,12 +75,12 @@
                 <div class="flex justify-between">
                     <h3 class="text-lg font-semibold text-gray-900 mb-4">User Experiences</h3>
                     <a href="{% url 'qualification_experience_index' user_object.id %}"
-                        class="my-2 bg-blue-500 hover:bg-blue-700 inline-block rounded-full text-white py-2 px-4">
-                        Add New Experience
-                    </a>
-                </div>
-                <div class="container mx-auto px-4">
-                    {% include 'appraisal/qualification_experience/qualifications/index_element.html' with user_qualification_qr=user_qualification_qr can_update=is_my_qualification_experience %}
+                    class="my-2 bg-blue-500 hover:bg-blue-700 inline-block rounded-full text-white py-2 px-4">
+                    Add New Experience
+                </a>
+            </div>
+            <div class="container mx-auto px-4">
+                    {% include 'appraisal/qualification_experience/experiences/index_element.html' with user_experiences_qr=user_experiences_qr can_update=is_my_qualification_experience %}
                 </div>
             </div>
         </div>
@@ -101,6 +101,12 @@
             </form>
         </div>
     </div>
+
+    {% if is_update %}
+        <div class="mt-6">
+            {% include "appraisal/approval/detail.html" with stages=stages last_stage_num=last_stage_number %}
+        </div>
+    {% endif %}
 </div>
 {% endblock%}
 {% block scripts %} 

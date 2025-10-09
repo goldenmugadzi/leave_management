@@ -1,4 +1,4 @@
-from typing import Dict, Any
+from typing import Dict, Any, List
 from django.core.files.uploadedfile import UploadedFile
 from django.db import IntegrityError
 from django.db.models.query import QuerySet
@@ -6,13 +6,22 @@ from django.core.files.storage import default_storage
 
 
 from it.users.models import UserQualification, UserProfile, UserExperience
-
+from loguru import logger
 class UserQualificationRepository:
-    def create(self, user_object: UserProfile, name: str, file: UploadedFile=None) -> UserQualification:
+    def create(self, user_object: UserProfile, name: str, description: str=None, file: UploadedFile=None) -> UserQualification:
         try:
-            return UserQualification.objects.create(user=user_object, name=name, file=file)
+            return UserQualification.objects.create(user=user_object, name=name, description=description, file=file)
         except Exception as e:
             raise Exception(f"create user qualification repo failed with error: {e}")
+    
+    def create_in_bulk(self, objs: List[UserQualification]) -> bool:
+        try:
+            created_objs = UserQualification.objects.bulk_create(objs=objs)
+            for user_qualification_obj in objs:
+                if user_qualification_obj not in created_objs:
+                    logger.error(f"[UserQualificationRepository] create_in_bulk failed to create user: {user_qualification_obj.user} with id")
+        except Exception as e:
+            raise Exception(f"[UserQualificationRepository] create_in_bulk repo failed with error: {e}")
     
     def get_by_user(self, user_object: UserProfile)->UserQualification:
         try:
@@ -35,12 +44,15 @@ class UserQualificationRepository:
         except Exception as e:
             raise Exception(f"retrieving user qualification objects by pk failed with error: {e}")
     
-    def update(self, qualification_object_id: int, name: str, file: UploadedFile)->UserQualification:
+    def update(self, qualification_object_id: int, name: str, description: str, file: UploadedFile)->UserQualification:
         try:
             changed = False
             qualification_object = self.get_by_id(qualification_object_id)
             if qualification_object.name != name:
                 qualification_object.name = name
+                changed = True
+            if qualification_object.description != description:
+                qualification_object.description = description
                 changed = True
             if file and (not qualification_object.file or qualification_object.file.name != file.name):
                 

@@ -14,10 +14,14 @@
 {% include "appraisal/appraisee_info_component.html" with appraisee_object=appraisee_object %}
 
 
-<div class="flex gap-4">
+<div class="">
     
-    <div class="flex-1">
-    {% include "./index.html" with training_objects=training_objects %}
+    <div class="">
+      {% include "./index.html" with training_objects=training_objects %}
+    </div>
+
+    <div class="mt-6">
+        {% include "appraisal/approval/detail.html" with stages=stages last_stage_num=last_stage_number %}
     </div>
 
 </div>

@@ -1,0 +1,20 @@
+<div class="bg-white shadow-xl rounded-lg border-2 p-6 mb-6">
+    <h2 class="font-bold text-xl text-indigo-700 border-b border-gray-200 pb-1">
+        Overall Comments
+    </h2>
+    
+    <div class="my-4 grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div>
+            <h4 class="font-semibold text-indigo-700 border-b border-gray-200 pb-1">
+                Appraiser Comment
+            </h4>
+            <p class="mt-3 text-gray-700 italic">{{ appraisal_obj.appraiser_comment|default:"No Comment added" }}</p>
+        </div>
+        <div>
+            <h4 class="font-semibold text-indigo-700 border-b border-gray-200 pb-1">
+                Reviewer Comment
+            </h4>
+            <p class="mt-3 text-gray-700 italic">{{ appraisal_obj.reviewer_comment|default:"No Comment added" }}</p>
+        </div>
+    </div>
+</div>

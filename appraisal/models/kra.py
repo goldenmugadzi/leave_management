@@ -38,6 +38,8 @@ APPRAISAL_KRA_REVIEWER_STATUS_CHOICES = [
     ("REJECT", "REJECT"),
 ]
 
+
+
 class AppraisalOutPutPerformanceDimensionScore(TimeStamp):
     appraisal_department_output = models.ForeignKey(AppraisalDepartmentOutput, on_delete=models.RESTRICT, related_name="appraisal_department_output_obj", null=True, blank=True)
     performance_dimension = models.ForeignKey(OutPutPerformanceDimension, on_delete=models.RESTRICT, related_name="performance_dimension", null=True, blank=True)
@@ -76,12 +78,26 @@ class AppraisalWorkflow(TimeStamp):
             )
         ]
 
+REVIEWERS_CONFIRMATION_STATUS = [
+    ("appraiser", "appraiser"),
+    ("reviewer", "reviewer"),
+    ("hr", "hr"),
+]
 
 class AppraisalDepartmentOutputReviewerStatus(TimeStamp):
-    performance_dimension_score = models.OneToOneField(AppraisalOutPutPerformanceDimensionScore, on_delete=models.RESTRICT, related_name="appraisal_department_output_reviewer_status", null=True)
-    status = models.CharField(max_length=10, choices=APPRAISAL_KRA_REVIEWER_STATUS_CHOICES, default=APPRAISAL_KRA_REVIEWER_STATUS_CHOICES[0][0])
+    appraisal_department_output = models.ForeignKey(AppraisalDepartmentOutput, on_delete=models.RESTRICT, related_name="reviewer_appraisal_department_output_obj", null=True, blank=True)
+    confirmation_status = models.CharField(max_length=10, choices=APPRAISAL_KRA_REVIEWER_STATUS_CHOICES, default=APPRAISAL_KRA_REVIEWER_STATUS_CHOICES[0][0])
+    reviewer = models.CharField(max_length=10, choices=REVIEWERS_CONFIRMATION_STATUS)
     comment = models.TextField(null=True, blank=True)
+    
+    def __str__(self):
+        return f"{self.appraisal_department_output} - {self.reviewer}"
+
+
+class AppraisalApprovalWorkFlowQuarter(TimeStamp):
+    appraisal_workflow = models.OneToOneField(AppraisalWorkflow, on_delete=models.RESTRICT)
+    year_quarter = models.ForeignKey(YearQuarter, on_delete=models.RESTRICT, related_name="quarter_workflow")
+    is_completed = models.BooleanField(default=False)
 
     def __str__(self):
-        return f"{self.performance_dimension_score}"
-
+        return f"{self.appraisal_workflow.stage_name} - {self.year_quarter}"
