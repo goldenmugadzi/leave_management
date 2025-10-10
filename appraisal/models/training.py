@@ -1,8 +1,10 @@
 from helpers.models import TimeStamp
 from django.db import models
 from it.users.models import Designations
+from .departmental_workplan import DepartmentOutputCompetency
 from .appraisal import Appraisal
 from .helpers import YearQuarter
+from loguru import logger
 
 INTERVENTION_CATEGORY_CHOICES = [
     ("TRAINING", "TRAINING"),
@@ -22,10 +24,10 @@ class Competency(TimeStamp):
     
 class JobCompetency(TimeStamp):
     designation = models.ForeignKey(Designations, on_delete=models.CASCADE)
-    competencies = models.ManyToManyField(Competency, related_name="competencies")
+    required_competency = models.CharField(max_length=255, null=True, default=None)
     
     def __str__(self):
-        return f"{self.designation.description}"
+        return f"{self.required_competency}"
     
     class Meta:
         verbose_name_plural = "JobCompetencies"
@@ -44,8 +46,7 @@ class InterventionStrategy(TimeStamp):
 class TrainingAndDevelopment(TimeStamp):
     appraisal = models.ForeignKey(Appraisal, on_delete=models.CASCADE)
     quarter = models.ForeignKey(YearQuarter, on_delete=models.RESTRICT, null=True, blank=True)
-    required_competencies = models.ManyToManyField(Competency, related_name="required_competencies")
-    competency_gaps = models.ManyToManyField(Competency, related_name="competency_gaps")
+    existence_competencies = models.ManyToManyField(JobCompetency, related_name="required_competencies")
     intervention_strategies = models.ManyToManyField(InterventionStrategy)
     action_recommended = models.TextField(null=True, blank=True)
     action_taken = models.TextField(null=True, blank=True)

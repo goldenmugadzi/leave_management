@@ -9,6 +9,9 @@
     <div class="flex-1 text-xl font-bold text-black focus:ring-blue-500 focus:border-blue-500">
         {{ form.reviewer|as_crispy_field }}
     </div>
+    <div class="flex-1 text-xl font-bold text-black focus:ring-blue-500 focus:border-blue-500">
+        {{ form.hr|as_crispy_field }}
+    </div>
 </div>
 <script>
 
@@ -29,5 +32,6 @@
 
         new TomSelect("#id_appraiser", getConfObject("Search and Select Appraiser"));
         new TomSelect("#id_reviewer", getConfObject("Search and Select Reviewer"));
+        new TomSelect("#id_hr", getConfObject("Search and Select Reviewer"));
     });
 </script>

@@ -1,0 +1,16 @@
+<div class="my-4">
+    <div class="flex justify-between gap-2">
+        <div class="flex-1 p-4 shadow-lg rounded-2xl border border-indigo-300 bg-white">
+            {% include 'appraisal/final_result/scores_table.html' with quarter_ratings=final_stage_data.final_score.rating final_score=final_stage_data.final_score.final_score %}
+        </div>
+        <div class="flex-1 p-4 shadow-lg rounded-2xl border border-indigo-300 bg-white">
+            {% include 'appraisal/detail_components/overall_comment.html' %}
+        </div>
+    </div>
+</div>
+
+<div>
+    <div class="px-6 py-4 shadow-lg rounded-2xl border border-indigo-300 bg-white">
+        {% include 'appraisal/final_result/attr_table_component.html' with appraisee_personal_attr_qr=final_stage_data.personal_attributes %}
+    </div>
+</div>

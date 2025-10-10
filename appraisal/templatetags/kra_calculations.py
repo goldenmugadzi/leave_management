@@ -85,7 +85,7 @@ def get_output_total_score(output_id)->float:
         logger.error(f"[KraCalculationTemplatetag] get_output_total_score(), output object with id: {output_id}, Invalid type Expected int, got {type(output_id).__name__}")
         return 0.0
 
-    try: 
+    try:
         service_handler = AppraisalDepartmentOutputService()
         total_weighted_score = service_handler.get_output_total_weighted_score(appraisal_dept_output_id=output_id, performance_dimension_repo=AppraisalOutPutPerformanceDimensionScoreRepository())
         return total_weighted_score

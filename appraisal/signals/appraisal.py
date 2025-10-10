@@ -6,8 +6,9 @@ from ..models import Appraisal, AppraisalWorkflow
 from ..services import PerformanceReviewService, TrainingAndDevelopmentService
 from ..services.kra import AppraisalDependanciesInitialisationService
 from ..repository import PerformanceReviewRepository, TrainingAndDevelopmentRepository, AppraisalWorkflowRepository, AppraisalRepository
-from ..repository.kra import KRARepository, AppraisalDepartmentOutputRepository, AppraisalOutPutPerformanceDimensionScoreRepository, YearQuarterRepository
+from ..repository.kra import AppraisalDepartmentOutputRepository, AppraisalOutPutPerformanceDimensionScoreRepository, YearQuarterRepository
 from ..repository.departmental_workplan import OutPutPerformanceDimensionRepository, DepartmentalOutRepository
+from ..repository.approval import AppraisalApprovalWorkFlowQuarterRepository, AppraisalWorkflowRepository
 from ..helpers.types.kra import KraRolesType
 from ..helpers.notifications import send_appraisal_notifications
 from ..helpers.setters import set_approval_process
@@ -91,23 +92,26 @@ def create_performance_review_post_save_handler(sender, instance, created, **kwa
 def create_training_development_post_save_handler(sender, instance, created, **kwargs):
     if created:
         try:
+            logger.info(f"[Signal]: create_training_development_post_save_handler for appraisal pk: {instance.id} init ..... ")
+            
             training_development_repo_handler = TrainingAndDevelopmentRepository()
             training_development_service_handler = TrainingAndDevelopmentService(training_dev_repo=training_development_repo_handler)
 
-            with transaction.atomic():
-
-                year_quarter_qr = YearQuarter.objects.filter(year=datetime.now().year)
-
-                for year_quarter_obj in year_quarter_qr:
-                    logger.info(f"[ TrainingAndDevelopment ]: create instance {year_quarter_obj} quart signal for {instance.user} appraisal ....")
-                    training_development_service_handler.create_use_case(
+            year_quarter_qr = YearQuarter.objects.filter(year=instance.created_date.year)
+            
+            year_quarters_count = year_quarter_qr.count()
+            total_year_quarters_count = 4
+            
+            if year_quarters_count != total_year_quarters_count:
+                raise ValueError(f"year quarters: {year_quarters_count} is not {total_year_quarters_count}")
+            
+            training_development_service_handler.create_for_all_quarters(
                         appraisal_object=instance,
-                        quarter_obj=year_quarter_obj
+                        year_quarter_qr=year_quarter_qr
                     )
-                    logger.success(f"[ TrainingAndDevelopment ]: instance {year_quarter_obj} quarter for {instance.user} appraisal created :) ")
-
+            logger.success(f"[Signal]: create_training_development_post_save_handler for appraisal pk: {instance.id}, created successfully")
         except Exception as e:
-            logger.error(f"[TrainingAndDevelopment]: creating training and development instances failed for {instance.user} appraisal, with error: {e} ")
+            logger.error(f"[Signal]: create_training_development_post_save_handler for appraisal pk: {instance.id} , with error: {e} ")
 
 @receiver(post_save, sender=Appraisal, dispatch_uid="send-appraiser-email")
 def send_appraiser_email_post_save_handler(sender, instance, created, **kwargs):
@@ -168,17 +172,31 @@ def set_appraisal_approval_workflow(sender, instance, created, **kwargs):
                 for index, stage in enumerate(ApprovalStageData)
             ]
             
-            with transaction.atomic():
-                AppraisalWorkflow.objects.bulk_create(workflow_entries)
+            AppraisalWorkflow.objects.bulk_create(workflow_entries)
+            logger.success("[Creating Appraisal Approval] AppraisalWorkflow objs creates")
             
-            logger.success("[Creating Appraisal Approval] completed")
+            appraisal_workflow_repo = AppraisalWorkflowRepository()
+            appraisal_workflow_qr = appraisal_workflow_repo.retrieve_by_appraisal(appraisal_id=instance.id)
+            
+            logger.info("[Creating Appraisal Approval] AppraisalWorkflowQuarter creation init ...")
+            for appraisal_workflow_obj in appraisal_workflow_qr:
+                year_q_repo = YearQuarterRepository()
+                
+                for year_q_obj in year_q_repo.fetch_by_year(year=instance.created_date.year):
+                    quarter_workflow_repo = AppraisalApprovalWorkFlowQuarterRepository()
+                    quarter_workflow_repo.create(
+                        appraisal_workflow_obj=appraisal_workflow_obj,
+                        year_quarter_obj=year_q_obj
+                    )
+
+            logger.success("[Creating Appraisal Approval] AppraisalWorkflowQuarter created successfully.")
         except Exception as e:
             logger.error(f"[Creating Appraisal Approval]-failed with error: {e}")
             return
         
 @receiver(post_save, sender=Appraisal, dispatch_uid="appraisal_approval_workflow_acceptance_complete")
 def set_appraisal_acceptance_stage_completed(sender, instance, created, **kwargs):
-    if not created and instance.reviewer is not None:
+    if not created and (instance.reviewer is not None and instance.hr is not None):
         try:
             logger.info(f"[Approval Workflow stage] Accept Appraisal: {instance} handler initialized ...")
             repo = AppraisalWorkflowRepository()

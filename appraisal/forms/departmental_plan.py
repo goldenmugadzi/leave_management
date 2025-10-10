@@ -2,6 +2,7 @@ from django import forms
 from it.users.models import CostCenter, Designations, UserProfile
 from ..models.helpers import get_year_choices
 from ..models.departmental_workplan import DepartmentObjective, DepartmentOutput, OutPutPerformanceDimension
+from ..models.training import JobCompetency
 
 class CostCenterFilterForm(forms.Form):
     cost_center = forms.ModelChoiceField(queryset=CostCenter.objects.all())
@@ -46,3 +47,8 @@ class OutPutPerformanceDimensionUpdateForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields['performance_indicator'].disabled = True
         
+
+class JobCompetencyForm(forms.ModelForm):
+    class Meta:
+        model = JobCompetency
+        fields = ["required_competency"]

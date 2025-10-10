@@ -1,4 +1,6 @@
 from django import template
+from datetime import date
+from dateutil.relativedelta import relativedelta
 
 register = template.Library()
 
@@ -12,3 +14,29 @@ def quarter_name(quarter):
     }
     
     return quarters.get(int(quarter), "")
+
+@register.filter
+def get_current_quarter(value):
+    today = date.today()
+    current_yr = today.year
+    
+    start_date = date(current_yr, 1, 1)
+    quarters_name = [
+        (0, "First Quarter"),
+        (1, "Second Quarter"),
+        (2, "Third Quarter"),
+        (3, "Fourth Quarter"),
+    ]
+    for quarter in quarters_name:
+        quarter_start_date = start_date + relativedelta(months=3*quarter[0])
+        quarter_end_date = quarter_start_date + relativedelta(months=3) - relativedelta(days=1)
+        
+        # Special check for 4th quarter already completed
+        if quarter[1] == "Fourth Quarter" and today > quarter_end_date:
+            return "Completed"
+        
+        if quarter_start_date <= today <= quarter_end_date:
+            return quarter[1]
+
+    return None  # fallback
+    

@@ -20,7 +20,7 @@ class TargetScoreType(BaseModel):
     )
     @field_validator("score")
     @classmethod
-    def validate_weight(cls, value: str):
+    def validate_score(cls, value: str):
         return percentage_validation(percentage_value=value, field_name="Score") 
     
 class AppraiserConfirmationType(BaseModel):

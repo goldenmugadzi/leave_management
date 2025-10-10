@@ -1,7 +1,9 @@
 from typing import List, Optional
 from pydantic import BaseModel, Field, ConfigDict
 from django.core.files.uploadedfile import UploadedFile
-
+from ...models import KeyResultArea, AppraisalOutPutPerformanceDimensionScore, JobCompetency, TrainingAndDevelopment, PerformanceProgressReview, AppraiseePersonalAttribute, Appraisal, AppraisalDepartmentOutput
+from it.users.models import Designations, Regions, Sections
+from ..types.final_results import FinalRatingType
 
 class QualificationsType(BaseModel):
     """
@@ -49,3 +51,56 @@ class AppraisalPayloadType(BaseModel):
     """
     experiences: Optional[List[ExperienceType]] = Field(None, description="A list of experience details.")
     qualifications: Optional[List[QualificationsType]] = Field(None, description="A list of qualifications.")
+
+class AppraisalPersonalDetails(BaseModel):
+    appraisee_name: str
+    appraisee_position: Designations|None
+    appraisee_qualifications: List[str]
+    appraisee_experiance: List[str]
+    appraisee_national_id: str|None
+    appraisee_ec_no: str
+    appraisee_date_of_appointment: str|None
+    appraisee_position_appointment_date: str|None
+    appraisee_department: Sections|None
+    appraisee_station: Regions|None
+    appraiser_name: str
+    appraiser_position: Designations|None
+    reviewer_name: str
+    reviewer_position: Designations|None
+    
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
+class AppraisalOutputType(BaseModel):
+    output_obj: AppraisalDepartmentOutput
+    performance_dimensions: List[AppraisalOutPutPerformanceDimensionScore]
+    
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
+class AppraisalPerformanceAssessmentType(BaseModel):
+    quarter: int
+    dept_outputs: List[AppraisalOutputType]
+    
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+    
+class TrainingAndDevType(BaseModel):
+    quarter: int
+    quarter_training_dev: TrainingAndDevelopment
+    competency_gap: List[JobCompetency]
+    
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+    
+class PerformanceProgressReviewType(BaseModel):
+    quarter: int
+    perf_progress_review: PerformanceProgressReview
+    
+    model_config = ConfigDict(arbitrary_types_allowed=True)
+
+class FinalScoreType(BaseModel):
+    final_score: float
+    rating: List[FinalRatingType]
+
+class FinalPerformanceAssType(BaseModel):
+    final_score: FinalScoreType
+    personal_attributes: List[AppraiseePersonalAttribute]
+    
+    model_config = ConfigDict(arbitrary_types_allowed=True)

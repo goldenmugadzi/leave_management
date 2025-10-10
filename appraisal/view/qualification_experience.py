@@ -93,6 +93,7 @@ class QualificationCreateView(SuccessMessageMixin, CreateView):
             user_qualification_obj = repo.create(
                 user_object=self.get_user_object(),
                 name=form.cleaned_data.get("name"),
+                description=form.cleaned_data.get("description"),
                 file=self.request.FILES.get("file")
             )
             form.instance = user_qualification_obj
@@ -146,6 +147,7 @@ class QualificationUpdateView(SuccessMessageMixin, UpdateView):
             user_qualification_obj = repo.update(
                 qualification_object_id=self.kwargs.get('qualification_id'),
                 name=form.cleaned_data.get("name"),
+                description=form.cleaned_data.get("description"),
                 file=self.request.FILES.get("file")
             )
             form.instance = user_qualification_obj

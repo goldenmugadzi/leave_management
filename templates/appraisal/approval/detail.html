@@ -1,13 +1,14 @@
 {% load approval_stages %}
+{% load quarter %}
 
 <h1 class="text-center mb-4 font-bold text-xl">Approval Workflow</h1>
 <div class="flex items-center justify-center bg-gray-100 p-4">
 
     <div class="w-full max-w-2xl">
         <p class="text-blue-500 font-semibold text-sm px-4">
-            Current Stage: ({{ current_stage.stage_num }}) {{ current_stage.stage_name }}
+            Current Quarter: {{ quarter|get_current_quarter }}
         </p>
-        {% if next_stage != None %}
+        <!-- {% if next_stage != None %}
         <p class="text-blue-500 font-semibold text-sm px-4">
             Next Stage: ({{ next_stage.stage_num }}) {{ next_stage.stage_name }}
         </p>
@@ -15,7 +16,7 @@
             <p class="text-blue-500 font-semibold text-sm px-4">
                 All stages completed
             </p>
-        {% endif %}
+        {% endif %} -->
         
         <div class="flex items-center justify-between pt-4 space-x-2">
             <!-- Step 1 -->
