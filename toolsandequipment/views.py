@@ -47,7 +47,7 @@ class ToolsAndEquipmentFormCreateView(LoginRequiredMixin, View):
             tools_form.save()
             formset.instance = tools_form
             formset.save()
-            return redirect('tools-and-equipment-list')
+            return redirect('tools-and-equipment:tools-and-equipment-list')
         print(form.errors)
         print(formset.errors)
         return render(request, self.template_name, {'form': form, 'formset': formset, 'extra': extra_forms})

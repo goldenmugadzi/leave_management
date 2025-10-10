@@ -12,7 +12,7 @@ from it.users.models import Notification, Regions, Districts, Depots
 from django.contrib import messages
 import os
 from django.contrib.auth.decorators import login_required
-from EquipTracker.models import addEquipment ,addEquipmentChange
+# from EquipTracker.models import addEquipment ,addEquipmentChange
 
 @login_required
 def clear_notifications(request):
@@ -127,15 +127,15 @@ class InstallBattery(LoginRequiredMixin, View):
             battery.equipment_tracker = equipment_id
             battery.substation = substation
             battery.save()
-            addEquipmentChange(
-                district=substation.district.district,
-                substation=substation,
-                equipment_tracker=equipment_id,
-                action_taken="Insalation",
-                date=battery.date,
-                reason="Insalation of new battery",
-                signed_by=request.user,
-            )
+            # addEquipmentChange(
+            #     district=substation.district.district,
+            #     substation=substation,
+            #     equipment_tracker=equipment_id,
+            #     action_taken="Insalation",
+            #     date=battery.date,
+            #     reason="Insalation of new battery",
+            #     signed_by=request.user,
+            # )
             cells = formset.save(commit=False)
             for cell in cells:
                 cell.installation = battery

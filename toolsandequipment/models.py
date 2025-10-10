@@ -21,7 +21,7 @@ class ToolsAndEquipmentRegister(models.Model):
    certified_date = models.DateField(blank=True, null=True)
 
    def __str__(self):
-      return f"Register {self.name} - {self.date_issued}"
+      return f"Register {self.artisan} - {self.date_issued}"
 
 class ToolsAndEquipmentRegisterItem(models.Model):
     register = models.ForeignKey(ToolsAndEquipmentRegister, on_delete=models.CASCADE, related_name='items')
