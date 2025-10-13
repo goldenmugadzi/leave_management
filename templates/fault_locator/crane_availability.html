@@ -1,0 +1,373 @@
+{% extends "admin_layout.html" %}
+{% load static %}
+
+{% block title %}Crane Availability - Fault Locator{% endblock %}
+
+{% block extra_css %}
+<link href="{% static 'assets/tailwind.css' %}" rel="stylesheet">
+<style>
+    .status-badge {
+        @apply px-2 py-1 text-xs font-semibold rounded-full;
+    }
+    .status-available { @apply bg-green-100 text-green-800; }
+    .status-in-service { @apply bg-blue-100 text-blue-800; }
+    .status-maintenance { @apply bg-yellow-100 text-yellow-800; }
+    .status-pending { @apply bg-orange-100 text-orange-800; }
+    .status-assigned { @apply bg-purple-100 text-purple-800; }
+    .status-completed { @apply bg-gray-100 text-gray-800; }
+    
+    .stat-card {
+        @apply bg-white rounded-lg shadow-sm border border-gray-200 p-4;
+    }
+    
+    .crane-card {
+        @apply bg-white rounded-lg shadow-sm border border-gray-200 p-4 hover:shadow-md transition-shadow;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="p-6 max-w-7xl mx-auto">
+    <!-- Header -->
+    <div class="mb-6">
+        <div class="flex justify-between items-center">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900">Crane Availability Dashboard</h1>
+                <p class="text-gray-600 mt-1">
+                    {% if is_senior_foreman %}
+                        System-wide crane availability and requests overview
+                    {% else %}
+                        Crane availability for your depot
+                    {% endif %}
+                </p>
+            </div>
+            <div class="flex space-x-3">
+                <a href="{% url 'fault_locator:crane_request_create' %}" 
+                   class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                    <i class="fas fa-plus mr-2"></i>Request Crane
+                </a>
+                {% if is_senior_foreman %}
+                <a href="{% url 'fault_locator:crane_truck_list' %}" 
+                   class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors">
+                    <i class="fas fa-cog mr-2"></i>Manage Trucks
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div class="stat-card">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Total Cranes</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ crane_stats.total }}</p>
+                </div>
+                <div class="text-blue-600">
+                    <i class="fas fa-truck fa-2x"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Available</p>
+                    <p class="text-2xl font-bold text-green-600">{{ crane_stats.available }}</p>
+                </div>
+                <div class="text-green-600">
+                    <i class="fas fa-check-circle fa-2x"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600">In Service</p>
+                    <p class="text-2xl font-bold text-blue-600">{{ crane_stats.in_service }}</p>
+                </div>
+                <div class="text-blue-600">
+                    <i class="fas fa-cog fa-2x"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Utilization Rate</p>
+                    <p class="text-2xl font-bold text-purple-600">{{ crane_stats.utilization_rate }}%</p>
+                </div>
+                <div class="text-purple-600">
+                    <i class="fas fa-chart-pie fa-2x"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Request Statistics -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div class="stat-card">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Pending Requests</p>
+                    <p class="text-2xl font-bold text-orange-600">{{ crane_stats.pending_requests }}</p>
+                </div>
+                <div class="text-orange-600">
+                    <i class="fas fa-clock fa-2x"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Current Assignments</p>
+                    <p class="text-2xl font-bold text-purple-600">{{ crane_stats.current_assignments }}</p>
+                </div>
+                <div class="text-purple-600">
+                    <i class="fas fa-tasks fa-2x"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="stat-card">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm font-medium text-gray-600">Completed Today</p>
+                    <p class="text-2xl font-bold text-green-600">{{ crane_stats.completed_today }}</p>
+                </div>
+                <div class="text-green-600">
+                    <i class="fas fa-check-double fa-2x"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <!-- Available Cranes -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div class="p-4 border-b border-gray-200">
+                <h2 class="text-lg font-semibold text-gray-900">Available Cranes</h2>
+                <p class="text-sm text-gray-600">Ready for assignment</p>
+            </div>
+            <div class="p-4">
+                {% if available_cranes %}
+                    <div class="space-y-3">
+                        {% for crane in available_cranes %}
+                        <div class="crane-card">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <h3 class="font-semibold text-gray-900">{{ crane.truck_number }}</h3>
+                                    <p class="text-sm text-gray-600">{{ crane.make_model }}</p>
+                                    <p class="text-sm text-gray-500">Capacity: {{ crane.capacity }}T</p>
+                                    {% if crane.operator %}
+                                        <p class="text-sm text-blue-600">
+                                            <i class="fas fa-user mr-1"></i>{{ crane.operator.get_full_name }}
+                                        </p>
+                                    {% endif %}
+                                </div>
+                                <span class="status-badge status-available">Available</span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center py-8 text-gray-500">
+                        <i class="fas fa-truck fa-3x mb-4 text-gray-300"></i>
+                        <p>No cranes currently available</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- In Service Cranes -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+            <div class="p-4 border-b border-gray-200">
+                <h2 class="text-lg font-semibold text-gray-900">Cranes In Service</h2>
+                <p class="text-sm text-gray-600">Currently on assignments</p>
+            </div>
+            <div class="p-4">
+                {% if in_service_cranes %}
+                    <div class="space-y-3">
+                        {% for crane in in_service_cranes %}
+                        <div class="crane-card">
+                            <div class="flex justify-between items-start">
+                                <div>
+                                    <h3 class="font-semibold text-gray-900">{{ crane.truck_number }}</h3>
+                                    <p class="text-sm text-gray-600">{{ crane.make_model }}</p>
+                                    {% if crane.operator %}
+                                        <p class="text-sm text-blue-600">
+                                            <i class="fas fa-user mr-1"></i>{{ crane.operator.get_full_name }}
+                                        </p>
+                                    {% endif %}
+                                </div>
+                                <span class="status-badge status-in-service">In Service</span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center py-8 text-gray-500">
+                        <i class="fas fa-cog fa-3x mb-4 text-gray-300"></i>
+                        <p>No cranes currently in service</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Pending Requests -->
+    {% if pending_requests %}
+    <div class="mt-6 bg-white rounded-lg shadow-sm border border-gray-200">
+        <div class="p-4 border-b border-gray-200">
+            <h2 class="text-lg font-semibold text-gray-900">Pending Requests</h2>
+            <p class="text-sm text-gray-600">Awaiting crane assignment</p>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Request</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Depot</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Requested By</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date Needed</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                        {% if is_senior_foreman %}
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                        {% endif %}
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for request in pending_requests %}
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm font-medium text-gray-900">#{{ request.id }}</div>
+                            <div class="text-sm text-gray-500">{{ request.job_description|truncatechars:50 }}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {{ request.depot.depot }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {{ request.requested_by.get_full_name }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {{ request.requested_date|date:"M d, Y" }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="status-badge status-pending">Pending</span>
+                        </td>
+                        {% if is_senior_foreman %}
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <a href="{% url 'fault_locator:crane_request_assign' request.id %}" 
+                               class="text-blue-600 hover:text-blue-900">Assign</a>
+                        </td>
+                        {% endif %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Current Assignments -->
+    {% if current_assignments %}
+    <div class="mt-6 bg-white rounded-lg shadow-sm border border-gray-200">
+        <div class="p-4 border-b border-gray-200">
+            <h2 class="text-lg font-semibold text-gray-900">Current Assignments</h2>
+            <p class="text-sm text-gray-600">Cranes currently working</p>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Crane</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Depot</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Operator</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Job</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for assignment in current_assignments %}
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                            {{ assignment.assigned_truck.truck_number }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {{ assignment.depot.depot }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {{ assignment.assigned_operator.get_full_name }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="text-sm text-gray-900">{{ assignment.job_description|truncatechars:40 }}</div>
+                            <div class="text-sm text-gray-500">{{ assignment.job_location }}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="status-badge status-assigned">Assigned</span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
+    {% if is_senior_foreman and depot_requests %}
+    <!-- Regional Overview -->
+    <div class="mt-6 bg-white rounded-lg shadow-sm border border-gray-200">
+        <div class="p-4 border-b border-gray-200">
+            <h2 class="text-lg font-semibold text-gray-900">Regional Request Overview</h2>
+            <p class="text-sm text-gray-600">Crane requests by depot</p>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Depot</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pending</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Assigned</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Active</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for depot_data in depot_requests %}
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                            {{ depot_data.depot__depot }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            <span class="status-badge status-pending">{{ depot_data.pending }}</span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            <span class="status-badge status-assigned">{{ depot_data.assigned }}</span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                            {{ depot_data.pending|add:depot_data.assigned }}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Action Buttons -->
+    <div class="mt-6 flex justify-center space-x-4">
+        <a href="{% url 'fault_locator:role_based_dashboard' %}" 
+           class="bg-gray-600 text-white px-6 py-2 rounded-lg hover:bg-gray-700 transition-colors">
+            <i class="fas fa-arrow-left mr-2"></i>Back to Dashboard
+        </a>
+        <a href="{% url 'fault_locator:crane_request_list' %}" 
+           class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+            <i class="fas fa-list mr-2"></i>View All Requests
+        </a>
+    </div>
+</div>
+{% endblock %}
