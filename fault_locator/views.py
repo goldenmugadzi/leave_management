@@ -2720,3 +2720,89 @@ def vehicle_edit(request, vehicle_id):
         'vehicle': vehicle,
         'user_profile': user_profile
     })
+
+@login_required
+def crane_availability(request):
+    """Crane availability dashboard for foremen"""
+    user_profile = UserProfile.objects.filter(id=request.user.id).first()
+    
+    # Check permissions - only foremen can view crane availability
+    if not (is_senior_foreman(user_profile) or is_depot_foreperson(user_profile)):
+        messages.error(request, "You don't have permission to view crane availability.")
+        return redirect('role_based_dashboard')
+    
+    # Get crane statistics
+    total_cranes = CraneTruck.objects.count()
+    available_cranes = CraneTruck.objects.filter(status='available')
+    in_service_cranes = CraneTruck.objects.filter(status='in_service')
+    maintenance_cranes = CraneTruck.objects.filter(status='maintenance')
+    
+    # Get recent crane requests
+    if is_senior_foreman(user_profile):
+        # Senior foreman sees all requests
+        recent_requests = CraneRequest.objects.select_related(
+            'depot', 'requested_by', 'assigned_truck', 'assigned_operator'
+        ).order_by('-created_at')[:20]
+        pending_requests = CraneRequest.objects.filter(status='pending')
+        
+        # Get requests by depot for regional view
+        depot_requests = CraneRequest.objects.filter(
+            status__in=['pending', 'assigned']
+        ).values('depot__depot').annotate(
+            pending=Count('id', filter=Q(status='pending')),
+            assigned=Count('id', filter=Q(status='assigned'))
+        ).order_by('depot__depot')
+        
+    else:
+        # Depot foreperson sees only their depot's requests
+        from .role_views import get_user_depot
+        user_depot = get_user_depot(user_profile)
+        recent_requests = CraneRequest.objects.filter(
+            depot=user_depot
+        ).select_related(
+            'requested_by', 'assigned_truck', 'assigned_operator'
+        ).order_by('-created_at')[:10] if user_depot else CraneRequest.objects.none()
+        pending_requests = CraneRequest.objects.filter(
+            depot=user_depot, status='pending'
+        ) if user_depot else CraneRequest.objects.none()
+        depot_requests = None
+    
+    # Current assignments
+    current_assignments = CraneRequest.objects.filter(
+        status='assigned'
+    ).select_related('depot', 'assigned_truck', 'assigned_operator')
+    
+    # Today's completed work
+    completed_today = CraneRequest.objects.filter(
+        status='completed',
+        job_report__completed_at__date=timezone.now().date()
+    ).select_related('depot', 'assigned_truck')
+    
+    # Crane efficiency stats
+    crane_stats = {
+        'total': total_cranes,
+        'available': available_cranes.count(),
+        'in_service': in_service_cranes.count(),
+        'maintenance': maintenance_cranes.count(),
+        'utilization_rate': round((in_service_cranes.count() / total_cranes * 100), 1) if total_cranes > 0 else 0,
+        'pending_requests': pending_requests.count(),
+        'current_assignments': current_assignments.count(),
+        'completed_today': completed_today.count(),
+    }
+    
+    context = {
+        'user_profile': user_profile,
+        'crane_stats': crane_stats,
+        'available_cranes': available_cranes.select_related('operator'),
+        'in_service_cranes': in_service_cranes.select_related('operator'),
+        'maintenance_cranes': maintenance_cranes,
+        'recent_requests': recent_requests,
+        'pending_requests': pending_requests.select_related('depot', 'requested_by'),
+        'current_assignments': current_assignments,
+        'completed_today': completed_today,
+        'depot_requests': depot_requests,
+        'is_senior_foreman': is_senior_foreman(user_profile),
+        'is_depot_foreperson': is_depot_foreperson(user_profile),
+    }
+    
+    return render(request, 'fault_locator/crane_availability.html', context)

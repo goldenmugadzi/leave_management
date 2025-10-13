@@ -160,9 +160,9 @@
                         <div class="crane-card">
                             <div class="flex justify-between items-start">
                                 <div>
-                                    <h3 class="font-semibold text-gray-900">{{ crane.truck_number }}</h3>
-                                    <p class="text-sm text-gray-600">{{ crane.make_model }}</p>
-                                    <p class="text-sm text-gray-500">Capacity: {{ crane.capacity }}T</p>
+                                    <h3 class="font-semibold text-gray-900">{{ crane.fleet_number }}</h3>
+                                    <p class="text-sm text-gray-600">{{ crane.number_plate }}</p>
+                                    <p class="text-sm text-gray-500">Mileage: {{ crane.mileage_km|floatformat:0 }} km</p>
                                     {% if crane.operator %}
                                         <p class="text-sm text-blue-600">
                                             <i class="fas fa-user mr-1"></i>{{ crane.operator.get_full_name }}
@@ -196,8 +196,8 @@
                         <div class="crane-card">
                             <div class="flex justify-between items-start">
                                 <div>
-                                    <h3 class="font-semibold text-gray-900">{{ crane.truck_number }}</h3>
-                                    <p class="text-sm text-gray-600">{{ crane.make_model }}</p>
+                                    <h3 class="font-semibold text-gray-900">{{ crane.fleet_number }}</h3>
+                                    <p class="text-sm text-gray-600">{{ crane.number_plate }}</p>
                                     {% if crane.operator %}
                                         <p class="text-sm text-blue-600">
                                             <i class="fas fa-user mr-1"></i>{{ crane.operator.get_full_name }}
@@ -295,7 +295,7 @@
                     {% for assignment in current_assignments %}
                     <tr class="hover:bg-gray-50">
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                            {{ assignment.assigned_truck.truck_number }}
+                            {{ assignment.assigned_truck.fleet_number }}
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                             {{ assignment.depot.depot }}

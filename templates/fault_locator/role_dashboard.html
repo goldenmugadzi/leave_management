@@ -280,6 +280,72 @@
         </div>
         {% endif %}
 
+        <!-- Crane Statistics Section -->
+        {% if crane_stats %}
+        <div class="mb-8">
+            <h4 class="text-2xl font-bold text-nepal-800 mb-6 flex items-center gap-3">
+                <i class="fas fa-truck text-orange-600"></i>
+                Crane Availability
+                <a href="{% url 'fault_locator:crane_availability' %}" 
+                   class="ml-auto text-sm bg-blue-600 text-white px-3 py-1 rounded-lg hover:bg-blue-700 transition-colors">
+                    View Details
+                </a>
+            </h4>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                <div class="glass-card p-4 rounded-3xl backdrop-blur-xl bg-white/40 border border-white/30 shadow-2xl hover:shadow-3xl transition-all duration-500 hover:scale-105 text-center">
+                    <h3 class="text-2xl font-bold text-blue-600 mb-2">{{ crane_stats.total_cranes }}</h3>
+                    <p class="text-nepal-600 text-xs uppercase tracking-wide">Total Cranes</p>
+                </div>
+                <div class="glass-card p-4 rounded-3xl backdrop-blur-xl bg-white/40 border border-white/30 shadow-2xl hover:shadow-3xl transition-all duration-500 hover:scale-105 text-center">
+                    <h3 class="text-2xl font-bold text-green-600 mb-2">{{ crane_stats.available_cranes }}</h3>
+                    <p class="text-nepal-600 text-xs uppercase tracking-wide">Available</p>
+                </div>
+                <div class="glass-card p-4 rounded-3xl backdrop-blur-xl bg-white/40 border border-white/30 shadow-2xl hover:shadow-3xl transition-all duration-500 hover:scale-105 text-center">
+                    <h3 class="text-2xl font-bold text-blue-600 mb-2">{{ crane_stats.in_service_cranes }}</h3>
+                    <p class="text-nepal-600 text-xs uppercase tracking-wide">In Service</p>
+                </div>
+                <div class="glass-card p-4 rounded-3xl backdrop-blur-xl bg-white/40 border border-white/30 shadow-2xl hover:shadow-3xl transition-all duration-500 hover:scale-105 text-center">
+                    <h3 class="text-2xl font-bold text-orange-600 mb-2">{{ crane_stats.pending_requests }}</h3>
+                    <p class="text-nepal-600 text-xs uppercase tracking-wide">Pending Requests</p>
+                </div>
+                <div class="glass-card p-4 rounded-3xl backdrop-blur-xl bg-white/40 border border-white/30 shadow-2xl hover:shadow-3xl transition-all duration-500 hover:scale-105 text-center">
+                    <h3 class="text-2xl font-bold text-purple-600 mb-2">{{ crane_stats.my_pending_requests|default:"0" }}</h3>
+                    <p class="text-nepal-600 text-xs uppercase tracking-wide">My Requests</p>
+                </div>
+            </div>
+            
+            <!-- Recent Crane Requests -->
+            {% if recent_crane_requests %}
+            <div class="mt-6 glass-card p-6 rounded-3xl backdrop-blur-xl bg-white/40 border border-white/30 shadow-2xl">
+                <h5 class="text-lg font-semibold text-nepal-700 mb-4 flex items-center gap-2">
+                    <i class="fas fa-history"></i>
+                    Recent Crane Requests
+                </h5>
+                <div class="space-y-3">
+                    {% for request in recent_crane_requests %}
+                    <div class="flex justify-between items-center py-2 border-b border-nepal-200/50 last:border-b-0">
+                        <div>
+                            <span class="font-medium text-nepal-800">#{{ request.id }}</span>
+                            <span class="text-nepal-600 ml-2">{{ request.job_description|truncatechars:40 }}</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-sm text-nepal-500">{{ request.created_at|timesince }} ago</span>
+                            {% if request.status == 'pending' %}
+                                <span class="px-2 py-1 text-xs bg-orange-100 text-orange-800 rounded-full">Pending</span>
+                            {% elif request.status == 'assigned' %}
+                                <span class="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full">Assigned</span>
+                            {% elif request.status == 'completed' %}
+                                <span class="px-2 py-1 text-xs bg-green-100 text-green-800 rounded-full">Completed</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+
         <!-- Role-Specific Content -->
         {% if user_role == 'senior_foreman' %}
             {% include 'fault_locator/dashboard/senior_foreman.html' %}

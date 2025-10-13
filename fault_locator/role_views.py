@@ -442,6 +442,26 @@ def get_senior_foreman_context(user_profile):
         'active_faults': Fault.objects.filter(status='assigned').count(),
     }
     
+    # Crane availability and requests overview
+    from .models import CraneTruck, CraneRequest
+    crane_stats = {
+        'total_cranes': CraneTruck.objects.count(),
+        'available_cranes': CraneTruck.objects.filter(status='available').count(),
+        'in_service_cranes': CraneTruck.objects.filter(status='in_service').count(),
+        'maintenance_cranes': CraneTruck.objects.filter(status='maintenance').count(),
+        'pending_requests': CraneRequest.objects.filter(status='pending').count(),
+        'assigned_requests': CraneRequest.objects.filter(status='assigned').count(),
+        'completed_today_requests': CraneRequest.objects.filter(
+            status='completed',
+            job_report__completed_at__date=timezone.now().date()
+        ).count(),
+    }
+    
+    # Recent crane requests across all depots
+    recent_crane_requests = CraneRequest.objects.select_related(
+        'depot', 'requested_by', 'assigned_truck', 'assigned_operator'
+    ).order_by('-created_at')[:10]
+    
     # Recent deployments
     recent_deployments = TeamDeployment.objects.filter(
         deployed_at__gte=timezone.now() - timezone.timedelta(days=7)
@@ -453,6 +473,8 @@ def get_senior_foreman_context(user_profile):
         'unassigned_devices': unassigned_devices,
         'critical_faults': critical_faults,
         'stats': stats,
+        'crane_stats': crane_stats,
+        'recent_crane_requests': recent_crane_requests,
         'recent_deployments': recent_deployments,
         'primary_actions': [
             {
@@ -554,6 +576,13 @@ def get_senior_foreman_context(user_profile):
                 'url': '/fault_locator/vehicles/',
                 'icon_class': 'fas fa-truck',
                 'priority': 'medium'
+            },
+            {
+                'title': 'Crane Availability',
+                'description': 'View crane status and availability across all regions',
+                'url': '/fault_locator/cranes/availability/',
+                'icon_class': 'fas fa-search',
+                'priority': 'medium'
             }
         ]
     }
@@ -635,6 +664,42 @@ def get_depot_foreperson_context(user_profile):
         ).distinct().count(),
     }
     
+    # Crane availability information
+    from .models import CraneTruck, CraneRequest
+    crane_stats = {
+        'total_cranes': CraneTruck.objects.count(),
+        'available_cranes': CraneTruck.objects.filter(status='available').count(),
+        'in_service_cranes': CraneTruck.objects.filter(status='in_service').count(),
+        'pending_requests': CraneRequest.objects.filter(status='pending').count(),
+        'my_pending_requests': CraneRequest.objects.filter(
+            requested_by=user_profile, 
+            status__in=['pending', 'assigned']
+        ).count(),
+    }
+    
+    # Recent crane requests
+    recent_crane_requests = CraneRequest.objects.filter(
+        depot=user_depot
+    ).select_related('requested_by', 'assigned_truck', 'assigned_operator').order_by('-created_at')[:5]
+    
+    # Crane availability information
+    from .models import CraneTruck, CraneRequest
+    crane_stats = {
+        'total_cranes': CraneTruck.objects.count(),
+        'available_cranes': CraneTruck.objects.filter(status='available').count(),
+        'in_service_cranes': CraneTruck.objects.filter(status='in_service').count(),
+        'pending_requests': CraneRequest.objects.filter(status='pending').count(),
+        'my_pending_requests': CraneRequest.objects.filter(
+            requested_by=user_profile, 
+            status__in=['pending', 'approved']
+        ).count(),
+    }
+    
+    # Recent crane requests
+    recent_crane_requests = CraneRequest.objects.filter(
+        depot=user_depot
+    ).select_related('requested_by', 'assigned_truck', 'assigned_operator').order_by('-created_at')[:5]
+    
     return {
         'user_depot': user_depot,
         'depot_foreperson_role': depot_foreperson_role,
@@ -647,6 +712,8 @@ def get_depot_foreperson_context(user_profile):
         'my_assignments': my_assignments,
         'completed_today': completed_today,  # Pass as queryset for template iteration
         'stats': stats,
+        'crane_stats': crane_stats,
+        'recent_crane_requests': recent_crane_requests,
         'can_assign_faults': can_assign_faults(user_profile),
         'is_depot_foreperson': is_depot_foreperson(user_profile),
         'primary_actions': [
@@ -741,6 +808,13 @@ def get_depot_foreperson_context(user_profile):
                 'description': 'Add and manage fault locator vehicles',
                 'url': '/fault_locator/vehicles/',
                 'icon_class': 'fas fa-truck',
+                'priority': 'medium'
+            },
+            {
+                'title': 'Crane Availability',
+                'description': 'View crane status and availability',
+                'url': '/fault_locator/cranes/availability/',
+                'icon_class': 'fas fa-search',
                 'priority': 'medium'
             }
         ]

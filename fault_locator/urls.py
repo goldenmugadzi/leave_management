@@ -113,6 +113,7 @@ urlpatterns += [
     path('cranes/requests/create/', views.crane_request_create, name='crane_request_create'),
     path('cranes/requests/<int:request_id>/assign/', views.crane_request_assign, name='crane_request_assign'),
     path('cranes/requests/<int:request_id>/report/', views.crane_job_report, name='crane_job_report'),
+    path('cranes/availability/', views.crane_availability, name='crane_availability'),
     
     # Vehicle management URLs
     path('vehicles/', views.vehicle_list, name='vehicle_list'),
