@@ -8,6 +8,46 @@ admin.site.register(CraneTruck)
 admin.site.register(CraneRequest)
 admin.site.register(CraneJobReport)
 
+@admin.register(Vehicle)
+class VehicleAdmin(admin.ModelAdmin):
+    list_display = ['fleet_number', 'reg_number', 'odometer_km', 'status', 'created_at']
+    list_filter = ['status', 'created_at']
+    search_fields = ['fleet_number', 'reg_number']
+    readonly_fields = ['created_at', 'updated_at']
+    ordering = ['fleet_number']
+    
+    fieldsets = (
+        ('Vehicle Information', {
+            'fields': ('fleet_number', 'reg_number', 'odometer_km', 'status')
+        }),
+        ('Timestamps', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+
+@admin.register(FaultLocatorDevice)
+class FaultLocatorDeviceAdmin(admin.ModelAdmin):
+    list_display = ['serial_number', 'description', 'vehicle', 'status', 'created_at']
+    list_filter = ['status', 'vehicle__status', 'created_at']
+    search_fields = ['serial_number', 'description', 'vehicle__fleet_number', 'vehicle__reg_number']
+    readonly_fields = ['created_at']
+    ordering = ['serial_number']
+    
+    fieldsets = (
+        ('Device Information', {
+            'fields': ('serial_number', 'description', 'status')
+        }),
+        ('Vehicle Assignment', {
+            'fields': ('vehicle',),
+            'description': 'Vehicle this device is mounted on'
+        }),
+        ('Metadata', {
+            'fields': ('created_by', 'created_at'),
+            'classes': ('collapse',)
+        }),
+    )
+
 @admin.register(Fault)
 class FaultAdmin(admin.ModelAdmin):
     # Priority order: VVIP, voltage, clients_affected, reported_at, priority, then other details

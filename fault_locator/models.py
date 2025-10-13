@@ -1,10 +1,42 @@
 from django.db import models
 from it.users.models import UserProfile, Depots
 
+class Vehicle(models.Model):
+    """Vehicles used to transport fault locator equipment"""
+    reg_number = models.CharField(max_length=20, unique=True, help_text="Vehicle registration number")
+    fleet_number = models.CharField(max_length=20, unique=True, help_text="Fleet identification number")
+    odometer_km = models.PositiveIntegerField(default=0, help_text="Current odometer reading in kilometers")
+    status = models.CharField(max_length=20, choices=[
+        ('active', 'Active'),
+        ('maintenance', 'Under Maintenance'),
+        ('retired', 'Retired')
+    ], default='active')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['fleet_number']
+    
+    def __str__(self):
+        return f"{self.fleet_number} ({self.reg_number})"
+    
+    def clean(self):
+        """Ensure odometer can only increase"""
+        from django.core.exceptions import ValidationError
+        if self.pk:
+            try:
+                original = Vehicle.objects.get(pk=self.pk)
+                if self.odometer_km < original.odometer_km:
+                    raise ValidationError("Odometer reading cannot decrease from the recorded value.")
+            except Vehicle.DoesNotExist:
+                pass
+
 class FaultLocatorDevice(models.Model):
     """Fault locator devices/machines used by teams"""
     serial_number = models.CharField(max_length=100, unique=True)
     description = models.CharField(max_length=255, blank=True)
+    vehicle = models.ForeignKey(Vehicle, on_delete=models.SET_NULL, null=True, blank=True,
+                               help_text="Vehicle this device is mounted on")
     status = models.CharField(max_length=20, choices=[
         ('available', 'Available'),
         ('assigned', 'Assigned to Team'),
