@@ -1,0 +1,133 @@
+{% extends 'admin_layout.html' %}
+{% block content %}
+{% include 'fault_locator/partials/form_styles.html' %}
+<div class="container mx-auto px-4 py-8">
+  <div class="max-w-3xl mx-auto bg-white/90 backdrop-blur p-6 rounded-xl shadow-md ring-1 ring-gray-100">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-2xl font-bold text-gray-800">{{ title }}</h2>
+      <a class="px-4 py-2 bg-gray-200 text-gray-900 rounded-lg hover:bg-gray-300" 
+         href="{% url 'fault_locator:vehicle_list' %}">
+        <i class="fas fa-arrow-left"></i>
+        Back to Vehicles
+      </a>
+    </div>
+    
+    {% if vehicle %}
+    <div class="mb-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+      <h3 class="font-semibold text-blue-800 mb-2">Current Vehicle Information</h3>
+      <div class="grid grid-cols-2 gap-4 text-sm">
+        <div>
+          <span class="font-medium">Fleet Number:</span> {{ vehicle.fleet_number }}
+        </div>
+        <div>
+          <span class="font-medium">Registration:</span> {{ vehicle.reg_number }}
+        </div>
+        <div>
+          <span class="font-medium">Current Odometer:</span> {{ vehicle.odometer_km|floatformat:0 }} km
+        </div>
+        <div>
+          <span class="font-medium">Status:</span> {{ vehicle.get_status_display }}
+        </div>
+      </div>
+    </div>
+    {% endif %}
+    
+    <form method="post" class="fl-form">
+      {% csrf_token %}
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="space-y-4">
+          <div>
+            <label for="{{ form.fleet_number.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+              Fleet Number *
+            </label>
+            {{ form.fleet_number }}
+            {% if form.fleet_number.help_text %}
+              <p class="mt-1 text-sm text-gray-500">{{ form.fleet_number.help_text }}</p>
+            {% endif %}
+            {% if form.fleet_number.errors %}
+              <div class="mt-1 text-sm text-red-600">
+                {{ form.fleet_number.errors.0 }}
+              </div>
+            {% endif %}
+          </div>
+          
+          <div>
+            <label for="{{ form.reg_number.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+              Registration Number *
+            </label>
+            {{ form.reg_number }}
+            {% if form.reg_number.help_text %}
+              <p class="mt-1 text-sm text-gray-500">{{ form.reg_number.help_text }}</p>
+            {% endif %}
+            {% if form.reg_number.errors %}
+              <div class="mt-1 text-sm text-red-600">
+                {{ form.reg_number.errors.0 }}
+              </div>
+            {% endif %}
+          </div>
+        </div>
+        
+        <div class="space-y-4">
+          <div>
+            <label for="{{ form.odometer_km.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+              Odometer Reading (km) *
+            </label>
+            {{ form.odometer_km }}
+            {% if form.odometer_km.help_text %}
+              <p class="mt-1 text-sm text-gray-500">{{ form.odometer_km.help_text }}</p>
+            {% endif %}
+            {% if form.odometer_km.errors %}
+              <div class="mt-1 text-sm text-red-600">
+                {{ form.odometer_km.errors.0 }}
+              </div>
+            {% endif %}
+          </div>
+          
+          <div>
+            <label for="{{ form.status.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+              Status *
+            </label>
+            {{ form.status }}
+            {% if form.status.help_text %}
+              <p class="mt-1 text-sm text-gray-500">{{ form.status.help_text }}</p>
+            {% endif %}
+            {% if form.status.errors %}
+              <div class="mt-1 text-sm text-red-600">
+                {{ form.status.errors.0 }}
+              </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      
+      {% if vehicle %}
+      <div class="mt-6 p-4 bg-yellow-50 rounded-lg border border-yellow-200">
+        <div class="flex items-start">
+          <i class="fas fa-exclamation-triangle text-yellow-600 mt-1 mr-2"></i>
+          <div>
+            <h4 class="font-medium text-yellow-800">Important Notes:</h4>
+            <ul class="mt-1 text-sm text-yellow-700 list-disc list-inside">
+              <li>Fleet Number and Registration Number cannot be changed once created</li>
+              <li>Odometer reading can only be increased, not decreased</li>
+              <li>Changes to vehicle status may affect device assignments</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+      
+      <div class="mt-6 flex items-center gap-3">
+        <button class="btn-primary" type="submit">
+          <i class="fas fa-save"></i>
+          {% if vehicle %}Update Vehicle{% else %}Add Vehicle{% endif %}
+        </button>
+        <a class="btn-secondary" href="{% url 'fault_locator:vehicle_list' %}">
+          <i class="fas fa-times"></i>
+          Cancel
+        </a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
