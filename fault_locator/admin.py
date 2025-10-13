@@ -10,15 +10,15 @@ admin.site.register(CraneJobReport)
 
 @admin.register(Vehicle)
 class VehicleAdmin(admin.ModelAdmin):
-    list_display = ['fleet_number', 'reg_number', 'odometer_km', 'status', 'created_at']
-    list_filter = ['status', 'created_at']
-    search_fields = ['fleet_number', 'reg_number']
+    list_display = ['fleet_number', 'reg_number', 'region', 'odometer_km', 'status', 'created_at']
+    list_filter = ['status', 'region', 'created_at']
+    search_fields = ['fleet_number', 'reg_number', 'region__region']
     readonly_fields = ['created_at', 'updated_at']
-    ordering = ['fleet_number']
+    ordering = ['region__region', 'fleet_number']
     
     fieldsets = (
         ('Vehicle Information', {
-            'fields': ('fleet_number', 'reg_number', 'odometer_km', 'status')
+            'fields': ('fleet_number', 'reg_number', 'odometer_km', 'region', 'status')
         }),
         ('Timestamps', {
             'fields': ('created_at', 'updated_at'),
@@ -28,15 +28,15 @@ class VehicleAdmin(admin.ModelAdmin):
 
 @admin.register(FaultLocatorDevice)
 class FaultLocatorDeviceAdmin(admin.ModelAdmin):
-    list_display = ['serial_number', 'description', 'vehicle', 'status', 'created_at']
-    list_filter = ['status', 'vehicle__status', 'created_at']
-    search_fields = ['serial_number', 'description', 'vehicle__fleet_number', 'vehicle__reg_number']
+    list_display = ['asset_number', 'description', 'region', 'vehicle', 'status', 'created_at']
+    list_filter = ['status', 'region', 'vehicle__status', 'created_at']
+    search_fields = ['asset_number', 'description', 'region__region', 'vehicle__fleet_number', 'vehicle__reg_number']
     readonly_fields = ['created_at']
-    ordering = ['serial_number']
+    ordering = ['region__region', 'asset_number']
     
     fieldsets = (
         ('Device Information', {
-            'fields': ('serial_number', 'description', 'status')
+            'fields': ('asset_number', 'description', 'region', 'status')
         }),
         ('Vehicle Assignment', {
             'fields': ('vehicle',),

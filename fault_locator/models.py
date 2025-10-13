@@ -1,11 +1,12 @@
 from django.db import models
-from it.users.models import UserProfile, Depots
+from it.users.models import UserProfile, Depots, Regions
 
 class Vehicle(models.Model):
     """Vehicles used to transport fault locator equipment"""
     reg_number = models.CharField(max_length=20, unique=True, help_text="Vehicle registration number")
     fleet_number = models.CharField(max_length=20, unique=True, help_text="Fleet identification number")
     odometer_km = models.PositiveIntegerField(default=0, help_text="Current odometer reading in kilometers")
+    region = models.ForeignKey(Regions, on_delete=models.CASCADE, help_text="Region where this vehicle operates")
     status = models.CharField(max_length=20, choices=[
         ('active', 'Active'),
         ('maintenance', 'Under Maintenance'),
@@ -15,10 +16,10 @@ class Vehicle(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     
     class Meta:
-        ordering = ['fleet_number']
+        ordering = ['region__region', 'fleet_number']
     
     def __str__(self):
-        return f"{self.fleet_number} ({self.reg_number})"
+        return f"{self.fleet_number} ({self.reg_number}) - {self.region.region}"
     
     def clean(self):
         """Ensure odometer can only increase"""
@@ -33,8 +34,9 @@ class Vehicle(models.Model):
 
 class FaultLocatorDevice(models.Model):
     """Fault locator devices/machines used by teams"""
-    serial_number = models.CharField(max_length=100, unique=True)
+    asset_number = models.CharField(max_length=100, unique=True, help_text="Asset identification number")
     description = models.CharField(max_length=255, blank=True)
+    region = models.ForeignKey(Regions, on_delete=models.CASCADE, help_text="Region where this device operates")
     vehicle = models.ForeignKey(Vehicle, on_delete=models.SET_NULL, null=True, blank=True,
                                help_text="Vehicle this device is mounted on")
     status = models.CharField(max_length=20, choices=[
@@ -46,8 +48,11 @@ class FaultLocatorDevice(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     created_by = models.ForeignKey(UserProfile, on_delete=models.SET_NULL, null=True, blank=True)
 
+    class Meta:
+        ordering = ['region__region', 'asset_number']
+
     def __str__(self):
-        return self.serial_number
+        return f"{self.asset_number} - {self.region.region}"
 
 class FaultLocatorTeam(models.Model):
     """Teams that perform fault location work"""

@@ -59,7 +59,26 @@ class FaultForm(forms.ModelForm):
 class FaultLocatorDeviceForm(forms.ModelForm):
     class Meta:
         model = FaultLocatorDevice
-        fields = ['serial_number', 'description']
+        fields = ['asset_number', 'description', 'region', 'vehicle', 'status']
+        widgets = {
+            'asset_number': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'e.g., FL-DEV-001'
+            }),
+            'description': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'Device description'
+            }),
+            'region': forms.Select(attrs={
+                'class': 'form-control'
+            }),
+            'vehicle': forms.Select(attrs={
+                'class': 'form-control'
+            }),
+            'status': forms.Select(attrs={
+                'class': 'form-control'
+            })
+        }
 
 class FaultLocatorTeamForm(forms.ModelForm):
     class Meta:
@@ -633,7 +652,7 @@ class VehicleForm(forms.ModelForm):
     """Form for adding and editing vehicles"""
     class Meta:
         model = Vehicle
-        fields = ['fleet_number', 'reg_number', 'odometer_km', 'status']
+        fields = ['fleet_number', 'reg_number', 'odometer_km', 'region', 'status']
         widgets = {
             'fleet_number': forms.TextInput(attrs={
                 'class': 'form-control',
@@ -647,6 +666,9 @@ class VehicleForm(forms.ModelForm):
                 'class': 'form-control',
                 'min': '0',
                 'placeholder': 'Current odometer reading'
+            }),
+            'region': forms.Select(attrs={
+                'class': 'form-control'
             }),
             'status': forms.Select(attrs={
                 'class': 'form-control'
