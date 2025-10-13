@@ -547,6 +547,13 @@ def get_senior_foreman_context(user_profile):
                 'url': '/fault_locator/senior-dashboard/',
                 'icon_class': 'fas fa-user-tie',
                 'priority': 'medium'
+            },
+            {
+                'title': 'Manage Vehicles',
+                'description': 'Add and manage fault locator vehicles',
+                'url': '/fault_locator/vehicles/',
+                'icon_class': 'fas fa-truck',
+                'priority': 'medium'
             }
         ]
     }
@@ -727,6 +734,13 @@ def get_depot_foreperson_context(user_profile):
                 'description': 'Assign gear to teams',
                 'url': '/fault_locator/assign-device-to-team/',
                 'icon_class': 'fas fa-mobile-screen-button',
+                'priority': 'medium'
+            },
+            {
+                'title': 'Manage Vehicles',
+                'description': 'Add and manage fault locator vehicles',
+                'url': '/fault_locator/vehicles/',
+                'icon_class': 'fas fa-truck',
                 'priority': 'medium'
             }
         ]

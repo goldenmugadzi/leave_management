@@ -14,7 +14,7 @@ from decouple import config
 
 from it.users.helpers import DEPOTS
 from .models import *
-from .forms import FaultForm, FaultLocatorDeviceForm, FaultLocatorTeamForm, FaultLocatorTeamNameForm, AddTeamMemberForm, AssignDeviceToTeamForm, AssignFaultForm, TeamDeploymentForm, SeniorForepersonDeviceAssignmentForm, QuickFaultReportForm, TeamDepotAssignmentForm, FaultPriorityForm, CraneTruckForm, CraneRequestForm, CraneAssignmentForm, CraneJobReportForm
+from .forms import FaultForm, FaultLocatorDeviceForm, FaultLocatorTeamForm, FaultLocatorTeamNameForm, AddTeamMemberForm, AssignDeviceToTeamForm, AssignFaultForm, TeamDeploymentForm, SeniorForepersonDeviceAssignmentForm, QuickFaultReportForm, TeamDepotAssignmentForm, FaultPriorityForm, CraneTruckForm, CraneRequestForm, CraneAssignmentForm, CraneJobReportForm, VehicleForm
 from it.users.models import UserProfile, Notification
 from .central_roles import (
     FaultLocatorRoleManager,
@@ -2657,3 +2657,66 @@ def crane_job_report(request, request_id):
         if cr.assigned_truck and not report:
             form.initial['start_mileage_km'] = cr.assigned_truck.mileage_km or 0
     return render(request, 'fault_locator/crane_job_report_form.html', {'form': form, 'request_obj': cr, 'user_profile': user_profile})
+
+@login_required
+def vehicle_list(request):
+    """List all vehicles - accessible by senior foremen and depot forepersons"""
+    user_profile = UserProfile.objects.filter(id=request.user.id).first()
+    if not (is_senior_foreman(user_profile) or is_depot_foreperson(user_profile)):
+        messages.error(request, "Only Senior Foremen and Depot Forepersons can manage vehicles.")
+        return redirect('fault_locator:fault_locator_dashboard')
+    
+    vehicles = Vehicle.objects.all().order_by('fleet_number')
+    return render(request, 'fault_locator/vehicle_list.html', {
+        'vehicles': vehicles,
+        'user_profile': user_profile
+    })
+
+@login_required
+def vehicle_create(request):
+    """Create a new vehicle - accessible by senior foremen and depot forepersons"""
+    user_profile = UserProfile.objects.filter(id=request.user.id).first()
+    if not (is_senior_foreman(user_profile) or is_depot_foreperson(user_profile)):
+        messages.error(request, "Only Senior Foremen and Depot Forepersons can add vehicles.")
+        return redirect('fault_locator:fault_locator_dashboard')
+    
+    if request.method == 'POST':
+        form = VehicleForm(request.POST)
+        if form.is_valid():
+            vehicle = form.save()
+            messages.success(request, f'Vehicle {vehicle.fleet_number} ({vehicle.reg_number}) added successfully.')
+            return redirect('fault_locator:vehicle_list')
+    else:
+        form = VehicleForm()
+    
+    return render(request, 'fault_locator/vehicle_form.html', {
+        'form': form,
+        'title': 'Add Vehicle',
+        'user_profile': user_profile
+    })
+
+@login_required
+def vehicle_edit(request, vehicle_id):
+    """Edit an existing vehicle - accessible by senior foremen and depot forepersons"""
+    user_profile = UserProfile.objects.filter(id=request.user.id).first()
+    if not (is_senior_foreman(user_profile) or is_depot_foreperson(user_profile)):
+        messages.error(request, "Only Senior Foremen and Depot Forepersons can edit vehicles.")
+        return redirect('fault_locator:fault_locator_dashboard')
+    
+    vehicle = get_object_or_404(Vehicle, id=vehicle_id)
+    
+    if request.method == 'POST':
+        form = VehicleForm(request.POST, instance=vehicle)
+        if form.is_valid():
+            vehicle = form.save()
+            messages.success(request, f'Vehicle {vehicle.fleet_number} updated successfully.')
+            return redirect('fault_locator:vehicle_list')
+    else:
+        form = VehicleForm(instance=vehicle)
+    
+    return render(request, 'fault_locator/vehicle_form.html', {
+        'form': form,
+        'title': 'Edit Vehicle',
+        'vehicle': vehicle,
+        'user_profile': user_profile
+    })

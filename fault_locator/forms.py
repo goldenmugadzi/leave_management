@@ -1,6 +1,6 @@
 from django import forms
 from .models import Fault, FaultLocatorDevice, FaultLocatorTeam, FaultLocatorDeviceAssignment, FaultAssignment, TeamDeployment, FaultLocatorRole
-from .models import CraneTruck, CraneRequest, CraneJobReport
+from .models import CraneTruck, CraneRequest, CraneJobReport, Vehicle
 from it.users.models import UserProfile, Depots
 from django_select2.forms import Select2MultipleWidget
 
@@ -628,6 +628,39 @@ class TeamDepotAssignmentForm(forms.Form):
             cleaned_data['depot'] = None
         
         return cleaned_data
+
+class VehicleForm(forms.ModelForm):
+    """Form for adding and editing vehicles"""
+    class Meta:
+        model = Vehicle
+        fields = ['fleet_number', 'reg_number', 'odometer_km', 'status']
+        widgets = {
+            'fleet_number': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'e.g., FL001'
+            }),
+            'reg_number': forms.TextInput(attrs={
+                'class': 'form-control',
+                'placeholder': 'e.g., ABC-123'
+            }),
+            'odometer_km': forms.NumberInput(attrs={
+                'class': 'form-control',
+                'min': '0',
+                'placeholder': 'Current odometer reading'
+            }),
+            'status': forms.Select(attrs={
+                'class': 'form-control'
+            })
+        }
+    
+    def clean_odometer_km(self):
+        """Ensure odometer doesn't decrease"""
+        odometer = self.cleaned_data.get('odometer_km')
+        if self.instance and self.instance.pk:
+            original_odometer = self.instance.odometer_km
+            if odometer < original_odometer:
+                raise forms.ValidationError(f"Odometer cannot be less than current reading ({original_odometer} km)")
+        return odometer
 
 class TeamLeaderAssignmentForm(forms.ModelForm):
     """Form for assigning team leaders"""

@@ -113,4 +113,9 @@ urlpatterns += [
     path('cranes/requests/create/', views.crane_request_create, name='crane_request_create'),
     path('cranes/requests/<int:request_id>/assign/', views.crane_request_assign, name='crane_request_assign'),
     path('cranes/requests/<int:request_id>/report/', views.crane_job_report, name='crane_job_report'),
+    
+    # Vehicle management URLs
+    path('vehicles/', views.vehicle_list, name='vehicle_list'),
+    path('vehicles/add/', views.vehicle_create, name='vehicle_create'),
+    path('vehicles/<int:vehicle_id>/edit/', views.vehicle_edit, name='vehicle_edit'),
 ]
