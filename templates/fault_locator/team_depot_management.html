@@ -1,0 +1,377 @@
+{% extends "admin_layout.html" %}
+
+{% block content %}
+<div class="team-depot-management">
+  <!-- Header -->
+  <div class="flex justify-between items-center mb-6">
+    <div>
+      <h1 class="text-2xl font-bold text-gray-800">Team Depot Management</h1>
+      <p class="text-gray-600">Deploy teams to depots and manage assignments</p>
+    </div>
+    <div class="flex space-x-2">
+      <a href="{% url 'fault_locator:senior_foreman_dashboard' %}" 
+         class="px-6 py-3 bg-gradient-to-r from-gray-600 to-gray-700 text-white rounded-xl font-bold text-lg hover:from-gray-700 hover:to-gray-800 transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl transform hover:-translate-y-1">
+        ← Back to Dashboard
+      </a>
+      <a href="{% url 'fault_locator:deploy_team' %}" 
+         class="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl font-bold text-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl transform hover:-translate-y-1">
+        🚀 Deploy Team
+      </a>
+    </div>
+  </div>
+
+  <!-- Current Deployments Overview -->
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+    <div class="bg-white rounded-lg shadow-md p-6">
+      <h3 class="text-lg font-semibold text-gray-800 mb-2">Active Deployments</h3>
+      <p class="text-3xl font-bold text-green-600">
+        {{ teams|length|add:"-1" }}
+      </p>
+      <p class="text-sm text-gray-500">Teams currently deployed</p>
+    </div>
+    
+    <div class="bg-white rounded-lg shadow-md p-6">
+      <h3 class="text-lg font-semibold text-gray-800 mb-2">Available Teams</h3>
+      <p class="text-3xl font-bold text-blue-600">
+        {% for team in teams %}{% if not team.current_depot %}{{ forloop.counter0|add:"1" }}{% endif %}{% endfor %}
+      </p>
+      <p class="text-sm text-gray-500">Teams ready for deployment</p>
+    </div>
+    
+    <div class="bg-white rounded-lg shadow-md p-6">
+      <h3 class="text-lg font-semibold text-gray-800 mb-2">Coverage</h3>
+      <p class="text-3xl font-bold text-purple-600">
+        {% for depot in depots %}{% if depot.deployed_teams > 0 %}{{ forloop.counter0|add:"1" }}{% endif %}{% endfor %}
+      </p>
+      <p class="text-sm text-gray-500">Depots with team coverage</p>
+    </div>
+  </div>
+
+  <!-- Teams and Deployments -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+    <!-- Teams List -->
+    <div class="bg-white rounded-lg shadow-md p-6">
+      <h3 class="text-lg font-semibold text-gray-800 mb-4">Teams Status</h3>
+      <div class="space-y-3 max-h-96 overflow-y-auto">
+        {% for team in teams %}
+        <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+          <div class="flex-1">
+            <h4 class="font-medium text-gray-800">{{ team.name }}</h4>
+            <div class="text-sm text-gray-600">
+              <p>{{ team.member_count }} members • 
+                {% if team.device_count > 0 %}
+                <span class="text-green-600">Gear assigned</span>
+                {% else %}
+                <span class="text-red-600">No gear</span>
+                {% endif %}
+              </p>
+              {% if team.current_depot %}
+              <p class="text-blue-600 font-medium">📍 Deployed to {{ team.current_depot.depot }}</p>
+              {% else %}
+              <p class="text-gray-500">🏠 Available at base</p>
+              {% endif %}
+            </div>
+          </div>
+          <div class="flex space-x-2">
+            {% if team.current_depot %}
+            <button onclick="recallTeam({{ team.id }}, '{{ team.name }}')" 
+                    class="px-4 py-2 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-lg font-bold hover:from-red-700 hover:to-red-800 transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl transform hover:-translate-y-1">
+              🔄 Recall
+            </button>
+            {% else %}
+            {% if team.device_count > 0 %}
+            <button onclick="deployTeam({{ team.id }}, '{{ team.name }}')" 
+                    class="px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg font-bold hover:from-blue-700 hover:to-blue-800 transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl transform hover:-translate-y-1">
+              🚀 Deploy
+            </button>
+            {% else %}
+            <span class="bg-gray-300 text-gray-600 px-3 py-1 rounded text-sm">
+              Need Gear
+            </span>
+            {% endif %}
+            {% endif %}
+          </div>
+        </div>
+        {% empty %}
+        <p class="text-gray-500 text-center py-8">No teams available</p>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Depots Status -->
+    <div class="bg-white rounded-lg shadow-md p-6">
+      <h3 class="text-lg font-semibold text-gray-800 mb-4">Depot Coverage</h3>
+      <div class="space-y-3 max-h-96 overflow-y-auto">
+        {% for depot in depots %}
+        <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+          <div class="flex-1">
+            <h4 class="font-medium text-gray-800">{{ depot.depot }}</h4>
+            <div class="text-sm text-gray-600">
+              <p>{{ depot.region.region }}</p>
+              {% if depot.deployed_teams > 0 %}
+              <p class="text-green-600 font-medium">
+                👥 {{ depot.deployed_teams }} team{% if depot.deployed_teams != 1 %}s{% endif %} deployed
+              </p>
+              {% else %}
+              <p class="text-red-600">⚠️ No team coverage</p>
+              {% endif %}
+            </div>
+          </div>
+          <div class="text-right">
+            {% if depot.active_faults > 0 %}
+            <div class="text-sm text-red-600 font-medium">
+              {{ depot.active_faults }} active fault{% if depot.active_faults != 1 %}s{% endif %}
+            </div>
+            {% endif %}
+            {% if depot.deployed_teams == 0 %}
+            <div class="text-xs text-gray-500">
+              Needs team
+            </div>
+            {% endif %}
+          </div>
+        </div>
+        {% empty %}
+        <p class="text-gray-500 text-center py-8">No depots available</p>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent Deployment History -->
+  <div class="bg-white rounded-lg shadow-md p-6">
+    <h3 class="text-lg font-semibold text-gray-800 mb-4">Recent Deployment History</h3>
+    <div class="overflow-x-auto">
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50">
+          <tr>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Team
+            </th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Depot
+            </th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Deployed At
+            </th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Deployed By
+            </th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Status
+            </th>
+          </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200">
+          {% for deployment in recent_deployments %}
+          <tr>
+            <td class="px-6 py-4 whitespace-nowrap">
+              <div class="text-sm font-medium text-gray-900">{{ deployment.team.name }}</div>
+              <div class="text-sm text-gray-500">{{ deployment.team.members.count }} members</div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              <div class="text-sm text-gray-900">{{ deployment.depot.depot }}</div>
+              <div class="text-sm text-gray-500">{{ deployment.depot.region.region }}</div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+              {{ deployment.deployed_at|date:"M d, Y H:i" }}
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+              {{ deployment.deployed_by.get_full_name }}
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+              {% if deployment.is_active %}
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                Active
+              </span>
+              {% else %}
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                Recalled
+              </span>
+              {% endif %}
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="5" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-center">
+              No deployment history available
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Deploy Team Modal -->
+<div id="deployModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden z-50">
+  <div class="flex items-center justify-center min-h-screen">
+    <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+      <h3 class="text-lg font-semibold mb-4">Deploy Team</h3>
+      <div id="deployContent">
+        <div class="space-y-4">
+          <p id="deployTeamName"></p>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Select Depot</label>
+            <select id="depotSelect" class="w-full p-2 border rounded-md">
+              <option value="">Select depot...</option>
+              {% for depot in depots %}
+              <option value="{{ depot.id }}">{{ depot.depot }} ({{ depot.region.region }})</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Deployment Notes</label>
+            <textarea id="notesInput" placeholder="Enter deployment instructions..." 
+                      class="w-full p-2 border rounded-md" rows="3"></textarea>
+          </div>
+        </div>
+      </div>
+      <div class="flex justify-end space-x-2 mt-6">
+        <button onclick="closeDeployModal()" 
+                class="px-6 py-3 bg-gradient-to-r from-gray-600 to-gray-700 text-white rounded-xl font-bold hover:from-gray-700 hover:to-gray-800 transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl transform hover:-translate-y-1">
+          Cancel
+        </button>
+        <button id="confirmDeploy" 
+                class="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl font-bold hover:from-blue-700 hover:to-blue-800 transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl transform hover:-translate-y-1">
+          🚀 Deploy Team
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Recall Team Modal -->
+<div id="recallModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden z-50">
+  <div class="flex items-center justify-center min-h-screen">
+    <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+      <h3 class="text-lg font-semibold mb-4">Recall Team</h3>
+      <div id="recallContent">
+        <div class="space-y-4">
+          <p id="recallTeamName"></p>
+          <div class="bg-yellow-50 border border-yellow-200 rounded-md p-3">
+            <p class="text-sm text-yellow-800">
+              ⚠️ This will recall the team from their current depot. 
+              Make sure there are no active fault assignments.
+            </p>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Recall Reason</label>
+            <textarea id="recallNotesInput" placeholder="Enter reason for recall..." 
+                      class="w-full p-2 border rounded-md" rows="3"></textarea>
+          </div>
+        </div>
+      </div>
+      <div class="flex justify-end space-x-2 mt-6">
+        <button onclick="closeRecallModal()" 
+                class="px-6 py-3 bg-gradient-to-r from-gray-600 to-gray-700 text-white rounded-xl font-bold hover:from-gray-700 hover:to-gray-800 transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl transform hover:-translate-y-1">
+          Cancel
+        </button>
+        <button id="confirmRecall" 
+                class="px-6 py-3 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-xl font-bold hover:from-red-700 hover:to-red-800 transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl transform hover:-translate-y-1">
+          🔄 Recall Team
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let selectedTeamId = null;
+
+function deployTeam(teamId, teamName) {
+  selectedTeamId = teamId;
+  document.getElementById('deployTeamName').textContent = `Deploy team "${teamName}" to depot:`;
+  document.getElementById('deployModal').classList.remove('hidden');
+}
+
+function recallTeam(teamId, teamName) {
+  selectedTeamId = teamId;
+  document.getElementById('recallTeamName').textContent = `Recall team "${teamName}" from depot:`;
+  document.getElementById('recallModal').classList.remove('hidden');
+}
+
+function closeDeployModal() {
+  document.getElementById('deployModal').classList.add('hidden');
+  selectedTeamId = null;
+}
+
+function closeRecallModal() {
+  document.getElementById('recallModal').classList.add('hidden');
+  selectedTeamId = null;
+}
+
+// Deploy team confirmation
+document.getElementById('confirmDeploy').onclick = function() {
+  const depotId = document.getElementById('depotSelect').value;
+  const notes = document.getElementById('notesInput').value;
+  
+  if (!depotId) {
+    alert('Please select a depot');
+    return;
+  }
+  
+  fetch('{% url "fault_locator:quick_deploy_team" %}', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': '{{ csrf_token }}'
+    },
+    body: JSON.stringify({
+      team_id: selectedTeamId,
+      depot_id: depotId,
+      notes: notes
+    })
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      alert(data.message);
+      location.reload();
+    } else {
+      alert('Error: ' + data.message);
+    }
+  })
+  .catch(error => {
+    console.error('Error:', error);
+    alert('An error occurred. Please try again.');
+  });
+  
+  closeDeployModal();
+};
+
+// Recall team confirmation
+document.getElementById('confirmRecall').onclick = function() {
+  const notes = document.getElementById('recallNotesInput').value;
+  
+  fetch('{% url "fault_locator:quick_recall_team" %}', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': '{{ csrf_token }}'
+    },
+    body: JSON.stringify({
+      team_id: selectedTeamId,
+      notes: notes
+    })
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      alert(data.message);
+      location.reload();
+    } else {
+      alert('Error: ' + data.message);
+    }
+  })
+  .catch(error => {
+    console.error('Error:', error);
+    alert('An error occurred. Please try again.');
+  });
+  
+  closeRecallModal();
+};
+</script>
+{% endblock %}
+
+

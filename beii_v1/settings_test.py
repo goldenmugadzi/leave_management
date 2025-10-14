@@ -1,10 +1,14 @@
-from pathlib import Path
+"""Clean lightweight settings for running the fault_locator test suite.
 
-# Minimal settings for tests
+Avoids importing production settings to prevent external DB and env dependencies.
+"""
+from pathlib import Path
+from datetime import timedelta
+
 BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'test-secret-key'
 DEBUG = True
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ['testserver', 'localhost', '127.0.0.1']
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -14,12 +18,12 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'rest_framework.authtoken',
     'it.users',
-    'Asset_Register',
-    'approve',
-    'ACE2',
-    'finance.PettyCash',
+    'fault_locator',
 ]
+
+AUTH_USER_MODEL = 'users.UserProfile'
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -58,11 +62,23 @@ DATABASES = {
     }
 }
 
-AUTH_USER_MODEL = 'users.UserProfile'
-
 PASSWORD_HASHERS = [
     'django.contrib.auth.hashers.MD5PasswordHasher',
 ]
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.TokenAuthentication',
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ]
+}
+
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=5),
+    'REFRESH_TOKEN_LIFETIME': timedelta(minutes=10),
+}
 
 EMAIL_BACKEND = 'django.core.mail.backends.locmem.EmailBackend'
 
@@ -74,16 +90,12 @@ USE_TZ = True
 STATIC_URL = '/static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+MIGRATION_MODULES = {
+    'fault_locator': None,
+    'users': None,
+}
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': True,
-}
-
-# Disable migrations for apps to simplify test DB setup
-MIGRATION_MODULES = {
-    'ACE2': None,
-    'approve': None,
-    'users': None,
-    'Asset_Register': None,
-    'PettyCash': None,
 }

@@ -1,0 +1,388 @@
+{% extends "base_layout.html" %}
+{% load static %}
+
+{% block title %}My Fault Reports - Fault Locator{% endblock %}
+
+{% block styles %}
+<link href="{% static 'assets/css/tailwind.min.css' %}" rel="stylesheet">
+<style>
+    .stat-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 0.5rem;
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+    .fault-card {
+        border-left: 4px solid #e5e7eb;
+        transition: all 0.3s ease;
+    }
+    .fault-card.urgent {
+        border-left-color: #f59e0b;
+    }
+    .fault-card.critical {
+        border-left-color: #ef4444;
+    }
+    .fault-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+    .status-badge {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.25rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+    .status-requested { background-color: #fef3c7; color: #92400e; }
+    .status-assigned { background-color: #dbeafe; color: #1e40af; }
+    .status-located { background-color: #d1fae5; color: #065f46; }
+    .status-closed { background-color: #f3f4f6; color: #374151; }
+    .filter-section {
+        background: white;
+        border-radius: 0.5rem;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    .timeline-item {
+        border-left: 2px solid #e5e7eb;
+        padding-left: 1rem;
+        padding-bottom: 1rem;
+        position: relative;
+    }
+    .timeline-item::before {
+        content: '';
+        position: absolute;
+        left: -5px;
+        top: 0.5rem;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background-color: #6b7280;
+    }
+    .timeline-item.current::before {
+        background-color: #3b82f6;
+    }
+    .timeline-item.completed::before {
+        background-color: #10b981;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-6">
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-6">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900">My Fault Reports</h1>
+            <p class="text-gray-600 mt-1">View and track all your reported faults</p>
+        </div>
+        <div class="mt-4 md:mt-0 space-x-2">
+            <a href="{% url 'fault_locator:quick_fault_report' %}" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                </svg>
+                Report New Fault
+            </a>
+            <a href="{% url 'fault_locator:bulk_fault_report' %}" class="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                </svg>
+                Bulk Report
+            </a>
+            <a href="{% url 'fault_locator:fault_reporter_dashboard' %}" class="inline-flex items-center px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                </svg>
+                Dashboard
+            </a>
+        </div>
+    </div>
+
+    <!-- Summary Statistics -->
+    <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 mb-6">
+        <div class="stat-card">
+            <div class="text-2xl font-bold">{{ stats.total_reported }}</div>
+            <div class="text-sm opacity-80">Total Reports</div>
+        </div>
+        <div class="stat-card">
+            <div class="text-2xl font-bold text-yellow-300">{{ stats.pending }}</div>
+            <div class="text-sm opacity-80">Pending</div>
+        </div>
+        <div class="stat-card">
+            <div class="text-2xl font-bold text-blue-300">{{ stats.in_progress }}</div>
+            <div class="text-sm opacity-80">In Progress</div>
+        </div>
+        <div class="stat-card">
+            <div class="text-2xl font-bold text-green-300">{{ stats.located }}</div>
+            <div class="text-sm opacity-80">Located</div>
+        </div>
+        <div class="stat-card">
+            <div class="text-2xl font-bold text-gray-300">{{ stats.completed }}</div>
+            <div class="text-sm opacity-80">Completed</div>
+        </div>
+        <div class="stat-card">
+            <div class="text-2xl font-bold text-red-300">{{ stats.high_priority }}</div>
+            <div class="text-sm opacity-80">High Priority</div>
+        </div>
+    </div>
+
+    <!-- Filters and Search -->
+    <div class="filter-section">
+        <form method="get" class="flex flex-wrap gap-4 items-end">
+            <div class="flex-1 min-w-64">
+                <label for="search" class="block text-sm font-medium text-gray-700 mb-1">Search</label>
+                <input type="text" name="search" id="search" value="{{ search_query }}" 
+                       class="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                       placeholder="Search by description, location, or fault ID...">
+            </div>
+            <div class="min-w-40">
+                <label for="status" class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                <select name="status" id="status" class="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                    {% for value, label in status_options %}
+                        <option value="{{ value }}" {% if status_filter == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="min-w-40">
+                <label for="priority" class="block text-sm font-medium text-gray-700 mb-1">Priority</label>
+                <select name="priority" id="priority" class="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                    {% for value, label in priority_options %}
+                        <option value="{{ value }}" {% if priority_filter == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="min-w-40">
+                <label for="date_range" class="block text-sm font-medium text-gray-700 mb-1">Date Range</label>
+                <select name="date_range" id="date_range" class="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                    <option value="">All Time</option>
+                    <option value="today" {% if date_filter == 'today' %}selected{% endif %}>Today</option>
+                    <option value="week" {% if date_filter == 'week' %}selected{% endif %}>This Week</option>
+                    <option value="month" {% if date_filter == 'month' %}selected{% endif %}>This Month</option>
+                    <option value="quarter" {% if date_filter == 'quarter' %}selected{% endif %}>This Quarter</option>
+                </select>
+            </div>
+            <div class="flex space-x-2">
+                <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
+                    Filter
+                </button>
+                <a href="{% url 'fault_locator:my_fault_reports' %}" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 transition-colors">
+                    Clear
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Fault Reports List -->
+    <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+        <div class="px-4 py-3 bg-gray-50 border-b border-gray-200">
+            <h3 class="text-lg font-medium text-gray-900">
+                Your Fault Reports 
+                {% if total_count %}
+                    ({{ fault_data|length }} of {{ total_count }})
+                {% else %}
+                    ({{ fault_data|length }})
+                {% endif %}
+            </h3>
+        </div>
+        
+        {% if fault_data %}
+            <div class="divide-y divide-gray-200">
+                {% for data in fault_data %}
+                    <div class="fault-card {% if data.urgency == 'urgent' %}urgent{% elif data.urgency == 'critical' %}critical{% endif %} p-6">
+                        <div class="flex flex-col lg:flex-row lg:justify-between">
+                            <!-- Main Content -->
+                            <div class="flex-1 lg:pr-6">
+                                <div class="flex items-center space-x-3 mb-3">
+                                    <h4 class="text-xl font-semibold text-gray-900">
+                                        Fault #{{ data.fault.id }}
+                                        {% if data.fault.vvip %}
+                                            <span class="text-red-600 font-bold">[VVIP]</span>
+                                        {% endif %}
+                                    </h4>
+                                    <span class="status-badge status-{{ data.fault.status }}">
+                                        {{ data.fault.get_status_display }}
+                                    </span>
+                                    <span class="px-2 py-1 text-xs font-medium rounded {% if data.fault.priority == 4 %}bg-red-100 text-red-800{% elif data.fault.priority == 3 %}bg-orange-100 text-orange-800{% elif data.fault.priority == 2 %}bg-yellow-100 text-yellow-800{% else %}bg-gray-100 text-gray-800{% endif %}">
+                                        {{ data.fault.get_priority_display }}
+                                    </span>
+                                </div>
+                                
+                                <p class="text-gray-700 mb-3 text-lg">{{ data.fault.description }}</p>
+                                
+                                <!-- Fault Details -->
+                                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 mb-4">
+                                    <div class="text-sm">
+                                        <span class="font-medium text-gray-500">Depot:</span>
+                                        <p class="text-gray-900">{{ data.fault.depot.depot }}</p>
+                                    </div>
+                                    {% if data.fault.location %}
+                                        <div class="text-sm">
+                                            <span class="font-medium text-gray-500">Location:</span>
+                                            <p class="text-gray-900">{{ data.fault.location }}</p>
+                                        </div>
+                                    {% endif %}
+                                    {% if data.fault.voltage %}
+                                        <div class="text-sm">
+                                            <span class="font-medium text-gray-500">Voltage:</span>
+                                            <p class="text-gray-900">{{ data.fault.get_voltage_display }}</p>
+                                        </div>
+                                    {% endif %}
+                                    {% if data.fault.clients_affected %}
+                                        <div class="text-sm">
+                                            <span class="font-medium text-gray-500">Clients Affected:</span>
+                                            <p class="text-gray-900">{{ data.fault.clients_affected }}</p>
+                                        </div>
+                                    {% endif %}
+                                    <div class="text-sm">
+                                        <span class="font-medium text-gray-500">Reported:</span>
+                                        <p class="text-gray-900">{{ data.hours_elapsed }}h ago</p>
+                                    </div>
+                                    <div class="text-sm">
+                                        <span class="font-medium text-gray-500">Date:</span>
+                                        <p class="text-gray-900">{{ data.fault.timestamp|date:"M d, Y" }}</p>
+                                    </div>
+                                </div>
+                                
+                                <!-- Assignment Status -->
+                                {% if data.current_assignment %}
+                                    <div class="bg-blue-50 border border-blue-200 rounded-md p-3 mb-3">
+                                        <div class="flex items-center">
+                                            <svg class="w-5 h-5 text-blue-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                                            </svg>
+                                            <div>
+                                                <p class="text-sm font-medium text-blue-900">
+                                                    Assigned to: {{ data.current_assignment.team.name }}
+                                                </p>
+                                                {% if data.current_assignment.device %}
+                                                    <p class="text-xs text-blue-700">
+                                                        Gear: {{ data.current_assignment.device.serial_number }}
+                                                    </p>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% else %}
+                                    <div class="bg-yellow-50 border border-yellow-200 rounded-md p-3 mb-3">
+                                        <p class="text-sm text-yellow-800">
+                                            <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                            </svg>
+                                            Awaiting assignment to a team
+                                        </p>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            
+                            <!-- Actions and Timeline -->
+                            <div class="mt-4 lg:mt-0 lg:w-80 lg:pl-6 lg:border-l lg:border-gray-200">
+                                <!-- Actions -->
+                                <div class="mb-4">
+                                    <a href="{% url 'fault_locator:field_update' data.fault.id %}" 
+                                       class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 w-full justify-center">
+                                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                        </svg>
+                                        View Full Details
+                                    </a>
+                                </div>
+                                
+                                <!-- Status Timeline -->
+                                <div>
+                                    <h5 class="text-sm font-medium text-gray-900 mb-3">Status Timeline</h5>
+                                    <div class="space-y-2">
+                                        <div class="timeline-item {% if data.fault.status == 'requested' %}current{% else %}completed{% endif %}">
+                                            <div class="text-xs font-medium text-gray-900">Reported</div>
+                                            <div class="text-xs text-gray-500">{{ data.fault.timestamp|date:"M d, H:i" }}</div>
+                                        </div>
+                                        {% if data.current_assignment %}
+                                            <div class="timeline-item {% if data.fault.status == 'assigned' %}current{% elif data.fault.status == 'located' or data.fault.status == 'closed' %}completed{% endif %}">
+                                                <div class="text-xs font-medium text-gray-900">Assigned</div>
+                                                <div class="text-xs text-gray-500">{{ data.current_assignment.assignment_time|date:"M d, H:i" }}</div>
+                                            </div>
+                                        {% endif %}
+                                        {% if data.fault.status == 'located' or data.fault.status == 'closed' %}
+                                            <div class="timeline-item {% if data.fault.status == 'located' %}current{% else %}completed{% endif %}">
+                                                <div class="text-xs font-medium text-gray-900">Located</div>
+                                                <div class="text-xs text-gray-500">In progress</div>
+                                            </div>
+                                        {% endif %}
+                                        {% if data.fault.status == 'closed' %}
+                                            <div class="timeline-item completed">
+                                                <div class="text-xs font-medium text-gray-900">Completed</div>
+                                                <div class="text-xs text-gray-500">Fault resolved</div>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="text-center py-12">
+                <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                </svg>
+                <h3 class="mt-2 text-sm font-medium text-gray-900">No fault reports found</h3>
+                <p class="mt-1 text-sm text-gray-500">
+                    {% if search_query or status_filter or priority_filter or date_filter %}
+                        Try adjusting your filters or search criteria.
+                    {% else %}
+                        Get started by reporting your first fault.
+                    {% endif %}
+                </p>
+                <div class="mt-6">
+                    {% if search_query or status_filter or priority_filter or date_filter %}
+                        <a href="{% url 'fault_locator:my_fault_reports' %}" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-gray-600 hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 mr-3">
+                            Clear Filters
+                        </a>
+                    {% endif %}
+                    <a href="{% url 'fault_locator:quick_fault_report' %}" class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                        </svg>
+                        Report New Fault
+                    </a>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-submit form when filters change (except search)
+    const statusSelect = document.getElementById('status');
+    const prioritySelect = document.getElementById('priority');
+    const dateSelect = document.getElementById('date_range');
+    
+    [statusSelect, prioritySelect, dateSelect].forEach(select => {
+        if (select) {
+            select.addEventListener('change', function() {
+                this.form.submit();
+            });
+        }
+    });
+    
+    // Handle search form submission
+    const searchInput = document.getElementById('search');
+    if (searchInput) {
+        searchInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                this.form.submit();
+            }
+        });
+    }
+});
+</script>
+{% endblock %}
+
+

@@ -1,0 +1,395 @@
+{% extends "admin_layout.html" %}
+
+{% block content %}
+<div class="senior-foreman-dashboard">
+  <!-- Header -->
+  <div class="dashboard-header bg-gradient-to-r from-blue-600 to-blue-800 text-white p-6 rounded-lg mb-6">
+    <div class="flex justify-between items-center">
+      <div>
+        <h1 class="text-2xl font-bold">Senior Foreman Dashboard</h1>
+        <p class="text-blue-100">Comprehensive system management and monitoring</p>
+      </div>
+      <div class="text-right">
+        <p class="text-sm text-blue-100">Welcome back, {{ user_profile.get_full_name }}</p>
+        <p class="text-xs text-blue-200">{{ "now"|date:"M d, Y - H:i" }}</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick Stats Cards -->
+  <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
+    <!-- Teams Card -->
+    <div class="bg-white rounded-lg shadow-md p-6">
+      <div class="flex items-center justify-between">
+        <div>
+          <h3 class="text-lg font-semibold text-gray-800">Teams</h3>
+          <p class="text-2xl font-bold text-blue-600">{{ stats.total_teams }}</p>
+          <p class="text-sm text-gray-500">{{ stats.deployed_teams }} deployed</p>
+        </div>
+        <div class="text-4xl text-blue-500">👥</div>
+      </div>
+      <div class="mt-4">
+        <div class="bg-gray-200 rounded-full h-2">
+          <div class="bg-blue-500 h-2 rounded-full" style="width: {{ stats.deployment_rate }}%"></div>
+        </div>
+        <p class="text-xs text-gray-600 mt-1">{{ stats.deployment_rate }}% deployed</p>
+      </div>
+    </div>
+
+  <!-- Gear Card -->
+    <div class="bg-white rounded-lg shadow-md p-6">
+      <div class="flex items-center justify-between">
+        <div>
+          <h3 class="text-lg font-semibold text-gray-800">Gear</h3>
+          <p class="text-2xl font-bold text-green-600">{{ stats.total_devices }}</p>
+          <p class="text-sm text-gray-500">{{ stats.assigned_devices }} assigned</p>
+        </div>
+        <div class="text-4xl text-green-500">📱</div>
+      </div>
+      <div class="mt-4">
+        <div class="bg-gray-200 rounded-full h-2">
+          <div class="bg-green-500 h-2 rounded-full" style="width: {{ stats.device_utilization }}%"></div>
+        </div>
+  <p class="text-xs text-gray-600 mt-1">{{ stats.device_utilization }}% gear utilized</p>
+      </div>
+    </div>
+
+    <!-- Active Faults Card -->
+    <div class="bg-white rounded-lg shadow-md p-6">
+      <div class="flex items-center justify-between">
+        <div>
+          <h3 class="text-lg font-semibold text-gray-800">Active Faults</h3>
+          <p class="text-2xl font-bold text-red-600">{{ stats.active_faults }}</p>
+          <p class="text-sm text-gray-500">In progress</p>
+        </div>
+        <div class="text-4xl text-red-500">⚠️</div>
+      </div>
+      <div class="mt-4">
+        <a href="{% url 'fault_locator:simple_fault_list' %}" class="text-sm text-blue-600 hover:text-blue-800">
+          View All Faults →
+        </a>
+      </div>
+    </div>
+
+    <!-- Performance Card -->
+    <div class="bg-white rounded-lg shadow-md p-6">
+      <div class="flex items-center justify-between">
+        <div>
+          <h3 class="text-lg font-semibold text-gray-800">Performance</h3>
+          <p class="text-2xl font-bold text-purple-600">{{ performance_data.resolution_rate }}%</p>
+          <p class="text-sm text-gray-500">Resolution rate</p>
+        </div>
+        <div class="text-4xl text-purple-500">📊</div>
+      </div>
+      <div class="mt-4">
+        <a href="{% url 'fault_locator:performance_monitoring' %}" class="text-sm text-blue-600 hover:text-blue-800">
+          View Details →
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Actions -->
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+    <!-- Team Management -->
+    <div class="bg-white rounded-lg shadow-md p-6">
+      <h3 class="text-lg font-semibold text-gray-800 mb-4">
+        <span class="text-blue-500">👥</span> Team Management
+      </h3>
+      <p class="text-gray-600 mb-4">Deploy teams to depots and manage assignments</p>
+      <div class="space-y-2">
+        <a href="{% url 'fault_locator:team_depot_management' %}" 
+           class="block w-full bg-blue-600 text-white text-center py-2 px-4 rounded-md hover:bg-blue-700 transition">
+          Manage Team Deployments
+        </a>
+        <a href="{% url 'fault_locator:create_team' %}" 
+           class="block w-full bg-green-600 text-white text-center py-2 px-4 rounded-md hover:bg-green-700 transition">
+          Create New Team
+        </a>
+        <a href="{% url 'fault_locator:team_overview' %}" 
+           class="block w-full bg-gray-600 text-white text-center py-2 px-4 rounded-md hover:bg-gray-700 transition">
+          View All Teams
+        </a>
+      </div>
+    </div>
+
+  <!-- Gear Management -->
+    <div class="bg-white rounded-lg shadow-md p-6">
+      <h3 class="text-lg font-semibold text-gray-800 mb-4">
+  <span class="text-green-500">📱</span> Gear Management
+      </h3>
+  <p class="text-gray-600 mb-4">Assign gear to teams and track utilization</p>
+      <div class="space-y-2">
+        <a href="{% url 'fault_locator:device_team_management' %}" 
+           class="block w-full bg-green-600 text-white text-center py-2 px-4 rounded-md hover:bg-green-700 transition">
+          Manage Gear Assignments
+        </a>
+        <a href="{% url 'fault_locator:create_device' %}" 
+           class="block w-full bg-blue-600 text-white text-center py-2 px-4 rounded-md hover:bg-blue-700 transition">
+          Add New Gear
+        </a>
+        <a href="{% url 'fault_locator:device_list' %}" 
+           class="block w-full bg-gray-600 text-white text-center py-2 px-4 rounded-md hover:bg-gray-700 transition">
+          View All Gear
+        </a>
+      </div>
+    </div>
+
+    <!-- Performance Monitoring -->
+    <div class="bg-white rounded-lg shadow-md p-6">
+      <h3 class="text-lg font-semibold text-gray-800 mb-4">
+        <span class="text-purple-500">📊</span> Performance Monitoring
+      </h3>
+      <p class="text-gray-600 mb-4">Track team performance and system metrics</p>
+      <div class="space-y-2">
+        <a href="{% url 'fault_locator:performance_monitoring' %}" 
+           class="block w-full bg-purple-600 text-white text-center py-2 px-4 rounded-md hover:bg-purple-700 transition">
+          View Performance Dashboard
+        </a>
+        <a href="{% url 'fault_locator:advanced_fault_assignment' %}" 
+           class="block w-full bg-orange-600 text-white text-center py-2 px-4 rounded-md hover:bg-orange-700 transition">
+          Advanced Fault Assignment
+        </a>
+        <a href="{% url 'fault_locator:simple_fault_list' %}" 
+           class="block w-full bg-gray-600 text-white text-center py-2 px-4 rounded-md hover:bg-gray-700 transition">
+          View All Faults
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- Current System Status -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+    <!-- Teams Status -->
+    <div class="bg-white rounded-lg shadow-md p-6">
+      <h3 class="text-lg font-semibold text-gray-800 mb-4">Teams Status</h3>
+      <div class="space-y-3 max-h-96 overflow-y-auto">
+        {% for team in teams_data %}
+        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+          <div class="flex-1">
+            <h4 class="font-medium text-gray-800">{{ team.name }}</h4>
+            <p class="text-sm text-gray-600">
+              {{ team.member_count }} members
+              {% if team.current_depot %}
+              • Deployed to {{ team.current_depot.depot }}
+              {% else %}
+              • Available
+              {% endif %}
+            </p>
+          </div>
+          <div class="text-right">
+            {% if team.device_count > 0 %}
+            <span class="inline-block bg-green-100 text-green-800 text-xs px-2 py-1 rounded">
+              Gear Assigned
+            </span>
+            {% else %}
+            <span class="inline-block bg-red-100 text-red-800 text-xs px-2 py-1 rounded">
+              No Gear
+            </span>
+            {% endif %}
+            {% if team.active_assignments > 0 %}
+            <div class="text-sm text-blue-600 font-medium">
+              {{ team.active_assignments }} active
+            </div>
+            {% endif %}
+          </div>
+        </div>
+        {% empty %}
+        <p class="text-gray-500 text-center py-8">No teams created yet</p>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Depot Status -->
+    <div class="bg-white rounded-lg shadow-md p-6">
+      <h3 class="text-lg font-semibold text-gray-800 mb-4">Depot Status</h3>
+      <div class="space-y-3 max-h-96 overflow-y-auto">
+        {% for depot in depot_status %}
+        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+          <div class="flex-1">
+            <h4 class="font-medium text-gray-800">{{ depot.depot }}</h4>
+            <p class="text-sm text-gray-600">{{ depot.region.region }}</p>
+          </div>
+          <div class="text-right">
+            <div class="text-sm text-gray-600">
+              {{ depot.deployed_teams }} team{% if depot.deployed_teams != 1 %}s{% endif %}
+            </div>
+            {% if depot.active_faults > 0 %}
+            <div class="text-sm text-red-600 font-medium">
+              {{ depot.active_faults }} active fault{% if depot.active_faults != 1 %}s{% endif %}
+            </div>
+            {% endif %}
+          </div>
+        </div>
+        {% empty %}
+        <p class="text-gray-500 text-center py-8">No depots available</p>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent Activities -->
+  <div class="bg-white rounded-lg shadow-md p-6">
+    <h3 class="text-lg font-semibold text-gray-800 mb-4">Recent Activities</h3>
+    <div class="space-y-3 max-h-64 overflow-y-auto">
+      {% for activity in recent_activities %}
+      <div class="flex items-center p-3 bg-gray-50 rounded-lg">
+        <div class="flex-1">
+          <p class="text-sm text-gray-800">{{ activity.description }}</p>
+          <p class="text-xs text-gray-500">
+            by {{ activity.user }} • {{ activity.timestamp|date:"M d, Y H:i" }}
+          </p>
+        </div>
+        <div class="text-right">
+          {% if activity.type == 'deployment' %}
+          <span class="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">
+            Deployment
+          </span>
+          {% elif activity.type == 'assignment' %}
+          <span class="inline-block bg-green-100 text-green-800 text-xs px-2 py-1 rounded">
+            Assignment
+          </span>
+          {% endif %}
+        </div>
+      </div>
+      {% empty %}
+      <p class="text-gray-500 text-center py-8">No recent activities</p>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<!-- Quick Action Modals -->
+<div id="quickActionModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden">
+  <div class="flex items-center justify-center min-h-screen">
+    <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+      <h3 id="modalTitle" class="text-lg font-semibold mb-4"></h3>
+      <div id="modalContent"></div>
+      <div class="flex justify-end space-x-2 mt-4">
+        <button onclick="closeModal()" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400">
+          Cancel
+        </button>
+        <button id="modalAction" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+          Confirm
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function openModal(title, content) {
+  document.getElementById('modalTitle').textContent = title;
+  document.getElementById('modalContent').innerHTML = content;
+  document.getElementById('quickActionModal').classList.remove('hidden');
+}
+
+function closeModal() {
+  document.getElementById('quickActionModal').classList.add('hidden');
+}
+
+// Quick actions functionality
+function quickDeploy(teamId, teamName) {
+  const content = `
+    <div class="space-y-4">
+      <p>Deploy team "${teamName}" to depot:</p>
+      <select id="depotSelect" class="w-full p-2 border rounded-md">
+        <option value="">Select depot...</option>
+        {% for depot in depot_status %}
+        <option value="{{ depot.id }}">{{ depot.depot }} ({{ depot.region.region }})</option>
+        {% endfor %}
+      </select>
+      <textarea id="notesInput" placeholder="Deployment notes..." class="w-full p-2 border rounded-md" rows="3"></textarea>
+    </div>
+  `;
+  
+  openModal('Deploy Team', content);
+  
+  document.getElementById('modalAction').onclick = function() {
+    const depotId = document.getElementById('depotSelect').value;
+    const notes = document.getElementById('notesInput').value;
+    
+    if (!depotId) {
+      alert('Please select a depot');
+      return;
+    }
+    
+  fetch('{% url "fault_locator:quick_deploy_team" %}', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': '{{ csrf_token }}'
+      },
+      body: JSON.stringify({
+        team_id: teamId,
+        depot_id: depotId,
+        notes: notes
+      })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        alert(data.message);
+        location.reload();
+      } else {
+        alert('Error: ' + data.message);
+      }
+    });
+    
+    closeModal();
+  };
+}
+
+function quickAssign(deviceId, deviceName) {
+  const content = `
+    <div class="space-y-4">
+  <p>Assign gear "${deviceName}" to team:</p>
+      <select id="teamSelect" class="w-full p-2 border rounded-md">
+        <option value="">Select team...</option>
+        {% for team in teams_data %}
+  {% if team.device_count == 0 %}
+        <option value="{{ team.id }}">{{ team.name }} ({{ team.member_count }} members)</option>
+        {% endif %}
+        {% endfor %}
+      </select>
+    </div>
+  `;
+  
+  openModal('Assign Gear', content);
+  
+  document.getElementById('modalAction').onclick = function() {
+    const teamId = document.getElementById('teamSelect').value;
+    
+    if (!teamId) {
+      alert('Please select a team');
+      return;
+    }
+    
+  fetch('{% url "fault_locator:quick_assign_device" %}', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': '{{ csrf_token }}'
+      },
+      body: JSON.stringify({
+        device_id: deviceId,
+        team_id: teamId
+      })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.success) {
+        alert(data.message);
+        location.reload();
+      } else {
+        alert('Error: ' + data.message);
+      }
+    });
+    
+    closeModal();
+  };
+}
+</script>
+{% endblock %}
+
+

@@ -1,124 +1,284 @@
 {% extends "admin_layout.html" %}
 
 {% block content %}
-<div class="dashboard-container p-6">
-  <div class="header mb-6">
-    <h1 class="text-2xl font-bold text-gray-800">Fault Locator Dashboard</h1>
-    <p class="text-gray-600">Welcome, {{ user.get_full_name }} ({{ user_role }})</p>
+
+<!-- Django Messages Display - Add this section -->
+{% if messages %}
+    <div class="mb-4">
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} mb-3 p-3 rounded border-l-4 
+                {% if message.tags == 'error' %}bg-red-50 border-red-500 text-red-800
+                {% elif message.tags == 'warning' %}bg-yellow-50 border-yellow-500 text-yellow-800
+                {% elif message.tags == 'info' %}bg-blue-50 border-blue-500 text-blue-800
+                {% elif message.tags == 'success' %}bg-green-50 border-green-500 text-green-800
+                {% else %}bg-gray-50 border-gray-500 text-gray-800{% endif %}">
+                
+                <div class="flex items-start">
+                    <div class="flex-shrink-0 mr-3">
+                        {% if message.tags == 'error' %}❌
+                        {% elif message.tags == 'warning' %}⚠️
+                        {% elif message.tags == 'info' %}ℹ️
+                        {% elif message.tags == 'success' %}✅
+                        {% else %}📢{% endif %}
+                    </div>
+                    <div class="flex-1">
+                        {{ message|linebreaksbr }}
+                    </div>
+                    <button type="button" class="ml-2 text-gray-500 hover:text-gray-700" 
+                            onclick="this.parentElement.parentElement.style.display='none'">
+                        ✕
+                    </button>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+{% endif %}
+<!-- End Messages Display -->
+
+<div class="dashboard-container p-6 bg-nepal-25 min-h-screen">
+  <!-- Header -->
+  <div class="header mb-8">
+    <h1 class="text-3xl font-bold text-nepal-800">Fault Locator Dashboard</h1>
+    <p class="text-nepal-600">
+      Welcome, <strong>{{ user.get_full_name }}</strong>. 
+      Your role: 
+      {% if user_role == 'senior_foreman' %}
+        <span class="font-semibold text-royal-heath-600">{{ user_role_display }}</span>
+      {% elif user_role == 'depot_foreperson' %}
+        <span class="font-semibold text-gulf-blue-600">{{ user_role_display }}</span>
+      {% elif user_role == 'team_leader' %}
+        <span class="font-semibold text-jade-600">{{ user_role_display }}</span>
+      {% elif user_role == 'team_member' %}
+        <span class="font-semibold text-nepal-600">{{ user_role_display }}</span>
+      {% else %}
+        <span class="font-semibold text-nepal-600">No Role Assigned</span>
+      {% endif %}
+    </p>
+    <!-- Role-specific permissions indicator -->
+    <div class="flex flex-wrap gap-2 mt-2">
+      {% if role_permissions.can_create_faults %}
+        <span class="px-2 py-1 bg-green-100 text-green-800 rounded text-xs">Create Faults</span>
+      {% endif %}
+      {% if role_permissions.can_assign_faults %}
+        <span class="px-2 py-1 bg-blue-100 text-blue-800 rounded text-xs">Assign Faults</span>
+      {% endif %}
+      {% if role_permissions.can_deploy_teams %}
+        <span class="px-2 py-1 bg-purple-100 text-purple-800 rounded text-xs">Deploy Teams</span>
+      {% endif %}
+      {% if role_permissions.can_manage_devices %}
+        <span class="px-2 py-1 bg-orange-100 text-orange-800 rounded text-xs">Manage Devices</span>
+      {% endif %}
+      {% if role_permissions.can_create_teams %}
+        <span class="px-2 py-1 bg-indigo-100 text-indigo-800 rounded text-xs">Create Teams</span>
+      {% endif %}
+      {% if role_permissions.can_view_reports %}
+        <span class="px-2 py-1 bg-gray-100 text-gray-800 rounded text-xs">View Reports</span>
+      {% endif %}
+    </div>
   </div>
 
-  <!-- Quick Stats -->
-  <div class="stats-grid grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
-    <div class="stat-card bg-white rounded-lg shadow p-4">
-      <div class="flex items-center">
-        <div class="text-3xl text-red-500">🔥</div>
-        <div class="ml-3">
-          <p class="text-sm text-gray-600">Active Faults</p>
-          <p class="text-2xl font-bold">{{ stats.active_faults }}</p>
+  <!-- Role-specific Statistics -->
+  <div class="role-stats mb-8">
+    <h2 class="text-2xl font-semibold text-nepal-700 mb-4">Your Dashboard</h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      {% if user_role == 'senior_foreman' %}
+        <!-- Senior Foreman sees all statistics -->
+        <div class="stat-card bg-gradient-to-r from-red-500 to-red-600 text-white rounded-lg shadow-md p-4">
+          <h3 class="text-lg font-semibold">Total Open Faults</h3>
+          <p class="text-3xl font-bold">{{ total_open_faults|default:0 }}</p>
         </div>
-      </div>
-    </div>
-    
-    <div class="stat-card bg-white rounded-lg shadow p-4">
-      <div class="flex items-center">
-        <div class="text-3xl text-yellow-500">⏳</div>
-        <div class="ml-3">
-          <p class="text-sm text-gray-600">My Assignments</p>
-          <p class="text-2xl font-bold">{{ stats.my_assignments }}</p>
+        <div class="stat-card bg-gradient-to-r from-yellow-500 to-yellow-600 text-white rounded-lg shadow-md p-4">
+          <h3 class="text-lg font-semibold">Assigned Faults</h3>
+          <p class="text-3xl font-bold">{{ assigned_faults|default:0 }}</p>
         </div>
-      </div>
-    </div>
-    
-    <div class="stat-card bg-white rounded-lg shadow p-4">
-      <div class="flex items-center">
-        <div class="text-3xl text-green-500">✅</div>
-        <div class="ml-3">
-          <p class="text-sm text-gray-600">Completed Today</p>
-          <p class="text-2xl font-bold">{{ stats.completed_today }}</p>
+        <div class="stat-card bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg shadow-md p-4">
+          <h3 class="text-lg font-semibold">Resolved Today</h3>
+          <p class="text-3xl font-bold">{{ resolved_today|default:0 }}</p>
         </div>
-      </div>
-    </div>
-    
-    <div class="stat-card bg-white rounded-lg shadow p-4">
-      <div class="flex items-center">
-        <div class="text-3xl text-blue-500">👥</div>
-        <div class="ml-3">
-          <p class="text-sm text-gray-600">Teams Active</p>
-          <p class="text-2xl font-bold">{{ stats.active_teams }}</p>
+        <div class="stat-card bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg shadow-md p-4">
+          <h3 class="text-lg font-semibold">Active Teams</h3>
+          <p class="text-3xl font-bold">{{ active_teams|default:0 }}</p>
         </div>
-      </div>
+      {% elif user_role == 'depot_foreperson' %}
+        <!-- Depot Foreperson sees depot-specific statistics -->
+        <div class="stat-card bg-gradient-to-r from-red-500 to-red-600 text-white rounded-lg shadow-md p-4">
+          <h3 class="text-lg font-semibold">My Depot Open Faults</h3>
+          <p class="text-3xl font-bold">{{ depot_open_faults|default:0 }}</p>
+        </div>
+        <div class="stat-card bg-gradient-to-r from-yellow-500 to-yellow-600 text-white rounded-lg shadow-md p-4">
+          <h3 class="text-lg font-semibold">My Teams</h3>
+          <p class="text-3xl font-bold">{{ my_teams_count|default:0 }}</p>
+        </div>
+        <div class="stat-card bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg shadow-md p-4">
+          <h3 class="text-lg font-semibold">Resolved Today</h3>
+          <p class="text-3xl font-bold">{{ depot_resolved_today|default:0 }}</p>
+        </div>
+        <div class="stat-card bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg shadow-md p-4">
+          <h3 class="text-lg font-semibold">Team Efficiency</h3>
+          <p class="text-3xl font-bold">{{ team_efficiency|default:0 }}%</p>
+        </div>
+      {% elif user_role == 'team_leader' %}
+        <!-- Team Leader sees team-specific statistics -->
+        <div class="stat-card bg-gradient-to-r from-red-500 to-red-600 text-white rounded-lg shadow-md p-4">
+          <h3 class="text-lg font-semibold">My Team Faults</h3>
+          <p class="text-3xl font-bold">{{ team_open_faults|default:0 }}</p>
+        </div>
+        <div class="stat-card bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg shadow-md p-4">
+          <h3 class="text-lg font-semibold">Team Members</h3>
+          <p class="text-3xl font-bold">{{ team_members_count|default:0 }}</p>
+        </div>
+        <div class="stat-card bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg shadow-md p-4">
+          <h3 class="text-lg font-semibold">Completed Today</h3>
+          <p class="text-3xl font-bold">{{ team_completed_today|default:0 }}</p>
+        </div>
+        <div class="stat-card bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-lg shadow-md p-4">
+          <h3 class="text-lg font-semibold">In Progress</h3>
+          <p class="text-3xl font-bold">{{ team_in_progress|default:0 }}</p>
+        </div>
+      {% elif user_role == 'team_member' %}
+        <!-- Team Member sees personal statistics -->
+        <div class="stat-card bg-gradient-to-r from-yellow-500 to-yellow-600 text-white rounded-lg shadow-md p-4">
+          <h3 class="text-lg font-semibold">My Assigned Faults</h3>
+          <p class="text-3xl font-bold">{{ my_assigned_faults|default:0 }}</p>
+        </div>
+        <div class="stat-card bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-lg shadow-md p-4">
+          <h3 class="text-lg font-semibold">In Progress</h3>
+          <p class="text-3xl font-bold">{{ my_in_progress|default:0 }}</p>
+        </div>
+        <div class="stat-card bg-gradient-to-r from-green-500 to-green-600 text-white rounded-lg shadow-md p-4">
+          <h3 class="text-lg font-semibold">Completed Today</h3>
+          <p class="text-3xl font-bold">{{ my_completed_today|default:0 }}</p>
+        </div>
+        <div class="stat-card bg-gradient-to-r from-purple-500 to-purple-600 text-white rounded-lg shadow-md p-4">
+          <h3 class="text-lg font-semibold">This Week</h3>
+          <p class="text-3xl font-bold">{{ my_completed_week|default:0 }}</p>
+        </div>
+      {% endif %}
     </div>
   </div>
 
-  <!-- Action Cards -->
-  <div class="action-grid grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-    {% if user_role == 'Team Member' or user_role == 'Depot Foreperson' %}
-    <div class="action-card bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg shadow-lg p-6 text-white">
-      <h3 class="text-xl font-bold mb-2">📱 Field Updates</h3>
-      <p class="mb-4">Quick updates from the field</p>
-      <a href="{% url 'simple_fault_list' %}" 
-         class="inline-block px-6 py-3 bg-white text-blue-600 rounded-lg font-semibold hover:bg-gray-100 transition">
-        View My Faults
-      </a>
-    </div>
-    {% endif %}
-
-    {% if user_role == 'Senior Foreperson' or user_role == 'Depot Foreperson' %}
-    <div class="action-card bg-gradient-to-br from-green-500 to-green-600 rounded-lg shadow-lg p-6 text-white">
-      <h3 class="text-xl font-bold mb-2">📋 Manage Faults</h3>
-      <p class="mb-4">Create and assign fault reports</p>
-      <a href="{% url 'quick_fault_report' %}" 
-         class="inline-block px-6 py-3 bg-white text-green-600 rounded-lg font-semibold hover:bg-gray-100 transition">
-        Quick Report
-      </a>
-    </div>
-    {% endif %}
-
-    <div class="action-card bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg shadow-lg p-6 text-white">
-      <h3 class="text-xl font-bold mb-2">📊 View Reports</h3>
-      <p class="mb-4">Check fault status and history</p>
-      <a href="{% url 'fault_list' %}" 
-         class="inline-block px-6 py-3 bg-white text-purple-600 rounded-lg font-semibold hover:bg-gray-100 transition">
-        All Faults
-      </a>
-    </div>
-
-    {% if user_role == 'Senior Foreperson' or user_role == 'IT Personnel' %}
-    <div class="action-card bg-gradient-to-br from-red-500 to-red-600 rounded-lg shadow-lg p-6 text-white">
-      <h3 class="text-xl font-bold mb-2">⚙️ System Admin</h3>
-      <p class="mb-4">Manage teams and devices</p>
-      <a href="{% url 'team_list' %}" 
-         class="inline-block px-6 py-3 bg-white text-red-600 rounded-lg font-semibold hover:bg-gray-100 transition">
-        Manage Teams
-      </a>
-    </div>
-    {% endif %}
-  </div>
-
-  <!-- Recent Activity -->
-  {% if recent_faults %}
-  <div class="recent-activity mt-8">
-    <h2 class="text-xl font-bold text-gray-800 mb-4">Recent Activity</h2>
-    <div class="bg-white rounded-lg shadow overflow-hidden">
-      {% for fault in recent_faults %}
-      <div class="border-b border-gray-200 p-4 hover:bg-gray-50">
-        <div class="flex justify-between items-start">
-          <div>
-            <h4 class="font-semibold text-gray-800">{{ fault.description }}</h4>
-            <p class="text-sm text-gray-600">{{ fault.depot.depot }} - {{ fault.device.serial_number }}</p>
-            <p class="text-xs text-gray-500">{{ fault.created_at|timesince }} ago</p>
-          </div>
-          <span class="px-2 py-1 text-xs rounded-full
-                       {% if fault.status == 'ACTIVE' %}bg-red-100 text-red-800
-                       {% elif fault.status == 'RESOLVED' %}bg-green-100 text-green-800
-                       {% else %}bg-yellow-100 text-yellow-800{% endif %}">
-            {{ fault.get_status_display }}
-          </span>
+  <!-- Accessible Functions -->
+  <div class="accessible-functions mb-8">
+    <h2 class="text-2xl font-semibold text-nepal-700 mb-4">Your Tools & Functions</h2>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+      {% for func in accessible_functions %}
+      <a href="{% url func.url_name %}" 
+         class="function-card bg-white/80 backdrop-blur-sm rounded-lg shadow-md p-6 flex flex-col items-start hover:shadow-xl hover:-translate-y-1 hover:bg-white/90 transition-all duration-300 border border-nepal-100">
+        <div class="icon-container text-4xl mb-4">{{ func.icon }}</div>
+        <h3 class="text-lg font-bold text-nepal-800 mb-2">{{ func.title }}</h3>
+        <p class="text-sm text-nepal-600 flex-grow">{{ func.description }}</p>
+        <div class="mt-4 text-gulf-blue-600 font-semibold">
+          Go to {{ func.title }} &rarr;
         </div>
+      </a>
+      {% empty %}
+      <div class="col-span-full text-center py-12 bg-white/80 backdrop-blur-sm rounded-lg shadow-md border border-nepal-100">
+        <p class="text-nepal-600">You do not have any specific functions assigned in the Fault Locator system.</p>
+        <p class="text-sm text-nepal-500 mt-2">Please contact an administrator if you believe this is an error.</p>
       </div>
       {% endfor %}
     </div>
   </div>
-  {% endif %}
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <!-- Left Column: My Actions & Quick Stats -->
+    <div class="lg:col-span-2 space-y-8">
+      <!-- My Actions -->
+      <div class="my-actions">
+        <h2 class="text-2xl font-semibold text-nepal-700 mb-4">Immediate Actions</h2>
+        <div class="space-y-4">
+          {% for action in my_actions %}
+          <div class="action-item bg-white/80 backdrop-blur-sm rounded-lg shadow-md p-4 flex items-center justify-between border border-nepal-100 hover:bg-white/90 transition-all">
+            <div class="flex items-center">
+              <div class="action-icon mr-4">
+                {% if action.type == 'field_work' %}
+                  <span class="text-3xl">🛠️</span>
+                {% elif action.type == 'management' %}
+                  <span class="text-3xl">👉</span>
+                {% elif action.type == 'monitoring' %}
+                  <span class="text-3xl">👀</span>
+                {% elif action.type == 'deployment' %}
+                  <span class="text-3xl">🚀</span>
+                {% else %}
+                  <span class="text-3xl">🔔</span>
+                {% endif %}
+              </div>
+              <div>
+                <h3 class="font-semibold text-nepal-800">{{ action.title }}</h3>
+                <p class="text-sm text-nepal-600">{{ action.description }}</p>
+              </div>
+            </div>
+            <a href="{{ action.url }}" 
+               class="px-4 py-2 bg-gradient-to-r from-gulf-blue-600 to-tory-blue-primary text-white rounded-lg font-medium hover:from-gulf-blue-700 hover:to-tory-blue-primary transition text-sm">
+              Take Action
+            </a>
+          </div>
+          {% empty %}
+          <div class="text-center py-8 bg-white/80 backdrop-blur-sm rounded-lg shadow-md border border-nepal-100">
+            <p class="text-nepal-600">✅ No immediate actions required. Well done!</p>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Quick Stats -->
+      <div class="quick-stats">
+        <h2 class="text-2xl font-semibold text-nepal-700 mb-4">Quick Statistics</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {% for key, value in quick_stats.items %}
+          <div class="stat-card bg-white/80 backdrop-blur-sm rounded-lg shadow-md p-4 border border-nepal-100 hover:bg-white/90 transition-all">
+            <p class="text-sm text-nepal-600 capitalize">{{ key }}</p>
+            <p class="text-2xl font-bold text-nepal-800">{{ value }}</p>
+          </div>
+          {% empty %}
+          <div class="col-span-full text-center py-8 bg-white/80 backdrop-blur-sm rounded-lg shadow-md border border-nepal-100">
+            <p class="text-nepal-600">No statistics available for your role.</p>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column: Recent Activity -->
+    <div class="recent-activity">
+      <h2 class="text-2xl font-semibold text-nepal-700 mb-4">Recent Activity</h2>
+      <div class="bg-white/80 backdrop-blur-sm rounded-lg shadow-md overflow-hidden border border-nepal-100">
+        <div class="activity-list">
+          {% for activity in recent_activity %}
+          <div class="activity-item border-b border-nepal-200 p-4 hover:bg-nepal-25 transition">
+            <div class="flex justify-between items-start">
+              <div>
+                <p class="text-sm text-nepal-800">{{ activity.description }}</p>
+                <p class="text-xs text-nepal-500">{{ activity.location }} - {{ activity.time|timesince }} ago</p>
+              </div>
+              <span class="px-2 py-1 text-xs rounded-full font-medium
+                           {% if activity.priority == 'Critical' %}bg-scarlet-red-100 text-scarlet-red-800
+                           {% elif activity.priority == 'High' %}bg-lemon-100 text-citron-800
+                           {% else %}bg-nepal-100 text-nepal-800{% endif %}">
+                {{ activity.priority }}
+              </span>
+            </div>
+          </div>
+          {% empty %}
+          <div class="text-center py-12">
+            <p class="text-nepal-600">No recent activity to display.</p>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
+
+<style>
+  .function-card .icon-container {
+    background: linear-gradient(135deg, rgba(var(--gulf-blue-600), 0.1) 0%, rgba(var(--jade-600), 0.1) 100%);
+    border-radius: 50%;
+    width: 64px;
+    height: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+</style>
 {% endblock %}

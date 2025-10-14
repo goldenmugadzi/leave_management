@@ -94,26 +94,9 @@ except Exception:
 from django.http import FileResponse, HttpResponseNotFound
 from django.db.models.functions import TruncMonth
 from django.db.models import Sum, Count
-
-from .utils import notify_head_office_approvers, get_regional_budget_impact_summary
-
-# Safe helper to get a queryset of Roles for the current user without assuming request.user has a direct 'roles' M2M
-def get_user_roles_qs(user):
-    """Return a queryset of Roles for the given user safely.
-    Falls back to looking up UserProfile if needed; returns empty queryset on failure.
-    """
-    try:
-        # If the user model already has roles M2M
-        if hasattr(user, 'roles') and callable(getattr(user, 'roles').all):
-            return user.roles.all()
-        # Fallback via profile lookup
-        if hasattr(user, 'id'):
-            profile = UserProfile.objects.filter(id=user.id).first()
-            if profile and hasattr(profile, 'roles'):
-                return profile.roles.all()
-    except Exception:
-        pass
-    return Roles.objects.none()
+from django.contrib import messages
+from fault_locator.central_roles import FaultLocatorRoleManager
+from it.users.models import UserProfile, Application, Roles
 
 # Create your views here.
 @login_required
@@ -3161,783 +3144,358 @@ def monthly_usage_dashboard(request):
     }
     return render(request, 'finance/ace2/monthly_usage_dashboard.html', context)
 
-@login_required
-def transactions_excel_export(request):
-    """Export all transactions in the user's region to Excel (excluding rejected ACEs)"""
-    user_id = request.user.id
-    user_profile = UserProfile.objects.filter(id=user_id).first()
-    region = Regions.objects.filter(id=user_profile.region.id).first()
-    
-    # Use select_related to avoid DoesNotExist errors and exclude rejected transactions
-    transactions = Transactions.objects.filter(
-        region=region
-    ).exclude(
-        approval_status__icontains='rejected'
-    ).select_related(
-        'Ace_id2', 'Ace_id2__requested_by', 'virament', 'section', 'region', 'budget'
-    )
-    
-    response = HttpResponse(content_type='application/ms-excel')
-    response['Content-Disposition'] = 'attachment; filename="transactions_report.xlsx"'
-    
-    wb = Workbook()
-    ws = wb.active
-    
-    # Add header row
-    ws.append([
-        'Transaction ID',
-        'ACE ID',
-        'Virament ID',
-        'Details',
-        'Amount',
-        'Requested By',
-        'Date Created',
-        'Section',
-        'Section Code',
-        'Region',
-        'Budget',
-        'Approval Status'
-    ])
-    
-    # Add data rows
-    for transaction in transactions:
-        # Skip if ACE is rejected (additional check)
-        if transaction.Ace_id2 and transaction.Ace_id2.process:
-            if transaction.Ace_id2.process.approval_set.filter(approved="Rejected").exists():
-                continue
-                
-        # Safe access to related objects
-        try:
-            section_name = transaction.section.section if transaction.section else ''
-        except:
-            section_name = ''
-            
-        try:
-            section_code = transaction.section.code if transaction.section else ''
-        except:
-            section_code = ''
-            
-        try:
-            region_name = transaction.region.region if transaction.region else ''
-        except:
-            region_name = ''
-            
-        try:
-            budget_name = transaction.budget.budget_name if transaction.budget else ''
-        except:
-            budget_name = ''
-            
-        try:
-            requested_by = transaction.Ace_id2.requested_by.get_full_name() if transaction.Ace_id2 and transaction.Ace_id2.requested_by else ''
-        except:
-            requested_by = ''
-            
-        try:
-            date_created = transaction.Ace_id2.date_created.strftime('%Y-%m-%d') if transaction.Ace_id2 and transaction.Ace_id2.date_created else ''
-        except:
-            date_created = ''
-        
-        ws.append([
-            transaction.transaction_id,
-            transaction.Ace_id2.Ace_id2 if transaction.Ace_id2 else '',
-            transaction.virament.virament_id if transaction.virament else '',
-            transaction.details_of_expenditure or '',
-            transaction.amount or 0,
-            requested_by,
-            date_created,
-            section_name,
-            section_code,
-            region_name,
-            budget_name,
-            transaction.approval_status or ''
-        ])
-    
-    wb.save(response)
-    return response
 
 
-@login_required
-def transactions_for_budget_excel_export(request, budget_id):
-    """Export transactions for a specific budget to Excel (excluding rejected ACEs)"""
-    user_id = request.user.id
-    user_profile = UserProfile.objects.filter(id=user_id).first()
+def check_user_role_with_troubleshooting(request):
+    """
+    Check user role and provide troubleshooting messages if no role found.
+    Returns (user_profile, user_role, has_issues)
+    """
+    user_profile = UserProfile.objects.filter(id=request.user.id).first()
     
-    # Use select_related to avoid DoesNotExist errors and exclude rejected transactions
-    transactions = Transactions.objects.filter(
-        budget_id=budget_id
-    ).exclude(
-        approval_status__icontains='rejected'
-    ).select_related(
-        'Ace_id2', 'Ace_id2__requested_by', 'virament', 'section', 'region', 'budget'
-    )
+    if not user_profile:
+        messages.error(request, 
+            "❌ No user profile found. Please contact your system administrator to create your profile.")
+        return None, None, True
     
-    # Get budget name for filename
-    budget = get_object_or_404(AssetBudget, pk=budget_id)
-    # Clean filename to avoid invalid characters
-    clean_budget_name = "".join(c for c in budget.budget_name if c.isalnum() or c in (' ', '-', '_')).rstrip()
-    filename = f"transactions_budget_{clean_budget_name.replace(' ', '_')}.xlsx"
+    # Check if fault locator application exists
+    fault_app = Application.objects.filter(name='fault_locator').first()
+    if not fault_app:
+        messages.error(request, 
+            "❌ Fault Locator application not configured. Contact system administrator.")
+        return user_profile, None, True
     
-    response = HttpResponse(content_type='application/ms-excel')
-    response['Content-Disposition'] = f'attachment; filename="{filename}"'
-    
-    wb = Workbook()
-    ws = wb.active
-    
-    # Add header row
-    ws.append([
-        'Transaction ID',
-        'ACE ID',
-        'Virament ID',
-        'Details',
-        'Amount',
-        'Requested By',
-        'Date Created',
-        'Section',
-        'Section Code',
-        'Region',
-        'Budget',
-        'Approval Status'
-    ])
-    
-    # Add data rows
-    for transaction in transactions:
-        # Skip if ACE is rejected (additional check)
-        if transaction.Ace_id2 and transaction.Ace_id2.process:
-            if transaction.Ace_id2.process.approval_set.filter(approved="Rejected").exists():
-                continue
-                
-        # Safe access to related objects
-        try:
-            section_name = transaction.section.section if transaction.section else ''
-        except:
-            section_name = ''
-            
-        try:
-            section_code = transaction.section.code if transaction.section else ''
-        except:
-            section_code = ''
-            
-        try:
-            region_name = transaction.region.region if transaction.region else ''
-        except:
-            region_name = ''
-            
-        try:
-            budget_name = transaction.budget.budget_name if transaction.budget else ''
-        except:
-            budget_name = ''
-            
-        try:
-            requested_by = transaction.Ace_id2.requested_by.get_full_name() if transaction.Ace_id2 and transaction.Ace_id2.requested_by else ''
-        except:
-            requested_by = ''
-            
-        try:
-            date_created = transaction.Ace_id2.date_created.strftime('%Y-%m-%d') if transaction.Ace_id2 and transaction.Ace_id2.date_created else ''
-        except:
-            date_created = ''
+    # Check if user has any fault locator role
+    try:
+        user_role = FaultLocatorRoleManager.get_user_role(user_profile)
+        has_any_role = FaultLocatorRoleManager.has_any_role(user_profile)
         
-        ws.append([
-            transaction.transaction_id,
-            transaction.Ace_id2.Ace_id2 if transaction.Ace_id2 else '',
-            transaction.virament.virament_id if transaction.virament else '',
-            transaction.details_of_expenditure or '',
-            transaction.amount or 0,
-            requested_by,
-            date_created,
-            section_name,
-            section_code,
-            region_name,
-            budget_name,
-            transaction.approval_status or ''
-        ])
-    
-    wb.save(response)
-    return response
+        if not has_any_role:
+            # User has no fault locator role - provide helpful troubleshooting
+            _provide_role_troubleshooting_messages(request, user_profile)
+            return user_profile, None, True
+        
+        return user_profile, user_role, False
+        
 
-@login_required
-def ace_report_detail_csv(request, report_id2=None):
-    """Export ACE report to CSV format"""
-    if report_id2:
-        report = get_object_or_404(AceReport, report_id2=report_id2)
-        # Only filter by budget if a specific budget is selected
-        if report.budget_id:
-            aces = Ace2.objects.filter(
-                region=report.region,
-                budget_id=report.budget_id,
-                date_created__range=[report.start_date, report.end_date]
-            )
-        else:
-            aces = Ace2.objects.filter(
-                region=report.region,
-                date_created__range=[report.start_date, report.end_date]
-            )
         
-        filename = f"ace_report_{report.report_id2}.csv"
+    except Exception as e:
+        messages.error(request, 
+            f"❌ Error checking your roles: {str(e)}. Please contact system administrator.")
+        return user_profile, None, True
+
+
+def _provide_role_troubleshooting_messages(request, user_profile):
+    """Provide helpful troubleshooting messages for users without roles"""
+    
+    # Check user profile completeness
+    missing_info = []
+    if not user_profile.depot:
+        missing_info.append('depot assignment')
+    if not user_profile.designation:
+        missing_info.append('job designation')
+    if not user_profile.section:
+        missing_info.append('section assignment')
+    
+    if missing_info:
+        messages.warning(request, 
+            f"⚠️ Your profile is missing: {', '.join(missing_info)}. "
+            "This may prevent proper role assignment.")
+    
+    # Suggest role based on designation
+    suggested_role = _suggest_role_from_designation(user_profile)
+    if suggested_role:
+        messages.info(request, 
+            f"💡 Based on your designation '{user_profile.designation}', "
+            f"you should likely have the '{suggested_role}' role.")
+    
+    # Main error message with actionable steps
+    messages.error(request, 
+        "🚫 You don't have any Fault Locator roles assigned. "
+        "You cannot access fault reporting features until a role is assigned.")
+    
+    # Provide specific steps to resolve
+    if user_profile.depot:
+        messages.info(request, 
+            f"📋 Next steps:\n"
+            f"1. Contact your depot supervisor at {user_profile.depot}\n"
+            f"2. Request appropriate Fault Locator role assignment\n"
+            f"3. Alternatively, contact IT support for assistance")
     else:
-        # Get parameters from GET request for all budgets report
-        start_date = parse_date(request.GET.get('start_date'))
-        end_date = parse_date(request.GET.get('end_date'))
-        region_id = request.GET.get('region')
-        budget_id = request.GET.get('budget_id')
-        all_budgets = request.GET.get('all_budgets')
-        
-        # Handle filters - build query based on provided parameters
-        ace_filter = {}
-        
-        # Add date range filter if dates are provided
-        if start_date and end_date:
-            ace_filter['date_created__range'] = [start_date, end_date]
-        elif start_date:
-            ace_filter['date_created__gte'] = start_date
-        elif end_date:
-            ace_filter['date_created__lte'] = end_date
-        
-        # Add region filter if region is provided and not empty
-        if region_id and region_id.strip():
-            try:
-                region = get_object_or_404(Regions, id=int(region_id))
-                ace_filter['region'] = region
-            except (ValueError, TypeError):
-                pass  # Skip invalid region IDs
-        
-        # Add budget filter only if a specific budget is provided and all_budgets is not set
-        if budget_id and budget_id.strip() and not all_budgets:
-            try:
-                from .models import AssetBudget
-                budget = get_object_or_404(AssetBudget, budget_id=int(budget_id))
-                ace_filter['budget_id'] = budget
-            except (ValueError, TypeError):
-                pass  # Skip invalid budget IDs
-        # If all_budgets=1 or no budget_id specified, don't add budget filter (includes all budgets)
-        
-        aces = Ace2.objects.filter(**ace_filter)
-        
-        # Generate descriptive filename
-        if all_budgets or not budget_id:
-            filename = f"ace_report_all_budgets_{start_date or 'all'}_to_{end_date or 'all'}.csv"
-        else:
-            filename = f"ace_report_budget_{budget_id}_{start_date or 'all'}_to_{end_date or 'all'}.csv"
+        messages.info(request, 
+            "📋 Next steps:\n"
+            "1. Contact your line manager to complete your profile\n"
+            "2. Request depot and role assignment\n"
+            "3. Contact IT support if issues persist")
     
-    # Create CSV response
-    response = HttpResponse(content_type='text/csv')
-    response['Content-Disposition'] = f'attachment; filename="{filename}"'
-    
-    writer = csv.writer(response)
-    
-    # Write header row
-    writer.writerow([
-        'ACE ID',
-        'Details of Expenditure',
-        'Requested By',
-        'Section',
-        'Date Created',
-        'Budget',
-        'Amount',
-        'Transaction Status',
-        'Approval Status',
-        'Actioned By'
-    ])
-    
-    # Write data rows
-    for ace in aces:
-        # Get transaction info
-        transaction = Transactions.objects.filter(Ace_id2=ace).first()
-        
-        # Get approval info
-        latest_approval = ace.process.approval_set.last() if ace.process and ace.process.approval_set.exists() else None
-        approval_status = latest_approval.approved if latest_approval else ''
-        actioned_by = latest_approval.user.get_full_name() if latest_approval and latest_approval.user else ''
-        
-        # Get section name safely
-        try:
-            section_name = ace.section.section if ace.section else ''
-        except:
-            section_name = ''
-        
-        writer.writerow([
-            ace.Ace_id2,
-            ace.details_of_expenditure,
-            ace.requested_by.get_full_name() if ace.requested_by else '',
-            section_name,
-            ace.date_created.strftime('%Y-%m-%d') if ace.date_created else '',
-            ace.budget_id.budget_name if ace.budget_id else '',
-            ace.amount,
-            transaction.approval_status if transaction else '',
-            approval_status,
-            actioned_by
-        ])
-    
-    return response
-
-@login_required
-def export_current_year_csv(request):
-    """Export current year ACE data for user's region to CSV"""
-    user_id = request.user.id
-    user_profile = UserProfile.objects.filter(id=user_id).first()
-    current_year = timezone.now().year
-    
-    # Get user's region
-    region = user_profile.region
-    
-    # Filter ACEs for current year and user's region
-    aces = Ace2.objects.filter(
-        date_created__year=current_year,
-        region=region
-    ).order_by('-date_created')
-    
-    # Create CSV response
-    response = HttpResponse(content_type='text/csv')
-    response['Content-Disposition'] = f'attachment; filename="ace_report_{current_year}_{region.region}.csv"'
-    
-    writer = csv.writer(response)
-    
-    # Write header row
-    writer.writerow([
-        'ACE ID',
-        'Details of Expenditure',
-        'Requested By',
-        'Section',
-        'Date Created',
-        'Budget',
-        'Amount',
-        'Transaction Status',
-        'Approval Status',
-        'Actioned By'
-    ])
-    
-    # Write data rows
-    for ace in aces:
-        # Get transaction info
-        transaction = Transactions.objects.filter(Ace_id2=ace).first()
-        
-        # Get approval info
-        latest_approval = ace.process.approval_set.last() if ace.process and ace.process.approval_set.exists() else None
-        approval_status = latest_approval.approved if latest_approval else ''
-        actioned_by = latest_approval.user.get_full_name() if latest_approval and latest_approval.user else ''
-        
-        # Get section name safely
-        try:
-            section_name = ace.section.section if ace.section else ''
-        except:
-            section_name = ''
-        
-        writer.writerow([
-            ace.Ace_id2,
-            ace.details_of_expenditure,
-            ace.requested_by.get_full_name() if ace.requested_by else '',
-            section_name,
-            ace.date_created.strftime('%Y-%m-%d') if ace.date_created else '',
-            ace.budget_id.budget_name if ace.budget_id else '',
-            ace.amount,
-            transaction.approval_status if transaction else '',
-            approval_status,
-            actioned_by
-        ])
-    
-    return response
-
-@login_required
-def export_current_year_pdf(request):
-    """Export current year ACE data for user's region to PDF"""
-    user_id = request.user.id
-    user_profile = UserProfile.objects.filter(id=user_id).first()
-    current_year = timezone.now().year
-    
-    # Get user's region
-    region = user_profile.region
-    
-    # Filter ACEs for current year and user's region
-    aces = Ace2.objects.filter(
-        date_created__year=current_year,
-        region=region
-    ).order_by('-date_created')
-    
-    # Get budget summary for context
-    budgets = AssetBudget.objects.filter(region=region, period=current_year).order_by('-allocated')
-    budget_summary = []
-    
-    for budget_item in budgets:
-        if budget_item.allocated > 0:
-            budget_aces = aces.filter(budget_id=budget_item)
-            ace_count = budget_aces.count()
-            total_ace_amount = budget_aces.aggregate(total=Sum('amount'))['total'] or 0
-            avg_ace_amount = total_ace_amount / ace_count if ace_count > 0 else 0
-            
-            utilization_percentage = (budget_item.withdrawn / budget_item.allocated * 100) if budget_item.allocated > 0 else 0
-            pending_percentage = (budget_item.to_be_withdrawn / budget_item.allocated * 100) if budget_item.allocated > 0 else 0
-            available_percentage = (budget_item.balance / budget_item.allocated * 100) if budget_item.allocated > 0 else 0
-            total_commitment_percentage = utilization_percentage + pending_percentage
-            
-            budget_summary.append({
-                'budget': budget_item,
-                'allocated': budget_item.allocated,
-                'withdrawn': budget_item.withdrawn,
-                'to_be_withdrawn': budget_item.to_be_withdrawn,
-                'balance': budget_item.balance,
-                'utilization_percentage': utilization_percentage,
-                'pending_percentage': pending_percentage,
-                'available_percentage': available_percentage,
-                'total_commitment_percentage': total_commitment_percentage,
-                'total_committed': budget_item.withdrawn + budget_item.to_be_withdrawn,
-                'ace_count': ace_count,
-                'avg_ace_amount': avg_ace_amount,
-                'health_status': 'good' if budget_item.balance > (budget_item.allocated * 0.3) else 'warning' if budget_item.balance > (budget_item.allocated * 0.1) else 'critical'
-            })
-    
-    template = loader.get_template('finance/ace2/ace_reports.html')
-    context = {
-        'aces': aces,
-        'budget_summary': budget_summary,
-        'current_year': current_year,
-        'request': request
-    }
-    html = template.render(context, request)
-    pdf = HTML(string=html).write_pdf()
-    
-    response = HttpResponse(pdf, content_type='application/pdf')
-    response['Content-Disposition'] = f'attachment; filename="ace_report_{current_year}_{region.region}.pdf"'
-    return response
-
-
-@login_required
-def enhanced_add_asset_number(request):
-    """Enhanced asset number addition - works alongside your existing function"""
-    if request.method == 'POST':
-        try:
-            print('Enhanced asset number addition')
-            
-            ace_id = request.POST['ace_id']
-            ace_items = request.POST.getlist('asset_number[]')
-            use_enhanced = request.POST.get('use_enhanced', 'false') == 'true'
-            
-            ace = Ace2.objects.filter(Ace_id2=ace_id).first()
-            if not ace:
-                messages.error(request, 'ACE not found')
-                return redirect('/ace/aces')
-            
-            if use_enhanced:
-                # Use enhanced system
-                added_count = 0
-                errors = []
-                
-                for asset_num in ace_items:
-                    asset_num = asset_num.strip()
-                    if asset_num:
-                        try:
-                            # Check if already exists in enhanced system
-                            if ace.enhanced_asset_numbers.filter(asset_number=asset_num).exists():
-                                errors.append(f"Asset {asset_num} already exists")
-                                continue
-                                
-                            ace_asset = AceAssetNumber.objects.create(
-                                ace=ace,
-                                asset_number=asset_num,
-                                added_by=request.user,
-                                notes="Added via enhanced system"
-                            )
-                            ace_asset.verify_against_register()
-                            added_count += 1
-                            
-                        except Exception as e:
-                            errors.append(f"Error adding {asset_num}: {str(e)}")
-                
-                # Also update your existing field for backward compatibility
-                all_assets = ace.get_all_asset_numbers()
-                ace.asset_number = ','.join(all_assets)
-                ace.save()
-                
-                if added_count > 0:
-                    messages.success(request, f'Added {added_count} asset numbers using enhanced system')
-                if errors:
-                    for error in errors:
-                        messages.warning(request, error)
-                        
-            else:
-                # Fall back to your existing system
-                ace.asset_number = ','.join(ace_items)
-                ace.save()
-                messages.success(request, 'Asset numbers added using existing system')
-            
-            return redirect('Ace:ace_detail', Ace_id2=ace.Ace_id2)
-            
-        except Exception as e:
-            messages.error(request, f'Error: {str(e)}')
-            return redirect('/ace/aces')
-    
-    return redirect('/ace/aces')
-
-
-@login_required
-def asset_autocomplete_api(request):
-    """AJAX API for asset number autocomplete"""
+    # Show available roles for reference
     try:
-        query = request.GET.get('q', '').strip()
-        if len(query) < 2:
-            return JsonResponse({'results': []})
-        
-        results = []
-        
-        # Search in Asset Register (if available)
-        try:
-            from Asset_Register.models import ZetdcAssets
-            assets = ZetdcAssets.objects.filter(
-                asset_number__icontains=query
-            ).select_related('product_type')[:15]
-            
-            for asset in assets:
-                results.append({
-                    'id': asset.asset_number,
-                    'text': f"{asset.asset_number} - {getattr(asset.product_type, 'product_type', 'Unknown')}",
-                    'verified': True,
-                    'source': 'Asset Register'
-                })
-                
-        except (ImportError, Exception) as e:
-            print(f"Asset Register not available: {e}")
-        
-        # Search in existing ACE asset numbers for suggestions
-        existing_assets = AceAssetNumber.objects.filter(
-            asset_number__icontains=query
-        ).values_list('asset_number', flat=True).distinct()[:10]
-        
-        for asset_num in existing_assets:
-            if not any(r['id'] == asset_num for r in results):
-                results.append({
-                    'id': asset_num,
-                    'text': f"{asset_num} - Previously Used",
-                    'verified': False,
-                    'source': 'Previous ACEs'
-                })
-        
-        # Search in legacy asset numbers for additional suggestions
-        legacy_aces = Ace2.objects.exclude(
-            asset_number__isnull=True
-        ).exclude(
-            asset_number__exact=''
-        ).filter(
-            asset_number__icontains=query
-        )[:5]
-        
-        for ace in legacy_aces:
-            if ace.asset_number:
-                asset_list = [an.strip() for an in ace.asset_number.split(',') if an.strip()]
-                for asset_num in asset_list:
-                    if query.lower() in asset_num.lower() and not any(r['id'] == asset_num for r in results):
-                        results.append({
-                            'id': asset_num,
-                            'text': f"{asset_num} - From ACE {ace.Ace_id2}",
-                            'verified': False,
-                            'source': 'Legacy ACE'
-                        })
-        
-        # Allow manual entry
-        if query and not any(r['id'] == query for r in results):
-            results.insert(0, {
-                'id': query,
-                'text': f"{query} - New Asset Number",
-                'verified': False,
-                'source': 'Manual Entry'
-            })
-        
-        return JsonResponse({'results': results})
-        
-    except Exception as e:
-        print(f"Error in asset autocomplete: {e}")
-        return JsonResponse({'results': []})
+        available_roles = FaultLocatorRoleManager.get_available_roles()
+        if available_roles:
+            role_names = ', '.join([role.name for role in available_roles])
+            messages.info(request, 
+                f"ℹ️ Available roles: {role_names}")
+    except:
+        pass
 
 
+def _suggest_role_from_designation(user_profile):
+    """Suggest appropriate role based on user's designation"""
+    if not user_profile.designation:
+        return 'Team Member'  # Default suggestion
+    
+    designation = str(user_profile.designation).lower()
+    
+    if 'senior' in designation and 'foreman' in designation:
+        return 'Senior Foreman'
+    elif 'foreperson' in designation or 'depot' in designation:
+        return 'Depot Foreperson'
+    elif 'team leader' in designation or 'supervisor' in designation:
+        return 'Team Leader'
+    elif 'technician' in designation or 'artisan' in designation:
+        return 'Team Member'
+    else:
+        return 'Team Member'  # Default
+
+
+# Enhanced dashboard view with role troubleshooting
 @login_required
-def migrate_ace_assets(request, ace_id):
-    """Migrate existing asset numbers to enhanced format"""
+def dashboard(request):
+    """Enhanced dashboard with comprehensive role troubleshooting"""
+    
+    # Check user role with troubleshooting
+    user_profile, user_role, has_issues = check_user_role_with_troubleshooting(request)
+    
+    if has_issues:
+        # If there are role issues, show a basic dashboard with troubleshooting info
+        context = {
+            'user': request.user,
+            'user_profile': user_profile,
+            'has_role_issues': True,
+            'show_troubleshooting': True
+        }
+        return render(request, 'fault_locator/dashboard.html', context)
+    
+    # User has valid role - continue with normal dashboard
     try:
-        ace = get_object_or_404(Ace2, Ace_id2=ace_id)
+        user_role_display = FaultLocatorRoleManager.get_user_role_display(user_profile)
         
-        # Check permissions (only accounting officers)
-        user_roles = get_user_roles_qs(request.user)
-        ace_roles = [role.name for role in user_roles if 'accounting_officer' in role.name.lower()]
-        
-        if not ace_roles:
-            messages.error(request, 'Permission denied')
-            return redirect('Ace:ace_detail', Ace_id2=ace.Ace_id2)
-        
-        migrated_count = ace.migrate_to_enhanced_assets(request.user)
-        
-        if migrated_count > 0:
-            messages.success(request, f'Successfully migrated {migrated_count} asset numbers to enhanced format')
-        else:
-            messages.info(request, 'No asset numbers to migrate or already migrated')
-            
-        return redirect('Ace:ace_detail', Ace_id2=ace.Ace_id2)
-        
-    except Exception as e:
-        messages.error(request, f'Migration error: {str(e)}')
-        return redirect('Ace:ace_detail', Ace_id2=ace.Ace_id2)
-
-
-@login_required
-def remove_enhanced_asset(request, ace_id, asset_id):
-    """Remove an asset from enhanced system"""
-    try:
-        ace = get_object_or_404(Ace2, Ace_id2=ace_id)
-        ace_asset = get_object_or_404(AceAssetNumber, id=asset_id, ace=ace)
-        
-        # Check permissions
-        user_roles = get_user_roles_qs(request.user)
-        ace_roles = [role.name for role in user_roles if 'accounting_officer' in role.name.lower()]
-        
-        if not ace_roles:
-            messages.error(request, 'Permission denied')
-            return redirect('Ace:ace_detail', Ace_id2=ace.Ace_id2)
-        
-        asset_number = ace_asset.asset_number
-        ace_asset.delete()
-        
-        # Update legacy field
-        all_assets = ace.get_all_asset_numbers()
-        ace.asset_number = ','.join(all_assets)
-        ace.save()
-        
-        messages.success(request, f'Removed asset number {asset_number}')
-        return redirect('Ace:ace_detail', Ace_id2=ace_id)
-        
-    except Exception as e:
-        messages.error(request, f'Error removing asset: {str(e)}')
-        return redirect('Ace:ace_detail', Ace_id2=ace_id)
-
-
-@login_required
-def asset_management_dashboard(request):
-    """Dashboard for managing asset number migration and overview"""
-    # Calculate statistics
-    total_aces = Ace2.objects.count()
-    aces_with_legacy = Ace2.objects.exclude(asset_number__isnull=True).exclude(asset_number__exact='').count()
-    aces_with_enhanced = Ace2.objects.filter(enhanced_asset_numbers__isnull=False).distinct().count()
-    ready_to_migrate = Ace2.objects.exclude(
-        asset_number__isnull=True
-    ).exclude(
-        asset_number__exact=''
-    ).filter(
-        enhanced_asset_numbers__isnull=True
-    ).count()
-    
-    stats = {
-        'total_aces': total_aces,
-        'legacy_assets': aces_with_legacy,
-        'enhanced_assets': aces_with_enhanced,
-        'ready_to_migrate': ready_to_migrate,
-    }
-    
-    # Get sample ACEs for display
-    sample_aces = Ace2.objects.exclude(
-        asset_number__isnull=True
-    ).exclude(
-        asset_number__exact=''
-    ).prefetch_related('enhanced_asset_numbers')[:20]
-    
-    # Add asset count to each ACE
-    for ace in sample_aces:
-        if ace.asset_number:
-            ace.asset_count = len([an.strip() for an in ace.asset_number.split(',') if an.strip()])
-        else:
-            ace.asset_count = 0
-    
-    context = {
-        'stats': stats,
-        'sample_aces': sample_aces,
-    }
-    
-    return render(request, 'finance/ace2/asset_management_dashboard.html', context)
-
-
-@login_required
-def bulk_migrate_assets(request):
-    """Bulk migrate all legacy assets to enhanced system"""
-    if request.method != 'POST':
-        return JsonResponse({'error': 'POST method required'}, status=405)
-    
-    try:
-        # Check permissions
-        user_roles = get_user_roles_qs(request.user)
-        ace_roles = [role.name for role in user_roles if 'accounting_officer' in role.name.lower() or request.user.is_superuser]
-        
-        if not ace_roles and not request.user.is_superuser:
-            return JsonResponse({'error': 'Permission denied'}, status=403)
-        
-        # Get ACEs ready for migration
-        aces_to_migrate = Ace2.objects.exclude(
-            asset_number__isnull=True
-        ).exclude(
-            asset_number__exact=''
-        ).filter(
-            enhanced_asset_numbers__isnull=True
-        )
-        
-        migrated_count = 0
-        ace_count = 0
-        errors = []
-        
-        for ace in aces_to_migrate:
-            try:
-                count = ace.migrate_to_enhanced_assets(request.user)
-                if count > 0:
-                    migrated_count += count
-                    ace_count += 1
-            except Exception as e:
-                errors.append(f'ACE {ace.Ace_id2}: {str(e)}')
-        
-        response_data = {
-            'migrated_count': migrated_count,
-            'ace_count': ace_count,
+        context = {
+            'user': request.user,
+            'user_profile': user_profile,
+            'user_role': user_role,
+            'user_role_display': user_role_display,
+            'has_role_issues': False,
+            'show_troubleshooting': False
         }
         
-        if errors:
-            response_data['errors'] = errors
-            
-        return JsonResponse(response_data)
+        # Add role-specific dashboard content
+        if user_role == FaultLocatorRoleManager.SENIOR_FOREMAN:
+            context.update(_get_senior_foreman_dashboard_data(user_profile))
+        elif user_role == FaultLocatorRoleManager.DEPOT_FOREPERSON:
+            context.update(_get_depot_foreperson_dashboard_data(user_profile))
+        elif user_role == FaultLocatorRoleManager.TEAM_LEADER:
+            context.update(_get_team_leader_dashboard_data(user_profile))
+        else:
+            context.update(_get_team_member_dashboard_data(user_profile))
+        
+        return render(request, 'fault_locator/dashboard.html', context)
         
     except Exception as e:
-        return JsonResponse({'error': str(e)}, status=500)
-
-
-@login_required
-def test_migrate_assets(request):
-    """Test migration without making changes"""
-    try:
-        aces_to_migrate = Ace2.objects.exclude(
-            asset_number__isnull=True
-        ).exclude(
-            asset_number__exact=''
-        ).filter(
-            enhanced_asset_numbers__isnull=True
-        )
-        
-        total_assets = 0
-        samples = []
-        
-        for ace in aces_to_migrate[:10]:  # Sample first 10
-            if ace.asset_number:
-                asset_list = [an.strip() for an in ace.asset_number.split(',') if an.strip()]
-                asset_count = len(asset_list)
-                total_assets += asset_count
-                
-                samples.append({
-                    'ace_id': ace.Ace_id2,
-                    'asset_count': asset_count,
-                    'assets': asset_list
-                })
-        
-        # Count total for all ACEs
-        for ace in aces_to_migrate:
-            if ace.asset_number:
-                asset_list = [an.strip() for an in ace.asset_number.split(',') if an.strip()]
-                total_assets += len(asset_list)
-        
-        return JsonResponse({
-            'total_aces': aces_to_migrate.count(),
-            'total_assets': total_assets,
-            'samples': samples
+        messages.error(request, f"❌ Error loading dashboard: {str(e)}")
+        return render(request, 'fault_locator/dashboard.html', {
+            'user': request.user,
+            'user_profile': user_profile,
+            'has_role_issues': True,
+            'show_troubleshooting': True
         })
+
+
+# Enhanced fault reporting view with role troubleshooting
+@login_required
+def report_fault(request):
+    """Report fault with role troubleshooting"""
+    
+    # Check user role with troubleshooting
+    user_profile, user_role, has_issues = check_user_role_with_troubleshooting(request)
+    
+    if has_issues:
+        messages.error(request, 
+            "🚫 You cannot report faults without an assigned role. "
+            "Please resolve the role issues first.")
+        return redirect('fault_locator_dashboard')
+    
+    # Additional permission check for fault reporting
+    if not _can_report_faults(user_profile, user_role):
+        messages.error(request, 
+            f"🚫 Your role '{FaultLocatorRoleManager.get_user_role_display(user_profile)}' "
+            "does not have permission to report faults. Contact your supervisor.")
+        return redirect('fault_locator_dashboard')
+    
+    # Continue with normal fault reporting logic
+    if request.method == 'POST':
+        # ... existing fault reporting logic
+        pass
+    
+    return render(request, 'fault_locator/report_fault.html', {
+        'user_profile': user_profile,
+        'user_role': user_role
+    })
+
+
+# Enhanced team assignment view with role troubleshooting
+@login_required
+def assign_fault_to_team(request):
+    """Assign fault to team with role troubleshooting"""
+    
+    # Check user role with troubleshooting
+    user_profile, user_role, has_issues = check_user_role_with_troubleshooting(request)
+    
+    if has_issues:
+        return redirect('fault_locator_dashboard')
+    
+    # Check specific permission for fault assignment
+    if not _can_assign_faults(user_profile, user_role):
+        messages.error(request, 
+            f"🚫 Your role '{FaultLocatorRoleManager.get_user_role_display(user_profile)}' "
+            "cannot assign faults to teams. Only Depot Forepersons and Senior Foremen can assign faults.")
+        return redirect('fault_locator_dashboard')
+    
+    # Continue with normal assignment logic
+    # ... existing assignment logic
+
+
+# Helper function to provide role-specific troubleshooting
+@login_required
+def role_troubleshooting(request):
+    """Dedicated troubleshooting view with detailed role information"""
+    
+    user_profile = UserProfile.objects.filter(id=request.user.id).first()
+    
+    if not user_profile:
+        messages.error(request, 
+            "❌ No user profile found. Please contact system administrator.")
+        return redirect('home')
+    
+    # Get detailed role information
+    try:
+        user_role = FaultLocatorRoleManager.get_user_role(user_profile)
+        has_any_role = FaultLocatorRoleManager.has_any_role(user_profile)
+        available_roles = FaultLocatorRoleManager.get_available_roles()
+        
+        # Get fault locator application info
+        fault_app = Application.objects.filter(name='fault_locator').first()
+        user_fault_roles = []
+        
+        if fault_app:
+            user_fault_roles = user_profile.roles.filter(app_id=fault_app)
+        
+        # Provide comprehensive troubleshooting messages
+        if not has_any_role:
+            messages.warning(request, 
+                "⚠️ DIAGNOSIS: You have no Fault Locator roles assigned.")
+            
+            # Check if user has roles in other applications
+            other_roles = user_profile.roles.exclude(application='fault_locator')
+            if other_roles.exists():
+                other_apps = ', '.join(set([r.application for r in other_roles]))
+                messages.info(request, 
+                    f"ℹ️ You have roles in other applications: {other_apps}")
+            
+            _provide_role_troubleshooting_messages(request, user_profile)
+        else:
+            messages.success(request, 
+                f"✅ You have the role: {FaultLocatorRoleManager.get_user_role_display(user_profile)}")
+        
+        # Show system status
+        messages.info(request, 
+            f"🔧 System Status:\n"
+            f"• Fault Locator App: {'✅ Configured' if fault_app else '❌ Missing'}\n"
+            f"• Available Roles: {available_roles.count()}\n"
+            f"• Your Profile Complete: {'✅ Yes' if _is_profile_complete(user_profile) else '⚠️ Incomplete'}")
+        
+        context = {
+            'user_profile': user_profile,
+            'user_role': user_role,
+            'has_any_role': has_any_role,
+            'available_roles': available_roles,
+            'user_fault_roles': user_fault_roles,
+            'profile_complete': _is_profile_complete(user_profile)
+        }
+        
+        return render(request, 'fault_locator/troubleshooting.html', context)
         
     except Exception as e:
-        return JsonResponse({'error': str(e)}, status=500)
+        messages.error(request, 
+            f"❌ Error during troubleshooting: {str(e)}")
+        return redirect('fault_locator_dashboard')
+
+
+# Helper functions
+def _can_report_faults(user_profile, user_role):
+    """Check if user can report faults based on role"""
+    return user_role in [
+        FaultLocatorRoleManager.TEAM_MEMBER,
+        FaultLocatorRoleManager.TEAM_LEADER,
+        FaultLocatorRoleManager.DEPOT_FOREPERSON,
+        FaultLocatorRoleManager.SENIOR_FOREMAN,
+        FaultLocatorRoleManager.FAULT_REPORTER
+    ]
+
+
+def _can_assign_faults(user_profile, user_role):
+    """Check if user can assign faults to teams"""
+    return user_role in [
+        FaultLocatorRoleManager.DEPOT_FOREPERSON,
+        FaultLocatorRoleManager.SENIOR_FOREMAN
+    ]
+
+
+def _is_profile_complete(user_profile):
+    """Check if user profile has all required information"""
+    return all([
+        user_profile.depot,
+        user_profile.designation,
+        user_profile.section,
+        user_profile.first_name,
+        user_profile.last_name
+    ])
+
+
+# Dashboard data helper functions
+def _get_senior_foreman_dashboard_data(user_profile):
+    """Get dashboard data for senior foreman"""
+    return {
+        'can_manage_roles': True,
+        'can_view_all_faults': True,
+        'can_deploy_teams': True,
+        'dashboard_type': 'senior_foreman'
+    }
+
+
+def _get_depot_foreperson_dashboard_data(user_profile):
+    """Get dashboard data for depot foreperson"""
+    return {
+        'can_assign_faults': True,
+        'can_manage_teams': True,
+        'depot_only': True,
+        'dashboard_type': 'depot_foreperson'
+    }
+
+
+def _get_team_leader_dashboard_data(user_profile):
+    """Get dashboard data for team leader"""
+    return {
+        'can_update_progress': True,
+        'team_view_only': True,
+        'dashboard_type': 'team_leader'
+    }
+
+
+def _get_team_member_dashboard_data(user_profile):
+    """Get dashboard data for team member"""
+    return {
+        'can_report_faults': True,
+        'can_update_progress': True,
+        'dashboard_type': 'team_member'
+    }

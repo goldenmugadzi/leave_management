@@ -162,6 +162,7 @@ INSTALLED_APPS = [
     'EquipTracker',
     'equipment_management',
     'pretask_risk_assessment',
+    'fault_locator',
 ]
 
 AUTH_USER_MODEL = 'users.UserProfile'

@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fault Locator User Guide - Fault Reporter</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background-color: #8e44ad;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .section {
+            margin-bottom: 30px;
+            border-left: 4px solid #7d3c98;
+            padding-left: 20px;
+        }
+        .step {
+            background-color: #f8f9fa;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .menu-item {
+            background-color: #e8daef;
+            padding: 8px 12px;
+            margin: 5px 0;
+            border-radius: 3px;
+            font-weight: bold;
+        }
+        .warning {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .success {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .button {
+            background-color: #8e44ad;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 4px;
+            display: inline-block;
+            margin: 5px;
+        }
+        h1, h2, h3 {
+            color: #2c3e50;
+        }
+        .toc {
+            background-color: #f1f2f6;
+            padding: 20px;
+            margin-bottom: 30px;
+            border-radius: 8px;
+        }
+        .priority-info {
+            background-color: #fef9e7;
+            border-left: 4px solid #f39c12;
+            padding: 15px;
+            margin: 10px 0;
+        }
+        .urgent {
+            background-color: #ffebee;
+            border: 2px solid #f44336;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .form-field {
+            background-color: #f0f3ff;
+            padding: 10px;
+            margin: 5px 0;
+            border-left: 3px solid #3f51b5;
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h1>Fault Locator System</h1>
+    <h2>Fault Reporter User Guide</h2>
+    <p>Fault Reporting & Status Tracking Manual</p>
+</div>
+
+<div class="toc">
+    <h3>Table of Contents</h3>
+    <ol>
+        <li><a href="#overview">Role Overview & Access</a></li>
+        <li><a href="#reporting">Creating Fault Reports</a></li>
+        <li><a href="#priority">Understanding Priority Levels</a></li>
+        <li><a href="#tracking">Tracking Fault Status</a></li>
+        <li><a href="#communication">Communication & Updates</a></li>
+        <li><a href="#guidelines">Reporting Guidelines</a></li>
+        <li><a href="#quality">Quality Assurance</a></li>
+        <li><a href="#troubleshooting">Troubleshooting</a></li>
+    </ol>
+</div>
+
+<div class="section" id="overview">
+    <h2>1. Role Overview & Access</h2>
+    
+    <div class="priority-info">
+        <strong>Your Role:</strong> As a Fault Reporter, you're the first line of communication for electrical system issues, responsible for accurate fault reporting and initial customer liaison.
+    </div>
+    
+    <h3>Key Responsibilities:</h3>
+    <ul>
+        <li>Create accurate and detailed fault reports</li>
+        <li>Assign appropriate priority levels</li>
+        <li>Communicate with customers about fault status</li>
+        <li>Monitor fault location progress</li>
+        <li>Coordinate with depot management</li>
+        <li>Maintain records of customer interactions</li>
+    </ul>
+
+    <h3>System Access Permissions:</h3>
+    <ul>
+        <li>✅ Create new fault reports</li>
+        <li>✅ View all fault reports you've created</li>
+        <li>✅ Update fault details and customer information</li>
+        <li>✅ Track fault location progress</li>
+        <li>✅ Communicate with field teams</li>
+        <li>✅ Generate customer status reports</li>
+        <li>❌ Cannot assign teams to faults</li>
+        <li>❌ Cannot modify team assignments</li>
+        <li>❌ Cannot access depot operations</li>
+    </ul>
+    
+    <h3>Depot Restrictions:</h3>
+    <div class="warning">
+        <strong>Important:</strong> You can only create fault reports for your assigned depot(s). This ensures proper local coordination and resource allocation.
+    </div>
+</div>
+
+<div class="section" id="reporting">
+    <h2>2. Creating Fault Reports</h2>
+    
+    <h3>Accessing the Fault Reporting Form:</h3>
+    <div class="step">
+        <strong>Step 1:</strong> Log in to the Fault Locator System
+    </div>
+    <div class="step">
+        <strong>Step 2:</strong> Navigate to <div class="menu-item">Create New Fault Report</div>
+    </div>
+    <div class="step">
+        <strong>Step 3:</strong> The system displays the fault reporting form
+    </div>
+    
+    <h3>Required Information Fields:</h3>
+    
+    <div class="form-field">
+        <strong>Customer Information:</strong>
+        <ul>
+            <li>Customer name and contact details</li>
+            <li>Service address and location</li>
+            <li>Customer priority status (if applicable)</li>
+            <li>Alternative contact information</li>
+        </ul>
+    </div>
+    
+    <div class="form-field">
+        <strong>Fault Details:</strong>
+        <ul>
+            <li>Description of the electrical issue</li>
+            <li>When the fault occurred</li>
+            <li>Symptoms observed by customer</li>
+            <li>Any safety concerns reported</li>
+        </ul>
+    </div>
+    
+    <div class="form-field">
+        <strong>Technical Information:</strong>
+        <ul>
+            <li>Estimated voltage level affected</li>
+            <li>Number of customers affected</li>
+            <li>Possible backfeed availability</li>
+            <li>Asset information (if known)</li>
+        </ul>
+    </div>
+    
+    <div class="form-field">
+        <strong>Location Details:</strong>
+        <ul>
+            <li>Precise fault location</li>
+            <li>Access requirements</li>
+            <li>Landmark references</li>
+            <li>GPS coordinates (if available)</li>
+        </ul>
+    </div>
+    
+    <h3>Step-by-Step Reporting Process:</h3>
+    <div class="step">
+        <strong>Step 1:</strong> Gather Information
+        <ul>
+            <li>Listen carefully to customer description</li>
+            <li>Ask clarifying questions about symptoms</li>
+            <li>Confirm location and access details</li>
+            <li>Note any safety concerns</li>
+        </ul>
+    </div>
+    
+    <div class="step">
+        <strong>Step 2:</strong> Assess Priority Level
+        <ul>
+            <li>Consider customer impact</li>
+            <li>Evaluate safety implications</li>
+            <li>Check for VIP customer status</li>
+            <li>Determine urgency based on guidelines</li>
+        </ul>
+    </div>
+    
+    <div class="step">
+        <strong>Step 3:</strong> Complete Form
+        <ul>
+            <li>Fill all required fields completely</li>
+            <li>Use clear, descriptive language</li>
+            <li>Include relevant technical details</li>
+            <li>Add any special instructions</li>
+        </ul>
+    </div>
+    
+    <div class="step">
+        <strong>Step 4:</strong> Review and Submit
+        <ul>
+            <li>Double-check all information for accuracy</li>
+            <li>Verify priority level is appropriate</li>
+            <li>Confirm depot assignment is correct</li>
+            <li>Submit fault report</li>
+        </ul>
+    </div>
+</div>
+
+<div class="section" id="priority">
+    <h2>3. Understanding Priority Levels</h2>
+    
+    <h3>Priority Assignment Guidelines:</h3>
+    
+    <div class="urgent">
+        <strong>VVIP (Very Very Important Person) Priority:</strong>
+        <ul>
+            <li><strong>Criteria:</strong> Hospitals, emergency services, critical infrastructure</li>
+            <li><strong>Response:</strong> Immediate - highest priority</li>
+            <li><strong>Examples:</strong> Hospital power failure, police station outage</li>
+            <li><strong>Action:</strong> Notify depot foreperson immediately after reporting</li>
+        </ul>
+    </div>
+    
+    <div class="priority-info">
+        <strong>Critical Priority (Level 4):</strong>
+        <ul>
+            <li><strong>Criteria:</strong> High voltage faults, major customer impact, safety hazards</li>
+            <li><strong>Response:</strong> Within 2 hours</li>
+            <li><strong>Examples:</strong> 66kV line fault, multiple customer outage, safety concern</li>
+        </ul>
+    </div>
+    
+    <div class="priority-info">
+        <strong>High Priority (Level 3):</strong>
+        <ul>
+            <li><strong>Criteria:</strong> Significant customer impact, medium voltage issues</li>
+            <li><strong>Response:</strong> Within 4 hours</li>
+            <li><strong>Examples:</strong> 33kV fault, commercial customer outage, multiple residences</li>
+        </ul>
+    </div>
+    
+    <div class="priority-info">
+        <strong>Medium Priority (Level 2):</strong>
+        <ul>
+            <li><strong>Criteria:</strong> Moderate impact, low voltage faults</li>
+            <li><strong>Response:</strong> Within 8 hours</li>
+            <li><strong>Examples:</strong> Single customer outage, intermittent supply issues</li>
+        </ul>
+    </div>
+    
+    <div class="priority-info">
+        <strong>Low Priority (Level 1):</strong>
+        <ul>
+            <li><strong>Criteria:</strong> Minor issues, non-urgent matters</li>
+            <li><strong>Response:</strong> Next business day</li>
+            <li><strong>Examples:</strong> Routine maintenance requests, minor voltage variations</li>
+        </ul>
+    </div>
+    
+    <h3>Priority Decision Factors:</h3>
+    <div class="step">
+        <strong>Consider These Factors:</strong>
+        <ul>
+            <li><strong>Customer Impact:</strong> How many customers affected?</li>
+            <li><strong>Voltage Level:</strong> Higher voltage = higher priority</li>
+            <li><strong>Safety Risk:</strong> Any immediate danger?</li>
+            <li><strong>Customer Type:</strong> Essential services get priority</li>
+            <li><strong>Time of Day:</strong> Business hours vs. after hours</li>
+            <li><strong>Weather Conditions:</strong> May affect response urgency</li>
+        </ul>
+    </div>
+    
+    <div class="warning">
+        <strong>When in Doubt:</strong> If unsure about priority level, err on the side of caution and assign a higher priority. The depot foreperson can adjust if necessary.
+    </div>
+</div>
+
+<div class="section" id="tracking">
+    <h2>4. Tracking Fault Status</h2>
+    
+    <h3>Fault Status Overview:</h3>
+    <div class="step">
+        <strong>Status Progression:</strong>
+        <ol>
+            <li><strong>Reported:</strong> Fault report created and submitted</li>
+            <li><strong>Assigned:</strong> Team assigned to locate fault</li>
+            <li><strong>In Progress:</strong> Team actively working on fault location</li>
+            <li><strong>Located:</strong> Fault found and position confirmed</li>
+            <li><strong>Resolved:</strong> Fault cleared and customers restored</li>
+        </ol>
+    </div>
+    
+    <h3>Monitoring Your Reports:</h3>
+    <div class="step">
+        <strong>Viewing Active Faults:</strong>
+        <ol>
+            <li>Navigate to <div class="menu-item">My Fault Reports</div></li>
+            <li>System displays all your active reports</li>
+            <li>Status updates show current progress</li>
+            <li>Click on any fault for detailed information</li>
+        </ol>
+    </div>
+    
+    <h3>Understanding Status Updates:</h3>
+    <div class="step">
+        <strong>Team Started Work:</strong>
+        <ul>
+            <li>Team has begun fault location activities</li>
+            <li>Expected completion time may be provided</li>
+            <li>Customer can be informed work is in progress</li>
+        </ul>
+    </div>
+    
+    <div class="step">
+        <strong>Fault Located:</strong>
+        <ul>
+            <li>Fault position has been determined</li>
+            <li>Repair or clearance work can begin</li>
+            <li>Customer restoration may be imminent</li>
+        </ul>
+    </div>
+    
+    <div class="step">
+        <strong>Customer Restored:</strong>
+        <ul>
+            <li>Electrical supply has been restored</li>
+            <li>Fault report can be closed</li>
+            <li>Customer should be notified of restoration</li>
+        </ul>
+    </div>
+    
+    <h3>Automated Notifications:</h3>
+    <div class="success">
+        <strong>You'll Receive Updates When:</strong>
+        <ul>
+            <li>Team is assigned to your fault report</li>
+            <li>Field work begins</li>
+            <li>Fault is successfully located</li>
+            <li>Customer supply is restored</li>
+            <li>Additional information is needed</li>
+        </ul>
+    </div>
+</div>
+
+<div class="section" id="communication">
+    <h2>5. Communication & Updates</h2>
+    
+    <h3>Customer Communication:</h3>
+    <div class="step">
+        <strong>Initial Contact Response:</strong>
+        <ul>
+            <li>Acknowledge receipt of fault report</li>
+            <li>Provide estimated response time based on priority</li>
+            <li>Give fault reference number for tracking</li>
+            <li>Explain next steps in the process</li>
+        </ul>
+    </div>
+    
+    <div class="step">
+        <strong>Ongoing Updates:</strong>
+        <ul>
+            <li>Contact customers for significant delays</li>
+            <li>Provide updates at key milestones</li>
+            <li>Inform of any access requirements</li>
+            <li>Confirm restoration of supply</li>
+        </ul>
+    </div>
+    
+    <h3>Professional Communication Guidelines:</h3>
+    <div class="step">
+        <strong>Customer Service Standards:</strong>
+        <ul>
+            <li>Be courteous and professional at all times</li>
+            <li>Listen actively to customer concerns</li>
+            <li>Provide accurate and realistic timelines</li>
+            <li>Apologize for inconvenience caused</li>
+            <li>Follow up to ensure satisfaction</li>
+        </ul>
+    </div>
+    
+    <h3>Internal Communication:</h3>
+    <div class="step">
+        <strong>Coordinating with Depot Teams:</strong>
+        <ul>
+            <li>Provide additional information when requested</li>
+            <li>Clarify customer requirements</li>
+            <li>Assist with access arrangements</li>
+            <li>Relay urgent customer concerns</li>
+        </ul>
+    </div>
+    
+    <div class="step">
+        <strong>Escalation Procedures:</strong>
+        <ul>
+            <li>Contact depot foreperson for urgent issues</li>
+            <li>Escalate customer complaints appropriately</li>
+            <li>Report safety concerns immediately</li>
+            <li>Communicate media or regulatory interest</li>
+        </ul>
+    </div>
+</div>
+
+<div class="section" id="guidelines">
+    <h2>6. Reporting Guidelines</h2>
+    
+    <h3>Information Quality Standards:</h3>
+    <div class="step">
+        <strong>Complete Information:</strong>
+        <ul>
+            <li>All required fields must be completed</li>
+            <li>Descriptions should be clear and detailed</li>
+            <li>Contact information must be accurate</li>
+            <li>Location details should be precise</li>
+        </ul>
+    </div>
+    
+    <div class="step">
+        <strong>Accurate Descriptions:</strong>
+        <ul>
+            <li>Use customer's exact words for symptoms</li>
+            <li>Avoid technical jargon unless confirmed</li>
+            <li>Include relevant background information</li>
+            <li>Note any previous related issues</li>
+        </ul>
+    </div>
+    
+    <h3>Common Reporting Mistakes to Avoid:</h3>
+    <div class="warning">
+        <strong>Avoid These Errors:</strong>
+        <ul>
+            <li>Incomplete customer contact information</li>
+            <li>Vague fault descriptions</li>
+            <li>Incorrect priority assignment</li>
+            <li>Missing location details</li>
+            <li>Failing to note safety concerns</li>
+            <li>Not recording customer preferences</li>
+        </ul>
+    </div>
+    
+    <h3>Best Practices:</h3>
+    <div class="success">
+        <strong>Excellence Standards:</strong>
+        <ul>
+            <li>Double-check all information before submitting</li>
+            <li>Use clear, professional language</li>
+            <li>Include all relevant details</li>
+            <li>Follow up on critical faults</li>
+            <li>Maintain accurate records</li>
+            <li>Document all customer interactions</li>
+        </ul>
+    </div>
+    
+    <h3>Special Situations:</h3>
+    <div class="step">
+        <strong>Multiple Customer Reports:</strong>
+        <ul>
+            <li>Check for existing reports in the same area</li>
+            <li>Add customer details to existing fault if appropriate</li>
+            <li>Create new report if fault is genuinely separate</li>
+            <li>Coordinate with depot to avoid duplication</li>
+        </ul>
+    </div>
+    
+    <div class="step">
+        <strong>Emergency Situations:</strong>
+        <ul>
+            <li>Create fault report immediately</li>
+            <li>Use VVIP or Critical priority as appropriate</li>
+            <li>Contact depot foreperson by phone</li>
+            <li>Follow emergency reporting procedures</li>
+        </ul>
+    </div>
+</div>
+
+<div class="section" id="quality">
+    <h2>7. Quality Assurance</h2>
+    
+    <h3>Self-Review Checklist:</h3>
+    <div class="step">
+        <strong>Before Submitting Reports:</strong>
+        <ul>
+            <li>✅ All required fields completed</li>
+            <li>✅ Customer contact information verified</li>
+            <li>✅ Fault description is clear and detailed</li>
+            <li>✅ Priority level is appropriate</li>
+            <li>✅ Location information is accurate</li>
+            <li>✅ Safety concerns are noted</li>
+            <li>✅ Depot assignment is correct</li>
+        </ul>
+    </div>
+    
+    <h3>Performance Monitoring:</h3>
+    <div class="step">
+        <strong>Quality Metrics:</strong>
+        <ul>
+            <li>Report completion accuracy</li>
+            <li>Priority assignment appropriateness</li>
+            <li>Customer satisfaction feedback</li>
+            <li>Response time compliance</li>
+            <li>Information quality scores</li>
+        </ul>
+    </div>
+    
+    <h3>Continuous Improvement:</h3>
+    <div class="step">
+        <strong>Learning Opportunities:</strong>
+        <ul>
+            <li>Review completed faults for lessons learned</li>
+            <li>Attend training sessions on new procedures</li>
+            <li>Seek feedback from depot teams</li>
+            <li>Stay updated on system enhancements</li>
+        </ul>
+    </div>
+</div>
+
+<div class="section" id="troubleshooting">
+    <h2>8. Troubleshooting</h2>
+    
+    <h3>Common System Issues:</h3>
+    
+    <div class="step">
+        <strong>Issue:</strong> Cannot create fault report for specific depot
+        <br><strong>Solution:</strong>
+        <ul>
+            <li>Verify you have permissions for that depot</li>
+            <li>Check if depot is correctly selected</li>
+            <li>Contact system administrator if access needed</li>
+            <li>Use alternative depot if customer is on boundary</li>
+        </ul>
+    </div>
+    
+    <div class="step">
+        <strong>Issue:</strong> Form validation errors prevent submission
+        <br><strong>Solution:</strong>
+        <ul>
+            <li>Check all required fields are completed</li>
+            <li>Verify contact information format</li>
+            <li>Ensure priority level is selected</li>
+            <li>Review location details for completeness</li>
+        </ul>
+    </div>
+    
+    <div class="step">
+        <strong>Issue:</strong> System performance is slow
+        <br><strong>Solution:</strong>
+        <ul>
+            <li>Check your internet connection</li>
+            <li>Close unnecessary browser tabs</li>
+            <li>Clear browser cache if needed</li>
+            <li>Try refreshing the page</li>
+        </ul>
+    </div>
+    
+    <div class="step">
+        <strong>Issue:</strong> Cannot track fault status updates
+        <br><strong>Solution:</strong>
+        <ul>
+            <li>Verify fault report was successfully submitted</li>
+            <li>Check "My Fault Reports" section</li>
+            <li>Ensure browser allows system notifications</li>
+            <li>Contact depot for status if system shows no updates</li>
+        </ul>
+    </div>
+    
+    <h3>Customer Communication Issues:</h3>
+    
+    <div class="step">
+        <strong>Issue:</strong> Customer provides conflicting information
+        <br><strong>Solution:</strong>
+        <ul>
+            <li>Ask clarifying questions to resolve conflicts</li>
+            <li>Document all versions in fault notes</li>
+            <li>Prioritize safety-related information</li>
+            <li>Follow up with customer for verification</li>
+        </ul>
+    </div>
+    
+    <div class="step">
+        <strong>Issue:</strong> Unsure about priority level assignment
+        <br><strong>Solution:</strong>
+        <ul>
+            <li>Consult priority guidelines in this manual</li>
+            <li>Contact depot foreperson for guidance</li>
+            <li>Err on side of caution with higher priority</li>
+            <li>Document reasoning in fault notes</li>
+        </ul>
+    </div>
+    
+    <div class="warning">
+        <strong>Emergency Contacts:</strong>
+        <ul>
+            <li>Depot Foreperson: [Contact Info]</li>
+            <li>System Administrator: [Contact Info]</li>
+            <li>Emergency Services: [Contact Info]</li>
+            <li>Customer Service Supervisor: [Contact Info]</li>
+        </ul>
+    </div>
+</div>
+
+<div class="success">
+    <h3>Quick Reference for Fault Reporters:</h3>
+    <ul>
+        <li><strong>Complete Information:</strong> All details matter for effective fault location</li>
+        <li><strong>Priority Guidelines:</strong> VVIP → Critical → High → Medium → Low</li>
+        <li><strong>Customer Service:</strong> Professional, courteous communication always</li>
+        <li><strong>Accuracy First:</strong> Double-check all information before submitting</li>
+        <li><strong>Track Progress:</strong> Monitor your reports and provide customer updates</li>
+        <li><strong>Safety Focus:</strong> Always prioritize safety concerns</li>
+        <li><strong>Continuous Learning:</strong> Learn from each fault report experience</li>
+    </ul>
+</div>
+
+</body>
+</html>
