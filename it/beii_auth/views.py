@@ -151,12 +151,12 @@ APPLICATIONS = [
         "iconUrl": "assets/images/meeting.png",
         "url": "/meetings_dashboard/"
     }
-    # {
-    #     "name":"fault_locator",
-    #     "title": "Fault Locator",
-    #     "iconUrl": "assets/images/fault_locator.png",
-    #     "url": "/fault_locator/"
-    # },
+    {
+        "name":"fault_locator",
+        "title": "Fault Locator",
+        "iconUrl": "assets/images/fault_locator.png",
+        "url": "/fault_locator/"
+    }
     # {
     #     "name": "sanction_for_test",
     #     "title": "Sanction For Test",
