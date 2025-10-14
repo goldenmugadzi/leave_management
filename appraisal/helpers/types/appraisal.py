@@ -2,6 +2,7 @@ from typing import List, Optional
 from pydantic import BaseModel, Field, ConfigDict
 from django.core.files.uploadedfile import UploadedFile
 from ...models import KeyResultArea, AppraisalOutPutPerformanceDimensionScore, JobCompetency, TrainingAndDevelopment, PerformanceProgressReview, AppraiseePersonalAttribute, Appraisal, AppraisalDepartmentOutput
+from ...models.helpers import YearQuarter
 from it.users.models import Designations, Regions, Sections
 from ..types.final_results import FinalRatingType
 
@@ -106,7 +107,7 @@ class FinalPerformanceAssType(BaseModel):
     model_config = ConfigDict(arbitrary_types_allowed=True)
     
 class AppraisalPersonalAttributeType(BaseModel):
-    quarter: int
+    quarter: YearQuarter
     personal_attributes: List[AppraiseePersonalAttribute]
     
     model_config = ConfigDict(arbitrary_types_allowed=True)

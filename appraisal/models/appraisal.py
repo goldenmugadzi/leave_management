@@ -58,6 +58,6 @@ class AppraiseePersonalAttribute(TimeStamp):
     unsatisfactory = models.BooleanField(default=False)
 
     def __str__(self):
-        return f"{self.appraisal}"
+        return f"{self.appraisal} - {self.personal_attribute} - {self.quarter}"
 
 

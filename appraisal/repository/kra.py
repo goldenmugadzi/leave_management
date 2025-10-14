@@ -168,6 +168,13 @@ class YearQuarterRepository:
             return qr.first()
         except Exception as e:
             raise Exception(f"[YearQuarterRepository] get_by_year_quarter Repo with year: {year}, quarter: {quarter}, failed with error: {e}")
+    
+    def get_by_year_quarter_id(self, quarter_id: int)->YearQuarter:
+        try:
+            qr = YearQuarter.objects.filter(id=quarter_id)
+            return qr.first()
+        except Exception as e:
+            raise Exception(f"[YearQuarterRepository] get_by_year_quarter_id Repo with quarter pk: {quarter_id}, failed with error: {e}")
 
 class AppraisalDepartmentOutputRepository:
     def create(self, appraisal_object: Appraisal, department_output_obj: DepartmentOutput, year_quarter_obj: YearQuarter)->AppraisalDepartmentOutput:

@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from django.db import transaction
 from ..repository import UserQualificationRepository, AppraisalExperienceRepository, AppraisalRepository, ExperienceRepository
 from ..repository.appraisal import AppraiseePersonalAttributeRepository
+from ..repository.kra import YearQuarterRepository
 from it.users.models import UserProfile, UserQualification
 from ..models import Appraisal, Experience
 from ..models.helpers import QuarterChoices
@@ -146,15 +147,17 @@ class AppraisalService:
 class AppraisalPersonalAttributeService:
     repo: AppraiseePersonalAttributeRepository
     
-    def get_all_quarters(self, appraisal_id: int)->List[AppraisalPersonalAttributeType]:
+    def get_all_quarters(self, appraisal_obj: Appraisal)->List[AppraisalPersonalAttributeType]:
         try:
             results = []
-            qr = self.repo.fetch_appraisal_id(appraisal_id=appraisal_id)
-            for quarter_choice in QuarterChoices.choices:
-                quarter_number = quarter_choice[0]
+            qr = self.repo.fetch_appraisal_id(appraisal_id=appraisal_obj.id)
+            yr_repo = YearQuarterRepository()
+            appraisal_year_quarters_qr = yr_repo.fetch_by_year(year=appraisal_obj.created_date.year)
+            
+            for quarter_obj in appraisal_year_quarters_qr:
                 personal_attr_type = AppraisalPersonalAttributeType(
-                    quarter=quarter_number,
-                    personal_attributes=qr.filter(quarter__quarter=quarter_number)
+                    quarter=quarter_obj,
+                    personal_attributes=qr.filter(quarter__quarter=quarter_obj.quarter)
                 )
                 results.append(personal_attr_type)
             return results

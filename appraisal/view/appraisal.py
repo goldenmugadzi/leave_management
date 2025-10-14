@@ -19,7 +19,7 @@ from ..forms.qualification_experiences import UserQualificationsUploadForm
 from ..helpers.types.kra import RoleFilterChoices
 from ..repository import UserQualificationRepository, AppraisalExperienceRepository, ExperienceRepository, AppraisalRepository
 from ..repository.appraisal import AppraiseePersonalAttributeRepository
-from ..repository.kra import AppraisalOutPutPerformanceDimensionScoreRepository
+from ..repository.kra import AppraisalOutPutPerformanceDimensionScoreRepository, YearQuarterRepository
 from ..repository.qualification_experience import UserExperienceRepository
 from ..repository.users import UserProfileRepository
 from ..services import AppraisalService, AppraisalExperienceService
@@ -34,7 +34,7 @@ from approve.forms import ApprovalForm
 from approve.models import Step, Approval
 from datetime import datetime
 from ..forms.formsets import AppraiseePersonalAttributeFormSet
-from ..forms.appraisal import AppraisalOverallCommentForm
+from ..forms.appraisal import AppraisalOverallCommentForm, AppraiseePersonalAttributeForm
 from ..helpers.getters.dates import get_assessment_period, CurrentQuarterDate
 from ..helpers.getters.quarter import get_all_quarter_ratings_per_appraiser
 from loguru import logger
@@ -426,7 +426,7 @@ class AppraiseePersonalAttributesDetailView(TemplateView):
     def get_all_quarters_apraisee_personal_attrs(self):
         try:
             service_handler = AppraisalPersonalAttributeService(repo=AppraiseePersonalAttributeRepository())
-            return service_handler.get_all_quarters(appraisal_id=self.kwargs.get("appraisal_id"))
+            return service_handler.get_all_quarters(appraisal_obj=self.get_appraisal_object())
         except Exception as e:
             logger.error(f"[AppraiseePersonalAttributesDetailView] get_all_quarters_apraisee_personal_attrs failed with error: {e}")
     
@@ -552,13 +552,18 @@ class AppraiseePersonalAttributesUpdateView(TemplateView):
         }
         return data
     
-    def get_forms(self):
+    def get_quarter_personal_attr(self):
         repo = AppraiseePersonalAttributeRepository()
-        qr = repo.fetch_appraisal_id(appraisal_id=self.kwargs.get("appraisal_id"))
+        return repo.fetch_appraisal_id_quarter_id(appraisal_id=self.kwargs.get("appraisal_id"),
+                                                quarter_id=self.kwargs.get("quarter_id"))
+
+    def get_forms(self):
+        qr =  self.get_quarter_personal_attr()   
         formset_data = []
         
         for appraisee_personal_attr_obj in qr:
-            data = {"personal_attribute": appraisee_personal_attr_obj.personal_attribute,
+            data = {
+                    "personal_attribute": appraisee_personal_attr_obj.personal_attribute,
                     "excellent": appraisee_personal_attr_obj.excellent,
                     "very_good": appraisee_personal_attr_obj.very_good,
                     "satisfactory": appraisee_personal_attr_obj.satisfactory,
@@ -566,13 +571,21 @@ class AppraiseePersonalAttributesUpdateView(TemplateView):
                     "unsatisfactory": appraisee_personal_attr_obj.unsatisfactory
                     }
             formset_data.append(data)
+        if self.request.method == "POST":
+            formset = AppraiseePersonalAttributeFormSet(
+                        self.request.POST or None,
+                        initial=formset_data,
+                        prefix="appraisee_personal_attribute"
+                    )
             
-        formset = AppraiseePersonalAttributeFormSet(
-                    self.request.POST or None,
-                    initial=formset_data,
-                    prefix="appraisee_personal_attribute"
-                )
-        return formset
+            return formset
+        else:
+            formset = AppraiseePersonalAttributeFormSet(
+                        initial=formset_data,
+                        prefix="appraisee_personal_attribute"
+                    )
+            
+            return formset
     
     def appraisee_grade(self):
         user_obj = self.get_appraisal_object().user
@@ -584,16 +597,35 @@ class AppraiseePersonalAttributesUpdateView(TemplateView):
             return "C, D, E and F"
         return ""
     
+    
+    def get_year_quarter_obj(self):
+        repo = YearQuarterRepository()
+        return repo.get_by_year_quarter_id(quarter_id=self.kwargs.get("quarter_id"))
+    
     def is_current_date_in_current_quarter(self)->bool:
         appraisal_object = self.get_appraisal_object()
         handler = CurrentQuarterDate(year=appraisal_object.created_date.year)
-        current_quarter = handler.get_current_quarter()
-        return current_quarter.is_within_fourth_quarter
+        current_q_type = handler.get_current_quarter()
+        current_quarter_obj = self.get_year_quarter_obj()
+
+        match current_quarter_obj.quarter:
+            case 1:
+                return current_q_type.is_within_first_quarter
+            case 2:
+                return current_q_type.is_within_second_quarter
+            case 3:
+                return current_q_type.is_within_third_quarter
+            case _:
+                
+                return current_q_type.is_within_fourth_quarter
     
     def is_all_scored(self):
         repo = AppraisalOutPutPerformanceDimensionScoreRepository()
-        scores_qr = repo.fetch_by_appraisal_id(appraisal_id=self.get_appraisal_object().id)
+        scores_qr = repo.fetch_by_appraisal_id_year_quarter_id(appraisal_id=self.kwargs.get("appraisal_id"),
+                                                               year_quarter_id=self.kwargs.get("quarter_id")
+                                                               )
         not_scored_qr = scores_qr.filter(is_scored=False)
+        
         if not_scored_qr.exists():
             return False
         return True
@@ -601,10 +633,11 @@ class AppraiseePersonalAttributesUpdateView(TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context.update(self.approval_user_roles())
-        context["personal_attribute_formset"] = self.get_forms
+        context["personal_attribute_formset"] = self.get_forms()
         context["appraisal_object"] = self.get_appraisal_object()
         context["appraisee_grade"] = self.appraisee_grade()
         context["is_within_current_quarter"] = self.is_current_date_in_current_quarter()
+        context["current_quarter_obj"] = self.get_year_quarter_obj()       
         context["is_all_scored"] = self.is_all_scored()
         return context
     
@@ -612,37 +645,40 @@ class AppraiseePersonalAttributesUpdateView(TemplateView):
         """
         Redirects to the index page after successful update.
         """
-        return reverse('appraisal_final_result_index', kwargs={"appraisal_id": self.kwargs.get('appraisal_id')})
+        return reverse('appraisal_personal_attribute_update', kwargs={"appraisal_id": self.kwargs.get('appraisal_id'), "quarter_id": self.kwargs.get('quarter_id')})
 
     def post(self, request, *args, **kwargs):
         
         appraisal_object = self.get_appraisal_object()
+        appraisee_personal_attr_qr = self.get_quarter_personal_attr()
         formset = self.get_forms()
-
+        
         if formset.is_valid():
             err_msg_list = []
             updated_objects = []
             for form in formset:
                 cleaned_data = form.cleaned_data
-                attribute = cleaned_data.get("personal_attribute")
-                excellent = cleaned_data.get("excellent", False)
-                very_good = cleaned_data.get("very_good", False)
-                satisfactory = cleaned_data.get("satisfactory", False)
-                requires_improvement = cleaned_data.get("requires_improvement", False)
-                unsatisfactory = cleaned_data.get("unsatisfactory", False)
-                if True not in [excellent, very_good, satisfactory, requires_improvement, unsatisfactory]:
-                    err_msg = f"<strong>{attribute}</strong>: should have at least one tick"
+                personal_attribute_obj = cleaned_data.get("personal_attribute")
+
+                excellent = cleaned_data.get("excellent")
+                very_good = cleaned_data.get("very_good")
+                satisfactory = cleaned_data.get("satisfactory")
+                requires_improvement = cleaned_data.get("requires_improvement")
+                unsatisfactory = cleaned_data.get("unsatisfactory")
+                
+                fields = [excellent, very_good, satisfactory, requires_improvement, unsatisfactory]
+                if True not in fields:
+                    err_msg = f"<strong>{personal_attribute_obj}</strong>: should have at least one tick"
                     err_msg_list.append(err_msg)
                 else:
                     # =========  update fields in the model instance ========
-                    obj = attribute  
-                    obj.excellent = excellent
-                    obj.very_good = very_good
-                    obj.satisfactory = satisfactory
-                    obj.requires_improvement = requires_improvement
-                    obj.unsatisfactory = unsatisfactory
+                    obj = appraisee_personal_attr_qr.filter(personal_attribute__id=personal_attribute_obj.id).first()
+                    obj.excellent=excellent
+                    obj.very_good=very_good
+                    obj.satisfactory=satisfactory
+                    obj.requires_improvement=requires_improvement
+                    obj.unsatisfactory=unsatisfactory
                     updated_objects.append(obj)
-                    
             if len(err_msg_list) != 0:
                 # =============== validation errors ============
                 full_error_message = "<br>".join(err_msg_list)
@@ -651,13 +687,13 @@ class AppraiseePersonalAttributesUpdateView(TemplateView):
                 context["personal_attribute_formset"] = formset
                 return self.render_to_response(context)    
             
-            repo = AppraiseePersonalAttributeRepository()
             try:
+                repo = AppraiseePersonalAttributeRepository()
                 if repo.bulk_update(updated_objects_list=updated_objects):
                     messages.success(request, "Appraisee personal attributes updated successfully.")
 
             except Exception as e:
-                logger.error(f"[AppraiseePersonalAttributesUpdateView] for appraisal pk: {appraisal_object.id}, failed with error")
+                logger.error(f"[AppraiseePersonalAttributesUpdateView] for appraisal pk: {appraisal_object.id}, failed with error: {e}")
                 messages.error(request, "Something went wrong, please contact admin")
         else:
             error_messages = ""

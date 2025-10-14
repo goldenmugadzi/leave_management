@@ -12,7 +12,6 @@ def quarter_name(quarter):
         3: "Third Quarter",
         4: "Fourth Quarter"
     }
-    
     return quarters.get(int(quarter), "")
 
 @register.filter
