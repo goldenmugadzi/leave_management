@@ -122,22 +122,12 @@ APPLICATIONS = [
         "iconUrl": "assets/images/hardware.png",
         "url": "/show_fault/"
     },
-     {
+    {
         "name": "asset_register",
         "title": "IT Asset Register",
         "iconUrl": "assets/images/register.png",
         "url": "/tab/"
     },
-    #   {
-    #     "name": "leave_management",
-    #     "title": "Leave Management System",
-    #     "iconUrl": "assets/images/leave.png",
-    #     "url": "/leave_dashboard/"
-    #     "name": "safety",
-    #     "title": "Safety.Health.Wellbeing",
-    #     "iconUrl": "assets/images/health.png",
-    #     "url": "/safety_table/"
-    # },
     {
         "name": "comm_files",
         "title": "Commercial Files",
@@ -149,42 +139,18 @@ APPLICATIONS = [
         "iconUrl": "assets/images/customer.png",
         "url": "/installations/"
     },
-    #   {
-    #     "name": "Tools & Equipment",
-    #     "title": "Tools & Equipment",
-    #     "iconUrl": "assets/images/tools&equipment.png",
-    #     "url": "/tools-and-equipment-list/"
-    # },{
-    #     "name": "Equipment Change (E114)",
-    #     "title": "Equipment Change (E114)",
-    #     "iconUrl": "assets/images/tools&equijpment.png",
-    #     "url": "/equipment-list/"
-    # },
     {
         "name": "inspections",
         "title": "Inspections",
         "iconUrl": "assets/images/customer.png",
         "url": "/inspections/"
     },
-    # {
-    #     "name": "substation_inspections",
-    #     "title": "Substation Inspections",
-    #     "iconUrl": "assets/images/customer.png",
-    #     "url": "/substation-inspections/"
-    # },
-    # {
-    #     "name": "circuit_breaker_maintenance",
-    #     "title": "Circuit Breaker Maintenance",
-    #     "iconUrl": "assets/images/circuit_breaker.png",
-    #     "url": "/circuit-breakers/circuit-breakers/"
-    # },
     {
         "name": "Meetings",
         "title": "Meetings",
         "iconUrl": "assets/images/meeting.png",
         "url": "/meetings_dashboard/"
-    }, 
-      
+    }
     # {
     #     "name":"fault_locator",
     #     "title": "Fault Locator",
@@ -196,6 +162,39 @@ APPLICATIONS = [
     #     "title": "Sanction For Test",
     #     "iconUrl": "assets/images/sanction_for_test.png",
     #     "url": "/sanction_for_test/"
+    # },
+        # {
+    #     "name": "substation_inspections",
+    #     "title": "Substation Inspections",
+    #     "iconUrl": "assets/images/customer.png",
+    #     "url": "/substation-inspections/"
+    # },
+    # {
+    #     "name": "circuit_breaker_maintenance",
+    #     "title": "Circuit Breaker Maintenance",
+    #     "iconUrl": "assets/images/circuit_breaker.png",
+    #     "url": "/circuit-breakers/circuit-breakers/"
+    # },
+        #   {
+    #     "name": "Tools & Equipment",
+    #     "title": "Tools & Equipment",
+    #     "iconUrl": "assets/images/tools&equipment.png",
+    #     "url": "/tools-and-equipment-list/"
+    # },{
+    #     "name": "Equipment Change (E114)",
+    #     "title": "Equipment Change (E114)",
+    #     "iconUrl": "assets/images/tools&equijpment.png",
+    #     "url": "/equipment-list/"
+    # }
+        #   {
+    #     "name": "leave_management",
+    #     "title": "Leave Management System",
+    #     "iconUrl": "assets/images/leave.png",
+    #     "url": "/leave_dashboard/"
+    #     "name": "safety",
+    #     "title": "Safety.Health.Wellbeing",
+    #     "iconUrl": "assets/images/health.png",
+    #     "url": "/safety_table/"
     # },
 ]
 
