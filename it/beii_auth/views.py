@@ -114,10 +114,10 @@ APPLICATIONS = [
         "url": "/leave_dashboard/"
     },
       {
-        "name": "Safety",
-        "title": "Safety",
-        "iconUrl": "assets/images/leave.png",
-        "url": "/accident_report_dashboard/"
+        "name": "Meetings",
+        "title": "Meetings",
+        "iconUrl": "assets/images/meeting.png",
+        "url": "/meetings_dashboard/"
     }, 
       
       

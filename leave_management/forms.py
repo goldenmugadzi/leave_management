@@ -4,10 +4,10 @@ from .models import LeaveRequest,LeaveTypes
 class LeaveRequestForm(forms.ModelForm):
     class Meta:
         model = LeaveRequest
-        exclude = ['days_taken', 'days_encashed', 'total_days']
+        exclude = ['days_taken', 'days_encashed', 'total_days', 'gender',]
         fields = [
-            'employee_types', 'type_of_leave', 'start_date', 'gender',
-            'end_date', 'attachments',
+            'employee_types', 'type_of_leave', 
+           'start_date','attachments','end_date',
         ]
         widgets = {
             'start_date': forms.DateInput(attrs={

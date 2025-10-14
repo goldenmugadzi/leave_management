@@ -160,6 +160,13 @@ def approve_step(request, process_id):
                     print('------------------------------got here-----------------------------------', str(token.id))
                     return redirect('tokens:token', token.id)
                 
+                elif process.leaverequest_set.exists():
+                    leaverequest = process.leaverequest_set.last()
+
+                    # send_notification(request, 'tokens:token', token.type, token, token.id)
+                    print('------------------------------got here-----------------------------------', str(leaverequest.id))
+                    return redirect('leave_management:approve_leave', leaverequest.id)
+                
                 elif process.workflow.name == "pettycash":
                     return redirect(
                         "pettycash:pettycash_detail",

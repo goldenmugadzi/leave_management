@@ -1,0 +1,247 @@
+{% extends "admin_layout.html" %}
+{% load static %}
+<head>
+    <link rel="stylesheet" href="{% static 'assets/disburse.css' %}">
+    <script src="{% static 'assets/disbursemodal.js' %}"></script>
+</head>
+{% load custom_tags %}
+{% block content %}
+    <head>
+        <style>
+            .arrow, .arrow-step {
+                position: relative;
+            }
+            .arrow::before, .arrow::after, .arrow-step::before, .arrow-step::after {
+                content: "";
+                position: absolute;
+                top: 50%;
+                width: 0;
+                height: 0;
+                border-top: 15px solid transparent;
+                border-bottom: 15px solid transparent;
+            }
+            .arrow-step::before {
+                content: "";
+                position: absolute;
+                top: 50%;
+                right: -20px;
+                transform: translateY(-50%);
+                width: 0;
+                height: 0;
+                border-top: 10px solid transparent;
+                border-bottom: 10px solid transparent;
+                border-left: 20px solid #3B82F6;
+            }
+            .modal {
+                display: none;
+                position: fixed;
+                z-index: 1;
+                left: 50%;
+                top: 0;
+                width: 50%;
+                height: 50%;
+                overflow: auto;
+                background-color: rgba(0,0,0,0.4);
+            }
+            .modal-content {
+                background-color: white;
+                margin: 15% auto;
+                padding: 20px;
+                border: 1px solid #888;
+                width: 80%;
+            }
+            .form-group {
+                margin-bottom: 15px;
+            }
+            .close-modal {
+                color: #aaa;
+                float: right;
+                font-size: 16px;
+                font-weight: bold;
+            }
+            .close-modal:hover,
+            .close-modal:focus {
+                color: black;
+                text-decoration: none;
+                cursor: pointer;
+            }
+        </style>
+        <script src="{% static 'assets/disbursemodal.js' %}"></script>
+    </head>
+
+<div class="m-auto mt-5 ">
+    <div class="card grid grid-cols-1 gap-2 mb-3">
+        <div class="card-body m-2">
+            <div class="card-body m-auto mb-5 p-3 border rounded container rounded shadow-lg">
+                <div class="px-6 py-4">
+                    <div class="card grid grid-cols-2 gap-2 mb-3">
+                        <div class="card-body m-auto mb-5 bg-gradient-to-r from-gulf-blue-100 to-blue-500 p-3 border rounded justify-content-center align-content-stretch container rounded shadow-lg">
+                            <h1 class="text-center mb-4 font-bold text-xl">Leave Request Details</h1>
+
+                            <p class="font-bold mb-2">Requested by: {{ leave.user }}</p>
+                            <p class="font-bold mb-2">Type of Leave: {{ leave.type_of_leave }}</p>
+                            <p class="font-bold mb-2">Position: {{ leave.position }}</p>
+                            <p class="font-bold mb-2">Department: {{ leave.department }}</p>
+                            <p class="font-bold mb-2">Region: {{ leave.region }}</p>
+                            <p class="font-bold mb-2">Start Date: {{ leave.start_date }}</p>
+                            <p class="font-bold mb-2">End Date: {{ leave.end_date }}</p>
+                            <p class="font-bold mb-2">
+                                Attachments: 
+                                {% if leave.attachments %}
+                                    <a href="{{ leave.attachments.url }}" target="_blank" class="text-blue-600 underline">
+                                        {{ leave.attachments.name|default:"View File" }}
+                                    </a>
+                                {% else %}
+                                    No attachments
+                                {% endif %}
+                            </p>
+
+
+                           
+
+                            
+                            
+                            <!-- Modal -->
+                            <div id="modal" class="modal">
+                                <div class="modal-content">
+                                    <form id="upload-form" method="POST" enctype="multipart/form-data">
+                                        {% csrf_token %}
+                                        <div class="form-group">
+                                            <label for="file-input">Supporting Document:</label>
+                                            <br>
+                                            <input type="file" id="file-input" name="file-input" required>
+                                        </div>
+                                        <div class="form-group">
+                                            <label for="description">Description:</label>
+                                            <br>
+                                            <input type="text" id="description" name="description">
+                                        </div>
+                                        <button type="submit" class="bg-gulf-blue-600 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded">Submit</button>
+                                    </form>
+                                    <br>
+                                    <button id="close-modal" class="bg-red-500 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded">Close</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                 
+                    <!-- Workflow Section -->
+                 {% if approvalForm %}
+                        <form class="row rounded py-4 border rounded-lg p-3 m-auto container"
+                              method="POST"
+                              action="{% url 'approve:approve' leave.process.id %}"
+                              enctype="multipart/form-data">
+                            {% csrf_token %}
+                            <div class="m-auto container">
+                                {% for field in approvalForm %}
+                                        <div class="rounded row text-center py-2 my-3">
+                                            {% if field.is_hidden %}
+                                                {{ field }}
+                                            {% else %}
+                                                {% if field.name == "approved" %}
+                                                {% else %}
+                                                    <div class=" m-auto grid grid-cols-2 pr-5">
+                                                        <div>
+                                                            {{ field.label }}
+                                                            <div class="text-blue-500">{{ field.help_text }}</div>
+                                                            <div class="text-red-500 text-red-500 ">{{ field.errors }}</div>
+                                                        </div>
+                                                        {{ field }}
+                                                    </div>
+                                                {% endif %}
+                                            {% endif %}
+                                        </div>
+                                    {% endfor %}   <div class="m-4 text-center">
+                                    <button type="submit"
+                                            class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded"
+                                            name="approved"
+                                            value="Rejected">Reject</button>
+                                    <button type="submit"
+                                            class="bg-gulf-blue-600 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded"
+                                            name="approved"
+                                            value="Approved">{{ to }}</button>
+                                </div>
+                            </div>
+                        </form>
+                    {% endif %}
+    <h1 class="text-center mb-4 font-bold text-xl">Workflow Details</h1>
+                    <p class="font-bold mb-2">Workflow name: {{ leave.process.workflow }}</p>
+
+                    <!-- Approval / Rejection Form -->
+                   
+                    <!-- Workflow steps -->
+                    <div class="card grid grid-cols-5 gap-5">
+                        <div class="rounded">
+                            <div class="card-body arrow bg-gradient-to-r from-gulf-blue-100 to-green-700 border rounded container">
+                                <div class="p-3 font-bold rounded-lg">Created</div>
+                                <div class="grid grid-cols-2 text-center">
+                                    <span class="inline-block rounded-full text-sm">By:
+                                        {% if request.user == leave.user %}
+                                            You
+                                        {% elif leave.user.get_full_name %}
+                                            {{ leave.user.get_full_name }}
+                                        {% else %}
+                                            {{ leave.user }}
+                                        {% endif %}
+                                        <i class="fas fa-check-circle text-green-500"></i>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {% for step in leave.process.workflow.step_set.all %}
+                            <div class="mx-3 rounded">
+                                {% if step.step in approved_steps %}
+                                    {% for approval in leave.process.approval_set.all %}
+                                        {% if step == approval.step %}
+                                            <div class="card-body px-2 arrow bg-gradient-to-r from-gulf-blue-100 to-green-700 border rounded container">
+                                                <div class="rounded-lg" title="{{ approval.comment }}">
+                                                    <p class="font-bold">{{ step|default_if_none:'' }}</p>
+                                                    <br>
+                                                </div>
+                                                <div class="grid grid-cols-2 text-center">
+                                                    <span class="inline-block rounded-full text-sm">{{ approval.approved }}</span>
+                                                    <span class="inline-block rounded-full text-sm">By:
+                                                        {% if request.user == approval.user %}
+                                                            You
+                                                        {% elif approval.user.get_full_name %}
+                                                            {{ approval.user.get_full_name }}
+                                                        {% else %}
+                                                            {{ approval.user }}
+                                                        {% endif %}
+                                                        <i class="fas fa-check-circle text-green-500"></i>
+                                                    </span>
+                                                    <span class="inline-block rounded-full text-sm">On: {{ approval.approved_at }}</span>
+                                                </div>
+                                            </div>
+                                        {% endif %}
+                                    {% endfor %}
+                                {% else %}
+                                    <div class="card-body px-2 arrow bg-gradient-to-r from-gulf-blue-100 to-blue-700 border rounded container">
+                                        <div class="rounded-lg">
+                                            <p class="font-bold">{{ step|default_if_none:'' }}</p>
+                                            <br>
+                                            {% if step.to %}
+                                                <span class="inline-block rounded-full text-sm">To {{ step.to|default_if_none:'' }}
+                                                    <i class="fas fa-circle-notch fa-spin text-blue-500"></i>
+                                                </span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            {% if step == leave.process.workflow.step_set.last and step == leave.process.approval_set.last.step %}
+                                <div class="flex justify-center items-center rounded">
+                                    <div class="flex justify-center rounded-lg">Completed
+                                        <i class="fas fa-check-circle text-green-500"></i>
+                                    </div>
+                                </div>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

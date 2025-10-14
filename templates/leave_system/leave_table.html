@@ -173,7 +173,6 @@
             <th>EC Number</th>
             <th>User</th>
             <th>Type of Leave</th>
-            <th>Gender</th>
             <th>Position</th>
             <th>Start Date</th>
             <th>End Date</th>
@@ -181,7 +180,6 @@
             <th>Number of Days</th>
             <th>Region</th>
             <th>Attachment</th>
-            <th>Status</th>
             <th>Action</th>
           </tr>
         </thead>
@@ -201,7 +199,7 @@ $(document).ready(function () {
     processing: true,
     serverSide: true,
     ajax: {
-      url: "{% url 'leave_request_datatable' %}",
+      url: "{% url 'leave_management:leave_request_datatable' %}",
       type: "GET",
       data: function(d) {
         d.department = $('#departmentLeaveFilter').val();
@@ -212,7 +210,6 @@ $(document).ready(function () {
       { data: "ecnumber" },
       { data: "user" },
       { data: "type_of_leave" },
-      { data: "gender" },
       { data: "position" },
       { data: "start_date" },
       { data: "end_date" },
@@ -229,22 +226,12 @@ $(document).ready(function () {
           }
         }
       },
-      {
-        data: "status",
-        render: function(data, type, row) {
-          let color = "bg-gray-400 text-white";
-          if (data === "approved") color = "bg-green-500 text-white";
-          else if (data === "rejected") color = "bg-red-500 text-white";
-          else if (data === "pending") color = "bg-yellow-400 text-gray-900";
-          return `<span class="inline-block px-3 py-1 rounded-full text-xs font-semibold ${color}">${data.charAt(0).toUpperCase() + data.slice(1)}</span>`;
-        }
-      },
       
        
       {
         data: "id",
         render: function(data, type, row) {
-          return `<a href="/update_leave/${data}" class="btn btn-info">
+          return `<a href="/approve_leave/${data}" class="btn btn-info">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
               <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
             </svg></a>`;
