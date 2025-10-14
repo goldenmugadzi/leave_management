@@ -774,6 +774,15 @@ class AppraisalDetailView(TemplateView):
             strategy=perf_progress_rev_strg
         )
         return handler.get_dependance()
+    
+    def get_all_quarters_apraisee_personal_attrs(self):
+        try:
+            service_handler = AppraisalPersonalAttributeService(repo=AppraiseePersonalAttributeRepository())
+            return service_handler.get_all_quarters(appraisal_obj=self.get_appraisal_obj())
+        except Exception as e:
+            logger.error(f"[AppraiseePersonalAttributesDetailView] get_all_quarters_apraisee_personal_attrs failed with error: {e}")
+    
+    
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -785,6 +794,8 @@ class AppraisalDetailView(TemplateView):
         context["perf_assessment_data"] = self.get_perf_assmt()
         context["perf_progress_data"] = self.get_perf_progress_rev()
         context["final_stage_data"] = self.get_final_score()
+        context["appraisee_personal_attr_qr"] = self.get_all_quarters_apraisee_personal_attrs()
+
         return context
     
     def get(self, request, *args, **kwargs):
