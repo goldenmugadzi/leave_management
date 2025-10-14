@@ -1,6 +1,7 @@
 from django.db import models
 from it.users.models import *
 from datetime import timedelta
+from approve.models import Process,Step,Workflow,Approval
 
 class LeaveRequest(models.Model):
     LEAVE_TYPES = [
@@ -14,14 +15,10 @@ class LeaveRequest(models.Model):
         ('study leave','study leave')
         
     ]
-    GENDER_CHOICES = [
-        ('male', 'Male'),
-        ('female', 'Female'),
-    
-    ]
+   
     EMPLOYEE_TYPES  = [
         ('Permanent','Permanent'),
-        ('Apis','Apis'),
+        ('Apprentice','Apprentice'),
         ('PGT','PGT'),
         ('Contract','Contract'),
     ]
@@ -37,7 +34,6 @@ class LeaveRequest(models.Model):
     ecnumber = models.PositiveIntegerField()
     user = models.ForeignKey(UserProfile, on_delete=models.CASCADE, blank=True, null=True,related_name="leave")
     type_of_leave = models.CharField(max_length=200, choices=LEAVE_TYPES)
-    gender = models.CharField(max_length=100, choices=GENDER_CHOICES)
     position = models.ForeignKey(Designations, on_delete=models.DO_NOTHING , blank=True, null=True)
     start_date = models.DateField()
     end_date = models.DateField()
@@ -50,6 +46,7 @@ class LeaveRequest(models.Model):
     days_encashed = models.PositiveIntegerField(default=0, blank=True, null=True)
     total_days = models.PositiveIntegerField(default=0, blank=True, null=True)
     attachments = models.FileField(upload_to='leave_management/', blank=True, null=True)
+    process=models.ForeignKey(Process, on_delete=models.CASCADE, blank=True, null=True)
     
 
     def __str__(self):
