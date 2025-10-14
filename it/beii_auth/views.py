@@ -116,7 +116,7 @@ APPLICATIONS = [
       {
         "name": "Meetings",
         "title": "Meetings",
-        "iconUrl": "assets/images/leave.png",
+        "iconUrl": "assets/images/meeting.png",
         "url": "/meetings_dashboard/"
     }, 
       
