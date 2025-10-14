@@ -23,6 +23,7 @@
       <table id="booked_venues" class="display" style="width:100%">
         <thead>
           <tr>
+             <th>ID</th>
             <th>Venue</th>
             <th>Department</th>
             <th>Start Time</th>
@@ -30,12 +31,14 @@
             <th>Date of Meeting</th>
             <th>Capacity</th>
             <th>Type of Meeting</th>
+            <th>Status</th>
             <th>Action</th>
           </tr>
         </thead>
         <tbody></tbody>
         <tfoot>
           <tr>
+            <th>ID</th>
             <th>Venue</th>
             <th>Department</th>
             <th>Start Time</th>
@@ -43,6 +46,7 @@
             <th>Date of Meeting</th>
             <th>Capacity</th>
             <th>Type of Meeting</th>
+            <th>Status</th>
             <th>Action</th>
           </tr>
         </tfoot>
@@ -50,6 +54,7 @@
     </div>
   </div>
 </div>
+<!-- DEBUG: is_requester={{ is_requester }} -->
 {% endblock %}
 
 {% block scripts %}
@@ -62,38 +67,44 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.36/vfs_fonts.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
 <script>
-$(document).ready(function () {
- $('#booked_venues').DataTable({
-  ajax: {
-    url: "{% url 'booked_venues_datatable' %}",
-    dataSrc: 'data'
-  },
-  columns: [
-    { data: "venue" },
-    { data: "department" },
-    { data: "start_time" },
-    { data: "end_time" },
-    { data: "date_of_meeting" },
-    { data: "capacity" },
-    { data: "type_of_meeting" },
-    {
-      data: "id", // make sure your JSON returns an "id" field
-      render: function(data, type, row) {
-        return `
-           <span style="display: inline-flex; gap: 0.5rem;">
-              <a href="/venue-booking/${data}/update/" class="btn btn-info" title="Edit">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
-                </svg>
-              </a>
-            </span>
-        `;
+  var is_requester = "{{ is_requester|yesno:'true,false' }}";
+  $(document).ready(function () {
+    $('#booked_venues').DataTable({
+      ajax: {
+        url: "{% url 'booked_venues_datatable' %}",
+        dataSrc: 'data'
       },
-      orderable: false,
-      searchable: false
-    }
-  ]
-});
-})
+      columns: [
+        { data: "id" },
+        { data: "venue" },
+        { data: "department" },
+        { data: "start_time" },
+        { data: "end_time" },
+        { data: "date_of_meeting" },
+        { data: "capacity" },
+        { data: "type_of_meeting" },
+        { data: "status" },
+        {
+          data: "id",
+          render: function(data, type, row) {
+            if (is_requester !== "true") {
+              return `
+                <span style="display: inline-flex; gap: 0.5rem;">
+                  <a href="/venue-booking/${data}/update/" class="btn btn-info" title="Edit">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+                    </svg>
+                  </a>
+                </span>
+              `;
+            } else {
+              return '';
+            }
+          }
+        }
+      ]
+    });
+  });
 </script>
+
 {% endblock %}

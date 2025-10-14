@@ -5,7 +5,7 @@ class MeetingsForm(forms.ModelForm):
     class Meta:
         model = Meetings
         fields = '__all__'
-        exclude = ['comments', 'confirm_status', 'list_of_invited_attendees']  # excluded on create
+        exclude = ['comments', 'confirm_status', 'list_of_invited_attendees', 'regions', 'depot','actual_cost_of_meeting']  # excluded on create
         widgets = {
             'date_of_meeting': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
             'start_time': forms.TimeInput(attrs={'type': 'time', 'class': 'form-control'}),
@@ -27,7 +27,7 @@ class MeetingsUpdateForm(forms.ModelForm):
     class Meta:
         model = Meetings
         fields = '__all__'
-        exclude = ['regions', 'depot', 'cost_center', 'employees_invited']
+        exclude = ['regions', 'depot', 'cost_center', 'employees_invited', 'list_of_invited_attendees']
         widgets = {
             'date_of_meeting': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
             'start_time': forms.TimeInput(attrs={'type': 'time', 'class': 'form-control'}),
@@ -47,24 +47,24 @@ class MeetingsUpdateForm(forms.ModelForm):
 class VenueBookingForm(forms.ModelForm):
     class Meta:
         model = VenueBooking
-        fields = ['venue', 'department', 'start_time', 'end_time', 'date_of_meeting', 'type_of_meeting', 'capacity']
+        fields = '__all__'
         widgets = {
             'date_of_meeting': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
             'start_time': forms.TimeInput(attrs={'type': 'time', 'class': 'form-control'}),
             'end_time': forms.TimeInput(attrs={'type': 'time', 'class': 'form-control'}),
-            'type_of_meeting': forms.Select(attrs={'class': 'select2 form-control'}),  # ✅ force select dropdown
+            'type_of_meeting': forms.Select(attrs={'class': 'select2 form-control'}),
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-
         self.fields['capacity'].widget.attrs['readonly'] = True
         self.fields['venue'].label_from_instance = lambda obj: f"{obj.name}  - Capacity: {obj.capacity}"
-
-        # Keep select2 for dropdowns
         for field_name, field in self.fields.items():
             if isinstance(field, forms.ModelChoiceField):
                 field.widget.attrs.update({'class': 'select2 form-control'})
-            elif field_name != 'type_of_meeting':  # skip because we forced widget above
+            elif field_name != 'type_of_meeting': 
                 field.widget.attrs.update({'class': 'form-control'})
+        # Set default status if not provided
+        self.fields['status'].widget = forms.HiddenInput()
+        self.fields['status'].initial = 'Pending'
 

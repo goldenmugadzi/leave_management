@@ -9,6 +9,7 @@
   <div class="bg-gulf-blue-100 shadow shadow-gulf-blue-300 text-gulf-blue-900 rounded p-6">
     <form method="post">
       {% csrf_token %}
+      {{ form.status }}
       
       <!-- Form Header -->
       <div class="mb-8 border-b border-gulf-blue-300 pb-4">

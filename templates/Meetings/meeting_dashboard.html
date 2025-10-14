@@ -30,15 +30,17 @@
            viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round"
            d="M12 4v16m8-8H4"/></svg>
     </a>
-    <a href="/meetings" class="bg-green-600 text-white rounded-lg shadow p-6 flex items-center justify-between hover:bg-green-700 transition">
+    
+    <a href="/meetings/create"  class="bg-green-600 text-white rounded-lg shadow p-6 flex items-center justify-between hover:bg-green-700 transition">
       <div>
-        <h2 class="text-lg font-semibold">Create Meeting</h2>
+        <h2 class="text-lg font-semibold">Create Meeting {{ booking.name }}</h2>
         <p class="text-sm text-green-100">Schedule a new meeting</p>
       </div>
       <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" stroke-width="2"
            viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round"
            d="M12 4v16m8-8H4"/></svg>
     </a>
+    
     <a href="/booked_venue" class="bg-yellow-500 text-white rounded-lg shadow p-6 flex items-center justify-between hover:bg-yellow-600 transition">
       <div>
         <h2 class="text-lg font-semibold">Booked Venues</h2>
@@ -54,7 +56,7 @@
   <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
     <!-- Available Venues -->
     <div class="bg-gulf-blue-100 shadow shadow-gulf-blue-300 text-gulf-blue-900 rounded px-2 py-2">
-      <h2 class="text-lg font-semibold text-gray-800 mb-4">Available Venues</h2>
+      <h2 class="text-lg font-semibold text-gray-800 mb-4">Available Internal Venues</h2>
       <div class="table-responsive">
         <table id="venues_table" class="display" style="width:100%">
           <thead>
@@ -78,7 +80,6 @@
               <th>ID</th>
               <th>Employees Invited</th>
               <th>Department</th>
-              <th>Region</th>
               <th>Type of Meeting</th>
               <th>Date</th>
               <th>Start Time</th>
@@ -87,7 +88,8 @@
               <th>Previous Minutes</th>
               <th>Agenda Items</th>
               <th>Cost Center</th>
-              <th>Depot</th>
+              <th>Estimated Cost</th>
+              <th>Actual Cost</th>
               <th>Comments</th>
               <th>Confirm Status</th>
               <th>Action</th>
@@ -156,7 +158,6 @@ $(document).ready(function () {
       { data: "id" },
       { data: "employees_invited" },
       { data: "department" },
-      { data: "regions" },
       { data: "type_of_meeting" },
       { data: "date_of_meeting" },
       { data: "start_time" },
@@ -170,7 +171,8 @@ $(document).ready(function () {
       },
       { data: "list_of_agenda_items" },
       { data: "cost_center" },
-      { data: "depot" },
+      { data: "estimated_cost_of_meeting" },
+      { data: "actual_cost_of_meeting" },
       { data: "comments" },
       { 
         data: "confirm_status",
@@ -190,19 +192,27 @@ $(document).ready(function () {
         orderable: false,
         searchable: false,
         render: function(data) {
-          return `
-            <span style="display: inline-flex; gap: 0.5rem;">
-              <a href="/update_meeting/${data}/" class="btn btn-info" title="Edit">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
-                </svg>
-              </a>
-            </span>
-          `;
+          if (is_requester !== "true") {
+            return `
+              <span style="display: inline-flex; gap: 0.5rem;">
+                <a href="/update_meeting/${data}/" class="btn btn-info" title="Edit">
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" />
+                  </svg>
+                </a>
+              </span>
+            `;
+          } else {
+            return '';
+          }
         }
       }
     ],
   });
 });
+</script>
+
+<script>
+  var is_requester = "{{ is_requester|yesno:'true,false' }}";
 </script>
 {% endblock %}
