@@ -86,6 +86,9 @@ urlpatterns = [
     path('e60-inspections/', include('e60_inspections.urls')),
     path('circuit-breakers/', include('circuit_breaker_maintenance.urls')),
     path('equipment/', include('equipment_management.urls')),
+    path('', include('fault_locator.urls')),
+    # Namespaced include so templates can reverse with 'fault_locator:<name>'
+    path('fault_locator/', include(('fault_locator.urls', 'fault_locator'), namespace='fault_locator')),
     
     path('api-auth/', include('rest_framework.urls')),
     path("gql/", csrf_exempt(FileUploadGraphQLView.as_view(graphiql=True))),  
