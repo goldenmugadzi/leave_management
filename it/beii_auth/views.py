@@ -160,18 +160,18 @@ APPLICATIONS = [
         "iconUrl": "assets/images/customer.png",
         "url": "/inspections/"
     },
-    {
-        "name": "substation_inspections",
-        "title": "Substation Inspections",
-        "iconUrl": "assets/images/customer.png",
-        "url": "/substation-inspections/"
-    },
-    {
-        "name": "circuit_breaker_maintenance",
-        "title": "Circuit Breaker Maintenance",
-        "iconUrl": "assets/images/circuit_breaker.png",
-        "url": "/circuit-breakers/circuit-breakers/"
-    },
+    # {
+    #     "name": "substation_inspections",
+    #     "title": "Substation Inspections",
+    #     "iconUrl": "assets/images/customer.png",
+    #     "url": "/substation-inspections/"
+    # },
+    # {
+    #     "name": "circuit_breaker_maintenance",
+    #     "title": "Circuit Breaker Maintenance",
+    #     "iconUrl": "assets/images/circuit_breaker.png",
+    #     "url": "/circuit-breakers/circuit-breakers/"
+    # },
     {
         "name": "Meetings",
         "title": "Meetings",
