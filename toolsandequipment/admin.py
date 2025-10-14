@@ -2,6 +2,7 @@ from django.contrib import admin
 from .models import *
 
 admin.site.register(ToolOrEquipment)
-admin.site.register(ToolsAndEquipmentForm)
-admin.site.register(AssignedToolOrEquipment)
-admin.site.register(Comment)
+admin.site.register(ToolsAndEquipmentRegister)
+admin.site.register(ToolsAndEquipmentRegisterItem)
+# admin.site.register(AssignedToolOrEquipment)
+# admin.site.register(Comment)

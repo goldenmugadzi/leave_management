@@ -148,12 +148,18 @@ APPLICATIONS = [
         "title": "Battery Maintenance",
         "iconUrl": "assets/images/customer.png",
         "url": "/installations/"
-    },  {
-        "name": "Tools & Equipment",
-        "title": "Tools & Equipment",
-        "iconUrl": "assets/images/tools&equipment.png",
-        "url": "/tools-and-equipment-list/"
     },
+    #   {
+    #     "name": "Tools & Equipment",
+    #     "title": "Tools & Equipment",
+    #     "iconUrl": "assets/images/tools&equipment.png",
+    #     "url": "/tools-and-equipment-list/"
+    # },{
+    #     "name": "Equipment Change (E114)",
+    #     "title": "Equipment Change (E114)",
+    #     "iconUrl": "assets/images/tools&equijpment.png",
+    #     "url": "/equipment-list/"
+    # },
     {
         "name": "inspections",
         "title": "Inspections",
