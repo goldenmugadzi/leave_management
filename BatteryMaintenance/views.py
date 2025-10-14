@@ -122,9 +122,9 @@ class InstallBattery(LoginRequiredMixin, View):
                     "formset": formset,
                     "substationForm": substationForm,
                 })
-            equipment_id = addEquipment("Battery")
+            # equipment_id = addEquipment("Battery")
             battery = form.save(commit=False)
-            battery.equipment_tracker = equipment_id
+            # battery.equipment_tracker = equipment_id
             battery.substation = substation
             battery.save()
             # addEquipmentChange(
