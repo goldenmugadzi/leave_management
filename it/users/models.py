@@ -6,8 +6,6 @@ from django.contrib.auth.models import AbstractUser
 from django.contrib.auth.models import BaseUserManager
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
-from django.db.models.signals import post_save
-from django.dispatch import receiver
 from django.utils import timezone
 
 from helpers.models import TimeStamp
@@ -661,30 +659,3 @@ class UserExperience(TimeStamp):
     def __str__(self):
         return f"{self.name}"
     
-
-
-@receiver(post_save, sender=UserProfile)
-def assign_fault_locator_roles_on_designation_change(sender, instance, **kwargs):
-    """Automatically assign fault locator central roles based on designation changes."""
-    if instance.designation:
-        desc = (instance.designation.description or '').lower()
-        
-        # Infer senior foreman role
-        if 'senior' in desc and ('foreman' in desc or 'foreperson' in desc):
-            from fault_locator.central_roles import FaultLocatorRoleManager
-            if not FaultLocatorRoleManager.has_role(instance, FaultLocatorRoleManager.SENIOR_FOREMAN):
-                try:
-                    FaultLocatorRoleManager.assign_role(instance, FaultLocatorRoleManager.SENIOR_FOREMAN)
-                    print(f"Auto-assigned senior_foreman role to {instance.username}")
-                except Exception as e:
-                    print(f"Error auto-assigning senior_foreman role to {instance.username}: {e}")
-        
-        # Infer depot foreperson role
-        elif ('foreman' in desc or 'foreperson' in desc) and 'senior' not in desc:
-            from fault_locator.central_roles import FaultLocatorRoleManager
-            if not FaultLocatorRoleManager.has_role(instance, FaultLocatorRoleManager.DEPOT_FOREPERSON):
-                try:
-                    FaultLocatorRoleManager.assign_role(instance, FaultLocatorRoleManager.DEPOT_FOREPERSON)
-                    print(f"Auto-assigned depot_foreperson role to {instance.username}")
-                except Exception as e:
-                    print(f"Error auto-assigning depot_foreperson role to {instance.username}: {e}")
