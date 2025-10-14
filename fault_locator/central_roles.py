@@ -1,0 +1,523 @@
+"""
+Utility functions for working with fault locator roles through the central user roles system.
+This module provides helpers to check roles and permissions using the central it.users.models.Roles system.
+"""
+
+from it.users.models import UserProfile, Roles, Application
+from fault_locator.models import FaultLocatorRole
+
+class FaultLocatorRoleManager:
+    """Manager class for fault locator roles using central system"""
+    
+    APPLICATION_NAME = 'fault_locator'
+    
+    # Role constants
+    SENIOR_FOREMAN = 'senior_foreman'
+    DEPOT_FOREPERSON = 'depot_foreperson'
+    TEAM_LEADER = 'team_leader'
+    TEAM_MEMBER = 'team_member'
+    FAULT_REPORTER = 'fault_reporter'
+    TRANSPORT_MANAGER = 'transport_manager'
+    CRANE_OPERATOR = 'crane_operator'
+    
+    @classmethod
+    def get_application(cls):
+        """Get the fault locator application object"""
+        return Application.objects.filter(name=cls.APPLICATION_NAME).first()
+    
+    @classmethod
+    def get_user_role(cls, user_profile):
+        """Get the user's fault locator role from central system"""
+        if not user_profile:
+            return None
+        
+        try:
+            # Validate that user_profile is actually a UserProfile instance
+            if not hasattr(user_profile, 'get_user_role_for_application'):
+                print(f"Error: user_profile object {type(user_profile)} does not have get_user_role_for_application method")
+                return None
+                
+            # Use the existing method on UserProfile
+            role_obj = user_profile.get_user_role_for_application(cls.APPLICATION_NAME)
+            if role_obj:
+                # The method returns a Role object, so we need to access its role attribute
+                if hasattr(role_obj, 'role'):
+                    return role_obj.role
+                else:
+                    print(f"Warning: Role object {type(role_obj)} does not have 'role' attribute")
+                    return None
+            return None
+        except Exception as e:
+            print(f"Error getting user role: {e}")
+            import traceback
+            traceback.print_exc()
+            return None
+    
+    @classmethod
+    def get_user_role_display(cls, user_profile):
+        """Get the user's fault locator role display name"""
+        if not user_profile:
+            return None
+        
+        try:
+            role_obj = user_profile.get_user_role_for_application(cls.APPLICATION_NAME)
+            if role_obj:
+                if hasattr(role_obj, 'name'):
+                    return role_obj.name
+                else:
+                    print(f"Warning: Role object {type(role_obj)} does not have 'name' attribute")
+                    return None
+            return None
+        except Exception as e:
+            print(f"Error getting user role display: {e}")
+            import traceback
+            traceback.print_exc()
+            return None
+    
+    @classmethod
+    def assign_role(cls, user_profile, role_code, assigned_by=None):
+        """Assign a fault locator role to a user"""
+        try:
+            application = cls.get_application()
+            if not application:
+                raise ValueError("Fault locator application not found. Run setup_fault_locator_roles command first.")
+            
+            role = Roles.objects.get(
+                role=role_code,
+                application=cls.APPLICATION_NAME,
+                app_id=application
+            )
+            
+            # Special validation for depot foreperson role
+            if role_code == cls.DEPOT_FOREPERSON:
+                from .depot_foreperson_validation import validate_depot_foreperson_assignment
+                
+                if not hasattr(user_profile, 'depot') or not user_profile.depot:
+                    raise ValueError(f"User {user_profile.get_full_name()} must be assigned to a depot before being assigned as depot foreperson")
+                
+                is_valid, error_message = validate_depot_foreperson_assignment(user_profile, user_profile.depot)
+                if not is_valid:
+                    raise ValueError(error_message)
+            
+            # Use the existing add_role method
+            user_profile.add_role(role, cls.APPLICATION_NAME)
+            
+            # Optionally log the assignment
+            if assigned_by:
+                print(f"Role '{role.name}' assigned to {user_profile.username} by {assigned_by.username}")
+            
+            return True
+            
+        except Roles.DoesNotExist:
+            raise ValueError(f"Role '{role_code}' not found for fault locator application")
+        except Exception as e:
+            print(f"Error assigning role: {str(e)}")
+            return False
+    
+    @classmethod
+    def remove_role(cls, user_profile):
+        """Remove fault locator role from user"""
+        try:
+            application = cls.get_application()
+            if application:
+                user_profile.roles.filter(
+                    application=cls.APPLICATION_NAME,
+                    app_id=application
+                ).delete()
+            return True
+        except Exception as e:
+            print(f"Error removing role: {str(e)}")
+            return False
+    
+    @classmethod
+    def has_role(cls, user_profile, role_code):
+        """Check if user has specific fault locator role"""
+        try:
+            if not user_profile:
+                return False
+            
+            # Additional safety check
+            if not hasattr(user_profile, 'get_user_role_for_application'):
+                print(f"Error: user_profile object {type(user_profile)} does not have get_user_role_for_application method")
+                return False
+                
+            user_role = cls.get_user_role(user_profile)
+            return user_role == role_code
+        except Exception as e:
+            print(f"Error checking role {role_code}: {e}")
+            return False
+    
+    @classmethod
+    def has_any_role(cls, user_profile):
+        """Check if user has any fault locator role"""
+        return cls.get_user_role(user_profile) is not None
+    
+    @classmethod
+    def get_users_with_role(cls, role_code):
+        """Get all users with a specific fault locator role"""
+        try:
+            application = cls.get_application()
+            if not application:
+                return UserProfile.objects.none()
+            
+            role = Roles.objects.get(
+                role=role_code,
+                application=cls.APPLICATION_NAME,
+                app_id=application
+            )
+            
+            return UserProfile.objects.filter(roles=role)
+            
+        except Roles.DoesNotExist:
+            return UserProfile.objects.none()
+    
+    @classmethod
+    def get_available_roles(cls):
+        """Get all available fault locator roles"""
+        application = cls.get_application()
+        if not application:
+            return []
+        
+        return Roles.objects.filter(
+            application=cls.APPLICATION_NAME,
+            app_id=application
+        ).order_by('name')
+
+# Permission checking functions using central roles
+def get_user_fault_locator_role(user_profile):
+    """Get the user's primary fault locator role from central system"""
+    return FaultLocatorRoleManager.get_user_role(user_profile)
+
+def is_senior_foreman(user_profile):
+    """Check if user is a senior foreman using central roles"""
+    try:
+        if not user_profile:
+            return False
+        return FaultLocatorRoleManager.has_role(user_profile, FaultLocatorRoleManager.SENIOR_FOREMAN)
+    except Exception as e:
+        print(f"Error checking senior foreman role: {e}")
+        return False
+
+def is_depot_foreperson_by_designation(user_profile):
+    """Transitional helper: determine depot foreperson based on designation text.
+
+    This mirrors the legacy designation-based permission logic used in some
+    validation utilities (e.g. depot foreperson assignment validation) prior
+    to full adoption of central role assignments. It purposefully excludes
+    any designation containing 'senior' while including either 'foreperson'
+    or 'foreman'.
+
+    Args:
+        user_profile (UserProfile): Profile to inspect.
+
+    Returns:
+        bool: True if designation indicates a (non-senior) foreperson/foreman.
+    """
+    try:
+        if not user_profile or not hasattr(user_profile, 'designation') or not user_profile.designation:
+            return False
+        designation_desc = str(user_profile.designation.description).lower()
+        # Must contain foreperson/foreman but not senior
+        return ('foreperson' in designation_desc or 'foreman' in designation_desc) and 'senior' not in designation_desc
+    except Exception:
+        return False
+
+def is_depot_foreperson(user_profile, depot_code=None):
+    """Check if user is depot foreperson using central roles"""
+    try:
+        if not user_profile:
+            return False
+            
+        if not FaultLocatorRoleManager.has_role(user_profile, FaultLocatorRoleManager.DEPOT_FOREPERSON):
+            return False
+        
+        # If depot_code is provided, check if user is assigned to that depot
+        if depot_code:
+            if hasattr(user_profile, 'depot') and user_profile.depot:
+                if isinstance(depot_code, str):
+                    return user_profile.depot.code == depot_code
+                else:
+                    return user_profile.depot == depot_code
+        
+        return True
+    except Exception as e:
+        print(f"Error checking depot foreperson role: {e}")
+        return False
+
+def is_team_leader(user_profile):
+    """Check if user is a team leader using central roles"""
+    try:
+        if not user_profile:
+            return False
+        return FaultLocatorRoleManager.has_role(user_profile, FaultLocatorRoleManager.TEAM_LEADER)
+    except Exception as e:
+        print(f"Error checking team leader role: {e}")
+        return False
+
+def is_team_member(user_profile):
+    """Check if user is a team member using central roles"""
+    try:
+        if not user_profile:
+            return False
+        return FaultLocatorRoleManager.has_role(user_profile, FaultLocatorRoleManager.TEAM_MEMBER)
+    except Exception as e:
+        print(f"Error checking team member role: {e}")
+        return False
+
+def is_transport_manager(user_profile):
+    """Check if user is a transport manager using central roles"""
+    try:
+        if not user_profile:
+            return False
+        return FaultLocatorRoleManager.has_role(user_profile, FaultLocatorRoleManager.TRANSPORT_MANAGER)
+    except Exception as e:
+        print(f"Error checking transport manager role: {e}")
+        return False
+
+def is_crane_operator(user_profile):
+    """Check if user is a crane operator using central roles"""
+    try:
+        if not user_profile:
+            return False
+        return FaultLocatorRoleManager.has_role(user_profile, FaultLocatorRoleManager.CRANE_OPERATOR)
+    except Exception as e:
+        print(f"Error checking crane operator role: {e}")
+        return False
+
+def is_fault_reporter(user_profile, depot_code=None):
+    """Check if user can report faults using central roles"""
+    try:
+        if not user_profile:
+            return False
+        
+        if not FaultLocatorRoleManager.has_role(user_profile, FaultLocatorRoleManager.FAULT_REPORTER):
+            return False
+        
+        # If depot_code is provided, check if user is assigned to that depot
+        if depot_code:
+            if hasattr(user_profile, 'depot') and user_profile.depot:
+                if isinstance(depot_code, str):
+                    return user_profile.depot.code == depot_code
+                else:
+                    return user_profile.depot == depot_code
+        
+        # If no depot_code provided, just check if user has the role
+        return True
+    except Exception as e:
+        print(f"Error checking fault reporter role: {e}")
+        return False
+
+def can_report_faults(user_profile, depot=None):
+    """Check if user can report faults for a specific depot"""
+    # Senior foremen can report faults anywhere
+    if is_senior_foreman(user_profile):
+        return True
+    
+    # Depot forepersons can report faults at their depot
+    if depot and is_depot_foreperson(user_profile):
+        if hasattr(user_profile, 'depot') and user_profile.depot:
+            return user_profile.depot == depot or (hasattr(depot, 'code') and user_profile.depot.code == depot.code)
+    
+    # Fault reporters can only report faults at their assigned depot
+    if is_fault_reporter(user_profile):
+        if not depot:
+            # If no depot specified, check if user has depot assigned
+            return hasattr(user_profile, 'depot') and user_profile.depot is not None
+        else:
+            # Check if user's depot matches the specified depot
+            if hasattr(user_profile, 'depot') and user_profile.depot:
+                return user_profile.depot == depot or (hasattr(depot, 'code') and user_profile.depot.code == depot.code)
+            return False
+    
+    # Team leaders and members can report faults at their depot
+    if is_team_leader(user_profile) or is_team_member(user_profile):
+        if depot and hasattr(user_profile, 'depot') and user_profile.depot:
+            return user_profile.depot == depot or (hasattr(depot, 'code') and user_profile.depot.code == depot.code)
+    
+    return False
+
+def can_assign_faults(user_profile, depot=None):
+    """Check if user can assign faults at given depot"""
+    if is_senior_foreman(user_profile):
+        return True
+    
+    if depot and is_depot_foreperson(user_profile):
+        if hasattr(user_profile, 'depot') and user_profile.depot:
+            return user_profile.depot == depot or (hasattr(depot, 'code') and user_profile.depot.code == depot.code)
+    
+    return False
+
+def can_deploy_teams(user_profile):
+    """Check if user can deploy teams to depots"""
+    return is_senior_foreman(user_profile)
+
+def can_manage_devices(user_profile):
+    """Check if user can manage fault locator devices"""
+    try:
+        if not user_profile:
+            return False
+        return is_senior_foreman(user_profile)
+    except Exception as e:
+        print(f"Error checking can_manage_devices: {e}")
+        return False
+
+def can_create_teams(user_profile):
+    """Check if user can create and manage teams"""
+    try:
+        if not user_profile:
+            return False
+        return is_senior_foreman(user_profile)
+    except Exception as e:
+        print(f"Error checking can_create_teams: {e}")
+        return False
+
+def can_report_fault_status(user_profile, fault):
+    """Check if user can report on fault status"""
+    # Team leaders can report for their assignments
+    if is_team_leader(user_profile):
+        from fault_locator.models import FaultAssignment
+        assignment = FaultAssignment.objects.filter(
+            fault=fault, 
+            team__team_leader=user_profile,
+            located_at__isnull=True
+        ).first()
+        if assignment:
+            return True
+    
+    # Forepersons can also report at their depot
+    if is_depot_foreperson(user_profile):
+        if hasattr(user_profile, 'depot') and user_profile.depot:
+            return fault.depot == user_profile.depot
+    
+    # Senior foremen can report on any fault
+    return is_senior_foreman(user_profile)
+
+def has_fault_locator_permissions(user_profile):
+    """Check if user has any fault locator system permissions"""
+    if not user_profile:
+        return False
+    
+    # Check for formal roles first
+    if FaultLocatorRoleManager.has_any_role(user_profile):
+        return True
+    
+    # Check if user is a team member or team leader
+    from .models import FaultLocatorTeam
+    
+    # Check if user is a team leader
+    if FaultLocatorTeam.objects.filter(team_leader=user_profile).exists():
+        return True
+    
+    # Check if user is a team member
+    if FaultLocatorTeam.objects.filter(members=user_profile).exists():
+        return True
+    
+    return False
+
+# Role assignment helpers
+def assign_fault_locator_role(user_profile, role_code, assigned_by=None):
+    """Assign a fault locator role to a user"""
+    return FaultLocatorRoleManager.assign_role(user_profile, role_code, assigned_by)
+
+def assign_depot_foreperson_to_depot(user_profile, depot, assigned_by=None):
+    """
+    Assign a user as depot foreperson to a specific depot.
+    
+    Args:
+        user_profile: UserProfile instance to be assigned as depot foreperson
+        depot: Depot instance where user will be assigned
+        assigned_by: UserProfile instance of the person making the assignment
+    
+    Returns:
+        tuple: (success, error_message)
+    """
+    try:
+        from .depot_foreperson_validation import validate_depot_foreperson_assignment
+        
+        # First validate the assignment
+        is_valid, error_message = validate_depot_foreperson_assignment(user_profile, depot)
+        if not is_valid:
+            return False, error_message
+        
+        # Update user's depot assignment
+        user_profile.depot = depot
+        user_profile.save()
+        
+        # Assign the depot foreperson role
+        success = FaultLocatorRoleManager.assign_role(
+            user_profile, 
+            FaultLocatorRoleManager.DEPOT_FOREPERSON, 
+            assigned_by
+        )
+        
+        if success:
+            return True, f"Successfully assigned {user_profile.get_full_name()} as depot foreperson for {depot.depot}"
+        else:
+            return False, "Failed to assign depot foreperson role"
+            
+    except Exception as e:
+        return False, str(e)
+
+def remove_depot_foreperson_from_depot(user_profile, assigned_by=None):
+    """
+    Remove a user from depot foreperson role and clear depot assignment.
+    
+    Args:
+        user_profile: UserProfile instance to be removed as depot foreperson
+        assigned_by: UserProfile instance of the person making the change
+    
+    Returns:
+        tuple: (success, error_message)
+    """
+    try:
+        from .depot_foreperson_validation import validate_depot_foreperson_removal
+        
+        if not user_profile.depot:
+            return False, f"{user_profile.get_full_name()} is not assigned to any depot"
+        
+        depot = user_profile.depot
+        
+        # Validate the removal
+        is_valid, error_message = validate_depot_foreperson_removal(user_profile, depot)
+        if not is_valid:
+            return False, error_message
+        
+        # Remove the role
+        success = FaultLocatorRoleManager.remove_role(user_profile)
+        
+        if success:
+            # Clear depot assignment
+            user_profile.depot = None
+            user_profile.save()
+            return True, f"Successfully removed {user_profile.get_full_name()} as depot foreperson from {depot.depot}"
+        else:
+            return False, "Failed to remove depot foreperson role"
+            
+    except Exception as e:
+        return False, str(e)
+
+def remove_fault_locator_role(user_profile):
+    """Remove fault locator role from user"""
+    return FaultLocatorRoleManager.remove_role(user_profile)
+
+# Migration helper
+def migrate_legacy_roles():
+    """Migrate from FaultLocatorRole to central roles system"""
+    migrated = 0
+    errors = []
+    
+    for old_role in FaultLocatorRole.objects.filter(is_active=True):
+        try:
+            success = assign_fault_locator_role(
+                old_role.user, 
+                old_role.role, 
+                old_role.assigned_by
+            )
+            if success:
+                migrated += 1
+                old_role.is_active = False
+                old_role.save()
+        except Exception as e:
+            errors.append(f"Error migrating {old_role.user.username}: {str(e)}")
+    
+    return migrated, errors

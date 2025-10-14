@@ -4,53 +4,113 @@
 <div class="simple-fault-list p-4">
   <div class="header mb-6">
     <h1 class="text-xl font-bold text-gray-800">My Fault Assignments</h1>
-    <a href="{% url 'fault_locator_dashboard' %}" 
-       class="text-blue-600 hover:text-blue-800">← Back to Dashboard</a>
+  <a href="{% url 'fault_locator:fault_locator_dashboard' %}" 
+       class="inline-block px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl font-bold text-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl transform hover:-translate-y-1">
+      ← Back to Dashboard
+    </a>
   </div>
 
-  {% if faults %}
+  {% if fault_data %}
     <div class="fault-cards space-y-4">
-      {% for fault in faults %}
+      {% for data in fault_data %}
+      {% with fault=data.fault %}
       <div class="fault-card bg-white rounded-lg shadow-md p-4 border-l-4 
-                  {% if fault.status == 'ACTIVE' %}border-red-500
-                  {% elif fault.status == 'IN_PROGRESS' %}border-yellow-500
+                  {% if fault.status == 'requested' %}border-red-500
+                  {% elif fault.status == 'assigned' %}border-yellow-500
+                  {% elif fault.status == 'located' %}border-blue-500
                   {% else %}border-green-500{% endif %}">
         
         <div class="flex justify-between items-start mb-3">
           <h3 class="font-semibold text-gray-800">{{ fault.description }}</h3>
-          <span class="px-2 py-1 text-xs rounded-full
-                       {% if fault.status == 'ACTIVE' %}bg-red-100 text-red-800
-                       {% elif fault.status == 'IN_PROGRESS' %}bg-yellow-100 text-yellow-800
-                       {% else %}bg-green-100 text-green-800{% endif %}">
-            {{ fault.get_status_display }}
-          </span>
+          <div class="flex items-center space-x-2">
+            <span class="px-2 py-1 text-xs rounded-full
+                         {% if fault.priority == 1 %}bg-blue-100 text-blue-800
+                         {% elif fault.priority == 2 %}bg-green-100 text-green-800
+                         {% elif fault.priority == 3 %}bg-yellow-100 text-yellow-800
+                         {% elif fault.priority == 4 %}bg-red-100 text-red-800{% endif %}">
+              {{ fault.get_priority_display }}
+            </span>
+            <span class="px-2 py-1 text-xs rounded-full
+                         {% if fault.status == 'requested' %}bg-red-100 text-red-800
+                         {% elif fault.status == 'assigned' %}bg-yellow-100 text-yellow-800
+                         {% elif fault.status == 'located' %}bg-blue-100 text-blue-800
+                         {% else %}bg-green-100 text-green-800{% endif %}">
+              {{ fault.get_status_display }}
+            </span>
+          </div>
         </div>
         
         <div class="fault-details text-sm text-gray-600 mb-4">
-          <p>📍 <strong>Location:</strong> {{ fault.depot.depot }}</p>
-          <p>🔧 <strong>Device:</strong> {{ fault.device.serial_number }}</p>
-          <p>📅 <strong>Reported:</strong> {{ fault.created_at|date:"M d, Y" }}</p>
-          {% if fault.assignment.team %}
-          <p>👥 <strong>Team:</strong> {{ fault.assignment.team.name }}</p>
+          <!-- Priority 1: Voltage -->
+          {% if fault.voltage %}
+          <p>⚡ <strong>Voltage:</strong> 
+            <span class="inline-flex px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800">
+              {{ fault.get_voltage_display }}
+            </span>
+          </p>
           {% endif %}
+          
+          <!-- Priority 2: Number of Clients -->
+          {% if fault.clients_affected %}
+          <p>👥 <strong>Clients Affected:</strong> 
+            <span class="inline-flex px-2 py-1 text-xs rounded-full bg-orange-100 text-orange-800">
+              {{ fault.clients_affected }}
+            </span>
+          </p>
+          {% endif %}
+          
+          <!-- Priority 3: Date Reported -->
+          <p>� <strong>Reported:</strong> {{ fault.reported_at|date:"M d, Y H:i" }}</p>
+          
+          <!-- Priority 4: Priority Level -->
+          <p>🔥 <strong>Priority:</strong> 
+            <span class="inline-flex px-2 py-1 text-xs rounded-full
+                         {% if fault.priority == 1 %}bg-blue-100 text-blue-800
+                         {% elif fault.priority == 2 %}bg-green-100 text-green-800
+                         {% elif fault.priority == 3 %}bg-yellow-100 text-yellow-800
+                         {% elif fault.priority == 4 %}bg-red-100 text-red-800{% endif %}">
+              {{ fault.get_priority_display }}
+            </span>
+          </p>
+          
+          <!-- Additional Details -->
+          <p>📍 <strong>Location:</strong> {{ fault.depot.depot }}</p>
+          {% if fault.backfeed %}
+          <p>� <strong>Backfeed:</strong> <span class="text-green-600">Available</span></p>
+          {% endif %}
+          {% if data.current_assignment and data.current_assignment.device %}
+          <p>🔧 <strong>Gear:</strong> {{ data.current_assignment.device.serial_number }}</p>
+          {% endif %}
+          {% if data.current_assignment and data.current_assignment.team %}
+          <p>👥 <strong>Team:</strong> {{ data.current_assignment.team.name }}</p>
+          {% endif %}
+          <p>👤 <strong>Reported By:</strong> {{ fault.reported_by.get_full_name }}</p>
         </div>
         
-        {% if fault.status != 'RESOLVED' %}
-        <div class="action-buttons flex space-x-2">
-          <a href="{% url 'field_update' fault.id %}" 
-             class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700 transition">
-            📱 Field Update
+        {% if fault.status not in 'closed,resolved' %}
+        <div class="action-buttons flex flex-wrap gap-2">
+          {% if data.next_action %}
+          <a href="{{ data.next_action.url }}" 
+             class="px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg font-bold text-sm hover:from-blue-700 hover:to-blue-800 transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl">
+            {{ data.next_action.text }}
+          </a>
+          {% endif %}
+          
+          <a href="{% url 'fault_locator:fault_detail' fault.id %}" 
+             class="px-4 py-2 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-lg font-bold text-sm hover:from-green-700 hover:to-green-800 transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl">
+            📱 View/Update
           </a>
           
-          {% if user_role == 'Senior Foreperson' or user_role == 'Depot Foreperson' %}
-          <a href="{% url 'assign_fault' fault.id %}" 
-             class="px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 transition">
-            👥 Reassign
+          {% if fault.reported_by == user_profile and fault.status not in 'closed,resolved' %}
+          <a href="{% url 'fault_locator:change_fault_priority' fault.id %}" 
+             class="px-4 py-2 bg-gradient-to-r from-purple-600 to-purple-700 text-white rounded-lg font-bold text-sm hover:from-purple-700 hover:to-purple-800 transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl">
+            � Change Priority
           </a>
           {% endif %}
         </div>
         {% endif %}
       </div>
+      {% endwith %}
       {% endfor %}
     </div>
   {% else %}

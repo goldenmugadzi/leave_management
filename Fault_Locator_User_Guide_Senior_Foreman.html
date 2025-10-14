@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Fault Locator User Guide - Senior Foreman</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background-color: #2c3e50;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .section {
+            margin-bottom: 30px;
+            border-left: 4px solid #3498db;
+            padding-left: 20px;
+        }
+        .step {
+            background-color: #f8f9fa;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .menu-item {
+            background-color: #e8f4fd;
+            padding: 8px 12px;
+            margin: 5px 0;
+            border-radius: 3px;
+            font-weight: bold;
+        }
+        .warning {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .success {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .button {
+            background-color: #007bff;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 4px;
+            display: inline-block;
+            margin: 5px;
+        }
+        h1, h2, h3 {
+            color: #2c3e50;
+        }
+        .toc {
+            background-color: #f1f2f6;
+            padding: 20px;
+            margin-bottom: 30px;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h1>Fault Locator System</h1>
+    <h2>Senior Foreman User Guide</h2>
+    <p>Complete Navigation & Operations Manual</p>
+</div>
+
+<div class="toc">
+    <h3>Table of Contents</h3>
+    <ol>
+        <li><a href="#overview">Role Overview & Permissions</a></li>
+        <li><a href="#dashboard">Dashboard Navigation</a></li>
+        <li><a href="#fault-management">Fault Management</a></li>
+        <li><a href="#team-management">Team Management</a></li>
+        <li><a href="#device-management">Device Management</a></li>
+        <li><a href="#reporting">Performance Monitoring & Reporting</a></li>
+        <li><a href="#advanced">Advanced Operations</a></li>
+        <li><a href="#troubleshooting">Troubleshooting</a></li>
+    </ol>
+</div>
+
+<div class="section" id="overview">
+    <h2>1. Role Overview & Permissions</h2>
+    
+    <div class="success">
+        <strong>Senior Foreman Authority:</strong> You have the highest level of access in the fault locator system with full management capabilities across all depots and regions.
+    </div>
+    
+    <h3>Your Key Responsibilities:</h3>
+    <ul>
+        <li>Strategic fault assignment across all depots</li>
+        <li>Team deployment and resource allocation</li>
+        <li>Device management and assignment</li>
+        <li>Performance monitoring and optimization</li>
+        <li>Role assignment and user management</li>
+        <li>Cross-depot priority management</li>
+    </ul>
+
+    <h3>Access Permissions:</h3>
+    <ul>
+        <li>✅ View all faults across all depots</li>
+        <li>✅ Assign teams to any depot</li>
+        <li>✅ Manage all fault locator devices</li>
+        <li>✅ Assign roles to other users</li>
+        <li>✅ Access performance analytics</li>
+        <li>✅ Override depot foreperson decisions</li>
+    </ul>
+</div>
+
+<div class="section" id="dashboard">
+    <h2>2. Dashboard Navigation</h2>
+    
+    <h3>Accessing Your Dashboard:</h3>
+    <div class="step">
+        <strong>Step 1:</strong> Log into the system using your credentials
+    </div>
+    <div class="step">
+        <strong>Step 2:</strong> Navigate to: <div class="menu-item">Fault Locator → Senior Dashboard</div>
+    </div>
+    <div class="step">
+        <strong>Step 3:</strong> Your dashboard displays:
+        <ul>
+            <li>System-wide fault overview</li>
+            <li>Team deployment status</li>
+            <li>Device availability</li>
+            <li>Performance metrics</li>
+            <li>Priority alerts</li>
+        </ul>
+    </div>
+
+    <h3>Main Menu Options:</h3>
+    <div class="menu-item">🏠 Senior Dashboard</div>
+    <p>Overview of all system activities and critical metrics</p>
+    
+    <div class="menu-item">👥 Team & Depot Management</div>
+    <p>Comprehensive team deployment and depot assignment tools</p>
+    
+    <div class="menu-item">🔧 Device & Team Management</div>
+    <p>Device inventory, assignment, and maintenance management</p>
+    
+    <div class="menu-item">📊 Performance Monitoring</div>
+    <p>Analytics, reports, and performance optimization tools</p>
+    
+    <div class="menu-item">⚡ Quick Actions</div>
+    <p>Rapid deployment, assignment, and priority management</p>
+</div>
+
+<div class="section" id="fault-management">
+    <h2>3. Fault Management</h2>
+    
+    <h3>Viewing All Faults:</h3>
+    <div class="step">
+        <strong>Navigate to:</strong> <div class="menu-item">Dashboard → Fault Overview</div>
+        <ul>
+            <li>View all faults across all depots</li>
+            <li>Filter by priority, status, voltage, depot</li>
+            <li>Sort by date, priority, clients affected</li>
+        </ul>
+    </div>
+    
+    <h3>Advanced Fault Assignment:</h3>
+    <div class="step">
+        <strong>Step 1:</strong> Go to <div class="menu-item">Advanced Fault Assignment</div>
+    </div>
+    <div class="step">
+        <strong>Step 2:</strong> Use filters to select faults:
+        <ul>
+            <li>Select depot(s)</li>
+            <li>Choose priority level</li>
+            <li>Filter by voltage level</li>
+        </ul>
+    </div>
+    <div class="step">
+        <strong>Step 3:</strong> Bulk assign faults:
+        <ul>
+            <li>Select multiple faults using checkboxes</li>
+            <li>Choose available team from dropdown</li>
+            <li>Click <span class="button">Assign Selected Faults</span></li>
+        </ul>
+    </div>
+    
+    <div class="warning">
+        <strong>Priority Guidelines:</strong>
+        <ul>
+            <li><strong>VVIP Faults:</strong> Absolute priority - assign immediately</li>
+            <li><strong>High Voltage (132kV+):</strong> Critical priority</li>
+            <li><strong>High Client Impact (500+):</strong> Elevated priority</li>
+            <li><strong>Critical Priority (Level 4):</strong> Same-day assignment</li>
+        </ul>
+    </div>
+    
+    <h3>Priority Management:</h3>
+    <div class="step">
+        <strong>Changing Fault Priority:</strong>
+        <ol>
+            <li>Navigate to fault details</li>
+            <li>Click <span class="button">Change Priority</span></li>
+            <li>Select new priority level</li>
+            <li>Add justification notes</li>
+            <li>Save changes</li>
+        </ol>
+    </div>
+</div>
+
+<div class="section" id="team-management">
+    <h2>4. Team Management</h2>
+    
+    <h3>Team Overview:</h3>
+    <div class="step">
+        <strong>Access:</strong> <div class="menu-item">Team & Depot Management → Team Overview</div>
+        <ul>
+            <li>View all teams system-wide</li>
+            <li>See current deployments</li>
+            <li>Check team availability</li>
+            <li>Monitor workload distribution</li>
+        </ul>
+    </div>
+    
+    <h3>Deploying Teams:</h3>
+    <div class="step">
+        <strong>Quick Deploy (Recommended):</strong>
+        <ol>
+            <li>From dashboard, find "Quick Actions" section</li>
+            <li>Click <span class="button">Quick Deploy Team</span></li>
+            <li>Select team from dropdown</li>
+            <li>Choose depot with priority information</li>
+            <li>Confirm deployment</li>
+        </ol>
+    </div>
+    
+    <div class="step">
+        <strong>Advanced Deploy:</strong>
+        <ol>
+            <li>Go to <div class="menu-item">Deploy Team</div></li>
+            <li>Select team (shows device status)</li>
+            <li>View depot priority information</li>
+            <li>Choose optimal depot based on:
+                <ul>
+                    <li>Number of pending faults</li>
+                    <li>Voltage levels involved</li>
+                    <li>Client impact numbers</li>
+                    <li>Urgency indicators</li>
+                </ul>
+            </li>
+            <li>Deploy with notes</li>
+        </ol>
+    </div>
+    
+    <h3>Team Recall:</h3>
+    <div class="step">
+        <strong>Recalling Teams:</strong>
+        <ol>
+            <li>Navigate to <div class="menu-item">Team Overview</div></li>
+            <li>Find deployed team</li>
+            <li>Click <span class="button">Recall Team</span></li>
+            <li>Choose recall options:
+                <ul>
+                    <li>Immediate recall</li>
+                    <li>Force recall (if active assignments)</li>
+                    <li>Schedule reassignment after current work</li>
+                </ul>
+            </li>
+            <li>Add recall notes</li>
+            <li>Confirm recall</li>
+        </ol>
+    </div>
+    
+    <h3>Creating New Teams:</h3>
+    <div class="step">
+        <strong>Team Creation:</strong>
+        <ol>
+            <li>Go to <div class="menu-item">Team Management → Create Team</div></li>
+            <li>Enter team name</li>
+            <li>Assign team leader</li>
+            <li>Add team members</li>
+            <li>Save team</li>
+            <li>Assign device to team</li>
+        </ol>
+    </div>
+</div>
+
+<div class="section" id="device-management">
+    <h2>5. Device Management</h2>
+    
+    <h3>Device Overview:</h3>
+    <div class="step">
+        <strong>Access:</strong> <div class="menu-item">Device & Team Management → Device List</div>
+        <ul>
+            <li>View all fault locator devices</li>
+            <li>Check device status and availability</li>
+            <li>See current assignments</li>
+            <li>Monitor maintenance schedules</li>
+        </ul>
+    </div>
+    
+    <h3>Device Assignment:</h3>
+    <div class="step">
+        <strong>Quick Assign Device:</strong>
+        <ol>
+            <li>Use <span class="button">Quick Assign Device</span> from dashboard</li>
+            <li>Select available device</li>
+            <li>Choose team without device</li>
+            <li>Confirm assignment</li>
+        </ol>
+    </div>
+    
+    <div class="step">
+        <strong>Advanced Assignment:</strong>
+        <ol>
+            <li>Go to <div class="menu-item">Assign Device to Team</div></li>
+            <li>Select device (check maintenance status)</li>
+            <li>Choose team</li>
+            <li>Add assignment notes</li>
+            <li>Confirm assignment</li>
+        </ol>
+    </div>
+    
+    <h3>Device Status Management:</h3>
+    <div class="step">
+        <strong>Status Options:</strong>
+        <ul>
+            <li><strong>Available:</strong> Ready for assignment</li>
+            <li><strong>Assigned:</strong> Currently assigned to team</li>
+            <li><strong>Maintenance:</strong> Under repair/service</li>
+            <li><strong>Retired:</strong> Out of service</li>
+        </ul>
+    </div>
+    
+    <div class="warning">
+        <strong>Important:</strong> Teams cannot be deployed without working devices. Always ensure device status is "Available" or "Assigned" before team deployment.
+    </div>
+</div>
+
+<div class="section" id="reporting">
+    <h2>6. Performance Monitoring & Reporting</h2>
+    
+    <h3>Performance Dashboard:</h3>
+    <div class="step">
+        <strong>Access:</strong> <div class="menu-item">Performance Monitoring</div>
+        <ul>
+            <li>System-wide performance metrics</li>
+            <li>Team productivity analysis</li>
+            <li>Fault resolution times</li>
+            <li>Resource utilization</li>
+        </ul>
+    </div>
+    
+    <h3>Key Metrics to Monitor:</h3>
+    <div class="step">
+        <strong>Fault Metrics:</strong>
+        <ul>
+            <li>Average assignment time</li>
+            <li>Fault resolution rate</li>
+            <li>Priority compliance</li>
+            <li>Backlog trends</li>
+        </ul>
+    </div>
+    
+    <div class="step">
+        <strong>Team Metrics:</strong>
+        <ul>
+            <li>Team utilization rates</li>
+            <li>Deployment efficiency</li>
+            <li>Geographic coverage</li>
+            <li>Workload distribution</li>
+        </ul>
+    </div>
+    
+    <h3>Generating Reports:</h3>
+    <div class="step">
+        <strong>Standard Reports:</strong>
+        <ol>
+            <li>Navigate to <div class="menu-item">Reports → Usage Report</div></li>
+            <li>Select date range</li>
+            <li>Choose report type</li>
+            <li>Generate and download</li>
+        </ol>
+    </div>
+</div>
+
+<div class="section" id="advanced">
+    <h2>7. Advanced Operations</h2>
+    
+    <h3>Role Management:</h3>
+    <div class="step">
+        <strong>Assigning Roles:</strong>
+        <ol>
+            <li>Go to <div class="menu-item">Manage Roles</div></li>
+            <li>Search for user</li>
+            <li>Select role type:
+                <ul>
+                    <li>Senior Foreman</li>
+                    <li>Depot Foreperson</li>
+                    <li>Team Leader</li>
+                    <li>Team Member</li>
+                    <li>Fault Reporter</li>
+                </ul>
+            </li>
+            <li>For Depot Foreperson, assign specific depot</li>
+            <li>Confirm assignment</li>
+        </ol>
+    </div>
+    
+    <h3>Depot Assignment Management:</h3>
+    <div class="step">
+        <strong>Managing Depot Assignments:</strong>
+        <ol>
+            <li>Access <div class="menu-item">Depot Assignments</div></li>
+            <li>View current foreperson assignments</li>
+            <li>Assign/reassign depot forepersons</li>
+            <li>Monitor depot coverage</li>
+        </ol>
+    </div>
+    
+    <h3>System Administration:</h3>
+    <div class="step">
+        <strong>Admin Functions:</strong>
+        <ul>
+            <li>User role history tracking</li>
+            <li>System audit logs</li>
+            <li>Performance optimization</li>
+            <li>Data integrity checks</li>
+        </ul>
+    </div>
+</div>
+
+<div class="section" id="troubleshooting">
+    <h2>8. Troubleshooting</h2>
+    
+    <h3>Common Issues & Solutions:</h3>
+    
+    <div class="step">
+        <strong>Issue:</strong> Cannot assign team to depot
+        <br><strong>Solution:</strong>
+        <ul>
+            <li>Check if team has working device assigned</li>
+            <li>Verify team is not already deployed</li>
+            <li>Ensure device status is "Available" or "Assigned"</li>
+        </ul>
+    </div>
+    
+    <div class="step">
+        <strong>Issue:</strong> Team not appearing in assignment list
+        <br><strong>Solution:</strong>
+        <ul>
+            <li>Confirm team has device assignment</li>
+            <li>Check device status</li>
+            <li>Verify team members are assigned</li>
+        </ul>
+    </div>
+    
+    <div class="step">
+        <strong>Issue:</strong> Cannot see all faults
+        <br><strong>Solution:</strong>
+        <ul>
+            <li>Verify your Senior Foreman role assignment</li>
+            <li>Check system permissions</li>
+            <li>Clear browser cache and retry</li>
+        </ul>
+    </div>
+    
+    <div class="warning">
+        <strong>Emergency Contacts:</strong>
+        <ul>
+            <li>System Administrator: [Contact Info]</li>
+            <li>Technical Support: [Contact Info]</li>
+            <li>Help Desk: [Contact Info]</li>
+        </ul>
+    </div>
+</div>
+
+<div class="success">
+    <h3>Quick Reference Summary:</h3>
+    <ul>
+        <li><strong>Dashboard Access:</strong> Fault Locator → Senior Dashboard</li>
+        <li><strong>Quick Actions:</strong> Use dashboard quick action buttons for efficiency</li>
+        <li><strong>Priority Order:</strong> VVIP → High Voltage → High Client Impact → Date</li>
+        <li><strong>Team Deployment:</strong> Always check device status first</li>
+        <li><strong>Emergency:</strong> Use force recall for urgent reassignments</li>
+    </ul>
+</div>
+
+</body>
+</html>

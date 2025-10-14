@@ -1,0 +1,454 @@
+{% extends "admin_layout.html" %}
+{% load static %}
+
+{% block content %}
+<div class="deploy-team-container p-6">
+  <div class="max-w-7xl mx-auto">
+    <!-- Header -->
+    <div class="header mb-6">
+      <div class="flex justify-between items-center">
+        <div>
+          <h1 class="text-2xl font-bold text-gray-800">{{ page_title }}</h1>
+          <p class="text-gray-600">Deploy fault locator teams to depot locations based on priority needs</p>
+        </div>
+        <div class="action-buttons space-x-2">
+          <a href="{% url 'fault_locator:team_overview' %}" 
+             class="px-6 py-3 bg-gradient-to-r from-gray-600 to-gray-700 text-white rounded-xl font-bold text-lg hover:from-gray-700 hover:to-gray-800 transition-all duration-300 hover:scale-105 shadow-xl hover:shadow-2xl transform hover:-translate-y-1 border-2 border-gray-500 hover:border-gray-400 ring-2 ring-gray-200 hover:ring-gray-300">
+            ← Back to Teams
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
+      <!-- Depot Priority Information -->
+      <div class="xl:col-span-2">
+        <div class="depot-priority-section mb-6">
+          <h2 class="text-xl font-semibold text-gray-800 mb-4">
+            📊 Depot Priority Analysis
+            <span class="text-sm font-normal text-gray-500 ml-2">
+              (Updated in real-time to help you make informed deployment decisions)
+            </span>
+          </h2>
+          
+          {% if depot_priority_info %}
+          <div class="depot-grid grid grid-cols-1 md:grid-cols-2 gap-4">
+            {% for depot_data in depot_priority_info %}
+            <div class="depot-card bg-white rounded-lg shadow-lg border-l-4 
+                        {% if depot_data.priority_level == 'CRITICAL' %}border-red-500
+                        {% elif depot_data.priority_level == 'HIGH' %}border-orange-500
+                        {% elif depot_data.priority_level == 'MEDIUM' %}border-yellow-500
+                        {% else %}border-green-500{% endif %}">
+              
+              <div class="depot-header p-4 border-b border-gray-100">
+                <div class="flex justify-between items-start">
+                  <div>
+                    <h3 class="font-semibold text-gray-800 text-lg">{{ depot_data.depot.depot }}</h3>
+                    <p class="text-sm text-gray-600">{{ depot_data.depot.region }}</p>
+                  </div>
+                  <div class="text-right">
+                    <div class="priority-badge inline-flex items-center px-3 py-1 rounded-full text-sm font-medium {{ depot_data.priority_class }}">
+                      {{ depot_data.priority_icon }} {{ depot_data.priority_level }}
+                    </div>
+                    <div class="text-xs text-gray-500 mt-1">
+                      Score: {{ depot_data.workload_score }}
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="depot-body p-4">
+                <!-- Key Metrics -->
+                <div class="metrics-grid grid grid-cols-2 gap-4 mb-4">
+                  <div class="metric">
+                    <div class="metric-value text-2xl font-bold {% if depot_data.pending_faults > 0 %}text-red-600{% else %}text-green-600{% endif %}">
+                      {{ depot_data.pending_faults }}
+                    </div>
+                    <div class="metric-label text-xs text-gray-500">Pending Faults</div>
+                  </div>
+                  
+                  <div class="metric">
+                    <div class="metric-value text-2xl font-bold {% if depot_data.critical_faults > 0 %}text-red-600{% else %}text-gray-600{% endif %}">
+                      {{ depot_data.critical_faults }}
+                    </div>
+                    <div class="metric-label text-xs text-gray-500">Critical Faults</div>
+                  </div>
+                  
+                  <div class="metric">
+                    <div class="metric-value text-2xl font-bold {% if depot_data.team_count == 0 %}text-orange-600{% else %}text-blue-600{% endif %}">
+                      {{ depot_data.team_count }}
+                    </div>
+                    <div class="metric-label text-xs text-gray-500">Teams Deployed</div>
+                  </div>
+                  
+                  <div class="metric">
+                    <div class="metric-value text-2xl font-bold text-gray-600">
+                      {{ depot_data.in_progress_faults }}
+                    </div>
+                    <div class="metric-label text-xs text-gray-500">In Progress</div>
+                  </div>
+                </div>
+                
+                <!-- Status Indicators -->
+                <div class="status-indicators space-y-2">
+                  {% if depot_data.needs_team %}
+                  <div class="status-item flex items-center text-sm">
+                    <span class="status-icon w-3 h-3 bg-red-500 rounded-full mr-2"></span>
+                    <span class="text-red-600 font-medium">❗ Urgent: No teams deployed with active faults</span>
+                  </div>
+                  {% endif %}
+                  
+                  {% if depot_data.overwhelmed %}
+                  <div class="status-item flex items-center text-sm">
+                    <span class="status-icon w-3 h-3 bg-orange-500 rounded-full mr-2"></span>
+                    <span class="text-orange-600 font-medium">⚠️ Overwhelmed: High fault-to-team ratio</span>
+                  </div>
+                  {% endif %}
+                  
+                  {% if depot_data.oldest_fault_hours %}
+                  <div class="status-item flex items-center text-sm">
+                    <span class="status-icon w-3 h-3 bg-yellow-500 rounded-full mr-2"></span>
+                    <span class="text-yellow-600">⏰ Oldest fault: {{ depot_data.oldest_fault_hours }}h ago</span>
+                  </div>
+                  {% endif %}
+                  
+                  {% if depot_data.high_priority_faults > 0 %}
+                  <div class="status-item flex items-center text-sm">
+                    <span class="status-icon w-3 h-3 bg-red-500 rounded-full mr-2"></span>
+                    <span class="text-red-600">🚨 {{ depot_data.high_priority_faults }} high priority fault{% if depot_data.high_priority_faults != 1 %}s{% endif %}</span>
+                  </div>
+                  {% endif %}
+                </div>
+                
+                <!-- Team Details -->
+                {% if depot_data.team_details %}
+                <div class="team-details mt-4 pt-4 border-t border-gray-100">
+                  <h4 class="text-sm font-medium text-gray-700 mb-2">Current Teams:</h4>
+                  <div class="teams-list space-y-1">
+                    {% for team in depot_data.team_details %}
+                    <div class="team-item flex items-center justify-between text-sm">
+                      <span class="team-name">{{ team.name }}</span>
+                      <span class="team-status {% if team.status == 'busy' %}text-orange-600{% else %}text-green-600{% endif %}">
+                        {{ team.active_assignments }} active
+                      </span>
+                    </div>
+                    {% endfor %}
+                  </div>
+                </div>
+                {% endif %}
+                
+                <!-- Recommendation -->
+                <div class="recommendation mt-4 pt-4 border-t border-gray-100">
+                  {% if depot_data.priority_level == 'CRITICAL' %}
+                  <div class="recommendation-badge bg-red-100 text-red-800 px-3 py-2 rounded-lg text-sm font-medium">
+                    🚨 <strong>Immediate Action Required:</strong> Deploy team now to address critical workload
+                  </div>
+                  {% elif depot_data.priority_level == 'HIGH' %}
+                  <div class="recommendation-badge bg-orange-100 text-orange-800 px-3 py-2 rounded-lg text-sm font-medium">
+                    ⚠️ <strong>High Priority:</strong> Consider deploying additional team support
+                  </div>
+                  {% elif depot_data.priority_level == 'MEDIUM' %}
+                  <div class="recommendation-badge bg-yellow-100 text-yellow-800 px-3 py-2 rounded-lg text-sm font-medium">
+                    ⚡ <strong>Monitor:</strong> Deployment may be needed soon
+                  </div>
+                  {% else %}
+                  <div class="recommendation-badge bg-green-100 text-green-800 px-3 py-2 rounded-lg text-sm font-medium">
+                    ✅ <strong>Stable:</strong> Current capacity appears adequate
+                  </div>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+          {% else %}
+          <div class="no-data bg-gray-50 rounded-lg p-8 text-center">
+            <div class="text-gray-500 text-lg">📊</div>
+            <h3 class="text-lg font-medium text-gray-800 mt-2">No depot data available</h3>
+            <p class="text-sm text-gray-600 mt-1">Unable to load depot priority information at this time.</p>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+      
+      <!-- Deployment Form -->
+      <div class="deployment-form-section">
+        <div class="form-card bg-white rounded-lg shadow-lg p-6 mb-6">
+          <h2 class="text-lg font-semibold text-gray-800 mb-4">Deployment Form</h2>
+          
+          <form method="post" class="space-y-6">
+            {% csrf_token %}
+            
+            <!-- Form Errors -->
+            {% if form.errors %}
+            <div class="alert-error bg-red-50 border border-red-200 rounded-lg p-4">
+              <div class="flex">
+                <div class="text-red-400">⚠️</div>
+                <div class="ml-3">
+                  <h3 class="text-sm font-medium text-red-800">Please correct the following errors:</h3>
+                  <div class="mt-2 text-sm text-red-700">
+                    {% for field, errors in form.errors.items %}
+                      {% for error in errors %}
+                        <p>{{ field|title }}: {{ error }}</p>
+                      {% endfor %}
+                    {% endfor %}
+                  </div>
+                </div>
+              </div>
+            </div>
+            {% endif %}
+            
+            <!-- Team Selection -->
+            <div class="form-group">
+              <label for="{{ form.team.id_for_label }}" 
+                     class="block text-sm font-medium text-gray-700 mb-1">
+                Select Team <span class="text-red-500">*</span>
+              </label>
+              {{ form.team }}
+              <p class="text-xs text-gray-500 mt-1">
+                Only teams with assigned devices and not currently deployed are shown.
+              </p>
+            </div>
+            
+            <!-- Depot Selection -->
+            <div class="form-group">
+              <label for="{{ form.depot.id_for_label }}" 
+                     class="block text-sm font-medium text-gray-700 mb-1">
+                Deployment Location <span class="text-red-500">*</span>
+              </label>
+              {{ form.depot }}
+              <p class="text-xs text-gray-500 mt-1">
+                Select the depot where the team will be stationed. Use the priority analysis above to guide your decision.
+              </p>
+            </div>
+            
+            <!-- Notes -->
+            <div class="form-group">
+              <label for="{{ form.deployment_notes.id_for_label }}" 
+                     class="block text-sm font-medium text-gray-700 mb-1">
+                Deployment Notes
+              </label>
+              {{ form.deployment_notes }}
+              <p class="text-xs text-gray-500 mt-1">
+                Optional notes about the deployment (special instructions, duration, etc.).
+              </p>
+            </div>
+            
+            <!-- Action Buttons -->
+            <div class="form-actions flex flex-col space-y-3 pt-6">
+              <button type="submit" 
+                      class="w-full px-6 py-3 bg-gradient-to-r from-green-600 to-green-700 text-white rounded-xl font-bold text-lg hover:from-green-700 hover:to-green-800 transition-all duration-300 hover:scale-105 shadow-xl hover:shadow-2xl transform hover:-translate-y-1 border-2 border-green-500 hover:border-green-400 ring-2 ring-green-200 hover:ring-green-300">
+                🚀 Deploy Team
+              </button>
+              <a href="{% url 'fault_locator:team_overview' %}" 
+                 class="w-full px-6 py-3 bg-gradient-to-r from-gray-600 to-gray-700 text-white rounded-xl font-bold text-lg hover:from-gray-700 hover:to-gray-800 transition-all duration-300 hover:scale-105 shadow-xl hover:shadow-2xl transform hover:-translate-y-1 border-2 border-gray-500 hover:border-gray-400 ring-2 ring-gray-200 hover:ring-gray-300 text-center">
+                Cancel
+              </a>
+            </div>
+          </form>
+        </div>
+        
+        <!-- Selected Team Info -->
+        {% if selected_team %}
+        <div class="team-info-card bg-white rounded-lg shadow-lg p-6 mb-6">
+          <h2 class="text-lg font-semibold text-gray-800 mb-4">Selected Team</h2>
+          
+          <div class="team-details space-y-3">
+            <div class="detail-item">
+              <h3 class="font-medium text-gray-800">👥 {{ selected_team.name }}</h3>
+              <p class="text-sm text-gray-600">{{ selected_team.members.count }} members</p>
+            </div>
+            
+            <div class="detail-item">
+              <h4 class="text-sm font-medium text-gray-700">Team Members:</h4>
+              <div class="mt-1">
+                {% for member in selected_team.members.all %}
+                  <span class="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded mr-1 mb-1">
+                    {{ member.get_full_name }}
+                  </span>
+                {% endfor %}
+              </div>
+            </div>
+            
+            {% with device_assignment=selected_team.faultlocatordeviceassignment_set.first %}
+            {% if device_assignment %}
+            <div class="detail-item">
+              <h4 class="text-sm font-medium text-gray-700">Assigned Device:</h4>
+              <p class="text-sm text-gray-600">
+                📱 {{ device_assignment.device.serial_number }}
+                {% if device_assignment.device.description %}
+                  - {{ device_assignment.device.description }}
+                {% endif %}
+              </p>
+            </div>
+            {% endif %}
+            {% endwith %}
+            
+            <div class="detail-item">
+              <h4 class="text-sm font-medium text-gray-700">Current Status:</h4>
+              <p class="text-sm text-green-600">✅ Ready for deployment</p>
+            </div>
+          </div>
+        </div>
+        {% endif %}
+        
+        <!-- Deployment Guidelines -->
+        <div class="guidelines-card bg-blue-50 border border-blue-200 rounded-lg p-6">
+          <h2 class="text-lg font-semibold text-blue-800 mb-4">Deployment Guidelines</h2>
+          
+          <div class="guidelines-list space-y-3">
+            <div class="guideline-item flex items-start">
+              <div class="text-blue-500 mr-2">🎯</div>
+              <div>
+                <h4 class="text-sm font-medium text-blue-800">Priority-Based Deployment</h4>
+                <p class="text-sm text-blue-600">Deploy teams to depots with CRITICAL or HIGH priority status first</p>
+              </div>
+            </div>
+            
+            <div class="guideline-item flex items-start">
+              <div class="text-blue-500 mr-2">�</div>
+              <div>
+                <h4 class="text-sm font-medium text-blue-800">Workload Analysis</h4>
+                <p class="text-sm text-blue-600">Consider pending faults, team capacity, and critical fault counts</p>
+              </div>
+            </div>
+            
+            <div class="guideline-item flex items-start">
+              <div class="text-blue-500 mr-2">⚡</div>
+              <div>
+                <h4 class="text-sm font-medium text-blue-800">Urgent Indicators</h4>
+                <p class="text-sm text-blue-600">Look for "No teams deployed" and "Overwhelmed" warnings</p>
+              </div>
+            </div>
+            
+            <div class="guideline-item flex items-start">
+              <div class="text-blue-500 mr-2">�</div>
+              <div>
+                <h4 class="text-sm font-medium text-blue-800">Communication</h4>
+                <p class="text-sm text-blue-600">Team members and depot foreperson will be notified automatically</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+/* Form styling */
+.form-group input,
+.form-group select,
+.form-group textarea {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  background-color: #ffffff;
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.form-group textarea {
+  min-height: 80px;
+  resize: vertical;
+}
+
+/* Depot card animations */
+.depot-card {
+  transition: all 0.3s ease;
+}
+
+.depot-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+/* Priority badge animations */
+.priority-badge {
+  transition: all 0.2s ease;
+}
+
+.priority-badge:hover {
+  transform: scale(1.05);
+}
+
+/* Metric value animations */
+.metric-value {
+  transition: all 0.3s ease;
+}
+
+.metric:hover .metric-value {
+  transform: scale(1.1);
+}
+
+/* Status indicators */
+.status-icon {
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .depot-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .metrics-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+</style>
+
+<!-- JavaScript for enhanced interactivity -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Enhance depot selection based on priority
+  const depotSelect = document.getElementById('{{ form.depot.id_for_label }}');
+  const depotCards = document.querySelectorAll('.depot-card');
+  
+  // Add click handlers to depot cards to auto-select in form
+  depotCards.forEach(card => {
+    card.addEventListener('click', function() {
+      const depotName = this.querySelector('h3').textContent.trim();
+      
+      // Find and select the corresponding option
+      Array.from(depotSelect.options).forEach(option => {
+        if (option.textContent.includes(depotName)) {
+          depotSelect.value = option.value;
+          
+          // Visual feedback
+          depotCards.forEach(c => c.classList.remove('ring-2', 'ring-blue-500'));
+          this.classList.add('ring-2', 'ring-blue-500');
+        }
+      });
+    });
+    
+    // Add hover effects
+    card.addEventListener('mouseenter', function() {
+      this.style.cursor = 'pointer';
+    });
+  });
+  
+  // Auto-refresh depot data every 5 minutes
+  setInterval(function() {
+    // Only refresh if no form data is entered
+    if (!depotSelect.value) {
+      location.reload();
+    }
+  }, 300000); // 5 minutes
+});
+</script>
+{% endblock %}
+
