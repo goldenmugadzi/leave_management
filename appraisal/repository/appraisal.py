@@ -1,5 +1,6 @@
 from typing import Dict, Any, List
 from ..models import Appraisal, PersonalAttribute, AppraiseePersonalAttribute
+from ..models.helpers import YearQuarter
 from it.users.models import UserProfile
 
 
@@ -118,9 +119,9 @@ class PersonalAttributeRepository:
             raise Exception(f"PersonalAttributeRepository fetch all Repo failed with error: {e}")
 
 class AppraiseePersonalAttributeRepository:
-    def create(self, appraisal_obj: Appraisal, personal_attr_object: PersonalAttribute)->AppraiseePersonalAttribute:
+    def create(self, appraisal_obj: Appraisal, quarter_obj: YearQuarter, personal_attr_object: PersonalAttribute)->AppraiseePersonalAttribute:
         try:
-            return AppraiseePersonalAttribute.objects.create(appraisal=appraisal_obj, personal_attribute=personal_attr_object)
+            return AppraiseePersonalAttribute.objects.create(appraisal=appraisal_obj, quarter=quarter_obj, personal_attribute=personal_attr_object)
         except Exception as e:
             raise Exception(f"AppraiseePersonalAttributeRepository create Repo failed with error: {e}")
 
@@ -144,6 +145,12 @@ class AppraiseePersonalAttributeRepository:
     
     def fetch_appraisal_id(self, appraisal_id)->List[AppraiseePersonalAttribute]:
         try:
-            return AppraiseePersonalAttribute.objects.filter(appraisal__id=appraisal_id).select_related("personal_attribute")
+            return AppraiseePersonalAttribute.objects.filter(appraisal__id=appraisal_id).select_related("quarter", "personal_attribute", "appraisal")
         except Exception as e:
             raise Exception(f"AppraiseePersonalAttributeRepository fetch by appraisal pk: {appraisal_id} Repo failed with error: {e}")
+    
+    def fetch_appraisal_id_quarter_id(self, appraisal_id: int, quarter_id: int)->List[AppraiseePersonalAttribute]:
+        try:
+            return AppraiseePersonalAttribute.objects.filter(appraisal__id=appraisal_id, quarter__id=quarter_id).select_related("personal_attribute")
+        except Exception as e:
+            raise Exception(f"AppraiseePersonalAttributeRepository fetch by appraisal and quarter pk: appraisa - {appraisal_id} and quarter id - {quarter_id} Repo failed with error: {e}")

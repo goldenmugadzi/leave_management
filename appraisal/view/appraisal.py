@@ -24,6 +24,7 @@ from ..repository.qualification_experience import UserExperienceRepository
 from ..repository.users import UserProfileRepository
 from ..services import AppraisalService, AppraisalExperienceService
 from ..services.qualification import UserQualificationService
+from ..services.appraisal import AppraisalPersonalAttributeService
 from ..helpers.types.kra import KraRolesType
 from ..helpers.getters.approval import ApprovalStagesHandler
 from ..helpers.getters.appraisal import AppraisalDependanciesStrategyContext, AppraisalPersonalDetailsStrategy, TrainingAndDevStrategy, PerformanceAssessmentStrategy, PerformanceProgressReviewStrategy, FinalPerformanceAssStrategy
@@ -421,13 +422,13 @@ class AppraiseePersonalAttributesDetailView(TemplateView):
     def get_appraisal_object(self):
         obj = get_object_or_404(Appraisal, pk=self.kwargs.get("appraisal_id"))
         return obj
-    
-    def get_apraisee_personal_attrs(self):
+
+    def get_all_quarters_apraisee_personal_attrs(self):
         try:
-            repo = AppraiseePersonalAttributeRepository()
-            return repo.fetch_appraisal_id(appraisal_id=self.kwargs.get("appraisal_id"))
+            service_handler = AppraisalPersonalAttributeService(repo=AppraiseePersonalAttributeRepository())
+            return service_handler.get_all_quarters(appraisal_id=self.kwargs.get("appraisal_id"))
         except Exception as e:
-            logger.error(f"[AppraiseePersonalAttributesDetailView] repo failed with error: {e}")
+            logger.error(f"[AppraiseePersonalAttributesDetailView] get_all_quarters_apraisee_personal_attrs failed with error: {e}")
     
     
     def requesters(self)->Dict[str, bool]:
@@ -488,7 +489,7 @@ class AppraiseePersonalAttributesDetailView(TemplateView):
 
         context.update(self.requesters())
         context["appraisal_object"] = self.get_appraisal_object()
-        context["appraisee_personal_attr_qr"] = self.get_apraisee_personal_attrs()
+        context["appraisee_personal_attr_qr"] = self.get_all_quarters_apraisee_personal_attrs()
         context["quarter_ratings"] = final_rating_type.rating
         context["final_score"] = final_rating_type.final_score
         context["final_comment_form"] = self.get_final_comment_form(None)
@@ -531,6 +532,7 @@ class AppraiseePersonalAttributesDetailView(TemplateView):
                 logger.warning(f"[AppraiseePersonalAttributesDetailView] get_appraisal_object() with appraisal pk: {appraisal_id}, not found error")
                 return redirect("object_not_found_error", object_name=slugify("Appraisal"))
 
+            self.get_all_quarters_apraisee_personal_attrs()
         except Exception as e:
             logger.error(f"[AppraiseePersonalAttributesDetailView]  get_appraisal_object() with appraisal pk: {appraisal_id}, failed with error: {e}")
             return redirect("server_error_view")

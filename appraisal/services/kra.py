@@ -86,7 +86,7 @@ class AppraisalDependanciesInitialisationService:
             
         return self.appraisal_output_perf_dimension_repo.bulk_create(appraisal_output_perf_dimension_objs_list=appraisal_output_perf_dimension_objs_list)
     
-    def create_appraisee_personal_attr(self, appraisal_object):
+    def create_appraisee_personal_attr(self, appraisal_object, quarter_obj):
         appraisee_personal_attr_objs_list = []
         personal_attr_repo = PersonalAttributeRepository()
         personal_attr_qr = personal_attr_repo.fetch_all()
@@ -94,7 +94,8 @@ class AppraisalDependanciesInitialisationService:
         for personal_attr_obj in personal_attr_qr:
             appraisee_personal_attr_obj = AppraiseePersonalAttribute(
                 appraisal=appraisal_object,
-                personal_attribute=personal_attr_obj
+                personal_attribute=personal_attr_obj,
+                quarter=quarter_obj
             )
             appraisee_personal_attr_objs_list.append(appraisee_personal_attr_obj)
         apprasee_personal_attr_repo = AppraiseePersonalAttributeRepository()
@@ -145,9 +146,9 @@ class AppraisalDependanciesInitialisationService:
                                 except Exception as e:
                                     raise Exception(f"reviewers status creation failed with error: {e}")
                     
-                    # ======================== create appraisee personal attributes ====================>>
-                    self.create_appraisee_personal_attr(appraisal_object=appraisal_obj)
-                    logger.success(f"appraisee personal attributes created successfully")
+                            # ======================== create appraisee personal attributes ====================>>
+                            self.create_appraisee_personal_attr(appraisal_object=appraisal_obj, quarter_obj=year_quarter_obj)
+                            logger.success(f"appraisee personal attributes created successfully")
                 else:
                     raise Exception(f"appraisee with appraisal id: {appraisal_id}. has no designation")
             

@@ -104,3 +104,9 @@ class FinalPerformanceAssType(BaseModel):
     personal_attributes: List[AppraiseePersonalAttribute]
     
     model_config = ConfigDict(arbitrary_types_allowed=True)
+    
+class AppraisalPersonalAttributeType(BaseModel):
+    quarter: int
+    personal_attributes: List[AppraiseePersonalAttribute]
+    
+    model_config = ConfigDict(arbitrary_types_allowed=True)
