@@ -4,7 +4,7 @@ from graphql_jwt.decorators import login_required
 from approve.views import gql_initiate_approval_process, gql_send_notification
 from .models import Substation, BatteryInstallation, Cell, BatteryMaintenance, CellReading
 from pretask_risk_assessment.types import ToolOrEquipmentType
-from toolsandequipment.models import ToolOrEquipment
+# from toolsandequipment.models import ToolOrEquipment
 from .types import SubstationType, BatteryInstallationType, CellType, BatteryMaintenanceType, CellReadingType
 from django.db.models import Q
 
@@ -26,7 +26,7 @@ class Query(graphene.ObjectType):
     battery_maintenance = Field(BatteryMaintenanceType, id=ID(required=True))
     maintenances_by_battery = List(BatteryMaintenanceType, battery_id=ID(required=True))
     cell_readings_by_maintenance = List(CellReadingType, maintenance_id=ID(required=True))
-    equipment_for_substation = graphene.List(ToolOrEquipmentType,substation_id=graphene.ID(required=True))
+    # equipment_for_substation = graphene.List(ToolOrEquipmentType,substation_id=graphene.ID(required=True))
 
     def resolve_all_substations(self, info):
         return Substation.objects.all()
@@ -40,8 +40,8 @@ class Query(graphene.ObjectType):
     def resolve_substations_by_district(self, info, district):
         return Substation.objects.filter(district__district__icontains=district)
         
-    def resolve_equipment_for_substation(self, info, substation_id):
-        return ToolOrEquipment.objects.filter(substation__id=substation_id)
+    # def resolve_equipment_for_substation(self, info, substation_id):
+    #     return ToolOrEquipment.objects.filter(substation__id=substation_id)
 
 
     def resolve_substations_by_depot(self, info, depot):
