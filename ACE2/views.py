@@ -94,6 +94,29 @@ except Exception:
 from django.http import FileResponse, HttpResponseNotFound
 from django.db.models.functions import TruncMonth
 from django.db.models import Sum, Count
+from django.contrib import messages
+from fault_locator.central_roles import FaultLocatorRoleManager
+from it.users.models import UserProfile, Application, Roles
+
+from .utils import notify_head_office_approvers, get_regional_budget_impact_summary
+
+# Safe helper to get a queryset of Roles for the current user without assuming request.user has a direct 'roles' M2M
+def get_user_roles_qs(user):
+    """Return a queryset of Roles for the given user safely.
+    Falls back to looking up UserProfile if needed; returns empty queryset on failure.
+    """
+    try:
+        # If the user model already has roles M2M
+        if hasattr(user, 'roles') and callable(getattr(user, 'roles').all):
+            return user.roles.all()
+        # Fallback via profile lookup
+        if hasattr(user, 'id'):
+            profile = UserProfile.objects.filter(id=user.id).first()
+            if profile and hasattr(profile, 'roles'):
+                return profile.roles.all()
+    except Exception:
+        pass
+    return Roles.objects.none()
 
 from .utils import notify_head_office_approvers, get_regional_budget_impact_summary
 
@@ -3941,3 +3964,359 @@ def test_migrate_assets(request):
         
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
+
+
+
+def check_user_role_with_troubleshooting(request):
+    """
+    Check user role and provide troubleshooting messages if no role found.
+    Returns (user_profile, user_role, has_issues)
+    """
+    user_profile = UserProfile.objects.filter(id=request.user.id).first()
+    
+    if not user_profile:
+        messages.error(request, 
+            "❌ No user profile found. Please contact your system administrator to create your profile.")
+        return None, None, True
+    
+    # Check if fault locator application exists
+    fault_app = Application.objects.filter(name='fault_locator').first()
+    if not fault_app:
+        messages.error(request, 
+            "❌ Fault Locator application not configured. Contact system administrator.")
+        return user_profile, None, True
+    
+    # Check if user has any fault locator role
+    try:
+        user_role = FaultLocatorRoleManager.get_user_role(user_profile)
+        has_any_role = FaultLocatorRoleManager.has_any_role(user_profile)
+        
+        if not has_any_role:
+            # User has no fault locator role - provide helpful troubleshooting
+            _provide_role_troubleshooting_messages(request, user_profile)
+            return user_profile, None, True
+        
+        return user_profile, user_role, False
+        
+
+        
+    except Exception as e:
+        messages.error(request, 
+            f"❌ Error checking your roles: {str(e)}. Please contact system administrator.")
+        return user_profile, None, True
+
+
+def _provide_role_troubleshooting_messages(request, user_profile):
+    """Provide helpful troubleshooting messages for users without roles"""
+    
+    # Check user profile completeness
+    missing_info = []
+    if not user_profile.depot:
+        missing_info.append('depot assignment')
+    if not user_profile.designation:
+        missing_info.append('job designation')
+    if not user_profile.section:
+        missing_info.append('section assignment')
+    
+    if missing_info:
+        messages.warning(request, 
+            f"⚠️ Your profile is missing: {', '.join(missing_info)}. "
+            "This may prevent proper role assignment.")
+    
+    # Suggest role based on designation
+    suggested_role = _suggest_role_from_designation(user_profile)
+    if suggested_role:
+        messages.info(request, 
+            f"💡 Based on your designation '{user_profile.designation}', "
+            f"you should likely have the '{suggested_role}' role.")
+    
+    # Main error message with actionable steps
+    messages.error(request, 
+        "🚫 You don't have any Fault Locator roles assigned. "
+        "You cannot access fault reporting features until a role is assigned.")
+    
+    # Provide specific steps to resolve
+    if user_profile.depot:
+        messages.info(request, 
+            f"📋 Next steps:\n"
+            f"1. Contact your depot supervisor at {user_profile.depot}\n"
+            f"2. Request appropriate Fault Locator role assignment\n"
+            f"3. Alternatively, contact IT support for assistance")
+    else:
+        messages.info(request, 
+            "📋 Next steps:\n"
+            "1. Contact your line manager to complete your profile\n"
+            "2. Request depot and role assignment\n"
+            "3. Contact IT support if issues persist")
+    
+    # Show available roles for reference
+    try:
+        available_roles = FaultLocatorRoleManager.get_available_roles()
+        if available_roles:
+            role_names = ', '.join([role.name for role in available_roles])
+            messages.info(request, 
+                f"ℹ️ Available roles: {role_names}")
+    except:
+        pass
+
+
+def _suggest_role_from_designation(user_profile):
+    """Suggest appropriate role based on user's designation"""
+    if not user_profile.designation:
+        return 'Team Member'  # Default suggestion
+    
+    designation = str(user_profile.designation).lower()
+    
+    if 'senior' in designation and 'foreman' in designation:
+        return 'Senior Foreman'
+    elif 'foreperson' in designation or 'depot' in designation:
+        return 'Depot Foreperson'
+    elif 'team leader' in designation or 'supervisor' in designation:
+        return 'Team Leader'
+    elif 'technician' in designation or 'artisan' in designation:
+        return 'Team Member'
+    else:
+        return 'Team Member'  # Default
+
+
+# Enhanced dashboard view with role troubleshooting
+@login_required
+def dashboard(request):
+    """Enhanced dashboard with comprehensive role troubleshooting"""
+    
+    # Check user role with troubleshooting
+    user_profile, user_role, has_issues = check_user_role_with_troubleshooting(request)
+    
+    if has_issues:
+        # If there are role issues, show a basic dashboard with troubleshooting info
+        context = {
+            'user': request.user,
+            'user_profile': user_profile,
+            'has_role_issues': True,
+            'show_troubleshooting': True
+        }
+        return render(request, 'fault_locator/dashboard.html', context)
+    
+    # User has valid role - continue with normal dashboard
+    try:
+        user_role_display = FaultLocatorRoleManager.get_user_role_display(user_profile)
+        
+        context = {
+            'user': request.user,
+            'user_profile': user_profile,
+            'user_role': user_role,
+            'user_role_display': user_role_display,
+            'has_role_issues': False,
+            'show_troubleshooting': False
+        }
+        
+        # Add role-specific dashboard content
+        if user_role == FaultLocatorRoleManager.SENIOR_FOREMAN:
+            context.update(_get_senior_foreman_dashboard_data(user_profile))
+        elif user_role == FaultLocatorRoleManager.DEPOT_FOREPERSON:
+            context.update(_get_depot_foreperson_dashboard_data(user_profile))
+        elif user_role == FaultLocatorRoleManager.TEAM_LEADER:
+            context.update(_get_team_leader_dashboard_data(user_profile))
+        else:
+            context.update(_get_team_member_dashboard_data(user_profile))
+        
+        return render(request, 'fault_locator/dashboard.html', context)
+        
+    except Exception as e:
+        messages.error(request, f"❌ Error loading dashboard: {str(e)}")
+        return render(request, 'fault_locator/dashboard.html', {
+            'user': request.user,
+            'user_profile': user_profile,
+            'has_role_issues': True,
+            'show_troubleshooting': True
+        })
+
+
+# Enhanced fault reporting view with role troubleshooting
+@login_required
+def report_fault(request):
+    """Report fault with role troubleshooting"""
+    
+    # Check user role with troubleshooting
+    user_profile, user_role, has_issues = check_user_role_with_troubleshooting(request)
+    
+    if has_issues:
+        messages.error(request, 
+            "🚫 You cannot report faults without an assigned role. "
+            "Please resolve the role issues first.")
+        return redirect('fault_locator_dashboard')
+    
+    # Additional permission check for fault reporting
+    if not _can_report_faults(user_profile, user_role):
+        messages.error(request, 
+            f"🚫 Your role '{FaultLocatorRoleManager.get_user_role_display(user_profile)}' "
+            "does not have permission to report faults. Contact your supervisor.")
+        return redirect('fault_locator_dashboard')
+    
+    # Continue with normal fault reporting logic
+    if request.method == 'POST':
+        # ... existing fault reporting logic
+        pass
+    
+    return render(request, 'fault_locator/report_fault.html', {
+        'user_profile': user_profile,
+        'user_role': user_role
+    })
+
+
+# Enhanced team assignment view with role troubleshooting
+@login_required
+def assign_fault_to_team(request):
+    """Assign fault to team with role troubleshooting"""
+    
+    # Check user role with troubleshooting
+    user_profile, user_role, has_issues = check_user_role_with_troubleshooting(request)
+    
+    if has_issues:
+        return redirect('fault_locator_dashboard')
+    
+    # Check specific permission for fault assignment
+    if not _can_assign_faults(user_profile, user_role):
+        messages.error(request, 
+            f"🚫 Your role '{FaultLocatorRoleManager.get_user_role_display(user_profile)}' "
+            "cannot assign faults to teams. Only Depot Forepersons and Senior Foremen can assign faults.")
+        return redirect('fault_locator_dashboard')
+    
+    # Continue with normal assignment logic
+    # ... existing assignment logic
+
+
+# Helper function to provide role-specific troubleshooting
+@login_required
+def role_troubleshooting(request):
+    """Dedicated troubleshooting view with detailed role information"""
+    
+    user_profile = UserProfile.objects.filter(id=request.user.id).first()
+    
+    if not user_profile:
+        messages.error(request, 
+            "❌ No user profile found. Please contact system administrator.")
+        return redirect('home')
+    
+    # Get detailed role information
+    try:
+        user_role = FaultLocatorRoleManager.get_user_role(user_profile)
+        has_any_role = FaultLocatorRoleManager.has_any_role(user_profile)
+        available_roles = FaultLocatorRoleManager.get_available_roles()
+        
+        # Get fault locator application info
+        fault_app = Application.objects.filter(name='fault_locator').first()
+        user_fault_roles = []
+        
+        if fault_app:
+            user_fault_roles = user_profile.roles.filter(app_id=fault_app)
+        
+        # Provide comprehensive troubleshooting messages
+        if not has_any_role:
+            messages.warning(request, 
+                "⚠️ DIAGNOSIS: You have no Fault Locator roles assigned.")
+            
+            # Check if user has roles in other applications
+            other_roles = user_profile.roles.exclude(application='fault_locator')
+            if other_roles.exists():
+                other_apps = ', '.join(set([r.application for r in other_roles]))
+                messages.info(request, 
+                    f"ℹ️ You have roles in other applications: {other_apps}")
+            
+            _provide_role_troubleshooting_messages(request, user_profile)
+        else:
+            messages.success(request, 
+                f"✅ You have the role: {FaultLocatorRoleManager.get_user_role_display(user_profile)}")
+        
+        # Show system status
+        messages.info(request, 
+            f"🔧 System Status:\n"
+            f"• Fault Locator App: {'✅ Configured' if fault_app else '❌ Missing'}\n"
+            f"• Available Roles: {available_roles.count()}\n"
+            f"• Your Profile Complete: {'✅ Yes' if _is_profile_complete(user_profile) else '⚠️ Incomplete'}")
+        
+        context = {
+            'user_profile': user_profile,
+            'user_role': user_role,
+            'has_any_role': has_any_role,
+            'available_roles': available_roles,
+            'user_fault_roles': user_fault_roles,
+            'profile_complete': _is_profile_complete(user_profile)
+        }
+        
+        return render(request, 'fault_locator/troubleshooting.html', context)
+        
+    except Exception as e:
+        messages.error(request, 
+            f"❌ Error during troubleshooting: {str(e)}")
+        return redirect('fault_locator_dashboard')
+
+
+# Helper functions
+def _can_report_faults(user_profile, user_role):
+    """Check if user can report faults based on role"""
+    return user_role in [
+        FaultLocatorRoleManager.TEAM_MEMBER,
+        FaultLocatorRoleManager.TEAM_LEADER,
+        FaultLocatorRoleManager.DEPOT_FOREPERSON,
+        FaultLocatorRoleManager.SENIOR_FOREMAN,
+        FaultLocatorRoleManager.FAULT_REPORTER
+    ]
+
+
+def _can_assign_faults(user_profile, user_role):
+    """Check if user can assign faults to teams"""
+    return user_role in [
+        FaultLocatorRoleManager.DEPOT_FOREPERSON,
+        FaultLocatorRoleManager.SENIOR_FOREMAN
+    ]
+
+
+def _is_profile_complete(user_profile):
+    """Check if user profile has all required information"""
+    return all([
+        user_profile.depot,
+        user_profile.designation,
+        user_profile.section,
+        user_profile.first_name,
+        user_profile.last_name
+    ])
+
+
+# Dashboard data helper functions
+def _get_senior_foreman_dashboard_data(user_profile):
+    """Get dashboard data for senior foreman"""
+    return {
+        'can_manage_roles': True,
+        'can_view_all_faults': True,
+        'can_deploy_teams': True,
+        'dashboard_type': 'senior_foreman'
+    }
+
+
+def _get_depot_foreperson_dashboard_data(user_profile):
+    """Get dashboard data for depot foreperson"""
+    return {
+        'can_assign_faults': True,
+        'can_manage_teams': True,
+        'depot_only': True,
+        'dashboard_type': 'depot_foreperson'
+    }
+
+
+def _get_team_leader_dashboard_data(user_profile):
+    """Get dashboard data for team leader"""
+    return {
+        'can_update_progress': True,
+        'team_view_only': True,
+        'dashboard_type': 'team_leader'
+    }
+
+
+def _get_team_member_dashboard_data(user_profile):
+    """Get dashboard data for team member"""
+    return {
+        'can_report_faults': True,
+        'can_update_progress': True,
+        'dashboard_type': 'team_member'
+    }

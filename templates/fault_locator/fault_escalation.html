@@ -1,0 +1,854 @@
+{% extends "base_layout.html" %}
+{% load static %}
+
+{% block title %}Fault Escalation - Fault Locator{% endblock %}
+
+{% block styles %}
+<link href="{% static 'assets/css/tailwind.min.css' %}" rel="stylesheet">
+<style>
+    .escalation-card {
+        background: white;
+        border-radius: 0.5rem;
+        box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+        border: 1px solid #e5e7eb;
+    }
+    .escalation-card:hover {
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        transform: translateY(-1px);
+    }
+    .priority-indicator {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.5rem 1rem;
+        border-radius: 0.5rem;
+        font-weight: 600;
+        font-size: 0.875rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+    }
+    .priority-normal { background-color: #dbeafe; color: #1e40af; }
+    .priority-high { background-color: #fed7aa; color: #ea580c; }
+    .priority-critical { background-color: #fecaca; color: #dc2626; }
+    .priority-vvip { 
+        background: linear-gradient(135deg, #dc2626 0%, #7c2d12 100%);
+        color: white;
+        box-shadow: 0 2px 4px rgba(220, 38, 38, 0.3);
+    }
+    .escalation-level {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.25rem 0.75rem;
+        border-radius: 0.375rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+    .level-1 { background-color: #dbeafe; color: #1e40af; }
+    .level-2 { background-color: #fed7aa; color: #ea580c; }
+    .level-3 { background-color: #fecaca; color: #dc2626; }
+    .level-4 { background-color: #e0e7ff; color: #5b21b6; }
+    .escalation-timeline {
+        position: relative;
+        padding-left: 2rem;
+    }
+    .timeline-item {
+        position: relative;
+        padding: 1rem 0;
+        border-left: 2px solid #e5e7eb;
+        margin-left: 0.5rem;
+        padding-left: 2rem;
+    }
+    .timeline-item:last-child {
+        border-left: 2px solid transparent;
+    }
+    .timeline-icon {
+        position: absolute;
+        left: -0.75rem;
+        top: 1.25rem;
+        width: 1.5rem;
+        height: 1.5rem;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.75rem;
+        color: white;
+        font-weight: bold;
+    }
+    .timeline-icon.escalated { background-color: #f59e0b; }
+    .timeline-icon.approved { background-color: #10b981; }
+    .timeline-icon.rejected { background-color: #ef4444; }
+    .timeline-icon.pending { background-color: #6b7280; }
+    .escalation-form {
+        background: #f8fafc;
+        border-radius: 0.5rem;
+        padding: 1.5rem;
+        border: 1px solid #e2e8f0;
+    }
+    .approval-section {
+        background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+        border: 1px solid #bfdbfe;
+        border-radius: 0.5rem;
+        padding: 1.5rem;
+    }
+    .notification-panel {
+        background: #f0fdf4;
+        border: 1px solid #bbf7d0;
+        border-radius: 0.5rem;
+        padding: 1rem;
+    }
+    .urgency-meter {
+        background: linear-gradient(90deg, #10b981 0%, #f59e0b 50%, #ef4444 100%);
+        height: 0.5rem;
+        border-radius: 0.25rem;
+        position: relative;
+        margin: 1rem 0;
+    }
+    .urgency-indicator {
+        position: absolute;
+        top: -0.25rem;
+        width: 1rem;
+        height: 1rem;
+        background: white;
+        border: 2px solid #374151;
+        border-radius: 50%;
+        transform: translateX(-50%);
+        transition: left 0.3s ease;
+    }
+    .escalation-reasons {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 1rem;
+        margin: 1rem 0;
+    }
+    .reason-card {
+        background: white;
+        border: 2px solid #e5e7eb;
+        border-radius: 0.5rem;
+        padding: 1rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        text-align: center;
+    }
+    .reason-card:hover {
+        border-color: #3b82f6;
+        background: #eff6ff;
+    }
+    .reason-card.selected {
+        border-color: #3b82f6;
+        background: #eff6ff;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+    .stakeholder-list {
+        background: white;
+        border-radius: 0.5rem;
+        border: 1px solid #e5e7eb;
+        overflow: hidden;
+    }
+    .stakeholder-item {
+        display: flex;
+        align-items: center;
+        padding: 1rem;
+        border-bottom: 1px solid #f3f4f6;
+    }
+    .stakeholder-item:last-child {
+        border-bottom: none;
+    }
+    .stakeholder-avatar {
+        width: 2.5rem;
+        height: 2.5rem;
+        border-radius: 50%;
+        background: #3b82f6;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-weight: bold;
+        margin-right: 0.75rem;
+    }
+    .notification-status {
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.25rem;
+        font-size: 0.75rem;
+        font-weight: 600;
+    }
+    .status-sent { background-color: #dbeafe; color: #1e40af; }
+    .status-delivered { background-color: #dcfce7; color: #166534; }
+    .status-read { background-color: #f3e8ff; color: #7c3aed; }
+    .status-pending { background-color: #fef3c7; color: #92400e; }
+    .emergency-banner {
+        background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+        border: 2px solid #fca5a5;
+        border-radius: 0.5rem;
+        padding: 1rem;
+        margin-bottom: 1.5rem;
+        display: flex;
+        align-items: center;
+    }
+    .emergency-icon {
+        width: 3rem;
+        height: 3rem;
+        background: #ef4444;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        margin-right: 1rem;
+        font-size: 1.25rem;
+    }
+    .approval-workflow {
+        background: white;
+        border-radius: 0.5rem;
+        border: 1px solid #e5e7eb;
+        overflow: hidden;
+    }
+    .workflow-step {
+        display: flex;
+        align-items: center;
+        padding: 1rem;
+        border-bottom: 1px solid #f3f4f6;
+        position: relative;
+    }
+    .workflow-step:last-child {
+        border-bottom: none;
+    }
+    .workflow-step.completed {
+        background: #f0fdf4;
+    }
+    .workflow-step.current {
+        background: #eff6ff;
+        border-left: 4px solid #3b82f6;
+    }
+    .workflow-step.rejected {
+        background: #fef2f2;
+        border-left: 4px solid #ef4444;
+    }
+    .step-number {
+        width: 2rem;
+        height: 2rem;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: bold;
+        margin-right: 1rem;
+        color: white;
+    }
+    .step-number.completed { background-color: #10b981; }
+    .step-number.current { background-color: #3b82f6; }
+    .step-number.pending { background-color: #6b7280; }
+    .step-number.rejected { background-color: #ef4444; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-6">
+    <!-- Emergency Banner (if applicable) -->
+    {% if fault.priority >= 3 or fault.vvip %}
+        <div class="emergency-banner">
+            <div class="emergency-icon">
+                <svg fill="currentColor" viewBox="0 0 20 20" class="w-6 h-6">
+                    <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"></path>
+                </svg>
+            </div>
+            <div class="flex-1">
+                <h3 class="font-bold text-red-900 text-lg">
+                    {% if fault.vvip %}VVIP Fault - Immediate Escalation Required{% else %}High Priority Fault - Consider Escalation{% endif %}
+                </h3>
+                <p class="text-red-800 text-sm mt-1">
+                    This fault requires special attention due to its 
+                    {% if fault.vvip %}VVIP status{% else %}high priority level{% endif %}.
+                    Escalation may be necessary for faster resolution.
+                </p>
+            </div>
+        </div>
+    {% endif %}
+
+    <!-- Header -->
+    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-6">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900">Fault Escalation</h1>
+            <p class="text-gray-600 mt-1">Escalate fault priority and request management intervention</p>
+            {% if fault %}
+                <div class="mt-2 flex items-center space-x-4">
+                    <span class="text-sm text-gray-500">Fault #{{ fault.id }}</span>
+                    <div class="priority-indicator {% if fault.vvip %}priority-vvip{% elif fault.priority >= 3 %}priority-critical{% elif fault.priority == 2 %}priority-high{% else %}priority-normal{% endif %}">
+                        {% if fault.vvip %}VVIP{% else %}{{ fault.get_priority_display }}{% endif %}
+                    </div>
+                    {% if fault.current_escalation_level %}
+                        <div class="escalation-level level-{{ fault.current_escalation_level }}">
+                            Level {{ fault.current_escalation_level }} Escalation
+                        </div>
+                    {% endif %}
+                </div>
+            {% endif %}
+        </div>
+        <div class="mt-4 lg:mt-0">
+            <button onclick="showEmergencyEscalation()" 
+                    class="inline-flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors mr-2">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                </svg>
+                Emergency Escalation
+            </button>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Left Column: Escalation Form -->
+        <div class="lg:col-span-2">
+            <!-- Fault Summary -->
+            <div class="escalation-card p-6 mb-6">
+                <h2 class="text-xl font-semibold text-gray-900 mb-4">Fault Summary</h2>
+                {% if fault %}
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Fault ID</label>
+                            <p class="mt-1 text-sm text-gray-900">#{{ fault.id }}</p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Current Priority</label>
+                            <p class="mt-1">
+                                <span class="priority-indicator {% if fault.vvip %}priority-vvip{% elif fault.priority >= 3 %}priority-critical{% elif fault.priority == 2 %}priority-high{% else %}priority-normal{% endif %}">
+                                    {% if fault.vvip %}VVIP{% else %}{{ fault.get_priority_display }}{% endif %}
+                                </span>
+                            </p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Depot</label>
+                            <p class="mt-1 text-sm text-gray-900">{{ fault.depot.depot }}</p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Age</label>
+                            <p class="mt-1 text-sm text-gray-900">{{ fault.created_at|timesince }} ago</p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Assigned Team</label>
+                            <p class="mt-1 text-sm text-gray-900">
+                                {% if fault.assigned_team %}{{ fault.assigned_team.name }}{% else %}Not assigned{% endif %}
+                            </p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Status</label>
+                            <p class="mt-1 text-sm text-gray-900">{{ fault.get_status_display }}</p>
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-medium text-gray-700">Description</label>
+                            <p class="mt-1 text-sm text-gray-900">{{ fault.description }}</p>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Escalation Reasons -->
+            <div class="escalation-card p-6 mb-6">
+                <h2 class="text-xl font-semibold text-gray-900 mb-4">Escalation Reason</h2>
+                <p class="text-sm text-gray-600 mb-4">Select the primary reason for escalating this fault:</p>
+                
+                <div class="escalation-reasons">
+                    <div class="reason-card" onclick="selectReason(this, 'customer_complaint')">
+                        <div class="mb-2">
+                            <svg class="w-8 h-8 mx-auto text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                            </svg>
+                        </div>
+                        <h4 class="font-semibold text-gray-900">Customer Complaint</h4>
+                        <p class="text-sm text-gray-600 mt-1">Customer has lodged a formal complaint</p>
+                    </div>
+                    
+                    <div class="reason-card" onclick="selectReason(this, 'sla_breach')">
+                        <div class="mb-2">
+                            <svg class="w-8 h-8 mx-auto text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </div>
+                        <h4 class="font-semibold text-gray-900">SLA Breach</h4>
+                        <p class="text-sm text-gray-600 mt-1">Service Level Agreement timeframe exceeded</p>
+                    </div>
+                    
+                    <div class="reason-card" onclick="selectReason(this, 'resource_shortage')">
+                        <div class="mb-2">
+                            <svg class="w-8 h-8 mx-auto text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                            </svg>
+                        </div>
+                        <h4 class="font-semibold text-gray-900">Resource Shortage</h4>
+                        <p class="text-sm text-gray-600 mt-1">Insufficient resources to resolve fault</p>
+                    </div>
+                    
+                    <div class="reason-card" onclick="selectReason(this, 'technical_complexity')">
+                        <div class="mb-2">
+                            <svg class="w-8 h-8 mx-auto text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                            </svg>
+                        </div>
+                        <h4 class="font-semibold text-gray-900">Technical Complexity</h4>
+                        <p class="text-sm text-gray-600 mt-1">Requires specialized expertise or equipment</p>
+                    </div>
+                    
+                    <div class="reason-card" onclick="selectReason(this, 'safety_concern')">
+                        <div class="mb-2">
+                            <svg class="w-8 h-8 mx-auto text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                            </svg>
+                        </div>
+                        <h4 class="font-semibold text-gray-900">Safety Concern</h4>
+                        <p class="text-sm text-gray-600 mt-1">Public safety or electrical hazard present</p>
+                    </div>
+                    
+                    <div class="reason-card" onclick="selectReason(this, 'other')">
+                        <div class="mb-2">
+                            <svg class="w-8 h-8 mx-auto text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                            </svg>
+                        </div>
+                        <h4 class="font-semibold text-gray-900">Other</h4>
+                        <p class="text-sm text-gray-600 mt-1">Specify custom escalation reason</p>
+                    </div>
+                </div>
+                
+                <input type="hidden" id="escalation_reason" name="escalation_reason" value="">
+            </div>
+
+            <!-- Escalation Details -->
+            <div class="escalation-form mb-6">
+                <h2 class="text-xl font-semibold text-gray-900 mb-4">Escalation Details</h2>
+                
+                <form method="post" id="escalationForm">
+                    {% csrf_token %}
+                    
+                    <!-- Urgency Level -->
+                    <div class="mb-6">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Urgency Level</label>
+                        <div class="urgency-meter">
+                            <div class="urgency-indicator" id="urgency-indicator" style="left: 25%;"></div>
+                        </div>
+                        <input type="range" 
+                               id="urgency-slider" 
+                               min="1" 
+                               max="5" 
+                               value="2" 
+                               class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                               onchange="updateUrgencyIndicator(this.value)">
+                        <div class="flex justify-between text-xs text-gray-500 mt-1">
+                            <span>Low</span>
+                            <span>Medium</span>
+                            <span>High</span>
+                            <span>Critical</span>
+                            <span>Emergency</span>
+                        </div>
+                    </div>
+
+                    <!-- Escalation Level -->
+                    <div class="mb-4">
+                        <label for="escalation_level" class="block text-sm font-medium text-gray-700 mb-1">Escalation Level</label>
+                        <select name="escalation_level" 
+                                id="escalation_level" 
+                                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            <option value="1">Level 1 - Depot Foreperson</option>
+                            <option value="2">Level 2 - Senior Foreman</option>
+                            <option value="3">Level 3 - Regional Manager</option>
+                            <option value="4">Level 4 - Operations Director</option>
+                        </select>
+                    </div>
+
+                    <!-- Justification -->
+                    <div class="mb-4">
+                        <label for="justification" class="block text-sm font-medium text-gray-700 mb-1">Escalation Justification</label>
+                        <textarea name="justification" 
+                                  id="justification" 
+                                  rows="4"
+                                  required
+                                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                  placeholder="Provide detailed justification for escalating this fault, including any attempts made to resolve it and why escalation is necessary..."></textarea>
+                    </div>
+
+                    <!-- Additional Comments -->
+                    <div class="mb-4">
+                        <label for="additional_comments" class="block text-sm font-medium text-gray-700 mb-1">Additional Comments (Optional)</label>
+                        <textarea name="additional_comments" 
+                                  id="additional_comments" 
+                                  rows="2"
+                                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                  placeholder="Any additional information that may be relevant..."></textarea>
+                    </div>
+
+                    <!-- Request Immediate Response -->
+                    <div class="mb-6">
+                        <label class="flex items-center">
+                            <input type="checkbox" 
+                                   name="immediate_response" 
+                                   class="rounded border-gray-300 text-blue-600 shadow-sm focus:border-blue-300 focus:ring focus:ring-blue-200 focus:ring-opacity-50">
+                            <span class="ml-2 text-sm text-gray-700">Request immediate response (within 1 hour)</span>
+                        </label>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Right Column: Workflow and Notifications -->
+        <div class="lg:col-span-1">
+            <!-- Approval Workflow -->
+            <div class="approval-workflow mb-6">
+                <div class="p-4 bg-gray-50 border-b">
+                    <h3 class="font-semibold text-gray-900">Approval Workflow</h3>
+                    <p class="text-sm text-gray-600">Escalation approval process</p>
+                </div>
+                
+                <div class="workflow-step current">
+                    <div class="step-number current">1</div>
+                    <div class="flex-1">
+                        <div class="font-medium text-gray-900">Submit Escalation Request</div>
+                        <div class="text-sm text-gray-600">Provide justification and details</div>
+                    </div>
+                    <div class="text-xs text-blue-600">Current</div>
+                </div>
+                
+                <div class="workflow-step pending">
+                    <div class="step-number pending">2</div>
+                    <div class="flex-1">
+                        <div class="font-medium text-gray-900">Management Review</div>
+                        <div class="text-sm text-gray-600">Senior Foreman approval required</div>
+                    </div>
+                    <div class="text-xs text-gray-500">Pending</div>
+                </div>
+                
+                <div class="workflow-step pending">
+                    <div class="step-number pending">3</div>
+                    <div class="flex-1">
+                        <div class="font-medium text-gray-900">Priority Update</div>
+                        <div class="text-sm text-gray-600">Fault priority will be increased</div>
+                    </div>
+                    <div class="text-xs text-gray-500">Pending</div>
+                </div>
+                
+                <div class="workflow-step pending">
+                    <div class="step-number pending">4</div>
+                    <div class="flex-1">
+                        <div class="font-medium text-gray-900">Resource Allocation</div>
+                        <div class="text-sm text-gray-600">Additional resources assigned</div>
+                    </div>
+                    <div class="text-xs text-gray-500">Pending</div>
+                </div>
+            </div>
+
+            <!-- Stakeholder Notifications -->
+            <div class="escalation-card p-6 mb-6">
+                <h3 class="font-semibold text-gray-900 mb-4">Notification Recipients</h3>
+                <div class="stakeholder-list">
+                    <div class="stakeholder-item">
+                        <div class="stakeholder-avatar">SF</div>
+                        <div class="flex-1">
+                            <div class="font-medium text-gray-900">Senior Foreman</div>
+                            <div class="text-sm text-gray-600">Primary approval authority</div>
+                        </div>
+                        <div class="notification-status status-pending">Pending</div>
+                    </div>
+                    
+                    <div class="stakeholder-item">
+                        <div class="stakeholder-avatar">DF</div>
+                        <div class="flex-1">
+                            <div class="font-medium text-gray-900">Depot Foreperson</div>
+                            <div class="text-sm text-gray-600">Resource coordination</div>
+                        </div>
+                        <div class="notification-status status-pending">Pending</div>
+                    </div>
+                    
+                    <div class="stakeholder-item">
+                        <div class="stakeholder-avatar">TL</div>
+                        <div class="flex-1">
+                            <div class="font-medium text-gray-900">Team Leader</div>
+                            <div class="text-sm text-gray-600">Field coordination</div>
+                        </div>
+                        <div class="notification-status status-pending">Pending</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Escalation History -->
+            {% if fault.escalation_history %}
+                <div class="escalation-card p-6 mb-6">
+                    <h3 class="font-semibold text-gray-900 mb-4">Escalation History</h3>
+                    <div class="escalation-timeline">
+                        {% for escalation in fault.escalation_history %}
+                            <div class="timeline-item">
+                                <div class="timeline-icon {% if escalation.approved %}approved{% elif escalation.rejected %}rejected{% else %}pending{% endif %}">
+                                    {% if escalation.approved %}✓{% elif escalation.rejected %}✗{% else %}⧖{% endif %}
+                                </div>
+                                <div>
+                                    <div class="font-medium text-gray-900">
+                                        Level {{ escalation.level }} Escalation
+                                        {% if escalation.approved %}
+                                            <span class="text-green-600">(Approved)</span>
+                                        {% elif escalation.rejected %}
+                                            <span class="text-red-600">(Rejected)</span>
+                                        {% else %}
+                                            <span class="text-yellow-600">(Pending)</span>
+                                        {% endif %}
+                                    </div>
+                                    <div class="text-sm text-gray-600">{{ escalation.created_at|date:"M d, Y H:i" }}</div>
+                                    <div class="text-sm text-gray-700 mt-1">{{ escalation.reason }}</div>
+                                    {% if escalation.approved_by %}
+                                        <div class="text-xs text-gray-500 mt-1">By: {{ escalation.approved_by.get_full_name }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% endif %}
+
+            <!-- Quick Actions -->
+            <div class="space-y-3">
+                <button onclick="submitEscalation()" 
+                        class="w-full px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors font-medium">
+                    Submit Escalation Request
+                </button>
+                
+                <button onclick="saveDraft()" 
+                        class="w-full px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors font-medium">
+                    Save as Draft
+                </button>
+                
+                <button onclick="scheduleEscalation()" 
+                        class="w-full px-4 py-2 border border-orange-300 text-orange-700 rounded-lg hover:bg-orange-50 transition-colors font-medium">
+                    Schedule Escalation
+                </button>
+                
+                <a href="{% url 'fault_locator:field_update' fault.id %}" 
+                   class="block w-full px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium text-center">
+                    Back to Fault Details
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Emergency Escalation Modal -->
+<div id="emergency-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded-lg p-6 max-w-lg mx-4 w-full">
+        <div class="text-center">
+            <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg class="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.732-.833-2.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                </svg>
+            </div>
+            <h3 class="text-lg font-semibold text-gray-900 mb-2">Emergency Escalation</h3>
+            <p class="text-sm text-gray-600 mb-6">This will immediately escalate the fault to the highest priority and alert senior management. Use only for genuine emergencies.</p>
+            
+            <div class="mb-4">
+                <label for="emergency_reason" class="block text-sm font-medium text-gray-700 mb-1">Emergency Reason</label>
+                <textarea id="emergency_reason" 
+                          rows="3"
+                          class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                          placeholder="Describe the emergency situation requiring immediate escalation..."></textarea>
+            </div>
+            
+            <div class="flex space-x-3">
+                <button onclick="confirmEmergencyEscalation()" 
+                        class="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors">
+                    Confirm Emergency
+                </button>
+                <button onclick="closeEmergencyModal()" 
+                        class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Success Modal -->
+<div id="success-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded-lg p-6 max-w-md mx-4 w-full">
+        <div class="text-center">
+            <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg class="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+            </div>
+            <h3 class="text-lg font-semibold text-gray-900 mb-2">Escalation Submitted</h3>
+            <p class="text-sm text-gray-600 mb-6">Your escalation request has been submitted and relevant stakeholders have been notified.</p>
+            <button onclick="closeSuccessModal()" 
+                    class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors">
+                Continue
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialize urgency slider
+    updateUrgencyIndicator(2);
+});
+
+function selectReason(element, reason) {
+    // Remove selection from all reason cards
+    document.querySelectorAll('.reason-card').forEach(card => {
+        card.classList.remove('selected');
+    });
+    
+    // Add selection to clicked card
+    element.classList.add('selected');
+    
+    // Set hidden input value
+    document.getElementById('escalation_reason').value = reason;
+    
+    // Show custom reason input if "other" is selected
+    if (reason === 'other') {
+        showCustomReasonInput();
+    }
+}
+
+function showCustomReasonInput() {
+    const customInput = document.createElement('div');
+    customInput.id = 'custom-reason-input';
+    customInput.className = 'mt-4';
+    customInput.innerHTML = `
+        <label for="custom_reason" class="block text-sm font-medium text-gray-700 mb-1">Custom Escalation Reason</label>
+        <input type="text" 
+               id="custom_reason" 
+               name="custom_reason" 
+               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+               placeholder="Specify the escalation reason...">
+    `;
+    
+    // Remove existing custom input if present
+    const existing = document.getElementById('custom-reason-input');
+    if (existing) {
+        existing.remove();
+    }
+    
+    // Add after escalation reasons
+    const reasonsContainer = document.querySelector('.escalation-reasons');
+    reasonsContainer.parentNode.insertBefore(customInput, reasonsContainer.nextSibling);
+}
+
+function updateUrgencyIndicator(value) {
+    const indicator = document.getElementById('urgency-indicator');
+    const percentage = ((value - 1) / 4) * 100;
+    indicator.style.left = percentage + '%';
+    
+    // Update color based on urgency level
+    const colors = {
+        1: '#10b981', // Green
+        2: '#3b82f6', // Blue
+        3: '#f59e0b', // Yellow
+        4: '#ef4444', // Red
+        5: '#dc2626'  // Dark Red
+    };
+    
+    indicator.style.borderColor = colors[value];
+}
+
+function submitEscalation() {
+    const reason = document.getElementById('escalation_reason').value;
+    const justification = document.getElementById('justification').value.trim();
+    
+    if (!reason) {
+        showNotification('Please select an escalation reason', 'warning');
+        return;
+    }
+    
+    if (!justification) {
+        showNotification('Please provide escalation justification', 'warning');
+        return;
+    }
+    
+    showNotification('Submitting escalation request...', 'info');
+    
+    // Simulate submission process
+    setTimeout(() => {
+        document.getElementById('success-modal').classList.remove('hidden');
+        updateWorkflowProgress();
+    }, 2000);
+}
+
+function updateWorkflowProgress() {
+    // Update workflow steps to show progress
+    const steps = document.querySelectorAll('.workflow-step');
+    steps[0].classList.remove('current');
+    steps[0].classList.add('completed');
+    steps[0].querySelector('.step-number').classList.remove('current');
+    steps[0].querySelector('.step-number').classList.add('completed');
+    steps[0].querySelector('.step-number').textContent = '✓';
+    steps[0].querySelector('.text-xs').textContent = 'Completed';
+    steps[0].querySelector('.text-xs').className = 'text-xs text-green-600';
+    
+    steps[1].classList.add('current');
+    steps[1].querySelector('.step-number').classList.remove('pending');
+    steps[1].querySelector('.step-number').classList.add('current');
+    steps[1].querySelector('.text-xs').textContent = 'In Progress';
+    steps[1].querySelector('.text-xs').className = 'text-xs text-blue-600';
+}
+
+function saveDraft() {
+    showNotification('Escalation request saved as draft', 'success');
+}
+
+function scheduleEscalation() {
+    showNotification('Escalation scheduling feature would be available here', 'info');
+}
+
+function showEmergencyEscalation() {
+    document.getElementById('emergency-modal').classList.remove('hidden');
+}
+
+function closeEmergencyModal() {
+    document.getElementById('emergency-modal').classList.add('hidden');
+}
+
+function confirmEmergencyEscalation() {
+    const reason = document.getElementById('emergency_reason').value.trim();
+    
+    if (!reason) {
+        showNotification('Please provide an emergency reason', 'warning');
+        return;
+    }
+    
+    closeEmergencyModal();
+    showNotification('Emergency escalation initiated - Senior management alerted', 'success');
+    
+    // Update priority display
+    setTimeout(() => {
+        const priorityIndicators = document.querySelectorAll('.priority-indicator');
+        priorityIndicators.forEach(indicator => {
+            indicator.className = 'priority-indicator priority-vvip';
+            indicator.textContent = 'EMERGENCY';
+        });
+    }, 1000);
+}
+
+function closeSuccessModal() {
+    document.getElementById('success-modal').classList.add('hidden');
+}
+
+function showNotification(message, type = 'info') {
+    const notification = document.createElement('div');
+    notification.className = `fixed top-4 right-4 p-4 rounded-lg shadow-lg z-50 max-w-sm ${
+        type === 'success' ? 'bg-green-100 text-green-800 border border-green-200' :
+        type === 'error' ? 'bg-red-100 text-red-800 border border-red-200' :
+        type === 'warning' ? 'bg-yellow-100 text-yellow-800 border border-yellow-200' :
+        'bg-blue-100 text-blue-800 border border-blue-200'
+    }`;
+    notification.innerHTML = `
+        <div class="flex items-center">
+            <div class="flex-1">${message}</div>
+            <button onclick="this.parentElement.parentElement.remove()" class="ml-2 text-sm opacity-70 hover:opacity-100">×</button>
+        </div>
+    `;
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        if (notification.parentElement) {
+            notification.remove();
+        }
+    }, 5000);
+}
+</script>
+{% endblock %}

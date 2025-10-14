@@ -7,83 +7,405 @@
     <p class="text-gray-600">Report a new fault quickly and efficiently</p>
   </div>
 
+  {% if messages %}
+    <div class="mb-4">
+      {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} bg-{{ message.tags }}-50 border border-{{ message.tags }}-200 text-{{ message.tags }}-700 px-4 py-3 rounded mb-3">
+          {{ message }}
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
   <form method="post" class="bg-white rounded-lg shadow-md p-6">
     {% csrf_token %}
     
     <div class="form-grid space-y-6">
+      <!-- Fault Description -->
       <div class="form-group">
-        <label class="block text-sm font-medium text-gray-700 mb-2">
-          📝 Fault Description *
+        <label for="{{ form.description.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+          Fault Description *
         </label>
-        <textarea name="description" rows="3" required
-                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Describe the fault clearly..."></textarea>
+        {{ form.description }}
+        {% if form.description.errors %}
+          <div class="text-red-600 text-sm mt-1">
+            {% for error in form.description.errors %}
+              <p>{{ error }}</p>
+            {% endfor %}
+          </div>
+        {% endif %}
       </div>
 
+      <!-- Searchable Depot Selection -->
       <div class="form-group">
-        <label class="block text-sm font-medium text-gray-700 mb-2">
-          📍 Location/Depot *
+        <label for="{{ form.depot.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+          Location/Depot *
         </label>
-        <select name="depot" required
-                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-          <option value="">Select Depot...</option>
-          {% for depot in depots %}
-          <option value="{{ depot.id }}">{{ depot.depot }}</option>
-          {% endfor %}
-        </select>
+        
+        <!-- Searchable Depot Container -->
+        <div class="relative">
+          <!-- Search Input -->
+          <div class="relative">
+            <input type="text" 
+                   id="depot-search" 
+                   placeholder="Search and select depot..."
+                   class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 pr-10"
+                   autocomplete="off" />
+            <div class="absolute inset-y-0 right-0 flex items-center pr-3">
+              <button type="button" id="depot-dropdown-toggle" class="text-gray-400 hover:text-gray-600">
+                <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                </svg>
+              </button>
+            </div>
+          </div>
+          
+          <!-- Dropdown Options -->
+          <div id="depot-dropdown" class="absolute z-10 mt-1 w-full bg-white shadow-lg max-h-60 rounded-lg py-1 text-base ring-1 ring-black ring-opacity-5 overflow-auto focus:outline-none sm:text-sm hidden">
+            <!-- Close button -->
+            <div class="sticky top-0 bg-white border-b border-gray-200 px-3 py-2">
+              <div class="flex justify-between items-center">
+                <span class="text-xs font-medium text-gray-500">Select depot</span>
+                <button type="button" id="close-depot-dropdown" class="text-gray-400 hover:text-gray-600">
+                  <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+            
+            {% for choice in form.depot.field.choices %}
+              {% if choice.0 %}
+              <div class="depot-option cursor-pointer select-none relative py-2 pl-3 pr-9 hover:bg-blue-50" 
+                   data-value="{{ choice.0 }}" 
+                   data-name="{{ choice.1 }}">
+                <div class="flex items-center">
+                  <span class="font-normal block truncate">{{ choice.1 }}</span>
+                </div>
+              </div>
+              {% endif %}
+            {% endfor %}
+          </div>
+          
+          <!-- Hidden Select for Form Submission -->
+          <select name="{{ form.depot.name }}" 
+                  id="{{ form.depot.id_for_label }}"
+                  class="hidden"
+                  required>
+            <option value="">Select depot...</option>
+            {% for choice in form.depot.field.choices %}
+              <option value="{{ choice.0 }}">{{ choice.1 }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        
+        {% if form.depot.errors %}
+          <div class="text-red-600 text-sm mt-1">
+            {% for error in form.depot.errors %}
+              <p>{{ error }}</p>
+            {% endfor %}
+          </div>
+        {% endif %}
       </div>
 
+      <!-- Priority Selection -->
       <div class="form-group">
-        <label class="block text-sm font-medium text-gray-700 mb-2">
-          🔧 Device Serial Number
+        <label for="{{ form.priority.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+          Priority Level
         </label>
-        <select name="device"
-                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-          <option value="">Select Device (if known)...</option>
-          {% for device in devices %}
-          <option value="{{ device.id }}">{{ device.serial_number }} - {{ device.device_type }}</option>
-          {% endfor %}
-        </select>
+        {{ form.priority }}
+        {% if form.priority.errors %}
+          <div class="text-red-600 text-sm mt-1">
+            {% for error in form.priority.errors %}
+              <p>{{ error }}</p>
+            {% endfor %}
+          </div>
+        {% endif %}
       </div>
 
-      <div class="form-group">
-        <label class="block text-sm font-medium text-gray-700 mb-2">
-          ⚡ Priority Level
-        </label>
-        <select name="priority"
-                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-          <option value="LOW">🟢 Low Priority</option>
-          <option value="MEDIUM" selected>🟡 Medium Priority</option>
-          <option value="HIGH">🔴 High Priority</option>
-          <option value="CRITICAL">🚨 Critical</option>
-        </select>
-      </div>
-
-      <div class="form-group">
-        <label class="block text-sm font-medium text-gray-700 mb-2">
-          👥 Assign to Team
-        </label>
-        <select name="team"
-                class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-          <option value="">Auto-assign based on location</option>
-          {% for team in teams %}
-          <option value="{{ team.id }}">{{ team.name }}</option>
-          {% endfor %}
-        </select>
+      <!-- Technical Details Section -->
+      <div class="bg-gray-50 p-4 rounded-lg">
+        <h4 class="text-lg font-semibold text-gray-800 mb-3">Technical Details</h4>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <!-- Voltage Field -->
+          <div class="form-group">
+            <label for="{{ form.voltage.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+              {{ form.voltage.label }}
+            </label>
+            {{ form.voltage }}
+            {% if form.voltage.help_text %}
+              <p class="text-xs text-gray-500 mt-1">{{ form.voltage.help_text }}</p>
+            {% endif %}
+            {% if form.voltage.errors %}
+              <div class="text-red-600 text-sm mt-1">
+                {% for error in form.voltage.errors %}
+                  <p>{{ error }}</p>
+                {% endfor %}
+              </div>
+            {% endif %}
+          </div>
+          
+          <!-- Clients Affected Field -->
+          <div class="form-group">
+            <label for="{{ form.clients_affected.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+              {{ form.clients_affected.label }}
+            </label>
+            {{ form.clients_affected }}
+            {% if form.clients_affected.help_text %}
+              <p class="text-xs text-gray-500 mt-1">{{ form.clients_affected.help_text }}</p>
+            {% endif %}
+            {% if form.clients_affected.errors %}
+              <div class="text-red-600 text-sm mt-1">
+                {% for error in form.clients_affected.errors %}
+                  <p>{{ error }}</p>
+                {% endfor %}
+              </div>
+            {% endif %}
+          </div>
+          
+          <!-- Backfeed Field -->
+          <div class="form-group">
+            <label class="block text-sm font-medium text-gray-700 mb-2">
+              {{ form.backfeed.label }}
+            </label>
+            <div class="flex items-center">
+              {{ form.backfeed }}
+              <label for="{{ form.backfeed.id_for_label }}" class="ml-2 text-sm text-gray-600">
+                Backfeed Available
+              </label>
+            </div>
+            {% if form.backfeed.help_text %}
+              <p class="text-xs text-gray-500 mt-1">{{ form.backfeed.help_text }}</p>
+            {% endif %}
+            {% if form.backfeed.errors %}
+              <div class="text-red-600 text-sm mt-1">
+                {% for error in form.backfeed.errors %}
+                  <p>{{ error }}</p>
+                {% endfor %}
+              </div>
+            {% endif %}
+          </div>
+        </div>
       </div>
     </div>
 
     <div class="form-actions flex space-x-4 mt-8">
       <button type="submit" 
               class="flex-1 py-3 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 transition">
-        🚨 Report Fault
+        Report Fault
       </button>
       
-      <a href="{% url 'fault_locator_dashboard' %}" 
+  <a href="{% url 'fault_locator:fault_locator_dashboard' %}" 
          class="flex-1 py-3 bg-gray-500 text-white rounded-lg font-semibold text-center hover:bg-gray-600 transition">
         Cancel
       </a>
     </div>
   </form>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('depot-search');
+    const dropdown = document.getElementById('depot-dropdown');
+    const hiddenSelect = document.getElementById('{{ form.depot.id_for_label }}');
+    const depotOptions = document.querySelectorAll('.depot-option');
+    const dropdownToggle = document.getElementById('depot-dropdown-toggle');
+    const closeDropdown = document.getElementById('close-depot-dropdown');
+    
+    let isDropdownOpen = false;
+    let selectedDepot = null;
+    
+    // Check if depot is pre-selected
+    const preSelectedValue = hiddenSelect.value;
+    if (preSelectedValue) {
+        const preSelectedOption = document.querySelector(`[data-value="${preSelectedValue}"]`);
+        if (preSelectedOption) {
+            searchInput.value = preSelectedOption.dataset.name;
+            selectedDepot = preSelectedValue;
+        }
+    }
+    
+    // Toggle dropdown visibility
+    function toggleDropdown() {
+        if (isDropdownOpen) {
+            closeDropdownMenu();
+        } else {
+            openDropdownMenu();
+        }
+    }
+    
+    function openDropdownMenu() {
+        dropdown.classList.remove('hidden');
+        isDropdownOpen = true;
+        filterOptions();
+    }
+    
+    function closeDropdownMenu() {
+        dropdown.classList.add('hidden');
+        isDropdownOpen = false;
+        searchInput.blur();
+    }
+    
+    // Event listeners for opening dropdown
+    searchInput.addEventListener('focus', openDropdownMenu);
+    dropdownToggle.addEventListener('click', toggleDropdown);
+    
+    // Event listener for closing dropdown
+    closeDropdown.addEventListener('click', closeDropdownMenu);
+    
+    // Hide dropdown when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('#depot-search') && 
+            !e.target.closest('#depot-dropdown') && 
+            !e.target.closest('#depot-dropdown-toggle')) {
+            closeDropdownMenu();
+        }
+    });
+    
+    // Filter options based on search
+    searchInput.addEventListener('input', function() {
+        if (!isDropdownOpen) {
+            openDropdownMenu();
+        }
+        filterOptions();
+    });
+    
+    function filterOptions() {
+        const searchTerm = searchInput.value.toLowerCase();
+        
+        depotOptions.forEach(option => {
+            const name = option.dataset.name.toLowerCase();
+            if (name.includes(searchTerm)) {
+                option.style.display = 'block';
+            } else {
+                option.style.display = 'none';
+            }
+        });
+    }
+    
+    // Handle option selection
+    depotOptions.forEach(option => {
+        option.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const value = this.dataset.value;
+            const name = this.dataset.name;
+            
+            // Update hidden select
+            hiddenSelect.value = value;
+            selectedDepot = value;
+            
+            // Update search input to show selected name
+            searchInput.value = name;
+            
+            // Close dropdown
+            closeDropdownMenu();
+        });
+    });
+    
+    // Keyboard shortcuts
+    searchInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeDropdownMenu();
+        } else if (e.key === 'Enter') {
+            e.preventDefault();
+            closeDropdownMenu();
+        } else if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            if (!isDropdownOpen) {
+                openDropdownMenu();
+            }
+            const firstVisible = dropdown.querySelector('.depot-option:not([style*="display: none"])');
+            if (firstVisible) {
+                firstVisible.scrollIntoView({ block: 'nearest' });
+            }
+        }
+    });
+    
+    // Clear search when no depot is selected
+    searchInput.addEventListener('blur', function() {
+        setTimeout(() => {
+            if (!selectedDepot && searchInput.value) {
+                searchInput.value = '';
+                hiddenSelect.value = '';
+            }
+        }, 200);
+    });
+});
+</script>
+
+<style>
+/* Custom scrollbar for dropdown */
+#depot-dropdown::-webkit-scrollbar {
+    width: 6px;
+}
+
+#depot-dropdown::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+#depot-dropdown::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+}
+
+#depot-dropdown::-webkit-scrollbar-thumb:hover {
+    background: #a1a1a1;
+}
+
+/* Smooth transitions */
+.depot-option {
+    transition: background-color 0.15s ease-in-out;
+}
+
+/* Form styling */
+.form-control {
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    color: #1f2937;
+    background-color: #ffffff;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.form-control:focus {
+    outline: 2px solid transparent;
+    outline-offset: 2px;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+}
+
+.form-select {
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    line-height: 1.5;
+    color: #1f2937;
+    background-color: #ffffff;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+    background-position: right 0.5rem center;
+    background-repeat: no-repeat;
+    background-size: 1.5em 1.5em;
+    padding-right: 2.5rem;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.form-select:focus {
+    outline: 2px solid transparent;
+    outline-offset: 2px;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+}
+
+textarea.form-control {
+    resize: vertical;
+    min-height: 4rem;
+}
+</style>
 {% endblock %}
