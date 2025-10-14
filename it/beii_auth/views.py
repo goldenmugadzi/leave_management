@@ -150,7 +150,7 @@ APPLICATIONS = [
         "title": "Meetings",
         "iconUrl": "assets/images/meeting.png",
         "url": "/meetings_dashboard/"
-    }
+    },
     {
         "name":"fault_locator",
         "title": "Fault Locator",
