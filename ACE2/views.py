@@ -98,6 +98,46 @@ from django.contrib import messages
 from fault_locator.central_roles import FaultLocatorRoleManager
 from it.users.models import UserProfile, Application, Roles
 
+from .utils import notify_head_office_approvers, get_regional_budget_impact_summary
+
+# Safe helper to get a queryset of Roles for the current user without assuming request.user has a direct 'roles' M2M
+def get_user_roles_qs(user):
+    """Return a queryset of Roles for the given user safely.
+    Falls back to looking up UserProfile if needed; returns empty queryset on failure.
+    """
+    try:
+        # If the user model already has roles M2M
+        if hasattr(user, 'roles') and callable(getattr(user, 'roles').all):
+            return user.roles.all()
+        # Fallback via profile lookup
+        if hasattr(user, 'id'):
+            profile = UserProfile.objects.filter(id=user.id).first()
+            if profile and hasattr(profile, 'roles'):
+                return profile.roles.all()
+    except Exception:
+        pass
+    return Roles.objects.none()
+
+from .utils import notify_head_office_approvers, get_regional_budget_impact_summary
+
+# Safe helper to get a queryset of Roles for the current user without assuming request.user has a direct 'roles' M2M
+def get_user_roles_qs(user):
+    """Return a queryset of Roles for the given user safely.
+    Falls back to looking up UserProfile if needed; returns empty queryset on failure.
+    """
+    try:
+        # If the user model already has roles M2M
+        if hasattr(user, 'roles') and callable(getattr(user, 'roles').all):
+            return user.roles.all()
+        # Fallback via profile lookup
+        if hasattr(user, 'id'):
+            profile = UserProfile.objects.filter(id=user.id).first()
+            if profile and hasattr(profile, 'roles'):
+                return profile.roles.all()
+    except Exception:
+        pass
+    return Roles.objects.none()
+
 # Create your views here.
 @login_required
 def Ace_detail(request, Ace_id2):
@@ -3143,6 +3183,787 @@ def monthly_usage_dashboard(request):
         'current_year': current_year,
     }
     return render(request, 'finance/ace2/monthly_usage_dashboard.html', context)
+
+@login_required
+def transactions_excel_export(request):
+    """Export all transactions in the user's region to Excel (excluding rejected ACEs)"""
+    user_id = request.user.id
+    user_profile = UserProfile.objects.filter(id=user_id).first()
+    region = Regions.objects.filter(id=user_profile.region.id).first()
+    
+    # Use select_related to avoid DoesNotExist errors and exclude rejected transactions
+    transactions = Transactions.objects.filter(
+        region=region
+    ).exclude(
+        approval_status__icontains='rejected'
+    ).select_related(
+        'Ace_id2', 'Ace_id2__requested_by', 'virament', 'section', 'region', 'budget'
+    )
+    
+    response = HttpResponse(content_type='application/ms-excel')
+    response['Content-Disposition'] = 'attachment; filename="transactions_report.xlsx"'
+    
+    wb = Workbook()
+    ws = wb.active
+    
+    # Add header row
+    ws.append([
+        'Transaction ID',
+        'ACE ID',
+        'Virament ID',
+        'Details',
+        'Amount',
+        'Requested By',
+        'Date Created',
+        'Section',
+        'Section Code',
+        'Region',
+        'Budget',
+        'Approval Status'
+    ])
+    
+    # Add data rows
+    for transaction in transactions:
+        # Skip if ACE is rejected (additional check)
+        if transaction.Ace_id2 and transaction.Ace_id2.process:
+            if transaction.Ace_id2.process.approval_set.filter(approved="Rejected").exists():
+                continue
+                
+        # Safe access to related objects
+        try:
+            section_name = transaction.section.section if transaction.section else ''
+        except:
+            section_name = ''
+            
+        try:
+            section_code = transaction.section.code if transaction.section else ''
+        except:
+            section_code = ''
+            
+        try:
+            region_name = transaction.region.region if transaction.region else ''
+        except:
+            region_name = ''
+            
+        try:
+            budget_name = transaction.budget.budget_name if transaction.budget else ''
+        except:
+            budget_name = ''
+            
+        try:
+            requested_by = transaction.Ace_id2.requested_by.get_full_name() if transaction.Ace_id2 and transaction.Ace_id2.requested_by else ''
+        except:
+            requested_by = ''
+            
+        try:
+            date_created = transaction.Ace_id2.date_created.strftime('%Y-%m-%d') if transaction.Ace_id2 and transaction.Ace_id2.date_created else ''
+        except:
+            date_created = ''
+        
+        ws.append([
+            transaction.transaction_id,
+            transaction.Ace_id2.Ace_id2 if transaction.Ace_id2 else '',
+            transaction.virament.virament_id if transaction.virament else '',
+            transaction.details_of_expenditure or '',
+            transaction.amount or 0,
+            requested_by,
+            date_created,
+            section_name,
+            section_code,
+            region_name,
+            budget_name,
+            transaction.approval_status or ''
+        ])
+    
+    wb.save(response)
+    return response
+
+
+@login_required
+def transactions_for_budget_excel_export(request, budget_id):
+    """Export transactions for a specific budget to Excel (excluding rejected ACEs)"""
+    user_id = request.user.id
+    user_profile = UserProfile.objects.filter(id=user_id).first()
+    
+    # Use select_related to avoid DoesNotExist errors and exclude rejected transactions
+    transactions = Transactions.objects.filter(
+        budget_id=budget_id
+    ).exclude(
+        approval_status__icontains='rejected'
+    ).select_related(
+        'Ace_id2', 'Ace_id2__requested_by', 'virament', 'section', 'region', 'budget'
+    )
+    
+    # Get budget name for filename
+    budget = get_object_or_404(AssetBudget, pk=budget_id)
+    # Clean filename to avoid invalid characters
+    clean_budget_name = "".join(c for c in budget.budget_name if c.isalnum() or c in (' ', '-', '_')).rstrip()
+    filename = f"transactions_budget_{clean_budget_name.replace(' ', '_')}.xlsx"
+    
+    response = HttpResponse(content_type='application/ms-excel')
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    
+    wb = Workbook()
+    ws = wb.active
+    
+    # Add header row
+    ws.append([
+        'Transaction ID',
+        'ACE ID',
+        'Virament ID',
+        'Details',
+        'Amount',
+        'Requested By',
+        'Date Created',
+        'Section',
+        'Section Code',
+        'Region',
+        'Budget',
+        'Approval Status'
+    ])
+    
+    # Add data rows
+    for transaction in transactions:
+        # Skip if ACE is rejected (additional check)
+        if transaction.Ace_id2 and transaction.Ace_id2.process:
+            if transaction.Ace_id2.process.approval_set.filter(approved="Rejected").exists():
+                continue
+                
+        # Safe access to related objects
+        try:
+            section_name = transaction.section.section if transaction.section else ''
+        except:
+            section_name = ''
+            
+        try:
+            section_code = transaction.section.code if transaction.section else ''
+        except:
+            section_code = ''
+            
+        try:
+            region_name = transaction.region.region if transaction.region else ''
+        except:
+            region_name = ''
+            
+        try:
+            budget_name = transaction.budget.budget_name if transaction.budget else ''
+        except:
+            budget_name = ''
+            
+        try:
+            requested_by = transaction.Ace_id2.requested_by.get_full_name() if transaction.Ace_id2 and transaction.Ace_id2.requested_by else ''
+        except:
+            requested_by = ''
+            
+        try:
+            date_created = transaction.Ace_id2.date_created.strftime('%Y-%m-%d') if transaction.Ace_id2 and transaction.Ace_id2.date_created else ''
+        except:
+            date_created = ''
+        
+        ws.append([
+            transaction.transaction_id,
+            transaction.Ace_id2.Ace_id2 if transaction.Ace_id2 else '',
+            transaction.virament.virament_id if transaction.virament else '',
+            transaction.details_of_expenditure or '',
+            transaction.amount or 0,
+            requested_by,
+            date_created,
+            section_name,
+            section_code,
+            region_name,
+            budget_name,
+            transaction.approval_status or ''
+        ])
+    
+    wb.save(response)
+    return response
+
+@login_required
+def ace_report_detail_csv(request, report_id2=None):
+    """Export ACE report to CSV format"""
+    if report_id2:
+        report = get_object_or_404(AceReport, report_id2=report_id2)
+        # Only filter by budget if a specific budget is selected
+        if report.budget_id:
+            aces = Ace2.objects.filter(
+                region=report.region,
+                budget_id=report.budget_id,
+                date_created__range=[report.start_date, report.end_date]
+            )
+        else:
+            aces = Ace2.objects.filter(
+                region=report.region,
+                date_created__range=[report.start_date, report.end_date]
+            )
+        
+        filename = f"ace_report_{report.report_id2}.csv"
+    else:
+        # Get parameters from GET request for all budgets report
+        start_date = parse_date(request.GET.get('start_date'))
+        end_date = parse_date(request.GET.get('end_date'))
+        region_id = request.GET.get('region')
+        budget_id = request.GET.get('budget_id')
+        all_budgets = request.GET.get('all_budgets')
+        
+        # Handle filters - build query based on provided parameters
+        ace_filter = {}
+        
+        # Add date range filter if dates are provided
+        if start_date and end_date:
+            ace_filter['date_created__range'] = [start_date, end_date]
+        elif start_date:
+            ace_filter['date_created__gte'] = start_date
+        elif end_date:
+            ace_filter['date_created__lte'] = end_date
+        
+        # Add region filter if region is provided and not empty
+        if region_id and region_id.strip():
+            try:
+                region = get_object_or_404(Regions, id=int(region_id))
+                ace_filter['region'] = region
+            except (ValueError, TypeError):
+                pass  # Skip invalid region IDs
+        
+        # Add budget filter only if a specific budget is provided and all_budgets is not set
+        if budget_id and budget_id.strip() and not all_budgets:
+            try:
+                from .models import AssetBudget
+                budget = get_object_or_404(AssetBudget, budget_id=int(budget_id))
+                ace_filter['budget_id'] = budget
+            except (ValueError, TypeError):
+                pass  # Skip invalid budget IDs
+        # If all_budgets=1 or no budget_id specified, don't add budget filter (includes all budgets)
+        
+        aces = Ace2.objects.filter(**ace_filter)
+        
+        # Generate descriptive filename
+        if all_budgets or not budget_id:
+            filename = f"ace_report_all_budgets_{start_date or 'all'}_to_{end_date or 'all'}.csv"
+        else:
+            filename = f"ace_report_budget_{budget_id}_{start_date or 'all'}_to_{end_date or 'all'}.csv"
+    
+    # Create CSV response
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    
+    writer = csv.writer(response)
+    
+    # Write header row
+    writer.writerow([
+        'ACE ID',
+        'Details of Expenditure',
+        'Requested By',
+        'Section',
+        'Date Created',
+        'Budget',
+        'Amount',
+        'Transaction Status',
+        'Approval Status',
+        'Actioned By'
+    ])
+    
+    # Write data rows
+    for ace in aces:
+        # Get transaction info
+        transaction = Transactions.objects.filter(Ace_id2=ace).first()
+        
+        # Get approval info
+        latest_approval = ace.process.approval_set.last() if ace.process and ace.process.approval_set.exists() else None
+        approval_status = latest_approval.approved if latest_approval else ''
+        actioned_by = latest_approval.user.get_full_name() if latest_approval and latest_approval.user else ''
+        
+        # Get section name safely
+        try:
+            section_name = ace.section.section if ace.section else ''
+        except:
+            section_name = ''
+        
+        writer.writerow([
+            ace.Ace_id2,
+            ace.details_of_expenditure,
+            ace.requested_by.get_full_name() if ace.requested_by else '',
+            section_name,
+            ace.date_created.strftime('%Y-%m-%d') if ace.date_created else '',
+            ace.budget_id.budget_name if ace.budget_id else '',
+            ace.amount,
+            transaction.approval_status if transaction else '',
+            approval_status,
+            actioned_by
+        ])
+    
+    return response
+
+@login_required
+def export_current_year_csv(request):
+    """Export current year ACE data for user's region to CSV"""
+    user_id = request.user.id
+    user_profile = UserProfile.objects.filter(id=user_id).first()
+    current_year = timezone.now().year
+    
+    # Get user's region
+    region = user_profile.region
+    
+    # Filter ACEs for current year and user's region
+    aces = Ace2.objects.filter(
+        date_created__year=current_year,
+        region=region
+    ).order_by('-date_created')
+    
+    # Create CSV response
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = f'attachment; filename="ace_report_{current_year}_{region.region}.csv"'
+    
+    writer = csv.writer(response)
+    
+    # Write header row
+    writer.writerow([
+        'ACE ID',
+        'Details of Expenditure',
+        'Requested By',
+        'Section',
+        'Date Created',
+        'Budget',
+        'Amount',
+        'Transaction Status',
+        'Approval Status',
+        'Actioned By'
+    ])
+    
+    # Write data rows
+    for ace in aces:
+        # Get transaction info
+        transaction = Transactions.objects.filter(Ace_id2=ace).first()
+        
+        # Get approval info
+        latest_approval = ace.process.approval_set.last() if ace.process and ace.process.approval_set.exists() else None
+        approval_status = latest_approval.approved if latest_approval else ''
+        actioned_by = latest_approval.user.get_full_name() if latest_approval and latest_approval.user else ''
+        
+        # Get section name safely
+        try:
+            section_name = ace.section.section if ace.section else ''
+        except:
+            section_name = ''
+        
+        writer.writerow([
+            ace.Ace_id2,
+            ace.details_of_expenditure,
+            ace.requested_by.get_full_name() if ace.requested_by else '',
+            section_name,
+            ace.date_created.strftime('%Y-%m-%d') if ace.date_created else '',
+            ace.budget_id.budget_name if ace.budget_id else '',
+            ace.amount,
+            transaction.approval_status if transaction else '',
+            approval_status,
+            actioned_by
+        ])
+    
+    return response
+
+@login_required
+def export_current_year_pdf(request):
+    """Export current year ACE data for user's region to PDF"""
+    user_id = request.user.id
+    user_profile = UserProfile.objects.filter(id=user_id).first()
+    current_year = timezone.now().year
+    
+    # Get user's region
+    region = user_profile.region
+    
+    # Filter ACEs for current year and user's region
+    aces = Ace2.objects.filter(
+        date_created__year=current_year,
+        region=region
+    ).order_by('-date_created')
+    
+    # Get budget summary for context
+    budgets = AssetBudget.objects.filter(region=region, period=current_year).order_by('-allocated')
+    budget_summary = []
+    
+    for budget_item in budgets:
+        if budget_item.allocated > 0:
+            budget_aces = aces.filter(budget_id=budget_item)
+            ace_count = budget_aces.count()
+            total_ace_amount = budget_aces.aggregate(total=Sum('amount'))['total'] or 0
+            avg_ace_amount = total_ace_amount / ace_count if ace_count > 0 else 0
+            
+            utilization_percentage = (budget_item.withdrawn / budget_item.allocated * 100) if budget_item.allocated > 0 else 0
+            pending_percentage = (budget_item.to_be_withdrawn / budget_item.allocated * 100) if budget_item.allocated > 0 else 0
+            available_percentage = (budget_item.balance / budget_item.allocated * 100) if budget_item.allocated > 0 else 0
+            total_commitment_percentage = utilization_percentage + pending_percentage
+            
+            budget_summary.append({
+                'budget': budget_item,
+                'allocated': budget_item.allocated,
+                'withdrawn': budget_item.withdrawn,
+                'to_be_withdrawn': budget_item.to_be_withdrawn,
+                'balance': budget_item.balance,
+                'utilization_percentage': utilization_percentage,
+                'pending_percentage': pending_percentage,
+                'available_percentage': available_percentage,
+                'total_commitment_percentage': total_commitment_percentage,
+                'total_committed': budget_item.withdrawn + budget_item.to_be_withdrawn,
+                'ace_count': ace_count,
+                'avg_ace_amount': avg_ace_amount,
+                'health_status': 'good' if budget_item.balance > (budget_item.allocated * 0.3) else 'warning' if budget_item.balance > (budget_item.allocated * 0.1) else 'critical'
+            })
+    
+    template = loader.get_template('finance/ace2/ace_reports.html')
+    context = {
+        'aces': aces,
+        'budget_summary': budget_summary,
+        'current_year': current_year,
+        'request': request
+    }
+    html = template.render(context, request)
+    pdf = HTML(string=html).write_pdf()
+    
+    response = HttpResponse(pdf, content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="ace_report_{current_year}_{region.region}.pdf"'
+    return response
+
+
+@login_required
+def enhanced_add_asset_number(request):
+    """Enhanced asset number addition - works alongside your existing function"""
+    if request.method == 'POST':
+        try:
+            print('Enhanced asset number addition')
+            
+            ace_id = request.POST['ace_id']
+            ace_items = request.POST.getlist('asset_number[]')
+            use_enhanced = request.POST.get('use_enhanced', 'false') == 'true'
+            
+            ace = Ace2.objects.filter(Ace_id2=ace_id).first()
+            if not ace:
+                messages.error(request, 'ACE not found')
+                return redirect('/ace/aces')
+            
+            if use_enhanced:
+                # Use enhanced system
+                added_count = 0
+                errors = []
+                
+                for asset_num in ace_items:
+                    asset_num = asset_num.strip()
+                    if asset_num:
+                        try:
+                            # Check if already exists in enhanced system
+                            if ace.enhanced_asset_numbers.filter(asset_number=asset_num).exists():
+                                errors.append(f"Asset {asset_num} already exists")
+                                continue
+                                
+                            ace_asset = AceAssetNumber.objects.create(
+                                ace=ace,
+                                asset_number=asset_num,
+                                added_by=request.user,
+                                notes="Added via enhanced system"
+                            )
+                            ace_asset.verify_against_register()
+                            added_count += 1
+                            
+                        except Exception as e:
+                            errors.append(f"Error adding {asset_num}: {str(e)}")
+                
+                # Also update your existing field for backward compatibility
+                all_assets = ace.get_all_asset_numbers()
+                ace.asset_number = ','.join(all_assets)
+                ace.save()
+                
+                if added_count > 0:
+                    messages.success(request, f'Added {added_count} asset numbers using enhanced system')
+                if errors:
+                    for error in errors:
+                        messages.warning(request, error)
+                        
+            else:
+                # Fall back to your existing system
+                ace.asset_number = ','.join(ace_items)
+                ace.save()
+                messages.success(request, 'Asset numbers added using existing system')
+            
+            return redirect('Ace:ace_detail', Ace_id2=ace.Ace_id2)
+            
+        except Exception as e:
+            messages.error(request, f'Error: {str(e)}')
+            return redirect('/ace/aces')
+    
+    return redirect('/ace/aces')
+
+
+@login_required
+def asset_autocomplete_api(request):
+    """AJAX API for asset number autocomplete"""
+    try:
+        query = request.GET.get('q', '').strip()
+        if len(query) < 2:
+            return JsonResponse({'results': []})
+        
+        results = []
+        
+        # Search in Asset Register (if available)
+        try:
+            from Asset_Register.models import ZetdcAssets
+            assets = ZetdcAssets.objects.filter(
+                asset_number__icontains=query
+            ).select_related('product_type')[:15]
+            
+            for asset in assets:
+                results.append({
+                    'id': asset.asset_number,
+                    'text': f"{asset.asset_number} - {getattr(asset.product_type, 'product_type', 'Unknown')}",
+                    'verified': True,
+                    'source': 'Asset Register'
+                })
+                
+        except (ImportError, Exception) as e:
+            print(f"Asset Register not available: {e}")
+        
+        # Search in existing ACE asset numbers for suggestions
+        existing_assets = AceAssetNumber.objects.filter(
+            asset_number__icontains=query
+        ).values_list('asset_number', flat=True).distinct()[:10]
+        
+        for asset_num in existing_assets:
+            if not any(r['id'] == asset_num for r in results):
+                results.append({
+                    'id': asset_num,
+                    'text': f"{asset_num} - Previously Used",
+                    'verified': False,
+                    'source': 'Previous ACEs'
+                })
+        
+        # Search in legacy asset numbers for additional suggestions
+        legacy_aces = Ace2.objects.exclude(
+            asset_number__isnull=True
+        ).exclude(
+            asset_number__exact=''
+        ).filter(
+            asset_number__icontains=query
+        )[:5]
+        
+        for ace in legacy_aces:
+            if ace.asset_number:
+                asset_list = [an.strip() for an in ace.asset_number.split(',') if an.strip()]
+                for asset_num in asset_list:
+                    if query.lower() in asset_num.lower() and not any(r['id'] == asset_num for r in results):
+                        results.append({
+                            'id': asset_num,
+                            'text': f"{asset_num} - From ACE {ace.Ace_id2}",
+                            'verified': False,
+                            'source': 'Legacy ACE'
+                        })
+        
+        # Allow manual entry
+        if query and not any(r['id'] == query for r in results):
+            results.insert(0, {
+                'id': query,
+                'text': f"{query} - New Asset Number",
+                'verified': False,
+                'source': 'Manual Entry'
+            })
+        
+        return JsonResponse({'results': results})
+        
+    except Exception as e:
+        print(f"Error in asset autocomplete: {e}")
+        return JsonResponse({'results': []})
+
+
+@login_required
+def migrate_ace_assets(request, ace_id):
+    """Migrate existing asset numbers to enhanced format"""
+    try:
+        ace = get_object_or_404(Ace2, Ace_id2=ace_id)
+        
+        # Check permissions (only accounting officers)
+        user_roles = get_user_roles_qs(request.user)
+        ace_roles = [role.name for role in user_roles if 'accounting_officer' in role.name.lower()]
+        
+        if not ace_roles:
+            messages.error(request, 'Permission denied')
+            return redirect('Ace:ace_detail', Ace_id2=ace.Ace_id2)
+        
+        migrated_count = ace.migrate_to_enhanced_assets(request.user)
+        
+        if migrated_count > 0:
+            messages.success(request, f'Successfully migrated {migrated_count} asset numbers to enhanced format')
+        else:
+            messages.info(request, 'No asset numbers to migrate or already migrated')
+            
+        return redirect('Ace:ace_detail', Ace_id2=ace.Ace_id2)
+        
+    except Exception as e:
+        messages.error(request, f'Migration error: {str(e)}')
+        return redirect('Ace:ace_detail', Ace_id2=ace.Ace_id2)
+
+
+@login_required
+def remove_enhanced_asset(request, ace_id, asset_id):
+    """Remove an asset from enhanced system"""
+    try:
+        ace = get_object_or_404(Ace2, Ace_id2=ace_id)
+        ace_asset = get_object_or_404(AceAssetNumber, id=asset_id, ace=ace)
+        
+        # Check permissions
+        user_roles = get_user_roles_qs(request.user)
+        ace_roles = [role.name for role in user_roles if 'accounting_officer' in role.name.lower()]
+        
+        if not ace_roles:
+            messages.error(request, 'Permission denied')
+            return redirect('Ace:ace_detail', Ace_id2=ace.Ace_id2)
+        
+        asset_number = ace_asset.asset_number
+        ace_asset.delete()
+        
+        # Update legacy field
+        all_assets = ace.get_all_asset_numbers()
+        ace.asset_number = ','.join(all_assets)
+        ace.save()
+        
+        messages.success(request, f'Removed asset number {asset_number}')
+        return redirect('Ace:ace_detail', Ace_id2=ace_id)
+        
+    except Exception as e:
+        messages.error(request, f'Error removing asset: {str(e)}')
+        return redirect('Ace:ace_detail', Ace_id2=ace_id)
+
+
+@login_required
+def asset_management_dashboard(request):
+    """Dashboard for managing asset number migration and overview"""
+    # Calculate statistics
+    total_aces = Ace2.objects.count()
+    aces_with_legacy = Ace2.objects.exclude(asset_number__isnull=True).exclude(asset_number__exact='').count()
+    aces_with_enhanced = Ace2.objects.filter(enhanced_asset_numbers__isnull=False).distinct().count()
+    ready_to_migrate = Ace2.objects.exclude(
+        asset_number__isnull=True
+    ).exclude(
+        asset_number__exact=''
+    ).filter(
+        enhanced_asset_numbers__isnull=True
+    ).count()
+    
+    stats = {
+        'total_aces': total_aces,
+        'legacy_assets': aces_with_legacy,
+        'enhanced_assets': aces_with_enhanced,
+        'ready_to_migrate': ready_to_migrate,
+    }
+    
+    # Get sample ACEs for display
+    sample_aces = Ace2.objects.exclude(
+        asset_number__isnull=True
+    ).exclude(
+        asset_number__exact=''
+    ).prefetch_related('enhanced_asset_numbers')[:20]
+    
+    # Add asset count to each ACE
+    for ace in sample_aces:
+        if ace.asset_number:
+            ace.asset_count = len([an.strip() for an in ace.asset_number.split(',') if an.strip()])
+        else:
+            ace.asset_count = 0
+    
+    context = {
+        'stats': stats,
+        'sample_aces': sample_aces,
+    }
+    
+    return render(request, 'finance/ace2/asset_management_dashboard.html', context)
+
+
+@login_required
+def bulk_migrate_assets(request):
+    """Bulk migrate all legacy assets to enhanced system"""
+    if request.method != 'POST':
+        return JsonResponse({'error': 'POST method required'}, status=405)
+    
+    try:
+        # Check permissions
+        user_roles = get_user_roles_qs(request.user)
+        ace_roles = [role.name for role in user_roles if 'accounting_officer' in role.name.lower() or request.user.is_superuser]
+        
+        if not ace_roles and not request.user.is_superuser:
+            return JsonResponse({'error': 'Permission denied'}, status=403)
+        
+        # Get ACEs ready for migration
+        aces_to_migrate = Ace2.objects.exclude(
+            asset_number__isnull=True
+        ).exclude(
+            asset_number__exact=''
+        ).filter(
+            enhanced_asset_numbers__isnull=True
+        )
+        
+        migrated_count = 0
+        ace_count = 0
+        errors = []
+        
+        for ace in aces_to_migrate:
+            try:
+                count = ace.migrate_to_enhanced_assets(request.user)
+                if count > 0:
+                    migrated_count += count
+                    ace_count += 1
+            except Exception as e:
+                errors.append(f'ACE {ace.Ace_id2}: {str(e)}')
+        
+        response_data = {
+            'migrated_count': migrated_count,
+            'ace_count': ace_count,
+        }
+        
+        if errors:
+            response_data['errors'] = errors
+            
+        return JsonResponse(response_data)
+        
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@login_required
+def test_migrate_assets(request):
+    """Test migration without making changes"""
+    try:
+        aces_to_migrate = Ace2.objects.exclude(
+            asset_number__isnull=True
+        ).exclude(
+            asset_number__exact=''
+        ).filter(
+            enhanced_asset_numbers__isnull=True
+        )
+        
+        total_assets = 0
+        samples = []
+        
+        for ace in aces_to_migrate[:10]:  # Sample first 10
+            if ace.asset_number:
+                asset_list = [an.strip() for an in ace.asset_number.split(',') if an.strip()]
+                asset_count = len(asset_list)
+                total_assets += asset_count
+                
+                samples.append({
+                    'ace_id': ace.Ace_id2,
+                    'asset_count': asset_count,
+                    'assets': asset_list
+                })
+        
+        # Count total for all ACEs
+        for ace in aces_to_migrate:
+            if ace.asset_number:
+                asset_list = [an.strip() for an in ace.asset_number.split(',') if an.strip()]
+                total_assets += len(asset_list)
+        
+        return JsonResponse({
+            'total_aces': aces_to_migrate.count(),
+            'total_assets': total_assets,
+            'samples': samples
+        })
+        
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
 
 
 
