@@ -4,6 +4,8 @@ from django.forms import modelformset_factory
 from django.forms.renderers import BaseRenderer
 from django.forms.utils import ErrorList
 from it.users.models import UserQualification, CostCenter, UserProfile, Designations
+from ..services.user import UserProfileService
+from ..repository.users import UserProfileRepository
 from ..models import Appraisal, AppraisalExperience, Experience, AppraiseePersonalAttribute
 from ..helpers.types.kra import KraRolesType
 
@@ -52,6 +54,7 @@ class AppraisalExperienceForm(forms.ModelForm):
         
         # Assign choices to the widget
         self.fields['experience'].widget = forms.Select(choices=experience_choices)
+
 class AppraisalExperienceUpdateForm(forms.ModelForm):
     class Meta:
         model = AppraisalExperience
@@ -61,24 +64,49 @@ class AppraisalExperienceUpdateForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         self.fields['experience'].disabled = True
 
+
+def get_all_cost_center_users(user_id):
+    service_handler = UserProfileService(UserProfileRepository())
+    cost_center_user_qr = service_handler.fetch_cost_center_users_from_user_id(user_id=user_id)
+    
+    if cost_center_user_qr is None:
+        cost_center_user_qr = UserProfile.objects.none()
+    else:
+        # exclude this user instance
+        cost_center_user_qr = cost_center_user_qr.exclude(id=user_id)
+    return cost_center_user_qr
+
+def get_regional_hrs(region_id):
+    repo = UserProfileRepository()
+    return repo.fetch_by_region_id_hr_section(region_id=region_id)
+
+def get_regional_users(region_id):
+    repo = UserProfileRepository()
+    return repo.fetch_by_region_id(region_id=region_id)
+
+
+
 class AppraisalForm(forms.ModelForm):
     
     class Meta:
         model = Appraisal
-        fields = ["appraiser", "reviewer"]
+        fields = ["appraiser", "reviewer", "hr"]
         
     def __init__(self, *args, **kwargs):
         appraisee_id = kwargs.pop("appraisee_id", None)
         super().__init__(*args, **kwargs)
         
         if appraisee_id is not None:
-            qr_exclude_appraisee = UserProfile.objects.exclude(id=appraisee_id)
-            self.fields["appraiser"].queryset = qr_exclude_appraisee
+            cost_center_user_qr = get_all_cost_center_users(user_id=appraisee_id)
+            self.fields["appraiser"].queryset = cost_center_user_qr
         
         self.fields["appraiser"].required = True
         self.fields["reviewer"].required = False
-        self.fields['reviewer'].disabled = True
+        self.fields["reviewer"].disabled = True
+        self.fields['hr'].disabled = True
+        self.fields['hr'].required = False
         
+
 class AppraisalOverallCommentForm(forms.ModelForm):
     class Meta:
         model = Appraisal
@@ -103,26 +131,38 @@ class AppraisalUpdateForm(forms.ModelForm):
         
     class Meta:
         model = Appraisal
-        fields = ["appraiser", "reviewer"]
+        fields = ["appraiser", "reviewer", "hr"]
         
     def __init__(self, *args, **kwargs):
         appraisee_id = kwargs.pop("appraisee_id", None)
         appraiser_id = kwargs.pop("appraiser_id", None)
+        appraisal_reviewer_id = kwargs.pop("appraisal_reviewer_id", None)
         appraisal_appraisee_id = kwargs.pop("appraisal_appraisee_id", None)
         super().__init__(*args, **kwargs)
         
         if appraisee_id:
-            qr_exclude_appraisee = UserProfile.objects.exclude(id=appraisee_id)
-            self.fields["appraiser"].queryset = qr_exclude_appraisee
+            cost_center_user_qr = get_all_cost_center_users(user_id=appraisee_id)
+            
+            if appraisal_reviewer_id is not None:
+                self.fields["appraiser"].queryset = cost_center_user_qr.exclude(id=appraisal_reviewer_id) #exclude reviewer
             self.fields['reviewer'].disabled = True
             self.fields["reviewer"].required = False
+            
+            self.fields["hr"].required = False
+            self.fields["hr"].disabled = True
         elif appraiser_id:
-            qr_exclude_appraiser = UserProfile.objects.exclude(id=appraiser_id).exclude(id=appraisal_appraisee_id)
-            self.fields["reviewer"].queryset = qr_exclude_appraiser
+            cost_center_user_qr = get_all_cost_center_users(user_id=appraiser_id)
+
+            user_obj = cost_center_user_qr.first()
+            regional_user_qr = get_regional_users(region_id=user_obj.region.id)
+            
+            self.fields["hr"].queryset = get_regional_hrs(region_id=user_obj.region.id)
+            self.fields["reviewer"].queryset = regional_user_qr.exclude(id=appraisal_appraisee_id) #exclude appraisee
             self.fields['appraiser'].disabled = True
         else:
             self.fields['appraiser'].disabled = True
             self.fields['reviewer'].disabled = True
+            self.fields["hr"].disabled = True
         
 
 class ExperienceForm(forms.ModelForm):

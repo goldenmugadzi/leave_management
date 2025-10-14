@@ -4,3 +4,4 @@ from .models import *
 admin.site.register(ToolOrEquipment)
 admin.site.register(ToolsAndEquipmentForm)
 admin.site.register(AssignedToolOrEquipment)
+admin.site.register(Comment)

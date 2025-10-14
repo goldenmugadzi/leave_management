@@ -29,7 +29,7 @@ class Substation(models.Model):
     voltage_level = models.CharField(max_length=10, choices=VOLTAGE_LEVEL_CHOICES)
     location = models.CharField(max_length=255)
     district = models.CharField(max_length=100)
-    region = models.ForeignKey('users.Regions', on_delete=models.SET_NULL, null=True, blank=True)
+    region = models.ForeignKey('users.Regions', on_delete=models.SET_NULL, null=True, blank=True, related_name='inspection_substations')
     
     # Equipment inventory
     transformers_count = models.PositiveIntegerField(default=0)

@@ -46,4 +46,4 @@ class AppraiserConfirmationForm(forms.ModelForm):
 class AppraisalDepartmentOutputReviewerStatusForm(forms.ModelForm):
     class Meta:
         model = AppraisalDepartmentOutputReviewerStatus
-        fields = ["status", "comment"]
+        fields = ["confirmation_status", "comment"]

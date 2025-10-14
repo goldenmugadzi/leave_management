@@ -77,10 +77,12 @@
                         {% endif %}
                     </div>
                     <p class="flex flex-row text-sm">
+                    {% if response.attachment %}
                             <a class="rounded shadow-md p-1 m-1 bg-white text-center text-blue-600"
                                href="{{ response.attachment.url }}"
                                name="">{{ response.attachment.name|basename }}</a>
-                    </p>
+                    {% endif %}
+                  </p>
                     <p class="flex flex-row text-sm flex justify-between ">
                         <span class="text-sm text-left">
                             {% if response.user.get_full_name %}

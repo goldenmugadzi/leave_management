@@ -129,6 +129,10 @@ APPLICATIONS = [
         "url": "/tab/"
     },
     #   {
+    #     "name": "leave_management",
+    #     "title": "Leave Management System",
+    #     "iconUrl": "assets/images/leave.png",
+    #     "url": "/leave_dashboard/"
     #     "name": "safety",
     #     "title": "Safety.Health.Wellbeing",
     #     "iconUrl": "assets/images/health.png",
@@ -139,6 +143,16 @@ APPLICATIONS = [
         "title": "Commercial Files",
         "iconUrl": "assets/images/customer.png",
         "url": "/commercial/customers"
+    },  {
+        "name": "Battery Maintenance",
+        "title": "Battery Maintenance",
+        "iconUrl": "assets/images/customer.png",
+        "url": "/installations/"
+    },  {
+        "name": "Tools & Equipment",
+        "title": "Tools & Equipment",
+        "iconUrl": "assets/images/tools&equipment.png",
+        "url": "/tools-and-equipment-list/"
     },
     {
         "name": "inspections",
@@ -210,12 +224,13 @@ REPORTS = [
         "iconUrl": "assets/images/change.png",
         "url": "/change_requests/change_request_reports"
     },
+    #   {
+    #     "name": "asset reports",
+    #     "title": "Asset Reports",
+    #     "iconUrl": "assets/images/reports.png",
+    #     "url": "/asset_report/"
+    # }, 
       {
-        "name": "asset reports",
-        "title": "Asset Reports",
-        "iconUrl": "assets/images/reports.png",
-        "url": "/asset_report/"
-    },  {
         "name": "Token",
         "title": "Tokens",
         "iconUrl": "assets/images/token.png",
@@ -321,21 +336,13 @@ def login_user(request):
 
 
 
-@login_required(login_url='/accounts/login')
 def index(request):
     if request.user.is_authenticated:
-        user_title = request.user.get_full_name()
-        l = request.user.groups.values_list('name', flat=True)  # QuerySet Object
-        user_groups = list(l)
-
-        return redirect(
-            '/dashboards/overview',
-            user_title,
-            request,
-            user_groups
-        )
-
-    return redirect('/accounts/login')
+        # For authenticated users, redirect to dashboard
+        return redirect('/dashboards/overview')
+    else:
+        # For unauthenticated users, show login page
+        return redirect('/accounts/login')
 
 
 @login_required(login_url='/accounts/login')
@@ -503,7 +510,7 @@ def home(request):
             "user_title": user_title,
             "user_groups": user_groups,
             "user": custom_user
-        })
+        }) 
 
 
 @login_required(login_url='/accounts/login')
@@ -1312,3 +1319,5 @@ def test_email(request):
     except Exception as e:
         logger.error(f"Test email failed: {str(e)}", exc_info=True)
         return HttpResponse(f"<h1>Email Test Failed</h1><p>Error: {str(e)}</p>")
+
+

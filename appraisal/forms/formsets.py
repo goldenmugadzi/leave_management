@@ -1,9 +1,10 @@
 from typing import Any
 from django.forms import inlineformset_factory, modelformset_factory, formset_factory
 from .appraisal import AppraisalExperienceForm, UserQualificationForm, AppraiseePersonalAttributeForm
-from .training import InterventionStrategyForm, CompetencyForm
+from .training import InterventionStrategyForm
+from .departmental_plan import JobCompetencyForm
 from .kra import ScoreDocumentForm
-from ..models import AppraisalExperience, Appraisal, InterventionStrategy, ScoreDocument
+from ..models import AppraisalExperience, Appraisal, InterventionStrategy, ScoreDocument, JobCompetency
 from it.users.models import UserQualification
 
 AppraisalExperienceFormset = inlineformset_factory(
@@ -17,11 +18,6 @@ AppraisalExperienceFormset = inlineformset_factory(
 UserQualificationFormset = modelformset_factory(
     model=UserQualification,
     form=UserQualificationForm,
-    extra=1
-)
-
-CompetencyFormSet = formset_factory(
-    form=CompetencyForm,
     extra=1
 )
 
@@ -40,4 +36,11 @@ ScoreDocumentFormset = modelformset_factory(
 AppraiseePersonalAttributeFormSet = formset_factory(
     form=AppraiseePersonalAttributeForm,
     extra=0
+)
+
+JobCompetencyFormSet = modelformset_factory(
+    JobCompetency,
+    form=JobCompetencyForm,
+    extra=0,        # no extra blank forms by default
+    can_delete=True # allow marking forms for deletion
 )

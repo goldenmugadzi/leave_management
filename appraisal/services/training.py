@@ -6,6 +6,9 @@ from appraisal.models.appraisal import Appraisal
 from ..repository.training import TrainingAndDevelopmentRepository
 from ..helpers.types.training import TrainingAndDevelopmentCreateUpdateType
 from ..models.helpers import YearQuarter
+from django.db import transaction
+from loguru import logger
+
 class TrainingAndDevelopmentServiceErr(Exception):
     ...
 
@@ -20,6 +23,23 @@ class TrainingAndDevelopmentService:
         except Exception as e:
             raise TrainingAndDevelopmentServiceErr(f"Failed to create training and development with error: {e}")
 
+    def create_for_all_quarters(self, appraisal_object: Appraisal, year_quarter_qr: List[YearQuarter])->None:
+        try:
+            with transaction.atomic():
+                for year_quarter_obj in year_quarter_qr:
+                    logger.info(f"[ TrainingAndDevelopmentService ]: create with year obj {year_quarter_obj} for user id: {appraisal_object.user.id} and appraisal pk: {appraisal_object.id} ....")
+                    try:
+                        self.create_use_case(
+                            appraisal_object=appraisal_object,
+                            quarter_obj=year_quarter_obj
+                        )
+                        logger.success(f"[ TrainingAndDevelopmentService ]: year obj {year_quarter_obj} for user id: {appraisal_object.user.id} and appraisal pk: {appraisal_object.id} created successfully")
+                    except Exception as e:
+                        raise Exception(f"creation handler, year obj {year_quarter_obj} for user id: {appraisal_object.user.id} and appraisal pk: {appraisal_object.id}, failed with error: {e}")
+        except Exception as e:
+            logger.error(f"[TrainingAndDevelopmentService]: creating training and development for appraisal pk: {appraisal_object.id}, with error: {e} ")
+
+    
     def update_use_case(self, training_development_object: TrainingAndDevelopment, payload: TrainingAndDevelopmentCreateUpdateType)->TrainingAndDevelopment:
         try:
             return self.training_dev_repo.update(training_development_object=training_development_object, data=payload)

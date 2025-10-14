@@ -136,5 +136,5 @@ class AppraisalService:
     def get_appraisal_by_pk_use_case(self, appraisal_id: int)->Appraisal:
         return self.appraisal_repository.get_appraisal_by_pk(appraisal_id=appraisal_id)
     
-    def get_all_use_case(self):
-        return self.appraisal_repository.get_all_appraisal_objects()
+    def get_all_use_case(self, hr_id):
+        return self.appraisal_repository.fetch_by_hr_id(hr_id=hr_id)

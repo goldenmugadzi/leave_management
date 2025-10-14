@@ -1,5 +1,4 @@
 document.addEventListener("DOMContentLoaded", function () {
-  console.log("DOM ready, JS working");
 
   const addFormButton = document.getElementById("add-form-button");
   if (!addFormButton) return;
@@ -58,4 +57,34 @@ document.addEventListener("DOMContentLoaded", function () {
     formsetContainer.appendChild(newFormWrapper);
     totalFormsInput.value = totalForms + 1;
   });
+   function toggleSubstationVisibility() {
+    const newSubstationContainer = document.getElementById('new_substation_container');
+    const existingSubstationContainer = document.getElementById('existing_substation_container');
+    const substationChoice = document.querySelector('input[name="substation_choice"]:checked').value;
+
+    if (substationChoice === 'new') {
+      newSubstationContainer.classList.remove('hidden');
+      // clear inputs in the new substation form
+      for (const input of newSubstationContainer.querySelectorAll('input[type="text"], select')) {
+        input.value = ''; // Clear the input value
+      }
+      existingSubstationContainer.classList.add('hidden');
+      document.getElementById('id_new_substation').focus(); // Focus the new substation input
+    } else {
+      newSubstationContainer.classList.add('hidden');
+      existingSubstationContainer.classList.remove('hidden');
+      // clear substation input
+      document.getElementById('id_substation').value = ''; // Clear the existing sub
+      document.getElementById('id_substation').focus(); // Focus the existing substation input
+    }
+  }
+
+  // Add event listeners to radio buttons to toggle visibility
+  document.querySelectorAll('input[name="substation_choice"]').forEach((radio) => {
+    radio.addEventListener('change', toggleSubstationVisibility);
+  });
+
+  // Initial call to set visibility based on the default selected option
+  toggleSubstationVisibility();
+
 });

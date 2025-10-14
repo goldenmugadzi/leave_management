@@ -30,7 +30,7 @@ CORS_ALLOW_ALL_ORIGINS = True
 CSRF_TRUSTED_ORIGINS = [
     config('BASE_URL'),
     config('BASE_URL') + ":" + config('PORT'),
-    "https://d4d74ece50d8.ngrok-free.app",
+    "https://65600443401e.ngrok-free.app",
     # Add your production domain here
     # "https://your-production-domain.com"
 ]
@@ -130,6 +130,14 @@ INSTALLED_APPS = [
     'appraisal.apps.AppraisalConfig',
 
     'toolsandequipment',
+    'Transport',
+    'Hardware_Faults',
+    'Asset_Register',
+    'register',
+    'asset_transfer',
+    'widget_tweaks',
+    'meetings',
+    'leave_management',
     'reports',
     'sweetify',
     'mathfilters',
@@ -145,19 +153,15 @@ INSTALLED_APPS = [
     'comm_files',
     # 'django_prometheus',  # Temporarily disabled due to import error
     'api.ops_maintenance.safety_operations',
-    'Transport',
-    'Hardware_Faults',
-    'Asset_Register',
-    'equipment_management',
-    'widget_tweaks',
-    'meetings',
-    'leave_management',
-    'sanction_for_test',
     'utils',
-    'inspections',
     'substation_inspections',
     'e60_inspections',
     'circuit_breaker_maintenance',
+    'sanction_for_test',
+    'inspections',
+    'EquipTracker',
+    'equipment_management',
+    'pretask_risk_assessment',
 ]
 
 AUTH_USER_MODEL = 'users.UserProfile'
@@ -402,7 +406,7 @@ LANGUAGE_CODE = 'en-us'
 
 USE_I18N = True
 
-LOGIN_REDIRECT_URL = '/'
+LOGIN_REDIRECT_URL = '/dashboards/overview'
 LOGIN_URL = '/accounts/login'
 
 os.environ['TIKA_SERVER_JAR'] = os.path.join(BASE_DIR,'static','tika','tika-server-standard-2.9.2.jar')

@@ -1,8 +1,8 @@
 from typing import List
 from django.db.models.query import QuerySet
 from it.users.models import UserProfile, CostCenter, Designations
-from ..models import KeyResultArea, DepartmentObjective, DepartmentOutput, OutPutPerformanceDimension
-from ..models.departmental_workplan import PERFORMANCE_INDICATOR
+from ..models import KeyResultArea, DepartmentObjective, DepartmentOutput, OutPutPerformanceDimension, JobCompetency
+from ..models.departmental_workplan import PERFORMANCE_INDICATOR, DepartmentOutputCompetency
 from ..helpers.types.dept_workplan import DepartmentalOutTypes, OutputPerformanceDimensionType
 
 class DepartmentalObjectiveRepository:
@@ -45,6 +45,17 @@ class DepartmentalObjectiveRepository:
             return qr
         except Exception as e:
             raise Exception(f"DepartmentalObjectiveRepository fetch_by_cost_center_year with cost_center pk: {cost_center_id}, failed with error: {e}")
+    
+        
+    def fetch_by_cost_center_kra(self, cost_center_id: int, kra_id: int)->QuerySet[DepartmentObjective]:
+        try:
+            qr = DepartmentObjective.objects.filter(
+                cost_center__id=cost_center_id,
+                key_result_area__id=kra_id
+                )
+            return qr
+        except Exception as e:
+            raise Exception(f"DepartmentalObjectiveRepository fetch_by_cost_center_kra with cost_center pk: {cost_center_id} and kra pk: {kra_id}, failed with error: {e}")
     
         
     def fetch_by_designation_year(self, designation_id: int, year: int)->QuerySet[DepartmentObjective]:
@@ -209,3 +220,68 @@ class OutPutPerformanceDimensionRepository:
             return qr.first()
         except Exception as e:
             raise Exception(f"[OutPutPerformanceDimensionRepository] output_perf_dimension_id with pk: {output_perf_dimension_id}, failed with error: {e}")
+
+class DepartmentOutputCompetencyRepository:
+    def create_in_bulk(self, competency_objs: List[DepartmentOutputCompetency])->bool:
+        try:
+            DepartmentOutputCompetency.objects.bulk_create(competency_objs)
+            return True
+        except Exception as e:
+            raise Exception(f"[DepartmentOutputCompetencyRepository] create_in_bulk, failed with error: {e}")
+    
+    def fetch_department_output_id(self, department_output_id: int)->QuerySet[DepartmentOutputCompetency]:
+        try:
+            return DepartmentOutputCompetency.objects.filter(department_output__id=department_output_id)
+        except Exception as e:
+            raise Exception(f"[DepartmentOutputCompetencyRepository] fetch_department_output_id with pk: {department_output_id}, failed with error: {e}")
+
+class JobCompetencyRepository:
+    def create_in_bulk(self, job_competency_objs: JobCompetency)->bool:
+        try:
+            JobCompetency.objects.bulk_create(job_competency_objs)
+            return True
+        except Exception as e:
+            raise Exception(f"[JobCompetencyRepository] create_in_bulk, failed with error: {e}")
+        
+    def create(self, designation_obj: Designations, required_competency: str)->JobCompetency:
+        try:
+            return JobCompetency.objects.create(designation=designation_obj, required_competency=required_competency)
+
+        except Exception as e:
+            raise Exception(f"[JobCompetencyRepository] create with designation id: {designation_obj.id}, failed with error: {e}")
+        
+    def fetch_by_designation_id_year(self, designation_id: int, year: int)->QuerySet[JobCompetency]:
+        try:
+            return JobCompetency.objects.filter(designation__id=designation_id, created_date__year=year)
+        except Exception as e:
+            raise Exception(f"[JobCompetencyRepository] fetch_by_designation_id_year, designation_id: {designation_id}, year: {year}, failed with error: {e}")
+        
+    def get_by_id(self, pk: int)->JobCompetency:
+        try:
+            qr = JobCompetency.objects.filter(id=pk)
+            return qr.first()
+        except Exception as e:
+            raise Exception(f"[JobCompetencyRepository] get_by_id with pk: {pk}, failed with error: {e}")
+    
+    def update(self, job_competency_obj: JobCompetency, required_competency)->JobCompetency:
+        try:
+            is_changed = False
+            
+            if required_competency != job_competency_obj.required_competency:
+                job_competency_obj.required_competency = required_competency
+                is_changed = True
+                
+            if is_changed:
+                job_competency_obj.save()
+            return job_competency_obj
+        except Exception as e:
+            raise Exception(f"[JobCompetencyRepository] update with job_competency pk: {job_competency_obj.id}, failed with error: {e}")
+
+    def update_in_bulk(self, job_competency_objs: List[JobCompetency], fields: list[str])->bool:
+        try:
+            JobCompetency.objects.bulk_update(job_competency_objs, fields)
+            return True
+        except Exception as e:
+            raise Exception(f"[JobCompetencyRepository] update_in_bulk, failed with error: {e}")
+
+    

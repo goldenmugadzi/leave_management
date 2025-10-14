@@ -1,9 +1,10 @@
-from django.views.generic import View
+from django.views.generic import View, DetailView
 from django.shortcuts import render, redirect
 from django.forms import modelform_factory, inlineformset_factory
 from django.contrib.auth.mixins import LoginRequiredMixin
 from .models import  ToolsAndEquipmentForm, AssignedToolOrEquipment, ToolOrEquipment
-
+import pandas as pd
+from django.core.management.base import BaseCommand
 
 ToolsAndEquipmentFormForm = modelform_factory(ToolsAndEquipmentForm, exclude=["received_by", "issued_by", "issued_at"]) 
 class ToolsAndEquipmentFormCreateView(LoginRequiredMixin, View):
@@ -64,3 +65,34 @@ class ToolsAndEquipmentFormListView(LoginRequiredMixin, View):
     def get(self, request):
         forms = ToolsAndEquipmentForm.objects.all().order_by('-issued_at')
         return render(request, self.template_name, {'teforms': forms})
+
+class ToolsAndEquipmentDetailView(LoginRequiredMixin, DetailView):
+    model = ToolsAndEquipmentForm
+    template_name = 'ToolsandEquipment/tools_and_equipment_detail.html'
+    context_object_name = 'teform'
+
+class Command(BaseCommand):
+    help = 'Upload tools from TOOLS.xls into the ToolOrEquipment model'
+
+    def add_arguments(self, parser):
+        parser.add_argument('filepath', type=str, help='Path to TOOLS.xls file')
+
+    def handle(self, *args, **kwargs):
+        filepath = kwargs['filepath']
+        df = pd.read_excel(filepath)
+
+        for index, row in df.iterrows():
+            try:
+               
+                tool = ToolOrEquipment(
+                    id=str(row['id']),
+                    name=row['name'],
+                    quantity=int(row['quantity']),
+                    value=row['value'] if pd.notna(row['value']) else None,
+                    asset_number=row['asset_number'] if pd.notna(row['asset_number']) else None
+                )
+                tool.save()
+                self.stdout.write(self.style.SUCCESS(f"Added tool: {tool.name}"))
+
+            except Exception as e:
+                self.stderr.write(self.style.ERROR(f"Error adding row {index + 2}: {e}"))

@@ -1,0 +1,49 @@
+{% load kra_calculations %}
+
+<div style="max-height: 500px; overflow-y: auto;">
+    
+    <table 
+        class="w-full border border-blue-800 rounded-lg shadow-lg"
+    >
+        <thead class="bg-blue-800 text-white">
+            <tr>
+                <th class="px-6 py-3 text-left text-md font-semibold">Departmental output</th>
+                <th class="px-6 py-3 text-left text-md font-semibold">Performance Indicator</th>
+                <th class="px-6 py-3 text-left text-md font-semibold">Activity description</th>
+                <th class="px-6 py-3 text-left text-md font-semibold">Weight</th>
+                <th class="px-6 py-3 text-left text-md font-semibold">Agreed Target</th>
+                <th class="px-6 py-3 text-left text-md font-semibold">Allowable Variance</th>
+                <th class="px-6 py-3 text-left text-md font-semibold">Actual Performance</th>
+                <th class="px-6 py-3 text-left text-md font-semibold">Actual Variance</th>
+                <th class="px-6 py-3 text-left text-md font-semibold">Rating</th>
+                <th class="px-6 py-3 text-left text-md font-semibold">Weighted Score</th>
+            </tr>
+        </thead>
+
+        <tbody class="divide-y divide-blue-300 bg-blue-50">
+            {% for perf_assessment in perf_assessment_data %}
+                {% if perf_assessment.quarter == quarter_number %}
+                        {% for appraisal_output in perf_assessment.dept_outputs %}
+                            <tr class="hover:bg-blue-100">
+                                <td rowspan="5" class="border-r border-gray-300 bg-apple-200 p-4 font-bold font-black">{{ appraisal_output.output_obj.department_output }}</td>  
+                                {% for perf_dimension_obj in appraisal_output.performance_dimensions %}
+                                    <tr>
+                                        <td class="px-6 py-4 text-md text-blue-900 truncate max-w-xs">{{perf_dimension_obj.performance_dimension.performance_indicator}}</td>
+                                        <td class="px-6 py-4 text-md text-blue-900 truncate max-w-xs">{{perf_dimension_obj.performance_dimension.description}}</td>
+                                        <td class="px-6 py-4 text-md text-blue-900 truncate max-w-xs">{{perf_dimension_obj.performance_dimension.weight}}</td>
+                                        <td class="px-6 py-4 text-md text-blue-900 truncate max-w-xs">{{perf_dimension_obj.performance_dimension.agreed_target}}</td>
+                                        <td class="px-6 py-4 text-md text-blue-900 truncate max-w-xs">{{perf_dimension_obj.performance_dimension.allowable_variance}}</td>
+                                        <td class="px-6 py-4 text-md text-blue-900 truncate max-w-xs">{{perf_dimension_obj.score}}</td>
+                                        <td class="px-6 py-4 text-md text-blue-900 truncate max-w-xs">{{perf_dimension_obj.id|get_performance_dimension_actual_variance}}</td>
+                                        <td class="px-6 py-4 text-md text-blue-900 truncate max-w-xs">{{perf_dimension_obj.id|get_performance_dimension_rating}}</td>
+                                        <td class="px-6 py-4 text-md text-blue-900 truncate max-w-xs">{{perf_dimension_obj.id|get_performance_dimension_weighted_score}}</td>        
+                                    </tr>
+                                {% endfor %}
+                            </tr>
+                        {% endfor %}
+                {% endif %}
+            {% endfor %}
+        </tbody>
+    </table>
+
+</div>

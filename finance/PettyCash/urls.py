@@ -10,6 +10,7 @@ urlpatterns = [
     path('pettycashs_awaiting_my_action', pettycash_awaiting_my_action, name='pettycashs_awaiting_my_action'),
     path('import_pettycash', import_pettycash, name='import_pettycash'),
     path('receipt', receipt, name='receipt'),
+    path('receipt/<str:petty_id>/', receipt_form, name='receipt_form'),
     path('attachment/<str:filename>/', download_file, name='attachment'),
     path('attachments/<str:attachment_id>', download_attachment, name='attachments'),
     path('create_pettycash_report', pettycash_report, name='pettycash_report'),

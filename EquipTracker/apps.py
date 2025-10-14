@@ -1,7 +1,6 @@
 from django.apps import AppConfig
 
 
-class PettycashConfig(AppConfig):
+class EquiptrackerConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
-    label = 'PettyCash'
-    name = 'finance.PettyCash'
+    name = 'EquipTracker'

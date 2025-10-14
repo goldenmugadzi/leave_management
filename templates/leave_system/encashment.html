@@ -1,0 +1,174 @@
+{% extends 'admin_layout.html' %}
+{% load static %}
+{% load custom_filters %}
+{% block content %}
+
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css"/>
+<link href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css" rel="stylesheet">
+<script src="https://code.jquery.com/jquery-3.7.0.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://code.jquery.com/jquery-1.12.4.js"></script>
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+<div class="content-wrapper">
+  <div class="bg-gulf-blue-100 shadow shadow-gulf-blue-300 text-gulf-blue-900 rounded px-2 py-2">
+    <!-- Encashment Form -->
+    <form method="post">
+      {% csrf_token %}
+      <h1 class="text-base font-semibold leading-7 text-gulf-blue-900">
+        Encashment Form 
+      </h1>
+      <p class="mt-1 text-sm leading-6 text-gulf-blue-900">
+        Fill all required fields.
+      </p>
+      <div class="rounded row text-center py-2 grid grid-cols-3 gap-4 my-3">
+        {% for field in form %}
+          {% if field.is_hidden %}
+            {{ field }}
+          {% else %}
+            <div class="mb-5">
+              <div>
+                {{ field.label_tag }}
+                <div class="text-blue-500 text-center">{{ field.help_text }}</div>
+                <div class="text-red-500 text-center">{{ field.errors }}</div>
+              </div>
+              {{ field }}
+            </div>
+          {% endif %}
+        {% endfor %}
+      </div>
+      <div class="flex mt-10 px-3 py-3">
+        <div style="width: 50%;">
+          <button style="width: 100%;" class="text-sm font-semibold leading-6 text-gray-900">
+            CANCEL
+          </button>
+        </div>
+        <div style="width: 50%;">
+          <button
+            style="width: 100%;"
+            type="submit"
+            class="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible-outline-2 focus-visible-outline-offset-2 focus-visible-outline-indigo-600"
+          >
+            SUBMIT
+          </button>
+        </div>
+      </div>
+    </form>
+
+    <!-- Encashment Table -->
+    {% if show_table and leave_requests %}
+    <div class="overflow-x-auto mt-8">
+      <h2 class="text-lg font-bold text-center text-gulf-blue-900 mb-4">ENCASHMENT TABLE</h2>
+      <table id="encashmentTable" class="display min-w-full divide-y divide-gray-200 bg-white rounded shadow my-6">
+        <thead class="bg-gulf-blue-200">
+          <tr>
+            <th class="px-4 py-2 text-center text-xs font-medium text-gray-700">ID</th>
+            <th class="px-4 py-2 text-left text-xs font-medium text-gray-700">Type of Leave</th>
+            <th class="px-4 py-2 text-center text-xs font-medium text-gray-700">Days Taken</th>
+            <th class="px-4 py-2 text-center text-xs font-medium text-gray-700">Days Encashed</th>
+            <th class="px-4 py-2 text-center text-xs font-medium text-gray-700">Total Days</th>
+            <th class="px-4 py-2 text-center text-xs font-medium text-gray-700">Vacation Leave Balance</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+          {% for leave in leave_requests %}
+          <tr>
+            <td class="px-4 py-2 text-center">{{ leave.id }}</td>
+            <td class="px-4 py-2 text-left">{{ leave.type_of_leave|capfirst }}</td>
+            <td class="px-4 py-2 text-center">{{ leave.days_taken }}</td>
+            <td class="px-4 py-2 text-center">{{ leave.days_encashed }}</td>
+            <td class="px-4 py-2 text-center">{{ leave.total_days }}</td>
+            {% if forloop.first %}
+            <td class="px-4 py-2 text-center font-bold text-green-700" rowspan="{{ leave_requests|length }}">
+              {{ vacation_leave|default:"0" }}
+            </td>
+            {% endif %}
+          </tr>
+          {% endfor %}
+        </tbody>
+        </tfoot>
+      </table>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+{% if leave_requests %}
+<script>
+  $(document).ready(function () {
+    $("#encashmentTable").DataTable({
+      paging: false,
+      searching: false,
+      info: false,
+      ordering: true
+    });
+  });
+</script>
+{% endif %}
+<!-- Place this script block at the end of your template, before </body> -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Get field elements
+    const startDate = document.getElementById('id_start_date');
+    const endDate = document.getElementById('id_end_date');
+    const daysTaken = document.getElementById('id_days_taken');
+    const daysEncashed = document.getElementById('id_days_encashed');
+    const totalDays = document.getElementById('id_total_days');
+
+    // Always output a valid number for availableVacationLeave
+    let availableVacationLeave = {{ vacation_leave|default:"0" }};
+
+    // Helper: Calculate working days between two dates
+    function getWorkingDays(start, end) {
+        let count = 0;
+        let cur = new Date(start);
+        end = new Date(end);
+        while (cur <= end) {
+            const day = cur.getDay();
+            if (day !== 0 && day !== 6) count++; // Mon-Fri
+            cur.setDate(cur.getDate() + 1);
+        }
+        return count;
+    }
+
+    // Update days taken when dates change
+    function updateDaysTaken() {
+        if (startDate.value && endDate.value) {
+            const days = getWorkingDays(startDate.value, endDate.value);
+            daysTaken.value = days;
+            updateTotalDays();
+        }
+    }
+
+    // Update total days
+    function updateTotalDays() {
+        const taken = parseInt(daysTaken.value) || 0;
+        const encashed = parseInt(daysEncashed.value) || 0;
+        totalDays.value = taken + encashed;
+    }
+
+    // Validate days encashed
+    function validateDaysEncashed() {
+        const encashed = parseInt(daysEncashed.value) || 0;
+        if (encashed > availableVacationLeave) {
+            alert("You cannot encash more days than your available vacation leave (" + availableVacationLeave + ").");
+            daysEncashed.value = availableVacationLeave;
+        }
+        updateTotalDays();
+    }
+
+    // Event listeners
+    if (startDate && endDate) {
+        startDate.addEventListener('change', updateDaysTaken);
+        endDate.addEventListener('change', updateDaysTaken);
+    }
+    if (daysEncashed) {
+        daysEncashed.addEventListener('input', validateDaysEncashed);
+    }
+    if (daysTaken) {
+        daysTaken.addEventListener('input', updateTotalDays);
+    }
+});
+</script>
+{% endblock %}

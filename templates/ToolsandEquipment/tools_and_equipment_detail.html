@@ -1,0 +1,282 @@
+{% extends "admin_layout.html" %}
+{% load static %}
+{% load custom_tags %}
+{% block content %}
+    <head>
+        <style>
+    .arrow, .arrow-step {
+        position: relative;
+        {% comment %} margin-left: 5px; /* Adjust this to move the arrows left or right */ {% endcomment %}
+    }
+    
+    .arrow::before, .arrow::after, .arrow-step::before, .arrow-step::after {
+        content: "";
+        position: absolute;
+        top: 50%;
+        width: 0;
+        height: 0;
+        border-top: 15px solid transparent;
+        border-bottom: 15px solid transparent;
+    }
+    
+    .arrow::before, .arrow-step::before {
+        left: 100%;
+        transform: translateY(-50%);
+        border-left: 20px solid #28a745; /* Adjust arrow color here */
+    }
+    
+    .arrow::after, .arrow-step::after {
+        left: 104%;
+        transform: translateY(-50%);
+        border-left: 20px solid #28a745; /* Adjust arrow color here */
+    }
+        </style>
+    </head>
+
+      <div class="m-auto mt-5 justify-content-center">
+        <div class="card grid grid-cols-1 gap-2 mb-3">
+            <div class="card-body m-2">
+                <div class="card-body m-auto mb-5 p-3      container rounded  shadow-lg">
+                    <div class="px-6 py-4">
+                        <div class="card grid grid-cols-2 gap-2 mb-3">
+                            <div class="card border-1 border  border-blue-500 shadow-md  bg-gradient-to-r from-gulf-blue-100 rounded to-blue-400 mb-3">
+                                <div class=" grid grid-cols-2 px-3 ">
+                                    <span class="inline-block text-start rounded-full text-sm">Issued By:
+                                        {% if request.user == teform.issued_by %}
+                                            You
+                                        {% elif  teform.issued_by.get_full_name %}
+                                            {{ teform.issued_by.get_full_name }}
+                                        {% elif request.user == teform.issued_by %}
+                                            {{ teform.issued_by }}
+                                        {% endif %}
+                                    </span>
+                                    <span class="inline-block text-end rounded-full text-sm">Date:
+                                        {{ teform.issued_at|default_if_none:'' }}
+                                    </span>
+                                </div>
+                                <h1 class="text-center mb-4 font-bold text-xl rounded  mb-2">{{ token.type|default_if_none:'' }} Tools & Equipment for   {% if request.user == teform.artisan %}
+                                            You
+                                        {% elif  teform.artisan.get_full_name %}
+                                            {{ teform.artisan.get_full_name }}
+                                        {% elif request.user == teform.artisan %}
+                                            {{ teform.artisan }}
+                                        {% endif %} </h1>
+                                <div class="card-body grid grid-cols-2  rounded m-auto ed p-3      rounded  ">
+                                    {{ teform.assigned_tools_set.all }}
+                                        {% for tool in teform.assigned_tools_set.all %}
+                                    <div class=" text-center">
+                                        <p class="font-bold ">Description:</p>
+                                        <p class="mb-2 font-normal">{{ tool.id|default_if_none:'' }}</p>
+                                        {% if tool.quantity %}
+                                            <a class=" mb-2 font-normal text-red-900 m-auto shadow-lg mb-2 p-2 border-yellow-500 border border-1 font-bold inline-block text-start rounded-full text-sm"
+                                               href="{{ token.token_photo.url }}">Token photo</a>
+                                        {% endif %}
+                                    </div>
+                                    {% endfor %}
+                                    {% comment %} <div class=" text-center">
+                                        <div class=" text-center">
+                                            <span class="inline-block font-bold text-start rounded-full text-sm">Customer</span>
+                                            <span class="inline-block text-end rounded-full text-sm">{{ token.customer.name|default_if_none:'' }}</span>
+                                        </div>
+                                        <div class=" text-center">
+                                            <span class="inline-block text-start font-bold rounded-full text-sm">Phone Number</span>
+                                            <span class="inline-block text-end rounded-full text-sm">{{ token.customer.contact_number|default_if_none:'' }}</span>
+                                        </div>
+                                        <div class=" text-center">
+                                            <span class="inline-block text-start font-bold rounded-full text-sm">Meter Number</span>
+                                            <span class="inline-block text-end rounded-full text-sm">{{ token.meter.number|default_if_none:'' }}</span>
+                                        </div>
+                                        {% if token.type == "REIMBURSEMENT" %}
+                                            <div class=" text-center">
+                                                {% if token.reimbursement_set.first.units %}
+                                                    <span class="inline-block text-start font-bold rounded-full text-sm">Units to be reimbursed</span>
+                                                    <span class="inline-block text-end rounded-full text-sm">{{ token.reimbursement_set.first.units }}</span>
+                                                {% elif token.faultmeter_set.first.units %}
+                                                    <span class="inline-block text-start font-bold rounded-full text-sm">Units to be reimbursed</span>
+                                                    <span class="inline-block text-end rounded-full text-sm">{{ token.faultmeter_set.first.units }}</span>
+                                                {% endif %}
+                                            </div>
+                                        {% endif %}
+                                        <div class=" text-center">
+                                            <span class="inline-block text-start font-bold rounded-full text-sm">Address</span>
+                                            <span class="inline-block text-end rounded-full text-sm">{{ token.customer.address|default_if_none:'' }}</span>
+                                        </div>
+                                        <div class=" text-center">
+                                            <span class="inline-block text-start font-bold rounded-full text-sm">Stand Number</span>
+                                            <span class="inline-block text-end rounded-full text-sm">{{ token.customer.stand_number|default_if_none:'' }}</span>
+                                        </div>
+                                        <details class=" text-center">
+                                            {% if token.cost_center %}
+                                                <summary class="inline-block  font-bold  text-lg ">{{ token.cost_center|default_if_none:'' }}</summary>
+                                            {% endif %}
+                                            <br>
+                                            {% for center in token.cost_center.get_all_ancestors %}
+                                                <span class="inline-block text-start rounded-full text-sm">{{ center }}</span>
+                                                <br>
+                                            {% endfor %}
+                                        </details>
+                                    </div> {% endcomment %}
+                                </div>
+                                
+                            </div>
+                            <div class="card-body m-2   px-2 rounded">
+                                {% if token.process.approval_set.exists %}<div class="font-bold text-xl text-center">Approvals</div>{% endif %}
+                                <div class="scrollable-div">
+                                    {% for response in token.process.approval_set.all %}
+                                        <div class="card-body  rounded-lg rounded-md rounded-sm">
+                                            {% if response.approved == 'Rejected' %}
+                                                <div class="card mb-3 row rounded py-4 border-1 bg-gray-200 border border-yellow-500 p-3 m-auto container">
+                                                    <div class="card-body font-bold">
+                                                        {% if response.comment %}<p class="card-text">Comment: {{ response.comment }}</p>{% endif %}
+                                                    </div>
+                                                    <p class="flex flex-row text-sm flex text-red-700 justify-between ">
+                                                        <span class="font-medium ">{{ response.step }}</span>
+                                                        <span class="text-sm text-left">
+                                                            {% if response.user.get_full_name %}
+                                                                {{ response.user.get_full_name }}
+                                                            {% else %}
+                                                                {{ response.user.username }}
+                                                            {% endif %}
+                                                        </span>
+                                                        <span class="text-smtext-right">Rejected @ {{ response.approved_at }}</span>
+                                                    </p>
+                                                </div>
+                                            {% else %}
+                                                <div class="card mb-3 row rounded py-4 border-3 border bg-gray-200 border-green-400 p-3 m-auto container">
+                                                    <div class="card-body font-bold">
+                                                        {% if response.comment %}<p class="card-text">Comment: {{ response.comment }}</p>{% endif %}
+                                                    </div>
+                                                    <p class="flex flex-row text-sm flex text-green-500 justify-between ">
+                                                        <span class="font-medium ">{{ response.step }}</span>
+                                                        <span class="text-sm text-left">
+                                                            {% if response.user.get_full_name %}
+                                                                {{ response.user.get_full_name }}
+                                                            {% else %}
+                                                                {{ response.user.username }}
+                                                            {% endif %}
+                                                        </span>
+                                                        <span class="text-sm text-right">Accepted @ {{ response.approved_at }}</span>
+                                                    </p>
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        </div>
+                        {% comment %} <h1 class="text-center mb-4 font-bold text-xl  mb-2">Workflow Details ({{ token.process.workflow }})</h1> {% endcomment %}
+                        {% comment %} {% if approvalForm %}
+                            <form class="row rounded py-4 border  rounded-lg p-3 m-auto container"
+                                  method="POST"
+                                  action=""
+                                  enctype="multipart/form-data">
+                                {% csrf_token %}
+                                <div class=" m-auto container  ">
+                                    <div class="col-span-4">
+                                        {{ field.name }}
+                                        {% for field in generateTokenForm %}
+                                            <div class="rounded row text-center py-2 my-3">
+                                                {% if field.is_hidden %}
+                                                    {{ field }}
+                                                {% else %}
+                                                    <div class=" m-auto grid grid-cols-2 pr-5">
+                                                        <div>
+                                                            {{ field.label }}
+                                                            <div class="text-blue-500">{{ field.help_text }}</div>
+                                                            <div class="text-red-500 text-red-500 ">{{ field.errors }}</div>
+                                                        </div>
+                                                        {{ field }}
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+                                        {% endfor %}
+                                        {% for field in approvalForm %}
+                                            <div class="rounded row text-center py-2 my-3">
+                                                {% if field.is_hidden %}
+                                                    {{ field }}
+                                                {% else %}
+                                                    {% if field.name == "approved" %}
+                                                    {% else %}
+                                                        <div class=" m-auto grid grid-cols-2 pr-5">
+                                                            <div>
+                                                                {{ field.label }}
+                                                                <div class="text-blue-500">{{ field.help_text }}</div>
+                                                                <div class="text-red-500 text-red-500 ">{{ field.errors }}</div>
+                                                            </div>
+                                                            {{ field }}
+                                                        </div>
+                                                    {% endif %}
+                                                {% endif %}
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                    <div class="m-4 text-center">
+                                        <button type="submit"
+                                                class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded"
+                                                name="approved"
+                                                value="Rejected">Reject</button>
+                                        <button type="submit"
+                                                class="bg-gulf-blue-600 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded"
+                                                name="approved"
+                                                value="Approved">{{ to }}</button>
+                                    </div>
+                                </div>
+                            </form>
+                        {% endif %} {% endcomment %}
+                        {% comment %} <div class="card flex flex-row  flex  justify-center ">
+                            {% for step in token.process.workflow.step_set.all %}
+                                <div class=" m-1 mx-4 rounded ">
+                                    {% if step.step in approved_steps %}
+                                        {% for approval in token.process.approval_set.all %}
+                                            {% if step == approval.step %}
+                                                <div class="card-body m-1 px-2 arrow bg-gradient-to-r from-gulf-blue-100  {% if approval.approved == 'Rejected' %} to-red-700 {% else %} to-green-700 {% endif %} ed border rounded container rounded">
+                                                    <div class=" rounded-lg" title="{{ approval.comment }}">
+                                                        <p class="font-bold">{{ step |default_if_none:'' }}</p>
+                                                        <br>
+                                                    </div>
+                                                    <div class=" grid grid-cols-2 text-center">
+                                                        <span class="inline-block rounded-full text-sm">{{ approval.approved }}</span>
+                                                        <span class="inline-block rounded-full text-sm">By:
+                                                            {% if request.user == approval.user %}
+                                                                You
+                                                            {% elif approval.user.get_full_name %}
+                                                                {{ approval.user.get_full_name }}
+                                                            {% elif request.user == approval.user %}
+                                                                {{ approval.user }}
+                                                            {% endif %}
+                                                            <i class="fas fa-check-circle text-green-500">  </i>
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            {% endif %}
+                                        {% endfor %}
+                                    {% else %}
+                                        <div class="card-body px-2 arrow bg-gradient-to-r from-gulf-blue-100 to-blue-700 ed border rounded container rounded">
+                                            <div class=" rounded-lg" title="{{ approval.comment }}">
+                                                <p class="font-bold">{{ step |default_if_none:'' }}</p>
+                                                <br>
+                                                {% if step.to %}
+                                                    <span class="inline-block rounded-full text-sm">To {{ step.to|default_if_none:'' }}  <i class="fas fa-circle-notch fa-spin text-blue-500"></i>  </span>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                                {% if step == token.process.workflow.step_set.last and step == token.process.approval_set.last.step %}
+                                    <div class="card-body   m-2  p-2 border  rounded">
+                                        <div class="flex justify-center items-center  rounded ">
+                                            <div class="rounded-lg" title="{{ approval.comment }}">
+                                                Completed
+                                                <i class="fas fa-check-circle text-green-500"></i>
+                                            </div>
+                                        </div>
+                                    </div>
+                                {% endif %}
+                            {% endfor %}
+                        </div> {% endcomment %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock content %}

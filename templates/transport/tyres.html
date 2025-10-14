@@ -1,0 +1,73 @@
+{% extends 'admin_layout.html' %}
+
+{% block styles %}
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css"/>
+<style>
+  .dataTables_wrapper .dataTables_length select {
+    width: 5rem;
+  }
+  .table-responsive {
+    width: 100%;
+    overflow-x: auto;
+  }
+  #tyresTable {
+    min-width: 800px;
+  }
+  .btn-add {
+    background-color: #1d4ed8;
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 0.375rem;
+    text-decoration: none;
+    font-weight: bold;
+  }
+  .btn-add:hover {
+    background-color: #2563eb;
+  }
+</style>
+{% endblock styles %}
+
+{% block content %}
+<div class="content-wrapper">
+    <div class="flex justify-between items-center mb-4">
+        <h2 class="text-2xl font-bold">Tyres List</h2>
+        <a href="{% url 'add_tyres' %}" class="btn-add">+ Add Tyre</a>
+    </div>
+    <div class="bg-gulf-blue-100 shadow shadow-gulf-blue-300 text-gulf-blue-900 rounded px-2 py-2">
+        <div class="table-responsive">
+            <table id="tyresTable" class="min-w-full table-auto">
+                <thead>
+                    <tr class="bg-gray-100">
+                        <th>Name</th>
+                        <th>Quantity</th>
+                        <th>Size</th>
+                        <th>Date Fitted</th>
+                    </tr>
+                </thead>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://code.jquery.com/jquery-3.7.0.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script>
+$(document).ready(function () {
+    $('#tyresTable').DataTable({
+        "processing": true,
+        "serverSide": false,
+        "columns": [
+            {"data": "name"},
+            {"data": "quantity"},
+            {"data": "size"},
+            {"data": "date_fitted"}
+        ],
+        "pageLength": 10,
+        "lengthChange": false,
+        "autoWidth": false
+    });
+});
+</script>
+{% endblock %}

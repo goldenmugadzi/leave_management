@@ -1,0 +1,82 @@
+<div class="bg-white shadow-xl rounded-lg border border-indigo-200 p-6 mt-4">
+  <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 text-sm">
+    
+    <!-- Appraisee Info -->
+    <div>
+      <p class="text-gray-500 font-medium">Appraisee Name</p>
+      <p class="text-gray-900">{{ personal_details.appraisee_name }}</p>
+    </div>
+
+    <div>
+      <p class="text-gray-500 font-medium">Position</p>
+      <p class="text-gray-900">{{ personal_details.appraisee_position }}</p>
+    </div>
+
+    <div>
+      <p class="text-gray-500 font-medium">Qualifications</p>
+      <p class="text-gray-900">
+        {{ personal_details.appraisee_qualifications|join:", " }}
+      </p>
+    </div>
+
+    <div>
+      <p class="text-gray-500 font-medium">Experience</p>
+      <p class="text-gray-900">
+        {{ personal_details.appraisee_experiance|join:", " }}
+      </p>
+    </div>
+
+    <div>
+      <p class="text-gray-500 font-medium">National ID</p>
+      <p class="text-gray-900">{{ personal_details.appraisee_national_id }}</p>
+    </div>
+
+    <div>
+      <p class="text-gray-500 font-medium">EC No.</p>
+      <p class="text-gray-900">{{ personal_details.appraisee_ec_no }}</p>
+    </div>
+
+    <div>
+      <p class="text-gray-500 font-medium">Date of Appointment</p>
+      <p class="text-gray-900">{{ personal_details.appraisee_date_of_appointment }}</p>
+    </div>
+
+    <div>
+      <p class="text-gray-500 font-medium">Position Appointment Date</p>
+      <p class="text-gray-900">{{ personal_details.appraisee_position_appointment_date }}</p>
+    </div>
+
+    <div>
+      <p class="text-gray-500 font-medium">Department</p>
+      <p class="text-gray-900">{{ personal_details.appraisee_department }}</p>
+    </div>
+
+    <div>
+      <p class="text-gray-500 font-medium">Station</p>
+      <p class="text-gray-900">{{ personal_details.appraisee_station }}</p>
+    </div>
+
+    <!-- Appraiser Info -->
+    <div>
+      <p class="text-gray-500 font-medium">Appraiser Name</p>
+      <p class="text-gray-900">{{ personal_details.appraiser_name }}</p>
+    </div>
+
+    <div>
+      <p class="text-gray-500 font-medium">Appraiser Position</p>
+      <p class="text-gray-900">{{ personal_details.appraiser_position }}</p>
+    </div>
+
+    <!-- Reviewer Info -->
+    <div>
+      <p class="text-gray-500 font-medium">Reviewer Name</p>
+      <p class="text-gray-900">{{ personal_details.reviewer_name }}</p>
+    </div>
+
+    <div>
+      <p class="text-gray-500 font-medium">Reviewer Position</p>
+      <p class="text-gray-900">{{ personal_details.reviewer_position }}</p>
+    </div>
+
+  </div>
+</div>

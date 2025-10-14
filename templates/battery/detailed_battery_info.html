@@ -1,0 +1,216 @@
+{% extends "admin_layout.html" %} {% load static %} {% load custom_tags %} {% block content %}
+<head>
+  <style>
+    .arrow, .arrow-step {
+        position: relative;
+        {% comment %} margin-left: 5px; /* Adjust this to move the arrows left or right */ {% endcomment %}
+    }
+
+    .arrow::before, .arrow::after, .arrow-step::before, .arrow-step::after {
+        content: "";
+        position: absolute;
+        top: 50%;
+        width: 0;
+        height: 0;
+        border-top: 15px solid transparent;
+        border-bottom: 15px solid transparent;
+    }
+
+    .arrow::before, .arrow-step::before {
+        left: 100%;
+        transform: translateY(-50%);
+        border-left: 20px solid #28a745; /* Adjust arrow color here */
+    }
+
+    .arrow::after, .arrow-step::after {
+        left: 104%;
+        transform: translateY(-50%);
+        border-left: 20px solid #28a745; /* Adjust arrow color here */
+    }
+  </style>
+</head>
+<div class="m-auto mt-5 justify-content-center">
+  <div class="card grid grid-cols-2  gap-2 mb-3">
+    <div class="card-body m-2">
+          <div
+            class="card p-3 border-blue-500 shadow-md bg-gradient-to-r from-gulf-blue-100 rounded to-blue-400 mb-3"
+          > <div class="card-body m-2 px-2 rounded">
+                <h1 class="text-center mb-4 font-bold text-xl rounded mb-2">
+              Battery Details
+            </h1>
+            
+            <div
+              class="card-body grid grid-cols-2 rounded m-auto ed p-3 rounded"
+            >
+              <div class="text-center">
+                <div class="text-center">
+                  <span
+                    class="inline-block font-bold text-start rounded-full text-sm"
+                    >Battery name:</span
+                  >
+                  <span class="inline-block text-end rounded-full text-sm"
+                    >{{ installation.battery_name|default_if_none:'' }}</span
+                  >
+                </div>
+              </div>
+              <div class="text-center">
+                <div class="text-center">
+                  <span
+                    class="inline-block font-bold text-start rounded-full text-sm"
+                    >Installation Date:</span
+                  >
+                  <span class="inline-block text-end rounded-full text-sm"
+                    >{{ installation.date|date:"Y-m-d"|default_if_none:''}}</span
+                  >
+                </div>
+              </div>
+              <div class="text-center">
+                <div class="text-center">
+                  <span
+                    class="inline-block font-bold text-start rounded-full text-sm"
+                    >{{ installation.substation.region|default_if_none:''}}</span
+                  >
+                  <span class="inline-block text-end rounded-full text-sm"
+                    >{{ installation.substation.district|default_if_none:''}}</span
+                  >
+                </div>
+              </div>
+             {% if  installation.substation.name  %}
+                
+             <div class="text-center">
+                <div class="text-center">
+                  <span
+                    class="inline-block font-bold text-start rounded-full text-sm"
+                    >Installed at:</span
+                  >
+                  <span class="inline-block text-end rounded-full text-sm"
+                    >{{ installation.substation.name|default_if_none:'' }} ({{ installation.substation.code|default_if_none:'' }} )</span
+                  >
+                </div>
+              </div>
+               {% endif%}
+              <div class="text-center">
+                <div class="text-center">
+                  <span
+                    class="inline-block font-bold text-start rounded-full text-sm"
+                    >Plates per cell:</span
+                  >
+                  <span class="inline-block text-end rounded-full text-sm"
+                    >{{ installation.plates_per_cell|default_if_none:'' }}</span
+                  >
+                </div>
+              </div>
+              <div class="text-center">
+                <div class="text-center">
+                  <span
+                    class="inline-block font-bold text-start rounded-full text-sm"
+                    >Cell type:</span
+                  >
+                  <span class="inline-block text-end rounded-full text-sm"
+                    >{{ installation.cell_type|default_if_none:'' }}</span
+                  >
+                </div>
+              </div>
+              <div class="text-center">
+                <div class="text-center">
+                  <span
+                    class="inline-block font-bold text-start rounded-full text-sm"
+                    >Battery application:</span
+                  >
+                  <span class="inline-block text-end rounded-full text-sm"
+                    >{{ installation.battery_application|default_if_none:''}}</span
+                  >
+                </div>
+              </div>
+            </div>  {% if installation.cells.exists %}
+              <h1 class="text-center mb-4 font-bold text-xl mb-2">
+                Battery Cells
+              </h1>
+              {% endif %}
+              <div class="scrollable-div">
+                {% for cell in installation.cells.all %}
+              <div class="card-body rounded-lg rounded-md rounded-sm">
+                  <div
+                    class="card mb-3 row rounded py-4 border-3 border bg-gray-200 border-green-400 p-3 m-auto container grid grid-cols-3 text-center"
+                  >
+                    <span class="inline-block rounded-full text-sm">
+                      {% if cell.specific_gravity %}
+                      <p class="card-text">cell number: {{ cell.id }}</p>
+                      {% endif %}
+                    </span>
+                    <span class="inline-block rounded-full text-sm">
+                      {% if cell.voltage %}
+                      <p class="card-text">Voltage: {{ cell.voltage }}</p>
+                      {% endif %}
+                    </span>
+                    <span class="inline-block rounded-full text-sm">
+                      {% if cell.voltage %}
+                      <p class="card-text">Voltage: {{ cell.voltage }}</p>
+                      {% endif %}
+                    </span>
+                  </div>
+                </div>
+               {% endfor %}
+              </div>
+            </div>
+
+
+     </div>
+        </div>
+          <div class="card-body m-2">
+              <!-- <div class="card-body m-auto mb-5 p-3 container rounded shadow-lg"> -->
+          <div
+            class="card p-3"
+          >  <div class="card-body m-2 px-2 rounded">
+              {% if installation.cells.exists %}
+              <h1 class="text-center mb-4 font-bold text-xl mb-2">
+                Battery Maintanences Done ASDF
+              </h1>
+              {% endif %}
+              <div class="scrollable-div">
+                {{ installation.batterymaintenance_set.all }}
+                {% for cell in installation.batterymaintenance_set.all %}
+                {{ cell.id}}
+                <a
+
+              class="text-blue-500 button"
+              href="{% url 'BatteryMaintenance:inspect_battery' installation.id %}"
+              >  <div class="card-body rounded-lg rounded-md rounded-sm">
+                  <div
+                    class="card mb-3 row rounded py-4 border-3 border bg-green-200 border-red-200 p-3 m-auto container grid grid-cols-3 text-center"
+                  >
+                    <span class="inline-block rounded-full text-sm">
+                      {% if cell.specific_gravity %}
+                      <p class="card-text">
+                         {{ installation.date|date|default_if_none:''}}
+                      </p>
+                      {% endif %}
+                    </span>
+                    <span class="inline-block rounded-full text-sm">
+                      {% if cell.voltage %}
+                      <p class="card-text">Water used: {{ cell.voltage }}l</p>
+                      {% endif %}
+                    </span>
+                    <span class="inline-block rounded-full text-sm">
+                      {% if cell.voltage %}
+                      <p class="card-text">
+                        Total Volts Across cells : {{ cell.voltage }}
+                         <!-- at the end
+                        of charge when charging at {{ cell.specific_gravity }} -->
+                      </p>
+                      {% endif %}
+                    </span>
+                  </div>
+                </div>
+               </a>   {% endfor %}
+              </div>
+      </div>
+      </div>
+</div>
+      <a
+              class="text-blue-500 button"
+              href="{% url 'BatteryMaintenance:inspect_battery' installation.id %}"
+              >Inspect battery</a
+            >
+</div>
+  {% endblock content %}

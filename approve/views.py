@@ -166,9 +166,16 @@ def approve_step(request, process_id):
     
     if not process.approval_set.filter(approved="Rejected"):
         if request.method == "POST":
-            form = ApprovalForm(request.POST)
+            # Get the approved value from the button click
+            approved_value = request.POST.get('approved')
+            
+            # Create form data with the approved value
+            form_data = request.POST.copy()
+            form_data['approved'] = approved_value
+            
+            form = ApprovalForm(form_data)
             if form.is_valid():
-                approval = ApprovalForm(request.POST).save(commit=False)
+                approval = form.save(commit=False)
                 approval.user = request.user
                 approval.process = process
                 approval.step = step
@@ -277,7 +284,7 @@ def approve_step(request, process_id):
                     
                     return redirect("Ace:virament_detail", virement_item.virament_id)
                 # Check for tokens only if no specific workflow matched
-                elif process.token_set.exists():
+                elif process.token_set.exists(): 
                     token = process.token_set.last()
                     send_notification(request, 'tokens:token', token.type, token, token.id)
                     print('------------------------------got here-----------------------------------', str(token.id))

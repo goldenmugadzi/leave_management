@@ -168,7 +168,13 @@
                                 <p class="font-bold   mb-2"> Payment mode: {{ pettycash.payment_mode }}</p>
                                 <p class="font-bold   mb-2"> Disbursed Amount($): {{ pettycash.amount_disbursed|default_if_none:0|floatformat:2|intcomma }}</p>
                                 {% if pettycash.receipt_file == '' or pettycash.receipt_file == None and request.user == approval.user %}
-                                    <p class="font-bold   mb-2"> Receipt: Not yet Receipted</p>
+                                    <p class="font-bold mb-2"> Receipt: Not yet Receipted</p>
+                                    {% if request.user == pettycash.requested_by and pettycash.amount_disbursed %}
+                                        <a href="{% url 'pettycash:receipt_form' pettycash.petty_id %}" 
+                                           class="bg-green-600 hover:bg-green-500 text-white font-bold py-2 px-4 rounded inline-block mt-2">
+                                            <i class="fas fa-upload mr-2"></i>Upload Receipt
+                                        </a>
+                                    {% endif %}
 
 
                                 {% else %}
@@ -257,8 +263,7 @@
                     {% if approvalForm %}
                         <form class="row rounded py-4 border bg-gulf-blue-400 rounded-lg p-3 m-auto container"
                               method="POST"
-                              action="{% url 'approve:approve' pettycash.process.id %}"
-                              enctype="multipart/form-data">
+                              action="{% url 'approve:approve' pettycash.process.id %}">
                             {% csrf_token %}
                             <div class=" m-auto container  ">
                                 <div class="bg-white rounded-lg p-4 mb-4 shadow-inner">
@@ -268,6 +273,7 @@
                                             💬 Comments <span class="text-red-500">*</span>
                                         </label>
                                         {{ approvalForm.comment }}
+                                        {{ approvalForm.approved }} <!-- Hidden field for approved status -->
                                         <p class="text-xs text-gray-500 mt-1">
                                             Please provide comments for your decision. Comments are required for rejections.
                                         </p>
@@ -375,10 +381,54 @@
     <script src="{% static 'assets/disbursemodal.js' %}"></script>
     <script src="{% static 'js/enhanced_comments.js' %}"></script>
     <script>
-        // Prevent double submissions on all forms on this page
+        // Prevent double submissions and validate rejections
         document.addEventListener('DOMContentLoaded', function () {
-            const forms = document.querySelectorAll('form');
-            forms.forEach(form => {
+            const approvalForm = document.querySelector('form[action*="approve"]');
+            if (approvalForm) {
+                const commentTextarea = approvalForm.querySelector('textarea[name="comment"]');
+                const rejectButton = approvalForm.querySelector('button[value="Rejected"]');
+                const approveButton = approvalForm.querySelector('button[value="Approved"]');
+
+                approvalForm.addEventListener('submit', function (e) {
+                    const submitter = e.submitter; // Get which button was clicked
+                    const approvedValue = submitter ? submitter.value : '';
+
+                    // Set the hidden field value
+                    const hiddenField = approvalForm.querySelector('input[name="approved"]');
+                    if (hiddenField) {
+                        hiddenField.value = approvedValue;
+                    }
+
+                    // Validate rejection requires comment
+                    if (approvedValue === 'Rejected') {
+                        const commentValue = commentTextarea ? commentTextarea.value.trim() : '';
+                        if (!commentValue) {
+                            e.preventDefault();
+                            alert('Please provide a comment when rejecting this petty cash request.');
+                            if (commentTextarea) {
+                                commentTextarea.focus();
+                                commentTextarea.style.borderColor = 'red';
+                                setTimeout(() => {
+                                    commentTextarea.style.borderColor = '';
+                                }, 3000);
+                            }
+                            return false;
+                        }
+                    }
+
+                    // Disable buttons to prevent double submission
+                    const buttons = approvalForm.querySelectorAll('button[type="submit"]');
+                    buttons.forEach(btn => {
+                        btn.disabled = true;
+                        btn.classList.add('opacity-60', 'cursor-not-allowed');
+                        btn.textContent = 'Processing...';
+                    });
+                }, { once: true });
+            }
+
+            // Handle other forms on the page
+            const otherForms = document.querySelectorAll('form:not([action*="approve"])');
+            otherForms.forEach(form => {
                 form.addEventListener('submit', function (e) {
                     const buttons = form.querySelectorAll('button[type="submit"]');
                     buttons.forEach(btn => {

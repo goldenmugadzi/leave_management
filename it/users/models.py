@@ -70,6 +70,15 @@ class Depots(models.Model):
     def __str__(self):
         return self.depot
 
+class Substation(models.Model):
+    name =  models.CharField(max_length=100)
+    code =  models.CharField(max_length=100)
+    region = models.ForeignKey(Regions, on_delete=models.DO_NOTHING,null=True, blank=True, related_name='substations')
+    district = models.ForeignKey(Districts, on_delete=models.DO_NOTHING,null=True, blank=True)
+    depot = models.ForeignKey(Depots, on_delete=models.DO_NOTHING,null=True, blank=True)
+
+    def __str__(self):
+        return self.name
 
 class Application(models.Model):
     name = models.CharField(max_length=100, unique=True)
@@ -204,6 +213,7 @@ class UserProfile(AbstractUser):
             return f"{self.last_name} {self.first_name}"
         else:
             return f"{self.username}"
+
 
     def add_role(self, role, app_id):
         existing_role = self.roles.filter(app_id__fullname=app_id).first()
@@ -585,6 +595,18 @@ class DelegationNotification(models.Model):
     def __str__(self):
         return f"{self.notification_type} - {self.recipient.username}"
 
+QUALIFICATION_TYPE = [
+    ("Ordinary Levels", "Ordinary Levels"),
+    ("Advanced Levels", "Advanced Levels"),
+    ("Certificate", "Certificate"),
+    ("Diploma", "Diploma"),
+    ("Higher National Diploma", "Higher National Diploma"),
+    ("Professional Membership", "Professional Membership"),
+    ("Degree", "Degree"),
+    ("Masters", "Masters"),
+    ("PHD", "PHD"),
+    ("Other", "Other"),
+]
 
 class UserQualification(TimeStamp):
     """_summary_
@@ -593,7 +615,8 @@ class UserQualification(TimeStamp):
         TimeStamp (_type_): _description_
     """
     user = models.ForeignKey(UserProfile, on_delete=models.PROTECT)
-    name = models.CharField(max_length=255, null=False, blank=False)
+    name = models.CharField(max_length=30, null=False, blank=False, choices=QUALIFICATION_TYPE)
+    description = models.CharField(max_length=255, null=True, default=None)
     file = models.FileField(upload_to='uploads/appraisal/user_qualification', null=True, blank=True)
     
     def __str__(self) -> str:
