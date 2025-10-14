@@ -1,0 +1,97 @@
+{% extends 'admin_layout.html' %}
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+  <div class="max-w-6xl mx-auto bg-white/90 backdrop-blur p-6 rounded-xl shadow-md ring-1 ring-gray-100">
+    <div class="flex items-center justify-between mb-6">
+      <h2 class="text-2xl font-bold text-gray-800">Vehicle Management</h2>
+      <div class="flex gap-3">
+        <a class="px-4 py-2 bg-gulf-blue-600 text-white rounded-lg hover:bg-gulf-blue-700 flex items-center gap-2" 
+           href="{% url 'fault_locator:vehicle_create' %}">
+          <i class="fas fa-plus"></i>
+          Add Vehicle
+        </a>
+        <a class="px-4 py-2 bg-gray-200 text-gray-900 rounded-lg hover:bg-gray-300" 
+           href="{% url 'fault_locator:fault_locator_dashboard' %}">
+          <i class="fas fa-arrow-left"></i>
+          Back to Dashboard
+        </a>
+      </div>
+    </div>
+    
+    {% if vehicles %}
+    <div class="overflow-x-auto">
+      <table class="min-w-full bg-white border border-gray-200 rounded-lg">
+        <thead class="bg-gray-50">
+          <tr>
+            <th class="px-5 py-3 border-b border-gray-200 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+              Fleet Number
+            </th>
+            <th class="px-5 py-3 border-b border-gray-200 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+              Registration
+            </th>
+            <th class="px-5 py-3 border-b border-gray-200 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+              Region
+            </th>
+            <th class="px-5 py-3 border-b border-gray-200 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+              Odometer (km)
+            </th>
+            <th class="px-5 py-3 border-b border-gray-200 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+              Status
+            </th>
+            <th class="px-5 py-3 border-b border-gray-200 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+              Assigned Device
+            </th>
+            <th class="px-5 py-3 border-b border-gray-200 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
+              Actions
+            </th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-200">
+          {% for vehicle in vehicles %}
+          <tr class="hover:bg-gray-50">
+            <td class="px-5 py-3 font-medium text-gray-800">{{ vehicle.fleet_number }}</td>
+            <td class="px-5 py-3">{{ vehicle.reg_number }}</td>
+            <td class="px-5 py-3">
+              <span class="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-800">{{ vehicle.region.region }}</span>
+            </td>
+            <td class="px-5 py-3">{{ vehicle.odometer_km|floatformat:0 }}</td>
+            <td class="px-5 py-3">
+              {% if vehicle.status == 'active' %}
+                <span class="px-2 py-1 text-xs rounded-full bg-green-100 text-green-800">Active</span>
+              {% elif vehicle.status == 'maintenance' %}
+                <span class="px-2 py-1 text-xs rounded-full bg-yellow-100 text-yellow-800">Maintenance</span>
+              {% else %}
+                <span class="px-2 py-1 text-xs rounded-full bg-gray-100 text-gray-800">Retired</span>
+              {% endif %}
+            </td>
+            <td class="px-5 py-3">
+              {% if vehicle.faultlocatordevice_set.first %}
+                {{ vehicle.faultlocatordevice_set.first.asset_number }}
+              {% else %}
+                <span class="text-gray-400">None</span>
+              {% endif %}
+            </td>
+            <td class="px-5 py-3 text-right space-x-2">
+              <a class="px-3 py-1.5 bg-gulf-blue-600 text-white rounded-md hover:bg-gulf-blue-700 text-sm" 
+                 href="{% url 'fault_locator:vehicle_edit' vehicle.id %}">
+                <i class="fas fa-edit"></i> Edit
+              </a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="text-center py-8">
+      <i class="fas fa-truck text-4xl text-gray-400 mb-4"></i>
+      <p class="text-gray-500 mb-4">No vehicles have been added yet.</p>
+      <a class="px-4 py-2 bg-gulf-blue-600 text-white rounded-lg hover:bg-gulf-blue-700" 
+         href="{% url 'fault_locator:vehicle_create' %}">
+        Add First Vehicle
+      </a>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
