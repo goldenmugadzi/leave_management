@@ -6,7 +6,7 @@ from django.core.files.uploadedfile import UploadedFile
 from django.core.files.storage import default_storage
 
 from ..models.kra import REVIEWERS_CONFIRMATION_STATUS
-from ..models import KeyResultArea, YearQuarter,  Appraisal, KeyResultAreaOutCome, DepartmentOutput, AppraisalDepartmentOutput, AppraisalOutPutPerformanceDimensionScore, OutPutPerformanceDimension, ScoreDocument, AppraisalDepartmentOutputReviewerStatus
+from ..models import KeyResultArea, YearQuarter,  Appraisal, KeyResultAreaOutCome, DepartmentOutput, AppraisalDepartmentOutput, AppraisalOutPutPerformanceDimensionScore, OutPutPerformanceDimension, ScoreDocument, AppraisalDepartmentOutputReviewerStatus, AppraisalConfirmationStatus
 from ..helpers.types.kra import KRAType, TargetScoreType, KraRolesCreateType, ActivityType, PerformanceDimensionType
 from it.users.models import UserProfile, Application, Roles, Designations
 from loguru import logger
@@ -233,7 +233,6 @@ class AppraisalDepartmentOutputRepository:
             return qr.first()
         except Exception as e:
             raise Exception(f"[AppraisalDepartmentOutputRepository] get_by_id, appraisal_department_output id: {appraisal_department_output_id}, failed with error: {e}")
-
 
 
 class AppraisalOutPutPerformanceDimensionScoreRepository:
@@ -471,3 +470,39 @@ class ApprasialKraReviewerStatusRepository:
             return qr
         except Exception as e:
             raise Exception(f"ApprasialKraReviewerStatusRepository fetch_by_appraisal_id_quarter_year year_q_id: {year_q_id} appraisal id: {appraisal_id}, repo failed with error: {e}")
+
+class AppraisalConfirmationStatusRepository:
+    def bulk_create(self, appraisal_confirmation_status_list: List[AppraisalConfirmationStatus])->bool:
+        try:
+            AppraisalConfirmationStatus.objects.bulk_create(objs=appraisal_confirmation_status_list, ignore_conflicts=True)
+            return True
+        except Exception as e:
+            raise Exception(f"AppraisalConfirmationStatusRepository bulk_create Repo failed with error: {e}")
+
+    def fetch_by_appraisal_id(self, appraisal_id: int)->QuerySet[AppraisalConfirmationStatus]:
+        try:
+            qr = AppraisalConfirmationStatus.objects.filter(appraisal__id=appraisal_id)
+            return qr
+        except Exception as e:
+            raise Exception(f"AppraisalConfirmationStatusRepository fetch_by_appraisal_id with pk: {appraisal_id}, failed with error: {e}")
+    
+    def update(self, appraisal_confirmation_status_obj: AppraisalConfirmationStatus, confirmation_status: str, comment: str)->AppraisalConfirmationStatus:
+        try:
+            is_changed = False
+            
+            print("=============== >>> ", appraisal_confirmation_status_obj.confirmation_status != confirmation_status)
+            print("=============== exi >>> ", appraisal_confirmation_status_obj.confirmation_status)
+            print("=============== arg >>> ", confirmation_status)
+            if appraisal_confirmation_status_obj.confirmation_status != confirmation_status:
+                appraisal_confirmation_status_obj.confirmation_status = confirmation_status
+                is_changed = True
+            
+            if appraisal_confirmation_status_obj.comment != comment:
+                appraisal_confirmation_status_obj.comment = comment
+                is_changed = True
+                
+            if is_changed:
+                appraisal_confirmation_status_obj.save()
+            return appraisal_confirmation_status_obj
+        except Exception as e:
+            raise Exception(f"AppraisalConfirmationStatusRepository update with pk: {appraisal_confirmation_status_obj.id}, failed with error: {e}")

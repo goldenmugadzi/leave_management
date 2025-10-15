@@ -19,7 +19,7 @@ from ..forms.qualification_experiences import UserQualificationsUploadForm
 from ..helpers.types.kra import RoleFilterChoices
 from ..repository import UserQualificationRepository, AppraisalExperienceRepository, ExperienceRepository, AppraisalRepository
 from ..repository.appraisal import AppraiseePersonalAttributeRepository, AppraisalOverallCommentsRepository
-from ..repository.kra import AppraisalOutPutPerformanceDimensionScoreRepository, YearQuarterRepository
+from ..repository.kra import AppraisalOutPutPerformanceDimensionScoreRepository, YearQuarterRepository, AppraisalConfirmationStatusRepository
 from ..repository.qualification_experience import UserExperienceRepository
 from ..repository.users import UserProfileRepository
 from ..services import AppraisalService, AppraisalExperienceService
@@ -28,12 +28,13 @@ from ..services.appraisal import AppraisalPersonalAttributeService
 from ..helpers.types.kra import KraRolesType
 from ..helpers.getters.approval import ApprovalStagesHandler
 from ..helpers.getters.appraisal import AppraisalDependanciesStrategyContext, AppraisalPersonalDetailsStrategy, TrainingAndDevStrategy, PerformanceAssessmentStrategy, PerformanceProgressReviewStrategy, FinalPerformanceAssStrategy
-
+from ..models.kra import REVIEWERS_CONFIRMATION_STATUS, APPRAISAL_KRA_REVIEWER_STATUS_CHOICES
 from approve.views import intiate,approve_step
 from approve.forms import ApprovalForm
 from approve.models import Step, Approval
 from datetime import datetime
 from ..forms.formsets import AppraiseePersonalAttributeFormSet
+from ..forms.kra import AppraisalConfirmationStatusForm
 from ..forms.appraisal import AppraisalOverallCommentForm, AppraiseePersonalAttributeForm
 from ..helpers.getters.dates import get_assessment_period, CurrentQuarterDate
 from ..helpers.getters.quarter import get_all_quarter_ratings_per_appraiser
@@ -502,7 +503,96 @@ class AppraiseePersonalAttributesDetailView(TemplateView):
         elif current_quarter.is_within_fourth_quarter:
             return True
         return False
-
+    
+    def get_appraisal_confirmation_form(self, request):
+        repo = AppraisalConfirmationStatusRepository()
+        confirmation_status_qr = repo.fetch_by_appraisal_id(appraisal_id=self.kwargs.get("appraisal_id"))
+        
+        quarter_forms = {
+            "first_quarter": 
+                {
+                    "reviewer_form": AppraisalConfirmationStatusForm(
+                    request,
+                    instance=confirmation_status_qr.filter(year_quarter__quarter=1, confirmed_by=REVIEWERS_CONFIRMATION_STATUS[1][0]).first()
+                ),
+                    "hr_form":
+                        AppraisalConfirmationStatusForm(
+                        request,
+                        instance=confirmation_status_qr.filter(year_quarter__quarter=1, confirmed_by=REVIEWERS_CONFIRMATION_STATUS[2][0]).first()
+                )
+                },
+            "second_quarter": {
+                    "reviewer_form": AppraisalConfirmationStatusForm(
+                    request,
+                    instance=confirmation_status_qr.filter(year_quarter__quarter=2, confirmed_by=REVIEWERS_CONFIRMATION_STATUS[1][0]).first()
+                ),
+                    "hr_form":
+                        AppraisalConfirmationStatusForm(
+                        request,
+                        instance=confirmation_status_qr.filter(year_quarter__quarter=2, confirmed_by=REVIEWERS_CONFIRMATION_STATUS[2][0]).first()
+                )
+                },
+            "third_quarter": {
+                    "reviewer_form": AppraisalConfirmationStatusForm(
+                    request,
+                    instance=confirmation_status_qr.filter(year_quarter__quarter=3, confirmed_by=REVIEWERS_CONFIRMATION_STATUS[1][0]).first()
+                ),
+                    "hr_form":
+                        AppraisalConfirmationStatusForm(
+                        request,
+                        instance=confirmation_status_qr.filter(year_quarter__quarter=3, confirmed_by=REVIEWERS_CONFIRMATION_STATUS[2][0]).first()
+                )
+                },
+            "fourth_quarter": {
+                    "reviewer_form": AppraisalConfirmationStatusForm(
+                    request,
+                    instance=confirmation_status_qr.filter(year_quarter__quarter=4, confirmed_by=REVIEWERS_CONFIRMATION_STATUS[1][0]).first()
+                ),
+                    "hr_form":
+                        AppraisalConfirmationStatusForm(
+                        request,
+                        instance=confirmation_status_qr.filter(year_quarter__quarter=4, confirmed_by=REVIEWERS_CONFIRMATION_STATUS[2][0]).first()
+                )
+                }
+        }
+        return quarter_forms
+    
+    def get_current_quarter_type(self):
+        appraisal_object = self.get_appraisal_object()
+        handler = CurrentQuarterDate(year=appraisal_object.created_date.year)
+        return handler.get_current_quarter()
+    
+    def is_all_scored(self):
+        repo = AppraisalOutPutPerformanceDimensionScoreRepository()
+        current_quarter = self.get_current_quarter_type()
+        data = {
+            "first_quarter": False,
+            "second_quarter": False,
+            "third_quarter": False,
+            "fourth_quarter": False,
+        }
+        if current_quarter.is_within_first_quarter:
+            scores_qr = repo.fetch_by_appraisal_id_quarter_num(appraisal_id=self.kwargs.get("appraisal_id"), quarter_num=1)
+            not_scored_qr = scores_qr.filter(is_scored=False)
+            if not not_scored_qr.exists():
+                data["first_quarter"] = True
+        if current_quarter.is_within_second_quarter:
+            scores_qr = repo.fetch_by_appraisal_id_quarter_num(appraisal_id=self.kwargs.get("appraisal_id"), quarter_num=2)
+            not_scored_qr = scores_qr.filter(is_scored=False)
+            if not not_scored_qr.exists():
+                data["second_quarter"] = True
+        if current_quarter.is_within_third_quarter:
+            scores_qr = repo.fetch_by_appraisal_id_quarter_num(appraisal_id=self.kwargs.get("appraisal_id"), quarter_num=3)
+            not_scored_qr = scores_qr.filter(is_scored=False)
+            if not not_scored_qr.exists():
+                data["third_quarter"] = True
+        if current_quarter.is_within_fourth_quarter:
+            scores_qr = repo.fetch_by_appraisal_id_quarter_num(appraisal_id=self.kwargs.get("appraisal_id"), quarter_num=4)
+            not_scored_qr = scores_qr.filter(is_scored=False)
+            if not not_scored_qr.exists():
+                data["fourth_quarter"] = True
+        return data
+    
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         final_rating_type = self.get_quarterly_total_score()
@@ -514,7 +604,10 @@ class AppraiseePersonalAttributesDetailView(TemplateView):
         context["final_score"] = final_rating_type.final_score
         context["final_comment_form"] = self.get_final_comment_form(None)
         context["appraisee_grade"] = self.appraisee_grade()
-        context["is_within_current_quarter"] = self.is_current_date_in_current_quarter()
+        context["is_detail_view"] = False
+        context["appraisal_confirmation_forms"] = self.get_appraisal_confirmation_form(None)
+        context["current_quarter"] = self.get_current_quarter_type()
+        context["is_all_scored"] = self.is_all_scored()
 
         return context
     
@@ -690,6 +783,7 @@ class AppraiseePersonalAttributesUpdateView(TemplateView):
         context["is_within_current_quarter"] = self.is_current_date_in_current_quarter()
         context["current_quarter_obj"] = self.get_year_quarter_obj()       
         context["is_all_scored"] = self.is_all_scored()
+        context["is_detail_view"] = False
         return context
     
     def get_success_url(self) -> str:
@@ -856,10 +950,139 @@ class AppraisalDetailView(TemplateView):
         }
         return quarter_forms
     
+    def get_appraisal_confirmation_form(self, request):
+        repo = AppraisalConfirmationStatusRepository()
+        confirmation_status_qr = repo.fetch_by_appraisal_id(appraisal_id=self.kwargs.get("appraisal_id"))
+        
+        quarter_forms = {
+            "first_quarter": 
+                {
+                    "reviewer_form": AppraisalConfirmationStatusForm(
+                    request,
+                    instance=confirmation_status_qr.filter(year_quarter__quarter=1, confirmed_by=REVIEWERS_CONFIRMATION_STATUS[1][0]).first()
+                ),
+                    "hr_form":
+                        AppraisalConfirmationStatusForm(
+                        request,
+                        instance=confirmation_status_qr.filter(year_quarter__quarter=1, confirmed_by=REVIEWERS_CONFIRMATION_STATUS[2][0]).first()
+                )
+                },
+            "second_quarter": {
+                    "reviewer_form": AppraisalConfirmationStatusForm(
+                    request,
+                    instance=confirmation_status_qr.filter(year_quarter__quarter=2, confirmed_by=REVIEWERS_CONFIRMATION_STATUS[1][0]).first()
+                ),
+                    "hr_form":
+                        AppraisalConfirmationStatusForm(
+                        request,
+                        instance=confirmation_status_qr.filter(year_quarter__quarter=2, confirmed_by=REVIEWERS_CONFIRMATION_STATUS[2][0]).first()
+                )
+                },
+            "third_quarter": {
+                    "reviewer_form": AppraisalConfirmationStatusForm(
+                    request,
+                    instance=confirmation_status_qr.filter(year_quarter__quarter=3, confirmed_by=REVIEWERS_CONFIRMATION_STATUS[1][0]).first()
+                ),
+                    "hr_form":
+                        AppraisalConfirmationStatusForm(
+                        request,
+                        instance=confirmation_status_qr.filter(year_quarter__quarter=3, confirmed_by=REVIEWERS_CONFIRMATION_STATUS[2][0]).first()
+                )
+                },
+            "fourth_quarter": {
+                    "reviewer_form": AppraisalConfirmationStatusForm(
+                    request,
+                    instance=confirmation_status_qr.filter(year_quarter__quarter=4, confirmed_by=REVIEWERS_CONFIRMATION_STATUS[1][0]).first()
+                ),
+                    "hr_form":
+                        AppraisalConfirmationStatusForm(
+                        request,
+                        instance=confirmation_status_qr.filter(year_quarter__quarter=4, confirmed_by=REVIEWERS_CONFIRMATION_STATUS[2][0]).first()
+                )
+                }
+        }
+        return quarter_forms
+    
+    def requesters(self)->Dict[str, bool]:
+        appraisal_object = self.get_appraisal_obj()
+        is_appraiser = self.request.user == appraisal_object.appraiser
+        is_appraisee = self.request.user == appraisal_object.user
+        is_reviewer = self.request.user == appraisal_object.reviewer
+        is_hr = self.request.user == appraisal_object.hr
+        
+        data = {
+            "is_appraiser": is_appraiser,
+            "is_appraisee": is_appraisee,
+            "is_reviewer": is_reviewer,
+            "is_hr": is_hr
+        }
+        return data
+    
+    def get_current_quarter_type(self):
+        appraisal_object = self.get_appraisal_obj()
+        handler = CurrentQuarterDate(year=appraisal_object.created_date.year)
+        return handler.get_current_quarter()
+    
+    def is_current_date_in_current_quarter(self)->bool:
+        current_quarter = self.get_current_quarter_type()
+        
+        if current_quarter.is_within_first_quarter:
+            return True
+        elif current_quarter.is_within_second_quarter:
+            return True
+        elif current_quarter.is_within_third_quarter:
+            return True
+        elif current_quarter.is_within_fourth_quarter:
+            return True
+        return False
+    
+    def get_quarter_num(self):
+        current_quarter = self.get_current_quarter_type()
+        
+        if current_quarter.is_within_first_quarter:
+            return 1
+        elif current_quarter.is_within_second_quarter:
+            return 2
+        elif current_quarter.is_within_third_quarter:
+            return 3
+        elif current_quarter.is_within_fourth_quarter:
+            return 4
+    
+    def is_all_scored(self):
+        repo = AppraisalOutPutPerformanceDimensionScoreRepository()
+        current_quarter = self.get_current_quarter_type()
+        data = {
+            "first_quarter": False,
+            "second_quarter": False,
+            "third_quarter": False,
+            "fourth_quarter": False,
+        }
+        if current_quarter.is_within_first_quarter:
+            scores_qr = repo.fetch_by_appraisal_id_quarter_num(appraisal_id=self.kwargs.get("appraisal_id"), quarter_num=1)
+            not_scored_qr = scores_qr.filter(is_scored=False)
+            if not not_scored_qr.exists():
+                data["first_quarter"] = True
+        if current_quarter.is_within_second_quarter:
+            scores_qr = repo.fetch_by_appraisal_id_quarter_num(appraisal_id=self.kwargs.get("appraisal_id"), quarter_num=2)
+            not_scored_qr = scores_qr.filter(is_scored=False)
+            if not not_scored_qr.exists():
+                data["second_quarter"] = True
+        if current_quarter.is_within_third_quarter:
+            scores_qr = repo.fetch_by_appraisal_id_quarter_num(appraisal_id=self.kwargs.get("appraisal_id"), quarter_num=3)
+            not_scored_qr = scores_qr.filter(is_scored=False)
+            if not not_scored_qr.exists():
+                data["third_quarter"] = True
+        if current_quarter.is_within_fourth_quarter:
+            scores_qr = repo.fetch_by_appraisal_id_quarter_num(appraisal_id=self.kwargs.get("appraisal_id"), quarter_num=4)
+            not_scored_qr = scores_qr.filter(is_scored=False)
+            if not not_scored_qr.exists():
+                data["fourth_quarter"] = True
+        return data
+    
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         final_rating_type = self.get_final_score()
-        
+        context.update(self.requesters())
         context["appraisal_obj"] = self.get_appraisal_obj()
         context["steps"] = self.get_steps()
         context["personal_details"] = self.get_personal_details()
@@ -869,11 +1092,68 @@ class AppraisalDetailView(TemplateView):
         context["perf_progress_data"] = self.get_perf_progress_rev()
         context["final_stage_data"] = final_rating_type.rating
         context["final_score"] = final_rating_type.final_score
-
+        context["appraisal_confirmation_forms"] = self.get_appraisal_confirmation_form(None)
         context["appraisee_personal_attr_qr"] = self.get_all_quarters_apraisee_personal_attrs()
         context["final_comment_form"] = self.get_final_comment_form(None)
-
+        context["is_within_current_quarter"] = self.is_current_date_in_current_quarter()
+        context["is_all_scored"] = self.is_all_scored()
+        context["is_detail_view"] = True
+        context["current_quarter"] = self.get_current_quarter_type()
         return context
+    
+    
+    def post(self, request, *args, **kwargs):
+        try:
+            quarter_number = self.get_quarter_num()
+            if quarter_number is None:
+                raise Exception(f"AppraisalConfirmationStatus has no quarter num in request")
+
+            form = None
+            
+            if quarter_number == 1:
+                if "hr_request" in self.request.POST:
+                    form = self.get_appraisal_confirmation_form(request.POST).get("first_quarter").get("hr_form")
+                if "reviewer_request" in self.request.POST:
+                    form = self.get_appraisal_confirmation_form(request.POST).get("first_quarter").get("reviewer_form")
+            elif quarter_number == 2:
+                if "hr_request" in self.request.POST:
+                    form = self.get_appraisal_confirmation_form(request.POST).get("second_quarter").get("hr_form")
+                if "reviewer_request" in self.request.POST:
+                    form = self.get_appraisal_confirmation_form(request.POST).get("second_quarter").get("reviewer_form")
+
+            elif quarter_number == 3:
+                if "hr_request" in self.request.POST:
+                    form = self.get_appraisal_confirmation_form(request.POST).get("third_quarter").get("hr_form")
+                if "reviewer_request" in self.request.POST:
+                    form = self.get_appraisal_confirmation_form(request.POST).get("third_quarter").get("reviewer_form")
+            else:
+                if "hr_request" in self.request.POST:
+                    form = self.get_appraisal_confirmation_form(request.POST).get("fourth_quarter").get("hr_form")
+                if "reviewer_request" in self.request.POST:
+                    form = self.get_appraisal_confirmation_form(request.POST).get("fourth_quarter").get("reviewer_form")
+
+            if form is None:
+                raise Exception(f"request has no form, request should have 'hr_request' or 'reviewer_request'")
+            
+            
+            if form.is_valid():
+                confirmation_status = form.cleaned_data.get("confirmation_status")
+                comment = form.cleaned_data.get("comment")
+            
+                if (confirmation_status == APPRAISAL_KRA_REVIEWER_STATUS_CHOICES[2][0]) and not comment:
+                    messages.error(self.request, "Please provide a rejection reason in the comment field.")
+                    return redirect(reverse("appraisal_detail", kwargs={"appraisal_id": self.kwargs.get("appraisal_id")}))
+                
+                obj = form.instance
+                obj.save()
+                
+                messages.success(self.request, "confirmation status saved successfully")
+        except Exception as e:
+            logger.error(f"[AppraisalDetailView] confirmation status for appraisal pk: {self.kwargs.get('appraisal_id')}, failed with error: {e}")
+            messages.error(request, "Something went wrong, please contact the admin")
+
+        return redirect(reverse("appraisal_detail", kwargs={"appraisal_id": self.kwargs.get("appraisal_id")}))
+
     
     def get(self, request, *args, **kwargs):
         try:

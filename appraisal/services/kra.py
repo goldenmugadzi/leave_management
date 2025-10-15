@@ -4,11 +4,12 @@ from django.db import transaction
 from django.db.models.query import QuerySet
 from decimal import Decimal
 
-from ..repository.kra import KRARepository, AppraisalDepartmentOutputRepository, AppraisalOutPutPerformanceDimensionScoreRepository, YearQuarterRepository, ApprasialKraReviewerStatusRepository
+from ..repository.kra import KRARepository, AppraisalDepartmentOutputRepository, AppraisalOutPutPerformanceDimensionScoreRepository, YearQuarterRepository, ApprasialKraReviewerStatusRepository, AppraisalConfirmationStatusRepository
 from ..repository.departmental_workplan import OutPutPerformanceDimensionRepository, DepartmentalOutRepository
 from ..repository.appraisal import AppraisalRepository, PersonalAttributeRepository, AppraiseePersonalAttributeRepository, AppraisalOverallCommentsRepository
 from it.users.models import Designations
-from ..models import KeyResultArea, AppraisalOutPutPerformanceDimensionScore, AppraisalDepartmentOutput, AppraiseePersonalAttribute, AppraisalOverallComments
+from ..models import KeyResultArea, AppraisalOutPutPerformanceDimensionScore, AppraisalDepartmentOutput, AppraiseePersonalAttribute, AppraisalOverallComments, AppraisalConfirmationStatus
+from ..models.kra import REVIEWERS_CONFIRMATION_STATUS
 from ..helpers.types.kra import KRAType
 from ..helpers.getters import RatingCalculation
 
@@ -102,6 +103,26 @@ class AppraisalDependanciesInitialisationService:
         apprasee_personal_attr_repo = AppraiseePersonalAttributeRepository()
         return apprasee_personal_attr_repo.bulk_create(appraisee_personal_attr_list=appraisee_personal_attr_objs_list)
     
+    
+    def create_appraisal_confirmation_status(self, appraisal_object, year_quarter_qr):
+        appraisal_confirmation_list = []
+        appraisal_confirmation_status_repo = AppraisalConfirmationStatusRepository()
+        
+        for year_quarter_obj in year_quarter_qr:
+            hr_obj = AppraisalConfirmationStatus(
+                appraisal=appraisal_object,
+                year_quarter=year_quarter_obj,
+                confirmed_by=REVIEWERS_CONFIRMATION_STATUS[2][0]
+            )
+            reviewer_obj = AppraisalConfirmationStatus(
+                appraisal=appraisal_object,
+                year_quarter=year_quarter_obj,
+                confirmed_by=REVIEWERS_CONFIRMATION_STATUS[1][0]
+            )
+            appraisal_confirmation_list.append(hr_obj)
+            appraisal_confirmation_list.append(reviewer_obj)
+        return appraisal_confirmation_status_repo.bulk_create(appraisal_confirmation_status_list=appraisal_confirmation_list)
+    
     def create_overall_comments(self, appraisal_obj, year_quarter_qr):
         comments_list = []
         
@@ -165,6 +186,10 @@ class AppraisalDependanciesInitialisationService:
                     # ====================== create appraisal overall comments ======================
                     self.create_overall_comments(appraisal_obj=appraisal_obj, year_quarter_qr=year_quarter_qr)
                     logger.success(f"appraisal overall comments created successfully")
+                    
+                    # ====================== create appraisal confirmation status ======================
+                    self.create_appraisal_confirmation_status(appraisal_object=appraisal_obj, year_quarter_qr=year_quarter_qr)
+                    logger.success(f"appraisal confirmation status created successfully")
                 else:
                     raise Exception(f"appraisee with appraisal id: {appraisal_id}. has no designation")
             

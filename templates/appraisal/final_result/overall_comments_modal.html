@@ -12,11 +12,55 @@
                 >
                     {{ final_comment_form.first_quarter.appraiser_comment|as_crispy_field }}
                 </div>
+                <div class="flex justify-end mt-2 mr-8 gap-2">
+
+                    {% if is_appraiser and is_all_scored.first_quarter %}
+                        {% if current_quarter.is_within_first_quarter %}
+                            <button 
+                                type="submit" 
+                                class="w-96 bg-blue-500 hover:bg-blue-700 inline-block rounded-full text-white py-2 px-4" 
+                                name="{{quarter_name}}"
+                            >
+                                Save
+                            </button>
+                        {% endif %}
+                    {% endif %}
+                    
+                    <button 
+                        type="button" 
+                        onclick="closeOverallCommentModal('{{ quarter_name|escapejs }}')" 
+                        class="px-4 py-2 text-white bg-red-500 rounded-lg"
+                    >
+                        Close
+                    </button>
+                </div>
             {% elif quarter_name == 'Second Quarter' %}
                 <div 
                     class="flex-1 px-2 shadow-xl rounded-lg border-2 my-2"
                 >
                     {{ final_comment_form.second_quarter.appraiser_comment|as_crispy_field }}
+                </div>
+                <div class="flex justify-end mt-2 mr-8 gap-2">
+
+                    {% if is_appraiser and is_all_scored.second_quarter %}
+                        {% if current_quarter.is_within_second_quarter %}
+                            <button 
+                                type="submit" 
+                                class="w-96 bg-blue-500 hover:bg-blue-700 inline-block rounded-full text-white py-2 px-4" 
+                                name="{{quarter_name}}"
+                            >
+                                Save
+                            </button>
+                        {% endif %}
+                    {% endif %}
+                    
+                    <button 
+                        type="button" 
+                        onclick="closeOverallCommentModal('{{ quarter_name|escapejs }}')" 
+                        class="px-4 py-2 text-white bg-red-500 rounded-lg"
+                    >
+                        Close
+                    </button>
                 </div>
             {% elif quarter_name == 'Third Quarter' %}
                 <div 
@@ -24,37 +68,61 @@
                 >
                     {{ final_comment_form.third_quarter.appraiser_comment|as_crispy_field }}
                 </div>
+                <div class="flex justify-end mt-2 mr-8 gap-2">
+
+                    {% if is_appraiser and is_all_scored.third_quarter %}
+                        {% if current_quarter.is_within_third_quarter %}
+                            <button 
+                                type="submit" 
+                                class="w-96 bg-blue-500 hover:bg-blue-700 inline-block rounded-full text-white py-2 px-4" 
+                                name="{{quarter_name}}"
+                            >
+                                Save
+                            </button>
+                        {% endif %}
+                    {% endif %}
+                    
+                    <button 
+                        type="button" 
+                        onclick="closeOverallCommentModal('{{ quarter_name|escapejs }}')" 
+                        class="px-4 py-2 text-white bg-red-500 rounded-lg"
+                    >
+                        Close
+                    </button>
+                </div> 
             {% elif quarter_name == 'Fourth Quarter' %}
                 <div 
                     class="flex-1 px-2 shadow-xl rounded-lg border-2 my-2"
                 >
                     {{ final_comment_form.fourth_quarter.appraiser_comment|as_crispy_field }}
                 </div>
+
+                <div class="flex justify-end mt-2 mr-8 gap-2">
+
+                    {% if is_appraiser and is_all_scored.fourth_quarter %}
+                        {% if current_quarter.is_within_fourth_quarter %}
+                            <button 
+                                type="submit" 
+                                class="w-96 bg-blue-500 hover:bg-blue-700 inline-block rounded-full text-white py-2 px-4" 
+                                name="{{quarter_name}}"
+                            >
+                                Save
+                            </button>
+                        {% endif %}
+                    {% endif %}
+                    
+                    <button 
+                        type="button" 
+                        onclick="closeOverallCommentModal('{{ quarter_name|escapejs }}')" 
+                        class="px-4 py-2 text-white bg-red-500 rounded-lg"
+                    >
+                        Close
+                    </button>
+                </div> 
             {% endif %}
             
 
-            <div class="flex justify-end mt-2 mr-8 gap-2">
-
-                {% if is_appraiser %}
-                    {% if is_within_current_quarter %}
-                        <button 
-                            type="submit" 
-                            class="w-96 bg-blue-500 hover:bg-blue-700 inline-block rounded-full text-white py-2 px-4" 
-                            name="{{quarter_name}}"
-                        >
-                            Save
-                        </button>
-                    {% endif %}
-                {% endif %}
-                
-                <button 
-                    type="button" 
-                    onclick="closeOverallCommentModal('{{ quarter_name|escapejs }}')" 
-                    class="px-4 py-2 text-white bg-red-500 rounded-lg"
-                >
-                    Close
-                </button>
-            </div> 
+            
         </form>
 
     </div>
