@@ -6,7 +6,7 @@ from django.forms.utils import ErrorList
 from it.users.models import UserQualification, CostCenter, UserProfile, Designations
 from ..services.user import UserProfileService
 from ..repository.users import UserProfileRepository
-from ..models import Appraisal, AppraisalExperience, Experience, AppraiseePersonalAttribute
+from ..models import Appraisal, AppraisalExperience, Experience, AppraiseePersonalAttribute, AppraisalOverallComments
 from ..helpers.types.kra import KraRolesType
 
 
@@ -109,23 +109,16 @@ class AppraisalForm(forms.ModelForm):
 
 class AppraisalOverallCommentForm(forms.ModelForm):
     class Meta:
-        model = Appraisal
-        fields = ["appraiser_comment", "reviewer_comment"]
+        model = AppraisalOverallComments
+        fields = ["appraiser_comment"]
+
         
     def __init__(self, *args, **kwargs):
         is_appraiser = kwargs.pop("is_appraiser", False)
-        is_reviewer = kwargs.pop("is_reviewer", False)
         super().__init__(*args, **kwargs)
-        
-        if is_appraiser:
-            self.fields['reviewer_comment'].disabled = True
-            
-        if is_reviewer:
+
+        if not is_appraiser:
             self.fields['appraiser_comment'].disabled = True
-        
-        if not is_appraiser and not is_reviewer:
-            self.fields['appraiser_comment'].disabled = True
-            self.fields['reviewer_comment'].disabled = True
 
 class AppraisalUpdateForm(forms.ModelForm):
         

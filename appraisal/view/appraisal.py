@@ -18,7 +18,7 @@ from ..forms import AppraisalForm, AppraisalRoleFilterForm, AppraisalUpdateForm
 from ..forms.qualification_experiences import UserQualificationsUploadForm
 from ..helpers.types.kra import RoleFilterChoices
 from ..repository import UserQualificationRepository, AppraisalExperienceRepository, ExperienceRepository, AppraisalRepository
-from ..repository.appraisal import AppraiseePersonalAttributeRepository
+from ..repository.appraisal import AppraiseePersonalAttributeRepository, AppraisalOverallCommentsRepository
 from ..repository.kra import AppraisalOutPutPerformanceDimensionScoreRepository, YearQuarterRepository
 from ..repository.qualification_experience import UserExperienceRepository
 from ..repository.users import UserProfileRepository
@@ -445,14 +445,33 @@ class AppraiseePersonalAttributesDetailView(TemplateView):
         return data
     
     def get_final_comment_form(self, request):
+        repo = AppraisalOverallCommentsRepository()
+        overall_comm_qr = repo.fetch_by_appraisal_id(appraisal_id=self.kwargs.get("appraisal_id"))
         requesters_dict = self.requesters()
-        form = AppraisalOverallCommentForm(
-                request,
-                is_appraiser=requesters_dict["is_appraiser"],
-                is_reviewer=requesters_dict["is_reviewer"],
-                instance=self.get_appraisal_object()
-            )
-        return form
+
+        quarter_forms = {
+            "first_quarter": AppraisalOverallCommentForm(
+                    request,
+                    is_appraiser=requesters_dict["is_appraiser"],
+                    instance=overall_comm_qr.filter(quarter__quarter=1).first()
+                ),
+            "second_quarter": AppraisalOverallCommentForm(
+                    request,
+                    is_appraiser=requesters_dict["is_appraiser"],
+                    instance=overall_comm_qr.filter(quarter__quarter=2).first()
+                ),
+            "third_quarter": AppraisalOverallCommentForm(
+                    request,
+                    is_appraiser=requesters_dict["is_appraiser"],
+                    instance=overall_comm_qr.filter(quarter__quarter=3).first()
+                ),
+            "fourth_quarter": AppraisalOverallCommentForm(
+                    request,
+                    is_appraiser=requesters_dict["is_appraiser"],
+                    instance=overall_comm_qr.filter(quarter__quarter=4).first()
+                ),
+        }
+        return quarter_forms
     
     def get_quarterly_total_score(self):
         appraisal_object = self.get_appraisal_object()
@@ -473,15 +492,16 @@ class AppraiseePersonalAttributesDetailView(TemplateView):
         appraisal_object = self.get_appraisal_object()
         handler = CurrentQuarterDate(year=appraisal_object.created_date.year)
         current_quarter = handler.get_current_quarter()
-        return current_quarter.is_within_fourth_quarter
-    
-    def is_all_scored(self):
-        repo = AppraisalOutPutPerformanceDimensionScoreRepository()
-        scores_qr = repo.fetch_by_appraisal_id(appraisal_id=self.get_appraisal_object().id)
-        not_scored_qr = scores_qr.filter(is_scored=False)
-        if not_scored_qr.exists():
-            return False
-        return True
+        
+        if current_quarter.is_within_first_quarter:
+            return True
+        elif current_quarter.is_within_second_quarter:
+            return True
+        elif current_quarter.is_within_third_quarter:
+            return True
+        elif current_quarter.is_within_fourth_quarter:
+            return True
+        return False
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -495,22 +515,53 @@ class AppraiseePersonalAttributesDetailView(TemplateView):
         context["final_comment_form"] = self.get_final_comment_form(None)
         context["appraisee_grade"] = self.appraisee_grade()
         context["is_within_current_quarter"] = self.is_current_date_in_current_quarter()
-        context["is_all_scored"] = self.is_all_scored()
 
         return context
+    
+    def get_quarter_in_post_request(self):
+        quarter_number = None
+        
+        if "First Quarter" in self.request.POST:
+            quarter_number = 1
+        elif "Second Quarter" in self.request.POST:
+            quarter_number = 2
+        elif "Third Quarter" in self.request.POST:
+            quarter_number = 3
+        elif "Fourth Quarter" in self.request.POST:
+            quarter_number = 4
+        return quarter_number
     
     def post(self, request, *args, **kwargs):
         try:
             appraisal_object = self.get_appraisal_object()
             
-            form = self.get_final_comment_form(request.POST)
-            if form.is_valid():
-                appraiser_comment = form.cleaned_data.get("appraiser_comment", None)
-                reviewer_comment = form.cleaned_data.get("reviewer_comment", None)
+            quarter_number = self.get_quarter_in_post_request()
+            if quarter_number is None:
+                raise Exception(f"AppraisalOverallComments has no quarter num in request")
+            
+            if quarter_number == 1:
+                form = self.get_final_comment_form(request.POST).get("first_quarter")
+            elif quarter_number == 2:
+                form = self.get_final_comment_form(request.POST).get("second_quarter")
+            elif quarter_number == 3:
+                form = self.get_final_comment_form(request.POST).get("third_quarter")
+            else:
+                form = self.get_final_comment_form(request.POST).get("fourth_quarter")
 
-                repo = AppraisalRepository()
-                repo.update_final_comment(appraisal_object=appraisal_object, appraiser_comment=appraiser_comment, reviewer_comment=reviewer_comment)
+            if form.is_valid():
+                repo = AppraisalOverallCommentsRepository()
+                obj = repo.get_by_appraisal_id_quarter_id(
+                    appraisal_id=self.get_appraisal_object().id,
+                    quarter_number=quarter_number
+                )
                 
+                if obj is None:
+                    raise Exception(f"AppraisalOverallComments with quarter num {quarter_number} not found")
+                
+                repo.update(
+                    appraisal_overall_comm_obj=obj,
+                    comment=form.cleaned_data.get("appraiser_comment", None)
+                )
                 messages.success(request, f"Overall comments added successfully")
             else:
                 error_messages = ""
@@ -769,11 +820,10 @@ class AppraisalDetailView(TemplateView):
         return handler.get_dependance()
     
     def get_final_score(self):
-        perf_progress_rev_strg = FinalPerformanceAssStrategy(appraisal_object=self.get_appraisal_obj())
-        handler = AppraisalDependanciesStrategyContext(
-            strategy=perf_progress_rev_strg
-        )
-        return handler.get_dependance()
+        appraisal_object = self.get_appraisal_obj()
+        appraisal_created_year = appraisal_object.created_date.year
+        return get_all_quarter_ratings_per_appraiser(year=appraisal_created_year, appraisal_id=appraisal_object.id)
+
     
     def get_all_quarters_apraisee_personal_attrs(self):
         try:
@@ -782,10 +832,34 @@ class AppraisalDetailView(TemplateView):
         except Exception as e:
             logger.error(f"[AppraiseePersonalAttributesDetailView] get_all_quarters_apraisee_personal_attrs failed with error: {e}")
     
+    def get_final_comment_form(self, request):
+        repo = AppraisalOverallCommentsRepository()
+        overall_comm_qr = repo.fetch_by_appraisal_id(appraisal_id=self.kwargs.get("appraisal_id"))
+        
+        quarter_forms = {
+            "first_quarter": AppraisalOverallCommentForm(
+                    request,
+                    instance=overall_comm_qr.filter(quarter__quarter=1).first()
+                ),
+            "second_quarter": AppraisalOverallCommentForm(
+                    request,
+                    instance=overall_comm_qr.filter(quarter__quarter=2).first()
+                ),
+            "third_quarter": AppraisalOverallCommentForm(
+                    request,
+                    instance=overall_comm_qr.filter(quarter__quarter=3).first()
+                ),
+            "fourth_quarter": AppraisalOverallCommentForm(
+                    request,
+                    instance=overall_comm_qr.filter(quarter__quarter=4).first()
+                ),
+        }
+        return quarter_forms
     
-
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        final_rating_type = self.get_final_score()
+        
         context["appraisal_obj"] = self.get_appraisal_obj()
         context["steps"] = self.get_steps()
         context["personal_details"] = self.get_personal_details()
@@ -793,8 +867,11 @@ class AppraisalDetailView(TemplateView):
         context["training_dev_data"] = self.get_training_dev()
         context["perf_assessment_data"] = self.get_perf_assmt()
         context["perf_progress_data"] = self.get_perf_progress_rev()
-        context["final_stage_data"] = self.get_final_score()
+        context["final_stage_data"] = final_rating_type.rating
+        context["final_score"] = final_rating_type.final_score
+
         context["appraisee_personal_attr_qr"] = self.get_all_quarters_apraisee_personal_attrs()
+        context["final_comment_form"] = self.get_final_comment_form(None)
 
         return context
     
