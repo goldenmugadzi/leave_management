@@ -642,20 +642,24 @@ class AppraiseePersonalAttributesDetailView(TemplateView):
                 form = self.get_final_comment_form(request.POST).get("fourth_quarter")
 
             if form.is_valid():
-                repo = AppraisalOverallCommentsRepository()
-                obj = repo.get_by_appraisal_id_quarter_id(
-                    appraisal_id=self.get_appraisal_object().id,
-                    quarter_number=quarter_number
-                )
-                
-                if obj is None:
-                    raise Exception(f"AppraisalOverallComments with quarter num {quarter_number} not found")
-                
-                repo.update(
-                    appraisal_overall_comm_obj=obj,
-                    comment=form.cleaned_data.get("appraiser_comment", None)
-                )
-                messages.success(request, f"Overall comments added successfully")
+                comment=form.cleaned_data.get("appraiser_comment", None)
+                if comment is None:
+                    messages.error(request, "comment is required")
+                else:
+                    repo = AppraisalOverallCommentsRepository()
+                    obj = repo.get_by_appraisal_id_quarter_id(
+                        appraisal_id=self.get_appraisal_object().id,
+                        quarter_number=quarter_number
+                    )
+                    
+                    if obj is None:
+                        raise Exception(f"AppraisalOverallComments with quarter num {quarter_number} not found")
+                    
+                    repo.update(
+                        appraisal_overall_comm_obj=obj,
+                        comment=form.cleaned_data.get("appraiser_comment", None)
+                    )
+                    messages.success(request, f"Overall comments added successfully")
             else:
                 error_messages = ""
                 for error_message in form.errors:
