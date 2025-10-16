@@ -177,7 +177,7 @@ class UserQualificationService:
                 num += 1
                 print(f"Processed EC No.: {ec_no}")
                 print("---------------------")
-
+                
             # Bulk insert into DB
             if objs_to_create:
                 self.user_qualification_repo.create_in_bulk(objs=objs_to_create)

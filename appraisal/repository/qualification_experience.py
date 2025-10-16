@@ -25,9 +25,9 @@ class UserQualificationRepository:
     
     def get_by_user(self, user_object: UserProfile)->UserQualification:
         try:
-            object = UserQualification.objects.filter(user=user_object)
+            qr = UserQualification.objects.filter(user=user_object)
             
-            return object
+            return qr.first()
         except Exception as e:
             raise Exception(f"retrieving user qualification objects by user failed with error: {e}")
     
