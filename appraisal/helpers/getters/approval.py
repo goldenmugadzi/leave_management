@@ -372,7 +372,7 @@ class AppraisalOverallCommentStrategy:
     def __get_completed_qr(self, qr, quarter_id):
         return qr.filter(
             Q(quarter__id=quarter_id) &
-            (Q(appraiser_comment__isnull=True) | Q(appraiser_comment=''))
+            (Q(appraiser_comment__isnull=False) | Q(appraiser_comment=''))
         )
     
     def get_approved_quarters(self, appraisal_kra_id: int)->List[ApprovedQuartersType]:
