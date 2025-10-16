@@ -1,0 +1,291 @@
+{% extends 'home_layout.html' %}
+{% load static %}
+
+{% block title %}Inspector Workload{% endblock %}
+
+{% block extra_css %}
+<style>
+    .workload-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 2rem;
+        border-radius: 10px;
+        margin-bottom: 2rem;
+    }
+    
+    .workload-card {
+        background: white;
+        border-radius: 10px;
+        padding: 1.5rem;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        margin-bottom: 1.5rem;
+    }
+    
+    .workload-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    
+    .stat-item {
+        text-align: center;
+        padding: 1rem;
+        background: #f8f9fa;
+        border-radius: 8px;
+    }
+    
+    .stat-number {
+        font-size: 2rem;
+        font-weight: bold;
+        color: #2c3e50;
+    }
+    
+    .stat-label {
+        color: #7f8c8d;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+    
+    .workload-table {
+        background: white;
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    
+    .workload-table th {
+        background-color: #f8f9fa;
+        font-weight: 600;
+        color: #495057;
+        border-bottom: 2px solid #dee2e6;
+    }
+    
+    .workload-table td {
+        vertical-align: middle;
+    }
+    
+    .badge {
+        font-size: 0.8rem;
+        padding: 0.5rem 0.75rem;
+    }
+    
+    .inspector-name {
+        font-weight: 600;
+        color: #2c3e50;
+    }
+    
+    .workload-bar {
+        height: 8px;
+        background-color: #e9ecef;
+        border-radius: 4px;
+        overflow: hidden;
+        margin-top: 0.5rem;
+    }
+    
+    .workload-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #28a745, #ffc107, #dc3545);
+        transition: width 0.3s ease;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Header -->
+    <div class="workload-header">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h1 class="mb-0">
+                    <i class="fas fa-users me-2"></i>
+                    Inspector Workload
+                </h1>
+                <p class="mb-0 mt-2">Workload distribution and performance metrics for all inspectors</p>
+            </div>
+            <div class="col-md-4 text-end">
+                <a href="{% url 'substation_inspections:monitoring_dashboard' %}" class="btn btn-light">
+                    <i class="fas fa-arrow-left me-1"></i>Back to Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Summary Statistics -->
+    <div class="workload-card">
+        <h4 class="mb-3"><i class="fas fa-chart-pie me-2"></i>Summary Statistics</h4>
+        <div class="workload-stats">
+            <div class="stat-item">
+                <div class="stat-number">{{ inspector_workload|length }}</div>
+                <div class="stat-label">Active Inspectors</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">
+                    {% for workload in inspector_workload %}{{ workload.total_assigned|add:0 }}{% if not forloop.last %}+{% endif %}{% empty %}0{% endfor %}
+                </div>
+                <div class="stat-label">Total Assignments</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">
+                    {% for workload in inspector_workload %}{{ workload.pending|add:0 }}{% if not forloop.last %}+{% endif %}{% empty %}0{% endfor %}
+                </div>
+                <div class="stat-label">Pending Inspections</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-number">
+                    {% for workload in inspector_workload %}{{ workload.overdue|add:0 }}{% if not forloop.last %}+{% endif %}{% empty %}0{% endfor %}
+                </div>
+                <div class="stat-label">Overdue Inspections</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Inspector Workload Table -->
+    <div class="workload-card">
+        <h4 class="mb-3"><i class="fas fa-table me-2"></i>Detailed Workload</h4>
+        <div class="workload-table">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Inspector</th>
+                        <th>Total Assigned</th>
+                        <th>Pending</th>
+                        <th>In Progress</th>
+                        <th>Completed This Month</th>
+                        <th>Overdue</th>
+                        <th>Workload Level</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for workload in inspector_workload %}
+                    <tr>
+                        <td>
+                            <div class="inspector-name">{{ workload.inspector.get_full_name }}</div>
+                            <small class="text-muted">{{ workload.inspector.email }}</small>
+                        </td>
+                        <td>
+                            <span class="badge bg-secondary">{{ workload.total_assigned }}</span>
+                        </td>
+                        <td>
+                            <span class="badge bg-warning">{{ workload.pending }}</span>
+                        </td>
+                        <td>
+                            <span class="badge bg-info">{{ workload.in_progress }}</span>
+                        </td>
+                        <td>
+                            <span class="badge bg-success">{{ workload.completed_this_month }}</span>
+                        </td>
+                        <td>
+                            <span class="badge bg-danger">{{ workload.overdue }}</span>
+                        </td>
+                        <td>
+                            {% if workload.total_assigned > 10 %}
+                                <span class="badge bg-danger">High</span>
+                            {% elif workload.total_assigned > 5 %}
+                                <span class="badge bg-warning">Medium</span>
+                            {% else %}
+                                <span class="badge bg-success">Low</span>
+                            {% endif %}
+                            <div class="workload-bar">
+                                <div class="workload-fill" style="width: {% widthratio workload.total_assigned 15 100 %}%"></div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="text-center text-muted py-4">
+                            <i class="fas fa-users fa-3x mb-3"></i>
+                            <p>No inspector workload data available</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Workload Distribution Chart -->
+    <div class="workload-card">
+        <h4 class="mb-3"><i class="fas fa-chart-bar me-2"></i>Workload Distribution</h4>
+        <div class="row">
+            <div class="col-md-6">
+                <h6>Inspections by Status</h6>
+                <canvas id="statusChart" width="400" height="200"></canvas>
+            </div>
+            <div class="col-md-6">
+                <h6>Inspector Workload</h6>
+                <canvas id="workloadChart" width="400" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Status Distribution Chart
+    const statusCtx = document.getElementById('statusChart').getContext('2d');
+    const statusChart = new Chart(statusCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Pending', 'In Progress', 'Completed', 'Overdue'],
+            datasets: [{
+                data: [
+                    {% for workload in inspector_workload %}{{ workload.pending|add:0 }}{% if not forloop.last %}+{% endif %}{% empty %}0{% endfor %},
+                    {% for workload in inspector_workload %}{{ workload.in_progress|add:0 }}{% if not forloop.last %}+{% endif %}{% empty %}0{% endfor %},
+                    {% for workload in inspector_workload %}{{ workload.completed_this_month|add:0 }}{% if not forloop.last %}+{% endif %}{% empty %}0{% endfor %},
+                    {% for workload in inspector_workload %}{{ workload.overdue|add:0 }}{% if not forloop.last %}+{% endif %}{% empty %}0{% endfor %}
+                ],
+                backgroundColor: ['#ffc107', '#17a2b8', '#28a745', '#dc3545'],
+                borderWidth: 2,
+                borderColor: '#fff'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+
+    // Workload Chart
+    const workloadCtx = document.getElementById('workloadChart').getContext('2d');
+    const workloadChart = new Chart(workloadCtx, {
+        type: 'bar',
+        data: {
+            labels: [
+                {% for workload in inspector_workload %}'{{ workload.inspector.get_full_name }}'{% if not forloop.last %},{% endif %}{% endfor %}
+            ],
+            datasets: [{
+                label: 'Total Assignments',
+                data: [
+                    {% for workload in inspector_workload %}{{ workload.total_assigned }}{% if not forloop.last %},{% endif %}{% endfor %}
+                ],
+                backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                borderColor: 'rgba(54, 162, 235, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}

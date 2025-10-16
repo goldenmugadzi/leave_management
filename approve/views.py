@@ -207,30 +207,14 @@ def approve_step(request, process_id):
 
                     send_notification(request, 'tokens:token', token.type, token, token.id)
                     return redirect('tokens:token', token.id)
-                 
-                elif process.workflow.name == "ace":
-                    # Get the approval status to customize the message
-                    approval_status = approval.approved
-                    if approval_status == "Approved":
-                        messages.success(request, "ACE approved successfully")
-                    elif approval_status == "Rejected":
-                        messages.warning(request, "ACE rejected successfully")
-                    else:
-                        messages.success(request, "ACE actioned successfully")
-                    
-                    print(process.ace2_set.last().Ace_id2, "Please")
-                    return redirect("Ace:ace_detail", process.ace2_set.last().Ace_id2)
-                elif process.workflow.name == "ace_value":
-                    # Handle high-value ACE workflow with enhanced messaging
-                    approval_status = approval.approved
-                    if approval_status == "Approved":
-                        messages.success(request, "High-value ACE approved successfully")
-                    elif approval_status == "Rejected":
-                        messages.warning(request, "High-value ACE rejected successfully")
-                    else:
-                        messages.success(request, "High-value ACE actioned successfully")
-                    
-                    return redirect("Ace:ace_detail", process.ace2_set.last().Ace_id2)
+                
+                elif process.leaverequest_set.exists():
+                    leaverequest = process.leaverequest_set.last()
+
+                    # send_notification(request, 'tokens:token', token.type, token, token.id)
+                    print('------------------------------got here-----------------------------------', str(leaverequest.id))
+                    return redirect('leave_management:approve_leave', leaverequest.id)
+                
                 elif process.workflow.name == "pettycash":
                     # Get the approval status to customize the message
                     approval_status = approval.approved

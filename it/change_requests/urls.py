@@ -17,5 +17,18 @@ urlpatterns = [
     path('profile_modification/create', views.profile_modification_request, name='profile_modification_request'),
     path('update_change_request', views.update_change_request, name='update_change_request'),
     path('profile_deactivation_request', views.profile_deactivation_request, name='profile_deactivation_request'),
+    path('delete_change_request', views.delete_change_request, name='delete_change_request'),
+    path('restore_change_request', views.restore_change_request, name='restore_change_request'),
+    path('bulk_delete_change_requests', views.bulk_delete_change_requests, name='bulk_delete_change_requests'),
+    path('get_delegation_roles', views.get_delegation_roles, name='get_delegation_roles'),
+    path('get_delegator_roles_by_app', views.get_delegator_roles_by_app, name='get_delegator_roles_by_app'),
+    path('api/cost_centers/', views.api_cost_centers, name='api_cost_centers'),
+    path('api/applications/', views.api_applications, name='api_applications'),
+    
+    # Optimized API endpoints - Phase 3 Performance Enhancement
+    path('api/v2/change_requests/', views.api_change_requests_optimized, name='api_change_requests_optimized'),
+    path('api/v2/stats/', views.api_change_request_stats, name='api_change_request_stats'),
+    path('api/v2/change_requests/<str:cr_id>/', views.api_change_request_detail, name='api_change_request_detail'),
+    path('api/v2/metrics/', views.api_performance_metrics, name='api_performance_metrics'),
     
 ]

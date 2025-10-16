@@ -1,0 +1,315 @@
+{% extends "admin_layout.html" %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-gulf-blue-50 via-white to-jade-50 p-6">
+  <div class="max-w-7xl mx-auto">
+    
+    <!-- Floating Header with Glassmorphism -->
+    <div class="glass-header mb-8 p-6 rounded-3xl backdrop-blur-xl bg-white/30 border border-white/20 shadow-2xl">
+      <div class="flex flex-col lg:flex-row items-center justify-between gap-6">
+        <div class="text-center lg:text-left">
+          <h1 class="text-4xl font-black bg-gradient-to-r from-gulf-blue-600 via-tory-blue-primary to-gulf-blue-900 bg-clip-text text-transparent mb-2 animate-fade-in">
+            Team Overview
+          </h1>
+          <p class="text-nepal-600 text-lg">Manage and monitor fault locator teams</p>
+          <div class="mt-4 grid grid-cols-2 lg:grid-cols-4 gap-4 text-sm">
+            <div class="text-center">
+              <div class="font-bold text-gulf-blue-600 text-lg">{{ summary_stats.total_teams }}</div>
+              <div class="text-nepal-500">Total Teams</div>
+            </div>
+            <div class="text-center">
+              <div class="font-bold text-jade-600 text-lg">{{ summary_stats.deployed_teams }}</div>
+              <div class="text-nepal-500">Deployed</div>
+            </div>
+            <div class="text-center">
+              <div class="font-bold text-tory-blue-600 text-lg">{{ summary_stats.teams_with_devices }}</div>
+              <div class="text-nepal-500">With Gear</div>
+            </div>
+            <div class="text-center">
+              <div class="font-bold text-pomegranate-primary text-lg">{{ summary_stats.active_assignments }}</div>
+              <div class="text-nepal-500">Active Tasks</div>
+            </div>
+          </div>
+        </div>
+        
+        {% if can_create_team %}
+        <div class="flex gap-4">
+          <a href="{% url 'fault_locator:create_team' %}" 
+             class="group relative overflow-hidden px-8 py-4 bg-gradient-to-r from-gulf-blue-600 to-tory-blue-primary text-white rounded-2xl font-bold shadow-2xl hover:shadow-gulf-blue-500/25 transition-all duration-500 hover:scale-110">
+            <span class="relative z-10 flex items-center gap-3">
+              <span class="group-hover:rotate-180 transition-transform duration-500">⚡</span>
+              Create New Team
+            </span>
+            <div class="absolute inset-0 bg-gradient-to-r from-tory-blue-primary to-gulf-blue-600 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+          </a>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Teams Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+      {% for item in team_data %}
+      <div class="glass-card group relative overflow-hidden rounded-3xl backdrop-blur-xl bg-white/40 border border-white/30 shadow-2xl hover:shadow-3xl transition-all duration-500 hover:scale-105 hover:bg-white/50">
+        
+        <!-- Status Indicator -->
+        <div class="absolute top-4 right-4 z-10">
+          <div class="px-3 py-1 rounded-full text-xs font-bold {{ item.status_class }} bg-white/80 backdrop-blur-sm border border-white/50">
+            {% if item.status == 'deployed' %}
+              🚀 Deployed
+            {% elif item.status == 'available' %}
+              ✅ Available
+            {% else %}
+              ⚠️ No Gear
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="p-6">
+          <!-- Team Header -->
+          <div class="mb-4">
+            <h3 class="text-xl font-bold text-nepal-800 mb-2 group-hover:text-gulf-blue-600 transition-colors duration-300">
+              {{ item.team.name }}
+            </h3>
+            <div class="flex items-center gap-2 text-sm text-nepal-600">
+              <span class="w-2 h-2 bg-gradient-to-r from-gulf-blue-500 to-tory-blue-primary rounded-full"></span>
+              <span>{{ item.location }}</span>
+            </div>
+          </div>
+
+          <!-- Team Stats -->
+          <div class="grid grid-cols-2 gap-4 mb-4">
+            <div class="text-center p-3 rounded-xl bg-white/50 backdrop-blur-sm border border-white/30">
+              <div class="text-2xl font-bold text-gulf-blue-600">{{ item.actual_member_count }}</div>
+              <div class="text-xs text-nepal-600 uppercase tracking-wide">Members</div>
+            </div>
+            <div class="text-center p-3 rounded-xl bg-white/50 backdrop-blur-sm border border-white/30">
+              <div class="text-2xl font-bold text-pomegranate-primary">{{ item.actual_active_assignments }}</div>
+              <div class="text-xs text-nepal-600 uppercase tracking-wide">Active Tasks</div>
+            </div>
+          </div>
+
+          <!-- Team Leader -->
+          {% if item.team_leader_name %}
+          <div class="mb-4 p-3 rounded-xl bg-gradient-to-r from-gulf-blue-50 to-tory-blue-50 border border-gulf-blue-200/50">
+            <div class="text-xs text-gulf-blue-600 uppercase tracking-wide mb-1">Team Leader</div>
+            <div class="font-semibold text-gulf-blue-800">{{ item.team_leader_name }}</div>
+          </div>
+          {% else %}
+          <div class="mb-4 p-3 rounded-xl bg-gradient-to-r from-lemon-50 to-citron-50 border border-lemon-200/50">
+            <div class="text-xs text-lemon-700 uppercase tracking-wide mb-1">Team Leader</div>
+            <div class="text-lemon-800 italic">No leader assigned</div>
+          </div>
+          {% endif %}
+
+          <!-- Team Members -->
+          {% if item.team_members %}
+          <div class="mb-4 p-3 rounded-xl bg-gradient-to-r from-tory-blue-50 to-gulf-blue-50 border border-tory-blue-200/50">
+            <div class="text-xs text-tory-blue-600 uppercase tracking-wide mb-2">Team Members</div>
+            <div class="space-y-1 max-h-32 overflow-y-auto">
+              {% for member in item.team_members %}
+              <div class="flex items-center justify-between text-sm">
+                <span class="font-medium text-tory-blue-800">{{ member.name }}</span>
+                <span class="text-xs text-tory-blue-600">{{ member.email }}</span>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+          {% endif %}
+
+          <!-- Deployment Status -->
+          {% if item.deployment_info.depot_name %}
+          <div class="mb-4 p-3 rounded-xl bg-gradient-to-r from-jade-50 to-apple-50 border border-jade-200/50">
+            <div class="text-xs text-jade-600 uppercase tracking-wide mb-1">Deployment Status</div>
+            <div class="font-semibold text-jade-800">{{ item.deployment_info.depot_name }}</div>
+            {% if item.deployment_info.assigned_at %}
+            <div class="text-xs text-jade-600 mt-1">
+              Deployed: {{ item.deployment_info.assigned_at|date:"M d, Y H:i" }}
+            </div>
+            {% endif %}
+            {% if item.deployment_info.assigned_by %}
+            <div class="text-xs text-jade-600">
+              By: {{ item.deployment_info.assigned_by }}
+            </div>
+            {% endif %}
+          </div>
+          {% else %}
+          <div class="mb-4 p-3 rounded-xl bg-gradient-to-r from-nepal-50 to-nepal-100 border border-nepal-200/50">
+            <div class="text-xs text-nepal-500 uppercase tracking-wide mb-1">Deployment Status</div>
+            <div class="text-nepal-600 italic">Not deployed</div>
+          </div>
+          {% endif %}
+
+          <!-- Gear Assignment -->
+          {% if item.has_device %}
+          <div class="mb-4 p-3 rounded-xl bg-gradient-to-r from-jade-50 to-apple-50 border border-jade-200/50">
+            <div class="text-xs text-jade-600 uppercase tracking-wide mb-1">Assigned Gear</div>
+            <div class="font-semibold text-jade-800">{{ item.device_serial }}</div>
+            {% if item.device.description %}
+            <div class="text-sm text-jade-600">{{ item.device.description }}</div>
+            {% endif %}
+            <div class="text-xs text-jade-500 mt-1">Status: {{ item.device.get_status_display }}</div>
+          </div>
+          {% else %}
+          <div class="mb-4 p-3 rounded-xl bg-gradient-to-r from-pomegranate-50 to-scarlet-red-50 border border-pomegranate-200/50">
+            <div class="text-xs text-pomegranate-600 uppercase tracking-wide mb-1">Gear Status</div>
+            <div class="text-pomegranate-800 italic">No gear assigned</div>
+            <div class="text-xs text-pomegranate-600 mt-1">Team needs gear to be deployed</div>
+          </div>
+          {% endif %}
+
+          <!-- Action Buttons -->
+          {% if item.actions %}
+          <div class="flex flex-wrap gap-2">
+            {% for action in item.actions %}
+            <a href="{{ action.url }}" 
+               class="inline-flex items-center px-4 py-2 {{ action.class }} rounded-xl text-sm font-medium transition-all duration-300 hover:shadow-lg hover:scale-105">
+              {{ action.text }}
+            </a>
+            {% endfor %}
+            
+            <!-- Add Assign to Depot button for teams with gear but not deployed -->
+            {% if item.has_device and not item.is_deployed and is_senior_foreman %}
+            <a href="{% url 'fault_locator:assign_team_to_depot' item.team.id %}" 
+               class="inline-flex items-center px-4 py-2 btn-primary btn-sm rounded-xl text-sm font-medium transition-all duration-300 hover:shadow-lg hover:scale-105">
+              🏢 Assign to Depot
+            </a>
+            {% endif %}
+            
+            <!-- Add Recall from Depot button for deployed teams -->
+            {% if item.is_deployed and item.can_interact_with_team %}
+            <form method="post" action="{% url 'fault_locator:recall_team_from_depot' item.team.id %}" class="inline-block">
+              {% csrf_token %}
+              <button type="submit" 
+                      onclick="return confirm('Are you sure you want to recall this team from {{ item.deployment_info.depot_name }}?')"
+                      class="inline-flex items-center px-4 py-2 bg-gradient-to-r from-yellow-600 to-yellow-700 text-white rounded-xl font-bold text-sm hover:from-yellow-700 hover:to-yellow-800 transition-all duration-300 hover:shadow-lg hover:scale-105 transform hover:-translate-y-1 border border-yellow-500 hover:border-yellow-400">
+                📥 Recall from Depot
+              </button>
+            </form>
+            {% endif %}
+
+            {% if is_senior_foreman %}
+            <a href="{% url 'fault_locator:edit_team' item.team.id %}"
+              class="inline-flex items-center px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl font-bold text-sm hover:from-blue-700 hover:to-blue-800 transition-all duration-300 hover:shadow-lg hover:scale-105 transform hover:-translate-y-1 border border-blue-500 hover:border-blue-400">
+              ✏️ Edit Team
+            </a>
+            <a href="{% url 'fault_locator:delete_team' item.team.id %}"
+              class="inline-flex items-center px-4 py-2 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-xl font-bold text-sm hover:from-red-700 hover:to-red-800 transition-all duration-300 hover:shadow-lg hover:scale-105 transform hover:-translate-y-1 border border-red-500 hover:border-red-400">
+              🗑️ Delete Team
+            </a>
+            {% endif %}
+          </div>
+          {% endif %}
+        </div>
+
+        <!-- Hover Effects -->
+        <div class="absolute inset-0 bg-gradient-to-br from-gulf-blue-600/10 to-tory-blue-primary/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-3xl pointer-events-none"></div>
+      </div>
+      {% empty %}
+      
+      <!-- No Teams State -->
+      <div class="col-span-full flex flex-col items-center justify-center py-16">
+        <div class="glass-card p-8 rounded-3xl backdrop-blur-xl bg-white/40 border border-white/30 text-center max-w-md">
+          <div class="text-6xl mb-4 animate-bounce">👥</div>
+          <h3 class="text-xl font-bold text-nepal-800 mb-2">No Teams Found</h3>
+          <p class="text-nepal-600 mb-6">Create your first fault locator team to get started.</p>
+          {% if can_create_team %}
+          <a href="{% url 'fault_locator:create_team' %}" 
+             class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-gulf-blue-600 to-tory-blue-primary text-white rounded-xl font-medium hover:shadow-lg transition-all duration-300 hover:scale-105">
+            <span class="mr-2">⚡</span>
+            Create Team
+          </a>
+          {% endif %}
+        </div>
+      </div>
+      
+      {% endfor %}
+    </div>
+
+    <!-- Quick Actions Bar -->
+    {% if is_senior_foreman %}
+    <div class="mt-8 glass-card p-6 rounded-3xl backdrop-blur-xl bg-white/40 border border-white/30">
+      <h3 class="text-lg font-bold text-nepal-800 mb-4">Quick Actions</h3>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+  <a href="{% url 'fault_locator:device_list' %}" 
+           class="flex items-center gap-3 p-4 rounded-xl bg-white/50 hover:bg-white/70 border border-white/30 transition-all duration-300 hover:scale-105">
+          <div class="w-10 h-10 bg-gradient-to-r from-gulf-blue-500 to-tory-blue-primary rounded-xl flex items-center justify-center text-white font-bold">📱</div>
+          <div>
+            <div class="font-semibold text-nepal-800">Manage Gear</div>
+            <div class="text-sm text-nepal-600">View and assign gear</div>
+          </div>
+        </a>
+        
+        <a href="{% url 'fault_locator:fault_list' %}" 
+           class="flex items-center gap-3 p-4 rounded-xl bg-white/50 hover:bg-white/70 border border-white/30 transition-all duration-300 hover:scale-105">
+          <div class="w-10 h-10 bg-gradient-to-r from-pomegranate-primary to-scarlet-red-primary rounded-xl flex items-center justify-center text-white font-bold">⚡</div>
+          <div>
+            <div class="font-semibold text-nepal-800">View Faults</div>
+            <div class="text-sm text-nepal-600">Monitor fault assignments</div>
+          </div>
+        </a>
+        
+  <a href="{% url 'fault_locator:fault_locator_dashboard' %}" 
+           class="flex items-center gap-3 p-4 rounded-xl bg-white/50 hover:bg-white/70 border border-white/30 transition-all duration-300 hover:scale-105">
+          <div class="w-10 h-10 bg-gradient-to-r from-royal-heath-500 to-violet-eggplant-600 rounded-xl flex items-center justify-center text-white font-bold">📊</div>
+          <div>
+            <div class="font-semibold text-nepal-800">Dashboard</div>
+            <div class="text-sm text-nepal-600">Overview and reports</div>
+          </div>
+        </a>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<style>
+.glass-header, .glass-card {
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+.animate-fade-in {
+  animation: fadeIn 1s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.btn-primary {
+  @apply bg-gulf-blue-600 text-white border-gulf-blue-600 hover:bg-gulf-blue-700 hover:border-gulf-blue-700;
+}
+
+.btn-warning {
+  @apply bg-lemon-primary text-white border-lemon-primary hover:bg-lemon-600 hover:border-lemon-600;
+}
+
+.btn-success {
+  @apply bg-jade-600 text-white border-jade-600 hover:bg-jade-700 hover:border-jade-700;
+}
+
+.btn-outline-secondary {
+  @apply bg-transparent text-nepal-600 border-nepal-300 hover:bg-nepal-100 hover:border-nepal-400;
+}
+
+.btn-sm {
+  @apply px-3 py-1 text-sm;
+}
+
+.text-green-600 {
+  color: #16a34a;
+}
+
+.text-blue-600 {
+  color: #2563eb;
+}
+
+.text-gray-500 {
+  color: #6b7280;
+}
+</style>
+{% endblock %}
+
+

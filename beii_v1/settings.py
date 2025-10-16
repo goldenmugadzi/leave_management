@@ -18,8 +18,7 @@ SECRET_KEY = config('SECRET_KEY', default='django-insecure-change-in-production'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG', default=False, cast=bool)
 
-ALLOWED_HOSTS = ["*"]
-CORS_ALLOW_ALL_ORIGINS = True
+ALLOWED_HOSTS = [config('HOST'), "127.0.0.1", 'localhost']
 
 # CORS_ALLOWED_ORIGINS = [
 #     config('BASE_URL') + ":" + config('PORT'),
@@ -76,7 +75,7 @@ SIMPLE_JWT = {
     "SLIDING_TOKEN_LIFETIME": timedelta(minutes=10),
     "SLIDING_TOKEN_REFRESH_LIFETIME": timedelta(days=1),
 
-    "TOKEN_OBTAIN_SERIALIZER": "users.serializers.MyTokenObtainPairSerializer",
+    "TOKEN_OBTAIN_SERIALIZER": "it.users.serializers.MyTokenObtainPairSerializer",
     "TOKEN_REFRESH_SERIALIZER": "rest_framework_simplejwt.serializers.TokenRefreshSerializer",
     "TOKEN_VERIFY_SERIALIZER": "rest_framework_simplejwt.serializers.TokenVerifySerializer",
     "TOKEN_BLACKLIST_SERIALIZER": "rest_framework_simplejwt.serializers.TokenBlacklistSerializer",
@@ -153,11 +152,16 @@ INSTALLED_APPS = [
     'comm_files',
     # 'django_prometheus',  # Temporarily disabled due to import error
     'api.ops_maintenance.safety_operations',
-    'sanction_for_test',
     'utils',
+    'substation_inspections',
+    'e60_inspections',
+    'circuit_breaker_maintenance',
+    'sanction_for_test',
     'inspections',
     'EquipTracker',
+    'equipment_management',
     'pretask_risk_assessment',
+    'fault_locator',
 ]
 
 AUTH_USER_MODEL = 'users.UserProfile'
@@ -353,6 +357,11 @@ LOGGING = {
         'executive.general_dashboards': {
             'handlers': ['dashboard_file', 'console'],
             'level': 'INFO',
+            'propagate': False,
+        },
+        'it.change_requests.views': {
+            'handlers': ['file', 'console'],
+            'level': 'DEBUG',
             'propagate': False,
         },
     },

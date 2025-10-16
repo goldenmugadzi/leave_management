@@ -1,0 +1,377 @@
+{% extends 'admin_layout.html' %}
+{% load static %}
+
+{% block title %}Inspection Checklist Items{% endblock %}
+
+{% block content %}
+<div class="content-wrapper">
+  <div class="bg-gray-50 border border-gray-200 rounded-lg px-6 py-6 max-w-7xl mx-auto">
+    
+    <!-- Header -->
+    <div class="flex justify-between items-center mb-8">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-900">Inspection Checklist Items</h1>
+        <p class="text-gray-600 mt-1">Manage inspection checklist items and categories</p>
+      </div>
+      <div class="flex space-x-3">
+        <a href="{% url 'substation_inspections:checklist_item_create' %}" 
+           class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+          <i class="fas fa-plus mr-2"></i>New Item
+        </a>
+      </div>
+    </div>
+
+    <!-- Search and Filter -->
+    <div class="bg-white border border-gray-200 rounded-lg p-6 mb-6 shadow-sm">
+      <h3 class="text-lg font-medium text-gray-900 mb-4">
+        <i class="fas fa-search mr-2 text-blue-600"></i>Search & Filter
+      </h3>
+      <form method="get" class="space-y-4">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Search</label>
+            <input type="text" name="search" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                   placeholder="Search by code, title, or description..." value="{{ search_query }}">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Category</label>
+            <select name="category" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+              <option value="">All Categories</option>
+              <option value="safety" {% if category == 'safety' %}selected{% endif %}>Safety</option>
+              <option value="electrical" {% if category == 'electrical' %}selected{% endif %}>Electrical Equipment</option>
+              <option value="mechanical" {% if category == 'mechanical' %}selected{% endif %}>Mechanical Equipment</option>
+              <option value="environmental" {% if category == 'environmental' %}selected{% endif %}>Environmental</option>
+              <option value="security" {% if category == 'security' %}selected{% endif %}>Security</option>
+              <option value="documentation" {% if category == 'documentation' %}selected{% endif %}>Documentation</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Equipment Type</label>
+            <select name="equipment_type" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+              <option value="">All Equipment Types</option>
+              <option value="substation" {% if equipment_type == 'substation' %}selected{% endif %}>Substation</option>
+              <option value="transformer" {% if equipment_type == 'transformer' %}selected{% endif %}>Transformer</option>
+              <option value="circuit_breaker" {% if equipment_type == 'circuit_breaker' %}selected{% endif %}>Circuit Breaker</option>
+              <option value="switchgear" {% if equipment_type == 'switchgear' %}selected{% endif %}>Switchgear</option>
+              <option value="protection" {% if equipment_type == 'protection' %}selected{% endif %}>Protection Equipment</option>
+              <option value="auxiliary" {% if equipment_type == 'auxiliary' %}selected{% endif %}>Auxiliary Equipment</option>
+              <option value="general" {% if equipment_type == 'general' %}selected{% endif %}>General</option>
+            </select>
+          </div>
+          <div class="flex items-end">
+            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+              <i class="fas fa-search mr-2"></i>Search
+            </button>
+          </div>
+        </div>
+        <div class="flex justify-end">
+          <a href="{% url 'substation_inspections:checklist_item_list' %}" 
+             class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+            <i class="fas fa-times mr-2"></i>Clear
+          </a>
+        </div>
+      </form>
+    </div>
+
+    <!-- Checklist Items Table -->
+    <div class="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+          <thead class="bg-gray-50">
+            <tr>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Item Code</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Equipment Type</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Severity</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Mandatory</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reference</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Frequency</th>
+              <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="bg-white divide-y divide-gray-200">
+            {% for item in items %}
+            <tr class="hover:bg-gray-50">
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="text-sm font-medium text-gray-900">{{ item.item_code }}</div>
+              </td>
+              <td class="px-6 py-4">
+                <div class="text-sm font-medium text-gray-900">{{ item.title }}</div>
+                {% if item.description %}
+                  <div class="text-sm text-gray-500 mt-1">{{ item.description|truncatewords:15 }}</div>
+                {% endif %}
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                {% if item.equipment_type == 'substation' %}
+                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                    <i class="fas fa-building mr-1"></i>Substation
+                  </span>
+                {% elif item.equipment_type == 'transformer' %}
+                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                    <i class="fas fa-bolt mr-1"></i>Transformer
+                  </span>
+                {% elif item.equipment_type == 'circuit_breaker' %}
+                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                    <i class="fas fa-power-off mr-1"></i>Circuit Breaker
+                  </span>
+                {% elif item.equipment_type == 'switchgear' %}
+                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                    <i class="fas fa-toggle-on mr-1"></i>Switchgear
+                  </span>
+                {% elif item.equipment_type == 'protection' %}
+                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                    <i class="fas fa-shield-alt mr-1"></i>Protection
+                  </span>
+                {% elif item.equipment_type == 'auxiliary' %}
+                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                    <i class="fas fa-cogs mr-1"></i>Auxiliary
+                  </span>
+                {% elif item.equipment_type == 'general' %}
+                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
+                    <i class="fas fa-list mr-1"></i>General
+                  </span>
+                {% endif %}
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                {% if item.category == 'safety' %}
+                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                    <i class="fas fa-shield-alt mr-1"></i>Safety
+                  </span>
+                {% elif item.category == 'electrical' %}
+                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                    <i class="fas fa-bolt mr-1"></i>Electrical
+                  </span>
+                {% elif item.category == 'mechanical' %}
+                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800">
+                    <i class="fas fa-cogs mr-1"></i>Mechanical
+                  </span>
+                {% elif item.category == 'environmental' %}
+                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                    <i class="fas fa-leaf mr-1"></i>Environmental
+                  </span>
+                {% elif item.category == 'security' %}
+                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                    <i class="fas fa-lock mr-1"></i>Security
+                  </span>
+                {% elif item.category == 'documentation' %}
+                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                    <i class="fas fa-file-alt mr-1"></i>Documentation
+                  </span>
+                {% endif %}
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                {% if item.severity == 'critical' %}
+                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                    <i class="fas fa-exclamation-triangle mr-1"></i>Critical
+                  </span>
+                {% elif item.severity == 'high' %}
+                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                    <i class="fas fa-exclamation-circle mr-1"></i>High
+                  </span>
+                {% elif item.severity == 'medium' %}
+                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                    <i class="fas fa-info-circle mr-1"></i>Medium
+                  </span>
+                {% elif item.severity == 'low' %}
+                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                    <i class="fas fa-check-circle mr-1"></i>Low
+                  </span>
+                {% endif %}
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                {% if item.is_mandatory %}
+                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                    <i class="fas fa-exclamation mr-1"></i>Required
+                  </span>
+                {% else %}
+                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                    <i class="fas fa-minus mr-1"></i>Optional
+                  </span>
+                {% endif %}
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                {% if item.is_active %}
+                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                    <i class="fas fa-check-circle mr-1"></i>Active
+                  </span>
+                {% else %}
+                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                    <i class="fas fa-pause-circle mr-1"></i>Inactive
+                  </span>
+                {% endif %}
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                {% if item.reference_standard %}
+                  <div class="text-sm text-gray-900">{{ item.reference_standard }}</div>
+                {% else %}
+                  <span class="text-sm text-gray-500">-</span>
+                {% endif %}
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                  <i class="fas fa-repeat mr-1"></i>{{ item.frequency|title }}
+                </span>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                <div class="flex space-x-2">
+                  <a href="{% url 'substation_inspections:checklist_item_edit' item.pk %}" 
+                     class="text-yellow-600 hover:text-yellow-900" title="Edit Item">
+                    <i class="fas fa-edit"></i>
+                  </a>
+                  <button type="button" class="text-indigo-600 hover:text-indigo-900" 
+                          onclick="toggleItemStatus('{{ item.pk }}', {{ item.is_active|yesno:'false,true' }})" 
+                          title="{% if item.is_active %}Deactivate{% else %}Activate{% endif %} Item">
+                    <i class="fas fa-{% if item.is_active %}pause{% else %}play{% endif %}"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="10" class="px-6 py-12 text-center">
+                <div class="text-gray-500">
+                  <i class="fas fa-list-check text-4xl mb-4"></i>
+                  <p class="text-lg font-medium">No checklist items found</p>
+                  <p class="text-sm">Get started by creating your first checklist item</p>
+                  <a href="{% url 'substation_inspections:checklist_item_create' %}" 
+                     class="mt-4 inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-medium transition-colors">
+                    <i class="fas fa-plus mr-2"></i>Create First Item
+                  </a>
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Pagination -->
+    <div class="mt-6 flex items-center justify-between">
+      <div class="text-sm text-gray-700">
+        Showing {{ items.start_index }} to {{ items.end_index }} of {{ items.paginator.count }} results
+        {% if items.paginator.count > 0 %}
+          (Page {{ items.number }} of {{ items.paginator.num_pages }})
+        {% endif %}
+      </div>
+      {% if items.has_other_pages %}
+      <div class="flex space-x-2">
+        {% if items.has_previous %}
+          <a href="?page=1{% if search_query %}&search={{ search_query }}{% endif %}{% if category %}&category={{ category }}{% endif %}{% if equipment_type %}&equipment_type={{ equipment_type }}{% endif %}" 
+             class="px-3 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg text-sm font-medium transition-colors">
+            <i class="fas fa-angle-double-left"></i>
+          </a>
+          <a href="?page={{ items.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if category %}&category={{ category }}{% endif %}{% if equipment_type %}&equipment_type={{ equipment_type }}{% endif %}" 
+             class="px-3 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg text-sm font-medium transition-colors">
+            <i class="fas fa-angle-left"></i>
+          </a>
+        {% endif %}
+        
+        <span class="px-3 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium">
+          Page {{ items.number }} of {{ items.paginator.num_pages }}
+        </span>
+        
+        {% if items.has_next %}
+          <a href="?page={{ items.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if category %}&category={{ category }}{% endif %}{% if equipment_type %}&equipment_type={{ equipment_type }}{% endif %}" 
+             class="px-3 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg text-sm font-medium transition-colors">
+            <i class="fas fa-angle-right"></i>
+          </a>
+          <a href="?page={{ items.paginator.num_pages }}{% if search_query %}&search={{ search_query }}{% endif %}{% if category %}&category={{ category }}{% endif %}{% if equipment_type %}&equipment_type={{ equipment_type }}{% endif %}" 
+             class="px-3 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg text-sm font-medium transition-colors">
+            <i class="fas fa-angle-double-right"></i>
+          </a>
+        {% endif %}
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- Item Status Toggle Modal -->
+<div id="itemStatusModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full hidden z-50">
+  <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
+    <div class="mt-3">
+      <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-blue-100">
+        <i class="fas fa-exclamation-triangle text-blue-600"></i>
+      </div>
+      <div class="mt-2 px-7 py-3">
+        <h3 class="text-lg font-medium text-gray-900 text-center">Confirm Item Status Change</h3>
+        <div class="mt-2 px-7 py-3">
+          <p id="itemStatusMessage" class="text-sm text-gray-500 text-center"></p>
+        </div>
+      </div>
+      <div class="items-center px-4 py-3">
+        <div class="flex space-x-3 justify-end">
+          <button id="cancelItemStatusChange" 
+                  class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+            Cancel
+          </button>
+          <button id="confirmItemStatusChange" 
+                  class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+            Confirm
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+let currentItemId = null;
+let newStatus = null;
+
+function toggleItemStatus(itemId, currentStatus) {
+  currentItemId = itemId;
+  newStatus = !currentStatus;
+  
+  const message = newStatus ? 
+    'Are you sure you want to activate this checklist item?' : 
+    'Are you sure you want to deactivate this checklist item?';
+  
+  document.getElementById('itemStatusMessage').textContent = message;
+  document.getElementById('itemStatusModal').classList.remove('hidden');
+}
+
+document.getElementById('confirmItemStatusChange').addEventListener('click', function() {
+  if (currentItemId && newStatus !== null) {
+    // Here you would typically make an AJAX call to update the item status
+    // For now, we'll just show a message
+    alert('Item status change functionality would be implemented here.');
+    
+    // Close the modal
+    document.getElementById('itemStatusModal').classList.add('hidden');
+  }
+});
+
+document.getElementById('cancelItemStatusChange').addEventListener('click', function() {
+  document.getElementById('itemStatusModal').classList.add('hidden');
+});
+
+// Close modal when clicking outside
+document.getElementById('itemStatusModal').addEventListener('click', function(e) {
+  if (e.target === this) {
+    this.classList.add('hidden');
+  }
+});
+
+document.addEventListener('DOMContentLoaded', function() {
+  // Auto-submit form on category change
+  const categorySelect = document.querySelector('select[name="category"]');
+  if (categorySelect) {
+    categorySelect.addEventListener('change', function() {
+      this.form.submit();
+    });
+  }
+  
+  // Auto-submit form on equipment type change
+  const equipmentTypeSelect = document.querySelector('select[name="equipment_type"]');
+  if (equipmentTypeSelect) {
+    equipmentTypeSelect.addEventListener('change', function() {
+      this.form.submit();
+    });
+  }
+});
+</script>
+{% endblock %}

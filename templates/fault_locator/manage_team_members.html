@@ -1,0 +1,348 @@
+{% extends "admin_layout.html" %}
+{% load static %}
+
+{% block content %}
+<div class="manage-team-members-container p-6">
+  <div class="max-w-6xl mx-auto">
+    <!-- Header -->
+    <div class="header mb-6">
+      <div class="flex justify-between items-center">
+        <div>
+          <h1 class="text-2xl font-bold text-gray-800">Manage Team Members</h1>
+          <p class="text-gray-600">Team: <strong>{{ team.name }}</strong></p>
+        </div>
+        <div class="action-buttons space-x-2">
+          <a href="{% url 'fault_locator:edit_team' team.id %}" 
+             class="px-6 py-3 bg-gradient-to-r from-gray-600 to-gray-700 text-white rounded-xl font-bold text-lg hover:from-gray-700 hover:to-gray-800 transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl transform hover:-translate-y-1">
+            ← Back to Team
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <!-- Current Team Members -->
+      <div class="current-members-section">
+        <div class="members-card bg-white rounded-lg shadow-lg p-6">
+          <div class="flex justify-between items-center mb-4">
+            <h2 class="text-lg font-semibold text-gray-800">Current Members ({{ team.members.count }})</h2>
+            <span class="text-sm text-gray-500">Max: {{ max_team_size }} members</span>
+          </div>
+          
+          {% if team.members.exists %}
+          <div class="members-list space-y-3">
+            {% for member in team.members.all %}
+            <div class="member-item bg-gray-50 rounded-lg p-4">
+              <div class="flex justify-between items-start">
+                <div class="member-info flex-1">
+                  <div class="flex items-center mb-2">
+                    <div class="member-avatar w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-medium mr-3">
+                      {{ member.first_name|first }}{{ member.last_name|first }}
+                    </div>
+                    <div>
+                      <h3 class="font-medium text-gray-800">{{ member.get_full_name }}</h3>
+                      <p class="text-sm text-gray-600">{{ member.email }}</p>
+                    </div>
+                  </div>
+                  
+                  <div class="member-details grid grid-cols-2 gap-2 text-xs text-gray-600">
+                    <div>
+                      <span class="font-medium">Department:</span>
+                      {% if member.userprofile.department %}
+                        {{ member.userprofile.department }}
+                      {% else %}
+                        Not specified
+                      {% endif %}
+                    </div>
+                    <div>
+                      <span class="font-medium">Position:</span>
+                      {% if member.userprofile.job_title %}
+                        {{ member.userprofile.job_title }}
+                      {% else %}
+                        Not specified
+                      {% endif %}
+                    </div>
+                    <div>
+                      <span class="font-medium">Role:</span>
+                      {% if member.userprofile.role %}
+                        {{ member.userprofile.get_role_display }}
+                      {% else %}
+                        Standard User
+                      {% endif %}
+                    </div>
+                    <div>
+                      <span class="font-medium">Phone:</span>
+                      {% if member.userprofile.phone_number %}
+                        {{ member.userprofile.phone_number }}
+                      {% else %}
+                        Not provided
+                      {% endif %}
+                    </div>
+                  </div>
+                </div>
+                
+                <div class="member-actions">
+                  <form method="post" action="{% url 'fault_locator:manage_team_members' team.id %}" class="inline">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="remove">
+                    <input type="hidden" name="user_id" value="{{ member.id }}">
+                    <button type="submit" 
+                            class="px-4 py-2 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-lg font-bold text-sm hover:from-red-700 hover:to-red-800 transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
+                            onclick="return confirm('Are you sure you want to remove {{ member.get_full_name }} from this team?')">
+                      🗑️ Remove
+                    </button>
+                  </form>
+                </div>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+          {% else %}
+          <div class="empty-state text-center py-8">
+            <div class="text-gray-400 text-4xl mb-2">👥</div>
+            <p class="text-gray-600">No members in this team yet.</p>
+            <p class="text-sm text-gray-500">Add members from the available users list.</p>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Available Users -->
+      <div class="available-users-section">
+        <div class="users-card bg-white rounded-lg shadow-lg p-6">
+          <div class="flex justify-between items-center mb-4">
+            <h2 class="text-lg font-semibold text-gray-800">Available Users</h2>
+            <div class="search-filter flex space-x-2">
+              <input type="text" 
+                     id="userSearch" 
+                     placeholder="Search users..." 
+                     class="px-3 py-1 border border-gray-300 rounded text-sm"
+                     onkeyup="filterUsers()">
+              <select id="departmentFilter" onchange="filterUsers()" class="px-3 py-1 border border-gray-300 rounded text-sm">
+                <option value="">All Departments</option>
+                {% for dept in departments %}
+                <option value="{{ dept }}">{{ dept }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+          
+          {% if available_users %}
+          <div class="users-list space-y-3 max-h-96 overflow-y-auto" id="usersList">
+            {% for user in available_users %}
+            <div class="user-item bg-gray-50 rounded-lg p-4" 
+                 data-name="{{ user.get_full_name|lower }}" 
+                 data-email="{{ user.email|lower }}" 
+                 data-department="{% if user.userprofile.department %}{{ user.userprofile.department|lower }}{% endif %}">
+              <div class="flex justify-between items-start">
+                <div class="user-info flex-1">
+                  <div class="flex items-center mb-2">
+                    <div class="user-avatar w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-white text-sm font-medium mr-3">
+                      {{ user.first_name|first }}{{ user.last_name|first }}
+                    </div>
+                    <div>
+                      <h3 class="font-medium text-gray-800">{{ user.get_full_name }}</h3>
+                      <p class="text-sm text-gray-600">{{ user.email }}</p>
+                    </div>
+                  </div>
+                  
+                  <div class="user-details grid grid-cols-2 gap-2 text-xs text-gray-600">
+                    <div>
+                      <span class="font-medium">Department:</span>
+                      {% if user.userprofile.department %}
+                        {{ user.userprofile.department }}
+                      {% else %}
+                        Not specified
+                      {% endif %}
+                    </div>
+                    <div>
+                      <span class="font-medium">Position:</span>
+                      {% if user.userprofile.job_title %}
+                        {{ user.userprofile.job_title }}
+                      {% else %}
+                        Not specified
+                      {% endif %}
+                    </div>
+                  </div>
+                </div>
+                
+                <div class="user-actions">
+                  <form method="post" action="{% url 'fault_locator:manage_team_members' team.id %}" class="inline">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="add">
+                    <input type="hidden" name="user_id" value="{{ user.id }}">
+                    <button type="submit" 
+                            class="px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg font-bold text-sm hover:from-blue-700 hover:to-blue-800 transition-all duration-300 hover:scale-105 shadow-lg hover:shadow-xl transform hover:-translate-y-1"
+                            {% if team.members.count >= max_team_size %}
+                            disabled title="Team is at maximum capacity"
+                            {% endif %}>
+                      ➕ Add
+                    </button>
+                  </form>
+                </div>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+          {% else %}
+          <div class="empty-state text-center py-8">
+            <div class="text-gray-400 text-4xl mb-2">🔍</div>
+            <p class="text-gray-600">No available users found.</p>
+            <p class="text-sm text-gray-500">All eligible users may already be assigned to teams.</p>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    <!-- Team Status and Guidelines -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+      <!-- Team Status -->
+      <div class="team-status-card bg-white rounded-lg shadow-lg p-6">
+        <h2 class="text-lg font-semibold text-gray-800 mb-4">Team Status</h2>
+        
+        <div class="status-items space-y-3">
+          <div class="status-item flex items-center justify-between">
+            <span class="text-sm text-gray-700">Team Size:</span>
+            <span class="text-sm font-medium 
+              {% if team.members.count >= max_team_size %}text-red-600
+              {% elif team.members.count >= min_team_size %}text-green-600
+              {% else %}text-yellow-600{% endif %}">
+              {{ team.members.count }}/{{ max_team_size }}
+            </span>
+          </div>
+          
+          <div class="status-item flex items-center justify-between">
+            <span class="text-sm text-gray-700">Gear Assignment:</span>
+            {% with device_assignment=team.faultlocatordeviceassignment_set.first %}
+            {% if device_assignment %}
+            <span class="text-sm font-medium text-green-600">
+              ✅ {{ device_assignment.device.serial_number }}
+            </span>
+            {% else %}
+            <span class="text-sm font-medium text-red-600">❌ No gear assigned</span>
+            {% endif %}
+            {% endwith %}
+          </div>
+          
+          <div class="status-item flex items-center justify-between">
+            <span class="text-sm text-gray-700">Deployment Status:</span>
+            {% if team.current_deployment %}
+            <span class="text-sm font-medium text-blue-600">
+              🚀 Deployed to {{ team.current_deployment.depot.name }}
+            </span>
+            {% else %}
+            <span class="text-sm font-medium text-gray-600">📍 Available</span>
+            {% endif %}
+          </div>
+          
+          <div class="status-item flex items-center justify-between">
+            <span class="text-sm text-gray-700">Readiness:</span>
+            {% if team.members.count >= min_team_size and team.faultlocatordeviceassignment_set.exists %}
+            <span class="text-sm font-medium text-green-600">✅ Ready for deployment</span>
+            {% else %}
+            <span class="text-sm font-medium text-yellow-600">⚠️ Needs attention</span>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <!-- Management Guidelines -->
+      <div class="guidelines-card bg-blue-50 border border-blue-200 rounded-lg p-6">
+        <h2 class="text-lg font-semibold text-blue-800 mb-4">Team Management Guidelines</h2>
+        
+        <div class="guidelines-list space-y-3">
+          <div class="guideline-item flex items-start">
+            <div class="text-blue-500 mr-2">👥</div>
+            <div>
+              <h4 class="text-sm font-medium text-blue-800">Team Size</h4>
+              <p class="text-sm text-blue-600">Minimum {{ min_team_size }}, maximum {{ max_team_size }} members per team</p>
+            </div>
+          </div>
+          
+          <div class="guideline-item flex items-start">
+            <div class="text-blue-500 mr-2">🔧</div>
+            <div>
+              <h4 class="text-sm font-medium text-blue-800">Skills Balance</h4>
+              <p class="text-sm text-blue-600">Include members with different technical skills and experience levels</p>
+            </div>
+          </div>
+          
+          <div class="guideline-item flex items-start">
+            <div class="text-blue-500 mr-2">📱</div>
+            <div>
+              <h4 class="text-sm font-medium text-blue-800">Gear Assignment</h4>
+              <p class="text-sm text-blue-600">Team must have fault locator gear before deployment</p>
+            </div>
+          </div>
+          
+          <div class="guideline-item flex items-start">
+            <div class="text-blue-500 mr-2">🚀</div>
+            <div>
+              <h4 class="text-sm font-medium text-blue-800">Deployment Ready</h4>
+              <p class="text-sm text-blue-600">Teams with gear and minimum members can be deployed</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function filterUsers() {
+  const searchTerm = document.getElementById('userSearch').value.toLowerCase();
+  const departmentFilter = document.getElementById('departmentFilter').value.toLowerCase();
+  const userItems = document.querySelectorAll('.user-item');
+  
+  userItems.forEach(item => {
+    const name = item.getAttribute('data-name');
+    const email = item.getAttribute('data-email');
+    const department = item.getAttribute('data-department') || '';
+    
+    const matchesSearch = name.includes(searchTerm) || email.includes(searchTerm);
+    const matchesDepartment = !departmentFilter || department.includes(departmentFilter);
+    
+    if (matchesSearch && matchesDepartment) {
+      item.style.display = 'block';
+    } else {
+      item.style.display = 'none';
+    }
+  });
+}
+</script>
+
+<style>
+/* Custom styling for user/member cards */
+.member-item, .user-item {
+  transition: all 0.2s ease-in-out;
+}
+
+.member-item:hover, .user-item:hover {
+  background-color: #f9fafb;
+  transform: translateY(-1px);
+}
+
+.member-avatar, .user-avatar {
+  flex-shrink: 0;
+}
+
+/* Search and filter styling */
+#userSearch, #departmentFilter {
+  transition: border-color 0.15s ease-in-out;
+}
+
+#userSearch:focus, #departmentFilter:focus {
+  outline: none;
+  border-color: #3b82f6;
+}
+
+/* Disabled button styling */
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+</style>
+{% endblock %}
+
+

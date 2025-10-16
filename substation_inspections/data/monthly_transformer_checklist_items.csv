@@ -1,0 +1,22 @@
+item_code,title,description,equipment_type,category,severity,is_mandatory,is_active,reference_standard,frequency
+TRF-001,Tap changer counter reading,Record tap changer counter reading,transformer,electrical,medium,true,true,IEEE 141,monthly
+TRF-002,Oil level indication glasses clear,Check oil level indication glasses for clarity,transformer,electrical,medium,true,true,IEEE 141,monthly
+TRF-003,Check oil level (Conservator),Inspect oil level in conservator tank,transformer,electrical,high,true,true,IEEE 141,monthly
+TRF-004,Check oil level (Tap/changer),Inspect oil level in tap changer compartment,transformer,electrical,high,true,true,IEEE 141,monthly
+TRF-005,Oil leaks (indicate source of leaks),Check for oil leaks and identify source,transformer,electrical,high,true,true,IEEE 141,monthly
+TRF-006,Check hotspots on spindle clamps,Use infrared thermometer to check for hotspots,transformer,electrical,high,true,true,IEEE 141,monthly
+TRF-007,Paintwork,Inspect transformer paintwork condition,transformer,mechanical,low,true,true,IEEE 141,monthly
+TRF-008,Silica GEL,Check silica gel condition and color,transformer,electrical,medium,true,true,IEEE 141,monthly
+TRF-009,Check winding temp gauge,Inspect winding temperature gauge readings,transformer,electrical,high,true,true,IEEE 141,monthly
+TRF-010,Check oil temp gauge,Inspect oil temperature gauge readings,transformer,electrical,high,true,true,IEEE 141,monthly
+TRF-011,Reset temperature instruments,Reset temperature monitoring instruments,transformer,electrical,medium,true,true,IEEE 141,monthly
+TRF-012,Check CTs,Inspect current transformers (CTs),transformer,electrical,high,true,true,IEEE 141,monthly
+TRF-013,Check VTs,Inspect voltage transformers (VTs),transformer,electrical,high,true,true,IEEE 141,monthly
+TRF-014,Check ammeters,Inspect ammeter readings and functionality,transformer,electrical,medium,true,true,IEEE 141,monthly
+TRF-015,Check voltmeters,Inspect voltmeter readings and functionality,transformer,electrical,medium,true,true,IEEE 141,monthly
+TRF-016,Check NER Tank Level,Inspect neutral earthing resistor tank level,transformer,electrical,high,true,true,IEEE 141,monthly
+TRF-017,Earthing intact,Check earthing system integrity,transformer,electrical,high,true,true,IEEE 141,monthly
+TRF-018,Check fans,Inspect cooling fan operation,transformer,mechanical,medium,true,true,IEEE 141,monthly
+TRF-019,Tank over pressure valve,Check over pressure valve functionality,transformer,mechanical,high,true,true,IEEE 141,monthly
+TRF-020,Check AVR status,Inspect automatic voltage regulator status,transformer,electrical,high,true,true,IEEE 141,monthly
+TRF-021,Surge arrestors counter reading,Record surge arrestor counter readings,transformer,electrical,medium,true,true,IEEE 141,monthly

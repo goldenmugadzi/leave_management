@@ -1,82 +1,340 @@
-<!--users/templates/quotations/index.html-->
-{% extends 'admin_layout.html' %} {% block styles %}
-<link
-  rel="stylesheet"
-  href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css"
-/>
+{% extends 'admin_layout.html' %}
+{% load static %}
+
+{% block styles %}
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css"/>
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
 <style>
   .dataTables_wrapper .dataTables_length select {
     width: 4rem;
   }
+  
+  /* Cost center dropdown styling - matching other selects */
+  .cost-center-option {
+    padding: 6px 0;
+    line-height: 1.4;
+  }
+  
+  .cost-center-name {
+    font-weight: 500;
+    color: #1f2937;
+    font-size: 0.875rem;
+  }
+  
+  .cost-center-hierarchy {
+    font-size: 0.75rem;
+    color: #6b7280;
+    margin-top: 2px;
+    line-height: 1.3;
+    max-height: 2.6em;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  
+  .cost-center-code {
+    font-size: 0.7rem;
+    color: #9ca3af;
+    margin-top: 1px;
+    font-family: 'Courier New', monospace;
+  }
+  
+  /* Select2 dropdown styling - consistent with other selects */
+  .select2-container--default .select2-results__option {
+    padding: 8px 12px;
+    border-bottom: 1px solid #f3f4f6;
+  }
+  
+  .select2-container--default .select2-results__option:last-child {
+    border-bottom: none;
+  }
+  
+  .select2-container--default .select2-results__option--highlighted[aria-selected] {
+    background-color: #3b82f6;
+  }
+  
+  .select2-container--default .select2-results__option--highlighted[aria-selected] .cost-center-hierarchy {
+    color: #dbeafe;
+  }
+  
+  .select2-container--default .select2-results__option--highlighted[aria-selected] .cost-center-code {
+    color: #bfdbfe;
+  }
+  
+  /* Give cost center more space */
+  .select2-container--default .select2-results__option .cost-center-option {
+    min-height: 50px;
+  }
+  
+  /* Loading state styling */
+  .select2-container--default .select2-results__option--loading {
+    text-align: center;
+    color: #6b7280;
+    font-style: italic;
+  }
+  
+  /* Make cost center select match other selects */
+  .select2-container--default .select2-selection--single {
+    height: 38px;
+    border: 1px solid #d1d5db;
+    border-radius: 0.375rem;
+  }
+  
+  .select2-container--default .select2-selection--single .select2-selection__rendered {
+    line-height: 36px;
+    padding-left: 12px;
+    padding-right: 20px;
+  }
+  
+  .select2-container--default .select2-selection--single .select2-selection__arrow {
+    height: 36px;
+    right: 8px;
+  }
+  
+  /* Enhanced status badge styling */
+  .status-badge {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+  }
+  
+  .status-pending-sh {
+    @apply bg-yellow-100 text-yellow-800;
+  }
+  
+  .status-pending-it {
+    @apply bg-blue-100 text-blue-800;
+  }
+  
+  .status-approved {
+    @apply bg-green-100 text-green-800;
+  }
+  
+  .status-rejected {
+    @apply bg-red-100 text-red-800;
+  }
+  
+  /* Enhanced type indicator styling */
+  .type-indicator {
+    @apply flex items-center;
+  }
+  
+  .type-icon {
+    @apply mr-2;
+  }
+  
+  .type-new-profile {
+    @apply text-green-600;
+  }
+  
+  .type-profile-modification {
+    @apply text-blue-600;
+  }
+  
+  .type-profile-deactivation {
+    @apply text-red-600;
+  }
+  
+  .type-delegation {
+    @apply text-purple-600;
+  }
+  
+  /* Responsive table styling */
+  @media (max-width: 768px) {
+    .dataTables_wrapper .dataTables_length,
+    .dataTables_wrapper .dataTables_filter,
+    .dataTables_wrapper .dataTables_info,
+    .dataTables_wrapper .dataTables_paginate {
+      @apply text-sm;
+    }
+    
+    .dataTables_wrapper .dataTables_length select {
+      @apply text-sm py-1 px-2;
+    }
+  }
 </style>
-{% endblock styles %} {% block content %}
+{% endblock styles %}
+
+{% block content %}
 <div class="content-wrapper">
-    <div
-      class="bg-gulf-blue-100 shadow-md shadow-gulf-blue-300 text-gulf-blue-900 rounded px-2 py-2"
-    >        
-    <div class="flex justify-between items-center mb-5">
-        <div>
-          <p class="text-lg font-semibold">Change Requests</p>
+  <div class="bg-gray-50 border border-gray-200 rounded-lg px-6 py-6 max-w-7xl mx-auto">
+    
+    <!-- Header -->
+    <div class="flex justify-between items-center mb-8">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-900">Change Requests Dashboard</h1>
+        <p class="text-gray-600 mt-1">Manage all types of change requests in one place</p>
+      </div>
+      <a href="/change_requests/create_change_request" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg flex items-center gap-2 transition-colors">
+        <i class="fas fa-plus"></i> Add New Request
+      </a>
+    </div>
+
+    <!-- Statistics Cards -->
+    {% comment %} <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div class="bg-white border border-gray-200 rounded-lg p-6 text-center shadow-sm">
+        <h3 id="total-requests" class="text-3xl font-bold text-gray-900 mb-2">-</h3>
+        <p class="text-gray-600 text-sm">Total Requests</p>
+      </div>
+      <div class="bg-white border border-gray-200 rounded-lg p-6 text-center shadow-sm">
+        <h3 id="pending-requests" class="text-3xl font-bold text-gray-900 mb-2">-</h3>
+        <p class="text-gray-600 text-sm">Pending Approval</p>
+      </div>
+      <div class="bg-white border border-gray-200 rounded-lg p-6 text-center shadow-sm">
+        <h3 id="delegation-requests" class="text-3xl font-bold text-gray-900 mb-2">-</h3>
+        <p class="text-gray-600 text-sm">Delegation Requests</p>
+      </div>
+      <div class="bg-white border border-gray-200 rounded-lg p-6 text-center shadow-sm">
+        <h3 id="active-delegations" class="text-3xl font-bold text-gray-900 mb-2">-</h3>
+        <p class="text-gray-600 text-sm">Active Delegations</p>
+      </div>
+    </div> {% endcomment %}
+
+    <!-- Filter Controls -->
+    <div class="bg-white border border-gray-200 rounded-lg p-6 mb-6 shadow-sm">
+      <h3 class="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b border-gray-200">Filter Requests</h3>
+      
+      <!-- Filter Buttons -->
+      <div class="flex flex-wrap gap-3 mb-4">
+        <button class="filter-btn bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors" id="all_schedules">All Requests</button>
+        <button class="filter-btn bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors" id="incoming_cr">Awaiting Action</button>
+        <button class="filter-btn bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors" id="delegation_requests">Delegations</button>
+        <button class="filter-btn bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors" id="active_delegations">Active Delegations</button>
+      </div>
+      
+      <!-- Advanced Filters -->
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <!-- Cost Center - Give it more space -->
+        <div class="lg:col-span-2">
+          <label for="filter_cost_center" class="block text-sm font-medium text-gray-700 mb-2">Cost Center</label>
+          <select id="filter_cost_center" class="select2 w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+            <option value="">All Cost Centers</option>
+          </select>
         </div>
-        <div class="flex justify-between items-center mb-5">
-          <a
-          id="all_schedules"
-          class="bg-gulf-blue-600 hover:bg-gulf-blue-800 text-white font-bold py-2 px-4 rounded m-2"
-          >
-            ALL
-          </a>
-          <a
-          id="incoming_cr"
-          class="bg-gulf-blue-600 hover:bg-gulf-blue-800 text-white font-bold py-2 px-4 rounded m-2"
-          >
-            AWAITING ACTION
-          </a>
-          <a
-            href="/change_requests/create_change_request"
-            class="bg-gulf-blue-600 hover:bg-gulf-blue-800 text-white font-bold py-2 px-4 rounded"
-            >
-            ADD NEW
-          </a>
+        <!-- Other filters in remaining space -->
+        <div>
+          <label for="filter_change_type" class="block text-sm font-medium text-gray-700 mb-2">Change Type</label>
+          <select id="filter_change_type" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+            <option value="">All Types</option>
+            <option value="New Profile">New Profile</option>
+            <option value="Profile Modification">Profile Modification</option>
+            <option value="Profile Deactivation">Profile Deactivation</option>
+            <option value="Temporary Role Delegation">Temporary Role Delegation</option>
+          </select>
+        </div>
+        <div>
+          <label for="filter_application" class="block text-sm font-medium text-gray-700 mb-2">Application</label>
+          <select id="filter_application" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+            <option value="">All Applications</option>
+          </select>
         </div>
       </div>
-    <table id="change_request_index" class="display" style="width: 100%">
-      <thead>
-        <tr>
-          <th>ID</th>
-          <th>TYPE</th>
-          <th>REASON</th>
-          <th>APPLICATION</th>
-          <th>APPROVAL STATUS</th>
-          <th>DONE BY</th>
-          <th>DATE</th>
-          <th>ACTION</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-      <tfoot>
-        <tr>
-          <th>ID</th>
-          <th>TYPE</th>
-          <th>REASON</th>
-          <th>APPLICATION</th>
-          <th>APPROVAL STATUS</th>
-          <th>DONE BY</th>
-          <th>DATE</th>
-          <th>ACTION</th>
-        </tr>
-      </tfoot>
-    </table>
+      
+      <!-- Status filter on its own row -->
+      <div class="mt-4">
+        <div class="max-w-xs">
+          <label for="filter_status" class="block text-sm font-medium text-gray-700 mb-2">Status</label>
+          <select id="filter_status" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+            <option value="">All Statuses</option>
+            <option value="Pending SH">Pending Section Head</option>
+            <option value="Pending IT">Pending IT</option>
+            <option value="Complete">Complete</option>
+            <option value="Rejected">Rejected</option>
+          </select>
+        </div>
+      </div>
+      
+      <!-- Filter Actions -->
+      <div class="flex justify-end gap-2 mt-4">
+        <button id="clear_filters" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500">
+          Clear Filters
+        </button>
+        <button id="apply_filters" class="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+          Apply Filters
+        </button>
+      </div>
+    </div>
+    <!-- Data Table -->
+    <div class="bg-white border border-gray-200 rounded-lg p-6 mb-6 shadow-sm">
+      <h3 class="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b border-gray-200">Change Requests</h3>
+      <table id="change_request_index" class="display w-full" style="width: 100%">
+        <thead class="bg-gray-50">
+          <tr>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">TYPE</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">REASON</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">APPLICATION</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">COST CENTER</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">APPROVAL STATUS</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">DONE BY</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">DATE</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ACTION</th>
+          </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-200"></tbody>
+        <tfoot>
+          <tr>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">TYPE</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">REASON</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">APPLICATION</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">COST CENTER</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">APPROVAL STATUS</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">DONE BY</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">DATE</th>
+            <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ACTION</th>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+
+    <!-- Quick Actions -->
+    {% comment %} <div class="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
+      <h3 class="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b border-gray-200">Quick Actions</h3>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+        <a href="/change_requests/create_change_request" class="bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg p-4 text-center transition-colors group">
+          <i class="fas fa-user-plus text-blue-600 text-xl mb-2 group-hover:text-blue-700"></i>
+          <div class="text-sm font-medium text-gray-900">Create New Profile</div>
+        </a>
+        <a href="/change_requests/create_change_request" class="bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg p-4 text-center transition-colors group">
+          <i class="fas fa-user-edit text-blue-600 text-xl mb-2 group-hover:text-blue-700"></i>
+          <div class="text-sm font-medium text-gray-900">Modify Profile</div>
+        </a>
+        <a href="/change_requests/create_change_request" class="bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg p-4 text-center transition-colors group">
+          <i class="fas fa-user-times text-blue-600 text-xl mb-2 group-hover:text-blue-700"></i>
+          <div class="text-sm font-medium text-gray-900">Deactivate Profile</div>
+        </a>
+        <a href="/change_requests/create_change_request" class="bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg p-4 text-center transition-colors group">
+          <i class="fas fa-user-shield text-blue-600 text-xl mb-2 group-hover:text-blue-700"></i>
+          <div class="text-sm font-medium text-gray-900">Create Delegation</div>
+        </a>
+        <a href="/change_requests/change_request_reports" class="bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg p-4 text-center transition-colors group">
+          <i class="fas fa-chart-bar text-blue-600 text-xl mb-2 group-hover:text-blue-700"></i>
+          <div class="text-sm font-medium text-gray-900">View Reports</div>
+        </a>
+        <a href="/change_requests/datatables/export" class="bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg p-4 text-center transition-colors group">
+          <i class="fas fa-download text-blue-600 text-xl mb-2 group-hover:text-blue-700"></i>
+          <div class="text-sm font-medium text-gray-900">Export Data</div>
+        </a>
+      </div>
+    </div> {% endcomment %}
+
   </div>
 </div>
-{% endblock %} {% block scripts %}
+{% endblock %}
+
+{% block scripts %}
 <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
 <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script>
-
   const user_title = "{{user_title}}"
+  
+  // Declare table variable in global scope
+  var table;
 
   $(document).ready(function () {
-    var table = $("#change_request_index").DataTable({
+    // Load dashboard statistics
+    loadDashboardStats();
+    
+    table = $("#change_request_index").DataTable({
       "processing": true,
       "serverSide": true,
       "ajax": {
@@ -89,6 +347,23 @@
         },
         {
           data: "change_type",
+          render: function (data, type, row, meta) {
+            const typeConfig = {
+              'New Profile': { icon: 'fa-user-plus', color: 'text-green-600' },
+              'Profile Modification': { icon: 'fa-user-edit', color: 'text-blue-600' },
+              'Profile Deactivation': { icon: 'fa-user-times', color: 'text-red-600' },
+              'Temporary Role Delegation': { icon: 'fa-user-shield', color: 'text-purple-600' }
+            };
+            
+            const config = typeConfig[data] || { icon: 'fa-question', color: 'text-gray-600' };
+            
+            return `
+              <div class="flex items-center">
+                <i class="fas ${config.icon} ${config.color} mr-2"></i>
+                <span class="text-sm font-medium">${data}</span>
+              </div>
+            `;
+          }
         },
         {
           data: "change_reason",
@@ -97,36 +372,29 @@
           data: "application",
         },
         {
-          data: "section_head_approval",
+          data: "cost_center",
+        },
+        {
+          data: "overall_status",  // Use computed property
           orderable: false,
           searchable: false,
           render: function (data, type, row, meta) {
-            let sh_approval = row.section_head_approval
-            let it_sh_approval = row.it_section_head_approval
-            let approval_badge = ""
-            if (sh_approval === "Approved" && it_sh_approval !== "Approved"){
-              approval_badge = `
-              <a type="button" class="bg-green-200 text-green-800 rounded px-1 py-2 w-full text-center" href='/change_requests/view_change_request?i=${row.cr_id}' >
-                APPROVED              
-              </a>`
-            } else if (sh_approval === "Approved" && it_sh_approval === "Approved"){
-              approval_badge = `
-              <a type="button" class="bg-green-300 text-green-800 rounded px-1 py-2 w-full text-center" href='/change_requests/view_change_request?i=${row.cr_id}' >
-                APPROVED & IMPLEMENTED              
-              </a>`
-            } else if (sh_approval === "Rejected" || it_sh_approval === "Rejected"){
-              approval_badge = `
-              <a type="button" class="bg-red-300 text-red-800 rounded px-1 py-2 w-full text-center" href='/change_requests/view_change_request?i=${row.cr_id}' >
-                REJECTED              
-              </a>`
-            } else {
-              approval_badge = `
-              <a type="button" class="bg-blue-300 text-blue-800 rounded px-1 py-2 w-full text-center" href='/change_requests/view_change_request?i=${row.cr_id}' >
-                PENDING              
-              </a>`
-            }
-            return approval_badge;
-          },
+            const statusConfig = {
+              'pending_sh': { class: 'bg-yellow-100 text-yellow-800', text: 'Pending SH' },
+              'pending_it': { class: 'bg-blue-100 text-blue-800', text: 'Pending IT' },
+              'approved_complete': { class: 'bg-green-100 text-green-800', text: 'Complete' },
+              'rejected_sh': { class: 'bg-red-100 text-red-800', text: 'Rejected' },
+              'rejected_it': { class: 'bg-red-100 text-red-800', text: 'Rejected' }
+            };
+            
+            const config = statusConfig[data] || { class: 'bg-gray-100 text-gray-800', text: 'Unknown' };
+            
+            return `
+              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${config.class}">
+                ${config.text}
+              </span>
+            `;
+          }
         },
         {
           data: "created_by",
@@ -155,35 +423,286 @@
           },
         }
       ],
-      order: [[5, 'desc']]
+      order: [[7, 'desc']]
     });
 
-    $("#all_schedules").on("click", function () {
+    // Load filter options
+    setTimeout(function() {
+      loadFilterOptions();
+    }, 100);
+
+    // Filter button handlers
+    $(".filter-btn").on("click", function () {
+      // Remove active classes from all buttons
+      $(".filter-btn").removeClass("bg-blue-600").addClass("bg-gray-500 hover:bg-gray-600");
+      // Add active class to clicked button
+      $(this).removeClass("bg-gray-500 hover:bg-gray-600").addClass("bg-blue-600");
+      
       var newUrl = "/change_requests/datatables/all";
+      var buttonId = $(this).attr("id");
+      
+      switch(buttonId) {
+        case "all_schedules":
+          newUrl = "/change_requests/datatables/all";
+          break;
+        case "incoming_cr":
+          newUrl = "/change_requests/datatables/incoming_cr";
+          break;
+        case "delegation_requests":
+          newUrl = "/change_requests/datatables/delegation_requests";
+          break;
+        case "active_delegations":
+          newUrl = "/change_requests/datatables/active_delegations";
+          break;
+      }
+      
       table.ajax.url(newUrl).load();
     });
 
-    $("#incoming_cr").on("click", function () {
-      var newUrl = "/change_requests/datatables/incoming_cr";
-      table.ajax.url(newUrl).load();
+    // Advanced filter handlers
+    $("#apply_filters").on("click", function () {
+      applyAdvancedFilters();
+    });
+
+    $("#clear_filters").on("click", function () {
+      clearAdvancedFilters();
     });
 
   });
+
+  // Dashboard statistics function
+  function loadDashboardStats() {
+    // Load total requests
+    fetch('/change_requests/datatables/all?draw=1&start=0&length=1')
+      .then(response => response.json())
+      .then(data => {
+        document.getElementById('total-requests').textContent = data.recordsTotal || 0;
+      })
+      .catch(error => console.error('Error loading total requests:', error));
+
+    // Load pending requests
+    fetch('/change_requests/datatables/incoming_cr?draw=1&start=0&length=1')
+      .then(response => response.json())
+      .then(data => {
+        document.getElementById('pending-requests').textContent = data.recordsTotal || 0;
+      })
+      .catch(error => console.error('Error loading pending requests:', error));
+
+    // Load delegation requests
+    fetch('/change_requests/datatables/delegation_requests?draw=1&start=0&length=1')
+      .then(response => response.json())
+      .then(data => {
+        document.getElementById('delegation-requests').textContent = data.recordsTotal || 0;
+      })
+      .catch(error => console.error('Error loading delegation requests:', error));
+
+    // Load active delegations
+    fetch('/change_requests/datatables/active_delegations?draw=1&start=0&length=1')
+      .then(response => response.json())
+      .then(data => {
+        document.getElementById('active-delegations').textContent = data.recordsTotal || 0;
+      })
+      .catch(error => console.error('Error loading active delegations:', error));
+  }
+
+  // Load filter options
+  function loadFilterOptions() {
+    // Check if jQuery and select2 are available
+    if (typeof $ === 'undefined') {
+      console.error('jQuery is not loaded');
+      return;
+    }
+    
+    if (typeof $.fn.select2 === 'undefined') {
+      console.error('Select2 is not loaded');
+      return;
+    }
+    
+    // Check if the element exists
+    if ($('#filter_cost_center').length === 0) {
+      console.error('Cost center select element not found');
+      return;
+    }
+    
+    // Initialize cost center dropdown with server-side search
+    $('#filter_cost_center').select2({
+      placeholder: 'All Cost Centers',
+      allowClear: true,
+      width: '100%',
+      ajax: {
+        url: '/change_requests/api/cost_centers/',
+        dataType: 'json',
+        delay: 300, // Wait 300ms before making request
+        minimumInputLength: 2, // Require at least 2 characters
+        data: function (params) {
+          return {
+            q: params.term, // search term
+            page: params.page || 1
+          };
+        },
+        transport: function (params, success, failure) {
+          const $request = $.ajax(params);
+          $request.then(success);
+          $request.fail(failure);
+          return $request;
+        },
+        processResults: function (data, params) {
+          // Parse the results and return in the format expected by Select2
+          const results = data.results.map(function (costCenter) {
+            // Create a simple result object that Select2 can handle
+            const result = {
+              id: costCenter.id,
+              text: costCenter.display_name
+            };
+            
+            // Add custom properties for our template function
+            result.code = costCenter.code;
+            result.hierarchy = costCenter.hierarchy;
+            result.searchable_text = costCenter.searchable_text;
+            
+            return result;
+          });
+          
+          return {
+            results: results,
+            pagination: {
+              more: data.pagination.more
+            }
+          };
+        },
+        error: function(xhr, status, error) {
+          // Ignore abort errors (normal when user types quickly)
+          if (status !== 'abort') {
+            console.error('AJAX Error:', error);
+            console.error('Status:', status);
+            console.error('Response:', xhr.responseText);
+            console.error('XHR:', xhr);
+          }
+        },
+        cache: true
+      },
+      templateResult: function(costCenter) {
+        if (!costCenter.id) {
+          return costCenter.text;
+        }
+        
+        // Use direct properties instead of element.getAttribute
+        const hierarchy = costCenter.hierarchy || '';
+        const code = costCenter.code || '';
+        
+        // Split hierarchy into parts for better display
+        const hierarchyParts = hierarchy.split(' > ');
+        const currentPart = hierarchyParts[hierarchyParts.length - 1] || '';
+        const parentParts = hierarchyParts.slice(0, -1);
+        
+        const $container = $(
+          '<div class="cost-center-option">' +
+            '<div class="cost-center-name">' + costCenter.text + '</div>' +
+            '<div class="cost-center-hierarchy text-sm text-gray-500">' + 
+              (parentParts.length > 0 ? parentParts.join(' > ') + ' > ' : '') +
+              '<span class="font-medium text-blue-600">' + currentPart + '</span>' +
+            '</div>' +
+            (code ? '<div class="cost-center-code text-xs text-gray-400 mt-1">Code: ' + code + '</div>' : '') +
+          '</div>'
+        );
+        
+        return $container;
+      },
+      templateSelection: function(costCenter) {
+        return costCenter.text;
+      },
+      language: {
+        inputTooShort: function () {
+          return 'Type at least 2 characters to search...';
+        },
+        searching: function () {
+          return 'Searching...';
+        },
+        noResults: function () {
+          return 'No cost centers found';
+        },
+        loadingMore: function () {
+          return 'Loading more results...';
+        }
+      }
+    });
+
+    // Load applications
+    fetch('/change_requests/api/applications/')
+      .then(response => response.json())
+      .then(data => {
+        const applicationSelect = document.getElementById('filter_application');
+        data.forEach(application => {
+          const option = document.createElement('option');
+          option.value = application;
+          option.textContent = application;
+          applicationSelect.appendChild(option);
+        });
+      })
+      .catch(error => console.error('Error loading applications:', error));
+  }
+
+  // Apply advanced filters
+  function applyAdvancedFilters() {
+    // Check if table is initialized
+    if (!table) {
+      console.error('Table not initialized yet');
+      return;
+    }
+    
+    const costCenter = document.getElementById('filter_cost_center').value;
+    const changeType = document.getElementById('filter_change_type').value;
+    const application = document.getElementById('filter_application').value;
+    const status = document.getElementById('filter_status').value;
+
+    // Build filter URL
+    let filterUrl = '/change_requests/datatables/filter?';
+    const params = new URLSearchParams();
+    
+    if (costCenter) params.append('cost_center', costCenter);
+    if (changeType) params.append('cr_type', changeType);
+    if (application) params.append('cr_app', application);
+    if (status) params.append('status', status);
+    
+    filterUrl += params.toString();
+    
+    // Update table with filtered data
+    table.ajax.url(filterUrl).load();
+  }
+
+  // Clear advanced filters
+  function clearAdvancedFilters() {
+    // Check if table is initialized
+    if (!table) {
+      console.error('Table not initialized yet');
+      return;
+    }
+    
+    document.getElementById('filter_cost_center').value = '';
+    document.getElementById('filter_change_type').value = '';
+    document.getElementById('filter_application').value = '';
+    document.getElementById('filter_status').value = '';
+    
+    // Reset to all requests
+    table.ajax.url('/change_requests/datatables/all').load();
+  }
 
   const region = document.getElementById('region');
   const cost_center = document.getElementById('cost_center');
 
-  region.addEventListener('change', (e) => {
-    const regionId = e.target.value;
-    fetch(`{{BASE_URL}}/users/filtered_centers/${regionId}`)
-      .then((res) => res.json())
-      .then((data) => {
-        console.log("var: ", data);
-        cost_center.innerHTML = '<option>Select Cost Centre</option>';
-        data.forEach((_cost_center) => {
-          cost_center.innerHTML += `<option value="${_cost_center.id}">${_cost_center.name}</option>`;
+  if (region && cost_center) {
+    region.addEventListener('change', (e) => {
+      const regionId = e.target.value;
+      fetch(`{{BASE_URL}}/users/filtered_centers/${regionId}`)
+        .then((res) => res.json())
+        .then((data) => {
+          console.log("var: ", data);
+          cost_center.innerHTML = '<option>Select Cost Centre</option>';
+          data.forEach((_cost_center) => {
+            cost_center.innerHTML += `<option value="${_cost_center.id}">${_cost_center.name}</option>`;
+          });
         });
-      });
-  });
+    });
+  }
 </script>
 {% endblock scripts %}

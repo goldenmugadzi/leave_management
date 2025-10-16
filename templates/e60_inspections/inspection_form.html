@@ -1,0 +1,178 @@
+{% extends "e60_inspections/base.html" %}
+{% load crispy_forms_tags %}
+{% load static %}
+
+{% block page_content %}
+<div class="max-w-4xl mx-auto">
+    <!-- Form Header -->
+    <div class="flex flex-col lg:flex-row lg:justify-between lg:items-center mb-6">
+        <div class="mb-4 lg:mb-0">
+            <h1 class="text-2xl font-bold text-gray-900">{{ title }}</h1>
+            <p class="text-gray-600 mt-1">Create a new E60 consumer substation inspection report</p>
+        </div>
+        <div>
+            <a href="{% url 'e60_inspections:e60_inspection_list' %}" 
+               class="inline-flex items-center px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors">
+                <i class="fas fa-arrow-left mr-2"></i> Back to List
+            </a>
+        </div>
+    </div>
+
+    <div class="flex flex-col lg:flex-row gap-6">
+        <!-- Main Form -->
+        <div class="flex-1">
+            <div class="card-modern">
+                <div class="card-header-modern">
+                    <h3 class="text-lg font-medium text-gray-900">
+                        <i class="fas fa-clipboard-check mr-2 text-blue-600"></i>Inspection Report Details
+                    </h3>
+                </div>
+                <div class="card-body-modern">
+                    <form method="post" class="space-y-6">
+                        {% csrf_token %}
+                        
+                        <!-- Substation Information -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label for="{{ form.substation_name.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                    Substation Name <span class="text-red-500">*</span>
+                                </label>
+                                {{ form.substation_name }}
+                            </div>
+                            <div>
+                                <label for="{{ form.service_number.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                    Service Number <span class="text-red-500">*</span>
+                                </label>
+                                {{ form.service_number }}
+                            </div>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label for="{{ form.section.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                    Section <span class="text-red-500">*</span>
+                                </label>
+                                {{ form.section }}
+                            </div>
+                            <div>
+                                <label for="{{ form.construction_type.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                    Construction Type <span class="text-red-500">*</span>
+                                </label>
+                                {{ form.construction_type }}
+                            </div>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label for="{{ form.inspection_date.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                    Inspection Date <span class="text-red-500">*</span>
+                                </label>
+                                {{ form.inspection_date }}
+                            </div>
+                            <div>
+                                <label for="{{ form.inspection_type.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                    Inspection Type <span class="text-red-500">*</span>
+                                </label>
+                                {{ form.inspection_type }}
+                            </div>
+                        </div>
+                        
+                        <!-- Assessment Fields -->
+                        <div class="border-t border-gray-200 pt-6">
+                            <h4 class="text-md font-medium text-gray-900 mb-4">Overall Assessment</h4>
+                            
+                            <div class="space-y-4">
+                                <div>
+                                    <label for="{{ form.general_condition.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                        General Condition
+                                    </label>
+                                    {{ form.general_condition }}
+                                </div>
+                                
+                                <div>
+                                    <label for="{{ form.remarks.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                        Remarks
+                                    </label>
+                                    {{ form.remarks }}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Form Actions -->
+                        <div class="flex justify-between items-center pt-6 border-t border-gray-200">
+                            <a href="{% url 'e60_inspections:e60_inspection_list' %}" 
+                               class="inline-flex items-center px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors">
+                                <i class="fas fa-arrow-left mr-2"></i>Cancel
+                            </a>
+                            <button type="submit" class="btn-e60">
+                                <i class="fas fa-save mr-2"></i>Save Inspection Report
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Help Section -->
+        <div class="w-full lg:w-80">
+            <div class="card-modern">
+                <div class="card-header-modern">
+                    <h6 class="text-md font-medium text-gray-900">
+                        <i class="fas fa-info-circle mr-2 text-blue-600"></i>E60 Form Guidelines
+                    </h6>
+                </div>
+                <div class="card-body-modern">
+                    <div class="space-y-4">
+                        <div>
+                            <h6 class="font-medium text-gray-900 mb-2">Required Information:</h6>
+                            <ul class="text-sm text-gray-600 space-y-1">
+                                <li>• Substation name and location details</li>
+                                <li>• Service number for identification</li>
+                                <li>• Section responsible for the substation</li>
+                                <li>• Type of construction materials used</li>
+                                <li>• Scheduled inspection date</li>
+                            </ul>
+                        </div>
+                        
+                        <div>
+                            <h6 class="font-medium text-gray-900 mb-2">Construction Types:</h6>
+                            <ul class="text-sm text-gray-600 space-y-1">
+                                <li><strong>PMT:</strong> Pole Mounted Transformer</li>
+                                <li><strong>Concrete:</strong> Concrete construction</li>
+                                <li><strong>Steel:</strong> Steel frame construction</li>
+                                <li><strong>Brick:</strong> Brick masonry construction</li>
+                                <li><strong>Other:</strong> Alternative construction types</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-blue-50 border border-blue-200 rounded-md p-3 mt-4">
+                        <div class="flex">
+                            <i class="fas fa-lightbulb text-blue-600 mr-2 mt-0.5"></i>
+                            <div>
+                                <p class="text-sm font-medium text-blue-900">Next Steps:</p>
+                                <p class="text-sm text-blue-700 mt-1">
+                                    After creating the inspection report, you can fill in detailed 
+                                    inspection data for each section (transformers, circuit breakers, 
+                                    metering, etc.) from the inspection detail page.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Add proper styling for form fields */
+input[type="text"], input[type="date"], select, textarea {
+    @apply block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500;
+}
+
+textarea {
+    min-height: 100px;
+}
+</style>
+{% endblock %}

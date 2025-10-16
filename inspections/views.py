@@ -424,6 +424,50 @@ def inspection_detail(request, pk):
     return render(request, 'inspections/e117_view.html', context)
 
 
+@login_required
+def inspection_create(request):
+    """Create a new inspection report"""
+    # Get application if provided in query params
+    application_id = request.GET.get('application')
+    application = None
+    if application_id:
+        application = get_object_or_404(ClientApplication, pk=application_id)
+    
+    if request.method == 'POST':
+        form = InspectionReportForm(request.POST)
+        if form.is_valid():
+            inspection = form.save(commit=False)
+            inspection.inspector = request.user
+            if application:
+                inspection.client_application = application
+                # Update application status to in_progress
+                application.status = 'in_progress'
+                application.save()
+            inspection.save()
+            
+            messages.success(request, 'Inspection report created successfully.')
+            return redirect('inspections:inspection_detail', pk=inspection.pk)
+    else:
+        # Pre-populate form with application data if available
+        initial_data = {}
+        if application:
+            initial_data.update({
+                'consumer_name': application.customer.full_name if application.customer else '',
+                'property_supplied': application.property_address or '',
+                'property_owner_name': application.owner_name or '',
+                'property_owner_address': application.owner_address or '',
+                'contractor': application.contractor.business_name if application.contractor else '',
+                'contractor_address': application.contractor.address if application.contractor else '',
+            })
+        form = InspectionReportForm(initial=initial_data)
+    
+    context = {
+        'form': form,
+        'application': application,
+    }
+    return render(request, 'inspections/inspection_form.html', context)
+
+
 # E6 CERTIFICATE VIEWS
 @login_required
 def e6_certificate_list(request):
@@ -592,6 +636,14 @@ def assignment_create(request):
             return redirect('inspections:assignment_list')
     else:
         form = ApplicationAssignmentForm()
+        # Pre-select application if provided in URL parameter
+        application_id = request.GET.get('application')
+        if application_id:
+            try:
+                application = get_object_or_404(ClientApplication, pk=application_id)
+                form.initial['application'] = application
+            except:
+                pass  # If invalid application ID, just ignore
     
     context = {
         'form': form,

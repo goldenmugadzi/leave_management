@@ -1,0 +1,87 @@
+{% extends "fault_locator/base.html" %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <div class="max-w-3xl mx-auto bg-white p-6 rounded-lg shadow-md">
+        <h1 class="text-2xl font-bold text-gray-800 mb-4">{{ page_title }}</h1>
+        
+        <form method="post" id="team-form">
+            {% csrf_token %}
+            
+            <div class="mb-4">
+                <label for="{{ form.name.id_for_label }}" class="block text-sm font-medium text-gray-700">{{ form.name.label }}</label>
+                {{ form.name }}
+                {% if form.name.help_text %}
+                    <p class="mt-2 text-sm text-gray-500">{{ form.name.help_text }}</p>
+                {% endif %}
+                {% for error in form.name.errors %}
+                    <p class="mt-2 text-sm text-red-600">{{ error }}</p>
+                {% endfor %}
+            </div>
+
+            <div class="mb-4">
+                <label for="{{ form.members.id_for_label }}" class="block text-sm font-medium text-gray-700">{{ form.members.label }}</label>
+                {{ form.members }}
+                {% if form.members.help_text %}
+                    <p class="mt-2 text-sm text-gray-500">{{ form.members.help_text }}</p>
+                {% endif %}
+                {% for error in form.members.errors %}
+                    <p class="mt-2 text-sm text-red-600">{{ error }}</p>
+                {% endfor %}
+            </div>
+
+            <div class="mb-4">
+                <label for="{{ form.team_leader.id_for_label }}" class="block text-sm font-medium text-gray-700">{{ form.team_leader.label }}</label>
+                {{ form.team_leader }}
+                <p class="mt-2 text-sm text-gray-500">
+                    Select a team leader from the members. If no leader is chosen, the first member added will be assigned as the leader.
+                </p>
+                {% for error in form.team_leader.errors %}
+                    <p class="mt-2 text-sm text-red-600">{{ error }}</p>
+                {% endfor %}
+            </div>
+
+            <div class="flex justify-end space-x-4 mt-6">
+                <a href="{% url 'fault_locator:team_overview' %}" class="px-4 py-2 bg-gray-300 text-gray-800 rounded-md hover:bg-gray-400">Cancel</a>
+                <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">Save Team</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const membersSelect = document.getElementById('{{ form.members.id_for_label }}');
+    const leaderSelect = document.getElementById('{{ form.team_leader.id_for_label }}');
+    
+    function updateLeaderOptions() {
+        const selectedMembers = Array.from(membersSelect.selectedOptions).map(option => ({
+            value: option.value,
+            text: option.text
+        }));
+        
+        const currentLeader = leaderSelect.value;
+        
+        // Clear existing options
+        leaderSelect.innerHTML = '<option value="">-- Select a Leader --</option>';
+        
+        // Add selected members as options
+        selectedMembers.forEach(member => {
+            const option = new Option(member.text, member.value, false, member.value === currentLeader);
+            leaderSelect.add(option);
+        });
+    }
+    
+    // Initial update
+    if (membersSelect) {
+        updateLeaderOptions();
+    }
+
+    // Update on change
+    $(membersSelect).on('change', updateLeaderOptions);
+});
+</script>
+{% endblock %}
+{% endblock %}

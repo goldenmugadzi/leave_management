@@ -2,6 +2,7 @@ from django.contrib import messages
 from django.shortcuts import render, redirect, get_object_or_404
 from .forms import LeaveRequestForm, LeaveTypesForm,  LeaveRequestFullForm
 from django.http import JsonResponse
+from approve.views import intiate
 from django.db.models import Q
 from .models import LeaveRequest, LeaveTypes
 from it.users.models import *
@@ -10,11 +11,23 @@ from django.http import JsonResponse, Http404
 from django.db import transaction
 from django.utils import timezone
 
+from approve.views import (
+    intiate,
+    approve_step,
+    get_my_roles_for_apps,
+    send_notification,
+    allowed_to_approve,
+    approvers
+)
+from approve.models import Step
+from approve.forms import ApprovalForm
+
 def leave_create(request):
     if request.method == 'POST':
         form = LeaveRequestForm(request.POST, request.FILES)  
         if form.is_valid():
             leave = form.save(commit=False)
+            leave.process = intiate(request, 'leave management')
             user_profile = request.user
 
             leave.user = user_profile
@@ -42,7 +55,7 @@ def leave_create(request):
             leave_types = LeaveTypes.objects.filter(user=user).first()
             if not leave_types:
                 messages.error(request, "Your leave balances are not set up. Please contact HR.")
-                return redirect('leave_types')
+                return redirect('leave_management:leave_types')
 
             days = leave.number_of_days or 0
             leave_type_map = {
@@ -65,7 +78,7 @@ def leave_create(request):
                 if leave.type_of_leave == 'occassional leave':
                     if days > 3:
                         messages.error(request, "You can only apply for a maximum of 3 days per occasional leave application.")
-                        return redirect('leave_types')
+                        return redirect('leave_management:leave_types')
                     
                     year = timezone.now().year
                     taken_this_year = LeaveRequest.objects.filter(
@@ -75,12 +88,12 @@ def leave_create(request):
                     ).aggregate(models.Sum('number_of_days'))['number_of_days__sum'] or 0
                     if taken_this_year + days > 12:
                         messages.error(request, f"You cannot exceed 12 days of occasional leave per year. Already taken: {taken_this_year}, Requested: {days}")
-                        return redirect('leave_types')
+                        return redirect('leave_management:leave_types')
                 # --- End occasional leave rule ---
 
                 if current < days:
                     messages.error(request, f"You do not have enough {leave.type_of_leave} days. Available: {current}, Requested: {days}")
-                    return redirect('leave_types')
+                    return redirect('leave_management:leave_types')
 
                 # Deduct days
                 setattr(leave_types, leave_type_field, max(current - days, 0))
@@ -88,7 +101,7 @@ def leave_create(request):
 
             leave.save()
             messages.success(request, "Leave request submitted successfully.")
-            return redirect('leave_types')
+            return redirect('leave_management:leave_dashboard')
     else:
         form = LeaveRequestForm()
     user_profile = request.user
@@ -127,7 +140,6 @@ def leave_request_datatable(request):
         qs = qs.filter(
             Q(user__user__username__icontains=search_value) |
             Q(type_of_leave__icontains=search_value) |
-            Q(gender__icontains=search_value) |
             Q(position__designation__icontains=search_value) |
             Q(department__section__icontains=search_value) |
             Q(region__region__icontains=search_value)
@@ -167,14 +179,12 @@ def leave_request_datatable(request):
             "ecnumber": leave.ecnumber,
             "user": user_str,
             "type_of_leave": leave.type_of_leave,
-            "gender": leave.gender,
             "position": str(leave.position) if leave.position else "",
             "start_date": leave.start_date.strftime('%Y-%m-%d') if leave.start_date else "",
             "end_date": leave.end_date.strftime('%Y-%m-%d') if leave.end_date else "",
             "department": str(leave.department) if leave.department else "",
             "number_of_days": leave.number_of_days,
             "region": str(leave.region) if leave.region else "",
-            "status": leave.status,
             "attachments": attachments_url,
         })
 
@@ -219,7 +229,7 @@ def create_leave_types(request):
         form = LeaveTypesForm(request.POST)
         if form.is_valid():
             form.save()
-            return redirect('leave_types') 
+            return redirect('leave_management:leave_types') 
     else:
         form = LeaveTypesForm()
     return render(request, 'leave_system/create.html', {'form': form})
@@ -338,11 +348,34 @@ def accumulate_vacation_leave_view(request, pk, employee_type, months=1):
     leave_types = get_object_or_404(LeaveTypes, pk=pk)
     leave_types.accumulate_vacation_leave(employee_type, months)
     messages.success(request, f"Vacation leave accumulated for {employee_type} by {months} month(s).")
-    return redirect('leave_types')
+    return redirect('leave_management:leave_types')
 
 def approve_leave (request,pk):
     leave = get_object_or_404(LeaveRequest,pk=pk)
-    return render(request, 'leave_system/awaiting_my_action.html', {'leave': leave})
+    approvalForm = None
+    to = None
+    completed = False
+    user_roles = request.user.roles.all()
+
+    if not leave.process.approval_set.filter(approved="Rejected").exists():  # and allowed:
+        try:
+            last_approved = leave.process.approval_set.last().step.step
+        except AttributeError:
+            last_approved = 0
+        next_step = last_approved + 1
+        try:
+            newStep = Step.objects.get(
+                step=next_step, workflow=leave.process.workflow, approver__in=user_roles
+            )
+            approvalForm = ApprovalForm
+            to = newStep.to
+        except Step.DoesNotExist:
+            pass
+        completed = leave.process.workflow.step_set.last().step == last_approved
+   
+    approved_steps = leave.process.approval_set.all().values_list('step__step', flat=True)
+    
+    return render(request, 'leave_system/approve_leave.html', {'leave': leave,'approved_steps': approved_steps, "approvalForm": approvalForm, "completed": completed,"to": to, })
 
 def update_leave_request(request, id):
     leave_request = LeaveRequest.objects.filter(id=id).first()

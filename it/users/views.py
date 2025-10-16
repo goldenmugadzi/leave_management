@@ -31,13 +31,15 @@ from approve.decorators import allowed_roles
 from django.core.paginator import Paginator
 from decouple import config
 from django.forms import inlineformset_factory
-from .forms import ResponsibilitiesForm
+from .forms import ResponsibilitiesForm, RoleDelegationForm, DelegationApprovalForm, DelegationSearchForm
 from django.template.loader import get_template
 import logging
 import traceback
 from django.db.models import Count
 from django.http import HttpResponse
 from rest_framework.response import Response
+
+logger = logging.getLogger(__name__)
 
 BASE_URL = "http://" + config('HOST') + ":" + config('PORT')
 APP_NAME = "users"
@@ -1564,3 +1566,538 @@ def roles_modal(request):
     return JsonResponse({"form": form.as_p(), "regioncc": regioncc_list,
                          "app": {'fullname': Application.objects.get(id=appid).fullname,
                                  'id': Application.objects.get(id=appid).id}}, safe=False)
+
+
+# ==================== ROLE DELEGATION VIEWS ====================
+
+@login_required
+def delegation_dashboard(request):
+    """Main dashboard for role delegation management"""
+    user = request.user
+    user_title = user.get_full_name()
+    user_groups = list(user.groups.values_list('name', flat=True))
+    
+    # Debug: Log user roles for troubleshooting
+    logger.info(f"User {user.username} roles:")
+    for role in user.roles.all():
+        logger.info(f"  - Role: {role.role}, Name: {role.name}, Application: {role.application}")
+    
+    logger.info(f"User {user.username} can_approve_delegations: {user.can_approve_delegations()}")
+    logger.info(f"User {user.username} can_delegate_roles: {user.can_delegate_roles()}")
+    
+    # Get delegation statistics
+    stats = {
+        'total_delegations': RoleDelegation.objects.filter(delegator=user).count(),
+        'active_delegations': RoleDelegation.objects.filter(
+            delegator=user, 
+            status='ACTIVE',
+            is_active=True
+        ).count(),
+        'pending_delegations': RoleDelegation.objects.filter(
+            delegatee=user,
+            status='PENDING'
+        ).count(),
+        'received_delegations': RoleDelegation.objects.filter(
+            delegatee=user,
+            status='ACTIVE',
+            is_active=True
+        ).count(),
+    }
+    
+    # Get recent delegations
+    recent_delegations = RoleDelegation.objects.filter(
+        Q(delegator=user) | Q(delegatee=user)
+    ).order_by('-created_at')[:10]
+    
+    # Get pending approvals (if user can approve)
+    pending_approvals = []
+    if user.can_approve_delegations():
+        pending_approvals = RoleDelegation.objects.filter(
+            status='PENDING'
+        ).order_by('-created_at')[:5]
+    
+    context = {
+        'user_title': user_title,
+        'user_groups': user_groups,
+        'stats': stats,
+        'recent_delegations': recent_delegations,
+        'pending_approvals': pending_approvals,
+        'can_delegate': user.can_delegate_roles(),
+        'can_approve': user.can_approve_delegations(),
+        # Debug info
+        'user_roles': user.roles.all(),
+        'debug_can_approve': user.can_approve_delegations(),
+    }
+    
+    return render(request, 'users/delegation_dashboard.html', context)
+
+
+@login_required
+def create_delegation(request):
+    """Create a new role delegation"""
+    user = request.user
+    
+    # Check if user can create delegations (either for themselves or for others)
+    can_delegate_for_self = user.can_delegate_roles()
+    can_delegate_for_others = user.can_approve_delegations()
+    
+    if not (can_delegate_for_self or can_delegate_for_others):
+        messages.error(request, "You don't have permission to create delegations.")
+        return redirect('delegation_dashboard')
+    
+    # Determine if delegator selection should be allowed
+    allow_delegator_selection = can_delegate_for_others and request.GET.get('admin_mode') == 'true'
+    
+    if request.method == 'POST':
+        # Determine the actual delegator
+        if allow_delegator_selection and 'delegator' in request.POST:
+            delegator_id = request.POST.get('delegator')
+            if delegator_id:
+                try:
+                    actual_delegator = UserProfile.objects.get(id=delegator_id)
+                except UserProfile.DoesNotExist:
+                    messages.error(request, "Selected delegator not found.")
+                    return redirect('create_delegation')
+            else:
+                actual_delegator = user
+        else:
+            actual_delegator = user
+        
+        form = RoleDelegationForm(
+            request.POST, 
+            delegator=actual_delegator,
+            current_user=user,
+            allow_delegator_selection=allow_delegator_selection
+        )
+        
+        if form.is_valid():
+            delegation = form.save(commit=False)
+            delegation.delegator = actual_delegator
+            delegation.created_by = user
+            delegation.save()
+            
+            # Handle role and application selection from checkboxes
+            selected_roles = request.POST.getlist('roles')
+            selected_applications = request.POST.getlist('applications')
+            
+            if selected_roles:
+                delegation.roles.set(selected_roles)
+            if selected_applications:
+                delegation.applications.set(selected_applications)
+            
+            # Create notification for delegatee
+            DelegationNotification.objects.create(
+                delegation=delegation,
+                recipient=delegation.delegatee,
+                notification_type='DELEGATION_CREATED',
+                message=f"Role delegation request from {actual_delegator.get_full_name()}"
+            )
+            
+            # Create notification for potential approvers
+            approvers = UserProfile.objects.filter(
+                Q(roles__role__in=['admin', 'administrator'], roles__application='users') | 
+                Q(roles__role='section_head', roles__application='users')
+            ).distinct()
+            
+            for approver in approvers:
+                DelegationNotification.objects.create(
+                    delegation=delegation,
+                    recipient=approver,
+                    notification_type='DELEGATION_CREATED',
+                    message=f"New delegation request requires approval"
+                )
+            
+            messages.success(request, "Delegation request created successfully and sent for approval.")
+            return redirect('delegation_dashboard')
+        else:
+            # Form is invalid, render the form again with errors
+            context = {
+                'form': form,
+                'user_title': user.get_full_name(),
+                'user_groups': list(user.groups.values_list('name', flat=True)),
+                'allow_delegator_selection': allow_delegator_selection,
+                'can_delegate_for_others': can_delegate_for_others,
+            }
+            return render(request, 'users/create_delegation.html', context)
+    else:
+        form = RoleDelegationForm(
+            delegator=user,
+            current_user=user,
+            allow_delegator_selection=allow_delegator_selection
+        )
+        
+        # Debug: Log form information
+        logger.info(f"Creating delegation form for user {user.username}")
+        logger.info(f"User has {user.roles.count()} roles")
+        logger.info(f"Form has {len(form.fields)} fields: {list(form.fields.keys())}")
+        
+        context = {
+            'form': form,
+            'user_title': user.get_full_name(),
+            'user_groups': list(user.groups.values_list('name', flat=True)),
+            'allow_delegator_selection': allow_delegator_selection,
+            'can_delegate_for_others': can_delegate_for_others,
+        }
+        
+        return render(request, 'users/create_delegation.html', context)
+
+
+@login_required
+def delegation_list(request):
+    """List all delegations with filtering and search"""
+    user = request.user
+    search_form = DelegationSearchForm(request.GET)
+    
+    # Base queryset
+    delegations = RoleDelegation.objects.all()
+    
+    # Apply filters based on user permissions
+    if not user.can_approve_delegations():
+        # Regular users can only see their own delegations
+        delegations = delegations.filter(
+            Q(delegator=user) | Q(delegatee=user)
+        )
+    
+    # Apply search filters
+    if search_form.is_valid():
+        status = search_form.cleaned_data.get('status')
+        delegation_type = search_form.cleaned_data.get('delegation_type')
+        start_date = search_form.cleaned_data.get('start_date')
+        end_date = search_form.cleaned_data.get('end_date')
+        search = search_form.cleaned_data.get('search')
+        
+        if status:
+            delegations = delegations.filter(status=status)
+        
+        if delegation_type:
+            if delegation_type == 'DELEGATED':
+                delegations = delegations.filter(delegator=user)
+            elif delegation_type == 'RECEIVED':
+                delegations = delegations.filter(delegatee=user)
+            elif delegation_type == 'APPROVED':
+                delegations = delegations.filter(approved_by=user)
+        
+        if start_date:
+            delegations = delegations.filter(start_date__date__gte=start_date)
+        
+        if end_date:
+            delegations = delegations.filter(end_date__date__lte=end_date)
+        
+        if search:
+            delegations = delegations.filter(
+                Q(delegator__username__icontains=search) |
+                Q(delegatee__username__icontains=search) |
+                Q(reason__icontains=search) |
+                Q(roles__name__icontains=search)
+            ).distinct()
+    
+    # Order by creation date
+    delegations = delegations.order_by('-created_at')
+    
+    # Pagination
+    paginator = Paginator(delegations, 20)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    context = {
+        'page_obj': page_obj,
+        'search_form': search_form,
+        'user_title': user.get_full_name(),
+        'user_groups': list(user.groups.values_list('name', flat=True)),
+    }
+    
+    return render(request, 'users/delegation_list.html', context)
+
+
+@login_required
+def delegation_detail(request, delegation_id):
+    """View detailed information about a specific delegation"""
+    user = request.user
+    delegation = get_object_or_404(RoleDelegation, id=delegation_id)
+    
+    # Check permissions
+    if not (delegation.delegator == user or 
+            delegation.delegatee == user or 
+            user.can_approve_delegations()):
+        messages.error(request, "You don't have permission to view this delegation.")
+        return redirect('delegation_dashboard')
+    
+    # Get delegation history
+    notifications = delegation.notifications.all().order_by('-sent_at')
+    
+    context = {
+        'delegation': delegation,
+        'notifications': notifications,
+        'user_title': user.get_full_name(),
+        'user_groups': list(user.groups.values_list('name', flat=True)),
+        'can_approve': user.can_approve_delegations() and delegation.can_be_approved(),
+        'can_cancel': delegation.can_be_cancelled() and (
+            delegation.delegator == user or user.can_approve_delegations()
+        ),
+    }
+    
+    return render(request, 'users/delegation_detail.html', context)
+
+
+@login_required
+def approve_delegation(request, delegation_id):
+    """Approve or reject a delegation"""
+    user = request.user
+    delegation = get_object_or_404(RoleDelegation, id=delegation_id)
+    
+    if not user.can_approve_delegations():
+        messages.error(request, "You don't have permission to approve delegations.")
+        return redirect('delegation_dashboard')
+    
+    if not delegation.can_be_approved():
+        messages.error(request, "This delegation cannot be approved.")
+        return redirect('delegation_detail', delegation_id=delegation_id)
+    
+    if request.method == 'POST':
+        form = DelegationApprovalForm(request.POST)
+        if form.is_valid():
+            action = form.cleaned_data['action']
+            comments = form.cleaned_data['comments']
+            
+            if action == 'APPROVE':
+                if delegation.approve(user):
+                    # Create notifications
+                    DelegationNotification.objects.create(
+                        delegation=delegation,
+                        recipient=delegation.delegator,
+                        notification_type='DELEGATION_APPROVED',
+                        message=f"Your delegation request has been approved by {user.get_full_name()}"
+                    )
+                    
+                    DelegationNotification.objects.create(
+                        delegation=delegation,
+                        recipient=delegation.delegatee,
+                        notification_type='DELEGATION_APPROVED',
+                        message=f"Role delegation approved. You will receive the roles on {delegation.start_date.strftime('%Y-%m-%d %H:%M')}"
+                    )
+                    
+                    messages.success(request, "Delegation approved successfully.")
+                else:
+                    messages.error(request, "Failed to approve delegation.")
+            else:  # REJECT
+                if delegation.reject(comments):
+                    # Create notifications
+                    DelegationNotification.objects.create(
+                        delegation=delegation,
+                        recipient=delegation.delegator,
+                        notification_type='DELEGATION_REJECTED',
+                        message=f"Your delegation request has been rejected by {user.get_full_name()}. Reason: {comments}"
+                    )
+                    
+                    DelegationNotification.objects.create(
+                        delegation=delegation,
+                        recipient=delegation.delegatee,
+                        notification_type='DELEGATION_REJECTED',
+                        message=f"Role delegation rejected. Reason: {comments}"
+                    )
+                    
+                    messages.success(request, "Delegation rejected.")
+                else:
+                    messages.error(request, "Failed to reject delegation.")
+            
+            return redirect('delegation_detail', delegation_id=delegation_id)
+    else:
+        form = DelegationApprovalForm()
+    
+    context = {
+        'form': form,
+        'delegation': delegation,
+        'user_title': user.get_full_name(),
+        'user_groups': list(user.groups.values_list('name', flat=True)),
+    }
+    
+    return render(request, 'users/approve_delegation.html', context)
+
+
+@login_required
+def cancel_delegation(request, delegation_id):
+    """Cancel a delegation"""
+    user = request.user
+    delegation = get_object_or_404(RoleDelegation, id=delegation_id)
+    
+    # Check permissions
+    if not (delegation.delegator == user or user.can_approve_delegations()):
+        messages.error(request, "You don't have permission to cancel this delegation.")
+        return redirect('delegation_dashboard')
+    
+    if not delegation.can_be_cancelled():
+        messages.error(request, "This delegation cannot be cancelled.")
+        return redirect('delegation_detail', delegation_id=delegation_id)
+    
+    if request.method == 'POST':
+        reason = request.POST.get('reason', 'Cancelled by user')
+        
+        if delegation.cancel(reason):
+            # Create notifications
+            DelegationNotification.objects.create(
+                delegation=delegation,
+                recipient=delegation.delegator,
+                notification_type='DELEGATION_CANCELLED',
+                message=f"Delegation cancelled by {user.get_full_name()}. Reason: {reason}"
+            )
+            
+            DelegationNotification.objects.create(
+                delegation=delegation,
+                recipient=delegation.delegatee,
+                notification_type='DELEGATION_CANCELLED',
+                message=f"Delegation cancelled. Reason: {reason}"
+            )
+            
+            messages.success(request, "Delegation cancelled successfully.")
+        else:
+            messages.error(request, "Failed to cancel delegation.")
+        
+        return redirect('delegation_detail', delegation_id=delegation_id)
+    
+    context = {
+        'delegation': delegation,
+        'user_title': user.get_full_name(),
+        'user_groups': list(user.groups.values_list('name', flat=True)),
+    }
+    
+    return render(request, 'users/cancel_delegation.html', context)
+
+
+@login_required
+def delegation_notifications(request):
+    """View delegation notifications"""
+    user = request.user
+    notifications = DelegationNotification.objects.filter(
+        recipient=user
+    ).order_by('-sent_at')
+    
+    # Mark notifications as read
+    notifications.update(is_read=True)
+    
+    # Pagination
+    paginator = Paginator(notifications, 20)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    context = {
+        'page_obj': page_obj,
+        'user_title': user.get_full_name(),
+        'user_groups': list(user.groups.values_list('name', flat=True)),
+    }
+    
+    return render(request, 'users/delegation_notifications.html', context)
+
+
+@login_required
+def delegation_calendar(request):
+    """Calendar view of delegations"""
+    user = request.user
+    
+    # Get delegations for calendar
+    delegations = RoleDelegation.objects.filter(
+        Q(delegator=user) | Q(delegatee=user)
+    ).order_by('start_date')
+    
+    # Convert to calendar format
+    calendar_events = []
+    for delegation in delegations:
+        calendar_events.append({
+            'id': delegation.id,
+            'title': f"{delegation.delegator.username} → {delegation.delegatee.username}",
+            'start': delegation.start_date.isoformat(),
+            'end': delegation.end_date.isoformat(),
+            'status': delegation.status,
+            'color': {
+                'PENDING': '#ffc107',
+                'APPROVED': '#17a2b8',
+                'ACTIVE': '#28a745',
+                'EXPIRED': '#6c757d',
+                'CANCELLED': '#dc3545',
+                'REJECTED': '#dc3545',
+            }.get(delegation.status, '#6c757d')
+        })
+    
+    context = {
+        'calendar_events': json.dumps(calendar_events),
+        'user_title': user.get_full_name(),
+        'user_groups': list(user.groups.values_list('name', flat=True)),
+    }
+    
+    return render(request, 'users/delegation_calendar.html', context)
+
+
+@login_required
+def get_delegation_roles(request):
+    """Get roles available for delegation based on selected delegatee and delegator"""
+    try:
+        if request.method == 'GET':
+            delegatee_id = request.GET.get('delegatee_id')
+            delegator_id = request.GET.get('delegator_id')  # New parameter for delegator selection
+            
+            if not delegatee_id:
+                return JsonResponse({'error': 'Delegatee ID required'}, status=400)
+            
+            try:
+                delegatee = UserProfile.objects.get(id=delegatee_id)
+                
+                # Determine the delegator
+                if delegator_id:
+                    delegator = UserProfile.objects.get(id=delegator_id)
+                else:
+                    delegator = request.user
+                
+                logger.info(f"Getting roles for delegation: delegator={delegator.username}, delegatee={delegatee.username}")
+                
+                # Get roles that the delegator has and can delegate
+                delegator_roles = delegator.roles.all()
+                logger.info(f"Delegator has {delegator_roles.count()} roles")
+                
+                # Check if delegator has any roles
+                if delegator_roles.count() == 0:
+                    logger.warning(f"Delegator {delegator.username} has no roles to delegate")
+                    return JsonResponse({
+                        'error': f'{delegator.get_full_name()} doesn\'t have any roles to delegate',
+                        'roles_by_app': {}
+                    })
+                
+                # Group roles by application
+                roles_by_app = {}
+                for role in delegator_roles:
+                    app = role.app_id
+                    app_id = app.id if app else 'unknown'
+                    app_name = app.fullname if app else 'Unknown'
+                    
+                    if app_id not in roles_by_app:
+                        roles_by_app[app_id] = {
+                            'app_id': app_id,
+                            'app_name': app_name,
+                            'roles': []
+                        }
+                    
+                    roles_by_app[app_id]['roles'].append({
+                        'id': role.id,
+                        'name': role.name,
+                        'description': role.description or '',
+                        'app_name': app_name
+                    })
+                
+                logger.info(f"Grouped roles into {len(roles_by_app)} applications")
+                
+                return JsonResponse({
+                    'roles_by_app': roles_by_app,
+                    'delegatee_name': delegatee.get_full_name(),
+                    'delegator_name': delegator.get_full_name()
+                })
+                
+            except UserProfile.DoesNotExist:
+                logger.error(f"User with ID {delegatee_id or delegator_id} not found")
+                return JsonResponse({'error': 'User not found'}, status=404)
+            except Exception as e:
+                logger.error(f"Error getting delegation roles: {str(e)}")
+                return JsonResponse({'error': f'Server error: {str(e)}'}, status=500)
+        
+        return JsonResponse({'error': 'Invalid request method'}, status=405)
+        
+    except Exception as e:
+        logger.error(f"Unexpected error in get_delegation_roles: {str(e)}")
+        return JsonResponse({'error': 'Internal server error'}, status=500)

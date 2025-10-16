@@ -1,0 +1,605 @@
+{% extends 'admin_layout.html' %}
+{% load widget_tweaks %}
+
+{% block title %}{{ action }} Maintenance Record{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+    <!-- Header -->
+    <div class="bg-white rounded-lg shadow-lg overflow-hidden mb-8">
+        <div class="bg-gray-50 px-6 py-4 border-b border-gray-200">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                    <h3 class="text-xl font-semibold text-gray-900 flex items-center">
+                        <i class="fas fa-clipboard-check text-blue-600 mr-3"></i>
+                        {{ action }} Maintenance Record
+                        {% if record %}
+                            <span class="text-gray-600 ml-2">- {{ record.report_no }}</span>
+                        {% endif %}
+                        {% if quick_mode %}
+                            <span class="ml-3 inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-800">Quick Mode</span>
+                        {% endif %}
+                    </h3>
+                </div>
+                <div class="mt-3 sm:mt-0 flex flex-wrap gap-2">
+                    {% if not quick_mode and action == 'Create' %}
+                    <a href="?quick=1{% if circuit_breaker_id %}&circuit_breaker={{ circuit_breaker_id }}{% endif %}" 
+                       class="bg-blue-100 hover:bg-blue-200 text-blue-700 px-4 py-2 rounded-md text-sm font-medium transition-colors duration-200 inline-flex items-center">
+                        <i class="fas fa-bolt mr-2"></i>Quick Mode
+                    </a>
+                    {% elif quick_mode %}
+                    <a href="?{% if circuit_breaker_id %}circuit_breaker={{ circuit_breaker_id }}{% endif %}" 
+                       class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-md text-sm font-medium transition-colors duration-200 inline-flex items-center">
+                        <i class="fas fa-cogs mr-2"></i>Full Form
+                    </a>
+                    {% endif %}
+                    <a href="{% if record %}{% url 'circuit_breaker_maintenance:record_detail' record.pk %}{% else %}{% url 'circuit_breaker_maintenance:record_list' %}{% endif %}" 
+                       class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors duration-200 inline-flex items-center">
+                        <i class="fas fa-arrow-left mr-2"></i>Back
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Circuit Breaker Info -->
+    {% if circuit_breaker %}
+    <div class="bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-200 rounded-lg p-6 mb-8 border-l-4 border-l-blue-500">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between">
+            <div>
+                <h6 class="text-lg font-semibold text-blue-900 mb-2 flex items-center">
+                    <i class="fas fa-bolt mr-2 text-blue-600"></i>
+                    Creating maintenance record for: <strong class="text-blue-800">{{ circuit_breaker.breaker_number }}</strong>
+                </h6>
+                <p class="text-blue-700">
+                    {{ circuit_breaker.sub_station }} | {{ circuit_breaker.make_type }} | {{ circuit_breaker.voltage_capacity }}
+                </p>
+            </div>
+            <div class="mt-4 md:mt-0">
+                <a href="{% url 'circuit_breaker_maintenance:circuit_breaker_detail' circuit_breaker.pk %}" 
+                   class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium transition-colors duration-200 inline-flex items-center">
+                    <i class="fas fa-eye mr-2"></i>View Circuit Breaker
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+            <!-- Warning for editing completed records -->
+            {% if action == 'Edit' and record.status in 'approved,completed' %}
+            <div class="alert alert-warning">
+                <i class="fas fa-exclamation-triangle"></i>
+                <strong>Warning:</strong> This maintenance record has been {{ record.get_status_display|lower }}. 
+                Changes should be made carefully and may require supervisor approval.
+            </div>
+            {% endif %}
+
+            <!-- Form -->
+            <form method="post" novalidate>
+                {% csrf_token %}
+                
+                <div class="card">
+                    <div class="card-body">
+                        {% if not quick_mode %}
+                        <!-- Basic Information Section -->
+                        <div class="form-section">
+                            <h5><i class="fas fa-info-circle me-2"></i>Basic Information</h5>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="{{ form.circuit_breaker.id_for_label }}" class="form-label">
+                                            <span class="required-asterisk">*</span> {{ form.circuit_breaker.label }}
+                                        </label>
+                                        {{ form.circuit_breaker|add_class:"form-control" }}
+                                        {% if form.circuit_breaker.errors %}
+                                            <div class="text-danger small">{{ form.circuit_breaker.errors.0 }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="{{ form.date.id_for_label }}" class="form-label">
+                                            <span class="required-asterisk">*</span> {{ form.date.label }}
+                                        </label>
+                                        {{ form.date|add_class:"form-control" }}
+                                        {% if form.date.errors %}
+                                            <div class="text-danger small">{{ form.date.errors.0 }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="{{ form.status.id_for_label }}" class="form-label">
+                                            {{ form.status.label }}
+                                        </label>
+                                        {{ form.status|add_class:"form-control" }}
+                                        {% if form.status.errors %}
+                                            <div class="text-danger small">{{ form.status.errors.0 }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="{{ form.priority.id_for_label }}" class="form-label">
+                                            {{ form.priority.label }}
+                                        </label>
+                                        {{ form.priority|add_class:"form-control" }}
+                                        {% if form.priority.errors %}
+                                            <div class="text-danger small">{{ form.priority.errors.0 }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="{{ form.maintenance_carried_out_by.id_for_label }}" class="form-label">
+                                            {{ form.maintenance_carried_out_by.label }}
+                                        </label>
+                                        {{ form.maintenance_carried_out_by|add_class:"form-control" }}
+                                        {% if form.maintenance_carried_out_by.errors %}
+                                            <div class="text-danger small">{{ form.maintenance_carried_out_by.errors.0 }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="{{ form.weather_conditions.id_for_label }}" class="form-label">
+                                            {{ form.weather_conditions.label }}
+                                        </label>
+                                        {{ form.weather_conditions|add_class:"form-control" }}
+                                        {% if form.weather_conditions.errors %}
+                                            <div class="text-danger small">{{ form.weather_conditions.errors.0 }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Work Authorization Section -->
+                        <div class="form-section">
+                            <h5><i class="fas fa-id-badge me-2"></i>Work Authorization & Permits</h5>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <label for="{{ form.permit_to_work_number.id_for_label }}" class="form-label">
+                                            {{ form.permit_to_work_number.label }}
+                                        </label>
+                                        {{ form.permit_to_work_number|add_class:"form-control" }}
+                                        {% if form.permit_to_work_number.errors %}
+                                            <div class="text-danger small">{{ form.permit_to_work_number.errors.0 }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <label for="{{ form.permit_issued_date.id_for_label }}" class="form-label">
+                                            {{ form.permit_issued_date.label }}
+                                        </label>
+                                        {{ form.permit_issued_date|add_class:"form-control" }}
+                                        {% if form.permit_issued_date.errors %}
+                                            <div class="text-danger small">{{ form.permit_issued_date.errors.0 }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <label for="{{ form.permit_expires_date.id_for_label }}" class="form-label">
+                                            {{ form.permit_expires_date.label }}
+                                        </label>
+                                        {{ form.permit_expires_date|add_class:"form-control" }}
+                                        {% if form.permit_expires_date.errors %}
+                                            <div class="text-danger small">{{ form.permit_expires_date.errors.0 }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="{{ form.sanction_for_test_number.id_for_label }}" class="form-label">
+                                            {{ form.sanction_for_test_number.label }}
+                                        </label>
+                                        {{ form.sanction_for_test_number|add_class:"form-control" }}
+                                        {% if form.sanction_for_test_number.errors %}
+                                            <div class="text-danger small">{{ form.sanction_for_test_number.errors.0 }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="{{ form.limitation_of_access_number.id_for_label }}" class="form-label">
+                                            {{ form.limitation_of_access_number.label }}
+                                        </label>
+                                        {{ form.limitation_of_access_number|add_class:"form-control" }}
+                                        {% if form.limitation_of_access_number.errors %}
+                                            <div class="text-danger small">{{ form.limitation_of_access_number.errors.0 }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Technical Data Section -->
+                        <div class="form-section">
+                            <h5><i class="fas fa-clipboard-list me-2"></i>Technical Data & Tests</h5>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="{{ form.general_checks.id_for_label }}" class="form-label">
+                                            {{ form.general_checks.label }}
+                                        </label>
+                                        {{ form.general_checks|add_class:"form-control" }}
+                                        {% if form.general_checks.errors %}
+                                            <div class="text-danger small">{{ form.general_checks.errors.0 }}</div>
+                                        {% endif %}
+                                        <div class="json-help">
+                                            <i class="fas fa-lightbulb"></i>
+                                            <strong>💡 Easy Input Options:</strong>
+                                            <ul class="small mt-2 mb-2">
+                                                <li><strong>Simple Text:</strong> Just type normally - each line becomes a check item</li>
+                                                <li><strong>List Items:</strong> Separate with commas: "Battery check, Control wiring, SF6 pressure"</li>
+                                                <li><strong>Advanced JSON:</strong> ["Visual inspection", "Function test", "Documentation check"]</li>
+                                            </ul>
+                                            <small class="text-muted">
+                                                <strong>Example:</strong><br>
+                                                "Visual inspection completed<br>
+                                                Control circuits tested<br>
+                                                SF6 pressure checked"<br>
+                                                <em>← This will work perfectly!</em>
+                                            </small>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="{{ form.test_results.id_for_label }}" class="form-label">
+                                            {{ form.test_results.label }}
+                                        </label>
+                                        {{ form.test_results|add_class:"form-control" }}
+                                        {% if form.test_results.errors %}
+                                            <div class="text-danger small">{{ form.test_results.errors.0 }}</div>
+                                        {% endif %}
+                                        <div class="json-help">
+                                            <i class="fas fa-lightbulb"></i>
+                                            <strong>💡 Easy Input Options:</strong>
+                                            <ul class="small mt-2 mb-2">
+                                                <li><strong>Simple Notes:</strong> Just describe your test results normally</li>
+                                                <li><strong>Key-Value Format:</strong> "Voltage: 132kV" (one per line)</li>
+                                                <li><strong>Advanced JSON:</strong> {"voltage": "132kV", "current": "400A"}</li>
+                                            </ul>
+                                            <small class="text-muted">
+                                                <strong>Example:</strong><br>
+                                                "Voltage: 132kV<br>
+                                                Current: 400A<br>
+                                                All tests passed"<br>
+                                                <em>← This will work perfectly!</em>
+                                            </small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Scheduling Section -->
+                        <div class="form-section">
+                            <h5><i class="fas fa-calendar-alt me-2"></i>Scheduling & Follow-up</h5>
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <div class="form-check">
+                                            {{ form.follow_up_required|add_class:"form-check-input" }}
+                                            <label class="form-check-label" for="{{ form.follow_up_required.id_for_label }}">
+                                                {{ form.follow_up_required.label }}
+                                            </label>
+                                        </div>
+                                        {% if form.follow_up_required.errors %}
+                                            <div class="text-danger small">{{ form.follow_up_required.errors.0 }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <label for="{{ form.follow_up_date.id_for_label }}" class="form-label">
+                                            {{ form.follow_up_date.label }}
+                                        </label>
+                                        {{ form.follow_up_date|add_class:"form-control" }}
+                                        {% if form.follow_up_date.errors %}
+                                            <div class="text-danger small">{{ form.follow_up_date.errors.0 }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <label for="{{ form.maintenance_interval_months.id_for_label }}" class="form-label">
+                                            {{ form.maintenance_interval_months.label }}
+                                        </label>
+                                        {{ form.maintenance_interval_months|add_class:"form-control" }}
+                                        {% if form.maintenance_interval_months.errors %}
+                                            <div class="text-danger small">{{ form.maintenance_interval_months.errors.0 }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="{{ form.next_maintenance_due.id_for_label }}" class="form-label">
+                                            {{ form.next_maintenance_due.label }}
+                                        </label>
+                                        {{ form.next_maintenance_due|add_class:"form-control" }}
+                                        {% if form.next_maintenance_due.errors %}
+                                            <div class="text-danger small">{{ form.next_maintenance_due.errors.0 }}</div>
+                                        {% endif %}
+                                        <div class="json-help">
+                                            <i class="fas fa-info-circle"></i>
+                                            Will be auto-calculated if left blank
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="{{ form.remarks.id_for_label }}" class="form-label">
+                                            {{ form.remarks.label }}
+                                        </label>
+                                        {{ form.remarks|add_class:"form-control" }}
+                                        {% if form.remarks.errors %}
+                                            <div class="text-danger small">{{ form.remarks.errors.0 }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {% else %}
+                        <!-- Quick Mode Form -->
+                        <div class="form-section">
+                            <h5><i class="fas fa-bolt me-2"></i>Quick Maintenance Record</h5>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="{{ form.circuit_breaker.id_for_label }}" class="form-label">
+                                            <span class="required-asterisk">*</span> {{ form.circuit_breaker.label }}
+                                        </label>
+                                        {{ form.circuit_breaker|add_class:"form-control" }}
+                                        {% if form.circuit_breaker.errors %}
+                                            <div class="text-danger small">{{ form.circuit_breaker.errors.0 }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="{{ form.date.id_for_label }}" class="form-label">
+                                            <span class="required-asterisk">*</span> {{ form.date.label }}
+                                        </label>
+                                        {{ form.date|add_class:"form-control" }}
+                                        {% if form.date.errors %}
+                                            <div class="text-danger small">{{ form.date.errors.0 }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="{{ form.status.id_for_label }}" class="form-label">
+                                            {{ form.status.label }}
+                                        </label>
+                                        {{ form.status|add_class:"form-control" }}
+                                        {% if form.status.errors %}
+                                            <div class="text-danger small">{{ form.status.errors.0 }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="{{ form.priority.id_for_label }}" class="form-label">
+                                            {{ form.priority.label }}
+                                        </label>
+                                        {{ form.priority|add_class:"form-control" }}
+                                        {% if form.priority.errors %}
+                                            <div class="text-danger small">{{ form.priority.errors.0 }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-12">
+                                    <div class="mb-3">
+                                        <label for="{{ form.maintenance_carried_out_by.id_for_label }}" class="form-label">
+                                            {{ form.maintenance_carried_out_by.label }}
+                                        </label>
+                                        {{ form.maintenance_carried_out_by|add_class:"form-control" }}
+                                        {% if form.maintenance_carried_out_by.errors %}
+                                            <div class="text-danger small">{{ form.maintenance_carried_out_by.errors.0 }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-12">
+                                    <div class="mb-3">
+                                        <label for="{{ form.remarks.id_for_label }}" class="form-label">
+                                            {{ form.remarks.label }}
+                                        </label>
+                                        {{ form.remarks|add_class:"form-control" }}
+                                        {% if form.remarks.errors %}
+                                            <div class="text-danger small">{{ form.remarks.errors.0 }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Form Actions -->
+                    <div class="card-footer">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <div class="btn-group">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-save"></i> 
+                                        {% if action == 'Create' %}Create Record{% else %}Save Changes{% endif %}
+                                    </button>
+                                    
+                                    {% if action == 'Create' %}
+                                    <button type="submit" name="save_and_add_another" class="btn btn-outline-primary">
+                                        <i class="fas fa-plus"></i> Save & Add Another
+                                    </button>
+                                    <button type="submit" name="save_and_view_cb" class="btn btn-outline-success">
+                                        <i class="fas fa-bolt"></i> Save & View Circuit Breaker
+                                    </button>
+                                    {% elif action == 'Edit' %}
+                                    <button type="submit" name="save_and_continue" class="btn btn-outline-primary">
+                                        <i class="fas fa-save"></i> Save & Continue Editing
+                                    </button>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md-4 text-end">
+                                <a href="{% if record %}{% url 'circuit_breaker_maintenance:record_detail' record.pk %}{% elif circuit_breaker %}{% url 'circuit_breaker_maintenance:circuit_breaker_detail' circuit_breaker.pk %}{% else %}{% url 'circuit_breaker_maintenance:record_list' %}{% endif %}" 
+                                   class="btn btn-secondary">
+                                    <i class="fas fa-times"></i> Cancel
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </form>
+
+            <!-- Help Section -->
+            {% if action == 'Create' and recent_records %}
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-history me-2"></i>Recent Maintenance Records
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% for recent_record in recent_records %}
+                        <div class="col-md-6 mb-2">
+                            <div class="record-preview">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <strong>{{ recent_record.report_no }}</strong><br>
+                                        <small class="text-muted">
+                                            {{ recent_record.circuit_breaker.breaker_number }} | 
+                                            {{ recent_record.date|date:"d M Y" }}
+                                        </small>
+                                    </div>
+                                    <span class="status-badge bg-{% if recent_record.status == 'completed' %}success{% elif recent_record.status == 'in_progress' %}warning{% else %}secondary{% endif %}">
+                                        {{ recent_record.get_status_display }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            {% if action == 'Edit' and related_records %}
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h6 class="mb-0">
+                        <i class="fas fa-link me-2"></i>Other Records for {{ record.circuit_breaker.breaker_number }}
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Report No.</th>
+                                    <th>Date</th>
+                                    <th>Status</th>
+                                    <th>Technician</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for related_record in related_records %}
+                                <tr>
+                                    <td>
+                                        <a href="{% url 'circuit_breaker_maintenance:record_detail' related_record.pk %}">
+                                            {{ related_record.report_no }}
+                                        </a>
+                                    </td>
+                                    <td>{{ related_record.date|date:"d M Y" }}</td>
+                                    <td>
+                                        <span class="status-badge bg-{% if related_record.status == 'completed' %}success{% elif related_record.status == 'in_progress' %}warning{% else %}secondary{% endif %}">
+                                            {{ related_record.get_status_display }}
+                                        </span>
+                                    </td>
+                                    <td>{{ related_record.maintenance_carried_out_by|default:"N/A" }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-calculate next maintenance due date
+    const dateField = document.querySelector('#id_date');
+    const intervalField = document.querySelector('#id_maintenance_interval_months');
+    const nextDueField = document.querySelector('#id_next_maintenance_due');
+    
+    function calculateNextDue() {
+        if (dateField && intervalField && nextDueField && dateField.value && intervalField.value && !nextDueField.value) {
+            const maintenanceDate = new Date(dateField.value);
+            const intervalMonths = parseInt(intervalField.value);
+            
+            if (!isNaN(intervalMonths)) {
+                const nextDue = new Date(maintenanceDate);
+                nextDue.setMonth(nextDue.getMonth() + intervalMonths);
+                
+                // Format as YYYY-MM-DD
+                const formattedDate = nextDue.toISOString().split('T')[0];
+                nextDueField.value = formattedDate;
+            }
+        }
+    }
+    
+    if (dateField && intervalField && nextDueField) {
+        dateField.addEventListener('change', calculateNextDue);
+        intervalField.addEventListener('change', calculateNextDue);
+    }
+    
+    // Follow-up date logic
+    const followUpRequiredField = document.querySelector('#id_follow_up_required');
+    const followUpDateField = document.querySelector('#id_follow_up_date');
+    
+    if (followUpRequiredField && followUpDateField) {
+        followUpRequiredField.addEventListener('change', function() {
+            if (this.checked && !followUpDateField.value) {
+                // Set default follow-up date to 7 days from today
+                const followUpDate = new Date();
+                followUpDate.setDate(followUpDate.getDate() + 7);
+                followUpDateField.value = followUpDate.toISOString().split('T')[0];
+            }
+        });
+    }
+    
+    // Form validation feedback
+    const form = document.querySelector('form');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            const requiredFields = form.querySelectorAll('[required]');
+            let isValid = true;
+            
+            requiredFields.forEach(field => {
+                if (!field.value.trim()) {
+                    field.classList.add('is-invalid');
+                    isValid = false;
+                } else {
+                    field.classList.remove('is-invalid');
+                }
+            });
+            
+            if (!isValid) {
+                e.preventDefault();
+                alert('Please fill in all required fields.');
+                return false;
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

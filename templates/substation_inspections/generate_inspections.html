@@ -1,0 +1,207 @@
+{% extends 'admin_layout.html' %}
+{% load static %}
+
+{% block title %}Generate Inspections{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-6">
+    <!-- Header -->
+    <div class="bg-gradient-to-r from-blue-600 to-purple-700 text-white p-8 rounded-lg mb-8">
+        <div class="flex justify-between items-center">
+            <div>
+                <h1 class="text-3xl font-bold mb-2">
+                    <i class="fas fa-plus-circle mr-2"></i>
+                    Generate Monthly Inspections
+                </h1>
+                <p class="text-blue-100">Generate inspection reports for all active substations based on their schedules</p>
+            </div>
+            <div>
+                <a href="{% url 'substation_inspections:monitoring_dashboard' %}" class="bg-white text-blue-600 px-4 py-2 rounded-lg hover:bg-blue-50 transition-colors">
+                    <i class="fas fa-arrow-left mr-1"></i>Back to Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div class="bg-white rounded-lg p-6 text-center shadow-md">
+            <div class="text-3xl font-bold text-gray-800">{{ total_schedules }}</div>
+            <div class="text-sm text-gray-600 uppercase tracking-wide">Active Schedules</div>
+        </div>
+        <div class="bg-white rounded-lg p-6 text-center shadow-md">
+            <div class="text-3xl font-bold text-green-600">{{ would_create }}</div>
+            <div class="text-sm text-gray-600 uppercase tracking-wide">Will Create</div>
+        </div>
+        <div class="bg-white rounded-lg p-6 text-center shadow-md">
+            <div class="text-3xl font-bold text-yellow-600">{{ already_exists }}</div>
+            <div class="text-sm text-gray-600 uppercase tracking-wide">Already Exist</div>
+        </div>
+    </div>
+
+    <!-- Generation Preview -->
+    <div class="bg-white rounded-lg p-6 shadow-md mb-8">
+        <h4 class="text-xl font-semibold mb-4 text-gray-800">
+            <i class="fas fa-eye mr-2 text-blue-600"></i>Generation Preview
+        </h4>
+        
+        <div class="bg-gray-50 rounded-lg p-6 mb-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <h6 class="text-green-600 font-semibold mb-2">
+                        <i class="fas fa-plus-circle mr-2"></i>
+                        Inspections to be Created ({{ would_create }})
+                    </h6>
+                    <p class="text-gray-600 text-sm">These substations will have new inspection reports generated for the current month.</p>
+                </div>
+                <div>
+                    <h6 class="text-yellow-600 font-semibold mb-2">
+                        <i class="fas fa-info-circle mr-2"></i>
+                        Already Exist ({{ already_exists }})
+                    </h6>
+                    <p class="text-gray-600 text-sm">These substations already have inspection reports for the current month.</p>
+                </div>
+            </div>
+        </div>
+
+        {% if would_create > 0 %}
+        <div class="mb-6">
+            <h6 class="text-lg font-semibold mb-4 text-gray-800">Substations that will have inspections created:</h6>
+            <div class="overflow-x-auto">
+                <table class="min-w-full bg-white border border-gray-200 rounded-lg">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Substation</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Assigned Inspector</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200">
+                        {% for item in schedules_to_create %}
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="font-semibold text-gray-900">{{ item.schedule.substation.name }}</div>
+                                    <div class="text-sm text-gray-500">{{ item.schedule.substation.substation_code }}</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-gray-600">{{ item.schedule.substation.location }}</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-gray-600">
+                                        {% if item.schedule.assigned_inspector %}
+                                            <i class="fas fa-user mr-1"></i>{{ item.schedule.assigned_inspector.get_full_name }}
+                                        {% else %}
+                                            <span class="text-gray-400">No inspector assigned</span>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="inline-flex px-3 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+                                        Will Create
+                                    </span>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if already_exists > 0 %}
+        <div class="mb-6">
+            <h6 class="text-lg font-semibold mb-4 text-gray-800">Substations that already have inspections for this month:</h6>
+            <div class="overflow-x-auto">
+                <table class="min-w-full bg-white border border-gray-200 rounded-lg">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Substation</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Location</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Existing Report</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-200">
+                        {% for item in schedules_existing %}
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="font-semibold text-gray-900">{{ item.schedule.substation.name }}</div>
+                                    <div class="text-sm text-gray-500">{{ item.schedule.substation.substation_code }}</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-gray-600">{{ item.schedule.substation.location }}</div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <div class="text-gray-600">
+                                        <i class="fas fa-file-alt mr-1"></i>{{ item.existing_inspection.report_number }}
+                                    </div>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap">
+                                    <span class="inline-flex px-3 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">
+                                        Already Exists
+                                    </span>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="bg-white rounded-lg p-6 shadow-md mb-8">
+        <div class="text-center">
+            {% if would_create > 0 %}
+            <form method="post" class="inline-block">
+                {% csrf_token %}
+                <button type="submit" class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-8 rounded-lg text-lg transition-colors" onclick="return confirm('Are you sure you want to generate {{ would_create }} new inspections?')">
+                    <i class="fas fa-magic mr-2"></i>Generate {{ would_create }} Inspections
+                </button>
+            </form>
+            {% else %}
+            <div class="text-gray-500">
+                <i class="fas fa-info-circle text-6xl mb-4"></i>
+                <h5 class="text-xl font-semibold mb-2">No New Inspections to Generate</h5>
+                <p>All active substations already have inspection reports for the current month.</p>
+            </div>
+            {% endif %}
+            
+            <div class="flex justify-center gap-4 mt-8">
+                <a href="{% url 'substation_inspections:monitoring_dashboard' %}" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-3 px-6 rounded-lg transition-colors">
+                    <i class="fas fa-arrow-left mr-2"></i>Back to Dashboard
+                </a>
+                <a href="{% url 'substation_inspections:schedule_list' %}" class="bg-blue-200 hover:bg-blue-300 text-blue-800 font-bold py-3 px-6 rounded-lg transition-colors">
+                    <i class="fas fa-calendar mr-2"></i>Manage Schedules
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Information Card -->
+    <div class="bg-white rounded-lg p-6 shadow-md">
+        <h4 class="text-xl font-semibold mb-6 text-gray-800">
+            <i class="fas fa-info-circle mr-2 text-blue-600"></i>How It Works
+        </h4>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="text-center">
+                <i class="fas fa-calendar-alt text-4xl text-blue-600 mb-4"></i>
+                <h6 class="text-lg font-semibold mb-2">Check Schedules</h6>
+                <p class="text-gray-600">The system checks all active monthly inspection schedules.</p>
+            </div>
+            <div class="text-center">
+                <i class="fas fa-search text-4xl text-blue-600 mb-4"></i>
+                <h6 class="text-lg font-semibold mb-2">Check Existing</h6>
+                <p class="text-gray-600">It verifies if inspections already exist for the current month.</p>
+            </div>
+            <div class="text-center">
+                <i class="fas fa-plus text-4xl text-green-600 mb-4"></i>
+                <h6 class="text-lg font-semibold mb-2">Create New</h6>
+                <p class="text-gray-600">New inspection reports are created for substations without them.</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

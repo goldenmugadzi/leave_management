@@ -1,0 +1,306 @@
+{% extends 'admin_layout.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Equipment Operations{% endblock %}
+
+{% block styles %}
+<style>
+  .operation-card {
+    background: #ffffff;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 15px;
+    transition: box-shadow 0.3s ease;
+  }
+  
+  .operation-card:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  }
+  
+  .status-badge {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.85em;
+    font-weight: 500;
+  }
+  
+  .status-draft { background-color: #f8f9fa; color: #6c757d; }
+  .status-submitted { background-color: #fff3cd; color: #856404; }
+  .status-approved { background-color: #d1ecf1; color: #0c5460; }
+  .status-completed { background-color: #d4edda; color: #155724; }
+  .status-cancelled { background-color: #f8d7da; color: #721c24; }
+  
+  .operation-type-badge {
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.75em;
+    font-weight: 500;
+  }
+  
+  .type-installation { background-color: #e3f2fd; color: #1565c0; }
+  .type-removal { background-color: #ffebee; color: #c62828; }
+  .type-change { background-color: #f3e5f5; color: #7b1fa2; }
+  .type-repair { background-color: #fff8e1; color: #ef6c00; }
+  .type-maintenance { background-color: #e8f5e8; color: #2e7d32; }
+  
+  .search-filters {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+  
+  .stats-row {
+    margin-bottom: 20px;
+  }
+  
+  .stat-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 20px;
+    border-radius: 8px;
+    text-align: center;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <!-- Page Header -->
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <div>
+                    <h1 class="page-title">
+                        <i class="fas fa-clipboard-list"></i>
+                        Equipment Operations
+                    </h1>
+                    <p class="page-subtitle">Manage installation, removal, and change operations</p>
+                </div>
+                <div>
+                    <a href="{% url 'equipment_management:operation_create' %}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> New Operation
+                    </a>
+                </div>
+            </div>
+
+            <!-- Quick Stats -->
+            <div class="row stats-row">
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <div class="h3 mb-1">{{ operations|length }}</div>
+                        <div>Total Operations</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <div class="h3 mb-1">{{ operations.paginator.count }}</div>
+                        <div>All Operations</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <div class="h3 mb-1">
+                            {% for operation in operations %}
+                                {% if operation.status == 'submitted' %}{{ forloop.counter0|add:"1" }}{% endif %}
+                            {% empty %}0{% endfor %}
+                        </div>
+                        <div>Pending Approval</div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="stat-card">
+                        <div class="h3 mb-1">
+                            {% for operation in operations %}
+                                {% if operation.status == 'completed' %}{{ forloop.counter0|add:"1" }}{% endif %}
+                            {% empty %}0{% endfor %}
+                        </div>
+                        <div>Completed</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Search and Filters -->
+            <div class="search-filters">
+                <form method="get" class="row g-3">
+                    <div class="col-md-4">
+                        <label for="search" class="form-label">Search</label>
+                        <input type="text" class="form-control" id="search" name="search" 
+                               value="{{ search_query }}" placeholder="Form number, consumer, operator...">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="operation_type" class="form-label">Operation Type</label>
+                        <select class="form-select" id="operation_type" name="operation_type">
+                            <option value="">All Types</option>
+                            {% for value, label in operation_types %}
+                                <option value="{{ value }}" {% if selected_type == value %}selected{% endif %}>
+                                    {{ label }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="status" class="form-label">Status</label>
+                        <select class="form-select" id="status" name="status">
+                            <option value="">All Statuses</option>
+                            {% for value, label in status_choices %}
+                                <option value="{{ value }}" {% if selected_status == value %}selected{% endif %}>
+                                    {{ label }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label">&nbsp;</label>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-outline-primary">
+                                <i class="fas fa-search"></i> Search
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Operations List -->
+            {% if operations %}
+                <div class="row">
+                    {% for operation in operations %}
+                        <div class="col-md-6 col-lg-4">
+                            <div class="operation-card">
+                                <div class="d-flex justify-content-between align-items-start mb-3">
+                                    <div>
+                                        <h5 class="card-title mb-1">
+                                            <a href="{% url 'equipment_management:operation_detail' operation.pk %}" 
+                                               class="text-decoration-none">
+                                                {{ operation.form_number }}
+                                            </a>
+                                        </h5>
+                                        <span class="operation-type-badge type-{{ operation.operation_type }}">
+                                            {{ operation.get_operation_type_display }}
+                                        </span>
+                                    </div>
+                                    <span class="status-badge status-{{ operation.status }}">
+                                        {{ operation.get_status_display }}
+                                    </span>
+                                </div>
+
+                                <div class="mb-2">
+                                    <strong>Consumer:</strong> {{ operation.consumer_name|truncatechars:30 }}
+                                </div>
+                                <div class="mb-2">
+                                    <strong>Substation:</strong> {{ operation.substation_name|truncatechars:25 }}
+                                </div>
+                                <div class="mb-2">
+                                    <strong>District:</strong> {{ operation.district }}
+                                </div>
+                                <div class="mb-2">
+                                    <strong>Operator:</strong> {{ operation.operator_name|truncatechars:25 }}
+                                </div>
+                                
+                                <div class="row text-muted small">
+                                    <div class="col-6">
+                                        <i class="fas fa-calendar"></i>
+                                        {{ operation.operation_date|date:"M d, Y" }}
+                                    </div>
+                                    <div class="col-6 text-end">
+                                        <i class="fas fa-clock"></i>
+                                        {{ operation.created_at|naturaltime }}
+                                    </div>
+                                </div>
+
+                                <div class="mt-3 pt-3 border-top">
+                                    <div class="d-flex justify-content-between">
+                                        <a href="{% url 'equipment_management:operation_detail' operation.pk %}" 
+                                           class="btn btn-sm btn-outline-primary">
+                                            <i class="fas fa-eye"></i> View
+                                        </a>
+                                        {% if operation.status == 'draft' or operation.status == 'submitted' %}
+                                            <a href="{% url 'equipment_management:operation_edit' operation.pk %}" 
+                                               class="btn btn-sm btn-outline-secondary">
+                                                <i class="fas fa-edit"></i> Edit
+                                            </a>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+
+                <!-- Pagination -->
+                {% if operations.has_other_pages %}
+                    <nav aria-label="Operations pagination" class="mt-4">
+                        <ul class="pagination justify-content-center">
+                            {% if operations.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?{% if search_query %}search={{ search_query }}&{% endif %}{% if selected_type %}operation_type={{ selected_type }}&{% endif %}{% if selected_status %}status={{ selected_status }}&{% endif %}page={{ operations.previous_page_number }}">
+                                        Previous
+                                    </a>
+                                </li>
+                            {% endif %}
+
+                            {% for num in operations.paginator.page_range %}
+                                {% if operations.number == num %}
+                                    <li class="page-item active">
+                                        <span class="page-link">{{ num }}</span>
+                                    </li>
+                                {% elif num > operations.number|add:'-3' and num < operations.number|add:'3' %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?{% if search_query %}search={{ search_query }}&{% endif %}{% if selected_type %}operation_type={{ selected_type }}&{% endif %}{% if selected_status %}status={{ selected_status }}&{% endif %}page={{ num }}">
+                                            {{ num }}
+                                        </a>
+                                    </li>
+                                {% endif %}
+                            {% endfor %}
+
+                            {% if operations.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?{% if search_query %}search={{ search_query }}&{% endif %}{% if selected_type %}operation_type={{ selected_type }}&{% endif %}{% if selected_status %}status={{ selected_status }}&{% endif %}page={{ operations.next_page_number }}">
+                                        Next
+                                    </a>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                {% endif %}
+            {% else %}
+                <div class="text-center py-5">
+                    <div class="mb-3">
+                        <i class="fas fa-clipboard-list text-muted" style="font-size: 4rem;"></i>
+                    </div>
+                    <h4 class="text-muted">No Operations Found</h4>
+                    <p class="text-muted">
+                        {% if search_query or selected_type or selected_status %}
+                            No operations match your search criteria. Try adjusting your filters.
+                        {% else %}
+                            No operations have been created yet.
+                        {% endif %}
+                    </p>
+                    <a href="{% url 'equipment_management:operation_create' %}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Create First Operation
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Auto-submit form on filter change (optional)
+    document.getElementById('operation_type').addEventListener('change', function() {
+        if (this.value !== '') {
+            this.form.submit();
+        }
+    });
+    
+    document.getElementById('status').addEventListener('change', function() {
+        if (this.value !== '') {
+            this.form.submit();
+        }
+    });
+</script>
+{% endblock %}

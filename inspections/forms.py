@@ -596,7 +596,7 @@ class ApplicationAssignmentForm(forms.ModelForm):
                 'class': 'block w-full rounded-md border-gray-300 shadow-sm focus:border-gulf-blue-500 focus:ring-gulf-blue-500 sm:text-sm p-2'
             }),
             'assigned_to': forms.Select(attrs={
-                'class': 'block w-full rounded-md border-gray-300 shadow-sm focus:border-gulf-blue-500 focus:ring-gulf-blue-500 sm:text-sm p-2'
+                'class': 'block w-full rounded-md border-gray-300 shadow-sm focus:border-gulf-blue-500 focus:ring-gulf-blue-500 sm:text-sm p-2 select2-inspector'
             }),
             'due_date': forms.DateTimeInput(attrs={
                 'class': 'block w-full rounded-md border-gray-300 shadow-sm focus:border-gulf-blue-500 focus:ring-gulf-blue-500 sm:text-sm', 
@@ -613,10 +613,21 @@ class ApplicationAssignmentForm(forms.ModelForm):
         # Filter applications to only show submitted ones
         self.fields['application'].queryset = ClientApplication.objects.filter(status='submitted')
         
-        # Filter users to show only active ones
+        # Filter users to show only inspectors
         from django.contrib.auth import get_user_model
         User = get_user_model()
-        self.fields['assigned_to'].queryset = User.objects.filter(is_active=True)
+        
+        # Get users with inspector role for inspections application
+        inspector_users = User.objects.filter(
+            is_active=True,
+            roles__role='inspector',
+            roles__application='Installation_inspections'
+        ).distinct().order_by('first_name', 'last_name', 'username')
+        
+        self.fields['assigned_to'].queryset = inspector_users
+        
+        # Add help text to clarify the field
+        self.fields['assigned_to'].help_text = "Select an inspector from the list. Only users with inspector role are shown."
 
 
 class InspectionSearchForm(forms.Form):

@@ -1,0 +1,37 @@
+<div class="col-md-2">
+    <div class="stat-card text-center">
+        <div class="stat-number">{{ stats.total_substations }}</div>
+        <div class="stat-label">Total Substations</div>
+    </div>
+</div>
+<div class="col-md-2">
+    <div class="stat-card text-center">
+        <div class="stat-number text-warning">{{ stats.pending_inspections }}</div>
+        <div class="stat-label">Pending</div>
+    </div>
+</div>
+<div class="col-md-2">
+    <div class="stat-card text-center">
+        <div class="stat-number text-info">{{ stats.in_progress_inspections }}</div>
+        <div class="stat-label">In Progress</div>
+    </div>
+</div>
+<div class="col-md-2">
+    <div class="stat-card text-center">
+        <div class="stat-number text-success">{{ stats.completed_this_month }}</div>
+        <div class="stat-label">Completed This Month</div>
+    </div>
+</div>
+<div class="col-md-2">
+    <div class="stat-card text-center">
+        <div class="stat-number text-danger">{{ stats.overdue_inspections }}</div>
+        <div class="stat-label">Overdue</div>
+    </div>
+</div>
+<div class="col-md-2">
+    <div class="stat-card text-center">
+        <div class="htmx-indicator">
+            <i class="fas fa-spinner fa-spin"></i>
+        </div>
+    </div>
+</div>

@@ -25,6 +25,23 @@ from django.db import IntegrityError
 # Add this at the top with other imports
 logger = logging.getLogger(__name__)
 
+# Integration helpers
+def get_circuit_breaker_checklist_items():
+    """Get circuit breaker checklist items from substation inspections module"""
+    try:
+        from substation_inspections.models import InspectionChecklistItem
+        return InspectionChecklistItem.objects.filter(equipment_type='circuit_breaker')
+    except ImportError:
+        return None
+
+def get_regions_choices():
+    """Get region choices for filtering"""
+    try:
+        from it.users.models import Regions
+        return [(region.id, region.region) for region in Regions.objects.all()]
+    except ImportError:
+        return []
+
 @login_required
 def circuit_breaker_list(request):
     """List all circuit breakers with filtering and search"""
@@ -33,6 +50,7 @@ def circuit_breaker_list(request):
     # Get filter parameters
     substation_filter = request.GET.get('substation')
     status_filter = request.GET.get('status')
+    region_filter = request.GET.get('region')
     search_query = request.GET.get('search')
     
     # Apply filters
@@ -43,6 +61,9 @@ def circuit_breaker_list(request):
         circuit_breakers = circuit_breakers.filter(is_active=True)
     elif status_filter == 'inactive':
         circuit_breakers = circuit_breakers.filter(is_active=False)
+    
+    if region_filter:
+        circuit_breakers = circuit_breakers.filter(region_id=region_filter)
     
     # Apply search
     if search_query:
@@ -56,10 +77,13 @@ def circuit_breaker_list(request):
     # Annotate with maintenance count and add explicit ordering
     circuit_breakers = circuit_breakers.annotate(
         maintenance_count=Count('maintenancerecord')
-    ).select_related().order_by('sub_station', 'breaker_number')  # Add this ordering
+    ).select_related('region').order_by('sub_station', 'breaker_number')  # Add this ordering
     
     # Get unique substations for filter dropdown
     substations = CircuitBreaker.objects.values_list('sub_station', flat=True).distinct().order_by('sub_station')
+    
+    # Get regions for filter dropdown
+    regions = get_regions_choices()
     
     # Pagination
     paginator = Paginator(circuit_breakers, 25)
@@ -69,8 +93,10 @@ def circuit_breaker_list(request):
     context = {
         'page_obj': page_obj,
         'substations': substations,
+        'regions': regions,
         'current_substation': substation_filter,
         'current_status': status_filter,
+        'current_region': region_filter,
         'search_query': search_query,
         'total_count': circuit_breakers.count(),
     }
@@ -144,7 +170,7 @@ def circuit_breaker_create(request):
             except Exception as e:
                 messages.error(request, f'Error creating circuit breaker: {str(e)}')
         else:
-            messages.error(request, 'Please correct the errors below.')
+            messages.error(request, f'Please correct the errors below. {str(form.errors)}')
     else:
         form = CircuitBreakerForm()
     
@@ -974,3 +1000,356 @@ def maintenance_record_edit(request, pk):
     }
     
     return render(request, 'circuit_breaker_maintenance/maintenance_record_form.html', context)
+
+# API endpoints for integration
+@login_required
+def get_regions_api(request):
+    """Get regions from database as JSON"""
+    try:
+        from it.users.models import Regions
+        regions = Regions.objects.all()
+        return JsonResponse(list(regions.values('id', 'region')), safe=False)
+    except ImportError:
+        return JsonResponse([], safe=False)
+
+@login_required
+def get_circuit_breaker_checklist_api(request):
+    """Get circuit breaker inspection checklist items from substation inspections module"""
+    try:
+        checklist_items = get_circuit_breaker_checklist_items()
+        if checklist_items:
+            items = list(checklist_items.values(
+                'id', 'item_code', 'title', 'description', 'category', 'severity',
+                'is_mandatory', 'reference_standard'
+            ))
+            return JsonResponse(items, safe=False)
+        else:
+            return JsonResponse([], safe=False)
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+# Enhanced Circuit Breaker Maintenance Views
+
+@login_required
+def maintenance_record_create_typed(request, breaker_type):
+    """Create a maintenance record for a specific breaker type"""
+    from .models import (
+        VacuumBreakerChecks, OilBreakerChecks, InsulationResistanceTest,
+        ContactResistanceTest, TimingTest, AutoRecloseTest
+    )
+    from .forms import (
+        MaintenanceRecordForm, VacuumBreakerChecksForm, OilBreakerChecksForm,
+        InsulationTestFormSet, ContactResistanceTestFormSet, TimingTestFormSet
+    )
+    
+    # Filter circuit breakers by type
+    circuit_breakers = CircuitBreaker.objects.filter(
+        breaker_type=breaker_type, is_active=True
+    )
+    
+    if request.method == 'POST':
+        form = MaintenanceRecordForm(request.POST)
+        if form.is_valid():
+            maintenance_record = form.save()
+            
+            # Create default test records based on breaker type
+            if breaker_type == 'vacuum':
+                VacuumBreakerChecks.objects.create(maintenance_record=maintenance_record)
+            elif breaker_type == 'oil':
+                OilBreakerChecks.objects.create(maintenance_record=maintenance_record)
+            
+            # Create default test templates
+            phases = ['red', 'yellow', 'blue']
+            for phase in phases:
+                InsulationResistanceTest.objects.create(
+                    maintenance_record=maintenance_record,
+                    phase=phase,
+                    test_type='open_contact'
+                )
+                ContactResistanceTest.objects.create(
+                    maintenance_record=maintenance_record,
+                    phase=phase,
+                    test_condition='before_maintenance'
+                )
+                TimingTest.objects.create(
+                    maintenance_record=maintenance_record,
+                    phase=phase,
+                    operation_type='closing'
+                )
+            
+            AutoRecloseTest.objects.create(maintenance_record=maintenance_record)
+            
+            messages.success(request, f'{breaker_type.title()} circuit breaker maintenance record created successfully.')
+            return redirect('circuit_breaker_maintenance:record_detail', pk=maintenance_record.pk)
+    else:
+        form = MaintenanceRecordForm()
+        # Filter the circuit breaker choices
+        form.fields['circuit_breaker'].queryset = circuit_breakers
+    
+    context = {
+        'form': form,
+        'breaker_type': breaker_type,
+        'title': f'Create {breaker_type.title()} Circuit Breaker Maintenance Record'
+    }
+    
+    return render(request, 'circuit_breaker_maintenance/maintenance_record_create_typed.html', context)
+
+@login_required
+def maintenance_tests_view(request, pk):
+    """View and manage all tests for a maintenance record"""
+    maintenance_record = get_object_or_404(MaintenanceRecord, pk=pk)
+    
+    context = {
+        'maintenance_record': maintenance_record,
+        'insulation_tests': maintenance_record.insulation_tests.all(),
+        'contact_resistance_tests': maintenance_record.contact_resistance_tests.all(),
+        'timing_tests': maintenance_record.timing_tests.all(),
+        'interlock_tests': maintenance_record.interlock_tests.all(),
+        'contact_travel_tests': maintenance_record.contact_travel_tests.all(),
+        'ductor_tests': maintenance_record.ductor_tests.all(),
+        'protection_tests': maintenance_record.protection_tests.all(),
+        'relay_operation_tests': maintenance_record.relay_operation_tests.all(),
+        'auto_reclose_tests': maintenance_record.auto_reclose_tests.all(),
+    }
+    
+    # Add breaker-specific checks
+    try:
+        if maintenance_record.circuit_breaker.breaker_type == 'vacuum':
+            context['vacuum_checks'] = maintenance_record.vacuum_checks
+    except:
+        pass
+    
+    try:
+        if maintenance_record.circuit_breaker.breaker_type == 'oil':
+            context['oil_checks'] = maintenance_record.oil_checks
+    except:
+        pass
+    
+    return render(request, 'circuit_breaker_maintenance/maintenance_tests.html', context)
+
+@login_required
+def insulation_test_manage(request, pk):
+    """Manage insulation resistance tests for a maintenance record"""
+    from .forms import InsulationTestFormSet
+    maintenance_record = get_object_or_404(MaintenanceRecord, pk=pk)
+    
+    if request.method == 'POST':
+        formset = InsulationTestFormSet(request.POST, instance=maintenance_record)
+        if formset.is_valid():
+            formset.save()
+            messages.success(request, 'Insulation resistance tests updated successfully.')
+            return redirect('circuit_breaker_maintenance:maintenance_tests', pk=pk)
+    else:
+        formset = InsulationTestFormSet(instance=maintenance_record)
+    
+    context = {
+        'maintenance_record': maintenance_record,
+        'formset': formset,
+        'test_type': 'Insulation Resistance Tests'
+    }
+    
+    return render(request, 'circuit_breaker_maintenance/test_formset.html', context)
+
+@login_required
+def contact_resistance_test_manage(request, pk):
+    """Manage contact resistance tests for a maintenance record"""
+    from .forms import ContactResistanceTestFormSet
+    maintenance_record = get_object_or_404(MaintenanceRecord, pk=pk)
+    
+    if request.method == 'POST':
+        formset = ContactResistanceTestFormSet(request.POST, instance=maintenance_record)
+        if formset.is_valid():
+            formset.save()
+            messages.success(request, 'Contact resistance tests updated successfully.')
+            return redirect('circuit_breaker_maintenance:maintenance_tests', pk=pk)
+    else:
+        formset = ContactResistanceTestFormSet(instance=maintenance_record)
+    
+    context = {
+        'maintenance_record': maintenance_record,
+        'formset': formset,
+        'test_type': 'Contact Resistance Tests'
+    }
+    
+    return render(request, 'circuit_breaker_maintenance/test_formset.html', context)
+
+@login_required
+def timing_test_manage(request, pk):
+    """Manage timing tests for a maintenance record"""
+    from .forms import TimingTestFormSet
+    maintenance_record = get_object_or_404(MaintenanceRecord, pk=pk)
+    
+    if request.method == 'POST':
+        formset = TimingTestFormSet(request.POST, instance=maintenance_record)
+        if formset.is_valid():
+            formset.save()
+            messages.success(request, 'Timing tests updated successfully.')
+            return redirect('circuit_breaker_maintenance:maintenance_tests', pk=pk)
+    else:
+        formset = TimingTestFormSet(instance=maintenance_record)
+    
+    context = {
+        'maintenance_record': maintenance_record,
+        'formset': formset,
+        'test_type': 'Timing Tests'
+    }
+    
+    return render(request, 'circuit_breaker_maintenance/test_formset.html', context)
+
+@login_required
+def vacuum_checks_manage(request, pk):
+    """Manage vacuum circuit breaker specific checks"""
+    from .forms import VacuumBreakerChecksForm
+    maintenance_record = get_object_or_404(MaintenanceRecord, pk=pk)
+    
+    try:
+        vacuum_checks = maintenance_record.vacuum_checks
+    except:
+        from .models import VacuumBreakerChecks
+        vacuum_checks = VacuumBreakerChecks.objects.create(maintenance_record=maintenance_record)
+    
+    if request.method == 'POST':
+        form = VacuumBreakerChecksForm(request.POST, instance=vacuum_checks)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Vacuum circuit breaker checks updated successfully.')
+            return redirect('circuit_breaker_maintenance:maintenance_tests', pk=pk)
+    else:
+        form = VacuumBreakerChecksForm(instance=vacuum_checks)
+    
+    context = {
+        'maintenance_record': maintenance_record,
+        'form': form,
+        'check_type': 'Vacuum Circuit Breaker Checks'
+    }
+    
+    return render(request, 'circuit_breaker_maintenance/vacuum_oil_checks.html', context)
+
+@login_required
+def oil_checks_manage(request, pk):
+    """Manage oil circuit breaker specific checks"""
+    from .forms import OilBreakerChecksForm
+    maintenance_record = get_object_or_404(MaintenanceRecord, pk=pk)
+    
+    try:
+        oil_checks = maintenance_record.oil_checks
+    except:
+        from .models import OilBreakerChecks
+        oil_checks = OilBreakerChecks.objects.create(maintenance_record=maintenance_record)
+    
+    if request.method == 'POST':
+        form = OilBreakerChecksForm(request.POST, instance=oil_checks)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Oil circuit breaker checks updated successfully.')
+            return redirect('circuit_breaker_maintenance:maintenance_tests', pk=pk)
+    else:
+        form = OilBreakerChecksForm(instance=oil_checks)
+    
+    context = {
+        'maintenance_record': maintenance_record,
+        'form': form,
+        'check_type': 'Oil Circuit Breaker Checks'
+    }
+    
+    return render(request, 'circuit_breaker_maintenance/vacuum_oil_checks.html', context)
+
+# Transformer Maintenance Views
+
+@login_required
+def transformer_maintenance_list(request):
+    """List transformer maintenance records"""
+    from .models import TransformerMaintenanceRecord
+    
+    records = TransformerMaintenanceRecord.objects.all()
+    
+    # Apply filters
+    substation_filter = request.GET.get('substation')
+    status_filter = request.GET.get('status')
+    search_query = request.GET.get('search')
+    
+    if substation_filter:
+        records = records.filter(substation__icontains=substation_filter)
+    
+    if status_filter:
+        records = records.filter(status=status_filter)
+    
+    if search_query:
+        records = records.filter(
+            Q(transformer_number__icontains=search_query) |
+            Q(substation__icontains=search_query) |
+            Q(report_no__icontains=search_query)
+        )
+    
+    # Pagination
+    paginator = Paginator(records, 20)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    context = {
+        'page_obj': page_obj,
+        'substation_filter': substation_filter,
+        'status_filter': status_filter,
+        'search_query': search_query,
+    }
+    
+    return render(request, 'circuit_breaker_maintenance/transformer_list.html', context)
+
+@login_required
+def transformer_maintenance_create(request):
+    """Create a transformer maintenance record"""
+    from .forms import TransformerMaintenanceRecordForm
+    
+    if request.method == 'POST':
+        form = TransformerMaintenanceRecordForm(request.POST)
+        if form.is_valid():
+            record = form.save()
+            messages.success(request, 'Transformer maintenance record created successfully.')
+            return redirect('circuit_breaker_maintenance:transformer_detail', pk=record.pk)
+    else:
+        form = TransformerMaintenanceRecordForm()
+    
+    context = {
+        'form': form,
+        'title': 'Create Transformer Maintenance Record'
+    }
+    
+    return render(request, 'circuit_breaker_maintenance/transformer_form.html', context)
+
+@login_required
+def transformer_maintenance_detail(request, pk):
+    """View transformer maintenance record details"""
+    from .models import TransformerMaintenanceRecord
+    record = get_object_or_404(TransformerMaintenanceRecord, pk=pk)
+    
+    context = {
+        'record': record,
+        'check_items': record.check_items.all().order_by('category', 'order')
+    }
+    
+    return render(request, 'circuit_breaker_maintenance/transformer_detail.html', context)
+
+@login_required
+def transformer_maintenance_edit(request, pk):
+    """Edit transformer maintenance record"""
+    from .models import TransformerMaintenanceRecord
+    from .forms import TransformerMaintenanceRecordForm
+    
+    record = get_object_or_404(TransformerMaintenanceRecord, pk=pk)
+    
+    if request.method == 'POST':
+        form = TransformerMaintenanceRecordForm(request.POST, instance=record)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Transformer maintenance record updated successfully.')
+            return redirect('circuit_breaker_maintenance:transformer_detail', pk=pk)
+    else:
+        form = TransformerMaintenanceRecordForm(instance=record)
+    
+    context = {
+        'form': form,
+        'record': record,
+        'title': 'Edit Transformer Maintenance Record'
+    }
+    
+    return render(request, 'circuit_breaker_maintenance/transformer_form.html', context)

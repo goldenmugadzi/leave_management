@@ -1,0 +1,311 @@
+{% extends "e60_inspections/base.html" %}
+{% load static %}
+
+{% block page_content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <!-- Inspection Header -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                <div class="flex-1">
+                    <h4 class="text-2xl font-semibold text-gray-900 flex items-center">
+                        <i class="fas fa-clipboard-check text-blue-600 mr-3"></i>
+                        {{ inspection.report_number }}
+                    </h4>
+                    <p class="text-gray-600 mt-1">{{ inspection.substation_name }}</p>
+                </div>
+                <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium status-{{ inspection.status }}">
+                        {{ inspection.get_status_display }}
+                    </span>
+                    <div class="flex items-center gap-2">
+                        <a href="{% url 'e60_inspections:e60_inspection_edit' inspection.pk %}" 
+                           class="inline-flex items-center px-3 py-2 border border-blue-300 rounded-md text-sm font-medium text-blue-700 bg-white hover:bg-blue-50 transition-colors">
+                            <i class="fas fa-edit mr-2"></i>Edit
+                        </a>
+                        <a href="{% url 'e60_inspections:e60_inspection_print' inspection.pk %}" 
+                           class="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors" target="_blank">
+                            <i class="fas fa-print mr-2"></i>Print
+                        </a>
+                        <div class="relative inline-block text-left">
+                            <button type="button" class="inline-flex items-center px-3 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors dropdown-toggle" 
+                                    data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-cog"></i>
+                            </button>
+                            <ul class="dropdown-menu absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border border-gray-200 z-10">
+                                {% if inspection.status == 'draft' %}
+                                <li>
+                                    <form method="post" action="{% url 'e60_inspections:e60_inspection_submit' inspection.pk %}" class="inline-block w-full">
+                                        {% csrf_token %}
+                                        <button type="submit" class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center">
+                                            <i class="fas fa-paper-plane mr-3"></i>Submit for Approval
+                                        </button>
+                                    </form>
+                                </li>
+                                {% endif %}
+                                {% if inspection.status == 'completed' %}
+                                <li>
+                                    <form method="post" action="{% url 'e60_inspections:e60_inspection_approve' inspection.pk %}" class="inline-block w-full">
+                                        {% csrf_token %}
+                                        <button type="submit" class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center">
+                                            <i class="fas fa-check mr-3"></i>Approve
+                                        </button>
+                                    </form>
+                                </li>
+                                {% endif %}
+                                <li><hr class="my-1 border-gray-200"></li>
+                                <li>
+                                    <a class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center" href="{% url 'e60_inspections:e60_inspection_pdf' inspection.pk %}">
+                                        <i class="fas fa-file-pdf mr-3"></i>Export PDF
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center" href="{% url 'e60_inspections:e60_inspection_export' inspection.pk %}">
+                                        <i class="fas fa-download mr-3"></i>Export Data
+                                    </a>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="px-6 py-6">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div class="space-y-4">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <dt class="text-sm font-medium text-gray-600">Service Number:</dt>
+                            <dd class="mt-1 text-sm text-gray-900">{{ inspection.service_number }}</dd>
+                        </div>
+                        <div>
+                            <dt class="text-sm font-medium text-gray-600">Section:</dt>
+                            <dd class="mt-1 text-sm text-gray-900">{{ inspection.section }}</dd>
+                        </div>
+                    </div>
+                    <div>
+                        <dt class="text-sm font-medium text-gray-600">Construction Type:</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ inspection.get_construction_type_display }}</dd>
+                    </div>
+                </div>
+                <div class="space-y-4">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <dt class="text-sm font-medium text-gray-600">Inspection Date:</dt>
+                            <dd class="mt-1 text-sm text-gray-900">{{ inspection.inspection_date|date:"F d, Y" }}</dd>
+                        </div>
+                        <div>
+                            <dt class="text-sm font-medium text-gray-600">Inspection Type:</dt>
+                            <dd class="mt-1 text-sm text-gray-900">{{ inspection.get_inspection_type_display }}</dd>
+                        </div>
+                    </div>
+                    <div>
+                        <dt class="text-sm font-medium text-gray-600">Inspector:</dt>
+                        <dd class="mt-1 text-sm text-gray-900">
+                            {% if inspection.inspector %}
+                                {{ inspection.inspector.get_full_name|default:inspection.inspector.username }}
+                            {% else %}
+                                <span class="text-gray-500">Not assigned</span>
+                            {% endif %}
+                        </dd>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Inspection Sections -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+        <!-- Section A: Transformers -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 h-fit">
+            <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                <h6 class="text-lg font-semibold text-gray-900">Section A: TRANSFORMERS</h6>
+                <a href="{% url 'e60_inspections:e60_transformer_edit' inspection.pk %}" 
+                   class="inline-flex items-center px-3 py-1 border border-blue-300 rounded-md text-sm font-medium text-blue-700 bg-white hover:bg-blue-50 transition-colors">
+                    <i class="fas fa-edit"></i>
+                </a>
+            </div>
+            <div class="px-6 py-4">
+                {% if transformer_inspection %}
+                    <div class="space-y-4">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <dt class="text-sm font-medium text-gray-600">Make:</dt>
+                                <dd class="mt-1 text-sm text-gray-900">{{ transformer_inspection.make|default:"—" }}</dd>
+                            </div>
+                            <div>
+                                <dt class="text-sm font-medium text-gray-600">KVA Rating:</dt>
+                                <dd class="mt-1 text-sm text-gray-900">{{ transformer_inspection.kva_rating|default:"—" }}</dd>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <dt class="text-sm font-medium text-gray-600">Voltage Ratio:</dt>
+                                <dd class="mt-1 text-sm text-gray-900">{{ transformer_inspection.voltage_ratio|default:"—" }}</dd>
+                            </div>
+                            <div>
+                                <dt class="text-sm font-medium text-gray-600">Oil Condition:</dt>
+                                <dd class="mt-1">
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                        {{ transformer_inspection.get_oil_condition_display|default:"—" }}
+                                    </span>
+                                </dd>
+                            </div>
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="flex items-center text-gray-500">
+                        <i class="fas fa-info-circle mr-2"></i>
+                        <span class="text-sm">No transformer inspection data recorded.</span>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Section B: Circuit Breaker -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 h-fit">
+            <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                <h6 class="text-lg font-semibold text-gray-900">Section B: A.C.B or O.C.B</h6>
+                <a href="{% url 'e60_inspections:e60_circuit_breaker_edit' inspection.pk %}" 
+                   class="inline-flex items-center px-3 py-1 border border-blue-300 rounded-md text-sm font-medium text-blue-700 bg-white hover:bg-blue-50 transition-colors">
+                    <i class="fas fa-edit"></i>
+                </a>
+            </div>
+            <div class="px-6 py-4">
+                {% if circuit_breaker_inspection %}
+                    <div class="space-y-4">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <dt class="text-sm font-medium text-gray-600">Make:</dt>
+                                <dd class="mt-1 text-sm text-gray-900">{{ circuit_breaker_inspection.make|default:"—" }}</dd>
+                            </div>
+                            <div>
+                                <dt class="text-sm font-medium text-gray-600">Type:</dt>
+                                <dd class="mt-1 text-sm text-gray-900">{{ circuit_breaker_inspection.get_breaker_type_display|default:"—" }}</dd>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <dt class="text-sm font-medium text-gray-600">Current Rating:</dt>
+                                <dd class="mt-1 text-sm text-gray-900">{{ circuit_breaker_inspection.current_rating|default:"—" }}</dd>
+                            </div>
+                            <div>
+                                <dt class="text-sm font-medium text-gray-600">Oil Condition:</dt>
+                                <dd class="mt-1">
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                        {{ circuit_breaker_inspection.get_oil_condition_display|default:"—" }}
+                                    </span>
+                                </dd>
+                            </div>
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="flex items-center text-gray-500">
+                        <i class="fas fa-info-circle mr-2"></i>
+                        <span class="text-sm">No circuit breaker inspection data recorded.</span>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Section C: Metering -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 h-fit">
+            <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                <h6 class="text-lg font-semibold text-gray-900">Section C: METERING</h6>
+                <a href="{% url 'e60_inspections:e60_metering_edit' inspection.pk %}" 
+                   class="inline-flex items-center px-3 py-1 border border-blue-300 rounded-md text-sm font-medium text-blue-700 bg-white hover:bg-blue-50 transition-colors">
+                    <i class="fas fa-edit"></i>
+                </a>
+            </div>
+            <div class="px-6 py-4">
+                {% if metering_inspection %}
+                    <div class="space-y-4">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <dt class="text-sm font-medium text-gray-600">Make:</dt>
+                                <dd class="mt-1 text-sm text-gray-900">{{ metering_inspection.make|default:"—" }}</dd>
+                            </div>
+                            <div>
+                                <dt class="text-sm font-medium text-gray-600">Type:</dt>
+                                <dd class="mt-1 text-sm text-gray-900">{{ metering_inspection.meter_type|default:"—" }}</dd>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <dt class="text-sm font-medium text-gray-600">CT Ratio:</dt>
+                                <dd class="mt-1 text-sm text-gray-900">{{ metering_inspection.ct_ratio|default:"—" }}</dd>
+                            </div>
+                            <div>
+                                <dt class="text-sm font-medium text-gray-600">Phase Rotation:</dt>
+                                <dd class="mt-1">
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                        {{ metering_inspection.get_phase_rotation_display|default:"—" }}
+                                    </span>
+                                </dd>
+                            </div>
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="flex items-center text-gray-500">
+                        <i class="fas fa-info-circle mr-2"></i>
+                        <span class="text-sm">No metering inspection data recorded.</span>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Section D: Housing -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 h-fit">
+            <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+                <h6 class="text-lg font-semibold text-gray-900">Section D: HOUSING</h6>
+                <a href="{% url 'e60_inspections:e60_housing_edit' inspection.pk %}" 
+                   class="inline-flex items-center px-3 py-1 border border-blue-300 rounded-md text-sm font-medium text-blue-700 bg-white hover:bg-blue-50 transition-colors">
+                    <i class="fas fa-edit"></i>
+                </a>
+            </div>
+            <div class="px-6 py-4">
+                {% if housing_inspection %}
+                    <div>
+                        <dt class="text-sm font-medium text-gray-600">Housing Type:</dt>
+                        <dd class="mt-1 text-sm text-gray-900">{{ housing_inspection.get_housing_type_display|default:"—" }}</dd>
+                    </div>
+                {% else %}
+                    <div class="flex items-center text-gray-500">
+                        <i class="fas fa-info-circle mr-2"></i>
+                        <span class="text-sm">No housing inspection data recorded.</span>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- General Condition and Remarks -->
+    {% if inspection.general_condition or inspection.remarks %}
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h5 class="text-xl font-semibold text-gray-900 flex items-center">
+                <i class="fas fa-clipboard-list text-blue-600 mr-3"></i>General Assessment
+            </h5>
+        </div>
+        <div class="px-6 py-6 space-y-6">
+            {% if inspection.general_condition %}
+                <div>
+                    <h6 class="text-lg font-medium text-gray-900 mb-3">General Condition:</h6>
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <p class="text-gray-700 leading-relaxed">{{ inspection.general_condition }}</p>
+                    </div>
+                </div>
+            {% endif %}
+            {% if inspection.remarks %}
+                <div>
+                    <h6 class="text-lg font-medium text-gray-900 mb-3">Remarks:</h6>
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <p class="text-gray-700 leading-relaxed">{{ inspection.remarks }}</p>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

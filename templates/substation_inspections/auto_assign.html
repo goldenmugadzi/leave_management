@@ -1,0 +1,179 @@
+{% extends 'admin_layout.html' %}
+{% load static %}
+
+{% block title %}Auto Assign Inspections{% endblock %}
+
+{% block content %}
+<div class="content-wrapper">
+  <div class="container-fluid">
+    <!-- Header -->
+    <div class="flex flex-col lg:flex-row lg:justify-between lg:items-center mb-6">
+      <div class="mb-4 lg:mb-0">
+        <h1 class="text-2xl font-bold text-gray-900">Auto Assign Inspections</h1>
+        <p class="text-gray-600 mt-1">Automatically assign unassigned inspections to inspectors based on schedules</p>
+      </div>
+      <div>
+        <a href="{% url 'substation_inspections:monitoring_dashboard' %}" 
+           class="inline-flex items-center px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors">
+          <i class="fas fa-arrow-left mr-2"></i>Back to Dashboard
+        </a>
+      </div>
+    </div>
+
+    <!-- Statistics -->
+    <div class="max-w-6xl mx-auto mb-6">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
+          <div class="text-center">
+            <div class="text-3xl font-bold text-blue-600">{{ unassigned_inspections.count }}</div>
+            <div class="text-sm text-gray-500 uppercase tracking-wide">Unassigned Inspections</div>
+          </div>
+        </div>
+        <div class="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
+          <div class="text-center">
+            <div class="text-3xl font-bold text-green-600">
+              {% for inspection in unassigned_inspections %}
+                {% if inspection.substation.inspection_schedules.filter.is_active.True %}
+                  {% if forloop.first %}1{% else %}{{ forloop.counter0|add:1 }}{% endif %}
+                {% endif %}
+              {% empty %}0{% endfor %}
+            </div>
+            <div class="text-sm text-gray-500 uppercase tracking-wide">With Schedules</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {% if unassigned_inspections %}
+    <!-- Unassigned Inspections List -->
+    <div class="max-w-6xl mx-auto">
+      <div class="bg-white border border-gray-200 rounded-lg shadow-sm">
+        <div class="px-6 py-4 border-b border-gray-200">
+          <div class="flex justify-between items-center">
+            <h3 class="text-lg font-medium text-gray-900">
+              <i class="fas fa-list mr-2"></i>Unassigned Inspections
+            </h3>
+            <form method="post" class="inline">
+              {% csrf_token %}
+              <button type="submit" class="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors" onclick="return confirm('Are you sure you want to auto-assign all inspections?')">
+                <i class="fas fa-magic mr-2"></i>Auto Assign All
+              </button>
+            </form>
+          </div>
+        </div>
+        <div class="p-6">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {% for inspection in unassigned_inspections %}
+            <div class="border border-gray-200 rounded-lg p-4 hover:border-blue-300 hover:shadow-md transition-all">
+              <div class="flex justify-between items-start mb-2">
+                <div>
+                  <div class="font-semibold text-gray-900">{{ inspection.substation.name }}</div>
+                  <div class="text-sm text-gray-500">{{ inspection.substation.location }}</div>
+                  <div class="text-sm text-gray-600 mt-1">
+                    <i class="fas fa-calendar mr-1"></i>{{ inspection.inspection_date }}
+                  </div>
+                </div>
+                <div>
+                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                    Unassigned
+                  </span>
+                </div>
+              </div>
+              
+              <!-- Check if substation has a schedule -->
+              {% with schedule=inspection.substation.inspection_schedules.filter.is_active.True.first %}
+                {% if schedule and schedule.assigned_inspector %}
+                  <div class="mt-2">
+                    <span class="text-sm text-green-600">
+                      <i class="fas fa-check-circle mr-1"></i>
+                      Will be assigned to: {{ schedule.assigned_inspector.get_full_name }}
+                    </span>
+                  </div>
+                {% else %}
+                  <div class="mt-2">
+                    <span class="text-sm text-yellow-600">
+                      <i class="fas fa-exclamation-triangle mr-1"></i>
+                      No schedule or inspector configured
+                    </span>
+                  </div>
+                {% endif %}
+              {% endwith %}
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Assignment Preview -->
+    <div class="max-w-6xl mx-auto mt-6">
+      <div class="bg-white border border-gray-200 rounded-lg shadow-sm">
+        <div class="px-6 py-4 border-b border-gray-200">
+          <h3 class="text-lg font-medium text-gray-900">
+            <i class="fas fa-eye mr-2"></i>Assignment Preview
+          </h3>
+          <p class="text-gray-600 mt-1">The following assignments will be made when you click "Auto Assign All":</p>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+              <tr>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Substation</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Inspection Date</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Current Status</th>
+                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Will Be Assigned To</th>
+              </tr>
+            </thead>
+            <tbody class="bg-white divide-y divide-gray-200">
+              {% for inspection in unassigned_inspections %}
+              <tr class="hover:bg-gray-50">
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <div class="font-medium text-gray-900">{{ inspection.substation.name }}</div>
+                  <div class="text-sm text-gray-500">{{ inspection.substation.location }}</div>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ inspection.inspection_date }}</td>
+                <td class="px-6 py-4 whitespace-nowrap">
+                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                    Unassigned
+                  </span>
+                </td>
+                <td class="px-6 py-4 whitespace-nowrap text-sm">
+                  {% with schedule=inspection.substation.inspection_schedules.filter.is_active.True.first %}
+                    {% if schedule and schedule.assigned_inspector %}
+                      <span class="text-green-600">
+                        <i class="fas fa-user mr-1"></i>{{ schedule.assigned_inspector.get_full_name }}
+                      </span>
+                    {% else %}
+                      <span class="text-gray-500">
+                        <i class="fas fa-times mr-1"></i>No assignment possible
+                      </span>
+                    {% endif %}
+                  {% endwith %}
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    {% else %}
+    <!-- No Unassigned Inspections -->
+    <div class="max-w-6xl mx-auto">
+      <div class="bg-white border border-gray-200 rounded-lg shadow-sm">
+        <div class="text-center py-12">
+          <i class="fas fa-check-circle text-6xl text-green-500 mb-4"></i>
+          <h3 class="text-xl font-semibold text-gray-900 mb-2">All Inspections Assigned</h3>
+          <p class="text-gray-600 mb-6">There are currently no unassigned inspections that can be automatically assigned.</p>
+          <a href="{% url 'substation_inspections:monitoring_dashboard' %}" 
+             class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
+            <i class="fas fa-arrow-left mr-2"></i>Back to Dashboard
+          </a>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

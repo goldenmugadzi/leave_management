@@ -1,0 +1,164 @@
+{% extends 'admin_layout.html' %}
+{% load static %}
+
+{% block styles %}
+<style>
+    /* E60 specific styles */
+    .e60-header-gradient {
+        background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+    }
+    
+    .status-badge {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.75rem;
+        border-radius: 0.375rem;
+        font-weight: 500;
+    }
+    
+    .status-draft {
+        background-color: #fef3c7;
+        color: #92400e;
+    }
+    
+    .status-in_progress {
+        background-color: #dbeafe;
+        color: #1e40af;
+    }
+    
+    .status-completed {
+        background-color: #dcfce7;
+        color: #166534;
+    }
+    
+    .status-approved {
+        background-color: #f3e8ff;
+        color: #7c2d12;
+    }
+    
+    .status-pending {
+        background-color: #f3f4f6;
+        color: #374151;
+    }
+    
+    .status-rejected {
+        background-color: #fee2e2;
+        color: #dc2626;
+    }
+    
+    .section-card {
+        transition: all 0.2s ease-in-out;
+        border-left: 4px solid #3b82f6;
+    }
+    
+    .section-card:hover {
+        transform: translateX(2px);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+    
+    .btn-e60 {
+        background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%);
+        color: white;
+        border: none;
+        padding: 0.5rem 1rem;
+        border-radius: 0.375rem;
+        font-weight: 500;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        transition: all 0.2s ease-in-out;
+    }
+    
+    .btn-e60:hover {
+        background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%);
+        color: white;
+        text-decoration: none;
+        transform: translateY(-1px);
+    }
+    
+    .card-modern {
+        background: white;
+        border: 1px solid #e5e7eb;
+        border-radius: 0.5rem;
+        box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+    }
+    
+    .card-header-modern {
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid #e5e7eb;
+        background-color: #f9fafb;
+    }
+    
+    .card-body-modern {
+        padding: 1.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="content-wrapper">
+    <div class="container-fluid">
+        <!-- E60 Header -->
+        <div class="e60-header-gradient rounded-lg p-6 mb-6 text-white">
+            <div class="flex flex-col lg:flex-row lg:justify-between lg:items-center">
+                <div class="mb-4 lg:mb-0">
+                    <h1 class="text-3xl font-bold flex items-center">
+                        <i class="fas fa-bolt mr-3"></i>
+                        E60 Consumer Substation Inspections
+                    </h1>
+                    <p class="text-blue-100 mt-2">INSPECTION AND OVERHAUL OF CONSUMER'S SUBSTATIONS</p>
+                </div>
+                <div>
+                    <a href="{% url 'e60_inspections:e60_inspection_create' %}" 
+                       class="inline-flex items-center px-4 py-2 bg-white text-blue-600 rounded-md hover:bg-blue-50 transition-colors font-medium">
+                        <i class="fas fa-plus mr-2"></i>New Inspection
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation Breadcrumb -->
+        <nav class="flex mb-6" aria-label="Breadcrumb">
+            <ol class="inline-flex items-center space-x-1 md:space-x-3">
+                <li class="inline-flex items-center">
+                    <a href="#"
+                       class="inline-flex items-center text-sm font-medium text-gray-700 hover:text-blue-600">
+                        <i class="fas fa-home mr-1"></i>Dashboard
+                    </a>
+                </li>
+                <li>
+                    <div class="flex items-center">
+                        <i class="fas fa-chevron-right text-gray-400 mx-2"></i>
+                        <a href="{% url 'substation_inspections:dashboard' %}" 
+                           class="text-sm font-medium text-gray-700 hover:text-blue-600">Inspections</a>
+                    </div>
+                </li>
+                <li aria-current="page">
+                    <div class="flex items-center">
+                        <i class="fas fa-chevron-right text-gray-400 mx-2"></i>
+                        <span class="text-sm font-medium text-gray-500">E60 Inspections</span>
+                    </div>
+                </li>
+            </ol>
+        </nav>
+
+        {% block page_content %}
+        <!-- Page content goes here -->
+        {% endblock %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('E60 Inspections module loaded');
+    
+    // Add any E60-specific JavaScript here
+    // Initialize tooltips if needed
+    const tooltips = document.querySelectorAll('[data-tooltip]');
+    tooltips.forEach(tooltip => {
+        // Initialize tooltip functionality
+    });
+});
+</script>
+{% endblock %}

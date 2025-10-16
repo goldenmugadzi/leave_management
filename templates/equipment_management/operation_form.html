@@ -1,0 +1,394 @@
+{% extends 'admin_layout.html' %}
+{% load static %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h1 class="page-title">
+                            <i class="fas fa-clipboard-list"></i>
+                            {{ title }}
+                        </h1>
+                        <p class="page-subtitle">
+                            Digital Form E114 - Installation/Removal/Change of Equipment
+                        </p>
+                    </div>
+                    <div>
+                        <a href="{% url 'equipment_management:operation_list' %}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Back to Operations
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-file-alt"></i>
+                        Form E114 - Equipment Operation Request
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="post" id="operationForm">
+                        {% csrf_token %}
+                        
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger">
+                                {{ form.non_field_errors }}
+                            </div>
+                        {% endif %}
+
+                        <!-- Operation Details Section -->
+                        <fieldset class="mb-4">
+                            <legend class="h5 border-bottom pb-2 text-primary">Operation Details</legend>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group mb-3">
+                                        <label for="{{ form.operation_type.id_for_label }}" class="form-label">
+                                            {{ form.operation_type.label }} <span class="text-danger">*</span>
+                                        </label>
+                                        {{ form.operation_type }}
+                                        {% if form.operation_type.errors %}
+                                            <div class="text-danger small">{{ form.operation_type.errors }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group mb-3">
+                                        <label for="{{ form.priority.id_for_label }}" class="form-label">
+                                            {{ form.priority.label }}
+                                        </label>
+                                        {{ form.priority }}
+                                        {% if form.priority.errors %}
+                                            <div class="text-danger small">{{ form.priority.errors }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group mb-3">
+                                        <label for="{{ form.operation_date.id_for_label }}" class="form-label">
+                                            {{ form.operation_date.label }}
+                                        </label>
+                                        {{ form.operation_date }}
+                                        {% if form.operation_date.errors %}
+                                            <div class="text-danger small">{{ form.operation_date.errors }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group mb-3">
+                                        <label for="{{ form.scheduled_date.id_for_label }}" class="form-label">
+                                            {{ form.scheduled_date.label }}
+                                        </label>
+                                        {{ form.scheduled_date }}
+                                        {% if form.scheduled_date.errors %}
+                                            <div class="text-danger small">{{ form.scheduled_date.errors }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </fieldset>
+
+                        <!-- Consumer Information Section -->
+                        <fieldset class="mb-4">
+                            <legend class="h5 border-bottom pb-2 text-primary">Consumer Information</legend>
+                            <div class="row">
+                                <div class="col-md-8">
+                                    <div class="form-group mb-3">
+                                        <label for="{{ form.consumer_name.id_for_label }}" class="form-label">
+                                            {{ form.consumer_name.label }} <span class="text-danger">*</span>
+                                        </label>
+                                        {{ form.consumer_name }}
+                                        {% if form.consumer_name.errors %}
+                                            <div class="text-danger small">{{ form.consumer_name.errors }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group mb-3">
+                                        <label for="{{ form.consumer_account_number.id_for_label }}" class="form-label">
+                                            {{ form.consumer_account_number.label }}
+                                        </label>
+                                        {{ form.consumer_account_number }}
+                                        {% if form.consumer_account_number.help_text %}
+                                            <div class="form-text">{{ form.consumer_account_number.help_text }}</div>
+                                        {% endif %}
+                                        {% if form.consumer_account_number.errors %}
+                                            <div class="text-danger small">{{ form.consumer_account_number.errors }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </fieldset>
+
+                        <!-- Location Section -->
+                        <fieldset class="mb-4">
+                            <legend class="h5 border-bottom pb-2 text-primary">Location</legend>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group mb-3">
+                                        <label for="{{ form.substation_name.id_for_label }}" class="form-label">
+                                            {{ form.substation_name.label }} <span class="text-danger">*</span>
+                                        </label>
+                                        {{ form.substation_name }}
+                                        {% if form.substation_name.errors %}
+                                            <div class="text-danger small">{{ form.substation_name.errors }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group mb-3">
+                                        <label for="{{ form.section.id_for_label }}" class="form-label">
+                                            {{ form.section.label }}
+                                        </label>
+                                        {{ form.section }}
+                                        {% if form.section.errors %}
+                                            <div class="text-danger small">{{ form.section.errors }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group mb-3">
+                                        <label for="{{ form.district.id_for_label }}" class="form-label">
+                                            {{ form.district.label }} <span class="text-danger">*</span>
+                                        </label>
+                                        {{ form.district }}
+                                        {% if form.district.errors %}
+                                            <div class="text-danger small">{{ form.district.errors }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </fieldset>
+
+                        <!-- Equipment Section -->
+                        <fieldset class="mb-4">
+                            <legend class="h5 border-bottom pb-2 text-primary">Equipment</legend>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group mb-3">
+                                        <label for="{{ form.equipment_installed.id_for_label }}" class="form-label">
+                                            {{ form.equipment_installed.label }}
+                                        </label>
+                                        {{ form.equipment_installed }}
+                                        <div class="form-text">Select equipment being installed (if applicable)</div>
+                                        {% if form.equipment_installed.errors %}
+                                            <div class="text-danger small">{{ form.equipment_installed.errors }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group mb-3">
+                                        <label for="{{ form.equipment_removed.id_for_label }}" class="form-label">
+                                            {{ form.equipment_removed.label }}
+                                        </label>
+                                        {{ form.equipment_removed }}
+                                        <div class="form-text">Select equipment being removed (if applicable)</div>
+                                        {% if form.equipment_removed.errors %}
+                                            <div class="text-danger small">{{ form.equipment_removed.errors }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </fieldset>
+
+                        <!-- Operation Details Section -->
+                        <fieldset class="mb-4">
+                            <legend class="h5 border-bottom pb-2 text-primary">Work Details</legend>
+                            <div class="form-group mb-3">
+                                <label for="{{ form.reason.id_for_label }}" class="form-label">
+                                    {{ form.reason.label }} <span class="text-danger">*</span>
+                                </label>
+                                {{ form.reason }}
+                                <div class="form-text">Provide detailed justification for this operation</div>
+                                {% if form.reason.errors %}
+                                    <div class="text-danger small">{{ form.reason.errors }}</div>
+                                {% endif %}
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group mb-3">
+                                        <label for="{{ form.operator_name.id_for_label }}" class="form-label">
+                                            {{ form.operator_name.label }} <span class="text-danger">*</span>
+                                        </label>
+                                        {{ form.operator_name }}
+                                        {% if form.operator_name.errors %}
+                                            <div class="text-danger small">{{ form.operator_name.errors }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group mb-3">
+                                        <label for="{{ form.operator_designation.id_for_label }}" class="form-label">
+                                            {{ form.operator_designation.label }} <span class="text-danger">*</span>
+                                        </label>
+                                        {{ form.operator_designation }}
+                                        {% if form.operator_designation.errors %}
+                                            <div class="text-danger small">{{ form.operator_designation.errors }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="form-group mb-3">
+                                        <label for="{{ form.estimated_duration_hours.id_for_label }}" class="form-label">
+                                            {{ form.estimated_duration_hours.label }}
+                                        </label>
+                                        {{ form.estimated_duration_hours }}
+                                        {% if form.estimated_duration_hours.help_text %}
+                                            <div class="form-text">{{ form.estimated_duration_hours.help_text }}</div>
+                                        {% endif %}
+                                        {% if form.estimated_duration_hours.errors %}
+                                            <div class="text-danger small">{{ form.estimated_duration_hours.errors }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-group mb-3">
+                                        <label for="{{ form.cost_estimate.id_for_label }}" class="form-label">
+                                            {{ form.cost_estimate.label }}
+                                        </label>
+                                        {{ form.cost_estimate }}
+                                        {% if form.cost_estimate.help_text %}
+                                            <div class="form-text">{{ form.cost_estimate.help_text }}</div>
+                                        {% endif %}
+                                        {% if form.cost_estimate.errors %}
+                                            <div class="text-danger small">{{ form.cost_estimate.errors }}</div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </fieldset>
+
+                        <!-- Action Buttons -->
+                        <div class="card-footer bg-light">
+                            <div class="d-flex justify-content-between">
+                                <a href="{% url 'equipment_management:operation_list' %}" class="btn btn-secondary">
+                                    <i class="fas fa-times"></i> Cancel
+                                </a>
+                                <div class="btn-group">
+                                    <button type="submit" name="submit" class="btn btn-primary">
+                                        <i class="fas fa-save"></i> Save as Draft
+                                    </button>
+                                    <button type="submit" name="submit_and_send" class="btn btn-success">
+                                        <i class="fas fa-paper-plane"></i> Save & Submit for Approval
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        // Show/hide equipment fields based on operation type
+        $('#id_operation_type').change(function() {
+            var operationType = $(this).val();
+            var installedField = $('#id_equipment_installed').closest('.form-group');
+            var removedField = $('#id_equipment_removed').closest('.form-group');
+            
+            // Reset visibility
+            installedField.show();
+            removedField.show();
+            
+            switch(operationType) {
+                case 'installation':
+                    removedField.hide();
+                    $('#id_equipment_removed').val('');
+                    break;
+                case 'removal':
+                    installedField.hide();
+                    $('#id_equipment_installed').val('');
+                    break;
+                case 'change':
+                    // Both fields visible
+                    break;
+                default:
+                    // Show both by default
+                    break;
+            }
+        }).trigger('change');
+        
+        // Auto-fill operator name with current user if available
+        {% if user.is_authenticated %}
+        if (!$('#id_operator_name').val()) {
+            $('#id_operator_name').val('{{ user.get_full_name|default:user.username }}');
+        }
+        {% endif %}
+        
+        // Form validation
+        $('#operationForm').on('submit', function(e) {
+            var operationType = $('#id_operation_type').val();
+            var equipmentInstalled = $('#id_equipment_installed').val();
+            var equipmentRemoved = $('#id_equipment_removed').val();
+            var isValid = true;
+            var errors = [];
+            
+            // Operation type specific validations
+            if (operationType === 'installation' && !equipmentInstalled) {
+                errors.push('Equipment to be installed is required for installation operations.');
+                isValid = false;
+            }
+            
+            if (operationType === 'removal' && !equipmentRemoved) {
+                errors.push('Equipment to be removed is required for removal operations.');
+                isValid = false;
+            }
+            
+            if (operationType === 'change' && (!equipmentInstalled || !equipmentRemoved)) {
+                errors.push('Both equipment to be installed and removed are required for change operations.');
+                isValid = false;
+            }
+            
+            if (equipmentInstalled && equipmentRemoved && equipmentInstalled === equipmentRemoved) {
+                errors.push('Equipment to be installed and removed cannot be the same.');
+                isValid = false;
+            }
+            
+            if (!isValid) {
+                e.preventDefault();
+                alert('Validation errors:\n' + errors.join('\n'));
+                return false;
+            }
+            
+            // Confirm submission
+            if ($(document.activeElement).attr('name') === 'submit_and_send') {
+                if (!confirm('Are you sure you want to submit this operation for approval? You won\'t be able to edit it afterwards.')) {
+                    e.preventDefault();
+                    return false;
+                }
+            }
+        });
+        
+        // Auto-set operation date to today if not set
+        if (!$('#id_operation_date').val()) {
+            var today = new Date().toISOString().split('T')[0];
+            $('#id_operation_date').val(today);
+        }
+    });
+</script>
+{% endblock %}

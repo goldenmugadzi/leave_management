@@ -1,0 +1,41 @@
+{% for inspection in upcoming_inspections %}
+<div class="border border-gray-200 rounded-lg p-4 mb-4 bg-white shadow-sm hover:shadow-md transition-shadow duration-200">
+    <div class="flex justify-between items-start mb-4">
+        <div class="flex-1">
+            <h6 class="font-semibold text-gray-900 mb-1">{{ inspection.substation.name }}</h6>
+            <p class="text-gray-600 mb-1">{{ inspection.substation.location }}</p>
+            <div class="text-xs text-gray-500 flex items-center">
+                <i class="fas fa-calendar mr-1"></i>{{ inspection.inspection_date }}
+                {% if inspection.inspector %}
+                <span class="mx-2">|</span>
+                <i class="fas fa-user mr-1"></i>{{ inspection.inspector.get_full_name }}
+                {% endif %}
+            </div>
+        </div>
+        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+            {% if inspection.status == 'completed' %}bg-green-100 text-green-800
+            {% elif inspection.status == 'in_progress' %}bg-blue-100 text-blue-800
+            {% elif inspection.status == 'overdue' %}bg-red-100 text-red-800
+            {% else %}bg-yellow-100 text-yellow-800{% endif %}">
+            {{ inspection.get_status_display }}
+        </span>
+    </div>
+    <div class="flex gap-2">
+        <a href="{% url 'substation_inspections:inspection_report_detail' inspection.pk %}"
+           class="bg-blue-50 hover:bg-blue-100 text-blue-600 px-3 py-1 rounded-md text-sm font-medium transition-colors duration-200">
+            <i class="fas fa-eye mr-1"></i>View
+        </a>
+        {% if inspection.inspector %}
+        <a href="{% url 'substation_inspections:reassign_inspection' inspection.pk %}"
+           class="bg-gray-50 hover:bg-gray-100 text-gray-600 px-3 py-1 rounded-md text-sm font-medium transition-colors duration-200">
+            <i class="fas fa-user-edit mr-1"></i>Reassign
+        </a>
+        {% endif %}
+    </div>
+</div>
+{% empty %}
+<div class="text-center py-8">
+    <i class="fas fa-calendar-check text-gray-400 text-3xl mb-3"></i>
+    <p class="text-gray-500">No upcoming inspections</p>
+</div>
+{% endfor %}

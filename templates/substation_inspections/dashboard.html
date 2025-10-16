@@ -1,0 +1,211 @@
+{% extends 'admin_layout.html' %}
+{% load static %}
+
+{% block title %}Substation Inspection Dashboard{% endblock %}
+
+{% block content %}
+<div class="content-wrapper">
+  <div class="bg-gray-50 border border-gray-200 rounded-lg px-6 py-6 max-w-7xl mx-auto">
+    
+    <!-- Header -->
+    <div class="flex justify-between items-center mb-8">
+      <div>
+        <h1 class="text-2xl font-bold text-gray-900">Substation Inspection Dashboard</h1>
+        <p class="text-gray-600 mt-1">Manage substation inspections and monitoring</p>
+      </div>
+      <div>
+        <a href="{% url 'substation_inspections:unified_dashboard' %}" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors">
+          <i class="fas fa-tachometer-alt mr-2"></i>Unified Dashboard
+        </a>
+      </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div class="bg-white border border-gray-200 rounded-lg p-6 text-center shadow-sm">
+        <h3 class="text-3xl font-bold text-gray-900 mb-2">{{ total_substations }}</h3>
+        <p class="text-gray-600 text-sm">Total Substations</p>
+        <div class="mt-2">
+          <i class="fas fa-home text-blue-600 text-xl"></i>
+        </div>
+      </div>
+      <div class="bg-white border border-gray-200 rounded-lg p-6 text-center shadow-sm">
+        <h3 class="text-3xl font-bold text-gray-900 mb-2">{{ pending_inspections }}</h3>
+        <p class="text-gray-600 text-sm">Pending Inspections</p>
+        <div class="mt-2">
+          <i class="fas fa-clock text-yellow-600 text-xl"></i>
+        </div>
+      </div>
+      <div class="bg-white border border-gray-200 rounded-lg p-6 text-center shadow-sm">
+        <h3 class="text-3xl font-bold text-gray-900 mb-2">{{ completed_this_month }}</h3>
+        <p class="text-gray-600 text-sm">Completed This Month</p>
+        <div class="mt-2">
+          <i class="fas fa-check-circle text-green-600 text-xl"></i>
+        </div>
+      </div>
+      <div class="bg-white border border-gray-200 rounded-lg p-6 text-center shadow-sm">
+        <h3 class="text-3xl font-bold text-gray-900 mb-2">{{ overdue_inspections }}</h3>
+        <p class="text-gray-600 text-sm">Overdue Inspections</p>
+        <div class="mt-2">
+          <i class="fas fa-exclamation-triangle text-red-600 text-xl"></i>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="bg-white border border-gray-200 rounded-lg p-6 mb-8 shadow-sm">
+      <h3 class="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b border-gray-200">Quick Actions</h3>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+        <a href="{% url 'substation_inspections:monitoring_dashboard' %}" 
+           class="bg-gradient-to-r from-purple-50 to-blue-50 hover:from-purple-100 hover:to-blue-100 border border-purple-200 rounded-lg p-4 text-center transition-colors group">
+          <i class="fas fa-tachometer-alt text-purple-600 text-xl mb-2 group-hover:text-purple-700"></i>
+          <div class="text-sm font-medium text-gray-900">Monitoring Dashboard</div>
+        </a>
+        <a href="{% url 'substation_inspections:substation_create' %}" 
+           class="bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg p-4 text-center transition-colors group">
+          <i class="fas fa-plus text-blue-600 text-xl mb-2 group-hover:text-blue-700"></i>
+          <div class="text-sm font-medium text-gray-900">Add New Substation</div>
+        </a>
+        <a href="{% url 'substation_inspections:inspection_report_create' %}" 
+           class="bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg p-4 text-center transition-colors group">
+          <i class="fas fa-file text-blue-600 text-xl mb-2 group-hover:text-blue-700"></i>
+          <div class="text-sm font-medium text-gray-900">Create Inspection Report</div>
+        </a>
+        <a href="{% url 'substation_inspections:schedule_create' %}" 
+           class="bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg p-4 text-center transition-colors group">
+          <i class="fas fa-calendar text-blue-600 text-xl mb-2 group-hover:text-blue-700"></i>
+          <div class="text-sm font-medium text-gray-900">Schedule Inspection</div>
+        </a>
+        <a href="{% url 'substation_inspections:bulk_assignment' %}" 
+           class="bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg p-4 text-center transition-colors group">
+          <i class="fas fa-users text-blue-600 text-xl mb-2 group-hover:text-blue-700"></i>
+          <div class="text-sm font-medium text-gray-900">Bulk Assignment</div>
+        </a>
+      </div>
+    </div>
+
+    <!-- Recent Inspections and Upcoming Inspections -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+      <!-- Recent Inspections -->
+      <div class="lg:col-span-2">
+        <div class="bg-white border border-gray-200 rounded-lg shadow-sm">
+          <div class="px-6 py-4 border-b border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-900">Recent Inspections</h3>
+          </div>
+            <div class="overflow-x-auto">
+              <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                  <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Report #</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Substation</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Inspector</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+                  </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                  {% for inspection in recent_inspections %}
+                  <tr class="hover:bg-gray-50">
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      {{ inspection.report_number }}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {{ inspection.substation.name }}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {{ inspection.inspector.get_full_name|default:"Not Assigned" }}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {{ inspection.inspection_date|date:"M d, Y" }}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                      <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                        {% if inspection.status == 'completed' %}bg-green-100 text-green-800
+                        {% elif inspection.status == 'in_progress' %}bg-blue-100 text-blue-800
+                        {% elif inspection.status == 'overdue' %}bg-red-100 text-red-800
+                        {% else %}bg-yellow-100 text-yellow-800{% endif %}">
+                        {{ inspection.get_status_display }}
+                      </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <a href="{% url 'substation_inspections:inspection_report_detail' inspection.pk %}" 
+                         class="text-blue-600 hover:text-blue-900">
+                        View
+                      </a>
+                    </td>
+                  </tr>
+                  {% empty %}
+                  <tr>
+                    <td colspan="6" class="px-6 py-12 text-center text-gray-500">
+                      <i class="fas fa-search text-4xl mb-4"></i>
+                      <div class="text-lg font-medium mb-2">No inspections found</div>
+                    </td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+      <!-- Upcoming Inspections -->
+      <div>
+        <div class="bg-white border border-gray-200 rounded-lg shadow-sm">
+          <div class="px-6 py-4 border-b border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-900">Upcoming Inspections</h3>
+          </div>
+            <div class="p-6">
+              <div class="space-y-4">
+                {% for inspection in upcoming_inspections %}
+                <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                  <div>
+                    <h6 class="text-sm font-medium text-gray-900">{{ inspection.substation.name }}</h6>
+                    <p class="text-xs text-gray-500">{{ inspection.inspection_date|date:"M d, Y" }}</p>
+                  </div>
+                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                    {{ inspection.get_status_display }}
+                  </span>
+                </div>
+                {% empty %}
+                <div class="text-center py-8 text-gray-500">
+                  <i class="fas fa-calendar text-4xl mb-4"></i>
+                  <div class="text-sm">No upcoming inspections</div>
+                </div>
+                {% endfor %}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    <!-- Navigation Links -->
+    <div class="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
+      <h3 class="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b border-gray-200">Navigation</h3>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <a href="{% url 'substation_inspections:substation_list' %}" 
+           class="bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg p-4 text-center transition-colors group">
+          <i class="fas fa-home text-blue-600 text-xl mb-2 group-hover:text-blue-700"></i>
+          <div class="text-sm font-medium text-gray-900">Manage Substations</div>
+        </a>
+        <a href="{% url 'substation_inspections:inspection_report_list' %}" 
+           class="bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg p-4 text-center transition-colors group">
+          <i class="fas fa-file text-blue-600 text-xl mb-2 group-hover:text-blue-700"></i>
+          <div class="text-sm font-medium text-gray-900">View Reports</div>
+        </a>
+        <a href="{% url 'substation_inspections:schedule_list' %}" 
+           class="bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg p-4 text-center transition-colors group">
+          <i class="fas fa-calendar text-blue-600 text-xl mb-2 group-hover:text-blue-700"></i>
+          <div class="text-sm font-medium text-gray-900">Manage Schedules</div>
+        </a>
+        <a href="{% url 'substation_inspections:checklist_item_list' %}" 
+           class="bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg p-4 text-center transition-colors group">
+          <i class="fas fa-list-check text-blue-600 text-xl mb-2 group-hover:text-blue-700"></i>
+          <div class="text-sm font-medium text-gray-900">Checklist Items</div>
+        </a>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}

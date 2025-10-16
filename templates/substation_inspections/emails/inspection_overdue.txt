@@ -1,0 +1,25 @@
+Subject: URGENT: Overdue Inspection - {{ substation.name }}
+
+Dear {{ inspector.get_full_name }},
+
+URGENT NOTICE: You have an overdue inspection that requires immediate attention:
+
+Inspection Details:
+- Substation: {{ substation.name }} ({{ substation.substation_code }})
+- Location: {{ substation.location }}
+- Scheduled Date: {{ inspection.inspection_date }}
+- Report Number: {{ inspection.report_number }}
+- Days Overdue: {{ inspection.inspection_date|timesince }}
+
+This inspection is now marked as OVERDUE and requires immediate action. Please:
+
+1. Complete the inspection as soon as possible
+2. Update the inspection status in the system
+3. Contact your supervisor if there are any issues preventing completion
+
+Failure to complete overdue inspections may result in compliance issues and disciplinary action.
+
+Please contact the administration team immediately if you need assistance.
+
+Best regards,
+Substation Inspection Administration System

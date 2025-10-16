@@ -1,0 +1,246 @@
+{% extends 'admin_layout.html' %}
+{% load static %}
+
+{% block title %}{{ check_type }} - {{ maintenance_record.report_no }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">
+                        <i class="fas fa-clipboard-check"></i>
+                        {{ check_type }}
+                    </h3>
+                    <div class="card-tools">
+                        <a href="{% url 'circuit_breaker_maintenance:maintenance_tests' maintenance_record.pk %}" class="btn btn-secondary btn-sm">
+                            <i class="fas fa-arrow-left"></i> Back to Tests
+                        </a>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <!-- Circuit Breaker Info -->
+                    <div class="row mb-4">
+                        <div class="col-md-8">
+                            <h5><i class="fas fa-bolt"></i> {{ maintenance_record.circuit_breaker.breaker_number }}</h5>
+                            <p class="text-muted">
+                                {{ maintenance_record.circuit_breaker.make_type }} - {{ maintenance_record.circuit_breaker.voltage_capacity }}<br>
+                                {{ maintenance_record.circuit_breaker.sub_station }} | Report: {{ maintenance_record.report_no }}
+                            </p>
+                        </div>
+                        <div class="col-md-4 text-right">
+                            <span class="badge badge-{{ maintenance_record.status|default:'secondary' }} badge-lg">
+                                {{ maintenance_record.get_status_display }}
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Form -->
+                    <form method="post">
+                        {% csrf_token %}
+                        
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h5 class="card-title">
+                                            {% if maintenance_record.circuit_breaker.breaker_type == 'vacuum' %}
+                                                <i class="fas fa-vacuum-cleaner"></i> Vacuum Circuit Breaker Checks
+                                            {% else %}
+                                                <i class="fas fa-oil-can"></i> Oil Circuit Breaker Checks
+                                            {% endif %}
+                                        </h5>
+                                    </div>
+                                    <div class="card-body">
+                                        {% if maintenance_record.circuit_breaker.breaker_type == 'vacuum' %}
+                                            <!-- Vacuum Breaker Specific Checks -->
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <h6><i class="fas fa-cog"></i> Mechanical Checks</h6>
+                                                    <div class="form-group">
+                                                        {{ form.gearing_checked.label_tag }}
+                                                        {{ form.gearing_checked }}
+                                                    </div>
+                                                    <div class="form-group">
+                                                        {{ form.lubrication_checked.label_tag }}
+                                                        {{ form.lubrication_checked }}
+                                                    </div>
+                                                    <div class="form-group">
+                                                        {{ form.auxiliary_contacts_checked.label_tag }}
+                                                        {{ form.auxiliary_contacts_checked }}
+                                                    </div>
+                                                    <div class="form-group">
+                                                        {{ form.motor_checked.label_tag }}
+                                                        {{ form.motor_checked }}
+                                                    </div>
+                                                    <div class="form-group">
+                                                        {{ form.springs_close_open_checked.label_tag }}
+                                                        {{ form.springs_close_open_checked }}
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <h6><i class="fas fa-bolt"></i> Electrical Checks</h6>
+                                                    <div class="form-group">
+                                                        {{ form.cb_insulators_checked.label_tag }}
+                                                        {{ form.cb_insulators_checked }}
+                                                    </div>
+                                                    <div class="form-group">
+                                                        {{ form.cts_checked.label_tag }}
+                                                        {{ form.cts_checked }}
+                                                    </div>
+                                                    <div class="form-group">
+                                                        {{ form.porcelain_checked.label_tag }}
+                                                        {{ form.porcelain_checked }}
+                                                    </div>
+                                                    <div class="form-group">
+                                                        {{ form.local_remote_operation_checked.label_tag }}
+                                                        {{ form.local_remote_operation_checked }}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            
+                                            <hr>
+                                            
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <h6><i class="fas fa-vial"></i> Vacuum System</h6>
+                                                    <div class="form-group">
+                                                        {{ form.vacuum_check_performed.label_tag }}
+                                                        {{ form.vacuum_check_performed }}
+                                                    </div>
+                                                    <div class="form-group">
+                                                        {{ form.vacuum_level_satisfactory.label_tag }}
+                                                        {{ form.vacuum_level_satisfactory }}
+                                                    </div>
+                                                    <div class="form-group">
+                                                        {{ form.contacts_condition.label_tag }}
+                                                        {{ form.contacts_condition }}
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <h6><i class="fas fa-chart-line"></i> Ductor Test Results</h6>
+                                                    <div class="form-group">
+                                                        {{ form.red_phase_ductor.label_tag }}
+                                                        {{ form.red_phase_ductor }}
+                                                    </div>
+                                                    <div class="form-group">
+                                                        {{ form.yellow_phase_ductor.label_tag }}
+                                                        {{ form.yellow_phase_ductor }}
+                                                    </div>
+                                                    <div class="form-group">
+                                                        {{ form.blue_phase_ductor.label_tag }}
+                                                        {{ form.blue_phase_ductor }}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        {% else %}
+                                            <!-- Oil Breaker Specific Checks -->
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <h6><i class="fas fa-oil-can"></i> Oil System Checks</h6>
+                                                    <div class="form-group">
+                                                        {{ form.oil_level_checked.label_tag }}
+                                                        {{ form.oil_level_checked }}
+                                                    </div>
+                                                    <div class="form-group">
+                                                        {{ form.oil_quality_checked.label_tag }}
+                                                        {{ form.oil_quality_checked }}
+                                                    </div>
+                                                    <div class="form-group">
+                                                        {{ form.oil_leakage_checked.label_tag }}
+                                                        {{ form.oil_leakage_checked }}
+                                                    </div>
+                                                    <div class="form-group">
+                                                        {{ form.oil_condition.label_tag }}
+                                                        {{ form.oil_condition }}
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <h6><i class="fas fa-flask"></i> Oil Analysis Results</h6>
+                                                    <div class="form-group">
+                                                        {{ form.oil_dielectric_strength.label_tag }}
+                                                        {{ form.oil_dielectric_strength }}
+                                                    </div>
+                                                    <div class="form-group">
+                                                        {{ form.oil_moisture_content.label_tag }}
+                                                        {{ form.oil_moisture_content }}
+                                                    </div>
+                                                    <div class="form-group">
+                                                        {{ form.oil_acidity.label_tag }}
+                                                        {{ form.oil_acidity }}
+                                                    </div>
+                                                    <div class="form-group">
+                                                        {{ form.oil_analysis_required.label_tag }}
+                                                        {{ form.oil_analysis_required }}
+                                                    </div>
+                                                    <div class="form-group">
+                                                        {{ form.oil_analysis_date.label_tag }}
+                                                        {{ form.oil_analysis_date }}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            
+                                            <hr>
+                                            
+                                            <div class="row">
+                                                <div class="col-md-6">
+                                                    <h6><i class="fas fa-cogs"></i> Mechanical System</h6>
+                                                    <div class="form-group">
+                                                        {{ form.contacts_inspection.label_tag }}
+                                                        {{ form.contacts_inspection }}
+                                                    </div>
+                                                    <div class="form-group">
+                                                        {{ form.arcing_contacts_condition.label_tag }}
+                                                        {{ form.arcing_contacts_condition }}
+                                                    </div>
+                                                    <div class="form-group">
+                                                        {{ form.tank_condition.label_tag }}
+                                                        {{ form.tank_condition }}
+                                                    </div>
+                                                    <div class="form-group">
+                                                        {{ form.gasket_seals_condition.label_tag }}
+                                                        {{ form.gasket_seals_condition }}
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <h6><i class="fas fa-clipboard"></i> Analysis Results</h6>
+                                                    <div class="form-group">
+                                                        {{ form.oil_analysis_results.label_tag }}
+                                                        {{ form.oil_analysis_results }}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        {% endif %}
+                                        
+                                        <hr>
+                                        
+                                        <div class="row">
+                                            <div class="col-md-12">
+                                                <h6><i class="fas fa-comments"></i> Additional Comments</h6>
+                                                <div class="form-group">
+                                                    {{ form.comments.label_tag }}
+                                                    {{ form.comments }}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="text-center mt-4">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="fas fa-save"></i> Save Checks
+                            </button>
+                            <a href="{% url 'circuit_breaker_maintenance:maintenance_tests' maintenance_record.pk %}" class="btn btn-secondary btn-lg ml-2">
+                                <i class="fas fa-times"></i> Cancel
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

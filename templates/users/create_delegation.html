@@ -1,0 +1,381 @@
+{% extends 'admin_layout.html' %}
+{% load static %}
+
+{% block content %}
+<div class="content-wrapper">
+    <div class="container-fluid">
+        <!-- Header -->
+        <div class="flex flex-col lg:flex-row lg:justify-between lg:items-center mb-6">
+            <div class="mb-4 lg:mb-0">
+                <h1 class="text-2xl font-bold text-gray-900">Create Role Delegation</h1>
+                <p class="text-gray-600 mt-1">Delegate your roles to another user temporarily</p>
+            </div>
+            <div>
+                <a href="{% url 'delegation_dashboard' %}" class="inline-flex items-center px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors">
+                    <i class="fas fa-arrow-left mr-2"></i> Back to Dashboard
+                </a>
+            </div>
+        </div>
+
+        <!-- Form -->
+        <div class="max-w-4xl mx-auto">
+            <div class="bg-white border border-gray-200 rounded-lg shadow-sm">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h3 class="text-lg font-medium text-gray-900">Delegation Details</h3>
+                </div>
+                <div class="p-6">
+                    <form method="post" class="space-y-6">
+                        {% csrf_token %}
+                        
+                        <!-- Delegator Selection (Admin Mode) -->
+                        {% if allow_delegator_selection and form.delegator %}
+                        <div>
+                            <label for="{{ form.delegator.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                Delegator <span class="text-red-500">*</span>
+                            </label>
+                            {{ form.delegator }}
+                            {% if form.delegator.errors %}
+                                <div class="mt-1 text-sm text-red-600">
+                                    {% for error in form.delegator.errors %}
+                                        <p>{{ error }}</p>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <p class="mt-1 text-sm text-gray-500">Select the user whose roles will be delegated</p>
+                        </div>
+                        {% endif %}
+
+                        <!-- Delegatee Selection -->
+                        <div>
+                            <label for="{{ form.delegatee.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                Delegatee <span class="text-red-500">*</span>
+                            </label>
+                            {{ form.delegatee }}
+                            {% if form.delegatee.errors %}
+                                <div class="mt-1 text-sm text-red-600">
+                                    {% for error in form.delegatee.errors %}
+                                        <p>{{ error }}</p>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <p class="mt-1 text-sm text-gray-500">
+                                {% if allow_delegator_selection %}
+                                    Select the user who will receive the delegated roles
+                                {% else %}
+                                    Select the user who will receive your roles
+                                {% endif %}
+                            </p>
+                        </div>
+
+                        <!-- Roles Selection -->
+                        <div id="roles-section" class="hidden">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                Roles to Delegate <span class="text-red-500">*</span>
+                            </label>
+                            <p class="text-sm text-gray-500 mb-4">Select the roles you want to delegate to <span id="delegatee-name"></span></p>
+                            
+                            <!-- Roles will be loaded dynamically here -->
+                            <div id="roles-container">
+                                <div class="text-center py-8">
+                                    <i class="fas fa-user-plus text-4xl text-gray-400 mb-3"></i>
+                                    <p class="text-gray-500">Please select a delegatee first to see available roles</p>
+                                </div>
+                            </div>
+                            
+                            <!-- Hidden inputs for selected roles and applications -->
+                            <div id="selected-roles-inputs"></div>
+                            <div id="selected-applications-inputs"></div>
+                        </div>
+
+                        <!-- Date Range -->
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label for="{{ form.start_date.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                    Start Date <span class="text-red-500">*</span>
+                                </label>
+                                {{ form.start_date }}
+                                {% if form.start_date.errors %}
+                                    <div class="mt-1 text-sm text-red-600">
+                                        {% for error in form.start_date.errors %}
+                                            <p>{{ error }}</p>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                <p class="mt-1 text-sm text-gray-500">When the delegation becomes active</p>
+                            </div>
+                            
+                            <div>
+                                <label for="{{ form.end_date.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                    End Date <span class="text-red-500">*</span>
+                                </label>
+                                {{ form.end_date }}
+                                {% if form.end_date.errors %}
+                                    <div class="mt-1 text-sm text-red-600">
+                                        {% for error in form.end_date.errors %}
+                                            <p>{{ error }}</p>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                                <p class="mt-1 text-sm text-gray-500">When the delegation expires (max 90 days)</p>
+                            </div>
+                        </div>
+
+                        <!-- Reason -->
+                        <div>
+                            <label for="{{ form.reason.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                Reason for Delegation <span class="text-red-500">*</span>
+                            </label>
+                            {{ form.reason }}
+                            {% if form.reason.errors %}
+                                <div class="mt-1 text-sm text-red-600">
+                                    {% for error in form.reason.errors %}
+                                        <p>{{ error }}</p>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <p class="mt-1 text-sm text-gray-500">Explain why you're delegating your roles (e.g., leave, training, etc.)</p>
+                        </div>
+
+                        <!-- Form Errors -->
+                        {% if form.non_field_errors %}
+                            <div class="bg-red-50 border border-red-200 rounded-md p-4">
+                                <div class="flex">
+                                    <div class="flex-shrink-0">
+                                        <i class="fas fa-exclamation-circle text-red-400"></i>
+                                    </div>
+                                    <div class="ml-3">
+                                        <h3 class="text-sm font-medium text-red-800">Please correct the following errors:</h3>
+                                        <div class="mt-2 text-sm text-red-700">
+                                            {% for error in form.non_field_errors %}
+                                                <p>{{ error }}</p>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endif %}
+
+                        <!-- Submit Buttons -->
+                        <div class="flex justify-end space-x-3 pt-6 border-t border-gray-200">
+                            <a href="{% url 'delegation_dashboard' %}" class="inline-flex items-center px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors">
+                                Cancel
+                            </a>
+                            <button type="submit" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
+                                <i class="fas fa-paper-plane mr-2"></i> Create Delegation
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Information Panel -->
+            <div class="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div class="flex">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-info-circle text-blue-400"></i>
+                    </div>
+                    <div class="ml-3">
+                        <h3 class="text-sm font-medium text-blue-800">Important Information</h3>
+                        <div class="mt-2 text-sm text-blue-700">
+                            <ul class="list-disc list-inside space-y-1">
+                                <li>You can only delegate to users in the same region</li>
+                                <li>You can only delegate roles that you currently have</li>
+                                <li>Delegation period cannot exceed 90 days</li>
+                                <li>All delegations require approval before becoming active</li>
+                                <li>You can cancel the delegation at any time</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}
+
+{% block scripts %}
+<script>
+    $(document).ready(function() {
+        // Initialize Select2 for delegatee field
+        $('.select2').select2({
+            placeholder: 'Select a delegatee',
+            allowClear: true,
+            width: '100%'
+        });
+        
+        // Handle delegator selection change (if available)
+        $('#id_delegator').on('change', function() {
+            // Clear delegatee selection when delegator changes
+            $('#id_delegatee').val('').trigger('change');
+            $('#roles-section').addClass('hidden');
+        });
+        
+        // Handle delegatee selection change
+        $('#id_delegatee').on('change', function() {
+            const delegateeId = $(this).val();
+            const delegatorId = $('#id_delegator').val(); // Get delegator if available
+            const rolesSection = $('#roles-section');
+            const rolesContainer = $('#roles-container');
+            const delegateeName = $('#delegatee-name');
+            
+            if (delegateeId) {
+                // Show loading state
+                rolesContainer.html(`
+                    <div class="text-center py-8">
+                        <i class="fas fa-spinner fa-spin text-4xl text-blue-500 mb-3"></i>
+                        <p class="text-gray-500">Loading available roles...</p>
+                    </div>
+                `);
+                
+                // Show roles section
+                rolesSection.removeClass('hidden');
+                
+                // Prepare AJAX data
+                const ajaxData = { 
+                    delegatee_id: delegateeId,
+                    csrfmiddlewaretoken: $('[name=csrfmiddlewaretoken]').val()
+                };
+                
+                // Add delegator_id if delegator is selected
+                if (delegatorId) {
+                    ajaxData.delegator_id = delegatorId;
+                }
+                
+                // Fetch roles for the selected delegatee and delegator
+                $.ajax({
+                    url: '{% url "get_delegation_roles" %}',
+                    method: 'GET',
+                    data: ajaxData,
+                    success: function(response) {
+                        console.log('AJAX Success:', response);
+                        if (response.error) {
+                            rolesContainer.html(`
+                                <div class="text-center py-8">
+                                    <i class="fas fa-exclamation-triangle text-4xl text-yellow-500 mb-3"></i>
+                                    <p class="text-gray-500">${response.error}</p>
+                                </div>
+                            `);
+                        } else if (response.roles_by_app && Object.keys(response.roles_by_app).length > 0) {
+                            delegateeName.text(response.delegatee_name);
+                            renderRolesByApplication(response.roles_by_app, response.delegator_name);
+                        } else {
+                            rolesContainer.html(`
+                                <div class="text-center py-8">
+                                    <i class="fas fa-exclamation-triangle text-4xl text-yellow-500 mb-3"></i>
+                                    <p class="text-gray-500">No roles available for delegation to this user</p>
+                                </div>
+                            `);
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('AJAX Error:', {
+                            status: xhr.status,
+                            statusText: xhr.statusText,
+                            responseText: xhr.responseText,
+                            error: error
+                        });
+                        rolesContainer.html(`
+                            <div class="text-center py-8">
+                                <i class="fas fa-exclamation-circle text-4xl text-red-500 mb-3"></i>
+                                <p class="text-gray-500">Error loading roles. Please try again.</p>
+                                <p class="text-xs text-gray-400 mt-2">Status: ${xhr.status} - ${xhr.statusText}</p>
+                            </div>
+                        `);
+                    }
+                });
+            } else {
+                // Hide roles section if no delegatee selected
+                rolesSection.addClass('hidden');
+                delegateeName.text('');
+            }
+        });
+        
+        function renderRolesByApplication(rolesByApp, delegatorName) {
+            let html = '';
+            
+            // Add delegator info if available
+            if (delegatorName) {
+                html += `
+                    <div class="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
+                        <div class="flex items-center">
+                            <i class="fas fa-user text-blue-600 mr-2"></i>
+                            <span class="text-sm font-medium text-blue-800">Delegating roles from: ${delegatorName}</span>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            for (const [appId, appData] of Object.entries(rolesByApp)) {
+                html += `
+                    <div class="mb-6 border border-gray-200 rounded-lg p-4">
+                        <h4 class="text-lg font-medium text-gray-900 mb-3 flex items-center">
+                            <i class="fas fa-cube text-blue-600 mr-2"></i>
+                            ${appData.app_name}
+                        </h4>
+                        <div class="space-y-3">
+                `;
+                
+                appData.roles.forEach(role => {
+                    html += `
+                        <label class="flex items-start space-x-3 p-3 border border-gray-200 rounded-md hover:bg-gray-50 cursor-pointer">
+                            <input type="checkbox" 
+                                   name="roles" 
+                                   value="${role.id}" 
+                                   class="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded role-checkbox"
+                                   data-app-id="${appId}">
+                            <div class="flex-1">
+                                <div class="text-sm font-medium text-gray-900">${role.name}</div>
+                                ${role.description ? `<div class="text-xs text-gray-500 mt-1">${role.description}</div>` : ''}
+                            </div>
+                        </label>
+                    `;
+                });
+                
+                html += `
+                        </div>
+                    </div>
+                `;
+            }
+            
+            $('#roles-container').html(html);
+            
+            // Handle role selection changes
+            $('.role-checkbox').on('change', function() {
+                updateSelectedInputs();
+            });
+        }
+        
+        function updateSelectedInputs() {
+            const selectedRoles = [];
+            const selectedApps = new Set();
+            
+            $('.role-checkbox:checked').each(function() {
+                selectedRoles.push($(this).val());
+                selectedApps.add($(this).data('app-id'));
+            });
+            
+            // Update hidden inputs for roles
+            $('#selected-roles-inputs').empty();
+            selectedRoles.forEach(roleId => {
+                $('#selected-roles-inputs').append(`<input type="hidden" name="roles" value="${roleId}">`);
+            });
+            
+            // Update hidden inputs for applications
+            $('#selected-applications-inputs').empty();
+            selectedApps.forEach(appId => {
+                $('#selected-applications-inputs').append(`<input type="hidden" name="applications" value="${appId}">`);
+            });
+        }
+        
+        // Form validation
+        $('form').on('submit', function(e) {
+            const selectedRoles = $('.role-checkbox:checked').length;
+            if (selectedRoles === 0) {
+                e.preventDefault();
+                alert('Please select at least one role to delegate.');
+                return false;
+            }
+        });
+    });
+</script>
+{% endblock scripts %}

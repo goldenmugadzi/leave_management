@@ -1,5 +1,6 @@
-from django.urls import path
+from django.urls import path, include
 from . import views
+from . import mobile_api_views
 
 app_name = 'inspections'
 
@@ -27,6 +28,7 @@ urlpatterns = [
     
     # Inspection Reports (E117)
     path('inspections/', views.inspection_list, name='inspection_list'),
+    path('inspections/create/', views.inspection_create, name='inspection_create'),
     path('inspections/<uuid:pk>/', views.inspection_detail, name='inspection_detail'),
     
     # E6 Certificates
@@ -50,4 +52,15 @@ urlpatterns = [
     # API Endpoints
     path('api/my-assignments/', views.api_my_assignments, name='api_my_assignments'),
     path('api/assignments/<uuid:pk>/accept/', views.api_accept_assignment, name='api_accept_assignment'),
+    
+    # Mobile API Endpoints
+    path('api/v1/applications/assigned/', mobile_api_views.get_assigned_applications, name='mobile_api_assigned_applications'),
+    path('api/v1/applications/<uuid:application_id>/', mobile_api_views.get_application_details, name='mobile_api_application_details'),
+    path('api/v1/applications/<uuid:application_id>/accept/', mobile_api_views.accept_assignment, name='mobile_api_accept_assignment'),
+    path('api/v1/applications/<uuid:application_id>/status/', mobile_api_views.update_assignment_status, name='mobile_api_update_status'),
+    path('api/v1/applications/<uuid:application_id>/complete/', mobile_api_views.complete_assignment, name='mobile_api_complete_assignment'),
+    path('api/v1/applications/<uuid:application_id>/attachments/', mobile_api_views.get_application_attachments, name='mobile_api_application_attachments'),
+
+    # Sync API Endpoints
+    path('sync/', include('inspections.sync.urls')),
 ] 

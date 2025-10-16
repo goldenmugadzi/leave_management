@@ -1,0 +1,359 @@
+{% extends 'admin_layout.html' %}
+{% load static %}
+
+{% block title %}{{ title }}{% endblock %}
+
+{% block content %}
+<div class="content-wrapper">
+  <div class="container-fluid">
+    <!-- Header -->
+    <div class="flex flex-col lg:flex-row lg:justify-between lg:items-center mb-6">
+      <div class="mb-4 lg:mb-0">
+        <h1 class="text-2xl font-bold text-gray-900">{{ title }}</h1>
+        <p class="text-gray-600 mt-1">
+          {% if substation %}Update substation information{% else %}Add a new substation to the system{% endif %}
+        </p>
+      </div>
+      <div>
+        <a href="{% url 'substation_inspections:substation_list' %}" 
+           class="inline-flex items-center px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors">
+          <i class="fas fa-arrow-left mr-2"></i> Back to List
+        </a>
+      </div>
+    </div>
+
+    <!-- Form and Information Panel -->
+    <div class="max-w-6xl mx-auto">
+      <div class="flex flex-col lg:flex-row gap-6">
+        <!-- Form -->
+        <div class="flex-1">
+          <div class="bg-white border border-gray-200 rounded-lg shadow-sm">
+            <div class="px-6 py-4 border-b border-gray-200">
+              <h3 class="text-lg font-medium text-gray-900">
+                Substation Information
+              </h3>
+            </div>
+            <div class="p-6">
+
+              <form method="post" id="substation-form" class="space-y-6">
+                {% csrf_token %}
+                
+                <!-- Basic Information -->
+                <div class="mb-6">
+                  <h4 class="text-lg font-medium text-gray-900 mb-4">
+                    Basic Information
+                  </h4>
+                  
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <label for="{{ form.substation_code.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        {{ form.substation_code.label }} <span class="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        name="{{ form.substation_code.name }}"
+                        id="{{ form.substation_code.id_for_label }}"
+                        value="{{ form.substation_code.value|default:'' }}"
+                        class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="Enter substation code"
+                      />
+                      {% if form.substation_code.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.substation_code.errors.0 }}</p>
+                      {% endif %}
+                      <p class="mt-1 text-sm text-gray-500">
+                        Unique identifier for the substation
+                      </p>
+                    </div>
+                    <div>
+                      <label for="{{ form.name.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        {{ form.name.label }} <span class="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        name="{{ form.name.name }}"
+                        id="{{ form.name.id_for_label }}"
+                        value="{{ form.name.value|default:'' }}"
+                        class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="Enter substation name"
+                      />
+                      {% if form.name.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.name.errors.0 }}</p>
+                      {% endif %}
+                      <p class="mt-1 text-sm text-gray-500">
+                        Full name of the substation
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Technical Specifications -->
+                <div class="mb-6">
+                  <h4 class="text-lg font-medium text-gray-900 mb-4">
+                    Technical Specifications
+                  </h4>
+                  
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <label for="{{ form.substation_type.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        {{ form.substation_type.label }} <span class="text-red-500">*</span>
+                      </label>
+                      <select
+                        name="{{ form.substation_type.name }}"
+                        id="{{ form.substation_type.id_for_label }}"
+                        class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      >
+                        <option value="">Select Substation Type</option>
+                        {% for choice in form.substation_type.field.choices %}
+                          <option value="{{ choice.0 }}" {% if form.substation_type.value == choice.0 %}selected{% endif %}>
+                            {{ choice.1 }}
+                          </option>
+                        {% endfor %}
+                      </select>
+                      {% if form.substation_type.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.substation_type.errors.0 }}</p>
+                      {% endif %}
+                      <p class="mt-1 text-sm text-gray-500">
+                        Type of substation (Primary, Secondary, etc.)
+                      </p>
+                    </div>
+                    <div>
+                      <label for="{{ form.voltage_level.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        {{ form.voltage_level.label }} <span class="text-red-500">*</span>
+                      </label>
+                      <select
+                        name="{{ form.voltage_level.name }}"
+                        id="{{ form.voltage_level.id_for_label }}"
+                        class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      >
+                        <option value="">Select Voltage Level</option>
+                        {% for choice in form.voltage_level.field.choices %}
+                          <option value="{{ choice.0 }}" {% if form.voltage_level.value == choice.0 %}selected{% endif %}>
+                            {{ choice.1 }}
+                          </option>
+                        {% endfor %}
+                      </select>
+                      {% if form.voltage_level.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.voltage_level.errors.0 }}</p>
+                      {% endif %}
+                      <p class="mt-1 text-sm text-gray-500">
+                        Operating voltage level
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Location Information -->
+                <div class="mb-6">
+                  <h4 class="text-lg font-medium text-gray-900 mb-4">
+                    Location Information
+                  </h4>
+                  
+                  <div class="mb-6">
+                    <label for="{{ form.location.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                      {{ form.location.label }} <span class="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      name="{{ form.location.name }}"
+                      id="{{ form.location.id_for_label }}"
+                      value="{{ form.location.value|default:'' }}"
+                      class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="Enter location address"
+                    />
+                    {% if form.location.errors %}
+                      <p class="mt-1 text-sm text-red-600">{{ form.location.errors.0 }}</p>
+                    {% endif %}
+                    <p class="mt-1 text-sm text-gray-500">
+                      Physical address or location description
+                    </p>
+                  </div>
+
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <label for="{{ form.district.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        {{ form.district.label }} <span class="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        name="{{ form.district.name }}"
+                        id="{{ form.district.id_for_label }}"
+                        value="{{ form.district.value|default:'' }}"
+                        class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="Enter district name"
+                      />
+                      {% if form.district.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.district.errors.0 }}</p>
+                      {% endif %}
+                      <p class="mt-1 text-sm text-gray-500">
+                        Administrative district
+                      </p>
+                    </div>
+                    <div>
+                      <label for="{{ form.region.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        {{ form.region.label }} <span class="text-red-500">*</span>
+                      </label>
+                      {{ form.region }}
+                      {% if form.region.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.region.errors.0 }}</p>
+                      {% endif %}
+                      <p class="mt-1 text-sm text-gray-500">
+                        Regional location
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Equipment Inventory -->
+                <div class="mb-6">
+                  <h4 class="text-lg font-medium text-gray-900 mb-4">
+                    Equipment Inventory
+                  </h4>
+                  
+                  <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div>
+                      <label for="{{ form.transformers_count.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        {{ form.transformers_count.label }}
+                      </label>
+                      <input
+                        type="number"
+                        name="{{ form.transformers_count.name }}"
+                        id="{{ form.transformers_count.id_for_label }}"
+                        value="{{ form.transformers_count.value|default:'' }}"
+                        min="0"
+                        class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="0"
+                      />
+                      {% if form.transformers_count.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.transformers_count.errors.0 }}</p>
+                      {% endif %}
+                      <p class="mt-1 text-sm text-gray-500">
+                        Number of transformers
+                      </p>
+                    </div>
+                    <div>
+                      <label for="{{ form.circuit_breakers_count.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        {{ form.circuit_breakers_count.label }}
+                      </label>
+                      <input
+                        type="number"
+                        name="{{ form.circuit_breakers_count.name }}"
+                        id="{{ form.circuit_breakers_count.id_for_label }}"
+                        value="{{ form.circuit_breakers_count.value|default:'' }}"
+                        min="0"
+                        class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="0"
+                      />
+                      {% if form.circuit_breakers_count.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.circuit_breakers_count.errors.0 }}</p>
+                      {% endif %}
+                      <p class="mt-1 text-sm text-gray-500">
+                        Number of circuit breakers
+                      </p>
+                    </div>
+                    <div>
+                      <label for="{{ form.switchgear_count.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        {{ form.switchgear_count.label }}
+                      </label>
+                      <input
+                        type="number"
+                        name="{{ form.switchgear_count.name }}"
+                        id="{{ form.switchgear_count.id_for_label }}"
+                        value="{{ form.switchgear_count.value|default:'' }}"
+                        min="0"
+                        class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="0"
+                      />
+                      {% if form.switchgear_count.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.switchgear_count.errors.0 }}</p>
+                      {% endif %}
+                      <p class="mt-1 text-sm text-gray-500">
+                        Number of switchgear units
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Status -->
+                <div class="mb-6">
+                  <h4 class="text-lg font-medium text-gray-900 mb-4">
+                    Status
+                  </h4>
+                  
+                  <div class="flex items-center">
+                    <div class="flex items-center h-5">
+                      <input
+                        type="checkbox"
+                        name="{{ form.is_active.name }}"
+                        id="{{ form.is_active.id_for_label }}"
+                        {% if form.is_active.value %}checked{% endif %}
+                        class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                      />
+                    </div>
+                    <div class="ml-3 text-sm">
+                      <label for="{{ form.is_active.id_for_label }}" class="font-medium text-gray-700">
+                        {{ form.is_active.label }}
+                      </label>
+                      <p class="text-gray-500">Enable or disable this substation</p>
+                    </div>
+                    {% if form.is_active.errors %}
+                      <p class="mt-1 text-sm text-red-600">{{ form.is_active.errors.0 }}</p>
+                    {% endif %}
+                  </div>
+                </div>
+
+                <!-- Form Actions -->
+                <div class="flex justify-end space-x-3 pt-6 border-t border-gray-200">
+                  <a href="{% url 'substation_inspections:substation_list' %}" 
+                     class="inline-flex items-center px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors">
+                    Cancel
+                  </a>
+                  <button type="submit" 
+                          class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
+                    <i class="fas fa-save mr-2"></i>
+                    {% if substation %}Update Substation{% else %}Create Substation{% endif %}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Important Information Panel -->
+        <div class="lg:w-80 flex-shrink-0">
+          <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 sticky top-6">
+            <div class="flex">
+              <div class="flex-shrink-0">
+                <i class="fas fa-info-circle text-blue-400"></i>
+              </div>
+              <div class="ml-3">
+                <h3 class="text-sm font-medium text-blue-800">
+                  Important Information
+                </h3>
+                <div class="mt-2 text-sm text-blue-700">
+                  <ul class="list-disc list-inside space-y-1">
+                    <li>
+                      All substation information must be accurate and up-to-date
+                    </li>
+                    <li>
+                      Technical specifications are used for maintenance planning
+                    </li>
+                    <li>
+                      Location details help with emergency response planning
+                    </li>
+                    <li>
+                      Equipment counts should reflect current inventory
+                    </li>
+                    <li>
+                      Only active substations will appear in inspection schedules
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

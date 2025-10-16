@@ -1,0 +1,75 @@
+<style>
+/* Basic modern styling for forms within a .fl-form container */
+.fl-form form {
+  display: grid;
+  gap: 1rem;
+}
+.fl-form label {
+  font-weight: 600;
+  color: #334155; /* slate-700 */
+  display: block;
+  margin-bottom: 0.25rem;
+}
+.fl-form input[type="text"],
+.fl-form input[type="number"],
+.fl-form input[type="date"],
+.fl-form input[type="datetime-local"],
+.fl-form select,
+.fl-form textarea {
+  width: 100%;
+  border: 1px solid rgba(203,213,225,0.8); /* slate-300 */
+  background: rgba(255,255,255,0.8);
+  border-radius: 0.75rem;
+  padding: 0.625rem 0.875rem;
+  outline: none;
+  transition: box-shadow 0.2s, border-color 0.2s;
+}
+.fl-form input:focus,
+.fl-form select:focus,
+.fl-form textarea:focus {
+  border-color: #1e40af; /* blue-800 */
+  box-shadow: 0 0 0 3px rgba(59,130,246,0.25);
+}
+.fl-form .helptext {
+  font-size: 0.85rem;
+  color: #64748b; /* slate-500 */
+}
+.fl-form .errorlist {
+  margin: 0.25rem 0 0.5rem 0;
+  color: #b91c1c; /* red-700 */
+  list-style: none;
+  padding-left: 0;
+}
+.btn-primary {
+  background: linear-gradient(90deg, #1e40af, #0ea5e9);
+  color: white;
+  border: none;
+  padding: 0.6rem 1rem;
+  border-radius: 0.75rem;
+}
+.btn-secondary {
+  background: #e2e8f0;
+  color: #0f172a;
+  border: none;
+  padding: 0.6rem 1rem;
+  border-radius: 0.75rem;
+}
+.btn-success {
+  background: linear-gradient(90deg, #15803d, #22c55e);
+  color: white;
+  border: none;
+  padding: 0.6rem 1rem;
+  border-radius: 0.75rem;
+}
+.badge {
+  display: inline-block;
+  padding: 0.25rem 0.625rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+.badge-info { background: #e0f2fe; color: #075985; }
+.badge-success { background: #dcfce7; color: #166534; }
+.badge-warn { background: #fff7ed; color: #9a3412; }
+.badge-muted { background: #e2e8f0; color: #334155; }
+</style>

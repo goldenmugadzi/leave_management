@@ -1,0 +1,48 @@
+{% load static %}
+<div class="mb-10">
+  <h4 class="text-2xl font-bold text-nepal-800 mb-6 flex items-center gap-3">
+    <i class="fas fa-hard-hat text-jade-600"></i>
+    Crane Operator
+  </h4>
+
+  {% if operator_assigned_requests %}
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    {% for r in operator_assigned_requests %}
+    <div class="glass-card p-6 rounded-3xl backdrop-blur-xl bg-white/40 border border-white/30 shadow-2xl">
+      <div class="flex items-center justify-between mb-3">
+        <h5 class="text-xl font-semibold text-gulf-blue-700">Request #{{ r.id }}</h5>
+        <span class="px-3 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-700">Assigned</span>
+      </div>
+      <div class="text-nepal-700 text-sm space-y-1">
+        <div><span class="font-medium">Depot:</span> {{ r.depot.depot }}</div>
+        <div><span class="font-medium">Purpose:</span> {{ r.purpose }}</div>
+        <div><span class="font-medium">Location:</span> {{ r.location }}</div>
+        <div><span class="font-medium">Truck:</span> {{ r.assigned_truck.fleet_number|default:'-' }} ({{ r.assigned_truck.number_plate|default:'-' }})</div>
+        <div><span class="font-medium">Date:</span> {{ r.requested_date }}</div>
+      </div>
+      <div class="mt-5 flex gap-3">
+        <a href="{% url 'fault_locator:crane_job_report' r.id %}"
+           class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-jade-600 text-white hover:bg-jade-700 transition">
+          <i class="fas fa-clipboard-check"></i>
+          Submit Report
+        </a>
+        <a href="{% url 'fault_locator:crane_request_list' %}"
+           class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-200 text-slate-800 hover:bg-slate-300 transition">
+          <i class="fas fa-list"></i>
+          All Requests
+        </a>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+    <div class="glass-card p-8 rounded-3xl backdrop-blur-xl bg-white/40 border border-white/30 shadow-2xl text-center">
+      <p class="text-nepal-600 mb-2">No crane jobs are currently assigned to you.</p>
+      <a href="{% url 'fault_locator:crane_request_list' %}"
+         class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-200 text-slate-800 hover:bg-slate-300 transition">
+        <i class="fas fa-list"></i>
+        View Requests
+      </a>
+    </div>
+  {% endif %}
+</div>

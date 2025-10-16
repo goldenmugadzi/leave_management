@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>URGENT: Overdue Inspection - {{ substation.name }}</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+        .header { background-color: #dc3545; color: white; padding: 20px; border-radius: 5px; margin-bottom: 20px; }
+        .content { padding: 20px; }
+        .inspection-details { background-color: #f8d7da; border: 1px solid #f5c6cb; padding: 15px; border-radius: 5px; margin: 20px 0; }
+        .urgent-notice { background-color: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; border-radius: 5px; margin: 20px 0; }
+        .footer { margin-top: 30px; padding-top: 20px; border-top: 1px solid #dee2e6; font-size: 0.9em; color: #6c757d; }
+        .urgent { color: #dc3545; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2>🚨 URGENT: Overdue Inspection</h2>
+            <p>Dear {{ inspector.get_full_name }},</p>
+        </div>
+        
+        <div class="content">
+            <div class="urgent-notice">
+                <h3 class="urgent">URGENT NOTICE</h3>
+                <p>You have an overdue inspection that requires <strong>immediate attention</strong>:</p>
+            </div>
+            
+            <div class="inspection-details">
+                <h3>Inspection Details:</h3>
+                <ul>
+                    <li><strong>Substation:</strong> {{ substation.name }} ({{ substation.substation_code }})</li>
+                    <li><strong>Location:</strong> {{ substation.location }}</li>
+                    <li><strong>Scheduled Date:</strong> {{ inspection.inspection_date }}</li>
+                    <li><strong>Report Number:</strong> {{ inspection.report_number }}</li>
+                    <li><strong>Days Overdue:</strong> {{ inspection.inspection_date|timesince }}</li>
+                </ul>
+            </div>
+            
+            <p>This inspection is now marked as <span class="urgent">OVERDUE</span> and requires immediate action. Please:</p>
+            
+            <ol>
+                <li>Complete the inspection as soon as possible</li>
+                <li>Update the inspection status in the system</li>
+                <li>Contact your supervisor if there are any issues preventing completion</li>
+            </ol>
+            
+            <div class="urgent-notice">
+                <p><strong>Warning:</strong> Failure to complete overdue inspections may result in compliance issues and disciplinary action.</p>
+            </div>
+            
+            <p>Please contact the administration team immediately if you need assistance.</p>
+        </div>
+        
+        <div class="footer">
+            <p>Best regards,<br>
+            Substation Inspection Administration System</p>
+        </div>
+    </div>
+</body>
+</html>

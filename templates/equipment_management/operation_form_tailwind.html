@@ -1,0 +1,363 @@
+{% extends 'admin_layout.html' %}
+{% load static %}
+
+{% block title %}
+    {% if operation %}
+        Edit Operation
+    {% else %}
+        Create New Operation
+    {% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-6">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Header -->
+        <div class="mb-8">
+            <nav class="flex items-center space-x-2 text-sm text-gray-500 mb-4">
+                <a href="{% url 'equipment_management:equipment_list' %}" class="hover:text-gray-700">Equipment</a>
+                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
+                </svg>
+                <a href="{% url 'equipment_management:operation_list' %}" class="hover:text-gray-700">Operations</a>
+                <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"></path>
+                </svg>
+                <span class="text-gray-900">Create</span>
+            </nav>
+            
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900 flex items-center">
+                        <svg class="w-8 h-8 mr-3 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                        Create New Operation (Form E114)
+                    </h1>
+                    <p class="mt-2 text-lg text-gray-600">Digital Form E114 - Installation/Removal/Change of Equipment</p>
+                </div>
+                <a href="{% url 'equipment_management:operation_list' %}" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+                    </svg>
+                    Back to Operations
+                </a>
+            </div>
+        </div>
+
+        <!-- Form -->
+        <form method="post" class="space-y-8">
+            {% csrf_token %}
+            
+            {% if form.non_field_errors %}
+                <div class="bg-red-50 border border-red-200 rounded-md p-4">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+                            </svg>
+                        </div>
+                        <div class="ml-3">
+                            <h3 class="text-sm font-medium text-red-800">
+                                There were errors with your submission
+                            </h3>
+                            <div class="mt-2 text-sm text-red-700">
+                                {{ form.non_field_errors }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+            
+            <!-- Operation Details Card -->
+            <div class="bg-white shadow-sm rounded-lg border border-gray-200">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h3 class="text-lg font-medium text-gray-900 flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        Operation Details
+                    </h3>
+                </div>
+                <div class="p-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label for="{{ form.operation_type.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                {{ form.operation_type.label }}
+                                {% if form.operation_type.field.required %}<span class="text-red-500">*</span>{% endif %}
+                            </label>
+                            <select name="{{ form.operation_type.name }}" id="{{ form.operation_type.id_for_label }}" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                                <option value="">---------</option>
+                                {% for choice in form.operation_type.field.choices %}
+                                    <option value="{{ choice.0 }}" {% if form.operation_type.value == choice.0 %}selected{% endif %}>{{ choice.1 }}</option>
+                                {% endfor %}
+                            </select>
+                            {% if form.operation_type.help_text %}
+                                <p class="mt-1 text-sm text-gray-500">{{ form.operation_type.help_text }}</p>
+                            {% endif %}
+                            {% if form.operation_type.errors %}
+                                <div class="mt-1">
+                                    {% for error in form.operation_type.errors %}
+                                        <p class="text-sm text-red-600">{{ error }}</p>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div>
+                            <label for="{{ form.priority.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                {{ form.priority.label }}
+                            </label>
+                            <select name="{{ form.priority.name }}" id="{{ form.priority.id_for_label }}" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                                {% for choice in form.priority.field.choices %}
+                                    <option value="{{ choice.0 }}" {% if form.priority.value == choice.0 %}selected{% endif %}>{{ choice.1 }}</option>
+                                {% endfor %}
+                            </select>
+                            {% if form.priority.errors %}
+                                <div class="mt-1">
+                                    {% for error in form.priority.errors %}
+                                        <p class="text-sm text-red-600">{{ error }}</p>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div>
+                            <label for="{{ form.operation_date.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                {{ form.operation_date.label }}
+                            </label>
+                            <input type="date" name="{{ form.operation_date.name }}" id="{{ form.operation_date.id_for_label }}" value="{{ form.operation_date.value|default:'' }}" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                            {% if form.operation_date.errors %}
+                                <div class="mt-1">
+                                    {% for error in form.operation_date.errors %}
+                                        <p class="text-sm text-red-600">{{ error }}</p>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div>
+                            <label for="{{ form.scheduled_date.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                {{ form.scheduled_date.label }}
+                            </label>
+                            <input type="date" name="{{ form.scheduled_date.name }}" id="{{ form.scheduled_date.id_for_label }}" value="{{ form.scheduled_date.value|default:'' }}" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                            {% if form.scheduled_date.errors %}
+                                <div class="mt-1">
+                                    {% for error in form.scheduled_date.errors %}
+                                        <p class="text-sm text-red-600">{{ error }}</p>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Consumer Information Card -->
+            {% comment %} <div class="bg-white shadow-sm rounded-lg border border-gray-200">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h3 class="text-lg font-medium text-gray-900 flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
+                        </svg>
+                        Consumer Information
+                    </h3>
+                </div>
+                <div class="p-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label for="{{ form.consumer_name.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                {{ form.consumer_name.label }}
+                                {% if form.consumer_name.field.required %}<span class="text-red-500">*</span>{% endif %}
+                            </label>
+                            <input type="text" name="{{ form.consumer_name.name }}" id="{{ form.consumer_name.id_for_label }}" value="{{ form.consumer_name.value|default:'' }}" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                            {% if form.consumer_name.errors %}
+                                <div class="mt-1">
+                                    {% for error in form.consumer_name.errors %}
+                                        <p class="text-sm text-red-600">{{ error }}</p>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div>
+                            <label for="{{ form.consumer_account.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                {{ form.consumer_account.label }}
+                            </label>
+                            <input type="text" name="{{ form.consumer_account.name }}" id="{{ form.consumer_account.id_for_label }}" value="{{ form.consumer_account.value|default:'' }}" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                            {% if form.consumer_account.errors %}
+                                <div class="mt-1">
+                                    {% for error in form.consumer_account.errors %}
+                                        <p class="text-sm text-red-600">{{ error }}</p>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div class="md:col-span-2">
+                            <label for="{{ form.consumer_address.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                {{ form.consumer_address.label }}
+                            </label>
+                            <textarea name="{{ form.consumer_address.name }}" id="{{ form.consumer_address.id_for_label }}" rows="3" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">{{ form.consumer_address.value|default:'' }}</textarea>
+                            {% if form.consumer_address.errors %}
+                                <div class="mt-1">
+                                    {% for error in form.consumer_address.errors %}
+                                        <p class="text-sm text-red-600">{{ error }}</p>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div>
+                            <label for="{{ form.contact_person.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                {{ form.contact_person.label }}
+                            </label>
+                            <input type="text" name="{{ form.contact_person.name }}" id="{{ form.contact_person.id_for_label }}" value="{{ form.contact_person.value|default:'' }}" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                            {% if form.contact_person.errors %}
+                                <div class="mt-1">
+                                    {% for error in form.contact_person.errors %}
+                                        <p class="text-sm text-red-600">{{ error }}</p>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+
+                        <div>
+                            <label for="{{ form.contact_phone.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                                {{ form.contact_phone.label }}
+                            </label>
+                            <input type="tel" name="{{ form.contact_phone.name }}" id="{{ form.contact_phone.id_for_label }}" value="{{ form.contact_phone.value|default:'' }}" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm">
+                            {% if form.contact_phone.errors %}
+                                <div class="mt-1">
+                                    {% for error in form.contact_phone.errors %}
+                                        <p class="text-sm text-red-600">{{ error }}</p>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div> {% endcomment %}
+
+            <!-- Operation Description Card -->
+            <div class="bg-white shadow-sm rounded-lg border border-gray-200">
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h3 class="text-lg font-medium text-gray-900 flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                        </svg>
+                        Operation Description
+                    </h3>
+                </div>
+                <div class="p-6 space-y-6">
+                    <div>
+                        <label for="{{ form.description.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                            {{ form.description.label }}
+                            {% if form.description.field.required %}<span class="text-red-500">*</span>{% endif %}
+                        </label>
+                        <textarea name="{{ form.description.name }}" id="{{ form.description.id_for_label }}" rows="4" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" placeholder="Provide a detailed description of the operation...">{{ form.description.value|default:'' }}</textarea>
+                        {% if form.description.errors %}
+                            <div class="mt-1">
+                                {% for error in form.description.errors %}
+                                    <p class="text-sm text-red-600">{{ error }}</p>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div>
+                        <label for="{{ form.equipment_details.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                            {{ form.equipment_details.label }}
+                        </label>
+                        <textarea name="{{ form.equipment_details.name }}" id="{{ form.equipment_details.id_for_label }}" rows="4" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" placeholder="Specify equipment make, model, serial numbers, specifications...">{{ form.equipment_details.value|default:'' }}</textarea>
+                        {% if form.equipment_details.errors %}
+                            <div class="mt-1">
+                                {% for error in form.equipment_details.errors %}
+                                    <p class="text-sm text-red-600">{{ error }}</p>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div>
+                        <label for="{{ form.safety_precautions.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                            {{ form.safety_precautions.label }}
+                        </label>
+                        <textarea name="{{ form.safety_precautions.name }}" id="{{ form.safety_precautions.id_for_label }}" rows="3" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" placeholder="List safety measures and precautions to be taken...">{{ form.safety_precautions.value|default:'' }}</textarea>
+                        {% if form.safety_precautions.errors %}
+                            <div class="mt-1">
+                                {% for error in form.safety_precautions.errors %}
+                                    <p class="text-sm text-red-600">{{ error }}</p>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div>
+                        <label for="{{ form.remarks.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                            {{ form.remarks.label }}
+                        </label>
+                        <textarea name="{{ form.remarks.name }}" id="{{ form.remarks.id_for_label }}" rows="3" class="block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 sm:text-sm" placeholder="Additional remarks or notes...">{{ form.remarks.value|default:'' }}</textarea>
+                        {% if form.remarks.errors %}
+                            <div class="mt-1">
+                                {% for error in form.remarks.errors %}
+                                    <p class="text-sm text-red-600">{{ error }}</p>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex justify-end space-x-4 pt-6">
+                <a href="{% url 'equipment_management:operation_list' %}" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    Cancel
+                </a>
+                <button type="submit" class="inline-flex items-center px-6 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                    </svg>
+                    {% if operation %}
+                        Update Operation
+                    {% else %}
+                        Create Operation
+                    {% endif %}
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-populate operation date with today's date if empty
+    const operationDateField = document.getElementById('{{ form.operation_date.id_for_label }}');
+    if (operationDateField && !operationDateField.value) {
+        const today = new Date().toISOString().split('T')[0];
+        operationDateField.value = today;
+    }
+    
+    // Form validation
+    const form = document.querySelector('form');
+    form.addEventListener('submit', function(e) {
+        const requiredFields = form.querySelectorAll('[required]');
+        let hasErrors = false;
+        
+        requiredFields.forEach(field => {
+            if (!field.value.trim()) {
+                hasErrors = true;
+                field.classList.add('border-red-300');
+            } else {
+                field.classList.remove('border-red-300');
+            }
+        });
+        
+        if (hasErrors) {
+            e.preventDefault();
+            alert('Please fill in all required fields.');
+        }
+    });
+});
+</script>
+{% endblock %}

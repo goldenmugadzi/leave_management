@@ -1,0 +1,475 @@
+{% extends "admin_layout.html" %}
+{% load static %}
+
+{% block title %}{{ role_display }} Dashboard{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-gulf-blue-50 via-white to-jade-50 p-6">
+    <div class="max-w-7xl mx-auto">
+        <!-- Header Section -->
+        <div class="glass-header mb-8 p-6 rounded-3xl backdrop-blur-xl bg-white/30 border border-white/20 shadow-2xl">
+            <div class="flex flex-col lg:flex-row items-center justify-between gap-6">
+                <div class="text-center lg:text-left">
+                    <h1 class="text-4xl font-black bg-gradient-to-r from-gulf-blue-600 via-tory-blue-primary to-gulf-blue-900 bg-clip-text text-transparent mb-2 animate-fade-in">
+                        <i class="fas fa-tools text-gulf-blue-600 mr-3"></i>
+                        Fault Locator System
+                    </h1>
+                    <p class="text-nepal-600 text-lg">{{ role_display }} Dashboard - {{ user_profile.get_full_name }}</p>
+                </div>
+                <div class="text-center lg:text-right">
+                    <span class="inline-flex items-center px-4 py-2 rounded-full text-sm font-bold bg-gradient-to-r from-gulf-blue-600 to-tory-blue-primary text-white shadow-lg">
+                        {{ user_role|upper }}
+                    </span>
+                </div>
+            </div>
+        </div>
+            <div class="flex flex-col lg:flex-row items-center justify-between gap-6">
+                <div class="text-center lg:text-left">
+                    <h1 class="text-4xl font-black bg-gradient-to-r from-gulf-blue-600 via-tory-blue-primary to-gulf-blue-900 bg-clip-text text-transparent mb-2 animate-fade-in">
+                        <i class="fas fa-tools text-gulf-blue-600 mr-3"></i>
+                        Fault Locator System
+                    </h1>
+                    <p class="text-nepal-600 text-lg">{{ role_display }} Dashboard - {{ user_profile.get_full_name }}</p>
+                </div>
+                <div class="text-center lg:text-right">
+                    <span class="inline-flex items-center px-4 py-2 rounded-full text-sm font-bold bg-gradient-to-r from-gulf-blue-600 to-tory-blue-primary text-white shadow-lg">
+                        {{ user_role|upper }}
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Error Message -->
+        {% if error|default:'' %}
+        <div class="mb-6">
+            <div class="glass-card p-4 rounded-2xl backdrop-blur-xl bg-scarlet-red-50/80 border border-scarlet-red-200/50 shadow-lg">
+                <div class="flex items-center gap-3">
+                    <i class="fas fa-exclamation-triangle text-scarlet-red-600"></i>
+                    <span class="text-scarlet-red-800 font-medium">{{ error }}</span>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Primary Actions Section -->
+        {% if primary_actions %}
+        <div class="mb-8">
+            <h4 class="text-2xl font-bold text-nepal-800 mb-6 flex items-center gap-3">
+                <i class="fas fa-bolt text-lemon-primary"></i>
+                Quick Actions
+            </h4>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {% for action in primary_actions %}
+                    {% if action.title == 'Deploy Team to Depot' and can_deploy_teams %}
+                        <div class="glass-card group relative overflow-hidden rounded-3xl backdrop-blur-xl bg-white/40 border border-white/30 shadow-2xl hover:shadow-3xl transition-all duration-500 hover:scale-105 hover:bg-white/50 priority-{{ action.priority|default:'medium' }}">
+                            <div class="p-6 text-center">
+                                <div class="action-icon mb-4 text-4xl">
+                                 <i class="{{ action.icon_class|default:'' }}"></i>
+                                </div>
+                                <h5 class="text-xl font-bold text-nepal-800 mb-3 group-hover:text-gulf-blue-600 transition-colors duration-300">{{ action.title }}</h5>
+                                <p class="text-nepal-600 mb-4">{{ action.description }}</p>
+                                <a href="{{ action.url }}" class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-gulf-blue-600 to-tory-blue-primary text-white rounded-xl font-medium hover:shadow-lg transition-all duration-300 hover:scale-105">
+                                    Take Action
+                                </a>
+                            </div>
+                            <div class="absolute inset-0 bg-gradient-to-br from-gulf-blue-600/10 to-tory-blue-primary/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-3xl pointer-events-none"></div>
+                        </div>
+                    {% elif action.title == 'Assign Gear to Teams' and can_manage_devices %}
+                        <div class="glass-card group relative overflow-hidden rounded-3xl backdrop-blur-xl bg-white/40 border border-white/30 shadow-2xl hover:shadow-3xl transition-all duration-500 hover:scale-105 hover:bg-white/50 priority-{{ action.priority|default:'medium' }}">
+                            <div class="p-6 text-center">
+                                <div class="action-icon mb-4 text-4xl">
+                                 <i class="{{ action.icon_class|default:'' }}"></i>
+                                </div>
+                                <h5 class="text-xl font-bold text-nepal-800 mb-3 group-hover:text-gulf-blue-600 transition-colors duration-300">{{ action.title }}</h5>
+                                <p class="text-nepal-600 mb-4">{{ action.description }}</p>
+                                <a href="{{ action.url }}" class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-gulf-blue-600 to-tory-blue-primary text-white rounded-xl font-medium hover:shadow-lg transition-all duration-300 hover:scale-105">
+                                    Take Action
+                                </a>
+                            </div>
+                            <div class="absolute inset-0 bg-gradient-to-br from-gulf-blue-600/10 to-tory-blue-primary/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-3xl pointer-events-none"></div>
+                        </div>
+                    {% elif action.title == 'Monitor Critical Faults' and is_senior_foreman %}
+                        <div class="glass-card group relative overflow-hidden rounded-3xl backdrop-blur-xl bg-white/40 border border-white/30 shadow-2xl hover:shadow-3xl transition-all duration-500 hover:scale-105 hover:bg-white/50 priority-{{ action.priority|default:'medium' }}">
+                            <div class="p-6 text-center">
+                                <div class="action-icon mb-4 text-4xl">
+                                 <i class="{{ action.icon_class|default:'' }}"></i>
+                                </div>
+                                <h5 class="text-xl font-bold text-nepal-800 mb-3 group-hover:text-gulf-blue-600 transition-colors duration-300">{{ action.title }}</h5>
+                                <p class="text-nepal-600 mb-4">{{ action.description }}</p>
+                                <a href="{{ action.url }}" class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-gulf-blue-600 to-tory-blue-primary text-white rounded-xl font-medium hover:shadow-lg transition-all duration-300 hover:scale-105">
+                                    Take Action
+                                </a>
+                            </div>
+                            <div class="absolute inset-0 bg-gradient-to-br from-gulf-blue-600/10 to-tory-blue-primary/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-3xl pointer-events-none"></div>
+                        </div>
+                    {% elif action.title == 'Assign Pending Faults' and can_assign_faults %}
+                        <div class="glass-card group relative overflow-hidden rounded-3xl backdrop-blur-xl bg-white/40 border border-white/30 shadow-2xl hover:shadow-3xl transition-all duration-500 hover:scale-105 hover:bg-white/50 priority-{{ action.priority|default:'medium' }}">
+                            <div class="p-6 text-center">
+                                <div class="action-icon mb-4 text-4xl">
+                                 <i class="{{ action.icon_class|default:'' }}"></i>
+                                </div>
+                                <h5 class="text-xl font-bold text-nepal-800 mb-3 group-hover:text-gulf-blue-600 transition-colors duration-300">{{ action.title }}</h5>
+                                <p class="text-nepal-600 mb-4">{{ action.description }}</p>
+                                <a href="{{ action.url }}" class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-gulf-blue-600 to-tory-blue-primary text-white rounded-xl font-medium hover:shadow-lg transition-all duration-300 hover:scale-105">
+                                    Take Action
+                                </a>
+                            </div>
+                            <div class="absolute inset-0 bg-gradient-to-br from-gulf-blue-600/10 to-tory-blue-primary/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-3xl pointer-events-none"></div>
+                        </div>
+                    {% elif action.title == 'Report New Fault' and is_depot_foreperson %}
+                        <div class="glass-card group relative overflow-hidden rounded-3xl backdrop-blur-xl bg-white/40 border border-white/30 shadow-2xl hover:shadow-3xl transition-all duration-500 hover:scale-105 hover:bg-white/50 priority-{{ action.priority|default:'medium' }}">
+                            <div class="p-6 text-center">
+                                <div class="action-icon mb-4 text-4xl">
+                                 <i class="{{ action.icon_class|default:'' }}"></i>
+                                </div>
+                                <h5 class="text-xl font-bold text-nepal-800 mb-3 group-hover:text-gulf-blue-600 transition-colors duration-300">{{ action.title }}</h5>
+                                <p class="text-nepal-600 mb-4">{{ action.description }}</p>
+                                <a href="{{ action.url }}" class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-gulf-blue-600 to-tory-blue-primary text-white rounded-xl font-medium hover:shadow-lg transition-all duration-300 hover:scale-105">
+                                    Take Action
+                                </a>
+                            </div>
+                            <div class="absolute inset-0 bg-gradient-to-br from-gulf-blue-600/10 to-tory-blue-primary/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-3xl pointer-events-none"></div>
+                        </div>
+                    {% elif action.title == 'Monitor Team Progress' and is_depot_foreperson %}
+                        <div class="glass-card group relative overflow-hidden rounded-3xl backdrop-blur-xl bg-white/40 border border-white/30 shadow-2xl hover:shadow-3xl transition-all duration-500 hover:scale-105 hover:bg-white/50 priority-{{ action.priority|default:'medium' }}">
+                            <div class="p-6 text-center">
+                                <div class="action-icon mb-4 text-4xl">
+                                 <i class="{{ action.icon_class|default:'' }}"></i>
+                                </div>
+                                <h5 class="text-xl font-bold text-nepal-800 mb-3 group-hover:text-gulf-blue-600 transition-colors duration-300">{{ action.title }}</h5>
+                                <p class="text-nepal-600 mb-4">{{ action.description }}</p>
+                                <a href="{{ action.url }}" class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-gulf-blue-600 to-tory-blue-primary text-white rounded-xl font-medium hover:shadow-lg transition-all duration-300 hover:scale-105">
+                                    Take Action
+                                </a>
+                            </div>
+                            <div class="absolute inset-0 bg-gradient-to-br from-gulf-blue-600/10 to-tory-blue-primary/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-3xl pointer-events-none"></div>
+                        </div>
+                    {% elif action.title == 'Request Crane' and is_depot_foreperson %}
+                        <div class="glass-card group relative overflow-hidden rounded-3xl backdrop-blur-xl bg-white/40 border border-white/30 shadow-2xl hover:shadow-3xl transition-all duration-500 hover:scale-105 hover:bg-white/50 priority-{{ action.priority|default:'medium' }}">
+                            <div class="p-6 text-center">
+                                <div class="action-icon mb-4 text-4xl">
+                                 <i class="{{ action.icon_class|default:'' }}"></i>
+                                </div>
+                                <h5 class="text-xl font-bold text-nepal-800 mb-3 group-hover:text-gulf-blue-600 transition-colors duration-300">{{ action.title }}</h5>
+                                <p class="text-nepal-600 mb-4">{{ action.description }}</p>
+                                <a href="{{ action.url }}" class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-gulf-blue-600 to-tory-blue-primary text-white rounded-xl font-medium hover:shadow-lg transition-all duration-300 hover:scale-105">
+                                    Take Action
+                                </a>
+                            </div>
+                            <div class="absolute inset-0 bg-gradient-to-br from-gulf-blue-600/10 to-tory-blue-primary/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-3xl pointer-events-none"></div>
+                        </div>
+                    {% elif action.title == 'Report Fault Located' and is_team_leader %}
+                        <div class="glass-card group relative overflow-hidden rounded-3xl backdrop-blur-xl bg-white/40 border border-white/30 shadow-2xl hover:shadow-3xl transition-all duration-500 hover:scale-105 hover:bg-white/50 priority-{{ action.priority|default:'medium' }}">
+                            <div class="p-6 text-center">
+                                <div class="action-icon mb-4 text-4xl">
+                                 <i class="{{ action.icon_class|default:'' }}"></i>
+                                </div>
+                                <h5 class="text-xl font-bold text-nepal-800 mb-3 group-hover:text-gulf-blue-600 transition-colors duration-300">{{ action.title }}</h5>
+                                <p class="text-nepal-600 mb-4">{{ action.description }}</p>
+                                <a href="{{ action.url }}" class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-gulf-blue-600 to-tory-blue-primary text-white rounded-xl font-medium hover:shadow-lg transition-all duration-300 hover:scale-105">
+                                    Take Action
+                                </a>
+                            </div>
+                            <div class="absolute inset-0 bg-gradient-to-br from-gulf-blue-600/10 to-tory-blue-primary/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-3xl pointer-events-none"></div>
+                        </div>
+                    {% elif action.title == 'Update Work Progress' and is_team_leader %}
+                        <div class="glass-card group relative overflow-hidden rounded-3xl backdrop-blur-xl bg-white/40 border border-white/30 shadow-2xl hover:shadow-3xl transition-all duration-500 hover:scale-105 hover:bg-white/50 priority-{{ action.priority|default:'medium' }}">
+                            <div class="p-6 text-center">
+                                <div class="action-icon mb-4 text-4xl">
+                                 <i class="{{ action.icon_class|default:'' }}"></i>
+                                </div>
+                                <h5 class="text-xl font-bold text-nepal-800 mb-3 group-hover:text-gulf-blue-600 transition-colors duration-300">{{ action.title }}</h5>
+                                <p class="text-nepal-600 mb-4">{{ action.description }}</p>
+                                <a href="{{ action.url }}" class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-gulf-blue-600 to-tory-blue-primary text-white rounded-xl font-medium hover:shadow-lg transition-all duration-300 hover:scale-105">
+                                    Take Action
+                                </a>
+                            </div>
+                            <div class="absolute inset-0 bg-gradient-to-br from-gulf-blue-600/10 to-tory-blue-primary/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-3xl pointer-events-none"></div>
+                        </div>
+                    {% elif action.title == 'Request Assistance' and is_team_leader %}
+                        <div class="glass-card group relative overflow-hidden rounded-3xl backdrop-blur-xl bg-white/40 border border-white/30 shadow-2xl hover:shadow-3xl transition-all duration-500 hover:scale-105 hover:bg-white/50 priority-{{ action.priority|default:'medium' }}">
+                            <div class="p-6 text-center">
+                                <div class="action-icon mb-4 text-4xl">
+                                    <i class="{{ action.icon_class|default:'' }}"></i>
+                                </div>
+                                <h5 class="text-xl font-bold text-nepal-800 mb-3 group-hover:text-gulf-blue-600 transition-colors duration-300">{{ action.title }}</h5>
+                                <p class="text-nepal-600 mb-4">{{ action.description }}</p>
+                                <a href="{{ action.url }}" class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-gulf-blue-600 to-tory-blue-primary text-white rounded-xl font-medium hover:shadow-lg transition-all duration-300 hover:scale-105">
+                                    Take Action
+                                </a>
+                            </div>
+                            <div class="absolute inset-0 bg-gradient-to-br from-gulf-blue-600/10 to-tory-blue-primary/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-3xl pointer-events-none"></div>
+                        </div>
+                    {% elif action.title == 'View Current Work' and user_role == 'team_member' %}
+                        <div class="glass-card group relative overflow-hidden rounded-3xl backdrop-blur-xl bg-white/40 border border-white/30 shadow-2xl hover:shadow-3xl transition-all duration-500 hover:scale-105 hover:bg-white/50 priority-{{ action.priority|default:'medium' }}">
+                            <div class="p-6 text-center">
+                                <div class="action-icon mb-4 text-4xl">
+                                    <i class="{{ action.icon_class|default:'' }}"></i>
+                                </div>
+                                <h5 class="text-xl font-bold text-nepal-800 mb-3 group-hover:text-gulf-blue-600 transition-colors duration-300">{{ action.title }}</h5>
+                                <p class="text-nepal-600 mb-4">{{ action.description }}</p>
+                                <a href="{{ action.url }}" class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-gulf-blue-600 to-tory-blue-primary text-white rounded-xl font-medium hover:shadow-lg transition-all duration-300 hover:scale-105">
+                                    Take Action
+                                </a>
+                            </div>
+                            <div class="absolute inset-0 bg-gradient-to-br from-gulf-blue-600/10 to-tory-blue-primary/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-3xl pointer-events-none"></div>
+                        </div>
+                    {% elif action.title == 'Contact Team Leader' and user_role == 'team_member' %}
+                        <div class="glass-card group relative overflow-hidden rounded-3xl backdrop-blur-xl bg-white/40 border border-white/30 shadow-2xl hover:shadow-3xl transition-all duration-500 hover:scale-105 hover:bg-white/50 priority-{{ action.priority|default:'medium' }}">
+                            <div class="p-6 text-center">
+                                <div class="action-icon mb-4 text-4xl">
+                                    <i class="{{ action.icon_class|default:'' }}"></i>
+                                </div>
+                                <h5 class="text-xl font-bold text-nepal-800 mb-3 group-hover:text-gulf-blue-600 transition-colors duration-300">{{ action.title }}</h5>
+                                <p class="text-nepal-600 mb-4">{{ action.description }}</p>
+                                <a href="{{ action.url }}" class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-gulf-blue-600 to-tory-blue-primary text-white rounded-xl font-medium hover:shadow-lg transition-all duration-300 hover:scale-105">
+                                    Take Action
+                                </a>
+                            </div>
+                            <div class="absolute inset-0 bg-gradient-to-br from-gulf-blue-600/10 to-tory-blue-primary/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-3xl pointer-events-none"></div>
+                        </div>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Secondary Actions -->
+        {% if secondary_actions %}
+        <div class="mb-8">
+            <h4 class="text-2xl font-bold text-nepal-800 mb-6 flex items-center gap-3">
+                <i class="fas fa-cog text-tory-blue-primary"></i>
+                Additional Functions
+            </h4>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                {% for action in secondary_actions %}
+                <div class="glass-card group relative overflow-hidden rounded-xl backdrop-blur-xl bg-white/30 border border-white/20 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 hover:bg-white/40">
+                    <div class="p-4 text-center">
+                        <div class="action-icon mb-2 text-2xl">
+                             <i class="{{ action.icon_class|default:'' }}"></i>
+                        </div>
+                        <h6 class="text-lg font-semibold text-nepal-800 mb-2 group-hover:text-gulf-blue-600 transition-colors duration-300">{{ action.title }}</h6>
+                        <p class="text-nepal-600 text-sm mb-3">{{ action.description }}</p>
+                        <a href="{{ action.url }}" class="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-gulf-blue-600 via-tory-blue-primary to-gulf-blue-800 text-white rounded-xl text-sm font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 ring-2 ring-gulf-blue-300/60 hover:ring-gulf-blue-400 focus:outline-none focus:ring-4 focus:ring-gulf-blue-300/70">
+                            <i class="fas fa-arrow-right"></i>
+                            Access
+                        </a>
+                    </div>
+                    <div class="absolute inset-0 bg-gradient-to-br from-gulf-blue-600/5 to-tory-blue-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-xl pointer-events-none"></div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Statistics Section -->
+        {% if stats %}
+        <div class="mb-8">
+            <h4 class="text-2xl font-bold text-nepal-800 mb-6 flex items-center gap-3">
+                <i class="fas fa-chart-line text-jade-600"></i>
+                Statistics
+            </h4>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {% for key, value in stats.items %}
+                <div class="glass-card p-6 rounded-3xl backdrop-blur-xl bg-white/40 border border-white/30 shadow-2xl hover:shadow-3xl transition-all duration-500 hover:scale-105 text-center">
+                    <h3 class="text-3xl font-bold text-gulf-blue-600 mb-2">{{ value }}</h3>
+                    <p class="text-nepal-600 text-sm uppercase tracking-wide">{{ key|title }}</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Crane Statistics Section -->
+        {% if crane_stats %}
+        <div class="mb-8">
+            <h4 class="text-2xl font-bold text-nepal-800 mb-6 flex items-center gap-3">
+                <i class="fas fa-truck text-orange-600"></i>
+                Crane Availability
+                <a href="{% url 'fault_locator:crane_availability' %}" 
+                   class="ml-auto text-sm bg-blue-600 text-white px-3 py-1 rounded-lg hover:bg-blue-700 transition-colors">
+                    View Details
+                </a>
+            </h4>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                <div class="glass-card p-4 rounded-3xl backdrop-blur-xl bg-white/40 border border-white/30 shadow-2xl hover:shadow-3xl transition-all duration-500 hover:scale-105 text-center">
+                    <h3 class="text-2xl font-bold text-blue-600 mb-2">{{ crane_stats.total_cranes }}</h3>
+                    <p class="text-nepal-600 text-xs uppercase tracking-wide">Total Cranes</p>
+                </div>
+                <div class="glass-card p-4 rounded-3xl backdrop-blur-xl bg-white/40 border border-white/30 shadow-2xl hover:shadow-3xl transition-all duration-500 hover:scale-105 text-center">
+                    <h3 class="text-2xl font-bold text-green-600 mb-2">{{ crane_stats.available_cranes }}</h3>
+                    <p class="text-nepal-600 text-xs uppercase tracking-wide">Available</p>
+                </div>
+                <div class="glass-card p-4 rounded-3xl backdrop-blur-xl bg-white/40 border border-white/30 shadow-2xl hover:shadow-3xl transition-all duration-500 hover:scale-105 text-center">
+                    <h3 class="text-2xl font-bold text-blue-600 mb-2">{{ crane_stats.in_service_cranes }}</h3>
+                    <p class="text-nepal-600 text-xs uppercase tracking-wide">In Service</p>
+                </div>
+                <div class="glass-card p-4 rounded-3xl backdrop-blur-xl bg-white/40 border border-white/30 shadow-2xl hover:shadow-3xl transition-all duration-500 hover:scale-105 text-center">
+                    <h3 class="text-2xl font-bold text-orange-600 mb-2">{{ crane_stats.pending_requests }}</h3>
+                    <p class="text-nepal-600 text-xs uppercase tracking-wide">Pending Requests</p>
+                </div>
+                <div class="glass-card p-4 rounded-3xl backdrop-blur-xl bg-white/40 border border-white/30 shadow-2xl hover:shadow-3xl transition-all duration-500 hover:scale-105 text-center">
+                    <h3 class="text-2xl font-bold text-purple-600 mb-2">{{ crane_stats.my_pending_requests|default:"0" }}</h3>
+                    <p class="text-nepal-600 text-xs uppercase tracking-wide">My Requests</p>
+                </div>
+            </div>
+            
+            <!-- Recent Crane Requests -->
+            {% if recent_crane_requests %}
+            <div class="mt-6 glass-card p-6 rounded-3xl backdrop-blur-xl bg-white/40 border border-white/30 shadow-2xl">
+                <h5 class="text-lg font-semibold text-nepal-700 mb-4 flex items-center gap-2">
+                    <i class="fas fa-history"></i>
+                    Recent Crane Requests
+                </h5>
+                <div class="space-y-3">
+                    {% for request in recent_crane_requests %}
+                    <div class="flex justify-between items-center py-2 border-b border-nepal-200/50 last:border-b-0">
+                        <div>
+                            <span class="font-medium text-nepal-800">#{{ request.id }}</span>
+                            <span class="text-nepal-600 ml-2">{{ request.job_description|truncatechars:40 }}</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-sm text-nepal-500">{{ request.created_at|timesince }} ago</span>
+                            {% if request.status == 'pending' %}
+                                <span class="px-2 py-1 text-xs bg-orange-100 text-orange-800 rounded-full">Pending</span>
+                            {% elif request.status == 'assigned' %}
+                                <span class="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full">Assigned</span>
+                            {% elif request.status == 'completed' %}
+                                <span class="px-2 py-1 text-xs bg-green-100 text-green-800 rounded-full">Completed</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        <!-- Role-Specific Content -->
+        {% if user_role == 'senior_foreman' %}
+            {% include 'fault_locator/dashboard/senior_foreman.html' %}
+        {% elif user_role == 'depot_foreperson' %}
+            {% include 'fault_locator/dashboard/depot_foreperson.html' %}
+        {% elif user_role == 'team_leader' %}
+            {% include 'fault_locator/dashboard/team_leader.html' %}
+        {% elif user_role == 'team_member' %}
+            {% include 'fault_locator/dashboard/team_member.html' %}
+        {% elif user_role == 'transport_manager' %}
+            {% include 'fault_locator/dashboard/transport_manager.html' %}
+        {% elif user_role == 'crane_operator' %}
+            {% include 'fault_locator/dashboard/crane_operator.html' %}
+        {% endif %}
+
+        <!-- Recent Activity Section -->
+        {% if recent_deployments|default:'' or my_assignments|default:'' or completed_today|default:'' %}
+        <div class="mt-8">
+            <h4 class="text-2xl font-bold text-nepal-800 mb-6 flex items-center gap-3">
+                <i class="fas fa-clock text-nepal-500"></i>
+                Recent Activity
+            </h4>
+            <div class="glass-card p-6 rounded-3xl backdrop-blur-xl bg-white/40 border border-white/30 shadow-2xl">
+                {% if recent_deployments|default:'' %}
+                    <h6 class="text-lg font-semibold text-nepal-700 mb-4">Recent Deployments</h6>
+                    {% for deployment in recent_deployments %}
+                    <div class="flex justify-between items-center py-3 border-b border-nepal-200/50 last:border-b-0">
+                        <div>
+                            <strong class="text-nepal-800">{{ deployment.team.name }}</strong> deployed to 
+                            <span class="text-gulf-blue-600 font-medium">{{ deployment.depot.depot }}</span>
+                        </div>
+                        <small class="text-nepal-500">{{ deployment.deployed_at|date:"M d, H:i" }}</small>
+                    </div>
+                    {% endfor %}
+                {% endif %}
+
+                {% if my_assignments|default:'' %}
+                    <h6 class="text-lg font-semibold text-nepal-700 mb-4 {% if recent_deployments|default:'' %}mt-6{% endif %}">My Recent Assignments</h6>
+                    {% for assignment in my_assignments %}
+                    <div class="flex justify-between items-center py-3 border-b border-nepal-200/50 last:border-b-0">
+                        <div>
+                            <strong class="text-nepal-800">{{ assignment.fault.description|truncatechars:50 }}</strong><br>
+                            <small class="text-nepal-500">{{ assignment.fault.depot.depot }}</small>
+                        </div>
+                        <small class="text-nepal-500">{{ assignment.assigned_at|date:"M d, H:i" }}</small>
+                    </div>
+                    {% endfor %}
+                {% endif %}
+
+                {% if completed_today|default:'' %}
+                    <h6 class="text-lg font-semibold text-nepal-700 mb-4 {% if my_assignments|default:'' or recent_deployments|default:'' %}mt-6{% endif %}">Completed Today</h6>
+                    {% for assignment in completed_today %}
+                    <div class="flex justify-between items-center py-3 border-b border-nepal-200/50 last:border-b-0">
+                        <div>
+                            <strong class="text-nepal-800">{{ assignment.fault.description|truncatechars:50 }}</strong><br>
+                            <small class="text-jade-600">Completed</small>
+                        </div>
+                        <small class="text-nepal-500">{{ assignment.located_at|date:"H:i" }}</small>
+                    </div>
+                    {% endfor %}
+                {% endif %}
+
+                {% if not recent_deployments|default:'' and not my_assignments|default:'' and not completed_today|default:'' %}
+                <p class="text-nepal-500 text-center mb-0">No recent activity</p>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+.glass-header, .glass-card {
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+.animate-fade-in {
+  animation: fadeIn 1s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.action-card {
+    transition: transform 0.2s, box-shadow 0.2s;
+    cursor: pointer;
+}
+
+.action-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15) !important;
+}
+
+.action-icon {
+    font-size: 2.5rem;
+}
+
+.priority-critical {
+    border-left: 4px solid #dc3545 !important;
+}
+
+.priority-high {
+    border-left: 4px solid #fd7e14 !important;
+}
+
+.priority-medium {
+    border-left: 4px solid #ffc107 !important;
+}
+
+.priority-low {
+    border-left: 4px solid #6c757d !important;
+}
+
+@media (max-width: 768px) {
+    .container-fluid {
+        padding: 1rem !important;
+    }
+    
+    .action-card {
+        margin-bottom: 1rem;
+    }
+}
+</style>
+{% endblock %}
