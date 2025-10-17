@@ -40,6 +40,7 @@ class UserQualificationStrategy:
         merged_tables = []
         all_sheets_data = self.__load_all_sheets()
         for sheet_name, df_raw in all_sheets_data.items():
+            print("========>>>>> sheetname", sheet_name)
             table_header_index = self.__get_index_of_table_header(df_raw)
             
             if table_header_index is None:
