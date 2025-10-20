@@ -69,6 +69,28 @@ class Depots(models.Model):
         return self.depot
 
 
+class Substation(models.Model):
+    """Network substation entity used across multiple apps.
+
+    Note: Districts model stores region via a CharField (region_id) in this codebase,
+    but for Substation we keep explicit FKs to both Region and District, as well as Depot.
+    """
+    name = models.CharField(max_length=150)
+    code = models.CharField(max_length=50, blank=True)
+    region = models.ForeignKey(Regions, on_delete=models.DO_NOTHING, null=True, blank=True)
+    district = models.ForeignKey(Districts, on_delete=models.DO_NOTHING, null=True, blank=True)
+    depot = models.ForeignKey(Depots, on_delete=models.DO_NOTHING, null=True, blank=True)
+
+    class Meta:
+        ordering = ["name"]
+
+    def __str__(self):
+        display = self.name or self.code or "Substation"
+        if self.code:
+            return f"{display} ({self.code})"
+        return display
+
+
 class Application(models.Model):
     name = models.CharField(max_length=100, unique=True)
     fullname = models.CharField(max_length=100, blank=True)
@@ -291,6 +313,34 @@ class Responsibilities(models.Model):
 
     def __str__(self):
         return str(self.role.name)
+
+
+class UserQualification(models.Model):
+    user = models.ForeignKey(UserProfile, on_delete=models.CASCADE, related_name='qualifications')
+    name = models.CharField(max_length=255)
+    description = models.TextField(blank=True, null=True)
+    file = models.FileField(upload_to='users/qualifications/', blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.user} - {self.name}"
+
+
+class UserExperience(models.Model):
+    user = models.ForeignKey(UserProfile, on_delete=models.CASCADE, related_name='experiences')
+    name = models.CharField(max_length=255)
+    experience_from = models.DateField()
+    experience_to = models.DateField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-experience_from', '-created_at']
+
+    def __str__(self):
+        return f"{self.user} - {self.name} ({self.experience_from} - {self.experience_to or 'present'})"
 
 
 @receiver(post_save, sender=UserProfile)

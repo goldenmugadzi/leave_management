@@ -130,6 +130,7 @@ INSTALLED_APPS = [
     'appraisal.apps.AppraisalConfig',
 
     'toolsandequipment',
+    'fault_locator',
     'Transport',
     'Hardware_Faults',
     'Asset_Register',

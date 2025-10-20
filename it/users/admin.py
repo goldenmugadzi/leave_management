@@ -44,6 +44,15 @@ class ResponsibilitiesAdmin(admin.ModelAdmin):
     def get_app_name(self, obj):
         return obj.role.app_id.name if obj.role and obj.role.app_id else 'No App'
     get_app_name.short_description = 'App Name'
-    
-admin.site.register(UserQualification)
-admin.site.register(UserExperience)
+
+@admin.register(Substation)
+class SubstationAdmin(admin.ModelAdmin):
+    list_display = ('name', 'code', 'region', 'district', 'depot')
+
+@admin.register(UserQualification)
+class UserQualificationAdmin(admin.ModelAdmin):
+    list_display = ('user', 'name', 'created_at')
+
+@admin.register(UserExperience)
+class UserExperienceAdmin(admin.ModelAdmin):
+    list_display = ('user', 'name', 'experience_from', 'experience_to')
