@@ -71,6 +71,7 @@ urlpatterns = [
     path('commercial/', include('comm_files.urls')),
     path('', include('Transport.urls')),
     path('', include('safety.urls')),
+    path('battery/', include('BatteryMaintenance.urls')),
  
       
 

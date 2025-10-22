@@ -38,13 +38,44 @@ class AceForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
 
         if user:
-            user_profile = UserProfile.objects.filter(username=user.username).first()
+            # Accept either a Django User or our UserProfile
+            user_profile = user if isinstance(user, UserProfile) else UserProfile.objects.filter(username=getattr(user, 'username', None)).first()
             if user_profile:
                 region = user_profile.region
-                region_id = Regions.objects.filter(region=region).first()
+                # Regions.region is CharField; fall back safely if lookup fails
+                region_obj = None
+                if region:
+                    region_obj = Regions.objects.filter(id=getattr(region, 'id', None)).first() or \
+                                 Regions.objects.filter(region=str(region)).first()
 
-                self.fields['budget_id'].queryset = AssetBudget.objects.filter(period=2025, region=region)
-                self.fields['section'].queryset = Sections.objects.filter(region_id=str(region_id.id))
+                # Budgets limited to year and region when possible
+                if region:
+                    self.fields['budget_id'].queryset = AssetBudget.objects.filter(period=2025, region=region)
+                # Sections limited to region; if lookup fails, fall back to all
+                if region_obj:
+                    self.fields['section'].queryset = Sections.objects.filter(region_id=str(region_obj.id))
+                if not self.fields['section'].queryset.exists():
+                    self.fields['section'].queryset = Sections.objects.all().order_by('section')
+
+                # Cost center filtering hierarchy:
+                # 1) If user has a cost_center, allow it and its descendants
+                from it.users.models import CostCenter
+                cc_qs = CostCenter.objects.none()
+                if getattr(user_profile, 'cost_center', None):
+                    try:
+                        base_cc = user_profile.cost_center
+                        cc_qs = CostCenter.objects.filter(pk=base_cc.pk) | base_cc.get_decendance()
+                    except Exception:
+                        cc_qs = CostCenter.objects.none()
+                # 2) Else, if user has a section, try name-based match on CC name/parent name
+                if not cc_qs.exists() and user_profile.section:
+                    sec_name = user_profile.section.section
+                    cc_qs = CostCenter.objects.filter(parent__name__icontains=sec_name) | \
+                            CostCenter.objects.filter(name__icontains=sec_name)
+                # 3) Final fallback: show all cost centers (ordered)
+                if not cc_qs.exists():
+                    cc_qs = CostCenter.objects.all().order_by('name')
+                self.fields['cost_center'].queryset = cc_qs
 
         for field_name, field in self.fields.items():
             field.widget.attrs.update({
@@ -54,14 +85,14 @@ class AceForm(forms.ModelForm):
             })
 
             if (field_name == 'id_from_budget') or (field_name == 'section') or (field_name == 'id_to_budget') or (
-                    field_name == 'budget_id') or (field_name == 'designation') or (field_name == 'classification'):
+                    field_name == 'budget_id') or (field_name == 'designation') or (field_name == 'classification') or (field_name == 'cost_center'):
                 field.widget.attrs.update({
                     'class': "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset "
                              "ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm "
                              "sm:leading-6",
                 })
 
-            if field_name == 'section' or field_name == 'budget_id':
+            if field_name == 'section' or field_name == 'budget_id' or field_name == 'cost_center':
                 field.widget.attrs.update({
                     'class': "select2 block w-full rounded-md border-0 py-1.5 text-gray-900 "
                              "shadow-sm ring-1 ring-inset ring-gray-300 "

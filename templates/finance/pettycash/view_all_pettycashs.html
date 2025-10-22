@@ -48,6 +48,58 @@
       {% endif %}
 
       {% if pettycash_role != 'none' %}
+  <br> <table id="nonconformity" class="table table-striped stripe table-bordered">
+        <thead>
+          <tr>
+            <tr>
+                <th>Pettycash ID</th>
+                <th>Pettycash Details</th>
+                <th>Allocation Code of Expenditure</th>
+                <th>Amount</th>
+                <th>Payment Mode</th>
+                <th>Requested By</th>
+                <th>Created At</th>
+                <th>Section</th>
+                <th>Status</th>
+          </tr>
+  </thead>
+  <tbody>
+            {% for pettycash in pettycashs %}
+            <tr class="h-1">
+                <td><a class="text-blue-500" href="/pettycash/pettycash_detail/{{pettycash.petty_id}}">{{ pettycash.petty_id|default_if_none:'' }}</a></td>
+                <td>{{ pettycash.details_of_expenditure }}</td>
+                <td>{{ pettycash.section.code }}</td>
+              <td>{{ pettycash.amount|floatformat:2|intcomma }}</td>
+              <td>{{ pettycash.payment_mode }}</td>
+            <td>{% if pettycash.requested_by == user %} You {% else %} {{pettycash.requested_by.get_full_name }} {% endif %}</td>
+              <td>{{ pettycash.date_created|date:"Y-m-d" }}</td>
+              <td>{{ pettycash.section }}</td>
+              <td>
+                {% if pettycash.receipt_file %}
+                  <span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs">Cleared</span>
+                {% elif pettycash.payment_mode %}
+                  <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs">Disbursed</span>
+                {% elif pettycash.process.approval_set.last and pettycash.process.approval_set.last.approved == 'Rejected' %}
+                  <span class="bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs">Rejected</span>
+                {% elif pettycash.process.approval_set.last %}
+                  <span class="bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs">Approved</span>
+                {% else %}
+                  <span class="bg-gray-100 text-gray-800 px-2 py-1 rounded-full text-xs">Created</span>
+                {% endif %}
+              </td>
+              {% comment %} <td>{{ pettycash.process }}</td> {% endcomment %}
+            </tr>
+          {% endfor %}
+        </tbody>
+        <tfoot>
+          <tr>
+            <th colspan="3" class="text-right">Total (visible):</th>
+            <th id="amountTotal"></th>
+            <th colspan="5"></th>
+          </tr>
+        </tfoot>
+      </table>
+
       {% if pettycash_role == requester and created_pettycashs %}
       <!-- Items Created by User Section -->
       <br>
@@ -103,58 +155,6 @@
         </table>
       </div>
       {% endif %}
-
-  <br> <table id="nonconformity" class="table table-striped stripe table-bordered">
-        <thead>
-          <tr>
-            <tr>
-                <th>Pettycash ID</th>
-                <th>Pettycash Details</th>
-                <th>Allocation Code of Expenditure</th>
-                <th>Amount</th>
-                <th>Payment Mode</th>
-                <th>Requested By</th>
-                <th>Created At</th>
-                <th>Section</th>
-                <th>Status</th>
-          </tr>
-  </thead>
-  <tbody>
-            {% for pettycash in pettycashs %}
-            <tr class="h-1">
-                <td><a class="text-blue-500" href="/pettycash/pettycash_detail/{{pettycash.petty_id}}">{{ pettycash.petty_id|default_if_none:'' }}</a></td>
-                <td>{{ pettycash.details_of_expenditure }}</td>
-                <td>{{ pettycash.section.code }}</td>
-              <td>{{ pettycash.amount|floatformat:2|intcomma }}</td>
-              <td>{{ pettycash.payment_mode }}</td>
-            <td>{% if pettycash.requested_by == user %} You {% else %} {{pettycash.requested_by.get_full_name }} {% endif %}</td>
-              <td>{{ pettycash.date_created|date:"Y-m-d" }}</td>
-              <td>{{ pettycash.section }}</td>
-              <td>
-                {% if pettycash.receipt_file %}
-                  <span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs">Cleared</span>
-                {% elif pettycash.payment_mode %}
-                  <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs">Disbursed</span>
-                {% elif pettycash.process.approval_set.last and pettycash.process.approval_set.last.approved == 'Rejected' %}
-                  <span class="bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs">Rejected</span>
-                {% elif pettycash.process.approval_set.last %}
-                  <span class="bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs">Approved</span>
-                {% else %}
-                  <span class="bg-gray-100 text-gray-800 px-2 py-1 rounded-full text-xs">Created</span>
-                {% endif %}
-              </td>
-              {% comment %} <td>{{ pettycash.process }}</td> {% endcomment %}
-            </tr>
-          {% endfor %}
-        </tbody>
-        <tfoot>
-          <tr>
-            <th colspan="3" class="text-right">Total (visible):</th>
-            <th id="amountTotal"></th>
-            <th colspan="5"></th>
-          </tr>
-        </tfoot>
-      </table>
 
     </div>
   </div>

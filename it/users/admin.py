@@ -7,10 +7,12 @@ class DistrictsAdmin(admin.ModelAdmin):
 @admin.register(Sections)
 class SectionsAdmin(admin.ModelAdmin):
     list_display = ('section', 'code', 'district_id')
+    search_fields = ('section', 'code')
 
 @admin.register(UserProfile)
 class UserProfileAdmin(admin.ModelAdmin):
-    list_display =('username', 'designation', 'section', 'depot', 'region', 'district', 'status', ) 
+    list_display =('username', 'designation', 'section', 'depot', 'region', 'district', 'status', )
+    search_fields = ('username', 'first_name', 'last_name', 'email') 
     
 @admin.register(Depots)
 class DepotsAdmin(admin.ModelAdmin):
@@ -19,6 +21,7 @@ class DepotsAdmin(admin.ModelAdmin):
 @admin.register(Regions)
 class RegionsAdmin(admin.ModelAdmin):
     list_display = ('region', 'code', )
+    search_fields = ('region', 'code')
 
 @admin.register(Roles)
 class RolesAdmin(admin.ModelAdmin):
@@ -27,6 +30,7 @@ class RolesAdmin(admin.ModelAdmin):
 @admin.register(Designations)
 class DesignationsAdmin(admin.ModelAdmin):
     list_display = ('identifier', 'description', )
+    search_fields = ('identifier', 'description')
 
 
 @admin.register(Notification)
@@ -36,6 +40,7 @@ class NotificationAdmin(admin.ModelAdmin):
 @admin.register(CostCenter)
 class CostCenterAdmin(admin.ModelAdmin):
     list_display = ('code', 'name', 'parent')
+    search_fields = ('code', 'name')
 
 @admin.register(Responsibilities)
 class ResponsibilitiesAdmin(admin.ModelAdmin):

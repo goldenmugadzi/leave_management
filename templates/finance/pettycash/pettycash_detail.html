@@ -161,6 +161,9 @@
                                                         {% endif %}</p>
                             <p class="font-bold   mb-2"> Created At: {{ pettycash.date_created }}</p>
                             <p class="font-bold   mb-2"> Section: {{ pettycash.section }}</p>
+                            {% if pettycash.cost_center %}
+                            <p class="font-bold mb-2"> Cost Center: {{ pettycash.cost_center.code }} - {{ pettycash.cost_center.name }}</p>
+                            {% endif %}
 {#                            <p class="font-bold   mb-2"> Role : {{ pettycash_role }}</p>#}
                             {%   if pettycash.payment_mode == None %}
                                 <p class="font-bold   mb-2 bg-red-600"> Payment mode: Not yet Added By Cashier</p>
