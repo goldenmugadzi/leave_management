@@ -535,15 +535,15 @@ def edit_document(request, document_id):
     return render(request, 'competence_building/edit_document.html', context)
 
 
+@login_required
 def view_archived_documents(request):
-
-  if request.method == 'POST':
-    document.archived = True
-    document.save()
-  context = {'archive_document': archive_document}
-  return render(request, 'archive_document', context) 
+    # This function appears to be incomplete and has errors
+    # It should be removed or properly implemented
+    messages.error(request, "This function is not properly implemented")
+    return redirect('/competence/competence_index') 
 
 
+@login_required
 def create_subcategory(request):
     if request.method == 'POST':
       
