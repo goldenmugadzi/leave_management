@@ -20,6 +20,7 @@ from django.views.decorators.csrf import csrf_exempt
 from graphene_file_upload.django import FileUploadGraphQLView
 from django.contrib import admin
 from django.urls import path, include
+from django.http import HttpResponse
 
 
 
@@ -29,7 +30,27 @@ from rest_framework_simplejwt.views import (
     TokenVerifyView
 )
 
+# Serve robots.txt to prevent search engine indexing
+def robots_txt(request):
+    robots_content = """# Robots.txt - Prevent search engine indexing
+# This file blocks all web crawlers from indexing the site
+# to prevent sensitive information disclosure
+
+User-agent: *
+Disallow: /
+
+# Additional security measures:
+# - No crawling of any part of the site
+# - No indexing of file download endpoints
+# - No crawling of user-generated content
+# - No indexing of PII-containing documents
+
+# This is a private business application containing sensitive data
+# All access should be authenticated and authorized"""
+    return HttpResponse(robots_content, content_type='text/plain')
+
 urlpatterns = [
+    path('robots.txt', robots_txt, name='robots_txt'),
     path('', include('pretask_risk_assessment.urls')),
     path('', include('it.beii_auth.urls')),
     path('', include('Docs.urls')),

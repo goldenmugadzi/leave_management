@@ -207,8 +207,19 @@ SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', config('SECURE_PROXY_SSL_HE
 SECURE_HSTS_SECONDS = config('SECURE_HSTS_SECONDS', default=31536000, cast=int)  # 1 year
 SECURE_HSTS_INCLUDE_SUBDOMAINS = config('SECURE_HSTS_INCLUDE_SUBDOMAINS', default=True, cast=bool)
 SECURE_HSTS_PRELOAD = config('SECURE_HSTS_PRELOAD', default=True, cast=bool)
+
+# Cookie Security
 CSRF_COOKIE_SECURE = config('CSRF_COOKIE_SECURE', default=True, cast=bool)
 SESSION_COOKIE_SECURE = config('SESSION_COOKIE_SECURE', default=True, cast=bool)
+SESSION_COOKIE_HTTPONLY = True
+CSRF_COOKIE_HTTPONLY = True
+
+# Additional Security Headers
+SECURE_CONTENT_TYPE_NOSNIFF = True  # Prevent MIME-type sniffing
+X_FRAME_OPTIONS = 'DENY'  # Prevent clickjacking attacks
+SECURE_BROWSER_XSS_FILTER = True  # Enable browser XSS filtering
+SECURE_REFERRER_POLICY = 'same-origin'  # Prevent referrer information leakage
+X_ROBOTS_TAG = 'noindex, nofollow'  # Prevent search engine indexing
 
 # Set session timeout to 10 minutes (600 seconds)
 SESSION_COOKIE_AGE = 600

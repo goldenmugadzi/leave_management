@@ -1,9 +1,12 @@
 from datetime import datetime
 import json
 import shutil
+import logging
 from django.shortcuts import render, redirect
-from django.http import FileResponse
+from django.http import FileResponse, HttpResponseForbidden, HttpResponseNotFound
 from django.views import View
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
 
 from beii_v1 import settings
 from .models import *
@@ -13,6 +16,10 @@ import os
 from .forms import DocumentForm,editDocumentForm
 from .models import Subcategory
 
+# Configure logger for security events
+logger = logging.getLogger(__name__)
+
+@login_required
 def view_competence(request):
         
         url_path = request.path.split("/")
@@ -20,7 +27,7 @@ def view_competence(request):
         return render(request, 'competence_building/competence.html', {
                       "url_path": url_path})
 
-# @login_required
+@login_required
 def view_qualifications(request):
     
     file_type = Category.objects.filter(name="Qualifications").first()
@@ -43,7 +50,7 @@ def view_qualifications(request):
     url_path = request.path.split("/")
     return render(request, 'competence_building/qualifications.html',{"folders": folders_list, "page_title": "Qualifications Documents", "url_path": url_path} )
 
-# @login_required
+@login_required
 def view_qualifications_files(request, folder_name):
     name = ""
     if folder_name.count("_") > 0:
@@ -123,23 +130,45 @@ def bulk_create(request):
 
 
 
+@login_required
 def download_file(request):
-
-    file_id = request.GET['file_id']
-    file_record = Document.objects.filter(id=file_id).first()
-#     file_path = "media/" + file_record.file
-
-    # search for file in system
+    """
+    Secure file download with authentication and logging.
+    Prevents unauthorized access to sensitive documents containing PII.
+    """
     try:
-        # base_directory_path = os.path.join(settings.BASE_DIR,file_path )
-
+        file_id = request.GET.get('file_id')
+        
+        if not file_id:
+            logger.warning(f"Download attempt without file_id by user {request.user.username}")
+            messages.error(request, "File ID is required")
+            return redirect('/competence/competence')
+        
+        file_record = Document.objects.filter(id=file_id).first()
+        
+        if not file_record:
+            logger.warning(f"Download attempt for non-existent file {file_id} by user {request.user.username}")
+            messages.error(request, "File not found")
+            return HttpResponseNotFound("File not found")
+        
+        # Log successful download attempt
+        logger.info(f"File download: file_id={file_id}, filename={file_record.name}, user={request.user.username}, user_id={request.user.id}")
+        
+        # Verify file exists
+        if not file_record.file or not os.path.exists(file_record.file.path):
+            logger.error(f"File path not found on disk: {file_record.file.path if file_record.file else 'No path'}, file_id={file_id}")
+            messages.error(request, "File not found on server")
+            return HttpResponseNotFound("File not available")
+        
         return FileResponse(file_record.file, content_type='application/pdf')
+        
     except Exception as ex:
-        print(ex)
+        logger.error(f"Error downloading file: {str(ex)}, user={request.user.username}, file_id={file_id}")
+        messages.error(request, "Error downloading file")
+        return redirect('/competence/competence')
 
-    return redirect('/competence/competence')
 
-
+@login_required
 def view_charts(request):
         
         url_path = request.path.split("/")
@@ -362,6 +391,7 @@ def view_rfqview(request):
         return render(request, 'competence_building/rfqview.html')
 
 
+@login_required
 def view_upload_file(request):
     if request.method == 'POST':
         form = DocumentForm(request.POST, request.FILES)
@@ -372,19 +402,25 @@ def view_upload_file(request):
                 file_name = request.FILES['file'].name
                 document.name = os.path.splitext(file_name)[0]  # Set document name from uploaded file
             document.save()  # Commit the changes to the database
+            logger.info(f"Document uploaded: id={document.id}, name={document.name}, user={request.user.username}")
+            messages.success(request, "Document uploaded successfully")
             return redirect('/competence/upload_file') 
         else:
-                print("error :")
+            logger.warning(f"Invalid form submission for document upload by user {request.user.username}")
+            messages.error(request, "Error uploading document. Please check the form.")
     return render(request, 'competence_building/upload_file.html', {'form': DocumentForm()})
 
+@login_required
 def view_categories(request):
         return render(request, 'competence_building/categories.html', {'categories': Category.objects.all()})
 
+@login_required
 def view_files(request, category):
     category_obj = Category.objects.get(id=category)
     files = category_obj.document_set.all()
     return render(request, 'competence_building/files.html', {'files': files})
 
+@login_required
 def uploaded_jobs_view(request):
     # Fetches job descriptions and renders them in a table.
     documents = Document.objects.filter(archive=False).all()  # Fetch all documents
@@ -416,6 +452,7 @@ def uploaded_jobs_view(request):
 
     return render(request, 'competence_building/competence_index.html', {"context": context, 'page':'competence_index'})
 
+@login_required
 def archived_documents(request):
     # Fetches job descriptions and renders them in a table.
     documents = Document.objects.filter(archive=True).all()  # Fetch all documents
@@ -447,22 +484,35 @@ def archived_documents(request):
 #     context = {'documents': documents}
     return render(request, 'competence_building/competence_index.html', {"context": context})
 
+@login_required
 def archive_file(request, file_id):
-
     um = Document.objects.filter(id=file_id).first()
-    um.archive=True
-    um.save()
+    if um:
+        um.archive=True
+        um.save()
+        logger.info(f"Document archived: id={file_id}, name={um.name}, user={request.user.username}")
+        messages.success(request, "Document archived successfully")
+    else:
+        logger.warning(f"Archive attempt for non-existent file {file_id} by user {request.user.username}")
+        messages.error(request, "Document not found")
     
     return redirect('/competence/competence_index')
 
+@login_required
 def unarchive_file(request, file_id):
-
     um = Document.objects.filter(id=file_id).first()
-    um.archive=False
-    um.save()
+    if um:
+        um.archive=False
+        um.save()
+        logger.info(f"Document unarchived: id={file_id}, name={um.name}, user={request.user.username}")
+        messages.success(request, "Document unarchived successfully")
+    else:
+        logger.warning(f"Unarchive attempt for non-existent file {file_id} by user {request.user.username}")
+        messages.error(request, "Document not found")
     
     return redirect('/competence/archive')
 
+@login_required
 def edit_document(request, document_id):
     document = Document.objects.get(pk=document_id)
 
@@ -470,8 +520,13 @@ def edit_document(request, document_id):
         form = editDocumentForm(request.POST, request.FILES, instance=document) 
 
         if form.is_valid():
-            form.save()  
+            form.save()
+            logger.info(f"Document edited: id={document_id}, name={document.name}, user={request.user.username}")
+            messages.success(request, "Document updated successfully")
             return redirect('competence_index') 
+        else:
+            logger.warning(f"Invalid form submission for document edit by user {request.user.username}, document_id={document_id}")
+            messages.error(request, "Error updating document. Please check the form.")
 
     else:
         form = editDocumentForm(instance=document)
@@ -498,6 +553,7 @@ def create_subcategory(request):
     context = {'form': form, 'subcategories': Subcategory.objects.all()}
     return render(request, 'competence_building/subcategory.html', context)
 
+@login_required
 def vacancies_view(request):
     # Fetches job vacancies and renders them in a table.
     category= Category.objects.filter(name="Vacancies").first()
@@ -520,6 +576,7 @@ def vacancies_view(request):
     context = json.dumps(vacancies_list, default=str)
     return render(request, 'competence_building/vacancies.html', {"context": context, 'page':'vacancies'})
 
+@login_required
 def safetycircula_view(request):
         category= Category.objects.filter(name="Safety and Healthy").first()
         safetycircula = Document.objects.filter(category=category,archive=False).all()
@@ -539,6 +596,7 @@ def safetycircula_view(request):
         context = json.dumps(safetycircula_list, default=str)
         return render(request, 'competence_building/safety.html', {"context": context, 'page':'safety'})
 
+@login_required
 def trainingDevelopment_view(request):
         category= Category.objects.filter(name="Training and Development").first()
         trainingDevelopment = Document.objects.filter(category=category,archive=False).all()
@@ -561,6 +619,7 @@ def trainingDevelopment_view(request):
         context = json.dumps(trainingDevelopment_list, default=str)
         return render(request, 'competence_building/trainings.html', {"context": context, 'page':'training'})
 
+@login_required
 def upcomingEvents_view(request):
         category= Category.objects.filter(name="Upcoming Events").first()
         upcomingEvents = Document.objects.filter(category=category,archive=False).all()
