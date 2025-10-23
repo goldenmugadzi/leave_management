@@ -212,7 +212,9 @@ SECURE_HSTS_PRELOAD = config('SECURE_HSTS_PRELOAD', default=True, cast=bool)
 CSRF_COOKIE_SECURE = config('CSRF_COOKIE_SECURE', default=True, cast=bool)
 SESSION_COOKIE_SECURE = config('SESSION_COOKIE_SECURE', default=True, cast=bool)
 SESSION_COOKIE_HTTPONLY = True
-CSRF_COOKIE_HTTPONLY = True
+# CSRF cookie must be accessible to JavaScript for AJAX/React apps
+# Reference: https://docs.djangoproject.com/en/4.2/ref/settings/#csrf-cookie-httponly
+CSRF_COOKIE_HTTPONLY = False
 
 # Additional Security Headers
 SECURE_CONTENT_TYPE_NOSNIFF = True  # Prevent MIME-type sniffing
