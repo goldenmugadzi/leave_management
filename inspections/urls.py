@@ -1,9 +1,12 @@
-from django.urls import path
+from django.urls import path, include
 from . import views
 
 app_name = 'inspections'
 
 urlpatterns = [
+    # REST API endpoints (for mobile app)
+    path('api/', include('inspections.api_urls')),
+    
     # Dashboard
     path('', views.dashboard, name='dashboard'),
     
