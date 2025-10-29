@@ -422,11 +422,11 @@
               </a>
             {% endif %}
             {% if application.status == 'assigned' or application.status == 'in_progress' %}
-              <a href="{% url 'inspections:inspection_create' %}?application={{ application.pk }}" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg flex items-center justify-center">
+              <a href="{% url 'inspections:inspection_list' %}?search={{ application.application_number }}" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg flex items-center justify-center">
                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path>
                 </svg>
-                Create Inspection
+                View Inspections
               </a>
             {% endif %}
             <a href="{% url 'inspections:application_edit' application.pk %}" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-lg flex items-center justify-center">

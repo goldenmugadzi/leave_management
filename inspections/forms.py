@@ -609,9 +609,14 @@ class ApplicationAssignmentForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
+        application_id = kwargs.pop('application_id', None)
         super().__init__(*args, **kwargs)
         # Filter applications to only show submitted ones
         self.fields['application'].queryset = ClientApplication.objects.filter(status='submitted')
+        
+        # Pre-populate application if provided
+        if application_id:
+            self.fields['application'].initial = application_id
         
         # Filter users to show only active ones
         from django.contrib.auth import get_user_model

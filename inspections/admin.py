@@ -2,7 +2,7 @@ from django.contrib import admin
 from .models import (
     Customer, Contractor, ApplicationAttachment, ClientApplication, 
     InspectionReport, E6Certificate, E1DefectReport, InspectionWorkflow, 
-    ApplicationAssignment
+    ApplicationAssignment, InspectionPhoto
 )
 
 
@@ -314,3 +314,33 @@ class ApplicationAssignmentAdmin(admin.ModelAdmin):
     )
     
     ordering = ['-created_at'] 
+
+@admin.register(InspectionPhoto)
+class InspectionPhotoAdmin(admin.ModelAdmin):
+    list_display = [
+        'filename', 'inspection_report', 'timestamp', 'file_size', 
+        'gps_latitude', 'gps_longitude', 'created_at'
+    ]
+    list_filter = ['timestamp', 'content_type', 'created_at']
+    search_fields = [
+        'filename', 'caption', 'inspection_report__service_no'
+    ]
+    readonly_fields = ['file_size', 'created_at', 'updated_at']
+    
+    fieldsets = (
+        ('Photo Information', {
+            'fields': ('inspection_report', 'filename', 'file', 'caption', 'timestamp')
+        }),
+        ('Metadata', {
+            'fields': ('content_type', 'file_size')
+        }),
+        ('GPS Coordinates', {
+            'fields': ('gps_latitude', 'gps_longitude')
+        }),
+        ('Audit Fields', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    ordering = ['-timestamp']

@@ -734,4 +734,64 @@ class ApplicationAssignment(models.Model):
         
         # Update the related application status
         self.application.status = 'completed'
-        self.application.save() 
+        self.application.save()
+
+
+class InspectionPhoto(models.Model):
+    """
+    Model for inspection photos uploaded during field inspections
+    Stores photos with GPS coordinates and metadata
+    """
+    # Primary key
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    
+    # Relationship
+    inspection_report = models.ForeignKey(
+        InspectionReport,
+        on_delete=models.CASCADE,
+        related_name='photos'
+    )
+    
+    # File Information
+    filename = models.CharField(max_length=255)
+    file = models.ImageField(upload_to='uploads/inspections/photos/')
+    caption = models.CharField(max_length=500, blank=True, null=True)
+    
+    # Metadata
+    timestamp = models.DateTimeField(default=timezone.now)
+    content_type = models.CharField(max_length=100, default='image/jpeg')
+    file_size = models.PositiveIntegerField(default=0)  # Size in bytes
+    
+    # GPS Coordinates
+    gps_latitude = models.DecimalField(
+        max_digits=10, 
+        decimal_places=7, 
+        blank=True, 
+        null=True,
+        help_text="Latitude coordinate where photo was taken"
+    )
+    gps_longitude = models.DecimalField(
+        max_digits=10, 
+        decimal_places=7, 
+        blank=True, 
+        null=True,
+        help_text="Longitude coordinate where photo was taken"
+    )
+    
+    # Audit fields
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['-timestamp']
+        verbose_name = 'Inspection Photo'
+        verbose_name_plural = 'Inspection Photos'
+    
+    def __str__(self):
+        return f"{self.filename} - {self.inspection_report.service_no or 'Unknown'}"
+    
+    def save(self, *args, **kwargs):
+        # Auto-calculate file size if not set
+        if self.file and not self.file_size:
+            self.file_size = self.file.size
+        super().save(*args, **kwargs) 

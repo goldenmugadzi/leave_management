@@ -56,6 +56,13 @@ def assigned_applications(request):
         for assignment in assignments:
             app = assignment.application
             
+            # Debug logging
+            print(f"[DEBUG] Assignment ID: {assignment.id}")
+            print(f"[DEBUG] Assigned to: {assignment.assigned_to}")
+            print(f"[DEBUG] Assigned to ID: {assignment.assigned_to.id if assignment.assigned_to else 'None'}")
+            print(f"[DEBUG] Assigned by: {assignment.assigned_by}")
+            print(f"[DEBUG] Status: {assignment.status}")
+            
             # Get attachments
             attachments = ApplicationAttachment.objects.filter(application=app)
             attachments_data = [
@@ -84,7 +91,11 @@ def assigned_applications(request):
                 'assignment_status': assignment.status,
                 'assignment_date': assignment.assignment_date.isoformat() if assignment.assignment_date else None,
                 'assigned_by': str(assignment.assigned_by.id) if assignment.assigned_by else None,
-                'accepted_at': assignment.accepted_at.isoformat() if assignment.accepted_at else None,
+                'assigned_to': str(assignment.assigned_to.id) if assignment.assigned_to else None,
+                'accepted_at': assignment.accepted_date.isoformat() if assignment.accepted_date else None,
+                
+                # Debug: log the assigned_to value
+                '_debug_assigned_to': str(assignment.assigned_to.id) if assignment.assigned_to else 'NONE',
                 
                 # Customer information
                 'customer': {
@@ -96,7 +107,7 @@ def assigned_applications(request):
                     'stand_plot_number': app.customer.stand_plot_number or '',
                     'farm_street_name': app.customer.farm_street_name or '',
                     'suburb_township': app.customer.suburb_township or '',
-                    'city': app.customer.city or '',
+                    'district': app.customer.district or '',
                 } if app.customer else None,
                 
                 # Contractor information
@@ -113,7 +124,19 @@ def assigned_applications(request):
                 # Application details
                 'supply_type': app.supply_type,
                 'purpose': app.purpose,
-                'application_details': app.application_details or {},
+                'application_details': {
+                    'roof_covering': app.roof_covering or '',
+                    'single_phase_required': app.single_phase_required,
+                    'single_phase_count': app.single_phase_count or 0,
+                    'three_phase_required': app.three_phase_required,
+                    'three_phase_count': app.three_phase_count or 0,
+                    'service_feed_type': app.service_feed_type or '',
+                    'main_switch_size_amperes': app.main_switch_size_amperes or 0,
+                    'main_switch_size_kva': float(app.main_switch_size_kva) if app.main_switch_size_kva else 0.0,
+                    'owner_name': app.owner_name or '',
+                    'owner_address': app.owner_address or '',
+                    'notes': app.notes or '',
+                },
                 
                 # Attachments
                 'attachments': attachments_data,
@@ -207,7 +230,7 @@ def application_detail(request, pk):
             'assignment_status': assignment.status,
             'assignment_date': assignment.assignment_date.isoformat() if assignment.assignment_date else None,
             'assigned_by': str(assignment.assigned_by.id) if assignment.assigned_by else None,
-            'accepted_at': assignment.accepted_at.isoformat() if assignment.accepted_at else None,
+            'accepted_at': assignment.accepted_date.isoformat() if assignment.accepted_date else None,
             
             # Customer information
             'customer': {
@@ -219,7 +242,7 @@ def application_detail(request, pk):
                 'stand_plot_number': app.customer.stand_plot_number or '',
                 'farm_street_name': app.customer.farm_street_name or '',
                 'suburb_township': app.customer.suburb_township or '',
-                'city': app.customer.city or '',
+                'district': app.customer.district or '',
             } if app.customer else None,
             
             # Contractor information
@@ -236,7 +259,19 @@ def application_detail(request, pk):
             # Application details
             'supply_type': app.supply_type,
             'purpose': app.purpose,
-            'application_details': app.application_details or {},
+            'application_details': {
+                'roof_covering': app.roof_covering or '',
+                'single_phase_required': app.single_phase_required,
+                'single_phase_count': app.single_phase_count or 0,
+                'three_phase_required': app.three_phase_required,
+                'three_phase_count': app.three_phase_count or 0,
+                'service_feed_type': app.service_feed_type or '',
+                'main_switch_size_amperes': app.main_switch_size_amperes or 0,
+                'main_switch_size_kva': float(app.main_switch_size_kva) if app.main_switch_size_kva else 0.0,
+                'owner_name': app.owner_name or '',
+                'owner_address': app.owner_address or '',
+                'notes': app.notes or '',
+            },
             
             # Attachments
             'attachments': attachments_data,
@@ -281,7 +316,7 @@ def accept_assignment(request, pk):
                     'success': True,
                     'message': 'Assignment accepted successfully',
                     'assignment_status': assignment.status,
-                    'accepted_at': assignment.accepted_at.isoformat() if assignment.accepted_at else None,
+                    'accepted_at': assignment.accepted_date.isoformat() if assignment.accepted_date else None,
                 },
                 status=status.HTTP_200_OK
             )
