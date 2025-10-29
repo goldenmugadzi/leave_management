@@ -37,6 +37,7 @@ class AceForm(forms.ModelForm):
         user = kwargs.pop('user', None)
         super().__init__(*args, **kwargs)
 
+
         if user:
             # Accept either a Django User or our UserProfile
             user_profile = user if isinstance(user, UserProfile) else UserProfile.objects.filter(username=getattr(user, 'username', None)).first()
@@ -56,6 +57,11 @@ class AceForm(forms.ModelForm):
                     self.fields['section'].queryset = Sections.objects.filter(region_id=str(region_obj.id))
                 if not self.fields['section'].queryset.exists():
                     self.fields['section'].queryset = Sections.objects.all().order_by('section')
+
+                # Set section initial value to user's section and hide the field
+                if getattr(user_profile, 'section', None):
+                    self.fields['section'].initial = user_profile.section.pk
+                    self.fields['section'].widget = forms.HiddenInput()
 
                 # Cost center filtering hierarchy:
                 # 1) If user has a cost_center, allow it and its descendants
