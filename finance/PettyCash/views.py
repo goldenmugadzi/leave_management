@@ -643,11 +643,12 @@ def pettycash_awaiting_my_action(request):
     
     # Determine access level for records without cost centers
     # System-wide roles: See everything
+    # Accounting Officer/Finance Manager: See entire region
     # Petty Cash Authoriser: See entire region
     # Others: See only their section
-    region_wide_roles = ['Petty Cash Authoriser']
+    region_wide_roles = ['Petty Cash Authoriser', 'Accounting Officer', 'Finance Manager']
     has_region_wide_access = user_roles and any(role.name in region_wide_roles for role in user_roles)
-    
+
     if has_system_wide_access:
         # System-wide roles see ALL records without cost centers
         fallback_filter = {
@@ -655,7 +656,7 @@ def pettycash_awaiting_my_action(request):
             'date_created__year__gte': current_year
         }
     elif has_region_wide_access and region:
-        # Region-wide roles see entire region
+        # Region-wide roles (including Accounting Officer/Finance Manager) see entire region
         fallback_filter = {
             'cost_center__isnull': True,
             'region': region,

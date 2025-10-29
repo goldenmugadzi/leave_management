@@ -72,7 +72,15 @@
               <td>{{ ace.date_created }}</td>
               <td>{{ ace.section }}</td>
             <td>{{ ace.section.code }}</td>
-            <td>{{ ace.process.approval_set.last|default_if_none:'' }}</td>
+            <td>
+              {% if ace.has_rejected_approval %}
+                <span class="text-red-600 font-bold">Rejected</span>
+              {% elif ace.latest_approval_status %}
+                {{ ace.latest_approval_status }}
+              {% else %}
+                Pending
+              {% endif %}
+            </td>
               {% comment %} <td>{{ ace.process }}</td> {% endcomment %}
             </tr>
           {% endfor %}
@@ -105,7 +113,15 @@
               <td>{{ ace.date_created }}</td>
               <td>{{ ace.section }}</td>
               <td>{{ ace.section.code }}</td>
-              <td>{{ ace.process.approval_set.last|default_if_none:'' }}</td>
+              <td>
+                {% if ace.has_rejected_approval %}
+                  <span class="text-red-600 font-bold">Rejected</span>
+                {% elif ace.latest_approval_status %}
+                  {{ ace.latest_approval_status }}
+                {% else %}
+                  Pending
+                {% endif %}
+              </td>
             </tr>
             {% endfor %}
           </tbody>

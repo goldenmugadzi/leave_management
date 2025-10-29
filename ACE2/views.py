@@ -533,30 +533,25 @@ def ace_awaiting_my_action(request):
     user_roles = set(user.roles.all())
     aces_to_process = []
     processed_ace_ids = set()  # Track processed ACEs to avoid duplicates
-    
-    # Determine role level for access control
+
+    # Extract region and section from user_profile
+    region = getattr(user_profile, 'region', None)
+    section = getattr(user_profile, 'section', None)
+
+    # Role access logic
     system_wide_roles = ['Finance Director/Transmission Manager', 'Managing Director']
-    has_system_wide_access = user_roles and any(role.name in system_wide_roles for role in user_roles)
-    
+    em_gm_roles = ['General Manager/Transmission Distribution Director', 'Engineering Manager']
+    region_wide_roles = ['Accounting Officer', 'Finance Manager']
+    user_role_names = [role.name for role in user_roles]
+    has_system_wide_access = any(role in system_wide_roles for role in user_role_names)
+    has_em_gm_access = any(role in em_gm_roles for role in user_role_names)
+    has_region_wide_access = any(role in region_wide_roles for role in user_role_names)
+
     # Query 1: Records WITH cost centers
     if has_system_wide_access:
-        # FD and MD see ALL records with cost centers
-        aces_with_cost_center = Ace2.objects.filter(
-            cost_center__isnull=False
-        ).exclude(
-            process__approval__approved="Rejected"
-        ).prefetch_related(
-            "process__approval_set", "process__workflow__step_set"
-        )
+        aces_with_cost_center = Ace2.objects.filter(cost_center__isnull=False).exclude(process__approval__approved="Rejected").prefetch_related("process__approval_set", "process__workflow__step_set")
     elif cost_centers:
-        # All other roles limited to their designated cost centers
-        aces_with_cost_center = Ace2.objects.filter(
-            cost_center__in=cost_centers
-        ).exclude(
-            process__approval__approved="Rejected"
-        ).prefetch_related(
-            "process__approval_set", "process__workflow__step_set"
-        )
+        aces_with_cost_center = Ace2.objects.filter(cost_center__in=cost_centers).exclude(process__approval__approved="Rejected").prefetch_related("process__approval_set", "process__workflow__step_set")
     else:
         aces_with_cost_center = Ace2.objects.none()
     
@@ -569,35 +564,31 @@ def ace_awaiting_my_action(request):
                     step=next_step, approver__in=user_roles
                 ).exists()
             ):
+                # Annotate for template
+                ace.has_rejected_approval = approvals.filter(approved='Rejected').exists()
+                if ace.has_rejected_approval:
+                    ace.latest_approval_status = 'Rejected'
+                else:
+                    ace.latest_approval_status = approvals.last().approved if approvals.exists() else None
                 aces_to_process.append(ace)
                 processed_ace_ids.add(ace.Ace_id2)
     
     # Query 2: Records WITHOUT cost centers (use section/region fallback)
-    section = user_profile.section
-    region = user_profile.region
-    
-    # Determine access level for records without cost centers
     # FD/MD: See everything in system
-    # Accounting Officer, Finance Manager, EM, GM: See entire region
+    # EM/GM, AO/FM: See entire region
     # Others: See only their section
-    region_wide_roles = ['Accounting Officer', 'Finance Manager', 'General Manager/Transmission Distribution Director', 'Engineering Manager']
-    has_region_wide_access = user_roles and any(role.name in region_wide_roles for role in user_roles)
-    
     if has_system_wide_access:
-        # FD and MD see ALL records without cost centers
         fallback_filter = {
             'cost_center__isnull': True,
             'date_created__year__gte': 2025
         }
-    elif has_region_wide_access and region:
-        # Senior roles see entire region
+    elif (has_em_gm_access or has_region_wide_access) and region:
         fallback_filter = {
             'cost_center__isnull': True,
             'region': region,
             'date_created__year__gte': 2025
         }
     elif region:
-        # Junior roles see only their section
         fallback_filter = {
             'cost_center__isnull': True,
             'region': region,
@@ -624,6 +615,11 @@ def ace_awaiting_my_action(request):
                         step=next_step, approver__in=user_roles
                     ).exists()
                 ):
+                    ace.has_rejected_approval = approvals.filter(approved='Rejected').exists()
+                    if ace.has_rejected_approval:
+                        ace.latest_approval_status = 'Rejected'
+                    else:
+                        ace.latest_approval_status = approvals.last().approved if approvals.exists() else None
                     aces_to_process.append(ace)
                     processed_ace_ids.add(ace.Ace_id2)
     else:
@@ -637,14 +633,14 @@ def ace_awaiting_my_action(request):
         created_aces_with_cc = Ace2.objects.filter(cost_center__in=cost_centers, **created_aces_filter).exclude(process__approval__approved="Rejected")
     else:
         created_aces_with_cc = Ace2.objects.none()
-    
+
     # For created ACEs without cost centers, respect access levels
     if has_system_wide_access:
         created_fallback_filter = {
             'cost_center__isnull': True,
             **created_aces_filter
         }
-    elif has_region_wide_access and region:
+    elif (has_em_gm_access or has_region_wide_access) and region:
         created_fallback_filter = {
             'cost_center__isnull': True,
             'region': region,
@@ -669,7 +665,19 @@ def ace_awaiting_my_action(request):
         created_aces_without_cc = Ace2.objects.none()
     
     # Combine created ACEs
+    # Annotate created_aces for template
     created_aces = list(created_aces_with_cc) + list(created_aces_without_cc)
+    for ace in created_aces:
+        if ace.process:
+            approvals = ace.process.approval_set.all()
+            ace.has_rejected_approval = approvals.filter(approved='Rejected').exists()
+            if ace.has_rejected_approval:
+                ace.latest_approval_status = 'Rejected'
+            else:
+                ace.latest_approval_status = approvals.last().approved if approvals.exists() else None
+        else:
+            ace.has_rejected_approval = False
+            ace.latest_approval_status = None
 
     return render(
         request,
