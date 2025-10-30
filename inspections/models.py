@@ -373,6 +373,67 @@ class InspectionReport(models.Model):
     # Derived status (calculated from safety checks)
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending')
     
+    # Defects tracking
+    defects_count = models.PositiveIntegerField(default=0, blank=True, null=True, help_text="Number of defects found during inspection")
+    
+    # Mobile sync tracking
+    offline_created = models.BooleanField(default=False, blank=True, null=True, help_text="Whether inspection was created offline")
+    sync_status = models.CharField(max_length=20, default='pending', blank=True, null=True, help_text="Sync status: pending, synced, failed, conflict")
+    sync_attempts = models.PositiveIntegerField(default=0, blank=True, null=True, help_text="Number of sync attempts")
+    last_sync_attempt = models.DateTimeField(null=True, blank=True, help_text="Last sync attempt timestamp")
+    sync_error_message = models.TextField(blank=True, null=True, help_text="Last sync error message")
+    
+    # Location and GPS tracking
+    gps_coordinates = models.JSONField(null=True, blank=True, help_text="GPS coordinates as {'latitude': float, 'longitude': float}")
+    location_accuracy = models.FloatField(null=True, blank=True, help_text="GPS accuracy in meters")
+    location_timestamp = models.DateTimeField(null=True, blank=True, help_text="When GPS location was captured")
+    
+    # Digital signatures
+    inspector_signature = models.TextField(blank=True, null=True, help_text="Base64 encoded inspector signature")
+    customer_signature = models.TextField(blank=True, null=True, help_text="Base64 encoded customer signature")
+    signature_timestamp = models.DateTimeField(null=True, blank=True, help_text="When signatures were captured")
+    
+    # Installation metadata
+    installation_type = models.CharField(max_length=20, choices=INSTALLATION_TYPE_CHOICES, blank=True, null=True, help_text="Type of installation")
+    consumer_unit_type = models.CharField(max_length=20, choices=CONSUMER_UNIT_TYPE_CHOICES, blank=True, null=True, help_text="Type of consumer unit")
+    db_enclosure_type = models.CharField(max_length=20, choices=DB_ENCLOSURE_TYPE_CHOICES, blank=True, null=True, help_text="DB enclosure type")
+    
+    # Inspection timing
+    started_at = models.DateTimeField(null=True, blank=True, help_text="When inspection was started")
+    completed_at = models.DateTimeField(null=True, blank=True, help_text="When inspection was completed")
+    inspection_duration = models.DurationField(null=True, blank=True, help_text="Total inspection duration")
+    
+    # Photo tracking
+    photos_count = models.PositiveIntegerField(default=0, blank=True, null=True, help_text="Number of photos taken")
+    photos_taken_at = models.DateTimeField(null=True, blank=True, help_text="When photos were taken")
+    photo_quality = models.CharField(max_length=50, blank=True, null=True, help_text="Photo quality setting")
+    photo_resolution = models.CharField(max_length=50, blank=True, null=True, help_text="Photo resolution")
+    
+    # Meter and equipment details
+    meter_type = models.CharField(max_length=100, blank=True, null=True, help_text="Type of meter")
+    meter_serial_number = models.CharField(max_length=100, blank=True, null=True, help_text="Meter serial number")
+    meter_reading = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, help_text="Meter reading")
+    main_switch_rating = models.CharField(max_length=50, blank=True, null=True, help_text="Main switch rating")
+    main_switch_type = models.CharField(max_length=50, blank=True, null=True, help_text="Main switch type")
+    
+    # Environmental conditions
+    temperature = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True, help_text="Temperature during inspection")
+    humidity = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True, help_text="Humidity during inspection")
+    weather_conditions = models.CharField(max_length=100, blank=True, null=True, help_text="Weather conditions")
+    
+    # Earthing system
+    earthing_system_type = models.CharField(max_length=50, blank=True, null=True, help_text="Type of earthing system")
+    earthing_resistance = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, help_text="Earthing resistance reading")
+    
+    # Additional notes and recommendations
+    notes = models.TextField(blank=True, null=True, help_text="Additional inspection notes")
+    recommendations = models.TextField(blank=True, null=True, help_text="Recommendations from inspection")
+    next_inspection_due = models.DateField(null=True, blank=True, help_text="Next inspection due date")
+    
+    # Mobile-specific fields (not stored, but may exist in DB)
+    mobile_id = models.CharField(max_length=255, blank=True, null=True, help_text="Mobile app identifier (not used for lookups)")
+    # Note: inspector_id is automatically created by Django for the 'inspector' ForeignKey field
+    
     # Relationships
     client_application = models.ForeignKey(
         'ClientApplication', 

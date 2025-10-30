@@ -44,34 +44,94 @@ class InspectionReportSyncSerializer(serializers.ModelSerializer):
     Formats according to sync API specification
     """
     consumer_main_switch = serializers.SerializerMethodField()
-    server_updated_at = serializers.DateTimeField(source='updated_at')
+    server_updated_at = serializers.DateTimeField(source='updated_at', required=False, allow_null=True)
     
     class Meta:
         model = InspectionReport
         fields = [
+            # Basic Information
             'id',
             'service_no',
+            'inspection_date',
+            'reason_for_inspection',
+            'status',
+            'server_updated_at',
+            
+            # Items 1-3: General Information
             'consumer_name',
             'property_supplied',
             'property_owner_name',
             'property_owner_address',
             'contractor',
             'contractor_address',
+            
+            # Items 4-5: Main Installation Details
             'size_of_mains',
             'size_of_mains_conduit',
             'consumer_main_switch',
-            'neutral_block_fitted',
+            
+            # Items 6-8: Neutral, Earthing, Bonding
             'neutrals_fused',
+            'neutral_block_fitted',
             'earth_electrode_installed',
             'earth_electrode_type',
             'all_equipment_bonded_earthed',
+            
+            # Items 9-10: Resistance Tests
             'insulation_resistance_between',
             'insulation_resistance_to_earth',
             'earth_continuity_resistance',
+            
+            # Items 11-13: Polarity & Socket Outlets
             'polarity_switches_plugs',
-            'status',
-            'inspection_date',
-            'server_updated_at',
+            'socket_outlets_earthed',
+            'socket_outlet_type',
+            
+            # Items 14-16: Wiring Details (PREVIOUSLY MISSING)
+            'wiring_type',
+            'circuit_conductors_correct_size',
+            'wiring_condition',
+            
+            # Items 17-18: Specific Installation Aspects (PREVIOUSLY MISSING)
+            'flexible_cord_prohibited_positions',
+            'bathroom_switch_accessible',
+            'unearthed_metal_switches',
+            
+            # Item 19: Conduits (PREVIOUSLY MISSING)
+            'conduits_bushed',
+            'conduits_bonded_earth',
+            'conduits_correct_size',
+            'conduits_adequately_supported',
+            'conduits_suitable_type',
+            
+            # Items 20-24: Circuit Counts (PREVIOUSLY MISSING)
+            'max_lighting_points_per_circuit',
+            'max_plug_points_per_circuit',
+            'total_lighting_points',
+            'total_plug_points',
+            'appliances_wattages',
+            'motors_plant_details',
+            
+            # Items 25-27: Overhead Lines (PREVIOUSLY MISSING)
+            'overhead_lines_height',
+            'overhead_lines_conductor_size',
+            'overhead_lines_support',
+            'overhead_lines_general',
+            'overhead_earthwires_fitted',
+            'overhead_lines_protected',
+            
+            # Items 28-30: Protection & Commission (PREVIOUSLY MISSING)
+            'outbuildings_protected',
+            'motor_installations_protected',
+            'commission_switch_details',
+            
+            # Items 31-33: Final Status (PREVIOUSLY MISSING)
+            'supply_connected_disconnected',
+            'contractor_notified_defects',
+            'other_features_attention',
+            
+            # Defects tracking
+            'defects_count',
         ]
     
     def get_consumer_main_switch(self, obj):
