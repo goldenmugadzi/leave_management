@@ -185,13 +185,15 @@ class E1DefectReportSyncSerializer(serializers.ModelSerializer):
     Formats according to sync API specification
     """
     inspection_id = serializers.UUIDField(source='inspection_report.id', read_only=True)
+    inspection_report_id = serializers.UUIDField(required=True)  # Explicitly define as writable field
+    client_application_id = serializers.UUIDField(required=True)  # Required - model has CASCADE constraint
     inspection_result = serializers.SerializerMethodField()
     defects_requiring_attention = serializers.SerializerMethodField()
     official_signature = serializers.SerializerMethodField()
     inspector_designation = serializers.SerializerMethodField()
-    reference_number = serializers.CharField(source='report_number')
+    reference_number = serializers.CharField(source='report_number', required=False, allow_blank=True, allow_null=True)
     stand_plot_location = serializers.SerializerMethodField()
-    sub_div_number = serializers.CharField(source='sub_division_number')
+    sub_div_number = serializers.CharField(source='sub_division_number', required=False, allow_blank=True, allow_null=True)
     farm_mine_location = serializers.SerializerMethodField()
     district_township = serializers.SerializerMethodField()
     inspection_date = serializers.DateTimeField(source='inspection_report.inspection_date', read_only=True)
@@ -203,7 +205,9 @@ class E1DefectReportSyncSerializer(serializers.ModelSerializer):
         model = E1DefectReport
         fields = [
             'id',
-            'inspection_id',
+            'inspection_id',  # Read-only for output
+            'inspection_report_id',  # Writable field for saving
+            'client_application_id',  # Required foreign key
             'stand_plot_location',
             'sub_div_number',
             'farm_mine_location',
@@ -217,7 +221,7 @@ class E1DefectReportSyncSerializer(serializers.ModelSerializer):
             'official_signature',
             'inspector_designation',
             'reference_number',
-            'status',
+            # 'status' removed - E1DefectReport model does not have this field
             'created_at',
             'updated_at',
         ]
@@ -274,6 +278,37 @@ class E1DefectReportSyncSerializer(serializers.ModelSerializer):
     def get_rectification_period_days(self, obj):
         """Get rectification period (default 14 days)"""
         return 14
+    
+    def create(self, validated_data):
+        """Override create to ensure inspection_report_id and client_application_id are set"""
+        # Extract inspection_report_id from validated_data
+        inspection_report_id = validated_data.pop('inspection_report_id', None)
+        if not inspection_report_id:
+            raise serializers.ValidationError({'inspection_report_id': 'This field is required.'})
+        
+        # Extract client_application_id from validated_data
+        client_application_id = validated_data.pop('client_application_id', None)
+        if not client_application_id:
+            raise serializers.ValidationError({'client_application_id': 'This field is required.'})
+        
+        # Create the instance with both required fields
+        validated_data['inspection_report_id'] = inspection_report_id
+        validated_data['client_application_id'] = client_application_id
+        return super().create(validated_data)
+    
+    def update(self, instance, validated_data):
+        """Override update to ensure inspection_report_id and client_application_id are preserved"""
+        # Extract inspection_report_id if present
+        inspection_report_id = validated_data.pop('inspection_report_id', None)
+        if inspection_report_id:
+            validated_data['inspection_report_id'] = inspection_report_id
+        
+        # Extract client_application_id if present
+        client_application_id = validated_data.pop('client_application_id', None)
+        if client_application_id:
+            validated_data['client_application_id'] = client_application_id
+        
+        return super().update(instance, validated_data)
 
 
 class E6CertificateSyncSerializer(serializers.ModelSerializer):
@@ -282,7 +317,9 @@ class E6CertificateSyncSerializer(serializers.ModelSerializer):
     Formats according to sync API specification
     """
     inspection_id = serializers.UUIDField(source='inspection_report.id', read_only=True)
-    service_number = serializers.CharField(source='service_no')
+    inspection_report_id = serializers.UUIDField(required=True)  # Explicitly define as writable field
+    client_application_id = serializers.UUIDField(required=False)  # Explicitly define as writable field
+    service_number = serializers.CharField(source='service_no', required=False, allow_blank=True, allow_null=True)
     property_details = serializers.CharField(source='property_address')
     owner_occupier = serializers.CharField(source='property_owner_occupant')
     inspection_completed = serializers.SerializerMethodField()
@@ -298,7 +335,9 @@ class E6CertificateSyncSerializer(serializers.ModelSerializer):
         model = E6Certificate
         fields = [
             'id',
-            'inspection_id',
+            'inspection_id',  # Read-only for output
+            'inspection_report_id',  # Writable field for saving
+            'client_application_id',  # Required foreign key
             'service_number',
             'installation_description',
             'property_details',
@@ -311,7 +350,7 @@ class E6CertificateSyncSerializer(serializers.ModelSerializer):
             'inspection_date',
             'certificate_issued_date',
             'inspector_signature',
-            'status',
+            # 'status' removed - E6Certificate model does not have this field
             'created_at',
             'updated_at',
         ]
@@ -339,6 +378,37 @@ class E6CertificateSyncSerializer(serializers.ModelSerializer):
     def get_inspector_signature(self, obj):
         """Get inspector signature (placeholder for base64 encoded signature)"""
         return ''
+    
+    def create(self, validated_data):
+        """Override create to ensure inspection_report_id and client_application_id are set"""
+        # Extract inspection_report_id from validated_data
+        inspection_report_id = validated_data.pop('inspection_report_id', None)
+        if not inspection_report_id:
+            raise serializers.ValidationError({'inspection_report_id': 'This field is required.'})
+        
+        # Extract client_application_id from validated_data
+        client_application_id = validated_data.pop('client_application_id', None)
+        if not client_application_id:
+            raise serializers.ValidationError({'client_application_id': 'This field is required.'})
+        
+        # Create the instance with both required fields
+        validated_data['inspection_report_id'] = inspection_report_id
+        validated_data['client_application_id'] = client_application_id
+        return super().create(validated_data)
+    
+    def update(self, instance, validated_data):
+        """Override update to ensure inspection_report_id and client_application_id are preserved"""
+        # Extract inspection_report_id if present
+        inspection_report_id = validated_data.pop('inspection_report_id', None)
+        if inspection_report_id:
+            validated_data['inspection_report_id'] = inspection_report_id
+        
+        # Extract client_application_id if present
+        client_application_id = validated_data.pop('client_application_id', None)
+        if client_application_id:
+            validated_data['client_application_id'] = client_application_id
+        
+        return super().update(instance, validated_data)
 
 
 class DefectSerializer(serializers.Serializer):

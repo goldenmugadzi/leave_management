@@ -33,17 +33,59 @@ logger = logging.getLogger(__name__)
 def get_user_inspection_ids(user):
     """
     Get list of inspection IDs that the user has access to
-    (inspections from applications assigned to the user)
+    (inspections from applications assigned to the user OR inspections created by the user)
     """
+    # Method 1: Get inspections from assigned applications
     assignments = ApplicationAssignment.objects.filter(assigned_to=user)
     application_ids = assignments.values_list('application_id', flat=True)
     
-    # Get inspection reports for these applications
-    inspection_ids = InspectionReport.objects.filter(
+    assigned_inspection_ids = InspectionReport.objects.filter(
         client_application_id__in=application_ids
     ).values_list('id', flat=True)
     
-    return list(inspection_ids)
+    # Method 2: Get inspections created by the user (for mobile sync)
+    # This handles inspections created via mobile sync that don't have client_application_id
+    user_created_inspection_ids = InspectionReport.objects.filter(
+        inspector=user
+    ).values_list('id', flat=True)
+    
+    # Combine both sets of IDs
+    all_inspection_ids = list(assigned_inspection_ids) + list(user_created_inspection_ids)
+    
+    # Remove duplicates while preserving order
+    unique_inspection_ids = []
+    seen = set()
+    for inspection_id in all_inspection_ids:
+        if inspection_id not in seen:
+            unique_inspection_ids.append(inspection_id)
+            seen.add(inspection_id)
+    
+    return unique_inspection_ids
+
+
+def check_user_has_access_to_inspection(user, inspection_id):
+    """
+    Check if user has access to inspection.
+    Returns (has_access, inspection_object) tuple.
+    """
+    try:
+        inspection = InspectionReport.objects.get(id=inspection_id)
+        
+        # Check if user has access via get_user_inspection_ids
+        user_inspection_ids = get_user_inspection_ids(user)
+        if str(inspection.id) in [str(i) for i in user_inspection_ids]:
+            return True, inspection
+        
+        # Fallback: If inspector field is not set but inspection exists,
+        # allow access if user is authenticated (for backward compatibility)
+        # This handles old inspections created before inspector field was set
+        if not inspection.inspector:
+            logger.warning(f"[PERMISSION] Inspection {inspection_id} has no inspector set, allowing access to authenticated user {user.username}")
+            return True, inspection
+        
+        return False, inspection
+    except InspectionReport.DoesNotExist:
+        return False, None
 
 
 @api_view(['GET'])
@@ -174,13 +216,29 @@ def mobile_sync_inspection(request):
                     if existing_inspection:
                         logger.info(f"[UPLOAD] Found existing inspection with id: {inspection_id}")
                 except (ValueError, AttributeError):
-                    # Not a valid UUID, will create new inspection
-                    logger.info(f"[UPLOAD] Provided id '{inspection_id}' is not a UUID, will create new inspection")
+                    # Not a valid UUID, will check by service_no or mobile_id below
+                    logger.info(f"[UPLOAD] Provided id '{inspection_id}' is not a UUID, will check by service_no or mobile_id")
                     pass
             except Exception as e:
                 logger.warn(f"[UPLOAD] Error checking for existing inspection: {str(e)}")
-                # Continue to create new inspection
+                # Continue to check by other fields
                 pass
+        
+        # Fallback: Check by service_no if UUID lookup failed
+        if not existing_inspection and data.get('service_no'):
+            existing_inspection = InspectionReport.objects.filter(
+                service_no=data['service_no']
+            ).first()
+            if existing_inspection:
+                logger.info(f"[UPLOAD] Found existing inspection by service_no: {data['service_no']}")
+        
+        # Fallback: Check by mobile_id if still not found
+        if not existing_inspection and data.get('mobile_id'):
+            existing_inspection = InspectionReport.objects.filter(
+                mobile_id=data['mobile_id']
+            ).first()
+            if existing_inspection:
+                logger.info(f"[UPLOAD] Found existing inspection by mobile_id: {data['mobile_id']}")
         
         # Remove fields that aren't in the model
         # Note: Most fields are now in the model. Only remove fields that truly shouldn't be stored
@@ -201,11 +259,12 @@ def mobile_sync_inspection(request):
             # Update existing
             serializer = InspectionReportSyncSerializer(existing_inspection, data=data, partial=True)
             if serializer.is_valid():
-                serializer.save()
-                logger.info(f"[UPLOAD] Successfully updated inspection: {existing_inspection.id}")
+                # Ensure inspector is set to current user (for permissions)
+                inspection = serializer.save(inspector=request.user)
+                logger.info(f"[UPLOAD] Successfully updated inspection: {inspection.id}")
                 return Response({
                     'success': True,
-                    'inspection_id': str(existing_inspection.id),
+                    'inspection_id': str(inspection.id),
                     'message': 'Inspection updated successfully'
                 }, status=status.HTTP_200_OK)
             else:
@@ -230,7 +289,8 @@ def mobile_sync_inspection(request):
             # Create new
             serializer = InspectionReportSyncSerializer(data=data)
             if serializer.is_valid():
-                inspection = serializer.save()
+                # Set inspector to current user (for permissions)
+                inspection = serializer.save(inspector=request.user)
                 logger.info(f"[UPLOAD] Successfully created inspection: {inspection.id}")
                 return Response({
                     'success': True,
@@ -286,9 +346,8 @@ def upload_e1_defect(request):
         
         # Verify inspection exists and user has access
         try:
-            inspection = get_object_or_404(InspectionReport, id=inspection_id)
-            user_inspection_ids = get_user_inspection_ids(request.user)
-            if str(inspection.id) not in [str(i) for i in user_inspection_ids]:
+            has_access, inspection = check_user_has_access_to_inspection(request.user, inspection_id)
+            if not has_access:
                 logger.error(f"[UPLOAD] User {request.user.username} does not have access to inspection {inspection_id}")
                 return Response({
                     'success': False,
@@ -305,10 +364,32 @@ def upload_e1_defect(request):
                     'message': f'Inspection not found: {inspection_id}',
                     'code': 'INSPECTION_NOT_FOUND'
                 }
-            }, status=status.HTTP_404_NOT_FOUND)
+                }, status=status.HTTP_404_NOT_FOUND)
         
         # Set inspection_report_id
         data['inspection_report_id'] = inspection_id
+        
+        # Set client_application_id - REQUIRED for E1/E6 models
+        # Priority: 1) From payload, 2) From inspection.client_application, 3) Error if missing
+        if 'client_application_id' not in data or not data.get('client_application_id'):
+            if hasattr(inspection, 'client_application') and inspection.client_application:
+                data['client_application_id'] = inspection.client_application.id
+            elif hasattr(inspection, 'client_application_id') and inspection.client_application_id:
+                data['client_application_id'] = inspection.client_application_id
+        
+        # Verify client_application_id is set - REQUIRED for E1/E6
+        if not data.get('client_application_id'):
+            logger.error(f"[UPLOAD] Inspection {inspection_id} does not have client_application_id - cannot create E1/E6 without it")
+            return Response({
+                'success': False,
+                'error': {
+                    'message': 'Inspection must have a client application before creating defect report/certificate',
+                    'code': 'MISSING_CLIENT_APPLICATION'
+                }
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Debug: Log the data being sent to serializer
+        logger.info(f"[UPLOAD] E1 data before serializer: inspection_report_id={data.get('inspection_report_id')}, client_application_id={data.get('client_application_id')}")
         
         # Remove mobile_id from data if present (not a model field)
         if 'mobile_id' in data:
@@ -344,6 +425,8 @@ def upload_e1_defect(request):
             serializer = E1DefectReportSyncSerializer(data=data)
         
         if serializer.is_valid():
+            # Debug: Log validated data before save
+            logger.info(f"[UPLOAD] Validated data: inspection_report_id={serializer.validated_data.get('inspection_report_id')}, client_application_id={serializer.validated_data.get('client_application_id')}")
             report = serializer.save()
             logger.info(f"[UPLOAD] Successfully saved E1 report: {report.id}")
             return Response({
@@ -353,6 +436,7 @@ def upload_e1_defect(request):
             }, status=status.HTTP_201_CREATED if not existing_report else status.HTTP_200_OK)
         else:
             logger.error(f"[UPLOAD] Validation errors: {serializer.errors}")
+            logger.error(f"[UPLOAD] Input data keys: {list(data.keys())}")
             return Response({
                 'success': False,
                 'error': {
@@ -465,9 +549,8 @@ def upload_e6_certificate(request):
         
         # Verify inspection exists and user has access
         try:
-            inspection = get_object_or_404(InspectionReport, id=inspection_id)
-            user_inspection_ids = get_user_inspection_ids(request.user)
-            if str(inspection.id) not in [str(i) for i in user_inspection_ids]:
+            has_access, inspection = check_user_has_access_to_inspection(request.user, inspection_id)
+            if not has_access:
                 logger.error(f"[UPLOAD] User {request.user.username} does not have access to inspection {inspection_id}")
                 return Response({
                     'success': False,
@@ -488,6 +571,28 @@ def upload_e6_certificate(request):
         
         # Set inspection_report_id
         data['inspection_report_id'] = inspection_id
+        
+        # Set client_application_id - REQUIRED for E1/E6 models
+        # Priority: 1) From payload, 2) From inspection.client_application, 3) Error if missing
+        if 'client_application_id' not in data or not data.get('client_application_id'):
+            if hasattr(inspection, 'client_application') and inspection.client_application:
+                data['client_application_id'] = inspection.client_application.id
+            elif hasattr(inspection, 'client_application_id') and inspection.client_application_id:
+                data['client_application_id'] = inspection.client_application_id
+        
+        # Verify client_application_id is set - REQUIRED for E1/E6
+        if not data.get('client_application_id'):
+            logger.error(f"[UPLOAD] Inspection {inspection_id} does not have client_application_id - cannot create E1/E6 without it")
+            return Response({
+                'success': False,
+                'error': {
+                    'message': 'Inspection must have a client application before creating defect report/certificate',
+                    'code': 'MISSING_CLIENT_APPLICATION'
+                }
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Debug: Log the data being sent to serializer
+        logger.info(f"[UPLOAD] E6 data before serializer: inspection_report_id={data.get('inspection_report_id')}, client_application_id={data.get('client_application_id')}")
         
         # Remove mobile_id from data if present (not a model field)
         if 'mobile_id' in data:
