@@ -235,33 +235,8 @@ class InspectionReport(models.Model):
     Includes all 33 inspection items from the E117 form
     """
     
-    INSTALLATION_TYPE_CHOICES = [
-        ('domestic', 'Domestic'),
-        ('commercial', 'Commercial'),
-        ('industrial', 'Industrial'),
-    ]
-    
-    CONSUMER_UNIT_TYPE_CHOICES = [
-        ('metal', 'Metal'),
-        ('plastic', 'Plastic'),
-        ('other', 'Other'),
-    ]
-    
-    DB_ENCLOSURE_TYPE_CHOICES = [
-        ('ip20', 'IP20'),
-        ('ip30', 'IP30'),
-        ('ip40', 'IP40'),
-        ('ip50', 'IP50'),
-        ('ip54', 'IP54'),
-        ('ip65', 'IP65'),
-    ]
-    
-    CONDUIT_MATERIAL_CHOICES = [
-        ('pvc', 'PVC'),
-        ('steel', 'Steel'),
-        ('aluminum', 'Aluminum'),
-        ('flexible', 'Flexible'),
-    ]
+    # INSTALLATION_TYPE_CHOICES, CONSUMER_UNIT_TYPE_CHOICES, DB_ENCLOSURE_TYPE_CHOICES removed
+    # CONDUIT_MATERIAL_CHOICES removed (not used)
     
     COMPLIANCE_CHOICES = [
         ('pass', 'Pass'),
@@ -393,10 +368,8 @@ class InspectionReport(models.Model):
     customer_signature = models.TextField(blank=True, null=True, help_text="Base64 encoded customer signature")
     signature_timestamp = models.DateTimeField(null=True, blank=True, help_text="When signatures were captured")
     
-    # Installation metadata
-    installation_type = models.CharField(max_length=20, choices=INSTALLATION_TYPE_CHOICES, blank=True, null=True, help_text="Type of installation")
-    consumer_unit_type = models.CharField(max_length=20, choices=CONSUMER_UNIT_TYPE_CHOICES, blank=True, null=True, help_text="Type of consumer unit")
-    db_enclosure_type = models.CharField(max_length=20, choices=DB_ENCLOSURE_TYPE_CHOICES, blank=True, null=True, help_text="DB enclosure type")
+    # Installation metadata - REMOVED (not on original form)
+    # installation_type, consumer_unit_type, db_enclosure_type removed
     
     # Inspection timing
     started_at = models.DateTimeField(null=True, blank=True, help_text="When inspection was started")
@@ -406,24 +379,16 @@ class InspectionReport(models.Model):
     # Photo tracking
     photos_count = models.PositiveIntegerField(default=0, blank=True, null=True, help_text="Number of photos taken")
     photos_taken_at = models.DateTimeField(null=True, blank=True, help_text="When photos were taken")
-    photo_quality = models.CharField(max_length=50, blank=True, null=True, help_text="Photo quality setting")
-    photo_resolution = models.CharField(max_length=50, blank=True, null=True, help_text="Photo resolution")
+    # photo_quality and photo_resolution removed (not used)
     
-    # Meter and equipment details
-    meter_type = models.CharField(max_length=100, blank=True, null=True, help_text="Type of meter")
-    meter_serial_number = models.CharField(max_length=100, blank=True, null=True, help_text="Meter serial number")
-    meter_reading = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, help_text="Meter reading")
-    main_switch_rating = models.CharField(max_length=50, blank=True, null=True, help_text="Main switch rating")
-    main_switch_type = models.CharField(max_length=50, blank=True, null=True, help_text="Main switch type")
+    # Meter and equipment details - REMOVED (not on original form)
+    # meter_type, meter_serial_number, meter_reading, main_switch_rating, main_switch_type removed
     
-    # Environmental conditions
-    temperature = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True, help_text="Temperature during inspection")
-    humidity = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True, help_text="Humidity during inspection")
-    weather_conditions = models.CharField(max_length=100, blank=True, null=True, help_text="Weather conditions")
+    # Environmental conditions - REMOVED (not on original form)
+    # temperature, humidity, weather_conditions removed
     
-    # Earthing system
-    earthing_system_type = models.CharField(max_length=50, blank=True, null=True, help_text="Type of earthing system")
-    earthing_resistance = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True, help_text="Earthing resistance reading")
+    # Earthing system - REMOVED (not on original form)
+    # earthing_system_type, earthing_resistance removed
     
     # Additional notes and recommendations
     notes = models.TextField(blank=True, null=True, help_text="Additional inspection notes")

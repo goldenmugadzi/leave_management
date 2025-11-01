@@ -70,7 +70,10 @@ class InspectionReportSyncSerializer(serializers.ModelSerializer):
             # Items 4-5: Main Installation Details
             'size_of_mains',
             'size_of_mains_conduit',
-            'consumer_main_switch',
+            'consumer_main_switch',  # SerializerMethodField (read-only for output)
+            'consumer_main_switch_type',  # Individual fields for input
+            'consumer_main_switch_capacity',
+            'consumer_main_switch_setting',
             
             # Items 6-8: Neutral, Earthing, Bonding
             'neutrals_fused',
@@ -127,13 +130,45 @@ class InspectionReportSyncSerializer(serializers.ModelSerializer):
             'motor_installations_protected',
             'commission_switch_details',
             
-            # Items 31-33: Final Status (PREVIOUSLY MISSING)
+            # Items 31-33: Final Status
             'supply_connected_disconnected',
             'contractor_notified_defects',
             'other_features_attention',
             
             # Defects tracking
             'defects_count',
+            
+            # Mobile Sync/Tracking Metadata
+            'mobile_id',
+            'offline_created',
+            'sync_status',
+            'sync_attempts',
+            'last_sync_attempt',
+            'sync_error_message',
+            
+            # GPS/Location Data
+            'gps_coordinates',
+            'location_accuracy',
+            'location_timestamp',
+            
+            # Digital Signatures
+            'inspector_signature',
+            'customer_signature',
+            'signature_timestamp',
+            
+            # Inspection Timing
+            'started_at',
+            'completed_at',
+            'inspection_duration',
+            
+            # Photo Metadata
+            'photos_count',
+            'photos_taken_at',
+            
+            # Additional Notes & Planning
+            'notes',
+            'recommendations',
+            'next_inspection_due',
         ]
     
     def get_consumer_main_switch(self, obj):
