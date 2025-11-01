@@ -80,7 +80,7 @@ def check_user_has_access_to_inspection(user, inspection_id):
         # allow access if user is authenticated (for backward compatibility)
         # This handles old inspections created before inspector field was set
         if not inspection.inspector:
-            logger.warning(f"[PERMISSION] Inspection {inspection_id} has no inspector set, allowing access to authenticated user {user.username}")
+            print(f"[PERMISSION] Inspection {inspection_id} has no inspector set, allowing access to authenticated user {user.username}")
             return True, inspection
         
         return False, inspection
@@ -192,21 +192,18 @@ def mobile_sync_inspection(request):
     Request Body: E117 inspection data in snake_case format
     """
     try:
-        logger.info(f"[UPLOAD] POST /inspections/sync/mobile-sync-inspection/")
-        logger.info(f"[UPLOAD] User: {request.user.username}")
-        logger.info(f"[UPLOAD] Request data keys: {list(request.data.keys()) if hasattr(request.data, 'keys') else 'N/A'}")
+        # Log raw request data received (sanitized for large fields)
+        log_data = {k: v if not isinstance(v, str) or len(v) < 100 else f"{len(v)} chars" for k, v in request.data.items()}
+        print(f"[INSPECTION UPLOAD] Raw request data received - User: {request.user.username}, Keys: {list(request.data.keys()) if hasattr(request.data, 'keys') else 'N/A'}, Data: {log_data}")
         
         data = request.data.copy()
-        
-        # Log received data (excluding large fields like signatures)
-        log_data = {k: v if not isinstance(v, str) or len(v) < 100 else f"{len(v)} chars" for k, v in data.items()}
-        logger.info(f"[UPLOAD] Request payload: {log_data}")
         
         # Extract id if present (mobile sends mobile_id or id)
         inspection_id = data.get('id') or data.get('mobile_id')
         
         # Check if inspection already exists by id (if it's a valid UUID)
         existing_inspection = None
+        lookup_method = None
         if inspection_id:
             try:
                 # Try to parse as UUID and check if inspection exists
@@ -214,15 +211,12 @@ def mobile_sync_inspection(request):
                     uuid_obj = uuid_lib.UUID(str(inspection_id))
                     existing_inspection = InspectionReport.objects.filter(id=uuid_obj).first()
                     if existing_inspection:
-                        logger.info(f"[UPLOAD] Found existing inspection with id: {inspection_id}")
+                        lookup_method = 'uuid'
                 except (ValueError, AttributeError):
                     # Not a valid UUID, will check by service_no or mobile_id below
-                    logger.info(f"[UPLOAD] Provided id '{inspection_id}' is not a UUID, will check by service_no or mobile_id")
                     pass
             except Exception as e:
-                logger.warn(f"[UPLOAD] Error checking for existing inspection: {str(e)}")
-                # Continue to check by other fields
-                pass
+                print(f"[INSPECTION UPLOAD] Error checking for existing inspection: {str(e)}")
         
         # Fallback: Check by service_no if UUID lookup failed
         if not existing_inspection and data.get('service_no'):
@@ -230,7 +224,7 @@ def mobile_sync_inspection(request):
                 service_no=data['service_no']
             ).first()
             if existing_inspection:
-                logger.info(f"[UPLOAD] Found existing inspection by service_no: {data['service_no']}")
+                lookup_method = 'service_no'
         
         # Fallback: Check by mobile_id if still not found
         if not existing_inspection and data.get('mobile_id'):
@@ -238,10 +232,12 @@ def mobile_sync_inspection(request):
                 mobile_id=data['mobile_id']
             ).first()
             if existing_inspection:
-                logger.info(f"[UPLOAD] Found existing inspection by mobile_id: {data['mobile_id']}")
+                lookup_method = 'mobile_id'
+        
+        # Log data after processing
+        print(f"[INSPECTION UPLOAD] Data after processing - Inspection ID from request: {inspection_id}, Existing found: {existing_inspection is not None}, Lookup method: {lookup_method}, Existing ID: {str(existing_inspection.id) if existing_inspection else None}")
         
         # Remove fields that aren't in the model
-        # Note: Most fields are now in the model. Only remove fields that truly shouldn't be stored
         fields_to_remove = [
             'server_id', 'last_synced',  # Not model fields
         ]
@@ -251,24 +247,36 @@ def mobile_sync_inspection(request):
                 data.pop(field)
                 removed_fields.append(field)
         
-        if removed_fields:
-            logger.info(f"[UPLOAD] Removed mobile-only fields: {removed_fields}")
-        
         # Create or update inspection
         if existing_inspection:
-            # Update existing
+            # Update existing - preserve client_application_id if not in payload
+            if 'client_application_id' not in data or not data.get('client_application_id'):
+                if hasattr(existing_inspection, 'client_application_id') and existing_inspection.client_application_id:
+                    data['client_application_id'] = existing_inspection.client_application_id
+                    print(f"[INSPECTION UPLOAD] Preserving existing client_application_id from database: {existing_inspection.client_application_id}")
+            
+            serializer_data_log = {k: v if not isinstance(v, str) or len(v) < 100 else f"{len(v)} chars" for k, v in data.items()}
+            print(f"[INSPECTION UPLOAD] Data sent to serializer (update) - Existing ID: {str(existing_inspection.id)}, Client App ID: {data.get('client_application_id')}, Data: {serializer_data_log}")
+            
             serializer = InspectionReportSyncSerializer(existing_inspection, data=data, partial=True)
             if serializer.is_valid():
+                # Log validated data from serializer
+                validated_data_log = {k: v if not isinstance(v, str) or len(v) < 100 else f"{len(v)} chars" for k, v in serializer.validated_data.items()}
+                print(f"[INSPECTION UPLOAD] Validated data from serializer (update) - Data: {validated_data_log}")
+                
                 # Ensure inspector is set to current user (for permissions)
                 inspection = serializer.save(inspector=request.user)
-                logger.info(f"[UPLOAD] Successfully updated inspection: {inspection.id}")
+                
+                # Log final saved object
+                print(f"[INSPECTION UPLOAD] Final saved object (update) - ID: {str(inspection.id)}, Service No: {inspection.service_no if hasattr(inspection, 'service_no') else None}, Client App ID: {str(inspection.client_application_id) if hasattr(inspection, 'client_application_id') else None}, Inspector: {inspection.inspector.username if hasattr(inspection, 'inspector') and inspection.inspector else None}, Action: updated")
+                
                 return Response({
                     'success': True,
                     'inspection_id': str(inspection.id),
                     'message': 'Inspection updated successfully'
                 }, status=status.HTTP_200_OK)
             else:
-                logger.error(f"[UPLOAD] Validation errors: {serializer.errors}")
+                print(f"[INSPECTION UPLOAD] Validation errors (update) - Errors: {serializer.errors}")
                 return Response({
                     'success': False,
                     'error': {
@@ -286,19 +294,29 @@ def mobile_sync_inspection(request):
                     # Not a valid UUID, remove it so Django generates a new one
                     data.pop('id')
             
+            serializer_data_log = {k: v if not isinstance(v, str) or len(v) < 100 else f"{len(v)} chars" for k, v in data.items()}
+            print(f"[INSPECTION UPLOAD] Data sent to serializer (create) - Data: {serializer_data_log}")
+            
             # Create new
             serializer = InspectionReportSyncSerializer(data=data)
             if serializer.is_valid():
+                # Log validated data from serializer
+                validated_data_log = {k: v if not isinstance(v, str) or len(v) < 100 else f"{len(v)} chars" for k, v in serializer.validated_data.items()}
+                print(f"[INSPECTION UPLOAD] Validated data from serializer (create) - Data: {validated_data_log}")
+                
                 # Set inspector to current user (for permissions)
                 inspection = serializer.save(inspector=request.user)
-                logger.info(f"[UPLOAD] Successfully created inspection: {inspection.id}")
+                
+                # Log final saved object
+                print(f"[INSPECTION UPLOAD] Final saved object (create) - ID: {str(inspection.id)}, Service No: {inspection.service_no if hasattr(inspection, 'service_no') else None}, Client App ID: {str(inspection.client_application_id) if hasattr(inspection, 'client_application_id') else None}, Inspector: {inspection.inspector.username if hasattr(inspection, 'inspector') and inspection.inspector else None}, Action: created")
+                
                 return Response({
                     'success': True,
                     'inspection_id': str(inspection.id),
                     'message': 'Inspection created successfully'
                 }, status=status.HTTP_201_CREATED)
             else:
-                logger.error(f"[UPLOAD] Validation errors: {serializer.errors}")
+                print(f"[INSPECTION UPLOAD] Validation errors (create) - Errors: {serializer.errors}")
                 return Response({
                     'success': False,
                     'error': {
@@ -308,7 +326,8 @@ def mobile_sync_inspection(request):
                 }, status=status.HTTP_400_BAD_REQUEST)
                 
     except Exception as e:
-        logger.error(f"[UPLOAD] Exception: {str(e)}", exc_info=True)
+        import traceback
+        print(f"[INSPECTION UPLOAD] Exception - Error: {str(e)}, Traceback: {traceback.format_exc()}")
         return Response({
             'success': False,
             'error': {
@@ -326,16 +345,15 @@ def upload_e1_defect(request):
     Upload E1 defect report from mobile app.
     """
     try:
-        logger.info(f"[UPLOAD] POST /inspections/sync/defects/e1/")
-        logger.info(f"[UPLOAD] User: {request.user.username}")
-        logger.info(f"[UPLOAD] Request data keys: {list(request.data.keys()) if hasattr(request.data, 'keys') else 'N/A'}")
+        # Log raw request data received (sanitized for large fields)
+        log_data = {k: v if not isinstance(v, str) or len(v) < 100 else f"{len(v)} chars" for k, v in request.data.items()}
+        print(f"[E1 DEFECT REPORT UPLOAD] Raw request data received - User: {request.user.username}, Keys: {list(request.data.keys()) if hasattr(request.data, 'keys') else 'N/A'}, Data: {log_data}")
         
         data = request.data.copy()
         
         # Extract inspection_report_id (server ID)
         inspection_id = data.get('inspection_report_id') or data.get('inspection_id')
         if not inspection_id:
-            logger.error("[UPLOAD] Missing inspection_report_id")
             return Response({
                 'success': False,
                 'error': {
@@ -348,7 +366,6 @@ def upload_e1_defect(request):
         try:
             has_access, inspection = check_user_has_access_to_inspection(request.user, inspection_id)
             if not has_access:
-                logger.error(f"[UPLOAD] User {request.user.username} does not have access to inspection {inspection_id}")
                 return Response({
                     'success': False,
                     'error': {
@@ -357,7 +374,7 @@ def upload_e1_defect(request):
                     }
                 }, status=status.HTTP_403_FORBIDDEN)
         except Exception as e:
-            logger.error(f"[UPLOAD] Inspection not found: {inspection_id} - {str(e)}")
+            print(f"[E1 DEFECT REPORT UPLOAD] Inspection not found: {inspection_id} - {str(e)}")
             return Response({
                 'success': False,
                 'error': {
@@ -371,15 +388,20 @@ def upload_e1_defect(request):
         
         # Set client_application_id - REQUIRED for E1/E6 models
         # Priority: 1) From payload, 2) From inspection.client_application, 3) Error if missing
+        original_client_app_id = data.get('client_application_id')
         if 'client_application_id' not in data or not data.get('client_application_id'):
             if hasattr(inspection, 'client_application') and inspection.client_application:
                 data['client_application_id'] = inspection.client_application.id
             elif hasattr(inspection, 'client_application_id') and inspection.client_application_id:
                 data['client_application_id'] = inspection.client_application_id
         
+        # Log data after processing
+        client_app_source = 'payload' if original_client_app_id else ('inspection.client_application' if hasattr(inspection, 'client_application') and inspection.client_application else ('inspection.client_application_id' if hasattr(inspection, 'client_application_id') else 'none'))
+        print(f"[E1 DEFECT REPORT UPLOAD] Data after processing - Inspection ID: {inspection_id}, Inspection Report ID: {data.get('inspection_report_id')}, Client App ID Source: {client_app_source}, Client App ID: {data.get('client_application_id')}")
+        
         # Verify client_application_id is set - REQUIRED for E1/E6
         if not data.get('client_application_id'):
-            logger.error(f"[UPLOAD] Inspection {inspection_id} does not have client_application_id - cannot create E1/E6 without it")
+            print(f"[E1 DEFECT REPORT UPLOAD] Inspection {inspection_id} does not have client_application_id - cannot create E1/E6 without it")
             return Response({
                 'success': False,
                 'error': {
@@ -387,9 +409,6 @@ def upload_e1_defect(request):
                     'code': 'MISSING_CLIENT_APPLICATION'
                 }
             }, status=status.HTTP_400_BAD_REQUEST)
-        
-        # Debug: Log the data being sent to serializer
-        logger.info(f"[UPLOAD] E1 data before serializer: inspection_report_id={data.get('inspection_report_id')}, client_application_id={data.get('client_application_id')}")
         
         # Remove mobile_id from data if present (not a model field)
         if 'mobile_id' in data:
@@ -403,13 +422,15 @@ def upload_e1_defect(request):
                 try:
                     uuid_obj = uuid_lib.UUID(str(report_id))
                     existing_report = E1DefectReport.objects.filter(id=uuid_obj).first()
-                    if existing_report:
-                        logger.info(f"[UPLOAD] Found existing E1 report with id: {report_id}")
                 except (ValueError, AttributeError):
                     # Not a valid UUID, will create new report
                     pass
             except Exception as e:
-                logger.warn(f"[UPLOAD] Error checking for existing E1 report: {str(e)}")
+                print(f"[E1 DEFECT REPORT UPLOAD] Error checking for existing E1 report: {str(e)}")
+        
+        # Log data sent to serializer
+        serializer_data_log = {k: v if not isinstance(v, str) or len(v) < 100 else f"{len(v)} chars" for k, v in data.items()}
+        print(f"[E1 DEFECT REPORT UPLOAD] Data sent to serializer - Is Update: {existing_report is not None}, Existing Report ID: {str(existing_report.id) if existing_report else None}, Data: {serializer_data_log}")
         
         # Create or update
         if existing_report:
@@ -425,18 +446,22 @@ def upload_e1_defect(request):
             serializer = E1DefectReportSyncSerializer(data=data)
         
         if serializer.is_valid():
-            # Debug: Log validated data before save
-            logger.info(f"[UPLOAD] Validated data: inspection_report_id={serializer.validated_data.get('inspection_report_id')}, client_application_id={serializer.validated_data.get('client_application_id')}")
+            # Log validated data from serializer
+            validated_data_log = {k: v if not isinstance(v, str) or len(v) < 100 else f"{len(v)} chars" for k, v in serializer.validated_data.items()}
+            print(f"[E1 DEFECT REPORT UPLOAD] Validated data from serializer - Data: {validated_data_log}")
+            
             report = serializer.save()
-            logger.info(f"[UPLOAD] Successfully saved E1 report: {report.id}")
+            
+            # Log final saved object
+            print(f"[E1 DEFECT REPORT UPLOAD] Final saved object - Report ID: {str(report.id)}, Report Number: {report.report_number if hasattr(report, 'report_number') else None}, Inspection Report ID: {str(report.inspection_report_id) if hasattr(report, 'inspection_report_id') else None}, Client App ID: {str(report.client_application_id) if hasattr(report, 'client_application_id') else None}, Action: {'updated' if existing_report else 'created'}")
+            
             return Response({
                 'success': True,
                 'report_id': str(report.id),
                 'message': 'E1 defect report uploaded successfully'
             }, status=status.HTTP_201_CREATED if not existing_report else status.HTTP_200_OK)
         else:
-            logger.error(f"[UPLOAD] Validation errors: {serializer.errors}")
-            logger.error(f"[UPLOAD] Input data keys: {list(data.keys())}")
+            print(f"[E1 DEFECT REPORT UPLOAD] Validation errors - Errors: {serializer.errors}, Input Data Keys: {list(data.keys())}")
             return Response({
                 'success': False,
                 'error': {
@@ -446,7 +471,8 @@ def upload_e1_defect(request):
             }, status=status.HTTP_400_BAD_REQUEST)
             
     except Exception as e:
-        logger.error(f"[UPLOAD] Exception: {str(e)}", exc_info=True)
+        import traceback
+        print(f"[E1 DEFECT REPORT UPLOAD] Exception - Error: {str(e)}, Traceback: {traceback.format_exc()}")
         return Response({
             'success': False,
             'error': {
@@ -529,16 +555,15 @@ def upload_e6_certificate(request):
     Upload E6 certificate from mobile app.
     """
     try:
-        logger.info(f"[UPLOAD] POST /inspections/sync/certificates/e6/")
-        logger.info(f"[UPLOAD] User: {request.user.username}")
-        logger.info(f"[UPLOAD] Request data keys: {list(request.data.keys()) if hasattr(request.data, 'keys') else 'N/A'}")
+        # Log raw request data received (sanitized for large fields)
+        log_data = {k: v if not isinstance(v, str) or len(v) < 100 else f"{len(v)} chars" for k, v in request.data.items()}
+        print(f"[E6 CERTIFICATE UPLOAD] Raw request data received - User: {request.user.username}, Keys: {list(request.data.keys()) if hasattr(request.data, 'keys') else 'N/A'}, Data: {log_data}")
         
         data = request.data.copy()
         
         # Extract inspection_report_id (server ID)
         inspection_id = data.get('inspection_report_id') or data.get('inspection_id')
         if not inspection_id:
-            logger.error("[UPLOAD] Missing inspection_report_id")
             return Response({
                 'success': False,
                 'error': {
@@ -551,7 +576,6 @@ def upload_e6_certificate(request):
         try:
             has_access, inspection = check_user_has_access_to_inspection(request.user, inspection_id)
             if not has_access:
-                logger.error(f"[UPLOAD] User {request.user.username} does not have access to inspection {inspection_id}")
                 return Response({
                     'success': False,
                     'error': {
@@ -560,7 +584,7 @@ def upload_e6_certificate(request):
                     }
                 }, status=status.HTTP_403_FORBIDDEN)
         except Exception as e:
-            logger.error(f"[UPLOAD] Inspection not found: {inspection_id} - {str(e)}")
+            print(f"[E6 CERTIFICATE UPLOAD] Inspection not found: {inspection_id} - {str(e)}")
             return Response({
                 'success': False,
                 'error': {
@@ -574,15 +598,20 @@ def upload_e6_certificate(request):
         
         # Set client_application_id - REQUIRED for E1/E6 models
         # Priority: 1) From payload, 2) From inspection.client_application, 3) Error if missing
+        original_client_app_id = data.get('client_application_id')
         if 'client_application_id' not in data or not data.get('client_application_id'):
             if hasattr(inspection, 'client_application') and inspection.client_application:
                 data['client_application_id'] = inspection.client_application.id
             elif hasattr(inspection, 'client_application_id') and inspection.client_application_id:
                 data['client_application_id'] = inspection.client_application_id
         
+        # Log data after processing
+        client_app_source = 'payload' if original_client_app_id else ('inspection.client_application' if hasattr(inspection, 'client_application') and inspection.client_application else ('inspection.client_application_id' if hasattr(inspection, 'client_application_id') else 'none'))
+        print(f"[E6 CERTIFICATE UPLOAD] Data after processing - Inspection ID: {inspection_id}, Inspection Report ID: {data.get('inspection_report_id')}, Client App ID Source: {client_app_source}, Client App ID: {data.get('client_application_id')}")
+        
         # Verify client_application_id is set - REQUIRED for E1/E6
         if not data.get('client_application_id'):
-            logger.error(f"[UPLOAD] Inspection {inspection_id} does not have client_application_id - cannot create E1/E6 without it")
+            print(f"[E6 CERTIFICATE UPLOAD] Inspection {inspection_id} does not have client_application_id - cannot create E1/E6 without it")
             return Response({
                 'success': False,
                 'error': {
@@ -590,9 +619,6 @@ def upload_e6_certificate(request):
                     'code': 'MISSING_CLIENT_APPLICATION'
                 }
             }, status=status.HTTP_400_BAD_REQUEST)
-        
-        # Debug: Log the data being sent to serializer
-        logger.info(f"[UPLOAD] E6 data before serializer: inspection_report_id={data.get('inspection_report_id')}, client_application_id={data.get('client_application_id')}")
         
         # Remove mobile_id from data if present (not a model field)
         if 'mobile_id' in data:
@@ -606,13 +632,15 @@ def upload_e6_certificate(request):
                 try:
                     uuid_obj = uuid_lib.UUID(str(cert_id))
                     existing_cert = E6Certificate.objects.filter(id=uuid_obj).first()
-                    if existing_cert:
-                        logger.info(f"[UPLOAD] Found existing E6 certificate with id: {cert_id}")
                 except (ValueError, AttributeError):
                     # Not a valid UUID, will create new certificate
                     pass
             except Exception as e:
-                logger.warn(f"[UPLOAD] Error checking for existing E6 certificate: {str(e)}")
+                print(f"[E6 CERTIFICATE UPLOAD] Error checking for existing E6 certificate: {str(e)}")
+        
+        # Log data sent to serializer
+        serializer_data_log = {k: v if not isinstance(v, str) or len(v) < 100 else f"{len(v)} chars" for k, v in data.items()}
+        print(f"[E6 CERTIFICATE UPLOAD] Data sent to serializer - Is Update: {existing_cert is not None}, Existing Cert ID: {str(existing_cert.id) if existing_cert else None}, Data: {serializer_data_log}")
         
         # Create or update
         if existing_cert:
@@ -628,15 +656,22 @@ def upload_e6_certificate(request):
             serializer = E6CertificateSyncSerializer(data=data)
         
         if serializer.is_valid():
+            # Log validated data from serializer
+            validated_data_log = {k: v if not isinstance(v, str) or len(v) < 100 else f"{len(v)} chars" for k, v in serializer.validated_data.items()}
+            print(f"[E6 CERTIFICATE UPLOAD] Validated data from serializer - Data: {validated_data_log}")
+            
             cert = serializer.save()
-            logger.info(f"[UPLOAD] Successfully saved E6 certificate: {cert.id}")
+            
+            # Log final saved object
+            print(f"[E6 CERTIFICATE UPLOAD] Final saved object - Certificate ID: {str(cert.id)}, Certificate Number: {cert.certificate_number if hasattr(cert, 'certificate_number') else None}, Inspection Report ID: {str(cert.inspection_report_id) if hasattr(cert, 'inspection_report_id') else None}, Client App ID: {str(cert.client_application_id) if hasattr(cert, 'client_application_id') else None}, Action: {'updated' if existing_cert else 'created'}")
+            
             return Response({
                 'success': True,
                 'certificate_id': str(cert.id),
                 'message': 'E6 certificate uploaded successfully'
             }, status=status.HTTP_201_CREATED if not existing_cert else status.HTTP_200_OK)
         else:
-            logger.error(f"[UPLOAD] Validation errors: {serializer.errors}")
+            print(f"[E6 CERTIFICATE UPLOAD] Validation errors - Errors: {serializer.errors}")
             return Response({
                 'success': False,
                 'error': {
@@ -646,7 +681,8 @@ def upload_e6_certificate(request):
             }, status=status.HTTP_400_BAD_REQUEST)
             
     except Exception as e:
-        logger.error(f"[UPLOAD] Exception: {str(e)}", exc_info=True)
+        import traceback
+        print(f"[E6 CERTIFICATE UPLOAD] Exception - Error: {str(e)}, Traceback: {traceback.format_exc()}")
         return Response({
             'success': False,
             'error': {
