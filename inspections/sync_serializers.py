@@ -45,6 +45,7 @@ class InspectionReportSyncSerializer(serializers.ModelSerializer):
     """
     consumer_main_switch = serializers.SerializerMethodField()
     server_updated_at = serializers.DateTimeField(source='updated_at', required=False, allow_null=True)
+    client_application_id = serializers.UUIDField(required=False, allow_null=True)  # Explicitly define for read/write access
     
     class Meta:
         model = InspectionReport
@@ -56,6 +57,7 @@ class InspectionReportSyncSerializer(serializers.ModelSerializer):
             'reason_for_inspection',
             'status',
             'server_updated_at',
+            'client_application_id',  # CRITICAL: Required for E1/E6 generation
             
             # Items 1-3: General Information
             'consumer_name',

@@ -268,12 +268,14 @@ def mobile_sync_inspection(request):
                 inspection = serializer.save(inspector=request.user)
                 
                 # Log final saved object
-                print(f"[INSPECTION UPLOAD] Final saved object (update) - ID: {str(inspection.id)}, Service No: {inspection.service_no if hasattr(inspection, 'service_no') else None}, Client App ID: {str(inspection.client_application_id) if hasattr(inspection, 'client_application_id') else None}, Inspector: {inspection.inspector.username if hasattr(inspection, 'inspector') and inspection.inspector else None}, Action: updated")
+                print(f"[INSPECTION UPLOAD] Final saved object (update) - ID: {str(inspection.id)}, Service No: {inspection.service_no if hasattr(inspection, 'service_no') else None}, Client App ID: {str(inspection.client_application_id) if hasattr(inspection, 'client_application_id') else None}, Inspector: {inspection.inspector.username if hasattr(inspection, 'inspector') and inspection.inspector else None}, Action: update")
                 
+                # Return full inspection data for frontend sync
+                response_serializer = InspectionReportSyncSerializer(inspection)
                 return Response({
                     'success': True,
-                    'inspection_id': str(inspection.id),
-                    'message': 'Inspection updated successfully'
+                    'message': 'Inspection updated successfully',
+                    'data': response_serializer.data,
                 }, status=status.HTTP_200_OK)
             else:
                 print(f"[INSPECTION UPLOAD] Validation errors (update) - Errors: {serializer.errors}")
@@ -308,12 +310,14 @@ def mobile_sync_inspection(request):
                 inspection = serializer.save(inspector=request.user)
                 
                 # Log final saved object
-                print(f"[INSPECTION UPLOAD] Final saved object (create) - ID: {str(inspection.id)}, Service No: {inspection.service_no if hasattr(inspection, 'service_no') else None}, Client App ID: {str(inspection.client_application_id) if hasattr(inspection, 'client_application_id') else None}, Inspector: {inspection.inspector.username if hasattr(inspection, 'inspector') and inspection.inspector else None}, Action: created")
+                print(f"[INSPECTION UPLOAD] Final saved object (create) - ID: {str(inspection.id)}, Service No: {inspection.service_no if hasattr(inspection, 'service_no') else None}, Client App ID: {str(inspection.client_application_id) if hasattr(inspection, 'client_application_id') else None}, Inspector: {inspection.inspector.username if hasattr(inspection, 'inspector') and inspection.inspector else None}, Action: create")
                 
+                # Return full inspection data for frontend sync
+                response_serializer = InspectionReportSyncSerializer(inspection)
                 return Response({
                     'success': True,
-                    'inspection_id': str(inspection.id),
-                    'message': 'Inspection created successfully'
+                    'message': 'Inspection created successfully',
+                    'data': response_serializer.data,
                 }, status=status.HTTP_201_CREATED)
             else:
                 print(f"[INSPECTION UPLOAD] Validation errors (create) - Errors: {serializer.errors}")
