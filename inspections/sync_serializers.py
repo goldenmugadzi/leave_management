@@ -362,7 +362,7 @@ class E6CertificateSyncSerializer(serializers.ModelSerializer):
     inspection_completed = serializers.SerializerMethodField()
     connection_approved = serializers.SerializerMethodField()
     minor_defects = serializers.SerializerMethodField()
-    rectification_period_days = serializers.IntegerField(source='defects_rectification_period')
+    rectification_period_days = serializers.IntegerField(source='defects_rectification_period', required=False, allow_null=True)
     inspector_name = serializers.SerializerMethodField()
     inspection_date = serializers.DateTimeField(source='inspection_report.inspection_date', read_only=True)
     certificate_issued_date = serializers.DateTimeField(source='created_at')

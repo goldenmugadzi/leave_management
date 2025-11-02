@@ -772,9 +772,10 @@
       });
     </script>
     <script>
-      document
-        .getElementById("id_classification")
-        .addEventListener("change", function () {
+      // Check if element exists before adding event listener
+      const classificationElement = document.getElementById("id_classification");
+      if (classificationElement) {
+        classificationElement.addEventListener("change", function () {
           const selectedValue = this.value;
           // project fields
           const field1 = document.getElementById("id_present_tariff");
@@ -804,6 +805,7 @@
             field7.style.display = "block";
           }
         });
+      }
     </script>
     <script></script>
     <script>

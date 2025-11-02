@@ -18,7 +18,8 @@ import uuid as uuid_lib
 
 from .models import (
     InspectionReport, E1DefectReport, E6Certificate, 
-    InspectionPhoto, ApplicationAssignment
+    InspectionPhoto, ApplicationAssignment, DocumentDistribution,
+    CertificateAuditLog
 )
 from .sync_serializers import (
     InspectionReportSyncSerializer, E1DefectReportSyncSerializer,
@@ -418,19 +419,47 @@ def upload_e1_defect(request):
         if 'mobile_id' in data:
             data.pop('mobile_id')
         
-        # Check if report already exists by id (if it's a valid UUID)
+        # Check if report already exists by id (if it's a valid UUID) or report_number
         existing_report = None
         report_id = data.get('id')
+        # Mobile app sends 'reference_number', which maps to 'report_number' in the model
+        report_number = data.get('reference_number') or data.get('report_number')
+        
+        # First, try to find by UUID
         if report_id:
             try:
                 try:
                     uuid_obj = uuid_lib.UUID(str(report_id))
                     existing_report = E1DefectReport.objects.filter(id=uuid_obj).first()
+                    if existing_report:
+                        print(f"[E1 DEFECT REPORT UPLOAD] Found existing report by UUID: {existing_report.id}")
                 except (ValueError, AttributeError):
                     # Not a valid UUID, will create new report
                     pass
             except Exception as e:
-                print(f"[E1 DEFECT REPORT UPLOAD] Error checking for existing E1 report: {str(e)}")
+                print(f"[E1 DEFECT REPORT UPLOAD] Error checking for existing E1 report by UUID: {str(e)}")
+        
+        # If not found by UUID, try to find by report_number to enable updates
+        if not existing_report and report_number:
+            try:
+                existing_report = E1DefectReport.objects.filter(report_number=report_number).first()
+                if existing_report:
+                    print(f"[E1 DEFECT REPORT UPLOAD] Found existing report by report_number: {report_number} (UUID: {existing_report.id})")
+                    # Important: Update the data dict with the correct UUID so serializer doesn't try to create new
+                    data['id'] = str(existing_report.id)
+            except Exception as e:
+                print(f"[E1 DEFECT REPORT UPLOAD] Error checking for existing E1 report by report_number: {str(e)}")
+        
+        # Final fallback: check by inspection_report_id (OneToOne relationship)
+        if not existing_report and inspection_id:
+            try:
+                existing_report = E1DefectReport.objects.filter(inspection_report_id=inspection_id).first()
+                if existing_report:
+                    print(f"[E1 DEFECT REPORT UPLOAD] Found existing report by inspection_report_id: {inspection_id} (UUID: {existing_report.id})")
+                    # Important: Update the data dict with the correct UUID so serializer doesn't try to create new
+                    data['id'] = str(existing_report.id)
+            except Exception as e:
+                print(f"[E1 DEFECT REPORT UPLOAD] Error checking for existing E1 report by inspection_report_id: {str(e)}")
         
         # Log data sent to serializer
         serializer_data_log = {k: v if not isinstance(v, str) or len(v) < 100 else f"{len(v)} chars" for k, v in data.items()}
@@ -628,19 +657,35 @@ def upload_e6_certificate(request):
         if 'mobile_id' in data:
             data.pop('mobile_id')
         
-        # Check if certificate already exists by id (if it's a valid UUID)
+        # Check if certificate already exists by id (UUID) or inspection_report_id (OneToOne relationship)
         existing_cert = None
         cert_id = data.get('id')
+        
+        # First, try to find by UUID
         if cert_id:
             try:
                 try:
                     uuid_obj = uuid_lib.UUID(str(cert_id))
                     existing_cert = E6Certificate.objects.filter(id=uuid_obj).first()
+                    if existing_cert:
+                        print(f"[E6 CERTIFICATE UPLOAD] Found existing certificate by UUID: {existing_cert.id}")
                 except (ValueError, AttributeError):
                     # Not a valid UUID, will create new certificate
                     pass
             except Exception as e:
-                print(f"[E6 CERTIFICATE UPLOAD] Error checking for existing E6 certificate: {str(e)}")
+                print(f"[E6 CERTIFICATE UPLOAD] Error checking for existing E6 certificate by UUID: {str(e)}")
+        
+        # If not found by UUID, try to find by inspection_report_id (OneToOne relationship)
+        # This allows updating when certificate already exists for this inspection
+        if not existing_cert and inspection_id:
+            try:
+                existing_cert = E6Certificate.objects.filter(inspection_report_id=inspection_id).first()
+                if existing_cert:
+                    print(f"[E6 CERTIFICATE UPLOAD] Found existing certificate by inspection_report_id: {inspection_id} (UUID: {existing_cert.id})")
+                    # Important: Update the data dict with the correct UUID so serializer doesn't try to create new
+                    data['id'] = str(existing_cert.id)
+            except Exception as e:
+                print(f"[E6 CERTIFICATE UPLOAD] Error checking for existing E6 certificate by inspection_report_id: {str(e)}")
         
         # Log data sent to serializer
         serializer_data_log = {k: v if not isinstance(v, str) or len(v) < 100 else f"{len(v)} chars" for k, v in data.items()}
@@ -762,18 +807,32 @@ def download_e6_certificates(request):
         )
 
 
-@api_view(['GET'])
+@api_view(['GET', 'POST'])
 @permission_classes([IsAuthenticated])
 @rate_limit_download
 def download_inspection_photos(request, id):
     """
     GET /inspections/sync/inspections/<id>/photos/
+    POST /inspections/sync/inspections/<id>/photos/
     
-    Download photos for a specific inspection.
+    Download or upload photos for a specific inspection.
     
     URL Parameters:
     - id: E117 inspection UUID
+    
+    POST Request Body (multipart/form-data):
+    - file: Image file (required)
+    - filename: Original filename (optional, will use file.name if not provided)
+    - caption: Photo caption/description (optional)
+    - gps_latitude: GPS latitude coordinate (optional)
+    - gps_longitude: GPS longitude coordinate (optional)
+    - timestamp: Photo capture timestamp ISO format (optional)
     """
+    
+    if request.method == 'POST':
+        return upload_inspection_photo(request, id)
+    
+    # GET method - download photos
     try:
         user = request.user
         user_inspection_ids = get_user_inspection_ids(user)
@@ -824,6 +883,163 @@ def download_inspection_photos(request, id):
             status=status.HTTP_404_NOT_FOUND
         )
     except Exception as e:
+        return Response(
+            {
+                'success': False,
+                'error': {
+                    'message': 'Internal server error',
+                    'code': 'SERVER_ERROR',
+                    'details': str(e)
+                }
+            },
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+def upload_inspection_photo(request, inspection_id):
+    """
+    Upload a photo for an inspection
+    
+    Validates file type, size, and user access
+    Creates InspectionPhoto record and updates photos_count automatically
+    """
+    try:
+        user = request.user
+        user_inspection_ids = get_user_inspection_ids(user)
+        
+        # Verify user has access to this inspection
+        if str(inspection_id) not in [str(i) for i in user_inspection_ids]:
+            return Response(
+                {
+                    'success': False,
+                    'error': {
+                        'message': 'You do not have access to this inspection',
+                        'code': 'FORBIDDEN'
+                    }
+                },
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        # Get inspection
+        try:
+            inspection = InspectionReport.objects.get(id=inspection_id)
+        except InspectionReport.DoesNotExist:
+            return Response(
+                {
+                    'success': False,
+                    'error': {
+                        'message': 'Inspection not found',
+                        'code': 'NOT_FOUND'
+                    }
+                },
+                status=status.HTTP_404_NOT_FOUND
+            )
+        
+        # Validate file is present
+        if 'file' not in request.FILES:
+            return Response(
+                {
+                    'success': False,
+                    'error': {
+                        'message': 'No file provided',
+                        'code': 'NO_FILE'
+                    }
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        uploaded_file = request.FILES['file']
+        
+        # Validate file type
+        allowed_types = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp']
+        if uploaded_file.content_type not in allowed_types:
+            return Response(
+                {
+                    'success': False,
+                    'error': {
+                        'message': f'Invalid file type: {uploaded_file.content_type}. Allowed: {", ".join(allowed_types)}',
+                        'code': 'INVALID_FILE_TYPE'
+                    }
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Validate file size (max 10MB)
+        max_size = 10 * 1024 * 1024  # 10MB in bytes
+        if uploaded_file.size > max_size:
+            return Response(
+                {
+                    'success': False,
+                    'error': {
+                        'message': f'File too large: {uploaded_file.size} bytes. Maximum: {max_size} bytes (10MB)',
+                        'code': 'FILE_TOO_LARGE'
+                    }
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Get optional fields from request
+        filename = request.data.get('filename', uploaded_file.name)
+        caption = request.data.get('caption', '')
+        gps_latitude = request.data.get('gps_latitude')
+        gps_longitude = request.data.get('gps_longitude')
+        photo_timestamp = request.data.get('timestamp')
+        
+        # Parse timestamp if provided
+        timestamp = None
+        if photo_timestamp:
+            try:
+                from datetime import datetime
+                timestamp = datetime.fromisoformat(photo_timestamp.replace('Z', '+00:00'))
+            except (ValueError, AttributeError):
+                # If timestamp parsing fails, use current time
+                timestamp = timezone.now()
+        else:
+            timestamp = timezone.now()
+        
+        # Create photo record
+        photo = InspectionPhoto(
+            inspection_report=inspection,
+            file=uploaded_file,
+            filename=filename,
+            caption=caption,
+            timestamp=timestamp,
+            content_type=uploaded_file.content_type,
+            file_size=uploaded_file.size,
+        )
+        
+        # Set GPS coordinates if provided
+        if gps_latitude and gps_longitude:
+            try:
+                photo.gps_latitude = float(gps_latitude)
+                photo.gps_longitude = float(gps_longitude)
+            except (ValueError, TypeError):
+                # Invalid GPS coordinates, skip them
+                pass
+        
+        # Save photo (this will auto-update inspection.photos_count via model save method)
+        photo.save()
+        
+        logger.info(
+            f"Photo uploaded successfully - Inspection: {inspection.service_no}, "
+            f"Photo ID: {photo.id}, User: {user.username}"
+        )
+        
+        # Serialize response
+        serializer = InspectionPhotoSerializer(photo, context={'request': request})
+        
+        return Response(
+            {
+                'success': True,
+                'message': 'Photo uploaded successfully',
+                'photo': serializer.data,
+                'inspection_photos_count': inspection.photos.count()
+            },
+            status=status.HTTP_201_CREATED
+        )
+        
+    except Exception as e:
+        logger.error(f"Photo upload error - Inspection: {inspection_id}, Error: {str(e)}")
         return Response(
             {
                 'success': False,
@@ -920,3 +1136,265 @@ def download_general_defects(request):
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
 
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def record_document_distribution(request):
+    """
+    POST /inspections/sync/distribution/record/
+    
+    Record a document distribution event from mobile app.
+    Tracks when and how documents are shared with stakeholders.
+    """
+    try:
+        data = request.data.copy()
+        user = request.user
+        
+        # Extract document references
+        document_type = data.get('document_type')
+        e6_cert_id = data.get('e6_certificate_id')
+        e1_report_id = data.get('e1_defect_report_id')
+        
+        # Validate document exists and user has access
+        document = None
+        if document_type == 'e6_certificate' and e6_cert_id:
+            document = E6Certificate.objects.filter(id=e6_cert_id).first()
+        elif document_type == 'e1_defect_report' and e1_report_id:
+            document = E1DefectReport.objects.filter(id=e1_report_id).first()
+        
+        if not document:
+            return Response({
+                'success': False,
+                'error': {
+                    'message': 'Document not found',
+                    'code': 'DOCUMENT_NOT_FOUND'
+                }
+            }, status=status.HTTP_404_NOT_FOUND)
+        
+        # Create distribution record
+        distribution = DocumentDistribution.objects.create(
+            document_type=document_type,
+            e6_certificate_id=e6_cert_id if document_type == 'e6_certificate' else None,
+            e1_defect_report_id=e1_report_id if document_type == 'e1_defect_report' else None,
+            stakeholder_type=data.get('stakeholder_type', 'client'),
+            recipient_name=data.get('recipient_name', ''),
+            recipient_email=data.get('recipient_email'),
+            recipient_phone=data.get('recipient_phone'),
+            recipient_organization=data.get('recipient_organization'),
+            delivery_method=data.get('delivery_method', 'email'),
+            delivery_status=data.get('delivery_status', 'sent'),
+            tracking_reference=data.get('tracking_reference'),
+            sent_by=user,
+            device_info=data.get('device_info'),
+            notes=data.get('notes'),
+            metadata=data.get('metadata', {}),
+        )
+        
+        # Also create audit log entry
+        CertificateAuditLog.objects.create(
+            e6_certificate_id=e6_cert_id if document_type == 'e6_certificate' else None,
+            e1_defect_report_id=e1_report_id if document_type == 'e1_defect_report' else None,
+            action='shared',
+            description=f"Document shared via {data.get('delivery_method', 'unknown method')}",
+            user=user,
+            user_name=user.get_full_name() or user.username,
+            device_info=data.get('device_info'),
+            metadata={
+                'method': data.get('delivery_method'),
+                'recipients': data.get('metadata', {}).get('recipients', []),
+                'distribution_id': str(distribution.id),
+            }
+        )
+        
+        return Response({
+            'success': True,
+            'distribution_id': str(distribution.id),
+            'message': 'Distribution recorded successfully'
+        }, status=status.HTTP_201_CREATED)
+        
+    except Exception as e:
+        logger.error(f"Failed to record distribution: {str(e)}")
+        return Response({
+            'success': False,
+            'error': {
+                'message': 'Failed to record distribution',
+                'code': 'SERVER_ERROR',
+                'details': str(e)
+            }
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def record_certificate_audit(request):
+    """
+    POST /inspections/sync/audit/record/
+    
+    Record a certificate audit log entry from mobile app.
+    """
+    try:
+        data = request.data.copy()
+        user = request.user
+        
+        # Extract certificate reference
+        e6_cert_id = data.get('e6_certificate_id')
+        e1_report_id = data.get('e1_defect_report_id')
+        
+        # Validate at least one certificate is provided
+        if not e6_cert_id and not e1_report_id:
+            return Response({
+                'success': False,
+                'error': {
+                    'message': 'Certificate ID required',
+                    'code': 'MISSING_CERTIFICATE_ID'
+                }
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Create audit log entry
+        audit_log = CertificateAuditLog.objects.create(
+            e6_certificate_id=e6_cert_id,
+            e1_defect_report_id=e1_report_id,
+            action=data.get('action', 'viewed'),
+            description=data.get('description'),
+            user=user,
+            user_name=data.get('user_name') or user.get_full_name() or user.username,
+            device_info=data.get('device_info'),
+            user_agent=data.get('user_agent'),
+            metadata=data.get('metadata', {}),
+        )
+        
+        return Response({
+            'success': True,
+            'audit_id': str(audit_log.id),
+            'message': 'Audit log recorded successfully'
+        }, status=status.HTTP_201_CREATED)
+        
+    except Exception as e:
+        logger.error(f"Failed to record audit log: {str(e)}")
+        return Response({
+            'success': False,
+            'error': {
+                'message': 'Failed to record audit log',
+                'code': 'SERVER_ERROR',
+                'details': str(e)
+            }
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_distribution_history(request):
+    """
+    GET /inspections/sync/distribution/history/
+    
+    Get distribution history for certificates/documents.
+    """
+    try:
+        user = request.user
+        
+        # Build query
+        query = Q()
+        
+        e6_cert_id = request.GET.get('e6_certificate_id')
+        e1_report_id = request.GET.get('e1_defect_report_id')
+        document_type = request.GET.get('document_type')
+        
+        if e6_cert_id:
+            query &= Q(e6_certificate_id=e6_cert_id)
+        if e1_report_id:
+            query &= Q(e1_defect_report_id=e1_report_id)
+        if document_type:
+            query &= Q(document_type=document_type)
+        
+        # Get distributions
+        limit = int(request.GET.get('limit', 50))
+        distributions = DocumentDistribution.objects.filter(query).order_by('-sent_at')[:limit]
+        
+        # Serialize data
+        data = []
+        for dist in distributions:
+            data.append({
+                'id': str(dist.id),
+                'document_type': dist.document_type,
+                'stakeholder_type': dist.stakeholder_type,
+                'recipient_name': dist.recipient_name,
+                'recipient_email': dist.recipient_email,
+                'recipient_phone': dist.recipient_phone,
+                'delivery_method': dist.delivery_method,
+                'delivery_status': dist.delivery_status,
+                'sent_at': dist.sent_at.isoformat() if dist.sent_at else None,
+                'delivered_at': dist.delivered_at.isoformat() if dist.delivered_at else None,
+                'sent_by': dist.sent_by.get_full_name() if dist.sent_by else None,
+            })
+        
+        return Response({
+            'success': True,
+            'distributions': data,
+            'count': len(data)
+        }, status=status.HTTP_200_OK)
+        
+    except Exception as e:
+        logger.error(f"Failed to get distribution history: {str(e)}")
+        return Response({
+            'success': False,
+            'error': {
+                'message': 'Failed to get distribution history',
+                'code': 'SERVER_ERROR'
+            }
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_audit_history(request):
+    """
+    GET /inspections/sync/audit/history/
+    
+    Get audit log history for certificates.
+    """
+    try:
+        # Build query
+        query = Q()
+        
+        e6_cert_id = request.GET.get('e6_certificate_id')
+        e1_report_id = request.GET.get('e1_defect_report_id')
+        action = request.GET.get('action')
+        
+        if e6_cert_id:
+            query &= Q(e6_certificate_id=e6_cert_id)
+        if e1_report_id:
+            query &= Q(e1_defect_report_id=e1_report_id)
+        if action:
+            query &= Q(action=action)
+        
+        # Get audit logs
+        limit = int(request.GET.get('limit', 50))
+        audit_logs = CertificateAuditLog.objects.filter(query).order_by('-timestamp')[:limit]
+        
+        # Serialize data
+        data = []
+        for log in audit_logs:
+            data.append({
+                'id': str(log.id),
+                'action': log.action,
+                'description': log.description,
+                'user_name': log.user_name,
+                'timestamp': log.timestamp.isoformat() if log.timestamp else None,
+                'device_info': log.device_info,
+            })
+        
+        return Response({
+            'success': True,
+            'audit_logs': data,
+            'count': len(data)
+        }, status=status.HTTP_200_OK)
+        
+    except Exception as e:
+        logger.error(f"Failed to get audit history: {str(e)}")
+        return Response({
+            'success': False,
+            'error': {
+                'message': 'Failed to get audit history',
+                'code': 'SERVER_ERROR'
+            }
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

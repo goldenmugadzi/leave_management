@@ -23,5 +23,11 @@ urlpatterns = [
     path('sync/mobile-sync-inspection/', sync_views.mobile_sync_inspection, name='mobile_sync_inspection'),
     path('sync/certificates/e6/', sync_views.download_e6_certificates, name='download_e6_certificates'),
     path('sync/defects/e1/', sync_views.download_e1_defects, name='download_e1_defects'),
+    
+    # Distribution Tracking & Audit API endpoints
+    path('sync/distribution/record/', sync_views.record_document_distribution, name='record_document_distribution'),
+    path('sync/distribution/history/', sync_views.get_distribution_history, name='get_distribution_history'),
+    path('sync/audit/record/', sync_views.record_certificate_audit, name='record_certificate_audit'),
+    path('sync/audit/history/', sync_views.get_audit_history, name='get_audit_history'),
 ]
 

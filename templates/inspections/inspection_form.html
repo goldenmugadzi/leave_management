@@ -559,7 +559,11 @@
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-2">Inspector</label>
               <div class="block w-full rounded-md border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-900">
-                {{ inspection.inspector.get_full_name|default:inspection.inspector.username|default:"Not assigned" }}
+                {% if inspection.inspector %}
+                  {{ inspection.inspector.get_full_name|default:inspection.inspector.username }}
+                {% else %}
+                  Not assigned
+                {% endif %}
               </div>
             </div>
 

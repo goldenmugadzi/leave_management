@@ -820,4 +820,254 @@ class InspectionPhoto(models.Model):
         # Auto-calculate file size if not set
         if self.file and not self.file_size:
             self.file_size = self.file.size
-        super().save(*args, **kwargs) 
+        super().save(*args, **kwargs)
+        
+        # Update parent inspection's photos_count
+        self._update_inspection_photo_count()
+    
+    def delete(self, *args, **kwargs):
+        inspection = self.inspection_report
+        result = super().delete(*args, **kwargs)
+        # Update count after deletion
+        if inspection:
+            inspection.photos_count = inspection.photos.count()
+            inspection.save(update_fields=['photos_count'])
+        return result
+    
+    def _update_inspection_photo_count(self):
+        """Update the photos_count field on the related inspection"""
+        if self.inspection_report:
+            actual_count = self.inspection_report.photos.count()
+            if self.inspection_report.photos_count != actual_count:
+                self.inspection_report.photos_count = actual_count
+                self.inspection_report.save(update_fields=['photos_count'])
+
+
+class DocumentDistribution(models.Model):
+    """
+    Audit trail for document distribution to stakeholders.
+    Tracks when and how documents (E6/E1) are shared with various stakeholders.
+    """
+    DOCUMENT_TYPE_CHOICES = [
+        ('e6_certificate', 'E6 Certificate'),
+        ('e1_defect_report', 'E1 Defect Report'),
+        ('inspection_report', 'Inspection Report'),
+    ]
+    
+    DELIVERY_METHOD_CHOICES = [
+        ('email', 'Email'),
+        ('sms', 'SMS'),
+        ('print', 'Printed'),
+        ('hand_delivery', 'Hand Delivery'),
+        ('postal', 'Postal Mail'),
+        ('native_share', 'Native Share'),
+        ('file_export', 'File Export'),
+    ]
+    
+    STAKEHOLDER_TYPE_CHOICES = [
+        ('client', 'Client/Property Owner'),
+        ('consumer', 'Consumer'),
+        ('contractor', 'Contractor'),
+        ('district_manager', 'District Manager'),
+        ('depot_official', 'Depot Official'),
+        ('regional_manager', 'Regional Manager'),
+        ('inspector', 'Inspector'),
+        ('other', 'Other'),
+    ]
+    
+    DELIVERY_STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('sent', 'Sent'),
+        ('delivered', 'Delivered'),
+        ('failed', 'Failed'),
+        ('bounced', 'Bounced'),
+        ('read', 'Read/Acknowledged'),
+    ]
+    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    
+    # Document Information
+    document_type = models.CharField(max_length=30, choices=DOCUMENT_TYPE_CHOICES)
+    e6_certificate = models.ForeignKey(
+        E6Certificate,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='distributions'
+    )
+    e1_defect_report = models.ForeignKey(
+        E1DefectReport,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='distributions'
+    )
+    inspection_report = models.ForeignKey(
+        InspectionReport,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='distributions'
+    )
+    
+    # Recipient Information
+    stakeholder_type = models.CharField(max_length=30, choices=STAKEHOLDER_TYPE_CHOICES)
+    recipient_name = models.CharField(max_length=255)
+    recipient_email = models.EmailField(blank=True, null=True)
+    recipient_phone = models.CharField(max_length=20, blank=True, null=True)
+    recipient_organization = models.CharField(max_length=255, blank=True, null=True)
+    
+    # Distribution Details
+    delivery_method = models.CharField(max_length=30, choices=DELIVERY_METHOD_CHOICES)
+    delivery_status = models.CharField(max_length=20, choices=DELIVERY_STATUS_CHOICES, default='pending')
+    sent_at = models.DateTimeField(auto_now_add=True)
+    delivered_at = models.DateTimeField(null=True, blank=True)
+    acknowledged_at = models.DateTimeField(null=True, blank=True)
+    
+    # Tracking Details
+    tracking_reference = models.CharField(max_length=255, blank=True, null=True, help_text="Email ID, SMS ID, etc.")
+    error_message = models.TextField(blank=True, null=True)
+    
+    # User and Device Information
+    sent_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='document_distributions'
+    )
+    device_info = models.CharField(max_length=255, blank=True, null=True)
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    
+    # Metadata
+    notes = models.TextField(blank=True, null=True)
+    metadata = models.JSONField(default=dict, blank=True, help_text="Additional distribution metadata")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['-sent_at']
+        verbose_name = 'Document Distribution'
+        verbose_name_plural = 'Document Distributions'
+        indexes = [
+            models.Index(fields=['document_type', 'delivery_status']),
+            models.Index(fields=['stakeholder_type', 'sent_at']),
+            models.Index(fields=['recipient_email']),
+        ]
+    
+    def __str__(self):
+        doc_ref = self.get_document_reference()
+        return f"{self.get_document_type_display()} to {self.recipient_name} ({self.get_delivery_status_display()}) - {doc_ref}"
+    
+    def get_document_reference(self):
+        """Get the document reference number"""
+        if self.e6_certificate:
+            return self.e6_certificate.certificate_number
+        elif self.e1_defect_report:
+            return self.e1_defect_report.report_number
+        elif self.inspection_report:
+            return self.inspection_report.reference_number
+        return "Unknown"
+    
+    def mark_delivered(self):
+        """Mark the distribution as delivered"""
+        self.delivery_status = 'delivered'
+        self.delivered_at = timezone.now()
+        self.save(update_fields=['delivery_status', 'delivered_at', 'updated_at'])
+    
+    def mark_acknowledged(self):
+        """Mark the distribution as acknowledged/read"""
+        self.delivery_status = 'read'
+        self.acknowledged_at = timezone.now()
+        if not self.delivered_at:
+            self.delivered_at = self.acknowledged_at
+        self.save(update_fields=['delivery_status', 'acknowledged_at', 'delivered_at', 'updated_at'])
+    
+    def mark_failed(self, error_message):
+        """Mark the distribution as failed with error message"""
+        self.delivery_status = 'failed'
+        self.error_message = error_message
+        self.save(update_fields=['delivery_status', 'error_message', 'updated_at'])
+
+
+class CertificateAuditLog(models.Model):
+    """
+    Comprehensive audit log for all certificate-related actions.
+    Tracks creation, updates, sharing, revocation, and verification.
+    """
+    ACTION_CHOICES = [
+        ('created', 'Created'),
+        ('updated', 'Updated'),
+        ('shared', 'Shared'),
+        ('revoked', 'Revoked'),
+        ('acknowledged', 'Acknowledged'),
+        ('verified', 'Verified'),
+        ('printed', 'Printed'),
+        ('downloaded', 'Downloaded'),
+        ('viewed', 'Viewed'),
+    ]
+    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    
+    # Certificate Reference
+    e6_certificate = models.ForeignKey(
+        E6Certificate,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='audit_logs'
+    )
+    e1_defect_report = models.ForeignKey(
+        E1DefectReport,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='audit_logs'
+    )
+    
+    # Action Details
+    action = models.CharField(max_length=20, choices=ACTION_CHOICES)
+    description = models.TextField(blank=True, null=True)
+    
+    # User Information
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='certificate_audit_logs'
+    )
+    user_name = models.CharField(max_length=255, blank=True, null=True)
+    
+    # Technical Details
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    user_agent = models.CharField(max_length=500, blank=True, null=True)
+    device_info = models.CharField(max_length=255, blank=True, null=True)
+    
+    # Additional Context
+    metadata = models.JSONField(default=dict, blank=True, help_text="Additional action metadata (recipients, method, etc.)")
+    
+    # Timestamp
+    timestamp = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        ordering = ['-timestamp']
+        verbose_name = 'Certificate Audit Log'
+        verbose_name_plural = 'Certificate Audit Logs'
+        indexes = [
+            models.Index(fields=['action', 'timestamp']),
+            models.Index(fields=['user', 'timestamp']),
+        ]
+    
+    def __str__(self):
+        doc_ref = self.get_document_reference()
+        user = self.user_name or (self.user.get_full_name() if self.user else 'System')
+        return f"{self.get_action_display()} - {doc_ref} by {user} at {self.timestamp}"
+    
+    def get_document_reference(self):
+        """Get the document reference number"""
+        if self.e6_certificate:
+            return f"E6-{self.e6_certificate.certificate_number}"
+        elif self.e1_defect_report:
+            return f"E1-{self.e1_defect_report.report_number}"
+        return "Unknown" 

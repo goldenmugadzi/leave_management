@@ -391,7 +391,7 @@ def application_edit(request, pk):
 def inspection_list(request):
     """List all inspection reports"""
     inspections = InspectionReport.objects.all().order_by('-created_at')
-    
+    print("inspections: ", inspections)
     # Search functionality
     search_query = request.GET.get('search', '')
     if search_query:
@@ -407,7 +407,7 @@ def inspection_list(request):
     inspections = paginator.get_page(page_number)
     
     context = {
-        'inspections': inspections,
+        'reports': inspections,  # Template expects 'reports' variable
         'search_query': search_query,
     }
     return render(request, 'inspections/inspection_list.html', context)
