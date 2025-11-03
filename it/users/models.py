@@ -205,6 +205,8 @@ class UserProfile(AbstractUser):
     change_password = models.BooleanField(default=False, null=True, blank=True)
     grade = models.CharField(choices=GRADE_CHOICES, max_length=20, null=True, blank=True)
     national_id = models.CharField(max_length=18, null=True, default=None)
+    date_of_engagement = models.DateField(null=True, blank=True)
+    
     class Meta:
         ordering = ['last_name', 'first_name', 'username']
 

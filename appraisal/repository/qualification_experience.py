@@ -14,15 +14,19 @@ class UserQualificationRepository:
         except Exception as e:
             raise Exception(f"create user qualification repo failed with error: {e}")
     
-    def create_in_bulk(self, objs: List[UserQualification]) -> bool:
+    def bulk_update(self, objs: List[UserQualification], fields: List[str]) -> bool:
+        """Bulk update existing user qualification records."""
         try:
-            created_objs = UserQualification.objects.bulk_create(objs=objs)
-            for user_qualification_obj in objs:
-                if user_qualification_obj not in created_objs:
-                    logger.error(f"[UserQualificationRepository] create_in_bulk failed to create user: {user_qualification_obj.user} with id")
+            if not objs:
+                logger.warning("[UserQualificationRepository] bulk_update called with empty list")
+                return False
+
+            UserQualification.objects.bulk_update(objs, fields)
+            logger.info(f"[UserQualificationRepository] Successfully bulk updated {len(objs)} user qualifications.")
+            return True
         except Exception as e:
-            raise Exception(f"[UserQualificationRepository] create_in_bulk repo failed with error: {e}")
-        
+            raise Exception(f"[UserQualificationRepository] bulk_update failed with error: {e}")
+
     def create_in_bulk(self, objs: List[UserQualification]) -> bool:
         """Bulk create multiple user qualification records."""
         try:

@@ -7,6 +7,7 @@ from ..helpers.getters.file_handlers import FileHandlerStrategyContext, UserQual
 from it.users.models import UserQualification, UserProfile, QUALIFICATION_TYPE
 from django.db.models import Q
 import pandas as pd
+from datetime import datetime
 class UserQualificationServiceError(Exception):
     pass
 
@@ -82,6 +83,7 @@ class UserQualificationService:
 
             objs_to_create = []
             objs_to_update = []
+            user_objs_to_update = []
             total_processed = 0
 
             for _, row in df.iterrows():
@@ -97,7 +99,43 @@ class UserQualificationService:
                 if user is None:
                     print(f"[WARN] No user found with EC No.: {ec_no_str}, skipping row.")
                     continue
+                
+                # Detect Date Of Engagement: 
+                date_of_engagement_col = next(
+                    (col for col in df.columns if "date of engagement" in str(col).lower().replace(".", "").strip()),
+                    None
+                )
 
+                if date_of_engagement_col:
+                    raw_date_value = row[date_of_engagement_col]
+
+                    if pd.notna(raw_date_value):
+                        parsed_date = None
+
+                        # Try to parse depending on data type
+                        if isinstance(raw_date_value, pd.Timestamp):
+                            parsed_date = raw_date_value.date()
+                        elif isinstance(raw_date_value, datetime):
+                            parsed_date = raw_date_value.date()
+                        elif isinstance(raw_date_value, str):
+                            for fmt in ("%Y-%m-%d", "%d/%m/%Y", "%m/%d/%Y", "%d-%m-%Y"):
+                                try:
+                                    parsed_date = datetime.strptime(raw_date_value.strip(), fmt).date()
+                                    break
+                                except ValueError:
+                                    continue
+                        elif isinstance(raw_date_value, (int, float)):
+                            # Excel-style numeric date (e.g. 45400)
+                            try:
+                                parsed_date = pd.to_datetime(raw_date_value, unit='D', origin='1899-12-30').date()
+                            except Exception:
+                                pass
+
+                        # Only update if parsed successfully and user has no date yet
+                        if parsed_date and user.date_of_engagement is None:
+                            user.date_of_engagement = parsed_date
+                            user_objs_to_update.append(user)
+                    
                 # Fetch user’s existing qualifications once
                 existing_quals = {
                     (q.name.lower(), (q.description or "").strip().lower()): q
@@ -178,9 +216,14 @@ class UserQualificationService:
 
             if objs_to_update:
                 self.user_qualification_repo.bulk_update(objs_to_update, fields=["description"])
+                
+            if user_objs_to_update:
+                user_repo = UserProfileRepository()
+                user_repo.bulk_update(objs=user_objs_to_update, fields=["date_of_engagement"])
 
             print(f"✅ Total Users Processed: {total_processed}")
-            print(f"✅ Created: {len(objs_to_create)} | Updated: {len(objs_to_update)}")
+            print(f"✅ [User Qualification] Created: {len(objs_to_create)} | Updated: {len(objs_to_update)}")
+            print(f"✅ [User Profile] Updated: {len(user_objs_to_update)}")
 
             return True
 
