@@ -182,6 +182,15 @@
 			"command": "python manage.py test fault_locator.tests_crane --settings=beii_v1.settings_test -v 2",
 			"isBackground": false,
 			"group": "build"
+		},
+		{
+			"label": "makemigrations (ACE2 + PettyCash cost_center)",
+			"type": "shell",
+			"command": "python manage.py makemigrations ACE2 finance.PettyCash",
+			"problemMatcher": [
+				"$eslint-stylish"
+			],
+			"group": "build"
 		}
 	]
 }

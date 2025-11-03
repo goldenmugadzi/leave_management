@@ -2,7 +2,7 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 
 from approve.models import Process
-from it.users.models import Regions, UserProfile, Sections, Designations
+from it.users.models import Regions, UserProfile, Sections, Designations, CostCenter
 
 # Create your models here.
 from django.db import models
@@ -96,6 +96,8 @@ class AssetBudget(models.Model):
     withdrawal_date = models.DateField(blank=True, null=True)
     period = models.PositiveIntegerField(validators=[MinValueValidator(1), MaxValueValidator(9999)])
     region = models.ForeignKey(Regions, on_delete=models.DO_NOTHING, blank=True)
+    # Optional mapping to cost center when available
+    cost_center = models.ForeignKey(CostCenter, on_delete=models.DO_NOTHING, blank=True, null=True)
     created_date = models.DateField(blank=True, null=True)
     budget_note = models.FileField(upload_to='uploads/budget')
 
@@ -206,6 +208,8 @@ class Ace2(models.Model):
 
     process = models.ForeignKey(Process, on_delete=models.SET_NULL, blank=True, null=True)
     section = models.ForeignKey(Sections, on_delete=models.DO_NOTHING, blank=True, null=True)
+    # New: align with Tokens by linking directly to CostCenter
+    cost_center = models.ForeignKey(CostCenter, on_delete=models.DO_NOTHING, blank=True, null=True)
 
     # dummy = models.CharField(null=True, max_length=120, blank=True)
 
@@ -387,6 +391,7 @@ class Asset_budget_Virament(models.Model):
     process = models.ForeignKey(Process, on_delete=models.DO_NOTHING, blank=True, null=True)
     region = models.ForeignKey(Regions, on_delete=models.DO_NOTHING, blank=True, null=True)
     section = models.ForeignKey(Sections, on_delete=models.DO_NOTHING, blank=True, null=True)
+    cost_center = models.ForeignKey(CostCenter, on_delete=models.DO_NOTHING, blank=True, null=True)
     date_created = models.DateField(auto_now_add=True, blank=True, null=True)
     currency = models.CharField(max_length=15, blank=True, null=True, choices=Ace2.CURRENCY_CHOICES)
 
@@ -463,6 +468,8 @@ class Transactions(models.Model):
     transaction_id = models.AutoField(primary_key=True)
     region = models.ForeignKey(Regions, on_delete=models.DO_NOTHING)
     section = models.ForeignKey(Sections, on_delete=models.DO_NOTHING)
+    # Direct link to cost center for reporting/filters
+    cost_center = models.ForeignKey(CostCenter, on_delete=models.DO_NOTHING, blank=True, null=True)
     amount = models.FloatField(blank=True, null=True, max_length=120)
     budget = models.ForeignKey(AssetBudget, on_delete=models.CASCADE)
 
@@ -486,6 +493,7 @@ class AceReport(models.Model):
     region = models.ForeignKey(Regions, blank=True, null=True, on_delete=models.DO_NOTHING)
     budget = models.ForeignKey(AssetBudget, on_delete=models.DO_NOTHING, blank=True, null=True)
     section = models.ForeignKey(Sections, on_delete=models.DO_NOTHING, blank=True, null=True)
+    cost_center = models.ForeignKey(CostCenter, on_delete=models.DO_NOTHING, blank=True, null=True)
 
     def __str__(self):
         return str(self.report_id2)

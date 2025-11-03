@@ -59,7 +59,7 @@ class UserQualificationService:
     def create_in_bulk_use_case(self, file: UploadedFile) -> bool:
         try:
             context = FileHandlerStrategyContext(strategy=UserQualificationStrategy())
-            df = context.data(file=file)   # merged DataFrame
+            df = context.data(file=file)
 
             # Detect EC No. column
             ec_no_col = next(
@@ -68,10 +68,10 @@ class UserQualificationService:
             )
             if ec_no_col is None:
                 raise ValueError(
-                    f"Could not find 'EC No.' column in the merged table. Available columns: {list(df.columns)}"
+                    f"Could not find 'EC No.' column in the uploaded file. Available columns: {list(df.columns)}"
                 )
 
-            # Get all qualification sub-columns (under QUALIFICATIONS multi-header)
+            # Detect qualification-related columns
             qualification_cols = [
                 col for col in df.columns
                 if any(key in str(col).lower() for key in [
@@ -81,118 +81,110 @@ class UserQualificationService:
             ]
 
             objs_to_create = []
-            num = 0
+            objs_to_update = []
+            total_processed = 0
 
             for _, row in df.iterrows():
                 ec_no = row[ec_no_col]
                 if pd.isna(ec_no):
                     continue
 
-                # Convert EC No. from float to int if needed
-                # Normalize EC No.
+                # Normalize EC number
                 ec_no_str = str(int(ec_no)) if isinstance(ec_no, float) else str(ec_no).strip()
 
-                # Find user
+                # Fetch user
                 user = self.get_user(username=ec_no_str)
-                if not user:
-                    print(f"[WARN] No user found with EC No.: {ec_no_str}, skipping qualifications")
+                if user is None:
+                    print(f"[WARN] No user found with EC No.: {ec_no_str}, skipping row.")
                     continue
 
+                # Fetch user’s existing qualifications once
+                existing_quals = {
+                    (q.name.lower(), (q.description or "").strip().lower()): q
+                    for q in self.user_qualification_repo.fetch_by_user(user_id=user.id)
+                }
 
-                # Loop through all qualification sub-columns
                 for col in qualification_cols:
                     val = row[col]
-
-                    # Skip nil/empty
-                    if isinstance(val, str) and val.strip().lower() == "nil":
-                        continue
                     if pd.isna(val):
                         continue
 
-                    # Default classification
-                    q_name = QUALIFICATION_TYPE[9][1]
+                    val_clean = str(val).strip()
+                    if not val_clean or val_clean.lower() == "nil":
+                        continue
 
                     col_clean = str(col).lower()
-                    val_clean = str(val).lower()
 
-                    user_obj = self.user_qualification_repo.get_by_user(user_object=user)
-                    if user_obj is None:
-                        print("=============+>>>> user_object is None")
-                        continue
-                    
-                    # Map sub-column to qualification type
-                    if "o' levels" in col_clean or "o levels" in col_clean:
-                        if user_obj.name == "Ordinary Levels":
-                            print(f"============>>>>>>>> User with pk: {user.id}, O levels already exists...")
-                            continue
-                        if "level" in val_clean:
-                            q_name = QUALIFICATION_TYPE[0][1]
-                    elif "a' levels" in col_clean:
-                        if user_obj.name == "Advanced Levels":
-                            print(f"============>>>>>>>> User with pk: {user.id}, Advanced Levels already exists...")
-                            continue
-                        if "level" in val_clean:
-                            q_name = QUALIFICATION_TYPE[1][1]
+                    # Determine qualification type
+                    q_name = "Other"
+
+                    if "o" in col_clean and "level" in col_clean:
+                        # Only O Level with a number is valid
+                        if any(char.isdigit() for char in val_clean):
+                            q_name = "Ordinary Levels"
+                    elif "a" in col_clean and "level" in col_clean:
+                        # Only A Level with a number is valid
+                        if any(char.isdigit() for char in val_clean):
+                            q_name = "Advanced Levels"
                     elif "certificate" in col_clean:
-                        if user_obj.name == "Certificate" and (user_obj.description.strip().lower() == val.strip().lower()):
-                            print(f"============>>>>>>>> User with pk: {user.id}, Certificate - {val} already exists...")
-                            continue
-                        q_name = QUALIFICATION_TYPE[2][1]
-                    elif "diploma" in col_clean:
-                        if user_obj.name == "Diploma" and (user_obj.description.strip().lower() == val.strip().lower()):
-                            print(f"============>>>>>>>> User with pk: {user.id}, Diploma - {val} already exists...")
-                            continue
-                        q_name = QUALIFICATION_TYPE[3][1]
+                        q_name = "Certificate"
+                    elif "diploma" in col_clean and "hnd" not in col_clean:
+                        q_name = "Diploma"
                     elif "hnd" in col_clean:
-                        if user_obj.name == "Higher National Diploma" and (user_obj.description.strip().lower() == val.strip().lower()):
-                            print(f"============>>>>>>>> User with pk: {user.id}, Higher National Diploma - {val} already exists...")
-                            continue
-                        q_name = QUALIFICATION_TYPE[4][1]
+                        q_name = "Higher National Diploma"
                     elif "prof membership" in col_clean:
-                        if user_obj.name == "Professional Membership" and (user_obj.description.strip().lower() == val.strip().lower()):
-                            print(f"============>>>>>>>> User with pk: {user.id}, Professional Membership - {val} already exists...")
-                            continue
-                        q_name = QUALIFICATION_TYPE[5][1]
+                        q_name = "Professional Membership"
                     elif "degree" in col_clean:
-                        if user_obj.name == "Degree" and (user_obj.description.strip().lower() == val.strip().lower()):
-                            print(f"============>>>>>>>> User with pk: {user.id}, Degree - {val} already exists...")
-                            continue
-                        q_name = QUALIFICATION_TYPE[6][1]
+                        q_name = "Degree"
                     elif "masters" in col_clean:
-                        if user_obj.name == "Masters" and (user_obj.description.strip().lower() == val.strip().lower()):
-                            print(f"============>>>>>>>> User with pk: {user.id}, Masters - {val} already exists...")
-                            continue
-                        q_name = QUALIFICATION_TYPE[7][1]
+                        q_name = "Masters"
                     elif "phd" in col_clean:
-                        if user_obj.name == "PHD" and (user_obj.description.strip().lower() == val.strip().lower()):
-                            print(f"============>>>>>>>> User with pk: {user.id}, PHD - {val} already exists...")
-                            continue
-                        q_name = QUALIFICATION_TYPE[8][1]
+                        q_name = "PHD"
 
-                    # Create qualification object
-                    objs_to_create.append(
-                        UserQualification(
+                    # Split by comma if not O/A Levels
+                    values_to_process = [val_clean]
+                    if q_name not in ["Ordinary Levels", "Advanced Levels"] and "," in val_clean:
+                        values_to_process = [v.strip() for v in val_clean.split(",") if v.strip()]
+
+                    for single_val in values_to_process:
+                        key = (q_name.lower(), single_val.lower())
+
+                        # Update existing qualification if exists
+                        if key in existing_quals:
+                            qual = existing_quals[key]
+                            if qual.description.strip() != single_val:
+                                qual.description = single_val
+                                objs_to_update.append(qual)
+                                print(f"[UPDATE] {user.username} - {q_name}: {single_val}")
+                            else:
+                                print(f"[SKIP] {user.username} already has {q_name} - {single_val}")
+                            continue
+
+                        # Otherwise → create new qualification
+                        new_qual = UserQualification(
                             user=user,
                             name=q_name,
-                            description=str(val),
+                            description=single_val,
                             file=None
                         )
-                    )
+                        objs_to_create.append(new_qual)
+                        print(f"[CREATE] {user.username} - {q_name}: {single_val}")
 
-                num += 1
-                print(f"Processed EC No.: {ec_no}")
-                print("---------------------")
-                
-            # Bulk insert into DB
+                total_processed += 1
+
+            # Perform DB operations
             if objs_to_create:
                 self.user_qualification_repo.create_in_bulk(objs=objs_to_create)
 
-            print(f"============>>>>>>>> Total Users Processed: {num}")
-            print(f"============>>>>>>>> Total Qualifications Created: {len(objs_to_create)}")
+            if objs_to_update:
+                self.user_qualification_repo.bulk_update(objs_to_update, fields=["description"])
+
+            print(f"✅ Total Users Processed: {total_processed}")
+            print(f"✅ Created: {len(objs_to_create)} | Updated: {len(objs_to_update)}")
 
             return True
 
         except Exception as e:
             raise UserQualificationServiceError(
-                f"[UserQualificationService] create_in_bulk_use_case failed with error: {e}"
+                f"[UserQualificationService] create_in_bulk_use_case failed: {e}"
             )

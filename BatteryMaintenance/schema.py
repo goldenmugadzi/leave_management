@@ -2,7 +2,8 @@ import graphene
 from graphene import ObjectType, Field, List, ID, Int, InputObjectType, String, Mutation, Float
 from graphql_jwt.decorators import login_required
 from approve.views import gql_initiate_approval_process, gql_send_notification
-from .models import Substation, BatteryInstallation, Cell, BatteryMaintenance, CellReading
+from it.users.models import Substation
+from .models import BatteryInstallation, Cell, BatteryMaintenance, CellReading
 from pretask_risk_assessment.types import ToolOrEquipmentType
 from toolsandequipment.models import ToolOrEquipment
 from .types import SubstationType, BatteryInstallationType, CellType, BatteryMaintenanceType, CellReadingType
@@ -148,7 +149,7 @@ class CreateSubstation(graphene.Mutation):
 
     @login_required
     def mutate(self, info, name, code, region_id, district_id, depot_id):
-        from .models import Regions, Districts, Depots  # Import here to avoid circular import
+        from it.users.models import Regions, Districts, Depots  # Import from users app
         try:
             region = Regions.objects.get(pk=region_id)
             district = Districts.objects.get(pk=district_id)

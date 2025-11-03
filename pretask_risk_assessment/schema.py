@@ -36,7 +36,7 @@ class CreatePretaskRiskAssessment(graphene.Mutation):
     def mutate(self, info, job_id, equipment_id, harzard, control_measures):
         job = Job.objects.get(pk=job_id)
         equipment = None
-        from toolsandequipment.model import ToolOrEquipment
+        # Correct import path already at top of file
         try:
             equipment = ToolOrEquipment.objects.get(pk=equipment_id)
         except ToolOrEquipment.DoesNotExist:
