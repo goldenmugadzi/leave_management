@@ -35,6 +35,10 @@ class MyTokenObtainPairSerializer(TokenObtainPairSerializer):
 
         return token
 
+
+class MyTokenObtainPairView(TokenObtainPairView):
+    serializer_class = MyTokenObtainPairSerializer
+
     # class UserSerializer(serializers.Serializer):
     #     username
     #     Designation

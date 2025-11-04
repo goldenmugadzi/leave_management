@@ -20,15 +20,36 @@ from django.conf import settings
 from django.contrib import admin
 from django.urls import path, include
 from django.views.decorators.csrf import csrf_exempt
+from django.http import HttpResponse
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
-    TokenVerifyView
+    TokenVerifyView,
 )
+from it.users.serializers import MyTokenObtainPairView
 from graphene_file_upload.django import FileUploadGraphQLView
+# Serve robots.txt to prevent search engine indexing
+def robots_txt(request):
+    robots_content = """# Robots.txt - Prevent search engine indexing
+# This file blocks all web crawlers from indexing the site
+# to prevent sensitive information disclosure
+
+User-agent: *
+Disallow: /
+
+# Additional security measures:
+# - No crawling of any part of the site
+# - No indexing of file download endpoints
+# - No crawling of user-generated content
+# - No indexing of PII-containing documents
+
+# This is a private business application containing sensitive data
+# All access should be authenticated and authorized"""
+    return HttpResponse(robots_content, content_type='text/plain')
 
 urlpatterns = [
-    path('', include('django_prometheus.urls')),
+    path('robots.txt', robots_txt, name='robots_txt'),
+    path('', include('pretask_risk_assessment.urls')),
     path('', include('it.beii_auth.urls')),
     path('', include('Docs.urls')),
     path('', include('tokens.urls')),
@@ -92,7 +113,7 @@ urlpatterns = [
     
     path('api-auth/', include('rest_framework.urls')),
     path("gql/", csrf_exempt(FileUploadGraphQLView.as_view(graphiql=True))),  
-    path('api/auth/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('api/auth/token/', MyTokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/auth/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('api/auth/token/verify/', TokenVerifyView.as_view(), name='token_verify'),
 
