@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fault Locator User Guide - Team Leader</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background-color: #e74c3c;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .section {
+            margin-bottom: 30px;
+            border-left: 4px solid #c0392b;
+            padding-left: 20px;
+        }
+        .step {
+            background-color: #f8f9fa;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .menu-item {
+            background-color: #fadbd8;
+            padding: 8px 12px;
+            margin: 5px 0;
+            border-radius: 3px;
+            font-weight: bold;
+        }
+        .warning {
+            background-color: #fff3cd;
+            border: 1px solid #ffeaa7;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .success {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+        .button {
+            background-color: #dc3545;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 4px;
+            display: inline-block;
+            margin: 5px;
+        }
+        h1, h2, h3 {
+            color: #2c3e50;
+        }
+        .toc {
+            background-color: #f1f2f6;
+            padding: 20px;
+            margin-bottom: 30px;
+            border-radius: 8px;
+        }
+        .field-specific {
+            background-color: #fdf2e9;
+            border-left: 4px solid #e67e22;
+            padding: 15px;
+            margin: 10px 0;
+        }
+        .safety {
+            background-color: #ffe6e6;
+            border: 2px solid #ff4444;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h1>Fault Locator System</h1>
+    <h2>Team Leader User Guide</h2>
+    <p>Field Operations & Team Management Manual</p>
+</div>
+
+<div class="toc">
+    <h3>Table of Contents</h3>
+    <ol>
+        <li><a href="#overview">Role Overview & Team Leadership</a></li>
+        <li><a href="#dashboard">Dashboard & Mobile Access</a></li>
+        <li><a href="#assignments">Managing Team Assignments</a></li>
+        <li><a href="#field-operations">Field Operations</a></li>
+        <li><a href="#reporting">Progress Reporting</a></li>
+        <li><a href="#team-management">Team Management</a></li>
+        <li><a href="#safety">Safety Procedures</a></li>
+        <li><a href="#troubleshooting">Troubleshooting</a></li>
+    </ol>
+</div>
+
+<div class="section" id="overview">
+    <h2>1. Role Overview & Team Leadership</h2>
+    
+    <div class="field-specific">
+        <strong>Your Leadership Role:</strong> As a Team Leader, you're responsible for coordinating your team's fault location activities and ensuring quality completion of assignments.
+    </div>
+    
+    <h3>Key Responsibilities:</h3>
+    <ul>
+        <li>Lead fault location field operations</li>
+        <li>Coordinate team member activities</li>
+        <li>Report fault location progress and completion</li>
+        <li>Ensure safety compliance in the field</li>
+        <li>Communicate with depot management</li>
+        <li>Verify fault clearance and restoration</li>
+    </ul>
+
+    <h3>Access Permissions:</h3>
+    <ul>
+        <li>✅ View your team's assigned faults</li>
+        <li>✅ Update fault status and progress</li>
+        <li>✅ Add field notes and location details</li>
+        <li>✅ Request assistance from management</li>
+        <li>✅ Access mobile-friendly field updates</li>
+        <li>✅ View team assignment history</li>
+        <li>❌ Cannot assign faults to other teams</li>
+        <li>❌ Cannot access other teams' assignments</li>
+    </ul>
+</div>
+
+<div class="section" id="dashboard">
+    <h2>2. Dashboard & Mobile Access</h2>
+    
+    <h3>Accessing Your Team Dashboard:</h3>
+    <div class="step">
+        <strong>Step 1:</strong> Log in with your team leader credentials
+    </div>
+    <div class="step">
+        <strong>Step 2:</strong> Navigate to <div class="menu-item">Simple Fault List</div> for mobile-optimized view
+    </div>
+    <div class="step">
+        <strong>Step 3:</strong> Your dashboard displays:
+        <ul>
+            <li>Active fault assignments for your team</li>
+            <li>Priority levels and urgency indicators</li>
+            <li>Assignment details and depot information</li>
+            <li>Progress tracking and status updates</li>
+        </ul>
+    </div>
+
+    <h3>Mobile-Optimized Views:</h3>
+    <div class="menu-item">📱 Simple Fault List</div>
+    <p>Mobile-friendly view of your team's assignments</p>
+    
+    <div class="menu-item">📝 Field Update</div>
+    <p>Quick status updates from the field</p>
+    
+    <div class="menu-item">🆘 Request Help</div>
+    <p>Emergency assistance requests</p>
+    
+    <div class="menu-item">✅ Complete Assignment</div>
+    <p>Mark faults as located with details</p>
+
+    <div class="success">
+        <strong>Mobile Tip:</strong> The system is designed for tablet and smartphone use. All critical functions work well on mobile devices for field operations.
+    </div>
+</div>
+
+<div class="section" id="assignments">
+    <h2>3. Managing Team Assignments</h2>
+    
+    <h3>Viewing Active Assignments:</h3>
+    <div class="step">
+        <strong>Assignment Overview:</strong>
+        <ol>
+            <li>Access <div class="menu-item">Simple Fault List</div></li>
+            <li>Review all faults assigned to your team</li>
+            <li>Check priority levels and deadlines</li>
+            <li>View depot locations and details</li>
+            <li>Read assignment notes from foreperson</li>
+        </ol>
+    </div>
+    
+    <h3>Priority Management:</h3>
+    <div class="step">
+        <strong>Understanding Priorities:</strong>
+        <ul>
+            <li><strong>VVIP Faults:</strong> Absolute priority - handle immediately</li>
+            <li><strong>Critical (Level 4):</strong> High voltage or major customer impact</li>
+            <li><strong>High (Level 3):</strong> Significant customer impact</li>
+            <li><strong>Medium (Level 2):</strong> Moderate impact</li>
+            <li><strong>Low (Level 1):</strong> Minimal impact</li>
+        </ul>
+    </div>
+    
+    <div class="warning">
+        <strong>Priority Guidelines:</strong>
+        <ul>
+            <li>Always address VVIP and Critical faults first</li>
+            <li>Consider travel efficiency when planning routes</li>
+            <li>High voltage faults require additional safety measures</li>
+            <li>Multiple low-priority faults in one area can be efficient</li>
+        </ul>
+    </div>
+    
+    <h3>Assignment Planning:</h3>
+    <div class="step">
+        <strong>Efficient Route Planning:</strong>
+        <ol>
+            <li>Review all assigned fault locations</li>
+            <li>Group geographically close faults</li>
+            <li>Plan route considering priority levels</li>
+            <li>Account for travel time between locations</li>
+            <li>Communicate plan to team members</li>
+        </ol>
+    </div>
+</div>
+
+<div class="section" id="field-operations">
+    <h2>4. Field Operations</h2>
+    
+    <h3>Pre-Field Preparation:</h3>
+    <div class="step">
+        <strong>Before Leaving Base:</strong>
+        <ol>
+            <li>Verify fault locator device is functional</li>
+            <li>Check all safety equipment</li>
+            <li>Review fault technical details:
+                <ul>
+                    <li>Voltage level</li>
+                    <li>Number of customers affected</li>
+                    <li>Backfeed availability</li>
+                    <li>Depot-specific instructions</li>
+                </ul>
+            </li>
+            <li>Ensure mobile device has system access</li>
+            <li>Brief team on day's assignments</li>
+        </ol>
+    </div>
+    
+    <div class="safety">
+        <strong>Safety First:</strong>
+        <ul>
+            <li>Always follow electrical safety procedures</li>
+            <li>Verify proper PPE for voltage level</li>
+            <li>Confirm system isolation before work</li>
+            <li>Maintain safe working distances</li>
+            <li>Report safety concerns immediately</li>
+        </ul>
+    </div>
+    
+    <h3>Fault Location Process:</h3>
+    <div class="step">
+        <strong>Systematic Approach:</strong>
+        <ol>
+            <li>Arrive at fault location safely</li>
+            <li>Assess site conditions and safety</li>
+            <li>Set up fault locator equipment</li>
+            <li>Follow systematic location procedures</li>
+            <li>Document findings and location details</li>
+            <li>Verify fault clearance methods</li>
+            <li>Coordinate restoration with operations</li>
+        </ol>
+    </div>
+    
+    <h3>Using the Fault Locator Device:</h3>
+    <div class="step">
+        <strong>Equipment Operation:</strong>
+        <ul>
+            <li>Ensure device calibration is current</li>
+            <li>Follow manufacturer operating procedures</li>
+            <li>Take multiple readings for accuracy</li>
+            <li>Document equipment readings</li>
+            <li>Report equipment issues immediately</li>
+        </ul>
+    </div>
+</div>
+
+<div class="section" id="reporting">
+    <h2>5. Progress Reporting</h2>
+    
+    <h3>Field Status Updates:</h3>
+    <div class="step">
+        <strong>Real-Time Updates:</strong>
+        <ol>
+            <li>From field, access <div class="menu-item">Field Update</div></li>
+            <li>Select the fault being worked</li>
+            <li>Choose update type:
+                <ul>
+                    <li><strong>Progress:</strong> Work in progress update</li>
+                    <li><strong>Located:</strong> Fault successfully located</li>
+                    <li><strong>Need Help:</strong> Request assistance</li>
+                </ul>
+            </li>
+            <li>Add detailed notes about:
+                <ul>
+                    <li>Current status</li>
+                    <li>Issues encountered</li>
+                    <li>Estimated completion time</li>
+                    <li>Safety concerns</li>
+                </ul>
+            </li>
+            <li>Submit update</li>
+        </ol>
+    </div>
+    
+    <h3>Completing Fault Location:</h3>
+    <div class="step">
+        <strong>Marking as Located:</strong>
+        <ol>
+            <li>Click <span class="button">Located</span> for completed fault</li>
+            <li>Provide detailed location information:
+                <ul>
+                    <li>Exact fault location (GPS coordinates if available)</li>
+                    <li>Type of fault found</li>
+                    <li>Clearance method used</li>
+                    <li>Customer restoration status</li>
+                    <li>Any follow-up required</li>
+                </ul>
+            </li>
+            <li>Confirm customer supply restoration</li>
+            <li>Submit completion report</li>
+        </ol>
+    </div>
+    
+    <h3>Requesting Assistance:</h3>
+    <div class="step">
+        <strong>When to Request Help:</strong>
+        <ul>
+            <li>Complex fault requiring additional expertise</li>
+            <li>Equipment failure or malfunction</li>
+            <li>Safety concerns or hazardous conditions</li>
+            <li>Access issues (locked gates, dangerous terrain)</li>
+            <li>Customer liaison difficulties</li>
+        </ul>
+    </div>
+    
+    <div class="step">
+        <strong>How to Request Help:</strong>
+        <ol>
+            <li>In field update, select "Need Help"</li>
+            <li>Describe specific assistance needed</li>
+            <li>Indicate urgency level</li>
+            <li>Provide contact information</li>
+            <li>System notifies depot foreperson automatically</li>
+        </ol>
+    </div>
+</div>
+
+<div class="section" id="team-management">
+    <h2>6. Team Management</h2>
+    
+    <h3>Coordinating Team Members:</h3>
+    <div class="step">
+        <strong>Team Coordination:</strong>
+        <ul>
+            <li>Assign specific roles to team members</li>
+            <li>Ensure everyone understands safety requirements</li>
+            <li>Coordinate equipment and vehicle usage</li>
+            <li>Maintain communication throughout the day</li>
+            <li>Monitor team member safety and wellbeing</li>
+        </ul>
+    </div>
+    
+    <h3>Workload Distribution:</h3>
+    <div class="step">
+        <strong>Efficient Team Usage:</strong>
+        <ol>
+            <li>Assess team member capabilities</li>
+            <li>Assign tasks based on experience level</li>
+            <li>Ensure balanced workload distribution</li>
+            <li>Rotate difficult or hazardous tasks</li>
+            <li>Provide training opportunities</li>
+        </ol>
+    </div>
+    
+    <h3>Communication Protocols:</h3>
+    <div class="step">
+        <strong>Team Communication:</strong>
+        <ul>
+            <li>Regular check-ins with team members</li>
+            <li>Clear instructions for each assignment</li>
+            <li>Emergency contact procedures</li>
+            <li>End-of-day debriefing sessions</li>
+        </ul>
+    </div>
+</div>
+
+<div class="section" id="safety">
+    <h2>7. Safety Procedures</h2>
+    
+    <div class="safety">
+        <h3>Electrical Safety Requirements:</h3>
+        <ul>
+            <li><strong>PPE:</strong> Appropriate for voltage level being worked</li>
+            <li><strong>Isolation:</strong> Verify system isolation before contact</li>
+            <li><strong>Testing:</strong> Test before touch procedures</li>
+            <li><strong>Clearances:</strong> Maintain safe working distances</li>
+            <li><strong>Communication:</strong> Clear communication with control room</li>
+        </ul>
+    </div>
+    
+    <h3>Voltage-Specific Procedures:</h3>
+    <div class="step">
+        <strong>Low Voltage (0.4kV):</strong>
+        <ul>
+            <li>Standard electrical PPE</li>
+            <li>Verify isolation before work</li>
+            <li>Test equipment before contact</li>
+        </ul>
+    </div>
+    
+    <div class="step">
+        <strong>Medium Voltage (11kV-33kV):</strong>
+        <ul>
+            <li>Enhanced PPE requirements</li>
+            <li>Minimum approach distances</li>
+            <li>Specialized testing equipment</li>
+            <li>Operations room coordination</li>
+        </ul>
+    </div>
+    
+    <div class="step">
+        <strong>High Voltage (66kV+):</strong>
+        <ul>
+            <li>Maximum safety precautions</li>
+            <li>Specialized training required</li>
+            <li>Extended clearance distances</li>
+            <li>Additional supervision may be required</li>
+        </ul>
+    </div>
+    
+    <div class="warning">
+        <strong>Emergency Procedures:</strong>
+        <ul>
+            <li>Electrical accident response protocol</li>
+            <li>Emergency contact numbers</li>
+            <li>First aid procedures</li>
+            <li>Incident reporting requirements</li>
+        </ul>
+    </div>
+</div>
+
+<div class="section" id="troubleshooting">
+    <h2>8. Troubleshooting</h2>
+    
+    <h3>Common Field Issues:</h3>
+    
+    <div class="step">
+        <strong>Issue:</strong> Cannot access fault location
+        <br><strong>Solution:</strong>
+        <ul>
+            <li>Contact property owner for access</li>
+            <li>Coordinate with depot for key arrangements</li>
+            <li>Report access issues in field update</li>
+            <li>Request assistance from foreperson if needed</li>
+        </ul>
+    </div>
+    
+    <div class="step">
+        <strong>Issue:</strong> Fault locator device malfunction
+        <br><strong>Solution:</strong>
+        <ul>
+            <li>Check device calibration and setup</li>
+            <li>Verify connection points and leads</li>
+            <li>Report equipment issues immediately</li>
+            <li>Request backup device if available</li>
+        </ul>
+    </div>
+    
+    <div class="step">
+        <strong>Issue:</strong> Complex fault requiring additional expertise
+        <br><strong>Solution:</strong>
+        <ul>
+            <li>Document findings thoroughly</li>
+            <li>Use "Need Help" feature to request assistance</li>
+            <li>Continue with safe investigation methods</li>
+            <li>Wait for expert guidance before proceeding</li>
+        </ul>
+    </div>
+    
+    <div class="step">
+        <strong>Issue:</strong> Cannot update system from field
+        <br><strong>Solution:</strong>
+        <ul>
+            <li>Check mobile device connectivity</li>
+            <li>Try switching between WiFi and cellular data</li>
+            <li>Use simple fault list view for better mobile performance</li>
+            <li>Contact support if persistent issues</li>
+        </ul>
+    </div>
+    
+    <div class="warning">
+        <strong>Emergency Contacts:</strong>
+        <ul>
+            <li>Depot Foreperson: [Contact Info]</li>
+            <li>Emergency Services: [Contact Info]</li>
+            <li>Control Room: [Contact Info]</li>
+            <li>Technical Support: [Contact Info]</li>
+        </ul>
+    </div>
+</div>
+
+<div class="success">
+    <h3>Quick Reference for Team Leaders:</h3>
+    <ul>
+        <li><strong>Mobile Access:</strong> Use Simple Fault List for field operations</li>
+        <li><strong>Priority Order:</strong> VVIP → Critical → High → Medium → Low</li>
+        <li><strong>Safety First:</strong> Always follow voltage-appropriate safety procedures</li>
+        <li><strong>Regular Updates:</strong> Keep system updated with progress</li>
+        <li><strong>Complete Reports:</strong> Detailed location information required</li>
+        <li><strong>Request Help:</strong> Don't hesitate to ask for assistance when needed</li>
+        <li><strong>Team Safety:</strong> Monitor team member safety continuously</li>
+    </ul>
+</div>
+
+</body>
+</html>

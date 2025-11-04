@@ -1,0 +1,25 @@
+{% extends 'admin_layout.html' %}
+{% block content %}
+{% include 'fault_locator/partials/form_styles.html' %}
+<div class="container mx-auto px-4 py-8">
+  <div class="max-w-4xl mx-auto bg-white/90 backdrop-blur p-6 rounded-xl shadow-md ring-1 ring-gray-100">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-2xl font-bold text-gray-800">Assign Crane — Request #{{ request_obj.id }}</h2>
+      <a class="px-4 py-2 bg-gray-200 text-gray-900 rounded-lg hover:bg-gray-300" href="{% url 'fault_locator:crane_request_list' %}">Back to requests</a>
+    </div>
+    <div class="mb-4 text-gray-600">
+      <span class="badge badge-muted">Depot</span> {{ request_obj.depot.depot }}
+      <span class="ml-4 badge badge-info">Purpose</span> {{ request_obj.purpose }}
+      <span class="ml-4 badge badge-success">Date</span> {{ request_obj.requested_date }}
+    </div>
+    <form method="post" class="fl-form">
+      {% csrf_token %}
+      {{ form.as_p }}
+      <div class="mt-4 flex items-center gap-3">
+        <button class="btn-primary" type="submit">Save Assignment</button>
+        <a class="btn-secondary" href="{% url 'fault_locator:crane_request_list' %}">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

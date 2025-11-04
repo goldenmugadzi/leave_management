@@ -1,6 +1,7 @@
 from graphene_django.types import DjangoObjectType
 from graphene import ObjectType, List, Field, ID, Int, String , Mutation, Boolean
-from .models import Substation, BatteryInstallation, Cell, BatteryMaintenance, CellReading
+from it.users.models import Substation
+from .models import BatteryInstallation, Cell, BatteryMaintenance, CellReading
 from graphene_django.filter import DjangoFilterConnectionField
 
 class SubstationType(DjangoObjectType):

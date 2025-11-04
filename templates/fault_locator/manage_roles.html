@@ -1,0 +1,382 @@
+{% extends 'base_layout.html' %}
+{% load static %}
+
+{% block title %}Manage Fault Locator Roles{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h3 class="card-title">Manage Fault Locator Roles</h3>
+                        <div>
+                            <a href="{% url 'fault_locator:role_assignment_history' %}" class="btn btn-info btn-sm">
+                                <i class="fas fa-history"></i> View History
+                            </a>
+                            <a href="{% url 'fault_locator:migrate_legacy_roles' %}" class="btn btn-warning btn-sm">
+                                <i class="fas fa-exchange-alt"></i> Migrate Legacy Roles
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card-body">
+                    <!-- Statistics Cards -->
+                    <div class="row mb-4">
+                        <div class="col-md-3">
+                            <div class="card bg-primary text-white">
+                                <div class="card-body">
+                                    <h5>{{ stats.total_users }}</h5>
+                                    <p class="mb-0">Total Users</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-success text-white">
+                                <div class="card-body">
+                                    <h5>{{ stats.users_with_roles }}</h5>
+                                    <p class="mb-0">Users with Roles</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-info text-white">
+                                <div class="card-body">
+                                    <h5>{{ stats.senior_foremen }}</h5>
+                                    <p class="mb-0">Senior Foremen</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card bg-warning text-white">
+                                <div class="card-body">
+                                    <h5>{{ stats.depot_forepersons }}</h5>
+                                    <p class="mb-0">Depot Forepersons</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Search and Filter -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <form method="get" class="form-inline">
+                                <div class="input-group">
+                                    <input type="text" 
+                                           name="search" 
+                                           value="{{ search_query }}" 
+                                           placeholder="Search users..." 
+                                           class="form-control">
+                                    <div class="input-group-append">
+                                        <button class="btn btn-outline-secondary" type="submit">
+                                            <i class="fas fa-search"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                        <div class="col-md-6">
+                            <form method="get">
+                                <div class="input-group">
+                                    <input type="hidden" name="search" value="{{ search_query }}">
+                                    <select name="role" class="form-control" onchange="this.form.submit()">
+                                        <option value="">All Roles</option>
+                                        {% for role_code, role_name in role_choices %}
+                                            <option value="{{ role_code }}" {% if role_filter == role_code %}selected{% endif %}>
+                                                {{ role_name }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Users Table -->
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-striped">
+                            <thead>
+                                <tr>
+                                    <th>User</th>
+                                    <th>EC Number</th>
+                                    <th>Current Role</th>
+                                    <th>Depot</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for user_data in page_obj %}
+                                <tr id="user-row-{{ user_data.user.id }}">
+                                    <td>
+                                        <strong>{{ user_data.user.get_full_name|default:user_data.user.username }}</strong>
+                                        <br>
+                                        <small class="text-muted">{{ user_data.user.email }}</small>
+                                    </td>
+                                    <td>{{ user_data.user.username }}</td>
+                                    <td>
+                                        <span id="current-role-{{ user_data.user.id }}">
+                                            {% if user_data.current_role_display %}
+                                                <span class="badge badge-info">{{ user_data.current_role_display }}</span>
+                                            {% else %}
+                                                <span class="badge badge-secondary">No Role</span>
+                                            {% endif %}
+                                        </span>
+                                    </td>
+                                    <td>{{ user_data.depot }}</td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <button type="button" 
+                                                    class="btn btn-sm btn-primary" 
+                                                    data-toggle="modal" 
+                                                    data-target="#assignRoleModal"
+                                                    data-user-id="{{ user_data.user.id }}"
+                                                    data-user-name="{{ user_data.user.get_full_name|default:user_data.user.username }}"
+                                                    data-current-role="{{ user_data.current_role|default:'' }}">
+                                                <i class="fas fa-user-cog"></i> Assign
+                                            </button>
+                                            {% if user_data.current_role %}
+                                            <button type="button" 
+                                                    class="btn btn-sm btn-danger" 
+                                                    onclick="removeRole({{ user_data.user.id }}, '{{ user_data.user.get_full_name|default:user_data.user.username }}')">
+                                                <i class="fas fa-user-times"></i> Remove
+                                            </button>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="5" class="text-center">No users found</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Pagination -->
+                    {% if page_obj.has_other_pages %}
+                    <nav aria-label="Page navigation">
+                        <ul class="pagination justify-content-center">
+                            {% if page_obj.has_previous %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}&search={{ search_query }}&role={{ role_filter }}">Previous</a>
+                                </li>
+                            {% endif %}
+                            
+                            {% for num in page_obj.paginator.page_range %}
+                                {% if page_obj.number == num %}
+                                    <li class="page-item active">
+                                        <span class="page-link">{{ num }}</span>
+                                    </li>
+                                {% else %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="?page={{ num }}&search={{ search_query }}&role={{ role_filter }}">{{ num }}</a>
+                                    </li>
+                                {% endif %}
+                            {% endfor %}
+                            
+                            {% if page_obj.has_next %}
+                                <li class="page-item">
+                                    <a class="page-link" href="?page={{ page_obj.next_page_number }}&search={{ search_query }}&role={{ role_filter }}">Next</a>
+                                </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Assign Role Modal -->
+<div class="modal fade" id="assignRoleModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Assign Fault Locator Role</h5>
+                <button type="button" class="close" data-dismiss="modal">
+                    <span>&times;</span>
+                </button>
+            </div>
+            <form id="assignRoleForm">
+                <div class="modal-body">
+                    <input type="hidden" id="assign-user-id" name="user_id">
+                    
+                    <div class="form-group">
+                        <label>User:</label>
+                        <p id="assign-user-name" class="font-weight-bold"></p>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="assign-role-code">Role:</label>
+                        <select id="assign-role-code" name="role_code" class="form-control" required onchange="toggleDepotSelection()">
+                            <option value="">Select Role</option>
+                            {% for role_code, role_name in role_choices %}
+                                <option value="{{ role_code }}">{{ role_name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="form-group" id="depot-selection" style="display: none;">
+                        <label for="assign-depot-id">Depot:</label>
+                        <select id="assign-depot-id" name="depot_id" class="form-control">
+                            <option value="">Select Depot</option>
+                            {% for depot in available_depots %}
+                                <option value="{{ depot.id }}">{{ depot.depot }} - {{ depot.region.region }}</option>
+                            {% endfor %}
+                        </select>
+                        <small class="form-text text-muted">Required for depot foreperson role. Only available depots are shown.</small>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <strong>Note:</strong> Assigning a new role will replace any existing fault locator role for this user.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Assign Role</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+// Handle assign role modal
+$('#assignRoleModal').on('show.bs.modal', function (event) {
+    var button = $(event.relatedTarget);
+    var userId = button.data('user-id');
+    var userName = button.data('user-name');
+    var currentRole = button.data('current-role');
+    
+    var modal = $(this);
+    modal.find('#assign-user-id').val(userId);
+    modal.find('#assign-user-name').text(userName);
+    modal.find('#assign-role-code').val(currentRole);
+});
+
+// Handle assign role form submission
+$('#assignRoleForm').on('submit', function(e) {
+    e.preventDefault();
+    
+    var formData = {
+        'user_id': $('#assign-user-id').val(),
+        'role_code': $('#assign-role-code').val(),
+        'csrfmiddlewaretoken': $('[name=csrfmiddlewaretoken]').val()
+    };
+    
+    // Include depot_id if depot foreperson role is selected
+    if ($('#assign-role-code').val() === 'depot_foreperson') {
+        formData['depot_id'] = $('#assign-depot-id').val();
+        
+        if (!formData['depot_id']) {
+            showAlert('danger', 'Please select a depot for the depot foreperson role.');
+            return;
+        }
+    }
+    
+    $.ajax({
+        url: '{% url "assign_fault_locator_role_ajax" %}',
+        type: 'POST',
+        data: formData,
+        success: function(response) {
+            if (response.success) {
+                // Update the role display in the table
+                var userId = formData.user_id;
+                var roleDisplay = response.new_role_display;
+                if (response.depot) {
+                    roleDisplay += ' (' + response.depot + ')';
+                }
+                $('#current-role-' + userId).html(
+                    '<span class="badge badge-info">' + roleDisplay + '</span>'
+                );
+                
+                // Close modal and show success message
+                $('#assignRoleModal').modal('hide');
+                showAlert('success', response.message);
+                
+                // Reload page to update remove button visibility
+                setTimeout(function() {
+                    location.reload();
+                }, 1000);
+            } else {
+                showAlert('danger', response.message);
+            }
+        },
+        error: function() {
+            showAlert('danger', 'Error assigning role. Please try again.');
+        }
+    });
+});
+
+// Function to toggle depot selection based on role
+function toggleDepotSelection() {
+    var roleCode = $('#assign-role-code').val();
+    var depotSelection = $('#depot-selection');
+    
+    if (roleCode === 'depot_foreperson') {
+        depotSelection.show();
+        $('#assign-depot-id').prop('required', true);
+    } else {
+        depotSelection.hide();
+        $('#assign-depot-id').prop('required', false);
+        $('#assign-depot-id').val('');
+    }
+}
+
+// Remove role function
+function removeRole(userId, userName) {
+    if (confirm('Are you sure you want to remove the fault locator role from ' + userName + '?')) {
+        $.ajax({
+            url: '{% url "remove_fault_locator_role_ajax" %}',
+            type: 'POST',
+            data: {
+                'user_id': userId,
+                'csrfmiddlewaretoken': $('[name=csrfmiddlewaretoken]').val()
+            },
+            success: function(response) {
+                if (response.success) {
+                    // Update the role display in the table
+                    $('#current-role-' + userId).html(
+                        '<span class="badge badge-secondary">No Role</span>'
+                    );
+                    
+                    showAlert('success', response.message);
+                    
+                    // Reload page to update button visibility
+                    setTimeout(function() {
+                        location.reload();
+                    }, 1000);
+                } else {
+                    showAlert('danger', response.message);
+                }
+            },
+            error: function() {
+                showAlert('danger', 'Error removing role. Please try again.');
+            }
+        });
+    }
+}
+
+// Show alert function
+function showAlert(type, message) {
+    var alertHtml = '<div class="alert alert-' + type + ' alert-dismissible fade show" role="alert">' +
+                    message +
+                    '<button type="button" class="close" data-dismiss="alert">' +
+                    '<span>&times;</span>' +
+                    '</button>' +
+                    '</div>';
+    
+    $('.card-body').prepend(alertHtml);
+    
+    // Auto-dismiss after 5 seconds
+    setTimeout(function() {
+        $('.alert').alert('close');
+    }, 5000);
+}
+</script>
+{% endblock %}
+

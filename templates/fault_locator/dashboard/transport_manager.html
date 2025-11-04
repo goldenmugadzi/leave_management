@@ -1,0 +1,66 @@
+<div class="mt-8">
+  <h4 class="text-2xl font-bold text-nepal-800 mb-6 flex items-center gap-3">
+    <i class="fas fa-truck-moving text-gulf-blue-600"></i>
+    Transport Manager — Crane Management
+  </h4>
+
+  <!-- Stats Cards -->
+  {% if stats %}
+  <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
+    <div class="glass-card p-4 rounded-2xl text-center"><div class="text-3xl font-bold">{{ stats.total_trucks }}</div><div class="text-nepal-600">Trucks</div></div>
+    <div class="glass-card p-4 rounded-2xl text-center"><div class="text-3xl font-bold">{{ stats.trucks_available }}</div><div class="text-nepal-600">Available</div></div>
+    <div class="glass-card p-4 rounded-2xl text-center"><div class="text-3xl font-bold">{{ stats.trucks_in_service }}</div><div class="text-nepal-600">In Service</div></div>
+    <div class="glass-card p-4 rounded-2xl text-center"><div class="text-3xl font-bold">{{ stats.pending_requests }}</div><div class="text-nepal-600">Pending Requests</div></div>
+    <div class="glass-card p-4 rounded-2xl text-center"><div class="text-3xl font-bold">{{ stats.assigned_requests }}</div><div class="text-nepal-600">Assigned</div></div>
+    <div class="glass-card p-4 rounded-2xl text-center"><div class="text-3xl font-bold">{{ stats.completed_today }}</div><div class="text-nepal-600">Completed Today</div></div>
+  </div>
+  {% endif %}
+
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <!-- Pending Requests -->
+    <div class="glass-card p-6 rounded-3xl">
+      <div class="flex items-center justify-between mb-4">
+        <h5 class="text-xl font-semibold text-nepal-800">Pending Crane Requests</h5>
+        <a href="/fault_locator/cranes/requests/" class="text-gulf-blue-600 hover:underline">View all</a>
+      </div>
+      {% if pending_requests %}
+        <ul class="divide-y divide-nepal-200/50">
+          {% for r in pending_requests %}
+          <li class="py-3 flex items-center justify-between">
+            <div>
+              <div class="font-medium text-nepal-800">{{ r.depot.depot }} — {{ r.purpose|truncatechars:40 }}</div>
+              <div class="text-nepal-500 text-sm">{{ r.requested_date }} · by {{ r.requested_by.get_full_name|default:r.requested_by.username }}</div>
+            </div>
+            <a href="/fault_locator/cranes/requests/{{ r.id }}/assign/" class="px-3 py-1.5 rounded-lg text-white bg-gulf-blue-600 hover:bg-gulf-blue-700 text-sm">Assign</a>
+          </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="text-nepal-500">No pending requests</p>
+      {% endif %}
+    </div>
+
+    <!-- Available Trucks -->
+    <div class="glass-card p-6 rounded-3xl">
+      <div class="flex items-center justify-between mb-4">
+        <h5 class="text-xl font-semibold text-nepal-800">Available Trucks</h5>
+        <a href="/fault_locator/cranes/trucks/" class="text-gulf-blue-600 hover:underline">Manage</a>
+      </div>
+      {% if available_trucks %}
+        <ul class="divide-y divide-nepal-200/50">
+          {% for t in available_trucks %}
+          <li class="py-3 flex items-center justify-between">
+            <div>
+              <div class="font-medium text-nepal-800">{{ t.fleet_number }} — {{ t.number_plate }}</div>
+              <div class="text-nepal-500 text-sm">{{ t.get_status_display|default:t.status|capfirst }} · {{ t.operator.get_full_name|default:'No operator' }}</div>
+            </div>
+            <a href="/fault_locator/cranes/trucks/{{ t.id }}/edit/" class="px-3 py-1.5 rounded-lg text-white bg-gulf-blue-600 hover:bg-gulf-blue-700 text-sm">Edit</a>
+          </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="text-nepal-500">No trucks available</p>
+      {% endif %}
+    </div>
+  </div>
+</div>

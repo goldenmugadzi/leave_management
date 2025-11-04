@@ -190,6 +190,9 @@
                             <p class="font-bold   mb-2"> Details of expenditure: {{ ace.details_of_expenditure }}</p>
                             <p class="font-bold mb-2"> Region: {{ ace.region}}</p>
                             <p class="font-bold   mb-2"> Section: {{ ace.section }}</p>
+                            {% if ace.cost_center %}
+                            <p class="font-bold mb-2"> Cost Center: {{ ace.cost_center.code }} - {{ ace.cost_center.name }}</p>
+                            {% endif %}
                             <p class="font-bold mb-2">Budget:{{ ace.budget_id }}</p>
                         <p class="font-bold mb-2">
                             {% for attachment in ace.quotation_set.all %}

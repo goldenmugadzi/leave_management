@@ -1,0 +1,33 @@
+{% extends "admin_layout.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header">
+            <h3>Current User Debug Info</h3>
+        </div>
+        <div class="card-body">
+            <p><strong>Username:</strong> {{ user.username }}</p>
+            <p><strong>Full Name:</strong> {{ user.get_full_name }}</p>
+            <p><strong>Email:</strong> {{ user.email }}</p>
+            
+            {% if user_profile %}
+                <p><strong>Designation:</strong> {{ user_profile.designation.description|default:"Not set" }}</p>
+                <p><strong>Section:</strong> {{ user_profile.section.section|default:"Not set" }}</p>
+                <p><strong>Depot:</strong> {{ user_profile.depot.depot|default:"Not set" }}</p>
+                
+                <hr>
+                <h4>Fault Locator Permissions:</h4>
+                <ul>
+                    <li><strong>is_senior_foreman:</strong> {{ is_senior_foreman }}</li>
+                    <li><strong>can_manage_devices:</strong> {{ can_manage_devices }}</li>
+                    <li><strong>can_deploy_teams:</strong> {{ can_deploy_teams }}</li>
+                    <li><strong>can_recall_teams:</strong> {{ can_recall_teams }}</li>
+                </ul>
+            {% else %}
+                <p><strong>User Profile:</strong> Not found</p>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

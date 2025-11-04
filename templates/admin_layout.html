@@ -5,7 +5,7 @@
     <!-- Select2 CSS -->
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Business Excellence</title>
+    <title>{% block title %}Business Excellence{% endblock %}</title>
     <link
       rel="shortcut icon"
       href="{% static 'assets/images/website-logo.png' %}"
@@ -584,10 +584,10 @@
                           </div>
                         </div>
                         {% endif %}
-                     <a href="{% url 'BatteryMaintenance:clear_notifications' %}" 
+                     {% comment %} <a href="{% url 'BatteryMaintenance:clear_notifications' %}" 
    class="text-red-700 font-bold py-2 px-4 rounded border bg-blue-200 m-10">
    Clear all
-</a>
+</a> {% endcomment %}
 {% csrf_token %}
 </div>
                     </div>

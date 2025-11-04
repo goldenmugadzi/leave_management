@@ -16,21 +16,19 @@ Including another URLconf
 
 from django.conf.urls.static import static
 from django.conf import settings
-from django.views.decorators.csrf import csrf_exempt
-from graphene_file_upload.django import FileUploadGraphQLView
+
 from django.contrib import admin
 from django.urls import path, include
-
-
-
+from django.views.decorators.csrf import csrf_exempt
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
     TokenVerifyView
 )
+from graphene_file_upload.django import FileUploadGraphQLView
 
 urlpatterns = [
-    path('', include('pretask_risk_assessment.urls')),
+    path('', include('django_prometheus.urls')),
     path('', include('it.beii_auth.urls')),
     path('', include('Docs.urls')),
     path('', include('tokens.urls')),
@@ -43,7 +41,6 @@ urlpatterns = [
     path('change_requests/', include('it.change_requests.urls')),
     path('dashboards/', include('executive.general_dashboards.urls')),
     path('ims/', include('knowledge_center.urls')),
-    path('ims/processes/', include('process_management.urls')),
     path('processes/', include('processes.urls'), name='processes'),
     path('process_risks/', include('process_risks.urls'), name='process_risks'),
     # path('process_maps/',include('process_maps.urls'), name='process_maps'),
@@ -51,22 +48,28 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     # path('accounts/', include('django.contrib.auth.urls')),
     path('ace/', include('ACE2.urls')),
-    path('appraisal/', include('appraisal.urls')),
+    # Namespaced include so templates can reverse with 'fault_locator:<name>'
+    path('fault_locator/', include(('fault_locator.urls', 'fault_locator'), namespace='fault_locator')),
+   
 
     # path('ace/', include('finance.Ace.urls')),
-    path('', include('toolsandequipment.urls')),
-    path('', include('safety.urls')),   
-    path('', include('BatteryMaintenance.urls')),
     path('direct_purchases/', include('finance.Direct_purchases.urls')),
     path('pettycash/', include('finance.PettyCash.urls')),
     path('comperative_schedule/', include('finance.comparative_schedules.urls')),
     path('restricted_bidding/', include('finance.ristricted_bidding.urls')),
     path('direct_purchase/', include('finance.direct_purchase.urls')),
     path('reports/', include('reports.urls')),
-    
+    path('api-auth/', include('rest_framework.urls')),
+    path('api/auth/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('api/auth/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('api/auth/token/verify/', TokenVerifyView.as_view(), name='token_verify'),
+    # OPS & MAINTENANCE
+    path('api/safety/operations/', include('api.ops_maintenance.safety_operations.urls')),
+     # path('', include('hardware_faults.urls')),
     path('', include('Hardware_Faults.urls')),
     path('', include('Asset_Register.urls')),
 
+    # Add the comm_files app URLs
     path('commercial/', include('comm_files.urls')),
     path('', include('Transport.urls')),
     # path('', include('safety.urls')),
@@ -95,5 +98,3 @@ urlpatterns = [
 
 ] 
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
-# Serve uploads directory for CS bid documents
-urlpatterns += static('/uploads/', document_root=settings.BASE_DIR / 'uploads')
