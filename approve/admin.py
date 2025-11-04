@@ -12,6 +12,7 @@ class StepAdmin(admin.ModelAdmin):
 @admin.register(Process)
 class ProcessAdmin(admin.ModelAdmin):
     list_display = [field.name for field in Process._meta.fields]
+    search_fields = ('name', 'description')
 
 @admin.register(Approval)
 class ApprovalAdmin(admin.ModelAdmin):

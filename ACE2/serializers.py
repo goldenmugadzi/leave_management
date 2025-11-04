@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
-from it.users.models import UserProfile, Roles, Sections, Regions
+from it.users.models import UserProfile, Roles, Sections, Regions, CostCenter
 from approve.models import Process, Step, Approval
 from .models import Ace2, AssetBudget, Quotation, Transactions, Asset_budget_Virament
 
@@ -45,17 +45,21 @@ class QuotationSerializer(serializers.ModelSerializer):
 class AssetBudgetSerializer(serializers.ModelSerializer):
     section_name = serializers.SerializerMethodField()
     region_name = serializers.SerializerMethodField()
+    cost_center_code = serializers.SerializerMethodField()
     
     class Meta:
         model = AssetBudget
         fields = ['budget_id', 'section_code', 'section_name', 'budget_name', 'allocated', 
-                  'withdrawn', 'balance', 'awaiting_sanctioning', 'period', 'region_name']
+              'withdrawn', 'balance', 'awaiting_sanctioning', 'period', 'region_name', 'cost_center_code']
     
     def get_section_name(self, obj):
         return obj.section if obj.section else ""
     
     def get_region_name(self, obj):
         return obj.region.region if obj.region else ""
+    
+    def get_cost_center_code(self, obj):
+        return obj.cost_center.code if getattr(obj, 'cost_center', None) else ""
 
 class ApprovalSerializer(serializers.ModelSerializer):
     user_name = serializers.SerializerMethodField()
@@ -79,13 +83,14 @@ class AceSerializer(serializers.ModelSerializer):
     approval_status = serializers.SerializerMethodField()
     quotations = QuotationSerializer(source='quotation_set', many=True, read_only=True)
     approvals = serializers.SerializerMethodField()
+    cost_center_code = serializers.SerializerMethodField()
     
     class Meta:
         model = Ace2
         fields = ['Ace_id2', 'details_of_expenditure', 'amount', 'requested_by', 'requested_by_name',
                   'section', 'section_name', 'region_name', 'date_created', 'budget_id', 'budget_name',
                   'classification', 'approval_status', 'quotations', 'approvals', 'asset_number',
-                  'currency', 'quantity']
+              'currency', 'quantity', 'cost_center_code']
     
     def get_requested_by_name(self, obj):
         return obj.requested_by.get_full_name() if obj.requested_by else ""
@@ -110,17 +115,21 @@ class AceSerializer(serializers.ModelSerializer):
             approvals = obj.process.approval_set.all()
             return ApprovalSerializer(approvals, many=True).data
         return []
+    
+    def get_cost_center_code(self, obj):
+        return obj.cost_center.code if getattr(obj, 'cost_center', None) else ""
 
 class TransactionSerializer(serializers.ModelSerializer):
     budget_name = serializers.SerializerMethodField()
     section_name = serializers.SerializerMethodField()
     region_name = serializers.SerializerMethodField()
     ace_id = serializers.SerializerMethodField()
+    cost_center_code = serializers.SerializerMethodField()
     
     class Meta:
         model = Transactions
         fields = ['id', 'Ace_id2', 'ace_id', 'details_of_expenditure', 'approval_status', 
-                  'region', 'region_name', 'amount', 'budget', 'budget_name', 'section', 'section_name']
+              'region', 'region_name', 'amount', 'budget', 'budget_name', 'section', 'section_name', 'cost_center_code']
     
     def get_budget_name(self, obj):
         return obj.budget.budget_name if obj.budget else ""
@@ -133,6 +142,9 @@ class TransactionSerializer(serializers.ModelSerializer):
     
     def get_ace_id(self, obj):
         return obj.Ace_id2.Ace_id2 if obj.Ace_id2 else ""
+    
+    def get_cost_center_code(self, obj):
+        return obj.cost_center.code if getattr(obj, 'cost_center', None) else ""
 
 class ViramentSerializer(serializers.ModelSerializer):
     requested_by_name = serializers.SerializerMethodField()
@@ -140,12 +152,13 @@ class ViramentSerializer(serializers.ModelSerializer):
     from_budget_name = serializers.SerializerMethodField()
     to_budget_name = serializers.SerializerMethodField()
     approval_status = serializers.SerializerMethodField()
+    cost_center_code = serializers.SerializerMethodField()
     
     class Meta:
         model = Asset_budget_Virament
         fields = ['virament_id', 'from_budget', 'from_budget_name', 'to_budget', 'to_budget_name',
                   'amount', 'reason', 'date_created', 'requested_by', 'requested_by_name',
-                  'section', 'section_name', 'approval_status']
+              'section', 'section_name', 'approval_status', 'cost_center_code']
     
     def get_requested_by_name(self, obj):
         return obj.requested_by.get_full_name() if obj.requested_by else ""
@@ -164,3 +177,6 @@ class ViramentSerializer(serializers.ModelSerializer):
             last_approval = obj.process.approval_set.last()
             return last_approval.approved
         return "Pending"
+    
+    def get_cost_center_code(self, obj):
+        return obj.cost_center.code if getattr(obj, 'cost_center', None) else ""

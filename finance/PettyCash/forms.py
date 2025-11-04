@@ -50,6 +50,7 @@ class CashierDisbursementForm(forms.Form):
 
 from django import forms
 from django.contrib.auth.models import User
+from django.db.models import Q
 
 from ACE2.models import AssetBudget
 from it.users.models import UserProfile, Regions, Sections
@@ -78,14 +79,59 @@ class PettycashForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         print("user", user)
 
+        # Handle user parameter - can be either Django User or UserProfile
+        user_profile = None
         if user:
-            user_profile = UserProfile.objects.filter(username=user.username).first()
-            if user_profile:
-                region = user_profile.region
-                region_id = Regions.objects.filter(region=region).first()
+            if hasattr(user, 'username'):
+                # It's a Django User, get the UserProfile
+                if hasattr(user, 'id'):
+                    user_profile = UserProfile.objects.filter(id=user.id).first()
+                else:
+                    user_profile = UserProfile.objects.filter(username=user.username).first()
+            else:
+                # Assume it's already a UserProfile
+                user_profile = user
 
-                print("region", region)
-                self.fields['section'].queryset = Sections.objects.filter(region_id=region_id.id)
+        if user_profile:
+            # Robust cost_center filtering with fallbacks
+            from it.users.models import CostCenter
+            
+            if user_profile.cost_center:
+                # Primary: Use user's cost center and its descendants
+                cost_center_queryset = CostCenter.objects.filter(
+                    id__in=user_profile.cost_center.get_decendance()
+                ).order_by('name')
+            elif user_profile.section:
+                # Secondary: Filter by section name matching
+                section_name = user_profile.section.section if hasattr(user_profile.section, 'section') else str(user_profile.section)
+                cost_center_queryset = CostCenter.objects.filter(
+                    Q(parent__name__icontains=section_name) | Q(name__icontains=section_name)
+                ).order_by('name')
+            else:
+                # Fallback: Show all cost centers
+                cost_center_queryset = CostCenter.objects.all().order_by('name')
+            
+            self.fields['cost_center'].queryset = cost_center_queryset
+            
+            # Robust section filtering with fallbacks
+            if user_profile.region:
+                region_obj = None
+                if hasattr(user_profile.region, 'id'):
+                    region_obj = user_profile.region
+                else:
+                    region_obj = Regions.objects.filter(region=user_profile.region).first()
+                
+                if region_obj:
+                    section_queryset = Sections.objects.filter(region_id=region_obj.id)
+                    if not section_queryset.exists():
+                        # Fallback to all sections if region-based query returns nothing
+                        section_queryset = Sections.objects.all()
+                else:
+                    section_queryset = Sections.objects.all()
+            else:
+                section_queryset = Sections.objects.all()
+                
+            self.fields['section'].queryset = section_queryset
 
         for field_name, field in self.fields.items():
             field.widget.attrs.update({
@@ -110,7 +156,7 @@ class PettycashForm(forms.ModelForm):
                                            })
                 # set maximum to 2600
                 field.widget.attrs.update({'max': '5000'})
-            if field_name == 'section':
+            if field_name == 'section' or field_name == 'cost_center':
                 field.widget.attrs.update({
                     'class': "select2 block w-full rounded-md border-0 py-1.5 text-gray-900 "
                              "shadow-sm ring-1 ring-inset ring-gray-300 "
