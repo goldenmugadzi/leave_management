@@ -5,6 +5,7 @@ from ...models import KeyResultArea, AppraisalOutPutPerformanceDimensionScore, J
 from ...models.helpers import YearQuarter
 from it.users.models import Designations, Regions, Sections
 from ..types.final_results import FinalRatingType
+from datetime import date
 
 class QualificationsType(BaseModel):
     """
@@ -60,8 +61,8 @@ class AppraisalPersonalDetails(BaseModel):
     appraisee_experiance: List[str]
     appraisee_national_id: str|None
     appraisee_ec_no: str
-    appraisee_date_of_appointment: str|None
-    appraisee_position_appointment_date: str|None
+    appraisee_date_of_appointment: date | None
+    appraisee_position_appointment_date: date | None
     appraisee_department: Sections|None
     appraisee_station: Regions|None
     appraiser_name: str
