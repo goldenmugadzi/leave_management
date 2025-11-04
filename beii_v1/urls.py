@@ -28,6 +28,8 @@ from rest_framework_simplejwt.views import (
 )
 from it.users.serializers import MyTokenObtainPairView
 from graphene_file_upload.django import FileUploadGraphQLView
+from it.users.serializers import MyTokenObtainPairView
+
 # Serve robots.txt to prevent search engine indexing
 def robots_txt(request):
     robots_content = """# Robots.txt - Prevent search engine indexing
