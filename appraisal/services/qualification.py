@@ -118,7 +118,11 @@ class UserQualificationService:
                         elif isinstance(raw_date_value, datetime):
                             parsed_date = raw_date_value.date()
                         elif isinstance(raw_date_value, str):
-                            for fmt in ("%Y-%m-%d", "%d/%m/%Y", "%m/%d/%Y", "%d-%m-%Y"):
+                            date_fmts = [
+                                "%Y-%m-%d", "%d/%m/%Y", "%m/%d/%Y", "%d-%m-%Y",
+                                "%Y.%m.%d", "%d.%m.%Y", "%m.%d.%Y", "%d.%m.%Y"
+                            ]
+                            for fmt in date_fmts:
                                 try:
                                     parsed_date = datetime.strptime(raw_date_value.strip(), fmt).date()
                                     break
