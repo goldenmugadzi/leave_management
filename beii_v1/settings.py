@@ -38,6 +38,15 @@ CSRF_TRUSTED_ORIGINS = [
 CORS_ALLOW_HEADERS = ('content-disposition', 'accept-encoding',
                       'content-type', 'accept', 'origin', 'authorization')
 
+CORS_ALLOW_METHODS = [
+    'DELETE',
+    'GET',
+    'OPTIONS',
+    'PATCH',
+    'POST',
+    'PUT',
+]
+
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework.authentication.SessionAuthentication',
@@ -105,6 +114,7 @@ INSTALLED_APPS = [
     'django.contrib.humanize',
     'rest_framework',
     'rest_framework_simplejwt',
+    'corsheaders',
     'clearcache',
     'risk.audit.nonconformity',
     'it.beii_auth',
@@ -212,8 +222,21 @@ SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', config('SECURE_PROXY_SSL_HE
 SECURE_HSTS_SECONDS = config('SECURE_HSTS_SECONDS', default=31536000, cast=int)  # 1 year
 SECURE_HSTS_INCLUDE_SUBDOMAINS = config('SECURE_HSTS_INCLUDE_SUBDOMAINS', default=True, cast=bool)
 SECURE_HSTS_PRELOAD = config('SECURE_HSTS_PRELOAD', default=True, cast=bool)
+
+# Cookie Security
 CSRF_COOKIE_SECURE = config('CSRF_COOKIE_SECURE', default=True, cast=bool)
 SESSION_COOKIE_SECURE = config('SESSION_COOKIE_SECURE', default=True, cast=bool)
+SESSION_COOKIE_HTTPONLY = True
+# CSRF cookie must be accessible to JavaScript for AJAX/React apps
+# Reference: https://docs.djangoproject.com/en/4.2/ref/settings/#csrf-cookie-httponly
+CSRF_COOKIE_HTTPONLY = False
+
+# Additional Security Headers
+SECURE_CONTENT_TYPE_NOSNIFF = True  # Prevent MIME-type sniffing
+X_FRAME_OPTIONS = 'DENY'  # Prevent clickjacking attacks
+SECURE_BROWSER_XSS_FILTER = True  # Enable browser XSS filtering
+SECURE_REFERRER_POLICY = 'same-origin'  # Prevent referrer information leakage
+X_ROBOTS_TAG = 'noindex, nofollow'  # Prevent search engine indexing
 
 # Set session timeout to 10 minutes (600 seconds)
 SESSION_COOKIE_AGE = 600

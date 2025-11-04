@@ -1,0 +1,15 @@
+# Robots.txt - Prevent search engine indexing
+# This file blocks all web crawlers from indexing the site
+# to prevent sensitive information disclosure
+
+User-agent: *
+Disallow: /
+
+# Additional security measures:
+# - No crawling of any part of the site
+# - No indexing of file download endpoints
+# - No crawling of user-generated content
+# - No indexing of PII-containing documents
+
+# This is a private business application containing sensitive data
+# All access should be authenticated and authorized
