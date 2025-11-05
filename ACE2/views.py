@@ -1539,9 +1539,10 @@ def viraments_awaiting_my_action(request):
 
         # Only add if the user is the approver for this step
         if step:
-            # Optionally, check if the user is in the approver list for this step
-            if step.approver.filter(id__in=request.user.roles.values_list('id', flat=True)).exists():
-                viraments_to_process.append(virement)
+            # Compare approver.id directly to user's role id
+            if hasattr(step.approver, 'id') and hasattr(request.user.roles, 'id'):
+                if step.approver.id == request.user.roles.id:
+                    viraments_to_process.append(virement)
 
     return render(request, 'finance/ace2/view_all_viraments.html', {'aces': viraments_to_process,
                                                                     'virement_role': virement_role,

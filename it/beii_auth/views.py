@@ -133,18 +133,36 @@ APPLICATIONS = [
         "title": "Commercial Files",
         "iconUrl": "assets/images/customer.png",
         "url": "/commercial/customers"
-    },  {
-        "name": "Battery Maintenance",
-        "title": "Battery Maintenance",
-        "iconUrl": "assets/images/customer.png",
-        "url": "/installations/"
-    },
-    {
-        "name": "inspections",
-        "title": "Inspections",
-        "iconUrl": "assets/images/customer.png",
-        "url": "/inspections/"
-    },
+    },  
+    # {
+    #     "name": "Battery Maintenance",
+    #     "title": "Battery Maintenance",
+    #     "iconUrl": "assets/images/customer.png",
+    #     "url": "/installations/"
+    # },  {
+    #     "name": "Tools & Equipment",
+    #     "title": "Tools & Equipment",
+    #     "iconUrl": "assets/images/tools&equipment.png",
+    #     "url": "/tools-and-equipment-list/"
+    # },
+    # {
+    #     "name": "inspections",
+    #     "title": "Inspections",
+    #     "iconUrl": "assets/images/customer.png",
+    #     "url": "/inspections/"
+    # },
+    # {
+    #     "name": "substation_inspections",
+    #     "title": "Substation Inspections",
+    #     "iconUrl": "assets/images/customer.png",
+    #     "url": "/substation-inspections/"
+    # },
+    # {
+    #     "name": "circuit_breaker_maintenance",
+    #     "title": "Circuit Breaker Maintenance",
+    #     "iconUrl": "assets/images/circuit_breaker.png",
+    #     "url": "/circuit-breakers/circuit-breakers/"
+    # },
     {
         "name": "Meetings",
         "title": "Meetings",

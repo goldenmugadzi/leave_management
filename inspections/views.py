@@ -391,7 +391,7 @@ def application_edit(request, pk):
 def inspection_list(request):
     """List all inspection reports"""
     inspections = InspectionReport.objects.all().order_by('-created_at')
-    
+    print("inspections: ", inspections)
     # Search functionality
     search_query = request.GET.get('search', '')
     if search_query:
@@ -407,7 +407,7 @@ def inspection_list(request):
     inspections = paginator.get_page(page_number)
     
     context = {
-        'inspections': inspections,
+        'reports': inspections,  # Template expects 'reports' variable
         'search_query': search_query,
     }
     return render(request, 'inspections/inspection_list.html', context)
@@ -633,7 +633,7 @@ def assignment_create(request):
             application.save()
             
             messages.success(request, f'Application assigned to {assignment.assigned_to.get_full_name()} successfully.')
-            return redirect('inspections:assignment_list')
+            return redirect('inspections:application_detail', pk=application.pk)
     else:
         form = ApplicationAssignmentForm()
         # Pre-select application if provided in URL parameter

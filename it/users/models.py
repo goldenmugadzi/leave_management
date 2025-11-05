@@ -7,6 +7,7 @@ from django.contrib.auth.models import BaseUserManager
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
 from django.utils import timezone
+from helpers.models.timestamp import TimeStamp
 
 from helpers.models import TimeStamp
 from datetime import date
@@ -393,7 +394,7 @@ class Responsibilities(models.Model):
 
     def __str__(self):
         return str(self.role.name)
-   
+
 
 class RoleDelegation(models.Model):
     """Model for managing temporary role delegations between users"""
