@@ -1363,6 +1363,34 @@ def update_change_request(request):
             print(f"DEBUG: Delegator: {delegator_username}, Delegatee: {delegatee_username}")
             print(f"DEBUG: Assigned role IDs: {assigned_role_ids}")
 
+            # ADDED: Extract delegation dates and reason from JSON
+            delegation_start_date = ""
+            delegation_end_date = ""
+            delegation_reason = ""
+            
+            if is_delegation and profile_change.roles_actions:
+                try:
+                    import json
+                    data = json.loads(profile_change.roles_actions)
+                    
+                    # Extract dates in format suitable for datetime-local input (YYYY-MM-DDTHH:MM)
+                    start_date_raw = data.get('start_date', '')
+                    end_date_raw = data.get('end_date', '')
+                    
+                    if start_date_raw:
+                        # Convert to datetime-local format if needed
+                        # Expected format: "2025-11-06T13:24" (already in datetime-local format)
+                        delegation_start_date = start_date_raw
+                    
+                    if end_date_raw:
+                        delegation_end_date = end_date_raw
+                    
+                    delegation_reason = data.get('reason', '')
+                    
+                    print(f"DEBUG: Extracted delegation dates - Start: {delegation_start_date}, End: {delegation_end_date}")
+                except (json.JSONDecodeError, Exception) as e:
+                    print(f"DEBUG: Error parsing delegation dates: {e}")
+
             cr = {
                 "user": new_user,
                 "cr_id": change_request.cr_id,
@@ -1381,6 +1409,10 @@ def update_change_request(request):
                 "delegator_id": delegator_obj.id if delegator_obj else None,  # ADDED: Delegator ID for AJAX
                 "delegatee_username": delegatee_username,
                 "assigned_role_ids": assigned_role_ids,  # For pre-selecting roles in edit form
+                # ADDED: Delegation date and reason fields
+                "delegation_start_date": delegation_start_date,
+                "delegation_end_date": delegation_end_date,
+                "delegation_reason": delegation_reason,
             }
             
             # Check if current user is the owner
@@ -1536,6 +1568,35 @@ def update_change_request(request):
                             # Clear roles if none selected
                             profile_mod.role_to_assign.clear()
                             print("DEBUG: Cleared all role assignments")
+                        
+                        # ADDED: Update delegation dates and reason
+                        delegation_start_date = sanitized_data.get('delegation_start_date')
+                        delegation_end_date = sanitized_data.get('delegation_end_date')
+                        delegation_reason = sanitized_data.get('delegation_reason')
+                        
+                        if delegation_start_date and delegation_end_date:
+                            import json
+                            # Get existing data or create new
+                            delegation_data = {}
+                            if profile_mod.roles_actions:
+                                try:
+                                    delegation_data = json.loads(profile_mod.roles_actions)
+                                except json.JSONDecodeError:
+                                    delegation_data = {}
+                            
+                            # Update the delegation metadata
+                            delegation_data['type'] = 'DELEGATION'
+                            delegation_data['start_date'] = delegation_start_date
+                            delegation_data['end_date'] = delegation_end_date
+                            delegation_data['reason'] = delegation_reason if delegation_reason else delegation_data.get('reason', '')
+                            
+                            # Keep delegator_id if it exists
+                            if 'delegator_id' not in delegation_data and profile_mod.changed_by:
+                                delegation_data['delegator_id'] = profile_mod.changed_by.id
+                            
+                            # Save back to roles_actions as JSON
+                            profile_mod.roles_actions = json.dumps(delegation_data)
+                            print(f"DEBUG: Updated delegation dates - Start: {delegation_start_date}, End: {delegation_end_date}")
                     
                     profile_mod.save()
                     
@@ -1899,6 +1960,33 @@ def view_profile_modification_request(request, change_request, permissions, appr
     # Parse delegation data for proper display
     delegation_info = parse_delegation_data(profile_change)
     
+    # FIXED: For temporary delegations, build roles display from actual assigned roles
+    roles_to_action_display = delegation_info['formatted_display']
+    if change_request.change_type == "Temporary Role Delegation":
+        # Get actual roles from role_to_assign ManyToMany field
+        assigned_roles = profile_change.role_to_assign.all()
+        if assigned_roles.exists():
+            # Build a readable string of role names
+            role_names = [role.role for role in assigned_roles]
+            roles_to_action_display = ", ".join(role_names)
+            # Also store role objects for template display
+            delegation_info['assigned_roles'] = list(assigned_roles)
+            delegation_info['assigned_role_names'] = role_names
+        else:
+            # Fallback if no roles assigned
+            roles_to_action_display = "TEMPORARY_DELEGATION (No roles specified)"
+    
+    # Get delegator and delegatee info
+    delegator_name = ""
+    delegatee_name = user.get_full_name() if user else ""
+    
+    if change_request.change_type == "Temporary Role Delegation" and profile_change.changed_by:
+        delegator_name = profile_change.changed_by.get_full_name()
+        delegation_info['delegator_name'] = delegator_name
+        delegation_info['delegator_username'] = profile_change.changed_by.username
+    elif delegation_info.get('delegator_name'):
+        delegator_name = delegation_info['delegator_name']
+    
     # Build change request context
     cr = {
         "user": new_user,
@@ -1906,13 +1994,15 @@ def view_profile_modification_request(request, change_request, permissions, appr
         "change_reason": change_request.change_reason,
         "change_description": change_request.change_description,
         "application": change_request.application,
-        "roles_to_action": delegation_info['formatted_display'],
+        "change_type": change_request.change_type,
+        "roles_to_action": roles_to_action_display,  # FIXED: Now shows actual roles for delegations
         "roles_actions": profile_change.roles_actions,
         "delegation_info": delegation_info,
         "cr_context": cr_context,
         "created_by": change_request.created_by.get_full_name(),
         "creator_designation": change_request.creator_designation.description if change_request.creator_designation else "",
-        "created_at": change_request.created_at
+        "created_at": change_request.created_at,
+        "is_delegation": change_request.change_type == "Temporary Role Delegation",  # ADDED: Flag for template
     }
     
     # Get base template context
@@ -2075,10 +2165,19 @@ def view_change_request_unified(request):
         
         # Add type-specific context for profile modification
         if isinstance(handler, ProfileModificationHandler):
-            cr_context['delegation_info'] = handler.get_delegation_info(cr)
+            delegation_info = handler.get_delegation_info(cr)
+            cr_context['delegation_info'] = delegation_info
             cr_context['cr_context'] = handler.get_change_request_context(cr)
+            # ADDED: Add is_delegation flag for template
+            cr_context['is_delegation'] = delegation_info.get('is_delegation', False)
+            cr_context['change_type'] = cr.change_type  # Ensure change_type is in context
         elif isinstance(handler, ProfileDeactivationHandler):
             cr_context['cr_context'] = handler.get_change_request_context(cr)
+            cr_context['change_type'] = cr.change_type
+        
+        # For New Profile, ensure change_type is in context
+        if isinstance(handler, NewProfileHandler):
+            cr_context['change_type'] = cr.change_type
         
         # Add approval context
         context = ContextBuilder.add_approval_context(base_context, permissions, approval_status)

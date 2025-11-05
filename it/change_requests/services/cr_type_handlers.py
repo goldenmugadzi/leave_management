@@ -74,6 +74,19 @@ class ProfileModificationHandler:
             logger.error(f"Error getting cost center for user {user.username}: {ex}")
             cost_center = None
         
+        # FIXED: Build roles_to_action display from actual assigned roles for delegations
+        roles_to_action_display = profile_change.roles_to_action
+        if cr.change_type == "Temporary Role Delegation":
+            # Get actual roles from role_to_assign ManyToMany field
+            assigned_roles = profile_change.role_to_assign.all()
+            if assigned_roles.exists():
+                # Build a readable string of role names
+                role_names = [role.role for role in assigned_roles]
+                roles_to_action_display = ", ".join(role_names)
+            else:
+                # Fallback if no roles assigned
+                roles_to_action_display = profile_change.roles_to_action or "TEMPORARY_DELEGATION (No roles specified)"
+        
         profile_data = {
             "id": user.pk,
             "username": user.username,
@@ -87,7 +100,7 @@ class ProfileModificationHandler:
             "region": user.region,
             "cost_center": cost_center,
             "designation": user.designation,
-            "roles_to_action": profile_change.roles_to_action,
+            "roles_to_action": roles_to_action_display,  # FIXED: Shows actual roles for delegations
             "roles_actions": profile_change.roles_actions,
         }
         
@@ -106,6 +119,8 @@ class ProfileModificationHandler:
                 'delegator_name': '',
                 'delegatee_name': '',
                 'formatted_display': '',
+                'assigned_roles': [],
+                'assigned_role_names': [],
             }
         
         profile_change = cr.profile_change
@@ -114,26 +129,78 @@ class ProfileModificationHandler:
         # Check if this is a delegation request
         is_delegation = cr.change_type == "Temporary Role Delegation"
         
-        # Parse delegation info from roles_to_action
-        # Format expected: "Delegator: username, Delegatee: username, ..."
+        # Get delegator from changed_by field (who initiated the delegation)
         delegator_name = ''
-        delegatee_name = ''
+        delegator_username = ''
+        if is_delegation and profile_change.changed_by:
+            delegator_obj = profile_change.changed_by
+            delegator_name = delegator_obj.get_full_name()
+            delegator_username = delegator_obj.username
         
-        if is_delegation and roles_to_action:
-            parts = roles_to_action.split(',')
-            for part in parts:
-                part = part.strip()
-                if part.startswith('Delegator:'):
-                    delegator_name = part.replace('Delegator:', '').strip()
-                elif part.startswith('Delegatee:'):
-                    delegatee_name = part.replace('Delegatee:', '').strip()
+        # Get delegatee (the user being modified)
+        delegatee_name = profile_change.user.get_full_name() if profile_change.user else ''
+        delegatee_username = profile_change.user.username if profile_change.user else ''
+        
+        # FIXED: Get actual assigned roles from role_to_assign ManyToMany field
+        assigned_roles = []
+        assigned_role_names = []
+        start_date = ''
+        end_date = ''
+        reason = ''
+        
+        if is_delegation:
+            assigned_roles_list = list(profile_change.role_to_assign.all())
+            assigned_roles = assigned_roles_list
+            assigned_role_names = [role.role for role in assigned_roles_list]
+            
+            # Parse delegation metadata from roles_actions JSON field
+            if profile_change.roles_actions:
+                try:
+                    import json
+                    from datetime import datetime
+                    data = json.loads(profile_change.roles_actions)
+                    
+                    # Get delegation dates
+                    start_date_raw = data.get('start_date', '')
+                    end_date_raw = data.get('end_date', '')
+                    
+                    if start_date_raw:
+                        try:
+                            start_dt = datetime.fromisoformat(start_date_raw.replace('T', ' '))
+                            start_date = start_dt.strftime('%B %d, %Y at %I:%M %p')
+                        except:
+                            start_date = start_date_raw
+                    
+                    if end_date_raw:
+                        try:
+                            end_dt = datetime.fromisoformat(end_date_raw.replace('T', ' '))
+                            end_date = end_dt.strftime('%B %d, %Y at %I:%M %p')
+                        except:
+                            end_date = end_date_raw
+                    
+                    reason = data.get('reason', '')
+                except (json.JSONDecodeError, Exception) as e:
+                    logger.error(f"Error parsing delegation metadata: {e}")
+        
+        # Build formatted display
+        if is_delegation and assigned_role_names:
+            formatted_display = ", ".join(assigned_role_names)
+        else:
+            formatted_display = roles_to_action
         
         return {
             'display_type': 'delegation' if is_delegation else 'permanent',
             'is_delegation': is_delegation,
             'delegator_name': delegator_name,
+            'delegator_username': delegator_username,
             'delegatee_name': delegatee_name,
-            'formatted_display': roles_to_action,
+            'delegatee_username': delegatee_username,
+            'formatted_display': formatted_display,
+            'assigned_roles': assigned_roles,  # ADDED: Role objects for template
+            'assigned_role_names': assigned_role_names,  # ADDED: Role names for display
+            'start_date': start_date,  # ADDED: Delegation start date
+            'end_date': end_date,  # ADDED: Delegation end date
+            'reason': reason,  # ADDED: Delegation reason
         }
     
     @staticmethod
