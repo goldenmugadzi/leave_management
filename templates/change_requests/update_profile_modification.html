@@ -94,9 +94,27 @@
                   </div>
 
                   <div class="mb-6">
-                    <label for="roles_to_action" class="block text-sm font-medium text-gray-700 mb-2">
-                      Roles to Action
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                      Roles to Delegate <span class="text-red-500">*</span>
                     </label>
+                    
+                    {% if cr.is_delegation %}
+                    <!-- For temporary delegations, show dynamic role selection (same as create form) -->
+                    <div id="roles-to-delegate" class="mb-6">
+                      <div id="delegator-roles-container" class="border border-gray-300 rounded-md p-4 max-h-96 overflow-y-auto">
+                        <!-- Roles will be populated here via JavaScript -->
+                        <div class="text-center text-gray-500">
+                          <i class="fas fa-spinner fa-spin mr-2"></i>Loading roles...
+                        </div>
+                      </div>
+                    </div>
+                    <!-- Hidden field to maintain the roles_to_action marker -->
+                    <input type="hidden" name="roles_to_action" value="TEMPORARY_DELEGATION" />
+                    <p class="mt-1 text-sm text-gray-500">
+                      Select which roles will be temporarily delegated from {{ cr.delegator_username }} to {{ cr.delegatee_username }}
+                    </p>
+                    {% else %}
+                    <!-- For regular modifications, show editable textarea -->
                     <textarea
                       name="roles_to_action"
                       id="roles_to_action"
@@ -107,6 +125,7 @@
                     <p class="mt-1 text-sm text-gray-500">
                       Optional: List specific roles, responsibilities or designations
                     </p>
+                    {% endif %}
                   </div>
                 </div>
 
@@ -289,6 +308,16 @@
       width: "100%"
     });
 
+    // ADDED: Auto-load delegator roles on page load for existing delegations
+    {% if cr.is_delegation and cr.delegator_id %}
+    // Load roles immediately for existing delegation using delegator ID
+    const initialDelegatorId = "{{ cr.delegator_id }}";
+    if (initialDelegatorId) {
+      console.log("Loading roles for delegator ID:", initialDelegatorId);
+      loadDelegatorRolesById(initialDelegatorId);
+    }
+    {% endif %}
+
     // Handle change type change for profile modification
     $("#change_type").on("change", function () {
       const changeType = $(this).val();
@@ -331,7 +360,38 @@
       }
     });
 
-    // Function to load delegator roles grouped by application
+    // Function to load delegator roles by ID (direct call)
+    function loadDelegatorRolesById(delegatorId) {
+      if (!delegatorId) {
+        console.error("No delegator ID provided");
+        return;
+      }
+      
+      $("#delegator-roles-container").html('<div class="text-center py-4"><i class="fas fa-spinner fa-spin mr-2"></i>Loading roles...</div>');
+      $("#roles-to-delegate").removeClass("hidden");
+      
+      $.ajax({
+        url: "/change_requests/get_delegator_roles_by_app",
+        method: "GET",
+        data: {
+          delegator_id: delegatorId
+        },
+        success: function(response) {
+          console.log("Role loading response:", response);
+          if (response.success) {
+            displayDelegatorRoles(response.roles_by_app, response.delegator);
+          } else {
+            $("#delegator-roles-container").html('<div class="text-red-600">Error: ' + (response.error || response.message || 'Unknown error') + '</div>');
+          }
+        },
+        error: function(xhr, status, error) {
+          console.error("Error loading delegator roles:", error);
+          $("#delegator-roles-container").html('<div class="text-red-600">Error loading roles. Please try again.</div>');
+        }
+      });
+    }
+    
+    // Function to load delegator roles grouped by application (from username)
     function loadDelegatorRoles(delegatorValue) {
       let delegatorId = null;
       
@@ -350,27 +410,7 @@
         return;
       }
       
-      $("#delegator-roles-container").html('<div class="text-center py-4"><i class="fas fa-spinner fa-spin mr-2"></i>Loading roles...</div>');
-      $("#roles-to-delegate").removeClass("hidden");
-      
-      $.ajax({
-        url: "/change_requests/get_delegator_roles_by_app",
-        method: "GET",
-        data: {
-          delegator_id: delegatorId
-        },
-        success: function(response) {
-          if (response.success) {
-            displayDelegatorRoles(response.roles_by_app, response.delegator);
-          } else {
-            $("#delegator-roles-container").html('<div class="text-red-600">Error: ' + (response.error || response.message || 'Unknown error') + '</div>');
-          }
-        },
-        error: function(xhr, status, error) {
-          console.error("Error loading delegator roles:", error);
-          $("#delegator-roles-container").html('<div class="text-red-600">Error loading roles. Please try again.</div>');
-        }
-      });
+      loadDelegatorRolesById(delegatorId);
     }
 
     function displayDelegatorRoles(rolesByApp, delegator) {
@@ -381,6 +421,10 @@
         container.html('<div class="text-gray-600">No roles available for delegation from ' + delegator.name + '</div>');
         return;
       }
+      
+      // Get currently assigned role IDs from the backend
+      const assignedRoleIds = {{ cr.assigned_role_ids|safe }};
+      console.log("Pre-selecting roles:", assignedRoleIds);
       
       const header = $('<div class="mb-4"><h4 class="text-lg font-medium text-gray-900">Available Roles from ' + delegator.name + '</h4></div>');
       container.append(header);
@@ -393,8 +437,13 @@
         
         const rolesContainer = $('<div class="space-y-2"></div>');
         appData.roles.forEach(function(role) {
+          // Check if this role is already assigned
+          const isChecked = assignedRoleIds.includes(role.id);
+          
           const roleCheckbox = $('<div class="flex items-center">' +
-            '<input type="checkbox" name="roles" value="' + role.id + '" id="role_' + role.id + '" class="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">' +
+            '<input type="checkbox" name="roles" value="' + role.id + '" id="role_' + role.id + '" ' +
+            (isChecked ? 'checked' : '') +
+            ' class="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">' +
             '<label for="role_' + role.id + '" class="text-sm text-gray-700">' + role.name + (role.description ? ' - ' + role.description : '') + '</label>' +
             '</div>');
           rolesContainer.append(roleCheckbox);

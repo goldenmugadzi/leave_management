@@ -1311,6 +1311,26 @@ def update_change_request(request):
             except Exception as ex:
                 print("error: ", ex)
                 cost_center = None
+            # FIXED: Build roles_to_action string from actual assigned roles for delegations
+            roles_to_action_display = profile_change.roles_to_action
+            if change_request.change_type == "Temporary Role Delegation":
+                # Get actual roles from role_to_assign ManyToMany field
+                assigned_roles = profile_change.role_to_assign.all()
+                print(f"DEBUG: Temporary delegation - assigned_roles count: {assigned_roles.count()}")
+                if assigned_roles.exists():
+                    # Build a readable string of role names
+                    role_names = [role.role for role in assigned_roles]
+                    roles_to_action_display = ", ".join(role_names)
+                    print(f"DEBUG: Built roles display string: {roles_to_action_display}")
+                else:
+                    # Fallback to stored value if no roles assigned yet
+                    roles_to_action_display = profile_change.roles_to_action or ""
+                    print(f"DEBUG: No assigned roles, using fallback: {roles_to_action_display}")
+            elif profile_change.roles_to_action:
+                roles_to_action_display = profile_change.roles_to_action
+            
+            print(f"DEBUG: Final roles_to_action_display value: '{roles_to_action_display}'")
+            
             new_user = {
                 "id": user.pk,
                 "username": user.username,
@@ -1322,7 +1342,7 @@ def update_change_request(request):
                 "region": user.region,
                 "cost_center": cost_center,
                 "designation": user.designation if user.designation else None,
-                "roles_to_action": profile_change.roles_to_action,
+                "roles_to_action": roles_to_action_display,  # FIXED: Now shows actual roles for delegations
                 "roles_actions": profile_change.roles_actions,
             }
             
@@ -1333,8 +1353,15 @@ def update_change_request(request):
             
             # Get delegator from changed_by field (who initiated the delegation)
             delegator_username = profile_change.changed_by.username if profile_change.changed_by else None
+            delegator_obj = profile_change.changed_by  # Keep reference to delegator object
             # Delegatee is the user being modified
             delegatee_username = user.username
+            
+            # Get assigned roles for the edit form (for role selection)
+            assigned_role_ids = list(profile_change.role_to_assign.values_list('id', flat=True))
+            
+            print(f"DEBUG: Delegator: {delegator_username}, Delegatee: {delegatee_username}")
+            print(f"DEBUG: Assigned role IDs: {assigned_role_ids}")
 
             cr = {
                 "user": new_user,
@@ -1351,11 +1378,32 @@ def update_change_request(request):
                 "is_delegation": is_delegation,
                 "delegation_type": "TEMPORARY" if is_delegation else "PERMANENT",
                 "delegator_username": delegator_username,
+                "delegator_id": delegator_obj.id if delegator_obj else None,  # ADDED: Delegator ID for AJAX
                 "delegatee_username": delegatee_username,
+                "assigned_role_ids": assigned_role_ids,  # For pre-selecting roles in edit form
             }
             
             # Check if current user is the owner
             is_owner = change_request.created_by == request.user
+            
+            # Get delegator's available roles (for role selection in delegation edits)
+            delegator_roles = []
+            if is_delegation and profile_change.changed_by:
+                # Get the delegator's roles for the application
+                delegator_obj = profile_change.changed_by
+                if change_request.application:
+                    app = Application.objects.filter(name=change_request.application).first()
+                    if app:
+                        # Get all roles the delegator has for this application
+                        delegator_roles = delegator_obj.roles.filter(app_id=app.id).all()
+                        print(f"DEBUG: Delegator {delegator_obj.username} has {delegator_roles.count()} roles for {change_request.application}")
+            
+            # Get all roles for the application (fallback for regular modifications)
+            all_roles = []
+            if change_request.application:
+                app = Application.objects.filter(name=change_request.application).first()
+                if app:
+                    all_roles = Roles.objects.filter(app_id=app.id)
             
             return render(
                 request,
@@ -1372,7 +1420,10 @@ def update_change_request(request):
                     "user_groups": list(request.user.groups.values_list('name', flat=True)),
                     "cr": cr,
                     "change_request": change_request,
-                    "is_owner": is_owner
+                    "is_owner": is_owner,
+                    "all_roles": all_roles,  # All roles for the application
+                    "delegator_roles": delegator_roles,  # ADDED: Delegator's available roles
+                    "assigned_roles": profile_change.role_to_assign.all(),  # Currently assigned roles
                 }
             )
         
@@ -1472,6 +1523,20 @@ def update_change_request(request):
                     profile_mod.roles_to_action = roles_to_action if roles_to_action else profile_mod.roles_to_action
                     profile_mod.roles_actions = roles_actions if roles_actions else profile_mod.roles_actions
                     profile_mod.application = sanitized_data.get('application', profile_mod.application)
+                    
+                    # FIXED: Update delegated roles if this is a temporary delegation
+                    if change_request.change_type == "Temporary Role Delegation":
+                        selected_role_ids = request.POST.getlist('roles')
+                        print(f"DEBUG: Updating delegation with selected roles: {selected_role_ids}")
+                        if selected_role_ids:
+                            # Update the role_to_assign ManyToMany field
+                            profile_mod.role_to_assign.set(Roles.objects.filter(id__in=selected_role_ids))
+                            print(f"DEBUG: Updated role_to_assign with {len(selected_role_ids)} roles")
+                        else:
+                            # Clear roles if none selected
+                            profile_mod.role_to_assign.clear()
+                            print("DEBUG: Cleared all role assignments")
+                    
                     profile_mod.save()
                     
                 elif change_request.profile_deactivation:
@@ -1816,7 +1881,8 @@ def view_new_profile_request(request, change_request, permissions, approval_stat
         "cr": cr,
     })
     
-    return render(request, "change_requests/view_profile_request.html", context)
+    # FIXED: Use unified template instead of deleted template
+    return render(request, "change_requests/view_change_request.html", context)
 
 @login_required
 def view_profile_modification_request(request, change_request, permissions, approval_status):
@@ -1873,7 +1939,8 @@ def view_profile_modification_request(request, change_request, permissions, appr
     logger.info(f"Profile modification request - section_head_awaiting_action: {approval_status['section_head_awaiting_action']}")
     logger.info(f"Profile modification request - it_section_head_awaiting_action: {approval_status['it_section_head_awaiting_action']}")
     
-    return render(request, "change_requests/view_profile_modification.html", context)
+    # FIXED: Use unified template instead of deleted template
+    return render(request, "change_requests/view_change_request.html", context)
 
 @login_required
 def view_profile_deactivation_request(request, change_request, permissions, approval_status):
@@ -1912,7 +1979,8 @@ def view_profile_deactivation_request(request, change_request, permissions, appr
         "cr": cr,
     })
     
-    return render(request, "change_requests/view_profile_deactivation.html", context)
+    # FIXED: Use unified template instead of deleted template
+    return render(request, "change_requests/view_change_request.html", context)
 
 @login_required
 def view_profile_request(request):
