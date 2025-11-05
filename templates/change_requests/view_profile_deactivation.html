@@ -107,7 +107,7 @@
                 </div>
 
                 <!-- Approval History Section -->
-                {% if approvals %}
+                {% if cr_approvals %}
                 <div class="border-t border-gray-200 pt-6">
                   <h4 class="text-lg font-medium text-gray-900 mb-4">Approval History</h4>
                   <div class="overflow-hidden border border-gray-200 rounded-lg">
@@ -122,7 +122,7 @@
                         </tr>
                       </thead>
                       <tbody class="bg-white divide-y divide-gray-200">
-                        {% for approval in approvals %}
+                        {% for approval in cr_approvals %}
                         <tr>
                           <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{approval.approver.title}}</td>
                           <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{approval.approver_designation}}</td>
@@ -217,7 +217,7 @@
         </div>
 
         <!-- Info Panel -->
-        {% include 'change_requests/components/ui/info_panel.html' with title="Important Information" cr_id=cr.cr_id cr_type=cr.change_type status=cr.overall_status created_date=cr.created_at items=info_items %}
+        {% include 'change_requests/components/ui/info_panel.html' with title="Important Information" cr_id=cr.cr_id cr_type=change_request.change_type status=change_request.overall_status created_date=cr.created_at items=info_items %}
       </div>
     </div>
   </div>

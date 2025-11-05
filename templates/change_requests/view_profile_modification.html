@@ -99,31 +99,35 @@
                 {% if cr.delegation_info.display_type == 'delegation' %}
                 <div class="border-t border-gray-200 pt-6">
                   <h4 class="text-lg font-medium text-gray-900 mb-4">Delegation Period</h4>
-                  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {% include 'change_requests/components/forms/display_field.html' with label="Start Date" value=cr.delegation_info.delegation_start_date %}
-                    {% include 'change_requests/components/forms/display_field.html' with label="End Date" value=cr.delegation_info.delegation_end_date %}
-                    {% include 'change_requests/components/forms/display_field.html' with label="Delegation Reason" value=cr.delegation_info.delegation_reason %}
+                  <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {% include 'change_requests/components/forms/display_field.html' with label="Start Date" value=cr.delegation_info.start_date %}
+                    {% include 'change_requests/components/forms/display_field.html' with label="End Date" value=cr.delegation_info.end_date %}
+                    {% include 'change_requests/components/forms/display_field.html' with label="Delegation Reason" value=cr.delegation_info.reason %}
                   </div>
                 </div>
                 {% endif %}
 
                 <!-- Roles Section -->
-                {% if cr.delegation_info.roles_list or cr.user.roles_to_action %}
+                {% if cr.delegation_info.roles or cr.user.roles_to_action %}
                 <div class="border-t border-gray-200 pt-6">
                   <h4 class="text-lg font-medium text-gray-900 mb-4">Roles</h4>
-                  {% if cr.delegation_info.roles_list %}
+                  
+                  {% if cr.delegation_info.roles %}
                   <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Roles to Delegate</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                      {% if cr.delegation_info.display_type == 'delegation' %}Roles to Delegate{% else %}Roles to Assign{% endif %}
+                    </label>
                     <div class="border border-gray-200 rounded-md p-4 bg-gray-50">
                       <ul class="list-disc list-inside space-y-1">
-                        {% for role in cr.delegation_info.roles_list %}
-                        <li class="text-sm text-gray-900">{{ role }}</li>
+                        {% for role in cr.delegation_info.roles %}
+                        <li class="text-sm text-gray-900">{{ role.name }}{% if role.description %} - {{ role.description }}{% endif %}</li>
                         {% endfor %}
                       </ul>
                     </div>
                   </div>
                   {% endif %}
-                  {% if cr.user.roles_to_action %}
+                  
+                  {% if cr.user.roles_to_action and cr.user.roles_to_action != 'TEMPORARY_DELEGATION' %}
                     {% include 'change_requests/components/forms/display_field.html' with label="Roles to Action" value=cr.user.roles_to_action %}
                   {% endif %}
                 </div>
@@ -131,21 +135,27 @@
 
                 <!-- Roles Implemented Section (if IT can edit) -->
                 {% if requestor_role == "it_section_head" and it_section_head_awaiting_action and section_head_awaiting_action == False and it_section_head_allowed == True %}
-                <div class="bg-green-50 border border-green-200 rounded-md p-4">
-                  <label for="roles_actions" class="block text-sm font-medium text-gray-900 mb-2">
-                    Roles Implemented <span class="text-red-500">*</span>
-                  </label>
-                  <textarea 
-                    required 
-                    name="roles_actions" 
-                    id="roles_actions" 
-                    rows="3"
-                    class="block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  >{% if cr.user.roles_actions %}{{cr.user.roles_actions}}{% endif %}</textarea>
+                <div class="border-t border-gray-200 pt-6">
+                  <div class="bg-green-50 border border-green-200 rounded-md p-4">
+                    <label for="roles_actions" class="block text-sm font-medium text-gray-900 mb-2">
+                      Implementation Notes <span class="text-red-500">*</span>
+                    </label>
+                    <textarea 
+                      required 
+                      name="roles_actions" 
+                      id="roles_actions" 
+                      rows="3"
+                      placeholder="Enter notes about the implementation..."
+                      class="block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    >{% if cr.user.roles_actions and cr.delegation_info.display_type != 'delegation' %}{{cr.user.roles_actions}}{% endif %}</textarea>
+                    <p class="mt-1 text-sm text-gray-500">
+                      Document the roles/changes that were implemented
+                    </p>
+                  </div>
                 </div>
-                {% elif cr.user.roles_actions %}
-                <div>
-                  {% include 'change_requests/components/forms/display_field.html' with label="Roles Implemented" value=cr.user.roles_actions %}
+                {% elif cr.user.roles_actions and cr.delegation_info.display_type != 'delegation' %}
+                <div class="border-t border-gray-200 pt-6">
+                  {% include 'change_requests/components/forms/display_field.html' with label="Implementation Notes" value=cr.user.roles_actions %}
                 </div>
                 {% endif %}
 
@@ -160,7 +170,7 @@
                 </div>
 
                 <!-- Approval History Section -->
-                {% if approvals %}
+                {% if cr_approvals %}
                 <div class="border-t border-gray-200 pt-6">
                   <h4 class="text-lg font-medium text-gray-900 mb-4">Approval History</h4>
                   <div class="overflow-hidden border border-gray-200 rounded-lg">
@@ -175,7 +185,7 @@
                         </tr>
                       </thead>
                       <tbody class="bg-white divide-y divide-gray-200">
-                        {% for approval in approvals %}
+                        {% for approval in cr_approvals %}
                         <tr>
                           <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{approval.approver.title}}</td>
                           <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{{approval.approver_designation}}</td>
@@ -270,7 +280,7 @@
         </div>
 
         <!-- Info Panel -->
-        {% include 'change_requests/components/ui/info_panel.html' with title="Important Information" cr_id=cr.cr_id cr_type=cr.change_type status=cr.overall_status created_date=cr.created_at items=info_items %}
+        {% include 'change_requests/components/ui/info_panel.html' with title="Important Information" cr_id=cr.cr_id cr_type=change_request.change_type status=change_request.overall_status created_date=cr.created_at items=info_items %}
       </div>
     </div>
   </div>

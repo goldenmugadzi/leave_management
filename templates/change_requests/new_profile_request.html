@@ -96,10 +96,13 @@
                       class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       placeholder="Specify roles, responsibilities or designations that need to be assigned"
                     >{% if cr.user.roles_to_action %}{{cr.user.roles_to_action}}{% endif %}</textarea>
+                    <p class="mt-1 text-sm text-gray-500">
+                      Optional: List specific roles, responsibilities or designations
+                    </p>
                   </div>
                 </div>
 
-                <!-- User Information Section -->
+                <!-- New User Profile Information Section -->
                 <div class="border-t border-gray-200 pt-6">
                   <h4 class="text-lg font-medium text-gray-900 mb-4">New User Profile Information</h4>
                   
@@ -224,7 +227,7 @@
         </div>
 
         <!-- Info Panel -->
-        {% include 'change_requests/components/ui/info_panel.html' with title="Edit Information" cr_id=cr.cr_id cr_type=cr.change_type status=cr.overall_status created_date=cr.created_at items=info_items %}
+        {% include 'change_requests/components/ui/info_panel.html' with title="Edit Information" cr_id=cr.cr_id cr_type=change_request.change_type status=change_request.overall_status created_date=cr.created_at items=info_items %}
       </div>
     </div>
   </div>

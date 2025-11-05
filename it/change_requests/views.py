@@ -93,7 +93,7 @@ def check_change_request_permissions(user, change_request):
     if not change_request:
         return False, "Change request not found"
     
-    # Check if user is the creator
+    # Check if user is the creator (owner can edit their own request)
     if change_request.created_by == user:
         return True, "User is the creator"
     
@@ -106,10 +106,17 @@ def check_change_request_permissions(user, change_request):
             ).first()
             if user_responsibilities and change_request.cost_center in user_responsibilities.cost_centers.all():
                 return True, "User has section head permissions"
+        # Check if user has IT section head role
+        elif user_role and user_role.role == "it_section_head":
+            user_responsibilities = Responsibilities.objects.filter(
+                user=user, role=user_role
+            ).first()
+            if user_responsibilities and change_request.cost_center in user_responsibilities.cost_centers.all():
+                return True, "User has IT section head permissions"
     except Exception:
         pass
     
-    return False, "Insufficient permissions"
+    return False, "Insufficient permissions to edit this request"
 
 @monitor_performance(threshold_ms=200)
 def get_change_requests_optimized(user, filters=None, include_deleted=False):
@@ -1213,10 +1220,17 @@ def new_profile_request(request):
                     "cr_id": change_request.cr_id,
                     "change_reason": change_request.change_reason,
                     "change_description": change_request.change_description,
+                    "application": change_request.application,
                     "created_by": change_request.created_by.first_name + " " + change_request.created_by.last_name,
                     "creator_designation": change_request.creator_designation.description,
-                    "created_at": change_request.created_at
+                    "created_at": change_request.created_at,
+                    "change_type": change_request.change_type,
+                    "overall_status": change_request.overall_status
                 }
+                
+                # Check if current user is the owner
+                is_owner = change_request.created_by == request.user
+                
                 return render(
                     request,
                     "change_requests/new_profile_request.html",
@@ -1226,9 +1240,12 @@ def new_profile_request(request):
                         "sections": Sections.objects.all(),
                         "districts": Districts.objects.all(),
                         "regions": Regions.objects.all(),
+                        "cost_centers": CostCenter.objects.all(),
                         "user_title": request.user.get_full_name(),
                         "user_groups": list(request.user.groups.values_list('name', flat=True)),
-                        "cr": cr
+                        "cr": cr,
+                        "change_request": change_request,
+                        "is_owner": is_owner
                     }
                 )
                 
@@ -1306,10 +1323,17 @@ def update_change_request(request):
                 "cr_id": change_request.cr_id,
                 "change_reason": change_request.change_reason,
                 "change_description": change_request.change_description,
+                "application": change_request.application,
                 "created_by": change_request.created_by.first_name + " " + change_request.created_by.last_name,
                 "creator_designation": change_request.creator_designation.description,
-                "created_at": change_request.created_at
+                "created_at": change_request.created_at,
+                "change_type": change_request.change_type,
+                "overall_status": change_request.overall_status
             }
+            
+            # Check if current user is the owner
+            is_owner = change_request.created_by == request.user
+            
             return render(
                 request,
                 "change_requests/update_profile_modification.html",
@@ -1319,10 +1343,13 @@ def update_change_request(request):
                     "sections": Sections.objects.all(),
                     "districts": Districts.objects.all(),
                     "regions": Regions.objects.all(),
+                    "cost_centers": CostCenter.objects.all(),
+                    "user_profiles": UserProfile.objects.filter(is_active=True),
                     "user_title": request.user.get_full_name(),
                     "user_groups": list(request.user.groups.values_list('name', flat=True)),
                     "cr": cr,
-                    "change_request": change_request
+                    "change_request": change_request,
+                    "is_owner": is_owner
                 }
             )
         
@@ -1333,10 +1360,18 @@ def update_change_request(request):
                 "cr_id": change_request.cr_id,
                 "change_reason": change_request.change_reason,
                 "change_description": change_request.change_description,
+                "application": change_request.application,
                 "created_by": change_request.created_by.first_name + " " + change_request.created_by.last_name,
                 "creator_designation": change_request.creator_designation.description,
-                "created_at": change_request.created_at
+                "created_at": change_request.created_at,
+                "change_type": change_request.change_type,
+                "overall_status": change_request.overall_status,
+                "user": user
             }
+            
+            # Check if current user is the owner
+            is_owner = change_request.created_by == request.user
+            
             return render(
                 request,
                 "change_requests/update_profile_deactivation.html",
@@ -1346,10 +1381,13 @@ def update_change_request(request):
                     "sections": Sections.objects.all(),
                     "districts": Districts.objects.all(),
                     "regions": Regions.objects.all(),
+                    "cost_centers": CostCenter.objects.all(),
+                    "user_profiles": UserProfile.objects.filter(is_active=True),
                     "user_title": request.user.get_full_name(),
                     "user_groups": list(request.user.groups.values_list('name', flat=True)),
                     "cr": cr,
-                    "change_request": change_request
+                    "change_request": change_request,
+                    "is_owner": is_owner
                 }
             )
             

@@ -27,10 +27,8 @@
               <input type="hidden" name="cr_id" value="{{cr.cr_id}}" />
               
               <div class="p-6 space-y-6">
-                <!-- Request Information Section -->
+                <!-- Common Fields -->
                 <div>
-                  <h4 class="text-base font-semibold text-gray-900 mb-4">Request Information</h4>
-                  
                   <div class="mb-6">
                     <label for="change_reason" class="block text-sm font-medium text-gray-700 mb-2">
                       Reason for Change <span class="text-red-500">*</span>
@@ -43,6 +41,9 @@
                       required
                       class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     />
+                    <p class="mt-1 text-sm text-gray-500">
+                      Brief description of why this change is needed
+                    </p>
                   </div>
 
                   <div class="mb-6">
@@ -55,7 +56,11 @@
                       rows="3"
                       required
                       class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="Detailed description of the requested change"
                     >{{cr.change_description}}</textarea>
+                    <p class="mt-1 text-sm text-gray-500">
+                      Provide detailed information about the change
+                    </p>
                   </div>
 
                   <div class="mb-6">
@@ -71,6 +76,7 @@
                       {% if change_request.profile_change.application %}
                       <option value="{{change_request.profile_change.application}}">{{change_request.profile_change.application}}</option>
                       {% endif %}
+                      <option value="">Select Application</option>
                       <option value="BUSINESS EXCELLENCE">BUSINESS EXCELLENCE</option>
                       <option value="SAP">SAP</option>
                       <option value="NDM">NDM</option>
@@ -85,26 +91,9 @@
                       <option value="SMART METERING">SMART METERING</option>
                       <option value="STATISTICAL METERING">STATISTICAL METERING</option>
                     </select>
-                  </div>
-
-                  <div class="mb-6">
-                    <label for="user_profile" class="block text-sm font-medium text-gray-700 mb-2">
-                      User Profile <span class="text-red-500">*</span>
-                    </label>
-                    <select
-                      id="user_profile"
-                      name="user_profile"
-                      required
-                      class="select2 block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    >
-                      {% if change_request.profile_change.user %}
-                      <option value="{{change_request.profile_change.user.username}}">{{change_request.profile_change.user.first_name}} {{change_request.profile_change.user.last_name}}</option>
-                      {% endif %}
-                      <option value="">Select User</option>
-                      {% for usr in user_profiles %}
-                      <option value="{{usr.username}}">{{usr.first_name}} {{usr.last_name}}</option>
-                      {% endfor %}
-                    </select>
+                    <p class="mt-1 text-sm text-gray-500">
+                      Select the application this change relates to
+                    </p>
                   </div>
 
                   <div class="mb-6">
@@ -116,8 +105,152 @@
                       id="roles_to_action"
                       rows="3"
                       class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      placeholder="Specify roles, responsibilities or designations that need to be modified"
+                      placeholder="Specify roles, responsibilities or designations that need to be assigned"
                     >{% if cr.user.roles_to_action %}{{cr.user.roles_to_action}}{% endif %}</textarea>
+                    <p class="mt-1 text-sm text-gray-500">
+                      Optional: List specific roles, responsibilities or designations
+                    </p>
+                  </div>
+                </div>
+
+                <!-- Profile Modification Details -->
+                <div class="border-t border-gray-200 pt-6">
+                  <h4 class="text-lg font-medium text-gray-900 mb-4">Profile Modification Details</h4>
+
+                  <!-- Change Type Selection -->
+                  <div class="mb-6">
+                    <label for="change_type" class="block text-sm font-medium text-gray-700 mb-2">
+                      Change Type <span class="text-red-500">*</span>
+                    </label>
+                    <select
+                      id="change_type"
+                      name="change_type"
+                      required
+                      class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    >
+                      <option value="">Select Change Type</option>
+                      <option value="PERMANENT">Permanent Role Assignment</option>
+                      <option value="TEMPORARY_DELEGATION">Temporary Role Delegation</option>
+                    </select>
+                    <p class="mt-1 text-sm text-gray-500">
+                      Choose the type of modification
+                    </p>
+                  </div>
+
+                  <!-- Delegator Selection -->
+                  <div class="mb-6">
+                    <label for="delegator" class="block text-sm font-medium text-gray-700 mb-2">
+                      Delegator <span class="text-red-500">*</span>
+                    </label>
+                    <select
+                      id="delegator"
+                      name="delegator"
+                      required
+                      class="select2 block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    >
+                      <option value="">Select Delegator</option>
+                      <option value="{{request.user.username}}">
+                        {{request.user.get_full_name}} (Logged in user)
+                      </option>
+                      {% for usr in user_profiles %}
+                      <option value="{{usr.username}}">
+                        {{usr.first_name}} {{usr.last_name}}
+                      </option>
+                      {% endfor %}
+                    </select>
+                    <p class="mt-1 text-sm text-gray-500">
+                      Select who is delegating their roles
+                    </p>
+                  </div>
+
+                  <!-- Delegatee Selection -->
+                  <div class="mb-6">
+                    <label for="delegatee" class="block text-sm font-medium text-gray-700 mb-2">
+                      Delegatee <span class="text-red-500">*</span>
+                    </label>
+                    <select
+                      id="delegatee"
+                      name="delegatee"
+                      required
+                      class="select2 block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    >
+                      {% if cr.user.username %}
+                      <option value="{{cr.user.username}}">{{cr.user.firstname}} {{cr.user.lastname}}</option>
+                      {% endif %}
+                      <option value="">Select Delegatee</option>
+                      <option value="{{request.user.username}}">
+                        {{request.user.get_full_name}} (Logged in user)
+                      </option>
+                      {% for usr in user_profiles %}
+                      <option value="{{usr.username}}">
+                        {{usr.first_name}} {{usr.last_name}}
+                      </option>
+                      {% endfor %}
+                    </select>
+                    <p class="mt-1 text-sm text-gray-500">
+                      Select who will receive the delegated roles
+                    </p>
+                  </div>
+
+                  <!-- Delegation-specific fields (hidden by default, shown for TEMPORARY_DELEGATION) -->
+                  <div id="delegation-fields" class="hidden">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div class="mb-6">
+                        <label for="delegation_start_date" class="block text-sm font-medium text-gray-700 mb-2">
+                          Delegation Start Date <span class="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="datetime-local"
+                          name="delegation_start_date"
+                          id="delegation_start_date"
+                          class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        />
+                        <p class="mt-1 text-sm text-gray-500">
+                          When the delegation becomes active
+                        </p>
+                      </div>
+                      
+                      <div class="mb-6">
+                        <label for="delegation_end_date" class="block text-sm font-medium text-gray-700 mb-2">
+                          Delegation End Date <span class="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="datetime-local"
+                          name="delegation_end_date"
+                          id="delegation_end_date"
+                          class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        />
+                        <p class="mt-1 text-sm text-gray-500">
+                          When the delegation expires (max 90 days)
+                        </p>
+                      </div>
+                    </div>
+                    
+                    <div class="mb-6">
+                      <label for="delegation_reason" class="block text-sm font-medium text-gray-700 mb-2">
+                        Delegation Reason <span class="text-red-500">*</span>
+                      </label>
+                      <textarea
+                        name="delegation_reason"
+                        id="delegation_reason"
+                        rows="3"
+                        class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="Explain why you're delegating your roles (e.g., leave, training, etc.)"
+                      ></textarea>
+                    </div>
+
+                    <!-- Roles to Delegate -->
+                    <div id="roles-to-delegate" class="mb-6 hidden">
+                      <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Select Roles to Delegate <span class="text-red-500">*</span>
+                      </label>
+                      <div id="delegator-roles-container" class="space-y-4">
+                        <!-- Roles will be populated here via AJAX -->
+                      </div>
+                      <p class="mt-1 text-sm text-gray-500">
+                        Choose which roles from the delegator to assign temporarily
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -143,7 +276,7 @@
         </div>
 
         <!-- Info Panel -->
-        {% include 'change_requests/components/ui/info_panel.html' with title="Edit Information" cr_id=cr.cr_id cr_type=cr.change_type status=cr.overall_status created_date=cr.created_at items=info_items %}
+        {% include 'change_requests/components/ui/info_panel.html' with title="Edit Information" cr_id=cr.cr_id cr_type=change_request.change_type status=change_request.overall_status created_date=cr.created_at items=info_items %}
       </div>
     </div>
   </div>
@@ -162,6 +295,136 @@
       allowClear: true,
       width: "100%"
     });
+
+    // Handle change type change for profile modification
+    $("#change_type").on("change", function () {
+      const changeType = $(this).val();
+      const application = $("#for_application").val();
+      const delegatorValue = $("#delegator").val();
+      
+      if (changeType === "TEMPORARY_DELEGATION") {
+        if (application === "BUSINESS EXCELLENCE") {
+          $("#delegation-fields").removeClass("hidden");
+          if (delegatorValue) {
+            loadDelegatorRoles(delegatorValue);
+          }
+        } else {
+          $("#delegation-fields").addClass("hidden");
+          alert("Temporary delegation is only available for Business Excellence application.");
+        }
+      } else if (changeType === "PERMANENT" && application === "BUSINESS EXCELLENCE") {
+        $("#delegation-fields").addClass("hidden");
+        if (delegatorValue) {
+          loadDelegatorRoles(delegatorValue);
+        }
+      } else {
+        $("#delegation-fields").addClass("hidden");
+        $("#roles-to-delegate").addClass("hidden");
+        $("#delegator-roles-container").empty();
+      }
+    });
+
+    // Handle delegator selection change
+    $("#delegator").on("change", function () {
+      const delegatorValue = $(this).val();
+      const changeType = $("#change_type").val();
+      const application = $("#for_application").val();
+      
+      if (application === "BUSINESS EXCELLENCE" && delegatorValue && (changeType === "TEMPORARY_DELEGATION" || changeType === "PERMANENT")) {
+        loadDelegatorRoles(delegatorValue);
+      } else {
+        $("#roles-to-delegate").addClass("hidden");
+        $("#delegator-roles-container").empty();
+      }
+    });
+
+    // Function to load delegator roles grouped by application
+    function loadDelegatorRoles(delegatorValue) {
+      let delegatorId = null;
+      
+      {% for usr in user_profiles %}
+        if ("{{ usr.username }}" === delegatorValue) {
+          delegatorId = "{{ usr.id }}";
+        }
+      {% endfor %}
+      
+      if (delegatorValue === "{{ request.user.username }}") {
+        delegatorId = "{{ request.user.id }}";
+      }
+      
+      if (!delegatorId) {
+        console.error("Could not find delegator ID for:", delegatorValue);
+        return;
+      }
+      
+      $("#delegator-roles-container").html('<div class="text-center py-4"><i class="fas fa-spinner fa-spin mr-2"></i>Loading roles...</div>');
+      $("#roles-to-delegate").removeClass("hidden");
+      
+      $.ajax({
+        url: "/change_requests/get_delegator_roles_by_app",
+        method: "GET",
+        data: {
+          delegator_id: delegatorId
+        },
+        success: function(response) {
+          if (response.success) {
+            displayDelegatorRoles(response.roles_by_app, response.delegator);
+          } else {
+            $("#delegator-roles-container").html('<div class="text-red-600">Error: ' + (response.error || response.message || 'Unknown error') + '</div>');
+          }
+        },
+        error: function(xhr, status, error) {
+          console.error("Error loading delegator roles:", error);
+          $("#delegator-roles-container").html('<div class="text-red-600">Error loading roles. Please try again.</div>');
+        }
+      });
+    }
+
+    function displayDelegatorRoles(rolesByApp, delegator) {
+      const container = $("#delegator-roles-container");
+      container.empty();
+      
+      if (Object.keys(rolesByApp).length === 0) {
+        container.html('<div class="text-gray-600">No roles available for delegation from ' + delegator.name + '</div>');
+        return;
+      }
+      
+      const header = $('<div class="mb-4"><h4 class="text-lg font-medium text-gray-900">Available Roles from ' + delegator.name + '</h4></div>');
+      container.append(header);
+      
+      Object.keys(rolesByApp).forEach(function(appKey) {
+        const appData = rolesByApp[appKey];
+        const appSection = $('<div class="mb-6 border border-gray-200 rounded-lg p-4"></div>');
+        const appHeader = $('<div class="mb-3"><h5 class="text-md font-medium text-blue-800">' + appData.app_fullname + '</h5></div>');
+        appSection.append(appHeader);
+        
+        const rolesContainer = $('<div class="space-y-2"></div>');
+        appData.roles.forEach(function(role) {
+          const roleCheckbox = $('<div class="flex items-center">' +
+            '<input type="checkbox" name="roles" value="' + role.id + '" id="role_' + role.id + '" class="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">' +
+            '<label for="role_' + role.id + '" class="text-sm text-gray-700">' + role.name + (role.description ? ' - ' + role.description : '') + '</label>' +
+            '</div>');
+          rolesContainer.append(roleCheckbox);
+        });
+        
+        appSection.append(rolesContainer);
+        container.append(appSection);
+      });
+      
+      const selectAllContainer = $('<div class="mt-4 flex justify-between items-center">' +
+        '<button type="button" id="select-all-roles" class="text-blue-600 hover:text-blue-800 text-sm">Select All</button>' +
+        '<button type="button" id="clear-all-roles" class="text-gray-600 hover:text-gray-800 text-sm">Clear All</button>' +
+        '</div>');
+      container.append(selectAllContainer);
+      
+      $("#select-all-roles").on("click", function() {
+        $('input[name="roles"]').prop('checked', true);
+      });
+      
+      $("#clear-all-roles").on("click", function() {
+        $('input[name="roles"]').prop('checked', false);
+      });
+    }
   });
 </script>
 {% endblock scripts %}

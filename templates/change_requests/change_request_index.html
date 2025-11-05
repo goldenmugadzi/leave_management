@@ -409,10 +409,10 @@
           render: function (data, type, row, meta) {
             let actions = '<div class="flex items-center gap-2">';
             
-            // Edit button - only show if user created it AND it's not approved yet
+            // Edit button - show for owners on pending requests that haven't been approved
             if(user_title === row.created_by && row.overall_status === 'pending_sh'){
               actions += `
-                <a href='/change_requests/view_change_request?i=${row.cr_id}&edit=true' 
+                <a href='/change_requests/update_change_request?i=${row.cr_id}' 
                    class="inline-flex items-center p-2 text-blue-600 hover:bg-blue-50 rounded transition-colors" 
                    title="Edit">
                   <i class="fas fa-edit"></i>

@@ -27,10 +27,8 @@
               <input type="hidden" name="cr_id" value="{{cr.cr_id}}" />
               
               <div class="p-6 space-y-6">
-                <!-- Request Information Section -->
+                <!-- Common Fields -->
                 <div>
-                  <h4 class="text-base font-semibold text-gray-900 mb-4">Request Information</h4>
-                  
                   <div class="mb-6">
                     <label for="change_reason" class="block text-sm font-medium text-gray-700 mb-2">
                       Reason for Change <span class="text-red-500">*</span>
@@ -43,6 +41,9 @@
                       required
                       class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     />
+                    <p class="mt-1 text-sm text-gray-500">
+                      Brief description of why this change is needed
+                    </p>
                   </div>
 
                   <div class="mb-6">
@@ -55,7 +56,11 @@
                       rows="3"
                       required
                       class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="Detailed description of the requested change"
                     >{{cr.change_description}}</textarea>
+                    <p class="mt-1 text-sm text-gray-500">
+                      Provide detailed information about the change
+                    </p>
                   </div>
 
                   <div class="mb-6">
@@ -69,6 +74,7 @@
                       class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     >
                       <option value="{{cr.application}}">{{cr.application}}</option>
+                      <option value="">Select Application</option>
                       <option value="BUSINESS EXCELLENCE">BUSINESS EXCELLENCE</option>
                       <option value="SAP">SAP</option>
                       <option value="NDM">NDM</option>
@@ -83,14 +89,23 @@
                       <option value="SMART METERING">SMART METERING</option>
                       <option value="STATISTICAL METERING">STATISTICAL METERING</option>
                     </select>
+                    <p class="mt-1 text-sm text-gray-500">
+                      Select the application this change relates to
+                    </p>
                   </div>
+                </div>
 
+                <!-- Profile Deactivation Details -->
+                <div class="border-t border-gray-200 pt-6">
+                  <h4 class="text-lg font-medium text-gray-900 mb-4">Profile Deactivation Details</h4>
+
+                  <!-- User Profile Selection -->
                   <div class="mb-6">
-                    <label for="user_profile" class="block text-sm font-medium text-gray-700 mb-2">
-                      User to Deactivate <span class="text-red-500">*</span>
+                    <label for="user_profile_deac" class="block text-sm font-medium text-gray-700 mb-2">
+                      User Profile <span class="text-red-500">*</span>
                     </label>
                     <select
-                      id="user_profile"
+                      id="user_profile_deac"
                       name="user_profile"
                       required
                       class="select2 block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -100,7 +115,9 @@
                       {% endif %}
                       <option value="">Select User</option>
                       {% for usr in user_profiles %}
-                      <option value="{{usr.username}}">{{usr.first_name}} {{usr.last_name}}</option>
+                      <option value="{{usr.username}}">
+                        {{usr.first_name}} {{usr.last_name}}
+                      </option>
                       {% endfor %}
                     </select>
                     <p class="mt-1 text-sm text-gray-500">
@@ -131,7 +148,7 @@
         </div>
 
         <!-- Info Panel -->
-        {% include 'change_requests/components/ui/info_panel.html' with title="Edit Information" cr_id=cr.cr_id cr_type=cr.change_type status=cr.overall_status created_date=cr.created_at items=info_items %}
+        {% include 'change_requests/components/ui/info_panel.html' with title="Edit Information" cr_id=cr.cr_id cr_type=change_request.change_type status=change_request.overall_status created_date=cr.created_at items=info_items %}
       </div>
     </div>
   </div>
