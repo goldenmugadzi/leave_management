@@ -6,6 +6,7 @@ from django.forms import model_to_dict
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
 from django.utils import timezone
+from django.db import transaction
 
 from it.change_requests.models import CRApproval, ChangeRequest, NewProfile, ProfileChange, ProfileDeactivation
 from it.users.forms import ResponsibilitiesForm
@@ -39,7 +40,7 @@ from .constants import (
     ERROR_MESSAGES, SUCCESS_MESSAGES, WARNING_MESSAGES, LOG_MESSAGES,
     MAX_REASON_LENGTH, MAX_DESCRIPTION_LENGTH, REQUIRED_CHANGE_REQUEST_FIELDS,
     REQUIRED_NEW_PROFILE_FIELDS, URL_PATTERNS, CACHE_TIMEOUT, USER_DATA_CACHE_KEY_PREFIX,
-    PROFILE_CHANGE_STATUS
+    PROFILE_CHANGE_STATUS, APPLICATION_NAMES
 )
 
 # Create your views here.
@@ -494,6 +495,11 @@ def create_new_profile(request):
         if profile_validation_errors:
             for error in profile_validation_errors:
                 messages.error(request, error)
+            return redirect("/change_requests/create_change_request")
+
+        # Check if username already exists
+        if UserProfile.objects.filter(username=profile_username).exists():
+            messages.error(request, f"Username '{profile_username}' already exists. Please choose a different username.")
             return redirect("/change_requests/create_change_request")
 
         region = Regions.objects.filter(id=request.user.region.id).first() if request.user else None
@@ -2140,6 +2146,7 @@ def update_new_profile_request(request):
     
 @csrf_protect
 @login_required
+@transaction.atomic
 def approve_profile_request(request):
     if request.method == "POST":
         try:
@@ -2215,6 +2222,8 @@ def approve_profile_request(request):
                     approval_date=timezone.now()
                 )
                 cr_approval.save()
+                change_request.status = 'REJECTED'
+                change_request.save()
                 
                 # Send delegation notifications if this is a delegation request
                 if change_request.change_type == "Temporary Role Delegation":
@@ -2235,25 +2244,25 @@ def approve_profile_request(request):
                     print("roles_actions: ", roles_actions)
                     if roles_actions:
                         roles_actions = roles_actions.strip()
-                        if change_request.change_type == "new_profile":
+                        if change_request.change_type == "New Profile":
                             new_profile = change_request.new_profile
                             new_profile.roles_actions = roles_actions if roles_actions else new_profile.roles_actions
                             new_profile.save()
-                        elif change_request.change_type == "profile_modification":
-                            profile_modification = change_request.profile_modification
-                            profile_modification.roles_actions = roles_actions if roles_actions else profile_modification.roles_actions
-                            profile_modification.save()
+                        elif change_request.change_type == "Profile Modification":
+                            profile_change = change_request.profile_change
+                            profile_change.roles_actions = roles_actions if roles_actions else profile_change.roles_actions
+                            profile_change.save()
                     
                     # Check if there are roles to assign/designate
                     has_roles_to_assign = False
-                    if change_request.change_type == "new_profile":
+                    if change_request.change_type == "New Profile":
                         new_profile = change_request.new_profile
                         has_roles_to_assign = bool(new_profile.roles_to_action and new_profile.roles_to_action.strip() and 
                                                    new_profile.roles_to_action.strip() not in ['No roles or designations specified', 'None', ''])
-                    elif change_request.change_type == "profile_modification":
-                        profile_modification = change_request.profile_modification
-                        has_roles_to_assign = bool(profile_modification.roles_to_action and profile_modification.roles_to_action.strip() and 
-                                                   profile_modification.roles_to_action.strip() not in ['No roles or designations specified', 'None', ''])
+                    elif change_request.change_type == "Profile Modification":
+                        profile_change = change_request.profile_change
+                        has_roles_to_assign = bool(profile_change.roles_to_action and profile_change.roles_to_action.strip() and 
+                                                   profile_change.roles_to_action.strip() not in ['No roles or designations specified', 'None', ''])
                     
                     # Allow approval even when no roles_actions if there are no roles to assign
                     if not roles_actions:
@@ -2268,16 +2277,16 @@ def approve_profile_request(request):
                                 cr_id=change_request.cr_id, 
                                 username=request.user.get_full_name()
                             ))
-                    if change_request.change_type == "new_profile":
+                    if change_request.change_type == "New Profile":
                         new_profile = change_request.new_profile
                         print("new_profile: ", new_profile)
                         new_profile.roles_actions = roles_actions
                         new_profile.save()
-                    elif change_request.change_type == "profile_modification":
-                        profile_modification = change_request.profile_modification
-                        print("profile modification: ", profile_modification)
-                        profile_modification.roles_actions = roles_actions
-                        profile_modification.save()
+                    elif change_request.change_type == "Profile Modification":
+                        profile_change = change_request.profile_change
+                        print("profile modification: ", profile_change)
+                        profile_change.roles_actions = roles_actions
+                        profile_change.save()
                         
                     # Handle delegation requests
                     if change_request.change_type == "Temporary Role Delegation":
@@ -2287,6 +2296,69 @@ def approve_profile_request(request):
                         else:
                             messages.error(request, message)
                             return redirect("/change_requests/change_request_index")
+                    
+                    # Apply changes for Business Excellence application only
+                    if change_request.application == APPLICATION_NAMES['BUSINESS_EXCELLENCE']:
+                        if change_request.change_type == "New Profile":
+                            # Create actual UserProfile from NewProfile
+                            new_profile = change_request.new_profile
+                            user_profile = UserProfile.objects.create(
+                                username=new_profile.username,
+                                first_name=new_profile.first_name,
+                                last_name=new_profile.last_name,
+                                email=new_profile.email,
+                                designation=new_profile.designation,
+                                section=new_profile.section,
+                                cost_center=new_profile.cost_center,
+                                district=new_profile.district,
+                                region=new_profile.region,
+                                is_active=True
+                            )
+                            # Assign roles from NewProfile
+                            if new_profile.roles.exists():
+                                user_profile.roles.set(new_profile.roles.all())
+                            
+                            change_request.status = 'IMPLEMENTED'
+                            change_request.save()
+                            logger.info(f"Created UserProfile {user_profile.username} from NewProfile CR {change_request.cr_id}")
+                        elif change_request.change_type == "Profile Modification":
+                            profile_change = change_request.profile_change
+                            user = profile_change.user
+                            
+                            # Apply role additions
+                            if profile_change.role_to_assign.exists():
+                                user.roles.add(*profile_change.role_to_assign.all())
+                            
+                            # Apply role removals  
+                            if profile_change.role_to_remove.exists():
+                                user.roles.remove(*profile_change.role_to_remove.all())
+                            
+                            # Update status
+                            profile_change.status = 'IMPLEMENTED'
+                            profile_change.save()
+                            change_request.status = 'IMPLEMENTED'
+                            change_request.save()
+                            logger.info(f"Applied profile changes for {user.username} from CR {change_request.cr_id}")
+                    
+                    # Profile deactivation applies to all applications
+                    if change_request.change_type == "Profile Deactivation":
+                        profile_deactivation = change_request.profile_deactivation
+                        user = profile_deactivation.user
+                        
+                        # Deactivate user account
+                        user.is_active = False
+                        user.save()
+                        
+                        # Revoke active sessions
+                        from django.contrib.sessions.models import Session
+                        Session.objects.filter(
+                            expire_date__gte=timezone.now(),
+                            session_data__contains=user.username
+                        ).delete()
+                        
+                        change_request.status = 'IMPLEMENTED'
+                        change_request.save()
+                        logger.info(f"Deactivated user {user.username} from CR {change_request.cr_id}")
                     
                     cr_approval = CRApproval(
                         cr_id=change_request,
@@ -2301,7 +2373,7 @@ def approve_profile_request(request):
 
         except Exception as ex:
             print("error: ", ex)
-            # messages.error(request, "An error occurred while approving the change request " + str(ex))
+            messages.error(request, "An error occurred while approving the change request: " + str(ex))
     return redirect("/change_requests/change_request_index")
 
 @login_required

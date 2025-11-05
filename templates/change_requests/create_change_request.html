@@ -165,7 +165,8 @@
                 <div id="business-excellence-roles" class="hidden">
                   <div class="space-y-2">
                     <p class="text-sm text-gray-600 mb-3">Select specific system roles to assign:</p>
-                    {% for role in user_roles %}
+                    {% if user_roles.BUSINESS_EXCELLENCE %}
+                    {% for role in user_roles.BUSINESS_EXCELLENCE %}
                     <div class="flex items-center">
                       <input
                         type="checkbox"
@@ -175,10 +176,13 @@
                         class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                       />
                       <label for="role_{{ role.id }}" class="ml-2 block text-sm text-gray-900">
-                        {{ role.name }} - {{ role.description|default:"System Role" }}
+                        {{ role.name }}{% if role.description %} - {{ role.description }}{% endif %}
                       </label>
                     </div>
                     {% endfor %}
+                    {% else %}
+                    <p class="text-sm text-gray-500">No roles available for Business Excellence application.</p>
+                    {% endif %}
                   </div>
                 </div>
                 
