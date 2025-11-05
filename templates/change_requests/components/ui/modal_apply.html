@@ -1,8 +1,8 @@
 <!-- Apply Changes Modal Component -->
 <div
-  x-cloak
-  x-show="confirmApply === true"
-  class="fixed inset-0 z-50 overflow-y-auto"
+  id="modalApply"
+  class="modal-overlay fixed inset-0 z-50 overflow-y-auto"
+  style="display: none;"
   aria-labelledby="modal-title"
   role="dialog"
   aria-modal="true"
@@ -11,29 +11,12 @@
     class="flex items-end justify-center min-h-screen px-4 text-center md:items-center sm:block sm:p-0"
   >
     <div
-      x-cloak
-      @click="confirmApply = false"
-      x-show="confirmApply"
-      x-transition:enter="transition ease-out duration-300 transform"
-      x-transition:enter-start="opacity-0"
-      x-transition:enter-end="opacity-100"
-      x-transition:leave="transition ease-in duration-200 transform"
-      x-transition:leave-start="opacity-100"
-      x-transition:leave-end="opacity-0"
-      class="fixed inset-0 transition-opacity bg-gray-500 bg-opacity-40"
+      class="modal-backdrop fixed inset-0 transition-opacity bg-gray-500 bg-opacity-40"
       aria-hidden="true"
     ></div>
 
     <div
-      x-cloak
-      x-show="confirmApply"
-      x-transition:enter="transition ease-out duration-300 transform"
-      x-transition:enter-start="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-      x-transition:enter-end="opacity-100 translate-y-0 sm:scale-100"
-      x-transition:leave="transition ease-in duration-200 transform"
-      x-transition:leave-start="opacity-100 translate-y-0 sm:scale-100"
-      x-transition:leave-end="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
-      class="inline-block w-full max-w-xl p-8 my-20 overflow-hidden text-left transition-all transform bg-white rounded-lg shadow-xl 2xl:max-w-2xl"
+      class="inline-block w-full max-w-xl p-8 my-20 overflow-hidden text-left transition-all transform bg-white rounded-lg shadow-xl 2xl:max-w-2xl relative"
     >
       <div class="flex items-center justify-between space-x-4">
         <h1 class="text-xl font-medium text-gray-800">
@@ -42,8 +25,7 @@
 
         <button
           type="button"
-          @click="confirmApply = false"
-          class="text-gray-600 focus:outline-none hover:text-gray-700"
+          class="closeModalApply text-gray-600 focus:outline-none hover:text-gray-700"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -66,11 +48,26 @@
         Are you sure you want to apply this change request?
       </p>
 
+      <div class="mt-4">
+        <label for="roles_actions" class="block text-sm font-medium text-gray-700">
+          Roles Implemented (Optional)
+        </label>
+        <textarea
+          name="roles_actions"
+          id="roles_actions"
+          rows="3"
+          placeholder="Enter the roles/designations that were implemented..."
+          class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+        ></textarea>
+        <p class="mt-1 text-xs text-gray-500">
+          Leave blank if no specific roles were assigned
+        </p>
+      </div>
+
       <div class="flex justify-evenly mt-6">
         <button
           type="button"
-          @click="confirmApply = false"
-          class="px-3 py-2 text-sm tracking-wide text-gray-900 capitalize transition-colors duration-200 transform focus:outline-none focus:ring-opacity-50"
+          class="closeModalApply px-3 py-2 text-sm tracking-wide text-gray-900 capitalize transition-colors duration-200 transform focus:outline-none focus:ring-opacity-50"
         >
           Cancel
         </button>

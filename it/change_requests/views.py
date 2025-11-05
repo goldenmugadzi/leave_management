@@ -1675,8 +1675,10 @@ def build_new_profile_context(new_profile):
     return {
         "id": new_profile.pk,
         "username": new_profile.username,
-        "firstname": new_profile.first_name,
-        "lastname": new_profile.last_name,
+        "first_name": new_profile.first_name,  # With underscore (standard Django naming)
+        "last_name": new_profile.last_name,    # With underscore (standard Django naming)
+        "firstname": new_profile.first_name,   # Without underscore (legacy compatibility)
+        "lastname": new_profile.last_name,     # Without underscore (legacy compatibility)
         "email": new_profile.email,
         "roles_to_action": new_profile.roles_to_action,
         "roles_actions": new_profile.roles_actions,
@@ -1921,6 +1923,7 @@ def view_new_profile_request(request, change_request, permissions, approval_stat
     cr = {
         "user": new_user,
         "cr_id": change_request.cr_id,
+        "change_type": change_request.change_type,  # ADDED: Missing change_type field
         "change_reason": change_request.change_reason,
         "change_description": change_request.change_description,
         "application": change_request.application,
@@ -2047,8 +2050,10 @@ def view_profile_deactivation_request(request, change_request, permissions, appr
     # Build change request context
     cr = {
         "cr_id": change_request.cr_id,
+        "change_type": change_request.change_type,  # ADDED: Missing change_type field
         "change_reason": change_request.change_reason,
         "change_description": change_request.change_description,
+        "application": change_request.application,  # ADDED: Missing application field
         "created_by": change_request.created_by.get_full_name(),
         "creator_designation": change_request.creator_designation.description if change_request.creator_designation else "",
         "created_at": change_request.created_at,
@@ -2614,235 +2619,76 @@ def update_new_profile_request(request):
 @login_required
 @transaction.atomic
 def approve_profile_request(request):
-    if request.method == "POST":
-        try:
-            action_button = request.POST.get('actionButton')
-            cr_id = request.POST.get('cr_id')
-            requestor = UserProfile.objects.filter(username=request.user.username).first()
-            user_role = requestor.get_user_roles_for_application("change_requests")
-            change_request = ChangeRequest.objects.filter(cr_id=cr_id).first()
-            if 'APPROVE' in action_button:
-                # The "APPROVE CHANGE REQUEST" button was clicked
-                if not change_request:
-                    messages.error(request, "Change request not found")
-                    return redirect("/change_requests/change_request_index")
-                else:
-                    
-                    if user_role == "section_head":
-                        cr_approval = CRApproval(
-                            cr_id=change_request,
-                            approver=request.user,
-                            approver_role=requestor.get_user_role_for_application("change_requests"),
-                            approval_status=True,
-                            approval_date=timezone.now()
-                        )
-                        cr_approval.save()
-                        
-                        # Update change request status to APPROVED
-                        change_request.status = 'APPROVED'
-                        change_request.save()
-                        
-                        # Send delegation notifications if this is a delegation request
-                        if change_request.change_type == "Temporary Role Delegation":
-                            send_delegation_notifications(
-                                change_request, 
-                                'DELEGATION_APPROVED', 
-                                f"Delegation request approved by {request.user.get_full_name()}"
-                            )
-                        
-                        messages.success(request, "Change Request approved successfully")
-                        try:
-                            # Get IT section head approver for the CR's cost center
-                            application = Application.objects.filter(name="change_requests").first()
-                            it_section_head_role = Roles.objects.filter(role="it_section_head", app_id=application.id).first()
-                            approver_responsibilities = Responsibilities.objects.filter(
-                                role=it_section_head_role,
-                                cost_centers__in=[change_request.cost_center]
-                            ).first()
-                            approver = approver_responsibilities.user if approver_responsibilities else None
-                            if not approver:
-                                messages.error(request, "No IT section head approver found for this cost center")
-                                return redirect("/change_requests/change_request_index")
-                            print("Sending email to: ", approver.email)
-                            cr_type = "new_profile_request" if change_request.change_type == "new_profile" else "profile_modification_request" if change_request.change_type == "profile_modification" else "profile_deactivation_request" if change_request.change_type == "profile_deactivation" else ""
-                            ms_exhange_send_html("Change Request Implementation", [approver.email], [], "emails/email_template.html", {
-                                "message": "Change Request Implementation",
-                                "type": "Change Request Implementation",
-                                "redirect_url": "https://172.16.29.32:9300/change_requests/" + cr_type + "?i=" + change_request.cr_id
-                            })
-                            
-                            messages.success(request, "Section head approver notified successfully")
-                        except Exception as ex:
-                            print("error: ", ex)
-                    else:
-                        messages.error(request, "Error. Please check your Change Request role")
-                    
-                    return redirect("/change_requests/change_request_index")
-                    
-            elif 'REJECT' in action_button:
-                # The "REJECT CHANGE REQUEST" button was clicked
-                cr_approval = CRApproval(
-                    cr_id=change_request,
-                    approver=request.user,
-                    approver_role=requestor.get_user_role_for_application("change_requests"),
-                    approval_status=False,
-                    comment=request.POST.get('rejectReason'),
-                    approval_date=timezone.now()
-                )
-                cr_approval.save()
-                change_request.status = 'REJECTED'
-                change_request.save()
-                
-                # Send delegation notifications if this is a delegation request
-                if change_request.change_type == "Temporary Role Delegation":
-                    send_delegation_notifications(
-                        change_request, 
-                        'DELEGATION_REJECTED', 
-                        f"Delegation request rejected by {request.user.get_full_name()}"
-                    )
-                
-                messages.success(request, "Change Request rejected successfully")
-                
+    """
+    LEGACY ENDPOINT - Backward compatibility wrapper for old approval flow.
+    New code should use approve_change_request_unified instead.
+    
+    This function now delegates to the service layer for actual business logic.
+    """
+    if request.method != "POST":
+        return redirect("/change_requests/change_request_index")
+    
+    try:
+        action = request.POST.get('actionButton')
+        cr_id = request.POST.get('cr_id')
+        
+        if not action or not cr_id:
+            messages.error(request, "Missing required parameters")
+            return redirect("/change_requests/change_request_index")
+        
+        # Get change request with related data
+        cr = ChangeRequestService.get_cr_with_details(cr_id)
+        if not cr:
+            messages.error(request, "Change request not found")
+            return redirect("/change_requests/change_request_index")
+        
+        # Process action using service layer
+        if 'APPROVE' in action:
+            success, message = ApprovalService.approve_cr(cr, request.user)
+            if success:
+                messages.success(request, message)
+                # Send notification to next approver
+                NotificationService.send_approval_notification(cr, action, request)
+            else:
+                messages.error(request, message)
+        
+        elif 'REJECT' in action:
+            reason = request.POST.get('rejectReason')
+            if not reason:
+                messages.error(request, "Rejection reason is required")
                 return redirect("/change_requests/change_request_index")
-            elif 'APPLY' in action_button:
-                # The "APPLY CHANGE REQUEST" button was clicked
-                    
-                if user_role == "it_section_head":
-                    roles_actions = request.POST.get('roles_actions')
-                    print("roles_actions: ", roles_actions)
-                    if roles_actions:
-                        roles_actions = roles_actions.strip()
-                        if change_request.change_type == "New Profile":
-                            new_profile = change_request.new_profile
-                            new_profile.roles_actions = roles_actions if roles_actions else new_profile.roles_actions
-                            new_profile.save()
-                        elif change_request.change_type == "Profile Modification":
-                            profile_change = change_request.profile_change
-                            profile_change.roles_actions = roles_actions if roles_actions else profile_change.roles_actions
-                            profile_change.save()
-                    
-                    # Check if there are roles to assign/designate
-                    has_roles_to_assign = False
-                    if change_request.change_type == "New Profile":
-                        new_profile = change_request.new_profile
-                        has_roles_to_assign = bool(new_profile.roles_to_action and new_profile.roles_to_action.strip() and 
-                                                   new_profile.roles_to_action.strip() not in ['No roles or designations specified', 'None', ''])
-                    elif change_request.change_type == "Profile Modification":
-                        profile_change = change_request.profile_change
-                        has_roles_to_assign = bool(profile_change.roles_to_action and profile_change.roles_to_action.strip() and 
-                                                   profile_change.roles_to_action.strip() not in ['No roles or designations specified', 'None', ''])
-                    
-                    # Allow approval even when no roles_actions if there are no roles to assign
-                    if not roles_actions:
-                        if has_roles_to_assign:
-                            messages.error(request, "Please enter the roles implemented")
-                            return redirect("/change_requests/change_request_index")
-                        else:
-                            # No roles to assign, allow approval but with warning
-                            roles_actions = "No roles applied - no roles were specified for assignment"
-                            messages.warning(request, WARNING_MESSAGES['NO_ROLES_TO_ASSIGN'])
-                            logger.warning(LOG_MESSAGES['NO_ROLES_APPROVAL'].format(
-                                cr_id=change_request.cr_id, 
-                                username=request.user.get_full_name()
-                            ))
-                    if change_request.change_type == "New Profile":
-                        new_profile = change_request.new_profile
-                        print("new_profile: ", new_profile)
-                        new_profile.roles_actions = roles_actions
-                        new_profile.save()
-                    elif change_request.change_type == "Profile Modification":
-                        profile_change = change_request.profile_change
-                        print("profile modification: ", profile_change)
-                        profile_change.roles_actions = roles_actions
-                        profile_change.save()
-                        
-                    # Handle delegation requests
-                    if change_request.change_type == "Temporary Role Delegation":
-                        success, message = apply_delegation_change_request(change_request)
-                        if success:
-                            messages.success(request, message)
-                        else:
-                            messages.error(request, message)
-                            return redirect("/change_requests/change_request_index")
-                    
-                    # Apply changes for Business Excellence application only
-                    if change_request.application == APPLICATION_NAMES['BUSINESS_EXCELLENCE']:
-                        if change_request.change_type == "New Profile":
-                            # Create actual UserProfile from NewProfile
-                            new_profile = change_request.new_profile
-                            user_profile = UserProfile.objects.create(
-                                username=new_profile.username,
-                                first_name=new_profile.first_name,
-                                last_name=new_profile.last_name,
-                                email=new_profile.email,
-                                designation=new_profile.designation,
-                                section=new_profile.section,
-                                cost_center=new_profile.cost_center,
-                                district=new_profile.district,
-                                region=new_profile.region,
-                                is_active=True
-                            )
-                            # Assign roles from NewProfile
-                            if new_profile.roles.exists():
-                                user_profile.roles.set(new_profile.roles.all())
-                            
-                            change_request.status = 'IMPLEMENTED'
-                            change_request.save()
-                            logger.info(f"Created UserProfile {user_profile.username} from NewProfile CR {change_request.cr_id}")
-                        elif change_request.change_type == "Profile Modification":
-                            profile_change = change_request.profile_change
-                            user = profile_change.user
-                            
-                            # Apply role additions
-                            if profile_change.role_to_assign.exists():
-                                user.roles.add(*profile_change.role_to_assign.all())
-                            
-                            # Apply role removals  
-                            if profile_change.role_to_remove.exists():
-                                user.roles.remove(*profile_change.role_to_remove.all())
-                            
-                            # Update status
-                            profile_change.status = 'IMPLEMENTED'
-                            profile_change.save()
-                            change_request.status = 'IMPLEMENTED'
-                            change_request.save()
-                            logger.info(f"Applied profile changes for {user.username} from CR {change_request.cr_id}")
-                    
-                    # Profile deactivation applies to all applications
-                    if change_request.change_type == "Profile Deactivation":
-                        profile_deactivation = change_request.profile_deactivation
-                        user = profile_deactivation.user
-                        
-                        # Deactivate user account
-                        user.is_active = False
-                        user.save()
-                        
-                        # Revoke active sessions
-                        from django.contrib.sessions.models import Session
-                        Session.objects.filter(
-                            expire_date__gte=timezone.now(),
-                            session_data__contains=user.username
-                        ).delete()
-                        
-                        change_request.status = 'IMPLEMENTED'
-                        change_request.save()
-                        logger.info(f"Deactivated user {user.username} from CR {change_request.cr_id}")
-                    
-                    cr_approval = CRApproval(
-                        cr_id=change_request,
-                        approver=request.user,
-                        approver_role=requestor.get_user_role_for_application("change_requests"),
-                        approval_status=True,
-                        approval_date=timezone.now()
-                    )
-                    cr_approval.save()
-                    messages.success(request, "Change Request approved successfully")
-                    return redirect("/change_requests/change_request_index")
-
-        except Exception as ex:
-            print("error: ", ex)
-            messages.error(request, "An error occurred while approving the change request: " + str(ex))
-    return redirect("/change_requests/change_request_index")
+            
+            success, message = ApprovalService.reject_cr(cr, request.user, reason)
+            if success:
+                messages.success(request, message)
+                # Send notification to creator
+                NotificationService.send_approval_notification(cr, action, request)
+            else:
+                messages.error(request, message)
+        
+        elif 'APPLY' in action:
+            roles_actions = request.POST.get('roles_actions')
+            success, message = ApprovalService.apply_cr(cr, request.user, roles_actions)
+            if success:
+                messages.success(request, message)
+                # Send notification to creator
+                NotificationService.send_approval_notification(cr, action, request)
+            else:
+                messages.error(request, message)
+        
+        else:
+            messages.error(request, f"Unknown action: {action}")
+        
+        return redirect("/change_requests/change_request_index")
+    
+    except ChangeRequest.DoesNotExist:
+        logger.error(f"Change request not found: {cr_id}")
+        messages.error(request, "Change request not found")
+        return redirect("/change_requests/change_request_index")
+    except Exception as e:
+        logger.error(f"Error processing approval action: {str(e)}", exc_info=True)
+        messages.error(request, f"An error occurred: {str(e)}")
+        return redirect("/change_requests/change_request_index")
 
 @login_required
 def change_request_index(request):

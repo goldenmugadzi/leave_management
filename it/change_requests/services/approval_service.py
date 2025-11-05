@@ -4,13 +4,15 @@ Approval Service Layer
 Handles approval workflow logic, permissions, and change request application.
 """
 
+import json
 import logging
 from typing import Dict, Optional, Tuple, Any
+from datetime import datetime
 from django.db import transaction
 from django.utils import timezone
 
 from it.change_requests.models import ChangeRequest, CRApproval, NewProfile, ProfileChange, ProfileDeactivation
-from it.users.models import UserProfile, Roles, Application, Responsibilities, RoleDelegation
+from it.users.models import UserProfile, Roles, Application, Responsibilities, RoleDelegation, DelegationNotification
 from it.change_requests.constants import APPLICATION_NAMES, WARNING_MESSAGES, LOG_MESSAGES
 
 logger = logging.getLogger(__name__)
@@ -446,18 +448,93 @@ class ApprovalApplicationService:
     
     @staticmethod
     def apply_delegation(cr: ChangeRequest) -> Tuple[bool, str]:
-        """Apply temporary role delegation"""
+        """Apply temporary role delegation - creates delegation with APPROVED status"""
         try:
-            # This integrates with the existing delegation system
-            # The delegation logic is handled elsewhere in the system
-            # Just mark as implemented
+            profile_change = cr.profile_change
+            if not profile_change:
+                return False, "Profile change data not found for delegation"
+            
+            # Validate roles_to_action indicates this is a delegation
+            if profile_change.roles_to_action != "TEMPORARY_DELEGATION":
+                return False, "Not a delegation request"
+            
+            # Parse delegation metadata from roles_actions JSON
+            if not profile_change.roles_actions:
+                return False, "Delegation metadata missing"
+            
+            try:
+                metadata = json.loads(profile_change.roles_actions)
+            except json.JSONDecodeError as e:
+                logger.error(f"Invalid delegation metadata JSON for CR {cr.cr_id}: {str(e)}")
+                return False, "Invalid delegation metadata format"
+            
+            # Validate required fields
+            required_fields = ['delegator_id', 'start_date', 'end_date', 'reason']
+            missing_fields = [field for field in required_fields if field not in metadata]
+            if missing_fields:
+                return False, f"Missing required delegation fields: {', '.join(missing_fields)}"
+            
+            # Parse dates
+            try:
+                start_date = datetime.fromisoformat(metadata['start_date'])
+                end_date = datetime.fromisoformat(metadata['end_date'])
+            except (ValueError, TypeError) as e:
+                logger.error(f"Invalid date format in delegation metadata for CR {cr.cr_id}: {str(e)}")
+                return False, "Invalid date format in delegation metadata"
+            
+            # Validate date logic
+            if end_date <= start_date:
+                return False, "End date must be after start date"
+            
+            # Create RoleDelegation record with APPROVED status (will be activated on start_date)
+            delegation = RoleDelegation.objects.create(
+                delegator_id=metadata['delegator_id'],
+                delegatee=profile_change.user,
+                start_date=start_date,
+                end_date=end_date,
+                reason=metadata['reason'],
+                status='APPROVED',  # Will be activated by management command on start_date
+                created_by=cr.created_by
+            )
+            
+            # Add roles to delegation
+            if profile_change.role_to_assign.exists():
+                delegation.roles.set(profile_change.role_to_assign.all())
+            else:
+                logger.warning(f"No roles assigned to delegation for CR {cr.cr_id}")
+            
+            # Add applications to delegation
+            if cr.application:
+                app = Application.objects.filter(name=cr.application).first()
+                if app:
+                    delegation.applications.add(app)
+                else:
+                    logger.warning(f"Application {cr.application} not found for CR {cr.cr_id}")
+            
+            # Create notification for delegatee
+            DelegationNotification.objects.create(
+                delegation=delegation,
+                recipient=delegation.delegatee,
+                notification_type='DELEGATION_APPROVED',
+                message=f"Role delegation from {delegation.delegator.get_full_name()} has been approved. It will activate on {start_date.strftime('%Y-%m-%d %H:%M')}"
+            )
+            
+            # Create notification for delegator
+            DelegationNotification.objects.create(
+                delegation=delegation,
+                recipient=delegation.delegator,
+                notification_type='DELEGATION_APPROVED',
+                message=f"Your role delegation to {delegation.delegatee.get_full_name()} has been approved. It will activate on {start_date.strftime('%Y-%m-%d %H:%M')}"
+            )
+            
+            # Update CR status
             cr.status = 'IMPLEMENTED'
             cr.save()
             
-            logger.info(f"Applied delegation CR {cr.cr_id}")
-            return True, "Delegation applied successfully"
+            logger.info(f"Created delegation for CR {cr.cr_id} with status APPROVED (ID: {delegation.id})")
+            return True, f"Delegation approved and scheduled to activate on {start_date.strftime('%Y-%m-%d %H:%M')}"
         
         except Exception as e:
-            logger.error(f"Error applying delegation CR {cr.cr_id}: {str(e)}")
+            logger.error(f"Error applying delegation CR {cr.cr_id}: {str(e)}", exc_info=True)
             return False, f"Error applying delegation: {str(e)}"
 

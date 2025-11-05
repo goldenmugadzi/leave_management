@@ -3,7 +3,13 @@
 
 {% block styles %}
 <style>
-  [x-cloak] { display: none !important; }
+  /* Modal styles - hidden by default */
+  .modal-overlay {
+    display: none;
+  }
+  .modal-overlay.active {
+    display: block;
+  }
 </style>
 {% endblock styles %}
 
@@ -23,19 +29,7 @@
               <h3 class="text-lg font-medium text-gray-900">Change Request Details</h3>
             </div>
             
-            <form id="profile_form" method="post" action="/change_requests/approve_change_request"
-              x-data="{ 
-                rejectOpen: false,
-                confirmOpen: false,
-                confirmApply: false,
-                deleteOpen: false
-              }"
-              x-init="() => { 
-                rejectOpen = false; 
-                confirmOpen = false; 
-                confirmApply = false;
-                deleteOpen = false;
-              }">
+            <form id="profile_form" method="post" action="/change_requests/approve_cr">
               {% csrf_token %}
               <input type="hidden" name="cr_id" value="{{cr.cr_id}}" />
               <input type="hidden" name="rejectReason" id="rejectReason" />
@@ -83,7 +77,7 @@
                   {% if section_head_awaiting_action %}
                   <button
                     type="button"
-                    @click="deleteOpen = true"
+                    id="btnArchive"
                     class="inline-flex items-center px-4 py-2 border border-red-600 text-red-600 rounded-md hover:bg-red-50 transition-colors"
                   >
                     <i class="fas fa-archive mr-2"></i> Archive
@@ -93,16 +87,14 @@
                   {% if requestor_role == "section_head" and section_head_awaiting_action and section_head_allowed == True %}
                   <button
                     type="button"
-                    @click="confirmOpen = true"
-                    name="APPROVE"
+                    id="btnApprove"
                     class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
                   >
                     <i class="fas fa-check mr-2"></i> Approve
                   </button>
                   <button
                     type="button"
-                    @click="rejectOpen = true"
-                    name="REJECT"
+                    id="btnReject"
                     class="inline-flex items-center px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
                   >
                     <i class="fas fa-times mr-2"></i> Reject
@@ -112,16 +104,14 @@
                   {% if requestor_role == "it_section_head" and it_section_head_awaiting_action and section_head_awaiting_action == False and it_section_head_allowed == True %}
                   <button
                     type="button"
-                    @click="confirmApply = true"
-                    name="APPLY"
+                    id="btnApply"
                     class="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
                   >
                     <i class="fas fa-play mr-2"></i> Apply Changes
                   </button>
                   <button
                     type="button"
-                    @click="rejectOpen = true"
-                    name="REJECT"
+                    id="btnRejectIT"
                     class="inline-flex items-center px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
                   >
                     <i class="fas fa-times mr-2"></i> Reject
@@ -148,36 +138,130 @@
 {% block scripts %}
 <script>
   $(document).ready(function () {
+    // === MODAL SHOW/HIDE HANDLERS ===
+    
+    // Show Approve Modal
+    $("#btnApprove").on("click", function () {
+      console.log("Approve button clicked - showing modal");
+      $("#modalApprove").fadeIn(200);
+    });
+    
+    // Show Reject Modal (for both section head and IT)
+    $("#btnReject, #btnRejectIT").on("click", function () {
+      console.log("Reject button clicked - showing modal");
+      $("#modalReject").fadeIn(200);
+    });
+    
+    // Show Apply Modal (for IT section head)
+    $("#btnApply").on("click", function () {
+      console.log("Apply button clicked - showing modal");
+      $("#modalApply").fadeIn(200);
+    });
+    
+    // Show Archive Modal
+    $("#btnArchive").on("click", function () {
+      $("#modalArchive").fadeIn(200);
+    });
+    
+    // Close Approve Modal
+    $(".closeModalApprove").on("click", function () {
+      $("#modalApprove").fadeOut(200);
+    });
+    
+    // Close Reject Modal
+    $(".closeModalReject").on("click", function () {
+      $("#modalReject").fadeOut(200);
+    });
+    
+    // Close Apply Modal
+    $(".closeModalApply").on("click", function () {
+      $("#modalApply").fadeOut(200);
+    });
+    
+    // Close Archive Modal
+    $(".closeModalArchive").on("click", function () {
+      $("#modalArchive").fadeOut(200);
+    });
+    
+    // Close modals on backdrop click (using event delegation)
+    $(document).on("click", ".modal-backdrop", function (e) {
+      if ($(e.target).hasClass('modal-backdrop')) {
+        $(".modal-overlay").fadeOut(200);
+      }
+    });
+    
+    // === CONFIRMATION HANDLERS ===
+    
+    // Handle approve confirmation
+    $("#confirmApprove").on("click", function (e) {
+      e.preventDefault();
+      console.log("Approve confirmed - submitting form");
+      
+      // Disable button
+      $(this).prop('disabled', true).text('Processing...');
+      
+      $("#actionButton").val("APPROVE");
+      $("#modalApprove").fadeOut(200);
+      
+      // Submit form using native submit
+      document.getElementById('profile_form').submit();
+    });
+
     // Handle reject confirmation
-    $("#confirmReject").on("click", function () {
+    $("#confirmReject").on("click", function (e) {
+      e.preventDefault(); // Prevent any default behavior
+      
       const reason = $("#modalRejectReason").val();
       if (!reason || reason.trim() === "") {
         alert("Please provide a reason for rejection");
         return;
       }
+      
+      console.log("Reject confirmed with reason:", reason);
+      
+      // Disable button to prevent double submission
+      $(this).prop('disabled', true).text('Processing...');
+      
+      // Set form values
       $("#rejectReason").val(reason);
       $("#actionButton").val("REJECT");
-      $("#profile_form").submit();
-    });
-
-    // Handle approve confirmation
-    $("#confirmApprove").on("click", function () {
-      $("#actionButton").val("APPROVE");
-      $("#profile_form").submit();
+      
+      // Close modal
+      $("#modalReject").fadeOut(200);
+      
+      // Submit form using native submit (not jQuery)
+      console.log("Submitting form...");
+      document.getElementById('profile_form').submit();
     });
 
     // Handle apply confirmation
-    $("#confirmApplyBtn").on("click", function () {
+    $("#confirmApplyBtn").on("click", function (e) {
+      e.preventDefault();
       const rolesActions = $("#roles_actions").val();
+      console.log("Apply confirmed with roles:", rolesActions);
+      
+      // Disable button
+      $(this).prop('disabled', true).text('Processing...');
+      
       // Allow submission even if empty - backend will handle validation
       $("#actionButton").val("APPLY");
-      $("#profile_form").submit();
+      $("#modalApply").fadeOut(200);
+      
+      // Submit form using native submit
+      document.getElementById('profile_form').submit();
     });
 
     // Handle archive confirmation
     $("#confirmArchive").on("click", function () {
       if (confirm("Are you sure you want to archive this change request? This action cannot be undone.")) {
         window.location.href = "/change_requests/archive_change_request?cr_id={{cr.cr_id}}";
+      }
+    });
+    
+    // Close modal on Escape key
+    $(document).on("keydown", function (e) {
+      if (e.key === "Escape") {
+        $(".modal-overlay").fadeOut(200);
       }
     });
   });

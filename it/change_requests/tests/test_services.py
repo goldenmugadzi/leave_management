@@ -399,3 +399,372 @@ class NotificationServiceTestCase(TestCase):
         self.assertTrue(result)
         mock_send_email.assert_called_once()
 
+
+class DelegationApprovalTestCase(TestCase):
+    """Test cases for delegation approval and activation"""
+    
+    def setUp(self):
+        """Set up test data for delegation tests"""
+        from it.users.models import RoleDelegation, DelegationNotification
+        from datetime import datetime, timedelta
+        
+        self.region = Regions.objects.create(name="Test Region")
+        self.cost_center = CostCenter.objects.create(name="Test Cost Center")
+        self.designation = Designations.objects.create(description="Test Designation")
+        self.app = Application.objects.create(name="change_requests")
+        
+        # Create roles
+        self.test_role = Roles.objects.create(
+            role="test_role",
+            name="Test Role",
+            app_id=self.app.id
+        )
+        
+        # Create delegator
+        self.delegator = UserProfile.objects.create(
+            username="delegator",
+            first_name="Delegator",
+            last_name="User",
+            email="delegator@example.com",
+            region=self.region,
+            cost_center=self.cost_center,
+            designation=self.designation
+        )
+        
+        # Create delegatee
+        self.delegatee = UserProfile.objects.create(
+            username="delegatee",
+            first_name="Delegatee",
+            last_name="User",
+            email="delegatee@example.com",
+            region=self.region,
+            cost_center=self.cost_center,
+            designation=self.designation
+        )
+        
+        # Create IT section head
+        self.it_user = UserProfile.objects.create(
+            username="it_head",
+            first_name="IT",
+            last_name="Head",
+            email="it@example.com",
+            region=self.region,
+            cost_center=self.cost_center,
+            designation=self.designation
+        )
+        
+        self.it_role = Roles.objects.create(
+            role="it_section_head",
+            name="IT Section Head",
+            app_id=self.app.id
+        )
+        self.it_user.roles.add(self.it_role)
+        
+        # Create delegation metadata
+        now = timezone.now()
+        self.delegation_metadata = {
+            'delegator_id': self.delegator.id,
+            'start_date': (now + timedelta(hours=1)).isoformat(),
+            'end_date': (now + timedelta(days=7)).isoformat(),
+            'reason': 'Going on leave'
+        }
+    
+    def test_apply_delegation_creates_approved_status(self):
+        """Test that applying delegation creates record with APPROVED status"""
+        from it.users.models import RoleDelegation
+        import json
+        
+        # Create profile change for delegation
+        profile_change = ProfileChange.objects.create(
+            user=self.delegatee,
+            changed_by=self.delegator,
+            roles_to_action="TEMPORARY_DELEGATION",
+            roles_actions=json.dumps(self.delegation_metadata)
+        )
+        profile_change.role_to_assign.add(self.test_role)
+        
+        # Create change request
+        cr = ChangeRequest.objects.create(
+            cr_id="CR-DEL-001",
+            change_type="Temporary Role Delegation",
+            profile_change=profile_change,
+            change_reason="Test delegation",
+            change_description="Testing delegation approval",
+            created_by=self.delegator,
+            creator_designation=self.designation,
+            region=self.region,
+            cost_center=self.cost_center,
+            application="BUSINESS EXCELLENCE"
+        )
+        
+        # Apply delegation
+        from it.change_requests.services.approval_service import ApprovalApplicationService
+        success, message = ApprovalApplicationService.apply_delegation(cr)
+        
+        # Verify success
+        self.assertTrue(success)
+        
+        # Verify delegation was created with APPROVED status
+        delegation = RoleDelegation.objects.filter(
+            delegator=self.delegator,
+            delegatee=self.delegatee
+        ).first()
+        
+        self.assertIsNotNone(delegation)
+        self.assertEqual(delegation.status, 'APPROVED')
+        self.assertEqual(delegation.reason, 'Going on leave')
+        
+        # Verify roles were assigned
+        self.assertIn(self.test_role, delegation.roles.all())
+    
+    def test_apply_delegation_validates_metadata(self):
+        """Test that applying delegation validates metadata properly"""
+        import json
+        
+        # Create profile change with invalid metadata (missing required fields)
+        invalid_metadata = {
+            'delegator_id': self.delegator.id,
+            'start_date': timezone.now().isoformat()
+            # Missing end_date and reason
+        }
+        
+        profile_change = ProfileChange.objects.create(
+            user=self.delegatee,
+            changed_by=self.delegator,
+            roles_to_action="TEMPORARY_DELEGATION",
+            roles_actions=json.dumps(invalid_metadata)
+        )
+        
+        cr = ChangeRequest.objects.create(
+            cr_id="CR-DEL-002",
+            change_type="Temporary Role Delegation",
+            profile_change=profile_change,
+            change_reason="Test",
+            change_description="Test",
+            created_by=self.delegator,
+            creator_designation=self.designation,
+            region=self.region,
+            cost_center=self.cost_center
+        )
+        
+        # Apply delegation should fail
+        from it.change_requests.services.approval_service import ApprovalApplicationService
+        success, message = ApprovalApplicationService.apply_delegation(cr)
+        
+        self.assertFalse(success)
+        self.assertIn('Missing required delegation fields', message)
+    
+    def test_apply_delegation_validates_dates(self):
+        """Test that applying delegation validates date logic"""
+        import json
+        
+        # Create metadata with end_date before start_date
+        now = timezone.now()
+        invalid_metadata = {
+            'delegator_id': self.delegator.id,
+            'start_date': (now + timedelta(days=7)).isoformat(),
+            'end_date': (now + timedelta(days=1)).isoformat(),  # Before start!
+            'reason': 'Test'
+        }
+        
+        profile_change = ProfileChange.objects.create(
+            user=self.delegatee,
+            changed_by=self.delegator,
+            roles_to_action="TEMPORARY_DELEGATION",
+            roles_actions=json.dumps(invalid_metadata)
+        )
+        
+        cr = ChangeRequest.objects.create(
+            cr_id="CR-DEL-003",
+            change_type="Temporary Role Delegation",
+            profile_change=profile_change,
+            change_reason="Test",
+            change_description="Test",
+            created_by=self.delegator,
+            creator_designation=self.designation,
+            region=self.region,
+            cost_center=self.cost_center
+        )
+        
+        # Apply delegation should fail
+        from it.change_requests.services.approval_service import ApprovalApplicationService
+        success, message = ApprovalApplicationService.apply_delegation(cr)
+        
+        self.assertFalse(success)
+        self.assertIn('End date must be after start date', message)
+    
+    def test_status_transition_to_implemented(self):
+        """Test that applying CR sets status to IMPLEMENTED"""
+        import json
+        
+        # Create profile change for delegation
+        profile_change = ProfileChange.objects.create(
+            user=self.delegatee,
+            changed_by=self.delegator,
+            roles_to_action="TEMPORARY_DELEGATION",
+            roles_actions=json.dumps(self.delegation_metadata)
+        )
+        profile_change.role_to_assign.add(self.test_role)
+        
+        # Create change request
+        cr = ChangeRequest.objects.create(
+            cr_id="CR-DEL-004",
+            change_type="Temporary Role Delegation",
+            profile_change=profile_change,
+            change_reason="Test delegation",
+            change_description="Testing status transition",
+            created_by=self.delegator,
+            creator_designation=self.designation,
+            region=self.region,
+            cost_center=self.cost_center,
+            application="BUSINESS EXCELLENCE",
+            status='APPROVED'  # Already approved by section head
+        )
+        
+        # Create section head approval
+        sh_role = Roles.objects.create(
+            role="section_head",
+            name="Section Head",
+            app_id=self.app.id
+        )
+        CRApproval.objects.create(
+            cr_id=cr,
+            approver=self.delegator,
+            approver_role=sh_role,
+            approval_status=True,
+            approval_date=timezone.now()
+        )
+        
+        # Apply CR
+        from it.change_requests.services.approval_service import ApprovalService
+        success, message = ApprovalService.apply_cr(cr, self.it_user, "Delegation approved")
+        
+        # Verify status is IMPLEMENTED
+        cr.refresh_from_db()
+        self.assertTrue(success)
+        self.assertEqual(cr.status, 'IMPLEMENTED')
+
+
+class DelegationActivationCommandTestCase(TestCase):
+    """Test cases for the delegation activation management command"""
+    
+    def setUp(self):
+        """Set up test data"""
+        from datetime import timedelta
+        
+        self.region = Regions.objects.create(name="Test Region")
+        self.cost_center = CostCenter.objects.create(name="Test Cost Center")
+        self.designation = Designations.objects.create(description="Test Designation")
+        
+        self.delegator = UserProfile.objects.create(
+            username="delegator",
+            first_name="Delegator",
+            last_name="User",
+            region=self.region,
+            cost_center=self.cost_center,
+            designation=self.designation
+        )
+        
+        self.delegatee = UserProfile.objects.create(
+            username="delegatee",
+            first_name="Delegatee",
+            last_name="User",
+            region=self.region,
+            cost_center=self.cost_center,
+            designation=self.designation
+        )
+    
+    def test_activate_delegations_ready(self):
+        """Test that delegations are activated when start_date arrives"""
+        from it.users.models import RoleDelegation
+        from datetime import timedelta
+        from django.core.management import call_command
+        from io import StringIO
+        
+        now = timezone.now()
+        
+        # Create delegation that should be activated
+        delegation = RoleDelegation.objects.create(
+            delegator=self.delegator,
+            delegatee=self.delegatee,
+            start_date=now - timedelta(hours=1),  # Already started
+            end_date=now + timedelta(days=7),
+            reason='Test',
+            status='APPROVED'
+        )
+        
+        # Run command
+        out = StringIO()
+        call_command('activate_delegations', stdout=out)
+        
+        # Verify delegation was activated
+        delegation.refresh_from_db()
+        self.assertEqual(delegation.status, 'ACTIVE')
+        
+        # Verify output
+        output = out.getvalue()
+        self.assertIn('Successfully activated', output)
+    
+    def test_expire_delegations_past_end_date(self):
+        """Test that active delegations are expired when end_date passes"""
+        from it.users.models import RoleDelegation
+        from datetime import timedelta
+        from django.core.management import call_command
+        from io import StringIO
+        
+        now = timezone.now()
+        
+        # Create delegation that should be expired
+        delegation = RoleDelegation.objects.create(
+            delegator=self.delegator,
+            delegatee=self.delegatee,
+            start_date=now - timedelta(days=7),
+            end_date=now - timedelta(hours=1),  # Already ended
+            reason='Test',
+            status='ACTIVE'
+        )
+        
+        # Run command
+        out = StringIO()
+        call_command('activate_delegations', stdout=out)
+        
+        # Verify delegation was expired
+        delegation.refresh_from_db()
+        self.assertEqual(delegation.status, 'EXPIRED')
+        
+        # Verify output
+        output = out.getvalue()
+        self.assertIn('Successfully expired', output)
+    
+    def test_dry_run_mode(self):
+        """Test that dry-run mode doesn't make changes"""
+        from it.users.models import RoleDelegation
+        from datetime import timedelta
+        from django.core.management import call_command
+        from io import StringIO
+        
+        now = timezone.now()
+        
+        # Create delegation that should be activated
+        delegation = RoleDelegation.objects.create(
+            delegator=self.delegator,
+            delegatee=self.delegatee,
+            start_date=now - timedelta(hours=1),
+            end_date=now + timedelta(days=7),
+            reason='Test',
+            status='APPROVED'
+        )
+        
+        # Run command in dry-run mode
+        out = StringIO()
+        call_command('activate_delegations', '--dry-run', stdout=out)
+        
+        # Verify delegation was NOT activated
+        delegation.refresh_from_db()
+        self.assertEqual(delegation.status, 'APPROVED')
+        
+        # Verify dry-run message in output
+        output = out.getvalue()
+        self.assertIn('DRY RUN', output)
+        self.assertIn('Would activate', output)
+
