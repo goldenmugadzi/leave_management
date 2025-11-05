@@ -624,18 +624,30 @@
     $("#change_type").on("change", function () {
       const changeType = $(this).val();
       const application = $("#for_application").val();
+      const delegatorValue = $("#delegator").val();
       
       if (changeType === "TEMPORARY_DELEGATION") {
         // Only show delegation fields if Business Excellence is selected
         if (application === "BUSINESS EXCELLENCE") {
           $("#delegation-fields").removeClass("hidden");
+          // Load delegator roles if delegator is already selected
+          if (delegatorValue) {
+            loadDelegatorRoles(delegatorValue);
+          }
         } else {
           $("#delegation-fields").addClass("hidden");
           alert("Temporary delegation is only available for Business Excellence application.");
         }
+      } else if (changeType === "PERMANENT" && application === "BUSINESS EXCELLENCE") {
+        // Also load delegator roles for permanent assignment
+        $("#delegation-fields").addClass("hidden");
+        if (delegatorValue) {
+          loadDelegatorRoles(delegatorValue);
+        }
       } else {
         $("#delegation-fields").addClass("hidden");
         $("#roles-to-delegate").addClass("hidden");
+        $("#delegator-roles-container").empty();
       }
     });
 
@@ -644,6 +656,7 @@
       const application = $(this).val();
       const changeType = $("#change_type").val();
       const operationType = $("#operation_type").val();
+      const delegatorValue = $("#delegator").val();
       
       // Update roles section based on application
       updateRolesSection(application, operationType);
@@ -652,14 +665,22 @@
       if (changeType === "TEMPORARY_DELEGATION") {
         if (application === "BUSINESS EXCELLENCE") {
           $("#delegation-fields").removeClass("hidden");
+          // Load delegator roles if delegator is selected
+          if (delegatorValue) {
+            loadDelegatorRoles(delegatorValue);
+          }
         } else {
           $("#delegation-fields").addClass("hidden");
           $("#roles-to-delegate").addClass("hidden");
+          $("#delegator-roles-container").empty();
           if (application !== "") {
             alert("Temporary delegation is only available for Business Excellence application.");
             $("#change_type").val("");
           }
         }
+      } else if (changeType === "PERMANENT" && application === "BUSINESS EXCELLENCE" && delegatorValue) {
+        // Load delegator roles for permanent assignment
+        loadDelegatorRoles(delegatorValue);
       }
     });
     
@@ -680,13 +701,15 @@
       }
       
       if (application === "BUSINESS EXCELLENCE") {
-        // Show role checkboxes for Business Excellence
-        businessExcellenceRoles.removeClass("hidden");
-        otherAppRoles.addClass("hidden");
-        
         if (operationType === "profile_modification") {
+          // For profile modification, hide static roles - they'll be loaded via AJAX based on delegator
+          businessExcellenceRoles.addClass("hidden");
+          otherAppRoles.addClass("hidden");
           rolesLabel.text("Roles to Assign");
         } else {
+          // For new profile, show role checkboxes for Business Excellence
+          businessExcellenceRoles.removeClass("hidden");
+          otherAppRoles.addClass("hidden");
           rolesLabel.text("Roles to Assign");
         }
       } else {
@@ -721,11 +744,14 @@
       const changeType = $("#change_type").val();
       const application = $("#for_application").val();
       
-      if (changeType === "TEMPORARY_DELEGATION" && application === "BUSINESS EXCELLENCE" && delegatorValue) {
+      // Load delegator roles for both temporary delegation and permanent assignment in Business Excellence
+      if (application === "BUSINESS EXCELLENCE" && delegatorValue && (changeType === "TEMPORARY_DELEGATION" || changeType === "PERMANENT")) {
         loadDelegatorRoles(delegatorValue);
       } else {
         $("#roles-to-delegate").addClass("hidden");
         $("#delegator-roles-container").empty();
+        // Also hide the static Business Excellence roles section if it was shown
+        $("#business-excellence-roles").addClass("hidden");
       }
     });
 
