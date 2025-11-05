@@ -68,20 +68,20 @@
                       required
                       class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     >
-                      <option value="{{cr.application}}">{{cr.application}}</option>
-                      <option value="BUSINESS EXCELLENCE">BUSINESS EXCELLENCE</option>
-                      <option value="SAP">SAP</option>
-                      <option value="NDM">NDM</option>
-                      <option value="ICS">ICS</option>
-                      <option value="SMARTVEND">SMARTVEND</option>
-                      <option value="ZIMS">ZIMS</option>
-                      <option value="GIS">GIS</option>
-                      <option value="NET METERING">NET METERING</option>
-                      <option value="DOMAIN/EMAIL">DOMAIN/EMAIL</option>
-                      <option value="CITRIX">CITRIX</option>
-                      <option value="ITSM">ITSM</option>
-                      <option value="SMART METERING">SMART METERING</option>
-                      <option value="STATISTICAL METERING">STATISTICAL METERING</option>
+                      <option value="">Select Application</option>
+                      <option value="BUSINESS EXCELLENCE" {% if cr.application == "BUSINESS EXCELLENCE" %}selected{% endif %}>BUSINESS EXCELLENCE</option>
+                      <option value="SAP" {% if cr.application == "SAP" %}selected{% endif %}>SAP</option>
+                      <option value="NDM" {% if cr.application == "NDM" %}selected{% endif %}>NDM</option>
+                      <option value="ICS" {% if cr.application == "ICS" %}selected{% endif %}>ICS</option>
+                      <option value="SMARTVEND" {% if cr.application == "SMARTVEND" %}selected{% endif %}>SMARTVEND</option>
+                      <option value="ZIMS" {% if cr.application == "ZIMS" %}selected{% endif %}>ZIMS</option>
+                      <option value="GIS" {% if cr.application == "GIS" %}selected{% endif %}>GIS</option>
+                      <option value="NET METERING" {% if cr.application == "NET METERING" %}selected{% endif %}>NET METERING</option>
+                      <option value="DOMAIN/EMAIL" {% if cr.application == "DOMAIN/EMAIL" %}selected{% endif %}>DOMAIN/EMAIL</option>
+                      <option value="CITRIX" {% if cr.application == "CITRIX" %}selected{% endif %}>CITRIX</option>
+                      <option value="ITSM" {% if cr.application == "ITSM" %}selected{% endif %}>ITSM</option>
+                      <option value="SMART METERING" {% if cr.application == "SMART METERING" %}selected{% endif %}>SMART METERING</option>
+                      <option value="STATISTICAL METERING" {% if cr.application == "STATISTICAL METERING" %}selected{% endif %}>STATISTICAL METERING</option>
                     </select>
                   </div>
 
@@ -236,7 +236,6 @@
 {% endblock content %}
 
 {% block scripts %}
-<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script>
   $(document).ready(function() {

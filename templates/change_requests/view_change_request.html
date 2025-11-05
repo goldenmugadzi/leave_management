@@ -1,0 +1,186 @@
+{% extends 'admin_layout.html' %}
+{% load custom_filters %}
+
+{% block styles %}
+<style>
+  [x-cloak] { display: none !important; }
+</style>
+{% endblock styles %}
+
+{% block content %}
+<div class="content-wrapper">
+  <div class="container-fluid">
+    <!-- Page Header -->
+    {% include 'change_requests/components/layout/page_header.html' with title="View Change Request" subtitle=cr.change_type back_url="/change_requests/change_request_index" back_text="Back to Dashboard" %}
+
+    <!-- Main Layout -->
+    <div class="max-w-6xl mx-auto">
+      <div class="flex flex-col lg:flex-row gap-6">
+        <!-- Main Content -->
+        <div class="flex-1">
+          <div class="bg-white border border-gray-200 rounded-lg shadow-sm">
+            <div class="px-6 py-4 border-b border-gray-200">
+              <h3 class="text-lg font-medium text-gray-900">Change Request Details</h3>
+            </div>
+            
+            <form id="profile_form" method="post" action="/change_requests/approve_change_request"
+              x-data="{ 
+                rejectOpen: false,
+                confirmOpen: false,
+                confirmApply: false,
+                deleteOpen: false
+              }"
+              x-init="() => { 
+                rejectOpen = false; 
+                confirmOpen = false; 
+                confirmApply = false;
+                deleteOpen = false;
+              }">
+              {% csrf_token %}
+              <input type="hidden" name="cr_id" value="{{cr.cr_id}}" />
+              <input type="hidden" name="rejectReason" id="rejectReason" />
+              <input type="hidden" name="actionButton" id="actionButton" />
+              
+              <div class="p-6 space-y-6">
+                <!-- Common Request Information -->
+                {% include 'change_requests/components/sections/request_info.html' %}
+                
+                <!-- Type-specific Profile Data -->
+                {% if cr.change_type == 'New Profile' %}
+                  {% include 'change_requests/components/sections/new_profile_details.html' %}
+                {% elif cr.change_type == 'Profile Modification' or cr.change_type == 'Temporary Role Delegation' %}
+                  {% include 'change_requests/components/sections/profile_modification_details.html' %}
+                {% elif cr.change_type == 'Profile Deactivation' %}
+                  {% include 'change_requests/components/sections/profile_deactivation_details.html' %}
+                {% endif %}
+                
+                <!-- Creator Information (common for all) -->
+                <div class="border-t border-gray-200 pt-6">
+                  <h4 class="text-base font-semibold text-gray-900 mb-4">Creator Information</h4>
+                  <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {% include 'change_requests/components/forms/display_field.html' with label="Creator" value=cr.created_by %}
+                    {% include 'change_requests/components/forms/display_field.html' with label="Creator Designation" value=cr.creator_designation %}
+                    {% include 'change_requests/components/forms/display_field.html' with label="Date Created" value=cr.created_at %}
+                  </div>
+                </div>
+                
+                <!-- Approval History -->
+                {% include 'change_requests/components/sections/approval_history.html' %}
+              </div>
+
+              <!-- Action Buttons -->
+              <div class="flex justify-between px-6 py-4 border-t border-gray-200 bg-gray-50">
+                <div>
+                  <a
+                    href="/change_requests/change_request_index"
+                    class="inline-flex items-center px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors"
+                  >
+                    <i class="fas fa-arrow-left mr-2"></i> Back to Dashboard
+                  </a>
+                </div>
+                
+                <div class="flex gap-3">
+                  {% if section_head_awaiting_action %}
+                  <button
+                    type="button"
+                    @click="deleteOpen = true"
+                    class="inline-flex items-center px-4 py-2 border border-red-600 text-red-600 rounded-md hover:bg-red-50 transition-colors"
+                  >
+                    <i class="fas fa-archive mr-2"></i> Archive
+                  </button>
+                  {% endif %}
+                  
+                  {% if requestor_role == "section_head" and section_head_awaiting_action and section_head_allowed == True %}
+                  <button
+                    type="button"
+                    @click="confirmOpen = true"
+                    name="APPROVE"
+                    class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                  >
+                    <i class="fas fa-check mr-2"></i> Approve
+                  </button>
+                  <button
+                    type="button"
+                    @click="rejectOpen = true"
+                    name="REJECT"
+                    class="inline-flex items-center px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
+                  >
+                    <i class="fas fa-times mr-2"></i> Reject
+                  </button>
+                  {% endif %}
+                  
+                  {% if requestor_role == "it_section_head" and it_section_head_awaiting_action and section_head_awaiting_action == False and it_section_head_allowed == True %}
+                  <button
+                    type="button"
+                    @click="confirmApply = true"
+                    name="APPLY"
+                    class="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
+                  >
+                    <i class="fas fa-play mr-2"></i> Apply Changes
+                  </button>
+                  <button
+                    type="button"
+                    @click="rejectOpen = true"
+                    name="REJECT"
+                    class="inline-flex items-center px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
+                  >
+                    <i class="fas fa-times mr-2"></i> Reject
+                  </button>
+                  {% endif %}
+                </div>
+              </div>
+
+              <!-- Modals -->
+              {% include 'change_requests/components/ui/modals.html' %}
+            </form>
+          </div>
+        </div>
+
+        <!-- Info Panel -->
+        {% include 'change_requests/components/ui/info_panel.html' with title="Important Information" cr_id=cr.cr_id cr_type=change_request.change_type status=change_request.overall_status created_date=cr.created_at items=info_items %}
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock content %}
+
+{% block scripts %}
+<script>
+  $(document).ready(function () {
+    // Handle reject confirmation
+    $("#confirmReject").on("click", function () {
+      const reason = $("#modalRejectReason").val();
+      if (!reason || reason.trim() === "") {
+        alert("Please provide a reason for rejection");
+        return;
+      }
+      $("#rejectReason").val(reason);
+      $("#actionButton").val("REJECT");
+      $("#profile_form").submit();
+    });
+
+    // Handle approve confirmation
+    $("#confirmApprove").on("click", function () {
+      $("#actionButton").val("APPROVE");
+      $("#profile_form").submit();
+    });
+
+    // Handle apply confirmation
+    $("#confirmApplyBtn").on("click", function () {
+      const rolesActions = $("#roles_actions").val();
+      // Allow submission even if empty - backend will handle validation
+      $("#actionButton").val("APPLY");
+      $("#profile_form").submit();
+    });
+
+    // Handle archive confirmation
+    $("#confirmArchive").on("click", function () {
+      if (confirm("Are you sure you want to archive this change request? This action cannot be undone.")) {
+        window.location.href = "/change_requests/archive_change_request?cr_id={{cr.cr_id}}";
+      }
+    });
+  });
+</script>
+{% endblock scripts %}
+

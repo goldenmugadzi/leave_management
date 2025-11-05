@@ -43,6 +43,13 @@ from .constants import (
     PROFILE_CHANGE_STATUS, APPLICATION_NAMES
 )
 
+# Import service layer
+from .services import (
+    ChangeRequestService, CRTypeHandler, ApprovalService, ApprovalWorkflow,
+    NotificationService, ContextBuilder, NewProfileHandler, ProfileModificationHandler,
+    ProfileDeactivationHandler
+)
+
 # Create your views here.
 
 # Set up logging
@@ -779,7 +786,7 @@ def profile_modification_request(request):
         
         try:
             # Get section head approver for this cost center
-            application = Application.objects.filter(name="Change Requests").first()
+            application = Application.objects.filter(name="change_requests").first()
             section_head_role = Roles.objects.filter(role="section_head", app_id=application.id).first()
             approver_responsibilities = Responsibilities.objects.filter(
                 role=section_head_role,
@@ -1151,7 +1158,7 @@ def profile_deactivation_request(request):
             messages.success(request, "Change request submitted successfully")   
             try:     
                 # Get section head approver for this cost center
-                application = Application.objects.filter(name="Change Requests").first()
+                application = Application.objects.filter(name="change_requests").first()
                 section_head_role = Roles.objects.filter(role="section_head", app_id=application.id).first()
                 approver_responsibilities = Responsibilities.objects.filter(
                     role=section_head_role,
@@ -1276,6 +1283,7 @@ def update_change_request(request):
                     "cr_id": change_request.cr_id,
                     "change_reason": change_request.change_reason,
                     "change_description": change_request.change_description,
+                    "application": change_request.application,  # FIXED: Added missing application field
                     "created_by": change_request.created_by.first_name + " " + change_request.created_by.last_name,
                     "creator_designation": change_request.creator_designation.description,
                     "created_at": change_request.created_at
@@ -1317,6 +1325,16 @@ def update_change_request(request):
                 "roles_to_action": profile_change.roles_to_action,
                 "roles_actions": profile_change.roles_actions,
             }
+            
+            # FIXED: Get delegation data from the correct fields
+            # The delegator is stored in profile_change.changed_by
+            # The delegatee is stored in profile_change.user
+            is_delegation = change_request.change_type == "Temporary Role Delegation"
+            
+            # Get delegator from changed_by field (who initiated the delegation)
+            delegator_username = profile_change.changed_by.username if profile_change.changed_by else None
+            # Delegatee is the user being modified
+            delegatee_username = user.username
 
             cr = {
                 "user": new_user,
@@ -1328,7 +1346,12 @@ def update_change_request(request):
                 "creator_designation": change_request.creator_designation.description,
                 "created_at": change_request.created_at,
                 "change_type": change_request.change_type,
-                "overall_status": change_request.overall_status
+                "overall_status": change_request.overall_status,
+                # FIXED: Added delegation-specific fields with correct data source
+                "is_delegation": is_delegation,
+                "delegation_type": "TEMPORARY" if is_delegation else "PERMANENT",
+                "delegator_username": delegator_username,
+                "delegatee_username": delegatee_username,
             }
             
             # Check if current user is the owner
@@ -1417,24 +1440,44 @@ def update_change_request(request):
                 messages.warning(request, "Change request has already been approved by the section head. You cannot update it")
                 return redirect("/change_requests/change_request_index")
             else:
-                
+                # Update the ChangeRequest common fields
                 change_request.change_reason = change_reason if change_reason else change_request.change_reason
                 change_request.change_description = change_description if change_description else change_request.change_description
-                change_request.roles_to_action = roles_to_action if roles_to_action else change_request.roles_to_action
-                change_request.roles_actions = roles_actions if roles_actions else change_request.roles_actions
+                change_request.application = sanitized_data.get('application', change_request.application)
                 change_request.save()
 
-                if change_request.profile_change:
-                    profile_mod = ProfileChange.objects.filter(id=change_request.profile_change.id).first()
-                    # if profile_mod.application == "BUSINESS EXCELLENCE":
-                    #     roles = [role for role in [request.POST.get(app.name) for app in Application.objects.all() if request.POST.get(app.name) != 'Select Role'] if role and role != ""]
-                    #     profile_mod.role_to_assign.clear()
-                    #     profile_mod.role_to_assign.add(*Roles.objects.filter(id__in=roles))
-                    #     profile_mod.save()
+                # Update type-specific fields
+                if change_request.new_profile:
+                    # Update NewProfile fields
+                    new_profile = change_request.new_profile
+                    new_profile.roles_to_action = roles_to_action if roles_to_action else new_profile.roles_to_action
+                    new_profile.roles_actions = roles_actions if roles_actions else new_profile.roles_actions
+                    
+                    # Update other new profile fields if provided
+                    new_profile.first_name = sanitized_data.get('first_name', new_profile.first_name)
+                    new_profile.last_name = sanitized_data.get('last_name', new_profile.last_name)
+                    new_profile.username = sanitized_data.get('username', new_profile.username)
+                    new_profile.email = sanitized_data.get('email', new_profile.email)
+                    
+                    # Update designation if provided
+                    designation_id = sanitized_data.get('designation')
+                    if designation_id:
+                        new_profile.designation = Designations.objects.filter(id=designation_id).first()
+                    
+                    new_profile.save()
+                
+                elif change_request.profile_change:
+                    # Update ProfileChange fields
+                    profile_mod = change_request.profile_change
+                    profile_mod.roles_to_action = roles_to_action if roles_to_action else profile_mod.roles_to_action
+                    profile_mod.roles_actions = roles_actions if roles_actions else profile_mod.roles_actions
+                    profile_mod.application = sanitized_data.get('application', profile_mod.application)
+                    profile_mod.save()
                     
                 elif change_request.profile_deactivation:
-                    profile_deactivation = ProfileDeactivation.objects.filter(id=change_request.profile_deactivation.id).first()
-                    profile_deactivation.application = request.POST.get('application')
+                    # Update ProfileDeactivation fields
+                    profile_deactivation = change_request.profile_deactivation
+                    profile_deactivation.application = sanitized_data.get('application', profile_deactivation.application)
                     profile_deactivation.save()
                 # clear approvals
                 CRApproval.objects.filter(cr_id=change_request).delete()
@@ -1919,6 +1962,216 @@ def view_profile_request(request):
         messages.error(request, "An error occurred while viewing the change request")
         return redirect("/change_requests/change_request_index")
 
+
+# ==================== NEW UNIFIED VIEW FUNCTIONS (USING SERVICE LAYER) ====================
+
+@login_required
+def view_change_request_unified(request):
+    """
+    REFACTORED: Unified view for all change request types using service layer.
+    This replaces view_new_profile_request, view_profile_modification_request, 
+    and view_profile_deactivation_request with a single function.
+    """
+    if request.method != "GET":
+        logger.warning(f"Invalid request method {request.method} for view_change_request_unified")
+        messages.error(request, "Invalid request method")
+        return redirect("/change_requests/change_request_index")
+    
+    cr_id = request.GET.get('i')
+    if not cr_id:
+        logger.error("Missing change request ID parameter")
+        messages.error(request, "Change request ID is required")
+        return redirect("/change_requests/change_request_index")
+    
+    try:
+        # Get change request with optimized queries
+        cr = ChangeRequestService.get_cr_with_details(cr_id)
+        
+        # Get type handler for this CR
+        handler = CRTypeHandler.get_handler(cr.change_type)
+        
+        # Get user permissions
+        permissions = ApprovalService.get_user_permissions(request.user, cr)
+        
+        # Get approval workflow status
+        approval_status = ApprovalService.get_approval_status(cr)
+        
+        # Build profile data using handler
+        profile_data = handler.get_profile_data(cr)
+        
+        # Build base context
+        base_context = ContextBuilder.get_base_template_context(request.user, cr)
+        
+        # Build CR context
+        cr_context = ContextBuilder.build_cr_context(cr, profile_data)
+        
+        # Add type-specific context for profile modification
+        if isinstance(handler, ProfileModificationHandler):
+            cr_context['delegation_info'] = handler.get_delegation_info(cr)
+            cr_context['cr_context'] = handler.get_change_request_context(cr)
+        elif isinstance(handler, ProfileDeactivationHandler):
+            cr_context['cr_context'] = handler.get_change_request_context(cr)
+        
+        # Add approval context
+        context = ContextBuilder.add_approval_context(base_context, permissions, approval_status)
+        
+        # Add CR context
+        context['cr'] = cr_context
+        
+        logger.info(f"Rendering unified view for CR {cr_id} of type {cr.change_type}")
+        return render(request, "change_requests/view_change_request.html", context)
+    
+    except ChangeRequest.DoesNotExist:
+        logger.error(f"Change request not found: {cr_id}")
+        messages.error(request, "Change request not found")
+        return redirect("/change_requests/change_request_index")
+    except Exception as e:
+        logger.error(f"Error viewing change request {cr_id}: {str(e)}", exc_info=True)
+        messages.error(request, "An error occurred while viewing the change request")
+        return redirect("/change_requests/change_request_index")
+
+
+@csrf_protect
+@login_required
+@transaction.atomic
+def approve_change_request_unified(request):
+    """
+    REFACTORED: Unified approval handler using service layer.
+    This replaces the massive if/elif blocks in approve_profile_request with clean service calls.
+    """
+    if request.method != "POST":
+        messages.error(request, "Invalid request method")
+        return redirect("/change_requests/change_request_index")
+    
+    try:
+        cr_id = request.POST.get('cr_id')
+        action = request.POST.get('actionButton')
+        
+        if not cr_id or not action:
+            messages.error(request, "Missing required parameters")
+            return redirect("/change_requests/change_request_index")
+        
+        # Get change request
+        cr = ChangeRequestService.get_cr_with_details(cr_id)
+        
+        # Process action using service layer
+        if 'APPROVE' in action:
+            success, message = ApprovalService.approve_cr(cr, request.user)
+            if success:
+                messages.success(request, message)
+                # Send notification to next approver
+                NotificationService.send_approval_notification(cr, action, request)
+            else:
+                messages.error(request, message)
+        
+        elif 'REJECT' in action:
+            reason = request.POST.get('rejectReason')
+            if not reason:
+                messages.error(request, "Rejection reason is required")
+                return redirect("/change_requests/change_request_index")
+            
+            success, message = ApprovalService.reject_cr(cr, request.user, reason)
+            if success:
+                messages.success(request, message)
+                # Send notification to creator
+                NotificationService.send_approval_notification(cr, action, request)
+            else:
+                messages.error(request, message)
+        
+        elif 'APPLY' in action:
+            roles_actions = request.POST.get('roles_actions')
+            success, message = ApprovalService.apply_cr(cr, request.user, roles_actions)
+            if success:
+                messages.success(request, message)
+                # Send notification to creator
+                NotificationService.send_approval_notification(cr, action, request)
+            else:
+                messages.error(request, message)
+        
+        else:
+            messages.error(request, f"Unknown action: {action}")
+        
+        return redirect("/change_requests/change_request_index")
+    
+    except ChangeRequest.DoesNotExist:
+        logger.error(f"Change request not found: {cr_id}")
+        messages.error(request, "Change request not found")
+        return redirect("/change_requests/change_request_index")
+    except Exception as e:
+        logger.error(f"Error processing approval action: {str(e)}", exc_info=True)
+        messages.error(request, f"An error occurred while processing your request: {str(e)}")
+        return redirect("/change_requests/change_request_index")
+
+
+@csrf_protect
+@login_required
+def create_change_request_handler_unified(request):
+    """
+    REFACTORED: Unified CR creation handler using service layer.
+    This consolidates create_new_profile, profile_modification_request, etc.
+    """
+    if request.method != "POST":
+        messages.error(request, "Invalid request method")
+        return redirect("/change_requests/create_change_request")
+    
+    try:
+        # Determine CR type from form data
+        request_type = request.POST.get('request_type')
+        
+        # Validate common fields
+        errors = ChangeRequestService.validate_cr_data(request_type, request.POST.dict())
+        if errors:
+            for error in errors:
+                messages.error(request, error)
+            return redirect("/change_requests/create_change_request")
+        
+        # Create CR based on type
+        if request_type == 'NEW_PROFILE' or request.POST.get('username'):
+            # Validate new profile specific fields
+            profile_errors = ChangeRequestService.validate_new_profile_data(request.POST.dict())
+            if profile_errors:
+                for error in profile_errors:
+                    messages.error(request, error)
+                return redirect("/change_requests/create_change_request")
+            
+            # Check if username already exists
+            username = request.POST.get('username')
+            if UserProfile.objects.filter(username=username).exists():
+                messages.error(request, f"Username '{username}' already exists. Please choose a different username.")
+                return redirect("/change_requests/create_change_request")
+            
+            cr = ChangeRequestService.create_new_profile_cr(request.POST.dict(), request.user)
+        
+        elif request_type == 'PROFILE_MODIFICATION' or request.POST.get('delegator'):
+            cr = ChangeRequestService.create_profile_modification_cr(request.POST.dict(), request.user)
+        
+        elif request_type == 'PROFILE_DEACTIVATION':
+            cr = ChangeRequestService.create_profile_deactivation_cr(request.POST.dict(), request.user)
+        
+        else:
+            messages.error(request, "Invalid request type")
+            return redirect("/change_requests/create_change_request")
+        
+        # Send notification
+        NotificationService.send_creation_notification(cr, request)
+        
+        messages.success(request, SUCCESS_MESSAGES['CHANGE_REQUEST_CREATED'])
+        logger.info(LOG_MESSAGES['CHANGE_REQUEST_CREATED'].format(cr_id=cr.cr_id, username=request.user.username))
+        
+        return redirect("/change_requests/change_request_index")
+    
+    except ValueError as ve:
+        logger.error(f"Validation error creating change request: {str(ve)}")
+        messages.error(request, str(ve))
+        return redirect("/change_requests/create_change_request")
+    except Exception as e:
+        logger.error(f"Error creating change request: {str(e)}", exc_info=True)
+        messages.error(request, f"An error occurred while creating the change request: {str(e)}")
+        return redirect("/change_requests/create_change_request")
+
+
+# ==================== END NEW UNIFIED VIEW FUNCTIONS ====================
+
 # view_profile_request_legacy removed - replaced with refactored version above
 
         #         new_user = {
@@ -2218,6 +2471,10 @@ def approve_profile_request(request):
                         )
                         cr_approval.save()
                         
+                        # Update change request status to APPROVED
+                        change_request.status = 'APPROVED'
+                        change_request.save()
+                        
                         # Send delegation notifications if this is a delegation request
                         if change_request.change_type == "Temporary Role Delegation":
                             send_delegation_notifications(
@@ -2228,14 +2485,12 @@ def approve_profile_request(request):
                         
                         messages.success(request, "Change Request approved successfully")
                         try:
-                            region = change_request.region
-                            region_cost_center = CostCenter.objects.filter(Q(code=region.code), Q(code="CC"+region.code)).first()
-                            # Get section head approver for this cost center
-                            application = Application.objects.filter(name="Change Requests").first()
-                            section_head_role = Roles.objects.filter(role="section_head", app_id=application.id).first()
+                            # Get IT section head approver for the CR's cost center
+                            application = Application.objects.filter(name="change_requests").first()
+                            it_section_head_role = Roles.objects.filter(role="it_section_head", app_id=application.id).first()
                             approver_responsibilities = Responsibilities.objects.filter(
-                                role=section_head_role,
-                                cost_centers__in=[region_cost_center]
+                                role=it_section_head_role,
+                                cost_centers__in=[change_request.cost_center]
                             ).first()
                             approver = approver_responsibilities.user if approver_responsibilities else None
                             if not approver:

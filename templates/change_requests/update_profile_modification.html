@@ -73,23 +73,20 @@
                       required
                       class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     >
-                      {% if change_request.profile_change.application %}
-                      <option value="{{change_request.profile_change.application}}">{{change_request.profile_change.application}}</option>
-                      {% endif %}
                       <option value="">Select Application</option>
-                      <option value="BUSINESS EXCELLENCE">BUSINESS EXCELLENCE</option>
-                      <option value="SAP">SAP</option>
-                      <option value="NDM">NDM</option>
-                      <option value="ICS">ICS</option>
-                      <option value="SMARTVEND">SMARTVEND</option>
-                      <option value="ZIMS">ZIMS</option>
-                      <option value="GIS">GIS</option>
-                      <option value="NET METERING">NET METERING</option>
-                      <option value="DOMAIN/EMAIL">DOMAIN/EMAIL</option>
-                      <option value="CITRIX">CITRIX</option>
-                      <option value="ITSM">ITSM</option>
-                      <option value="SMART METERING">SMART METERING</option>
-                      <option value="STATISTICAL METERING">STATISTICAL METERING</option>
+                      <option value="BUSINESS EXCELLENCE" {% if cr.application == "BUSINESS EXCELLENCE" %}selected{% endif %}>BUSINESS EXCELLENCE</option>
+                      <option value="SAP" {% if cr.application == "SAP" %}selected{% endif %}>SAP</option>
+                      <option value="NDM" {% if cr.application == "NDM" %}selected{% endif %}>NDM</option>
+                      <option value="ICS" {% if cr.application == "ICS" %}selected{% endif %}>ICS</option>
+                      <option value="SMARTVEND" {% if cr.application == "SMARTVEND" %}selected{% endif %}>SMARTVEND</option>
+                      <option value="ZIMS" {% if cr.application == "ZIMS" %}selected{% endif %}>ZIMS</option>
+                      <option value="GIS" {% if cr.application == "GIS" %}selected{% endif %}>GIS</option>
+                      <option value="NET METERING" {% if cr.application == "NET METERING" %}selected{% endif %}>NET METERING</option>
+                      <option value="DOMAIN/EMAIL" {% if cr.application == "DOMAIN/EMAIL" %}selected{% endif %}>DOMAIN/EMAIL</option>
+                      <option value="CITRIX" {% if cr.application == "CITRIX" %}selected{% endif %}>CITRIX</option>
+                      <option value="ITSM" {% if cr.application == "ITSM" %}selected{% endif %}>ITSM</option>
+                      <option value="SMART METERING" {% if cr.application == "SMART METERING" %}selected{% endif %}>SMART METERING</option>
+                      <option value="STATISTICAL METERING" {% if cr.application == "STATISTICAL METERING" %}selected{% endif %}>STATISTICAL METERING</option>
                     </select>
                     <p class="mt-1 text-sm text-gray-500">
                       Select the application this change relates to
@@ -129,8 +126,8 @@
                       class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     >
                       <option value="">Select Change Type</option>
-                      <option value="PERMANENT">Permanent Role Assignment</option>
-                      <option value="TEMPORARY_DELEGATION">Temporary Role Delegation</option>
+                      <option value="PERMANENT" {% if cr.delegation_type == "PERMANENT" %}selected{% endif %}>Permanent Role Assignment</option>
+                      <option value="TEMPORARY_DELEGATION" {% if cr.delegation_type == "TEMPORARY" or cr.is_delegation %}selected{% endif %}>Temporary Role Delegation</option>
                     </select>
                     <p class="mt-1 text-sm text-gray-500">
                       Choose the type of modification
@@ -149,11 +146,11 @@
                       class="select2 block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     >
                       <option value="">Select Delegator</option>
-                      <option value="{{request.user.username}}">
+                      <option value="{{request.user.username}}" {% if cr.delegator_username == request.user.username %}selected{% endif %}>
                         {{request.user.get_full_name}} (Logged in user)
                       </option>
                       {% for usr in user_profiles %}
-                      <option value="{{usr.username}}">
+                      <option value="{{usr.username}}" {% if cr.delegator_username == usr.username %}selected{% endif %}>
                         {{usr.first_name}} {{usr.last_name}}
                       </option>
                       {% endfor %}
@@ -174,15 +171,12 @@
                       required
                       class="select2 block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     >
-                      {% if cr.user.username %}
-                      <option value="{{cr.user.username}}">{{cr.user.firstname}} {{cr.user.lastname}}</option>
-                      {% endif %}
                       <option value="">Select Delegatee</option>
-                      <option value="{{request.user.username}}">
+                      <option value="{{request.user.username}}" {% if cr.delegatee_username == request.user.username or cr.user.username == request.user.username %}selected{% endif %}>
                         {{request.user.get_full_name}} (Logged in user)
                       </option>
                       {% for usr in user_profiles %}
-                      <option value="{{usr.username}}">
+                      <option value="{{usr.username}}" {% if cr.delegatee_username == usr.username or cr.user.username == usr.username %}selected{% endif %}>
                         {{usr.first_name}} {{usr.last_name}}
                       </option>
                       {% endfor %}
@@ -285,7 +279,6 @@
 {% endblock content %}
 
 {% block scripts %}
-<script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script>
   $(document).ready(function() {
