@@ -74,6 +74,16 @@
                 </div>
                 
                 <div class="flex gap-3">
+                  <!-- DEBUG INFO (Remove in production) -->
+                  {% comment %}
+                  DEBUG VALUES:
+                  - requestor_role: {{ requestor_role }}
+                  - section_head_awaiting_action: {{ section_head_awaiting_action }}
+                  - it_section_head_awaiting_action: {{ it_section_head_awaiting_action }}
+                  - section_head_allowed: {{ section_head_allowed }}
+                  - it_section_head_allowed: {{ it_section_head_allowed }}
+                  {% endcomment %}
+                  
                   {% if section_head_awaiting_action %}
                   <button
                     type="button"
@@ -84,6 +94,7 @@
                   </button>
                   {% endif %}
                   
+                  <!-- Section Head Approve/Reject Buttons -->
                   {% if requestor_role == "section_head" and section_head_awaiting_action and section_head_allowed == True %}
                   <button
                     type="button"
@@ -101,6 +112,7 @@
                   </button>
                   {% endif %}
                   
+                  <!-- IT Section Head Apply/Reject Buttons -->
                   {% if requestor_role == "it_section_head" and it_section_head_awaiting_action and section_head_awaiting_action == False and it_section_head_allowed == True %}
                   <button
                     type="button"
@@ -116,6 +128,17 @@
                   >
                     <i class="fas fa-times mr-2"></i> Reject
                   </button>
+                  {% else %}
+                  <!-- DEBUG: Why Apply button is hidden -->
+                  {% if requestor_role != "it_section_head" %}
+                    <div class="hidden" data-debug="User role is '{{ requestor_role }}', need 'it_section_head'"></div>
+                  {% elif it_section_head_awaiting_action == False %}
+                    <div class="hidden" data-debug="IT Section Head already acted"></div>
+                  {% elif section_head_awaiting_action == True %}
+                    <div class="hidden" data-debug="Section Head has not approved yet"></div>
+                  {% elif it_section_head_allowed == False %}
+                    <div class="hidden" data-debug="IT Section Head not allowed for this cost center"></div>
+                  {% endif %}
                   {% endif %}
                 </div>
               </div>

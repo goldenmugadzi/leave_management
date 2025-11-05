@@ -1621,27 +1621,52 @@ def get_user_permissions(user, change_request):
     """
     Determine user permissions for the change request
     Returns: dict with permission flags
-    """
-    role = user.get_user_role_for_application("change_requests")
-    user_role = role.role if role else None
-    logger.info(f"User {user.username} has role: {user_role}")
     
-    user_responsibilities = Responsibilities.objects.filter(user=user, role=role).first() if role else None
-    cost_centers = user_responsibilities.cost_centers.all() if user_responsibilities else []
+    FIXED: Now checks ALL user roles, not just the first one
+    """
+    # Get ALL roles for this application
+    application = Application.objects.filter(name="change_requests").first()
+    user_roles = user.roles.filter(app_id=application.id) if application else []
+    
+    # Extract role names
+    role_names = [role.role for role in user_roles]
+    logger.info(f"User {user.username} has roles: {role_names}")
+    
+    # Determine primary role for template (prioritize IT section head for display)
+    if "it_section_head" in role_names:
+        primary_role = "it_section_head"
+    elif "section_head" in role_names:
+        primary_role = "section_head"
+    else:
+        primary_role = role_names[0] if role_names else None
     
     permissions = {
         'section_head_allowed': False,
         'it_section_head_allowed': False,
-        'user_role': user_role,
-        'cost_centers': cost_centers
+        'user_role': primary_role,  # Primary role for template
+        'all_roles': role_names,     # All roles for checking
+        'cost_centers': []
     }
     
-    if user_role == "section_head":
-        if change_request.cost_center in cost_centers:
-            permissions['section_head_allowed'] = True
-    elif user_role == "it_section_head":
-        if change_request.cost_center in cost_centers:
-            permissions['it_section_head_allowed'] = True
+    # Check permissions for each role the user has
+    for role_obj in user_roles:
+        user_responsibilities = Responsibilities.objects.filter(user=user, role=role_obj).first()
+        
+        if user_responsibilities:
+            cost_centers = user_responsibilities.cost_centers.all()
+            permissions['cost_centers'].extend(cost_centers)
+            
+            # Check section head permission
+            if role_obj.role == "section_head":
+                if change_request.cost_center in cost_centers:
+                    permissions['section_head_allowed'] = True
+            
+            # Check IT section head permission
+            elif role_obj.role == "it_section_head":
+                if change_request.cost_center in cost_centers:
+                    permissions['it_section_head_allowed'] = True
+    
+    logger.info(f"Permissions: section_head_allowed={permissions['section_head_allowed']}, it_section_head_allowed={permissions['it_section_head_allowed']}")
     
     return permissions
 
@@ -2031,6 +2056,19 @@ def view_profile_modification_request(request, change_request, permissions, appr
     
     logger.info(f"Profile modification request - section_head_awaiting_action: {approval_status['section_head_awaiting_action']}")
     logger.info(f"Profile modification request - it_section_head_awaiting_action: {approval_status['it_section_head_awaiting_action']}")
+    
+    # DEBUG LOG: Button visibility conditions
+    logger.info(f"=== BUTTON VISIBILITY DEBUG for CR {change_request.cr_id} ===")
+    logger.info(f"User: {request.user.username}")
+    logger.info(f"requestor_role: {permissions.get('user_role', 'N/A')}")
+    logger.info(f"section_head_allowed: {permissions['section_head_allowed']}")
+    logger.info(f"it_section_head_allowed: {permissions['it_section_head_allowed']}")
+    logger.info(f"Apply button condition check:")
+    logger.info(f"  - requestor_role == 'it_section_head': {permissions.get('user_role') == 'it_section_head'}")
+    logger.info(f"  - it_section_head_awaiting_action: {approval_status['it_section_head_awaiting_action']}")
+    logger.info(f"  - section_head_awaiting_action == False: {not approval_status['section_head_awaiting_action']}")
+    logger.info(f"  - it_section_head_allowed: {permissions['it_section_head_allowed']}")
+    logger.info(f"  => APPLY BUTTON SHOULD SHOW: {permissions.get('user_role') == 'it_section_head' and approval_status['it_section_head_awaiting_action'] and not approval_status['section_head_awaiting_action'] and permissions['it_section_head_allowed']}")
     
     # FIXED: Use unified template instead of deleted template
     return render(request, "change_requests/view_change_request.html", context)
