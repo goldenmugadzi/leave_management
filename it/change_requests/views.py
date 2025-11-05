@@ -1585,6 +1585,14 @@ def parse_delegation_data(profile_change):
         delegation_info['display_type'] = 'modification'
         delegation_info['formatted_display'] = profile_change.roles_to_action or 'Profile Modification'
         
+        # Get delegator information for regular modifications
+        if profile_change.changed_by:
+            delegation_info['delegator_name'] = profile_change.changed_by.get_full_name()
+            delegation_info['delegator_username'] = profile_change.changed_by.username
+        else:
+            delegation_info['delegator_name'] = 'Unknown'
+            delegation_info['delegator_username'] = ''
+        
         # Get roles for non-delegation modifications
         delegation_info['roles'] = list(profile_change.role_to_assign.all())
         
