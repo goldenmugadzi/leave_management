@@ -13,7 +13,7 @@ class Equipment(models.Model):
 class EquipmentChange(models.Model):
     district = models.ForeignKey(Districts, on_delete=models.CASCADE)
     substation = models.ForeignKey(Substation, on_delete=models.CASCADE)
-    equipment = models.ForeignKey(Equipment, on_delete=models.CASCADE)
+    equipment = models.ForeignKey(Equipment, on_delete=models.CASCADE, blank=True, null=True)
     section = models.ForeignKey(Sections, on_delete=models.CASCADE, blank=True, null=True)
     date = models.DateField(blank=True, null=True)
     reason = models.TextField(blank=True, null=True)
