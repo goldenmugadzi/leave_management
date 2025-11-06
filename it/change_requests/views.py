@@ -606,37 +606,63 @@ def profile_modification_request(request):
     try:
         change_reason = request.POST.get("change_reason")
         change_description = request.POST.get("change_description")
-        delegator_username = request.POST.get("delegator")
-        delegatee_username = request.POST.get("delegatee")
         application = request.POST.get("for_application")
         roles_to_action = request.POST.get("roles_to_action")
         change_type = request.POST.get("change_type", "PERMANENT")
         auth_user = request.user
         
-        print(f"Form data - delegator: {delegator_username}, delegatee: {delegatee_username}")
         print(f"Form data - application: {application}, change_type: {change_type}")
         print(f"Form data - roles_to_action: {roles_to_action}")
-        print("delegator: ", delegator_username, "delegatee: ", delegatee_username)
         
-        # Get delegator and delegatee users
-        print("Fetching delegator and delegatee users from database")
-        delegator = UserProfile.objects.filter(username=delegator_username).first()
-        delegatee = UserProfile.objects.filter(username=delegatee_username).first()
-        
-        print(f"Delegator found: {delegator is not None}")
-        print(f"Delegatee found: {delegatee is not None}")
-        
-        if not delegator:
-            error_msg = f"Delegator '{delegator_username}' not found in database"
-            print(f"ERROR: {error_msg}")
-            messages.error(request, error_msg)
-            return redirect("/change_requests/change_request_index")
+        # Handle different fields based on change type
+        if change_type == "TEMPORARY_DELEGATION":
+            # For temporary delegation, get delegator and delegatee
+            delegator_username = request.POST.get("delegator")
+            delegatee_username = request.POST.get("delegatee")
             
-        if not delegatee:
-            error_msg = f"Delegatee '{delegatee_username}' not found in database"
-            print(f"ERROR: {error_msg}")
-            messages.error(request, error_msg)
-            return redirect("/change_requests/change_request_index")
+            print(f"TEMPORARY_DELEGATION - delegator: {delegator_username}, delegatee: {delegatee_username}")
+            
+            # Get delegator and delegatee users
+            print("Fetching delegator and delegatee users from database")
+            delegator = UserProfile.objects.filter(username=delegator_username).first()
+            delegatee = UserProfile.objects.filter(username=delegatee_username).first()
+            
+            print(f"Delegator found: {delegator is not None}")
+            print(f"Delegatee found: {delegatee is not None}")
+            
+            if not delegator:
+                error_msg = f"Delegator '{delegator_username}' not found in database"
+                print(f"ERROR: {error_msg}")
+                messages.error(request, error_msg)
+                return redirect("/change_requests/change_request_index")
+                
+            if not delegatee:
+                error_msg = f"Delegatee '{delegatee_username}' not found in database"
+                print(f"ERROR: {error_msg}")
+                messages.error(request, error_msg)
+                return redirect("/change_requests/change_request_index")
+        else:
+            # For permanent role assignment, get user profile
+            user_profile_username = request.POST.get("user_profile")
+            
+            print(f"PERMANENT - user_profile: {user_profile_username}")
+            
+            # Get the user profile
+            print("Fetching user profile from database")
+            user_profile = UserProfile.objects.filter(username=user_profile_username).first()
+            
+            print(f"User profile found: {user_profile is not None}")
+            
+            if not user_profile:
+                error_msg = f"User profile '{user_profile_username}' not found in database"
+                print(f"ERROR: {error_msg}")
+                messages.error(request, error_msg)
+                return redirect("/change_requests/change_request_index")
+            
+            # For permanent changes, the logged-in user is the one making the change
+            # and the selected user profile is the one being modified
+            delegator = auth_user  # The person making the change request
+            delegatee = user_profile  # The person whose profile is being modified
         
         print(f"Delegator details: ID={delegator.id}, designation={delegator.designation}")
         print(f"Delegatee details: ID={delegatee.id}, designation={delegatee.designation}")

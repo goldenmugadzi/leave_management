@@ -153,56 +153,79 @@
                     </p>
                   </div>
 
-                  <!-- Delegator Selection -->
-                  <div class="mb-6">
-                    <label for="delegator" class="block text-sm font-medium text-gray-700 mb-2">
-                      Delegator <span class="text-red-500">*</span>
+                  <!-- User Profile Selection (for Permanent Changes) -->
+                  <div id="permanent-user-field" class="mb-6 {% if cr.is_delegation %}hidden{% endif %}">
+                    <label for="user_profile" class="block text-sm font-medium text-gray-700 mb-2">
+                      User Profile to Modify <span class="text-red-500">*</span>
                     </label>
                     <select
-                      id="delegator"
-                      name="delegator"
-                      required
+                      id="user_profile"
+                      name="user_profile"
                       class="select2 block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     >
-                      <option value="">Select Delegator</option>
-                      <option value="{{request.user.username}}" {% if cr.delegator_username == request.user.username %}selected{% endif %}>
-                        {{request.user.get_full_name}} (Logged in user)
-                      </option>
+                      <option value="">Select User Profile</option>
                       {% for usr in user_profiles %}
-                      <option value="{{usr.username}}" {% if cr.delegator_username == usr.username %}selected{% endif %}>
+                      <option value="{{usr.username}}" {% if cr.user.username == usr.username %}selected{% endif %}>
                         {{usr.first_name}} {{usr.last_name}}
                       </option>
                       {% endfor %}
                     </select>
                     <p class="mt-1 text-sm text-gray-500">
-                      Select who is delegating their roles
+                      Select the user whose profile will be modified
                     </p>
                   </div>
 
-                  <!-- Delegatee Selection -->
-                  <div class="mb-6">
-                    <label for="delegatee" class="block text-sm font-medium text-gray-700 mb-2">
-                      Delegatee <span class="text-red-500">*</span>
-                    </label>
-                    <select
-                      id="delegatee"
-                      name="delegatee"
-                      required
-                      class="select2 block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    >
-                      <option value="">Select Delegatee</option>
-                      <option value="{{request.user.username}}" {% if cr.delegatee_username == request.user.username or cr.user.username == request.user.username %}selected{% endif %}>
-                        {{request.user.get_full_name}} (Logged in user)
-                      </option>
-                      {% for usr in user_profiles %}
-                      <option value="{{usr.username}}" {% if cr.delegatee_username == usr.username or cr.user.username == usr.username %}selected{% endif %}>
-                        {{usr.first_name}} {{usr.last_name}}
-                      </option>
-                      {% endfor %}
-                    </select>
-                    <p class="mt-1 text-sm text-gray-500">
-                      Select who will receive the delegated roles
-                    </p>
+                  <!-- Delegation Fields (for Temporary Delegation) -->
+                  <div id="delegation-user-fields" class="{% if not cr.is_delegation %}hidden{% endif %}">
+                    <!-- Delegator Selection -->
+                    <div class="mb-6">
+                      <label for="delegator" class="block text-sm font-medium text-gray-700 mb-2">
+                        Delegator <span class="text-red-500">*</span>
+                      </label>
+                      <select
+                        id="delegator"
+                        name="delegator"
+                        class="select2 block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      >
+                        <option value="">Select Delegator</option>
+                        <option value="{{request.user.username}}" {% if cr.delegator_username == request.user.username %}selected{% endif %}>
+                          {{request.user.get_full_name}} (Logged in user)
+                        </option>
+                        {% for usr in user_profiles %}
+                        <option value="{{usr.username}}" {% if cr.delegator_username == usr.username %}selected{% endif %}>
+                          {{usr.first_name}} {{usr.last_name}}
+                        </option>
+                        {% endfor %}
+                      </select>
+                      <p class="mt-1 text-sm text-gray-500">
+                        Select who is delegating their roles
+                      </p>
+                    </div>
+
+                    <!-- Delegatee Selection -->
+                    <div class="mb-6">
+                      <label for="delegatee" class="block text-sm font-medium text-gray-700 mb-2">
+                        Delegatee <span class="text-red-500">*</span>
+                      </label>
+                      <select
+                        id="delegatee"
+                        name="delegatee"
+                        class="select2 block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      >
+                        <option value="">Select Delegatee</option>
+                        <option value="{{request.user.username}}" {% if cr.delegatee_username == request.user.username or cr.user.username == request.user.username %}selected{% endif %}>
+                          {{request.user.get_full_name}} (Logged in user)
+                        </option>
+                        {% for usr in user_profiles %}
+                        <option value="{{usr.username}}" {% if cr.delegatee_username == usr.username or cr.user.username == usr.username %}selected{% endif %}>
+                          {{usr.first_name}} {{usr.last_name}}
+                        </option>
+                        {% endfor %}
+                      </select>
+                      <p class="mt-1 text-sm text-gray-500">
+                        Select who will receive the delegated roles
+                      </p>
+                    </div>
                   </div>
 
                   <!-- Delegation-specific fields (hidden by default, shown for TEMPORARY_DELEGATION) -->
@@ -325,8 +348,19 @@
       const changeType = $(this).val();
       const application = $("#for_application").val();
       const delegatorValue = $("#delegator").val();
+      const userProfileValue = $("#user_profile").val();
       
       if (changeType === "TEMPORARY_DELEGATION") {
+        // Show delegation-specific fields and hide permanent user field
+        $("#delegation-user-fields").removeClass("hidden");
+        $("#permanent-user-field").addClass("hidden");
+        
+        // Set required attributes for delegation fields
+        $("#delegator").prop("required", true);
+        $("#delegatee").prop("required", true);
+        $("#user_profile").prop("required", false);
+        
+        // Only show delegation date fields if Business Excellence is selected
         if (application === "BUSINESS EXCELLENCE") {
           $("#delegation-fields").removeClass("hidden");
           if (delegatorValue) {
@@ -336,25 +370,56 @@
           $("#delegation-fields").addClass("hidden");
           alert("Temporary delegation is only available for Business Excellence application.");
         }
-      } else if (changeType === "PERMANENT" && application === "BUSINESS EXCELLENCE") {
+      } else if (changeType === "PERMANENT") {
+        // Show permanent user field and hide delegation-specific fields
+        $("#permanent-user-field").removeClass("hidden");
+        $("#delegation-user-fields").addClass("hidden");
         $("#delegation-fields").addClass("hidden");
-        if (delegatorValue) {
-          loadDelegatorRoles(delegatorValue);
+        
+        // Set required attributes for permanent fields
+        $("#user_profile").prop("required", true);
+        $("#delegator").prop("required", false);
+        $("#delegatee").prop("required", false);
+        
+        // Load user roles for permanent assignment if Business Excellence
+        if (application === "BUSINESS EXCELLENCE" && userProfileValue) {
+          loadDelegatorRoles(userProfileValue);
         }
       } else {
+        // No change type selected - hide all
+        $("#delegation-user-fields").addClass("hidden");
+        $("#permanent-user-field").addClass("hidden");
         $("#delegation-fields").addClass("hidden");
         $("#roles-to-delegate").addClass("hidden");
         $("#delegator-roles-container").empty();
+        
+        // Remove all required attributes
+        $("#user_profile").prop("required", false);
+        $("#delegator").prop("required", false);
+        $("#delegatee").prop("required", false);
       }
     });
 
-    // Handle delegator selection change
+    // Handle user profile selection change (for permanent assignments)
+    $("#user_profile").on("change", function () {
+      const userProfileValue = $(this).val();
+      const changeType = $("#change_type").val();
+      const application = $("#for_application").val();
+      
+      // Load user roles for permanent assignment in Business Excellence
+      if (application === "BUSINESS EXCELLENCE" && userProfileValue && changeType === "PERMANENT") {
+        loadDelegatorRoles(userProfileValue);
+      }
+    });
+
+    // Handle delegator selection change (for temporary delegations)
     $("#delegator").on("change", function () {
       const delegatorValue = $(this).val();
       const changeType = $("#change_type").val();
       const application = $("#for_application").val();
       
-      if (application === "BUSINESS EXCELLENCE" && delegatorValue && (changeType === "TEMPORARY_DELEGATION" || changeType === "PERMANENT")) {
+      // Load delegator roles for temporary delegation in Business Excellence
+      if (application === "BUSINESS EXCELLENCE" && delegatorValue && changeType === "TEMPORARY_DELEGATION") {
         loadDelegatorRoles(delegatorValue);
       } else {
         $("#roles-to-delegate").addClass("hidden");
