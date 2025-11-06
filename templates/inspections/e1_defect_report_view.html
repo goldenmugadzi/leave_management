@@ -152,7 +152,11 @@
           </div>
           <div class="border-t border-gray-400 w-48 mb-2"></div>
           <div class="text-sm text-gray-600">
-            {{ report.installation_inspector.get_full_name|default:report.installation_inspector.username|default:"[Inspector Name]" }}
+            {% if report.installation_inspector %}
+              {{ report.installation_inspector.get_full_name|default:report.installation_inspector.username }}
+            {% else %}
+              [Inspector Name]
+            {% endif %}
           </div>
           <div class="mt-2">
             <span class="font-semibold">DESIGNATION:</span>

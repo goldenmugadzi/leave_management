@@ -25,6 +25,67 @@
       </div>
     </div>
 
+    <!-- Related Documents Navigation -->
+    <div class="bg-white rounded-lg shadow-md p-4 mb-6">
+      <h3 class="text-sm font-semibold text-gray-700 mb-3">Related Documents</h3>
+      <div class="flex flex-wrap gap-2">
+        {% if inspection.client_application %}
+        <a href="{% url 'inspections:application_detail' inspection.client_application.pk %}" 
+           class="inline-flex items-center px-4 py-2 bg-blue-100 hover:bg-blue-200 text-blue-800 rounded-lg transition-colors">
+          <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+          </svg>
+          Application: {{ inspection.client_application.application_number }}
+        </a>
+        {% else %}
+        <span class="inline-flex items-center px-4 py-2 bg-gray-100 text-gray-500 rounded-lg">
+          <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+          </svg>
+          No Application Linked
+        </span>
+        {% endif %}
+
+        {% if inspection.status == 'pass' %}
+          {% if inspection.e6_certificate %}
+          <a href="{% url 'inspections:e6_certificate_detail' inspection.e6_certificate.pk %}" 
+             class="inline-flex items-center px-4 py-2 bg-green-100 hover:bg-green-200 text-green-800 rounded-lg transition-colors">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            E6 Certificate: {{ inspection.e6_certificate.certificate_number }}
+          </a>
+          {% else %}
+          <span class="inline-flex items-center px-4 py-2 bg-gray-100 text-gray-500 rounded-lg">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            E6 Certificate: Not Generated
+          </span>
+          {% endif %}
+        {% endif %}
+
+        {% if inspection.status == 'fail' %}
+          {% if inspection.e1_defect_report %}
+          <a href="{% url 'inspections:e1_defect_report_detail' inspection.e1_defect_report.pk %}" 
+             class="inline-flex items-center px-4 py-2 bg-red-100 hover:bg-red-200 text-red-800 rounded-lg transition-colors">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            E1 Defect Report: {{ inspection.e1_defect_report.report_number }}
+          </a>
+          {% else %}
+          <span class="inline-flex items-center px-4 py-2 bg-gray-100 text-gray-500 rounded-lg">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            E1 Defect Report: Not Generated
+          </span>
+          {% endif %}
+        {% endif %}
+      </div>
+    </div>
+
     <!-- Report Content -->
     <div class="bg-white rounded-lg shadow-md p-6">
       <div class="mb-6">
@@ -205,16 +266,231 @@
         {% endif %}
       </div>
 
+      <!-- Notes and Recommendations -->
+      {% if inspection.notes or inspection.recommendations %}
+      <div class="mb-8">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4 border-b pb-2">Notes & Recommendations</h3>
+        {% if inspection.notes %}
+        <div class="mb-4">
+          <span class="font-medium">Notes:</span>
+          <div class="mt-2 p-3 bg-gray-50 border border-gray-200 rounded-md">
+            {{ inspection.notes|linebreaks }}
+          </div>
+        </div>
+        {% endif %}
+        {% if inspection.recommendations %}
+        <div>
+          <span class="font-medium">Recommendations:</span>
+          <div class="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-md">
+            {{ inspection.recommendations|linebreaks }}
+          </div>
+        </div>
+        {% endif %}
+      </div>
+      {% endif %}
+
+      <!-- GPS Coordinates -->
+      {% if inspection.gps_coordinates %}
+      <div class="mb-8">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4 border-b pb-2">Location Information</h3>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div>
+            <span class="font-medium">Latitude:</span> {{ inspection.gps_coordinates.latitude|default:"Not available" }}
+          </div>
+          <div>
+            <span class="font-medium">Longitude:</span> {{ inspection.gps_coordinates.longitude|default:"Not available" }}
+          </div>
+          {% if inspection.location_accuracy %}
+          <div>
+            <span class="font-medium">Accuracy:</span> {{ inspection.location_accuracy }} meters
+          </div>
+          {% endif %}
+        </div>
+        {% if inspection.gps_coordinates.latitude and inspection.gps_coordinates.longitude %}
+        <div class="mt-4">
+          <a href="https://www.google.com/maps?q={{ inspection.gps_coordinates.latitude }},{{ inspection.gps_coordinates.longitude }}" 
+             target="_blank" 
+             class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-md">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+            </svg>
+            View on Google Maps
+          </a>
+        </div>
+        {% endif %}
+      </div>
+      {% endif %}
+
+      <!-- Inspection Photos -->
+      {% if inspection.photos.exists %}
+      <div class="mb-8">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4 border-b pb-2">Inspection Photos ({{ inspection.photos.count }})</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {% for photo in inspection.photos.all %}
+          <div class="border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+            <img src="{{ photo.file.url }}" alt="{{ photo.caption|default:'Inspection photo' }}" class="w-full h-48 object-cover">
+            <div class="p-3 bg-white">
+              {% if photo.caption %}
+              <p class="text-sm font-medium text-gray-900 mb-1">{{ photo.caption }}</p>
+              {% endif %}
+              <p class="text-xs text-gray-500">{{ photo.timestamp|date:"M d, Y H:i" }}</p>
+              {% if photo.gps_latitude and photo.gps_longitude %}
+              <p class="text-xs text-gray-500 mt-1">
+                📍 {{ photo.gps_latitude }}, {{ photo.gps_longitude }}
+              </p>
+              {% endif %}
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Signatures -->
+      {% if inspection.inspector_signature or inspection.customer_signature %}
+      <div class="mb-8">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4 border-b pb-2">Signatures</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {% if inspection.inspector_signature %}
+          <div>
+            <p class="font-medium text-gray-700 mb-2">Inspector Signature</p>
+            <div class="border rounded-lg p-4 bg-white">
+              <img src="data:image/png;base64,{{ inspection.inspector_signature }}" alt="Inspector Signature" class="max-h-32 w-auto">
+            </div>
+            {% if inspection.signature_timestamp %}
+            <p class="text-xs text-gray-500 mt-2">Signed: {{ inspection.signature_timestamp|date:"M d, Y H:i" }}</p>
+            {% endif %}
+          </div>
+          {% endif %}
+          {% if inspection.customer_signature %}
+          <div>
+            <p class="font-medium text-gray-700 mb-2">Customer Signature</p>
+            <div class="border rounded-lg p-4 bg-white">
+              <img src="data:image/png;base64,{{ inspection.customer_signature }}" alt="Customer Signature" class="max-h-32 w-auto">
+            </div>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Inspection Timing -->
+      {% if inspection.started_at or inspection.completed_at or inspection.inspection_duration %}
+      <div class="mb-8">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4 border-b pb-2">Inspection Timing</h3>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {% if inspection.started_at %}
+          <div>
+            <span class="font-medium">Started:</span> {{ inspection.started_at|date:"M d, Y H:i" }}
+          </div>
+          {% endif %}
+          {% if inspection.completed_at %}
+          <div>
+            <span class="font-medium">Completed:</span> {{ inspection.completed_at|date:"M d, Y H:i" }}
+          </div>
+          {% endif %}
+          {% if inspection.inspection_duration %}
+          <div>
+            <span class="font-medium">Duration:</span> {{ inspection.inspection_duration }}
+          </div>
+          {% endif %}
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Sync Information (for debugging/admin) -->
+      {% if inspection.offline_created or inspection.sync_status %}
+      <div class="mb-8">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4 border-b pb-2">Sync Information</h3>
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+          {% if inspection.offline_created %}
+          <div>
+            <span class="font-medium">Created Offline:</span> 
+            <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-800">
+              Yes
+            </span>
+          </div>
+          {% endif %}
+          {% if inspection.sync_status %}
+          <div>
+            <span class="font-medium">Sync Status:</span> 
+            <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full 
+              {% if inspection.sync_status == 'synced' %}bg-green-100 text-green-800
+              {% elif inspection.sync_status == 'pending' %}bg-yellow-100 text-yellow-800
+              {% elif inspection.sync_status == 'failed' %}bg-red-100 text-red-800
+              {% else %}bg-gray-100 text-gray-800{% endif %}">
+              {{ inspection.sync_status|upper }}
+            </span>
+          </div>
+          {% endif %}
+          {% if inspection.sync_attempts %}
+          <div>
+            <span class="font-medium">Sync Attempts:</span> {{ inspection.sync_attempts }}
+          </div>
+          {% endif %}
+          {% if inspection.last_sync_attempt %}
+          <div>
+            <span class="font-medium">Last Sync:</span> {{ inspection.last_sync_attempt|date:"M d, Y H:i" }}
+          </div>
+          {% endif %}
+        </div>
+        {% if inspection.sync_error_message %}
+        <div class="mt-4">
+          <span class="font-medium">Sync Error:</span>
+          <div class="mt-2 p-3 bg-red-50 border border-red-200 rounded-md text-red-800">
+            {{ inspection.sync_error_message }}
+          </div>
+        </div>
+        {% endif %}
+      </div>
+      {% endif %}
+
       <!-- Inspector Information -->
       <div class="border-t pt-6">
         <h3 class="text-lg font-semibold text-gray-900 mb-4">Inspector Information</h3>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <span class="font-medium">Inspector:</span> {{ inspection.inspector.get_full_name|default:inspection.inspector.username|default:"Not assigned" }}
+            <span class="font-medium">Inspector:</span>
+            {% if inspection.inspector %}
+              {{ inspection.inspector.get_full_name|default:inspection.inspector.username }}
+            {% else %}
+              Not assigned
+            {% endif %}
           </div>
           <div>
             <span class="font-medium">Inspection Date:</span> {{ inspection.inspection_date|date:"F d, Y"|default:"Not specified" }}
           </div>
+          {% if inspection.defects_count %}
+          <div>
+            <span class="font-medium">Defects Found:</span> 
+            <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">
+              {{ inspection.defects_count }}
+            </span>
+          </div>
+          {% endif %}
+          {% if inspection.photos_count %}
+          <div>
+            <span class="font-medium">Photos Taken:</span> {{ inspection.photos_count }}
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Metadata -->
+      <div class="border-t pt-6 mt-6">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-gray-600">
+          <div>
+            <span class="font-medium">Created:</span> {{ inspection.created_at|date:"M d, Y H:i" }}
+          </div>
+          <div>
+            <span class="font-medium">Last Updated:</span> {{ inspection.updated_at|date:"M d, Y H:i" }}
+          </div>
+          {% if inspection.mobile_id %}
+          <div>
+            <span class="font-medium">Mobile ID:</span> {{ inspection.mobile_id }}
+          </div>
+          {% endif %}
         </div>
       </div>
     </div>

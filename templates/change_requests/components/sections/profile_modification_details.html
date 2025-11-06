@@ -1,0 +1,120 @@
+<!-- Profile Modification Details Section -->
+
+<!-- Delegation Information (if applicable) -->
+{% if cr.is_delegation or cr.delegation_info.display_type == 'delegation' or cr.cr_context.is_business_excellence %}
+<div class="border-t border-gray-200 pt-6">
+  <h4 class="text-lg font-medium text-gray-900 mb-4">Profile Modification Details</h4>
+  
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    {% if cr.is_delegation or cr.delegation_info.display_type == 'delegation' %}
+      {% include 'change_requests/components/forms/display_field.html' with label="Change Type" value="Temporary Role Delegation" %}
+    {% else %}
+      {% include 'change_requests/components/forms/display_field.html' with label="Change Type" value="Permanent Role Assignment" %}
+    {% endif %}
+    
+    {% if cr.delegation_info.delegator_name %}
+      {% include 'change_requests/components/forms/display_field.html' with label="Delegator" value=cr.delegation_info.delegator_name %}
+    {% elif cr.delegation_info.delegator_username %}
+      {% include 'change_requests/components/forms/display_field.html' with label="Delegator" value=cr.delegation_info.delegator_username %}
+    {% endif %}
+    
+    {% if cr.delegation_info.delegatee_name %}
+      {% include 'change_requests/components/forms/display_field.html' with label="Delegatee" value=cr.delegation_info.delegatee_name %}
+    {% elif cr.user.username %}
+      {% include 'change_requests/components/forms/display_field.html' with label="Delegatee" value=cr.user.username %}
+    {% endif %}
+    
+    <!-- Delegation Dates (if available) -->
+    {% if cr.delegation_info.start_date %}
+      {% include 'change_requests/components/forms/display_field.html' with label="Delegation Start Date" value=cr.delegation_info.start_date %}
+    {% endif %}
+    
+    {% if cr.delegation_info.end_date %}
+      {% include 'change_requests/components/forms/display_field.html' with label="Delegation End Date" value=cr.delegation_info.end_date %}
+    {% endif %}
+    
+    {% if cr.delegation_info.reason %}
+      {% include 'change_requests/components/forms/display_field.html' with label="Delegation Reason" value=cr.delegation_info.reason %}
+    {% endif %}
+  </div>
+</div>
+{% endif %}
+
+<!-- User Information Section -->
+<div class="border-t border-gray-200 pt-6">
+  <h4 class="text-lg font-medium text-gray-900 mb-4">User Information</h4>
+  <p class="mt-1 text-sm text-gray-600 mb-4">
+    Profile information for the user
+  </p>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    {% include 'change_requests/components/forms/display_field.html' with label="First Name" value=cr.user.firstname %}
+    {% include 'change_requests/components/forms/display_field.html' with label="Last Name" value=cr.user.lastname %}
+    {% include 'change_requests/components/forms/display_field.html' with label="Username" value=cr.user.username %}
+    {% include 'change_requests/components/forms/display_field.html' with label="Email" value=cr.user.email %}
+    {% include 'change_requests/components/forms/display_field.html' with label="Designation" value=cr.user.designation %}
+    {% include 'change_requests/components/forms/display_field.html' with label="Region" value=cr.user.region %}
+    {% include 'change_requests/components/forms/display_field.html' with label="Cost Center" value=cr.user.cost_center %}
+    {% include 'change_requests/components/forms/display_field.html' with label="Section" value=cr.user.section %}
+    {% include 'change_requests/components/forms/display_field.html' with label="District" value=cr.user.district %}
+  </div>
+</div>
+
+<!-- Roles to Action / Delegated Roles -->
+{% if cr.is_delegation and cr.delegation_info.assigned_roles %}
+<!-- For temporary delegations, show assigned roles as a list -->
+<div class="border-t border-gray-200 pt-6">
+  <h4 class="text-base font-semibold text-gray-900 mb-4">Roles to be Delegated</h4>
+  <div class="bg-blue-50 border border-blue-200 rounded-md p-4">
+    <p class="text-sm text-gray-600 mb-3">The following roles will be temporarily delegated:</p>
+    <ul class="list-disc list-inside space-y-1">
+      {% for role in cr.delegation_info.assigned_roles %}
+      <li class="text-sm text-gray-900">{{ role.role }}{% if role.description %} - {{ role.description }}{% endif %}</li>
+      {% endfor %}
+    </ul>
+  </div>
+</div>
+{% elif cr.roles_to_action and not cr.is_delegation %}
+<!-- For regular modifications, show text-based roles -->
+<div class="border-t border-gray-200 pt-6">
+  <h4 class="text-base font-semibold text-gray-900 mb-4">Roles/Permissions</h4>
+  {% include 'change_requests/components/forms/display_field.html' with label="Roles to Action" value=cr.roles_to_action %}
+</div>
+{% elif cr.is_delegation %}
+<!-- Fallback if no roles assigned yet -->
+<div class="border-t border-gray-200 pt-6">
+  <h4 class="text-base font-semibold text-gray-900 mb-4">Roles to be Delegated</h4>
+  <div class="bg-yellow-50 border border-yellow-200 rounded-md p-4">
+    <p class="text-sm text-gray-600">No roles have been assigned for this delegation yet.</p>
+  </div>
+</div>
+{% endif %}
+
+<!-- Roles Implemented (editable for IT section head, display for others) -->
+{% if requestor_role == "it_section_head" and it_section_head_awaiting_action and section_head_awaiting_action == False and it_section_head_allowed == True %}
+<div class="border-t border-gray-200 pt-6 bg-green-50 border border-green-200 rounded-md p-4">
+  <label for="roles_actions" class="block text-sm font-medium text-gray-900 mb-2">
+    {% if cr.is_delegation %}Delegation Implementation Status{% else %}Roles Implemented{% endif %} <span class="text-red-500">*</span>
+  </label>
+  <textarea 
+    name="roles_actions" 
+    id="roles_actions" 
+    rows="3"
+    class="block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+  >{% if cr.roles_actions %}{{cr.roles_actions}}{% endif %}</textarea>
+  <p class="mt-1 text-sm text-gray-500">
+    {% if cr.is_delegation %}
+      Enter implementation notes (the delegation details are stored separately)
+    {% else %}
+      Enter the roles that were actually implemented
+    {% endif %}
+  </p>
+</div>
+{% elif cr.roles_actions and not cr.is_delegation %}
+<!-- Only show raw roles_actions for non-delegation requests -->
+<div class="border-t border-gray-200 pt-6">
+  <h4 class="text-base font-semibold text-gray-900 mb-4">Implementation Status</h4>
+  {% include 'change_requests/components/forms/display_field.html' with label="Roles Implemented" value=cr.roles_actions %}
+</div>
+{% endif %}
+

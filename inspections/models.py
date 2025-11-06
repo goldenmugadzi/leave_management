@@ -235,33 +235,8 @@ class InspectionReport(models.Model):
     Includes all 33 inspection items from the E117 form
     """
     
-    INSTALLATION_TYPE_CHOICES = [
-        ('domestic', 'Domestic'),
-        ('commercial', 'Commercial'),
-        ('industrial', 'Industrial'),
-    ]
-    
-    CONSUMER_UNIT_TYPE_CHOICES = [
-        ('metal', 'Metal'),
-        ('plastic', 'Plastic'),
-        ('other', 'Other'),
-    ]
-    
-    DB_ENCLOSURE_TYPE_CHOICES = [
-        ('ip20', 'IP20'),
-        ('ip30', 'IP30'),
-        ('ip40', 'IP40'),
-        ('ip50', 'IP50'),
-        ('ip54', 'IP54'),
-        ('ip65', 'IP65'),
-    ]
-    
-    CONDUIT_MATERIAL_CHOICES = [
-        ('pvc', 'PVC'),
-        ('steel', 'Steel'),
-        ('aluminum', 'Aluminum'),
-        ('flexible', 'Flexible'),
-    ]
+    # INSTALLATION_TYPE_CHOICES, CONSUMER_UNIT_TYPE_CHOICES, DB_ENCLOSURE_TYPE_CHOICES removed
+    # CONDUIT_MATERIAL_CHOICES removed (not used)
     
     COMPLIANCE_CHOICES = [
         ('pass', 'Pass'),
@@ -372,6 +347,57 @@ class InspectionReport(models.Model):
     
     # Derived status (calculated from safety checks)
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='pending')
+    
+    # Defects tracking
+    defects_count = models.PositiveIntegerField(default=0, blank=True, null=True, help_text="Number of defects found during inspection")
+    
+    # Mobile sync tracking
+    offline_created = models.BooleanField(default=False, blank=True, null=True, help_text="Whether inspection was created offline")
+    sync_status = models.CharField(max_length=20, default='pending', blank=True, null=True, help_text="Sync status: pending, synced, failed, conflict")
+    sync_attempts = models.PositiveIntegerField(default=0, blank=True, null=True, help_text="Number of sync attempts")
+    last_sync_attempt = models.DateTimeField(null=True, blank=True, help_text="Last sync attempt timestamp")
+    sync_error_message = models.TextField(blank=True, null=True, help_text="Last sync error message")
+    
+    # Location and GPS tracking
+    gps_coordinates = models.JSONField(null=True, blank=True, help_text="GPS coordinates as {'latitude': float, 'longitude': float}")
+    location_accuracy = models.FloatField(null=True, blank=True, help_text="GPS accuracy in meters")
+    location_timestamp = models.DateTimeField(null=True, blank=True, help_text="When GPS location was captured")
+    
+    # Digital signatures
+    inspector_signature = models.TextField(blank=True, null=True, help_text="Base64 encoded inspector signature")
+    customer_signature = models.TextField(blank=True, null=True, help_text="Base64 encoded customer signature")
+    signature_timestamp = models.DateTimeField(null=True, blank=True, help_text="When signatures were captured")
+    
+    # Installation metadata - REMOVED (not on original form)
+    # installation_type, consumer_unit_type, db_enclosure_type removed
+    
+    # Inspection timing
+    started_at = models.DateTimeField(null=True, blank=True, help_text="When inspection was started")
+    completed_at = models.DateTimeField(null=True, blank=True, help_text="When inspection was completed")
+    inspection_duration = models.DurationField(null=True, blank=True, help_text="Total inspection duration")
+    
+    # Photo tracking
+    photos_count = models.PositiveIntegerField(default=0, blank=True, null=True, help_text="Number of photos taken")
+    photos_taken_at = models.DateTimeField(null=True, blank=True, help_text="When photos were taken")
+    # photo_quality and photo_resolution removed (not used)
+    
+    # Meter and equipment details - REMOVED (not on original form)
+    # meter_type, meter_serial_number, meter_reading, main_switch_rating, main_switch_type removed
+    
+    # Environmental conditions - REMOVED (not on original form)
+    # temperature, humidity, weather_conditions removed
+    
+    # Earthing system - REMOVED (not on original form)
+    # earthing_system_type, earthing_resistance removed
+    
+    # Additional notes and recommendations
+    notes = models.TextField(blank=True, null=True, help_text="Additional inspection notes")
+    recommendations = models.TextField(blank=True, null=True, help_text="Recommendations from inspection")
+    next_inspection_due = models.DateField(null=True, blank=True, help_text="Next inspection due date")
+    
+    # Mobile-specific fields (not stored, but may exist in DB)
+    mobile_id = models.CharField(max_length=255, blank=True, null=True, help_text="Mobile app identifier (not used for lookups)")
+    # Note: inspector_id is automatically created by Django for the 'inspector' ForeignKey field
     
     # Relationships
     client_application = models.ForeignKey(
@@ -734,4 +760,314 @@ class ApplicationAssignment(models.Model):
         
         # Update the related application status
         self.application.status = 'completed'
-        self.application.save() 
+        self.application.save()
+
+
+class InspectionPhoto(models.Model):
+    """
+    Model for inspection photos uploaded during field inspections
+    Stores photos with GPS coordinates and metadata
+    """
+    # Primary key
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    
+    # Relationship
+    inspection_report = models.ForeignKey(
+        InspectionReport,
+        on_delete=models.CASCADE,
+        related_name='photos'
+    )
+    
+    # File Information
+    filename = models.CharField(max_length=255)
+    file = models.ImageField(upload_to='uploads/inspections/photos/')
+    caption = models.CharField(max_length=500, blank=True, null=True)
+    
+    # Metadata
+    timestamp = models.DateTimeField(default=timezone.now)
+    content_type = models.CharField(max_length=100, default='image/jpeg')
+    file_size = models.PositiveIntegerField(default=0)  # Size in bytes
+    
+    # GPS Coordinates
+    gps_latitude = models.DecimalField(
+        max_digits=10, 
+        decimal_places=7, 
+        blank=True, 
+        null=True,
+        help_text="Latitude coordinate where photo was taken"
+    )
+    gps_longitude = models.DecimalField(
+        max_digits=10, 
+        decimal_places=7, 
+        blank=True, 
+        null=True,
+        help_text="Longitude coordinate where photo was taken"
+    )
+    
+    # Audit fields
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['-timestamp']
+        verbose_name = 'Inspection Photo'
+        verbose_name_plural = 'Inspection Photos'
+    
+    def __str__(self):
+        return f"{self.filename} - {self.inspection_report.service_no or 'Unknown'}"
+    
+    def save(self, *args, **kwargs):
+        # Auto-calculate file size if not set
+        if self.file and not self.file_size:
+            self.file_size = self.file.size
+        super().save(*args, **kwargs)
+        
+        # Update parent inspection's photos_count
+        self._update_inspection_photo_count()
+    
+    def delete(self, *args, **kwargs):
+        inspection = self.inspection_report
+        result = super().delete(*args, **kwargs)
+        # Update count after deletion
+        if inspection:
+            inspection.photos_count = inspection.photos.count()
+            inspection.save(update_fields=['photos_count'])
+        return result
+    
+    def _update_inspection_photo_count(self):
+        """Update the photos_count field on the related inspection"""
+        if self.inspection_report:
+            actual_count = self.inspection_report.photos.count()
+            if self.inspection_report.photos_count != actual_count:
+                self.inspection_report.photos_count = actual_count
+                self.inspection_report.save(update_fields=['photos_count'])
+
+
+class DocumentDistribution(models.Model):
+    """
+    Audit trail for document distribution to stakeholders.
+    Tracks when and how documents (E6/E1) are shared with various stakeholders.
+    """
+    DOCUMENT_TYPE_CHOICES = [
+        ('e6_certificate', 'E6 Certificate'),
+        ('e1_defect_report', 'E1 Defect Report'),
+        ('inspection_report', 'Inspection Report'),
+    ]
+    
+    DELIVERY_METHOD_CHOICES = [
+        ('email', 'Email'),
+        ('sms', 'SMS'),
+        ('print', 'Printed'),
+        ('hand_delivery', 'Hand Delivery'),
+        ('postal', 'Postal Mail'),
+        ('native_share', 'Native Share'),
+        ('file_export', 'File Export'),
+    ]
+    
+    STAKEHOLDER_TYPE_CHOICES = [
+        ('client', 'Client/Property Owner'),
+        ('consumer', 'Consumer'),
+        ('contractor', 'Contractor'),
+        ('district_manager', 'District Manager'),
+        ('depot_official', 'Depot Official'),
+        ('regional_manager', 'Regional Manager'),
+        ('inspector', 'Inspector'),
+        ('other', 'Other'),
+    ]
+    
+    DELIVERY_STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('sent', 'Sent'),
+        ('delivered', 'Delivered'),
+        ('failed', 'Failed'),
+        ('bounced', 'Bounced'),
+        ('read', 'Read/Acknowledged'),
+    ]
+    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    
+    # Document Information
+    document_type = models.CharField(max_length=30, choices=DOCUMENT_TYPE_CHOICES)
+    e6_certificate = models.ForeignKey(
+        E6Certificate,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='distributions'
+    )
+    e1_defect_report = models.ForeignKey(
+        E1DefectReport,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='distributions'
+    )
+    inspection_report = models.ForeignKey(
+        InspectionReport,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='distributions'
+    )
+    
+    # Recipient Information
+    stakeholder_type = models.CharField(max_length=30, choices=STAKEHOLDER_TYPE_CHOICES)
+    recipient_name = models.CharField(max_length=255)
+    recipient_email = models.EmailField(blank=True, null=True)
+    recipient_phone = models.CharField(max_length=20, blank=True, null=True)
+    recipient_organization = models.CharField(max_length=255, blank=True, null=True)
+    
+    # Distribution Details
+    delivery_method = models.CharField(max_length=30, choices=DELIVERY_METHOD_CHOICES)
+    delivery_status = models.CharField(max_length=20, choices=DELIVERY_STATUS_CHOICES, default='pending')
+    sent_at = models.DateTimeField(auto_now_add=True)
+    delivered_at = models.DateTimeField(null=True, blank=True)
+    acknowledged_at = models.DateTimeField(null=True, blank=True)
+    
+    # Tracking Details
+    tracking_reference = models.CharField(max_length=255, blank=True, null=True, help_text="Email ID, SMS ID, etc.")
+    error_message = models.TextField(blank=True, null=True)
+    
+    # User and Device Information
+    sent_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='document_distributions'
+    )
+    device_info = models.CharField(max_length=255, blank=True, null=True)
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    
+    # Metadata
+    notes = models.TextField(blank=True, null=True)
+    metadata = models.JSONField(default=dict, blank=True, help_text="Additional distribution metadata")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        ordering = ['-sent_at']
+        verbose_name = 'Document Distribution'
+        verbose_name_plural = 'Document Distributions'
+        indexes = [
+            models.Index(fields=['document_type', 'delivery_status']),
+            models.Index(fields=['stakeholder_type', 'sent_at']),
+            models.Index(fields=['recipient_email']),
+        ]
+    
+    def __str__(self):
+        doc_ref = self.get_document_reference()
+        return f"{self.get_document_type_display()} to {self.recipient_name} ({self.get_delivery_status_display()}) - {doc_ref}"
+    
+    def get_document_reference(self):
+        """Get the document reference number"""
+        if self.e6_certificate:
+            return self.e6_certificate.certificate_number
+        elif self.e1_defect_report:
+            return self.e1_defect_report.report_number
+        elif self.inspection_report:
+            return self.inspection_report.reference_number
+        return "Unknown"
+    
+    def mark_delivered(self):
+        """Mark the distribution as delivered"""
+        self.delivery_status = 'delivered'
+        self.delivered_at = timezone.now()
+        self.save(update_fields=['delivery_status', 'delivered_at', 'updated_at'])
+    
+    def mark_acknowledged(self):
+        """Mark the distribution as acknowledged/read"""
+        self.delivery_status = 'read'
+        self.acknowledged_at = timezone.now()
+        if not self.delivered_at:
+            self.delivered_at = self.acknowledged_at
+        self.save(update_fields=['delivery_status', 'acknowledged_at', 'delivered_at', 'updated_at'])
+    
+    def mark_failed(self, error_message):
+        """Mark the distribution as failed with error message"""
+        self.delivery_status = 'failed'
+        self.error_message = error_message
+        self.save(update_fields=['delivery_status', 'error_message', 'updated_at'])
+
+
+class CertificateAuditLog(models.Model):
+    """
+    Comprehensive audit log for all certificate-related actions.
+    Tracks creation, updates, sharing, revocation, and verification.
+    """
+    ACTION_CHOICES = [
+        ('created', 'Created'),
+        ('updated', 'Updated'),
+        ('shared', 'Shared'),
+        ('revoked', 'Revoked'),
+        ('acknowledged', 'Acknowledged'),
+        ('verified', 'Verified'),
+        ('printed', 'Printed'),
+        ('downloaded', 'Downloaded'),
+        ('viewed', 'Viewed'),
+    ]
+    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    
+    # Certificate Reference
+    e6_certificate = models.ForeignKey(
+        E6Certificate,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='audit_logs'
+    )
+    e1_defect_report = models.ForeignKey(
+        E1DefectReport,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='audit_logs'
+    )
+    
+    # Action Details
+    action = models.CharField(max_length=20, choices=ACTION_CHOICES)
+    description = models.TextField(blank=True, null=True)
+    
+    # User Information
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='certificate_audit_logs'
+    )
+    user_name = models.CharField(max_length=255, blank=True, null=True)
+    
+    # Technical Details
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    user_agent = models.CharField(max_length=500, blank=True, null=True)
+    device_info = models.CharField(max_length=255, blank=True, null=True)
+    
+    # Additional Context
+    metadata = models.JSONField(default=dict, blank=True, help_text="Additional action metadata (recipients, method, etc.)")
+    
+    # Timestamp
+    timestamp = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        ordering = ['-timestamp']
+        verbose_name = 'Certificate Audit Log'
+        verbose_name_plural = 'Certificate Audit Logs'
+        indexes = [
+            models.Index(fields=['action', 'timestamp']),
+            models.Index(fields=['user', 'timestamp']),
+        ]
+    
+    def __str__(self):
+        doc_ref = self.get_document_reference()
+        user = self.user_name or (self.user.get_full_name() if self.user else 'System')
+        return f"{self.get_action_display()} - {doc_ref} by {user} at {self.timestamp}"
+    
+    def get_document_reference(self):
+        """Get the document reference number"""
+        if self.e6_certificate:
+            return f"E6-{self.e6_certificate.certificate_number}"
+        elif self.e1_defect_report:
+            return f"E1-{self.e1_defect_report.report_number}"
+        return "Unknown" 

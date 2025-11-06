@@ -1,0 +1,14 @@
+<!-- Card Container Component -->
+<div class="bg-white border border-gray-200 rounded-lg shadow-sm">
+  {% if title %}
+  <div class="px-6 py-4 border-b border-gray-200">
+    <h3 class="text-lg font-medium text-gray-900">{{ title }}</h3>
+  </div>
+  {% endif %}
+  <div class="p-6">
+    {% block card_content %}
+    {{ content }}
+    {% endblock %}
+  </div>
+</div>
+

@@ -1,0 +1,49 @@
+<!-- New Profile Details Section -->
+
+<!-- Roles to Action (if IT can edit) -->
+{% if requestor_role == "it_section_head" and it_section_head_awaiting_action and section_head_awaiting_action == False and it_section_head_allowed == True %}
+<div class="bg-green-50 border border-green-200 rounded-md p-4">
+  <label for="roles_actions" class="block text-sm font-medium text-gray-900 mb-2">
+    Roles Implemented <span class="text-red-500">*</span>
+  </label>
+  <textarea 
+    name="roles_actions" 
+    id="roles_actions" 
+    rows="3"
+    class="block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+  >{% if cr.user.roles_actions %}{{cr.user.roles_actions}}{% endif %}</textarea>
+  <p class="mt-1 text-sm text-gray-500">Enter the roles that were actually implemented for this user</p>
+</div>
+{% elif cr.user.roles_actions %}
+<div>
+  {% include 'change_requests/components/forms/display_field.html' with label="Roles Implemented" value=cr.user.roles_actions %}
+</div>
+{% endif %}
+
+<!-- Roles to Action (display only) -->
+{% if cr.user.roles_to_action %}
+<div>
+  {% include 'change_requests/components/forms/display_field.html' with label="Roles to Action" value=cr.user.roles_to_action %}
+</div>
+{% endif %}
+
+<!-- User Information Section -->
+<div class="border-t border-gray-200 pt-6">
+  <h4 class="text-lg font-medium text-gray-900 mb-4">New User Profile Information</h4>
+  <p class="mt-1 text-sm text-gray-600 mb-4">
+    Details for the new user profile to be created
+  </p>
+  
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    {% include 'change_requests/components/forms/display_field.html' with label="First Name" value=cr.user.firstname %}
+    {% include 'change_requests/components/forms/display_field.html' with label="Last Name" value=cr.user.lastname %}
+    {% include 'change_requests/components/forms/display_field.html' with label="Username" value=cr.user.username %}
+    {% include 'change_requests/components/forms/display_field.html' with label="Email" value=cr.user.email %}
+    {% include 'change_requests/components/forms/display_field.html' with label="Designation" value=cr.user.designation %}
+    {% include 'change_requests/components/forms/display_field.html' with label="Region" value=cr.user.region %}
+    {% include 'change_requests/components/forms/display_field.html' with label="Cost Center" value=cr.user.cost_center %}
+    {% include 'change_requests/components/forms/display_field.html' with label="Section" value=cr.user.section %}
+    {% include 'change_requests/components/forms/display_field.html' with label="District" value=cr.user.district %}
+  </div>
+</div>
+

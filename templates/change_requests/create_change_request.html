@@ -165,7 +165,8 @@
                 <div id="business-excellence-roles" class="hidden">
                   <div class="space-y-2">
                     <p class="text-sm text-gray-600 mb-3">Select specific system roles to assign:</p>
-                    {% for role in user_roles %}
+                    {% if user_roles.BUSINESS_EXCELLENCE %}
+                    {% for role in user_roles.BUSINESS_EXCELLENCE %}
                     <div class="flex items-center">
                       <input
                         type="checkbox"
@@ -175,10 +176,13 @@
                         class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                       />
                       <label for="role_{{ role.id }}" class="ml-2 block text-sm text-gray-900">
-                        {{ role.name }} - {{ role.description|default:"System Role" }}
+                        {{ role.name }}{% if role.description %} - {{ role.description }}{% endif %}
                       </label>
                     </div>
                     {% endfor %}
+                    {% else %}
+                    <p class="text-sm text-gray-500">No roles available for Business Excellence application.</p>
+                    {% endif %}
                   </div>
                 </div>
                 
@@ -342,23 +346,20 @@
                   </p>
                 </div>
 
-                <!-- Delegator Selection -->
-                <div class="mb-6">
+                <!-- User Profile Selection (for Permanent Changes) -->
+                <div id="permanent-user-field" class="mb-6 hidden">
                   <label
-                    for="delegator"
+                    for="user_profile"
                     class="block text-sm font-medium text-gray-700 mb-2"
                   >
-                    Delegator <span class="text-red-500">*</span>
+                    User Profile to Modify <span class="text-red-500">*</span>
                   </label>
                   <select
-                    id="delegator"
-                    name="delegator"
+                    id="user_profile"
+                    name="user_profile"
                     class="select2 block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   >
-                    <option value="">Select Delegator</option>
-                    <option value="{{request.user.username}}">
-                      {{request.user.get_full_name}} (Logged in user)
-                    </option>
+                    <option value="">Select User Profile</option>
                     {% for usr in user_profiles %}
                     <option value="{{usr.username}}">
                       {{usr.first_name}} {{usr.last_name}}
@@ -366,36 +367,67 @@
                     {% endfor %}
                   </select>
                   <p class="mt-1 text-sm text-gray-500">
-                    Select who is delegating their roles
+                    Select the user whose profile will be modified
                   </p>
                 </div>
 
-                <!-- Delegatee Selection -->
-                <div class="mb-6">
-                  <label
-                    for="delegatee"
-                    class="block text-sm font-medium text-gray-700 mb-2"
-                  >
-                    Delegatee <span class="text-red-500">*</span>
-                  </label>
-                  <select
-                    id="delegatee"
-                    name="delegatee"
-                    class="select2 block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  >
-                    <option value="">Select Delegatee</option>
-                    <option value="{{request.user.username}}">
-                      {{request.user.get_full_name}} (Logged in user)
-                    </option>
-                    {% for usr in user_profiles %}
-                    <option value="{{usr.username}}">
-                      {{usr.first_name}} {{usr.last_name}}
-                    </option>
-                    {% endfor %}
-                  </select>
-                  <p class="mt-1 text-sm text-gray-500">
-                    Select who will receive the delegated roles
-                  </p>
+                <!-- Delegation Fields (for Temporary Delegation) -->
+                <div id="delegation-user-fields" class="hidden">
+                  <!-- Delegator Selection -->
+                  <div class="mb-6">
+                    <label
+                      for="delegator"
+                      class="block text-sm font-medium text-gray-700 mb-2"
+                    >
+                      Delegator <span class="text-red-500">*</span>
+                    </label>
+                    <select
+                      id="delegator"
+                      name="delegator"
+                      class="select2 block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    >
+                      <option value="">Select Delegator</option>
+                      <option value="{{request.user.username}}">
+                        {{request.user.get_full_name}} (Logged in user)
+                      </option>
+                      {% for usr in user_profiles %}
+                      <option value="{{usr.username}}">
+                        {{usr.first_name}} {{usr.last_name}}
+                      </option>
+                      {% endfor %}
+                    </select>
+                    <p class="mt-1 text-sm text-gray-500">
+                      Select who is delegating their roles
+                    </p>
+                  </div>
+
+                  <!-- Delegatee Selection -->
+                  <div class="mb-6">
+                    <label
+                      for="delegatee"
+                      class="block text-sm font-medium text-gray-700 mb-2"
+                    >
+                      Delegatee <span class="text-red-500">*</span>
+                    </label>
+                    <select
+                      id="delegatee"
+                      name="delegatee"
+                      class="select2 block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    >
+                      <option value="">Select Delegatee</option>
+                      <option value="{{request.user.username}}">
+                        {{request.user.get_full_name}} (Logged in user)
+                      </option>
+                      {% for usr in user_profiles %}
+                      <option value="{{usr.username}}">
+                        {{usr.first_name}} {{usr.last_name}}
+                      </option>
+                      {% endfor %}
+                    </select>
+                    <p class="mt-1 text-sm text-gray-500">
+                      Select who will receive the delegated roles
+                    </p>
+                  </div>
                 </div>
 
                 <!-- Delegation-specific fields -->
@@ -620,18 +652,57 @@
     $("#change_type").on("change", function () {
       const changeType = $(this).val();
       const application = $("#for_application").val();
+      const delegatorValue = $("#delegator").val();
+      const userProfileValue = $("#user_profile").val();
       
       if (changeType === "TEMPORARY_DELEGATION") {
-        // Only show delegation fields if Business Excellence is selected
+        // Show delegation-specific fields and hide permanent user field
+        $("#delegation-user-fields").removeClass("hidden");
+        $("#permanent-user-field").addClass("hidden");
+        
+        // Set required attributes for delegation fields
+        $("#delegator").prop("required", true);
+        $("#delegatee").prop("required", true);
+        $("#user_profile").prop("required", false);
+        
+        // Only show delegation date fields if Business Excellence is selected
         if (application === "BUSINESS EXCELLENCE") {
           $("#delegation-fields").removeClass("hidden");
+          // Load delegator roles if delegator is already selected
+          if (delegatorValue) {
+            loadDelegatorRoles(delegatorValue);
+          }
         } else {
           $("#delegation-fields").addClass("hidden");
           alert("Temporary delegation is only available for Business Excellence application.");
         }
+      } else if (changeType === "PERMANENT") {
+        // Show permanent user field and hide delegation-specific fields
+        $("#permanent-user-field").removeClass("hidden");
+        $("#delegation-user-fields").addClass("hidden");
+        $("#delegation-fields").addClass("hidden");
+        
+        // Set required attributes for permanent fields
+        $("#user_profile").prop("required", true);
+        $("#delegator").prop("required", false);
+        $("#delegatee").prop("required", false);
+        
+        // Load user roles for permanent assignment if Business Excellence
+        //if (application === "BUSINESS EXCELLENCE" && userProfileValue) {
+        //  loadDelegatorRoles(userProfileValue);
+        //}
       } else {
+        // No change type selected - hide all
+        $("#delegation-user-fields").addClass("hidden");
+        $("#permanent-user-field").addClass("hidden");
         $("#delegation-fields").addClass("hidden");
         $("#roles-to-delegate").addClass("hidden");
+        $("#delegator-roles-container").empty();
+        
+        // Remove all required attributes
+        $("#user_profile").prop("required", false);
+        $("#delegator").prop("required", false);
+        $("#delegatee").prop("required", false);
       }
     });
 
@@ -640,6 +711,8 @@
       const application = $(this).val();
       const changeType = $("#change_type").val();
       const operationType = $("#operation_type").val();
+      const delegatorValue = $("#delegator").val();
+      const userProfileValue = $("#user_profile").val();
       
       // Update roles section based on application
       updateRolesSection(application, operationType);
@@ -648,14 +721,22 @@
       if (changeType === "TEMPORARY_DELEGATION") {
         if (application === "BUSINESS EXCELLENCE") {
           $("#delegation-fields").removeClass("hidden");
+          // Load delegator roles if delegator is selected
+          if (delegatorValue) {
+            loadDelegatorRoles(delegatorValue);
+          }
         } else {
           $("#delegation-fields").addClass("hidden");
           $("#roles-to-delegate").addClass("hidden");
+          $("#delegator-roles-container").empty();
           if (application !== "") {
             alert("Temporary delegation is only available for Business Excellence application.");
             $("#change_type").val("");
           }
         }
+      } else if (changeType === "PERMANENT" && application === "BUSINESS EXCELLENCE" && userProfileValue) {
+        // Load user roles for permanent assignment
+        loadDelegatorRoles(userProfileValue);
       }
     });
     
@@ -676,13 +757,15 @@
       }
       
       if (application === "BUSINESS EXCELLENCE") {
-        // Show role checkboxes for Business Excellence
-        businessExcellenceRoles.removeClass("hidden");
-        otherAppRoles.addClass("hidden");
-        
         if (operationType === "profile_modification") {
-          rolesLabel.text("Roles to Assign");
+          // For profile modification, hide static roles - they'll be loaded via AJAX based on delegator
+          businessExcellenceRoles.addClass("hidden");
+          otherAppRoles.addClass("hidden");
+          rolesLabel.text("Roles to Action");
         } else {
+          // For new profile, show role checkboxes for Business Excellence
+          businessExcellenceRoles.removeClass("hidden");
+          otherAppRoles.addClass("hidden");
           rolesLabel.text("Roles to Assign");
         }
       } else {
@@ -711,17 +794,32 @@
       updateRolesSection(application, operationType);
     });
 
-    // Handle delegator selection change
+    // Handle user profile selection change (for permanent assignments)
+    $("#user_profile").on("change", function () {
+      const userProfileValue = $(this).val();
+      const changeType = $("#change_type").val();
+      const application = $("#for_application").val();
+      
+      // Load user roles for permanent assignment in Business Excellence
+      if (application === "BUSINESS EXCELLENCE" && userProfileValue && changeType === "PERMANENT") {
+        loadDelegatorRoles(userProfileValue);
+      }
+    });
+
+    // Handle delegator selection change (for temporary delegations)
     $("#delegator").on("change", function () {
       const delegatorValue = $(this).val();
       const changeType = $("#change_type").val();
       const application = $("#for_application").val();
       
-      if (changeType === "TEMPORARY_DELEGATION" && application === "BUSINESS EXCELLENCE" && delegatorValue) {
+      // Load delegator roles for temporary delegation in Business Excellence
+      if (application === "BUSINESS EXCELLENCE" && delegatorValue && changeType === "TEMPORARY_DELEGATION") {
         loadDelegatorRoles(delegatorValue);
       } else {
         $("#roles-to-delegate").addClass("hidden");
         $("#delegator-roles-container").empty();
+        // Also hide the static Business Excellence roles section if it was shown
+        $("#business-excellence-roles").addClass("hidden");
       }
     });
 
@@ -790,24 +888,26 @@
         }
       } else if (operationType === "profile_modification") {
         // Validate profile modification fields
-        if (!$("#delegator").val()) {
-          errors.push("Delegator is required");
-          isValid = false;
-        }
-
-        if (!$("#delegatee").val()) {
-          errors.push("Delegatee is required");
-          isValid = false;
-        }
-
         const changeType = $("#change_type").val();
         if (!changeType) {
           errors.push("Change Type is required");
           isValid = false;
         }
 
-        // Validate delegation fields if applicable
+        // Validate based on change type
         if (changeType === "TEMPORARY_DELEGATION") {
+          // Validate delegator and delegatee for temporary delegation
+          if (!$("#delegator").val()) {
+            errors.push("Delegator is required");
+            isValid = false;
+          }
+
+          if (!$("#delegatee").val()) {
+            errors.push("Delegatee is required");
+            isValid = false;
+          }
+
+          // Validate delegation date fields
           if (!$("#delegation_start_date").val()) {
             errors.push("Delegation Start Date is required");
             isValid = false;
@@ -818,6 +918,12 @@
           }
           if (!$("#delegation_reason").val()) {
             errors.push("Delegation Reason is required");
+            isValid = false;
+          }
+        } else if (changeType === "PERMANENT") {
+          // Validate user profile for permanent assignment
+          if (!$("#user_profile").val()) {
+            errors.push("User Profile to Modify is required");
             isValid = false;
           }
 
