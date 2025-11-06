@@ -223,46 +223,28 @@ class AppraisalDepartmentPerformanceDimensionTemplateView(SuccessMessageMixin, U
         context["all_scored"] = is_all_scored
         return context
     
-    def reviewer_status_handler(self, form, reviewer_status_obj):
-        try:
-            if form.is_valid():
-                confirmation_status = form.cleaned_data.get("confirmation_status")
-                comment = form.cleaned_data.get("comment")
-            
-                if (confirmation_status == APPRAISAL_KRA_REVIEWER_STATUS_CHOICES[2][0]) and not comment:
-                    messages.error(self.request, "Please provide a rejection reason in the comment field.")
-                    return self.form_invalid(form)
-            
-                repo = ApprasialKraReviewerStatusRepository()
-
-                return repo.update(
-                    reviewer_status_obj=reviewer_status_obj,
-                    confirmation_status=confirmation_status,
-                    comment=comment
-                )
-            else:
-                for field, errors in form.errors.items():
-                    for err in errors:
-                        messages.error(self.request, f"{field}: {err}")
-        except Exception as e:
-            logger.error(f"[{self.__class__.__name__}] reviewer_status_handler failed: {e}")
-            messages.error(self.request, "Updating reviewer status failed, please try again")
-
-        return HttpResponseRedirect(self.get_success_url())
     
     def form_valid(self, form):
         try:
-            if self.is_appraiser_request():
-                appraiser_review_status_obj = self.get_appraiser_review_status_obj()
-                updated_object = self.reviewer_status_handler(form, appraiser_review_status_obj)
-            elif self.is_reviewer_request():
-                reviewer_status_obj = self.get_reviewer_status_obj()
-                updated_object = self.reviewer_status_handler(form, reviewer_status_obj)
-            elif self.is_hr_request():
-                hr_review_status_object = self.get_hr_review_status_obj()
-                updated_object = self.reviewer_status_handler(form, hr_review_status_object)
-            else:
-                raise Exception("Request not allowed, only 'appraiser_request' , 'reviewer_request' and 'hr_request' allowed")
+            appraiser_review_status_obj = self.get_appraiser_review_status_obj()
+            confirmation_status = form.cleaned_data.get("confirmation_status")
+            comment = form.cleaned_data.get("comment")
+        
+            if (confirmation_status == APPRAISAL_KRA_REVIEWER_STATUS_CHOICES[0][0]):
+                messages.error(self.request, "Please pick either ACCEPT or REJECT status.")
+                return self.form_invalid(form)
+            
+            if (confirmation_status == APPRAISAL_KRA_REVIEWER_STATUS_CHOICES[2][0]) and not comment:
+                messages.error(self.request, "Please provide a rejection reason in the comment field.")
+                return self.form_invalid(form)
+            
+            repo = ApprasialKraReviewerStatusRepository()
+
+            updated_object = repo.update(
+                reviewer_status_obj=appraiser_review_status_obj,
+                confirmation_status=confirmation_status,
+                comment=comment
+            )
             form.instance = updated_object
         except ValidationError as e:
             messages.error(self.request, "\n".join(e.messages))

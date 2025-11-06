@@ -9,7 +9,7 @@
                 Existence Competencies
                 </h4>
                 <ul class="mt-3 space-y-2">
-                    {% for comp in td.existence_competencies.all %}
+                    {% for comp in td.quarter_training_dev.existence_competencies.all %}
                         <li class="flex items-center text-gray-700">
                             <span class="w-2 h-2 bg-indigo-500 rounded-full mr-2"></span>
                             {{ comp.required_competency }}
@@ -44,7 +44,7 @@
             Intervention Strategies
         </h4>
         <ul class="mt-3 space-y-2">
-            {% for strat in td.intervention_strategies.all %}
+            {% for strat in td.quarter_training_dev.intervention_strategies.all %}
                 <li class="flex items-start text-gray-700">
                     <span class="w-2 h-2 bg-green-500 rounded-full mr-2 mt-1"></span>
                     <div>
@@ -64,13 +64,13 @@
             <h4 class="font-semibold text-indigo-700 border-b border-gray-200 pb-1">
                 Action Recommended
             </h4>
-            <p class="mt-3 text-gray-700">{{ td.action_recommended|default:"—" }}</p>
+            <p class="mt-3 text-gray-700">{{ td.quarter_training_dev.action_recommended|default:"—" }}</p>
         </div>
         <div>
             <h4 class="font-semibold text-indigo-700 border-b border-gray-200 pb-1">
                 Action Taken
             </h4>
-            <p class="mt-3 text-gray-700">{{ td.action_taken|default:"—" }}</p>
+            <p class="mt-3 text-gray-700">{{ td.quarter_training_dev.action_taken|default:"—" }}</p>
         </div>
     </div>
 

@@ -8,13 +8,13 @@ from toolsandequipment.models import ToolOrEquipment
 from it.users.models import Substation
 
 class Query(graphene.ObjectType):
-    jobs_for_user = graphene.List(JobType)
+    my_jobs = graphene.List(JobType)
     equipment_for_substation = graphene.List(
         ToolOrEquipmentType,
         substation_id=graphene.ID(required=True)
     )
 
-    def resolve_jobs_for_user(self, info):
+    def resolve_my_jobs(self, info):
         user = info.context.user
         if user.is_authenticated:
             return Job.objects.filter(competent_person=user)

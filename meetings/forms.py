@@ -65,6 +65,5 @@ class VenueBookingForm(forms.ModelForm):
             elif field_name != 'type_of_meeting': 
                 field.widget.attrs.update({'class': 'form-control'})
         # Set default status if not provided
-        self.fields['status'].widget = forms.HiddenInput()
-        self.fields['status'].initial = 'Pending'
+   
 
