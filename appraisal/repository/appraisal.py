@@ -1,5 +1,6 @@
 from typing import Dict, Any, List
-from ..models import Appraisal, PersonalAttribute, AppraiseePersonalAttribute
+from ..models import Appraisal, PersonalAttribute, AppraiseePersonalAttribute, AppraisalOverallComments
+from ..models.helpers import YearQuarter
 from it.users.models import UserProfile
 
 
@@ -48,26 +49,6 @@ class AppraisalRepository:
     def get_all_appraisal_objects(self)->list:
         return Appraisal.objects.all()
     
-    def update_final_comment(self, appraisal_object: Appraisal, appraiser_comment: str, reviewer_comment: str)->Appraisal:
-        try:
-            is_changed = False
-            
-            if appraisal_object.appraiser_comment != appraiser_comment:
-                appraisal_object.appraiser_comment = appraiser_comment
-                is_changed = True
-            
-            if appraisal_object.reviewer_comment != reviewer_comment:
-                appraisal_object.reviewer_comment = reviewer_comment
-                is_changed = True
-                
-            if is_changed:
-                appraisal_object.save()
-                
-            return appraisal_object
-        except Exception as e:
-            raise Exception(f"Appraisal update_final_comment Repo with appraisal pk: {appraisal_object.id}, failed with error: {e}")
-
-
     def update(self, appraisal_object: Appraisal, appraiser_object: UserProfile, reviewer_obj: UserProfile, hr_object: UserProfile, is_accepted_by_appraiser_reviewer: bool=False)->Appraisal:
         try:
             is_changed = False
@@ -118,9 +99,9 @@ class PersonalAttributeRepository:
             raise Exception(f"PersonalAttributeRepository fetch all Repo failed with error: {e}")
 
 class AppraiseePersonalAttributeRepository:
-    def create(self, appraisal_obj: Appraisal, personal_attr_object: PersonalAttribute)->AppraiseePersonalAttribute:
+    def create(self, appraisal_obj: Appraisal, quarter_obj: YearQuarter, personal_attr_object: PersonalAttribute)->AppraiseePersonalAttribute:
         try:
-            return AppraiseePersonalAttribute.objects.create(appraisal=appraisal_obj, personal_attribute=personal_attr_object)
+            return AppraiseePersonalAttribute.objects.create(appraisal=appraisal_obj, quarter=quarter_obj, personal_attribute=personal_attr_object)
         except Exception as e:
             raise Exception(f"AppraiseePersonalAttributeRepository create Repo failed with error: {e}")
 
@@ -144,6 +125,47 @@ class AppraiseePersonalAttributeRepository:
     
     def fetch_appraisal_id(self, appraisal_id)->List[AppraiseePersonalAttribute]:
         try:
-            return AppraiseePersonalAttribute.objects.filter(appraisal__id=appraisal_id).select_related("personal_attribute")
+            return AppraiseePersonalAttribute.objects.filter(appraisal__id=appraisal_id).select_related("quarter", "personal_attribute", "appraisal")
         except Exception as e:
             raise Exception(f"AppraiseePersonalAttributeRepository fetch by appraisal pk: {appraisal_id} Repo failed with error: {e}")
+    
+    def fetch_appraisal_id_quarter_id(self, appraisal_id: int, quarter_id: int)->List[AppraiseePersonalAttribute]:
+        try:
+            return AppraiseePersonalAttribute.objects.filter(appraisal__id=appraisal_id, quarter__id=quarter_id).select_related("personal_attribute")
+        except Exception as e:
+            raise Exception(f"AppraiseePersonalAttributeRepository fetch by appraisal and quarter pk: appraisa - {appraisal_id} and quarter id - {quarter_id} Repo failed with error: {e}")
+
+class AppraisalOverallCommentsRepository:
+    def bulk_create(self, appraisal_overall_comm_list: List[AppraisalOverallComments])->bool:
+        try:
+            AppraisalOverallComments.objects.bulk_create(objs=appraisal_overall_comm_list, ignore_conflicts=True)
+            return True
+        except Exception as e:
+            raise Exception(f"[AppraisalOverallCommentsRepository] bulk_create Repo failed with error: {e}")
+
+    def update(self, appraisal_overall_comm_obj: AppraisalOverallComments, comment: str)->AppraisalOverallComments:
+        try:
+            is_changed = False
+            
+            if appraisal_overall_comm_obj.appraiser_comment != comment:
+                appraisal_overall_comm_obj.appraiser_comment = comment
+                is_changed = True
+            if is_changed:
+                appraisal_overall_comm_obj.save()
+            return appraisal_overall_comm_obj
+        except Exception as e:
+            raise Exception(f"[AppraisalOverallCommentsRepository] update Repo for appraisal_overall_comm_id: {appraisal_overall_comm_obj.id} failed with error: {e}")
+
+    def get_by_appraisal_id_quarter_id(self, appraisal_id: int, quarter_number: int)->AppraisalOverallComments:
+        try:
+            qr = AppraisalOverallComments.objects.filter(appraisal__id=appraisal_id, quarter__quarter=quarter_number)
+            return qr.first()
+        except Exception as e:
+            raise Exception(f"[AppraisalOverallCommentsRepository] get_by_appraisal_id_quarter_id Repo for appraisal_id: {appraisal_id}, quarter num: {quarter_number}, failed with error: {e}")
+
+    def fetch_by_appraisal_id(self, appraisal_id: int)->List[AppraisalOverallComments]:
+        try:
+            qr = AppraisalOverallComments.objects.filter(appraisal__id=appraisal_id).select_related("quarter")
+            return qr
+        except Exception as e:
+            raise Exception(f"[AppraisalOverallCommentsRepository] fetch_by_appraisal_id Repo for appraisal_id: {appraisal_id}, failed with error: {e}")

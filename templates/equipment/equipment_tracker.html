@@ -1,75 +1,93 @@
 {% extends "admin_layout.html" %}
 {% load static %}
-{% load humanize %}
 {% load custom_tags %}
-{% block styles %}
-  <link rel="stylesheet"
-        href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css" />
-  <style>.dataTables_wrapper .dataTables_length select { width: 4rem; }</style>
-{% endblock %}
 {% block content %}
-  <title> Equipment</title>
-  <div class="content-wrapper">
-    <div class="grid grid-cols-1">
-      <div class="bg-gulf-blue-100 shadow-lg rounded-lg p-6">
-      
-
-        <table id="equipments" class="table table-striped stripe mt-3 table-bordered">
-          <thead>
-            <tr>
-              <th>ID</th>
-              <th>Type</th>
-              <th>Description</th>
-              <th>Date</th>
-              <th>Cost Center</th>
-              <th>Customer</th>
-              <th>Meter number</th>
-              <th>Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for equipment in equipments %}
-              <tr class="h-1">
-                <td><a class="text-blue-500" href="{% url 'EquipTracker:equipment_tracker' equipment.id %}">{{ equipment.id|default_if_none:'' }}</a></td>
-                <td>{{ equipment.type_of_equipment|default_if_none:'' }}</td>
-                <td>{{ equipment.reason|default_if_none:'' }}</td>
-                <td>{{ equipment.created_at|date }}</td>
-                <td>{{ equipment.cost_center }}</td>
-                <td>{{ equipment.customer.name|default_if_none:'' }}</td>
-                <td><span title="{{ equipment.meter.meter_type }}">{{ equipment.meter.number }}</span></td>
-                <td>{{ equipment.process.approval_set.last|default_if_none:"No Approval" }}</td>
-              </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-        <div class=" container text-center ">
-          {% if roles %}
-            {% for app_roles in roles %}
-              <span class="text-blue-400  mx-4 rounded border-2 border border-red-300 px-1  font-bold rounded">{{ app_roles }}</span>
-            {% endfor %}
-          {% endif %}
-        </div>
-        <div class=" container text-center mt-3">
-
-        </div>
-      </div>
+<div class="container mx-auto bg-yellow-200 p-6 rounded shadow border-2 border-gray-400 font-mono">
+    <div class="flex justify-between mb-2">
+        <span class="font-bold">FORM No. E114</span>
+        <span><span class="font-bold">DISTRICT:  </span><span class="underline ">{{ equipment.equipmentchange_set.last.district|default:"_________" }}, {{ equipment.equipmentchange_set.last.substation|default:"__________" }}</span></span>
     </div>
-  </div>
-{% endblock %}
+    {% comment %} <div class="mb-4 border-b border-gray-500"></div> {% endcomment %}
+ <div class="mb-2 mx-20">
+    <span class="font-bold  text-lg ">ZIMBABWE ELECTRICITY SUPPLY AUTHORITY</span>
+        <span class="float-right underline font-bold">No. {{ equipment.id|default:"________" }}</span>
+</div>
+<div class="mb-2 text-center">
+    <span class="font-bold text-lg underline">*INSTALLATION/REMOVAL/CHANGE OF EQUIPMENT</span>
+</div>
+    <div class="mb-2">
+        <span class="font-bold">Name of Consumer Substation:</span>
+        <span class="underline">{{ equipment.equipmentchange_set.last.substation|default:"__________" }}</span>
+        <span class="font-bold ml-8">Section:</span>
+        <span class="underline">{{ equipment.section|default:"_____________" }}</span>
+    </div>
+    <div class="mb-2">
+        <span class="font-bold">*Type of Equipment:</span>
+        <span class="underline">{{ equipment.type_of_equipment|default:"_________________________________________" }}</span>
+    </div>
+    <div class="mb-2">
+        <span class="font-bold">*Date of Installation, Removal or Change:</span>
+        <span class="underline">{{ equipment.date|date|default:"__________" }}</span>
+    </div>
+    <table class="w-full border border-black mb-4">
+        <thead class="bg-yellow-300">
+            <tr>
+                <th class="border border-black px-2 py-1">Particulars Required</th>
+                <th class="border border-black px-2 py-1">Equipment Installed</th>
+                <th class="border border-black px-2 py-1">Equipment Removed</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td class="border border-black px-2 py-1">Make</td>
+                <td class="border border-black px-2 py-1">{{ equipment.equipmentchange_set.last.action_taken|default:"____________________" }}</td>
+                <td class="border border-black px-2 py-1">{{ equipment.removed_make|default:"____________________" }}</td>
+            </tr>
+            <tr>
+                <td class="border border-black px-2 py-1">Serial Number</td>
+                <td class="border border-black px-2 py-1">{{ equipment.installed_serial|default:"____________________" }}</td>
+                <td class="border border-black px-2 py-1">{{ equipment.removed_serial|default:"____________________" }}</td>
+            </tr>
+            <tr>
+                <td class="border border-black px-2 py-1">KVA or Ampere Rating</td>
+                <td class="border border-black px-2 py-1">{{ equipment.installed_rating|default:"____________________" }}</td>
+                <td class="border border-black px-2 py-1">{{ equipment.removed_rating|default:"____________________" }}</td>
+            </tr>
+            <tr>
+                <td class="border border-black px-2 py-1">Voltage Rating</td>
+                <td class="border border-black px-2 py-1">{{ equipment.installed_voltage|default:"____________________" }}</td>
+                <td class="border border-black px-2 py-1">{{ equipment.removed_voltage|default:"____________________" }}</td>
+            </tr>
+        </tbody>
+    </table>
+    <div class="mb-2">
+        <span class="font-bold">*Reason for Installation, Removal or Change:</span>
+        <span class="underline">{{ equipment.reason|default:"_______________________________________________________________" }}</span>
+    </div>
+    <div class="mb-2">
+        <span class="font-bold">Vote/Job No.:</span>
+        <span class="underline">{{ equipment.job_number|default:"________________" }}</span>
+        <span class="font-bold ml-8">Signed:</span>
+        <span class="underline">{{ equipment.signed_by|default:"_________" }}</span>
+        <span class="font-bold ml-8">Designation:</span>
+        <span class="underline">{{ equipment.designation|default:"_________" }}</span>
+        <span class="font-bold ml-8">Date:</span>
+        <span class="underline">{{ equipment.signed_date|date:"d/m/Y"|default:"__________" }}</span>
+    </div>
+    <div class="text-xs mt-2">*Delete where not applicable.</div>
+</div>
+{% endblock content %}
 {% block scripts %}
-  <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
-  <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
-  <script>
-  $(document).ready(function () {
-    $("#equipments").DataTable({
-      "pageLength": 10,
-      "columnDefs": [{ "orderable": true, "targets": [0, 1, 2,3,4] }],
-      "responsive": true,
-      "searching": true,
-      language: {
-        search: "Filter results:"
-    }
+<script>
+  document.querySelectorAll('.open-modal-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+      document.getElementById(this.dataset.modal).classList.remove('hidden');
     });
   });
-  </script>
-{% endblock %}
+  document.querySelectorAll('.close-modal').forEach(btn => {
+    btn.addEventListener('click', function() {
+      this.closest('.modal').classList.add('hidden');
+    });
+  });
+</script>
+{% endblock scripts %}

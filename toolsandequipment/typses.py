@@ -1,15 +1,15 @@
 from graphene_django.types import DjangoObjectType
-from .models import  ToolOrEquipment, ToolsAndEquipmentForm, AssignedToolOrEquipment, Comment   
+from .models import  ToolOrEquipment, ToolsAndEquipmentRegister, Remarks, ToolsAndEquipmentRegisterItem   
 class ToolOrEquipmentType(DjangoObjectType):
     class Meta:
         model = ToolOrEquipment
-class ToolsAndEquipmentFormType(DjangoObjectType):
+class ToolsAndEquipmentRegisterType(DjangoObjectType):
     class Meta:
-        model = ToolsAndEquipmentForm
-class AssignedToolOrEquipmentType(DjangoObjectType):
+        model = ToolsAndEquipmentRegister
+class ToolsAndEquipmentRegisterItemType(DjangoObjectType):
     class Meta:
-        model = AssignedToolOrEquipment
-class CommentType(DjangoObjectType):
+        model = ToolsAndEquipmentRegisterItem
+class RemarksType(DjangoObjectType):
     class Meta:
-        model = Comment
+        model = Remarks
         
