@@ -498,239 +498,152 @@ def create_Ace(request):
 @login_required
 def ace_awaiting_my_action(request):
     """
-    Process ACEs based on user roles and cost centers - with fallback for older records.
-    Combines cost center filtering (for newer records) with section/region filtering (for older records).
+    Show ACEs awaiting action by the current user based on their role and cost center access.
+    Filters by:
+    1. User's assigned cost centers
+    2. Role-based permissions
+    3. Workflow step approver match
     """
     from datetime import datetime
-    
-    user = request.user
-    user_profile = UserProfile.objects.filter(id=user.id).first()
-    
-    if not user_profile:
-        return render(request, 'finance/ace2/view_all_aces.html', {
-            "aces": [],
-            "error": "User profile not found.",
-        })
-    
+    user_profile = UserProfile.objects.get(id=request.user.id)
+    user_roles = set(user_profile.roles.all())
+    user_role_names = [role.name for role in user_roles]
+
+    # Get cost centers for ACE application
     application_names = ["ace"]
-    cost_centers_set = user.cost_centers_for(application_names)
-    cost_center = user.cost_center
+    cost_centers_set = request.user.cost_centers_for(application_names)
+    cost_center = request.user.cost_center
     end_date = datetime.now()
     start_date = end_date.replace(day=1)
-    
-    # Prepare cost centers list
-    cost_centers = []
+
+    # Base query with optimized joins
+    aces_query = Ace2.objects.select_related(
+        'budget_id',
+        'requested_by',
+        'section',
+        'region',
+        'cost_center'
+    ).prefetch_related(
+        "process__approval_set",
+        "process__workflow__step_set"
+    )
+
+    # Cost center based filtering
     if cost_centers_set:
         cost_centers = list(cost_centers_set)
         cost_center = get_parent_cost_center(cost_centers)
+        aces_query = aces_query.filter(cost_center__in=cost_centers)
     else:
         # Fallback to user's cost center and descendants
-        print("Using fallback cost centers")
-        fallback_cost_centers = user.cost_center_and_decendace()
+        fallback_cost_centers = user_profile.cost_center_and_decendace()
         if fallback_cost_centers:
-            cost_centers = list(fallback_cost_centers)
-    
-    user_roles = set(user.roles.all())
+            aces_query = aces_query.filter(cost_center__in=fallback_cost_centers)
+
+    # Additional role-based filters
+    if not any(role in ['Finance Director/Transmission Manager', 'Managing Director'] for role in user_role_names):
+        if any(role in ['General Manager/Transmission Distribution Director', 'Engineering Manager', 'Finance Manager'] for role in user_role_names):
+            aces_query = aces_query.filter(region=user_profile.region)
+        else:
+            aces_query = aces_query.filter(
+                region=user_profile.region,
+                section=user_profile.section
+            )
+
+    # Get ACEs awaiting user's action
     aces_to_process = []
-    processed_ace_ids = set()  # Track processed ACEs to avoid duplicates
+    processed_ace_ids = set()
 
-    # Extract region and section from user_profile
-    region = getattr(user_profile, 'region', None)
-    section = getattr(user_profile, 'section', None)
+    for ace in aces_query:
+        if not ace.process or ace.Ace_id2 in processed_ace_ids:
+            continue
 
-    # Role access logic
-    system_wide_roles = ['Finance Director/Transmission Manager', 'Managing Director']
-    em_gm_roles = ['General Manager/Transmission Distribution Director', 'Engineering Manager']
-    region_wide_roles = ['Accounting Officer', 'Finance Manager']
-    user_role_names = [role.name for role in user_roles]
-    has_system_wide_access = any(role in system_wide_roles for role in user_role_names)
-    has_em_gm_access = any(role in em_gm_roles for role in user_role_names)
-    has_region_wide_access = any(role in region_wide_roles for role in user_role_names)
+        approvals = ace.process.approval_set.all()
+        if approvals.filter(approved='Rejected').exists():
+            continue
 
-    # Query 1: Records WITH cost centers
-    if has_system_wide_access:
-        aces_with_cost_center = Ace2.objects.filter(cost_center__isnull=False).exclude(process__approval__approved="Rejected").prefetch_related("process__approval_set", "process__workflow__step_set")
-    elif cost_centers:
-        aces_with_cost_center = Ace2.objects.filter(cost_center__in=cost_centers).exclude(process__approval__approved="Rejected").prefetch_related("process__approval_set", "process__workflow__step_set")
-    else:
-        aces_with_cost_center = Ace2.objects.none()
-    
-    for ace in aces_with_cost_center:
-        if ace.process and ace.Ace_id2 not in processed_ace_ids:
-            approvals = ace.process.approval_set.all()
-            next_step = (approvals.last().step.step if approvals.exists() else 0) + 1
-            if (
-                ace.process.workflow.step_set.filter(
-                    step=next_step, approver__in=user_roles
-                ).exists()
-            ):
-                # Annotate for template
-                ace.has_rejected_approval = approvals.filter(approved='Rejected').exists()
-                if ace.has_rejected_approval:
-                    ace.latest_approval_status = 'Rejected'
-                else:
-                    ace.latest_approval_status = approvals.last().approved if approvals.exists() else None
-                aces_to_process.append(ace)
-                processed_ace_ids.add(ace.Ace_id2)
-    
-    # Query 2: Records WITHOUT cost centers (use section/region fallback)
-    # FD/MD: See everything in system
-    # EM/GM, AO/FM: See entire region
-    # Others: See only their section
-    if has_system_wide_access:
-        fallback_filter = {
-            'cost_center__isnull': True,
-            'date_created__year__gte': 2025
-        }
-    elif (has_em_gm_access or has_region_wide_access) and region:
-        fallback_filter = {
-            'cost_center__isnull': True,
-            'region': region,
-            'date_created__year__gte': 2025
-        }
-    elif region:
-        fallback_filter = {
-            'cost_center__isnull': True,
-            'region': region,
-            'date_created__year__gte': 2025
-        }
-        if section:
-            fallback_filter['section'] = section
-    else:
-        fallback_filter = None
-    
-    if fallback_filter:
-        aces_without_cost_center = Ace2.objects.filter(
-            **fallback_filter
-        ).exclude(
-            process__approval__approved="Rejected"
-        ).prefetch_related("process__approval_set", "process__workflow__step_set")
-        
-        for ace in aces_without_cost_center:
-            if ace.process and ace.Ace_id2 not in processed_ace_ids:
-                approvals = ace.process.approval_set.all()
-                next_step = (approvals.last().step.step if approvals.exists() else 0) + 1
-                if (
-                    ace.process.workflow.step_set.filter(
-                        step=next_step, approver__in=user_roles
-                    ).exists()
-                ):
-                    ace.has_rejected_approval = approvals.filter(approved='Rejected').exists()
-                    if ace.has_rejected_approval:
-                        ace.latest_approval_status = 'Rejected'
-                    else:
-                        ace.latest_approval_status = approvals.last().approved if approvals.exists() else None
-                    aces_to_process.append(ace)
-                    processed_ace_ids.add(ace.Ace_id2)
-    else:
-        aces_without_cost_center = Ace2.objects.none()
+        next_step = (approvals.last().step.step if approvals.exists() else 0) + 1
+        if ace.process.workflow.step_set.filter(step=next_step, approver__in=user_roles).exists():
+            ace.has_rejected_approval = False
+            ace.latest_approval_status = approvals.last().approved if approvals.exists() else None
+            aces_to_process.append(ace)
+            processed_ace_ids.add(ace.Ace_id2)
 
-    # ACEs created by the user (both with and without cost centers)
-    created_aces_filter = {"requested_by": request.user}
-    if has_system_wide_access:
-        created_aces_with_cc = Ace2.objects.filter(cost_center__isnull=False, **created_aces_filter).exclude(process__approval__approved="Rejected")
-    elif cost_centers:
-        created_aces_with_cc = Ace2.objects.filter(cost_center__in=cost_centers, **created_aces_filter).exclude(process__approval__approved="Rejected")
-    else:
-        created_aces_with_cc = Ace2.objects.none()
+    # Get ACEs created by user with cost center filtering
+    created_aces = aces_query.filter(
+        requested_by=request.user
+    ).exclude(
+        process__approval__approved="Rejected"
+    )
 
-    # For created ACEs without cost centers, respect access levels
-    if has_system_wide_access:
-        created_fallback_filter = {
-            'cost_center__isnull': True,
-            **created_aces_filter
-        }
-    elif (has_em_gm_access or has_region_wide_access) and region:
-        created_fallback_filter = {
-            'cost_center__isnull': True,
-            'region': region,
-            **created_aces_filter
-        }
-    elif region:
-        created_fallback_filter = {
-            'cost_center__isnull': True,
-            'region': region,
-            **created_aces_filter
-        }
-        if section:
-            created_fallback_filter['section'] = section
-    else:
-        created_fallback_filter = None
-    
-    if created_fallback_filter:
-        created_aces_without_cc = Ace2.objects.filter(
-            **created_fallback_filter
-        ).exclude(process__approval__approved="Rejected")
-    else:
-        created_aces_without_cc = Ace2.objects.none()
-    
-    # Combine created ACEs
-    # Annotate created_aces for template
-    created_aces = list(created_aces_with_cc) + list(created_aces_without_cc)
+    # Add helpful flags for created ACEs
     for ace in created_aces:
         if ace.process:
             approvals = ace.process.approval_set.all()
-            ace.has_rejected_approval = approvals.filter(approved='Rejected').exists()
-            if ace.has_rejected_approval:
-                ace.latest_approval_status = 'Rejected'
-            else:
-                ace.latest_approval_status = approvals.last().approved if approvals.exists() else None
+            ace.has_rejected_approval = False
+            ace.latest_approval_status = approvals.last().approved if approvals.exists() else None
         else:
             ace.has_rejected_approval = False
             ace.latest_approval_status = None
 
-    return render(
-        request,
-        'finance/ace2/view_all_aces.html',
-        {
-            "aces": aces_to_process,
-            "created_aces": created_aces,
-            "all": False,
-            "start_date": start_date,
-            "end_date": end_date,
-            "cost_center": cost_center,
-            "types": application_names,
-            "roles": get_my_roles_for_apps(user, application_names),
-        },
-    )
+    return render(request, 'finance/ace2/view_all_aces.html', {
+        "aces": aces_to_process,
+        "created_aces": created_aces,
+        "all": False,
+        "start_date": start_date,
+        "end_date": end_date,
+        "cost_center": cost_center,
+        "types": application_names,
+        "roles": get_my_roles_for_apps(request.user, application_names),
+    })
 
 
 @login_required
 def view_all_aces(request):
-    user_roles = request.user.roles.all()
+    """
+    Show all ACEs accessible to the current user based on role:
+    - System-wide roles see all ACEs
+    - Regional roles see ACEs in their region
+    - Section roles see ACEs in their section
+    Orders by most recently created first.
+    """
+    user_profile = UserProfile.objects.get(id=request.user.id)
+    
+    # Get user's ACE role
+    ace_role = next(
+        (role.role for role in user_profile.roles.all() if role.application == "ace"),
+        None
+    )
+    
+    # Base query with select_related for efficiency
+    aces = Ace2.objects.select_related(
+        'region',
+        'section',
+        'budget_id',
+        'requested_by'
+    )
+    
+    # Apply role-based filters
+    system_wide_roles = {'Finance Director/Transmission Manager', 'Managing Director'}
+    regional_roles = {'General Manager/Transmission Distribution Director', 'Engineering Manager', 'Finance Manager'}
+    
+    user_role_names = {role.name for role in user_profile.roles.all()}
+    
+    if not system_wide_roles.intersection(user_role_names):
+        # Not a system-wide role, filter by region
+        aces = aces.filter(region=user_profile.region)
+        
+        if not regional_roles.intersection(user_role_names):
+            # Not a regional role either, filter by section
+            aces = aces.filter(section=user_profile.section)
+    
+    # Order by most recent first
+    aces = aces.order_by('-date_created')
 
-    user_id = request.user.id
-    user_profile = UserProfile.objects.filter(id=user_id).first()
-    region = Regions.objects.filter(id=user_profile.region.id).first()
-    section = Sections.objects.filter(section=user_profile.section).first()
-    print(section, " section")
-
-    user_groups = user_profile.groups.values_list('name', flat=True)
-
-    custom_user_roles = {
-        "ace": {},
-    }
-
-    roles_ = user_profile.roles.all()
-    for _role in roles_:
-        role = Roles.objects.filter(id=_role.id).first()
-
-        if role.application == "ace":
-            custom_user_roles["ace"] = role.role
-    ace_role = str(custom_user_roles["ace"])
-    requester = "create"
-
-    if ace_role == "create":
-        aces = Ace2.objects.filter(region=region).order_by('-date_created')
-    elif ace_role == "pass":
-        aces = Ace2.objects.filter(region=region).order_by('-date_created')
-    else:
-        print('kings')
-        aces = Ace2.objects.filter(region=region).order_by('-date_created')
-        print(aces)
-
-    return render(request, 'finance/ace2/view_all_aces.html', {'aces': aces,
-                                                               'requester': requester, 'ace_role': ace_role})
+    return render(request, 'finance/ace2/view_all_aces.html', {
+        'aces': aces,
+        'requester': "create",  # Used in template for role checks
+        'ace_role': ace_role
+    })
 
 
 def add_project_details(request, Ace_id2):
@@ -1569,41 +1482,63 @@ def transactions_for_budget(request, budget_id):
 
 @login_required
 def ace_reports(request):
-    user_id = request.user.id
-    user_profile = UserProfile.objects.filter(id=user_id).first()
+    """
+    Generate ACE reports based on date range, region and budget filters.
+    Uses optimized select_related queries and aggregation.
+    """
+    user_profile = UserProfile.objects.get(id=request.user.id)
     ace_report_form = AceReportForm(user=user_profile)
 
     if request.method == 'POST':
-        ace_report_form = AceReportForm(request.POST)
+        ace_report_form = AceReportForm(request.POST, user=user_profile)
         if ace_report_form.is_valid():
             start_date = ace_report_form.cleaned_data['start_date']
             end_date = ace_report_form.cleaned_data['end_date']
-            region = ace_report_form.cleaned_data['region']
             budget = ace_report_form.cleaned_data['budget_id']
 
+            # Base query with essential joins
+            aces_query = Ace2.objects.select_related(
+                'budget_id',
+                'requested_by',
+                'section',
+                'region'
+            ).filter(region=request.user.region)
+
+            if start_date:
+                aces_query = aces_query.filter(date_created__gte=start_date)
+            if end_date:
+                aces_query = aces_query.filter(date_created__lte=end_date)
+
             if budget:  # Specific budget selected
-                report = ace_report_form.save(commit=False)
+                aces_query = aces_query.filter(budget_id=budget)
+                report = ace_report_form.save(commit=False) 
                 report.start_date = start_date
                 report.end_date = end_date
-                report.region = region
+                report.region = request.user.region
                 report.budget_id = budget
                 report.save()
-                # Filter ACEs for this budget
-                aces = Ace2.objects.filter(
-                    date_created__range=[start_date, end_date],
-                    region=region,
-                    budget_id=budget
-                )
-                return render(request, 'finance/ace2/ace_reports.html', {'aces': aces, 'report': report})
-            else:  # All Budgets selected
-                # Do NOT save the report, just filter ACEs for all budgets
-                aces = Ace2.objects.filter(
-                    date_created__range=[start_date, end_date],
-                    region=region
-                )
-                return render(request, 'finance/ace2/ace_reports.html', {'aces': aces, 'report': None})
+            
+            # Final ordering and execution
+            aces = aces_query.order_by('-date_created')
+            
+            # Aggregate statistics
+            totals = aces.aggregate(
+                total_amount=models.Sum('amount'),
+                ace_count=models.Count('id')
+            )
 
-    return render(request, 'finance/ace2/ace_create_reports.html', {'ace_report_form': ace_report_form})
+            return render(request, 'finance/ace2/ace_reports.html', {
+                'aces': aces,
+                'report': report if budget else None,
+                'total_amount': totals['total_amount'] or 0,
+                'ace_count': totals['ace_count'],
+                'start_date': start_date,
+                'end_date': end_date
+            })
+
+    return render(request, 'finance/ace2/ace_create_reports.html', {
+        'ace_report_form': ace_report_form
+    })
 
 
 @login_required
