@@ -171,7 +171,7 @@
                       <input
                         type="checkbox"
                         id="role_{{ role.id }}"
-                        name="selected_roles"
+                        name="roles"
                         value="{{ role.id }}"
                         class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                       />
@@ -621,10 +621,26 @@
       width: "100%",
     });
 
+    function updateProfileFieldNames(operationType) {
+      if (operationType === "profile_modification") {
+        $("#user_profile").attr("name", "user_profile");
+        $("#user_profile_deac").removeAttr("name");
+      } else if (operationType === "profile_deactivation") {
+        $("#user_profile_deac").attr("name", "user_profile");
+        $("#user_profile").removeAttr("name");
+      } else {
+        $("#user_profile").attr("name", "user_profile");
+        $("#user_profile_deac").removeAttr("name");
+      }
+    }
+
     // Handle operation type change
     $("#operation_type").on("change", function () {
       const operationType = $(this).val();
       const application = $("#for_application").val();
+
+      // Toggle name attributes to prevent duplicate form keys
+      updateProfileFieldNames(operationType);
 
       // Hide all operation-specific fields
       $(
@@ -681,16 +697,13 @@
         $("#permanent-user-field").removeClass("hidden");
         $("#delegation-user-fields").addClass("hidden");
         $("#delegation-fields").addClass("hidden");
+        $("#roles-to-delegate").addClass("hidden");
+        $("#delegator-roles-container").empty();
         
         // Set required attributes for permanent fields
         $("#user_profile").prop("required", true);
         $("#delegator").prop("required", false);
         $("#delegatee").prop("required", false);
-        
-        // Load user roles for permanent assignment if Business Excellence
-        //if (application === "BUSINESS EXCELLENCE" && userProfileValue) {
-        //  loadDelegatorRoles(userProfileValue);
-        //}
       } else {
         // No change type selected - hide all
         $("#delegation-user-fields").addClass("hidden");
@@ -735,8 +748,7 @@
           }
         }
       } else if (changeType === "PERMANENT" && application === "BUSINESS EXCELLENCE" && userProfileValue) {
-        // Load user roles for permanent assignment
-        loadDelegatorRoles(userProfileValue);
+        // No special handling needed; text area remains visible
       }
     });
     
@@ -758,10 +770,12 @@
       
       if (application === "BUSINESS EXCELLENCE") {
         if (operationType === "profile_modification") {
-          // For profile modification, hide static roles - they'll be loaded via AJAX based on delegator
+          // For profile modification, use the shared text area for all applications
           businessExcellenceRoles.addClass("hidden");
-          otherAppRoles.addClass("hidden");
-          rolesLabel.text("Roles to Action");
+          otherAppRoles.removeClass("hidden");
+          rolesLabel.text("Roles to Designate");
+          $("#roles_to_action").attr("placeholder", "Specify roles, responsibilities or designations that need to be assigned");
+          rolesHelpText.text("List specific roles, responsibilities or designations that need attention");
         } else {
           // For new profile, show role checkboxes for Business Excellence
           businessExcellenceRoles.removeClass("hidden");
@@ -785,14 +799,9 @@
       }
     }
     
-    // Handle operation type change
-    $("#operation_type").on("change", function () {
-      const application = $("#for_application").val();
-      const operationType = $(this).val();
-      
-      // Update roles section
-      updateRolesSection(application, operationType);
-    });
+    // Initialize state on load
+    updateProfileFieldNames($("#operation_type").val());
+    $("#operation_type").trigger("change");
 
     // Handle user profile selection change (for permanent assignments)
     $("#user_profile").on("change", function () {
@@ -802,7 +811,7 @@
       
       // Load user roles for permanent assignment in Business Excellence
       if (application === "BUSINESS EXCELLENCE" && userProfileValue && changeType === "PERMANENT") {
-        loadDelegatorRoles(userProfileValue);
+        // No additional UI adjustments required
       }
     });
 
@@ -927,10 +936,10 @@
             isValid = false;
           }
 
-          // Validate that at least one role is selected
-          const selectedRoles = $('input[name="roles"]:checked').length;
-          if (selectedRoles === 0) {
-            errors.push("Please select at least one role to delegate");
+          // Validate roles description for all applications
+          const rolesDescription = ($("#roles_to_action").val() || "").trim();
+          if (!rolesDescription) {
+            errors.push("Please describe the roles or responsibilities to assign");
             isValid = false;
           }
 
@@ -1074,7 +1083,7 @@
         const appData = rolesByApp[appKey];
         
         // Create application section
-        const appSection = $('<div class="mb-6 border border-gray-200 rounded-lg p-4"></div>');
+        const appSection = $('<div class="mb-6 border border-gray-200 rounded-lg p-4 bg-white"></div>');
         const appHeader = $('<div class="mb-3"><h5 class="text-md font-medium text-blue-800">' + appData.app_fullname + '</h5></div>');
         appSection.append(appHeader);
         
@@ -1095,18 +1104,18 @@
       
       // Add select all functionality
       const selectAllContainer = $('<div class="mt-4 flex justify-between items-center">' +
-        '<button type="button" id="select-all-roles" class="text-blue-600 hover:text-blue-800 text-sm">Select All</button>' +
-        '<button type="button" id="clear-all-roles" class="text-gray-600 hover:text-gray-800 text-sm">Clear All</button>' +
+        '<button type="button" class="select-all-roles text-blue-600 hover:text-blue-800 text-sm">Select All</button>' +
+        '<button type="button" class="clear-all-roles text-gray-600 hover:text-gray-800 text-sm">Clear All</button>' +
         '</div>');
       container.append(selectAllContainer);
       
       // Bind select all / clear all events
-      $("#select-all-roles").on("click", function() {
-        $('input[name="roles"]').prop('checked', true);
+      selectAllContainer.find(".select-all-roles").on("click", function() {
+        container.find('input[name="roles"]').prop('checked', true);
       });
       
-      $("#clear-all-roles").on("click", function() {
-        $('input[name="roles"]').prop('checked', false);
+      selectAllContainer.find(".clear-all-roles").on("click", function() {
+        container.find('input[name="roles"]').prop('checked', false);
       });
     }
   });
