@@ -558,6 +558,192 @@ def handle_document_upload(request, process):
         })
 
 
+@login_required
+def manage_process_resources_view(request):
+    """
+    Provide a simple management interface for process departments and regions.
+    Allows creating new department and region records without leaving the app.
+    """
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        
+        if action == 'create_department':
+            name = request.POST.get('name', '').strip()
+            description = request.POST.get('description', '').strip()
+            order_value = request.POST.get('order', '').strip()
+            
+            if not name:
+                messages.error(request, "Department name is required.")
+                return redirect('process_management:manage_resources')
+            
+            try:
+                order = int(order_value) if order_value else 0
+                if order < 0:
+                    raise ValueError
+            except ValueError:
+                messages.error(request, "Order must be a non-negative integer.")
+                return redirect('process_management:manage_resources')
+            
+            if ProcessDepartment.objects.filter(name__iexact=name).exists():
+                messages.error(request, f"Department '{name}' already exists.")
+                return redirect('process_management:manage_resources')
+            
+            try:
+                ProcessDepartment.objects.create(
+                    name=name,
+                    description=description,
+                    order=order
+                )
+                messages.success(request, f"Department '{name}' created successfully.")
+            except Exception as exc:
+                logger.error(f"Failed to create department '{name}': {exc}")
+                messages.error(request, "Could not create department. Please try again.")
+            
+            return redirect('process_management:manage_resources')
+        
+        if action == 'create_region':
+            region_name = request.POST.get('region', '').strip()
+            region_code = request.POST.get('code', '').strip()
+            
+            if not region_name:
+                messages.error(request, "Region name is required.")
+                return redirect('process_management:manage_resources')
+            
+            if Regions.objects.filter(region__iexact=region_name).exists():
+                messages.error(request, f"Region '{region_name}' already exists.")
+                return redirect('process_management:manage_resources')
+            
+            try:
+                Regions.objects.create(region=region_name, code=region_code)
+                messages.success(request, f"Region '{region_name}' created successfully.")
+            except Exception as exc:
+                logger.error(f"Failed to create region '{region_name}': {exc}")
+                messages.error(request, "Could not create region. Please try again.")
+            
+            return redirect('process_management:manage_resources')
+        
+        if action == 'update_department':
+            department_id = request.POST.get('department_id')
+            department = get_object_or_404(ProcessDepartment, id=department_id)
+            
+            name = request.POST.get('name', '').strip()
+            description = request.POST.get('description', '').strip()
+            order_value = request.POST.get('order', '').strip()
+            
+            if not name:
+                messages.error(request, "Department name is required.")
+                return redirect(f"{request.path}?edit_department={department.id}")
+            
+            try:
+                order = int(order_value) if order_value else 0
+                if order < 0:
+                    raise ValueError
+            except ValueError:
+                messages.error(request, "Order must be a non-negative integer.")
+                return redirect(f"{request.path}?edit_department={department.id}")
+            
+            if ProcessDepartment.objects.filter(name__iexact=name).exclude(id=department.id).exists():
+                messages.error(request, f"Another department already uses the name '{name}'.")
+                return redirect(f"{request.path}?edit_department={department.id}")
+            
+            department.name = name
+            department.description = description
+            department.order = order
+            
+            try:
+                department.save()
+                messages.success(request, f"Department '{name}' updated successfully.")
+            except Exception as exc:
+                logger.error(f"Failed to update department '{department.id}': {exc}")
+                messages.error(request, "Could not update department. Please try again.")
+                return redirect(f"{request.path}?edit_department={department.id}")
+            
+            return redirect('process_management:manage_resources')
+        
+        if action == 'delete_department':
+            department_id = request.POST.get('department_id')
+            department = get_object_or_404(ProcessDepartment, id=department_id)
+            
+            if department.processes.exists():
+                messages.error(request, "Cannot delete department while processes are assigned to it.")
+                return redirect('process_management:manage_resources')
+            
+            try:
+                department.delete()
+                messages.success(request, f"Department '{department.name}' deleted successfully.")
+            except Exception as exc:
+                logger.error(f"Failed to delete department '{department.id}': {exc}")
+                messages.error(request, "Could not delete department. Please try again.")
+            
+            return redirect('process_management:manage_resources')
+        
+        if action == 'update_region':
+            region_id = request.POST.get('region_id')
+            region = get_object_or_404(Regions, id=region_id)
+            
+            region_name = request.POST.get('region', '').strip()
+            region_code = request.POST.get('code', '').strip()
+            
+            if not region_name:
+                messages.error(request, "Region name is required.")
+                return redirect(f"{request.path}?edit_region={region.id}")
+            
+            if Regions.objects.filter(region__iexact=region_name).exclude(id=region.id).exists():
+                messages.error(request, f"Another region already uses the name '{region_name}'.")
+                return redirect(f"{request.path}?edit_region={region.id}")
+            
+            region.region = region_name
+            region.code = region_code
+            
+            try:
+                region.save()
+                messages.success(request, f"Region '{region_name}' updated successfully.")
+            except Exception as exc:
+                logger.error(f"Failed to update region '{region.id}': {exc}")
+                messages.error(request, "Could not update region. Please try again.")
+                return redirect(f"{request.path}?edit_region={region.id}")
+            
+            return redirect('process_management:manage_resources')
+        
+        if action == 'delete_region':
+            region_id = request.POST.get('region_id')
+            region = get_object_or_404(Regions, id=region_id)
+            
+            if Process.objects.filter(region=region).exists():
+                messages.error(request, "Cannot delete region while processes reference it.")
+                return redirect('process_management:manage_resources')
+            
+            try:
+                region.delete()
+                messages.success(request, f"Region '{region.region}' deleted successfully.")
+            except Exception as exc:
+                logger.error(f"Failed to delete region '{region.id}': {exc}")
+                messages.error(request, "Could not delete region. Please try again.")
+            
+            return redirect('process_management:manage_resources')
+    
+    departments = ProcessDepartment.objects.all().order_by('order', 'name')
+    regions = Regions.objects.all().order_by('region')
+    edit_department = None
+    edit_region = None
+    
+    edit_department_id = request.GET.get('edit_department')
+    if edit_department_id:
+        edit_department = get_object_or_404(ProcessDepartment, id=edit_department_id)
+    
+    edit_region_id = request.GET.get('edit_region')
+    if edit_region_id:
+        edit_region = get_object_or_404(Regions, id=edit_region_id)
+    
+    context = {
+        'departments': departments,
+        'regions': regions,
+        'edit_department': edit_department,
+        'edit_region': edit_region,
+    }
+    return render(request, 'process_management/manage_resources.html', context)
+
+
 def validate_uploaded_file(uploaded_file):
     """
     Validate uploaded file for size, type, and other constraints.

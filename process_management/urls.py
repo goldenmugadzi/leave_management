@@ -22,6 +22,7 @@ urlpatterns = [
     
     # Process management views
     path('create/', views.process_create_view, name='process_create'),
+    path('resources/', views.manage_process_resources_view, name='manage_resources'),
     path('edit/<int:process_id>/', views.process_edit_view, name='process_edit'),
     path('delete/<int:process_id>/', views.process_delete_view, name='process_delete'),
     
