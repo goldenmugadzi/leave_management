@@ -1331,63 +1331,66 @@ def knowledge_center_file_search(request):
         return JsonResponse({'files': []})
     
     try:
-        # Search in both KnowledgeCenter and KnowldgeCentreFile models
-        # Use Q objects for complex queries with OR conditions
-        search_query = Q()
-        
-        # Search in KnowledgeCenter model (older files)
-        kc_files = KnowledgeCenter.objects.filter(
-            Q(filename__icontains=query),
-            archived=False
-        ).select_related('file_type_id', 'section_id', 'region_id')[:10]
-        
-        # Search in KnowldgeCentreFile model (newer files)
-        kcf_files = KnowldgeCentreFile.objects.filter(
-            Q(filename__icontains=query) | Q(name__icontains=query),
-            archived=False
-        ).select_related('folder', 'section', 'region', 'created_by')
-        
+        logger.info("Knowledge center file search started | query='%s'", query)
+
+        # Search in KnowldgeCentreFile model (primary data source)
+        kcf_files = (
+            KnowldgeCentreFile.objects.filter(archived=False)
+            .filter(
+                Q(filename__icontains=query)
+                | Q(name__icontains=query)
+                | Q(folder__name__icontains=query)
+                | Q(section__section__icontains=query)
+                | Q(region__region__icontains=query)
+            )
+            .select_related('folder', 'section', 'region', 'created_by')
+            .order_by('name', 'filename')
+        )
+        kcf_count = kcf_files.count()
+        logger.debug(
+            "Knowledge center file search queryset prepared | query='%s' | archived=False | count=%s",
+            query,
+            kcf_count,
+        )
         results = []
         
-        # Process KnowledgeCenter results - only include files that exist in filesystem
-        for file in kc_files:
-            # Check if file exists in filesystem before including in results
-            if hasattr(file, 'filepath') and file.filepath and os.path.exists(file.filepath):
-                results.append({
-                    'id': f"kc_{file.id}",
-                    'name': file.filename,
-                    'type': 'knowledge_center',
-                    'file_type': file.file_type if hasattr(file, 'file_type') else 'Unknown',
-                    'section': file.section if hasattr(file, 'section') else 'Unknown',
-                    'region': file.region if hasattr(file, 'region') else 'Unknown',
-                    'created_at': file.created_on.isoformat() if file.created_on else None,
-                    'file_path': file.filepath if hasattr(file, 'filepath') else None,
-                })
-        
-        # Process KnowldgeCentreFile results - only include files that exist in storage
+        # Process KnowldgeCentreFile results - include all matches, flag availability
         for file in kcf_files:
-            # Check if file exists in storage before including in results
-            if file.file and file.file.name and default_storage.exists(file.file.name):
-                results.append({
-                    'id': f"kcf_{file.id}",
-                    'name': file.filename,
-                    'type': 'knowledge_centre_file',
-                    'file_type': 'File',
-                    'section': file.section.section if file.section else 'Unknown',
-                    'region': file.region.region if file.region else 'Unknown',
-                    'created_at': file.created_on.isoformat() if file.created_on else None,
-                    'file_path': file.file.url if file.file else None,
-                    'folder': file.folder.name if file.folder else 'Unknown',
-                })
+            storage_path = getattr(file.file, 'name', None) if file.file else None
+            file_exists = file.file and storage_path and default_storage.exists(storage_path)
+
+            if not file_exists:
+                logger.warning(
+                    "Knowledge center file search match missing storage | id=%s | name='%s' | storage_path='%s'",
+                    getattr(file, 'id', None),
+                    getattr(file, 'name', None) or getattr(file, 'filename', None),
+                    storage_path,
+                )
+
+            results.append({
+                'id': f"kcf_{file.id}",
+                'name': file.name or file.filename,
+                'type': 'knowledge_centre_file',
+                'file_type': 'File',
+                'section': file.section.section if file.section else 'Unknown',
+                'region': file.region.region if file.region else 'Unknown',
+                'created_at': file.created_on.isoformat() if file.created_on else None,
+                'file_path': file.file.url if file.file else None,
+                'folder': file.folder.name if file.folder else 'Unknown',
+                'is_available': file_exists,
+            })
         
+        logger.info(
+            "Knowledge center file search completed | query='%s' | queryset_count=%s | result_count=%s",
+            query,
+            kcf_count,
+            len(results),
+        )
         # Sort results by relevance (exact matches first, then by name)
         results.sort(key=lambda x: (
             0 if query.lower() in x['name'].lower() else 1,
             x['name'].lower()
         ))
-        
-        # Limit to 15 results total
-        results = results[:15]
         
         return JsonResponse({
             'files': results,
