@@ -31,12 +31,12 @@
           </ol>
         </nav>
       </div>
-      <a href="{% url 'inspections:inspection_create' %}" class="bg-gulf-blue-600 hover:bg-gulf-blue-700 text-white font-medium py-2 px-4 rounded-lg flex items-center">
+      {% comment %} <a href="{% url 'inspections:inspection_create' %}" class="bg-gulf-blue-600 hover:bg-gulf-blue-700 text-white font-medium py-2 px-4 rounded-lg flex items-center">
         <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path>
         </svg>
         New Inspection Report
-      </a>
+      </a> {% endcomment %}
     </div>
 
     <!-- Search and Filter Section -->
@@ -128,8 +128,8 @@
                 </div>
               </td>
               <td class="px-6 py-4">
-                <div class="text-sm text-gray-900 max-w-xs truncate" title="{{ report.property_supplied|default:report.client_application.property_address|default:'N/A' }}">
-                  {{ report.property_supplied|default:report.client_application.property_address|default:"N/A"|truncatechars:40 }}
+                <div class="text-sm text-gray-900 max-w-xs truncate" title="{{ report.property_supplied|default:'N/A' }}">
+                  {{ report.property_supplied|default:"N/A"|truncatechars:40 }}
                 </div>
               </td>
               <td class="px-6 py-4 whitespace-nowrap">
@@ -142,7 +142,11 @@
                 {% endif %}
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                {{ report.inspector.get_full_name|default:report.inspector.username|default:"Unassigned" }}
+                {% if report.inspector %}
+                  {{ report.inspector.get_full_name|default:report.inspector.username }}
+                {% else %}
+                  Unassigned
+                {% endif %}
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                 {{ report.inspection_date|date:"M d, Y"|default:"Not scheduled" }}
@@ -164,23 +168,23 @@
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
                     </svg>
                   </a>
-                  <a href="{% url 'inspections:inspection_edit' report.pk %}" class="text-indigo-600 hover:text-indigo-900">
+                  {% comment %} <a href="{% url 'inspections:inspection_edit' report.pk %}" class="text-indigo-600 hover:text-indigo-900">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
                     </svg>
-                  </a>
-                  {% if report.status == 'pending' %}
+                  </a> {% endcomment %}
+                  {% comment %} {% if report.status == 'pending' %}
                     <a href="{% url 'inspections:inspection_conduct' report.pk %}" class="text-green-600 hover:text-green-900">
                       <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path>
                       </svg>
                     </a>
-                  {% endif %}
+                  {% endif %} {% endcomment %}
                 </div>
               </td>
             </tr>
             {% empty %}
-            <tr>
+            {% comment %} <tr>
               <td colspan="8" class="px-6 py-12 text-center">
                 <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path>
@@ -193,7 +197,7 @@
                   </a>
                 </div>
               </td>
-            </tr>
+            </tr> {% endcomment %}
             {% endfor %}
           </tbody>
         </table>

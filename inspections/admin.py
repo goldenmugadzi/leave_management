@@ -2,7 +2,7 @@ from django.contrib import admin
 from .models import (
     Customer, Contractor, ApplicationAttachment, ClientApplication, 
     InspectionReport, E6Certificate, E1DefectReport, InspectionWorkflow, 
-    ApplicationAssignment
+    ApplicationAssignment, InspectionPhoto, DocumentDistribution, CertificateAuditLog
 )
 
 
@@ -314,3 +314,152 @@ class ApplicationAssignmentAdmin(admin.ModelAdmin):
     )
     
     ordering = ['-created_at'] 
+
+@admin.register(InspectionPhoto)
+class InspectionPhotoAdmin(admin.ModelAdmin):
+    list_display = [
+        'filename', 'inspection_report', 'timestamp', 'file_size', 
+        'gps_latitude', 'gps_longitude', 'created_at'
+    ]
+    list_filter = ['timestamp', 'content_type', 'created_at']
+    search_fields = [
+        'filename', 'caption', 'inspection_report__service_no'
+    ]
+    readonly_fields = ['file_size', 'created_at', 'updated_at']
+    
+    fieldsets = (
+        ('Photo Information', {
+            'fields': ('inspection_report', 'filename', 'file', 'caption', 'timestamp')
+        }),
+        ('Metadata', {
+            'fields': ('content_type', 'file_size')
+        }),
+        ('GPS Coordinates', {
+            'fields': ('gps_latitude', 'gps_longitude')
+        }),
+        ('Audit Fields', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    ordering = ['-timestamp']
+
+
+@admin.register(DocumentDistribution)
+class DocumentDistributionAdmin(admin.ModelAdmin):
+    list_display = [
+        'get_document_reference', 'document_type', 'recipient_name', 'stakeholder_type',
+        'delivery_method', 'delivery_status', 'sent_at', 'delivered_at'
+    ]
+    list_filter = [
+        'document_type', 'stakeholder_type', 'delivery_method', 'delivery_status',
+        'sent_at', 'delivered_at'
+    ]
+    search_fields = [
+        'recipient_name', 'recipient_email', 'recipient_phone',
+        'e6_certificate__certificate_number', 'e1_defect_report__report_number',
+        'tracking_reference'
+    ]
+    readonly_fields = ['sent_at', 'created_at', 'updated_at']
+    
+    fieldsets = (
+        ('Document Information', {
+            'fields': ('document_type', 'e6_certificate', 'e1_defect_report', 'inspection_report')
+        }),
+        ('Recipient Information', {
+            'fields': (
+                'stakeholder_type', 'recipient_name', 'recipient_email',
+                'recipient_phone', 'recipient_organization'
+            )
+        }),
+        ('Distribution Details', {
+            'fields': (
+                'delivery_method', 'delivery_status', 'sent_at',
+                'delivered_at', 'acknowledged_at', 'tracking_reference'
+            )
+        }),
+        ('Tracking & Error Information', {
+            'fields': ('error_message', 'notes'),
+            'classes': ('collapse',)
+        }),
+        ('User & Device Information', {
+            'fields': ('sent_by', 'device_info', 'ip_address'),
+            'classes': ('collapse',)
+        }),
+        ('Metadata', {
+            'fields': ('metadata', 'created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+    
+    ordering = ['-sent_at']
+    
+    actions = ['mark_as_delivered', 'mark_as_acknowledged', 'mark_as_failed']
+    
+    def mark_as_delivered(self, request, queryset):
+        for distribution in queryset:
+            distribution.mark_delivered()
+        self.message_user(request, f"{queryset.count()} distribution(s) marked as delivered.")
+    mark_as_delivered.short_description = "Mark selected as delivered"
+    
+    def mark_as_acknowledged(self, request, queryset):
+        for distribution in queryset:
+            distribution.mark_acknowledged()
+        self.message_user(request, f"{queryset.count()} distribution(s) marked as acknowledged.")
+    mark_as_acknowledged.short_description = "Mark selected as acknowledged"
+    
+    def mark_as_failed(self, request, queryset):
+        for distribution in queryset:
+            distribution.mark_failed("Manually marked as failed by admin")
+        self.message_user(request, f"{queryset.count()} distribution(s) marked as failed.")
+    mark_as_failed.short_description = "Mark selected as failed"
+
+
+@admin.register(CertificateAuditLog)
+class CertificateAuditLogAdmin(admin.ModelAdmin):
+    list_display = [
+        'get_document_reference', 'action', 'user_name', 'timestamp',
+        'ip_address', 'device_info'
+    ]
+    list_filter = [
+        'action', 'timestamp', 'user'
+    ]
+    search_fields = [
+        'user_name', 'description', 'e6_certificate__certificate_number',
+        'e1_defect_report__report_number', 'ip_address'
+    ]
+    readonly_fields = ['timestamp']
+    
+    fieldsets = (
+        ('Certificate Reference', {
+            'fields': ('e6_certificate', 'e1_defect_report')
+        }),
+        ('Action Details', {
+            'fields': ('action', 'description')
+        }),
+        ('User Information', {
+            'fields': ('user', 'user_name')
+        }),
+        ('Technical Details', {
+            'fields': ('ip_address', 'user_agent', 'device_info'),
+            'classes': ('collapse',)
+        }),
+        ('Additional Context', {
+            'fields': ('metadata',),
+            'classes': ('collapse',)
+        }),
+        ('Timestamp', {
+            'fields': ('timestamp',)
+        }),
+    )
+    
+    ordering = ['-timestamp']
+    
+    def has_add_permission(self, request):
+        # Audit logs should not be manually created
+        return False
+    
+    def has_delete_permission(self, request, obj=None):
+        # Audit logs should not be deleted
+        return False

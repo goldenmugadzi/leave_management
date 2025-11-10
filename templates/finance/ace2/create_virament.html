@@ -12,6 +12,15 @@
 <div class=" m-auto mt-5  ">
   <form class="row rounded py-4 border  bg-gulf-blue-100 p-3 m-auto  container" method="POST" action="" enctype="multipart/form-data">
     {% csrf_token %}
+    {% if form.non_field_errors %}
+      <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+        <ul class="list-disc pl-5">
+          {% for error in form.non_field_errors %}
+            <li>{{ error }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+    {% endif %}
    <div class=" m-auto container justify-content-stretch align-content-stretch ">
     <div class="mx-10 my-3 d-flex col-span-4 ">
       {% for field in form %}
@@ -77,33 +86,29 @@
             {% endfor %}
               
         </div>
-         <div class="modal fade" id="resultModal" tabindex="-1" role="dialog" aria-labelledby="resultModalLabel" aria-hidden="true">
-             <div class="modal-dialog">
-                 <div class="modal-content">
-                     <div class="modal-header">
-                         <h5 class="modal-title" id="resultModalLabel">Transaction Aftermath</h5>
-                         <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                             <span aria-hidden="true"></span>
-                         </button>
-                     </div>
-                     <div class="modal-body" id="modal-body-content">
-                     </div>
-                     <div class="modal-footer">
-                         {#                    <button type="button" class="bg-gulf-blue-600 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded" data-dismiss="modal">Close</button>#}
-                     </div>
-                 </div>
-             </div>
+         <br>
+         <div class="m-auto justify-content-stretch text-center align-content-stretch">
+           <a class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded" href="/dashboard">Back</a>
+           <input class="bg-gulf-blue-600 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded" type="submit" value="Submit">
          </div>
-     </div>
-   </div>
-
-     <br>
-     <div class="m-auto justify-content-stretch text-center align-content-stretch">
-      <a class="bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded" href="/dashboard">Back</a>
-      <input class="bg-gulf-blue-600 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded" type="submit" value="Submit">
-  </div>
-
-  </form>
+         <div class="modal fade" id="resultModal" tabindex="-1" role="dialog" aria-labelledby="resultModalLabel" aria-hidden="true">
+           <div class="modal-dialog">
+             <div class="modal-content">
+               <div class="modal-header">
+                 <h5 class="modal-title" id="resultModalLabel">Transaction Aftermath</h5>
+                 <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                   <span aria-hidden="true"></span>
+                 </button>
+               </div>
+               <div class="modal-body" id="modal-body-content">
+               </div>
+               <div class="modal-footer">
+                 {#                    <button type="button" class="bg-gulf-blue-600 hover:bg-gulf-blue-500 text-white font-bold py-2 px-4 rounded" data-dismiss="modal">Close</button>#}
+               </div>
+             </div>
+           </div>
+         </div>
+         </form>
 </div>
 
     <div class="rounded row py-2 my-3 ">

@@ -1,0 +1,14 @@
+<!-- Request Information Section - Common for all CR types -->
+<div>
+  <h4 class="text-base font-semibold text-gray-900 mb-4">Request Information</h4>
+  <div class="space-y-6">
+    {% include 'change_requests/components/forms/display_field.html' with label="Change Type" value=cr.change_type %}
+    {% include 'change_requests/components/forms/display_field.html' with label="CR ID" value=cr.cr_id %}
+    {% include 'change_requests/components/forms/display_field.html' with label="Reason for Change" value=cr.change_reason %}
+    {% include 'change_requests/components/forms/display_field.html' with label="Change Description" value=cr.change_description %}
+    {% if cr.application %}
+      {% include 'change_requests/components/forms/display_field.html' with label="Application" value=cr.application %}
+    {% endif %}
+  </div>
+</div>
+
