@@ -305,6 +305,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 fileInput.required = true;
                 selectedFileId.value = '';
                 selectedFile = null;
+                const warning = document.getElementById('selectedFileWarning');
+                if (warning) {
+                    warning.remove();
+                }
             } else {
                 uploadSection.classList.add('hidden');
                 importSection.classList.remove('hidden');
@@ -350,6 +354,10 @@ document.addEventListener('DOMContentLoaded', function() {
         selectedFileDisplay.classList.add('hidden');
         searchInput.value = '';
         searchResults.classList.add('hidden');
+        const warning = document.getElementById('selectedFileWarning');
+        if (warning) {
+            warning.remove();
+        }
     });
 
     // Form submission with progress
@@ -423,13 +431,17 @@ document.addEventListener('DOMContentLoaded', function() {
             searchResultsList.innerHTML = '<div class="p-4 text-center text-gray-500">No files found</div>';
         } else {
             searchResultsList.innerHTML = files.map(file => `
-                <div class="p-3 hover:bg-gray-50 cursor-pointer file-result" data-file-id="${file.id}">
+                <div class="p-3 hover:bg-gray-50 cursor-pointer file-result ${file.is_available ? '' : 'bg-red-50'}" 
+                     data-file-id="${file.id}"
+                     data-is-available="${file.is_available}"
+                >
                     <div class="flex items-center justify-between">
                         <div class="flex-1">
                             <div class="font-medium text-gray-900">${file.name}</div>
                             <div class="text-sm text-gray-500">
                                 ${file.section} • ${file.region}
                                 ${file.folder ? ' • ' + file.folder : ''}
+                                ${file.is_available ? '' : '<span class="ml-2 text-xs font-semibold text-red-600 uppercase">Missing file</span>'}
                             </div>
                         </div>
                         <div class="text-xs text-gray-400">
@@ -457,7 +469,23 @@ document.addEventListener('DOMContentLoaded', function() {
         selectedFile = file;
         selectedFileId.value = file.id;
         selectedFileName.textContent = file.name;
-        selectedFileInfo.textContent = `${file.section} • ${file.region}${file.folder ? ' • ' + file.folder : ''}`;
+        let infoText = `${file.section} • ${file.region}${file.folder ? ' • ' + file.folder : ''}`;
+        selectedFileInfo.textContent = infoText;
+        
+        if (!file.is_available) {
+            if (!document.getElementById('selectedFileWarning')) {
+                const warning = document.createElement('div');
+                warning.id = 'selectedFileWarning';
+                warning.className = 'mt-2 text-sm text-red-600';
+                warning.innerHTML = '<i class="fas fa-exclamation-triangle mr-1"></i>File missing in storage. Import will fail until the file is restored or re-uploaded.';
+                selectedFileDisplay.querySelector('.p-4').appendChild(warning);
+            }
+        } else {
+            const warning = document.getElementById('selectedFileWarning');
+            if (warning) {
+                warning.remove();
+            }
+        }
         
         selectedFileDisplay.classList.remove('hidden');
         searchResults.classList.add('hidden');
