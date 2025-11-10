@@ -105,7 +105,7 @@ class AppraisalConfirmationStatus(TimeStamp):
         return f"{self.appraisal} - {self.year_quarter} - {self.confirmed_by}"
     
 class AppraisalApprovalWorkFlowQuarter(TimeStamp):
-    appraisal_workflow = models.OneToOneField(AppraisalWorkflow, on_delete=models.RESTRICT)
+    appraisal_workflow = models.ForeignKey(AppraisalWorkflow, on_delete=models.RESTRICT)
     year_quarter = models.ForeignKey(YearQuarter, on_delete=models.RESTRICT, related_name="quarter_workflow")
     is_completed = models.BooleanField(default=False)
 
