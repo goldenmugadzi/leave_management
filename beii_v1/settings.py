@@ -18,7 +18,7 @@ SECRET_KEY = config('SECRET_KEY', default='django-insecure-change-in-production'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG', default=False, cast=bool)
 
-ALLOWED_HOSTS = [config('HOST'), "127.0.0.1", 'localhost', '14c66eadfaf8.ngrok-free.app']
+ALLOWED_HOSTS = [config('HOST'), "127.0.0.1", 'localhost', '9e992977085f.ngrok-free.app']
 
 # CORS_ALLOWED_ORIGINS = [
 #     config('BASE_URL') + ":" + config('PORT'),
