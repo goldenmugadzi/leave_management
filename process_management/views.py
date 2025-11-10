@@ -106,12 +106,7 @@ def process_list_view(request):
     processes = processes.order_by('department__order', 'name')
     
     # Get available regions for filters
-    available_regions = Regions.objects.filter(
-        id__in=Process.objects.filter(
-            is_active=True,
-            region__isnull=False
-        ).values_list('region_id', flat=True).distinct()
-    ).order_by('region')
+    available_regions = Regions.objects.all().order_by('region')
     
     # Pagination for table view
     paginator = Paginator(processes, 25)  # 25 processes per page for table view
@@ -183,13 +178,7 @@ def process_department_view(request, department_id):
     
     # Get available regions for filters
     from it.users.models import Regions
-    available_regions = Regions.objects.filter(
-        id__in=Process.objects.filter(
-            department=department, 
-            is_active=True,
-            region__isnull=False
-        ).values_list('region_id', flat=True).distinct()
-    ).order_by('region') # as defined in users regions table
+    available_regions = Regions.objects.all().order_by('region')
     
     # Pagination
     paginator = Paginator(processes, 12)  # 12 processes per page

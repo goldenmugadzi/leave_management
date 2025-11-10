@@ -1,4 +1,4 @@
-{% extends 'admin_layout.html' %} {% load static %} {% block title %}Processes
+{% extends 'admin_layout.html' %} {% load static process_extras %} {% block title %}Processes
 and Procedures{% endblock %} {% block content %}
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
   <div class="bg-white border border-gray-200">
@@ -181,11 +181,12 @@ and Procedures{% endblock %} {% block content %}
                   </div>
                 </td>
                 <td class="px-5 py-4 text-center">
-                  {% if process.has_process_map %}
-                    <a href="{% url 'process_management:document_download_by_type' process.id 'process_map' %}" 
+                  {% current_document process 'process_map' as process_map_doc %}
+                  {% if process_map_doc %}
+                    <a href="{% url 'process_management:document_download' process_map_doc.id %}" 
                        class="inline-flex items-center px-3 py-1.5 border border-gray-300 text-gray-700 hover:bg-gray-100">
                       <i class="fas fa-download mr-2 text-xs"></i>
-                      Download
+                      {{ process_map_doc.filename }}
                     </a>
                   {% else %}
                     <span class="inline-flex items-center px-3 py-1.5 border border-gray-200 text-gray-500 bg-gray-100">
@@ -194,11 +195,12 @@ and Procedures{% endblock %} {% block content %}
                   {% endif %}
                 </td>
                 <td class="px-5 py-4 text-center">
-                  {% if process.has_procedure %}
-                    <a href="{% url 'process_management:document_download_by_type' process.id 'procedure' %}" 
+                  {% current_document process 'procedure' as procedure_doc %}
+                  {% if procedure_doc %}
+                    <a href="{% url 'process_management:document_download' procedure_doc.id %}" 
                        class="inline-flex items-center px-3 py-1.5 border border-gray-300 text-gray-700 hover:bg-gray-100">
                       <i class="fas fa-download mr-2 text-xs"></i>
-                      Download
+                      {{ procedure_doc.filename }}
                     </a>
                   {% else %}
                     <span class="inline-flex items-center px-3 py-1.5 border border-gray-200 text-gray-500 bg-gray-100">
@@ -207,11 +209,12 @@ and Procedures{% endblock %} {% block content %}
                   {% endif %}
                 </td>
                 <td class="px-5 py-4 text-center">
-                  {% if process.has_risk_register %}
-                    <a href="{% url 'process_management:document_download_by_type' process.id 'risk_register' %}" 
+                  {% current_document process 'risk_register' as risk_doc %}
+                  {% if risk_doc %}
+                    <a href="{% url 'process_management:document_download' risk_doc.id %}" 
                        class="inline-flex items-center px-3 py-1.5 border border-gray-300 text-gray-700 hover:bg-gray-100">
                       <i class="fas fa-download mr-2 text-xs"></i>
-                      Download
+                      {{ risk_doc.filename }}
                     </a>
                   {% else %}
                     <span class="inline-flex items-center px-3 py-1.5 border border-gray-200 text-gray-500 bg-gray-100">
@@ -220,11 +223,12 @@ and Procedures{% endblock %} {% block content %}
                   {% endif %}
                 </td>
                 <td class="px-5 py-4 text-center">
-                  {% if process.has_objectives_targets %}
-                    <a href="{% url 'process_management:document_download_by_type' process.id 'objectives_targets' %}" 
+                  {% current_document process 'objectives_targets' as objectives_doc %}
+                  {% if objectives_doc %}
+                    <a href="{% url 'process_management:document_download' objectives_doc.id %}" 
                        class="inline-flex items-center px-3 py-1.5 border border-gray-300 text-gray-700 hover:bg-gray-100">
                       <i class="fas fa-download mr-2 text-xs"></i>
-                      Download
+                      {{ objectives_doc.filename }}
                     </a>
                   {% else %}
                     <span class="inline-flex items-center px-3 py-1.5 border border-gray-200 text-gray-500 bg-gray-100">
@@ -233,11 +237,12 @@ and Procedures{% endblock %} {% block content %}
                   {% endif %}
                 </td>
                 <td class="px-5 py-4 text-center">
-                  {% if process.has_legal_register %}
-                    <a href="{% url 'process_management:document_download_by_type' process.id 'legal_register' %}" 
+                  {% current_document process 'legal_register' as legal_doc %}
+                  {% if legal_doc %}
+                    <a href="{% url 'process_management:document_download' legal_doc.id %}" 
                        class="inline-flex items-center px-3 py-1.5 border border-gray-300 text-gray-700 hover:bg-gray-100">
                       <i class="fas fa-download mr-2 text-xs"></i>
-                      Download
+                      {{ legal_doc.filename }}
                     </a>
                   {% else %}
                     <span class="inline-flex items-center px-3 py-1.5 border border-gray-200 text-gray-500 bg-gray-100">
