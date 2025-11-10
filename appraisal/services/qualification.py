@@ -4,10 +4,11 @@ from django.core.files.uploadedfile import UploadedFile
 from ..repository import UserQualificationRepository
 from ..repository.users import UserProfileRepository
 from ..helpers.getters.file_handlers import FileHandlerStrategyContext, UserQualificationStrategy
-from it.users.models import UserQualification, UserProfile, QUALIFICATION_TYPE
+from it.users.models import UserQualification, UserProfile, QUALIFICATION_TYPE, GRADE_CHOICES
 from django.db.models import Q
 import pandas as pd
 from datetime import datetime
+from loguru import logger
 class UserQualificationServiceError(Exception):
     pass
 
@@ -97,7 +98,7 @@ class UserQualificationService:
                 # Fetch user
                 user = self.get_user(username=ec_no_str)
                 if user is None:
-                    print(f"[WARN] No user found with EC No.: {ec_no_str}, skipping row.")
+                    logger.warning(f"[WARN] No user found with EC No.: {ec_no_str}, skipping row.")
                     continue
                 
                 # Detect Date Of Engagement: 
@@ -138,6 +139,30 @@ class UserQualificationService:
                         # Only update if parsed successfully and user has no date yet
                         if parsed_date and user.date_of_engagement is None:
                             user.date_of_engagement = parsed_date
+                            user_objs_to_update.append(user)
+                    
+                # Detect Grade
+                grade_col = next(
+                    (col for col in df.columns if "grade" in str(col).lower().replace(".", "").strip()),
+                    None
+                )
+                
+                if grade_col:
+                    grade_value = row[grade_col]
+                    
+                    if pd.notna(grade_value):
+                        grade_type = None
+                        if "A"  in grade_value or "B" in grade_value:
+                            grade_type = GRADE_CHOICES[1][1]
+                        elif "C"  in grade_value or "D"  in grade_value or "E"  in grade_value:
+                            grade_type = GRADE_CHOICES[2][1]
+                        
+                        if grade_type is None:
+                            logger.warning("f[User Grade Handler] user with ec_no: {ec_no_str}, has no grade")
+                            continue
+                        
+                        if user.grade != grade_type:
+                            user.grade = grade_type
                             user_objs_to_update.append(user)
                     
                 # Fetch user’s existing qualifications once
@@ -223,7 +248,7 @@ class UserQualificationService:
                 
             if user_objs_to_update:
                 user_repo = UserProfileRepository()
-                user_repo.bulk_update(objs=user_objs_to_update, fields=["date_of_engagement"])
+                user_repo.bulk_update(objs=user_objs_to_update, fields=["date_of_engagement", "grade"])
 
             print(f"✅ Total Users Processed: {total_processed}")
             print(f"✅ [User Qualification] Created: {len(objs_to_create)} | Updated: {len(objs_to_update)}")

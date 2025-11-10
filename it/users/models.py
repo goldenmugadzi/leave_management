@@ -393,7 +393,6 @@ class Responsibilities(models.Model):
 
     def __str__(self):
         return str(self.role.name)
-   
 
 class RoleDelegation(models.Model):
     """Model for managing temporary role delegations between users"""
