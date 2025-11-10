@@ -1,17 +1,29 @@
 from django.db import models
 import random
 import time
-from it.users.models import UserProfile,Depots
+from it.users.models import UserProfile,Depots,CostCenter
+
+class DepotToolsAndEquipmentRegister(models.Model):
+   depot = models.ForeignKey(CostCenter, on_delete=models.SET_NULL, null=True, related_name='depot_tools_and_equipment_registers')
+   created_at = models.DateTimeField(auto_now_add=True)
+   created_by = models.ForeignKey(UserProfile, on_delete=models.SET_NULL, null=True, related_name='depot_tes_created')
+   approved_by = models.ForeignKey(UserProfile, on_delete=models.SET_NULL, null=True, related_name='depot_tes_approved')   
+
+   def __str__(self):
+      return f"Depot Register {self.depot} - {self.created_at}"
 
 class ToolOrEquipment(models.Model):
+      depot_register = models.ForeignKey(DepotToolsAndEquipmentRegister, on_delete=models.CASCADE, related_name='tools_and_equipments')
       name = models.CharField(help_text="Name of the tool or equipment", max_length=100)
       total_quantity = models.PositiveIntegerField(null=True, blank=True)
+      so_or_invoice_no = models.CharField(max_length=50, blank=True, null=True)
+      so_or_invoice_date = models.DateField(blank=True, null=True)
       value = models.DecimalField(help_text="Value of the tool or equipment", max_digits=10, decimal_places=2, null=True, blank=True)
       asset_number = models.CharField(help_text="Asset number of the tool or equipment", max_length=50, null=True, blank=True)
    
       def __str__(self):
          return f"{self.name}"
-    
+
 class ToolsAndEquipmentRegister(models.Model):
    artisan = models.ForeignKey(UserProfile, on_delete=models.SET_NULL, null=True, related_name='registers')
    undertaking = models.ForeignKey(Depots, on_delete=models.SET_NULL, null=True, related_name='deopt_registers')
@@ -30,7 +42,6 @@ class ToolsAndEquipmentRegisterItem(models.Model):
     value = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     so_or_invoice_no = models.CharField(max_length=50, blank=True, null=True)
     so_or_invoice_date = models.DateField(blank=True, null=True)
-    initials = models.CharField(max_length=10, blank=True, null=True)
     remarks = models.TextField(blank=True, null=True)
     def __str__(self):
         return f"{self.id} "

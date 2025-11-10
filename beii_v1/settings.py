@@ -18,18 +18,19 @@ SECRET_KEY = config('SECRET_KEY', default='django-insecure-change-in-production'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG', default=False, cast=bool)
 
-ALLOWED_HOSTS = [config('HOST'), "127.0.0.1", 'localhost']
+ALLOWED_HOSTS = [config('HOST'), "127.0.0.1", 'localhost','ca173bdd6d5b.ngrok-free.app']
 
-# CORS_ALLOWED_ORIGINS = [
-#     config('BASE_URL') + ":" + config('PORT'),
-#     config('BASE_URL') + ":3000",
-# ]
+CORS_ALLOWED_ORIGINS = [
+    config('BASE_URL') + ":" + config('PORT'),
+    config('BASE_URL') + ":3000",
+    "https://ca173bdd6d5b.ngrok-free.app",
+]
 
 # CORS_ALLOW_ALL_ORIGINS = True
 CSRF_TRUSTED_ORIGINS = [
     config('BASE_URL'),
     config('BASE_URL') + ":" + config('PORT'),
-    "https://65600443401e.ngrok-free.app",
+    "https://ca173bdd6d5b.ngrok-free.app",
     # Add your production domain here
     # "https://your-production-domain.com"
 ]

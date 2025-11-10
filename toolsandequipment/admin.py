@@ -4,5 +4,5 @@ from .models import *
 admin.site.register(ToolOrEquipment)
 admin.site.register(ToolsAndEquipmentRegister)
 admin.site.register(ToolsAndEquipmentRegisterItem)
-# admin.site.register(AssignedToolOrEquipment)
+admin.site.register(DepotToolsAndEquipmentRegister)
 # admin.site.register(Comment)

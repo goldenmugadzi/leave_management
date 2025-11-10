@@ -1,10 +1,10 @@
 {% extends "admin_layout.html" %}
 {% load static %}
 {% block content %}
-<div class=" mx-auto  border-2 border-green-700 bg-green-200 rounded-lg shadow-lg p-8 mt-8 font-mono">
+<div class=" mx-auto  border-2 border-white bg-white-200 rounded-lg shadow-lg p-8 mt-8 font-mono">
   <div class="flex justify-between items-center mb-2">
     <div></div>
-    <div class="text-right text-base font-semibold">FORM NO: <span class="inline-block border-green-700 ">E/12</span></div>
+    <div class="text-right text-base font-semibold">FORM NO: <span class="inline-block border-white ">E/12</span></div>
   </div>
   <div class="flex justify-center">
     <div class="text-center font-bold text-2xl tracking-wide">ZIMBABWE ELECTRICITY DISTRIBUTION COMPANY</div>
@@ -14,79 +14,79 @@
   </div>
 <div class="flex justify-between mt-2 mb-2">
   <div class="flex flex-col gap-2 w-1/3">
-    <div><span class="font-semibold">NAME:</span> <span class="inline-block border-b border-green-700 w-64 ml-2">{{ register.artisan|default:"" }}</span></div>
-    <div><span class="font-semibold">NUMBER:</span> <span class="inline-block border-b border-green-700 w-64 ml-2">{{ register.artisan.username|default:"" }}</span></div>
-    <div><span class="font-semibold">DESIGNATION:</span> <span class="inline-block border-b border-green-700 w-64 ml-2">{{ register.artisan.designation|default:"" }}</span></div>
+    <div><span class="font-semibold">NAME:</span> <span class="inline-block border-b border-white w-64 ml-2">{{ register.artisan|default:"" }}</span></div>
+    <div><span class="font-semibold">NUMBER:</span> <span class="inline-block border-b border-white w-64 ml-2">{{ register.artisan.username|default:"" }}</span></div>
+    <div><span class="font-semibold">DESIGNATION:</span> <span class="inline-block border-b border-white w-64 ml-2">{{ register.artisan.designation|default:"" }}</span></div>
   </div>
    <div class="flex flex-col gap-2 w-1/3 items-end justify-end">
     <div>
-      <span class="inline-block border-b border-green-700 w-40 ml-2">{{ register.undertaking|default:"" }}</span>
+      <span class="inline-block border-b border-white w-40 ml-2">{{ register.undertaking|default:"" }}</span>
       <span class="font-semibold">UNDERTAKING</span>
     </div>
   </div>
   <div class="flex flex-col gap-2 w-1/3">
     {% comment %} <!-- Placeholder for additional column -->
-    <div><span class="font-semibold">ADDITIONAL INFO:</span> <span class="inline-block border-b border-green-700 w-64 ml-2">{{ register.certified_by|default:"" }}</span></div>
-    <div><span class="font-semibold">CERTIFIED BY:</span> <span class="inline-block border-b border-green-700 w-64 ml-2">{{ register.certified_by.username|default:"" }}</span></div> {% endcomment %}
+    <div><span class="font-semibold">ADDITIONAL INFO:</span> <span class="inline-block border-b border-white w-64 ml-2">{{ register.certified_by|default:"" }}</span></div>
+    <div><span class="font-semibold">CERTIFIED BY:</span> <span class="inline-block border-b border-white w-64 ml-2">{{ register.certified_by.username|default:"" }}</span></div> {% endcomment %}
   </div>
 </div>
 <br/>
   <div class="overflow-x-auto mt-2">
-    <table class="w-full border border-green-700 rounded-lg mb-4 text-base">
-      <thead class="bg-green-200">
+    <table class="w-full border border-black rounded-lg mb-4 text-base">
+      <thead class="bg-white-200">
         <tr>
-          <th class="border border-green-700 px-2 py-1 w-24">ITEM</th>
-          <th class="border border-green-700 px-2 py-1 w-20">Quantity</th>
-          <th class="border border-green-700 px-2 py-1 ">DESCRIPTION</th>
-          <th class="border border-green-700 px-2 py-1 w-40">VALUE ($)</th>
-          <th class="border border-green-700 px-2 py-1 " colspan="2">S.O. or INVOICE</th>
-          <th class="border border-green-700 px-2 py-1 w-16">Initials</th>
-          <th class="border border-green-700 px-2 py-1 ">REMARKS</th>
+          <th class="border border-black px-2 py-1 w-24">ITEM</th>
+          <th class="border border-black px-2 py-1 w-20">Quantity</th>
+          <th class="border border-black px-2 py-1 ">DESCRIPTION</th>
+          <th class="border border-black px-2 py-1 w-40">VALUE ($)</th>
+          <th class="border border-black px-2 py-1 " colspan="2">S.O. or INVOICE</th>
+          <th class="border border-black px-2 py-1 w-16">Initials</th>
+          <th class="border border-black px-2 py-1 ">REMARKS</th>
         </tr>
         <tr>
-          <th class="border border-green-700 px-2 py-1"></th>
-          <th class="border border-green-700 px-2 py-1"></th>
-          <th class="border border-green-700 px-2 py-1"></th>
-          <th class="border border-green-700 px-2 py-1"></th>
-          <th class="border border-green-700 px-2 py-1">No.</th>
-          <th class="border border-green-700 px-2 py-1">Date</th>
-          <th class="border border-green-700 px-2 py-1"></th>
-          <th class="border border-green-700 px-2 py-1"></th>
+          <th class="border border-black px-2 py-1"></th>
+          <th class="border border-black px-2 py-1"></th>
+          <th class="border border-black px-2 py-1"></th>
+          <th class="border border-black px-2 py-1"></th>
+          <th class="border border-black px-2 py-1">No.</th>
+          <th class="border border-black px-2 py-1">Date</th>
+          <th class="border border-black px-2 py-1"></th>
+          <th class="border border-black px-2 py-1"></th>
         </tr>
       </thead>
       <tbody>
         {% for item in register.items.all %}
-        <tr class="bg-green-200">
-          <td class="border border-green-700 px-2 py-1">{{ forloop.counter }}</td>
-          <td class="border border-green-700 px-2 py-1">{{ item.quantity|default:"" }}</td>
-          <td class="border border-green-700 px-2 py-1">{{ item.tool_or_equipment.name|default:"" }}</td>
-          <td class="border border-green-700 px-2 py-1">{{ item.tool_or_equipment.value|default:"" }}</td>
-          <td class="border border-green-700 px-2 py-1">{{ item.invoice_number|default:"" }}</td>
-          <td class="border border-green-700 px-2 py-1">{{ item.invoice_date|default:"" }}</td>
-          <td class="border border-green-700 px-2 py-1">{{ item.initials|default:"" }}</td>
-          <td class="border border-green-700 px-2 py-1">{{ item.remarks|default:"" }}</td>
+        <tr class="bg-white-200">
+          <td class="border border-black px-2 py-1">{{ forloop.counter }}</td>
+          <td class="border border-black px-2 py-1">{{ item.quantity|default:"" }}</td>
+          <td class="border border-black px-2 py-1">{{ item.tool_or_equipment.name|default:"" }}</td>
+          <td class="border border-black px-2 py-1">{{ item.tool_or_equipment.value|default:"" }}</td>
+          <td class="border border-black px-2 py-1">{{ item.invoice_number|default:"" }}</td>
+          <td class="border border-black px-2 py-1">{{ item.invoice_date|default:"" }}</td>
+          <td class="border border-black px-2 py-1">{{ item.initials|default:"" }}</td>
+          <td class="border border-black px-2 py-1">{{ item.remarks|default:"" }}</td>
         </tr>
-        {% empty %}
-        {% for i in "1234567" %}
-        <tr class="bg-green-200 h-7">
-          <td class="border border-green-700 px-2 py-1"></td>
-          <td class="border border-green-700 px-2 py-1"></td>
-          <td class="border border-green-700 px-2 py-1"></td>
-          <td class="border border-green-700 px-2 py-1"></td>
-          <td class="border border-green-700 px-2 py-1"></td>
-          <td class="border border-green-700 px-2 py-1"></td>
-          <td class="border border-green-700 px-2 py-1"></td>
-          <td class="border border-green-700 px-2 py-1"></td>
-        </tr>
-        {% endfor %}
+          {% empty %}
+          {% for i in "1234567" %}
+          <tr class="bg-white-200 h-7">
+            <td class="border border-black px-2 py-1"></td>
+            <td class="border border-black px-2 py-1"></td>
+            <td class="border border-black px-2 py-1"></td>
+            <td class="border border-black px-2 py-1"></td>
+            <td class="border border-black px-2 py-1"></td>
+            <td class="border border-black px-2 py-1"></td>
+            <td class="border border-black px-2 py-1"></td>
+            <td class="border border-black px-2 py-1"></td>
+          </tr>
+          {% endfor %}
         {% endfor %}
       </tbody>
     </table>
   </div>
   <div class="flex justify-end mt-8 gap-12">
-    <div><span class="font-semibold">Certified:</span> <span class="inline-block border-b border-green-700 w-40 ml-2"></span></div>
-    <div><span class="font-semibold">Date:</span> <span class="inline-block border-b border-green-700 w-32 ml-2"></span></div>
-    <div><span class="font-semibold">Designation:</span> <span class="inline-block border-b border-green-700 w-32 ml-2"></span></div>
+    <div><span class="font-semibold">Certified:</span> <span class="inline-block border-b border-white w-40 ml-2"></span></div>
+    <div><span class="font-semibold">Date:</span> <span class="inline-block border-b border-white w-32 ml-2"></span></div>
+    <div><span class="font-semibold">Designation:</span> <span class="inline-block border-b border-white w-32 ml-2"></span></div>
   </div>
 </div>
 {% endblock content %} 
