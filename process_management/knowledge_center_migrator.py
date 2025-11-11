@@ -136,7 +136,7 @@ class ProcessCandidateAnalyzer:
     def __init__(self):
         self.logger = logging.getLogger(__name__)
     
-    def analyze_kc_processes(self, app_id: int = 2) -> List[ProcessCandidate]:
+    def analyze_kc_processes(self, app_id: int = 2, folder_id: Optional[int] = None) -> List[ProcessCandidate]:
         """
         Analyze Knowledge Center data to identify process candidates.
         
@@ -162,11 +162,33 @@ class ProcessCandidateAnalyzer:
             
             self.logger.info(f"Analyzing processes in application: {pp_app.name}")
             
-            # Get root folders for processes and procedures
-            root_folders = KnowledgeCentreFolder.objects.filter(
-                folder_application=pp_app,
-                parent__isnull=True
-            ).order_by('name')
+            # Determine scope of folders to analyze
+            if folder_id:
+                target_folder = KnowledgeCentreFolder.objects.filter(id=folder_id).first()
+                if not target_folder:
+                    self.logger.error(f"Specified folder ID {folder_id} not found")
+                    return []
+                
+                if target_folder.folder_application_id != pp_app.id:
+                    self.logger.warning(
+                        "Specified folder ID %s does not belong to application %s (%s)",
+                        folder_id,
+                        pp_app.id,
+                        pp_app.name,
+                        extra={'folder_path': self._build_folder_path(target_folder)}
+                    )
+                self.logger.info(
+                    "Analyzing processes starting at folder ID %s: %s",
+                    folder_id,
+                    target_folder.name
+                )
+                root_folders = KnowledgeCentreFolder.objects.filter(id=folder_id)
+            else:
+                # Get root folders for processes and procedures
+                root_folders = KnowledgeCentreFolder.objects.filter(
+                    folder_application=pp_app,
+                    parent__isnull=True
+                ).order_by('name')
             
             if not root_folders.exists():
                 self.logger.warning(f"No root folders found in application {pp_app.name}")
@@ -247,20 +269,24 @@ class ProcessCandidateAnalyzer:
             # Build folder path
             folder_path = self._build_folder_path(folder)
             
-            # Determine department from folder hierarchy
-            department_name = self._determine_department(folder_path, folder.name)
-            
-            # Extract process name
-            process_name = self._extract_process_name(folder, folder_path)
-            
             # Classify files
             classified_files = []
             for file in files:
+                file_path = ''
+                try:
+                    file_path = file.file.name if file.file else ''
+                except Exception:
+                    file_path = getattr(file.file, 'name', '') if hasattr(file, 'file') else ''
+                
                 file_data = {
                     'id': file.id,
                     'filename': file.filename,
-                    'file_path': file.file.name if file.file else '',
-                    'document_type': self._classify_document_type(file.filename),
+                    'file_path': file_path,
+                    'document_type': self._classify_document_type(
+                        filename=file.filename,
+                        folder_path=folder_path,
+                        file_path=file_path
+                    ),
                     'region': file.region,
                     'section': file.section,
                     'created_by': file.created_by,
@@ -269,6 +295,12 @@ class ProcessCandidateAnalyzer:
                     'original_file': file
                 }
                 classified_files.append(file_data)
+            
+            # Determine department from folder hierarchy
+            department_name = self._determine_department(folder_path, folder.name)
+            
+            # Extract process name (prefer process map filenames)
+            process_name = self._extract_process_name(folder, folder_path, classified_files)
             
             # Only create candidate if we have at least one classifiable document
             if any(f['document_type'] for f in classified_files):
@@ -285,6 +317,8 @@ class ProcessCandidateAnalyzer:
                     created_by=self._get_common_creator(files),
                     metadata={
                         'original_folder_id': folder.id,
+                        'folder_path': folder_path,
+                        'folder_application_id': folder.folder_application_id,
                         'file_count': len(classified_files),
                         'document_types': list(set(f['document_type'] for f in classified_files if f['document_type']))
                     }
@@ -329,58 +363,120 @@ class ProcessCandidateAnalyzer:
         # Default department if no match found
         return 'General Operations'
     
-    def _extract_process_name(self, folder, folder_path: str) -> str:
+    def _extract_process_name(self, folder, folder_path: str, files: List[Dict[str, Any]]) -> str:
         """
         Extract a clean process name from folder information.
         
         Args:
             folder: KnowledgeCentreFolder instance
             folder_path: Full folder path
+            files: Classified file data dictionaries
             
         Returns:
             Clean process name
         """
-        # Start with folder name
-        process_name = folder.name
+        # Prefer process names derived from process map files
+        process_map_files = [
+            f for f in files
+            if f.get('document_type') == 'process_map'
+        ]
         
-        # Clean up common prefixes/suffixes
+        for file_data in process_map_files:
+            derived_name = self._clean_process_name_text(
+                os.path.splitext(file_data.get('filename', ''))[0]
+            )
+            if derived_name and derived_name.lower() not in ['process map', 'process maps']:
+                return derived_name
+        
+        # Fallback to other classified document types (procedure, risk register) for naming
+        for doc_type in ['procedure', 'risk_register']:
+            alt_file = next(
+                (f for f in files if f.get('document_type') == doc_type),
+                None
+            )
+            if alt_file:
+                derived_name = self._clean_process_name_text(
+                    os.path.splitext(alt_file.get('filename', ''))[0]
+                )
+                if derived_name:
+                    return derived_name
+        
+        # Use any available file to derive a name before falling back to folder
+        for file_data in files:
+            derived_name = self._clean_process_name_text(
+                os.path.splitext(file_data.get('filename', ''))[0]
+            )
+            if derived_name:
+                return derived_name
+        
+        # Start with folder name
+        process_name = self._clean_process_name_text(folder.name)
+        
+        # If name is too short or generic, use parent folder context
+        if len(process_name) < 3 or process_name.lower() in ['files', 'documents', 'misc', 'other']:
+            if folder.parent:
+                parent_combined = f"{folder.parent.name} {folder.name}"
+                process_name = self._clean_process_name_text(parent_combined)
+        
+        return process_name or "Unnamed Process"
+    
+    def _clean_process_name_text(self, text: str) -> str:
+        """Normalize a process name by removing codes, suffixes, and formatting."""
+        if not text:
+            return ""
+        
+        # Replace underscores with spaces and collapse whitespace
+        normalized = text.replace('_', ' ')
+        normalized = re.sub(r'\s+', ' ', normalized)
+        
         cleanup_patterns = [
             r'^(process|procedure|sop|manual|guideline|policy)\s*[-_:]?\s*',
             r'\s*(process|procedure|sop|manual|guideline|policy)$',
+            r'\s*(process\s*map)$',
+            r'\s*(risk(s)?\s*and\s*opportunit(y|ies)\s*register)$',
+            r'\s*(risk\s*register)$',
             r'^\d+\.\s*',  # Remove leading numbers
             r'^[A-Z]+\d+\s*[-_:]?\s*',  # Remove codes like "ENG01:"
         ]
         
         for pattern in cleanup_patterns:
-            process_name = re.sub(pattern, '', process_name, flags=re.IGNORECASE)
+            normalized = re.sub(pattern, '', normalized, flags=re.IGNORECASE)
         
-        # Capitalize properly
-        process_name = process_name.strip().title()
-        
-        # If name is too short or generic, use parent folder context
-        if len(process_name) < 3 or process_name.lower() in ['files', 'documents', 'misc', 'other']:
-            if folder.parent:
-                parent_name = folder.parent.name
-                process_name = f"{parent_name} - {process_name}"
-        
-        return process_name or "Unnamed Process"
+        normalized = normalized.strip()
+        return normalized.title()
     
-    def _classify_document_type(self, filename: str) -> Optional[str]:
+    def _classify_document_type(
+        self,
+        filename: str,
+        folder_path: str = "",
+        file_path: str = ""
+    ) -> Optional[str]:
         """
         Classify a document based on its filename.
         
         Args:
             filename: Name of the file
+            folder_path: Full folder path for additional context
+            file_path: Stored file path (may point to missing file)
             
         Returns:
             Document type ('process_map', 'procedure', 'risk_register') or None
         """
-        filename_lower = filename.lower()
+        filename_lower = (filename or '').lower()
+        folder_path_lower = (folder_path or '').lower()
+        file_path_lower = (file_path or '').lower()
         
         for doc_type, patterns in self.DOCUMENT_TYPE_PATTERNS.items():
             for pattern in patterns:
                 if re.search(pattern, filename_lower):
                     return doc_type
+
+        # Fallback: infer process map documents from folder/file path context
+        if file_path_lower:
+            if 'process map' in folder_path_lower or 'process_map' in folder_path_lower:
+                return 'process_map'
+            if 'process map' in file_path_lower or 'process_map' in file_path_lower:
+                return 'process_map'
         
         return None
     
@@ -481,7 +577,10 @@ class KnowledgeCenterMigrator:
             # Step 1: Analyze KC data
             self.logger.info("Step 1: Analyzing Knowledge Center data...")
             app_id = config.get('app_id', 2)
-            process_candidates = self.analyzer.analyze_kc_processes(app_id)
+            process_candidates = self.analyzer.analyze_kc_processes(
+                app_id=app_id,
+                folder_id=config.get('folder_id_filter')
+            )
             
             if not process_candidates:
                 self.logger.warning("No process candidates found in Knowledge Center")
