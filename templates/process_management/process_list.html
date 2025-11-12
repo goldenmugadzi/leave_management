@@ -27,6 +27,10 @@ and Procedures{% endblock %} {% block content %}
              class="inline-flex items-center px-3 py-2 border border-gray-300 text-gray-700 text-sm font-medium hover:bg-gray-100">
             Manage Departments & Regions
           </a>
+          <a href="{% url 'process_management:bulk_import_dashboard' %}"
+             class="inline-flex items-center px-3 py-2 border border-gray-300 text-gray-700 text-sm font-medium hover:bg-gray-100">
+            Bulk Import
+          </a>
         </div>
       </div>
     </div>
