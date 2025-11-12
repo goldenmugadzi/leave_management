@@ -15,7 +15,7 @@
                 <tr class="hover:bg-gray-100">
                     <td class="px-6 py-4 whitespace-nowrap">{{ quarter_rating.name }} ( {{quarter_rating.start_date}} - {{quarter_rating.end_date}} )</td>
                     <td class="px-6 py-4 whitespace-nowrap">
-                        {% if quarter_rating.total_score != 1 %}
+                        {% if quarter_rating.total_score >= 1 %}
                             <span class="px-6 py-4 text-blue-900 font-semibold">
                                 {{ quarter_rating.total_score }}
                             </span>
@@ -73,12 +73,18 @@
                 <td class="px-6 py-4 whitespace-nowrap">
                     <p class="font-bold">Final Score</p>
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap underline font-bold text-lg text-center">{{final_score}}</td>
+                <td class="px-6 py-4 whitespace-nowrap underline font-bold text-lg text-center">
+                    {% if final_score >= 1 %}
+                        {{final_score}}
+                    {% else %}
+                        1.0
+                    {% endif %}
+                </td>
                 <td>
                     {% if final_score >= 4 %}
-                        <span class="inline-block px-4 py-1 text-lg rounded-full bg-green-400">PASS</span>
+                        <span class="inline-block px-4 py-1 text-lg rounded-full bg-green-400">Merit Achieved</span>
                     {% else %}
-                        <span class="inline-block px-4 py-1 text-lg rounded-full bg-red-500">Fail</span>
+                        <span class="inline-block px-4 py-1 text-lg rounded-full bg-red-500">Merit Not Achieved</span>
                     {% endif %}
                 </td>
             </tr>
