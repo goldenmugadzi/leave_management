@@ -31,80 +31,75 @@ class Command(BaseCommand):
     # Standard departments based on your organizational structure
     STANDARD_DEPARTMENTS = [
         {
-            'name': 'Commercial Operations',
-            'description': 'Commercial activities, sales, and customer relations',
-            'order': 1
+            'name': 'Commercial',
+            'description': 'Commercial operations, customer relations, and revenue management',
+            'order': 1,
         },
         {
             'name': 'Engineering',
-            'description': 'Engineering processes and technical operations',
-            'order': 2
+            'description': 'Engineering processes, technical operations, and infrastructure support',
+            'order': 2,
         },
         {
             'name': 'Management Processes',
-            'description': 'Executive and strategic management processes',
-            'order': 3
+            'description': 'Executive leadership, governance, and strategic coordination',
+            'order': 3,
         },
         {
             'name': 'Information Communication Technology',
-            'description': 'ICT processes and technology management',
-            'order': 4
+            'description': 'ICT strategy, systems, and technology service delivery',
+            'order': 4,
         },
         {
             'name': 'Finance',
-            'description': 'Financial processes and accounting procedures',
-            'order': 5
+            'description': 'Financial management, budgeting, and accounting controls',
+            'order': 5,
         },
         {
             'name': 'Human Resources',
-            'description': 'HR processes and people management',
-            'order': 6
+            'description': 'People management, talent development, and organizational support',
+            'order': 6,
         },
         {
             'name': 'Risk Management',
-            'description': 'Risk assessment and management processes',
-            'order': 7
+            'description': 'Enterprise risk governance, assessment, and mitigation',
+            'order': 7,
         },
         {
             'name': 'Procurement',
-            'description': 'Procurement and supply chain processes',
-            'order': 8
+            'description': 'Supply chain management, sourcing, and vendor coordination',
+            'order': 8,
         },
         {
             'name': 'Stakeholder Relations',
-            'description': 'Stakeholder engagement and relations processes',
-            'order': 9
+            'description': 'Corporate communications, stakeholder engagement, and partnerships',
+            'order': 9,
         },
         {
             'name': 'Legal Services',
-            'description': 'Legal, regulatory, and compliance processes',
-            'order': 10
+            'description': 'Legal advisory, compliance, and contractual management',
+            'order': 10,
         },
         {
-            'name': 'Operations',
-            'description': 'Operational processes and service delivery',
-            'order': 11
+            'name': 'Operations and Maintenance',
+            'description': 'Network operations, maintenance planning, and asset reliability',
+            'order': 11,
         },
         {
-            'name': 'Quality Assurance',
-            'description': 'Quality management and assurance processes',
-            'order': 12
+            'name': 'Transport',
+            'description': 'Fleet operations, logistics coordination, and mobility support',
+            'order': 12,
         },
         {
-            'name': 'Safety and Health',
-            'description': 'Safety, health, and environmental processes',
-            'order': 13
+            'name': 'Network Development',
+            'description': 'Grid expansion, capital projects, and development planning',
+            'order': 13,
         },
         {
-            'name': 'Internal Audit',
-            'description': 'Internal audit and control processes',
-            'order': 14
+            'name': 'Districts',
+            'description': 'District-level operations, service delivery, and regional oversight',
+            'order': 14,
         },
-        {
-            'name': 'Strategic Planning',
-            'description': 'Strategic planning and business development',
-            'order': 15
-        }
     ]
     
     def add_arguments(self, parser):
