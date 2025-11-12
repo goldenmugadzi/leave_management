@@ -1,0 +1,427 @@
+{% extends 'admin_layout.html' %}
+{% load static %}
+
+{% block title %}Import Progress - {{ import_session.import_id }}{% endblock %}
+
+{% block page_name %}Import Progress{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-12">
+            <!-- Page Header -->
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="fas fa-spinner fa-spin mr-2"></i>
+                        Bulk Import Progress: {{ import_session.import_id }}
+                    </h4>
+                    <p class="mb-0 mt-2">Monitor the real-time progress of your bulk import operation</p>
+                </div>
+            </div>
+
+            <!-- Progress Overview -->
+            <div class="row mb-4">
+                <div class="col-md-12">
+                    <div class="card">
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-8">
+                                    <h5>Import Progress</h5>
+                                    <div class="progress mb-3" style="height: 25px;">
+                                        <div class="progress-bar progress-bar-striped progress-bar-animated"
+                                             id="progressBar"
+                                             role="progressbar"
+                                             style="width: {{ import_session.get_progress_percentage }}%">
+                                            <span id="progressText">{{ import_session.get_progress_percentage|floatformat:1 }}%</span>
+                                        </div>
+                                    </div>
+                                    <div class="row text-center">
+                                        <div class="col-3">
+                                            <div class="text-muted small">Total</div>
+                                            <div class="font-weight-bold h5 mb-0" id="totalItems">{{ import_session.total_items }}</div>
+                                        </div>
+                                        <div class="col-3">
+                                            <div class="text-muted small">Processed</div>
+                                            <div class="font-weight-bold h5 mb-0 text-primary" id="processedItems">{{ import_session.processed_items }}</div>
+                                        </div>
+                                        <div class="col-3">
+                                            <div class="text-muted small">Successful</div>
+                                            <div class="font-weight-bold h5 mb-0 text-success" id="successfulItems">{{ import_session.successful_items }}</div>
+                                        </div>
+                                        <div class="col-3">
+                                            <div class="text-muted small">Failed</div>
+                                            <div class="font-weight-bold h5 mb-0 text-danger" id="failedItems">{{ import_session.failed_items }}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <h5>Status</h5>
+                                    <div class="text-center">
+                                        <div class="status-indicator mb-3">
+                                            <div class="status-circle" id="statusCircle">
+                                                <i class="fas" id="statusIcon"></i>
+                                            </div>
+                                            <div class="status-text" id="statusText">{{ import_session.get_status_display }}</div>
+                                        </div>
+                                        <div class="status-details text-muted small">
+                                            <div id="statusDetails">
+                                                {% if import_session.status == 'analyzing' %}
+                                                Analyzing selected folders and files...
+                                                {% elif import_session.status == 'importing' %}
+                                                Importing process maps and creating processes...
+                                                {% elif import_session.status == 'completed' %}
+                                                Import completed successfully!
+                                                {% elif import_session.status == 'failed' %}
+                                                Import failed. Check error details below.
+                                                {% else %}
+                                                Preparing to start import...
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Real-time Log -->
+            <div class="row mb-4">
+                <div class="col-md-12">
+                    <div class="card">
+                        <div class="card-header bg-dark text-white">
+                            <h5 class="mb-0">
+                                <i class="fas fa-terminal mr-2"></i>
+                                Import Log
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div id="logContainer" class="log-container">
+                                <div id="logContent" class="log-content">
+                                    <!-- Log entries will be added here dynamically -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Error Details (if any) -->
+            {% if import_session.error_message %}
+            <div class="row mb-4">
+                <div class="col-md-12">
+                    <div class="card border-danger">
+                        <div class="card-header bg-danger text-white">
+                            <h5 class="mb-0">
+                                <i class="fas fa-exclamation-triangle mr-2"></i>
+                                Import Error
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="alert alert-danger">
+                                <h6>{{ import_session.error_message }}</h6>
+                                {% if import_session.error_details %}
+                                <pre class="mb-0">{{ import_session.error_details|safe }}</pre>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Action Buttons -->
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="card">
+                        <div class="card-body text-center">
+                            <div class="btn-group" role="group">
+                                <a href="{% url 'process_management:bulk_import_dashboard' %}" class="btn btn-outline-secondary">
+                                    <i class="fas fa-home mr-2"></i>Dashboard
+                                </a>
+
+                                {% if import_session.can_cancel %}
+                                <button class="btn btn-outline-danger" id="cancelBtn">
+                                    <i class="fas fa-stop mr-2"></i>Cancel Import
+                                </button>
+                                {% endif %}
+
+                                {% if import_session.status == 'completed' %}
+                                <a href="{% url 'process_management:bulk_import_results' import_session.import_id %}" class="btn btn-success">
+                                    <i class="fas fa-check-circle mr-2"></i>View Results
+                                </a>
+                                {% endif %}
+
+                                {% if import_session.status == 'failed' %}
+                                <a href="{% url 'process_management:bulk_import_results' import_session.import_id %}" class="btn btn-warning">
+                                    <i class="fas fa-exclamation-triangle mr-2"></i>View Details
+                                </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const importId = '{{ import_session.import_id }}';
+    const progressBar = document.getElementById('progressBar');
+    const progressText = document.getElementById('progressText');
+    const totalItems = document.getElementById('totalItems');
+    const processedItems = document.getElementById('processedItems');
+    const successfulItems = document.getElementById('successfulItems');
+    const failedItems = document.getElementById('failedItems');
+    const statusCircle = document.getElementById('statusCircle');
+    const statusIcon = document.getElementById('statusIcon');
+    const statusText = document.getElementById('statusText');
+    const statusDetails = document.getElementById('statusDetails');
+    const logContent = document.getElementById('logContent');
+    const cancelBtn = document.getElementById('cancelBtn');
+
+    let progressUpdateInterval;
+
+    // Status configurations
+    const statusConfig = {
+        'created': { icon: 'fa-clock', class: 'status-created', color: '#6c757d' },
+        'analyzing': { icon: 'fa-search', class: 'status-analyzing', color: '#ffc107' },
+        'preview_ready': { icon: 'fa-eye', class: 'status-preview', color: '#17a2b8' },
+        'importing': { icon: 'fa-spinner fa-spin', class: 'status-importing', color: '#ffc107' },
+        'completed': { icon: 'fa-check-circle', class: 'status-completed', color: '#28a745' },
+        'failed': { icon: 'fa-times-circle', class: 'status-failed', color: '#dc3545' },
+        'cancelled': { icon: 'fa-stop-circle', class: 'status-cancelled', color: '#6c757d' }
+    };
+
+    // Initialize status display
+    updateStatusDisplay('{{ import_session.status }}');
+
+    // Start progress updates if import is active
+    if (['analyzing', 'importing'].includes('{{ import_session.status }}')) {
+        startProgressUpdates();
+    }
+
+    // Handle cancel button
+    if (cancelBtn) {
+        cancelBtn.addEventListener('click', function() {
+            if (confirm('Are you sure you want to cancel this import? Any progress will be lost.')) {
+                cancelImport();
+            }
+        });
+    }
+
+    function startProgressUpdates() {
+        progressUpdateInterval = setInterval(updateProgress, 2000); // Update every 2 seconds
+    }
+
+    function stopProgressUpdates() {
+        if (progressUpdateInterval) {
+            clearInterval(progressUpdateInterval);
+        }
+    }
+
+    function updateProgress() {
+        fetch(`/ims/v2/bulk-import/progress/${importId}/`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    console.error('Progress update error:', data.error);
+                    return;
+                }
+
+                // Update progress bar
+                const percentage = data.progress_percentage;
+                progressBar.style.width = percentage + '%';
+                progressText.textContent = percentage.toFixed(1) + '%';
+
+                // Update counters
+                totalItems.textContent = data.total_items;
+                processedItems.textContent = data.processed_items;
+                successfulItems.textContent = data.successful_items;
+                failedItems.textContent = data.failed_items;
+
+                // Update status
+                updateStatusDisplay(data.status);
+
+                // Add log entry for significant changes
+                if (data.last_updated) {
+                    const lastUpdate = new Date(data.last_updated);
+                    addLogEntry(`Progress update: ${data.processed_items}/${data.total_items} items processed`, 'info');
+                }
+
+                // Stop updates if import is complete
+                if (['completed', 'failed', 'cancelled'].includes(data.status)) {
+                    stopProgressUpdates();
+                    addLogEntry(`Import ${data.status}`, data.status === 'completed' ? 'success' : 'error');
+
+                    // Reload page after completion to show final state
+                    setTimeout(() => {
+                        location.reload();
+                    }, 2000);
+                }
+            })
+            .catch(error => {
+                console.error('Progress update failed:', error);
+                addLogEntry('Failed to update progress', 'error');
+            });
+    }
+
+    function updateStatusDisplay(status) {
+        const config = statusConfig[status] || statusConfig.created;
+
+        statusCircle.className = `status-circle ${config.class}`;
+        statusCircle.style.borderColor = config.color;
+        statusIcon.className = `fas ${config.icon}`;
+        statusIcon.style.color = config.color;
+        statusText.textContent = getStatusDisplayText(status);
+        statusText.style.color = config.color;
+
+        updateStatusDetails(status);
+    }
+
+    function getStatusDisplayText(status) {
+        const statusMap = {
+            'created': 'Created',
+            'analyzing': 'Analyzing',
+            'preview_ready': 'Ready',
+            'importing': 'Importing',
+            'completed': 'Completed',
+            'failed': 'Failed',
+            'cancelled': 'Cancelled'
+        };
+        return statusMap[status] || 'Unknown';
+    }
+
+    function updateStatusDetails(status) {
+        const detailsMap = {
+            'created': 'Import session created. Waiting to start.',
+            'analyzing': 'Analyzing selected folders and files...',
+            'preview_ready': 'Analysis complete. Ready to start import.',
+            'importing': 'Importing process maps and creating processes...',
+            'completed': 'Import completed successfully!',
+            'failed': 'Import failed. Check error details.',
+            'cancelled': 'Import was cancelled by user.'
+        };
+        statusDetails.textContent = detailsMap[status] || 'Status unknown.';
+    }
+
+    function addLogEntry(message, type = 'info') {
+        const timestamp = new Date().toLocaleTimeString();
+        const logEntry = document.createElement('div');
+        logEntry.className = `log-entry log-${type}`;
+        logEntry.innerHTML = `<span class="log-timestamp">[${timestamp}]</span> ${message}`;
+
+        logContent.appendChild(logEntry);
+        logContent.scrollTop = logContent.scrollHeight;
+    }
+
+    function cancelImport() {
+        fetch(`/ims/v2/bulk-import/cancel/${importId}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                addLogEntry('Import cancelled successfully', 'warning');
+                setTimeout(() => location.reload(), 1000);
+            } else {
+                addLogEntry(`Cancel failed: ${data.error}`, 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Cancel failed:', error);
+            addLogEntry('Failed to cancel import', 'error');
+        });
+    }
+
+    // Add initial log entry
+    addLogEntry('Import monitoring started', 'info');
+});
+
+// Add some initial log entries based on current state
+{% if import_session.started_at %}
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(() => {
+        addLogEntry('Import started at {{ import_session.started_at|date:"H:i:s" }}', 'info');
+    }, 500);
+});
+{% endif %}
+</script>
+
+<style>
+.progress {
+    background-color: #e9ecef;
+}
+
+.status-indicator {
+    margin: 2rem 0;
+}
+
+.status-circle {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    border: 4px solid;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1rem;
+    background: white;
+}
+
+.status-circle i {
+    font-size: 2rem;
+}
+
+.status-text {
+    font-size: 1.25rem;
+    font-weight: bold;
+}
+
+.log-container {
+    background: #1a1a1a;
+    color: #f8f9fa;
+    font-family: 'Courier New', monospace;
+    font-size: 0.875rem;
+    max-height: 300px;
+    overflow-y: auto;
+    border-radius: 0.25rem;
+    padding: 0.5rem;
+}
+
+.log-content {
+    max-height: 250px;
+    overflow-y: auto;
+}
+
+.log-entry {
+    margin-bottom: 0.25rem;
+    padding: 0.125rem 0;
+}
+
+.log-timestamp {
+    color: #6c757d;
+    margin-right: 0.5rem;
+}
+
+.log-info { color: #17a2b8; }
+.log-success { color: #28a745; }
+.log-warning { color: #ffc107; }
+.log-error { color: #dc3545; }
+
+.status-created { border-color: #6c757d; }
+.status-analyzing { border-color: #ffc107; }
+.status-preview { border-color: #17a2b8; }
+.status-importing { border-color: #ffc107; }
+.status-completed { border-color: #28a745; }
+.status-failed { border-color: #dc3545; }
+.status-cancelled { border-color: #6c757d; }
+</style>
+{% endblock %}

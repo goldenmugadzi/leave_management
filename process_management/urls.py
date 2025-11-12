@@ -34,4 +34,13 @@ urlpatterns = [
     # Knowledge center integration
     path('api/knowledge-center/search/', views.knowledge_center_file_search, name='knowledge_center_search'),
     path('process/<int:process_id>/import-file/', views.import_knowledge_center_file, name='import_knowledge_center_file'),
+
+    # Bulk import system
+    path('bulk-import/', views.bulk_import_dashboard, name='bulk_import_dashboard'),
+    path('bulk-import/process-maps/', views.bulk_import_process_maps, name='bulk_import_process_maps'),
+    path('bulk-import/preview/<str:import_id>/', views.bulk_import_preview, name='bulk_import_preview'),
+    path('bulk-import/execute/<str:import_id>/', views.bulk_import_execute, name='bulk_import_execute'),
+    path('bulk-import/progress/<str:import_id>/', views.bulk_import_progress, name='bulk_import_progress'),
+    path('bulk-import/cancel/<str:import_id>/', views.bulk_import_cancel, name='bulk_import_cancel'),
+    path('bulk-import/results/<str:import_id>/', views.bulk_import_results, name='bulk_import_results'),
 ]

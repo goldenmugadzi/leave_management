@@ -11,15 +11,30 @@ from django.utils import timezone
 import os
 import logging
 import mimetypes
-from .models import ProcessDepartment, Process, ProcessDocument
+from .models import ProcessDepartment, Process, ProcessDocument, BulkImportSession
 from it.users.models import UserProfile, Regions
 from approve.decorators import allowed_roles
 from .ims_importer import IMSDocumentImporter
-from knowledge_center.models import KnowledgeCenter, KnowldgeCentreFile
+from .process_map_importer import ProcessMapImporter
+from knowledge_center.models import KnowledgeCenter, KnowldgeCentreFile, FolderApplication, KnowledgeCentreFolder
 
 
 # Set up logging for document access
 logger = logging.getLogger(__name__)
+
+
+def get_request_user_profile(request):
+    """
+    Safely return the UserProfile associated with the request user.
+    Handles scenarios where the authenticated user *is* a UserProfile
+    instance as well as when it is attached via a related attribute.
+    """
+    user = getattr(request, "user", None)
+    if isinstance(user, UserProfile):
+        return user
+    if user and hasattr(user, "userprofile"):
+        return user.userprofile
+    return None
 
 
 def sanitize_filename(filename):
@@ -1517,7 +1532,7 @@ def import_knowledge_center_file(request, process_id):
             existing_doc.file = uploaded_file
             existing_doc.filename = new_filename
             existing_doc.version = version
-            existing_doc.uploaded_by = request.user.userprofile if hasattr(request.user, 'userprofile') else None
+            existing_doc.uploaded_by = get_request_user_profile(request)
             existing_doc.save()
             
             # Log successful update
@@ -1543,7 +1558,7 @@ def import_knowledge_center_file(request, process_id):
             filename=new_filename,
             version=version,
             is_current=is_current,
-            uploaded_by=request.user.userprofile if hasattr(request.user, 'userprofile') else None
+            uploaded_by=get_request_user_profile(request)
         )
         
         # Log successful import
@@ -1571,3 +1586,404 @@ def import_knowledge_center_file(request, process_id):
             'error': 'Failed to import file. Please try again.',
             'debug': str(e) if settings.DEBUG else None
         }, status=500)
+
+
+# ===== BULK IMPORT VIEWS =====
+
+@login_required
+def bulk_import_dashboard(request):
+    """
+    Dashboard for managing bulk import sessions.
+    Shows recent imports and allows creating new import sessions.
+    """
+    user_profile = get_request_user_profile(request)
+    if not user_profile:
+        messages.error(request, "No user profile associated with your account. Please contact the administrator.")
+        return redirect('process_management:process_list')
+
+    # Get recent import sessions
+    recent_imports = BulkImportSession.objects.filter(
+        created_by=user_profile
+    ).order_by('-created_at')[:10]
+
+    # Get import statistics
+    total_imports = BulkImportSession.objects.filter(
+        created_by=user_profile
+    ).count()
+    completed_imports = BulkImportSession.objects.filter(
+        created_by=user_profile, status='completed'
+    ).count()
+    failed_imports = BulkImportSession.objects.filter(
+        created_by=user_profile, status='failed'
+    ).count()
+
+    # Get active imports (analyzing or importing)
+    active_imports = BulkImportSession.objects.filter(
+        created_by=user_profile,
+        status__in=['analyzing', 'importing']
+    ).order_by('-created_at')
+
+    context = {
+        'recent_imports': recent_imports,
+        'total_imports': total_imports,
+        'completed_imports': completed_imports,
+        'failed_imports': failed_imports,
+        'active_imports': active_imports,
+        'page_title': 'Bulk Import Dashboard'
+    }
+
+    return render(request, 'process_management/bulk_import_dashboard.html', context)
+
+
+@login_required
+def bulk_import_process_maps(request):
+    """
+    Interface for selecting and configuring bulk import of process maps.
+    """
+    user_profile = get_request_user_profile(request)
+    if not user_profile:
+        messages.error(request, "No user profile associated with your account. Please contact the administrator.")
+        return redirect('process_management:bulk_import_dashboard')
+
+    if request.method == 'POST':
+        # Create new import session
+        import_session = BulkImportSession.objects.create(
+            import_id=f"bulk_{timezone.now().strftime('%Y%m%d_%H%M%S')}",
+            import_type='process_maps',
+            application_name=request.POST.get('application_name', "PROCESSES AND PROCEDURES"),
+            folder_name=request.POST.get('folder_name', "PROCESS MAPS"),
+            selected_folders=request.POST.getlist('selected_folders'),
+            created_by=user_profile
+        )
+
+        # Redirect to preview
+        return redirect('process_management:bulk_import_preview', import_id=import_session.import_id)
+
+    # Get available applications and folders
+    applications = FolderApplication.objects.all()
+    root_folders = KnowledgeCentreFolder.objects.filter(parent__isnull=True)
+
+    context = {
+        'applications': applications,
+        'root_folders': root_folders,
+        'page_title': 'Bulk Import Process Maps'
+    }
+
+    return render(request, 'process_management/bulk_import_process_maps.html', context)
+
+
+@login_required
+def bulk_import_preview(request, import_id):
+    """
+    Preview what will be imported before execution.
+    """
+    user_profile = get_request_user_profile(request)
+    if not user_profile:
+        messages.error(request, "No user profile associated with your account. Please contact the administrator.")
+        return redirect('process_management:bulk_import_dashboard')
+
+    try:
+        import_session = BulkImportSession.objects.get(
+            import_id=import_id,
+            created_by=user_profile
+        )
+    except BulkImportSession.DoesNotExist:
+        messages.error(request, "Import session not found.")
+        return redirect('process_management:bulk_import_dashboard')
+
+    if request.method == 'POST':
+        # Start the import process
+        return redirect('process_management:bulk_import_execute', import_id=import_session.import_id)
+
+    # If preview not ready, trigger analysis
+    if import_session.status == 'created':
+        # Start analysis in background (for now, do it synchronously)
+        analyzer = BulkImportAnalyzer(import_session)
+        preview_data = analyzer.analyze()
+        import_session.preview_data = preview_data
+        import_session.total_items = preview_data.get('total_files', 0)
+        import_session.save(update_fields=['preview_data', 'total_items'])
+        import_session.mark_preview_ready()
+
+    context = {
+        'import_session': import_session,
+        'preview_data': import_session.preview_data,
+        'page_title': f'Import Preview - {import_session.import_id}'
+    }
+
+    return render(request, 'process_management/bulk_import_preview.html', context)
+
+
+@login_required
+def bulk_import_execute(request, import_id):
+    """
+    Execute the bulk import process.
+    """
+    user_profile = get_request_user_profile(request)
+    if not user_profile:
+        messages.error(request, "No user profile associated with your account. Please contact the administrator.")
+        return redirect('process_management:bulk_import_dashboard')
+
+    try:
+        import_session = BulkImportSession.objects.get(
+            import_id=import_id,
+            created_by=user_profile
+        )
+    except BulkImportSession.DoesNotExist:
+        messages.error(request, "Import session not found.")
+        return redirect('process_management:bulk_import_dashboard')
+
+    if import_session.status not in ['preview_ready', 'importing']:
+        messages.error(request, "Import session is not ready for execution.")
+        return redirect('process_management:bulk_import_preview', import_id=import_id)
+
+    # Start import if not already started
+    if import_session.status == 'preview_ready':
+        import_session.mark_importing()
+        # Execute the import process
+        execute_bulk_import(import_session)
+
+    context = {
+        'import_session': import_session,
+        'page_title': f'Import Progress - {import_session.import_id}'
+    }
+
+    return render(request, 'process_management/bulk_import_execute.html', context)
+
+
+@login_required
+def bulk_import_progress(request, import_id):
+    """
+    API endpoint for getting real-time import progress.
+    """
+    user_profile = get_request_user_profile(request)
+    if not user_profile:
+        return JsonResponse({'error': 'User profile not found'}, status=403)
+
+    try:
+        import_session = BulkImportSession.objects.get(import_id=import_id)
+    except BulkImportSession.DoesNotExist:
+        return JsonResponse({'error': 'Import session not found'}, status=404)
+
+    # Check if user owns this session
+    if import_session.created_by != user_profile:
+        return JsonResponse({'error': 'Access denied'}, status=403)
+
+    progress_data = {
+        'status': import_session.status,
+        'progress_percentage': import_session.get_progress_percentage(),
+        'total_items': import_session.total_items,
+        'processed_items': import_session.processed_items,
+        'successful_items': import_session.successful_items,
+        'failed_items': import_session.failed_items,
+        'skipped_items': import_session.skipped_items,
+        'last_updated': import_session.last_updated.isoformat() if import_session.last_updated else None,
+        'error_message': import_session.error_message,
+    }
+
+    return JsonResponse(progress_data)
+
+
+@login_required
+def bulk_import_cancel(request, import_id):
+    """
+    Cancel an active import session.
+    """
+    user_profile = get_request_user_profile(request)
+    if not user_profile:
+        return JsonResponse({'error': 'User profile not found'}, status=403)
+
+    try:
+        import_session = BulkImportSession.objects.get(
+            import_id=import_id,
+            created_by=user_profile
+        )
+    except BulkImportSession.DoesNotExist:
+        return JsonResponse({'error': 'Import session not found'}, status=404)
+
+    if not import_session.can_cancel():
+        return JsonResponse({'error': 'Import session cannot be cancelled'}, status=400)
+
+    import_session.mark_cancelled()
+    return JsonResponse({'success': True, 'message': 'Import cancelled successfully'})
+
+
+@login_required
+def bulk_import_results(request, import_id):
+    """
+    Display final import results.
+    """
+    user_profile = get_request_user_profile(request)
+    if not user_profile:
+        messages.error(request, "No user profile associated with your account. Please contact the administrator.")
+        return redirect('process_management:bulk_import_dashboard')
+
+    try:
+        import_session = BulkImportSession.objects.get(
+            import_id=import_id,
+            created_by=user_profile
+        )
+    except BulkImportSession.DoesNotExist:
+        messages.error(request, "Import session not found.")
+        return redirect('process_management:bulk_import_dashboard')
+
+    context = {
+        'import_session': import_session,
+        'import_results': import_session.import_results,
+        'page_title': f'Import Results - {import_session.import_id}'
+    }
+
+    return render(request, 'process_management/bulk_import_results.html', context)
+
+
+class BulkImportAnalyzer:
+    """
+    Helper class for analyzing what will be imported.
+    """
+
+    def __init__(self, import_session):
+        self.session = import_session
+        self.importer = ProcessMapImporter()
+
+    def analyze(self):
+        """
+        Analyze the selected folders and return preview data.
+        """
+        selected_folder_ids = self.session.selected_folders
+        if not selected_folder_ids:
+            return {'error': 'No folders selected'}
+
+        analysis_results = {
+            'selected_folders': [],
+            'total_files': 0,
+            'valid_files': 0,
+            'invalid_files': 0,
+            'estimated_processes': 0,
+            'existing_processes': 0,
+            'file_details': []
+        }
+
+        for folder_id in selected_folder_ids:
+            try:
+                folder = KnowledgeCentreFolder.objects.get(id=int(folder_id))
+                folder_analysis = self._analyze_folder(folder)
+                analysis_results['selected_folders'].append({
+                    'id': folder.id,
+                    'name': folder.name,
+                    'files_count': folder_analysis['files_count'],
+                    'valid_files': folder_analysis['valid_files'],
+                    'invalid_files': folder_analysis['invalid_files']
+                })
+                analysis_results['total_files'] += folder_analysis['files_count']
+                analysis_results['valid_files'] += folder_analysis['valid_files']
+                analysis_results['invalid_files'] += folder_analysis['invalid_files']
+                analysis_results['file_details'].extend(folder_analysis['file_details'])
+            except (ValueError, KnowledgeCentreFolder.DoesNotExist):
+                continue
+
+        # Estimate processes (rough calculation)
+        analysis_results['estimated_processes'] = analysis_results['valid_files']
+
+        return analysis_results
+
+    def _analyze_folder(self, folder):
+        """
+        Analyze a single folder and its contents.
+        """
+        # Get all files in this folder hierarchy
+        folder_ids = []
+        self._collect_folder_ids(folder, folder_ids)
+
+        files = KnowldgeCentreFile.objects.filter(
+            folder_id__in=folder_ids,
+            archived=False
+        ).select_related('folder')
+
+        analysis = {
+            'files_count': files.count(),
+            'valid_files': 0,
+            'invalid_files': 0,
+            'file_details': []
+        }
+
+        for file in files:
+            metadata = self.importer._parse_metadata(file.filename or file.name)
+            is_valid = metadata is not None
+
+            file_detail = {
+                'id': file.id,
+                'filename': file.filename or file.name,
+                'folder': file.folder.name,
+                'is_valid': is_valid,
+                'parsed_process_name': metadata.process_name if metadata else None,
+                'parsed_department': metadata.department_name if metadata else None,
+                'parsed_region': metadata.region_name if metadata else None,
+            }
+
+            analysis['file_details'].append(file_detail)
+
+            if is_valid:
+                analysis['valid_files'] += 1
+            else:
+                analysis['invalid_files'] += 1
+
+        return analysis
+
+    def _collect_folder_ids(self, folder, folder_ids):
+        """
+        Recursively collect all folder IDs in the hierarchy.
+        """
+        folder_ids.append(folder.id)
+        for subfolder in folder.subfolders.all():
+            self._collect_folder_ids(subfolder, folder_ids)
+
+
+def execute_bulk_import(import_session):
+    """
+    Execute the bulk import process for the given session.
+    """
+    from knowledge_center.models import KnowldgeCentreFile
+
+    importer = ProcessMapImporter()
+    selected_folder_ids = import_session.selected_folders
+
+    # Get all files from selected folders
+    folder_ids = set()
+    for folder_id in selected_folder_ids:
+        try:
+            from knowledge_center.models import KnowledgeCentreFolder
+            folder = KnowledgeCentreFolder.objects.get(id=int(folder_id))
+            _collect_folder_ids_recursive(folder, folder_ids)
+        except (ValueError, KnowledgeCentreFolder.DoesNotExist):
+            continue
+
+    files = KnowldgeCentreFile.objects.filter(
+        folder_id__in=folder_ids,
+        archived=False
+    ).select_related('folder')
+
+    # Process each file
+    for file in files:
+        try:
+            result = importer.import_file(file)
+            if result.get('status') == 'created':
+                import_session.update_progress(successful=1, processed=1)
+            elif result.get('status') == 'skipped':
+                import_session.update_progress(skipped=1, processed=1)
+            else:
+                import_session.update_progress(failed=1, processed=1)
+        except Exception as e:
+            import_session.update_progress(failed=1, processed=1)
+            # Log error but continue
+
+    # Mark as completed
+    import_session.mark_completed()
+
+
+def _collect_folder_ids_recursive(folder, folder_ids):
+    """
+    Recursively collect all folder IDs in the hierarchy.
+    """
+    folder_ids.add(folder.id)
+    for subfolder in folder.subfolders.all():
+        _collect_folder_ids_recursive(subfolder, folder_ids)

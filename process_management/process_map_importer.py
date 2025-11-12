@@ -337,10 +337,8 @@ class ProcessMapImporter:
             process_tokens.append(process_code)
         process_tokens.extend(remaining_tokens)
 
-        process_name = " ".join(process_tokens).strip()
-        if not process_name:
-            # Fallback to entire normalized string minus prefix
-            process_name = " ".join(tokens).strip() or normalized
+        # Use entire filename (without extension) as the default process name
+        process_name = stem
 
         search_prefix_parts = ["ZETDC"]
         if region_code:

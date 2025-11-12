@@ -409,34 +409,34 @@ class MigrationItem(models.Model):
         ('failed', 'Failed'),
         ('skipped', 'Skipped'),
     ]
-    
+
     checkpoint = models.ForeignKey(MigrationCheckpoint, on_delete=models.CASCADE, related_name='items')
     item_id = models.CharField(max_length=100, help_text="Unique identifier for this item")
     item_type = models.CharField(max_length=50, help_text="Type of item (e.g., 'process_candidate', 'document')")
     status = models.CharField(max_length=20, choices=ITEM_STATUS_CHOICES, default='pending')
-    
+
     # Source information for idempotency checks
     source_filename = models.CharField(max_length=255, blank=True)
     source_folder_path = models.CharField(max_length=500, blank=True)
     source_identifier = models.CharField(max_length=255, blank=True, help_text="Original source ID (folder_id, legacy_id, etc.)")
-    
+
     # Processing information
     retry_count = models.IntegerField(default=0)
     processing_time = models.FloatField(null=True, blank=True)
     error_message = models.TextField(blank=True)
     error_type = models.CharField(max_length=50, blank=True)
-    
+
     # Result information
     created_process_id = models.IntegerField(null=True, blank=True, help_text="ID of created Process")
     created_document_ids = models.JSONField(default=list, blank=True, help_text="IDs of created ProcessDocuments")
-    
+
     # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)
     processed_at = models.DateTimeField(null=True, blank=True)
-    
+
     # Item data snapshot
     item_data = models.JSONField(default=dict, blank=True)
-    
+
     class Meta:
         ordering = ['created_at']
         verbose_name = 'Migration Item'
@@ -450,10 +450,10 @@ class MigrationItem(models.Model):
             models.Index(fields=['source_identifier']),
             models.Index(fields=['status']),
         ]
-    
+
     def __str__(self):
         return f"{self.item_id} - {self.get_status_display()}"
-    
+
     def mark_completed(self, process_id: int = None, document_ids: list = None):
         """Mark item as completed with result information."""
         self.status = 'completed'
@@ -463,7 +463,7 @@ class MigrationItem(models.Model):
         if document_ids:
             self.created_document_ids = document_ids
         self.save(update_fields=['status', 'processed_at', 'created_process_id', 'created_document_ids'])
-    
+
     def mark_failed(self, error_message: str, error_type: str = ''):
         """Mark item as failed with error information."""
         self.status = 'failed'
@@ -471,19 +471,19 @@ class MigrationItem(models.Model):
         self.error_type = error_type
         self.processed_at = timezone.now()
         self.save(update_fields=['status', 'error_message', 'error_type', 'processed_at'])
-    
+
     def mark_skipped(self, reason: str = ''):
         """Mark item as skipped."""
         self.status = 'skipped'
         self.error_message = reason
         self.processed_at = timezone.now()
         self.save(update_fields=['status', 'error_message', 'processed_at'])
-    
+
     def increment_retry(self):
         """Increment retry count."""
         self.retry_count += 1
         self.save(update_fields=['retry_count'])
-    
+
     def is_already_migrated(self) -> bool:
         """Check if this item has already been successfully migrated."""
         if self.created_process_id:
@@ -491,3 +491,121 @@ class MigrationItem(models.Model):
             from process_management.models import Process
             return Process.objects.filter(id=self.created_process_id).exists()
         return False
+
+
+class BulkImportSession(models.Model):
+    """
+    Model for managing bulk import sessions with real-time progress tracking.
+    """
+    IMPORT_STATUS_CHOICES = [
+        ('created', 'Created'),
+        ('analyzing', 'Analyzing'),
+        ('preview_ready', 'Preview Ready'),
+        ('importing', 'Importing'),
+        ('completed', 'Completed'),
+        ('failed', 'Failed'),
+        ('cancelled', 'Cancelled'),
+    ]
+
+    import_id = models.CharField(max_length=50, unique=True, help_text="Unique identifier for this import session")
+    status = models.CharField(max_length=20, choices=IMPORT_STATUS_CHOICES, default='created')
+
+    # Import configuration
+    import_type = models.CharField(max_length=50, default='process_maps', help_text="Type of import (process_maps, documents, etc.)")
+    application_name = models.CharField(max_length=255, default="PROCESSES AND PROCEDURES")
+    application_id = models.IntegerField(null=True, blank=True)
+    folder_name = models.CharField(max_length=255, default="PROCESS MAPS")
+    selected_folders = models.JSONField(default=list, blank=True, help_text="List of selected folder IDs to import")
+
+    # Progress tracking
+    total_items = models.IntegerField(default=0)
+    processed_items = models.IntegerField(default=0)
+    successful_items = models.IntegerField(default=0)
+    failed_items = models.IntegerField(default=0)
+    skipped_items = models.IntegerField(default=0)
+
+    # Timing information
+    created_at = models.DateTimeField(auto_now_add=True)
+    started_at = models.DateTimeField(null=True, blank=True)
+    completed_at = models.DateTimeField(null=True, blank=True)
+    last_updated = models.DateTimeField(auto_now=True)
+
+    # User and metadata
+    created_by = models.ForeignKey(UserProfile, on_delete=models.SET_NULL, null=True, blank=True)
+    error_message = models.TextField(blank=True)
+    error_details = models.JSONField(default=dict, blank=True)
+
+    # Import results and data
+    preview_data = models.JSONField(default=dict, blank=True, help_text="Analysis results for preview")
+    import_results = models.JSONField(default=dict, blank=True, help_text="Final import results")
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = 'Bulk Import Session'
+        verbose_name_plural = 'Bulk Import Sessions'
+
+    def __str__(self):
+        return f"Bulk Import {self.import_id} - {self.get_status_display()}"
+
+    def update_progress(self, processed: int = 0, successful: int = 0, failed: int = 0, skipped: int = 0):
+        """Update progress counters."""
+        self.processed_items += processed
+        self.successful_items += successful
+        self.failed_items += failed
+        self.skipped_items += skipped
+        self.last_updated = timezone.now()
+        self.save(update_fields=[
+            'processed_items', 'successful_items', 'failed_items',
+            'skipped_items', 'last_updated'
+        ])
+
+    def mark_started(self):
+        """Mark import as started."""
+        self.status = 'analyzing'
+        self.started_at = timezone.now()
+        self.save(update_fields=['status', 'started_at'])
+
+    def mark_preview_ready(self):
+        """Mark import as having preview ready."""
+        self.status = 'preview_ready'
+        self.save(update_fields=['status'])
+
+    def mark_importing(self):
+        """Mark import as actively importing."""
+        self.status = 'importing'
+        self.save(update_fields=['status'])
+
+    def mark_completed(self):
+        """Mark import as completed."""
+        self.status = 'completed'
+        self.completed_at = timezone.now()
+        self.save(update_fields=['status', 'completed_at'])
+
+    def mark_failed(self, error_message: str, error_details: dict = None):
+        """Mark import as failed."""
+        self.status = 'failed'
+        self.error_message = error_message
+        if error_details:
+            self.error_details = error_details
+        self.completed_at = timezone.now()
+        self.save(update_fields=['status', 'error_message', 'error_details', 'completed_at'])
+
+    def mark_cancelled(self):
+        """Mark import as cancelled."""
+        self.status = 'cancelled'
+        self.completed_at = timezone.now()
+        self.save(update_fields=['status', 'completed_at'])
+
+    def get_progress_percentage(self) -> float:
+        """Get progress as percentage."""
+        if self.total_items == 0:
+            return 0.0
+        return (self.processed_items / self.total_items) * 100
+
+    def can_cancel(self) -> bool:
+        """Check if this import can be cancelled."""
+        return self.status in ['created', 'analyzing', 'preview_ready', 'importing']
+
+    def is_active(self) -> bool:
+        """Check if this import is currently active."""
+        return self.status in ['analyzing', 'importing']
