@@ -3,7 +3,7 @@ import os
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Set, Tuple
 
 from django.core.files.base import ContentFile
 from django.core.files.storage import default_storage
@@ -27,38 +27,89 @@ REGION_NAME_MAP = {
     "NR": "Northern Region",
 }
 
-DEPARTMENT_NAME_MAP = {
+APPROVED_DEPARTMENTS: Tuple[str, ...] = (
+    "Commercial",
+    "Engineering",
+    "Management Processes",
+    "Information Communication Technology",
+    "Finance",
+    "Human Resources",
+    "Risk Management",
+    "Procurement",
+    "Stakeholder Relations",
+    "Legal Services",
+    "Operations and Maintenance",
+    "Transport",
+    "Network Development",
+)
+
+DEPARTMENT_DEFAULT_CODES: Dict[str, str] = {
+    "Commercial": "COMM",
+    "Engineering": "ENG",
+    "Management Processes": "MGMT",
+    "Information Communication Technology": "ICT",
+    "Finance": "FIN",
+    "Human Resources": "HR",
+    "Risk Management": "RISK",
+    "Procurement": "PROC",
+    "Stakeholder Relations": "STKH",
+    "Legal Services": "LEGAL",
+    "Operations and Maintenance": "OPS",
+    "Transport": "TRANS",
+    "Network Development": "NETDEV",
+}
+
+
+def _normalize_department_key(value: str) -> str:
+    return re.sub(r"[^A-Z]", "", value.upper())
+
+
+DEPARTMENT_ALIAS_MAP: Dict[str, str] = {
     "COMM": "Commercial",
     "COMMERCIAL": "Commercial",
-    "TRANS": "Transport",
-    "TRANSPORT": "Transport",
-    "PROC": "Procurement",
-    "PROCU": "Procurement",
-    "PROCUREMENT": "Procurement",
-    "RISK": "Risk Management",
-    "OPS": "Operations",
-    "OPERATIONS": "Operations",
-    "OPS&MAINT": "Operations",
-    "OPSMAINT": "Operations",
-    "MAINT": "Operations",
-    "MAINTENANCE": "Operations",
-    "MANAGEMENT": "Management Processes",
+    "ENGINEERING": "Engineering",
+    "ENG": "Engineering",
     "MGMT": "Management Processes",
+    "MANAGEMENT": "Management Processes",
+    "MANAGEMENTPROCESSES": "Management Processes",
     "ICT": "Information Communication Technology",
+    "INFORMATIONCOMMUNICATIONTECHNOLOGY": "Information Communication Technology",
+    "INFORMATIONTECHNOLOGY": "Information Communication Technology",
     "IT": "Information Communication Technology",
-    "HR": "Human Resources",
-    "HUMAN": "Human Resources",
-    "ADMIN": "Human Resources",
     "FIN": "Finance",
     "FINANCE": "Finance",
-    "ENG": "Engineering",
-    "ENGINEERING": "Engineering",
+    "HR": "Human Resources",
+    "HUMANRESOURCES": "Human Resources",
+    "HUMAN": "Human Resources",
+    "RISK": "Risk Management",
+    "RISKMANAGEMENT": "Risk Management",
+    "PROC": "Procurement",
+    "PROCUREMENT": "Procurement",
+    "PROCU": "Procurement",
+    "STAKEHOLDERRELATIONS": "Stakeholder Relations",
+    "STAKEHOLDER": "Stakeholder Relations",
+    "RELATIONS": "Stakeholder Relations",
     "LEGAL": "Legal Services",
-    "PYR": "Payroll",
-    "PAY": "Payroll",
-    "QA": "Quality Assurance",
-    "QUALITY": "Quality Assurance",
+    "LEGALSERVICES": "Legal Services",
+    "OPS": "Operations and Maintenance",
+    "OPERATIONS": "Operations and Maintenance",
+    "OPERATIONSANDMAINTENANCE": "Operations and Maintenance",
+    "OPSMAINT": "Operations and Maintenance",
+    "OPS&MAINT": "Operations and Maintenance",
+    "MAINT": "Operations and Maintenance",
+    "MAINTENANCE": "Operations and Maintenance",
+    "OPERATIONSMAINTENANCE": "Operations and Maintenance",
+    "TRANSPORT": "Transport",
+    "TRANS": "Transport",
+    "NETWORK": "Network Development",
+    "NETWORKDEVELOPMENT": "Network Development",
+    "NETDEV": "Network Development",
+    "DEVELOPMENT": "Network Development",
 }
+
+DEPARTMENT_ALIAS_MAP.update(
+    {_normalize_department_key(name): name for name in APPROVED_DEPARTMENTS}
+)
 
 DOCUMENT_TYPE_PATTERNS = {
     "process_map": [
@@ -222,7 +273,7 @@ class ProcessMapImporter:
                 }
 
             with transaction.atomic():
-                department = self._get_or_create_department(metadata)
+                department = self._get_or_create_department(metadata, kc_file)
                 process, created = self._get_or_create_process(
                     department, metadata, kc_file
                 )
@@ -320,8 +371,8 @@ class ProcessMapImporter:
         if tokens:
             dept_token = tokens.pop(0)
             department_code = re.sub(r"[^A-Z]", "", dept_token.upper())
-            department_name = DEPARTMENT_NAME_MAP.get(
-                department_code, self._title_case_token(department_code)
+            department_name = self._canonicalize_department(department_code) or self._canonicalize_department(
+                dept_token
             )
 
         process_code = None
@@ -373,15 +424,93 @@ class ProcessMapImporter:
             return token.upper()
         return token.replace("_", " ").title()
 
+    def _canonicalize_department(self, value: Optional[str]) -> Optional[str]:
+        if not value:
+            return None
+        key = _normalize_department_key(str(value))
+        if not key:
+            return None
+        return DEPARTMENT_ALIAS_MAP.get(key)
+
+    def _resolve_department_from_folder(
+        self, folder: Optional[KnowledgeCentreFolder]
+    ) -> Optional[str]:
+        current = folder
+        visited: Set[int] = set()
+        while current:
+            if current.id in visited:
+                break
+            visited.add(current.id)
+            canonical = self._canonicalize_department(current.name)
+            if canonical:
+                return canonical
+            current = current.parent
+        return None
+
+    def _resolve_department_name(
+        self, metadata: ProcessMetadata, kc_file: KnowldgeCentreFile
+    ) -> str:
+        candidates = [
+            metadata.department_name,
+            metadata.department_code,
+        ]
+        for candidate in candidates:
+            canonical = self._canonicalize_department(candidate)
+            if canonical:
+                metadata.department_name = canonical
+                if not metadata.department_code:
+                    metadata.department_code = DEPARTMENT_DEFAULT_CODES.get(
+                        canonical
+                    )
+                return canonical
+
+        folder_department = self._resolve_department_from_folder(
+            kc_file.folder if hasattr(kc_file, "folder") else None
+        )
+        if folder_department:
+            metadata.department_name = folder_department
+            if not metadata.department_code:
+                metadata.department_code = DEPARTMENT_DEFAULT_CODES.get(
+                    folder_department
+                )
+            return folder_department
+
+        self.logger.warning(
+            "Falling back to default department for Knowledge Centre file id=%s (%s)",
+            kc_file.id,
+            kc_file.filename,
+        )
+        metadata.department_name = "Management Processes"
+        metadata.department_code = DEPARTMENT_DEFAULT_CODES.get(
+            "Management Processes"
+        )
+        return "Management Processes"
+
     def _get_or_create_department(
         self,
         metadata: ProcessMetadata,
+        kc_file: KnowldgeCentreFile,
     ) -> ProcessDepartment:
-        department_name = metadata.department_name or "General Operations"
+        department_name = self._resolve_department_name(metadata, kc_file)
+        if department_name not in APPROVED_DEPARTMENTS:
+            self.logger.warning(
+                "Department '%s' is not approved. Defaulting to 'Management Processes' for file id=%s",
+                department_name,
+                kc_file.id,
+            )
+            department_name = "Management Processes"
+            metadata.department_name = department_name
+
+        description = (
+            f"Imported from Knowledge Centre (code: {metadata.department_code})"
+            if metadata.department_code
+            else "Imported from Knowledge Centre"
+        )
+
         department, _ = ProcessDepartment.objects.get_or_create(
             name=department_name,
             defaults={
-                "description": f"Imported from Knowledge Centre (code: {metadata.department_code})",
+                "description": description,
             },
         )
         return department
@@ -463,6 +592,16 @@ class ProcessMapImporter:
         filename = kc_file.filename or kc_file.name or os.path.basename(original_path)
         sanitized_filename = self._sanitize_filename(filename)
 
+        file_size = 0
+        file_exists = False
+        if kc_file.file:
+            try:
+                file_size = kc_file.file.size
+                file_exists = default_storage.exists(kc_file.file.name)
+            except (FileNotFoundError, OSError):
+                file_size = 0
+                file_exists = False
+
         document_kwargs = {
             "process": process,
             "document_type": document_type,
@@ -470,7 +609,7 @@ class ProcessMapImporter:
             "original_filename": filename,
             "original_file_path": original_path or "",
             "file_path": original_path or "",
-            "file_size": kc_file.file.size if kc_file.file else 0,
+            "file_size": file_size,
             "status": "accessible",
             "version": "1.0",
             "metadata": {
@@ -486,9 +625,7 @@ class ProcessMapImporter:
             else None,
         }
 
-        if not kc_file.file or not kc_file.file.name or not default_storage.exists(
-            kc_file.file.name
-        ):
+        if not kc_file.file or not kc_file.file.name or not file_exists:
             document_kwargs["status"] = "missing_file"
             document_kwargs["metadata"]["file_missing"] = True
             doc = ProcessDocument.objects.create(**document_kwargs)

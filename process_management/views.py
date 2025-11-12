@@ -1733,7 +1733,8 @@ def bulk_import_execute(request, import_id):
         messages.error(request, "Import session not found.")
         return redirect('process_management:bulk_import_dashboard')
 
-    if import_session.status not in ['preview_ready', 'importing']:
+    allowed_statuses = ['preview_ready', 'importing', 'completed', 'failed', 'cancelled']
+    if import_session.status not in allowed_statuses:
         messages.error(request, "Import session is not ready for execution.")
         return redirect('process_management:bulk_import_preview', import_id=import_id)
 

@@ -6,166 +6,194 @@
 {% block page_name %}Import Progress{% endblock %}
 
 {% block content %}
-<div class="container-fluid">
-    <div class="row">
-        <div class="col-md-12">
-            <!-- Page Header -->
-            <div class="card mb-4">
-                <div class="card-header bg-primary text-white">
-                    <h4 class="mb-0">
-                        <i class="fas fa-spinner fa-spin mr-2"></i>
-                        Bulk Import Progress: {{ import_session.import_id }}
-                    </h4>
-                    <p class="mb-0 mt-2">Monitor the real-time progress of your bulk import operation</p>
+<div class="max-w-6xl mx-auto space-y-8">
+    <!-- Page Header -->
+    <section class="rounded-3xl border border-gulf-blue-100 bg-white shadow-sm overflow-hidden">
+        <div class="bg-gradient-to-r from-gulf-blue-700 via-gulf-blue-600 to-gulf-blue-500 px-6 py-6 text-white">
+            <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                <div class="space-y-2">
+                    <p class="text-xs font-semibold tracking-[0.3em] uppercase opacity-80">Bulk Import</p>
+                    <h1 class="text-2xl font-semibold flex items-center gap-3">
+                        <span class="inline-flex h-11 w-11 items-center justify-center rounded-full bg-white/15">
+                            <i class="fas fa-upload"></i>
+                        </span>
+                        {{ import_session.import_id }}
+                    </h1>
+                    <p class="text-sm text-gulf-blue-50/80 max-w-2xl">
+                        Monitor the live status of this Knowledge Centre import, including processed items, success rate, and activity log.
+                    </p>
+                </div>
+                <div class="flex flex-col items-start gap-2 text-sm md:items-end">
+                    <span class="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 font-semibold">
+                        <i class="fas fa-user-circle"></i>
+                        {{ request.user.get_full_name|default:request.user.username }}
+                    </span>
+                    <span class="text-xs text-gulf-blue-50/80">
+                        Created {{ import_session.created_at|date:"M d, Y H:i" }}
+                        {% if import_session.started_at %}
+                        • Started {{ import_session.started_at|date:"M d, Y H:i" }}
+                        {% endif %}
+                    </span>
                 </div>
             </div>
-
-            <!-- Progress Overview -->
-            <div class="row mb-4">
-                <div class="col-md-12">
-                    <div class="card">
-                        <div class="card-body">
-                            <div class="row">
-                                <div class="col-md-8">
-                                    <h5>Import Progress</h5>
-                                    <div class="progress mb-3" style="height: 25px;">
-                                        <div class="progress-bar progress-bar-striped progress-bar-animated"
-                                             id="progressBar"
-                                             role="progressbar"
-                                             style="width: {{ import_session.get_progress_percentage }}%">
-                                            <span id="progressText">{{ import_session.get_progress_percentage|floatformat:1 }}%</span>
-                                        </div>
-                                    </div>
-                                    <div class="row text-center">
-                                        <div class="col-3">
-                                            <div class="text-muted small">Total</div>
-                                            <div class="font-weight-bold h5 mb-0" id="totalItems">{{ import_session.total_items }}</div>
-                                        </div>
-                                        <div class="col-3">
-                                            <div class="text-muted small">Processed</div>
-                                            <div class="font-weight-bold h5 mb-0 text-primary" id="processedItems">{{ import_session.processed_items }}</div>
-                                        </div>
-                                        <div class="col-3">
-                                            <div class="text-muted small">Successful</div>
-                                            <div class="font-weight-bold h5 mb-0 text-success" id="successfulItems">{{ import_session.successful_items }}</div>
-                                        </div>
-                                        <div class="col-3">
-                                            <div class="text-muted small">Failed</div>
-                                            <div class="font-weight-bold h5 mb-0 text-danger" id="failedItems">{{ import_session.failed_items }}</div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-md-4">
-                                    <h5>Status</h5>
-                                    <div class="text-center">
-                                        <div class="status-indicator mb-3">
-                                            <div class="status-circle" id="statusCircle">
-                                                <i class="fas" id="statusIcon"></i>
-                                            </div>
-                                            <div class="status-text" id="statusText">{{ import_session.get_status_display }}</div>
-                                        </div>
-                                        <div class="status-details text-muted small">
-                                            <div id="statusDetails">
-                                                {% if import_session.status == 'analyzing' %}
-                                                Analyzing selected folders and files...
-                                                {% elif import_session.status == 'importing' %}
-                                                Importing process maps and creating processes...
-                                                {% elif import_session.status == 'completed' %}
-                                                Import completed successfully!
-                                                {% elif import_session.status == 'failed' %}
-                                                Import failed. Check error details below.
-                                                {% else %}
-                                                Preparing to start import...
-                                                {% endif %}
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Real-time Log -->
-            <div class="row mb-4">
-                <div class="col-md-12">
-                    <div class="card">
-                        <div class="card-header bg-dark text-white">
-                            <h5 class="mb-0">
-                                <i class="fas fa-terminal mr-2"></i>
-                                Import Log
-                            </h5>
-                        </div>
-                        <div class="card-body">
-                            <div id="logContainer" class="log-container">
-                                <div id="logContent" class="log-content">
-                                    <!-- Log entries will be added here dynamically -->
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Error Details (if any) -->
-            {% if import_session.error_message %}
-            <div class="row mb-4">
-                <div class="col-md-12">
-                    <div class="card border-danger">
-                        <div class="card-header bg-danger text-white">
-                            <h5 class="mb-0">
-                                <i class="fas fa-exclamation-triangle mr-2"></i>
-                                Import Error
-                            </h5>
-                        </div>
-                        <div class="card-body">
-                            <div class="alert alert-danger">
-                                <h6>{{ import_session.error_message }}</h6>
-                                {% if import_session.error_details %}
-                                <pre class="mb-0">{{ import_session.error_details|safe }}</pre>
-                                {% endif %}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+        </div>
+        <div class="flex flex-wrap items-center gap-3 border-t border-white/20 bg-gulf-blue-50/60 px-6 py-3 text-xs text-gulf-blue-500">
+            <span class="inline-flex items-center gap-2 font-semibold">
+                <span class="h-2.5 w-2.5 animate-pulse rounded-full bg-emerald-500"></span>
+                Live monitoring active
+            </span>
+            {% if import_session.completed_at %}
+            <span>Completed {{ import_session.completed_at|date:"M d, Y H:i" }}</span>
             {% endif %}
+        </div>
+    </section>
 
-            <!-- Action Buttons -->
-            <div class="row">
-                <div class="col-md-12">
-                    <div class="card">
-                        <div class="card-body text-center">
-                            <div class="btn-group" role="group">
-                                <a href="{% url 'process_management:bulk_import_dashboard' %}" class="btn btn-outline-secondary">
-                                    <i class="fas fa-home mr-2"></i>Dashboard
-                                </a>
-
-                                {% if import_session.can_cancel %}
-                                <button class="btn btn-outline-danger" id="cancelBtn">
-                                    <i class="fas fa-stop mr-2"></i>Cancel Import
-                                </button>
-                                {% endif %}
-
-                                {% if import_session.status == 'completed' %}
-                                <a href="{% url 'process_management:bulk_import_results' import_session.import_id %}" class="btn btn-success">
-                                    <i class="fas fa-check-circle mr-2"></i>View Results
-                                </a>
-                                {% endif %}
-
-                                {% if import_session.status == 'failed' %}
-                                <a href="{% url 'process_management:bulk_import_results' import_session.import_id %}" class="btn btn-warning">
-                                    <i class="fas fa-exclamation-triangle mr-2"></i>View Details
-                                </a>
-                                {% endif %}
+    <!-- Progress Overview -->
+    <section class="rounded-3xl border border-gulf-blue-100 bg-white shadow-sm">
+        <div class="p-6 space-y-8">
+            <div class="grid gap-8 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+                <div class="space-y-6">
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between gap-4">
+                            <h2 class="text-lg font-semibold text-gulf-blue-900">Progress Overview</h2>
+                            <span class="rounded-full bg-gulf-blue-50 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-gulf-blue-400">
+                                Real-time Sync
+                            </span>
+                        </div>
+                        <div class="relative h-4 w-full overflow-hidden rounded-full bg-gulf-blue-100/70">
+                            <div id="progressBar"
+                                 class="absolute inset-0 rounded-full bg-gradient-to-r from-gulf-blue-500 via-gulf-blue-600 to-gulf-blue-700 transition-all duration-500 ease-out"
+                                 style="width: {{ import_session.get_progress_percentage }}%">
                             </div>
                         </div>
+                        <div class="flex flex-wrap items-center justify-between gap-3 text-sm font-semibold text-gulf-blue-800">
+                            <span id="progressText">{{ import_session.get_progress_percentage|floatformat:1 }}%</span>
+                            <span class="text-xs font-medium text-gulf-blue-400">
+                                Updated {{ import_session.last_updated|date:"M d, Y H:i" }}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4 sm:grid-cols-4">
+                        <div class="rounded-2xl border border-gulf-blue-100 bg-gulf-blue-50/70 px-4 py-3 text-center shadow-sm">
+                            <p class="text-xs uppercase tracking-wide text-gulf-blue-400">Total</p>
+                            <p class="mt-2 text-2xl font-semibold text-gulf-blue-900" id="totalItems">{{ import_session.total_items }}</p>
+                        </div>
+                        <div class="rounded-2xl border border-sky-100 bg-sky-50 px-4 py-3 text-center shadow-sm">
+                            <p class="text-xs uppercase tracking-wide text-sky-500">Processed</p>
+                            <p class="mt-2 text-2xl font-semibold text-sky-600" id="processedItems">{{ import_session.processed_items }}</p>
+                        </div>
+                        <div class="rounded-2xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-center shadow-sm">
+                            <p class="text-xs uppercase tracking-wide text-emerald-500">Successful</p>
+                            <p class="mt-2 text-2xl font-semibold text-emerald-600" id="successfulItems">{{ import_session.successful_items }}</p>
+                        </div>
+                        <div class="rounded-2xl border border-rose-100 bg-rose-50 px-4 py-3 text-center shadow-sm">
+                            <p class="text-xs uppercase tracking-wide text-rose-500">Failed</p>
+                            <p class="mt-2 text-2xl font-semibold text-rose-600" id="failedItems">{{ import_session.failed_items }}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex flex-col items-center gap-4 rounded-2xl border border-gulf-blue-100 bg-gulf-blue-50/60 p-6 text-center shadow-inner">
+                    <h2 class="text-lg font-semibold text-gulf-blue-900">Current Status</h2>
+                    <div class="status-circle shadow-inner border-4 border-gulf-blue-200 bg-white transition" id="statusCircle">
+                        <i class="fas text-3xl text-gulf-blue-600" id="statusIcon"></i>
+                    </div>
+                    <div class="status-text text-xl font-semibold text-gulf-blue-700" id="statusText">
+                        {{ import_session.get_status_display }}
+                    </div>
+                    <div class="status-details text-sm leading-relaxed text-gulf-blue-500" id="statusDetails">
+                        {% if import_session.status == 'analyzing' %}
+                        Analyzing selected folders and files...
+                        {% elif import_session.status == 'importing' %}
+                        Importing process maps and creating processes...
+                        {% elif import_session.status == 'completed' %}
+                        Import completed successfully!
+                        {% elif import_session.status == 'failed' %}
+                        Import failed. Check error details below.
+                        {% else %}
+                        Preparing to start import...
+                        {% endif %}
                     </div>
                 </div>
             </div>
         </div>
-    </div>
+    </section>
+
+    <!-- Real-time Log -->
+    <section class="rounded-3xl border border-gulf-blue-100 bg-white shadow-sm">
+        <header class="flex items-start gap-3 rounded-t-3xl border-b border-gulf-blue-100 bg-gulf-blue-50/80 px-6 py-4">
+            <span class="inline-flex h-11 w-11 items-center justify-center rounded-full bg-gulf-blue-600 text-white">
+                <i class="fas fa-terminal"></i>
+            </span>
+            <div>
+                <h2 class="text-lg font-semibold text-gulf-blue-900">Import Log</h2>
+                <p class="text-xs text-gulf-blue-500">Live events recorded throughout the import lifecycle.</p>
+            </div>
+        </header>
+        <div class="p-6">
+            <div id="logContainer" class="log-container rounded-2xl border border-gulf-blue-900/25 bg-gulf-blue-950/95 shadow-inner">
+                <div id="logContent" class="log-content">
+                    <!-- Log entries will be added here dynamically -->
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Error Details (if any) -->
+    {% if import_session.error_message %}
+    <section class="rounded-3xl border border-rose-200 bg-white shadow-sm">
+        <header class="flex items-center gap-3 rounded-t-3xl border-b border-rose-200 bg-rose-50 px-6 py-4 text-rose-600">
+            <span class="inline-flex h-11 w-11 items-center justify-center rounded-full bg-rose-500 text-white">
+                <i class="fas fa-exclamation-triangle"></i>
+            </span>
+            <h2 class="text-lg font-semibold">Import Error</h2>
+        </header>
+        <div class="p-6 space-y-4">
+            <div class="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3">
+                <h3 class="text-sm font-semibold text-rose-700">{{ import_session.error_message }}</h3>
+                {% if import_session.error_details %}
+                <pre class="mt-3 whitespace-pre-wrap text-xs text-rose-600">{{ import_session.error_details|safe }}</pre>
+                {% endif %}
+            </div>
+        </div>
+    </section>
+    {% endif %}
+
+    <!-- Action Buttons -->
+    <section class="rounded-3xl border border-gulf-blue-100 bg-white shadow-sm">
+        <div class="p-6">
+            <div class="flex flex-wrap items-center justify-center gap-4 text-sm font-semibold">
+                <a href="{% url 'process_management:bulk_import_dashboard' %}"
+                   class="inline-flex items-center gap-2 rounded-xl border border-gulf-blue-200 bg-white px-5 py-2.5 text-gulf-blue-600 transition hover:bg-gulf-blue-50 hover:text-gulf-blue-700">
+                    <i class="fas fa-home"></i>
+                    Dashboard
+                </a>
+
+                {% if import_session.can_cancel %}
+                <button id="cancelBtn"
+                        class="inline-flex items-center gap-2 rounded-xl border border-rose-300 bg-rose-100 px-5 py-2.5 text-rose-700 transition hover:bg-rose-200">
+                    <i class="fas fa-stop"></i>
+                    Cancel Import
+                </button>
+                {% endif %}
+
+                {% if import_session.status == 'completed' %}
+                <a href="{% url 'process_management:bulk_import_results' import_session.import_id %}"
+                   class="inline-flex items-center gap-2 rounded-xl bg-emerald-500 px-5 py-2.5 text-white transition hover:bg-emerald-600">
+                    <i class="fas fa-check-circle"></i>
+                    View Results
+                </a>
+                {% endif %}
+
+                {% if import_session.status == 'failed' %}
+                <a href="{% url 'process_management:bulk_import_results' import_session.import_id %}"
+                   class="inline-flex items-center gap-2 rounded-xl bg-amber-500 px-5 py-2.5 text-white transition hover:bg-amber-600">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    View Details
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </section>
 </div>
 
 <script>
@@ -356,72 +384,54 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 
 <style>
-.progress {
-    background-color: #e9ecef;
-}
-
-.status-indicator {
-    margin: 2rem 0;
-}
-
 .status-circle {
-    width: 80px;
-    height: 80px;
-    border-radius: 50%;
-    border: 4px solid;
+    width: 6.25rem;
+    height: 6.25rem;
+    border-radius: 9999px;
     display: flex;
     align-items: center;
     justify-content: center;
-    margin: 0 auto 1rem;
     background: white;
 }
 
-.status-circle i {
-    font-size: 2rem;
-}
-
 .status-text {
-    font-size: 1.25rem;
-    font-weight: bold;
+    transition: color 0.2s ease;
 }
 
 .log-container {
-    background: #1a1a1a;
-    color: #f8f9fa;
-    font-family: 'Courier New', monospace;
-    font-size: 0.875rem;
-    max-height: 300px;
+    max-height: 18rem;
     overflow-y: auto;
-    border-radius: 0.25rem;
-    padding: 0.5rem;
+    font-family: 'JetBrains Mono', 'Courier New', monospace;
+    padding: 1rem;
 }
 
 .log-content {
-    max-height: 250px;
+    max-height: 16rem;
     overflow-y: auto;
 }
 
 .log-entry {
-    margin-bottom: 0.25rem;
-    padding: 0.125rem 0;
+    display: flex;
+    gap: 0.75rem;
+    margin-bottom: 0.35rem;
+    font-size: 0.85rem;
 }
 
 .log-timestamp {
-    color: #6c757d;
-    margin-right: 0.5rem;
+    color: rgba(148, 163, 184, 1);
 }
 
-.log-info { color: #17a2b8; }
-.log-success { color: #28a745; }
-.log-warning { color: #ffc107; }
-.log-error { color: #dc3545; }
+.log-info { color: rgba(56, 189, 248, 1); }
+.log-success { color: rgba(52, 211, 153, 1); }
+.log-warning { color: rgba(251, 191, 36, 1); }
+.log-error { color: rgba(248, 113, 113, 1); }
 
-.status-created { border-color: #6c757d; }
-.status-analyzing { border-color: #ffc107; }
-.status-preview { border-color: #17a2b8; }
-.status-importing { border-color: #ffc107; }
-.status-completed { border-color: #28a745; }
-.status-failed { border-color: #dc3545; }
-.status-cancelled { border-color: #6c757d; }
+.status-created { border-color: rgba(148, 163, 184, 1); }
+.status-analyzing { border-color: rgba(251, 191, 36, 1); }
+.status-preview { border-color: rgba(45, 212, 191, 1); }
+.status-importing { border-color: rgba(251, 191, 36, 1); }
+.status-completed { border-color: rgba(52, 211, 153, 1); }
+.status-failed { border-color: rgba(248, 113, 113, 1); }
+.status-cancelled { border-color: rgba(148, 163, 184, 1); }
 </style>
 {% endblock %}
