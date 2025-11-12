@@ -119,26 +119,26 @@ and Procedures{% endblock %} {% block content %}
         <div class="overflow-x-auto">
           <table class="min-w-full border border-gray-200 text-sm">
             <thead>
-              <tr class="bg-gray-100 text-gray-700 uppercase tracking-wide">
-                <th scope="col" class="px-5 py-3 text-left font-semibold border-b border-gray-200">
+              <tr class="bg-gray-100 text-gray-700 uppercase tracking-wide text-xs">
+                <th scope="col" class="px-5 py-2 text-left font-semibold border-b border-gray-200">
                   Process Details
                 </th>
-                <th scope="col" class="px-5 py-3 text-center font-semibold border-b border-gray-200">
+                <th scope="col" class="px-5 py-2 text-center font-semibold border-b border-gray-200">
                   Process Map
                 </th>
-                <th scope="col" class="px-5 py-3 text-center font-semibold border-b border-gray-200">
+                <th scope="col" class="px-5 py-2 text-center font-semibold border-b border-gray-200">
                   Procedure
                 </th>
-                <th scope="col" class="px-5 py-3 text-center font-semibold border-b border-gray-200">
+                <th scope="col" class="px-5 py-2 text-center font-semibold border-b border-gray-200">
                   Risk Register
                 </th>
-                <th scope="col" class="px-5 py-3 text-center font-semibold border-b border-gray-200">
+                <th scope="col" class="px-5 py-2 text-center font-semibold border-b border-gray-200">
                   Objectives
                 </th>
-                <th scope="col" class="px-5 py-3 text-center font-semibold border-b border-gray-200">
+                <th scope="col" class="px-5 py-2 text-center font-semibold border-b border-gray-200">
                   Legal Register
                 </th>
-                <th scope="col" class="px-5 py-3 text-center font-semibold border-b border-gray-200">
+                <th scope="col" class="px-5 py-2 text-center font-semibold border-b border-gray-200">
                   Status
                 </th>
               </tr>
@@ -146,7 +146,7 @@ and Procedures{% endblock %} {% block content %}
             <tbody class="bg-white">
               {% for process in processes %}
               <tr class="border-b border-gray-200 hover:bg-gray-50">
-                <td class="px-5 py-4 align-top">
+                <td class="px-5 py-3 align-top">
                   <div class="flex flex-col">
                     <div class="font-medium text-gray-900 mb-1">
                       <a href="{% url 'process_management:process_detail' process.id %}" 
@@ -184,77 +184,77 @@ and Procedures{% endblock %} {% block content %}
                     </div>
                   </div>
                 </td>
-                <td class="px-5 py-4 text-center">
+                <td class="px-5 py-3 text-center">
                   {% current_document process 'process_map' as process_map_doc %}
                   {% if process_map_doc %}
                     <a href="{% url 'process_management:document_download' process_map_doc.id %}" 
-                       class="inline-flex items-center px-3 py-1.5 border border-gray-300 text-gray-700 hover:bg-gray-100">
-                      <i class="fas fa-download mr-2 text-xs"></i>
-                      {{ process_map_doc.filename }}
+                       class="inline-flex items-center justify-center gap-2 text-blue-600 hover:text-blue-800 hover:underline">
+                      <i class="fas fa-download text-xs"></i>
+                      <span class="truncate max-w-[12rem]">{{ process_map_doc.filename }}</span>
                     </a>
                   {% else %}
-                    <span class="inline-flex items-center px-3 py-1.5 border border-gray-200 text-gray-500 bg-gray-100">
+                    <span class="text-xs text-gray-400 uppercase tracking-wide">
                       Not Available
                     </span>
                   {% endif %}
                 </td>
-                <td class="px-5 py-4 text-center">
+                <td class="px-5 py-3 text-center">
                   {% current_document process 'procedure' as procedure_doc %}
                   {% if procedure_doc %}
                     <a href="{% url 'process_management:document_download' procedure_doc.id %}" 
-                       class="inline-flex items-center px-3 py-1.5 border border-gray-300 text-gray-700 hover:bg-gray-100">
-                      <i class="fas fa-download mr-2 text-xs"></i>
-                      {{ procedure_doc.filename }}
+                       class="inline-flex items-center justify-center gap-2 text-blue-600 hover:text-blue-800 hover:underline">
+                      <i class="fas fa-download text-xs"></i>
+                      <span class="truncate max-w-[12rem]">{{ procedure_doc.filename }}</span>
                     </a>
                   {% else %}
-                    <span class="inline-flex items-center px-3 py-1.5 border border-gray-200 text-gray-500 bg-gray-100">
+                    <span class="text-xs text-gray-400 uppercase tracking-wide">
                       Not Available
                     </span>
                   {% endif %}
                 </td>
-                <td class="px-5 py-4 text-center">
+                <td class="px-5 py-3 text-center">
                   {% current_document process 'risk_register' as risk_doc %}
                   {% if risk_doc %}
                     <a href="{% url 'process_management:document_download' risk_doc.id %}" 
-                       class="inline-flex items-center px-3 py-1.5 border border-gray-300 text-gray-700 hover:bg-gray-100">
-                      <i class="fas fa-download mr-2 text-xs"></i>
-                      {{ risk_doc.filename }}
+                       class="inline-flex items-center justify-center gap-2 text-blue-600 hover:text-blue-800 hover:underline">
+                      <i class="fas fa-download text-xs"></i>
+                      <span class="truncate max-w-[12rem]">{{ risk_doc.filename }}</span>
                     </a>
                   {% else %}
-                    <span class="inline-flex items-center px-3 py-1.5 border border-gray-200 text-gray-500 bg-gray-100">
+                    <span class="text-xs text-gray-400 uppercase tracking-wide">
                       Not Available
                     </span>
                   {% endif %}
                 </td>
-                <td class="px-5 py-4 text-center">
+                <td class="px-5 py-3 text-center">
                   {% current_document process 'objectives_targets' as objectives_doc %}
                   {% if objectives_doc %}
                     <a href="{% url 'process_management:document_download' objectives_doc.id %}" 
-                       class="inline-flex items-center px-3 py-1.5 border border-gray-300 text-gray-700 hover:bg-gray-100">
-                      <i class="fas fa-download mr-2 text-xs"></i>
-                      {{ objectives_doc.filename }}
+                       class="inline-flex items-center justify-center gap-2 text-blue-600 hover:text-blue-800 hover:underline">
+                      <i class="fas fa-download text-xs"></i>
+                      <span class="truncate max-w-[12rem]">{{ objectives_doc.filename }}</span>
                     </a>
                   {% else %}
-                    <span class="inline-flex items-center px-3 py-1.5 border border-gray-200 text-gray-500 bg-gray-100">
+                    <span class="text-xs text-gray-400 uppercase tracking-wide">
                       Not Available
                     </span>
                   {% endif %}
                 </td>
-                <td class="px-5 py-4 text-center">
+                <td class="px-5 py-3 text-center">
                   {% current_document process 'legal_register' as legal_doc %}
                   {% if legal_doc %}
                     <a href="{% url 'process_management:document_download' legal_doc.id %}" 
-                       class="inline-flex items-center px-3 py-1.5 border border-gray-300 text-gray-700 hover:bg-gray-100">
-                      <i class="fas fa-download mr-2 text-xs"></i>
-                      {{ legal_doc.filename }}
+                       class="inline-flex items-center justify-center gap-2 text-blue-600 hover:text-blue-800 hover:underline">
+                      <i class="fas fa-download text-xs"></i>
+                      <span class="truncate max-w-[12rem]">{{ legal_doc.filename }}</span>
                     </a>
                   {% else %}
-                    <span class="inline-flex items-center px-3 py-1.5 border border-gray-200 text-gray-500 bg-gray-100">
+                    <span class="text-xs text-gray-400 uppercase tracking-wide">
                       Not Available
                     </span>
                   {% endif %}
                 </td>
-                <td class="px-5 py-4 text-center">
+                <td class="px-5 py-3 text-center">
                   {% if process.is_active %}
                     <span class="inline-flex items-center px-3 py-1 border border-green-200 bg-green-50 text-green-700 text-xs">
                       Active
