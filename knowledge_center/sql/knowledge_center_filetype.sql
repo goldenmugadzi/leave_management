@@ -1,0 +1,14 @@
+INSERT INTO beii_new.knowledge_center_filetype (id, name) VALUES (1, 'LEGISLATION');
+INSERT INTO beii_new.knowledge_center_filetype (id, name) VALUES (2, 'POLICIES & GUIDELINES');
+INSERT INTO beii_new.knowledge_center_filetype (id, name) VALUES (3, 'PUBLICATIONS');
+INSERT INTO beii_new.knowledge_center_filetype (id, name) VALUES (4, 'ENGINEERING INSTRUCTIONS MAIN INDEX');
+INSERT INTO beii_new.knowledge_center_filetype (id, name) VALUES (5, 'USER MANUALS');
+INSERT INTO beii_new.knowledge_center_filetype (id, name) VALUES (6, 'STANDARDS, SPECIFICATIONS & DRAWINGS');
+INSERT INTO beii_new.knowledge_center_filetype (id, name) VALUES (7, 'KNOWLEDGE BASE');
+INSERT INTO beii_new.knowledge_center_filetype (id, name) VALUES (8, 'STANDARDS');
+INSERT INTO beii_new.knowledge_center_filetype (id, name) VALUES (9, 'SPECIFICATIONS');
+INSERT INTO beii_new.knowledge_center_filetype (id, name) VALUES (10, 'DRAWINGS');
+INSERT INTO beii_new.knowledge_center_filetype (id, name) VALUES (11, 'PRINCE2 CENTRE OF EXCELLENCE');
+INSERT INTO beii_new.knowledge_center_filetype (id, name) VALUES (12, 'OTHER EXTERNAL DOCUMENTS');
+INSERT INTO beii_new.knowledge_center_filetype (id, name) VALUES (13, 'DRONE TECHNOLOGY');
+INSERT INTO beii_new.knowledge_center_filetype (id, name) VALUES (14, 'CONTRACTORS');
