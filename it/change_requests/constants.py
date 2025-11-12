@@ -162,14 +162,20 @@ PREFETCH_RELATED_FIELDS = [
 # Required Fields for Validation
 REQUIRED_CHANGE_REQUEST_FIELDS = [
     'change_reason',
-    'change_description'
+    'change_description',
+    'originator_company',
+    'originator_site',
+    'date_resolution_required'
 ]
 
 REQUIRED_NEW_PROFILE_FIELDS = [
     'username',
     'first_name',
     'last_name',
-    'email'
+    'email',
+    'np_ec_number',
+    'np_job_title',
+    'np_company'
 ]
 
 # URL Patterns

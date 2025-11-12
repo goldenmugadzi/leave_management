@@ -6,6 +6,7 @@ validation, creation, and data retrieval.
 """
 
 import logging
+from datetime import datetime
 from typing import Dict, List, Optional, Any
 from django.db import transaction
 from django.utils import timezone
@@ -87,6 +88,9 @@ class ChangeRequestService:
         # Common validation
         change_reason = data.get('change_reason', '').strip()
         change_description = data.get('change_description', '').strip()
+        originator_company = data.get('originator_company', '').strip()
+        originator_site = data.get('originator_site', '').strip()
+        date_resolution_required = data.get('date_resolution_required', '').strip()
         
         if not change_reason:
             errors.append(ERROR_MESSAGES.get('REQUIRED_FIELD_MISSING', 'Change reason is required'))
@@ -97,6 +101,18 @@ class ChangeRequestService:
             errors.append(ERROR_MESSAGES.get('REQUIRED_FIELD_MISSING', 'Change description is required'))
         elif len(change_description) > MAX_DESCRIPTION_LENGTH:
             errors.append(f"Change description exceeds maximum length of {MAX_DESCRIPTION_LENGTH} characters")
+        
+        if not originator_company:
+            errors.append("Originator company is required")
+        if not originator_site:
+            errors.append("Originator site is required")
+        if not date_resolution_required:
+            errors.append("Date resolution required is required")
+        else:
+            try:
+                datetime.strptime(date_resolution_required, "%Y-%m-%d")
+            except ValueError:
+                errors.append("Date resolution required must be in YYYY-MM-DD format")
         
         return errors
     
@@ -109,6 +125,9 @@ class ChangeRequestService:
         first_name = data.get('first_name', '').strip()
         last_name = data.get('last_name', '').strip()
         email = data.get('email', '').strip()
+        ec_number = (data.get('np_ec_number') or data.get('ec_number') or '').strip()
+        job_title = (data.get('np_job_title') or data.get('job_title') or '').strip()
+        company = (data.get('np_company') or data.get('company') or '').strip()
         
         if not username:
             errors.append("Username is required")
@@ -131,6 +150,13 @@ class ChangeRequestService:
             except ValidationError:
                 errors.append("Invalid email format")
         
+        if not ec_number:
+            errors.append("EC number is required")
+        if not job_title:
+            errors.append("Job title is required")
+        if not company:
+            errors.append("Company is required")
+        
         return errors
     
     @staticmethod
@@ -144,18 +170,34 @@ class ChangeRequestService:
         section = Sections.objects.filter(id=data.get('section')).first() if data.get('section') else None
         district = Districts.objects.filter(id=data.get('district')).first() if data.get('district') else None
         
+        # Parse optional dates
+        parsed_date_resolution = None
+        if data.get('date_resolution_required'):
+            parsed_date_resolution = datetime.strptime(data['date_resolution_required'], "%Y-%m-%d").date()
+        
+        parsed_training_date = None
+        training_date_value = data.get('np_training_date') or data.get('training_date')
+        if training_date_value:
+            parsed_training_date = datetime.strptime(training_date_value, "%Y-%m-%d").date()
+        
         new_profile = NewProfile(
             username=data.get('username'),
+            ec_number=data.get('np_ec_number') or data.get('ec_number'),
             first_name=data.get('first_name'),
             last_name=data.get('last_name'),
             email=data.get('email'),
+            job_title=data.get('np_job_title') or data.get('job_title'),
+            company=data.get('np_company') or data.get('company'),
             designation=designation,
             section=section,
             cost_center=cost_center,
             district=district,
             region=region,
-            roles_to_action=data.get('roles_to_action'),
-            created_at=timezone.now()
+            depot_office=data.get('np_depot_office') or data.get('depot_office'),
+            sub_module=data.get('np_sub_module') or data.get('sub_module'),
+            training_date=parsed_training_date,
+            training_confirmation_link=data.get('np_training_confirmation_link') or data.get('training_confirmation_link'),
+            roles_to_action=data.get('roles_to_action')
         )
         new_profile.save()
         
@@ -168,6 +210,9 @@ class ChangeRequestService:
             new_profile=new_profile,
             change_description=data.get('change_description'),
             change_reason=data.get('change_reason'),
+            originator_company=data.get('originator_company'),
+            originator_site=data.get('originator_site'),
+            date_resolution_required=parsed_date_resolution,
             creator_designation=user.designation,
             created_by=user,
             region=region,
@@ -194,6 +239,11 @@ class ChangeRequestService:
         if not delegatee:
             raise ValueError(f"Delegatee '{delegatee_username}' not found")
         
+        # Parse optional originator metadata
+        parsed_date_resolution = None
+        if data.get('date_resolution_required'):
+            parsed_date_resolution = datetime.strptime(data['date_resolution_required'], "%Y-%m-%d").date()
+        
         # Create ProfileChange instance
         profile_change = ProfileChange(
             user=delegatee,
@@ -201,6 +251,11 @@ class ChangeRequestService:
             roles_to_action=data.get('roles_to_action'),
             change_date=timezone.now(),
             changed_by=user,
+            current_user_id=data.get('mod_current_user_id') or data.get('current_user_id'),
+            ec_number=data.get('mod_ec_number') or data.get('ec_number'),
+            reason_assign=data.get('mod_reason_assign') or data.get('reason_assign'),
+            reason_remove=data.get('mod_reason_remove') or data.get('reason_remove'),
+            correspondence_link=data.get('mod_correspondence_link') or data.get('correspondence_link'),
             status='PENDING'
         )
         profile_change.save()
@@ -221,6 +276,9 @@ class ChangeRequestService:
             profile_change=profile_change,
             change_description=data.get('change_description'),
             change_reason=data.get('change_reason'),
+            originator_company=data.get('originator_company'),
+            originator_site=data.get('originator_site'),
+            date_resolution_required=parsed_date_resolution,
             creator_designation=user.designation,
             created_by=user,
             region=user.region,
@@ -236,17 +294,35 @@ class ChangeRequestService:
     @transaction.atomic
     def create_profile_deactivation_cr(data: Dict[str, Any], user: UserProfile) -> ChangeRequest:
         """Create a profile deactivation change request"""
-        username_to_deactivate = data.get('username')
+        username_to_deactivate = data.get('username') or data.get('user_profile')
         user_to_deactivate = UserProfile.objects.filter(username=username_to_deactivate).first()
         
         if not user_to_deactivate:
             raise ValueError(f"User '{username_to_deactivate}' not found")
         
+        parsed_date_resolution = None
+        if data.get('date_resolution_required'):
+            parsed_date_resolution = datetime.strptime(data['date_resolution_required'], "%Y-%m-%d").date()
+        
+        effective_start = None
+        if data.get('deactivation_effective_start'):
+            naive_start = datetime.strptime(data['deactivation_effective_start'], "%Y-%m-%dT%H:%M")
+            effective_start = timezone.make_aware(naive_start, timezone.get_current_timezone())
+        
+        reactivation_date = None
+        if data.get('deactivation_reactivation_date'):
+            naive_reactivation = datetime.strptime(data['deactivation_reactivation_date'], "%Y-%m-%dT%H:%M")
+            reactivation_date = timezone.make_aware(naive_reactivation, timezone.get_current_timezone())
+        
         # Create ProfileDeactivation instance
         profile_deactivation = ProfileDeactivation(
             user=user_to_deactivate,
             application=data.get('for_application'),
-            deactivation_date=timezone.now(),
+            deactivation_date=effective_start or timezone.now(),
+            effective_start_date=effective_start,
+            reactivation_date=reactivation_date,
+            deactivation_reason=data.get('deactivation_reason'),
+            correspondence_link=data.get('deactivation_correspondence_link'),
             deactivated_by=user
         )
         profile_deactivation.save()
@@ -260,6 +336,9 @@ class ChangeRequestService:
             profile_deactivation=profile_deactivation,
             change_description=data.get('change_description'),
             change_reason=data.get('change_reason'),
+            originator_company=data.get('originator_company'),
+            originator_site=data.get('originator_site'),
+            date_resolution_required=parsed_date_resolution,
             creator_designation=user.designation,
             created_by=user,
             region=user.region,

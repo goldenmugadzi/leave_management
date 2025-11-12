@@ -466,6 +466,7 @@ def create_change_request(request):
                 "user_applications": user_applications,
                 "user_designations": user_designations,
                 "cost_centers": cost_centers,
+                "all_roles": Roles.objects.all(),
                 "user_title": user_title,
                 "user_groups": user_groups,
             })
@@ -479,6 +480,9 @@ def create_new_profile(request):
         
         change_reason = sanitized_data.get('change_reason')
         change_description = sanitized_data.get('change_description')
+        originator_company = sanitized_data.get('originator_company')
+        originator_site = sanitized_data.get('originator_site')
+        date_resolution_required_str = sanitized_data.get('date_resolution_required')
         profile_username = sanitized_data.get('username')
         first_name = sanitized_data.get('first_name')
         last_name = sanitized_data.get('last_name')
@@ -487,11 +491,21 @@ def create_new_profile(request):
         cost_center = sanitized_data.get('cost_center')
         application = sanitized_data.get('for_application')
         roles_to_action = sanitized_data.get('roles_to_action')
+        np_ec_number = sanitized_data.get('np_ec_number')
+        np_job_title = sanitized_data.get('np_job_title')
+        np_company = sanitized_data.get('np_company')
+        np_sub_module = sanitized_data.get('np_sub_module')
+        np_depot_office = sanitized_data.get('np_depot_office')
+        np_training_date_str = sanitized_data.get('np_training_date')
+        np_training_confirmation_link = sanitized_data.get('np_training_confirmation_link')
         
         # Validate input data
         validation_errors = validate_change_request_data({
             'change_reason': change_reason,
-            'change_description': change_description
+            'change_description': change_description,
+            'originator_company': originator_company,
+            'originator_site': originator_site,
+            'date_resolution_required': date_resolution_required_str
         })
         
         if validation_errors:
@@ -503,13 +517,33 @@ def create_new_profile(request):
             'username': profile_username,
             'first_name': first_name,
             'last_name': last_name,
-            'email': email
+            'email': email,
+            'np_ec_number': np_ec_number,
+            'np_job_title': np_job_title,
+            'np_company': np_company
         })
         
         if profile_validation_errors:
             for error in profile_validation_errors:
                 messages.error(request, error)
             return redirect("/change_requests/create_change_request")
+
+        # Parse dates
+        date_resolution_required = None
+        if date_resolution_required_str:
+            try:
+                date_resolution_required = datetime.strptime(date_resolution_required_str, "%Y-%m-%d").date()
+            except ValueError:
+                messages.error(request, "Invalid Date Resolution Required. Please use YYYY-MM-DD format.")
+                return redirect("/change_requests/create_change_request")
+
+        training_date = None
+        if np_training_date_str:
+            try:
+                training_date = datetime.strptime(np_training_date_str, "%Y-%m-%d").date()
+            except ValueError:
+                messages.error(request, "Invalid Training Date. Please use YYYY-MM-DD format.")
+                return redirect("/change_requests/create_change_request")
 
         # Check if username already exists
         if UserProfile.objects.filter(username=profile_username).exists():
@@ -522,11 +556,18 @@ def create_new_profile(request):
 
         user = NewProfile(
             username=profile_username,
+            ec_number=np_ec_number,
             first_name=first_name,
             last_name=last_name,
             email=email,
+            job_title=np_job_title,
+            company=np_company,
             designation=designation,
             cost_center= cost_center_,
+            depot_office=np_depot_office,
+            sub_module=np_sub_module,
+            training_date=training_date,
+            training_confirmation_link=np_training_confirmation_link,
             region=region,
             created_at=timezone.now(),
             roles_to_action=roles_to_action
@@ -543,7 +584,10 @@ def create_new_profile(request):
             new_profile=user,
             change_description=change_description,
             change_reason=change_reason,
-            creator_designation=designation,
+            originator_company=originator_company,
+            originator_site=originator_site,
+            date_resolution_required=date_resolution_required,
+            creator_designation=request.user.designation if request.user.designation else designation,
             created_by=request.user,
             region=region,
             cost_center=cr_cost_center,
@@ -604,21 +648,58 @@ def profile_modification_request(request):
     print(f"User: {request.user.username}, Method: {request.method}")
     
     try:
-        change_reason = request.POST.get("change_reason")
-        change_description = request.POST.get("change_description")
-        application = request.POST.get("for_application")
-        roles_to_action = request.POST.get("roles_to_action")
-        change_type = request.POST.get("change_type", "PERMANENT")
+        sanitized_data = sanitize_input(request.POST.dict())
+        change_reason = sanitized_data.get("change_reason")
+        change_description = sanitized_data.get("change_description")
+        application = sanitized_data.get("for_application")
+        roles_to_action = sanitized_data.get("roles_to_action")
+        change_type = sanitized_data.get("change_type", "PERMANENT")
+        originator_company = sanitized_data.get("originator_company")
+        originator_site = sanitized_data.get("originator_site")
+        date_resolution_required_str = sanitized_data.get("date_resolution_required")
+        mod_current_user_id = sanitized_data.get("mod_current_user_id")
+        mod_ec_number = sanitized_data.get("mod_ec_number")
+        mod_reason_assign = sanitized_data.get("mod_reason_assign")
+        mod_reason_remove = sanitized_data.get("mod_reason_remove")
+        mod_correspondence_link = sanitized_data.get("mod_correspondence_link")
         auth_user = request.user
+        roles_to_remove = request.POST.getlist("mod_roles_remove")
         
         print(f"Form data - application: {application}, change_type: {change_type}")
         print(f"Form data - roles_to_action: {roles_to_action}")
+
+        # Server-side validation for required fields
+        missing_fields = []
+        for field_name, field_value in [
+            ("Originator company", originator_company),
+            ("Originator site", originator_site),
+            ("Date resolution required", date_resolution_required_str),
+            ("Change reason", change_reason),
+            ("Change description", change_description),
+            ("Current user ID", mod_current_user_id),
+            ("EC number", mod_ec_number),
+            ("Reason for assigning new roles", mod_reason_assign),
+        ]:
+            if not (field_value or "").strip():
+                missing_fields.append(field_name)
+        
+        if missing_fields:
+            for field in missing_fields:
+                messages.error(request, f"{field} is required")
+            return redirect("/change_requests/create_change_request")
+
+        # Parse date resolution required
+        try:
+            date_resolution_required = datetime.strptime(date_resolution_required_str, "%Y-%m-%d").date()
+        except (ValueError, TypeError):
+            messages.error(request, "Invalid Date Resolution Required. Please use YYYY-MM-DD format.")
+            return redirect("/change_requests/create_change_request")
         
         # Handle different fields based on change type
         if change_type == "TEMPORARY_DELEGATION":
             # For temporary delegation, get delegator and delegatee
-            delegator_username = request.POST.get("delegator")
-            delegatee_username = request.POST.get("delegatee")
+            delegator_username = sanitized_data.get("delegator")
+            delegatee_username = sanitized_data.get("delegatee")
             
             print(f"TEMPORARY_DELEGATION - delegator: {delegator_username}, delegatee: {delegatee_username}")
             
@@ -643,7 +724,7 @@ def profile_modification_request(request):
                 return redirect("/change_requests/change_request_index")
         else:
             # For permanent role assignment, get user profile
-            user_profile_username = request.POST.get("user_profile")
+            user_profile_username = sanitized_data.get("user_profile")
             
             print(f"PERMANENT - user_profile: {user_profile_username}")
             
@@ -688,6 +769,11 @@ def profile_modification_request(request):
                     user=delegatee,  # The delegatee receives the roles
                     application=application,
                     roles_to_action="TEMPORARY_DELEGATION",
+                    current_user_id=mod_current_user_id,
+                    ec_number=mod_ec_number,
+                    reason_assign=mod_reason_assign,
+                    reason_remove=mod_reason_remove,
+                    correspondence_link=mod_correspondence_link,
                     change_date=timezone.now(),
                     changed_by=delegator,  # The delegator is the one delegating
                     status=PROFILE_CHANGE_STATUS['PENDING']  # Explicitly set status to PENDING
@@ -723,6 +809,10 @@ def profile_modification_request(request):
                 if selected_roles:
                     profile_mod.role_to_assign.set(Roles.objects.filter(id__in=selected_roles))
                     print("Roles assigned to ProfileChange successfully")
+                if roles_to_remove:
+                    profile_mod.role_to_remove.set(Roles.objects.filter(id__in=roles_to_remove))
+                else:
+                    profile_mod.role_to_remove.clear()
             except Exception as e:
                 error_msg = f"Error storing delegation data: {str(e)}"
                 print(f"ERROR: {error_msg}")
@@ -735,14 +825,24 @@ def profile_modification_request(request):
                 # Handle regular profile modification
                 profile_mod = ProfileChange(
                     user=delegatee,  # Use delegatee for regular modifications too
+                    application=application,
                     change_date=timezone.now(),
                     changed_by=delegator,  # Use delegator as the one making the change
                     roles_to_action=roles_to_action,
+                    current_user_id=mod_current_user_id,
+                    ec_number=mod_ec_number,
+                    reason_assign=mod_reason_assign,
+                    reason_remove=mod_reason_remove,
+                    correspondence_link=mod_correspondence_link,
                     status=PROFILE_CHANGE_STATUS['PENDING']  # Explicitly set status to PENDING
                 )
                 print(f"ProfileChange object created, about to save with status: {PROFILE_CHANGE_STATUS['PENDING']}")
                 profile_mod.save()
                 print(f"ProfileChange saved successfully with ID: {profile_mod.id}")
+                if roles_to_remove:
+                    profile_mod.role_to_remove.set(Roles.objects.filter(id__in=roles_to_remove))
+                else:
+                    profile_mod.role_to_remove.clear()
             except Exception as e:
                 error_msg = f"Error creating regular ProfileChange: {str(e)}"
                 print(f"ERROR: {error_msg}")
@@ -760,6 +860,11 @@ def profile_modification_request(request):
             change_type_display = "Profile Modification"
         
         print(f"Change type display: {change_type_display}")
+        
+        # Require reason for removal when roles were selected
+        if roles_to_remove and not (mod_reason_remove or "").strip():
+            messages.error(request, "Please provide a reason for removing current roles when selecting roles to remove.")
+            return redirect("/change_requests/change_request_index")
         
         # Validate required fields before creating ChangeRequest
         if not delegatee.designation:
@@ -783,7 +888,10 @@ def profile_modification_request(request):
                 profile_change=profile_mod,
                 change_description=change_description,
                 change_reason=change_reason,
-                creator_designation=delegatee.designation,
+                originator_company=originator_company,
+                originator_site=originator_site,
+                date_resolution_required=date_resolution_required,
+                creator_designation=request.user.designation if request.user.designation else delegatee.designation,
                 created_by=request.user,
                 region=region,
                 cost_center=cost_center,
@@ -1146,12 +1254,64 @@ def roles_modal(request):
 @login_required
 def profile_deactivation_request(request):
     try:
-        change_reason = request.POST.get('change_reason')
-        change_description = request.POST.get('change_description')
-        profile_username = request.POST.get('user_profile')
-        application = request.POST.get('application')
+        sanitized_data = sanitize_input(request.POST.dict())
+        change_reason = sanitized_data.get('change_reason')
+        change_description = sanitized_data.get('change_description')
+        profile_username = sanitized_data.get('user_profile')
+        application = sanitized_data.get('for_application')
+        originator_company = sanitized_data.get('originator_company')
+        originator_site = sanitized_data.get('originator_site')
+        date_resolution_required_str = sanitized_data.get('date_resolution_required')
+        effective_start_str = sanitized_data.get('deactivation_effective_start')
+        reactivation_str = sanitized_data.get('deactivation_reactivation_date')
+        deactivation_reason = sanitized_data.get('deactivation_reason')
+        correspondence_link = sanitized_data.get('deactivation_correspondence_link')
         user = UserProfile.objects.filter(username=profile_username).first()
         auth_user = request.user
+
+        # Validate required fields
+        missing_fields = []
+        for field_name, field_value in [
+            ("Originator company", originator_company),
+            ("Originator site", originator_site),
+            ("Date resolution required", date_resolution_required_str),
+            ("Change reason", change_reason),
+            ("Change description", change_description),
+            ("User profile", profile_username),
+            ("Reason for deactivation", deactivation_reason),
+            ("Effective start date", effective_start_str),
+        ]:
+            if not (field_value or "").strip():
+                missing_fields.append(field_name)
+        
+        if missing_fields:
+            for field in missing_fields:
+                messages.error(request, f"{field} is required")
+            return redirect("/change_requests/create_change_request")
+
+        # Parse dates
+        try:
+            date_resolution_required = datetime.strptime(date_resolution_required_str, "%Y-%m-%d").date()
+        except (ValueError, TypeError):
+            messages.error(request, "Invalid Date Resolution Required. Please use YYYY-MM-DD format.")
+            return redirect("/change_requests/create_change_request")
+
+        try:
+            effective_start_naive = datetime.strptime(effective_start_str, "%Y-%m-%dT%H:%M")
+            effective_start_date = timezone.make_aware(effective_start_naive, timezone.get_current_timezone())
+        except (ValueError, TypeError):
+            messages.error(request, "Invalid Effective Start Date. Please use YYYY-MM-DDTHH:MM format.")
+            return redirect("/change_requests/create_change_request")
+
+        reactivation_date = None
+        if reactivation_str:
+            try:
+                reactivation_naive = datetime.strptime(reactivation_str, "%Y-%m-%dT%H:%M")
+                reactivation_date = timezone.make_aware(reactivation_naive, timezone.get_current_timezone())
+            except ValueError:
+                messages.error(request, "Invalid Reactivation Date. Please use YYYY-MM-DDTHH:MM format.")
+                return redirect("/change_requests/create_change_request")
+
         if user:
             
             if not auth_user.cost_center:
@@ -1160,8 +1320,12 @@ def profile_deactivation_request(request):
             profile_deactivation = ProfileDeactivation(
                 user=user,
                 application=application,
-                deactivation_date=timezone.now(),
-                deactivated_by=user
+                deactivation_date=effective_start_date or timezone.now(),
+                effective_start_date=effective_start_date,
+                reactivation_date=reactivation_date,
+                deactivation_reason=deactivation_reason,
+                correspondence_link=correspondence_link,
+                deactivated_by=auth_user
             )
             profile_deactivation.save()
 
@@ -1173,7 +1337,10 @@ def profile_deactivation_request(request):
                 change_description=change_description,
                 change_reason=change_reason,
                 application=application,
-                creator_designation=user.designation,
+                originator_company=originator_company,
+                originator_site=originator_site,
+                date_resolution_required=date_resolution_required,
+                creator_designation=auth_user.designation if auth_user.designation else user.designation,
                 created_by=request.user,
                 region=auth_user.region,
                 cost_center=auth_user.cost_center if auth_user.cost_center else None,

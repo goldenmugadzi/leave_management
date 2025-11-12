@@ -63,6 +63,17 @@ class ChangeRequestWorkflowTestCase(TestCase):
             description='IT Section Head Role'
         )
         
+        # Assign organizational data to user profiles
+        self.user_profile.region = self.region
+        self.user_profile.cost_center = self.cost_center
+        self.user_profile.designation = self.designation
+        self.user_profile.save()
+        
+        self.approver_profile.region = self.region
+        self.approver_profile.cost_center = self.cost_center
+        self.approver_profile.designation = self.designation
+        self.approver_profile.save()
+        
         # Set up client
         self.client = Client()
     
@@ -75,6 +86,9 @@ class ChangeRequestWorkflowTestCase(TestCase):
         response = self.client.post('/change_requests/create_new_profile', {
             'change_reason': 'Need new user account',
             'change_description': 'Creating account for new employee',
+            'originator_company': 'ZETDC',
+            'originator_site': 'Harare Region',
+            'date_resolution_required': '2025-12-31',
             'username': 'newemployee',
             'first_name': 'New',
             'last_name': 'Employee',
@@ -82,7 +96,14 @@ class ChangeRequestWorkflowTestCase(TestCase):
             'designation': self.designation.id,
             'cost_center': self.cost_center.id,
             'for_application': self.application.id,
-            'roles_to_action': 'Add basic role'
+            'roles_to_action': 'Add basic role',
+            'np_ec_number': '1234567',
+            'np_job_title': 'Business Analyst',
+            'np_company': 'ZETDC',
+            'np_sub_module': 'Core',
+            'np_depot_office': 'Head Office',
+            'np_training_date': '2025-11-01',
+            'np_training_confirmation_link': 'https://example.com/training-proof'
         })
         
         # Should redirect after successful creation
@@ -90,7 +111,7 @@ class ChangeRequestWorkflowTestCase(TestCase):
         
         # Verify change request was created
         change_request = ChangeRequest.objects.filter(
-            change_type='NEW_PROFILE',
+            change_type='New Profile',
             created_by=self.user_profile
         ).first()
         
@@ -98,6 +119,8 @@ class ChangeRequestWorkflowTestCase(TestCase):
         self.assertEqual(change_request.change_reason, 'Need new user account')
         self.assertIsNotNone(change_request.new_profile)
         self.assertEqual(change_request.new_profile.username, 'newemployee')
+        self.assertEqual(change_request.originator_company, 'ZETDC')
+        self.assertEqual(change_request.new_profile.ec_number, '1234567')
     
     def test_approval_workflow(self):
         """Test complete approval workflow"""

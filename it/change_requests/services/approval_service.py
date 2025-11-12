@@ -45,6 +45,10 @@ class ApprovalWorkflow:
     @staticmethod
     def can_user_approve(cr: ChangeRequest, user: UserProfile, role: str) -> bool:
         """Check if user can approve at current workflow step"""
+        if cr.created_by == user:
+            logger.warning(f"User {user.username} attempted to approve their own change request {cr.cr_id}")
+            return False
+        
         current_step = ApprovalWorkflow.get_current_step(cr)
         
         if current_step == 'section_head' and role == 'section_head':
@@ -412,6 +416,12 @@ class ApprovalApplicationService:
                 profile_change.status = 'IMPLEMENTED'
                 profile_change.save()
                 
+                logger.info(
+                    f"Applied profile modification CR {cr.cr_id} - "
+                    f"assign_reason='{profile_change.reason_assign}', "
+                    f"remove_reason='{profile_change.reason_remove}'"
+                )
+                
                 logger.info(f"Applied profile changes for {user.username} from CR {cr.cr_id}")
             
             # Update CR status
@@ -430,6 +440,14 @@ class ApprovalApplicationService:
         try:
             profile_deactivation = cr.profile_deactivation
             user = profile_deactivation.user
+            effective_start = profile_deactivation.effective_start_date or timezone.now()
+            
+            if effective_start > timezone.now():
+                logger.info(f"Deactivation for user {user.username} scheduled ahead of effective start {effective_start.isoformat()}. Applying immediately per approval.")
+            
+            # Align deactivation date with effective start
+            profile_deactivation.deactivation_date = effective_start
+            profile_deactivation.save(update_fields=['deactivation_date'])
             
             # Deactivate user
             user.is_active = False

@@ -74,6 +74,76 @@
 
             <!-- Common Fields -->
             <div id="common-fields">
+              <!-- Originator Details -->
+              <div class="border-t border-gray-200 pt-6">
+                <h4 class="text-lg font-medium text-gray-900 mb-4">
+                  Originator Details
+                </h4>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div class="mb-6">
+                    <label
+                      for="np_ec_number"
+                      class="block text-sm font-medium text-gray-700 mb-2"
+                    >
+                      EC Number <span class="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      name="np_ec_number"
+                      id="np_ec_number"
+                      class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+                  <div class="mb-6">
+                    <label
+                      for="originator_company"
+                      class="block text-sm font-medium text-gray-700 mb-2"
+                    >
+                      Originator Company <span class="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      name="originator_company"
+                      id="originator_company"
+                      class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="Enter the company of the change request originator"
+                    />
+                  </div>
+                  <div class="mb-6">
+                    <label
+                      for="originator_site"
+                      class="block text-sm font-medium text-gray-700 mb-2"
+                    >
+                      Originator Site <span class="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      name="originator_site"
+                      id="originator_site"
+                      class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="Enter the site or location for this request"
+                    />
+                  </div>
+                  <div class="mb-6">
+                    <label
+                      for="date_resolution_required"
+                      class="block text-sm font-medium text-gray-700 mb-2"
+                    >
+                      Date Resolution Required <span class="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="date"
+                      name="date_resolution_required"
+                      id="date_resolution_required"
+                      class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                    <p class="mt-1 text-sm text-gray-500">
+                      Provide the required completion date for this change
+                    </p>
+                  </div>
+                </div>
+              </div>
+
               <!-- Reason for Change -->
               <div class="mb-6">
                 <label
@@ -311,6 +381,96 @@
                       {% endfor %}
                     </select>
                   </div>
+                  <div class="mb-6">
+                    <label
+                      for="np_job_title"
+                      class="block text-sm font-medium text-gray-700 mb-2"
+                    >
+                      Job Title <span class="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      name="np_job_title"
+                      id="np_job_title"
+                      class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+                  <div class="mb-6">
+                    <label
+                      for="np_company"
+                      class="block text-sm font-medium text-gray-700 mb-2"
+                    >
+                      Company <span class="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      name="np_company"
+                      id="np_company"
+                      class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+                  <div class="mb-6">
+                    <label
+                      for="np_sub_module"
+                      class="block text-sm font-medium text-gray-700 mb-2"
+                    >
+                      Sub Module
+                    </label>
+                    <input
+                      type="text"
+                      name="np_sub_module"
+                      id="np_sub_module"
+                      class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="Specify the application sub module (if applicable)"
+                    />
+                  </div>
+                  <div class="mb-6">
+                    <label
+                      for="np_depot_office"
+                      class="block text-sm font-medium text-gray-700 mb-2"
+                    >
+                      Depot / Office
+                    </label>
+                    <input
+                      type="text"
+                      name="np_depot_office"
+                      id="np_depot_office"
+                      class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="Specify the depot or office for the new profile"
+                    />
+                  </div>
+                  <div class="mb-6">
+                    <label
+                      for="np_training_date"
+                      class="block text-sm font-medium text-gray-700 mb-2"
+                    >
+                      Training Date
+                    </label>
+                    <input
+                      type="date"
+                      name="np_training_date"
+                      id="np_training_date"
+                      class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                    <p class="mt-1 text-sm text-gray-500">
+                      Provide the date training was completed (if required)
+                    </p>
+                  </div>
+                  <div class="mb-6">
+                    <label
+                      for="np_training_confirmation_link"
+                      class="block text-sm font-medium text-gray-700 mb-2"
+                    >
+                      Training Confirmation Link
+                    </label>
+                    <input
+                      type="url"
+                      name="np_training_confirmation_link"
+                      id="np_training_confirmation_link"
+                      class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="Provide a link to the training confirmation evidence"
+                    />
+                  </div>
                 </div>
               </div>
             </div>
@@ -498,6 +658,111 @@
                     </p>
                   </div>
                 </div>
+                <div class="border-t border-gray-200 pt-6 mt-6">
+                  <h4 class="text-lg font-medium text-gray-900 mb-4">
+                    Modification Supporting Details
+                  </h4>
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="mb-6">
+                      <label
+                        for="mod_current_user_id"
+                        class="block text-sm font-medium text-gray-700 mb-2"
+                      >
+                        Current User ID <span class="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        name="mod_current_user_id"
+                        id="mod_current_user_id"
+                        class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="e.g. ZE9104683"
+                      />
+                    </div>
+                    <div class="mb-6">
+                      <label
+                        for="mod_ec_number"
+                        class="block text-sm font-medium text-gray-700 mb-2"
+                      >
+                        EC Number <span class="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        name="mod_ec_number"
+                        id="mod_ec_number"
+                        class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      />
+                    </div>
+                  </div>
+                  <div class="mb-6">
+                    <label
+                      for="mod_reason_assign"
+                      class="block text-sm font-medium text-gray-700 mb-2"
+                    >
+                      Reason for Assigning New Roles <span class="text-red-500">*</span>
+                    </label>
+                    <textarea
+                      id="mod_reason_assign"
+                      name="mod_reason_assign"
+                      rows="3"
+                      class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="Explain why the new roles are required"
+                    ></textarea>
+                  </div>
+                  <div class="mb-6">
+                    <label
+                      for="mod_reason_remove"
+                      class="block text-sm font-medium text-gray-700 mb-2"
+                    >
+                      Reason for Removing Current Roles
+                    </label>
+                    <textarea
+                      id="mod_reason_remove"
+                      name="mod_reason_remove"
+                      rows="3"
+                      class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="Explain why roles should be removed (if applicable)"
+                    ></textarea>
+                  </div>
+                  <div class="mb-6">
+                    <label
+                      for="mod_correspondence_link"
+                      class="block text-sm font-medium text-gray-700 mb-2"
+                    >
+                      Correspondence / Instruction Link
+                    </label>
+                    <input
+                      type="url"
+                      id="mod_correspondence_link"
+                      name="mod_correspondence_link"
+                      class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="Provide a link to supporting correspondence"
+                    />
+                  </div>
+                  <div class="mb-6">
+                    <label
+                      for="mod_roles_remove"
+                      class="block text-sm font-medium text-gray-700 mb-2"
+                    >
+                      Select Roles to Remove
+                    </label>
+                    <select
+                      id="mod_roles_remove"
+                      name="mod_roles_remove"
+                      class="select2 block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      multiple
+                      data-placeholder="Select roles to remove"
+                    >
+                      {% if all_roles %}
+                      {% for role in all_roles %}
+                      <option value="{{ role.id }}">{{ role.name }}</option>
+                      {% endfor %}
+                      {% endif %}
+                    </select>
+                    <p class="mt-1 text-sm text-gray-500">
+                      Choose the existing roles that should be removed from the user
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -531,6 +796,66 @@
                   <p class="mt-1 text-sm text-gray-500">
                     Select the user whose profile needs to be deactivated
                   </p>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div class="mb-6">
+                    <label
+                      for="deactivation_effective_start"
+                      class="block text-sm font-medium text-gray-700 mb-2"
+                    >
+                      Effective Start Date <span class="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="datetime-local"
+                      id="deactivation_effective_start"
+                      name="deactivation_effective_start"
+                      class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+                  <div class="mb-6">
+                    <label
+                      for="deactivation_reactivation_date"
+                      class="block text-sm font-medium text-gray-700 mb-2"
+                    >
+                      Reactivation Date (if known)
+                    </label>
+                    <input
+                      type="datetime-local"
+                      id="deactivation_reactivation_date"
+                      name="deactivation_reactivation_date"
+                      class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+                </div>
+                <div class="mb-6">
+                  <label
+                    for="deactivation_reason"
+                    class="block text-sm font-medium text-gray-700 mb-2"
+                  >
+                    Reason for Deactivation <span class="text-red-500">*</span>
+                  </label>
+                  <textarea
+                    id="deactivation_reason"
+                    name="deactivation_reason"
+                    rows="3"
+                    class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Provide details for why the profile should be deactivated"
+                  ></textarea>
+                </div>
+                <div class="mb-6">
+                  <label
+                    for="deactivation_correspondence_link"
+                    class="block text-sm font-medium text-gray-700 mb-2"
+                  >
+                    Correspondence / Instruction Link
+                  </label>
+                  <input
+                    type="url"
+                    id="deactivation_correspondence_link"
+                    name="deactivation_correspondence_link"
+                    class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Provide a link to supporting correspondence"
+                  />
                 </div>
               </div>
             </div>
@@ -615,10 +940,13 @@
 <script>
   $(document).ready(function () {
     // Initialize Select2 for select fields
-    $(".select2").select2({
-      placeholder: "Select an option",
-      allowClear: true,
-      width: "100%",
+    $(".select2").each(function () {
+      const placeholder = $(this).data("placeholder") || "Select an option";
+      $(this).select2({
+        placeholder,
+        allowClear: true,
+        width: "100%",
+      });
     });
 
     function updateProfileFieldNames(operationType) {
@@ -869,6 +1197,18 @@
         isValid = false;
       }
 
+      ["originator_company", "originator_site", "date_resolution_required"].forEach(
+        (field) => {
+          if (!($(`#${field}`).val() || "").trim()) {
+            const label = field
+              .replace(/_/g, " ")
+              .replace(/\b\w/g, (l) => l.toUpperCase());
+            errors.push(`${label} is required`);
+            isValid = false;
+          }
+        }
+      );
+
       // Prevent default form submission to handle validation
       e.preventDefault();
 
@@ -877,12 +1217,15 @@
         // Only validate new profile fields if they are visible
         if (!$("#new-profile-fields").hasClass("hidden")) {
           const requiredFields = [
+            "np_ec_number",
             "first_name",
             "last_name",
             "username",
             "email",
             "designation",
             "cost_center",
+            "np_job_title",
+            "np_company",
           ];
           requiredFields.forEach((field) => {
             if (!$(`#${field}`).val()) {
@@ -900,6 +1243,31 @@
         const changeType = $("#change_type").val();
         if (!changeType) {
           errors.push("Change Type is required");
+          isValid = false;
+        }
+
+        const currentUserId = ($("#mod_current_user_id").val() || "").trim();
+        if (!currentUserId) {
+          errors.push("Current User ID is required");
+          isValid = false;
+        }
+
+        const modEcNumber = ($("#mod_ec_number").val() || "").trim();
+        if (!modEcNumber) {
+          errors.push("EC Number is required for profile modification");
+          isValid = false;
+        }
+
+        const reasonAssign = ($("#mod_reason_assign").val() || "").trim();
+        if (!reasonAssign) {
+          errors.push("Reason for assigning new roles is required");
+          isValid = false;
+        }
+
+        const rolesToRemoveSelection = $("#mod_roles_remove").val() || [];
+        const reasonRemove = ($("#mod_reason_remove").val() || "").trim();
+        if (rolesToRemoveSelection.length > 0 && !reasonRemove) {
+          errors.push("Please provide a reason for removing current roles");
           isValid = false;
         }
 
@@ -971,6 +1339,14 @@
         if (!$("#profile-deactivation-fields").hasClass("hidden")) {
           if (!$("#user_profile_deac").val()) {
             errors.push("User Profile is required");
+            isValid = false;
+          }
+          if (!$("#deactivation_effective_start").val()) {
+            errors.push("Effective Start Date is required");
+            isValid = false;
+          }
+          if (!($("#deactivation_reason").val() || "").trim()) {
+            errors.push("Reason for Deactivation is required");
             isValid = false;
           }
         }
