@@ -64,6 +64,9 @@ class ContextBuilder:
             "creator_designation": cr.creator_designation.description if cr.creator_designation else "",
             "created_at": cr.created_at,
             "change_type": cr.change_type,
+            "originator_company": cr.originator_company,
+            "originator_site": cr.originator_site,
+            "date_resolution_required": cr.date_resolution_required,
         }
         
         return context

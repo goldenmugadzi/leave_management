@@ -29,6 +29,48 @@
               <div class="p-6 space-y-6">
                 <!-- Common Fields -->
                 <div>
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    <div>
+                      <label for="originator_company" class="block text-sm font-medium text-gray-700 mb-2">
+                        Originator Company <span class="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        id="originator_company"
+                        name="originator_company"
+                        value="{{cr.originator_company|default_if_none:''}}"
+                        required
+                        class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      />
+                    </div>
+                    <div>
+                      <label for="originator_site" class="block text-sm font-medium text-gray-700 mb-2">
+                        Originator Site <span class="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        id="originator_site"
+                        name="originator_site"
+                        value="{{cr.originator_site|default_if_none:''}}"
+                        required
+                        class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      />
+                    </div>
+                    <div>
+                      <label for="date_resolution_required" class="block text-sm font-medium text-gray-700 mb-2">
+                        Date Resolution Required <span class="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="date"
+                        id="date_resolution_required"
+                        name="date_resolution_required"
+                        value="{{cr.date_resolution_required|date:'Y-m-d'}}"
+                        required
+                        class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      />
+                    </div>
+                  </div>
+
                   <div class="mb-6">
                     <label for="change_reason" class="block text-sm font-medium text-gray-700 mb-2">
                       Reason for Change <span class="text-red-500">*</span>
@@ -132,6 +174,74 @@
                 <!-- Profile Modification Details -->
                 <div class="border-t border-gray-200 pt-6">
                   <h4 class="text-lg font-medium text-gray-900 mb-4">Profile Modification Details</h4>
+
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="mb-6">
+                      <label for="mod_current_user_id" class="block text-sm font-medium text-gray-700 mb-2">
+                        Current User ID <span class="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        id="mod_current_user_id"
+                        name="mod_current_user_id"
+                        value="{{cr.user.current_user_id|default_if_none:''}}"
+                        required
+                        class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      />
+                    </div>
+                    <div class="mb-6">
+                      <label for="mod_ec_number" class="block text-sm font-medium text-gray-700 mb-2">
+                        EC Number <span class="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        id="mod_ec_number"
+                        name="mod_ec_number"
+                        value="{{cr.user.ec_number|default_if_none:''}}"
+                        required
+                        class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus-border-blue-500"
+                      />
+                    </div>
+                  </div>
+
+                  <div class="mb-6">
+                    <label for="mod_reason_assign" class="block text-sm font-medium text-gray-700 mb-2">
+                      Reason for Assigning New Roles <span class="text-red-500">*</span>
+                    </label>
+                    <textarea
+                      id="mod_reason_assign"
+                      name="mod_reason_assign"
+                      rows="3"
+                      required
+                      class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus-border-blue-500"
+                    >{{cr.user.reason_assign|default_if_none:''}}</textarea>
+                  </div>
+
+                  <div class="mb-6">
+                    <label for="mod_reason_remove" class="block text-sm font-medium text-gray-700 mb-2">
+                      Reason for Removing Current Roles
+                    </label>
+                    <textarea
+                      id="mod_reason_remove"
+                      name="mod_reason_remove"
+                      rows="3"
+                      class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus-border-blue-500"
+                    >{{cr.user.reason_remove|default_if_none:''}}</textarea>
+                  </div>
+
+                  <div class="mb-6">
+                    <label for="mod_correspondence_link" class="block text-sm font-medium text-gray-700 mb-2">
+                      Correspondence / Instruction Link
+                    </label>
+                    <input
+                      type="url"
+                      id="mod_correspondence_link"
+                      name="mod_correspondence_link"
+                      value="{{cr.user.correspondence_link|default_if_none:''}}"
+                      class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus-border-blue-500"
+                      placeholder="Provide a link to supporting correspondence"
+                    />
+                  </div>
 
                   <!-- Change Type Selection -->
                   <div class="mb-6">
@@ -290,6 +400,29 @@
                       </p>
                     </div>
                   </div>
+                </div>
+
+                <div class="border-t border-gray-200 pt-6">
+                  <h4 class="text-lg font-medium text-gray-900 mb-4">Roles to Remove</h4>
+                  <label for="mod_roles_remove" class="block text-sm font-medium text-gray-700 mb-2">
+                    Select Roles to Remove
+                  </label>
+                  <select
+                    id="mod_roles_remove"
+                    name="mod_roles_remove"
+                    class="select2 block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus-border-blue-500"
+                    multiple
+                    data-placeholder="Select roles to remove"
+                  >
+                    {% for role in all_roles %}
+                    <option value="{{ role.id }}" {% if cr.role_to_remove_ids and role.id in cr.role_to_remove_ids %}selected{% endif %}>
+                      {{ role.role }}{% if role.description %} - {{ role.description }}{% endif %}
+                    </option>
+                    {% endfor %}
+                  </select>
+                  <p class="mt-1 text-sm text-gray-500">
+                    Choose the existing roles that should be removed from the user
+                  </p>
                 </div>
               </div>
 

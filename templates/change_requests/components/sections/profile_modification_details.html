@@ -52,12 +52,39 @@
     {% include 'change_requests/components/forms/display_field.html' with label="Last Name" value=cr.user.lastname %}
     {% include 'change_requests/components/forms/display_field.html' with label="Username" value=cr.user.username %}
     {% include 'change_requests/components/forms/display_field.html' with label="Email" value=cr.user.email %}
+    {% include 'change_requests/components/forms/display_field.html' with label="Current User ID" value=cr.user.current_user_id %}
+    {% include 'change_requests/components/forms/display_field.html' with label="EC Number" value=cr.user.ec_number %}
     {% include 'change_requests/components/forms/display_field.html' with label="Designation" value=cr.user.designation %}
     {% include 'change_requests/components/forms/display_field.html' with label="Region" value=cr.user.region %}
     {% include 'change_requests/components/forms/display_field.html' with label="Cost Center" value=cr.user.cost_center %}
     {% include 'change_requests/components/forms/display_field.html' with label="Section" value=cr.user.section %}
     {% include 'change_requests/components/forms/display_field.html' with label="District" value=cr.user.district %}
   </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+    {% if cr.user.reason_assign %}
+      {% include 'change_requests/components/forms/display_field.html' with label="Reason for Assigning New Roles" value=cr.user.reason_assign %}
+    {% endif %}
+    {% if cr.user.reason_remove %}
+      {% include 'change_requests/components/forms/display_field.html' with label="Reason for Removing Current Roles" value=cr.user.reason_remove %}
+    {% endif %}
+    {% if cr.user.correspondence_link %}
+      {% include 'change_requests/components/forms/display_field.html' with label="Correspondence / Instruction" value=cr.user.correspondence_link %}
+    {% endif %}
+  </div>
+
+  {% if cr.user.roles_to_remove %}
+  <div class="mt-6">
+    <h4 class="text-base font-semibold text-gray-900 mb-3">Roles to Remove</h4>
+    <div class="bg-red-50 border border-red-200 rounded-md p-4">
+      <ul class="list-disc list-inside space-y-1">
+        {% for role in cr.user.roles_to_remove %}
+        <li class="text-sm text-gray-900">{{ role.role }}{% if role.description %} - {{ role.description }}{% endif %}</li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+  {% endif %}
 </div>
 
 <!-- Roles to Action / Delegated Roles -->

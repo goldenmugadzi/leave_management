@@ -20,3 +20,22 @@
   </div>
 </div>
 
+<!-- Deactivation Metadata -->
+<div class="border-t border-gray-200 pt-6">
+  <h4 class="text-lg font-medium text-gray-900 mb-4">Deactivation Details</h4>
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    {% if cr.user.deactivation_reason %}
+      {% include 'change_requests/components/forms/display_field.html' with label="Reason for Deactivation" value=cr.user.deactivation_reason %}
+    {% endif %}
+    {% if cr.user.effective_start_date %}
+      {% include 'change_requests/components/forms/display_field.html' with label="Effective Start Date" value=cr.user.effective_start_date %}
+    {% endif %}
+    {% if cr.user.reactivation_date %}
+      {% include 'change_requests/components/forms/display_field.html' with label="Reactivation Date" value=cr.user.reactivation_date %}
+    {% endif %}
+    {% if cr.user.correspondence_link %}
+      {% include 'change_requests/components/forms/display_field.html' with label="Correspondence / Instruction" value=cr.user.correspondence_link %}
+    {% endif %}
+  </div>
+</div>
+

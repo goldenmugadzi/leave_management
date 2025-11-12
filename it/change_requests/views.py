@@ -1400,19 +1400,28 @@ def new_profile_request(request):
         change_request = ChangeRequest.objects.get(cr_id=request.GET['i'])
         if change_request.new_profile:
 
+                np = change_request.new_profile
+                training_date_str = np.training_date.strftime("%Y-%m-%d") if np.training_date else ""
                 new_user = {
-                    "id": change_request.new_profile.pk,
-                    "username": change_request.new_profile.username,
-                    "firstname": change_request.new_profile.first_name,
-                    "lastname": change_request.new_profile.last_name,
-                    "email": change_request.new_profile.email,
-                    "roles_to_action": change_request.new_profile.roles_to_action,
-                    "roles_actions": change_request.new_profile.roles_actions,
-                    "section": Sections.objects.filter(id=change_request.new_profile.section.id).first() if change_request.new_profile.section else None,
-                    "district": Districts.objects.filter(id=change_request.new_profile.district.id).first() if change_request.new_profile.district else None,
-                    "region": Regions.objects.filter(id=change_request.new_profile.region.id).first() if change_request.new_profile.region else None,
-                    "cost_center": CostCenter.objects.filter(id=change_request.new_profile.cost_center.id).first() if change_request.new_profile.cost_center else None,
-                    "designation": Designations.objects.filter(id=change_request.new_profile.designation.id).first() if change_request.new_profile.designation else None,
+                    "id": np.pk,
+                    "username": np.username,
+                    "ec_number": np.ec_number,
+                    "firstname": np.first_name,
+                    "lastname": np.last_name,
+                    "email": np.email,
+                    "job_title": np.job_title,
+                    "company": np.company,
+                    "roles_to_action": np.roles_to_action,
+                    "roles_actions": np.roles_actions,
+                    "section": Sections.objects.filter(id=np.section.id).first() if np.section else None,
+                    "district": Districts.objects.filter(id=np.district.id).first() if np.district else None,
+                    "region": Regions.objects.filter(id=np.region.id).first() if np.region else None,
+                    "cost_center": CostCenter.objects.filter(id=np.cost_center.id).first() if np.cost_center else None,
+                    "designation": Designations.objects.filter(id=np.designation.id).first() if np.designation else None,
+                    "depot_office": np.depot_office,
+                    "sub_module": np.sub_module,
+                    "training_date": training_date_str,
+                    "training_confirmation_link": np.training_confirmation_link,
                 }
 
                 cr = {
@@ -1422,15 +1431,32 @@ def new_profile_request(request):
                     "change_description": change_request.change_description,
                     "application": change_request.application,
                     "created_by": change_request.created_by.first_name + " " + change_request.created_by.last_name,
-                    "creator_designation": change_request.creator_designation.description,
+                    "creator_designation": change_request.creator_designation.description if change_request.creator_designation else "",
                     "created_at": change_request.created_at,
                     "change_type": change_request.change_type,
-                    "overall_status": change_request.overall_status
+                    "overall_status": change_request.overall_status,
+                    "originator_company": change_request.originator_company,
+                    "originator_site": change_request.originator_site,
+                    "date_resolution_required": change_request.date_resolution_required,
                 }
                 
                 # Check if current user is the owner
                 is_owner = change_request.created_by == request.user
                 
+                info_items = [
+                    f"Originator Company: {cr['originator_company']}" if cr.get('originator_company') else None,
+                    f"Originator Site: {cr['originator_site']}" if cr.get('originator_site') else None,
+                    f"Resolution Required By: {cr['date_resolution_required']}" if cr.get('date_resolution_required') else None,
+                ]
+                info_items = [item for item in info_items if item]
+
+                info_items = [
+                    f"Originator Company: {cr['originator_company']}" if cr.get('originator_company') else None,
+                    f"Originator Site: {cr['originator_site']}" if cr.get('originator_site') else None,
+                    f"Resolution Required By: {cr['date_resolution_required']}" if cr.get('date_resolution_required') else None,
+                ]
+                info_items = [item for item in info_items if item]
+
                 return render(
                     request,
                     "change_requests/new_profile_request.html",
@@ -1456,19 +1482,28 @@ def update_change_request(request):
         change_request = ChangeRequest.objects.get(cr_id=request.GET['i'])
         if change_request.new_profile:
 
+                np = change_request.new_profile
+                training_date_str = np.training_date.strftime("%Y-%m-%d") if np.training_date else ""
                 new_user = {
-                    "id": change_request.new_profile.pk,
-                    "username": change_request.new_profile.username,
-                    "firstname": change_request.new_profile.first_name,
-                    "lastname": change_request.new_profile.last_name,
-                    "email": change_request.new_profile.email,
-                    "roles_to_action": change_request.new_profile.roles_to_action,
-                    "roles_actions": change_request.new_profile.roles_actions,
-                    "section": Sections.objects.filter(id=change_request.new_profile.section.id).first() if change_request.new_profile.section else None,
-                    "district": Districts.objects.filter(id=change_request.new_profile.district.id).first() if change_request.new_profile.district else None,
-                    "region": Regions.objects.filter(id=change_request.new_profile.region.id).first() if change_request.new_profile.region else None,
-                    "cost_center": CostCenter.objects.filter(id=change_request.new_profile.cost_center.id).first() if change_request.new_profile.cost_center else None,
-                    "designation": Designations.objects.filter(id=change_request.new_profile.designation.id).first() if change_request.new_profile.designation else None,
+                    "id": np.pk,
+                    "username": np.username,
+                    "ec_number": np.ec_number,
+                    "firstname": np.first_name,
+                    "lastname": np.last_name,
+                    "email": np.email,
+                    "job_title": np.job_title,
+                    "company": np.company,
+                    "roles_to_action": np.roles_to_action,
+                    "roles_actions": np.roles_actions,
+                    "section": Sections.objects.filter(id=np.section.id).first() if np.section else None,
+                    "district": Districts.objects.filter(id=np.district.id).first() if np.district else None,
+                    "region": Regions.objects.filter(id=np.region.id).first() if np.region else None,
+                    "cost_center": CostCenter.objects.filter(id=np.cost_center.id).first() if np.cost_center else None,
+                    "designation": Designations.objects.filter(id=np.designation.id).first() if np.designation else None,
+                    "depot_office": np.depot_office,
+                    "sub_module": np.sub_module,
+                    "training_date": training_date_str,
+                    "training_confirmation_link": np.training_confirmation_link,
                 }
 
                 cr = {
@@ -1478,8 +1513,11 @@ def update_change_request(request):
                     "change_description": change_request.change_description,
                     "application": change_request.application,  # FIXED: Added missing application field
                     "created_by": change_request.created_by.first_name + " " + change_request.created_by.last_name,
-                    "creator_designation": change_request.creator_designation.description,
-                    "created_at": change_request.created_at
+                    "creator_designation": change_request.creator_designation.description if change_request.creator_designation else "",
+                    "created_at": change_request.created_at,
+                    "originator_company": change_request.originator_company,
+                    "originator_site": change_request.originator_site,
+                    "date_resolution_required": change_request.date_resolution_required,
                 }
                 return render(
                     request,
@@ -1492,7 +1530,8 @@ def update_change_request(request):
                         "regions": Regions.objects.all(),
                         "user_title": request.user.get_full_name(),
                         "user_groups": list(request.user.groups.values_list('name', flat=True)),
-                        "cr": cr
+                        "cr": cr,
+                        "info_items": info_items,
                     }
                 )
         
@@ -1527,6 +1566,8 @@ def update_change_request(request):
             new_user = {
                 "id": user.pk,
                 "username": user.username,
+                "current_user_id": profile_change.current_user_id,
+                "ec_number": profile_change.ec_number,
                 "firstname": user.first_name,
                 "lastname": user.last_name,
                 "email": user.email,
@@ -1537,6 +1578,9 @@ def update_change_request(request):
                 "designation": user.designation if user.designation else None,
                 "roles_to_action": roles_to_action_display,  # FIXED: Now shows actual roles for delegations
                 "roles_actions": profile_change.roles_actions,
+                "reason_assign": profile_change.reason_assign,
+                "reason_remove": profile_change.reason_remove,
+                "correspondence_link": profile_change.correspondence_link,
             }
             
             # FIXED: Get delegation data from the correct fields
@@ -1595,6 +1639,9 @@ def update_change_request(request):
                 "created_at": change_request.created_at,
                 "change_type": change_request.change_type,
                 "overall_status": change_request.overall_status,
+                "originator_company": change_request.originator_company,
+                "originator_site": change_request.originator_site,
+                "date_resolution_required": change_request.date_resolution_required,
                 # FIXED: Added delegation-specific fields with correct data source
                 "is_delegation": is_delegation,
                 "delegation_type": "TEMPORARY" if is_delegation else "PERMANENT",
@@ -1602,6 +1649,7 @@ def update_change_request(request):
                 "delegator_id": delegator_obj.id if delegator_obj else None,  # ADDED: Delegator ID for AJAX
                 "delegatee_username": delegatee_username,
                 "assigned_role_ids": assigned_role_ids,  # For pre-selecting roles in edit form
+                "role_to_remove_ids": list(profile_change.role_to_remove.values_list('id', flat=True)),
                 # ADDED: Delegation date and reason fields
                 "delegation_start_date": delegation_start_date,
                 "delegation_end_date": delegation_end_date,
@@ -1630,6 +1678,13 @@ def update_change_request(request):
                 if app:
                     all_roles = Roles.objects.filter(app_id=app.id)
             
+            info_items = [
+                f"Originator Company: {cr['originator_company']}" if cr.get('originator_company') else None,
+                f"Originator Site: {cr['originator_site']}" if cr.get('originator_site') else None,
+                f"Resolution Required By: {cr['date_resolution_required']}" if cr.get('date_resolution_required') else None,
+            ]
+            info_items = [item for item in info_items if item]
+
             return render(
                 request,
                 "change_requests/update_profile_modification.html",
@@ -1649,12 +1704,31 @@ def update_change_request(request):
                     "all_roles": all_roles,  # All roles for the application
                     "delegator_roles": delegator_roles,  # ADDED: Delegator's available roles
                     "assigned_roles": profile_change.role_to_assign.all(),  # Currently assigned roles
+                    "info_items": info_items,
                 }
             )
         
         elif change_request.profile_deactivation:
             profile_deactivation = change_request.profile_deactivation
             user = profile_deactivation.user
+            effective_start_str = profile_deactivation.effective_start_date.strftime("%Y-%m-%dT%H:%M") if profile_deactivation.effective_start_date else ""
+            reactivation_str = profile_deactivation.reactivation_date.strftime("%Y-%m-%dT%H:%M") if profile_deactivation.reactivation_date else ""
+            deactivation_user = {
+                "id": user.pk,
+                "username": user.username,
+                "firstname": user.first_name,
+                "lastname": user.last_name,
+                "email": user.email,
+                "designation": user.designation,
+                "region": user.region,
+                "cost_center": user.cost_center,
+                "section": user.section,
+                "district": user.district,
+                "deactivation_reason": profile_deactivation.deactivation_reason,
+                "correspondence_link": profile_deactivation.correspondence_link,
+                "effective_start_date": profile_deactivation.effective_start_date,
+                "reactivation_date": profile_deactivation.reactivation_date,
+            }
             cr = {
                 "cr_id": change_request.cr_id,
                 "change_reason": change_request.change_reason,
@@ -1665,11 +1739,25 @@ def update_change_request(request):
                 "created_at": change_request.created_at,
                 "change_type": change_request.change_type,
                 "overall_status": change_request.overall_status,
-                "user": user
+                "user": deactivation_user,
+                "originator_company": change_request.originator_company,
+                "originator_site": change_request.originator_site,
+                "date_resolution_required": change_request.date_resolution_required,
+                "deactivation_reason": profile_deactivation.deactivation_reason,
+                "correspondence_link": profile_deactivation.correspondence_link,
+                "effective_start_date": effective_start_str,
+                "reactivation_date": reactivation_str,
             }
             
             # Check if current user is the owner
             is_owner = change_request.created_by == request.user
+            
+            info_items = [
+                f"Originator Company: {cr['originator_company']}" if cr.get('originator_company') else None,
+                f"Originator Site: {cr['originator_site']}" if cr.get('originator_site') else None,
+                f"Resolution Required By: {cr['date_resolution_required']}" if cr.get('date_resolution_required') else None,
+            ]
+            info_items = [item for item in info_items if item]
             
             return render(
                 request,
@@ -1686,7 +1774,8 @@ def update_change_request(request):
                     "user_groups": list(request.user.groups.values_list('name', flat=True)),
                     "cr": cr,
                     "change_request": change_request,
-                    "is_owner": is_owner
+                    "is_owner": is_owner,
+                    "info_items": info_items,
                 }
             )
             
@@ -1700,6 +1789,9 @@ def update_change_request(request):
             change_description = sanitized_data.get('change_description')
             roles_to_action = sanitized_data.get('roles_to_action')
             roles_actions = sanitized_data.get('roles_actions')
+            originator_company = sanitized_data.get('originator_company')
+            originator_site = sanitized_data.get('originator_site')
+            date_resolution_required_str = sanitized_data.get('date_resolution_required')
             change_request = ChangeRequest.objects.filter(cr_id=cr_id).first()
             
             # Check permissions
@@ -1720,6 +1812,16 @@ def update_change_request(request):
                 change_request.change_reason = change_reason if change_reason else change_request.change_reason
                 change_request.change_description = change_description if change_description else change_request.change_description
                 change_request.application = sanitized_data.get('application', change_request.application)
+                if originator_company:
+                    change_request.originator_company = originator_company
+                if originator_site:
+                    change_request.originator_site = originator_site
+                if date_resolution_required_str:
+                    try:
+                        change_request.date_resolution_required = datetime.strptime(date_resolution_required_str, "%Y-%m-%d").date()
+                    except ValueError:
+                        messages.error(request, "Invalid Date Resolution Required. Please use YYYY-MM-DD format.")
+                        return redirect("/change_requests/change_request_index")
                 change_request.save()
 
                 # Update type-specific fields
@@ -1734,11 +1836,47 @@ def update_change_request(request):
                     new_profile.last_name = sanitized_data.get('last_name', new_profile.last_name)
                     new_profile.username = sanitized_data.get('username', new_profile.username)
                     new_profile.email = sanitized_data.get('email', new_profile.email)
+                    ec_number = sanitized_data.get('np_ec_number') or sanitized_data.get('ec_number')
+                    if ec_number is not None:
+                        new_profile.ec_number = ec_number
+                    job_title = sanitized_data.get('np_job_title') or sanitized_data.get('job_title')
+                    if job_title is not None:
+                        new_profile.job_title = job_title
+                    company = sanitized_data.get('np_company') or sanitized_data.get('company')
+                    if company is not None:
+                        new_profile.company = company
+                    new_profile.depot_office = sanitized_data.get('np_depot_office', new_profile.depot_office)
+                    new_profile.sub_module = sanitized_data.get('np_sub_module', new_profile.sub_module)
+                    training_date_str = sanitized_data.get('np_training_date')
+                    if training_date_str:
+                        try:
+                            new_profile.training_date = datetime.strptime(training_date_str, "%Y-%m-%d").date()
+                        except ValueError:
+                            messages.error(request, "Invalid Training Date. Please use YYYY-MM-DD format.")
+                            return redirect("/change_requests/change_request_index")
+                    elif training_date_str == "":
+                        new_profile.training_date = None
+                    training_link = sanitized_data.get('np_training_confirmation_link')
+                    if training_link is not None:
+                        new_profile.training_confirmation_link = training_link
                     
                     # Update designation if provided
                     designation_id = sanitized_data.get('designation')
                     if designation_id:
                         new_profile.designation = Designations.objects.filter(id=designation_id).first()
+                    
+                    cost_center_id = sanitized_data.get('cost_center')
+                    if cost_center_id:
+                        new_profile.cost_center = CostCenter.objects.filter(id=cost_center_id).first()
+                    section_id = sanitized_data.get('section')
+                    if section_id:
+                        new_profile.section = Sections.objects.filter(id=section_id).first()
+                    district_id = sanitized_data.get('district')
+                    if district_id:
+                        new_profile.district = Districts.objects.filter(id=district_id).first()
+                    region_id = sanitized_data.get('region')
+                    if region_id:
+                        new_profile.region = Regions.objects.filter(id=region_id).first()
                     
                     new_profile.save()
                 
@@ -1748,6 +1886,11 @@ def update_change_request(request):
                     profile_mod.roles_to_action = roles_to_action if roles_to_action else profile_mod.roles_to_action
                     profile_mod.roles_actions = roles_actions if roles_actions else profile_mod.roles_actions
                     profile_mod.application = sanitized_data.get('application', profile_mod.application)
+                    profile_mod.current_user_id = sanitized_data.get('mod_current_user_id', profile_mod.current_user_id)
+                    profile_mod.ec_number = sanitized_data.get('mod_ec_number', profile_mod.ec_number)
+                    profile_mod.reason_assign = sanitized_data.get('mod_reason_assign', profile_mod.reason_assign)
+                    profile_mod.reason_remove = sanitized_data.get('mod_reason_remove', profile_mod.reason_remove)
+                    profile_mod.correspondence_link = sanitized_data.get('mod_correspondence_link', profile_mod.correspondence_link)
                     
                     # FIXED: Update delegated roles if this is a temporary delegation
                     if change_request.change_type == "Temporary Role Delegation":
@@ -1793,10 +1936,38 @@ def update_change_request(request):
                     
                     profile_mod.save()
                     
+                    # Update roles to remove (applies to both permanent modifications and delegations)
+                    if 'mod_roles_remove' in request.POST:
+                        roles_to_remove_ids = request.POST.getlist('mod_roles_remove')
+                        if roles_to_remove_ids:
+                            profile_mod.role_to_remove.set(Roles.objects.filter(id__in=roles_to_remove_ids))
+                        else:
+                            profile_mod.role_to_remove.clear()
+                    
                 elif change_request.profile_deactivation:
                     # Update ProfileDeactivation fields
                     profile_deactivation = change_request.profile_deactivation
                     profile_deactivation.application = sanitized_data.get('application', profile_deactivation.application)
+                    profile_deactivation.deactivation_reason = sanitized_data.get('deactivation_reason', profile_deactivation.deactivation_reason)
+                    profile_deactivation.correspondence_link = sanitized_data.get('deactivation_correspondence_link', profile_deactivation.correspondence_link)
+                    effective_start_str = sanitized_data.get('deactivation_effective_start')
+                    if effective_start_str:
+                        try:
+                            effective_start = timezone.make_aware(datetime.strptime(effective_start_str, "%Y-%m-%dT%H:%M"), timezone.get_current_timezone())
+                            profile_deactivation.effective_start_date = effective_start
+                            profile_deactivation.deactivation_date = effective_start
+                        except ValueError:
+                            messages.error(request, "Invalid Effective Start Date. Please use YYYY-MM-DDTHH:MM format.")
+                            return redirect("/change_requests/change_request_index")
+                    reactivation_str = sanitized_data.get('deactivation_reactivation_date')
+                    if reactivation_str:
+                        try:
+                            profile_deactivation.reactivation_date = timezone.make_aware(datetime.strptime(reactivation_str, "%Y-%m-%dT%H:%M"), timezone.get_current_timezone())
+                        except ValueError:
+                            messages.error(request, "Invalid Reactivation Date. Please use YYYY-MM-DDTHH:MM format.")
+                            return redirect("/change_requests/change_request_index")
+                    elif 'deactivation_reactivation_date' in sanitized_data and not reactivation_str:
+                        profile_deactivation.reactivation_date = None
                     profile_deactivation.save()
                 # clear approvals
                 CRApproval.objects.filter(cr_id=change_request).delete()
@@ -1868,11 +2039,14 @@ def build_new_profile_context(new_profile):
     return {
         "id": new_profile.pk,
         "username": new_profile.username,
+        "ec_number": new_profile.ec_number,
         "first_name": new_profile.first_name,  # With underscore (standard Django naming)
         "last_name": new_profile.last_name,    # With underscore (standard Django naming)
         "firstname": new_profile.first_name,   # Without underscore (legacy compatibility)
         "lastname": new_profile.last_name,     # Without underscore (legacy compatibility)
         "email": new_profile.email,
+        "job_title": new_profile.job_title,
+        "company": new_profile.company,
         "roles_to_action": new_profile.roles_to_action,
         "roles_actions": new_profile.roles_actions,
         "section": new_profile.section,
@@ -1880,6 +2054,10 @@ def build_new_profile_context(new_profile):
         "region": new_profile.region,
         "cost_center": new_profile.cost_center,
         "designation": new_profile.designation,
+        "depot_office": new_profile.depot_office,
+        "sub_module": new_profile.sub_module,
+        "training_date": new_profile.training_date,
+        "training_confirmation_link": new_profile.training_confirmation_link,
     }
 
 def build_profile_change_context(user, profile_change):
@@ -1895,6 +2073,8 @@ def build_profile_change_context(user, profile_change):
     return {
         "id": user.pk,
         "username": user.username,
+        "current_user_id": profile_change.current_user_id,
+        "ec_number": profile_change.ec_number,
         "firstname": user.first_name,
         "lastname": user.last_name,
         "email": user.email,
@@ -1905,6 +2085,10 @@ def build_profile_change_context(user, profile_change):
         "designation": user.designation,
         "roles_to_action": profile_change.roles_to_action,
         "roles_actions": profile_change.roles_actions,
+        "reason_assign": profile_change.reason_assign,
+        "reason_remove": profile_change.reason_remove,
+        "correspondence_link": profile_change.correspondence_link,
+        "roles_to_remove": list(profile_change.role_to_remove.all()),
     }
 
 def parse_delegation_data(profile_change):
@@ -2395,6 +2579,12 @@ def view_change_request_unified(request):
         
         # Add CR context
         context['cr'] = cr_context
+        info_items = [
+            f"Originator Company: {cr_context.get('originator_company')}" if cr_context.get('originator_company') else None,
+            f"Originator Site: {cr_context.get('originator_site')}" if cr_context.get('originator_site') else None,
+            f"Resolution Required By: {cr_context.get('date_resolution_required')}" if cr_context.get('date_resolution_required') else None,
+        ]
+        context['info_items'] = [item for item in info_items if item]
         
         logger.info(f"Rendering unified view for CR {cr_id} of type {cr.change_type}")
         return render(request, "change_requests/view_change_request.html", context)

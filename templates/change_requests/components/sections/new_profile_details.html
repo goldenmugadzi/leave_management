@@ -35,15 +35,26 @@
   </p>
   
   <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    {% include 'change_requests/components/forms/display_field.html' with label="EC Number" value=cr.user.ec_number %}
     {% include 'change_requests/components/forms/display_field.html' with label="First Name" value=cr.user.firstname %}
     {% include 'change_requests/components/forms/display_field.html' with label="Last Name" value=cr.user.lastname %}
     {% include 'change_requests/components/forms/display_field.html' with label="Username" value=cr.user.username %}
     {% include 'change_requests/components/forms/display_field.html' with label="Email" value=cr.user.email %}
+    {% include 'change_requests/components/forms/display_field.html' with label="Job Title" value=cr.user.job_title %}
+    {% include 'change_requests/components/forms/display_field.html' with label="Company" value=cr.user.company %}
     {% include 'change_requests/components/forms/display_field.html' with label="Designation" value=cr.user.designation %}
     {% include 'change_requests/components/forms/display_field.html' with label="Region" value=cr.user.region %}
     {% include 'change_requests/components/forms/display_field.html' with label="Cost Center" value=cr.user.cost_center %}
     {% include 'change_requests/components/forms/display_field.html' with label="Section" value=cr.user.section %}
     {% include 'change_requests/components/forms/display_field.html' with label="District" value=cr.user.district %}
+    {% include 'change_requests/components/forms/display_field.html' with label="Depot / Office" value=cr.user.depot_office %}
+    {% include 'change_requests/components/forms/display_field.html' with label="Sub Module" value=cr.user.sub_module %}
+    {% if cr.user.training_date %}
+      {% include 'change_requests/components/forms/display_field.html' with label="Training Date" value=cr.user.training_date %}
+    {% endif %}
+    {% if cr.user.training_confirmation_link %}
+      {% include 'change_requests/components/forms/display_field.html' with label="Training Confirmation" value=cr.user.training_confirmation_link %}
+    {% endif %}
   </div>
 </div>
 
