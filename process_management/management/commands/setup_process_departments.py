@@ -1,5 +1,5 @@
 """
-Django management command for setting up process departments.
+Django management command for setting up p rocess departments.
 
 This command creates the standard process departments that will be used
 during the Knowledge Center migration.
