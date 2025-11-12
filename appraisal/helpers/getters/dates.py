@@ -62,18 +62,5 @@ class CurrentQuarterDate:
             is_within_fourth_quarter=self.is_within_range(first_date=fourth_q_start_date, end_date=fourth_q_end_date)
         )
         
-    def get_quarter_for_date(self, target_date: date) -> int:
-        """Return the quarter number (1–4) for the given date."""
-        if 1 <= target_date.month <= 3:
-            return 1
-        elif 4 <= target_date.month <= 6:
-            return 2
-        elif 7 <= target_date.month <= 9:
-            return 3
-        elif 10 <= target_date.month <= 12:
-            return 4
-        else:
-            raise ValueError("Invalid month in date")
-        
     
     

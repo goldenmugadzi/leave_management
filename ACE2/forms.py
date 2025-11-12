@@ -338,13 +338,14 @@ class ViramentForm(forms.ModelForm):
 
 
 class AceReportForm(forms.ModelForm):
-    start_date = forms.DateField(required=True, widget=forms.DateInput(attrs={'type': 'date'}))
-    end_date = forms.DateField(required=True, widget=forms.DateInput(attrs={'type': 'date'}))
+    start_date = forms.DateField(required=False, widget=forms.DateInput(attrs={'type': 'date'}))
+    end_date = forms.DateField(required=False, widget=forms.DateInput(attrs={'type': 'date'}))
     budget_id = forms.ModelChoiceField(
-        queryset=AssetBudget.objects.all(),
+        queryset=AssetBudget.objects.none(),  # Set initially empty, populated in __init__
         required=False,
         empty_label="All Budgets"
     )
+    # Removed cost_center field to simplify reporting
 
     # period = forms.DateField(required=True, widget=forms.DateInput(attrs={'type': 'date'}))
     class Meta:
@@ -367,15 +368,22 @@ class AceReportForm(forms.ModelForm):
         print("user", user)
 
         if user:
-            user_profile = UserProfile.objects.filter(username=user.username).first()
-            if user_profile:
-                region = user_profile.region
-                region_id = Regions.objects.filter(region=region).first()
+            # Handle both UserProfile and User objects
+            if isinstance(user, UserProfile):
+                user_profile = user
+            else:
+                user_profile = UserProfile.objects.filter(username=user.username).first()
 
-                print("region", region)
-                self.fields['budget_id'].queryset = AssetBudget.objects.filter(period=2025, region=region)
-                # self.fields['section'].queryset = Sections.objects.filter(region_id=region_id.id)
-                #
+            if user_profile and user_profile.region:
+                # Get budgets for user's region (without period restriction)
+                self.fields['budget_id'].queryset = AssetBudget.objects.filter(
+                    region=user_profile.region
+                ).order_by('-period', 'budget_name')
+                
+                # Store the region for form validation
+                self.user_region = user_profile.region
+            else:
+                self.fields['budget_id'].queryset = AssetBudget.objects.none()
 
         for field_name, field in self.fields.items():
             # for the field budget, I want it to display its balance attribute when it selected

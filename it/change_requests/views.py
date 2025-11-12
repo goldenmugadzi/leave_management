@@ -6,7 +6,6 @@ from django.forms import model_to_dict
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import redirect, render
 from django.utils import timezone
-from django.db import transaction
 
 from it.change_requests.models import CRApproval, ChangeRequest, NewProfile, ProfileChange, ProfileDeactivation
 from it.users.forms import ResponsibilitiesForm
@@ -40,14 +39,7 @@ from .constants import (
     ERROR_MESSAGES, SUCCESS_MESSAGES, WARNING_MESSAGES, LOG_MESSAGES,
     MAX_REASON_LENGTH, MAX_DESCRIPTION_LENGTH, REQUIRED_CHANGE_REQUEST_FIELDS,
     REQUIRED_NEW_PROFILE_FIELDS, URL_PATTERNS, CACHE_TIMEOUT, USER_DATA_CACHE_KEY_PREFIX,
-    PROFILE_CHANGE_STATUS, APPLICATION_NAMES
-)
-
-# Import service layer
-from .services import (
-    ChangeRequestService, CRTypeHandler, ApprovalService, ApprovalWorkflow,
-    NotificationService, ContextBuilder, NewProfileHandler, ProfileModificationHandler,
-    ProfileDeactivationHandler
+    PROFILE_CHANGE_STATUS
 )
 
 # Create your views here.
@@ -100,7 +92,7 @@ def check_change_request_permissions(user, change_request):
     if not change_request:
         return False, "Change request not found"
     
-    # Check if user is the creator (owner can edit their own request)
+    # Check if user is the creator
     if change_request.created_by == user:
         return True, "User is the creator"
     
@@ -113,17 +105,10 @@ def check_change_request_permissions(user, change_request):
             ).first()
             if user_responsibilities and change_request.cost_center in user_responsibilities.cost_centers.all():
                 return True, "User has section head permissions"
-        # Check if user has IT section head role
-        elif user_role and user_role.role == "it_section_head":
-            user_responsibilities = Responsibilities.objects.filter(
-                user=user, role=user_role
-            ).first()
-            if user_responsibilities and change_request.cost_center in user_responsibilities.cost_centers.all():
-                return True, "User has IT section head permissions"
     except Exception:
         pass
     
-    return False, "Insufficient permissions to edit this request"
+    return False, "Insufficient permissions"
 
 @monitor_performance(threshold_ms=200)
 def get_change_requests_optimized(user, filters=None, include_deleted=False):
@@ -511,11 +496,6 @@ def create_new_profile(request):
                 messages.error(request, error)
             return redirect("/change_requests/create_change_request")
 
-        # Check if username already exists
-        if UserProfile.objects.filter(username=profile_username).exists():
-            messages.error(request, f"Username '{profile_username}' already exists. Please choose a different username.")
-            return redirect("/change_requests/create_change_request")
-
         region = Regions.objects.filter(id=request.user.region.id).first() if request.user else None
         cost_center_ = CostCenter.objects.filter(id=cost_center).first() if cost_center else None
         designation = Designations.objects.filter(id=designation_).first() if designation_ else None
@@ -606,63 +586,37 @@ def profile_modification_request(request):
     try:
         change_reason = request.POST.get("change_reason")
         change_description = request.POST.get("change_description")
+        delegator_username = request.POST.get("delegator")
+        delegatee_username = request.POST.get("delegatee")
         application = request.POST.get("for_application")
         roles_to_action = request.POST.get("roles_to_action")
         change_type = request.POST.get("change_type", "PERMANENT")
         auth_user = request.user
         
+        print(f"Form data - delegator: {delegator_username}, delegatee: {delegatee_username}")
         print(f"Form data - application: {application}, change_type: {change_type}")
         print(f"Form data - roles_to_action: {roles_to_action}")
+        print("delegator: ", delegator_username, "delegatee: ", delegatee_username)
         
-        # Handle different fields based on change type
-        if change_type == "TEMPORARY_DELEGATION":
-            # For temporary delegation, get delegator and delegatee
-            delegator_username = request.POST.get("delegator")
-            delegatee_username = request.POST.get("delegatee")
+        # Get delegator and delegatee users
+        print("Fetching delegator and delegatee users from database")
+        delegator = UserProfile.objects.filter(username=delegator_username).first()
+        delegatee = UserProfile.objects.filter(username=delegatee_username).first()
+        
+        print(f"Delegator found: {delegator is not None}")
+        print(f"Delegatee found: {delegatee is not None}")
+        
+        if not delegator:
+            error_msg = f"Delegator '{delegator_username}' not found in database"
+            print(f"ERROR: {error_msg}")
+            messages.error(request, error_msg)
+            return redirect("/change_requests/change_request_index")
             
-            print(f"TEMPORARY_DELEGATION - delegator: {delegator_username}, delegatee: {delegatee_username}")
-            
-            # Get delegator and delegatee users
-            print("Fetching delegator and delegatee users from database")
-            delegator = UserProfile.objects.filter(username=delegator_username).first()
-            delegatee = UserProfile.objects.filter(username=delegatee_username).first()
-            
-            print(f"Delegator found: {delegator is not None}")
-            print(f"Delegatee found: {delegatee is not None}")
-            
-            if not delegator:
-                error_msg = f"Delegator '{delegator_username}' not found in database"
-                print(f"ERROR: {error_msg}")
-                messages.error(request, error_msg)
-                return redirect("/change_requests/change_request_index")
-                
-            if not delegatee:
-                error_msg = f"Delegatee '{delegatee_username}' not found in database"
-                print(f"ERROR: {error_msg}")
-                messages.error(request, error_msg)
-                return redirect("/change_requests/change_request_index")
-        else:
-            # For permanent role assignment, get user profile
-            user_profile_username = request.POST.get("user_profile")
-            
-            print(f"PERMANENT - user_profile: {user_profile_username}")
-            
-            # Get the user profile
-            print("Fetching user profile from database")
-            user_profile = UserProfile.objects.filter(username=user_profile_username).first()
-            
-            print(f"User profile found: {user_profile is not None}")
-            
-            if not user_profile:
-                error_msg = f"User profile '{user_profile_username}' not found in database"
-                print(f"ERROR: {error_msg}")
-                messages.error(request, error_msg)
-                return redirect("/change_requests/change_request_index")
-            
-            # For permanent changes, the logged-in user is the one making the change
-            # and the selected user profile is the one being modified
-            delegator = auth_user  # The person making the change request
-            delegatee = user_profile  # The person whose profile is being modified
+        if not delegatee:
+            error_msg = f"Delegatee '{delegatee_username}' not found in database"
+            print(f"ERROR: {error_msg}")
+            messages.error(request, error_msg)
+            return redirect("/change_requests/change_request_index")
         
         print(f"Delegator details: ID={delegator.id}, designation={delegator.designation}")
         print(f"Delegatee details: ID={delegatee.id}, designation={delegatee.designation}")
@@ -812,7 +766,7 @@ def profile_modification_request(request):
         
         try:
             # Get section head approver for this cost center
-            application = Application.objects.filter(name="change_requests").first()
+            application = Application.objects.filter(name="Change Requests").first()
             section_head_role = Roles.objects.filter(role="section_head", app_id=application.id).first()
             approver_responsibilities = Responsibilities.objects.filter(
                 role=section_head_role,
@@ -1184,7 +1138,7 @@ def profile_deactivation_request(request):
             messages.success(request, "Change request submitted successfully")   
             try:     
                 # Get section head approver for this cost center
-                application = Application.objects.filter(name="change_requests").first()
+                application = Application.objects.filter(name="Change Requests").first()
                 section_head_role = Roles.objects.filter(role="section_head", app_id=application.id).first()
                 approver_responsibilities = Responsibilities.objects.filter(
                     role=section_head_role,
@@ -1253,17 +1207,10 @@ def new_profile_request(request):
                     "cr_id": change_request.cr_id,
                     "change_reason": change_request.change_reason,
                     "change_description": change_request.change_description,
-                    "application": change_request.application,
                     "created_by": change_request.created_by.first_name + " " + change_request.created_by.last_name,
                     "creator_designation": change_request.creator_designation.description,
-                    "created_at": change_request.created_at,
-                    "change_type": change_request.change_type,
-                    "overall_status": change_request.overall_status
+                    "created_at": change_request.created_at
                 }
-                
-                # Check if current user is the owner
-                is_owner = change_request.created_by == request.user
-                
                 return render(
                     request,
                     "change_requests/new_profile_request.html",
@@ -1273,12 +1220,9 @@ def new_profile_request(request):
                         "sections": Sections.objects.all(),
                         "districts": Districts.objects.all(),
                         "regions": Regions.objects.all(),
-                        "cost_centers": CostCenter.objects.all(),
                         "user_title": request.user.get_full_name(),
                         "user_groups": list(request.user.groups.values_list('name', flat=True)),
-                        "cr": cr,
-                        "change_request": change_request,
-                        "is_owner": is_owner
+                        "cr": cr
                     }
                 )
                 
@@ -1309,7 +1253,6 @@ def update_change_request(request):
                     "cr_id": change_request.cr_id,
                     "change_reason": change_request.change_reason,
                     "change_description": change_request.change_description,
-                    "application": change_request.application,  # FIXED: Added missing application field
                     "created_by": change_request.created_by.first_name + " " + change_request.created_by.last_name,
                     "creator_designation": change_request.creator_designation.description,
                     "created_at": change_request.created_at
@@ -1337,26 +1280,6 @@ def update_change_request(request):
             except Exception as ex:
                 print("error: ", ex)
                 cost_center = None
-            # FIXED: Build roles_to_action string from actual assigned roles for delegations
-            roles_to_action_display = profile_change.roles_to_action
-            if change_request.change_type == "Temporary Role Delegation":
-                # Get actual roles from role_to_assign ManyToMany field
-                assigned_roles = profile_change.role_to_assign.all()
-                print(f"DEBUG: Temporary delegation - assigned_roles count: {assigned_roles.count()}")
-                if assigned_roles.exists():
-                    # Build a readable string of role names
-                    role_names = [role.role for role in assigned_roles]
-                    roles_to_action_display = ", ".join(role_names)
-                    print(f"DEBUG: Built roles display string: {roles_to_action_display}")
-                else:
-                    # Fallback to stored value if no roles assigned yet
-                    roles_to_action_display = profile_change.roles_to_action or ""
-                    print(f"DEBUG: No assigned roles, using fallback: {roles_to_action_display}")
-            elif profile_change.roles_to_action:
-                roles_to_action_display = profile_change.roles_to_action
-            
-            print(f"DEBUG: Final roles_to_action_display value: '{roles_to_action_display}'")
-            
             new_user = {
                 "id": user.pk,
                 "username": user.username,
@@ -1368,101 +1291,19 @@ def update_change_request(request):
                 "region": user.region,
                 "cost_center": cost_center,
                 "designation": user.designation if user.designation else None,
-                "roles_to_action": roles_to_action_display,  # FIXED: Now shows actual roles for delegations
+                "roles_to_action": profile_change.roles_to_action,
                 "roles_actions": profile_change.roles_actions,
             }
-            
-            # FIXED: Get delegation data from the correct fields
-            # The delegator is stored in profile_change.changed_by
-            # The delegatee is stored in profile_change.user
-            is_delegation = change_request.change_type == "Temporary Role Delegation"
-            
-            # Get delegator from changed_by field (who initiated the delegation)
-            delegator_username = profile_change.changed_by.username if profile_change.changed_by else None
-            delegator_obj = profile_change.changed_by  # Keep reference to delegator object
-            # Delegatee is the user being modified
-            delegatee_username = user.username
-            
-            # Get assigned roles for the edit form (for role selection)
-            assigned_role_ids = list(profile_change.role_to_assign.values_list('id', flat=True))
-            
-            print(f"DEBUG: Delegator: {delegator_username}, Delegatee: {delegatee_username}")
-            print(f"DEBUG: Assigned role IDs: {assigned_role_ids}")
-
-            # ADDED: Extract delegation dates and reason from JSON
-            delegation_start_date = ""
-            delegation_end_date = ""
-            delegation_reason = ""
-            
-            if is_delegation and profile_change.roles_actions:
-                try:
-                    import json
-                    data = json.loads(profile_change.roles_actions)
-                    
-                    # Extract dates in format suitable for datetime-local input (YYYY-MM-DDTHH:MM)
-                    start_date_raw = data.get('start_date', '')
-                    end_date_raw = data.get('end_date', '')
-                    
-                    if start_date_raw:
-                        # Convert to datetime-local format if needed
-                        # Expected format: "2025-11-06T13:24" (already in datetime-local format)
-                        delegation_start_date = start_date_raw
-                    
-                    if end_date_raw:
-                        delegation_end_date = end_date_raw
-                    
-                    delegation_reason = data.get('reason', '')
-                    
-                    print(f"DEBUG: Extracted delegation dates - Start: {delegation_start_date}, End: {delegation_end_date}")
-                except (json.JSONDecodeError, Exception) as e:
-                    print(f"DEBUG: Error parsing delegation dates: {e}")
 
             cr = {
                 "user": new_user,
                 "cr_id": change_request.cr_id,
                 "change_reason": change_request.change_reason,
                 "change_description": change_request.change_description,
-                "application": change_request.application,
                 "created_by": change_request.created_by.first_name + " " + change_request.created_by.last_name,
                 "creator_designation": change_request.creator_designation.description,
-                "created_at": change_request.created_at,
-                "change_type": change_request.change_type,
-                "overall_status": change_request.overall_status,
-                # FIXED: Added delegation-specific fields with correct data source
-                "is_delegation": is_delegation,
-                "delegation_type": "TEMPORARY" if is_delegation else "PERMANENT",
-                "delegator_username": delegator_username,
-                "delegator_id": delegator_obj.id if delegator_obj else None,  # ADDED: Delegator ID for AJAX
-                "delegatee_username": delegatee_username,
-                "assigned_role_ids": assigned_role_ids,  # For pre-selecting roles in edit form
-                # ADDED: Delegation date and reason fields
-                "delegation_start_date": delegation_start_date,
-                "delegation_end_date": delegation_end_date,
-                "delegation_reason": delegation_reason,
+                "created_at": change_request.created_at
             }
-            
-            # Check if current user is the owner
-            is_owner = change_request.created_by == request.user
-            
-            # Get delegator's available roles (for role selection in delegation edits)
-            delegator_roles = []
-            if is_delegation and profile_change.changed_by:
-                # Get the delegator's roles for the application
-                delegator_obj = profile_change.changed_by
-                if change_request.application:
-                    app = Application.objects.filter(name=change_request.application).first()
-                    if app:
-                        # Get all roles the delegator has for this application
-                        delegator_roles = delegator_obj.roles.filter(app_id=app.id).all()
-                        print(f"DEBUG: Delegator {delegator_obj.username} has {delegator_roles.count()} roles for {change_request.application}")
-            
-            # Get all roles for the application (fallback for regular modifications)
-            all_roles = []
-            if change_request.application:
-                app = Application.objects.filter(name=change_request.application).first()
-                if app:
-                    all_roles = Roles.objects.filter(app_id=app.id)
-            
             return render(
                 request,
                 "change_requests/update_profile_modification.html",
@@ -1472,16 +1313,10 @@ def update_change_request(request):
                     "sections": Sections.objects.all(),
                     "districts": Districts.objects.all(),
                     "regions": Regions.objects.all(),
-                    "cost_centers": CostCenter.objects.all(),
-                    "user_profiles": UserProfile.objects.filter(is_active=True),
                     "user_title": request.user.get_full_name(),
                     "user_groups": list(request.user.groups.values_list('name', flat=True)),
                     "cr": cr,
-                    "change_request": change_request,
-                    "is_owner": is_owner,
-                    "all_roles": all_roles,  # All roles for the application
-                    "delegator_roles": delegator_roles,  # ADDED: Delegator's available roles
-                    "assigned_roles": profile_change.role_to_assign.all(),  # Currently assigned roles
+                    "change_request": change_request
                 }
             )
         
@@ -1492,18 +1327,10 @@ def update_change_request(request):
                 "cr_id": change_request.cr_id,
                 "change_reason": change_request.change_reason,
                 "change_description": change_request.change_description,
-                "application": change_request.application,
                 "created_by": change_request.created_by.first_name + " " + change_request.created_by.last_name,
                 "creator_designation": change_request.creator_designation.description,
-                "created_at": change_request.created_at,
-                "change_type": change_request.change_type,
-                "overall_status": change_request.overall_status,
-                "user": user
+                "created_at": change_request.created_at
             }
-            
-            # Check if current user is the owner
-            is_owner = change_request.created_by == request.user
-            
             return render(
                 request,
                 "change_requests/update_profile_deactivation.html",
@@ -1513,13 +1340,10 @@ def update_change_request(request):
                     "sections": Sections.objects.all(),
                     "districts": Districts.objects.all(),
                     "regions": Regions.objects.all(),
-                    "cost_centers": CostCenter.objects.all(),
-                    "user_profiles": UserProfile.objects.filter(is_active=True),
                     "user_title": request.user.get_full_name(),
                     "user_groups": list(request.user.groups.values_list('name', flat=True)),
                     "cr": cr,
-                    "change_request": change_request,
-                    "is_owner": is_owner
+                    "change_request": change_request
                 }
             )
             
@@ -1549,87 +1373,24 @@ def update_change_request(request):
                 messages.warning(request, "Change request has already been approved by the section head. You cannot update it")
                 return redirect("/change_requests/change_request_index")
             else:
-                # Update the ChangeRequest common fields
+                
                 change_request.change_reason = change_reason if change_reason else change_request.change_reason
                 change_request.change_description = change_description if change_description else change_request.change_description
-                change_request.application = sanitized_data.get('application', change_request.application)
+                change_request.roles_to_action = roles_to_action if roles_to_action else change_request.roles_to_action
+                change_request.roles_actions = roles_actions if roles_actions else change_request.roles_actions
                 change_request.save()
 
-                # Update type-specific fields
-                if change_request.new_profile:
-                    # Update NewProfile fields
-                    new_profile = change_request.new_profile
-                    new_profile.roles_to_action = roles_to_action if roles_to_action else new_profile.roles_to_action
-                    new_profile.roles_actions = roles_actions if roles_actions else new_profile.roles_actions
-                    
-                    # Update other new profile fields if provided
-                    new_profile.first_name = sanitized_data.get('first_name', new_profile.first_name)
-                    new_profile.last_name = sanitized_data.get('last_name', new_profile.last_name)
-                    new_profile.username = sanitized_data.get('username', new_profile.username)
-                    new_profile.email = sanitized_data.get('email', new_profile.email)
-                    
-                    # Update designation if provided
-                    designation_id = sanitized_data.get('designation')
-                    if designation_id:
-                        new_profile.designation = Designations.objects.filter(id=designation_id).first()
-                    
-                    new_profile.save()
-                
-                elif change_request.profile_change:
-                    # Update ProfileChange fields
-                    profile_mod = change_request.profile_change
-                    profile_mod.roles_to_action = roles_to_action if roles_to_action else profile_mod.roles_to_action
-                    profile_mod.roles_actions = roles_actions if roles_actions else profile_mod.roles_actions
-                    profile_mod.application = sanitized_data.get('application', profile_mod.application)
-                    
-                    # FIXED: Update delegated roles if this is a temporary delegation
-                    if change_request.change_type == "Temporary Role Delegation":
-                        selected_role_ids = request.POST.getlist('roles')
-                        print(f"DEBUG: Updating delegation with selected roles: {selected_role_ids}")
-                        if selected_role_ids:
-                            # Update the role_to_assign ManyToMany field
-                            profile_mod.role_to_assign.set(Roles.objects.filter(id__in=selected_role_ids))
-                            print(f"DEBUG: Updated role_to_assign with {len(selected_role_ids)} roles")
-                        else:
-                            # Clear roles if none selected
-                            profile_mod.role_to_assign.clear()
-                            print("DEBUG: Cleared all role assignments")
-                        
-                        # ADDED: Update delegation dates and reason
-                        delegation_start_date = sanitized_data.get('delegation_start_date')
-                        delegation_end_date = sanitized_data.get('delegation_end_date')
-                        delegation_reason = sanitized_data.get('delegation_reason')
-                        
-                        if delegation_start_date and delegation_end_date:
-                            import json
-                            # Get existing data or create new
-                            delegation_data = {}
-                            if profile_mod.roles_actions:
-                                try:
-                                    delegation_data = json.loads(profile_mod.roles_actions)
-                                except json.JSONDecodeError:
-                                    delegation_data = {}
-                            
-                            # Update the delegation metadata
-                            delegation_data['type'] = 'DELEGATION'
-                            delegation_data['start_date'] = delegation_start_date
-                            delegation_data['end_date'] = delegation_end_date
-                            delegation_data['reason'] = delegation_reason if delegation_reason else delegation_data.get('reason', '')
-                            
-                            # Keep delegator_id if it exists
-                            if 'delegator_id' not in delegation_data and profile_mod.changed_by:
-                                delegation_data['delegator_id'] = profile_mod.changed_by.id
-                            
-                            # Save back to roles_actions as JSON
-                            profile_mod.roles_actions = json.dumps(delegation_data)
-                            print(f"DEBUG: Updated delegation dates - Start: {delegation_start_date}, End: {delegation_end_date}")
-                    
-                    profile_mod.save()
+                if change_request.profile_change:
+                    profile_mod = ProfileChange.objects.filter(id=change_request.profile_change.id).first()
+                    # if profile_mod.application == "BUSINESS EXCELLENCE":
+                    #     roles = [role for role in [request.POST.get(app.name) for app in Application.objects.all() if request.POST.get(app.name) != 'Select Role'] if role and role != ""]
+                    #     profile_mod.role_to_assign.clear()
+                    #     profile_mod.role_to_assign.add(*Roles.objects.filter(id__in=roles))
+                    #     profile_mod.save()
                     
                 elif change_request.profile_deactivation:
-                    # Update ProfileDeactivation fields
-                    profile_deactivation = change_request.profile_deactivation
-                    profile_deactivation.application = sanitized_data.get('application', profile_deactivation.application)
+                    profile_deactivation = ProfileDeactivation.objects.filter(id=change_request.profile_deactivation.id).first()
+                    profile_deactivation.application = request.POST.get('application')
                     profile_deactivation.save()
                 # clear approvals
                 CRApproval.objects.filter(cr_id=change_request).delete()
@@ -1701,10 +1462,8 @@ def build_new_profile_context(new_profile):
     return {
         "id": new_profile.pk,
         "username": new_profile.username,
-        "first_name": new_profile.first_name,  # With underscore (standard Django naming)
-        "last_name": new_profile.last_name,    # With underscore (standard Django naming)
-        "firstname": new_profile.first_name,   # Without underscore (legacy compatibility)
-        "lastname": new_profile.last_name,     # Without underscore (legacy compatibility)
+        "firstname": new_profile.first_name,
+        "lastname": new_profile.last_name,
         "email": new_profile.email,
         "roles_to_action": new_profile.roles_to_action,
         "roles_actions": new_profile.roles_actions,
@@ -1819,14 +1578,6 @@ def parse_delegation_data(profile_change):
         # Handle regular profile modifications
         delegation_info['display_type'] = 'modification'
         delegation_info['formatted_display'] = profile_change.roles_to_action or 'Profile Modification'
-        
-        # Get delegator information for regular modifications
-        if profile_change.changed_by:
-            delegation_info['delegator_name'] = profile_change.changed_by.get_full_name()
-            delegation_info['delegator_username'] = profile_change.changed_by.username
-        else:
-            delegation_info['delegator_name'] = 'Unknown'
-            delegation_info['delegator_username'] = ''
         
         # Get roles for non-delegation modifications
         delegation_info['roles'] = list(profile_change.role_to_assign.all())
@@ -1949,7 +1700,6 @@ def view_new_profile_request(request, change_request, permissions, approval_stat
     cr = {
         "user": new_user,
         "cr_id": change_request.cr_id,
-        "change_type": change_request.change_type,  # ADDED: Missing change_type field
         "change_reason": change_request.change_reason,
         "change_description": change_request.change_description,
         "application": change_request.application,
@@ -1971,8 +1721,7 @@ def view_new_profile_request(request, change_request, permissions, approval_stat
         "cr": cr,
     })
     
-    # FIXED: Use unified template instead of deleted template
-    return render(request, "change_requests/view_change_request.html", context)
+    return render(request, "change_requests/view_profile_request.html", context)
 
 @login_required
 def view_profile_modification_request(request, change_request, permissions, approval_status):
@@ -1989,33 +1738,6 @@ def view_profile_modification_request(request, change_request, permissions, appr
     # Parse delegation data for proper display
     delegation_info = parse_delegation_data(profile_change)
     
-    # FIXED: For temporary delegations, build roles display from actual assigned roles
-    roles_to_action_display = delegation_info['formatted_display']
-    if change_request.change_type == "Temporary Role Delegation":
-        # Get actual roles from role_to_assign ManyToMany field
-        assigned_roles = profile_change.role_to_assign.all()
-        if assigned_roles.exists():
-            # Build a readable string of role names
-            role_names = [role.role for role in assigned_roles]
-            roles_to_action_display = ", ".join(role_names)
-            # Also store role objects for template display
-            delegation_info['assigned_roles'] = list(assigned_roles)
-            delegation_info['assigned_role_names'] = role_names
-        else:
-            # Fallback if no roles assigned
-            roles_to_action_display = "TEMPORARY_DELEGATION (No roles specified)"
-    
-    # Get delegator and delegatee info
-    delegator_name = ""
-    delegatee_name = user.get_full_name() if user else ""
-    
-    if change_request.change_type == "Temporary Role Delegation" and profile_change.changed_by:
-        delegator_name = profile_change.changed_by.get_full_name()
-        delegation_info['delegator_name'] = delegator_name
-        delegation_info['delegator_username'] = profile_change.changed_by.username
-    elif delegation_info.get('delegator_name'):
-        delegator_name = delegation_info['delegator_name']
-    
     # Build change request context
     cr = {
         "user": new_user,
@@ -2023,15 +1745,13 @@ def view_profile_modification_request(request, change_request, permissions, appr
         "change_reason": change_request.change_reason,
         "change_description": change_request.change_description,
         "application": change_request.application,
-        "change_type": change_request.change_type,
-        "roles_to_action": roles_to_action_display,  # FIXED: Now shows actual roles for delegations
+        "roles_to_action": delegation_info['formatted_display'],
         "roles_actions": profile_change.roles_actions,
         "delegation_info": delegation_info,
         "cr_context": cr_context,
         "created_by": change_request.created_by.get_full_name(),
         "creator_designation": change_request.creator_designation.description if change_request.creator_designation else "",
-        "created_at": change_request.created_at,
-        "is_delegation": change_request.change_type == "Temporary Role Delegation",  # ADDED: Flag for template
+        "created_at": change_request.created_at
     }
     
     # Get base template context
@@ -2058,21 +1778,7 @@ def view_profile_modification_request(request, change_request, permissions, appr
     logger.info(f"Profile modification request - section_head_awaiting_action: {approval_status['section_head_awaiting_action']}")
     logger.info(f"Profile modification request - it_section_head_awaiting_action: {approval_status['it_section_head_awaiting_action']}")
     
-    # DEBUG LOG: Button visibility conditions
-    logger.info(f"=== BUTTON VISIBILITY DEBUG for CR {change_request.cr_id} ===")
-    logger.info(f"User: {request.user.username}")
-    logger.info(f"requestor_role: {permissions.get('user_role', 'N/A')}")
-    logger.info(f"section_head_allowed: {permissions['section_head_allowed']}")
-    logger.info(f"it_section_head_allowed: {permissions['it_section_head_allowed']}")
-    logger.info(f"Apply button condition check:")
-    logger.info(f"  - requestor_role == 'it_section_head': {permissions.get('user_role') == 'it_section_head'}")
-    logger.info(f"  - it_section_head_awaiting_action: {approval_status['it_section_head_awaiting_action']}")
-    logger.info(f"  - section_head_awaiting_action == False: {not approval_status['section_head_awaiting_action']}")
-    logger.info(f"  - it_section_head_allowed: {permissions['it_section_head_allowed']}")
-    logger.info(f"  => APPLY BUTTON SHOULD SHOW: {permissions.get('user_role') == 'it_section_head' and approval_status['it_section_head_awaiting_action'] and not approval_status['section_head_awaiting_action'] and permissions['it_section_head_allowed']}")
-    
-    # FIXED: Use unified template instead of deleted template
-    return render(request, "change_requests/view_change_request.html", context)
+    return render(request, "change_requests/view_profile_modification.html", context)
 
 @login_required
 def view_profile_deactivation_request(request, change_request, permissions, approval_status):
@@ -2089,10 +1795,8 @@ def view_profile_deactivation_request(request, change_request, permissions, appr
     # Build change request context
     cr = {
         "cr_id": change_request.cr_id,
-        "change_type": change_request.change_type,  # ADDED: Missing change_type field
         "change_reason": change_request.change_reason,
         "change_description": change_request.change_description,
-        "application": change_request.application,  # ADDED: Missing application field
         "created_by": change_request.created_by.get_full_name(),
         "creator_designation": change_request.creator_designation.description if change_request.creator_designation else "",
         "created_at": change_request.created_at,
@@ -2113,8 +1817,7 @@ def view_profile_deactivation_request(request, change_request, permissions, appr
         "cr": cr,
     })
     
-    # FIXED: Use unified template instead of deleted template
-    return render(request, "change_requests/view_change_request.html", context)
+    return render(request, "change_requests/view_profile_deactivation.html", context)
 
 @login_required
 def view_profile_request(request):
@@ -2163,225 +1866,6 @@ def view_profile_request(request):
         logger.error(f"Error viewing change request {cr_id}: {str(e)}", exc_info=True)
         messages.error(request, "An error occurred while viewing the change request")
         return redirect("/change_requests/change_request_index")
-
-
-# ==================== NEW UNIFIED VIEW FUNCTIONS (USING SERVICE LAYER) ====================
-
-@login_required
-def view_change_request_unified(request):
-    """
-    REFACTORED: Unified view for all change request types using service layer.
-    This replaces view_new_profile_request, view_profile_modification_request, 
-    and view_profile_deactivation_request with a single function.
-    """
-    if request.method != "GET":
-        logger.warning(f"Invalid request method {request.method} for view_change_request_unified")
-        messages.error(request, "Invalid request method")
-        return redirect("/change_requests/change_request_index")
-    
-    cr_id = request.GET.get('i')
-    if not cr_id:
-        logger.error("Missing change request ID parameter")
-        messages.error(request, "Change request ID is required")
-        return redirect("/change_requests/change_request_index")
-    
-    try:
-        # Get change request with optimized queries
-        cr = ChangeRequestService.get_cr_with_details(cr_id)
-        
-        # Get type handler for this CR
-        handler = CRTypeHandler.get_handler(cr.change_type)
-        
-        # Get user permissions
-        permissions = ApprovalService.get_user_permissions(request.user, cr)
-        
-        # Get approval workflow status
-        approval_status = ApprovalService.get_approval_status(cr)
-        
-        # Build profile data using handler
-        profile_data = handler.get_profile_data(cr)
-        
-        # Build base context
-        base_context = ContextBuilder.get_base_template_context(request.user, cr)
-        
-        # Build CR context
-        cr_context = ContextBuilder.build_cr_context(cr, profile_data)
-        
-        # Add type-specific context for profile modification
-        if isinstance(handler, ProfileModificationHandler):
-            delegation_info = handler.get_delegation_info(cr)
-            cr_context['delegation_info'] = delegation_info
-            cr_context['cr_context'] = handler.get_change_request_context(cr)
-            # ADDED: Add is_delegation flag for template
-            cr_context['is_delegation'] = delegation_info.get('is_delegation', False)
-            cr_context['change_type'] = cr.change_type  # Ensure change_type is in context
-        elif isinstance(handler, ProfileDeactivationHandler):
-            cr_context['cr_context'] = handler.get_change_request_context(cr)
-            cr_context['change_type'] = cr.change_type
-        
-        # For New Profile, ensure change_type is in context
-        if isinstance(handler, NewProfileHandler):
-            cr_context['change_type'] = cr.change_type
-        
-        # Add approval context
-        context = ContextBuilder.add_approval_context(base_context, permissions, approval_status)
-        
-        # Add CR context
-        context['cr'] = cr_context
-        
-        logger.info(f"Rendering unified view for CR {cr_id} of type {cr.change_type}")
-        return render(request, "change_requests/view_change_request.html", context)
-    
-    except ChangeRequest.DoesNotExist:
-        logger.error(f"Change request not found: {cr_id}")
-        messages.error(request, "Change request not found")
-        return redirect("/change_requests/change_request_index")
-    except Exception as e:
-        logger.error(f"Error viewing change request {cr_id}: {str(e)}", exc_info=True)
-        messages.error(request, "An error occurred while viewing the change request")
-        return redirect("/change_requests/change_request_index")
-
-
-@csrf_protect
-@login_required
-@transaction.atomic
-def approve_change_request_unified(request):
-    """
-    REFACTORED: Unified approval handler using service layer.
-    This replaces the massive if/elif blocks in approve_profile_request with clean service calls.
-    """
-    if request.method != "POST":
-        messages.error(request, "Invalid request method")
-        return redirect("/change_requests/change_request_index")
-    
-    try:
-        cr_id = request.POST.get('cr_id')
-        action = request.POST.get('actionButton')
-        
-        if not cr_id or not action:
-            messages.error(request, "Missing required parameters")
-            return redirect("/change_requests/change_request_index")
-        
-        # Get change request
-        cr = ChangeRequestService.get_cr_with_details(cr_id)
-        
-        # Process action using service layer
-        if 'APPROVE' in action:
-            success, message = ApprovalService.approve_cr(cr, request.user)
-            if success:
-                messages.success(request, message)
-                # Send notification to next approver
-                NotificationService.send_approval_notification(cr, action, request)
-            else:
-                messages.error(request, message)
-        
-        elif 'REJECT' in action:
-            reason = request.POST.get('rejectReason')
-            if not reason:
-                messages.error(request, "Rejection reason is required")
-                return redirect("/change_requests/change_request_index")
-            
-            success, message = ApprovalService.reject_cr(cr, request.user, reason)
-            if success:
-                messages.success(request, message)
-                # Send notification to creator
-                NotificationService.send_approval_notification(cr, action, request)
-            else:
-                messages.error(request, message)
-        
-        elif 'APPLY' in action:
-            roles_actions = request.POST.get('roles_actions')
-            success, message = ApprovalService.apply_cr(cr, request.user, roles_actions)
-            if success:
-                messages.success(request, message)
-                # Send notification to creator
-                NotificationService.send_approval_notification(cr, action, request)
-            else:
-                messages.error(request, message)
-        
-        else:
-            messages.error(request, f"Unknown action: {action}")
-        
-        return redirect("/change_requests/change_request_index")
-    
-    except ChangeRequest.DoesNotExist:
-        logger.error(f"Change request not found: {cr_id}")
-        messages.error(request, "Change request not found")
-        return redirect("/change_requests/change_request_index")
-    except Exception as e:
-        logger.error(f"Error processing approval action: {str(e)}", exc_info=True)
-        messages.error(request, f"An error occurred while processing your request: {str(e)}")
-        return redirect("/change_requests/change_request_index")
-
-
-@csrf_protect
-@login_required
-def create_change_request_handler_unified(request):
-    """
-    REFACTORED: Unified CR creation handler using service layer.
-    This consolidates create_new_profile, profile_modification_request, etc.
-    """
-    if request.method != "POST":
-        messages.error(request, "Invalid request method")
-        return redirect("/change_requests/create_change_request")
-    
-    try:
-        # Determine CR type from form data
-        request_type = request.POST.get('request_type')
-        
-        # Validate common fields
-        errors = ChangeRequestService.validate_cr_data(request_type, request.POST.dict())
-        if errors:
-            for error in errors:
-                messages.error(request, error)
-            return redirect("/change_requests/create_change_request")
-        
-        # Create CR based on type
-        if request_type == 'NEW_PROFILE' or request.POST.get('username'):
-            # Validate new profile specific fields
-            profile_errors = ChangeRequestService.validate_new_profile_data(request.POST.dict())
-            if profile_errors:
-                for error in profile_errors:
-                    messages.error(request, error)
-                return redirect("/change_requests/create_change_request")
-            
-            # Check if username already exists
-            username = request.POST.get('username')
-            if UserProfile.objects.filter(username=username).exists():
-                messages.error(request, f"Username '{username}' already exists. Please choose a different username.")
-                return redirect("/change_requests/create_change_request")
-            
-            cr = ChangeRequestService.create_new_profile_cr(request.POST.dict(), request.user)
-        
-        elif request_type == 'PROFILE_MODIFICATION' or request.POST.get('delegator'):
-            cr = ChangeRequestService.create_profile_modification_cr(request.POST.dict(), request.user)
-        
-        elif request_type == 'PROFILE_DEACTIVATION':
-            cr = ChangeRequestService.create_profile_deactivation_cr(request.POST.dict(), request.user)
-        
-        else:
-            messages.error(request, "Invalid request type")
-            return redirect("/change_requests/create_change_request")
-        
-        # Send notification
-        NotificationService.send_creation_notification(cr, request)
-        
-        messages.success(request, SUCCESS_MESSAGES['CHANGE_REQUEST_CREATED'])
-        logger.info(LOG_MESSAGES['CHANGE_REQUEST_CREATED'].format(cr_id=cr.cr_id, username=request.user.username))
-        
-        return redirect("/change_requests/change_request_index")
-    
-    except ValueError as ve:
-        logger.error(f"Validation error creating change request: {str(ve)}")
-        messages.error(request, str(ve))
-        return redirect("/change_requests/create_change_request")
-    except Exception as e:
-        logger.error(f"Error creating change request: {str(e)}", exc_info=True)
-        messages.error(request, f"An error occurred while creating the change request: {str(e)}")
-        return redirect("/change_requests/create_change_request")
-
-
-# ==================== END NEW UNIFIED VIEW FUNCTIONS ====================
 
 # view_profile_request_legacy removed - replaced with refactored version above
 
@@ -2656,78 +2140,169 @@ def update_new_profile_request(request):
     
 @csrf_protect
 @login_required
-@transaction.atomic
 def approve_profile_request(request):
-    """
-    LEGACY ENDPOINT - Backward compatibility wrapper for old approval flow.
-    New code should use approve_change_request_unified instead.
-    
-    This function now delegates to the service layer for actual business logic.
-    """
-    if request.method != "POST":
-        return redirect("/change_requests/change_request_index")
-    
-    try:
-        action = request.POST.get('actionButton')
-        cr_id = request.POST.get('cr_id')
-        
-        if not action or not cr_id:
-            messages.error(request, "Missing required parameters")
-            return redirect("/change_requests/change_request_index")
-        
-        # Get change request with related data
-        cr = ChangeRequestService.get_cr_with_details(cr_id)
-        if not cr:
-            messages.error(request, "Change request not found")
-            return redirect("/change_requests/change_request_index")
-        
-        # Process action using service layer
-        if 'APPROVE' in action:
-            success, message = ApprovalService.approve_cr(cr, request.user)
-            if success:
-                messages.success(request, message)
-                # Send notification to next approver
-                NotificationService.send_approval_notification(cr, action, request)
-            else:
-                messages.error(request, message)
-        
-        elif 'REJECT' in action:
-            reason = request.POST.get('rejectReason')
-            if not reason:
-                messages.error(request, "Rejection reason is required")
+    if request.method == "POST":
+        try:
+            action_button = request.POST.get('actionButton')
+            cr_id = request.POST.get('cr_id')
+            requestor = UserProfile.objects.filter(username=request.user.username).first()
+            user_role = requestor.get_user_roles_for_application("change_requests")
+            change_request = ChangeRequest.objects.filter(cr_id=cr_id).first()
+            if 'APPROVE' in action_button:
+                # The "APPROVE CHANGE REQUEST" button was clicked
+                if not change_request:
+                    messages.error(request, "Change request not found")
+                    return redirect("/change_requests/change_request_index")
+                else:
+                    
+                    if user_role == "section_head":
+                        cr_approval = CRApproval(
+                            cr_id=change_request,
+                            approver=request.user,
+                            approver_role=requestor.get_user_role_for_application("change_requests"),
+                            approval_status=True,
+                            approval_date=timezone.now()
+                        )
+                        cr_approval.save()
+                        
+                        # Send delegation notifications if this is a delegation request
+                        if change_request.change_type == "Temporary Role Delegation":
+                            send_delegation_notifications(
+                                change_request, 
+                                'DELEGATION_APPROVED', 
+                                f"Delegation request approved by {request.user.get_full_name()}"
+                            )
+                        
+                        messages.success(request, "Change Request approved successfully")
+                        try:
+                            region = change_request.region
+                            region_cost_center = CostCenter.objects.filter(Q(code=region.code), Q(code="CC"+region.code)).first()
+                            # Get section head approver for this cost center
+                            application = Application.objects.filter(name="Change Requests").first()
+                            section_head_role = Roles.objects.filter(role="section_head", app_id=application.id).first()
+                            approver_responsibilities = Responsibilities.objects.filter(
+                                role=section_head_role,
+                                cost_centers__in=[region_cost_center]
+                            ).first()
+                            approver = approver_responsibilities.user if approver_responsibilities else None
+                            if not approver:
+                                messages.error(request, "No IT section head approver found for this cost center")
+                                return redirect("/change_requests/change_request_index")
+                            print("Sending email to: ", approver.email)
+                            cr_type = "new_profile_request" if change_request.change_type == "new_profile" else "profile_modification_request" if change_request.change_type == "profile_modification" else "profile_deactivation_request" if change_request.change_type == "profile_deactivation" else ""
+                            ms_exhange_send_html("Change Request Implementation", [approver.email], [], "emails/email_template.html", {
+                                "message": "Change Request Implementation",
+                                "type": "Change Request Implementation",
+                                "redirect_url": "https://172.16.29.32:9300/change_requests/" + cr_type + "?i=" + change_request.cr_id
+                            })
+                            
+                            messages.success(request, "Section head approver notified successfully")
+                        except Exception as ex:
+                            print("error: ", ex)
+                    else:
+                        messages.error(request, "Error. Please check your Change Request role")
+                    
+                    return redirect("/change_requests/change_request_index")
+                    
+            elif 'REJECT' in action_button:
+                # The "REJECT CHANGE REQUEST" button was clicked
+                cr_approval = CRApproval(
+                    cr_id=change_request,
+                    approver=request.user,
+                    approver_role=requestor.get_user_role_for_application("change_requests"),
+                    approval_status=False,
+                    comment=request.POST.get('rejectReason'),
+                    approval_date=timezone.now()
+                )
+                cr_approval.save()
+                
+                # Send delegation notifications if this is a delegation request
+                if change_request.change_type == "Temporary Role Delegation":
+                    send_delegation_notifications(
+                        change_request, 
+                        'DELEGATION_REJECTED', 
+                        f"Delegation request rejected by {request.user.get_full_name()}"
+                    )
+                
+                messages.success(request, "Change Request rejected successfully")
+                
                 return redirect("/change_requests/change_request_index")
-            
-            success, message = ApprovalService.reject_cr(cr, request.user, reason)
-            if success:
-                messages.success(request, message)
-                # Send notification to creator
-                NotificationService.send_approval_notification(cr, action, request)
-            else:
-                messages.error(request, message)
-        
-        elif 'APPLY' in action:
-            roles_actions = request.POST.get('roles_actions')
-            success, message = ApprovalService.apply_cr(cr, request.user, roles_actions)
-            if success:
-                messages.success(request, message)
-                # Send notification to creator
-                NotificationService.send_approval_notification(cr, action, request)
-            else:
-                messages.error(request, message)
-        
-        else:
-            messages.error(request, f"Unknown action: {action}")
-        
-        return redirect("/change_requests/change_request_index")
-    
-    except ChangeRequest.DoesNotExist:
-        logger.error(f"Change request not found: {cr_id}")
-        messages.error(request, "Change request not found")
-        return redirect("/change_requests/change_request_index")
-    except Exception as e:
-        logger.error(f"Error processing approval action: {str(e)}", exc_info=True)
-        messages.error(request, f"An error occurred: {str(e)}")
-        return redirect("/change_requests/change_request_index")
+            elif 'APPLY' in action_button:
+                # The "APPLY CHANGE REQUEST" button was clicked
+                    
+                if user_role == "it_section_head":
+                    roles_actions = request.POST.get('roles_actions')
+                    print("roles_actions: ", roles_actions)
+                    if roles_actions:
+                        roles_actions = roles_actions.strip()
+                        if change_request.change_type == "new_profile":
+                            new_profile = change_request.new_profile
+                            new_profile.roles_actions = roles_actions if roles_actions else new_profile.roles_actions
+                            new_profile.save()
+                        elif change_request.change_type == "profile_modification":
+                            profile_modification = change_request.profile_modification
+                            profile_modification.roles_actions = roles_actions if roles_actions else profile_modification.roles_actions
+                            profile_modification.save()
+                    
+                    # Check if there are roles to assign/designate
+                    has_roles_to_assign = False
+                    if change_request.change_type == "new_profile":
+                        new_profile = change_request.new_profile
+                        has_roles_to_assign = bool(new_profile.roles_to_action and new_profile.roles_to_action.strip() and 
+                                                   new_profile.roles_to_action.strip() not in ['No roles or designations specified', 'None', ''])
+                    elif change_request.change_type == "profile_modification":
+                        profile_modification = change_request.profile_modification
+                        has_roles_to_assign = bool(profile_modification.roles_to_action and profile_modification.roles_to_action.strip() and 
+                                                   profile_modification.roles_to_action.strip() not in ['No roles or designations specified', 'None', ''])
+                    
+                    # Allow approval even when no roles_actions if there are no roles to assign
+                    if not roles_actions:
+                        if has_roles_to_assign:
+                            messages.error(request, "Please enter the roles implemented")
+                            return redirect("/change_requests/change_request_index")
+                        else:
+                            # No roles to assign, allow approval but with warning
+                            roles_actions = "No roles applied - no roles were specified for assignment"
+                            messages.warning(request, WARNING_MESSAGES['NO_ROLES_TO_ASSIGN'])
+                            logger.warning(LOG_MESSAGES['NO_ROLES_APPROVAL'].format(
+                                cr_id=change_request.cr_id, 
+                                username=request.user.get_full_name()
+                            ))
+                    if change_request.change_type == "new_profile":
+                        new_profile = change_request.new_profile
+                        print("new_profile: ", new_profile)
+                        new_profile.roles_actions = roles_actions
+                        new_profile.save()
+                    elif change_request.change_type == "profile_modification":
+                        profile_modification = change_request.profile_modification
+                        print("profile modification: ", profile_modification)
+                        profile_modification.roles_actions = roles_actions
+                        profile_modification.save()
+                        
+                    # Handle delegation requests
+                    if change_request.change_type == "Temporary Role Delegation":
+                        success, message = apply_delegation_change_request(change_request)
+                        if success:
+                            messages.success(request, message)
+                        else:
+                            messages.error(request, message)
+                            return redirect("/change_requests/change_request_index")
+                    
+                    cr_approval = CRApproval(
+                        cr_id=change_request,
+                        approver=request.user,
+                        approver_role=requestor.get_user_role_for_application("change_requests"),
+                        approval_status=True,
+                        approval_date=timezone.now()
+                    )
+                    cr_approval.save()
+                    messages.success(request, "Change Request approved successfully")
+                    return redirect("/change_requests/change_request_index")
+
+        except Exception as ex:
+            print("error: ", ex)
+            # messages.error(request, "An error occurred while approving the change request " + str(ex))
+    return redirect("/change_requests/change_request_index")
 
 @login_required
 def change_request_index(request):

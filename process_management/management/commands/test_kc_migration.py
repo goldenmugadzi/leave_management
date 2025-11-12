@@ -21,12 +21,6 @@ class Command(BaseCommand):
         )
         
         parser.add_argument(
-            '--folder-id',
-            type=int,
-            help='Restrict analysis to a specific Knowledge Center folder ID'
-        )
-        
-        parser.add_argument(
             '--show-details',
             action='store_true',
             help='Show detailed information about each process candidate'
@@ -42,17 +36,17 @@ class Command(BaseCommand):
             self.stdout.write("=" * 60)
             
             # Test basic KC access
-            self._test_kc_access(app_id, options.get('folder_id'))
+            self._test_kc_access(app_id)
             
             # Test migration logic
-            self._test_migration_logic(app_id, options.get('folder_id'), options['show_details'])
+            self._test_migration_logic(app_id, options['show_details'])
             
         except Exception as e:
             self.stdout.write(
                 self.style.ERROR(f"Test failed: {str(e)}")
             )
     
-    def _test_kc_access(self, app_id, folder_id):
+    def _test_kc_access(self, app_id):
         """Test basic Knowledge Center access."""
         
         try:
@@ -111,15 +105,6 @@ class Command(BaseCommand):
                         ).count()
                         parent_info = f" (parent: {folder.parent.name})" if folder.parent else " (root)"
                         self.stdout.write(f"     - {folder.name}{parent_info} ({files_count} files)")
-                if folder_id:
-                    target_folder = KnowledgeCentreFolder.objects.filter(id=folder_id).first()
-                    if target_folder:
-                        self.stdout.write(f"\n   Target folder (ID {folder_id}): {target_folder.name}")
-                        self.stdout.write(f"   Folder path: {self._build_folder_path(target_folder)}")
-                        files_count = KnowldgeCentreFile.objects.filter(folder=target_folder, archived=False).count()
-                        self.stdout.write(f"   Files in target folder: {files_count}")
-                    else:
-                        self.stdout.write(self.style.WARNING(f"\n   Folder ID {folder_id} not found"))
             else:
                 self.stdout.write(f"   ERROR: Application ID {app_id} not found!")
                 return False
@@ -137,7 +122,7 @@ class Command(BaseCommand):
             )
             return False
     
-    def _test_migration_logic(self, app_id, folder_id, show_details):
+    def _test_migration_logic(self, app_id, show_details):
         """Test the migration logic."""
         
         self.stdout.write(f"\n3. Testing migration logic...")
@@ -147,7 +132,7 @@ class Command(BaseCommand):
             analyzer = ProcessCandidateAnalyzer()
             
             # Analyze processes
-            candidates = analyzer.analyze_kc_processes(app_id, folder_id=folder_id)
+            candidates = analyzer.analyze_kc_processes(app_id)
             
             self.stdout.write(f"   Found {len(candidates)} process candidates")
             
@@ -167,7 +152,7 @@ class Command(BaseCommand):
                 dept_counts[dept] = dept_counts.get(dept, 0) + 1
                 
                 for file_data in candidate.files:
-                    doc_type = file_data.get('document_type') or 'unclassified'
+                    doc_type = file_data.get('document_type', 'unclassified')
                     doc_type_counts[doc_type] = doc_type_counts.get(doc_type, 0) + 1
             
             # Show summary
@@ -205,12 +190,7 @@ class Command(BaseCommand):
             migrator = KnowledgeCenterMigrator()
             
             # Dry run
-            config = {
-                'dry_run': True,
-                'app_id': app_id
-            }
-            if folder_id:
-                config['folder_id_filter'] = folder_id
+            config = {'dry_run': True, 'app_id': app_id}
             results = migrator.migrate_processes(config)
             
             if results.get('success'):
@@ -236,12 +216,3 @@ class Command(BaseCommand):
             self.stdout.write(
                 self.style.ERROR(f"   Migration logic test failed: {str(e)}")
             )
-    
-    def _build_folder_path(self, folder):
-        """Helper to display full folder path."""
-        parts = []
-        current = folder
-        while current:
-            parts.append(current.name)
-            current = current.parent
-        return " > ".join(reversed(parts))

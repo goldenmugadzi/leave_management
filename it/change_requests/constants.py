@@ -5,76 +5,13 @@
 CHANGE_TYPES = {
     'NEW_PROFILE': 'New Profile',
     'PROFILE_MODIFICATION': 'Profile Modification',
-    'PROFILE_DEACTIVATION': 'Profile Deactivation',
-    'TEMPORARY_ROLE_DELEGATION': 'Temporary Role Delegation'
-}
-
-# CR Type Configuration - Unified configuration for all CR types
-CR_TYPE_CONFIG = {
-    'NEW_PROFILE': {
-        'name': 'New Profile',
-        'model_field': 'new_profile',
-        'view_template': 'change_requests/components/sections/new_profile_details.html',
-        'handler_class': 'NewProfileHandler',
-        'requires_roles_implementation': True,
-        'url_segment': 'new_profile_request',
-    },
-    'PROFILE_MODIFICATION': {
-        'name': 'Profile Modification',
-        'model_field': 'profile_change',
-        'view_template': 'change_requests/components/sections/profile_modification_details.html',
-        'handler_class': 'ProfileModificationHandler',
-        'requires_roles_implementation': True,
-        'url_segment': 'profile_modification_request',
-    },
-    'PROFILE_DEACTIVATION': {
-        'name': 'Profile Deactivation',
-        'model_field': 'profile_deactivation',
-        'view_template': 'change_requests/components/sections/profile_deactivation_details.html',
-        'handler_class': 'ProfileDeactivationHandler',
-        'requires_roles_implementation': False,
-        'url_segment': 'profile_deactivation_request',
-    },
-    'TEMPORARY_ROLE_DELEGATION': {
-        'name': 'Temporary Role Delegation',
-        'model_field': 'profile_change',
-        'view_template': 'change_requests/components/sections/profile_modification_details.html',
-        'handler_class': 'ProfileModificationHandler',
-        'requires_roles_implementation': True,
-        'url_segment': 'profile_modification_request',
-    }
+    'PROFILE_DEACTIVATION': 'Profile Deactivation'
 }
 
 # Approval Roles
 APPROVAL_ROLES = {
     'SECTION_HEAD': 'section_head',
     'IT_SECTION_HEAD': 'it_section_head'
-}
-
-# Approval Workflow Configuration
-APPROVAL_WORKFLOW = {
-    'steps': ['section_head', 'it_section_head'],
-    'step_names': {
-        'section_head': 'Section Head Approval',
-        'it_section_head': 'IT Section Head Approval & Implementation'
-    },
-    'notifications': {
-        'created': 'section_head',
-        'section_head_approved': 'it_section_head',
-        'section_head_rejected': 'creator',
-        'it_section_head_approved': 'creator',
-        'it_section_head_rejected': 'creator',
-    },
-    'status_transitions': {
-        'PENDING': {
-            'section_head_approve': 'APPROVED',
-            'section_head_reject': 'REJECTED'
-        },
-        'APPROVED': {
-            'it_section_head_approve': 'IMPLEMENTED',
-            'it_section_head_reject': 'REJECTED'
-        }
-    }
 }
 
 # Profile Change Status

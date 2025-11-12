@@ -10,5 +10,7 @@
 </div>
 
 <div>
-    {% include 'appraisal/final_result/personal_attr_tabs.html' %}
+    <div class="px-6 py-4 shadow-lg rounded-2xl border border-indigo-300 bg-white">
+        {% include 'appraisal/final_result/attr_table_component.html' with appraisee_personal_attr_qr=final_stage_data.personal_attributes %}
+    </div>
 </div>

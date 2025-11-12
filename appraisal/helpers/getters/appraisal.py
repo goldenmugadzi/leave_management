@@ -51,8 +51,7 @@ class AppraisalPersonalDetailsStrategy:
         return appraisee_qualification, appraisee_experiences
     
     def __get_appraisee_appointment_date_and_position_appointment_date(self):
-        appraisee_user_obj = self.appraisal_object.user
-        return appraisee_user_obj.date_of_engagement
+        return None, None
     
     def __get_appraiser_name_and_position(self):
         appraiser_user_obj = self.appraisal_object.appraiser
@@ -66,7 +65,7 @@ class AppraisalPersonalDetailsStrategy:
         appraisee_ec_no, appraisee_name = self.__get_appraisee_ec_no_name()
         appraisee_national_id, appraisee_position = self.__get_appraisee_nation_id_position()
         appraisee_qualification, appraisee_exp = self.__get_appraisee_qualification_and_experiances()
-        appointed_date = self.__get_appraisee_appointment_date_and_position_appointment_date()
+        appointed_date, position_appointed_date = self.__get_appraisee_appointment_date_and_position_appointment_date()
         appraisee_section, appraisee_region = self.__get_appraisee_section_region()
         
         appraiser_name, appraiser_position = self.__get_appraiser_name_and_position()
@@ -80,7 +79,7 @@ class AppraisalPersonalDetailsStrategy:
             appraisee_national_id=appraisee_national_id,
             appraisee_ec_no=appraisee_ec_no,
             appraisee_date_of_appointment=appointed_date,
-            appraisee_position_appointment_date=appointed_date,
+            appraisee_position_appointment_date=position_appointed_date,
             appraisee_department=appraisee_section,
             appraisee_station=appraisee_region,
             appraiser_name=appraiser_name,

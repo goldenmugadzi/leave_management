@@ -4,12 +4,11 @@ from django.db import transaction
 from django.db.models.query import QuerySet
 from decimal import Decimal
 
-from ..repository.kra import KRARepository, AppraisalDepartmentOutputRepository, AppraisalOutPutPerformanceDimensionScoreRepository, YearQuarterRepository, ApprasialKraReviewerStatusRepository, AppraisalConfirmationStatusRepository
+from ..repository.kra import KRARepository, AppraisalDepartmentOutputRepository, AppraisalOutPutPerformanceDimensionScoreRepository, YearQuarterRepository, ApprasialKraReviewerStatusRepository
 from ..repository.departmental_workplan import OutPutPerformanceDimensionRepository, DepartmentalOutRepository
-from ..repository.appraisal import AppraisalRepository, PersonalAttributeRepository, AppraiseePersonalAttributeRepository, AppraisalOverallCommentsRepository
+from ..repository.appraisal import AppraisalRepository, PersonalAttributeRepository, AppraiseePersonalAttributeRepository
 from it.users.models import Designations
-from ..models import KeyResultArea, AppraisalOutPutPerformanceDimensionScore, AppraisalDepartmentOutput, AppraiseePersonalAttribute, AppraisalOverallComments, AppraisalConfirmationStatus
-from ..models.kra import REVIEWERS_CONFIRMATION_STATUS
+from ..models import KeyResultArea, AppraisalOutPutPerformanceDimensionScore, AppraisalDepartmentOutput, AppraiseePersonalAttribute
 from ..helpers.types.kra import KRAType
 from ..helpers.getters import RatingCalculation
 
@@ -87,54 +86,20 @@ class AppraisalDependanciesInitialisationService:
             
         return self.appraisal_output_perf_dimension_repo.bulk_create(appraisal_output_perf_dimension_objs_list=appraisal_output_perf_dimension_objs_list)
     
-    def create_appraisee_personal_attr(self, appraisal_object, year_quarter_qr):
+    def create_appraisee_personal_attr(self, appraisal_object):
         appraisee_personal_attr_objs_list = []
         personal_attr_repo = PersonalAttributeRepository()
         personal_attr_qr = personal_attr_repo.fetch_all()
         
-        for year_quarter_obj in year_quarter_qr:
-            for personal_attr_obj in personal_attr_qr:
-                appraisee_personal_attr_obj = AppraiseePersonalAttribute(
-                    appraisal=appraisal_object,
-                    personal_attribute=personal_attr_obj,
-                    quarter=year_quarter_obj
-                )
-                appraisee_personal_attr_objs_list.append(appraisee_personal_attr_obj)
+        for personal_attr_obj in personal_attr_qr:
+            appraisee_personal_attr_obj = AppraiseePersonalAttribute(
+                appraisal=appraisal_object,
+                personal_attribute=personal_attr_obj
+            )
+            appraisee_personal_attr_objs_list.append(appraisee_personal_attr_obj)
         apprasee_personal_attr_repo = AppraiseePersonalAttributeRepository()
         return apprasee_personal_attr_repo.bulk_create(appraisee_personal_attr_list=appraisee_personal_attr_objs_list)
     
-    
-    def create_appraisal_confirmation_status(self, appraisal_object, year_quarter_qr):
-        appraisal_confirmation_list = []
-        appraisal_confirmation_status_repo = AppraisalConfirmationStatusRepository()
-        
-        for year_quarter_obj in year_quarter_qr:
-            hr_obj = AppraisalConfirmationStatus(
-                appraisal=appraisal_object,
-                year_quarter=year_quarter_obj,
-                confirmed_by=REVIEWERS_CONFIRMATION_STATUS[2][0]
-            )
-            reviewer_obj = AppraisalConfirmationStatus(
-                appraisal=appraisal_object,
-                year_quarter=year_quarter_obj,
-                confirmed_by=REVIEWERS_CONFIRMATION_STATUS[1][0]
-            )
-            appraisal_confirmation_list.append(hr_obj)
-            appraisal_confirmation_list.append(reviewer_obj)
-        return appraisal_confirmation_status_repo.bulk_create(appraisal_confirmation_status_list=appraisal_confirmation_list)
-    
-    def create_overall_comments(self, appraisal_obj, year_quarter_qr):
-        comments_list = []
-        
-        for year_quarter_obj in year_quarter_qr:
-            overall_comment_obj = AppraisalOverallComments(
-                appraisal=appraisal_obj,
-                quarter=year_quarter_obj
-            )
-            comments_list.append(overall_comment_obj)
-        repo = AppraisalOverallCommentsRepository()
-        return repo.bulk_create(appraisal_overall_comm_list=comments_list)
-        
     
     def create_all_dependencies(self, appraisal_id: int, year: int)->bool|None:
         try:
@@ -149,7 +114,8 @@ class AppraisalDependanciesInitialisationService:
                     year_quarter_objects = year_quarter_qr.count()
                     if year_quarter_objects != 4:
                         raise Exception(f"create_all_dependencies, with pk: {appraisal_id}, has {year_quarter_objects} - 4 instances required.")
-                                       
+                        
+                    
                     department_output_qr = self.department_output_repo.fetch_by_designation_id(designation_id=designation_obj.id)
                     
                     for department_output_obj in department_output_qr:
@@ -180,16 +146,8 @@ class AppraisalDependanciesInitialisationService:
                                     raise Exception(f"reviewers status creation failed with error: {e}")
                     
                     # ======================== create appraisee personal attributes ====================>>
-                    self.create_appraisee_personal_attr(appraisal_object=appraisal_obj, year_quarter_qr=year_quarter_qr)
+                    self.create_appraisee_personal_attr(appraisal_object=appraisal_obj)
                     logger.success(f"appraisee personal attributes created successfully")
-
-                    # ====================== create appraisal overall comments ======================
-                    self.create_overall_comments(appraisal_obj=appraisal_obj, year_quarter_qr=year_quarter_qr)
-                    logger.success(f"appraisal overall comments created successfully")
-                    
-                    # ====================== create appraisal confirmation status ======================
-                    self.create_appraisal_confirmation_status(appraisal_object=appraisal_obj, year_quarter_qr=year_quarter_qr)
-                    logger.success(f"appraisal confirmation status created successfully")
                 else:
                     raise Exception(f"appraisee with appraisal id: {appraisal_id}. has no designation")
             

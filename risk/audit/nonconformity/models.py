@@ -26,6 +26,7 @@ class Question(models.Model):
     
     def __str__(self):
         return self.id
+        
 class Nonconformity(models.Model):
     id = models.CharField(primary_key=True, max_length=20, editable=False)
     created_by = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
@@ -43,6 +44,7 @@ class Nonconformity(models.Model):
     
     def __str__(self):
         return self.id
+    
     def get_absolute_url(self):
         return reverse('nonconformity:nonconformity', args=[str(self.id)])
     def save(self, *args, **kwargs):
@@ -51,6 +53,7 @@ class Nonconformity(models.Model):
             random_number = str(random.randint(10000, 99999))
             self.id = "NC" + timestamp + random_number
         super().save(*args, **kwargs)
+
 class Acceptance(models.Model):
     nonconformity = models.ForeignKey(Nonconformity , on_delete=models.CASCADE)
     cause = models.TextField(max_length=400, blank=True, null=True)
@@ -69,6 +72,7 @@ class Resolution(models.Model):
     attachment = models.FileField(upload_to='nonconformity/resolution_attachments/', blank=True, null=True, verbose_name='Attachment')
     def __str__(self):
         return self.corrective_action_taken
+    
 class Rejection(models.Model):
     nonconformity = models.ForeignKey(Nonconformity , on_delete=models.CASCADE)
     user = models.ForeignKey(UserProfile, on_delete=models.CASCADE, blank=True, null=True)
@@ -76,6 +80,7 @@ class Rejection(models.Model):
     dated = models.DateTimeField(default=timezone.now) 
     def __str__(self):
         return self.rejection_reason
+    
 class Attachment(models.Model):
     nonconformity = models.ForeignKey(Nonconformity, on_delete=models.CASCADE)
     attachment = models.FileField(upload_to='nonconformity/attachments/', blank=True, null=True, verbose_name='Attachment')

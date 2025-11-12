@@ -6,7 +6,5 @@ class ApprovalStageData(Enum):
     appraiser_review = "Appraiser Confirmation"
     set_training_and_development_needs = "Training And Development"
     set_performance_progress_review = "Performance Progress Review"
-    set_personal_attributes = "Personal Attributes"
-    overall_comments = "Overall Comments"
-    hr_review = "HR Confirmation"
+    hr_review = "HR Review"
     section_head_review = "Reviewer Confirmation"

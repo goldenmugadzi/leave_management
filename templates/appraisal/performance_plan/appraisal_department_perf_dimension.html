@@ -30,13 +30,24 @@
 
                     <!-- Right Section (Buttons) -->
                     <div class="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+                        <div onclick="openReviewerConfirmationModal()"
+                            class="my-2 bg-blue-500 hover:bg-blue-700 rounded-full text-white py-2 px-4 cursor-pointer shadow">
+                            Reviewer Confirmation
+                        </div>
 
                         <div onclick="openAppraiserConfirmationModal()"
                             class="my-2 bg-blue-500 hover:bg-blue-700 rounded-full text-white py-2 px-4 cursor-pointer shadow">
                             Appraiser Confirmation
                         </div>
 
+                        <div onclick="openHrConfirmationModal()"
+                            class="my-2 bg-blue-500 hover:bg-blue-700 rounded-full text-white py-2 px-4 cursor-pointer shadow">
+                            Hr Confirmation
+                        </div>
+
+                        {% include "appraisal/performance_plan/reviewer_confirmation_modal.htm"%}
                         {% include "appraisal/performance_plan/appraiser_confirmation_modal.html"%}
+                        {% include "appraisal/performance_plan/hr_confirmation_modal.html"%}
                     </div>
                 </div>
             </div>

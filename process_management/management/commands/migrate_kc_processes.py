@@ -205,10 +205,7 @@ class Command(BaseCommand):
         
         # Get process candidates
         app_id = config.get('app_id', 2)
-        candidates = migrator.analyzer.analyze_kc_processes(
-            app_id=app_id,
-            folder_id=config.get('folder_id_filter')
-        )
+        candidates = migrator.analyzer.analyze_kc_processes(app_id)
         
         if not candidates:
             self.stdout.write(
@@ -233,7 +230,7 @@ class Command(BaseCommand):
             
             # Count document types
             for file_data in candidate.files:
-                doc_type = file_data.get('document_type') or 'unclassified'
+                doc_type = file_data.get('document_type', 'unclassified')
                 if doc_type not in analysis['document_types']:
                     analysis['document_types'][doc_type] = 0
                 analysis['document_types'][doc_type] += 1

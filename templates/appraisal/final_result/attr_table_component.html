@@ -1,4 +1,3 @@
-
 <div class="overflow-x-auto rounded-lg shadow">
   <table class="min-w-full border border-gray-200 rounded-lg overflow-hidden text-sm">
     <thead>
@@ -12,7 +11,7 @@
       </tr>
     </thead>
     <tbody class="bg-white divide-y divide-gray-100">
-      {% for personal_attr_obj in personal_attrs_quarter.personal_attributes %}
+      {% for personal_attr_obj in appraisee_personal_attr_qr %}
         <tr class="hover:bg-gray-50">
           <td class="px-6 py-3 font-medium text-gray-800">
             {{ personal_attr_obj.personal_attribute.name }}

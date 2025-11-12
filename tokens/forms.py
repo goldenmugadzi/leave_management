@@ -6,6 +6,7 @@ class MeterForm(forms.ModelForm):
     class Meta:
         model = Meter
         fields = "__all__"
+        # fields = ['number', 'kilowatt_hours', 'phase']
     def clean_number(self):
         number = self.cleaned_data['number']
         if len(number) != 11 or not number.isdigit():
@@ -21,6 +22,7 @@ class CustomerForm(forms.ModelForm):
     class Meta:
         model = Customer
         fields = "__all__"
+        # fields = ['name', 'address', 'stand_number', 'contact_number']
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         for field_name, field in self.fields.items():

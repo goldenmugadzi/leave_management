@@ -46,8 +46,6 @@ django-annoying==0.10.6
 django-anymail==8.4
 django-elasticsearch-dsl==8.0
 django-jazzmin==2.6.0
-django-ratelimit==4.1.0
-bleach==6.2.0
 
 ### Data Validation
 pydantic==2.12.0

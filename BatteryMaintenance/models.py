@@ -1,10 +1,10 @@
 from django.db import models
 from it.users.models import Substation
-from EquipTracker.models import Equipment
+from EquipTracker.models import TrackEquipment
 
 class BatteryInstallation(models.Model):
     substation = models.ForeignKey(Substation, on_delete=models.DO_NOTHING,null=True, blank=True)
-    equipment_tracker = models.ForeignKey(Equipment, on_delete=models.CASCADE ,default=1, related_name='batteries')
+    equipment_tracker = models.ForeignKey(TrackEquipment, on_delete=models.CASCADE ,default=1, related_name='batteries')
     battery_name = models.CharField(max_length=100,help_text="type")
     cell_type = models.CharField(max_length=50, blank=True)
     plates_per_cell = models.PositiveIntegerField(null=True, blank=True)

@@ -54,7 +54,7 @@ urlpatterns = [
     
     # ================= Final Results ==============================
     path('<int:appraisal_id>/final-result', AppraiseePersonalAttributesDetailView.as_view(), name='appraisal_final_result_index'),
-    path('<int:appraisal_id>/<int:quarter_id>/personal-attribute', AppraiseePersonalAttributesUpdateView.as_view(), name='appraisal_personal_attribute_update'),
+    path('<int:appraisal_id>/personal-attribute', AppraiseePersonalAttributesUpdateView.as_view(), name='appraisal_personal_attribute_update'),
     
     # ============= errors urls ==============================
     path('server-error/', internal_server_error_view, name='server_error_view'),

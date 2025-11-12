@@ -6,11 +6,10 @@ from django.contrib.auth.models import AbstractUser
 from django.contrib.auth.models import BaseUserManager
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
-from django.utils import timezone
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+from helpers.models.timestamp import TimeStamp
 
-from helpers.models import TimeStamp
-from datetime import date
-from dateutil.relativedelta import relativedelta
 
 class UserManager(BaseUserManager):
     def create_user(self, username, password=None, **extra_fields):
@@ -70,6 +69,7 @@ class Depots(models.Model):
     def __str__(self):
         return self.depot
 
+
 class Substation(models.Model):
     name =  models.CharField(max_length=100)
     code =  models.CharField(max_length=100)
@@ -78,7 +78,11 @@ class Substation(models.Model):
     depot = models.ForeignKey(Depots, on_delete=models.DO_NOTHING,null=True, blank=True)
 
     def __str__(self):
-        return self.name
+        display = self.name or self.code or "Substation"
+        if self.code:
+            return f"{display} ({self.code})"
+        return display
+
 
 class Application(models.Model):
     name = models.CharField(max_length=100, unique=True)
@@ -96,7 +100,7 @@ class Roles(models.Model):
     app_id = models.ForeignKey(Application, on_delete=models.DO_NOTHING, blank=True, null=True)
 
     def __str__(self):
-        return f"{self.name} - {self.application}"
+        return f"{self.name}"
 
 
 class Designations(models.Model):
@@ -181,13 +185,6 @@ class CostCenter(models.Model):
         return f"{self.name} ({self.code})"
 
 
-GRADE_CHOICES = [
-    ('',''),
-    ('A and B', 'A and B'),
-    ('C and Above', 'C and Above'), 
-]
-
-
 class UserProfile(AbstractUser):
     username = models.CharField(max_length=15, unique=True, verbose_name='EC Number', db_index=True)
     designation = models.ForeignKey(Designations, on_delete=models.DO_NOTHING, blank=True, null=True)
@@ -195,18 +192,15 @@ class UserProfile(AbstractUser):
     cost_center = models.ForeignKey(CostCenter, on_delete=models.DO_NOTHING, blank=True, null=True)
     depot = models.ForeignKey(Depots, on_delete=models.DO_NOTHING, blank=True, null=True)
     district = models.ForeignKey(Districts, on_delete=models.DO_NOTHING, blank=True, null=True)
-    roles = models.ManyToManyField(Roles, blank=True)
+    roles = models.ManyToManyField(Roles, blank=True, null=True)
     region = models.ForeignKey(Regions, on_delete=models.DO_NOTHING, blank=True, null=True)
     status = models.CharField(max_length=30, blank=True)
     email = models.CharField(max_length=50, blank=True)
-    last_reset = models.DateField(default=timezone.now)
+    last_reset = models.DateField(default=date.today())
     password_expiry_date = models.DateField(null=True, blank=True)
     password_expiry_days = models.IntegerField(default=90)
     change_password = models.BooleanField(default=False, null=True, blank=True)
-    grade = models.CharField(choices=GRADE_CHOICES, max_length=20, null=True, blank=True)
-    national_id = models.CharField(max_length=18, null=True, default=None)
-    date_of_engagement = models.DateField(null=True, blank=True)
-    
+
     class Meta:
         ordering = ['last_name', 'first_name', 'username']
 
@@ -215,7 +209,6 @@ class UserProfile(AbstractUser):
             return f"{self.last_name} {self.first_name}"
         else:
             return f"{self.username}"
-
 
     def add_role(self, role, app_id):
         existing_role = self.roles.filter(app_id__fullname=app_id).first()
@@ -242,24 +235,19 @@ class UserProfile(AbstractUser):
 
     def get_user_role_for_application(self, application_name):
         # Filter the user's roles for the specific application
-        # Check both the app_id foreign key and the application char field
-        application = Application.objects.filter(name=application_name).first()
-        print("application: ", application)
-        
-        if application:
-            # First try to find roles by app_id foreign key
-            user_roles = self.roles.filter(app_id=application.id)
-            print("user_roles by app_id: ", user_roles)
-            if user_roles.exists():
-                return user_roles[0]
-        
-        # If not found by app_id, try by application char field
-        user_roles = self.roles.filter(application=application_name)
-        print("user_roles by application field: ", user_roles)
-        if user_roles.exists():
-            return user_roles[0]
-        
-        return None
+        try:
+            application = Application.objects.filter(name=application_name).first()
+            print("application: ", application)
+            if application:
+                user_roles = self.roles.filter(app_id=application.id)
+                print("user_roles: ", user_roles)
+                # Return the roles if any exist
+                if user_roles.exists():
+                    return user_roles[0]
+            return None
+        except Exception as e:
+            print(f"Error in get_user_role_for_application: {e}")
+            return None
 
     def cost_centers_for(self, app_names):
         responsibilities = self.responsibilities.filter(role__app_id__name__in=app_names)
@@ -393,6 +381,7 @@ class Responsibilities(models.Model):
 
     def __str__(self):
         return str(self.role.name)
+
 
 class RoleDelegation(models.Model):
     """Model for managing temporary role delegations between users"""
@@ -606,7 +595,7 @@ QUALIFICATION_TYPE = [
     ("Degree", "Degree"),
     ("Masters", "Masters"),
     ("PHD", "PHD"),
-    ("Other", "Other")
+    ("Other", "Other"),
 ]
 
 class UserQualification(TimeStamp):
@@ -631,32 +620,38 @@ class UserExperience(TimeStamp):
     user = models.ForeignKey(UserProfile, on_delete=models.PROTECT, related_name="user_experience")
     name = models.CharField(max_length=255, null=False)
     experience_from = models.DateField()
-    experience_to = models.DateField(null=True, blank=True)
-    
+    experience_to = models.DateField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
     class Meta:
-        constraints = [
-            models.UniqueConstraint(fields=["user", "name"],
-                                    violation_error_message="user experience with this name already exists",
-                                    name='unique_user_experience_name'
-                                    )
-        ]
-        ordering = ['-experience_from']
-    
-    @property
-    def years_of_experience(self):
-        """
-            Returns the duration between start and end date as a string in years and months.
-            Example: '3 years, 2 months'
-        """
-        end_date = self.experience_to or date.today()
-        rdelta = relativedelta(end_date, self.experience_from)
-        parts = []
-        if rdelta.years:
-            parts.append(f"{rdelta.years} year{'s' if rdelta.years > 1 else ''}")
-        if rdelta.months:
-            parts.append(f"{rdelta.months} month{'s' if rdelta.months > 1 else ''}")
-        return ", ".join(parts) if parts else "0 months"
-    
+        ordering = ['-experience_from', '-created_at']
+
     def __str__(self):
-        return f"{self.name}"
-    
+        return f"{self.user} - {self.name} ({self.experience_from} - {self.experience_to or 'present'})"
+
+
+@receiver(post_save, sender=UserProfile)
+def assign_fault_locator_roles_on_designation_change(sender, instance, **kwargs):
+    """Automatically assign fault locator central roles based on designation changes."""
+    if instance.designation:
+        desc = (instance.designation.description or '').lower()
+        
+        # Infer senior foreman role
+        if 'senior' in desc and ('foreman' in desc or 'foreperson' in desc):
+            from fault_locator.central_roles import FaultLocatorRoleManager
+            if not FaultLocatorRoleManager.has_role(instance, FaultLocatorRoleManager.SENIOR_FOREMAN):
+                try:
+                    FaultLocatorRoleManager.assign_role(instance, FaultLocatorRoleManager.SENIOR_FOREMAN)
+                    print(f"Auto-assigned senior_foreman role to {instance.username}")
+                except Exception as e:
+                    print(f"Error auto-assigning senior_foreman role to {instance.username}: {e}")
+        
+        # Infer depot foreperson role
+        elif ('foreman' in desc or 'foreperson' in desc) and 'senior' not in desc:
+            from fault_locator.central_roles import FaultLocatorRoleManager
+            if not FaultLocatorRoleManager.has_role(instance, FaultLocatorRoleManager.DEPOT_FOREPERSON):
+                try:
+                    FaultLocatorRoleManager.assign_role(instance, FaultLocatorRoleManager.DEPOT_FOREPERSON)
+                    print(f"Auto-assigned depot_foreperson role to {instance.username}")
+                except Exception as e:
+                    print(f"Error auto-assigning depot_foreperson role to {instance.username}: {e}")

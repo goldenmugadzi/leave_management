@@ -35,7 +35,7 @@ PyJWT==2.8.0
 oauthlib==3.2.2
 requests-oauthlib==2.0.0
 cryptography==43.0.1
-cffi>=1.17.0
+cffi==1.16.0
 pycparser==2.21
 pyspnego==0.10.2
 # sspilib==0.1.0  # Windows-specific, not needed on Linux
@@ -134,6 +134,3 @@ PyYAML==6.0.1
 tabulate==0.9.0
 redis==5.0.1
 gunicorn==20.1.0 
-loguru
-bleach
-django-ratelimit

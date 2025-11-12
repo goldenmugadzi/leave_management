@@ -21,7 +21,7 @@ class ZetdcAssets(models.Model):
     asset_state = models.CharField(max_length=100,blank=True, null=True,help_text="Asset state",  choices=[('Warrant', 'Warrant') , ('Obsolute state', 'Obsolute state'),('Awaiting New Spares', 'Awaiting New Spares'), ('Awaiting New User', 'Awaiting New User'),('Functioning', 'Functioning'),('Non Functioning', 'Non Functioning')])
     user = models.ForeignKey(UserProfile, on_delete=models.CASCADE, blank=True, null=True,related_name="user")
     regions = models.ForeignKey(Regions, on_delete=models.DO_NOTHING, blank=True, null=True)
-    purchase_cost = models.DecimalField(max_digits=10, decimal_places=2)
+    #purchase_cost = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True)
     designation = models.ForeignKey(Designations, on_delete=models.DO_NOTHING , blank=True, null=True)
     department = models.ForeignKey(Sections, on_delete=models.DO_NOTHING, blank=True, null=True)
     date_purchased =models.DateField()

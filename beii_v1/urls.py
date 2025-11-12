@@ -64,7 +64,6 @@ urlpatterns = [
     path('change_requests/', include('it.change_requests.urls')),
     path('dashboards/', include('executive.general_dashboards.urls')),
     path('ims/', include('knowledge_center.urls')),
-    path('ims/v2/', include('process_management.urls'), name='process_management'),
     path('processes/', include('processes.urls'), name='processes'),
     path('process_risks/', include('process_risks.urls'), name='process_risks'),
     # path('process_maps/',include('process_maps.urls'), name='process_maps'),
@@ -72,7 +71,6 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     # path('accounts/', include('django.contrib.auth.urls')),
     path('ace/', include('ACE2.urls')),
-    path('appraisal/', include('appraisal.urls')),
     # Namespaced include so templates can reverse with 'fault_locator:<name>'
     path('fault_locator/', include(('fault_locator.urls', 'fault_locator'), namespace='fault_locator')),
    
@@ -84,6 +82,10 @@ urlpatterns = [
     path('restricted_bidding/', include('finance.ristricted_bidding.urls')),
     path('direct_purchase/', include('finance.direct_purchase.urls')),
     path('reports/', include('reports.urls')),
+    path('api-auth/', include('rest_framework.urls')),
+    path('api/auth/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('api/auth/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    path('api/auth/token/verify/', TokenVerifyView.as_view(), name='token_verify'),
     # OPS & MAINTENANCE
     path('api/safety/operations/', include('api.ops_maintenance.safety_operations.urls')),
      # path('', include('hardware_faults.urls')),
