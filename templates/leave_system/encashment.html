@@ -28,12 +28,18 @@
             {{ field }}
           {% else %}
             <div class="mb-5">
-              <div>
+             <div>
+              {% if field.name in 'start_date end_date days_taken' %}
+                <label for="{{ field.id_for_label }}">
+                  {{ field.label }} <span class="text-gray-500 text-sm">(Optional)</span>
+                </label>
+              {% else %}
                 {{ field.label_tag }}
-                <div class="text-blue-500 text-center">{{ field.help_text }}</div>
-                <div class="text-red-500 text-center">{{ field.errors }}</div>
-              </div>
-              {{ field }}
+              {% endif %}
+              <div class="text-blue-500 text-center">{{ field.help_text }}</div>
+              <div class="text-red-500 text-center">{{ field.errors }}</div>
+            </div>
+            {{ field }}
             </div>
           {% endif %}
         {% endfor %}
