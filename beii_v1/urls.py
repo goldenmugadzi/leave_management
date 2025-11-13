@@ -55,8 +55,7 @@ urlpatterns = [
     path('', include('it.beii_auth.urls')),
     path('', include('Docs.urls')),
     path('', include('tokens.urls')),
-    # appraisal
-    path('', include('appraisal.urls')),
+    path('appraisal/', include('appraisal.urls')),
     # path('', include('esearch.urls')),
     path('', include('risk.audit.nonconformity.urls')),
     path('', include('finance.purchase_request.urls')),

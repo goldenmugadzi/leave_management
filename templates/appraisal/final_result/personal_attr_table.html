@@ -1,12 +1,15 @@
 
 <div class="my-2 flex justify-between border-b">
   <h3 class="text-lg font-bold text-indigo-600 mt-2">Personal Attributes</h3>
-  <a 
-    href="{% url 'appraisal_personal_attribute_update' appraisal_object.id %}"
-    class="bg-blue-500 hover:bg-blue-700 inline-block rounded-full text-white py-2 px-4 mt-2 mb-1"
-    >
-      Update
-  </a>
+  
+  {% if is_appraiser and not is_detail_view %}
+    <a 
+      href="{% url 'appraisal_personal_attribute_update' appraisal_object.id personal_attrs_quarter.quarter.id %}"
+      class="bg-blue-500 hover:bg-blue-700 inline-block rounded-full text-white py-2 px-4 mt-2 mb-1"
+      >
+        Update
+    </a>
+  {% endif %}
 </div>
 
 {% include 'appraisal/final_result/attr_table_component.html' %}

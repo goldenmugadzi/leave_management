@@ -28,7 +28,7 @@
                             </div>
                             {% for data in training_dev_data %}
                                 {% if data.quarter == 1 %}
-                                    {% include "appraisal/detail_components/training_dev_quarter.html" with quarter_data=data.quarter_training_dev %}
+                                    {% include "appraisal/detail_components/training_dev_quarter.html" with quarter_data=data %}
                                 {% endif %}
                             {% endfor %}
                         </div>
@@ -42,7 +42,7 @@
                             </div>
                             {% for data in training_dev_data %}
                                 {% if data.quarter == 2 %}
-                                    {% include "appraisal/detail_components/training_dev_quarter.html" with quarter_data=data.quarter_training_dev %}
+                                    {% include "appraisal/detail_components/training_dev_quarter.html" with quarter_data=data %}
                                 {% endif %}
                             {% endfor %}
                         </div>
@@ -56,7 +56,7 @@
                             </div>
                             {% for data in training_dev_data %}
                                 {% if data.quarter == 3 %}
-                                    {% include "appraisal/detail_components/training_dev_quarter.html" with quarter_data=data.quarter_training_dev %}
+                                    {% include "appraisal/detail_components/training_dev_quarter.html" with quarter_data=data %}
                                 {% endif %}
                             {% endfor %}
                         </div>
@@ -70,7 +70,7 @@
                             </div>
                             {% for data in training_dev_data %}
                                 {% if data.quarter == 4 %}
-                                    {% include "appraisal/detail_components/training_dev_quarter.html" with quarter_data=data.quarter_training_dev %}
+                                    {% include "appraisal/detail_components/training_dev_quarter.html" with quarter_data=data %}
                                 {% endif %}
                             {% endfor %}
                         </div>
