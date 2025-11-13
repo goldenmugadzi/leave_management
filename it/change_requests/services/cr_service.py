@@ -251,7 +251,7 @@ class ChangeRequestService:
             roles_to_action=data.get('roles_to_action'),
             change_date=timezone.now(),
             changed_by=user,
-            current_user_id=data.get('mod_current_user_id') or data.get('current_user_id'),
+            current_user_id=data.get('mod_current_user_id') or data.get('mod_ec_number') or data.get('current_user_id'),
             ec_number=data.get('mod_ec_number') or data.get('ec_number'),
             reason_assign=data.get('mod_reason_assign') or data.get('reason_assign'),
             reason_remove=data.get('mod_reason_remove') or data.get('reason_remove'),

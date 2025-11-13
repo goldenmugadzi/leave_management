@@ -233,7 +233,7 @@ The API uses Django's message framework for user feedback and standard HTTP stat
     "delegator": "string (required when change_type=TEMPORARY_DELEGATION)",
     "delegatee": "string (required when change_type=TEMPORARY_DELEGATION)",
     "roles_to_action": "string (optional)",
-    "mod_current_user_id": "string (required)",
+    "mod_current_user_id": "string (optional, auto-filled from EC number)",
     "mod_ec_number": "string (required)",
     "mod_reason_assign": "string (required)",
     "mod_reason_remove": "string (required when mod_roles_remove is provided)",

@@ -247,15 +247,70 @@ def get_cached_user_data(username):
             applications = Application.objects.all()
             all_roles = {app.name: [model_to_dict(role) for role in Roles.objects.filter(app_id=app.id).all()] for app in applications}
             active_roles = {role.app_id.name: model_to_dict(role) for role in user.roles.all() if role.app_id}
+            profile_info = {
+                "username": user.username,
+                "ec_number": user.username,
+                "first_name": user.first_name,
+                "last_name": user.last_name,
+                "full_name": user.get_full_name(),
+                "email": user.email,
+                "designation": getattr(user.designation, "description", "") if user.designation else "",
+                "cost_center": getattr(user.cost_center, "name", "") if user.cost_center else "",
+                "region": getattr(user.region, "region", "") if user.region else "",
+                "district": getattr(user.district, "district", "") if user.district else "",
+                "section": getattr(user.section, "section", "") if user.section else "",
+            }
             
             cached_data = {
                 "applications": list(applications.values('id', 'name', 'fullname')),
                 "userData": all_roles,
                 "active_roles": active_roles,
+                "profile": profile_info,
             }
             cache.set(cache_key, cached_data, CACHE_TIMEOUT)
     
     return cached_data
+
+
+def build_originator_defaults(user: UserProfile) -> dict:
+    """
+    Build default originator metadata from the authenticated user.
+    Keeps keys consistent for template prefill and server-side fallbacks.
+    """
+    if not isinstance(user, UserProfile):
+        return {
+            "ec_number": "",
+            "company": "ZETDC",
+            "site": "",
+            "designation": "",
+            "first_name": "",
+            "last_name": "",
+            "email": "",
+        }
+
+    cost_center = getattr(user, "cost_center", None)
+    district = getattr(user, "district", None)
+    section = getattr(user, "section", None)
+    region = getattr(user, "region", None)
+    designation = getattr(user, "designation", None)
+
+    site = ""
+    if district and getattr(district, "district", None):
+        site = district.district
+    elif section and getattr(section, "section", None):
+        site = section.section
+    elif region and getattr(region, "region", None):
+        site = region.region
+
+    return {
+        "ec_number": getattr(user, "username", "") or "",
+        "company": getattr(cost_center, "name", "") or "ZETDC",
+        "site": site,
+        "designation": getattr(designation, "description", "") or "",
+        "first_name": getattr(user, "first_name", "") or "",
+        "last_name": getattr(user, "last_name", "") or "",
+        "email": getattr(user, "email", "") or "",
+    }
 
 def prepare_change_request_data(change_request):
     """Prepare change request data for display"""
@@ -458,6 +513,12 @@ def create_change_request(request):
     parent = CostCenter.objects.filter(Q(code=user.region.code) | Q(code="CC"+user.region.code)).first()
     cost_centers = parent.get_decendance() #CostCenter.objects.filter(parent=parent.id).all() if parent else []
     users = UserProfile.objects.filter(region=user.region).all()
+
+    # Prefill originator defaults using the authenticated user (supports proxy overrides in the UI)
+    originator_defaults = build_originator_defaults(user)
+
+    # Default resolution date to today; template keeps the field editable for overrides
+    default_resolution_date = timezone.now().date().isoformat()
     
     return render(request, 'change_requests/create_change_request.html',
             {
@@ -469,6 +530,8 @@ def create_change_request(request):
                 "all_roles": Roles.objects.all(),
                 "user_title": user_title,
                 "user_groups": user_groups,
+                "originator_defaults": originator_defaults,
+                "default_resolution_date": default_resolution_date,
             })
     
 @csrf_protect
@@ -477,12 +540,13 @@ def create_new_profile(request):
     try:
         # Sanitize input data
         sanitized_data = sanitize_input(request.POST.dict())
+        originator_defaults = build_originator_defaults(request.user)
         
         change_reason = sanitized_data.get('change_reason')
         change_description = sanitized_data.get('change_description')
-        originator_company = sanitized_data.get('originator_company')
-        originator_site = sanitized_data.get('originator_site')
-        date_resolution_required_str = sanitized_data.get('date_resolution_required')
+        originator_company = sanitized_data.get('originator_company') or originator_defaults["company"]
+        originator_site = sanitized_data.get('originator_site') or originator_defaults["site"]
+        date_resolution_required_str = sanitized_data.get('date_resolution_required') or timezone.now().date().isoformat()
         profile_username = sanitized_data.get('username')
         first_name = sanitized_data.get('first_name')
         last_name = sanitized_data.get('last_name')
@@ -654,11 +718,12 @@ def profile_modification_request(request):
         application = sanitized_data.get("for_application")
         roles_to_action = sanitized_data.get("roles_to_action")
         change_type = sanitized_data.get("change_type", "PERMANENT")
-        originator_company = sanitized_data.get("originator_company")
-        originator_site = sanitized_data.get("originator_site")
-        date_resolution_required_str = sanitized_data.get("date_resolution_required")
-        mod_current_user_id = sanitized_data.get("mod_current_user_id")
+        originator_defaults = build_originator_defaults(request.user)
+        originator_company = sanitized_data.get("originator_company") or originator_defaults["company"]
+        originator_site = sanitized_data.get("originator_site") or originator_defaults["site"]
+        date_resolution_required_str = sanitized_data.get("date_resolution_required") or timezone.now().date().isoformat()
         mod_ec_number = sanitized_data.get("mod_ec_number")
+        mod_current_user_id = sanitized_data.get("mod_current_user_id") or mod_ec_number
         mod_reason_assign = sanitized_data.get("mod_reason_assign")
         mod_reason_remove = sanitized_data.get("mod_reason_remove")
         mod_correspondence_link = sanitized_data.get("mod_correspondence_link")
@@ -676,7 +741,6 @@ def profile_modification_request(request):
             ("Date resolution required", date_resolution_required_str),
             ("Change reason", change_reason),
             ("Change description", change_description),
-            ("Current user ID", mod_current_user_id),
             ("EC number", mod_ec_number),
             ("Reason for assigning new roles", mod_reason_assign),
         ]:
@@ -1259,9 +1323,10 @@ def profile_deactivation_request(request):
         change_description = sanitized_data.get('change_description')
         profile_username = sanitized_data.get('user_profile')
         application = sanitized_data.get('for_application')
-        originator_company = sanitized_data.get('originator_company')
-        originator_site = sanitized_data.get('originator_site')
-        date_resolution_required_str = sanitized_data.get('date_resolution_required')
+        originator_defaults = build_originator_defaults(request.user)
+        originator_company = sanitized_data.get('originator_company') or originator_defaults["company"]
+        originator_site = sanitized_data.get('originator_site') or originator_defaults["site"]
+        date_resolution_required_str = sanitized_data.get('date_resolution_required') or timezone.now().date().isoformat()
         effective_start_str = sanitized_data.get('deactivation_effective_start')
         reactivation_str = sanitized_data.get('deactivation_reactivation_date')
         deactivation_reason = sanitized_data.get('deactivation_reason')
@@ -1886,7 +1951,9 @@ def update_change_request(request):
                     profile_mod.roles_to_action = roles_to_action if roles_to_action else profile_mod.roles_to_action
                     profile_mod.roles_actions = roles_actions if roles_actions else profile_mod.roles_actions
                     profile_mod.application = sanitized_data.get('application', profile_mod.application)
-                    profile_mod.current_user_id = sanitized_data.get('mod_current_user_id', profile_mod.current_user_id)
+                    fallback_current_id = sanitized_data.get('mod_current_user_id') or sanitized_data.get('mod_ec_number')
+                    if fallback_current_id:
+                        profile_mod.current_user_id = fallback_current_id
                     profile_mod.ec_number = sanitized_data.get('mod_ec_number', profile_mod.ec_number)
                     profile_mod.reason_assign = sanitized_data.get('mod_reason_assign', profile_mod.reason_assign)
                     profile_mod.reason_remove = sanitized_data.get('mod_reason_remove', profile_mod.reason_remove)

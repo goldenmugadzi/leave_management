@@ -91,8 +91,12 @@
                       type="text"
                       name="np_ec_number"
                       id="np_ec_number"
+                      value="{{ originator_defaults.ec_number }}"
                       class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     />
+                    <p class="mt-1 text-sm text-gray-500">
+                      Prefilled from your profile; update if you are requesting for someone else.
+                    </p>
                   </div>
                   <div class="mb-6">
                     <label
@@ -105,9 +109,13 @@
                       type="text"
                       name="originator_company"
                       id="originator_company"
+                      value="{{ originator_defaults.company }}"
                       class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       placeholder="Enter the company of the change request originator"
                     />
+                    <p class="mt-1 text-sm text-gray-500">
+                      Typically reflects your business unit; edit if the requester differs.
+                    </p>
                   </div>
                   <div class="mb-6">
                     <label
@@ -120,9 +128,13 @@
                       type="text"
                       name="originator_site"
                       id="originator_site"
+                      value="{{ originator_defaults.site }}"
                       class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       placeholder="Enter the site or location for this request"
                     />
+                    <p class="mt-1 text-sm text-gray-500">
+                      Prefilled with your location; adjust when submitting on behalf of another site.
+                    </p>
                   </div>
                   <div class="mb-6">
                     <label
@@ -135,6 +147,7 @@
                       type="date"
                       name="date_resolution_required"
                       id="date_resolution_required"
+                      value="{{ default_resolution_date }}"
                       class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     />
                     <p class="mt-1 text-sm text-gray-500">
@@ -662,22 +675,31 @@
                   <h4 class="text-lg font-medium text-gray-900 mb-4">
                     Modification Supporting Details
                   </h4>
+                  <div class="mb-6">
+                    <label
+                      for="mod_user_selector"
+                      class="block text-sm font-medium text-gray-700 mb-2"
+                    >
+                      Select Existing User
+                    </label>
+                    <select
+                      id="mod_user_selector"
+                      class="select2 block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      data-placeholder="Search by name or EC number"
+                    >
+                      <option value="">Search user</option>
+                      {% for usr in user_profiles %}
+                      <option value="{{usr.username}}">
+                        {{usr.first_name}} {{usr.last_name}} ({{usr.username}})
+                      </option>
+                      {% endfor %}
+                    </select>
+                    <p class="mt-1 text-sm text-gray-500">
+                      Choose an existing user to auto-populate their details, or enter an EC Number manually.
+                    </p>
+                  </div>
+                  <input type="hidden" name="mod_current_user_id" id="mod_current_user_id" />
                   <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="mb-6">
-                      <label
-                        for="mod_current_user_id"
-                        class="block text-sm font-medium text-gray-700 mb-2"
-                      >
-                        Current User ID <span class="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        name="mod_current_user_id"
-                        id="mod_current_user_id"
-                        class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        placeholder="e.g. ZE9104683"
-                      />
-                    </div>
                     <div class="mb-6">
                       <label
                         for="mod_ec_number"
@@ -693,6 +715,44 @@
                       />
                     </div>
                   </div>
+                <div
+                  id="mod-user-summary"
+                  class="hidden mb-6 bg-gray-50 border border-gray-200 rounded-md p-4"
+                >
+                  <h5 class="text-sm font-semibold text-gray-800 mb-3">
+                    Target User Overview
+                  </h5>
+                  <p
+                    id="mod-user-summary-message"
+                    class="hidden text-sm mb-3"
+                  ></p>
+                  <dl class="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-gray-700">
+                    <div>
+                      <dt class="font-medium text-gray-600">Name</dt>
+                      <dd id="mod-user-summary-name" class="text-gray-900">Not provided</dd>
+                    </div>
+                    <div>
+                      <dt class="font-medium text-gray-600">EC Number</dt>
+                      <dd id="mod-user-summary-ec" class="text-gray-900">Not provided</dd>
+                    </div>
+                    <div>
+                      <dt class="font-medium text-gray-600">Designation</dt>
+                      <dd id="mod-user-summary-designation" class="text-gray-900">Not provided</dd>
+                    </div>
+                    <div>
+                      <dt class="font-medium text-gray-600">Cost Centre</dt>
+                      <dd id="mod-user-summary-cost-center" class="text-gray-900">Not provided</dd>
+                    </div>
+                    <div>
+                      <dt class="font-medium text-gray-600">Region</dt>
+                      <dd id="mod-user-summary-region" class="text-gray-900">Not provided</dd>
+                    </div>
+                    <div>
+                      <dt class="font-medium text-gray-600">Section / District</dt>
+                      <dd id="mod-user-summary-location" class="text-gray-900">Not provided</dd>
+                    </div>
+                  </dl>
+                </div>
                   <div class="mb-6">
                     <label
                       for="mod_reason_assign"
@@ -796,6 +856,44 @@
                   <p class="mt-1 text-sm text-gray-500">
                     Select the user whose profile needs to be deactivated
                   </p>
+                </div>
+                <div
+                  id="deactivation-user-summary"
+                  class="hidden mb-6 bg-gray-50 border border-gray-200 rounded-md p-4"
+                >
+                  <h5 class="text-sm font-semibold text-gray-800 mb-3">
+                    Selected User Overview
+                  </h5>
+                  <p
+                    id="deac-user-summary-message"
+                    class="hidden text-sm mb-3"
+                  ></p>
+                  <dl class="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-gray-700">
+                    <div>
+                      <dt class="font-medium text-gray-600">Name</dt>
+                      <dd id="deac-user-summary-name" class="text-gray-900">Not provided</dd>
+                    </div>
+                    <div>
+                      <dt class="font-medium text-gray-600">EC Number</dt>
+                      <dd id="deac-user-summary-ec" class="text-gray-900">Not provided</dd>
+                    </div>
+                    <div>
+                      <dt class="font-medium text-gray-600">Designation</dt>
+                      <dd id="deac-user-summary-designation" class="text-gray-900">Not provided</dd>
+                    </div>
+                    <div>
+                      <dt class="font-medium text-gray-600">Cost Centre</dt>
+                      <dd id="deac-user-summary-cost-center" class="text-gray-900">Not provided</dd>
+                    </div>
+                    <div>
+                      <dt class="font-medium text-gray-600">Region</dt>
+                      <dd id="deac-user-summary-region" class="text-gray-900">Not provided</dd>
+                    </div>
+                    <div>
+                      <dt class="font-medium text-gray-600">Section / District</dt>
+                      <dd id="deac-user-summary-location" class="text-gray-900">Not provided</dd>
+                    </div>
+                  </dl>
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div class="mb-6">
@@ -1126,7 +1224,194 @@
         }
       }
     }
-    
+
+    // === Target user lookup helpers ===
+    const userLookupCache = {};
+    const summaryMap = {
+      mod: {
+        container: $("#mod-user-summary"),
+        message: $("#mod-user-summary-message"),
+        fields: {
+          name: $("#mod-user-summary-name"),
+          ec: $("#mod-user-summary-ec"),
+          designation: $("#mod-user-summary-designation"),
+          costCenter: $("#mod-user-summary-cost-center"),
+          region: $("#mod-user-summary-region"),
+          location: $("#mod-user-summary-location"),
+        },
+      },
+      deac: {
+        container: $("#deactivation-user-summary"),
+        message: $("#deac-user-summary-message"),
+        fields: {
+          name: $("#deac-user-summary-name"),
+          ec: $("#deac-user-summary-ec"),
+          designation: $("#deac-user-summary-designation"),
+          costCenter: $("#deac-user-summary-cost-center"),
+          region: $("#deac-user-summary-region"),
+          location: $("#deac-user-summary-location"),
+        },
+      },
+    };
+
+    function setSelectorValue($select, value) {
+      if (!$select || !$select.length) return;
+      $select.data("suppressLookup", true);
+      $select.val(value).trigger("change.select2").trigger("change");
+      setTimeout(() => {
+        $select.data("suppressLookup", false);
+      }, 0);
+    }
+
+    function setFieldErrorState($field, hasError) {
+      if (!$field || !$field.length) return;
+      if (hasError) {
+        $field
+          .addClass("border-red-500 focus:border-red-500 focus:ring-red-500")
+          .removeClass("focus:border-blue-500 focus:ring-blue-500");
+      } else {
+        $field
+          .removeClass("border-red-500 focus:border-red-500 focus:ring-red-500")
+          .addClass("focus:border-blue-500 focus:ring-blue-500");
+      }
+    }
+
+    function setSummaryMessage(key, message, level = "info") {
+      const summary = summaryMap[key];
+      if (!summary) return;
+      const $message = summary.message;
+      if (!$message || !$message.length) return;
+
+      const levelClasses = {
+        info: "text-blue-700",
+        success: "text-green-700",
+        error: "text-red-600",
+      };
+
+      $message
+        .removeClass("hidden text-blue-700 text-green-700 text-red-600")
+        .addClass(levelClasses[level] || levelClasses.info)
+        .text(message || "");
+
+      if (!message) {
+        $message.addClass("hidden").text("");
+      }
+    }
+
+    function resetSummary(key, { hide = false } = {}) {
+      const summary = summaryMap[key];
+      if (!summary) return;
+      if (hide) {
+        summary.container.addClass("hidden");
+      }
+      setSummaryMessage(key, "");
+      Object.values(summary.fields).forEach(($field) => {
+        if ($field && $field.length) {
+          $field.text("Not provided");
+        }
+      });
+    }
+
+    function populateSummary(key, profile) {
+      const summary = summaryMap[key];
+      if (!summary || !profile) return;
+
+      const fullName =
+        profile.full_name ||
+        [profile.first_name, profile.last_name].filter(Boolean).join(" ").trim() ||
+        profile.username ||
+        profile.ec_number ||
+        "Not provided";
+      const locationParts = [];
+      if (profile.section) locationParts.push(profile.section);
+      if (profile.district) locationParts.push(profile.district);
+      const location =
+        locationParts.join(" / ") || profile.region || "Not provided";
+
+      summary.container.removeClass("hidden");
+      setSummaryMessage(key, "Details loaded from user directory.", "info");
+
+      summary.fields.name.text(fullName || "Not provided");
+      summary.fields.ec.text(profile.ec_number || profile.username || "Not provided");
+      summary.fields.designation.text(profile.designation || "Not provided");
+      summary.fields.costCenter.text(profile.cost_center || "Not provided");
+      summary.fields.region.text(profile.region || "Not provided");
+      summary.fields.location.text(location || "Not provided");
+    }
+
+    function showSummaryNotFound(key, username) {
+      const summary = summaryMap[key];
+      if (!summary) return;
+      summary.container.removeClass("hidden");
+      resetSummary(key);
+      setSummaryMessage(key, `No profile found for "${username}".`, "error");
+    }
+
+    function handleUserProfileLookup(rawValue, config = {}) {
+      const {
+        targets = [],
+        sourceField = null,
+        onSuccess = null,
+        onNotFound = null,
+      } = config;
+
+      const trimmed = (rawValue || "").trim();
+      if (!trimmed) {
+        targets.forEach((key) => resetSummary(key, { hide: true }));
+        if (sourceField) setFieldErrorState(sourceField, false);
+        if (typeof onNotFound === "function") onNotFound();
+        return;
+      }
+
+      const normalized = trimmed.toUpperCase();
+      if (sourceField) {
+        sourceField.val(normalized);
+      }
+
+      const applyResult = (profile) => {
+        if (profile) {
+          targets.forEach((key) => populateSummary(key, profile));
+          if (sourceField) setFieldErrorState(sourceField, false);
+          if (typeof onSuccess === "function") onSuccess(profile);
+        } else {
+          targets.forEach((key) => showSummaryNotFound(key, normalized));
+          if (sourceField) setFieldErrorState(sourceField, true);
+          if (typeof onNotFound === "function") onNotFound();
+        }
+      };
+
+      if (userLookupCache[normalized]) {
+        applyResult(userLookupCache[normalized]);
+        return;
+      }
+
+      targets.forEach((key) => {
+        const summary = summaryMap[key];
+        if (summary) {
+          summary.container.removeClass("hidden");
+          setSummaryMessage(key, "Looking up user details...", "info");
+        }
+      });
+
+      $.ajax({
+        url: `/change_requests/profile_modification/get_user_data/${encodeURIComponent(
+          normalized
+        )}`,
+        method: "GET",
+        success: function (response) {
+          if (response && response.profile) {
+            userLookupCache[normalized] = response.profile;
+            applyResult(response.profile);
+          } else {
+            applyResult(null);
+          }
+        },
+        error: function () {
+          applyResult(null);
+        },
+      });
+    }
+
     // Initialize state on load
     updateProfileFieldNames($("#operation_type").val());
     $("#operation_type").trigger("change");
@@ -1136,11 +1421,79 @@
       const userProfileValue = $(this).val();
       const changeType = $("#change_type").val();
       const application = $("#for_application").val();
+
+      handleUserProfileLookup(userProfileValue, {
+        targets: ["mod"],
+        onSuccess: function (profile) {
+          const usernameValue = profile.username || profile.ec_number || "";
+          const ecValue = profile.ec_number || profile.username || "";
+          $("#mod_current_user_id").val(usernameValue);
+          $("#mod_ec_number").val(ecValue);
+          setSelectorValue($("#mod_user_selector"), profile.username || "");
+        },
+        onNotFound: function () {
+          $("#mod_current_user_id").val("");
+          $("#mod_ec_number").val("");
+          setSelectorValue($("#mod_user_selector"), "");
+        },
+      });
       
       // Load user roles for permanent assignment in Business Excellence
       if (application === "BUSINESS EXCELLENCE" && userProfileValue && changeType === "PERMANENT") {
         // No additional UI adjustments required
       }
+    });
+
+    $("#mod_ec_number").on("change blur", function () {
+      const $field = $(this);
+      handleUserProfileLookup($field.val(), {
+        targets: ["mod"],
+        sourceField: $field,
+        onSuccess: function (profile) {
+          const usernameValue = profile.username || profile.ec_number || "";
+          const ecValue = profile.ec_number || profile.username || "";
+          $("#mod_current_user_id").val(usernameValue);
+          $("#mod_ec_number").val(ecValue);
+          setSelectorValue($("#mod_user_selector"), profile.username || "");
+        },
+        onNotFound: function () {
+          $("#mod_current_user_id").val("");
+          setSelectorValue($("#mod_user_selector"), "");
+        },
+      });
+    });
+
+    $("#mod_user_selector").on("change", function () {
+      if ($(this).data("suppressLookup")) {
+        return;
+      }
+      const selectedUsername = $(this).val();
+      handleUserProfileLookup(selectedUsername, {
+        targets: ["mod"],
+        onSuccess: function (profile) {
+          const usernameValue = profile.username || profile.ec_number || "";
+          const ecValue = profile.ec_number || profile.username || "";
+          $("#mod_ec_number").val(ecValue);
+          $("#mod_current_user_id").val(usernameValue);
+
+          const changeType = $("#change_type").val();
+          if (changeType === "PERMANENT") {
+            $("#user_profile").val(usernameValue).trigger("change");
+          } else if (changeType === "TEMPORARY_DELEGATION") {
+            $("#delegatee").val(usernameValue).trigger("change");
+          }
+        },
+        onNotFound: function () {
+          $("#mod_ec_number").val("");
+          $("#mod_current_user_id").val("");
+        },
+      });
+    });
+
+    $("#user_profile_deac").on("change", function () {
+      handleUserProfileLookup($(this).val(), {
+        targets: ["deac"],
+      });
     });
 
     // Handle delegator selection change (for temporary delegations)
@@ -1243,12 +1596,6 @@
         const changeType = $("#change_type").val();
         if (!changeType) {
           errors.push("Change Type is required");
-          isValid = false;
-        }
-
-        const currentUserId = ($("#mod_current_user_id").val() || "").trim();
-        if (!currentUserId) {
-          errors.push("Current User ID is required");
           isValid = false;
         }
 
