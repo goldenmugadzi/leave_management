@@ -1545,7 +1545,7 @@
     $("#change-request-form").on("submit", function (e) {
       const operationType = $("#operation_type").val();
       let isValid = true;
-      let errors = [];
+      const errors = [];
 
       // Check if operation type is selected
       if (!operationType) {
@@ -1554,13 +1554,15 @@
       }
 
       // Validate common required fields
-      if (!$("#change_reason").val()) {
-        errors.push("Reason for Change is required");
-        isValid = false;
-      }
-      if (!$("#change_description").val()) {
-        errors.push("Change Description is required");
-        isValid = false;
+      if (operationType !== "profile_modification") {
+        if (!$("#change_reason").val()) {
+          errors.push("Reason for Change is required");
+          isValid = false;
+        }
+        if (!$("#change_description").val()) {
+          errors.push("Change Description is required");
+          isValid = false;
+        }
       }
       if (!$("#for_application").val()) {
         errors.push("Application is required");
@@ -1622,16 +1624,33 @@
           isValid = false;
         }
 
-        const reasonAssign = ($("#mod_reason_assign").val() || "").trim();
-        if (!reasonAssign) {
-          errors.push("Reason for assigning new roles is required");
-          isValid = false;
+        const includeAssign = $("#mod_include_assign").is(":checked");
+        const includeRemove = $("#mod_include_remove").is(":checked");
+
+        if (includeAssign) {
+          const reasonAssign = ($("#mod_reason_assign").val() || "").trim();
+          const rolesToAssign = ($("#mod_roles_to_assign").val() || "").trim();
+          if (!rolesToAssign) {
+            errors.push("Please describe the new roles to assign");
+            isValid = false;
+          }
+          if (!reasonAssign) {
+            errors.push("Reason for assigning new roles is required");
+            isValid = false;
+          }
         }
 
-        const rolesToRemoveText = ($("#mod_roles_to_remove").val() || "").trim();
-        if (rolesToRemoveText.length === 0) {
-          errors.push("Please list the roles or access that must be revoked.");
-          isValid = false;
+        if (includeRemove) {
+          const rolesToRemoveText = ($("#mod_roles_to_remove").val() || "").trim();
+          const reasonRemove = ($("#mod_reason_remove").val() || "").trim();
+          if (!rolesToRemoveText) {
+            errors.push("Please list the roles or access that must be revoked.");
+            isValid = false;
+          }
+          if (!reasonRemove) {
+            errors.push("Reason for removing current roles is required");
+            isValid = false;
+          }
         }
 
         // Validate based on change type
