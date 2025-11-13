@@ -55,6 +55,8 @@ from .services import (
 # Set up logging
 logger = logging.getLogger(__name__)
 
+COMPANY_ROOT_IDS = ["1232", "2", "3", "4", "5", "6", "7", "844"]
+
 def validate_change_request_data(data):
     """Validate change request input data"""
     errors = []
@@ -511,8 +513,9 @@ def create_change_request(request):
     # get designations
     user_designations = Designations.objects.all()
     parent = CostCenter.objects.filter(Q(code=user.region.code) | Q(code="CC"+user.region.code)).first()
-    cost_centers = parent.get_decendance() #CostCenter.objects.filter(parent=parent.id).all() if parent else []
+    cost_centers = parent.get_decendance() if parent else CostCenter.objects.none()
     users = UserProfile.objects.filter(region=user.region).all()
+    company_cost_centers = CostCenter.objects.filter(id__in=COMPANY_ROOT_IDS).order_by('name')
 
     # Prefill originator defaults using the authenticated user (supports proxy overrides in the UI)
     originator_defaults = build_originator_defaults(user)
@@ -527,6 +530,7 @@ def create_change_request(request):
                 "user_applications": user_applications,
                 "user_designations": user_designations,
                 "cost_centers": cost_centers,
+                "company_cost_centers": company_cost_centers,
                 "all_roles": Roles.objects.all(),
                 "user_title": user_title,
                 "user_groups": user_groups,
@@ -554,7 +558,6 @@ def create_new_profile(request):
         designation_ = sanitized_data.get('designation')
         cost_center = sanitized_data.get('cost_center')
         application = sanitized_data.get('for_application')
-        roles_to_action = sanitized_data.get('roles_to_action')
         np_ec_number = sanitized_data.get('np_ec_number')
         np_job_title = sanitized_data.get('np_job_title')
         np_company = sanitized_data.get('np_company')
@@ -562,6 +565,8 @@ def create_new_profile(request):
         np_depot_office = sanitized_data.get('np_depot_office')
         np_training_date_str = sanitized_data.get('np_training_date')
         np_training_confirmation_link = sanitized_data.get('np_training_confirmation_link')
+        np_training_confirmation_notes = sanitized_data.get('np_training_confirmation_notes')
+        training_attachment = request.FILES.get('np_training_confirmation_attachment')
         
         # Validate input data
         validation_errors = validate_change_request_data({
@@ -617,6 +622,17 @@ def create_new_profile(request):
         region = Regions.objects.filter(id=request.user.region.id).first() if request.user else None
         cost_center_ = CostCenter.objects.filter(id=cost_center).first() if cost_center else None
         designation = Designations.objects.filter(id=designation_).first() if designation_ else None
+        company_cost_center = CostCenter.objects.filter(id=np_company).first() if np_company else None
+
+        if not company_cost_center:
+            messages.error(request, "Select a valid company from the list.")
+            return redirect("/change_requests/create_change_request")
+
+        if not np_job_title and designation and designation.description:
+            np_job_title = designation.description
+
+        if not np_depot_office and cost_center_:
+            np_depot_office = cost_center_.name
 
         user = NewProfile(
             username=profile_username,
@@ -625,16 +641,18 @@ def create_new_profile(request):
             last_name=last_name,
             email=email,
             job_title=np_job_title,
-            company=np_company,
+            company=company_cost_center.name if company_cost_center else np_company,
             designation=designation,
             cost_center= cost_center_,
             depot_office=np_depot_office,
             sub_module=np_sub_module,
             training_date=training_date,
             training_confirmation_link=np_training_confirmation_link,
+            training_confirmation_notes=np_training_confirmation_notes,
+            training_confirmation_attachment=training_attachment,
             region=region,
             created_at=timezone.now(),
-            roles_to_action=roles_to_action
+            roles_to_action=None
         )
 
         user.save()
@@ -713,10 +731,11 @@ def profile_modification_request(request):
     
     try:
         sanitized_data = sanitize_input(request.POST.dict())
-        change_reason = sanitized_data.get("change_reason")
-        change_description = sanitized_data.get("change_description")
         application = sanitized_data.get("for_application")
-        roles_to_action = sanitized_data.get("roles_to_action")
+        change_reason_raw = sanitized_data.get("change_reason")
+        change_description_raw = sanitized_data.get("change_description")
+        roles_to_assign_notes = sanitized_data.get("mod_roles_to_assign") or sanitized_data.get("roles_to_action")
+        roles_to_remove_notes = sanitized_data.get("mod_roles_to_remove") or sanitized_data.get("mod_roles_remove_notes")
         change_type = sanitized_data.get("change_type", "PERMANENT")
         originator_defaults = build_originator_defaults(request.user)
         originator_company = sanitized_data.get("originator_company") or originator_defaults["company"]
@@ -728,10 +747,10 @@ def profile_modification_request(request):
         mod_reason_remove = sanitized_data.get("mod_reason_remove")
         mod_correspondence_link = sanitized_data.get("mod_correspondence_link")
         auth_user = request.user
-        roles_to_remove = request.POST.getlist("mod_roles_remove")
         
         print(f"Form data - application: {application}, change_type: {change_type}")
-        print(f"Form data - roles_to_action: {roles_to_action}")
+        print(f"Form data - roles_to_assign_notes: {roles_to_assign_notes}")
+        print(f"Form data - roles_to_remove_notes: {roles_to_remove_notes}")
 
         # Server-side validation for required fields
         missing_fields = []
@@ -739,10 +758,7 @@ def profile_modification_request(request):
             ("Originator company", originator_company),
             ("Originator site", originator_site),
             ("Date resolution required", date_resolution_required_str),
-            ("Change reason", change_reason),
-            ("Change description", change_description),
             ("EC number", mod_ec_number),
-            ("Reason for assigning new roles", mod_reason_assign),
         ]:
             if not (field_value or "").strip():
                 missing_fields.append(field_name)
@@ -760,6 +776,20 @@ def profile_modification_request(request):
             return redirect("/change_requests/create_change_request")
         
         # Handle different fields based on change type
+        requires_role_notes = change_type != "TEMPORARY_DELEGATION"
+        if requires_role_notes:
+            if not (roles_to_assign_notes or roles_to_remove_notes):
+                messages.error(request, "Provide at least one role assignment or removal detail.")
+                return redirect("/change_requests/create_change_request")
+
+            if roles_to_assign_notes and not (mod_reason_assign or "").strip():
+                messages.error(request, "Provide a reason for assigning new roles.")
+                return redirect("/change_requests/create_change_request")
+
+            if roles_to_remove_notes and not (mod_reason_remove or "").strip():
+                messages.error(request, "Provide a reason for removing current roles.")
+                return redirect("/change_requests/create_change_request")
+
         if change_type == "TEMPORARY_DELEGATION":
             # For temporary delegation, get delegator and delegatee
             delegator_username = sanitized_data.get("delegator")
@@ -892,7 +922,9 @@ def profile_modification_request(request):
                     application=application,
                     change_date=timezone.now(),
                     changed_by=delegator,  # Use delegator as the one making the change
-                    roles_to_action=roles_to_action,
+                    roles_to_action=roles_to_assign_notes,
+                    roles_to_assign_notes=roles_to_assign_notes,
+                    roles_to_remove_notes=roles_to_remove_notes,
                     current_user_id=mod_current_user_id,
                     ec_number=mod_ec_number,
                     reason_assign=mod_reason_assign,
@@ -903,10 +935,6 @@ def profile_modification_request(request):
                 print(f"ProfileChange object created, about to save with status: {PROFILE_CHANGE_STATUS['PENDING']}")
                 profile_mod.save()
                 print(f"ProfileChange saved successfully with ID: {profile_mod.id}")
-                if roles_to_remove:
-                    profile_mod.role_to_remove.set(Roles.objects.filter(id__in=roles_to_remove))
-                else:
-                    profile_mod.role_to_remove.clear()
             except Exception as e:
                 error_msg = f"Error creating regular ProfileChange: {str(e)}"
                 print(f"ERROR: {error_msg}")
@@ -925,11 +953,6 @@ def profile_modification_request(request):
         
         print(f"Change type display: {change_type_display}")
         
-        # Require reason for removal when roles were selected
-        if roles_to_remove and not (mod_reason_remove or "").strip():
-            messages.error(request, "Please provide a reason for removing current roles when selecting roles to remove.")
-            return redirect("/change_requests/change_request_index")
-        
         # Validate required fields before creating ChangeRequest
         if not delegatee.designation:
             error_msg = f"Delegatee '{delegatee.username}' must have a designation assigned"
@@ -943,6 +966,24 @@ def profile_modification_request(request):
             messages.error(request, error_msg)
             return redirect("/change_requests/change_request_index")
         
+        if requires_role_notes:
+            change_description_parts = []
+            if roles_to_assign_notes and roles_to_assign_notes.strip():
+                change_description_parts.append(f"Assign: {roles_to_assign_notes.strip()}")
+            if roles_to_remove_notes and roles_to_remove_notes.strip():
+                change_description_parts.append(f"Remove: {roles_to_remove_notes.strip()}")
+            change_description = " | ".join(change_description_parts)
+
+            change_reason_parts = []
+            if mod_reason_assign and mod_reason_assign.strip():
+                change_reason_parts.append(f"Assign: {mod_reason_assign.strip()}")
+            if mod_reason_remove and mod_reason_remove.strip():
+                change_reason_parts.append(f"Remove: {mod_reason_remove.strip()}")
+            change_reason = " | ".join(change_reason_parts)
+        else:
+            change_description = change_description_raw or ""
+            change_reason = change_reason_raw or ""
+
         print("Creating ChangeRequest object")
         try:
             change_request = ChangeRequest(
@@ -1331,6 +1372,8 @@ def profile_deactivation_request(request):
         reactivation_str = sanitized_data.get('deactivation_reactivation_date')
         deactivation_reason = sanitized_data.get('deactivation_reason')
         correspondence_link = sanitized_data.get('deactivation_correspondence_link')
+        correspondence_notes = sanitized_data.get('deactivation_correspondence_notes')
+        correspondence_attachment = request.FILES.get('deactivation_correspondence_attachment')
         user = UserProfile.objects.filter(username=profile_username).first()
         auth_user = request.user
 
@@ -1390,6 +1433,8 @@ def profile_deactivation_request(request):
                 reactivation_date=reactivation_date,
                 deactivation_reason=deactivation_reason,
                 correspondence_link=correspondence_link,
+                correspondence_notes=correspondence_notes,
+                correspondence_attachment=correspondence_attachment,
                 deactivated_by=auth_user
             )
             profile_deactivation.save()
@@ -1522,6 +1567,10 @@ def new_profile_request(request):
                 ]
                 info_items = [item for item in info_items if item]
 
+                company_cost_centers = CostCenter.objects.filter(id__in=COMPANY_ROOT_IDS).order_by('name')
+
+                company_cost_centers = CostCenter.objects.filter(id__in=COMPANY_ROOT_IDS).order_by('name')
+
                 return render(
                     request,
                     "change_requests/new_profile_request.html",
@@ -1531,6 +1580,8 @@ def new_profile_request(request):
                         "sections": Sections.objects.all(),
                         "districts": Districts.objects.all(),
                         "regions": Regions.objects.all(),
+                        "company_cost_centers": company_cost_centers,
+                        "company_cost_centers": company_cost_centers,
                         "cost_centers": CostCenter.objects.all(),
                         "user_title": request.user.get_full_name(),
                         "user_groups": list(request.user.groups.values_list('name', flat=True)),
@@ -1850,13 +1901,17 @@ def update_change_request(request):
             sanitized_data = sanitize_input(request.POST.dict())
             
             cr_id = sanitized_data.get('cr_id')
-            change_reason = sanitized_data.get('change_reason')
-            change_description = sanitized_data.get('change_description')
-            roles_to_action = sanitized_data.get('roles_to_action')
+            roles_to_assign_notes = sanitized_data.get('mod_roles_to_assign') or sanitized_data.get('roles_to_action')
+            roles_to_remove_notes = sanitized_data.get('mod_roles_to_remove') or sanitized_data.get('mod_roles_remove_notes')
+            mod_reason_assign = sanitized_data.get('mod_reason_assign')
+            mod_reason_remove = sanitized_data.get('mod_reason_remove')
+            roles_to_action = roles_to_assign_notes
             roles_actions = sanitized_data.get('roles_actions')
             originator_company = sanitized_data.get('originator_company')
             originator_site = sanitized_data.get('originator_site')
             date_resolution_required_str = sanitized_data.get('date_resolution_required')
+            change_reason_raw = sanitized_data.get('change_reason')
+            change_description_raw = sanitized_data.get('change_description')
             change_request = ChangeRequest.objects.filter(cr_id=cr_id).first()
             
             # Check permissions
@@ -1873,9 +1928,41 @@ def update_change_request(request):
                 messages.warning(request, "Change request has already been approved by the section head. You cannot update it")
                 return redirect("/change_requests/change_request_index")
             else:
+                requires_role_notes = change_request.change_type != "Temporary Role Delegation"
+
+                if requires_role_notes:
+                    if not (roles_to_assign_notes or roles_to_remove_notes):
+                        messages.error(request, "Provide at least one role assignment or removal detail.")
+                        return redirect("/change_requests/change_request_index")
+
+                    if roles_to_assign_notes and not (mod_reason_assign or "").strip():
+                        messages.error(request, "Provide a reason for assigning new roles.")
+                        return redirect("/change_requests/change_request_index")
+
+                    if roles_to_remove_notes and not (mod_reason_remove or "").strip():
+                        messages.error(request, "Provide a reason for removing current roles.")
+                        return redirect("/change_requests/change_request_index")
+
+                    description_parts = []
+                    if roles_to_assign_notes and roles_to_assign_notes.strip():
+                        description_parts.append(f"Assign: {roles_to_assign_notes.strip()}")
+                    if roles_to_remove_notes and roles_to_remove_notes.strip():
+                        description_parts.append(f"Remove: {roles_to_remove_notes.strip()}")
+                    change_description = " | ".join(description_parts)
+
+                    reason_parts = []
+                    if mod_reason_assign and mod_reason_assign.strip():
+                        reason_parts.append(f"Assign: {mod_reason_assign.strip()}")
+                    if mod_reason_remove and mod_reason_remove.strip():
+                        reason_parts.append(f"Remove: {mod_reason_remove.strip()}")
+                    change_reason = " | ".join(reason_parts)
+                else:
+                    change_description = change_description_raw or change_request.change_description
+                    change_reason = change_reason_raw or change_request.change_reason
+
                 # Update the ChangeRequest common fields
-                change_request.change_reason = change_reason if change_reason else change_request.change_reason
-                change_request.change_description = change_description if change_description else change_request.change_description
+                change_request.change_reason = change_reason or change_request.change_reason
+                change_request.change_description = change_description or change_request.change_description
                 change_request.application = sanitized_data.get('application', change_request.application)
                 if originator_company:
                     change_request.originator_company = originator_company
@@ -1907,10 +1994,11 @@ def update_change_request(request):
                     job_title = sanitized_data.get('np_job_title') or sanitized_data.get('job_title')
                     if job_title is not None:
                         new_profile.job_title = job_title
-                    company = sanitized_data.get('np_company') or sanitized_data.get('company')
-                    if company is not None:
-                        new_profile.company = company
-                    new_profile.depot_office = sanitized_data.get('np_depot_office', new_profile.depot_office)
+                    company_id = sanitized_data.get('np_company') or sanitized_data.get('company')
+                    if company_id is not None:
+                        company_obj = CostCenter.objects.filter(id=company_id).first()
+                        new_profile.company = company_obj.name if company_obj else company_id
+                    depot_office_value = sanitized_data.get('np_depot_office')
                     new_profile.sub_module = sanitized_data.get('np_sub_module', new_profile.sub_module)
                     training_date_str = sanitized_data.get('np_training_date')
                     if training_date_str:
@@ -1924,6 +2012,15 @@ def update_change_request(request):
                     training_link = sanitized_data.get('np_training_confirmation_link')
                     if training_link is not None:
                         new_profile.training_confirmation_link = training_link
+                    if 'np_training_confirmation_notes' in sanitized_data:
+                        new_profile.training_confirmation_notes = sanitized_data.get('np_training_confirmation_notes') or ""
+                    training_attachment = request.FILES.get('np_training_confirmation_attachment')
+                    if training_attachment:
+                        new_profile.training_confirmation_attachment = training_attachment
+                    elif sanitized_data.get('clear_np_training_confirmation_attachment') == 'true':
+                        if new_profile.training_confirmation_attachment:
+                            new_profile.training_confirmation_attachment.delete(save=False)
+                        new_profile.training_confirmation_attachment = None
                     
                     # Update designation if provided
                     designation_id = sanitized_data.get('designation')
@@ -1931,8 +2028,18 @@ def update_change_request(request):
                         new_profile.designation = Designations.objects.filter(id=designation_id).first()
                     
                     cost_center_id = sanitized_data.get('cost_center')
+                    new_cost_center = None
                     if cost_center_id:
-                        new_profile.cost_center = CostCenter.objects.filter(id=cost_center_id).first()
+                        new_cost_center = CostCenter.objects.filter(id=cost_center_id).first()
+                        if new_cost_center:
+                            new_profile.cost_center = new_cost_center
+                    if depot_office_value is not None:
+                        if depot_office_value.strip():
+                            new_profile.depot_office = depot_office_value
+                        else:
+                            source_cost_center = new_cost_center or new_profile.cost_center
+                            if source_cost_center:
+                                new_profile.depot_office = source_cost_center.name
                     section_id = sanitized_data.get('section')
                     if section_id:
                         new_profile.section = Sections.objects.filter(id=section_id).first()
@@ -1948,7 +2055,12 @@ def update_change_request(request):
                 elif change_request.profile_change:
                     # Update ProfileChange fields
                     profile_mod = change_request.profile_change
-                    profile_mod.roles_to_action = roles_to_action if roles_to_action else profile_mod.roles_to_action
+                    if requires_role_notes:
+                        if roles_to_assign_notes is not None:
+                            profile_mod.roles_to_action = roles_to_assign_notes
+                            profile_mod.roles_to_assign_notes = roles_to_assign_notes
+                        if roles_to_remove_notes is not None:
+                            profile_mod.roles_to_remove_notes = roles_to_remove_notes
                     profile_mod.roles_actions = roles_actions if roles_actions else profile_mod.roles_actions
                     profile_mod.application = sanitized_data.get('application', profile_mod.application)
                     fallback_current_id = sanitized_data.get('mod_current_user_id') or sanitized_data.get('mod_ec_number')
@@ -2003,20 +2115,21 @@ def update_change_request(request):
                     
                     profile_mod.save()
                     
-                    # Update roles to remove (applies to both permanent modifications and delegations)
-                    if 'mod_roles_remove' in request.POST:
-                        roles_to_remove_ids = request.POST.getlist('mod_roles_remove')
-                        if roles_to_remove_ids:
-                            profile_mod.role_to_remove.set(Roles.objects.filter(id__in=roles_to_remove_ids))
-                        else:
-                            profile_mod.role_to_remove.clear()
-                    
                 elif change_request.profile_deactivation:
                     # Update ProfileDeactivation fields
                     profile_deactivation = change_request.profile_deactivation
                     profile_deactivation.application = sanitized_data.get('application', profile_deactivation.application)
                     profile_deactivation.deactivation_reason = sanitized_data.get('deactivation_reason', profile_deactivation.deactivation_reason)
                     profile_deactivation.correspondence_link = sanitized_data.get('deactivation_correspondence_link', profile_deactivation.correspondence_link)
+                    if 'deactivation_correspondence_notes' in sanitized_data:
+                        profile_deactivation.correspondence_notes = sanitized_data.get('deactivation_correspondence_notes') or ""
+                    attachment_file = request.FILES.get('deactivation_correspondence_attachment')
+                    if attachment_file:
+                        profile_deactivation.correspondence_attachment = attachment_file
+                    elif sanitized_data.get('clear_deactivation_correspondence_attachment') == 'true':
+                        if profile_deactivation.correspondence_attachment:
+                            profile_deactivation.correspondence_attachment.delete(save=False)
+                        profile_deactivation.correspondence_attachment = None
                     effective_start_str = sanitized_data.get('deactivation_effective_start')
                     if effective_start_str:
                         try:

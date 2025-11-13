@@ -24,6 +24,12 @@ class NewProfile(models.Model):
     region = models.ForeignKey(Regions, on_delete=models.DO_NOTHING, blank=True, null=True)
     training_date = models.DateField(blank=True, null=True)
     training_confirmation_link = models.URLField(max_length=500, blank=True, null=True)
+    training_confirmation_notes = models.TextField(blank=True, null=True)
+    training_confirmation_attachment = models.FileField(
+        upload_to="uploads/change_requests/training_confirmations",
+        blank=True,
+        null=True
+    )
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -48,6 +54,8 @@ class ProfileChange(models.Model):
     roles_actions = models.CharField(max_length=300, null=True, blank=True, default=None)
     role_to_assign = models.ManyToManyField(Roles, related_name='role_to_assign', blank=True, default=None)
     role_to_remove = models.ManyToManyField(Roles, related_name='role_to_remove', blank=True, default=None)
+    roles_to_assign_notes = models.TextField(blank=True, null=True)
+    roles_to_remove_notes = models.TextField(blank=True, null=True)
     reason_assign = models.TextField(blank=True, null=True)
     reason_remove = models.TextField(blank=True, null=True)
     correspondence_link = models.URLField(max_length=500, blank=True, null=True)
@@ -69,6 +77,12 @@ class ProfileDeactivation(models.Model):
     reactivation_date = models.DateTimeField(blank=True, null=True)
     deactivation_reason = models.TextField(blank=True, null=True)
     correspondence_link = models.URLField(max_length=500, blank=True, null=True)
+    correspondence_notes = models.TextField(blank=True, null=True)
+    correspondence_attachment = models.FileField(
+        upload_to="uploads/change_requests/correspondence",
+        blank=True,
+        null=True
+    )
     deactivated_by = models.ForeignKey(UserProfile, on_delete=models.CASCADE, related_name='deactivated_by')
 
     def __str__(self):
