@@ -377,6 +377,43 @@ class ChangeRequestWorkflowTestCase(TestCase):
         self.assertTrue(section_head_approval.approval_status)
         self.assertTrue(it_approval.approval_status)
 
+    def test_new_profile_job_title_defaults_from_designation(self):
+        """Job title should auto-populate from designation when not provided"""
+        self.client.login(username='testuser', password='testpass123')
+
+        response = self.client.post('/change_requests/create_new_profile', {
+            'change_reason': 'Need new user account',
+            'change_description': 'Creating account for new employee',
+            'originator_company': 'ZETDC',
+            'originator_site': 'Harare Region',
+            'date_resolution_required': '2025-12-31',
+            'username': 'autojobtitle',
+            'first_name': 'Auto',
+            'last_name': 'JobTitle',
+            'email': 'autojobtitle@example.com',
+            'designation': self.designation.id,
+            'cost_center': self.cost_center.id,
+            'for_application': self.application.id,
+            'roles_to_action': '',
+            'np_ec_number': '7654321',
+            'np_company': 'ZETDC',
+            'np_sub_module': '',
+            'np_depot_office': '',
+            'np_training_date': '',
+            'np_training_confirmation_link': ''
+        })
+
+        self.assertEqual(response.status_code, 302)
+
+        change_request = ChangeRequest.objects.filter(
+            change_type='New Profile',
+            created_by=self.user_profile,
+            new_profile__username='autojobtitle'
+        ).first()
+
+        self.assertIsNotNone(change_request)
+        self.assertEqual(change_request.new_profile.job_title, self.designation.description)
+
 
 class SecurityIntegrationTestCase(TestCase):
     """Integration tests for security features"""

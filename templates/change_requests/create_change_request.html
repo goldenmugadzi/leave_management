@@ -349,13 +349,14 @@
                       for="np_job_title"
                       class="block text-sm font-medium text-gray-700 mb-2"
                     >
-                      Job Title <span class="text-red-500">*</span>
-                    </label>
+                      Job Title
+                     </label>
                     <input
                       type="text"
                       name="np_job_title"
                       id="np_job_title"
-                      class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus-border-blue-500"
+                      placeholder="Auto-filled from designation; adjust if necessary"
                     />
                   </div>
                   <div class="mb-6">
@@ -747,54 +748,94 @@
                     </div>
                   </dl>
                 </div>
-                  <div class="mb-6">
-                    <label
-                      for="mod_roles_to_assign"
-                      class="block text-sm font-medium text-gray-700 mb-2"
-                    >
-                      New Roles to Assign
-                    </label>
-                    <textarea
-                      id="mod_roles_to_assign"
-                      name="mod_roles_to_assign"
-                      rows="3"
-                      class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus-border-blue-500"
-                      placeholder="List the roles or access that should be added (one per line or comma separated)"
-                    ></textarea>
-                    <p class="mt-1 text-sm text-gray-500">
-                      Provide clear instructions so implementers understand which access to grant.
-                    </p>
+                  <div class="mb-6" id="mod-role-action-toggle">
+                     <span class="block text-sm font-medium text-gray-700 mb-2">
+                       Role Change Actions <span class="text-red-500">*</span>
+                     </span>
+                     <div class="flex flex-col md:flex-row md:items-center gap-4">
+                       <label class="inline-flex items-center text-sm text-gray-700">
+                         <input type="checkbox" id="mod_include_assign" name="mod_include_assign" value="assign" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500" checked />
+                         <span class="ml-2">Add roles / access</span>
+                       </label>
+                       <label class="inline-flex items-center text-sm text-gray-700">
+                         <input type="checkbox" id="mod_include_remove" name="mod_include_remove" value="remove" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500" checked />
+                         <span class="ml-2">Remove roles / access</span>
+                       </label>
+                     </div>
+                   </div>
+
+                  <div id="mod-assign-section" class="space-y-6">
+                    <div class="mb-6">
+                      <label
+                        for="mod_roles_to_assign"
+                        class="block text-sm font-medium text-gray-700 mb-2"
+                      >
+                        New Roles to Assign
+                      </label>
+                      <textarea
+                        id="mod_roles_to_assign"
+                        name="mod_roles_to_assign"
+                        rows="3"
+                        class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus-border-blue-500"
+                        placeholder="List the roles or access that should be added (one per line or comma separated)"
+                      ></textarea>
+                      <p class="mt-1 text-sm text-gray-500">
+                        Provide clear instructions so implementers understand which access to grant.
+                      </p>
+                    </div>
+                    <div class="mb-6">
+                      <label
+                        for="mod_reason_assign"
+                        class="block text-sm font-medium text-gray-700 mb-2"
+                      >
+                        Reason for Assigning New Roles <span class="text-red-500">*</span>
+                      </label>
+                      <textarea
+                        id="mod_reason_assign"
+                        name="mod_reason_assign"
+                        rows="3"
+                        class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus-border-blue-500"
+                        placeholder="Explain why the new roles are required"
+                      ></textarea>
+                    </div>
                   </div>
-                  <div class="mb-6">
-                    <label
-                      for="mod_reason_assign"
-                      class="block text-sm font-medium text-gray-700 mb-2"
-                    >
-                      Reason for Assigning New Roles <span class="text-red-500">*</span>
-                    </label>
-                    <textarea
-                      id="mod_reason_assign"
-                      name="mod_reason_assign"
-                      rows="3"
-                      class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      placeholder="Explain why the new roles are required"
-                    ></textarea>
+
+                  <div id="mod-remove-section" class="space-y-6">
+                    <div class="mb-6">
+                      <label
+                        for="mod_roles_to_remove"
+                        class="block text-sm font-medium text-gray-700 mb-2"
+                      >
+                        Roles to Remove
+                      </label>
+                      <textarea
+                        id="mod_roles_to_remove"
+                        name="mod_roles_to_remove"
+                        rows="3"
+                        class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus-border-blue-500"
+                        placeholder="List the roles or access that must be revoked"
+                      ></textarea>
+                      <p class="mt-1 text-sm text-gray-500">
+                        Include sufficient detail for implementation teams to remove the correct access.
+                      </p>
+                    </div>
+                    <div class="mb-6">
+                      <label
+                        for="mod_reason_remove"
+                        class="block text-sm font-medium text-gray-700 mb-2"
+                      >
+                        Reason for Removing Current Roles
+                      </label>
+                      <textarea
+                        id="mod_reason_remove"
+                        name="mod_reason_remove"
+                        rows="3"
+                        class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus-border-blue-500"
+                        placeholder="Explain why roles should be removed (if applicable)"
+                      ></textarea>
+                    </div>
                   </div>
-                  <div class="mb-6">
-                    <label
-                      for="mod_reason_remove"
-                      class="block text-sm font-medium text-gray-700 mb-2"
-                    >
-                      Reason for Removing Current Roles
-                    </label>
-                    <textarea
-                      id="mod_reason_remove"
-                      name="mod_reason_remove"
-                      rows="3"
-                      class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      placeholder="Explain why roles should be removed (if applicable)"
-                    ></textarea>
-                  </div>
+
                   <div class="mb-6">
                     <label
                       for="mod_correspondence_link"
@@ -806,27 +847,9 @@
                       type="url"
                       id="mod_correspondence_link"
                       name="mod_correspondence_link"
-                      class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus-border-blue-500"
                       placeholder="Provide a link to supporting correspondence"
                     />
-                  </div>
-                  <div class="mb-6">
-                    <label
-                      for="mod_roles_to_remove"
-                      class="block text-sm font-medium text-gray-700 mb-2"
-                    >
-                      Roles to Remove
-                    </label>
-                    <textarea
-                      id="mod_roles_to_remove"
-                      name="mod_roles_to_remove"
-                      rows="3"
-                      class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus-border-blue-500"
-                      placeholder="List the roles or access that must be revoked"
-                    ></textarea>
-                    <p class="mt-1 text-sm text-gray-500">
-                      Include sufficient detail for implementation teams to remove the correct access.
-                    </p>
                   </div>
                 </div>
               </div>
@@ -1145,16 +1168,10 @@
         $("#delegatee").prop("required", true);
         $("#user_profile").prop("required", false);
         
-        // Only show delegation date fields if Business Excellence is selected
-        if (application === "BUSINESS EXCELLENCE") {
-          $("#delegation-fields").removeClass("hidden");
-          // Load delegator roles if delegator is already selected
-          if (delegatorValue) {
-            loadDelegatorRoles(delegatorValue);
-          }
-        } else {
-          $("#delegation-fields").addClass("hidden");
-          alert("Temporary delegation is only available for Business Excellence application.");
+        $("#delegation-fields").removeClass("hidden");
+        // Load delegator roles if delegator is already selected
+        if (delegatorValue) {
+          loadDelegatorRoles(delegatorValue);
         }
       } else if (changeType === "PERMANENT") {
         // Show permanent user field and hide delegation-specific fields
@@ -1181,6 +1198,8 @@
         $("#delegator").prop("required", false);
         $("#delegatee").prop("required", false);
       }
+
+      refreshRoleActionSections();
     });
 
     // Handle application change
@@ -1196,70 +1215,30 @@
       
       // If delegation is selected and application is changed
       if (changeType === "TEMPORARY_DELEGATION") {
-        if (application === "BUSINESS EXCELLENCE") {
-          $("#delegation-fields").removeClass("hidden");
-          // Load delegator roles if delegator is selected
-          if (delegatorValue) {
-            loadDelegatorRoles(delegatorValue);
-          }
-        } else {
-          $("#delegation-fields").addClass("hidden");
-          $("#roles-to-delegate").addClass("hidden");
-          $("#delegator-roles-container").empty();
-          if (application !== "") {
-            alert("Temporary delegation is only available for Business Excellence application.");
-            $("#change_type").val("");
-          }
+        $("#delegation-fields").removeClass("hidden");
+        // Load delegator roles if delegator is selected
+        if (delegatorValue) {
+          loadDelegatorRoles(delegatorValue);
         }
-      } else if (changeType === "PERMANENT" && application === "BUSINESS EXCELLENCE" && userProfileValue) {
-        // No special handling needed; text area remains visible
+      } else if (changeType === "PERMANENT" && userProfileValue) {
+        // No special handling needed
       }
+
+      refreshRoleActionSections();
     });
     
     // Function to update roles section based on application and operation type
     function updateRolesSection(application, operationType) {
-      const rolesLabel = $("#roles-label");
-      const businessExcellenceRoles = $("#business-excellence-roles");
-      const otherAppRoles = $("#other-app-roles");
-      const rolesHelpText = $("#roles-help-text");
-      
-      if (operationType === "profile_deactivation") {
-        // Hide roles section for deactivations
-        rolesLabel.parent().hide();
-        return;
+      console.debug("[CR] updateRolesSection", { application, operationType });
+      const reasonGroup = $("#change-reason-group");
+      const descriptionGroup = $("#change-description-group");
+
+      if (operationType === "profile_modification") {
+        reasonGroup.addClass("hidden");
+        descriptionGroup.addClass("hidden");
       } else {
-        // Show roles section for other operations
-        rolesLabel.parent().show();
-      }
-      
-      if (application === "BUSINESS EXCELLENCE") {
-        if (operationType === "profile_modification") {
-          // For profile modification, use the shared text area for all applications
-          businessExcellenceRoles.addClass("hidden");
-          otherAppRoles.removeClass("hidden");
-          rolesLabel.text("Roles to Designate");
-          $("#roles_to_action").attr("placeholder", "Specify roles, responsibilities or designations that need to be assigned");
-          rolesHelpText.text("List specific roles, responsibilities or designations that need attention");
-        } else {
-          // For new profile, show role checkboxes for Business Excellence
-          businessExcellenceRoles.removeClass("hidden");
-          otherAppRoles.addClass("hidden");
-          rolesLabel.text("Roles to Assign");
-        }
-      } else {
-        // Show text area for other applications
-        businessExcellenceRoles.addClass("hidden");
-        otherAppRoles.removeClass("hidden");
-        
-        if (operationType === "profile_modification") {
-          rolesLabel.text("Roles to Designate");
-          $("#roles_to_action").attr("placeholder", "Specify roles, responsibilities or designations that need to be assigned");
-          rolesHelpText.text("List specific roles, responsibilities or designations that need attention");
-        } else {
-          rolesLabel.text("Roles to Designate");
-          $("#roles_to_action").attr("placeholder", "Specify roles, responsibilities or designations for the new user");
-          rolesHelpText.text("List specific roles, responsibilities or designations for the new user profile");
-        }
+        reasonGroup.removeClass("hidden");
+        descriptionGroup.removeClass("hidden");
       }
     }
 
@@ -1878,6 +1857,194 @@
         container.find('input[name="roles"]').prop('checked', false);
       });
     }
+
+    // Toggle role action sections based on checkboxes
+    const $assignToggle = $("#mod_include_assign");
+    const $removeToggle = $("#mod_include_remove");
+    const $assignSection = $("#mod-assign-section");
+    const $removeSection = $("#mod-remove-section");
+    const $toggleContainer = $("#mod-role-action-toggle");
+
+    function isProfileModificationActive() {
+      return $("#profile-modification-fields").is(":visible");
+    }
+
+    function refreshRoleActionSections() {
+      console.debug("[CR] refreshRoleActionSections:start", {
+        profileModificationVisible: isProfileModificationActive(),
+        includeAssignChecked: $assignToggle.is(":checked"),
+        includeRemoveChecked: $removeToggle.is(":checked"),
+        changeType: $("#change_type").val()
+      });
+      if (!isProfileModificationActive()) {
+        $toggleContainer.addClass("hidden");
+        $assignSection.addClass("hidden");
+        $removeSection.addClass("hidden");
+        $assignSection.find("textarea, input[type='url'], select").prop("disabled", true);
+        $removeSection.find("textarea, input[type='url'], select").prop("disabled", true);
+        $("#mod_reason_assign").prop("required", false);
+        console.debug("[CR] refreshRoleActionSections:end", { state: "inactive" });
+        return;
+      }
+
+      if (changeType === "TEMPORARY_DELEGATION") {
+        $toggleContainer.addClass("hidden");
+        $assignSection.addClass("hidden");
+        $removeSection.addClass("hidden");
+        $assignSection.find("textarea, input[type='url'], select").prop("disabled", true);
+        $removeSection.find("textarea, input[type='url'], select").prop("disabled", true);
+        $("#mod_reason_assign").prop("required", false);
+        console.debug("[CR] refreshRoleActionSections:end", { state: "delegation" });
+        return;
+      }
+
+      $toggleContainer.removeClass("hidden");
+      const assignEnabled = $assignToggle.is(":checked");
+      const removeEnabled = $removeToggle.is(":checked");
+
+      $assignSection.toggleClass("hidden", !assignEnabled);
+      $assignSection.find("textarea, input[type='url'], select").prop("disabled", !assignEnabled);
+      $("#mod_reason_assign").prop("required", assignEnabled);
+      if (!assignEnabled) {
+        $("#mod_roles_to_assign").val("");
+        $("#mod_reason_assign").val("");
+      }
+
+      $removeSection.toggleClass("hidden", !removeEnabled);
+      $removeSection.find("textarea, input[type='url'], select").prop("disabled", !removeEnabled);
+      if (!removeEnabled) {
+        $("#mod_roles_to_remove").val("");
+        $("#mod_reason_remove").val("");
+      }
+
+      if (!assignEnabled && !removeEnabled) {
+        // Ensure at least one option is selected; default back to assign
+        $assignToggle.prop("checked", true);
+        console.warn("[CR] refreshRoleActionSections", "No toggles selected; defaulting to assign");
+        refreshRoleActionSections();
+      }
+
+      console.debug("[CR] refreshRoleActionSections:end", {
+        assignEnabled,
+        removeEnabled,
+        reasonAssignRequired: $("#mod_reason_assign").prop("required")
+      });
+    }
+
+    $assignToggle.on("change", refreshRoleActionSections);
+    $removeToggle.on("change", refreshRoleActionSections);
+
+    // Auto-fill job title from designation when available
+    const $designationSelect = $("#new-profile-fields select[name='designation']").first();
+    const $jobTitleField = $("#new-profile-fields input[name='np_job_title']").first();
+    const $costCenterSelect = $("#new-profile-fields select[name='cost_center']").first();
+    const $depotField = $("#new-profile-fields input[name='np_depot_office']").first();
+    const JOB_TITLE_SENTINEL = "Select Designation";
+    const DEPOT_SENTINEL = "Select Cost Centre";
+
+    if (($jobTitleField.val() || "").trim() === JOB_TITLE_SENTINEL) {
+      $jobTitleField.val("").data("manualEntry", false).data("autofilled", false);
+    }
+    if (($depotField.val() || "").trim() === DEPOT_SENTINEL) {
+      $depotField.val("");
+    }
+
+    function autoFillJobTitle() {
+      if (!$designationSelect.length || !$jobTitleField.length) return;
+      const selectedText = ($designationSelect.find("option:selected").text() || "").trim();
+      let currentValue = ($jobTitleField.val() || "").trim();
+      if (currentValue === JOB_TITLE_SENTINEL) {
+        currentValue = "";
+        $jobTitleField.val("");
+        $jobTitleField.data("manualEntry", false).data("autofilled", false);
+      }
+      const shouldAutofill = !$jobTitleField.data("manualEntry") && selectedText;
+
+      console.debug("[CR] autoFillJobTitle", { selectedText, currentValue, manualEntry: $jobTitleField.data("manualEntry"), shouldAutofill });
+
+      if (shouldAutofill && (!currentValue || $jobTitleField.data("autofilled"))) {
+        $jobTitleField.val(selectedText);
+        $jobTitleField.data("autofilled", true);
+        console.debug("[CR] autoFillJobTitle", "set to designation", selectedText, { finalValue: $jobTitleField.val() });
+      } else if (!selectedText && !$jobTitleField.data("manualEntry")) {
+        $jobTitleField.val("");
+        $jobTitleField.data("autofilled", false);
+        console.debug("[CR] autoFillJobTitle", "cleared due to empty designation");
+      }
+    }
+
+    $designationSelect.on("change", function () {
+      if (!$jobTitleField.data("manualEntry")) {
+        $jobTitleField.data("autofilled", !$jobTitleField.val());
+      }
+      autoFillJobTitle();
+    });
+
+    $(document).on("select2:select select2:clear", "#new-profile-fields select[name='designation']", function () {
+      if (!$jobTitleField.data("manualEntry")) {
+        $jobTitleField.data("autofilled", !$jobTitleField.val());
+      }
+      autoFillJobTitle();
+    });
+
+    $jobTitleField.on("input", function () {
+      const hasValue = !!$(this).val().trim();
+      $(this).data("manualEntry", hasValue);
+      if (!hasValue) {
+        $(this).data("autofilled", false);
+        autoFillJobTitle();
+      }
+    });
+
+    function autoFillDepot() {
+       if (!$costCenterSelect.length || !$depotField.length) return;
+       let depotValue = ($depotField.val() || "").trim();
+       if (depotValue === DEPOT_SENTINEL) {
+         depotValue = "";
+         $depotField.val("");
+       }
+       if (depotValue) {
+         console.debug("[CR] autoFillDepot", "existing value retained", depotValue);
+         return;
+       }
+       const selectedCostCenter = ($costCenterSelect.find("option:selected").text() || "").trim();
+       console.debug("[CR] autoFillDepot", { selectedCostCenter });
+       if (!selectedCostCenter || selectedCostCenter === DEPOT_SENTINEL) {
+         console.debug("[CR] autoFillDepot", "skipping due to placeholder");
+         return;
+       }
+       if (selectedCostCenter) {
+         $depotField.val(selectedCostCenter);
+         console.debug("[CR] autoFillDepot", "set from cost centre", selectedCostCenter);
+       } else {
+         console.debug("[CR] autoFillDepot", "no cost centre selected");
+       }
+     }
+
+     $costCenterSelect.on("change", function () {
+       console.debug("[CR] cost_center change", { value: $(this).val(), text: $(this).find("option:selected").text() });
+       if (!($depotField.val() || "").trim()) {
+         autoFillDepot();
+       }
+     });
+
+     $(document).on("select2:select select2:clear", "#new-profile-fields select[name='cost_center']", function () {
+       const selectedOption = $(this).find("option:selected");
+       console.debug("[CR] cost_center select2 event", { value: selectedOption.val(), text: selectedOption.text() });
+       if (!($depotField.val() || "").trim()) {
+         autoFillDepot();
+       }
+     });
+
+     // Initial state setup
+     refreshRoleActionSections();
+     autoFillJobTitle();
+     autoFillDepot();
+     console.debug("[CR] init complete", {
+       application: $("#for_application").val(),
+       operationType: $("#operation_type").val()
+     });
+     updateRolesSection($("#for_application").val(), $("#operation_type").val());
   });
 </script>
 {% endblock scripts %}

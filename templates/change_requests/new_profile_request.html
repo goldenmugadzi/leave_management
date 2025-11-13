@@ -224,15 +224,15 @@
 
                     <div class="mb-6">
                       <label for="np_job_title" class="block text-sm font-medium text-gray-700 mb-2">
-                        Job Title <span class="text-red-500">*</span>
+                        Job Title
                       </label>
                       <input
                         type="text"
                         id="np_job_title"
                         name="np_job_title"
                         value="{{cr.user.job_title|default_if_none:''}}"
-                        required
-                        class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus-border-blue-500"
+                        placeholder="Auto-filled from designation; adjust if necessary"
                       />
                     </div>
 
@@ -431,6 +431,111 @@
       allowClear: true,
       width: "100%"
     });
-  });
-</script>
+
+    const $designationSelect = $("#designation");
+    const $jobTitleField = $("#np_job_title");
+    const $costCenterSelect = $("#cost_center");
+    const $depotField = $("#np_depot_office");
+    const JOB_TITLE_SENTINEL = "Select Designation";
+    const DEPOT_SENTINEL = "Select Cost Centre";
+
+    if (($jobTitleField.val() || "").trim() === JOB_TITLE_SENTINEL) {
+      $jobTitleField.val("").data("manualEntry", false).data("autofilled", false);
+    }
+    if (($depotField.val() || "").trim() === DEPOT_SENTINEL) {
+      $depotField.val("");
+    }
+ 
+     function autoFillJobTitle() {
+       if (!$designationSelect.length || !$jobTitleField.length) return;
+       const selectedText = ($designationSelect.find("option:selected").text() || "").trim();
+       let currentValue = ($jobTitleField.val() || "").trim();
+       if (currentValue === JOB_TITLE_SENTINEL) {
+         currentValue = "";
+         $jobTitleField.val("");
+         $jobTitleField.data("manualEntry", false).data("autofilled", false);
+       }
+       const shouldAutofill = !$jobTitleField.data("manualEntry") && selectedText;
+
+       console.debug("[Edit NP] autoFillJobTitle", { selectedText, currentValue, manualEntry: $jobTitleField.data("manualEntry"), shouldAutofill });
+ 
+       if (shouldAutofill && (!currentValue || $jobTitleField.data("autofilled"))) {
+         $jobTitleField.val(selectedText);
+         $jobTitleField.data("autofilled", true);
+         console.debug("[Edit NP] autoFillJobTitle", "set to designation", selectedText, { finalValue: $jobTitleField.val() });
+       } else if (!selectedText && !$jobTitleField.data("manualEntry")) {
+         $jobTitleField.val("");
+         $jobTitleField.data("autofilled", false);
+         console.debug("[Edit NP] autoFillJobTitle", "cleared due to empty designation");
+       }
+     }
+ 
+     $designationSelect.on("change", function () {
+       if (!$jobTitleField.data("manualEntry")) {
+         $jobTitleField.data("autofilled", !$jobTitleField.val());
+       }
+       autoFillJobTitle();
+     });
+
+    $(document).on("select2:select select2:clear", "#designation", function () {
+      if (!$jobTitleField.data("manualEntry")) {
+        $jobTitleField.data("autofilled", !$jobTitleField.val());
+      }
+      autoFillJobTitle();
+    });
+ 
+     $jobTitleField.on("input", function () {
+       const hasValue = !!$(this).val().trim();
+       $(this).data("manualEntry", hasValue);
+       if (!hasValue) {
+         $(this).data("autofilled", false);
+         autoFillJobTitle();
+       }
+     });
+ 
+     function autoFillDepot() {
+       if (!$costCenterSelect.length || !$depotField.length) return;
+       let depotValue = ($depotField.val() || "").trim();
+       if (depotValue === DEPOT_SENTINEL) {
+         depotValue = "";
+         $depotField.val("");
+       }
+       if (depotValue) {
+         console.debug("[Edit NP] autoFillDepot", "existing value retained", depotValue);
+         return;
+       }
+       const selectedCostCenter = ($costCenterSelect.find("option:selected").text() || "").trim();
+       console.debug("[Edit NP] autoFillDepot", { selectedCostCenter });
+       if (!selectedCostCenter || selectedCostCenter === DEPOT_SENTINEL) {
+         console.debug("[Edit NP] autoFillDepot", "skipping due to placeholder");
+         return;
+       }
+       if (selectedCostCenter) {
+         $depotField.val(selectedCostCenter);
+         console.debug("[Edit NP] autoFillDepot", "set from cost centre", selectedCostCenter);
+       } else {
+         console.debug("[Edit NP] autoFillDepot", "no cost centre selected");
+       }
+     }
+ 
+     $costCenterSelect.on("change", function () {
+       console.debug("[Edit NP] cost_center change", { value: $(this).val(), text: $(this).find("option:selected").text() });
+       if (!($depotField.val() || "").trim()) {
+         autoFillDepot();
+       }
+     });
+
+    $(document).on("select2:select select2:clear", "#cost_center", function () {
+      const selectedOption = $(this).find("option:selected");
+      console.debug("[Edit NP] cost_center select2 event", { value: selectedOption.val(), text: selectedOption.text() });
+      if (!($depotField.val() || "").trim()) {
+        autoFillDepot();
+      }
+    });
+ 
+     autoFillJobTitle();
+     autoFillDepot();
+    console.debug("[Edit NP] init complete");
+   });
+ </script>
 {% endblock scripts %}

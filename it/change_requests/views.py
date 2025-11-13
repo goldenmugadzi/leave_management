@@ -747,6 +747,8 @@ def profile_modification_request(request):
         mod_reason_remove = sanitized_data.get("mod_reason_remove")
         mod_correspondence_link = sanitized_data.get("mod_correspondence_link")
         auth_user = request.user
+        include_assign = bool(request.POST.get("mod_include_assign") or (roles_to_assign_notes and roles_to_assign_notes.strip()))
+        include_remove = bool(request.POST.get("mod_include_remove") or (roles_to_remove_notes and roles_to_remove_notes.strip()))
         
         print(f"Form data - application: {application}, change_type: {change_type}")
         print(f"Form data - roles_to_assign_notes: {roles_to_assign_notes}")
@@ -778,17 +780,31 @@ def profile_modification_request(request):
         # Handle different fields based on change type
         requires_role_notes = change_type != "TEMPORARY_DELEGATION"
         if requires_role_notes:
-            if not (roles_to_assign_notes or roles_to_remove_notes):
-                messages.error(request, "Provide at least one role assignment or removal detail.")
+            if not include_assign and not include_remove:
+                messages.error(request, "Select whether you are adding roles, removing roles, or both.")
                 return redirect("/change_requests/create_change_request")
 
-            if roles_to_assign_notes and not (mod_reason_assign or "").strip():
-                messages.error(request, "Provide a reason for assigning new roles.")
-                return redirect("/change_requests/create_change_request")
+            if include_assign:
+                if not (roles_to_assign_notes or "").strip():
+                    messages.error(request, "Provide details for the roles to assign.")
+                    return redirect("/change_requests/create_change_request")
+                if not (mod_reason_assign or "").strip():
+                    messages.error(request, "Provide a reason for assigning new roles.")
+                    return redirect("/change_requests/create_change_request")
+            else:
+                roles_to_assign_notes = ""
+                mod_reason_assign = ""
 
-            if roles_to_remove_notes and not (mod_reason_remove or "").strip():
-                messages.error(request, "Provide a reason for removing current roles.")
-                return redirect("/change_requests/create_change_request")
+            if include_remove:
+                if not (roles_to_remove_notes or "").strip():
+                    messages.error(request, "Provide details for the roles to remove.")
+                    return redirect("/change_requests/create_change_request")
+                if not (mod_reason_remove or "").strip():
+                    messages.error(request, "Provide a reason for removing current roles.")
+                    return redirect("/change_requests/create_change_request")
+            else:
+                roles_to_remove_notes = ""
+                mod_reason_remove = ""
 
         if change_type == "TEMPORARY_DELEGATION":
             # For temporary delegation, get delegator and delegatee
@@ -903,10 +919,6 @@ def profile_modification_request(request):
                 if selected_roles:
                     profile_mod.role_to_assign.set(Roles.objects.filter(id__in=selected_roles))
                     print("Roles assigned to ProfileChange successfully")
-                if roles_to_remove:
-                    profile_mod.role_to_remove.set(Roles.objects.filter(id__in=roles_to_remove))
-                else:
-                    profile_mod.role_to_remove.clear()
             except Exception as e:
                 error_msg = f"Error storing delegation data: {str(e)}"
                 print(f"ERROR: {error_msg}")
@@ -922,13 +934,13 @@ def profile_modification_request(request):
                     application=application,
                     change_date=timezone.now(),
                     changed_by=delegator,  # Use delegator as the one making the change
-                    roles_to_action=roles_to_assign_notes,
-                    roles_to_assign_notes=roles_to_assign_notes,
-                    roles_to_remove_notes=roles_to_remove_notes,
+                    roles_to_action=roles_to_assign_notes if include_assign else "",
+                    roles_to_assign_notes=roles_to_assign_notes if include_assign else "",
+                    roles_to_remove_notes=roles_to_remove_notes if include_remove else "",
                     current_user_id=mod_current_user_id,
                     ec_number=mod_ec_number,
-                    reason_assign=mod_reason_assign,
-                    reason_remove=mod_reason_remove,
+                    reason_assign=mod_reason_assign if include_assign else "",
+                    reason_remove=mod_reason_remove if include_remove else "",
                     correspondence_link=mod_correspondence_link,
                     status=PROFILE_CHANGE_STATUS['PENDING']  # Explicitly set status to PENDING
                 )
@@ -968,16 +980,16 @@ def profile_modification_request(request):
         
         if requires_role_notes:
             change_description_parts = []
-            if roles_to_assign_notes and roles_to_assign_notes.strip():
+            if include_assign and roles_to_assign_notes and roles_to_assign_notes.strip():
                 change_description_parts.append(f"Assign: {roles_to_assign_notes.strip()}")
-            if roles_to_remove_notes and roles_to_remove_notes.strip():
+            if include_remove and roles_to_remove_notes and roles_to_remove_notes.strip():
                 change_description_parts.append(f"Remove: {roles_to_remove_notes.strip()}")
             change_description = " | ".join(change_description_parts)
 
             change_reason_parts = []
-            if mod_reason_assign and mod_reason_assign.strip():
+            if include_assign and mod_reason_assign and mod_reason_assign.strip():
                 change_reason_parts.append(f"Assign: {mod_reason_assign.strip()}")
-            if mod_reason_remove and mod_reason_remove.strip():
+            if include_remove and mod_reason_remove and mod_reason_remove.strip():
                 change_reason_parts.append(f"Remove: {mod_reason_remove.strip()}")
             change_reason = " | ".join(change_reason_parts)
         else:
@@ -1744,6 +1756,11 @@ def update_change_request(request):
                 except (json.JSONDecodeError, Exception) as e:
                     print(f"DEBUG: Error parsing delegation dates: {e}")
 
+            include_assign_existing = bool((profile_change.roles_to_assign_notes or "").strip() or (profile_change.reason_assign or "").strip())
+            include_remove_existing = bool((profile_change.roles_to_remove_notes or "").strip() or (profile_change.reason_remove or "").strip())
+            if not include_assign_existing and not include_remove_existing:
+                include_assign_existing = True
+
             cr = {
                 "user": new_user,
                 "cr_id": change_request.cr_id,
@@ -1766,6 +1783,8 @@ def update_change_request(request):
                 "delegatee_username": delegatee_username,
                 "assigned_role_ids": assigned_role_ids,  # For pre-selecting roles in edit form
                 "role_to_remove_ids": list(profile_change.role_to_remove.values_list('id', flat=True)),
+                "include_assign": include_assign_existing,
+                "include_remove": include_remove_existing,
                 # ADDED: Delegation date and reason fields
                 "delegation_start_date": delegation_start_date,
                 "delegation_end_date": delegation_end_date,
@@ -1913,6 +1932,8 @@ def update_change_request(request):
             change_reason_raw = sanitized_data.get('change_reason')
             change_description_raw = sanitized_data.get('change_description')
             change_request = ChangeRequest.objects.filter(cr_id=cr_id).first()
+            include_assign = bool(request.POST.get('mod_include_assign') or (roles_to_assign_notes and roles_to_assign_notes.strip()))
+            include_remove = bool(request.POST.get('mod_include_remove') or (roles_to_remove_notes and roles_to_remove_notes.strip()))
             
             # Check permissions
             has_permission, permission_message = check_change_request_permissions(request.user, change_request)
@@ -1931,29 +1952,43 @@ def update_change_request(request):
                 requires_role_notes = change_request.change_type != "Temporary Role Delegation"
 
                 if requires_role_notes:
-                    if not (roles_to_assign_notes or roles_to_remove_notes):
-                        messages.error(request, "Provide at least one role assignment or removal detail.")
+                    if not include_assign and not include_remove:
+                        messages.error(request, "Select whether you are adding roles, removing roles, or both.")
                         return redirect("/change_requests/change_request_index")
 
-                    if roles_to_assign_notes and not (mod_reason_assign or "").strip():
-                        messages.error(request, "Provide a reason for assigning new roles.")
-                        return redirect("/change_requests/change_request_index")
+                    if include_assign:
+                        if not (roles_to_assign_notes or "").strip():
+                            messages.error(request, "Provide details for the roles to assign.")
+                            return redirect("/change_requests/change_request_index")
+                        if not (mod_reason_assign or "").strip():
+                            messages.error(request, "Provide a reason for assigning new roles.")
+                            return redirect("/change_requests/change_request_index")
+                    else:
+                        roles_to_assign_notes = ""
+                        mod_reason_assign = ""
 
-                    if roles_to_remove_notes and not (mod_reason_remove or "").strip():
-                        messages.error(request, "Provide a reason for removing current roles.")
-                        return redirect("/change_requests/change_request_index")
+                    if include_remove:
+                        if not (roles_to_remove_notes or "").strip():
+                            messages.error(request, "Provide details for the roles to remove.")
+                            return redirect("/change_requests/change_request_index")
+                        if not (mod_reason_remove or "").strip():
+                            messages.error(request, "Provide a reason for removing current roles.")
+                            return redirect("/change_requests/change_request_index")
+                    else:
+                        roles_to_remove_notes = ""
+                        mod_reason_remove = ""
 
                     description_parts = []
-                    if roles_to_assign_notes and roles_to_assign_notes.strip():
+                    if include_assign and roles_to_assign_notes and roles_to_assign_notes.strip():
                         description_parts.append(f"Assign: {roles_to_assign_notes.strip()}")
-                    if roles_to_remove_notes and roles_to_remove_notes.strip():
+                    if include_remove and roles_to_remove_notes and roles_to_remove_notes.strip():
                         description_parts.append(f"Remove: {roles_to_remove_notes.strip()}")
                     change_description = " | ".join(description_parts)
 
                     reason_parts = []
-                    if mod_reason_assign and mod_reason_assign.strip():
+                    if include_assign and mod_reason_assign and mod_reason_assign.strip():
                         reason_parts.append(f"Assign: {mod_reason_assign.strip()}")
-                    if mod_reason_remove and mod_reason_remove.strip():
+                    if include_remove and mod_reason_remove and mod_reason_remove.strip():
                         reason_parts.append(f"Remove: {mod_reason_remove.strip()}")
                     change_reason = " | ".join(reason_parts)
                 else:
@@ -1991,9 +2026,6 @@ def update_change_request(request):
                     ec_number = sanitized_data.get('np_ec_number') or sanitized_data.get('ec_number')
                     if ec_number is not None:
                         new_profile.ec_number = ec_number
-                    job_title = sanitized_data.get('np_job_title') or sanitized_data.get('job_title')
-                    if job_title is not None:
-                        new_profile.job_title = job_title
                     company_id = sanitized_data.get('np_company') or sanitized_data.get('company')
                     if company_id is not None:
                         company_obj = CostCenter.objects.filter(id=company_id).first()
@@ -2022,7 +2054,6 @@ def update_change_request(request):
                             new_profile.training_confirmation_attachment.delete(save=False)
                         new_profile.training_confirmation_attachment = None
                     
-                    # Update designation if provided
                     designation_id = sanitized_data.get('designation')
                     if designation_id:
                         new_profile.designation = Designations.objects.filter(id=designation_id).first()
@@ -2040,6 +2071,14 @@ def update_change_request(request):
                             source_cost_center = new_cost_center or new_profile.cost_center
                             if source_cost_center:
                                 new_profile.depot_office = source_cost_center.name
+
+                    job_title_raw = sanitized_data.get('np_job_title')
+                    if job_title_raw is not None:
+                        job_title_normalized = job_title_raw.strip()
+                        if job_title_normalized:
+                            new_profile.job_title = job_title_normalized
+                        elif new_profile.designation and getattr(new_profile.designation, 'description', None):
+                            new_profile.job_title = new_profile.designation.description
                     section_id = sanitized_data.get('section')
                     if section_id:
                         new_profile.section = Sections.objects.filter(id=section_id).first()
@@ -2057,18 +2096,19 @@ def update_change_request(request):
                     profile_mod = change_request.profile_change
                     if requires_role_notes:
                         if roles_to_assign_notes is not None:
-                            profile_mod.roles_to_action = roles_to_assign_notes
-                            profile_mod.roles_to_assign_notes = roles_to_assign_notes
+                            profile_mod.roles_to_action = roles_to_assign_notes if include_assign else ""
+                            profile_mod.roles_to_assign_notes = roles_to_assign_notes if include_assign else ""
                         if roles_to_remove_notes is not None:
-                            profile_mod.roles_to_remove_notes = roles_to_remove_notes
+                            profile_mod.roles_to_remove_notes = roles_to_remove_notes if include_remove else ""
                     profile_mod.roles_actions = roles_actions if roles_actions else profile_mod.roles_actions
                     profile_mod.application = sanitized_data.get('application', profile_mod.application)
                     fallback_current_id = sanitized_data.get('mod_current_user_id') or sanitized_data.get('mod_ec_number')
                     if fallback_current_id:
                         profile_mod.current_user_id = fallback_current_id
                     profile_mod.ec_number = sanitized_data.get('mod_ec_number', profile_mod.ec_number)
-                    profile_mod.reason_assign = sanitized_data.get('mod_reason_assign', profile_mod.reason_assign)
-                    profile_mod.reason_remove = sanitized_data.get('mod_reason_remove', profile_mod.reason_remove)
+                    if requires_role_notes:
+                        profile_mod.reason_assign = mod_reason_assign if include_assign else ""
+                        profile_mod.reason_remove = mod_reason_remove if include_remove else ""
                     profile_mod.correspondence_link = sanitized_data.get('mod_correspondence_link', profile_mod.correspondence_link)
                     
                     # FIXED: Update delegated roles if this is a temporary delegation

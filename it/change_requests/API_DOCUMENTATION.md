@@ -96,19 +96,21 @@ The API uses Django's message framework for user feedback and standard HTTP stat
     "for_application": "integer (application ID)",
     "roles_to_action": "string (max 300 chars)",
     "np_ec_number": "string (required)",
-    "np_job_title": "string (required)",
-    "np_company": "string (required)",
+    "np_job_title": "string (optional — auto-filled from designation when omitted)",
+    "np_company": "string (required, top-level cost center ID)",
     "np_sub_module": "string (optional)",
     "np_depot_office": "string (optional)",
     "np_training_date": "string (optional, YYYY-MM-DD)",
-    "np_training_confirmation_link": "string (optional, URL)"
+    "np_training_confirmation_link": "string (optional, URL)",
+    "np_training_confirmation_notes": "string (optional, additional context)",
+    "np_training_confirmation_attachment": "file (optional, supporting document)"
 }
 ```
 
 **Validation**:
 - All required fields must be provided
 - Originator metadata must be supplied (company, site, date required)
-- EC number, job title, and company values must be specified for new profile
+- EC number and company values must be specified for new profile
 - Username must be unique
 - Email must be valid format
 - Field lengths must not exceed limits
@@ -222,8 +224,8 @@ The API uses Django's message framework for user feedback and standard HTTP stat
 **Request Parameters**:
 ```json
 {
-    "change_reason": "string (required)",
-    "change_description": "string (required)",
+    "change_reason": "string (optional — auto-derived from role notes when omitted)",
+    "change_description": "string (optional — auto-derived from role notes when omitted)",
     "originator_company": "string (required)",
     "originator_site": "string (required)",
     "date_resolution_required": "string (required, YYYY-MM-DD)",
@@ -232,14 +234,16 @@ The API uses Django's message framework for user feedback and standard HTTP stat
     "user_profile": "string (required when change_type=PERMANENT)",
     "delegator": "string (required when change_type=TEMPORARY_DELEGATION)",
     "delegatee": "string (required when change_type=TEMPORARY_DELEGATION)",
-    "roles_to_action": "string (optional)",
     "mod_current_user_id": "string (optional, auto-filled from EC number)",
     "mod_ec_number": "string (required)",
-    "mod_reason_assign": "string (required)",
-    "mod_reason_remove": "string (required when mod_roles_remove is provided)",
+    "mod_include_assign": "boolean (optional, defaults true)",
+    "mod_roles_to_assign": "string (optional, describe roles/access to add)",
+    "mod_reason_assign": "string (required when mod_roles_to_assign is provided)",
+    "mod_include_remove": "boolean (optional, defaults true)",
+    "mod_roles_to_remove": "string (optional, describe roles/access to revoke)",
+    "mod_reason_remove": "string (required when mod_roles_to_remove is provided)",
     "mod_correspondence_link": "string (optional, URL)",
-    "roles": "array[string] (optional, role IDs to assign)",
-    "mod_roles_remove": "array[string] (optional, role IDs to remove)",
+    "roles": "array[string] (optional, role IDs to assign — temporary delegation only)",
     "delegation_start_date": "string (required when change_type=TEMPORARY_DELEGATION, YYYY-MM-DDTHH:MM)",
     "delegation_end_date": "string (required when change_type=TEMPORARY_DELEGATION, YYYY-MM-DDTHH:MM)",
     "delegation_reason": "string (required when change_type=TEMPORARY_DELEGATION)"
@@ -268,7 +272,9 @@ The API uses Django's message framework for user feedback and standard HTTP stat
     "deactivation_effective_start": "string (required, YYYY-MM-DDTHH:MM)",
     "deactivation_reactivation_date": "string (optional, YYYY-MM-DDTHH:MM)",
     "deactivation_reason": "string (required)",
-    "deactivation_correspondence_link": "string (optional, URL)"
+    "deactivation_correspondence_link": "string (optional, URL)",
+    "deactivation_correspondence_notes": "string (optional, supporting narrative)",
+    "deactivation_correspondence_attachment": "file (optional, supporting document)"
 }
 ```
 

@@ -152,8 +152,6 @@ class ChangeRequestService:
         
         if not ec_number:
             errors.append("EC number is required")
-        if not job_title:
-            errors.append("Job title is required")
         if not company:
             errors.append("Company is required")
         
@@ -180,13 +178,17 @@ class ChangeRequestService:
         if training_date_value:
             parsed_training_date = datetime.strptime(training_date_value, "%Y-%m-%d").date()
         
+        job_title_value = data.get('np_job_title') or data.get('job_title')
+        if not job_title_value and designation and designation.description:
+            job_title_value = designation.description
+
         new_profile = NewProfile(
             username=data.get('username'),
             ec_number=data.get('np_ec_number') or data.get('ec_number'),
             first_name=data.get('first_name'),
             last_name=data.get('last_name'),
             email=data.get('email'),
-            job_title=data.get('np_job_title') or data.get('job_title'),
+            job_title=job_title_value,
             company=data.get('np_company') or data.get('company'),
             designation=designation,
             section=section,

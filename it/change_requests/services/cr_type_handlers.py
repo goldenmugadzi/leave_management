@@ -115,6 +115,8 @@ class ProfileModificationHandler:
             "reason_remove": profile_change.reason_remove,
             "correspondence_link": profile_change.correspondence_link,
             "roles_to_remove": list(profile_change.role_to_remove.all()),
+            "roles_to_assign_notes": profile_change.roles_to_assign_notes,
+            "roles_to_remove_notes": profile_change.roles_to_remove_notes,
         }
         
         return profile_data

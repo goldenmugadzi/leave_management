@@ -135,7 +135,7 @@
                     </p>
                   </div>
 
-                  <div class="mb-6">
+                  <div class="mb-6" id="mod-role-action-toggle">
                     <label class="block text-sm font-medium text-gray-700 mb-2">
                       Roles to Delegate <span class="text-red-500">*</span>
                     </label>
@@ -156,19 +156,97 @@
                       Select which roles will be temporarily delegated from {{ cr.delegator_username }} to {{ cr.delegatee_username }}
                     </p>
                     {% else %}
-                    <!-- For regular modifications, show editable textarea -->
-                    <textarea
-                      name="mod_roles_to_assign"
-                      id="mod_roles_to_assign"
-                      rows="3"
-                      class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus-border-blue-500"
-                      placeholder="List the roles or access that should be added"
-                    >{{ change_request.profile_change.roles_to_assign_notes|default_if_none:'' }}</textarea>
-                    <p class="mt-1 text-sm text-gray-500">
-                      Provide clear instructions so implementers understand which access to grant.
-                    </p>
-                    {% endif %}
-                  </div>
+                    <div class="mb-6">
+                      <span class="block text-sm font-medium text-gray-700 mb-2">
+                        Role Change Actions <span class="text-red-500">*</span>
+                      </span>
+                      <div class="flex flex-col md:flex-row md:items-center gap-4">
+                        <label class="inline-flex items-center text-sm text-gray-700">
+                          <input type="checkbox" id="mod_include_assign" name="mod_include_assign" value="assign" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500" {% if cr.include_assign %}checked{% endif %} />
+                          <span class="ml-2">Add roles / access</span>
+                        </label>
+                        <label class="inline-flex items-center text-sm text-gray-700">
+                          <input type="checkbox" id="mod_include_remove" name="mod_include_remove" value="remove" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500" {% if cr.include_remove %}checked{% endif %} />
+                          <span class="ml-2">Remove roles / access</span>
+                        </label>
+                      </div>
+                    </div>
+
+                    <div id="mod-assign-section" class="space-y-6">
+                      <div class="mb-6">
+                        <label
+                          for="mod_roles_to_assign"
+                          class="block text-sm font-medium text-gray-700 mb-2"
+                        >
+                          New Roles to Assign
+                        </label>
+                        <textarea
+                          name="mod_roles_to_assign"
+                          id="mod_roles_to_assign"
+                          rows="3"
+                          class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus-border-blue-500"
+                          placeholder="List the roles or access that should be added"
+                        >{{ change_request.profile_change.roles_to_assign_notes|default_if_none:'' }}</textarea>
+                        <p class="mt-1 text-sm text-gray-500">
+                          Provide clear instructions so implementers understand which access to grant.
+                        </p>
+                      </div>
+                      <div class="mb-6">
+                        <label for="mod_reason_assign" class="block text-sm font-medium text-gray-700 mb-2">
+                          Reason for Assigning New Roles <span class="text-red-500">*</span>
+                        </label>
+                        <textarea
+                          id="mod_reason_assign"
+                          name="mod_reason_assign"
+                          rows="3"
+                          class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus-border-blue-500"
+                        >{{cr.user.reason_assign|default_if_none:''}}</textarea>
+                      </div>
+                    </div>
+
+                    <div id="mod-remove-section" class="space-y-6">
+                      <div class="mb-6">
+                        <label for="mod_roles_to_remove" class="block text-sm font-medium text-gray-700 mb-2">
+                          Roles to Remove
+                        </label>
+                        <textarea
+                          id="mod_roles_to_remove"
+                          name="mod_roles_to_remove"
+                          rows="3"
+                          class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus-border-blue-500"
+                          placeholder="List the roles or access that must be revoked"
+                        >{{ change_request.profile_change.roles_to_remove_notes|default_if_none:'' }}</textarea>
+                        <p class="mt-1 text-sm text-gray-500">
+                          Include sufficient detail for implementation teams to remove the correct access.
+                        </p>
+                      </div>
+                      <div class="mb-6">
+                        <label for="mod_reason_remove" class="block text-sm font-medium text-gray-700 mb-2">
+                          Reason for Removing Current Roles
+                        </label>
+                        <textarea
+                          id="mod_reason_remove"
+                          name="mod_reason_remove"
+                          rows="3"
+                          class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus-border-blue-500"
+                        >{{cr.user.reason_remove|default_if_none:''}}</textarea>
+                      </div>
+                    </div>
+
+                    <div class="mb-6">
+                      <label for="mod_correspondence_link" class="block text-sm font-medium text-gray-700 mb-2">
+                        Correspondence / Instruction Link
+                      </label>
+                      <input
+                        type="url"
+                        id="mod_correspondence_link"
+                        name="mod_correspondence_link"
+                        value="{{cr.user.correspondence_link|default_if_none:''}}"
+                        class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus-border-blue-500"
+                        placeholder="Provide a link to supporting correspondence"
+                      />
+                    </div>
+                  {% endif %}
                 </div>
 
                 <!-- Profile Modification Details -->
@@ -412,29 +490,6 @@
                     </div>
                   </div>
                 </div>
-
-                <div class="border-t border-gray-200 pt-6">
-                  <h4 class="text-lg font-medium text-gray-900 mb-4">Roles to Remove</h4>
-                  <label for="mod_roles_remove" class="block text-sm font-medium text-gray-700 mb-2">
-                    Select Roles to Remove
-                  </label>
-                  <select
-                    id="mod_roles_remove"
-                    name="mod_roles_remove"
-                    class="select2 block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus-border-blue-500"
-                    multiple
-                    data-placeholder="Select roles to remove"
-                  >
-                    {% for role in all_roles %}
-                    <option value="{{ role.id }}" {% if cr.role_to_remove_ids and role.id in cr.role_to_remove_ids %}selected{% endif %}>
-                      {{ role.role }}{% if role.description %} - {{ role.description }}{% endif %}
-                    </option>
-                    {% endfor %}
-                  </select>
-                  <p class="mt-1 text-sm text-gray-500">
-                    Choose the existing roles that should be removed from the user
-                  </p>
-                </div>
               </div>
 
               <!-- Action Buttons -->
@@ -504,15 +559,9 @@
         $("#delegatee").prop("required", true);
         $("#user_profile").prop("required", false);
         
-        // Only show delegation date fields if Business Excellence is selected
-        if (application === "BUSINESS EXCELLENCE") {
-          $("#delegation-fields").removeClass("hidden");
-          if (delegatorValue) {
-            loadDelegatorRoles(delegatorValue);
-          }
-        } else {
-          $("#delegation-fields").addClass("hidden");
-          alert("Temporary delegation is only available for Business Excellence application.");
+        $("#delegation-fields").removeClass("hidden");
+        if (delegatorValue) {
+          loadDelegatorRoles(delegatorValue);
         }
       } else if (changeType === "PERMANENT") {
         // Show permanent user field and hide delegation-specific fields
@@ -525,8 +574,7 @@
         $("#delegator").prop("required", false);
         $("#delegatee").prop("required", false);
         
-        // Load user roles for permanent assignment if Business Excellence
-        if (application === "BUSINESS EXCELLENCE" && userProfileValue) {
+        if (userProfileValue) {
           loadDelegatorRoles(userProfileValue);
         }
       } else {
@@ -542,6 +590,8 @@
         $("#delegator").prop("required", false);
         $("#delegatee").prop("required", false);
       }
+
+      refreshRoleActionSections();
     });
 
     // Handle user profile selection change (for permanent assignments)
@@ -550,10 +600,11 @@
       const changeType = $("#change_type").val();
       const application = $("#for_application").val();
       
-      // Load user roles for permanent assignment in Business Excellence
-      if (application === "BUSINESS EXCELLENCE" && userProfileValue && changeType === "PERMANENT") {
+      if (userProfileValue && changeType === "PERMANENT") {
         loadDelegatorRoles(userProfileValue);
       }
+
+      refreshRoleActionSections();
     });
 
     // Handle delegator selection change (for temporary delegations)
@@ -562,14 +613,65 @@
       const changeType = $("#change_type").val();
       const application = $("#for_application").val();
       
-      // Load delegator roles for temporary delegation in Business Excellence
-      if (application === "BUSINESS EXCELLENCE" && delegatorValue && changeType === "TEMPORARY_DELEGATION") {
+      if (delegatorValue && changeType === "TEMPORARY_DELEGATION") {
         loadDelegatorRoles(delegatorValue);
       } else {
         $("#roles-to-delegate").addClass("hidden");
         $("#delegator-roles-container").empty();
       }
+
+      refreshRoleActionSections();
     });
+
+    // Toggle role action sections based on checkboxes
+    const $assignToggle = $("#mod_include_assign");
+    const $removeToggle = $("#mod_include_remove");
+    const $assignSection = $("#mod-assign-section");
+    const $removeSection = $("#mod-remove-section");
+    const $toggleContainer = $("#mod-role-action-toggle");
+
+    function refreshRoleActionSections() {
+      const changeType = $("#change_type").val();
+      if (changeType === "TEMPORARY_DELEGATION") {
+        $toggleContainer.addClass("hidden");
+        $assignSection.addClass("hidden");
+        $removeSection.addClass("hidden");
+        $assignSection.find("textarea, input[type='url'], select").prop("disabled", true);
+        $removeSection.find("textarea, input[type='url'], select").prop("disabled", true);
+        $("#mod_reason_assign").prop("required", false);
+        return;
+      }
+
+      $toggleContainer.removeClass("hidden");
+
+      const assignEnabled = $assignToggle.is(":checked");
+      const removeEnabled = $removeToggle.is(":checked");
+
+      $assignSection.toggleClass("hidden", !assignEnabled);
+      $assignSection.find("textarea, input[type='url'], select").prop("disabled", !assignEnabled);
+      $("#mod_reason_assign").prop("required", assignEnabled);
+      if (!assignEnabled) {
+        $("#mod_roles_to_assign").val("");
+        $("#mod_reason_assign").val("");
+      }
+
+      $removeSection.toggleClass("hidden", !removeEnabled);
+      $removeSection.find("textarea, input[type='url'], select").prop("disabled", !removeEnabled);
+      if (!removeEnabled) {
+        $("#mod_roles_to_remove").val("");
+        $("#mod_reason_remove").val("");
+      }
+
+      if (!assignEnabled && !removeEnabled) {
+        $assignToggle.prop("checked", true);
+        refreshRoleActionSections();
+      }
+    }
+
+    $assignToggle.on("change", refreshRoleActionSections);
+    $removeToggle.on("change", refreshRoleActionSections);
+
+    refreshRoleActionSections();
 
     // Function to load delegator roles by ID (direct call)
     function loadDelegatorRolesById(delegatorId) {

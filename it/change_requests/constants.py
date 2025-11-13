@@ -174,7 +174,6 @@ REQUIRED_NEW_PROFILE_FIELDS = [
     'last_name',
     'email',
     'np_ec_number',
-    'np_job_title',
     'np_company'
 ]
 

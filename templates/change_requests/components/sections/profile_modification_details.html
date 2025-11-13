@@ -73,15 +73,20 @@
     {% endif %}
   </div>
 
-  {% if cr.user.roles_to_remove %}
+  {% if cr.user.roles_to_assign_notes %}
+  <div class="mt-6">
+    <h4 class="text-base font-semibold text-gray-900 mb-3">New Roles to Assign</h4>
+    <div class="bg-blue-50 border border-blue-200 rounded-md p-4">
+      <p class="text-sm text-gray-900 whitespace-pre-line">{{ cr.user.roles_to_assign_notes }}</p>
+    </div>
+  </div>
+  {% endif %}
+
+  {% if cr.user.roles_to_remove_notes %}
   <div class="mt-6">
     <h4 class="text-base font-semibold text-gray-900 mb-3">Roles to Remove</h4>
     <div class="bg-red-50 border border-red-200 rounded-md p-4">
-      <ul class="list-disc list-inside space-y-1">
-        {% for role in cr.user.roles_to_remove %}
-        <li class="text-sm text-gray-900">{{ role.role }}{% if role.description %} - {{ role.description }}{% endif %}</li>
-        {% endfor %}
-      </ul>
+      <p class="text-sm text-gray-900 whitespace-pre-line">{{ cr.user.roles_to_remove_notes }}</p>
     </div>
   </div>
   {% endif %}
@@ -102,7 +107,7 @@
   </div>
 </div>
 {% elif cr.roles_to_action and not cr.is_delegation %}
-<!-- For regular modifications, show text-based roles -->
+<!-- For regular modifications, show any legacy roles_to_action string -->
 <div class="border-t border-gray-200 pt-6">
   <h4 class="text-base font-semibold text-gray-900 mb-4">Roles/Permissions</h4>
   {% include 'change_requests/components/forms/display_field.html' with label="Roles to Action" value=cr.roles_to_action %}
