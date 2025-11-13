@@ -1887,17 +1887,6 @@
         return;
       }
 
-      if (changeType === "TEMPORARY_DELEGATION") {
-        $toggleContainer.addClass("hidden");
-        $assignSection.addClass("hidden");
-        $removeSection.addClass("hidden");
-        $assignSection.find("textarea, input[type='url'], select").prop("disabled", true);
-        $removeSection.find("textarea, input[type='url'], select").prop("disabled", true);
-        $("#mod_reason_assign").prop("required", false);
-        console.debug("[CR] refreshRoleActionSections:end", { state: "delegation" });
-        return;
-      }
-
       $toggleContainer.removeClass("hidden");
       const assignEnabled = $assignToggle.is(":checked");
       const removeEnabled = $removeToggle.is(":checked");
