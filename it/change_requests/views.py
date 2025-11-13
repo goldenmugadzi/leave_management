@@ -1634,6 +1634,13 @@ def update_change_request(request):
                     "training_confirmation_link": np.training_confirmation_link,
                 }
 
+                info_items = [
+                    f"Originator Company: {change_request.originator_company}" if change_request.originator_company else None,
+                    f"Originator Site: {change_request.originator_site}" if change_request.originator_site else None,
+                    f"Resolution Required By: {change_request.date_resolution_required}" if change_request.date_resolution_required else None,
+                ]
+                info_items = [item for item in info_items if item]
+
                 cr = {
                     "user": new_user,
                     "cr_id": change_request.cr_id,
