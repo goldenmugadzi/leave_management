@@ -1,0 +1,27 @@
+<div class="bg-gulf-blue-100 shadow-lg rounded-lg p-2 my-6">
+    <div class="flex flex-col gap-4">
+        <div class="px-6 py-4 shadow-lg rounded-2xl border border-indigo-300 bg-white">
+            {% include 'appraisal/final_result/scores_table.html' %}
+        </div>
+    
+        <div class="px-6 py-4 shadow-lg rounded-2xl border border-indigo-300 bg-white">
+            {% include 'appraisal/final_result/personal_attr_tabs.html' %}
+        </div>
+    
+        <div>
+            <div class="px-6 py-4 shadow-lg rounded-2xl border border-indigo-300 bg-white">
+                <h3 class="text-lg font-semibold text-indigo-600 mb-4 border-b pb-2">Rating Key</h3>
+                <ul class="space-y-2 text-sm text-gray-700 list-disc list-inside">
+                    <li><span class="font-medium text-green-600">Score &gt; target, beyond variance</span>: Rating = <span class="font-bold text-green-700">6</span></li>
+                    <li><span class="font-medium text-green-500">Score &gt; target, within variance</span>: Rating = <span class="font-bold text-green-600">5</span></li>
+                    <li><span class="font-medium text-indigo-600">Score = / &gt; target</span>: Rating = <span class="font-bold text-indigo-700">4</span></li>
+                    <li><span class="font-medium text-yellow-500">Score &lt; target, within variance</span>: Rating = <span class="font-bold text-yellow-600">3</span></li>
+                    <li><span class="font-medium text-orange-500">Score &lt; target, outside variance, but &gt; 50% of target</span>: Rating = <span class="font-bold text-orange-600">2</span></li>
+                    <li><span class="font-medium text-red-600">Score &lt; target, below 50% of target <strong>(UNSATISFACTORY)</strong></span>: Rating = <span class="font-bold text-red-700">1</span></li>
+                </ul>
+            </div>
+    
+        </div>
+    </div>      
+
+</div>
