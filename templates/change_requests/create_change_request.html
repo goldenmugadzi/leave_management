@@ -1108,6 +1108,18 @@
       });
     });
 
+    function refreshSelect2Containers(scope) {
+      const $scope = scope ? $(scope) : $(document);
+      $scope.find("select.select2").each(function () {
+        const instance = $(this).data("select2");
+        if (instance && instance.$container) {
+          instance.$container.css("width", "100%");
+        }
+      });
+    }
+
+    refreshSelect2Containers();
+
     function updateProfileFieldNames(operationType) {
       if (operationType === "profile_modification") {
         $("#user_profile").attr("name", "user_profile");
@@ -1138,12 +1150,15 @@
       switch (operationType) {
         case "new_profile":
           $("#new-profile-fields").removeClass("hidden");
+          refreshSelect2Containers("#new-profile-fields");
           break;
         case "profile_modification":
           $("#profile-modification-fields").removeClass("hidden");
+          refreshSelect2Containers("#profile-modification-fields");
           break;
         case "profile_deactivation":
           $("#profile-deactivation-fields").removeClass("hidden");
+          refreshSelect2Containers("#profile-deactivation-fields");
           break;
       }
       
@@ -1162,6 +1177,7 @@
         // Show delegation-specific fields and hide permanent user field
         $("#delegation-user-fields").removeClass("hidden");
         $("#permanent-user-field").addClass("hidden");
+        refreshSelect2Containers("#delegation-user-fields");
         
         // Set required attributes for delegation fields
         $("#delegator").prop("required", true);
@@ -1180,6 +1196,7 @@
         $("#delegation-fields").addClass("hidden");
         $("#roles-to-delegate").addClass("hidden");
         $("#delegator-roles-container").empty();
+        refreshSelect2Containers("#permanent-user-field");
         
         // Set required attributes for permanent fields
         $("#user_profile").prop("required", true);
@@ -1200,6 +1217,7 @@
       }
 
       refreshRoleActionSections();
+      refreshSelect2Containers("#profile-modification-fields");
     });
 
     // Handle application change
