@@ -1558,6 +1558,22 @@
       if (delegateeId && changeType === "TEMPORARY_DELEGATION") {
         // Show delegation fields if not already visible
         $("#delegation-fields").removeClass("hidden");
+        handleUserProfileLookup(delegateeId, {
+          targets: ["mod"],
+          onSuccess: function (profile) {
+            const usernameValue = profile.username || profile.ec_number || "";
+            const ecValue = profile.ec_number || profile.username || "";
+            $("#mod_current_user_id").val(usernameValue);
+            $("#mod_ec_number").val(ecValue);
+          },
+          onNotFound: function () {
+            $("#mod_current_user_id").val("");
+            $("#mod_ec_number").val("");
+          },
+        });
+      } else if (!delegateeId && changeType === "TEMPORARY_DELEGATION") {
+        $("#mod_current_user_id").val("");
+        $("#mod_ec_number").val("");
       }
     });
 
@@ -1573,6 +1589,8 @@
         isValid = false;
       }
 
+      const changeType = $("#change_type").val();
+
       // Validate common required fields
       if (operationType !== "profile_modification") {
         if (!$("#change_reason").val()) {
@@ -1587,6 +1605,17 @@
       if (!$("#for_application").val()) {
         errors.push("Application is required");
         isValid = false;
+      }
+
+      if (operationType === "profile_modification") {
+        if (!changeType) {
+          errors.push("Change Type is required for profile modifications");
+          isValid = false;
+        }
+        if (!($("#mod_ec_number").val() || "").trim()) {
+          errors.push("EC Number is required for profile modification");
+          isValid = false;
+        }
       }
 
       ["originator_company", "originator_site", "date_resolution_required"].forEach(
