@@ -1,46 +1,42 @@
-{% extends 'admin_layout.html' %} {% load static %} {% block title %}Processes
+{% extends 'admin_layout.html' %} {% load static process_extras %} {% block title %}Processes
 and Procedures{% endblock %} {% block content %}
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-  <div class="bg-white shadow-sm rounded-lg">
-    <div class="px-6 py-4 border-b border-gray-200">
-      <div class="flex justify-between items-center">
-        <h3 class="text-lg font-medium text-gray-900 flex items-center">
-          <i class="fas fa-sitemap mr-2 text-blue-600"></i>
-          IMS Processes - Harare Region
-        </h3>
-        <div class="flex items-center space-x-3">
-          <!-- View Toggle -->
-          <div class="flex bg-gray-100 rounded-lg p-1">
-            <a href="?view=table{% if search_query %}&search={{ search_query }}{% endif %}{% if department_filter %}&department={{ department_filter }}{% endif %}{% if region_filter %}&region={{ region_filter }}{% endif %}" 
-               class="px-3 py-1 rounded-md text-sm font-medium transition-colors {% if view_mode == 'table' %}bg-white text-blue-600 shadow-sm{% else %}text-gray-600 hover:text-gray-900{% endif %}">
-              <i class="fas fa-table mr-1"></i>Table View
-            </a>
-            <a href="?view=departments{% if search_query %}&search={{ search_query }}{% endif %}{% if department_filter %}&department={{ department_filter }}{% endif %}{% if region_filter %}&region={{ region_filter }}{% endif %}" 
-               class="px-3 py-1 rounded-md text-sm font-medium transition-colors {% if view_mode == 'departments' %}bg-white text-blue-600 shadow-sm{% else %}text-gray-600 hover:text-gray-900{% endif %}">
-              <i class="fas fa-th-large mr-1"></i>Departments
-            </a>
-          </div>
-          <!-- IMS Features -->
-          <div class="flex items-center space-x-2">
-            {% comment %} <a href="{% url 'process_management:ims_processes' %}" 
-               class="inline-flex items-center px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors shadow-sm">
-              <i class="fas fa-certificate mr-2"></i>IMS Processes
-            </a>
-            <a href="{% url 'process_management:ims_import' %}" 
-               class="inline-flex items-center px-3 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors shadow-sm">
-              <i class="fas fa-file-import mr-2"></i>IMS Import
-            </a> {% endcomment %}
-            <a href="{% url 'process_management:process_create' %}" 
-               class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm">
-              <i class="fas fa-plus mr-2"></i>Create Process
-            </a>
-          </div>
+  <div class="bg-white border border-gray-200">
+    <div class="px-6 py-4 border-b border-gray-200 flex flex-wrap items-center justify-between gap-4">
+      <div>
+        <h3 class="text-xl font-semibold text-gray-900">Processes and Procedures</h3>
+        <p class="text-sm text-gray-600 mt-1">Search, filter, and manage active processes.</p>
+      </div>
+      <div class="flex items-center gap-3">
+        <div class="flex border border-gray-300 text-sm">
+          <a href="?view=table{% if search_query %}&search={{ search_query }}{% endif %}{% if department_filter %}&department={{ department_filter }}{% endif %}{% if region_filter %}&region={{ region_filter }}{% endif %}"
+             class="px-3 py-1.5 {% if view_mode == 'table' %}bg-gray-100 font-medium text-gray-900{% else %}text-gray-600 hover:text-gray-800{% endif %}">
+            Table
+          </a>
+          <a href="?view=departments{% if search_query %}&search={{ search_query }}{% endif %}{% if department_filter %}&department={{ department_filter }}{% endif %}{% if region_filter %}&region={{ region_filter }}{% endif %}"
+             class="px-3 py-1.5 {% if view_mode == 'departments' %}bg-gray-100 font-medium text-gray-900{% else %}text-gray-600 hover:text-gray-800{% endif %}">
+            Departments
+          </a>
+        </div>
+        <div class="flex items-center gap-2">
+          <a href="{% url 'process_management:process_create' %}"
+             class="inline-flex items-center px-3 py-2 border border-blue-600 text-blue-600 text-sm font-medium hover:bg-blue-50">
+            <i class="fas fa-plus mr-2"></i>Create Process
+          </a>
+          <a href="{% url 'process_management:manage_resources' %}"
+             class="inline-flex items-center px-3 py-2 border border-gray-300 text-gray-700 text-sm font-medium hover:bg-gray-100">
+            Manage Departments & Regions
+          </a>
+          <a href="{% url 'process_management:bulk_import_dashboard' %}"
+             class="inline-flex items-center px-3 py-2 border border-gray-300 text-gray-700 text-sm font-medium hover:bg-gray-100">
+            Bulk Import
+          </a>
         </div>
       </div>
     </div>
-    <div class="p-6">
+    <div class="px-6 py-5">
       <!-- Search and Filter Section -->
-      <div class="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 rounded-xl mb-6 border border-blue-100">
+      <div class="bg-gray-50 border border-gray-200 px-5 py-4 mb-5">
         <form method="get" class="space-y-4">
           <!-- Preserve view mode -->
           <input type="hidden" name="view" value="{{ view_mode }}">
@@ -55,7 +51,7 @@ and Procedures{% endblock %} {% block content %}
                 <input
                   type="text"
                   name="search"
-                  class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white shadow-sm"
+                  class="w-full pl-10 pr-4 py-2 border border-gray-300 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 bg-white"
                   placeholder="Search processes by name, description, or code..."
                   value="{{ search_query }}"
                   id="searchInput"
@@ -64,8 +60,8 @@ and Procedures{% endblock %} {% block content %}
             </div>
             
             <!-- Department Filter -->
-            <div class="w-full lg:w-48">
-              <select name="department" class="w-full py-3 px-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white shadow-sm">
+            <div class="w-full lg:w-52">
+              <select name="department" class="w-full py-2 px-3 border border-gray-300 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 bg-white">
                 <option value="">All Departments</option>
                 {% for dept in departments %}
                 <option value="{{ dept.id }}" {% if department_filter == dept.id|stringformat:"s" %}selected{% endif %}>
@@ -76,8 +72,8 @@ and Procedures{% endblock %} {% block content %}
             </div>
             
             <!-- Region Filter -->
-            <div class="w-full lg:w-48">
-              <select name="region" class="w-full py-3 px-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white shadow-sm">
+            <div class="w-full lg:w-52">
+              <select name="region" class="w-full py-2 px-3 border border-gray-300 focus:ring-1 focus:ring-blue-500 focus:border-blue-500 bg-white">
                 <option value="">All Regions</option>
                 {% for region in available_regions %}
                 <option value="{{ region.id }}" {% if region_filter == region.id|stringformat:"s" %}selected{% endif %}>
@@ -91,14 +87,14 @@ and Procedures{% endblock %} {% block content %}
             <div class="flex gap-2">
               <button
                 type="submit"
-                class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm whitespace-nowrap"
+                class="px-4 py-2 bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 whitespace-nowrap"
               >
                 <i class="fas fa-search mr-2"></i>Search
               </button>
               {% if search_query or department_filter or region_filter %}
               <a
                 href="?view={{ view_mode }}"
-                class="inline-flex items-center px-4 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors shadow-sm whitespace-nowrap"
+                class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm text-gray-700 hover:bg-gray-100 whitespace-nowrap"
               >
                 <i class="fas fa-times mr-2"></i>Clear
               </a>
@@ -108,178 +104,163 @@ and Procedures{% endblock %} {% block content %}
         </form>
       </div>
 
-      <!-- Stats Summary -->
-      <div class="bg-gradient-to-r from-blue-500 to-blue-600 text-white p-4 rounded-lg mb-6 text-center shadow-lg">
-        <div class="flex items-center justify-center space-x-4">
-          <div class="flex items-center space-x-2">
-            <i class="fas fa-chart-bar text-blue-200"></i>
-            <span class="font-semibold">Total: {{ total_processes }}</span>
-          </div>
-          {% if search_query or department_filter or region_filter %}
-          <div class="flex items-center space-x-2">
-            <i class="fas fa-filter text-blue-200"></i>
-            <span class="font-semibold">Filtered: {{ filtered_count }}</span>
-          </div>
-          {% endif %}
-          {% if view_mode == 'table' %}
-          <div class="flex items-center space-x-2">
-            <i class="fas fa-table text-blue-200"></i>
-            <span class="font-semibold">Table View</span>
-          </div>
-          {% endif %}
-        </div>
+      <!-- Summary -->
+      <div class="flex flex-wrap items-center gap-4 text-sm text-gray-700 mb-5">
+        <span>Total processes: <strong>{{ total_processes }}</strong></span>
+        {% if search_query or department_filter or region_filter %}
+        <span>Filtered results: <strong>{{ filtered_count }}</strong></span>
+        {% endif %}
+        <span>Current view: <strong>{{ view_mode|title }}</strong></span>
       </div>
 
       {% if view_mode == 'table' %}
       <!-- Table View -->
-      <div class="bg-white border border-gray-300 rounded-lg overflow-hidden shadow-sm">
+      <div class="bg-white border border-gray-200 rounded-none">
         <div class="overflow-x-auto">
-          <table class="min-w-full border-collapse">
+          <table class="min-w-full border border-gray-200 text-sm">
             <thead>
-              <tr class="bg-blue-600 text-white">
-                <th scope="col" class="px-6 py-4 text-left text-sm font-semibold border-r border-blue-500">
+              <tr class="bg-gray-100 text-gray-700 uppercase tracking-wide text-xs">
+                <th scope="col" class="px-5 py-2 text-left font-semibold border-b border-gray-200">
                   Process Details
                 </th>
-                <th scope="col" class="px-6 py-4 text-center text-sm font-semibold border-r border-blue-500">
+                <th scope="col" class="px-5 py-2 text-center font-semibold border-b border-gray-200">
                   Process Map
                 </th>
-                <th scope="col" class="px-6 py-4 text-center text-sm font-semibold border-r border-blue-500">
+                <th scope="col" class="px-5 py-2 text-center font-semibold border-b border-gray-200">
                   Procedure
                 </th>
-                <th scope="col" class="px-6 py-4 text-center text-sm font-semibold border-r border-blue-500">
+                <th scope="col" class="px-5 py-2 text-center font-semibold border-b border-gray-200">
                   Risk Register
                 </th>
-                <th scope="col" class="px-6 py-4 text-center text-sm font-semibold border-r border-blue-500">
+                <th scope="col" class="px-5 py-2 text-center font-semibold border-b border-gray-200">
                   Objectives
                 </th>
-                <th scope="col" class="px-6 py-4 text-center text-sm font-semibold border-r border-blue-500">
+                <th scope="col" class="px-5 py-2 text-center font-semibold border-b border-gray-200">
                   Legal Register
                 </th>
-                <th scope="col" class="px-6 py-4 text-center text-sm font-semibold">
+                <th scope="col" class="px-5 py-2 text-center font-semibold border-b border-gray-200">
                   Status
                 </th>
               </tr>
             </thead>
             <tbody class="bg-white">
               {% for process in processes %}
-              <tr class="border-b border-gray-200 hover:bg-blue-50 transition-colors">
-                <td class="px-6 py-4 border-r border-gray-200">
+              <tr class="border-b border-gray-200 hover:bg-gray-50">
+                <td class="px-5 py-3 align-top">
                   <div class="flex flex-col">
-                    <div class="text-sm font-medium text-gray-900 mb-1">
+                    <div class="font-medium text-gray-900 mb-1">
                       <a href="{% url 'process_management:process_detail' process.id %}" 
-                         class="text-blue-600 hover:text-blue-800 no-underline hover:underline">
+                         class="text-blue-600 hover:underline">
                         {{ process.name }}
                       </a>
                       {% if process.process_code %}
-                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-800 ml-2">
+                        <span class="inline-flex items-center px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-700 ml-1">
                           {{ process.process_code }}
                         </span>
                       {% endif %}
                     </div>
-                    <div class="text-xs text-gray-500 space-y-1">
+                    <div class="space-y-1 text-xs text-gray-600">
                       <div>
-                        <i class="fas fa-building mr-1"></i>{{ process.department.name }}
+                        <span class="font-semibold">{{ process.department.name }}</span>
                         {% if process.region %}
-                          <span class="mx-1">•</span>
-                          <i class="fas fa-map-marker-alt mr-1"></i>{{ process.region.region }}
+                          <span class="mx-1 text-gray-400">|</span>
+                          <span>{{ process.region.region }}</span>
                         {% endif %}
                         {% if process.section %}
-                          <span class="mx-1">•</span>
-                          <i class="fas fa-users mr-1"></i>{{ process.section.name }}
+                          <span class="mx-1 text-gray-400">|</span>
+                          <span>{{ process.section.name }}</span>
                         {% endif %}
                       </div>
                       {% if process.ims_reference %}
-                      <div class="text-xs text-blue-600">
-                        <i class="fas fa-certificate mr-1"></i>{{ process.ims_reference }}
+                      <div class="text-blue-600">
+                        IMS Ref: {{ process.ims_reference }}
                       </div>
                       {% endif %}
                       {% if process.iso_clause %}
-                      <div class="text-xs text-green-600">
-                        <i class="fas fa-award mr-1"></i>ISO {{ process.iso_clause }}
+                      <div class="text-green-600">
+                        ISO {{ process.iso_clause }}
                       </div>
                       {% endif %}
                     </div>
                   </div>
                 </td>
-                <td class="px-6 py-4 text-center border-r border-gray-200">
-                  {% if process.has_process_map %}
-                    <a href="{% url 'process_management:document_download_by_type' process.id 'process_map' %}" 
-                       class="inline-flex items-center px-4 py-2 bg-green-600 text-white text-sm font-medium rounded hover:bg-green-700 transition-colors shadow-sm">
-                      <i class="fas fa-download mr-2"></i>
-                      Process Map
+                <td class="px-5 py-3 text-center">
+                  {% current_document process 'process_map' as process_map_doc %}
+                  {% if process_map_doc %}
+                    <a href="{% url 'process_management:document_download' process_map_doc.id %}" 
+                       class="inline-flex items-center justify-center gap-2 text-blue-600 hover:text-blue-800 hover:underline">
+                      <i class="fas fa-download text-xs"></i>
+                      <span class="truncate max-w-[12rem]">{{ process_map_doc.filename }}</span>
                     </a>
                   {% else %}
-                    <span class="inline-flex items-center px-4 py-2 bg-gray-300 text-gray-600 text-sm font-medium rounded">
-                      <i class="fas fa-minus mr-2"></i>
+                    <span class="text-xs text-gray-400 uppercase tracking-wide">
                       Not Available
                     </span>
                   {% endif %}
                 </td>
-                <td class="px-6 py-4 text-center border-r border-gray-200">
-                  {% if process.has_procedure %}
-                    <a href="{% url 'process_management:document_download_by_type' process.id 'procedure' %}" 
-                       class="inline-flex items-center px-4 py-2 bg-green-600 text-white text-sm font-medium rounded hover:bg-green-700 transition-colors shadow-sm">
-                      <i class="fas fa-download mr-2"></i>
-                      Procedure
+                <td class="px-5 py-3 text-center">
+                  {% current_document process 'procedure' as procedure_doc %}
+                  {% if procedure_doc %}
+                    <a href="{% url 'process_management:document_download' procedure_doc.id %}" 
+                       class="inline-flex items-center justify-center gap-2 text-blue-600 hover:text-blue-800 hover:underline">
+                      <i class="fas fa-download text-xs"></i>
+                      <span class="truncate max-w-[12rem]">{{ procedure_doc.filename }}</span>
                     </a>
                   {% else %}
-                    <span class="inline-flex items-center px-4 py-2 bg-gray-300 text-gray-600 text-sm font-medium rounded">
-                      <i class="fas fa-minus mr-2"></i>
+                    <span class="text-xs text-gray-400 uppercase tracking-wide">
                       Not Available
                     </span>
                   {% endif %}
                 </td>
-                <td class="px-6 py-4 text-center border-r border-gray-200">
-                  {% if process.has_risk_register %}
-                    <a href="{% url 'process_management:document_download_by_type' process.id 'risk_register' %}" 
-                       class="inline-flex items-center px-4 py-2 bg-green-600 text-white text-sm font-medium rounded hover:bg-green-700 transition-colors shadow-sm">
-                      <i class="fas fa-download mr-2"></i>
-                      Available
+                <td class="px-5 py-3 text-center">
+                  {% current_document process 'risk_register' as risk_doc %}
+                  {% if risk_doc %}
+                    <a href="{% url 'process_management:document_download' risk_doc.id %}" 
+                       class="inline-flex items-center justify-center gap-2 text-blue-600 hover:text-blue-800 hover:underline">
+                      <i class="fas fa-download text-xs"></i>
+                      <span class="truncate max-w-[12rem]">{{ risk_doc.filename }}</span>
                     </a>
                   {% else %}
-                    <span class="inline-flex items-center px-4 py-2 bg-gray-300 text-gray-600 text-sm font-medium rounded">
-                      <i class="fas fa-minus mr-2"></i>
-                      Missing
+                    <span class="text-xs text-gray-400 uppercase tracking-wide">
+                      Not Available
                     </span>
                   {% endif %}
                 </td>
-                <td class="px-6 py-4 text-center border-r border-gray-200">
-                  {% if process.has_objectives_targets %}
-                    <a href="{% url 'process_management:document_download_by_type' process.id 'objectives_targets' %}" 
-                       class="inline-flex items-center px-4 py-2 bg-green-600 text-white text-sm font-medium rounded hover:bg-green-700 transition-colors shadow-sm">
-                      <i class="fas fa-download mr-2"></i>
-                      Available
+                <td class="px-5 py-3 text-center">
+                  {% current_document process 'objectives_targets' as objectives_doc %}
+                  {% if objectives_doc %}
+                    <a href="{% url 'process_management:document_download' objectives_doc.id %}" 
+                       class="inline-flex items-center justify-center gap-2 text-blue-600 hover:text-blue-800 hover:underline">
+                      <i class="fas fa-download text-xs"></i>
+                      <span class="truncate max-w-[12rem]">{{ objectives_doc.filename }}</span>
                     </a>
                   {% else %}
-                    <span class="inline-flex items-center px-4 py-2 bg-gray-300 text-gray-600 text-sm font-medium rounded">
-                      <i class="fas fa-minus mr-2"></i>
-                      Missing
+                    <span class="text-xs text-gray-400 uppercase tracking-wide">
+                      Not Available
                     </span>
                   {% endif %}
                 </td>
-                <td class="px-6 py-4 text-center border-r border-gray-200">
-                  {% if process.has_legal_register %}
-                    <a href="{% url 'process_management:document_download_by_type' process.id 'legal_register' %}" 
-                       class="inline-flex items-center px-4 py-2 bg-green-600 text-white text-sm font-medium rounded hover:bg-green-700 transition-colors shadow-sm">
-                      <i class="fas fa-download mr-2"></i>
-                      Available
+                <td class="px-5 py-3 text-center">
+                  {% current_document process 'legal_register' as legal_doc %}
+                  {% if legal_doc %}
+                    <a href="{% url 'process_management:document_download' legal_doc.id %}" 
+                       class="inline-flex items-center justify-center gap-2 text-blue-600 hover:text-blue-800 hover:underline">
+                      <i class="fas fa-download text-xs"></i>
+                      <span class="truncate max-w-[12rem]">{{ legal_doc.filename }}</span>
                     </a>
                   {% else %}
-                    <span class="inline-flex items-center px-4 py-2 bg-gray-300 text-gray-600 text-sm font-medium rounded">
-                      <i class="fas fa-minus mr-2"></i>
-                      Missing
+                    <span class="text-xs text-gray-400 uppercase tracking-wide">
+                      Not Available
                     </span>
                   {% endif %}
                 </td>
-                <td class="px-6 py-4 text-center">
+                <td class="px-5 py-3 text-center">
                   {% if process.is_active %}
-                    <span class="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                      <i class="fas fa-check-circle mr-1"></i>
+                    <span class="inline-flex items-center px-3 py-1 border border-green-200 bg-green-50 text-green-700 text-xs">
                       Active
                     </span>
                   {% else %}
-                    <span class="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                      <i class="fas fa-times-circle mr-1"></i>
+                    <span class="inline-flex items-center px-3 py-1 border border-red-200 bg-red-50 text-red-700 text-xs">
                       Inactive
                     </span>
                   {% endif %}

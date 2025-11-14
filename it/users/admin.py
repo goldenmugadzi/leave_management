@@ -54,9 +54,7 @@ class ResponsibilitiesAdmin(admin.ModelAdmin):
 class SubstationAdmin(admin.ModelAdmin):
     list_display = ('name', 'code', 'region', 'district', 'depot')
 
-@admin.register(UserQualification)
-class UserQualificationAdmin(admin.ModelAdmin):
-    list_display = ('user', 'name', 'created_date')
+admin.site.register(UserQualification)
 
 @admin.register(UserExperience)
 class UserExperienceAdmin(admin.ModelAdmin):

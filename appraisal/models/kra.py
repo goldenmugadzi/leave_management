@@ -94,6 +94,16 @@ class AppraisalDepartmentOutputReviewerStatus(TimeStamp):
         return f"{self.appraisal_department_output} - {self.reviewer}"
 
 
+class AppraisalConfirmationStatus(TimeStamp):
+    appraisal = models.ForeignKey(Appraisal, on_delete=models.RESTRICT, related_name="appraisal_confirmation")
+    year_quarter = models.ForeignKey(YearQuarter, on_delete=models.RESTRICT, related_name="appraisal_confirmation_quarter_year")
+    confirmed_by = models.CharField(max_length=10, choices=REVIEWERS_CONFIRMATION_STATUS, default=REVIEWERS_CONFIRMATION_STATUS[1][0])
+    confirmation_status = models.CharField(max_length=10, choices=APPRAISAL_KRA_REVIEWER_STATUS_CHOICES, default=APPRAISAL_KRA_REVIEWER_STATUS_CHOICES[0][0])
+    comment = models.TextField(null=True, blank=True)
+    
+    def __str__(self):
+        return f"{self.appraisal} - {self.year_quarter} - {self.confirmed_by}"
+    
 class AppraisalApprovalWorkFlowQuarter(TimeStamp):
     appraisal_workflow = models.OneToOneField(AppraisalWorkflow, on_delete=models.RESTRICT)
     year_quarter = models.ForeignKey(YearQuarter, on_delete=models.RESTRICT, related_name="quarter_workflow")
