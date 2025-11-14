@@ -670,7 +670,7 @@
                   <h4 class="text-lg font-medium text-gray-900 mb-4">
                     Modification Supporting Details
                   </h4>
-                  <div class="mb-6">
+                  <div class="mb-6" id="mod-existing-user-section">
                     <label
                       for="mod_user_selector"
                       class="block text-sm font-medium text-gray-700 mb-2"
@@ -695,7 +695,7 @@
                   </div>
                   <input type="hidden" name="mod_current_user_id" id="mod_current_user_id" />
                   <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="mb-6">
+                    <div class="mb-6" id="mod-ec-section">
                       <label
                         for="mod_ec_number"
                         class="block text-sm font-medium text-gray-700 mb-2"
@@ -706,6 +706,7 @@
                         type="text"
                         name="mod_ec_number"
                         id="mod_ec_number"
+                        required
                         class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       />
                     </div>
@@ -1108,17 +1109,21 @@
       });
     });
 
-    function refreshSelect2Containers(scope) {
-      const $scope = scope ? $(scope) : $(document);
-      $scope.find("select.select2").each(function () {
-        const instance = $(this).data("select2");
-        if (instance && instance.$container) {
-          instance.$container.css("width", "100%");
-        }
-      });
-    }
+    const modExistingUserSection = $("#mod-existing-user-section");
+    const modEcSection = $("#mod-ec-section");
+    const modEcInput = $("#mod_ec_number");
 
-    refreshSelect2Containers();
+    function toggleModificationUserFields(isTemporaryDelegation) {
+      if (isTemporaryDelegation) {
+        modExistingUserSection.addClass("hidden");
+        modEcSection.addClass("hidden");
+        modEcInput.prop("required", false);
+      } else {
+        modExistingUserSection.removeClass("hidden");
+        modEcSection.removeClass("hidden");
+        modEcInput.prop("required", true);
+      }
+    }
 
     function updateProfileFieldNames(operationType) {
       if (operationType === "profile_modification") {
@@ -1150,15 +1155,12 @@
       switch (operationType) {
         case "new_profile":
           $("#new-profile-fields").removeClass("hidden");
-          refreshSelect2Containers("#new-profile-fields");
           break;
         case "profile_modification":
           $("#profile-modification-fields").removeClass("hidden");
-          refreshSelect2Containers("#profile-modification-fields");
           break;
         case "profile_deactivation":
           $("#profile-deactivation-fields").removeClass("hidden");
-          refreshSelect2Containers("#profile-deactivation-fields");
           break;
       }
       
@@ -1174,10 +1176,10 @@
       const userProfileValue = $("#user_profile").val();
       
       if (changeType === "TEMPORARY_DELEGATION") {
+        toggleModificationUserFields(true);
         // Show delegation-specific fields and hide permanent user field
         $("#delegation-user-fields").removeClass("hidden");
         $("#permanent-user-field").addClass("hidden");
-        refreshSelect2Containers("#delegation-user-fields");
         
         // Set required attributes for delegation fields
         $("#delegator").prop("required", true);
@@ -1190,19 +1192,20 @@
           loadDelegatorRoles(delegatorValue);
         }
       } else if (changeType === "PERMANENT") {
+        toggleModificationUserFields(false);
         // Show permanent user field and hide delegation-specific fields
         $("#permanent-user-field").removeClass("hidden");
         $("#delegation-user-fields").addClass("hidden");
         $("#delegation-fields").addClass("hidden");
         $("#roles-to-delegate").addClass("hidden");
         $("#delegator-roles-container").empty();
-        refreshSelect2Containers("#permanent-user-field");
         
         // Set required attributes for permanent fields
         $("#user_profile").prop("required", true);
         $("#delegator").prop("required", false);
         $("#delegatee").prop("required", false);
       } else {
+        toggleModificationUserFields(false);
         // No change type selected - hide all
         $("#delegation-user-fields").addClass("hidden");
         $("#permanent-user-field").addClass("hidden");
@@ -1217,7 +1220,6 @@
       }
 
       refreshRoleActionSections();
-      refreshSelect2Containers("#profile-modification-fields");
     });
 
     // Handle application change
