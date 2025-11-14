@@ -146,19 +146,81 @@
                     
                     {% if cr.is_delegation %}
                     <!-- For temporary delegations, show dynamic role selection (same as create form) -->
-                    <div id="roles-to-delegate" class="mb-6">
-                      <div id="delegator-roles-container" class="border border-gray-300 rounded-md p-4 max-h-96 overflow-y-auto">
-                        <!-- Roles will be populated here via JavaScript -->
-                        <div class="text-center text-gray-500">
-                          <i class="fas fa-spinner fa-spin mr-2"></i>Loading roles...
+                    <div class="space-y-6">
+                      <div id="roles-to-delegate">
+                        <div id="delegator-roles-container" class="border border-gray-300 rounded-md p-4 max-h-96 overflow-y-auto">
+                          <!-- Roles will be populated here via JavaScript -->
+                          <div class="text-center text-gray-500">
+                            <i class="fas fa-spinner fa-spin mr-2"></i>Loading roles...
+                          </div>
+                        </div>
+                        <p class="mt-1 text-sm text-gray-500">
+                          Select which roles will be temporarily delegated from {{ cr.delegator_username }} to {{ cr.delegatee_username }}
+                        </p>
+                      </div>
+                      <!-- Hidden field to maintain the roles_to_action marker -->
+                      <input type="hidden" name="roles_to_action" value="TEMPORARY_DELEGATION" />
+
+                      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                          <label
+                            for="mod_roles_to_assign"
+                            class="block text-sm font-medium text-gray-700 mb-2"
+                          >
+                            Roles to Assign
+                          </label>
+                          <textarea
+                            name="mod_roles_to_assign"
+                            id="mod_roles_to_assign"
+                            rows="3"
+                            class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus-border-blue-500"
+                            placeholder="List the roles or access that should be added"
+                          >{{ change_request.profile_change.roles_to_assign_notes|default_if_none:'' }}</textarea>
+                        </div>
+                        <div>
+                          <label
+                            for="mod_reason_assign"
+                            class="block text-sm font-medium text-gray-700 mb-2"
+                          >
+                            Reason for Assigning Roles
+                          </label>
+                          <textarea
+                            id="mod_reason_assign"
+                            name="mod_reason_assign"
+                            rows="3"
+                            class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus-border-blue-500"
+                            placeholder="Explain why these roles are being delegated"
+                          >{{cr.user.reason_assign|default_if_none:''}}</textarea>
+                        </div>
+                      </div>
+
+                      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                          <label for="mod_roles_to_remove" class="block text-sm font-medium text-gray-700 mb-2">
+                            Roles to Remove
+                          </label>
+                          <textarea
+                            id="mod_roles_to_remove"
+                            name="mod_roles_to_remove"
+                            rows="3"
+                            class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus-border-blue-500"
+                            placeholder="List the roles or access that must be revoked"
+                          >{{ change_request.profile_change.roles_to_remove_notes|default_if_none:'' }}</textarea>
+                        </div>
+                        <div>
+                          <label for="mod_reason_remove" class="block text-sm font-medium text-gray-700 mb-2">
+                            Reason for Removing Roles
+                          </label>
+                          <textarea
+                            id="mod_reason_remove"
+                            name="mod_reason_remove"
+                            rows="3"
+                            class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus-border-blue-500"
+                            placeholder="Explain why the roles should be revoked (if applicable)"
+                          >{{cr.user.reason_remove|default_if_none:''}}</textarea>
                         </div>
                       </div>
                     </div>
-                    <!-- Hidden field to maintain the roles_to_action marker -->
-                    <input type="hidden" name="roles_to_action" value="TEMPORARY_DELEGATION" />
-                    <p class="mt-1 text-sm text-gray-500">
-                      Select which roles will be temporarily delegated from {{ cr.delegator_username }} to {{ cr.delegatee_username }}
-                    </p>
                     {% else %}
                     <div class="mb-6">
                       <span class="block text-sm font-medium text-gray-700 mb-2">

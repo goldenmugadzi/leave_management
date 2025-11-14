@@ -298,9 +298,8 @@
 
 {% endblock content %}
 
-{{ cr_type_definitions|json_script:"cr-type-definitions" }}
-
 {% block scripts %}
+{{ cr_type_definitions|json_script:"cr-type-definitions" }}
 <script>
   $(document).ready(function () {
     // Initialize Select2 for select fields
