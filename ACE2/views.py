@@ -1,4 +1,5 @@
 from datetime import datetime, date
+from os import remove
 from os.path import basename
 from random import randrange
 
@@ -512,6 +513,7 @@ def ace_awaiting_my_action(request):
     # Get cost centers for ACE application
     application_names = ["ace"]
     cost_centers_set = request.user.cost_centers_for(application_names)
+    print("cost centers set: ", cost_centers_set)
     cost_center = request.user.cost_center
     end_date = datetime.now()
     start_date = end_date.replace(day=1)
@@ -527,12 +529,17 @@ def ace_awaiting_my_action(request):
         "process__approval_set",
         "process__workflow__step_set"
     )
+    print("ACES query prepared")
+    print("Initial ACEs count: ", aces_query.count())
 
     # Cost center based filtering
     if cost_centers_set:
         cost_centers = list(cost_centers_set)
+        print("inside the loop")
         cost_center = get_parent_cost_center(cost_centers)
         aces_query = aces_query.filter(cost_center__in=cost_centers)
+        print("Filtered ACEs count after cost center filter: ", aces_query.count())
+
     else:
         # Fallback to user's cost center and descendants
         fallback_cost_centers = user_profile.cost_center_and_decendace()
@@ -541,7 +548,7 @@ def ace_awaiting_my_action(request):
 
     # Additional role-based filters
     if not any(role in ['Finance Director/Transmission Manager', 'Managing Director'] for role in user_role_names):
-        if any(role in ['General Manager/Transmission Distribution Director', 'Engineering Manager', 'Finance Manager'] for role in user_role_names):
+        if any(role in ['General Manager/Transmission Distribution Director', 'Engineering Manager', 'Finance Manager','Accounting Officer'] for role in user_role_names):
             aces_query = aces_query.filter(region=user_profile.region)
         else:
             aces_query = aces_query.filter(
@@ -567,6 +574,36 @@ def ace_awaiting_my_action(request):
             ace.latest_approval_status = approvals.last().approved if approvals.exists() else None
             aces_to_process.append(ace)
             processed_ace_ids.add(ace.Ace_id2)
+
+    #add aces being filtered by region and section
+    aces_in_region=Ace2.objects.filter(region=user_profile.region)
+    aces_in_section=aces_in_region.filter(section=user_profile.section)
+    for ace in aces_in_section:
+        if ace not in aces_to_process:
+            approvals = ace.process.approval_set.all() if ace.process else []
+            ace.has_rejected_approval = False
+            ace.latest_approval_status = approvals.last().approved if approvals.exists() else None
+            aces_to_process.append(ace)
+            processed_ace_ids.add(ace.Ace_id2)
+    print("ACEs to process count after section: ", len(aces_to_process))
+
+    # for ace in aces_in_region:
+    #     if ace not in aces_to_process:
+    #         approvals = ace.process.approval_set.all() if ace.process else []
+    #         ace.has_rejected_approval = False
+            
+    #         aces_to_process.append(ace)
+    #         processed_ace_ids.add(ace.Ace_id2)
+    # print("ACEs to process count after region addition: ", len(aces_to_process))
+
+    #remove  rejected
+    aces_to_process = [
+        ace for ace in aces_to_process if not (ace.process and ace.process.approval_set.filter(approved='Rejected').exists())]
+    
+
+
+
+
 
     # Get ACEs created by user with cost center filtering
     created_aces = aces_query.filter(
