@@ -653,18 +653,6 @@
                     ></textarea>
                   </div>
 
-                  <!-- Roles to Delegate -->
-                  <div id="roles-to-delegate" class="mb-6 hidden">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">
-                      Select Roles to Delegate <span class="text-red-500">*</span>
-                    </label>
-                    <div id="delegator-roles-container" class="space-y-4">
-                      <!-- Roles will be populated here via AJAX -->
-                    </div>
-                    <p class="mt-1 text-sm text-gray-500">
-                      Choose which roles from the delegator to assign temporarily
-                    </p>
-                  </div>
                 </div>
                 <div class="border-t border-gray-200 pt-6 mt-6">
                   <h4 class="text-lg font-medium text-gray-900 mb-4">
@@ -1187,18 +1175,12 @@
         $("#user_profile").prop("required", false);
         
         $("#delegation-fields").removeClass("hidden");
-        // Load delegator roles if delegator is already selected
-        if (delegatorValue) {
-          loadDelegatorRoles(delegatorValue);
-        }
       } else if (changeType === "PERMANENT") {
         toggleModificationUserFields(false);
         // Show permanent user field and hide delegation-specific fields
         $("#permanent-user-field").removeClass("hidden");
         $("#delegation-user-fields").addClass("hidden");
         $("#delegation-fields").addClass("hidden");
-        $("#roles-to-delegate").addClass("hidden");
-        $("#delegator-roles-container").empty();
         
         // Set required attributes for permanent fields
         $("#user_profile").prop("required", true);
@@ -1210,8 +1192,6 @@
         $("#delegation-user-fields").addClass("hidden");
         $("#permanent-user-field").addClass("hidden");
         $("#delegation-fields").addClass("hidden");
-        $("#roles-to-delegate").addClass("hidden");
-        $("#delegator-roles-container").empty();
         
         // Remove all required attributes
         $("#user_profile").prop("required", false);
@@ -1236,10 +1216,6 @@
       // If delegation is selected and application is changed
       if (changeType === "TEMPORARY_DELEGATION") {
         $("#delegation-fields").removeClass("hidden");
-        // Load delegator roles if delegator is selected
-        if (delegatorValue) {
-          loadDelegatorRoles(delegatorValue);
-        }
       } else if (changeType === "PERMANENT" && userProfileValue) {
         // No special handling needed
       }
@@ -1535,19 +1511,8 @@
 
     // Handle delegator selection change (for temporary delegations)
     $("#delegator").on("change", function () {
-      const delegatorValue = $(this).val();
-      const changeType = $("#change_type").val();
-      const application = $("#for_application").val();
-      
-      // Load delegator roles for temporary delegation in Business Excellence
-      if (application === "BUSINESS EXCELLENCE" && delegatorValue && changeType === "TEMPORARY_DELEGATION") {
-        loadDelegatorRoles(delegatorValue);
-      } else {
-        $("#roles-to-delegate").addClass("hidden");
-        $("#delegator-roles-container").empty();
-        // Also hide the static Business Excellence roles section if it was shown
-        $("#business-excellence-roles").addClass("hidden");
-      }
+      // No additional UI adjustments needed now that roles are captured as text.
+      // This handler remains in case future logic is required.
     });
 
     // Handle delegatee selection change for delegation
@@ -1824,108 +1789,6 @@
     $("input, select, textarea").on("change input", function () {
       $("#form-errors").addClass("hidden");
     });
-
-    // Function to load delegator roles grouped by application
-    function loadDelegatorRoles(delegatorValue) {
-      // Extract delegator ID from the value (it might be a username)
-      let delegatorId = null;
-      
-      // First, try to find the delegator by matching the select option value
-      {% for usr in user_profiles %}
-        if ("{{ usr.username }}" === delegatorValue) {
-          delegatorId = "{{ usr.id }}";
-        }
-      {% endfor %}
-      
-      // Also check if it's the logged-in user
-      if (delegatorValue === "{{ request.user.username }}") {
-        delegatorId = "{{ request.user.id }}";
-      }
-      
-      if (!delegatorId) {
-        console.error("Could not find delegator ID for:", delegatorValue);
-        return;
-      }
-      
-      // Show loading state
-      $("#delegator-roles-container").html('<div class="text-center py-4"><i class="fas fa-spinner fa-spin mr-2"></i>Loading roles...</div>');
-      $("#roles-to-delegate").removeClass("hidden");
-      
-      // Make AJAX request to get delegator roles
-      $.ajax({
-        url: "/change_requests/get_delegator_roles_by_app",
-        method: "GET",
-        data: {
-          delegator_id: delegatorId
-        },
-        success: function(response) {
-          if (response.success) {
-            displayDelegatorRoles(response.roles_by_app, response.delegator);
-          } else {
-            $("#delegator-roles-container").html('<div class="text-red-600">Error: ' + (response.error || response.message || 'Unknown error') + '</div>');
-          }
-        },
-        error: function(xhr, status, error) {
-          console.error("Error loading delegator roles:", error);
-          $("#delegator-roles-container").html('<div class="text-red-600">Error loading roles. Please try again.</div>');
-        }
-      });
-    }
-
-    // Function to display delegator roles grouped by application
-    function displayDelegatorRoles(rolesByApp, delegator) {
-      const container = $("#delegator-roles-container");
-      container.empty();
-      
-      if (Object.keys(rolesByApp).length === 0) {
-        container.html('<div class="text-gray-600">No roles available for delegation from ' + delegator.name + '</div>');
-        return;
-      }
-      
-      // Create header
-      const header = $('<div class="mb-4"><h4 class="text-lg font-medium text-gray-900">Available Roles from ' + delegator.name + '</h4></div>');
-      container.append(header);
-      
-      // Group roles by application
-      Object.keys(rolesByApp).forEach(function(appKey) {
-        const appData = rolesByApp[appKey];
-        
-        // Create application section
-        const appSection = $('<div class="mb-6 border border-gray-200 rounded-lg p-4 bg-white"></div>');
-        const appHeader = $('<div class="mb-3"><h5 class="text-md font-medium text-blue-800">' + appData.app_fullname + '</h5></div>');
-        appSection.append(appHeader);
-        
-        // Create roles list for this application
-        const rolesContainer = $('<div class="space-y-2"></div>');
-        
-        appData.roles.forEach(function(role) {
-          const roleCheckbox = $('<div class="flex items-center">' +
-            '<input type="checkbox" name="roles" value="' + role.id + '" id="role_' + role.id + '" class="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">' +
-            '<label for="role_' + role.id + '" class="text-sm text-gray-700">' + role.name + (role.description ? ' - ' + role.description : '') + '</label>' +
-            '</div>');
-          rolesContainer.append(roleCheckbox);
-        });
-        
-        appSection.append(rolesContainer);
-        container.append(appSection);
-      });
-      
-      // Add select all functionality
-      const selectAllContainer = $('<div class="mt-4 flex justify-between items-center">' +
-        '<button type="button" class="select-all-roles text-blue-600 hover:text-blue-800 text-sm">Select All</button>' +
-        '<button type="button" class="clear-all-roles text-gray-600 hover:text-gray-800 text-sm">Clear All</button>' +
-        '</div>');
-      container.append(selectAllContainer);
-      
-      // Bind select all / clear all events
-      selectAllContainer.find(".select-all-roles").on("click", function() {
-        container.find('input[name="roles"]').prop('checked', true);
-      });
-      
-      selectAllContainer.find(".clear-all-roles").on("click", function() {
-        container.find('input[name="roles"]').prop('checked', false);
-      });
-    }
 
     // Toggle role action sections based on checkboxes
     const $assignToggle = $("#mod_include_assign");
