@@ -345,7 +345,7 @@ class ApprovalServiceTestCase(TestCase):
     
     def setUp(self):
         """Set up test data"""
-        self.region = Regions.objects.create(name="Test Region")
+        self.region = Regions.objects.create(region="Test Region", code="TR")
         self.cost_center = CostCenter.objects.create(name="Test Cost Center")
         self.designation = Designations.objects.create(description="Test Designation")
         
@@ -406,7 +406,7 @@ class ApprovalWorkflowTestCase(TestCase):
     
     def setUp(self):
         """Set up test data"""
-        self.region = Regions.objects.create(name="Test Region")
+        self.region = Regions.objects.create(region="Test Region", code="TR")
         self.cost_center = CostCenter.objects.create(name="Test Cost Center")
         self.designation = Designations.objects.create(description="Test Designation")
         
@@ -452,7 +452,7 @@ class CRTypeHandlerTestCase(TestCase):
     
     def setUp(self):
         """Set up test data"""
-        self.region = Regions.objects.create(name="Test Region")
+        self.region = Regions.objects.create(region="Test Region", code="TR")
         self.cost_center = CostCenter.objects.create(name="Test Cost Center")
         self.designation = Designations.objects.create(description="Test Designation")
         
@@ -521,7 +521,7 @@ class ContextBuilderTestCase(TestCase):
     
     def setUp(self):
         """Set up test data"""
-        self.region = Regions.objects.create(name="Test Region")
+        self.region = Regions.objects.create(region="Test Region", code="TR")
         self.cost_center = CostCenter.objects.create(name="Test Cost Center")
         self.designation = Designations.objects.create(description="Test Designation")
         
@@ -578,7 +578,7 @@ class NotificationServiceTestCase(TestCase):
     
     def setUp(self):
         """Set up test data"""
-        self.region = Regions.objects.create(name="Test Region")
+        self.region = Regions.objects.create(region="Test Region", code="TR")
         self.cost_center = CostCenter.objects.create(name="Test Cost Center")
         self.designation = Designations.objects.create(description="Test Designation")
         
@@ -638,7 +638,7 @@ class DelegationApprovalTestCase(TestCase):
         from it.users.models import RoleDelegation, DelegationNotification
         from datetime import datetime, timedelta
         
-        self.region = Regions.objects.create(name="Test Region")
+        self.region = Regions.objects.create(region="Test Region", code="TR")
         self.cost_center = CostCenter.objects.create(name="Test Cost Center")
         self.designation = Designations.objects.create(description="Test Designation")
         self.app = Application.objects.create(name="change_requests")
@@ -882,7 +882,7 @@ class DelegationActivationCommandTestCase(TestCase):
         """Set up test data"""
         from datetime import timedelta
         
-        self.region = Regions.objects.create(name="Test Region")
+        self.region = Regions.objects.create(region="Test Region", code="TR")
         self.cost_center = CostCenter.objects.create(name="Test Cost Center")
         self.designation = Designations.objects.create(description="Test Designation")
         
@@ -997,4 +997,3 @@ class DelegationActivationCommandTestCase(TestCase):
         output = out.getvalue()
         self.assertIn('DRY RUN', output)
         self.assertIn('Would activate', output)
-

@@ -27,19 +27,12 @@
               <input type="hidden" name="cr_id" value="{{cr.cr_id}}" />
               
               <div class="p-6 space-y-6">
-                {% if cr_type_schema %}
-                <div class="bg-gray-50 border border-gray-200 rounded-md p-4">
+                <!-- Section A -->
+                <div class="border border-gray-200 rounded-md p-4">
                   <div class="flex items-center justify-between mb-4">
-                    <h4 class="text-base font-semibold text-gray-900">Current Details (Read-only)</h4>
-                    <span class="text-xs text-gray-500">Matches legacy form layout</span>
+                    <h4 class="text-base font-semibold text-gray-900">Section A – Change Request Originator</h4>
+                    <span class="text-xs text-gray-500">Legacy layout</span>
                   </div>
-                  {% include 'change_requests/components/sections/view_sections.html' with schema=cr_type_schema %}
-                </div>
-                {% endif %}
-                
-                <!-- Request Information Section -->
-                <div>
-                  <h4 class="text-base font-semibold text-gray-900 mb-4">Request Information</h4>
                   
                   <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                     <div>
@@ -157,9 +150,17 @@
                   </div>
                 </div>
 
-              {% if cr_type_schema.edit_partial %}
-                {% include cr_type_schema.edit_partial %}
-              {% endif %}
+                <!-- Section C -->
+                <div class="border border-gray-200 rounded-md p-4">
+                  <div class="flex items-center justify-between mb-4">
+                    <h4 class="text-base font-semibold text-gray-900">Section C – Creation of New Profile</h4>
+                    <span class="text-xs text-gray-500">Complete the new profile information</span>
+                  </div>
+
+                  {% if cr_type_schema.edit_partial %}
+                    {% include cr_type_schema.edit_partial %}
+                  {% endif %}
+                </div>
 
               <!-- Action Buttons -->
               <div class="flex justify-between px-6 py-4 border-t border-gray-200 bg-gray-50">

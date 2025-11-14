@@ -27,18 +27,12 @@
               <input type="hidden" name="cr_id" value="{{cr.cr_id}}" />
               
               <div class="p-6 space-y-6">
-                {% if cr_type_schema %}
-                <div class="bg-gray-50 border border-gray-200 rounded-md p-4">
+                <!-- Section A – Change Request Originator -->
+                <div class="border border-gray-200 rounded-md p-4">
                   <div class="flex items-center justify-between mb-4">
-                    <h4 class="text-base font-semibold text-gray-900">Current Details (Read-only)</h4>
-                    <span class="text-xs text-gray-500">Legacy form layout</span>
+                    <h4 class="text-base font-semibold text-gray-900">Section A – Change Request Originator</h4>
+                    <span class="text-xs text-gray-500">Legacy layout</span>
                   </div>
-                  {% include 'change_requests/components/sections/view_sections.html' with schema=cr_type_schema %}
-                </div>
-                {% endif %}
-                
-                <!-- Common Fields -->
-                <div>
                   <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                     <div>
                       <label for="originator_company" class="block text-sm font-medium text-gray-700 mb-2">
@@ -259,9 +253,13 @@
                   {% endif %}
                 </div>
 
-                              {% if cr_type_schema.edit_partial %}
-                {% include cr_type_schema.edit_partial %}
-              {% endif %}
+                <div class="border border-gray-200 rounded-md p-4">
+                  <div class="flex items-center justify-between mb-4">
+                    <h4 class="text-base font-semibold text-gray-900">Section D – Profile Modification Details</h4>
+                    <span class="text-xs text-gray-500">Update the modification request</span>
+                  </div>
+                  {% include 'change_requests/components/forms/profile_modification_fields.html' %}
+                </div>
 
 <!-- Action Buttons -->
               <div class="flex justify-between px-6 py-4 border-t border-gray-200 bg-gray-50">
