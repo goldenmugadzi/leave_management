@@ -279,7 +279,11 @@
                     {% endfor %}
                   {% endif %}
 
-                  {% include 'change_requests/components/forms/profile_modification_fields.html' %}
+                  {% if cr_type_schema and cr_type_schema.edit_partial %}
+                    {% include cr_type_schema.edit_partial %}
+                  {% else %}
+                    {% include 'change_requests/components/forms/profile_modification_fields.html' %}
+                  {% endif %}
                 </div>
 
 <!-- Action Buttons -->
