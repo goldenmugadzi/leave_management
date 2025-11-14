@@ -268,7 +268,7 @@ def pettyCash_detail(request, petty_id):
 
             # check if section head
             if pettycash_role == "approve":
-                if newStep and request.user.section == pettycash_item.section:
+                if newStep :
                     approvalForm = ApprovalForm
                     print("newstep", newStep.step)
                     print(len(pettycash_item.process.workflow.step_set.all()))
