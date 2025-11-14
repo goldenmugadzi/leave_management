@@ -694,7 +694,6 @@
                         type="text"
                         name="mod_ec_number"
                         id="mod_ec_number"
-                        required
                         class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       />
                     </div>
@@ -1100,6 +1099,27 @@
     const modExistingUserSection = $("#mod-existing-user-section");
     const modEcSection = $("#mod-ec-section");
     const modEcInput = $("#mod_ec_number");
+    const reasonGroup = $("#change-reason-group");
+    const descriptionGroup = $("#change-description-group");
+    const $changeReasonInput = $("#change_reason");
+    const $changeDescriptionInput = $("#change_description");
+    const $deactivationReasonInput = $("#deactivation_reason");
+    let reasonFieldsSyncedFromDeactivation = false;
+
+    function syncDeactivationReasonToGeneralFields() {
+      const value = ($deactivationReasonInput.val() || "").trim();
+      $changeReasonInput.val(value);
+      $changeDescriptionInput.val(value);
+      reasonFieldsSyncedFromDeactivation = true;
+    }
+
+    function clearSyncedReasonFields() {
+      if (reasonFieldsSyncedFromDeactivation) {
+        $changeReasonInput.val("");
+        $changeDescriptionInput.val("");
+        reasonFieldsSyncedFromDeactivation = false;
+      }
+    }
 
     function toggleModificationUserFields(isTemporaryDelegation) {
       if (isTemporaryDelegation) {
@@ -1151,7 +1171,14 @@
           $("#profile-deactivation-fields").removeClass("hidden");
           break;
       }
-      
+
+      if (operationType !== "profile_modification") {
+        modEcInput.prop("required", false);
+      } else {
+        const changeType = $("#change_type").val();
+        modEcInput.prop("required", changeType !== "TEMPORARY_DELEGATION");
+      }
+
       // Update roles section based on operation type
       updateRolesSection(application, operationType);
     });
@@ -1226,17 +1253,25 @@
     // Function to update roles section based on application and operation type
     function updateRolesSection(application, operationType) {
       console.debug("[CR] updateRolesSection", { application, operationType });
-      const reasonGroup = $("#change-reason-group");
-      const descriptionGroup = $("#change-description-group");
+      const hideReasonAndDescription = ["profile_modification", "profile_deactivation"].includes(
+        operationType
+      );
 
-      if (operationType === "profile_modification") {
-        reasonGroup.addClass("hidden");
-        descriptionGroup.addClass("hidden");
+      reasonGroup.toggleClass("hidden", hideReasonAndDescription);
+      descriptionGroup.toggleClass("hidden", hideReasonAndDescription);
+
+      if (operationType === "profile_deactivation") {
+        syncDeactivationReasonToGeneralFields();
       } else {
-        reasonGroup.removeClass("hidden");
-        descriptionGroup.removeClass("hidden");
+        clearSyncedReasonFields();
       }
     }
+
+    $deactivationReasonInput.on("input change", function () {
+      if ($("#operation_type").val() === "profile_deactivation") {
+        syncDeactivationReasonToGeneralFields();
+      }
+    });
 
     // === Target user lookup helpers ===
     const userLookupCache = {};
@@ -1547,6 +1582,10 @@
       const operationType = $("#operation_type").val();
       let isValid = true;
       const errors = [];
+
+      if (operationType === "profile_deactivation") {
+        syncDeactivationReasonToGeneralFields();
+      }
 
       // Check if operation type is selected
       if (!operationType) {
@@ -1969,3 +2008,4 @@
   });
 </script>
 {% endblock scripts %}
+
