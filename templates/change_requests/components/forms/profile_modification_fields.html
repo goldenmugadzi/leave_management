@@ -1,0 +1,360 @@
+            <!-- Profile Modification Fields -->
+            <div id="profile-modification-fields" class="hidden">
+              <div class="border-t border-gray-200 pt-6">
+                <h4 class="text-lg font-medium text-gray-900 mb-4">
+                  Profile Modification Details
+                </h4>
+
+                <!-- Change Type Selection -->
+                <div class="mb-6">
+                  <label
+                    for="change_type"
+                    class="block text-sm font-medium text-gray-700 mb-2"
+                  >
+                    Change Type <span class="text-red-500">*</span>
+                  </label>
+                  <select
+                    id="change_type"
+                    name="change_type"
+                    class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="">Select Change Type</option>
+                    <option value="PERMANENT">Permanent Role Assignment</option>
+                    <option value="TEMPORARY_DELEGATION">
+                      Temporary Role Delegation
+                    </option>
+                  </select>
+                  <p class="mt-1 text-sm text-gray-500">
+                    Choose the type of modification
+                  </p>
+                </div>
+
+                <!-- User Profile Selection (for Permanent Changes) -->
+                <div id="permanent-user-field" class="mb-6 hidden">
+                  <label
+                    for="user_profile"
+                    class="block text-sm font-medium text-gray-700 mb-2"
+                  >
+                    User Profile to Modify <span class="text-red-500">*</span>
+                  </label>
+                  <select
+                    id="user_profile"
+                    name="user_profile"
+                    class="select2 block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="">Select User Profile</option>
+                    {% for usr in user_profiles %}
+                    <option value="{{usr.username}}">
+                      {{usr.first_name}} {{usr.last_name}}
+                    </option>
+                    {% endfor %}
+                  </select>
+                  <p class="mt-1 text-sm text-gray-500">
+                    Select the user whose profile will be modified
+                  </p>
+                </div>
+
+                <!-- Delegation Fields (for Temporary Delegation) -->
+                <div id="delegation-user-fields" class="hidden">
+                  <!-- Delegator Selection -->
+                  <div class="mb-6">
+                    <label
+                      for="delegator"
+                      class="block text-sm font-medium text-gray-700 mb-2"
+                    >
+                      Delegator <span class="text-red-500">*</span>
+                    </label>
+                    <select
+                      id="delegator"
+                      name="delegator"
+                      class="select2 block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    >
+                      <option value="">Select Delegator</option>
+                      <option value="{{request.user.username}}">
+                        {{request.user.get_full_name}} (Logged in user)
+                      </option>
+                      {% for usr in user_profiles %}
+                      <option value="{{usr.username}}">
+                        {{usr.first_name}} {{usr.last_name}}
+                      </option>
+                      {% endfor %}
+                    </select>
+                    <p class="mt-1 text-sm text-gray-500">
+                      Select who is delegating their roles
+                    </p>
+                  </div>
+
+                  <!-- Delegatee Selection -->
+                  <div class="mb-6">
+                    <label
+                      for="delegatee"
+                      class="block text-sm font-medium text-gray-700 mb-2"
+                    >
+                      Delegatee <span class="text-red-500">*</span>
+                    </label>
+                    <select
+                      id="delegatee"
+                      name="delegatee"
+                      class="select2 block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    >
+                      <option value="">Select Delegatee</option>
+                      <option value="{{request.user.username}}">
+                        {{request.user.get_full_name}} (Logged in user)
+                      </option>
+                      {% for usr in user_profiles %}
+                      <option value="{{usr.username}}">
+                        {{usr.first_name}} {{usr.last_name}}
+                      </option>
+                      {% endfor %}
+                    </select>
+                    <p class="mt-1 text-sm text-gray-500">
+                      Select who will receive the delegated roles
+                    </p>
+                  </div>
+                </div>
+
+                <!-- Delegation-specific fields -->
+                <div id="delegation-fields" class="hidden">
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="mb-6">
+                      <label
+                        for="delegation_start_date"
+                        class="block text-sm font-medium text-gray-700 mb-2"
+                      >
+                        Delegation Start Date
+                        <span class="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="datetime-local"
+                        name="delegation_start_date"
+                        id="delegation_start_date"
+                        class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      />
+                      <p class="mt-1 text-sm text-gray-500">
+                        When the delegation becomes active
+                      </p>
+                    </div>
+                    <div class="mb-6">
+                      <label
+                        for="delegation_end_date"
+                        class="block text-sm font-medium text-gray-700 mb-2"
+                      >
+                        Delegation End Date <span class="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="datetime-local"
+                        name="delegation_end_date"
+                        id="delegation_end_date"
+                        class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      />
+                      <p class="mt-1 text-sm text-gray-500">
+                        When the delegation expires (max 90 days)
+                      </p>
+                    </div>
+                  </div>
+                  <div class="mb-6">
+                    <label
+                      for="delegation_reason"
+                      class="block text-sm font-medium text-gray-700 mb-2"
+                    >
+                      Delegation Reason <span class="text-red-500">*</span>
+                    </label>
+                    <textarea
+                      name="delegation_reason"
+                      id="delegation_reason"
+                      rows="3"
+                      class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      placeholder="Explain why you're delegating your roles (e.g., leave, training, etc.)"
+                    ></textarea>
+                  </div>
+
+                </div>
+                <div class="border-t border-gray-200 pt-6 mt-6">
+                  <h4 class="text-lg font-medium text-gray-900 mb-4">
+                    Modification Supporting Details
+                  </h4>
+                  <div class="mb-6" id="mod-existing-user-section">
+                    <label
+                      for="mod_user_selector"
+                      class="block text-sm font-medium text-gray-700 mb-2"
+                    >
+                      Select Existing User
+                    </label>
+                    <select
+                      id="mod_user_selector"
+                      class="select2 block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      data-placeholder="Search by name or EC number"
+                    >
+                      <option value="">Search user</option>
+                      {% for usr in user_profiles %}
+                      <option value="{{usr.username}}">
+                        {{usr.first_name}} {{usr.last_name}} ({{usr.username}})
+                      </option>
+                      {% endfor %}
+                    </select>
+                    <p class="mt-1 text-sm text-gray-500">
+                      Choose an existing user to auto-populate their details, or enter an EC Number manually.
+                    </p>
+                  </div>
+                  <input type="hidden" name="mod_current_user_id" id="mod_current_user_id" />
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="mb-6" id="mod-ec-section">
+                      <label
+                        for="mod_ec_number"
+                        class="block text-sm font-medium text-gray-700 mb-2"
+                      >
+                        EC Number <span class="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        name="mod_ec_number"
+                        id="mod_ec_number"
+                        class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      />
+                    </div>
+                  </div>
+                <div
+                  id="mod-user-summary"
+                  class="hidden mb-6 bg-gray-50 border border-gray-200 rounded-md p-4"
+                >
+                  <h5 class="text-sm font-semibold text-gray-800 mb-3">
+                    Target User Overview
+                  </h5>
+                  <p
+                    id="mod-user-summary-message"
+                    class="hidden text-sm mb-3"
+                  ></p>
+                  <dl class="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-gray-700">
+                    <div>
+                      <dt class="font-medium text-gray-600">Name</dt>
+                      <dd id="mod-user-summary-name" class="text-gray-900">Not provided</dd>
+                    </div>
+                    <div>
+                      <dt class="font-medium text-gray-600">EC Number</dt>
+                      <dd id="mod-user-summary-ec" class="text-gray-900">Not provided</dd>
+                    </div>
+                    <div>
+                      <dt class="font-medium text-gray-600">Designation</dt>
+                      <dd id="mod-user-summary-designation" class="text-gray-900">Not provided</dd>
+                    </div>
+                    <div>
+                      <dt class="font-medium text-gray-600">Cost Centre</dt>
+                      <dd id="mod-user-summary-cost-center" class="text-gray-900">Not provided</dd>
+                    </div>
+                    <div>
+                      <dt class="font-medium text-gray-600">Region</dt>
+                      <dd id="mod-user-summary-region" class="text-gray-900">Not provided</dd>
+                    </div>
+                    <div>
+                      <dt class="font-medium text-gray-600">Section / District</dt>
+                      <dd id="mod-user-summary-location" class="text-gray-900">Not provided</dd>
+                    </div>
+                  </dl>
+                </div>
+                  <div class="mb-6" id="mod-role-action-toggle">
+                     <span class="block text-sm font-medium text-gray-700 mb-2">
+                       Role Change Actions <span class="text-red-500">*</span>
+                     </span>
+                     <div class="flex flex-col md:flex-row md:items-center gap-4">
+                       <label class="inline-flex items-center text-sm text-gray-700">
+                         <input type="checkbox" id="mod_include_assign" name="mod_include_assign" value="assign" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500" checked />
+                         <span class="ml-2">Add roles / access</span>
+                       </label>
+                       <label class="inline-flex items-center text-sm text-gray-700">
+                         <input type="checkbox" id="mod_include_remove" name="mod_include_remove" value="remove" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500" checked />
+                         <span class="ml-2">Remove roles / access</span>
+                       </label>
+                     </div>
+                   </div>
+
+                  <div id="mod-assign-section" class="space-y-6">
+                    <div class="mb-6">
+                      <label
+                        for="mod_roles_to_assign"
+                        class="block text-sm font-medium text-gray-700 mb-2"
+                      >
+                        New Roles to Assign
+                      </label>
+                      <textarea
+                        id="mod_roles_to_assign"
+                        name="mod_roles_to_assign"
+                        rows="3"
+                        class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus-border-blue-500"
+                        placeholder="List the roles or access that should be added (one per line or comma separated)"
+                      ></textarea>
+                      <p class="mt-1 text-sm text-gray-500">
+                        Provide clear instructions so implementers understand which access to grant.
+                      </p>
+                    </div>
+                    <div class="mb-6">
+                      <label
+                        for="mod_reason_assign"
+                        class="block text-sm font-medium text-gray-700 mb-2"
+                      >
+                        Reason for Assigning New Roles <span class="text-red-500">*</span>
+                      </label>
+                      <textarea
+                        id="mod_reason_assign"
+                        name="mod_reason_assign"
+                        rows="3"
+                        class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus-border-blue-500"
+                        placeholder="Explain why the new roles are required"
+                      ></textarea>
+                    </div>
+                  </div>
+
+                  <div id="mod-remove-section" class="space-y-6">
+                    <div class="mb-6">
+                      <label
+                        for="mod_roles_to_remove"
+                        class="block text-sm font-medium text-gray-700 mb-2"
+                      >
+                        Roles to Remove
+                      </label>
+                      <textarea
+                        id="mod_roles_to_remove"
+                        name="mod_roles_to_remove"
+                        rows="3"
+                        class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus-border-blue-500"
+                        placeholder="List the roles or access that must be revoked"
+                      ></textarea>
+                      <p class="mt-1 text-sm text-gray-500">
+                        Include sufficient detail for implementation teams to remove the correct access.
+                      </p>
+                    </div>
+                    <div class="mb-6">
+                      <label
+                        for="mod_reason_remove"
+                        class="block text-sm font-medium text-gray-700 mb-2"
+                      >
+                        Reason for Removing Current Roles
+                      </label>
+                      <textarea
+                        id="mod_reason_remove"
+                        name="mod_reason_remove"
+                        rows="3"
+                        class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus-border-blue-500"
+                        placeholder="Explain why roles should be removed (if applicable)"
+                      ></textarea>
+                    </div>
+                  </div>
+
+                  <div class="mb-6">
+                    <label
+                      for="mod_correspondence_link"
+                      class="block text-sm font-medium text-gray-700 mb-2"
+                    >
+                      Correspondence / Instruction Link
+                    </label>
+                    <input
+                      type="url"
+                      id="mod_correspondence_link"
+                      name="mod_correspondence_link"
+                      class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus-border-blue-500"
+                      placeholder="Provide a link to supporting correspondence"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+

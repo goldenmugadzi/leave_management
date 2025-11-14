@@ -216,6 +216,7 @@ class ProfileModificationHandler:
             'start_date': start_date,  # ADDED: Delegation start date
             'end_date': end_date,  # ADDED: Delegation end date
             'reason': reason,  # ADDED: Delegation reason
+            'delegation_reason': reason,
         }
     
     @staticmethod

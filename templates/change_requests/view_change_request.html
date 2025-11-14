@@ -36,27 +36,15 @@
               <input type="hidden" name="actionButton" id="actionButton" />
               
               <div class="p-6 space-y-6">
-                <!-- Common Request Information -->
-                {% include 'change_requests/components/sections/request_info.html' %}
+                <!-- Unified View Sections -->
+                {% include 'change_requests/components/sections/view_sections.html' with schema=cr.cr_type_schema %}
                 
-                <!-- Type-specific Profile Data -->
-                {% if cr.change_type == 'New Profile' %}
-                  {% include 'change_requests/components/sections/new_profile_details.html' %}
-                {% elif cr.change_type == 'Profile Modification' or cr.change_type == 'Temporary Role Delegation' %}
-                  {% include 'change_requests/components/sections/profile_modification_details.html' %}
-                {% elif cr.change_type == 'Profile Deactivation' %}
-                  {% include 'change_requests/components/sections/profile_deactivation_details.html' %}
-                {% endif %}
-                
-                <!-- Creator Information (common for all) -->
-                <div class="border-t border-gray-200 pt-6">
-                  <h4 class="text-base font-semibold text-gray-900 mb-4">Creator Information</h4>
-                  <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    {% include 'change_requests/components/forms/display_field.html' with label="Creator" value=cr.created_by %}
-                    {% include 'change_requests/components/forms/display_field.html' with label="Creator Designation" value=cr.creator_designation %}
-                    {% include 'change_requests/components/forms/display_field.html' with label="Date Created" value=cr.created_at %}
-                  </div>
-                </div>
+                <!-- Type-specific Interactive Controls -->
+                {% with schema=cr.cr_type_schema %}
+                  {% if schema.view_template %}
+                    {% include schema.view_template %}
+                  {% endif %}
+                {% endwith %}
                 
                 <!-- Approval History -->
                 {% include 'change_requests/components/sections/approval_history.html' %}

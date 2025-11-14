@@ -27,6 +27,16 @@
               <input type="hidden" name="cr_id" value="{{cr.cr_id}}" />
               
               <div class="p-6 space-y-6">
+                {% if cr_type_schema %}
+                <div class="bg-gray-50 border border-gray-200 rounded-md p-4">
+                  <div class="flex items-center justify-between mb-4">
+                    <h4 class="text-base font-semibold text-gray-900">Current Details (Read-only)</h4>
+                    <span class="text-xs text-gray-500">Legacy form layout</span>
+                  </div>
+                  {% include 'change_requests/components/sections/view_sections.html' with schema=cr_type_schema %}
+                </div>
+                {% endif %}
+                
                 <!-- Common Fields -->
                 <div>
                   <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
@@ -249,250 +259,11 @@
                   {% endif %}
                 </div>
 
-                <!-- Profile Modification Details -->
-                <div class="border-t border-gray-200 pt-6">
-                  <h4 class="text-lg font-medium text-gray-900 mb-4">Profile Modification Details</h4>
+                              {% if cr_type_schema.edit_partial %}
+                {% include cr_type_schema.edit_partial %}
+              {% endif %}
 
-                  <input
-                    type="hidden"
-                    id="mod_current_user_id"
-                    name="mod_current_user_id"
-                    value="{{cr.user.current_user_id|default_if_none:cr.user.ec_number}}"
-                  />
-                  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="mb-6">
-                      <label for="mod_ec_number" class="block text-sm font-medium text-gray-700 mb-2">
-                        EC Number <span class="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        id="mod_ec_number"
-                        name="mod_ec_number"
-                        value="{{cr.user.ec_number|default_if_none:''}}"
-                        required
-                        class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus-border-blue-500"
-                      />
-                      <p class="mt-1 text-sm text-gray-500">
-                        System username on record: {{cr.user.current_user_id|default_if_none:"Not available"}}.
-                      </p>
-                    </div>
-                  </div>
-
-                  <div class="mb-6">
-                    <label for="mod_reason_assign" class="block text-sm font-medium text-gray-700 mb-2">
-                      Reason for Assigning New Roles <span class="text-red-500">*</span>
-                    </label>
-                    <textarea
-                      id="mod_reason_assign"
-                      name="mod_reason_assign"
-                      rows="3"
-                      required
-                      class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus-border-blue-500"
-                    >{{cr.user.reason_assign|default_if_none:''}}</textarea>
-                  </div>
-                  <div class="mb-6">
-                    <label for="mod_roles_to_remove" class="block text-sm font-medium text-gray-700 mb-2">
-                      Roles to Remove
-                    </label>
-                    <textarea
-                      id="mod_roles_to_remove"
-                      name="mod_roles_to_remove"
-                      rows="3"
-                      class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus-border-blue-500"
-                      placeholder="List the roles or access that must be revoked"
-                    >{{ change_request.profile_change.roles_to_remove_notes|default_if_none:'' }}</textarea>
-                    <p class="mt-1 text-sm text-gray-500">
-                      Include enough detail for teams to remove the correct access.
-                    </p>
-                  </div>
-
-                  <div class="mb-6">
-                    <label for="mod_reason_remove" class="block text-sm font-medium text-gray-700 mb-2">
-                      Reason for Removing Current Roles
-                    </label>
-                    <textarea
-                      id="mod_reason_remove"
-                      name="mod_reason_remove"
-                      rows="3"
-                      class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus-border-blue-500"
-                    >{{cr.user.reason_remove|default_if_none:''}}</textarea>
-                  </div>
-
-                  <div class="mb-6">
-                    <label for="mod_correspondence_link" class="block text-sm font-medium text-gray-700 mb-2">
-                      Correspondence / Instruction Link
-                    </label>
-                    <input
-                      type="url"
-                      id="mod_correspondence_link"
-                      name="mod_correspondence_link"
-                      value="{{cr.user.correspondence_link|default_if_none:''}}"
-                      class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus-border-blue-500"
-                      placeholder="Provide a link to supporting correspondence"
-                    />
-                  </div>
-
-                  <!-- Change Type Selection -->
-                  <div class="mb-6">
-                    <label for="change_type" class="block text-sm font-medium text-gray-700 mb-2">
-                      Change Type <span class="text-red-500">*</span>
-                    </label>
-                    <select
-                      id="change_type"
-                      name="change_type"
-                      required
-                      class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    >
-                      <option value="">Select Change Type</option>
-                      <option value="PERMANENT" {% if cr.delegation_type == "PERMANENT" %}selected{% endif %}>Permanent Role Assignment</option>
-                      <option value="TEMPORARY_DELEGATION" {% if cr.delegation_type == "TEMPORARY" or cr.is_delegation %}selected{% endif %}>Temporary Role Delegation</option>
-                    </select>
-                    <p class="mt-1 text-sm text-gray-500">
-                      Choose the type of modification
-                    </p>
-                  </div>
-
-                  <!-- User Profile Selection (for Permanent Changes) -->
-                  <div id="permanent-user-field" class="mb-6 {% if cr.is_delegation %}hidden{% endif %}">
-                    <label for="user_profile" class="block text-sm font-medium text-gray-700 mb-2">
-                      User Profile to Modify <span class="text-red-500">*</span>
-                    </label>
-                    <select
-                      id="user_profile"
-                      name="user_profile"
-                      class="select2 block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    >
-                      <option value="">Select User Profile</option>
-                      {% for usr in user_profiles %}
-                      <option value="{{usr.username}}" {% if cr.user.username == usr.username %}selected{% endif %}>
-                        {{usr.first_name}} {{usr.last_name}}
-                      </option>
-                      {% endfor %}
-                    </select>
-                    <p class="mt-1 text-sm text-gray-500">
-                      Select the user whose profile will be modified
-                    </p>
-                  </div>
-
-                  <!-- Delegation Fields (for Temporary Delegation) -->
-                  <div id="delegation-user-fields" class="{% if not cr.is_delegation %}hidden{% endif %}">
-                    <!-- Delegator Selection -->
-                    <div class="mb-6">
-                      <label for="delegator" class="block text-sm font-medium text-gray-700 mb-2">
-                        Delegator <span class="text-red-500">*</span>
-                      </label>
-                      <select
-                        id="delegator"
-                        name="delegator"
-                        class="select2 block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      >
-                        <option value="">Select Delegator</option>
-                        <option value="{{request.user.username}}" {% if cr.delegator_username == request.user.username %}selected{% endif %}>
-                          {{request.user.get_full_name}} (Logged in user)
-                        </option>
-                        {% for usr in user_profiles %}
-                        <option value="{{usr.username}}" {% if cr.delegator_username == usr.username %}selected{% endif %}>
-                          {{usr.first_name}} {{usr.last_name}}
-                        </option>
-                        {% endfor %}
-                      </select>
-                      <p class="mt-1 text-sm text-gray-500">
-                        Select who is delegating their roles
-                      </p>
-                    </div>
-
-                    <!-- Delegatee Selection -->
-                    <div class="mb-6">
-                      <label for="delegatee" class="block text-sm font-medium text-gray-700 mb-2">
-                        Delegatee <span class="text-red-500">*</span>
-                      </label>
-                      <select
-                        id="delegatee"
-                        name="delegatee"
-                        class="select2 block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      >
-                        <option value="">Select Delegatee</option>
-                        <option value="{{request.user.username}}" {% if cr.delegatee_username == request.user.username or cr.user.username == request.user.username %}selected{% endif %}>
-                          {{request.user.get_full_name}} (Logged in user)
-                        </option>
-                        {% for usr in user_profiles %}
-                        <option value="{{usr.username}}" {% if cr.delegatee_username == usr.username or cr.user.username == usr.username %}selected{% endif %}>
-                          {{usr.first_name}} {{usr.last_name}}
-                        </option>
-                        {% endfor %}
-                      </select>
-                      <p class="mt-1 text-sm text-gray-500">
-                        Select who will receive the delegated roles
-                      </p>
-                    </div>
-                  </div>
-
-                  <!-- Delegation-specific fields (hidden by default, shown for TEMPORARY_DELEGATION) -->
-                  <div id="delegation-fields" class="{% if not cr.is_delegation %}hidden{% endif %}">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      <div class="mb-6">
-                        <label for="delegation_start_date" class="block text-sm font-medium text-gray-700 mb-2">
-                          Delegation Start Date <span class="text-red-500">*</span>
-                        </label>
-                        <input
-                          type="datetime-local"
-                          name="delegation_start_date"
-                          id="delegation_start_date"
-                          value="{% if cr.delegation_start_date %}{{ cr.delegation_start_date }}{% endif %}"
-                          class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        />
-                        <p class="mt-1 text-sm text-gray-500">
-                          When the delegation becomes active
-                        </p>
-                      </div>
-                      
-                      <div class="mb-6">
-                        <label for="delegation_end_date" class="block text-sm font-medium text-gray-700 mb-2">
-                          Delegation End Date <span class="text-red-500">*</span>
-                        </label>
-                        <input
-                          type="datetime-local"
-                          name="delegation_end_date"
-                          id="delegation_end_date"
-                          value="{% if cr.delegation_end_date %}{{ cr.delegation_end_date }}{% endif %}"
-                          class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        />
-                        <p class="mt-1 text-sm text-gray-500">
-                          When the delegation expires (max 90 days)
-                        </p>
-                      </div>
-                    </div>
-                    
-                    <div class="mb-6">
-                      <label for="delegation_reason" class="block text-sm font-medium text-gray-700 mb-2">
-                        Delegation Reason <span class="text-red-500">*</span>
-                      </label>
-                      <textarea
-                        name="delegation_reason"
-                        id="delegation_reason"
-                        rows="3"
-                        class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        placeholder="Explain why you're delegating your roles (e.g., leave, training, etc.)"
-                      >{% if cr.delegation_reason %}{{ cr.delegation_reason }}{% endif %}</textarea>
-                    </div>
-
-                    <!-- Roles to Delegate -->
-                    <div id="roles-to-delegate" class="mb-6 hidden">
-                      <label class="block text-sm font-medium text-gray-700 mb-2">
-                        Select Roles to Delegate <span class="text-red-500">*</span>
-                      </label>
-                      <div id="delegator-roles-container" class="space-y-4">
-                        <!-- Roles will be populated here via AJAX -->
-                      </div>
-                      <p class="mt-1 text-sm text-gray-500">
-                        Choose which roles from the delegator to assign temporarily
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Action Buttons -->
+<!-- Action Buttons -->
               <div class="flex justify-between px-6 py-4 border-t border-gray-200 bg-gray-50">
                 <a
                   href="/change_requests/change_request_index"

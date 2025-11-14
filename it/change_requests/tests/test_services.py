@@ -7,9 +7,11 @@ Tests the refactored service layer components including:
 - NotificationService
 - CRTypeHandlers
 """
+import json
 from django.test import TestCase, Client
 from django.contrib.auth.models import User
 from django.utils import timezone
+from django.core.exceptions import ValidationError
 from unittest.mock import patch, MagicMock, Mock
 from it.change_requests.models import ChangeRequest, NewProfile, ProfileChange, ProfileDeactivation, CRApproval
 from it.users.models import UserProfile, Regions, CostCenter, Designations, Application, Roles, Sections, Districts
@@ -32,8 +34,8 @@ class ChangeRequestServiceTestCase(TestCase):
     
     def setUp(self):
         """Set up test data"""
-        self.region = Regions.objects.create(name="Test Region")
-        self.cost_center = CostCenter.objects.create(name="Test Cost Center")
+        self.region = Regions.objects.create(region="Test Region", code="TR")
+        self.cost_center = CostCenter.objects.create(id="CC100", code="CC100", name="Test Cost Center")
         self.designation = Designations.objects.create(description="Test Designation")
         
         self.user = UserProfile.objects.create(
@@ -108,6 +110,234 @@ class ChangeRequestServiceTestCase(TestCase):
         self.assertIsNotNone(cr.new_profile)
         self.assertEqual(cr.new_profile.username, 'newuser')
         self.assertEqual(cr.created_by, self.user)
+
+    # ------------------------------------------------------------------
+    # Helpers
+    # ------------------------------------------------------------------
+
+    def _create_new_profile_request(self, suffix: str = "001") -> ChangeRequest:
+        profile = NewProfile.objects.create(
+            username=f"np{suffix}",
+            first_name="First",
+            last_name="Last",
+            email="np@example.com",
+            company="Legacy Company",
+        )
+        return ChangeRequest.objects.create(
+            cr_id=f"CR-NP-{suffix}",
+            application="BUSINESS EXCELLENCE",
+            change_type="New Profile",
+            new_profile=profile,
+            change_reason="Initial reason",
+            change_description="Initial description",
+            originator_company="OrigCo",
+            originator_site="OrigSite",
+            created_by=self.user,
+            creator_designation=self.designation,
+            region=self.region,
+            cost_center=self.cost_center
+        )
+
+    def _create_profile_modification_request(self, suffix: str = "001", change_type="Profile Modification") -> ChangeRequest:
+        delegatee = UserProfile.objects.create(
+            username=f"delegatee{suffix}",
+            first_name="Delegatee",
+            last_name="User",
+            region=self.region,
+            cost_center=self.cost_center,
+            designation=self.designation
+        )
+        profile_change = ProfileChange.objects.create(
+            user=delegatee,
+            current_user_id=f"current-{suffix}",
+            ec_number=f"EC-{suffix}",
+            application="BUSINESS EXCELLENCE",
+            roles_to_action="",
+            roles_actions="",
+            change_date=timezone.now(),
+            changed_by=self.user,
+            status='PENDING'
+        )
+        return ChangeRequest.objects.create(
+            cr_id=f"CR-PM-{suffix}",
+            application="BUSINESS EXCELLENCE",
+            change_type=change_type,
+            profile_change=profile_change,
+            change_reason="Initial reason",
+            change_description="Initial description",
+            originator_company="OrigCo",
+            originator_site="OrigSite",
+            created_by=self.user,
+            creator_designation=self.designation,
+            region=self.region,
+            cost_center=self.cost_center
+        )
+
+    def _create_profile_deactivation_request(self, suffix: str = "001") -> ChangeRequest:
+        target = UserProfile.objects.create(
+            username=f"deactivate{suffix}",
+            first_name="Deactivate",
+            last_name="User",
+            region=self.region,
+            cost_center=self.cost_center,
+            designation=self.designation
+        )
+        profile_deactivation = ProfileDeactivation.objects.create(
+            user=target,
+            application="BUSINESS EXCELLENCE",
+            deactivation_date=timezone.now(),
+            deactivated_by=self.user
+        )
+        return ChangeRequest.objects.create(
+            cr_id=f"CR-PD-{suffix}",
+            application="BUSINESS EXCELLENCE",
+            change_type="Profile Deactivation",
+            profile_deactivation=profile_deactivation,
+            change_reason="Initial reason",
+            change_description="Initial description",
+            originator_company="OrigCo",
+            originator_site="OrigSite",
+            created_by=self.user,
+            creator_designation=self.designation,
+            region=self.region,
+            cost_center=self.cost_center
+        )
+
+    # ------------------------------------------------------------------
+    # Update flow tests
+    # ------------------------------------------------------------------
+
+    def test_update_new_profile_cr_updates_core_fields(self):
+        company_cc = CostCenter.objects.create(id="CC200", code="CC200", name="Company HQ")
+        cr = self._create_new_profile_request("010")
+        data = {
+            'cr_id': cr.cr_id,
+            'change_reason': 'Updated reason',
+            'change_description': 'Updated description',
+            'originator_company': 'UpdatedCo',
+            'originator_site': 'UpdatedSite',
+            'date_resolution_required': '2025-01-10',
+            'firstname': 'Updated',
+            'lastname': 'Person',
+            'username': 'updateduser',
+            'email': 'updated@example.com',
+            'np_ec_number': 'EC123',
+            'np_company': company_cc.id,
+            'np_training_date': '2025-01-15',
+            'np_training_confirmation_link': 'https://example.com/evidence',
+            'np_training_confirmation_notes': 'Provided during audit',
+            'np_job_title': '',
+            'roles_to_action': 'Assign base role'
+        }
+
+        ChangeRequestService.update_new_profile_cr(cr, data, files=None, selected_role_ids=[])
+        cr.refresh_from_db()
+
+        self.assertEqual(cr.change_reason, 'Updated reason')
+        self.assertEqual(cr.change_description, 'Updated description')
+        self.assertEqual(cr.new_profile.first_name, 'Updated')
+        self.assertEqual(cr.new_profile.company, company_cc.name)
+        self.assertEqual(cr.new_profile.training_confirmation_link, 'https://example.com/evidence')
+
+    def test_update_new_profile_cr_invalid_training_date_raises(self):
+        cr = self._create_new_profile_request("011")
+        data = {
+            'cr_id': cr.cr_id,
+            'change_reason': 'Reason',
+            'change_description': 'Description',
+            'originator_company': 'Company',
+            'originator_site': 'Site',
+            'date_resolution_required': '2025-02-10',
+            'firstname': 'Updated',
+            'lastname': 'Person',
+            'username': 'updateduser',
+            'email': 'updated@example.com',
+            'np_ec_number': 'EC123',
+            'np_company': self.cost_center.id,
+            'np_training_date': 'invalid-date'
+        }
+
+        with self.assertRaises(ValidationError):
+            ChangeRequestService.update_new_profile_cr(cr, data)
+
+    def test_update_profile_modification_cr_permanent_paths(self):
+        cr = self._create_profile_modification_request("020")
+        data = {
+            'cr_id': cr.cr_id,
+            'change_reason': 'Need changes',
+            'change_description': 'Assign/remove roles',
+            'originator_company': 'Company',
+            'originator_site': 'Site',
+            'date_resolution_required': '2025-03-01',
+            'application': 'BUSINESS EXCELLENCE',
+            'mod_include_assign': 'assign',
+            'mod_roles_to_assign': 'Grant access to BE',
+            'mod_reason_assign': 'New duties',
+            'mod_include_remove': 'remove',
+            'mod_roles_to_remove': 'Remove SAP access',
+            'mod_reason_remove': 'No longer needed',
+        }
+
+        ChangeRequestService.update_profile_modification_cr(cr, data)
+        cr.refresh_from_db()
+
+        self.assertIn("Grant access", cr.profile_change.roles_to_assign_notes)
+        self.assertIn("Remove SAP", cr.profile_change.roles_to_remove_notes)
+        self.assertEqual(cr.change_type, "Profile Modification")
+
+    def test_update_profile_modification_cr_delegation_paths(self):
+        application = Application.objects.create(name="BUSINESS EXCELLENCE")
+        role = Roles.objects.create(
+            role="BE_USER",
+            name="BE User",
+            description="Business Excellence User",
+            application="BUSINESS EXCELLENCE",
+            app_id=application
+        )
+        cr = self._create_profile_modification_request("021", change_type="Temporary Role Delegation")
+        data = {
+            'cr_id': cr.cr_id,
+            'change_reason': 'Delegate temporarily',
+            'change_description': 'User on leave',
+            'originator_company': 'Company',
+            'originator_site': 'Site',
+            'date_resolution_required': '2025-03-10',
+            'change_type': 'TEMPORARY_DELEGATION',
+            'roles_to_action': 'TEMPORARY_DELEGATION',
+            'delegation_start_date': '2025-03-15T08:00',
+            'delegation_end_date': '2025-03-20T17:00',
+            'delegation_reason': 'Leave cover',
+        }
+
+        ChangeRequestService.update_profile_modification_cr(cr, data, selected_role_ids=[role.id])
+        cr.refresh_from_db()
+
+        assigned_roles = list(cr.profile_change.role_to_assign.all())
+        self.assertEqual(len(assigned_roles), 1)
+        delegation_data = json.loads(cr.profile_change.roles_actions)
+        self.assertEqual(delegation_data['reason'], 'Leave cover')
+        self.assertEqual(cr.change_type, "Temporary Role Delegation")
+
+    def test_update_profile_deactivation_cr_updates_dates(self):
+        cr = self._create_profile_deactivation_request("030")
+        data = {
+            'cr_id': cr.cr_id,
+            'change_reason': 'Update deactivation',
+            'change_description': 'Adjust dates',
+            'originator_company': 'Company',
+            'originator_site': 'Site',
+            'date_resolution_required': '2025-04-01',
+            'application': 'BUSINESS EXCELLENCE',
+            'deactivation_effective_start': '2025-04-05T09:00',
+            'deactivation_reactivation_date': '2025-04-10T17:00',
+            'deactivation_reason': 'Contract end'
+        }
+
+        ChangeRequestService.update_profile_deactivation_cr(cr, data)
+        cr.refresh_from_db()
+
+        self.assertIsNotNone(cr.profile_deactivation.effective_start_date)
+        self.assertEqual(cr.profile_deactivation.deactivation_reason, 'Contract end')
 
 
 class ApprovalServiceTestCase(TestCase):

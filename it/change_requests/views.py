@@ -40,7 +40,7 @@ from .constants import (
     ERROR_MESSAGES, SUCCESS_MESSAGES, WARNING_MESSAGES, LOG_MESSAGES,
     MAX_REASON_LENGTH, MAX_DESCRIPTION_LENGTH, REQUIRED_CHANGE_REQUEST_FIELDS,
     REQUIRED_NEW_PROFILE_FIELDS, URL_PATTERNS, CACHE_TIMEOUT, USER_DATA_CACHE_KEY_PREFIX,
-    PROFILE_CHANGE_STATUS, APPLICATION_NAMES
+    PROFILE_CHANGE_STATUS, APPLICATION_NAMES, CR_TYPE_CONFIG, CR_TYPE_NAME_MAP
 )
 
 # Import service layer
@@ -523,6 +523,31 @@ def create_change_request(request):
     # Default resolution date to today; template keeps the field editable for overrides
     default_resolution_date = timezone.now().date().isoformat()
     
+    cr_type_definitions = [
+        {
+            "key": key,
+            "name": config["name"],
+            "form_partial": config.get("form_partial"),
+            "form_section_id": config.get("form_section_id"),
+            "operation_value": config.get("operation_value"),
+            "view_template": config.get("view_template"),
+            "field_groups": config.get("field_groups", []),
+        }
+        for key, config in CR_TYPE_CONFIG.items()
+    ]
+    
+    form_sections_map = {}
+    for definition in cr_type_definitions:
+        section_id = definition.get("form_section_id")
+        partial = definition.get("form_partial")
+        if not section_id or not partial or section_id in form_sections_map:
+            continue
+        form_sections_map[section_id] = {
+            "form_section_id": section_id,
+            "form_partial": partial,
+        }
+    form_sections = list(form_sections_map.values())
+    
     return render(request, 'change_requests/create_change_request.html',
             {
                 "user_roles": all_roles,
@@ -536,6 +561,8 @@ def create_change_request(request):
                 "user_groups": user_groups,
                 "originator_defaults": originator_defaults,
                 "default_resolution_date": default_resolution_date,
+                "cr_type_definitions": cr_type_definitions,
+                "form_sections": form_sections,
             })
     
 @csrf_protect
@@ -1561,6 +1588,7 @@ def new_profile_request(request):
                     "originator_site": change_request.originator_site,
                     "date_resolution_required": change_request.date_resolution_required,
                 }
+                cr["roles_actions"] = new_user.get("roles_actions")
                 
                 # Check if current user is the owner
                 is_owner = change_request.created_by == request.user
@@ -1583,6 +1611,8 @@ def new_profile_request(request):
 
                 company_cost_centers = CostCenter.objects.filter(id__in=COMPANY_ROOT_IDS).order_by('name')
 
+                cr_type_schema = ContextBuilder.get_cr_type_schema(change_request.change_type)
+                
                 return render(
                     request,
                     "change_requests/new_profile_request.html",
@@ -1599,7 +1629,8 @@ def new_profile_request(request):
                         "user_groups": list(request.user.groups.values_list('name', flat=True)),
                         "cr": cr,
                         "change_request": change_request,
-                        "is_owner": is_owner
+                        "is_owner": is_owner,
+                        "cr_type_schema": cr_type_schema,
                     }
                 )
                 
@@ -1654,6 +1685,9 @@ def update_change_request(request):
                     "originator_site": change_request.originator_site,
                     "date_resolution_required": change_request.date_resolution_required,
                 }
+                cr["roles_actions"] = new_user.get("roles_actions")
+                cr_type_schema = ContextBuilder.get_cr_type_schema(change_request.change_type)
+                
                 return render(
                     request,
                     "change_requests/new_profile_request.html",
@@ -1667,6 +1701,7 @@ def update_change_request(request):
                         "user_groups": list(request.user.groups.values_list('name', flat=True)),
                         "cr": cr,
                         "info_items": info_items,
+                        "cr_type_schema": cr_type_schema,
                     }
                 )
         
@@ -1797,6 +1832,8 @@ def update_change_request(request):
                 "delegation_end_date": delegation_end_date,
                 "delegation_reason": delegation_reason,
             }
+            cr["roles_actions"] = profile_change.roles_actions
+            cr["delegation_info"] = ProfileModificationHandler.get_delegation_info(change_request)
             
             # Check if current user is the owner
             is_owner = change_request.created_by == request.user
@@ -1827,6 +1864,8 @@ def update_change_request(request):
             ]
             info_items = [item for item in info_items if item]
 
+            cr_type_schema = ContextBuilder.get_cr_type_schema(change_request.change_type)
+            
             return render(
                 request,
                 "change_requests/update_profile_modification.html",
@@ -1847,6 +1886,7 @@ def update_change_request(request):
                     "delegator_roles": delegator_roles,  # ADDED: Delegator's available roles
                     "assigned_roles": profile_change.role_to_assign.all(),  # Currently assigned roles
                     "info_items": info_items,
+                    "cr_type_schema": cr_type_schema,
                 }
             )
         
@@ -1890,6 +1930,7 @@ def update_change_request(request):
                 "effective_start_date": effective_start_str,
                 "reactivation_date": reactivation_str,
             }
+            cr["roles_actions"] = ""
             
             # Check if current user is the owner
             is_owner = change_request.created_by == request.user
@@ -1900,6 +1941,8 @@ def update_change_request(request):
                 f"Resolution Required By: {cr['date_resolution_required']}" if cr.get('date_resolution_required') else None,
             ]
             info_items = [item for item in info_items if item]
+            
+            cr_type_schema = ContextBuilder.get_cr_type_schema(change_request.change_type)
             
             return render(
                 request,
@@ -1918,29 +1961,18 @@ def update_change_request(request):
                     "change_request": change_request,
                     "is_owner": is_owner,
                     "info_items": info_items,
+                    "cr_type_schema": cr_type_schema,
                 }
             )
             
     elif request.method == "POST":
         try:
-            # Sanitize input data
             sanitized_data = sanitize_input(request.POST.dict())
-            
             cr_id = sanitized_data.get('cr_id')
-            roles_to_assign_notes = sanitized_data.get('mod_roles_to_assign') or sanitized_data.get('roles_to_action')
-            roles_to_remove_notes = sanitized_data.get('mod_roles_to_remove') or sanitized_data.get('mod_roles_remove_notes')
-            mod_reason_assign = sanitized_data.get('mod_reason_assign')
-            mod_reason_remove = sanitized_data.get('mod_reason_remove')
-            roles_to_action = roles_to_assign_notes
-            roles_actions = sanitized_data.get('roles_actions')
-            originator_company = sanitized_data.get('originator_company')
-            originator_site = sanitized_data.get('originator_site')
-            date_resolution_required_str = sanitized_data.get('date_resolution_required')
-            change_reason_raw = sanitized_data.get('change_reason')
-            change_description_raw = sanitized_data.get('change_description')
-            change_request = ChangeRequest.objects.filter(cr_id=cr_id).first()
-            include_assign = bool(request.POST.get('mod_include_assign') or (roles_to_assign_notes and roles_to_assign_notes.strip()))
-            include_remove = bool(request.POST.get('mod_include_remove') or (roles_to_remove_notes and roles_to_remove_notes.strip()))
+            change_request = ChangeRequest.objects.filter(cr_id=cr_id).select_related(
+                'profile_change',
+                'profile_deactivation'
+            ).first()
             
             # Check permissions
             has_permission, permission_message = check_change_request_permissions(request.user, change_request)
@@ -1955,253 +1987,31 @@ def update_change_request(request):
             elif section_head_approval:
                 messages.warning(request, "Change request has already been approved by the section head. You cannot update it")
                 return redirect("/change_requests/change_request_index")
+
+            if change_request.profile_change:
+                selected_role_ids = request.POST.getlist('roles')
+                ChangeRequestService.update_profile_modification_cr(
+                    change_request,
+                    sanitized_data,
+                    selected_role_ids
+                )
+            elif change_request.profile_deactivation:
+                ChangeRequestService.update_profile_deactivation_cr(
+                    change_request,
+                    sanitized_data,
+                    request.FILES
+                )
             else:
-                requires_role_notes = change_request.change_type != "Temporary Role Delegation"
+                messages.error(request, "Unsupported change request type for update")
+                return redirect("/change_requests/change_request_index")
 
-                if requires_role_notes:
-                    if not include_assign and not include_remove:
-                        messages.error(request, "Select whether you are adding roles, removing roles, or both.")
-                        return redirect("/change_requests/change_request_index")
-
-                    if include_assign:
-                        if not (roles_to_assign_notes or "").strip():
-                            messages.error(request, "Provide details for the roles to assign.")
-                            return redirect("/change_requests/change_request_index")
-                        if not (mod_reason_assign or "").strip():
-                            messages.error(request, "Provide a reason for assigning new roles.")
-                            return redirect("/change_requests/change_request_index")
-                    else:
-                        roles_to_assign_notes = ""
-                        mod_reason_assign = ""
-
-                    if include_remove:
-                        if not (roles_to_remove_notes or "").strip():
-                            messages.error(request, "Provide details for the roles to remove.")
-                            return redirect("/change_requests/change_request_index")
-                        if not (mod_reason_remove or "").strip():
-                            messages.error(request, "Provide a reason for removing current roles.")
-                            return redirect("/change_requests/change_request_index")
-                    else:
-                        roles_to_remove_notes = ""
-                        mod_reason_remove = ""
-
-                    description_parts = []
-                    if include_assign and roles_to_assign_notes and roles_to_assign_notes.strip():
-                        description_parts.append(f"Assign: {roles_to_assign_notes.strip()}")
-                    if include_remove and roles_to_remove_notes and roles_to_remove_notes.strip():
-                        description_parts.append(f"Remove: {roles_to_remove_notes.strip()}")
-                    change_description = " | ".join(description_parts)
-
-                    reason_parts = []
-                    if include_assign and mod_reason_assign and mod_reason_assign.strip():
-                        reason_parts.append(f"Assign: {mod_reason_assign.strip()}")
-                    if include_remove and mod_reason_remove and mod_reason_remove.strip():
-                        reason_parts.append(f"Remove: {mod_reason_remove.strip()}")
-                    change_reason = " | ".join(reason_parts)
-                else:
-                    change_description = change_description_raw or change_request.change_description
-                    change_reason = change_reason_raw or change_request.change_reason
-
-                # Update the ChangeRequest common fields
-                change_request.change_reason = change_reason or change_request.change_reason
-                change_request.change_description = change_description or change_request.change_description
-                change_request.application = sanitized_data.get('application', change_request.application)
-                if originator_company:
-                    change_request.originator_company = originator_company
-                if originator_site:
-                    change_request.originator_site = originator_site
-                if date_resolution_required_str:
-                    try:
-                        change_request.date_resolution_required = datetime.strptime(date_resolution_required_str, "%Y-%m-%d").date()
-                    except ValueError:
-                        messages.error(request, "Invalid Date Resolution Required. Please use YYYY-MM-DD format.")
-                        return redirect("/change_requests/change_request_index")
-                change_request.save()
-
-                # Update type-specific fields
-                if change_request.new_profile:
-                    # Update NewProfile fields
-                    new_profile = change_request.new_profile
-                    new_profile.roles_to_action = roles_to_action if roles_to_action else new_profile.roles_to_action
-                    new_profile.roles_actions = roles_actions if roles_actions else new_profile.roles_actions
-                    
-                    # Update other new profile fields if provided
-                    new_profile.first_name = sanitized_data.get('first_name', new_profile.first_name)
-                    new_profile.last_name = sanitized_data.get('last_name', new_profile.last_name)
-                    new_profile.username = sanitized_data.get('username', new_profile.username)
-                    new_profile.email = sanitized_data.get('email', new_profile.email)
-                    ec_number = sanitized_data.get('np_ec_number') or sanitized_data.get('ec_number')
-                    if ec_number is not None:
-                        new_profile.ec_number = ec_number
-                    company_id = sanitized_data.get('np_company') or sanitized_data.get('company')
-                    if company_id is not None:
-                        company_obj = CostCenter.objects.filter(id=company_id).first()
-                        new_profile.company = company_obj.name if company_obj else company_id
-                    depot_office_value = sanitized_data.get('np_depot_office')
-                    new_profile.sub_module = sanitized_data.get('np_sub_module', new_profile.sub_module)
-                    training_date_str = sanitized_data.get('np_training_date')
-                    if training_date_str:
-                        try:
-                            new_profile.training_date = datetime.strptime(training_date_str, "%Y-%m-%d").date()
-                        except ValueError:
-                            messages.error(request, "Invalid Training Date. Please use YYYY-MM-DD format.")
-                            return redirect("/change_requests/change_request_index")
-                    elif training_date_str == "":
-                        new_profile.training_date = None
-                    training_link = sanitized_data.get('np_training_confirmation_link')
-                    if training_link is not None:
-                        new_profile.training_confirmation_link = training_link
-                    if 'np_training_confirmation_notes' in sanitized_data:
-                        new_profile.training_confirmation_notes = sanitized_data.get('np_training_confirmation_notes') or ""
-                    training_attachment = request.FILES.get('np_training_confirmation_attachment')
-                    if training_attachment:
-                        new_profile.training_confirmation_attachment = training_attachment
-                    elif sanitized_data.get('clear_np_training_confirmation_attachment') == 'true':
-                        if new_profile.training_confirmation_attachment:
-                            new_profile.training_confirmation_attachment.delete(save=False)
-                        new_profile.training_confirmation_attachment = None
-                    
-                    designation_id = sanitized_data.get('designation')
-                    if designation_id:
-                        new_profile.designation = Designations.objects.filter(id=designation_id).first()
-                    
-                    cost_center_id = sanitized_data.get('cost_center')
-                    new_cost_center = None
-                    if cost_center_id:
-                        new_cost_center = CostCenter.objects.filter(id=cost_center_id).first()
-                        if new_cost_center:
-                            new_profile.cost_center = new_cost_center
-                    if depot_office_value is not None:
-                        if depot_office_value.strip():
-                            new_profile.depot_office = depot_office_value
-                        else:
-                            source_cost_center = new_cost_center or new_profile.cost_center
-                            if source_cost_center:
-                                new_profile.depot_office = source_cost_center.name
-
-                    job_title_raw = sanitized_data.get('np_job_title')
-                    if job_title_raw is not None:
-                        job_title_normalized = job_title_raw.strip()
-                        if job_title_normalized:
-                            new_profile.job_title = job_title_normalized
-                        elif new_profile.designation and getattr(new_profile.designation, 'description', None):
-                            new_profile.job_title = new_profile.designation.description
-                    section_id = sanitized_data.get('section')
-                    if section_id:
-                        new_profile.section = Sections.objects.filter(id=section_id).first()
-                    district_id = sanitized_data.get('district')
-                    if district_id:
-                        new_profile.district = Districts.objects.filter(id=district_id).first()
-                    region_id = sanitized_data.get('region')
-                    if region_id:
-                        new_profile.region = Regions.objects.filter(id=region_id).first()
-                    
-                    new_profile.save()
-                
-                elif change_request.profile_change:
-                    # Update ProfileChange fields
-                    profile_mod = change_request.profile_change
-                    if requires_role_notes:
-                        if roles_to_assign_notes is not None:
-                            profile_mod.roles_to_action = roles_to_assign_notes if include_assign else ""
-                            profile_mod.roles_to_assign_notes = roles_to_assign_notes if include_assign else ""
-                        if roles_to_remove_notes is not None:
-                            profile_mod.roles_to_remove_notes = roles_to_remove_notes if include_remove else ""
-                    profile_mod.roles_actions = roles_actions if roles_actions else profile_mod.roles_actions
-                    profile_mod.application = sanitized_data.get('application', profile_mod.application)
-                    fallback_current_id = sanitized_data.get('mod_current_user_id') or sanitized_data.get('mod_ec_number')
-                    if fallback_current_id:
-                        profile_mod.current_user_id = fallback_current_id
-                    profile_mod.ec_number = sanitized_data.get('mod_ec_number', profile_mod.ec_number)
-                    if requires_role_notes:
-                        profile_mod.reason_assign = mod_reason_assign if include_assign else ""
-                        profile_mod.reason_remove = mod_reason_remove if include_remove else ""
-                    profile_mod.correspondence_link = sanitized_data.get('mod_correspondence_link', profile_mod.correspondence_link)
-                    
-                    # FIXED: Update delegated roles if this is a temporary delegation
-                    if change_request.change_type == "Temporary Role Delegation":
-                        selected_role_ids = request.POST.getlist('roles')
-                        print(f"DEBUG: Updating delegation with selected roles: {selected_role_ids}")
-                        if selected_role_ids:
-                            # Update the role_to_assign ManyToMany field
-                            profile_mod.role_to_assign.set(Roles.objects.filter(id__in=selected_role_ids))
-                            print(f"DEBUG: Updated role_to_assign with {len(selected_role_ids)} roles")
-                        else:
-                            # Clear roles if none selected
-                            profile_mod.role_to_assign.clear()
-                            print("DEBUG: Cleared all role assignments")
-                        
-                        # ADDED: Update delegation dates and reason
-                        delegation_start_date = sanitized_data.get('delegation_start_date')
-                        delegation_end_date = sanitized_data.get('delegation_end_date')
-                        delegation_reason = sanitized_data.get('delegation_reason')
-                        
-                        if delegation_start_date and delegation_end_date:
-                            import json
-                            # Get existing data or create new
-                            delegation_data = {}
-                            if profile_mod.roles_actions:
-                                try:
-                                    delegation_data = json.loads(profile_mod.roles_actions)
-                                except json.JSONDecodeError:
-                                    delegation_data = {}
-                            
-                            # Update the delegation metadata
-                            delegation_data['type'] = 'DELEGATION'
-                            delegation_data['start_date'] = delegation_start_date
-                            delegation_data['end_date'] = delegation_end_date
-                            delegation_data['reason'] = delegation_reason if delegation_reason else delegation_data.get('reason', '')
-                            
-                            # Keep delegator_id if it exists
-                            if 'delegator_id' not in delegation_data and profile_mod.changed_by:
-                                delegation_data['delegator_id'] = profile_mod.changed_by.id
-                            
-                            # Save back to roles_actions as JSON
-                            profile_mod.roles_actions = json.dumps(delegation_data)
-                            print(f"DEBUG: Updated delegation dates - Start: {delegation_start_date}, End: {delegation_end_date}")
-                    
-                    profile_mod.save()
-                    
-                elif change_request.profile_deactivation:
-                    # Update ProfileDeactivation fields
-                    profile_deactivation = change_request.profile_deactivation
-                    profile_deactivation.application = sanitized_data.get('application', profile_deactivation.application)
-                    profile_deactivation.deactivation_reason = sanitized_data.get('deactivation_reason', profile_deactivation.deactivation_reason)
-                    profile_deactivation.correspondence_link = sanitized_data.get('deactivation_correspondence_link', profile_deactivation.correspondence_link)
-                    if 'deactivation_correspondence_notes' in sanitized_data:
-                        profile_deactivation.correspondence_notes = sanitized_data.get('deactivation_correspondence_notes') or ""
-                    attachment_file = request.FILES.get('deactivation_correspondence_attachment')
-                    if attachment_file:
-                        profile_deactivation.correspondence_attachment = attachment_file
-                    elif sanitized_data.get('clear_deactivation_correspondence_attachment') == 'true':
-                        if profile_deactivation.correspondence_attachment:
-                            profile_deactivation.correspondence_attachment.delete(save=False)
-                        profile_deactivation.correspondence_attachment = None
-                    effective_start_str = sanitized_data.get('deactivation_effective_start')
-                    if effective_start_str:
-                        try:
-                            effective_start = timezone.make_aware(datetime.strptime(effective_start_str, "%Y-%m-%dT%H:%M"), timezone.get_current_timezone())
-                            profile_deactivation.effective_start_date = effective_start
-                            profile_deactivation.deactivation_date = effective_start
-                        except ValueError:
-                            messages.error(request, "Invalid Effective Start Date. Please use YYYY-MM-DDTHH:MM format.")
-                            return redirect("/change_requests/change_request_index")
-                    reactivation_str = sanitized_data.get('deactivation_reactivation_date')
-                    if reactivation_str:
-                        try:
-                            profile_deactivation.reactivation_date = timezone.make_aware(datetime.strptime(reactivation_str, "%Y-%m-%dT%H:%M"), timezone.get_current_timezone())
-                        except ValueError:
-                            messages.error(request, "Invalid Reactivation Date. Please use YYYY-MM-DDTHH:MM format.")
-                            return redirect("/change_requests/change_request_index")
-                    elif 'deactivation_reactivation_date' in sanitized_data and not reactivation_str:
-                        profile_deactivation.reactivation_date = None
-                    profile_deactivation.save()
-                # clear approvals
-                CRApproval.objects.filter(cr_id=change_request).delete()
-                messages.success(request, "Change Request updated successfully")
+            CRApproval.objects.filter(cr_id=change_request).delete()
+            messages.success(request, "Change Request updated successfully")
+        except ValidationError as ex:
+            for message in ex.messages:
+                messages.error(request, message)
         except Exception as ex:
-            traceback.print_exc()
-            print("save user error", ex)
+            logger.exception("Error updating change request %s: %s", request.POST.get('cr_id'), ex)
             messages.error(request, "An error occurred while saving the change request")
     
         return redirect("/change_requests/change_request_index")
@@ -2696,51 +2506,8 @@ def view_profile_deactivation_request(request, change_request, permissions, appr
 
 @login_required
 def view_profile_request(request):
-    """
-    Refactored view for handling profile requests.
-    Routes to appropriate sub-view based on request type.
-    """
-    if request.method != "GET":
-        logger.warning(f"Invalid request method {request.method} for view_profile_request")
-        messages.error(request, "Invalid request method")
-        return redirect("/change_requests/change_request_index")
-    
-    cr_id = request.GET.get('i')
-    if not cr_id:
-        logger.error("Missing change request ID parameter")
-        messages.error(request, "Change request ID is required")
-        return redirect("/change_requests/change_request_index")
-    
-    try:
-        # Get change request with optimized queries
-        change_request = get_optimized_change_request(cr_id)
-        
-        # Get user permissions
-        permissions = get_user_permissions(request.user, change_request)
-        
-        # Get approval workflow status
-        approval_status = get_approval_workflow_status(change_request)
-        
-        # Route to appropriate handler based on request type
-        if change_request.new_profile:
-            return view_new_profile_request(request, change_request, permissions, approval_status)
-        elif change_request.profile_change:
-            return view_profile_modification_request(request, change_request, permissions, approval_status)
-        elif change_request.profile_deactivation:
-            return view_profile_deactivation_request(request, change_request, permissions, approval_status)
-        else:
-            logger.error(f"Unknown change request type for CR: {cr_id}")
-            messages.error(request, "Unknown change request type")
-            return redirect("/change_requests/change_request_index")
-    
-    except ChangeRequest.DoesNotExist:
-        logger.error(f"Change request not found: {cr_id}")
-        messages.error(request, "Change request not found")
-        return redirect("/change_requests/change_request_index")
-    except Exception as e:
-        logger.error(f"Error viewing change request {cr_id}: {str(e)}", exc_info=True)
-        messages.error(request, "An error occurred while viewing the change request")
-        return redirect("/change_requests/change_request_index")
+    """Backward-compatible wrapper that now delegates to the unified view."""
+    return view_change_request_unified(request)
 
 
 # ==================== NEW UNIFIED VIEW FUNCTIONS (USING SERVICE LAYER) ====================
@@ -3171,69 +2938,46 @@ def get_user_data(request, username):
 def update_new_profile_request(request):
     if request.method == "POST":
         try:
-            # Sanitize input data
             sanitized_data = sanitize_input(request.POST.dict())
-            
             cr_id = sanitized_data.get('cr_id')
-            change_reason = sanitized_data.get('change_reason')
-            change_description = sanitized_data.get('change_description')
-            roles_to_action = sanitized_data.get('roles_to_action')
-            roles_actions = sanitized_data.get('roles_actions')
-            change_request = ChangeRequest.objects.filter(cr_id=cr_id).first()
-            
-            # Check permissions
+            change_request = ChangeRequest.objects.filter(cr_id=cr_id).select_related('new_profile').first()
+
+            if not change_request:
+                messages.error(request, "Change request not found")
+                return redirect("/change_requests/change_request_index")
+
             has_permission, permission_message = check_change_request_permissions(request.user, change_request)
             if not has_permission:
                 messages.error(request, permission_message)
                 return redirect("/change_requests/change_request_index")
-            
-            section_head_approval = CRApproval.objects.filter(cr_id=change_request, approver_role__role="section_head").first()
-            if not change_request:
-                messages.error(request, "Change request not found")
+
+            section_head_approval = CRApproval.objects.filter(
+                cr_id=change_request,
+                approver_role__role="section_head"
+            ).first()
+            if section_head_approval:
+                messages.warning(
+                    request,
+                    "Change request has already been approved by the section head. You cannot update it"
+                )
                 return redirect("/change_requests/change_request_index")
-            elif section_head_approval:
-                messages.warning(request, "Change request has already been approved by the section head. You cannot update it")
-                return redirect("/change_requests/change_request_index")
-            else:
-                change_request.roles_to_action = roles_to_action if roles_to_action else change_request.new_profile.roles_to_action
-                change_request.roles_actions = roles_actions if roles_actions else change_request.new_profile.roles_actions
-                change_request.change_reason = change_reason if change_reason else change_request.change_reason
-                change_request.change_description = change_description if change_description else change_request.change_description
-                change_request.save()
-            
-                user_data = {
-                    'first_name': request.POST.get('firstname'),
-                    'last_name': request.POST.get('lastname'),
-                    'username': request.POST.get('username'),
-                    'email': request.POST.get('email'),
-                    'roles_to_action': roles_to_action if roles_to_action else change_request.roles_to_action,
-                    'roles_actions': roles_actions if roles_actions else change_request.roles_actions,
-                    'region': Regions.objects.filter(id=request.POST.get('region')).first(),
-                    'cost_center': CostCenter.objects.filter(id=request.POST.get('cost_center')).first() if request.POST.get('cost_center') not in ["Select Cost Center", ""] else None,
-                    'district': Districts.objects.filter(id=request.POST.get('district')).first() if request.POST.get('district') not in ["Select District", ""] else None,
-                    'section': Sections.objects.filter(code=request.POST.get('section')).first(),
-                    'designation': Designations.objects.filter(id=request.POST.get('designation')).first() if request.POST.get('designation') not in ["Select Designation", ""] else None
-                }
 
-                if change_request.new_profile:
-                    user_id = change_request.new_profile.id
-                    user = NewProfile.objects.filter(id=user_id).first()
-                    for field, value in user_data.items():
-                        if value:
-                            setattr(user, field, value)
+            selected_role_ids = request.POST.getlist('roles')
+            ChangeRequestService.update_new_profile_cr(
+                change_request,
+                sanitized_data,
+                request.FILES,
+                selected_role_ids
+            )
 
-                    user.save()
-
-                    roles = [role for role in [request.POST.get(app.name) for app in Application.objects.all() if request.POST.get(app.name) != 'Select Role'] if role and role != ""]
-                    user.roles.clear()
-                    user.roles.add(*Roles.objects.filter(id__in=roles))
-                
-                # clear approvals
-                CRApproval.objects.filter(cr_id=change_request).delete()
-                messages.success(request, "Change Request updated successfully")
+            # reset approvals so workflow restarts with the latest data
+            CRApproval.objects.filter(cr_id=change_request).delete()
+            messages.success(request, "Change Request updated successfully")
+        except ValidationError as ex:
+            for message in ex.messages:
+                messages.error(request, message)
         except Exception as ex:
-            traceback.print_exc()
-            print("save user error", ex)
+            logger.exception("Error updating new profile change request: %s", ex)
             messages.error(request, "An error occurred while saving the change request")
     
         return redirect("/change_requests/change_request_index")

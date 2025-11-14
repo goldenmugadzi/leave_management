@@ -1,41 +1,4 @@
 <!-- Profile Deactivation Details Section -->
 
-<!-- User to Deactivate Section -->
-<div class="border-t border-gray-200 pt-6">
-  <h4 class="text-lg font-medium text-gray-900 mb-4">User to Deactivate</h4>
-  <p class="mt-1 text-sm text-gray-600 mb-4">
-    Profile information for the user to be deactivated
-  </p>
-
-  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-    {% include 'change_requests/components/forms/display_field.html' with label="First Name" value=cr.user.firstname %}
-    {% include 'change_requests/components/forms/display_field.html' with label="Last Name" value=cr.user.lastname %}
-    {% include 'change_requests/components/forms/display_field.html' with label="Username" value=cr.user.username %}
-    {% include 'change_requests/components/forms/display_field.html' with label="Email" value=cr.user.email %}
-    {% include 'change_requests/components/forms/display_field.html' with label="Designation" value=cr.user.designation %}
-    {% include 'change_requests/components/forms/display_field.html' with label="Region" value=cr.user.region %}
-    {% include 'change_requests/components/forms/display_field.html' with label="Cost Center" value=cr.user.cost_center %}
-    {% include 'change_requests/components/forms/display_field.html' with label="Section" value=cr.user.section %}
-    {% include 'change_requests/components/forms/display_field.html' with label="District" value=cr.user.district %}
-  </div>
-</div>
-
-<!-- Deactivation Metadata -->
-<div class="border-t border-gray-200 pt-6">
-  <h4 class="text-lg font-medium text-gray-900 mb-4">Deactivation Details</h4>
-  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-    {% if cr.user.deactivation_reason %}
-      {% include 'change_requests/components/forms/display_field.html' with label="Reason for Deactivation" value=cr.user.deactivation_reason %}
-    {% endif %}
-    {% if cr.user.effective_start_date %}
-      {% include 'change_requests/components/forms/display_field.html' with label="Effective Start Date" value=cr.user.effective_start_date %}
-    {% endif %}
-    {% if cr.user.reactivation_date %}
-      {% include 'change_requests/components/forms/display_field.html' with label="Reactivation Date" value=cr.user.reactivation_date %}
-    {% endif %}
-    {% if cr.user.correspondence_link %}
-      {% include 'change_requests/components/forms/display_field.html' with label="Correspondence / Instruction" value=cr.user.correspondence_link %}
-    {% endif %}
-  </div>
-</div>
+{% include 'change_requests/components/sections/dynamic_field_groups.html' %}
 

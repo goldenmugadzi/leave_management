@@ -1,0 +1,19 @@
+{% load custom_filters %}
+{% if cr.cr_type_schema.field_groups %}
+  {% for group in cr.cr_type_schema.field_groups %}
+    {% if group.source == 'delegation_info' %}
+      {% with data=cr.delegation_info %}
+        {% include 'change_requests/components/sections/dynamic_field_groups_section.html' %}
+      {% endwith %}
+    {% elif group.source == 'cr' %}
+      {% with data=cr %}
+        {% include 'change_requests/components/sections/dynamic_field_groups_section.html' %}
+      {% endwith %}
+    {% else %}
+      {% with data=cr.user %}
+        {% include 'change_requests/components/sections/dynamic_field_groups_section.html' %}
+      {% endwith %}
+    {% endif %}
+  {% endfor %}
+{% endif %}
+

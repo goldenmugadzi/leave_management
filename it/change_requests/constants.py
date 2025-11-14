@@ -13,36 +13,317 @@ CHANGE_TYPES = {
 CR_TYPE_CONFIG = {
     'NEW_PROFILE': {
         'name': 'New Profile',
+        'operation_value': 'new_profile',
         'model_field': 'new_profile',
         'view_template': 'change_requests/components/sections/new_profile_details.html',
+        'form_partial': 'change_requests/components/forms/new_profile_fields.html',
+        'edit_partial': 'change_requests/components/forms/edit/new_profile_fields.html',
         'handler_class': 'NewProfileHandler',
         'requires_roles_implementation': True,
         'url_segment': 'new_profile_request',
+        'form_section_id': 'new-profile-fields',
+        'field_groups': [
+            {
+                'key': 'identity',
+                'title': 'New User Profile Information',
+                'fields': [
+                    'ec_number', 'first_name', 'last_name', 'username', 'email',
+                    'job_title', 'company', 'designation', 'region', 'cost_center',
+                    'section', 'district', 'depot_office', 'sub_module'
+                ]
+            },
+            {
+                'key': 'training',
+                'title': 'Training Details',
+                'fields': ['training_date', 'training_confirmation_link']
+            },
+            {
+                'key': 'roles',
+                'title': 'Roles & Implementation',
+                'fields': ['roles_to_action', 'roles_actions']
+            }
+        ]
+        ,
+        'view_sections': [
+            'section_a',
+            'section_c_new_profile',
+            'section_c_training',
+            'section_roles_implementation',
+            'section_f_creator',
+            'section_g_status'
+        ]
     },
     'PROFILE_MODIFICATION': {
         'name': 'Profile Modification',
+        'operation_value': 'profile_modification',
         'model_field': 'profile_change',
         'view_template': 'change_requests/components/sections/profile_modification_details.html',
+        'form_partial': 'change_requests/components/forms/profile_modification_fields.html',
+        'edit_partial': 'change_requests/components/forms/edit/profile_modification_fields.html',
         'handler_class': 'ProfileModificationHandler',
         'requires_roles_implementation': True,
         'url_segment': 'profile_modification_request',
+        'form_section_id': 'profile-modification-fields',
+        'field_groups': [
+            {
+                'key': 'identity',
+                'title': 'Existing User Profile',
+                'fields': [
+                    'firstname', 'lastname', 'username', 'email',
+                    'current_user_id', 'ec_number', 'designation',
+                    'region', 'district', 'section', 'cost_center'
+                ]
+            },
+            {
+                'key': 'roles',
+                'title': 'Role Change Instructions',
+                'fields': [
+                    'roles_to_action', 'roles_actions', 'reason_assign',
+                    'reason_remove', 'correspondence_link'
+                ]
+            }
+        ]
+        ,
+        'view_sections': [
+            'section_a',
+            'section_d_change_details',
+            'section_d_existing_user',
+            'section_d_role_change',
+            'section_f_creator',
+            'section_g_status'
+        ]
     },
     'PROFILE_DEACTIVATION': {
         'name': 'Profile Deactivation',
+        'operation_value': 'profile_deactivation',
         'model_field': 'profile_deactivation',
         'view_template': 'change_requests/components/sections/profile_deactivation_details.html',
+        'form_partial': 'change_requests/components/forms/profile_deactivation_fields.html',
+        'edit_partial': 'change_requests/components/forms/edit/profile_deactivation_fields.html',
         'handler_class': 'ProfileDeactivationHandler',
         'requires_roles_implementation': False,
         'url_segment': 'profile_deactivation_request',
+        'form_section_id': 'profile-deactivation-fields',
+        'field_groups': [
+            {
+                'key': 'identity',
+                'title': 'User Profile',
+                'fields': ['username', 'first_name', 'last_name', 'email', 'designation']
+            },
+            {
+                'key': 'deactivation',
+                'title': 'Deactivation Details',
+                'fields': [
+                    'effective_start_date', 'reactivation_date', 'deactivation_reason',
+                    'correspondence_link'
+                ]
+            }
+        ]
+        ,
+        'view_sections': [
+            'section_a',
+            'section_deactivation_user',
+            'section_deactivation_details',
+            'section_f_creator',
+            'section_g_status'
+        ]
     },
     'TEMPORARY_ROLE_DELEGATION': {
         'name': 'Temporary Role Delegation',
+        'operation_value': 'profile_modification',
         'model_field': 'profile_change',
         'view_template': 'change_requests/components/sections/profile_modification_details.html',
+        'form_partial': 'change_requests/components/forms/profile_modification_fields.html',
+        'edit_partial': 'change_requests/components/forms/edit/profile_modification_fields.html',
         'handler_class': 'ProfileModificationHandler',
         'requires_roles_implementation': True,
         'url_segment': 'profile_modification_request',
+        'form_section_id': 'profile-modification-fields',
+        'field_groups': [
+            {
+                'key': 'identity',
+                'title': 'Delegatee',
+                'fields': ['firstname', 'lastname', 'username', 'email', 'designation']
+            },
+            {
+                'key': 'delegation',
+                'title': 'Delegation Window',
+                'source': 'delegation_info',
+                'fields': [
+                    'delegator_name', 'delegator_username',
+                    'delegatee_name', 'delegatee_username',
+                    'start_date', 'end_date', 'delegation_reason'
+                ]
+            },
+            {
+                'key': 'roles',
+                'title': 'Roles To Delegate',
+                'fields': ['roles_to_action', 'roles_actions']
+            }
+        ]
+        ,
+        'view_sections': [
+            'section_a',
+            'section_d_change_details',
+            'section_d_existing_user',
+            'section_delegation_window',
+            'section_d_role_change',
+            'section_f_creator',
+            'section_g_status'
+        ]
     }
+}
+
+# Quick lookup from display name back to config key
+CR_TYPE_NAME_MAP = {
+    config['name']: key for key, config in CR_TYPE_CONFIG.items()
+}
+
+VIEW_SECTION_DEFINITIONS = {
+    'section_a': {
+        'title': 'Section A – Change Request Originator',
+        'source': 'cr',
+        'fields': [
+            {'key': 'change_type', 'label': 'Change Type'},
+            {'key': 'cr_id', 'label': 'CR ID'},
+            {'key': 'originator_company', 'label': 'Originator Company'},
+            {'key': 'originator_site', 'label': 'Originator Site'},
+            {'key': 'change_reason', 'label': 'Reason for Change'},
+            {'key': 'change_description', 'label': 'Change Description'},
+            {'key': 'date_resolution_required', 'label': 'Resolution Required By'},
+            {'key': 'application', 'label': 'Application'},
+        ]
+    },
+    'section_c_new_profile': {
+        'title': 'Section C – Creation of New Profile',
+        'source': 'user',
+        'fields': [
+            {'key': 'ec_number', 'label': 'EC Number'},
+            {'key': 'firstname', 'label': 'First Name'},
+            {'key': 'lastname', 'label': 'Last Name'},
+            {'key': 'username', 'label': 'Username'},
+            {'key': 'email', 'label': 'Email'},
+            {'key': 'job_title', 'label': 'Job Title'},
+            {'key': 'company', 'label': 'Company'},
+            {'key': 'region', 'label': 'Region'},
+            {'key': 'district', 'label': 'District'},
+            {'key': 'depot_office', 'label': 'Depot / Office'},
+            {'key': 'designation', 'label': 'Designation'},
+            {'key': 'section', 'label': 'Section'},
+            {'key': 'cost_center', 'label': 'Cost Centre'},
+            {'key': 'sub_module', 'label': 'Sub Module'},
+        ]
+    },
+    'section_c_training': {
+        'title': 'Training Details',
+        'source': 'user',
+        'fields': [
+            {'key': 'training_date', 'label': 'Date of Training'},
+            {'key': 'training_confirmation_link', 'label': 'Training Confirmation Link'},
+            {'key': 'training_confirmation_notes', 'label': 'Training Confirmation Notes'},
+        ]
+    },
+    'section_roles_implementation': {
+        'title': 'Roles & Implementation',
+        'source': 'user',
+        'fields': [
+            {'key': 'roles_to_action', 'label': 'Roles to Action'},
+            {'key': 'roles_actions', 'label': 'Roles Implemented'},
+        ]
+    },
+    'section_d_change_details': {
+        'title': 'Section D – Profile Modification Details',
+        'source': 'cr',
+        'fields': [
+            {'key': 'change_type', 'label': 'Change Type'},
+            {'key': 'application', 'label': 'Application'},
+        ]
+    },
+    'section_d_existing_user': {
+        'title': 'Existing User Profile',
+        'source': 'user',
+        'fields': [
+            {'key': 'firstname', 'label': 'First Name'},
+            {'key': 'lastname', 'label': 'Last Name'},
+            {'key': 'username', 'label': 'Username'},
+            {'key': 'email', 'label': 'Email'},
+            {'key': 'current_user_id', 'label': 'Current User ID'},
+            {'key': 'ec_number', 'label': 'EC Number'},
+            {'key': 'designation', 'label': 'Designation'},
+            {'key': 'region', 'label': 'Region'},
+            {'key': 'district', 'label': 'District'},
+            {'key': 'section', 'label': 'Section'},
+            {'key': 'cost_center', 'label': 'Cost Centre'},
+        ]
+    },
+    'section_d_role_change': {
+        'title': 'Role Change Instructions',
+        'source': 'user',
+        'fields': [
+            {'key': 'roles_to_action', 'label': 'Roles to Action'},
+            {'key': 'roles_to_assign_notes', 'label': 'New Roles to Assign'},
+            {'key': 'roles_to_remove_notes', 'label': 'Roles to Remove'},
+            {'key': 'reason_assign', 'label': 'Reason for Assigning New Roles'},
+            {'key': 'reason_remove', 'label': 'Reason for Removing Current Roles'},
+            {'key': 'correspondence_link', 'label': 'Correspondence / Instruction Link'},
+        ]
+    },
+    'section_delegation_window': {
+        'title': 'Delegation Window',
+        'source': 'delegation_info',
+        'fields': [
+            {'key': 'delegator_name', 'label': 'Delegator Name'},
+            {'key': 'delegator_username', 'label': 'Delegator Username'},
+            {'key': 'delegatee_name', 'label': 'Delegatee Name'},
+            {'key': 'delegatee_username', 'label': 'Delegatee Username'},
+            {'key': 'start_date', 'label': 'Delegation Start Date'},
+            {'key': 'end_date', 'label': 'Delegation End Date'},
+            {'key': 'delegation_reason', 'label': 'Delegation Reason'},
+            {'key': 'formatted_display', 'label': 'Delegated Roles'},
+        ]
+    },
+    'section_deactivation_user': {
+        'title': 'User Profile',
+        'source': 'user',
+        'fields': [
+            {'key': 'firstname', 'label': 'First Name'},
+            {'key': 'lastname', 'label': 'Last Name'},
+            {'key': 'username', 'label': 'Username'},
+            {'key': 'email', 'label': 'Email'},
+            {'key': 'designation', 'label': 'Designation'},
+            {'key': 'region', 'label': 'Region'},
+            {'key': 'district', 'label': 'District'},
+            {'key': 'section', 'label': 'Section'},
+            {'key': 'cost_center', 'label': 'Cost Centre'},
+        ]
+    },
+    'section_deactivation_details': {
+        'title': 'Section E – Deactivation Details',
+        'source': 'user',
+        'fields': [
+            {'key': 'effective_start_date', 'label': 'Effective Start Date'},
+            {'key': 'reactivation_date', 'label': 'Reactivation Date'},
+            {'key': 'deactivation_reason', 'label': 'Reason for Deactivation'},
+            {'key': 'correspondence_link', 'label': 'Correspondence / Instruction Link'},
+        ]
+    },
+    'section_f_creator': {
+        'title': 'Section F – Change Authorisation',
+        'source': 'cr',
+        'fields': [
+            {'key': 'created_by', 'label': 'Created By'},
+            {'key': 'creator_designation', 'label': 'Creator Designation'},
+            {'key': 'created_at', 'label': 'Date Created'},
+        ]
+    },
+    'section_g_status': {
+        'title': 'Section G – Implementation Status',
+        'source': 'cr',
+        'fields': [
+            {'key': 'overall_status', 'label': 'Overall Status'},
+            {'key': 'roles_actions', 'label': 'Implementation Notes'},
+        ]
+    },
 }
 
 # Approval Roles

@@ -1,0 +1,28 @@
+{% load custom_filters %}
+{% if data %}
+<div class="border-t border-gray-200 pt-6">
+  <h4 class="text-base font-semibold text-gray-900 mb-4">{{ group.title }}</h4>
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    {% for field in group.fields %}
+      {% if field.key %}
+        {% with field_key=field.key field_label=field.label|default:field.key|humanize_key %}
+          {% with field_value=data|get_value:field_key %}
+            {% if field_value %}
+              {% include 'change_requests/components/forms/display_field.html' with label=field_label value=field_value %}
+            {% endif %}
+          {% endwith %}
+        {% endwith %}
+      {% else %}
+        {% with field_key=field field_label=field|humanize_key %}
+          {% with field_value=data|get_value:field_key %}
+            {% if field_value %}
+              {% include 'change_requests/components/forms/display_field.html' with label=field_label value=field_value %}
+            {% endif %}
+          {% endwith %}
+        {% endwith %}
+      {% endif %}
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+

@@ -1,0 +1,124 @@
+<!-- Profile Deactivation Details -->
+                <div class="border-t border-gray-200 pt-6">
+                  <h4 class="text-lg font-medium text-gray-900 mb-4">Profile Deactivation Details</h4>
+
+                  <!-- User Profile Selection -->
+                  <div class="mb-6">
+                    <label for="user_profile_deac" class="block text-sm font-medium text-gray-700 mb-2">
+                      User Profile <span class="text-red-500">*</span>
+                    </label>
+                    <select
+                      id="user_profile_deac"
+                      name="user_profile"
+                      required
+                      class="select2 block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    >
+                      {% if cr.user.username %}
+                      <option value="{{cr.user.username}}">{{cr.user.firstname}} {{cr.user.lastname}}</option>
+                      {% endif %}
+                      <option value="">Select User</option>
+                      {% for usr in user_profiles %}
+                      <option value="{{usr.username}}">
+                        {{usr.first_name}} {{usr.last_name}}
+                      </option>
+                      {% endfor %}
+                    </select>
+                    <p class="mt-1 text-sm text-gray-500">
+                      Select the user whose profile needs to be deactivated
+                    </p>
+                  </div>
+
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="mb-6">
+                      <label for="deactivation_effective_start" class="block text-sm font-medium text-gray-700 mb-2">
+                        Effective Start Date <span class="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="datetime-local"
+                        id="deactivation_effective_start"
+                        name="deactivation_effective_start"
+                        value="{{cr.effective_start_date|default_if_none:''}}"
+                        required
+                        class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus-border-blue-500"
+                      />
+                    </div>
+                    <div class="mb-6">
+                      <label for="deactivation_reactivation_date" class="block text-sm font-medium text-gray-700 mb-2">
+                        Reactivation Date (if known)
+                      </label>
+                      <input
+                        type="datetime-local"
+                        id="deactivation_reactivation_date"
+                        name="deactivation_reactivation_date"
+                        value="{{cr.reactivation_date|default_if_none:''}}"
+                        class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus-border-blue-500"
+                      />
+                    </div>
+                  </div>
+
+                  <div class="mb-6">
+                    <label for="deactivation_reason" class="block text-sm font-medium text-gray-700 mb-2">
+                      Reason for Deactivation <span class="text-red-500">*</span>
+                    </label>
+                    <textarea
+                      id="deactivation_reason"
+                      name="deactivation_reason"
+                      rows="3"
+                      required
+                      class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus-border-blue-500"
+                      placeholder="Provide details for why the profile should be deactivated"
+                    >{{cr.deactivation_reason|default_if_none:''}}</textarea>
+                  </div>
+
+                  <div class="mb-6">
+                    <label for="deactivation_correspondence_link" class="block text-sm font-medium text-gray-700 mb-2">
+                      Correspondence / Instruction Link
+                    </label>
+                    <input
+                      type="url"
+                      id="deactivation_correspondence_link"
+                      name="deactivation_correspondence_link"
+                      value="{{cr.correspondence_link|default_if_none:''}}"
+                      class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus-border-blue-500"
+                      placeholder="Provide a link to supporting correspondence"
+                    />
+                  </div>
+                  <div class="mb-6">
+                    <label for="deactivation_correspondence_notes" class="block text-sm font-medium text-gray-700 mb-2">
+                      Correspondence Notes
+                    </label>
+                    <textarea
+                      id="deactivation_correspondence_notes"
+                      name="deactivation_correspondence_notes"
+                      rows="3"
+                      class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus-border-blue-500"
+                      placeholder="Summarise the official instruction or key references"
+                    >{{cr.correspondence_notes|default_if_none:''}}</textarea>
+                  </div>
+                  <div class="mb-6">
+                    <label for="deactivation_correspondence_attachment" class="block text-sm font-medium text-gray-700 mb-2">
+                      Correspondence Attachment
+                    </label>
+                    <input
+                      type="file"
+                      id="deactivation_correspondence_attachment"
+                      name="deactivation_correspondence_attachment"
+                      class="block w-full text-sm text-gray-700"
+                    />
+                    {% if change_request.profile_deactivation.correspondence_attachment %}
+                    <p class="mt-1 text-sm text-gray-500">
+                      Current file: <a href="{{ change_request.profile_deactivation.correspondence_attachment.url }}" class="text-blue-600 underline" target="_blank">Download</a>
+                    </p>
+                    <div class="flex items-center mt-2 text-sm text-gray-600">
+                      <input type="checkbox" id="clear_deactivation_correspondence_attachment" name="clear_deactivation_correspondence_attachment" value="true" class="h-4 w-4 text-blue-600 border-gray-300 rounded" />
+                      <label for="clear_deactivation_correspondence_attachment" class="ml-2">Remove existing attachment</label>
+                    </div>
+                    {% endif %}
+                    <p class="mt-1 text-sm text-gray-500">
+                      Optional upload (PDF, image, etc.).
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              
