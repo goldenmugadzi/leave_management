@@ -1686,11 +1686,12 @@
             isValid = false;
           }
 
-          // Validate roles description for all applications
-          const rolesDescription = ($("#mod_roles_to_assign").val() || "").trim();
-          if (!rolesDescription) {
-            errors.push("Please describe the new roles to assign");
-            isValid = false;
+          if (includeAssign) {
+            const rolesDescription = ($("#mod_roles_to_assign").val() || "").trim();
+            if (!rolesDescription) {
+              errors.push("Please describe the new roles to assign");
+              isValid = false;
+            }
           }
 
           // Validate dates
