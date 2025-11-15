@@ -458,8 +458,12 @@ def _build_document_dashboard(documents_queryset):
     Serializes Document queryset data for the dashboard and prepares filter metadata.
     """
     documents_payload = []
-    categories = set()
-    subcategories = set()
+    categories = set(
+        Category.objects.order_by("name").values_list("name", flat=True)
+    )
+    subcategories = set(
+        Subcategory.objects.order_by("name").values_list("name", flat=True)
+    )
     regions = set()
     totals = {"all": 0, "active": 0, "archived": 0}
 
@@ -525,11 +529,15 @@ def _build_document_dashboard(documents_queryset):
         else:
             totals["active"] += 1
 
+    category_list = sorted(filter(None, categories))
+    subcategory_list = sorted(filter(None, subcategories))
+    region_list = sorted(filter(None, regions))
+
     return {
         "documents": documents_payload,
-        "categories": sorted(filter(None, categories)),
-        "subcategories": sorted(filter(None, subcategories)),
-        "regions": sorted(filter(None, regions)),
+        "categories": category_list,
+        "subcategories": subcategory_list,
+        "regions": region_list,
         "totals": totals,
     }
 
