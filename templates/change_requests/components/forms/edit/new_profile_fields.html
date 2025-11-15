@@ -1,6 +1,83 @@
                 <!-- New User Profile Information Section -->
                 <div class="border-t border-gray-200 pt-6">
                   <h4 class="text-lg font-medium text-gray-900 mb-4">Section C - Creation of New Profile</h4>
+
+                  <div class="grid grid-cols-1 gap-6 mb-6">
+                    <div>
+                      <label for="change_reason" class="block text-sm font-medium text-gray-700 mb-2">
+                        Reason for Change <span class="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        name="change_reason"
+                        id="change_reason"
+                        value="{{ cr.change_reason|default_if_none:'' }}"
+                        class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus-border-blue-500"
+                        placeholder="Summarise why this change is required"
+                      />
+                      <p class="mt-1 text-sm text-gray-500">
+                        Provide the short justification that appears in Section A/B of the form.
+                      </p>
+                    </div>
+                    <div>
+                      <label for="change_description" class="block text-sm font-medium text-gray-700 mb-2">
+                        Change Description <span class="text-red-500">*</span>
+                      </label>
+                      <textarea
+                        name="change_description"
+                        id="change_description"
+                        rows="3"
+                        class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus-border-blue-500"
+                        placeholder="Detailed description of the requested change"
+                      >{{ cr.change_description|default_if_none:'' }}</textarea>
+                      <p class="mt-1 text-sm text-gray-500">
+                        Mirrors the narrative captured in the official document.
+                      </p>
+                    </div>
+                    <div>
+                      <label for="for_application" class="block text-sm font-medium text-gray-700 mb-2">
+                        Application <span class="text-red-500">*</span>
+                      </label>
+                      <select
+                        id="for_application"
+                        name="application"
+                        class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus-border-blue-500"
+                      >
+                        <option value="">Select Application</option>
+                        <option value="BUSINESS EXCELLENCE" {% if cr.application == "BUSINESS EXCELLENCE" %}selected{% endif %}>BUSINESS EXCELLENCE</option>
+                        <option value="SAP" {% if cr.application == "SAP" %}selected{% endif %}>SAP</option>
+                        <option value="NDM" {% if cr.application == "NDM" %}selected{% endif %}>NDM</option>
+                        <option value="ICS" {% if cr.application == "ICS" %}selected{% endif %}>ICS</option>
+                        <option value="SMARTVEND" {% if cr.application == "SMARTVEND" %}selected{% endif %}>SMARTVEND</option>
+                        <option value="ZIMS" {% if cr.application == "ZIMS" %}selected{% endif %}>ZIMS</option>
+                        <option value="GIS" {% if cr.application == "GIS" %}selected{% endif %}>GIS</option>
+                        <option value="NET METERING" {% if cr.application == "NET METERING" %}selected{% endif %}>NET METERING</option>
+                        <option value="DOMAIN/EMAIL" {% if cr.application == "DOMAIN/EMAIL" %}selected{% endif %}>DOMAIN/EMAIL</option>
+                        <option value="CITRIX" {% if cr.application == "CITRIX" %}selected{% endif %}>CITRIX</option>
+                        <option value="ITSM" {% if cr.application == "ITSM" %}selected{% endif %}>ITSM</option>
+                        <option value="SMART METERING" {% if cr.application == "SMART METERING" %}selected{% endif %}>SMART METERING</option>
+                        <option value="STATISTICAL METERING" {% if cr.application == "STATISTICAL METERING" %}selected{% endif %}>STATISTICAL METERING</option>
+                      </select>
+                      <p class="mt-1 text-sm text-gray-500">
+                        Select the application this change relates to.
+                      </p>
+                    </div>
+                    <div>
+                      <label for="roles_to_action" class="block text-sm font-medium text-gray-700 mb-2">
+                        Roles to Action
+                      </label>
+                      <textarea
+                        name="roles_to_action"
+                        id="roles_to_action"
+                        rows="3"
+                        class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus-border-blue-500"
+                        placeholder="Specify roles, responsibilities or designations that need to be assigned"
+                      >{% if cr.user.roles_to_action %}{{cr.user.roles_to_action}}{% endif %}</textarea>
+                      <p class="mt-1 text-sm text-gray-500">
+                        Optional: List specific roles, responsibilities or designations.
+                      </p>
+                    </div>
+                  </div>
                   
                   <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div class="mb-6">
