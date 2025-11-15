@@ -1,0 +1,44 @@
+{% for child in children %}
+<li class="kc-tree-leaf mb-1">
+  {% if child.has_children %}
+  <details
+    class="kc-tree-node"
+    hx-get="{% url 'kc_tree_branch' child.id %}"
+    hx-trigger="toggle once"
+    hx-target="#kc-branch-{{ child.id }}"
+    hx-swap="innerHTML"
+  >
+    <summary
+      class="kc-tree-summary {% if child.id == selected_folder_id %}kc-node-active{% endif %}"
+      data-kc-node
+      data-folder-id="{{ child.id }}"
+      hx-get="{% url 'kc_folder_content' child.id %}"
+      hx-target="#kc-content"
+      hx-swap="innerHTML"
+      hx-indicator="#kc-content-loader"
+    >
+      <span>📁</span>
+      <span>{{ child.name }}</span>
+    </summary>
+    <ul id="kc-branch-{{ child.id }}" class="kc-branch"></ul>
+  </details>
+  {% else %}
+  <button
+    class="kc-quick-link text-sm {% if child.id == selected_folder_id %}kc-node-active{% endif %}"
+    data-kc-node
+    data-folder-id="{{ child.id }}"
+    hx-get="{% url 'kc_folder_content' child.id %}"
+    hx-target="#kc-content"
+    hx-swap="innerHTML"
+    hx-indicator="#kc-content-loader"
+    type="button"
+  >
+    <span>📄</span>
+    <span>{{ child.name }}</span>
+  </button>
+  {% endif %}
+</li>
+{% empty %}
+<li class="text-xs text-gray-500 py-1">No folders available.</li>
+{% endfor %}
+

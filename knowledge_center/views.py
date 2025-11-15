@@ -1,22 +1,76 @@
 import re
-from django.shortcuts import redirect
+from django.shortcuts import redirect, render, get_object_or_404
 from django.http import FileResponse, JsonResponse
 from urllib.parse import unquote
 from datetime import datetime
 import json, os
 from django.conf import settings
 from django.contrib import messages
+from django.db.models import Count, Q
 
 from it.users.models import CostCenter, Regions, Sections
 from processes.models import File_Type, FileSubType, Processes, SubSubType
 from .models import First_Category, FolderApplication, KnowldgeCentreFile, KnowledgeCentreFolder, Secondary_Category, Filetype
-from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 
 from ACE2.utils import get_kc_dict
 
 from .models import KnowledgeCenter
 from django.core.files.storage import FileSystemStorage
+
+
+def _serialize_folder_for_tree(folder):
+    """Return a dictionary used to render the navigation tree."""
+    child_nodes = []
+    children_qs = folder.subfolders.annotate(child_count=Count("subfolders")).order_by(
+        "name"
+    )
+    for child in children_qs:
+        child_nodes.append(
+            {
+                "id": child.id,
+                "name": child.name,
+                "has_children": child.child_count > 0,
+            }
+        )
+
+    return {
+        "id": folder.id,
+        "name": folder.name,
+        "application": folder.folder_application.name,
+        "has_children": len(child_nodes) > 0,
+        "children": child_nodes,
+    }
+
+
+def _build_folder_detail(folder):
+    """Assemble breadcrumb, subfolder, and file data for the content pane."""
+    if not folder:
+        return None
+
+    breadcrumbs = []
+    current = folder
+    while current:
+        breadcrumbs.append({"id": current.id, "name": current.name})
+        current = current.parent
+    breadcrumbs.reverse()
+
+    subfolders = folder.subfolders.annotate(
+            file_count=Count("files", filter=Q(files__archived=False))
+        ).order_by("name")
+    files = (
+        folder.files.filter(archived=False)
+        .select_related("created_by", "section", "region")
+        .order_by("filename")
+    )
+
+    return {
+        "folder": folder,
+        "breadcrumbs": breadcrumbs,
+        "subfolders": subfolders,
+        "files": files,
+    }
+
 
 # Create your views here.
 def import_old_data(request):
@@ -381,21 +435,91 @@ def get_subfolders(request, folder_id):
 
 @login_required
 def manage_folders(request):
-    folders = KnowledgeCentreFolder.objects.all()
-    folders_list = []
-    for folder in folders:
-        new_folder = {
-            "id": folder.id,
-            "name": folder.name,
-            "cover": folder.cover.url if folder.cover else "",
-            "application": folder.folder_application.name,
-            "parent": folder.parent.name if folder.parent else "",
-            "created_at": folder.created_at.astimezone().strftime("%Y-%m-%d %H:%M:%S") if folder.created_at else "",
-        }
-        folders_list.append(new_folder)
-    folders_json = json.dumps(folders_list) # serializers.serialize('json', folders)
     url_path = request.path.split("/")
-    return render(request, 'knowledge-center/view_folder_list.html', {"url_path": url_path, "folders": folders_json, "page_title": "Manage Folders"})
+    applications = FolderApplication.objects.all().order_by("name")
+    tree = []
+    first_folder = None
+
+    for application in applications:
+        root_folders = (
+            KnowledgeCentreFolder.objects.filter(
+                folder_application=application, parent__isnull=True
+            )
+            .order_by("name")
+            .prefetch_related("subfolders")
+        )
+        serialized_roots = []
+        for folder in root_folders:
+            if first_folder is None:
+                first_folder = folder
+            serialized_roots.append(_serialize_folder_for_tree(folder))
+        if serialized_roots:
+            tree.append(
+                {"id": application.id, "name": application.name, "folders": serialized_roots}
+            )
+
+    folder_detail = _build_folder_detail(first_folder) if first_folder else None
+    recent_folders = KnowledgeCentreFolder.objects.order_by("-updated_at")[:6]
+    pinned_folders = (
+        KnowledgeCentreFolder.objects.filter(parent__isnull=True).order_by("name")[:4]
+    )
+
+    context = {
+        "url_path": url_path,
+        "page_title": "Manage Folders",
+        "tree": tree,
+        "folder_detail": folder_detail,
+        "selected_folder_id": first_folder.id if first_folder else None,
+        "recent_folders": recent_folders,
+        "pinned_folders": pinned_folders,
+    }
+    return render(request, "knowledge-center/view_folder_list.html", context)
+
+
+@login_required
+def load_tree_branch(request, folder_id):
+    folder = get_object_or_404(KnowledgeCentreFolder, id=folder_id)
+    children_qs = folder.subfolders.annotate(child_count=Count("subfolders")).order_by(
+        "name"
+    )
+    children = [
+        {"id": child.id, "name": child.name, "has_children": child.child_count > 0}
+        for child in children_qs
+    ]
+    return render(
+        request,
+        "knowledge-center/components/tree_branch.html",
+        {"children": children},
+    )
+
+
+@login_required
+def folder_content(request, folder_id):
+    folder = get_object_or_404(KnowledgeCentreFolder, id=folder_id)
+    context = _build_folder_detail(folder) or {}
+    context["selected_folder_id"] = folder.id
+    return render(
+        request,
+        "knowledge-center/components/folder_content.html",
+        context,
+    )
+
+
+@login_required
+def search_navigation(request):
+    query = request.GET.get("q", "").strip()
+    results = []
+    if query:
+        results = (
+            KnowledgeCentreFolder.objects.filter(name__icontains=query)
+            .select_related("parent")
+            .order_by("name")[:15]
+        )
+    return render(
+        request,
+        "knowledge-center/components/search_results.html",
+        {"results": results, "query": query},
+    )
 
 @login_required 
 def edit_folder(request, folder_id):
