@@ -28,325 +28,113 @@
               
               <div class="p-6 space-y-6">
                 <!-- Section A – Change Request Originator -->
-                <div class="border border-gray-200 rounded-md p-4">
+                <section class="border-t border-gray-200 pt-6">
                   <div class="flex items-center justify-between mb-4">
-                    <h4 class="text-base font-semibold text-gray-900">Section A – Change Request Originator</h4>
-                    <span class="text-xs text-gray-500">Legacy layout</span>
+                    <h4 class="text-lg font-semibold text-gray-900">
+                      Section A - Change Request Originator
+                    </h4>
+                    <p class="text-sm text-gray-500">
+                      Matches Section A on the IT Change Request form.
+                    </p>
                   </div>
-                  <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                    <div>
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="mb-6">
                       <label for="originator_company" class="block text-sm font-medium text-gray-700 mb-2">
-                        Originator Company <span class="text-red-500">*</span>
+                        Company <span class="text-red-500">*</span>
                       </label>
                       <input
                         type="text"
-                        id="originator_company"
                         name="originator_company"
-                        value="{{cr.originator_company|default_if_none:''}}"
-                        required
+                        id="originator_company"
+                        value="{{ cr.originator_company|default_if_none:'' }}"
                         class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="Enter the company of the change request originator"
                       />
+                      <p class="mt-1 text-sm text-gray-500">
+                        Typically reflects your business unit; edit if the requester differs.
+                      </p>
                     </div>
-                    <div>
+                    <div class="mb-6">
                       <label for="originator_site" class="block text-sm font-medium text-gray-700 mb-2">
-                        Originator Site <span class="text-red-500">*</span>
+                        Site / Location <span class="text-red-500">*</span>
                       </label>
                       <input
                         type="text"
-                        id="originator_site"
                         name="originator_site"
-                        value="{{cr.originator_site|default_if_none:''}}"
-                        required
-                        class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        id="originator_site"
+                        value="{{ cr.originator_site|default_if_none:'' }}"
+                        class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus-border-blue-500"
+                        placeholder="Enter the site or location for this request"
                       />
+                      <p class="mt-1 text-sm text-gray-500">
+                        Prefilled with your location; adjust when submitting on behalf of another site.
+                      </p>
                     </div>
-                    <div>
+                    <div class="mb-6">
+                      <label for="originator_name_display" class="block text-sm font-medium text-gray-700 mb-2">
+                        Originator
+                      </label>
+                      <input
+                        type="text"
+                        id="originator_name_display"
+                        value="{{ cr.created_by|default:request.user.get_full_name }}"
+                        readonly
+                        class="block w-full border border-gray-200 bg-gray-50 rounded-md px-3 py-2 text-gray-900"
+                      />
+                      <p class="mt-1 text-sm text-gray-500">
+                        Taken from the original requester; override in correspondence if needed.
+                      </p>
+                    </div>
+                    <div class="mb-6">
+                      <label for="originator_designation_display" class="block text-sm font-medium text-gray-700 mb-2">
+                        Designation
+                      </label>
+                      <input
+                        type="text"
+                        id="originator_designation_display"
+                        value="{{ cr.creator_designation|default_if_none:'Not provided' }}"
+                        readonly
+                        class="block w-full border border-gray-200 bg-gray-50 rounded-md px-3 py-2 text-gray-900"
+                      />
+                      <p class="mt-1 text-sm text-gray-500">
+                        Shown for reference; approvals capture the official authorisation.
+                      </p>
+                    </div>
+                    <div class="mb-6">
+                      <label for="date_raised_display" class="block text-sm font-medium text-gray-700 mb-2">
+                        Date Raised
+                      </label>
+                      <input
+                        type="text"
+                        id="date_raised_display"
+                        value="{{ cr.created_at|date:'Y-m-d' }}"
+                        readonly
+                        class="block w-full border border-gray-200 bg-gray-50 rounded-md px-3 py-2 text-gray-900"
+                      />
+                      <p class="mt-1 text-sm text-gray-500">
+                        Original submission date (read-only).
+                      </p>
+                    </div>
+                    <div class="mb-6">
                       <label for="date_resolution_required" class="block text-sm font-medium text-gray-700 mb-2">
                         Date Resolution Required <span class="text-red-500">*</span>
                       </label>
                       <input
                         type="date"
-                        id="date_resolution_required"
                         name="date_resolution_required"
-                        value="{{cr.date_resolution_required|date:'Y-m-d'}}"
-                        required
+                        id="date_resolution_required"
+                        value="{{ cr.date_resolution_required|date:'Y-m-d' }}"
                         class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       />
+                      <p class="mt-1 text-sm text-gray-500">
+                        Provide the required completion date for this change.
+                      </p>
                     </div>
                   </div>
+                </section>
 
-                  <div class="mb-6">
-                    <label for="change_reason" class="block text-sm font-medium text-gray-700 mb-2">
-                      Reason for Change <span class="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      id="change_reason"
-                      name="change_reason"
-                      value="{{cr.change_reason}}"
-                      required
-                      class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    />
-                    <p class="mt-1 text-sm text-gray-500">
-                      Brief description of why this change is needed
-                    </p>
-                  </div>
-
-                  <div class="mb-6">
-                    <label for="change_description" class="block text-sm font-medium text-gray-700 mb-2">
-                      Change Description ghfv<span class="text-red-500">*</span>
-                    </label>
-                    <textarea
-                      id="change_description"
-                      name="change_description"
-                      rows="3"
-                      required
-                      class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      placeholder="Detailed description of the requested change"
-                    >{{cr.change_description}}</textarea>
-                    <p class="mt-1 text-sm text-gray-500">
-                      Provide detailed information about the change
-                    </p>
-                  </div>
-
-                  <div class="mb-6">
-                    <label for="for_application" class="block text-sm font-medium text-gray-700 mb-2">
-                      Application <span class="text-red-500">*</span>
-                    </label>
-                    <select
-                      id="for_application"
-                      name="application"
-                      required
-                      class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    >
-                      <option value="">Select Application</option>
-                      <option value="BUSINESS EXCELLENCE" {% if cr.application == "BUSINESS EXCELLENCE" %}selected{% endif %}>BUSINESS EXCELLENCE</option>
-                      <option value="SAP" {% if cr.application == "SAP" %}selected{% endif %}>SAP</option>
-                      <option value="NDM" {% if cr.application == "NDM" %}selected{% endif %}>NDM</option>
-                      <option value="ICS" {% if cr.application == "ICS" %}selected{% endif %}>ICS</option>
-                      <option value="SMARTVEND" {% if cr.application == "SMARTVEND" %}selected{% endif %}>SMARTVEND</option>
-                      <option value="ZIMS" {% if cr.application == "ZIMS" %}selected{% endif %}>ZIMS</option>
-                      <option value="GIS" {% if cr.application == "GIS" %}selected{% endif %}>GIS</option>
-                      <option value="NET METERING" {% if cr.application == "NET METERING" %}selected{% endif %}>NET METERING</option>
-                      <option value="DOMAIN/EMAIL" {% if cr.application == "DOMAIN/EMAIL" %}selected{% endif %}>DOMAIN/EMAIL</option>
-                      <option value="CITRIX" {% if cr.application == "CITRIX" %}selected{% endif %}>CITRIX</option>
-                      <option value="ITSM" {% if cr.application == "ITSM" %}selected{% endif %}>ITSM</option>
-                      <option value="SMART METERING" {% if cr.application == "SMART METERING" %}selected{% endif %}>SMART METERING</option>
-                      <option value="STATISTICAL METERING" {% if cr.application == "STATISTICAL METERING" %}selected{% endif %}>STATISTICAL METERING</option>
-                    </select>
-                    <p class="mt-1 text-sm text-gray-500">
-                      Select the application this change relates to
-                    </p>
-                  </div>
-
-                  <div class="mb-6" id="mod-role-action-toggle">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">
-                      Roles to Delegate <span class="text-red-500">*</span>
-                    </label>
-                    
-                    {% if cr.is_delegation %}
-                    <!-- For temporary delegations, show dynamic role selection (same as create form) -->
-                    <div class="space-y-6">
-                      <div id="roles-to-delegate">
-                        <div id="delegator-roles-container" class="border border-gray-300 rounded-md p-4 max-h-96 overflow-y-auto">
-                          <!-- Roles will be populated here via JavaScript -->
-                          <div class="text-center text-gray-500">
-                            <i class="fas fa-spinner fa-spin mr-2"></i>Loading roles...
-                          </div>
-                        </div>
-                        <p class="mt-1 text-sm text-gray-500">
-                          Select which roles will be temporarily delegated from {{ cr.delegator_username }} to {{ cr.delegatee_username }}
-                        </p>
-                      </div>
-                      <!-- Hidden field to maintain the roles_to_action marker -->
-                      <input type="hidden" name="roles_to_action" value="TEMPORARY_DELEGATION" />
-
-                      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                          <label
-                            for="mod_roles_to_assign"
-                            class="block text-sm font-medium text-gray-700 mb-2"
-                          >
-                            Roles to Assign
-                          </label>
-                          <textarea
-                            name="mod_roles_to_assign"
-                            id="mod_roles_to_assign"
-                            rows="3"
-                            class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus-border-blue-500"
-                            placeholder="List the roles or access that should be added"
-                          >{{ change_request.profile_change.roles_to_assign_notes|default_if_none:'' }}</textarea>
-                        </div>
-                        <div>
-                          <label
-                            for="mod_reason_assign"
-                            class="block text-sm font-medium text-gray-700 mb-2"
-                          >
-                            Reason for Assigning Roles
-                          </label>
-                          <textarea
-                            id="mod_reason_assign"
-                            name="mod_reason_assign"
-                            rows="3"
-                            class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus-border-blue-500"
-                            placeholder="Explain why these roles are being delegated"
-                          >{{cr.user.reason_assign|default_if_none:''}}</textarea>
-                        </div>
-                      </div>
-
-                      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                          <label for="mod_roles_to_remove" class="block text-sm font-medium text-gray-700 mb-2">
-                            Roles to Remove
-                          </label>
-                          <textarea
-                            id="mod_roles_to_remove"
-                            name="mod_roles_to_remove"
-                            rows="3"
-                            class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus-border-blue-500"
-                            placeholder="List the roles or access that must be revoked"
-                          >{{ change_request.profile_change.roles_to_remove_notes|default_if_none:'' }}</textarea>
-                        </div>
-                        <div>
-                          <label for="mod_reason_remove" class="block text-sm font-medium text-gray-700 mb-2">
-                            Reason for Removing Roles
-                          </label>
-                          <textarea
-                            id="mod_reason_remove"
-                            name="mod_reason_remove"
-                            rows="3"
-                            class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus-border-blue-500"
-                            placeholder="Explain why the roles should be revoked (if applicable)"
-                          >{{cr.user.reason_remove|default_if_none:''}}</textarea>
-                        </div>
-                      </div>
-                    </div>
-                    {% else %}
-                    <div class="mb-6">
-                      <span class="block text-sm font-medium text-gray-700 mb-2">
-                        Role Change Actions <span class="text-red-500">*</span>
-                      </span>
-                      <div class="flex flex-col md:flex-row md:items-center gap-4">
-                        <label class="inline-flex items-center text-sm text-gray-700">
-                          <input type="checkbox" id="mod_include_assign" name="mod_include_assign" value="assign" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500" {% if cr.include_assign %}checked{% endif %} />
-                          <span class="ml-2">Add roles / access</span>
-                        </label>
-                        <label class="inline-flex items-center text-sm text-gray-700">
-                          <input type="checkbox" id="mod_include_remove" name="mod_include_remove" value="remove" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500" {% if cr.include_remove %}checked{% endif %} />
-                          <span class="ml-2">Remove roles / access</span>
-                        </label>
-                      </div>
-                    </div>
-
-                    <div id="mod-assign-section" class="space-y-6">
-                      <div class="mb-6">
-                        <label
-                          for="mod_roles_to_assign"
-                          class="block text-sm font-medium text-gray-700 mb-2"
-                        >
-                          New Roles to Assign
-                        </label>
-                        <textarea
-                          name="mod_roles_to_assign"
-                          id="mod_roles_to_assign"
-                          rows="3"
-                          class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus-border-blue-500"
-                          placeholder="List the roles or access that should be added"
-                        >{{ change_request.profile_change.roles_to_assign_notes|default_if_none:'' }}</textarea>
-                        <p class="mt-1 text-sm text-gray-500">
-                          Provide clear instructions so implementers understand which access to grant.
-                        </p>
-                      </div>
-                      <div class="mb-6">
-                        <label for="mod_reason_assign" class="block text-sm font-medium text-gray-700 mb-2">
-                          Reason for Assigning New Roles <span class="text-red-500">*</span>
-                        </label>
-                        <textarea
-                          id="mod_reason_assign"
-                          name="mod_reason_assign"
-                          rows="3"
-                          class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus-border-blue-500"
-                        >{{cr.user.reason_assign|default_if_none:''}}</textarea>
-                      </div>
-                    </div>
-
-                    <div id="mod-remove-section" class="space-y-6">
-                      <div class="mb-6">
-                        <label for="mod_roles_to_remove" class="block text-sm font-medium text-gray-700 mb-2">
-                          Roles to Remove
-                        </label>
-                        <textarea
-                          id="mod_roles_to_remove"
-                          name="mod_roles_to_remove"
-                          rows="3"
-                          class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus-border-blue-500"
-                          placeholder="List the roles or access that must be revoked"
-                        >{{ change_request.profile_change.roles_to_remove_notes|default_if_none:'' }}</textarea>
-                        <p class="mt-1 text-sm text-gray-500">
-                          Include sufficient detail for implementation teams to remove the correct access.
-                        </p>
-                      </div>
-                      <div class="mb-6">
-                        <label for="mod_reason_remove" class="block text-sm font-medium text-gray-700 mb-2">
-                          Reason for Removing Current Roles
-                        </label>
-                        <textarea
-                          id="mod_reason_remove"
-                          name="mod_reason_remove"
-                          rows="3"
-                          class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus-border-blue-500"
-                        >{{cr.user.reason_remove|default_if_none:''}}</textarea>
-                      </div>
-                    </div>
-
-                    <div class="mb-6">
-                      <label for="mod_correspondence_link" class="block text-sm font-medium text-gray-700 mb-2">
-                        Correspondence / Instruction Link
-                      </label>
-                      <input
-                        type="url"
-                        id="mod_correspondence_link"
-                        name="mod_correspondence_link"
-                        value="{{cr.user.correspondence_link|default_if_none:''}}"
-                        class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus-border-blue-500"
-                        placeholder="Provide a link to supporting correspondence"
-                      />
-                    </div>
-                  {% endif %}
-                </div>
-
-                <div class="border border-gray-200 rounded-md p-4">
-                  <div class="flex items-center justify-between mb-4">
-                    <h4 class="text-base font-semibold text-gray-900">Section D – Profile Modification Details</h4>
-                    <span class="text-xs text-gray-500">Review and update the modification</span>
-                  </div>
-
-                  {% if cr_type_schema %}
-                    {% for group in cr_type_schema.view_sections %}
-                      {% if group.key != 'section_a' and group.key != 'section_f_creator' and group.key != 'section_g_status' %}
-                        {% if group.source == 'user' %}
-                          {% with data=cr.user %}
-                            {% include 'change_requests/components/sections/dynamic_field_groups_section.html' with group=group data=data %}
-                          {% endwith %}
-                        {% elif group.source == 'delegation_info' %}
-                          {% with data=cr.delegation_info %}
-                            {% include 'change_requests/components/sections/dynamic_field_groups_section.html' with group=group data=data %}
-                          {% endwith %}
-                        {% else %}
-                          {% with data=cr %}
-                            {% include 'change_requests/components/sections/dynamic_field_groups_section.html' with group=group data=data %}
-                          {% endwith %}
-                        {% endif %}
-                      {% endif %}
-                    {% endfor %}
-                  {% endif %}
-
-                  {% if cr_type_schema and cr_type_schema.edit_partial %}
-                    {% include cr_type_schema.edit_partial %}
-                  {% else %}
-                    {% include 'change_requests/components/forms/profile_modification_fields.html' %}
-                  {% endif %}
-                </div>
+                
+{% include 'change_requests/components/forms/edit/profile_modification_fields.html' with section_helper_text="Review and update the modification" %}
 
 <!-- Action Buttons -->
               <div class="flex justify-between px-6 py-4 border-t border-gray-200 bg-gray-50">
@@ -380,125 +168,230 @@
 {% block scripts %}
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script>
-  $(document).ready(function() {
-    // Initialize Select2
+  $(document).ready(function () {
     $(".select2").select2({
       placeholder: "Select an option",
       allowClear: true,
-      width: "100%"
+      width: "100%",
     });
 
-    // ADDED: Auto-load delegator roles on page load for existing delegations
-    {% if cr.is_delegation and cr.delegator_id %}
-    // Load roles immediately for existing delegation using delegator ID
-    const initialDelegatorId = "{{ cr.delegator_id }}";
-    if (initialDelegatorId) {
-      console.log("Loading roles for delegator ID:", initialDelegatorId);
-      loadDelegatorRolesById(initialDelegatorId);
-    }
-    {% endif %}
-
-    // Handle change type change for profile modification
-    $("#change_type").on("change", function () {
-      const changeType = $(this).val();
-      const application = $("#for_application").val();
-      const delegatorValue = $("#delegator").val();
-      const userProfileValue = $("#user_profile").val();
-      
-      if (changeType === "TEMPORARY_DELEGATION") {
-        // Show delegation-specific fields and hide permanent user field
-        $("#delegation-user-fields").removeClass("hidden");
-        $("#permanent-user-field").addClass("hidden");
-        
-        // Set required attributes for delegation fields
-        $("#delegator").prop("required", true);
-        $("#delegatee").prop("required", true);
-        $("#user_profile").prop("required", false);
-        
-        $("#delegation-fields").removeClass("hidden");
-        if (delegatorValue) {
-          loadDelegatorRoles(delegatorValue);
-        }
-      } else if (changeType === "PERMANENT") {
-        // Show permanent user field and hide delegation-specific fields
-        $("#permanent-user-field").removeClass("hidden");
-        $("#delegation-user-fields").addClass("hidden");
-        $("#delegation-fields").addClass("hidden");
-        
-        // Set required attributes for permanent fields
-        $("#user_profile").prop("required", true);
-        $("#delegator").prop("required", false);
-        $("#delegatee").prop("required", false);
-        
-        if (userProfileValue) {
-          loadDelegatorRoles(userProfileValue);
-        }
-      } else {
-        // No change type selected - hide all
-        $("#delegation-user-fields").addClass("hidden");
-        $("#permanent-user-field").addClass("hidden");
-        $("#delegation-fields").addClass("hidden");
-        $("#roles-to-delegate").addClass("hidden");
-        $("#delegator-roles-container").empty();
-        
-        // Remove all required attributes
-        $("#user_profile").prop("required", false);
-        $("#delegator").prop("required", false);
-        $("#delegatee").prop("required", false);
-      }
-
-      refreshRoleActionSections();
-    });
-
-    // Handle user profile selection change (for permanent assignments)
-    $("#user_profile").on("change", function () {
-      const userProfileValue = $(this).val();
-      const changeType = $("#change_type").val();
-      const application = $("#for_application").val();
-      
-      if (userProfileValue && changeType === "PERMANENT") {
-        loadDelegatorRoles(userProfileValue);
-      }
-
-      refreshRoleActionSections();
-    });
-
-    // Handle delegator selection change (for temporary delegations)
-    $("#delegator").on("change", function () {
-      const delegatorValue = $(this).val();
-      const changeType = $("#change_type").val();
-      const application = $("#for_application").val();
-      
-      if (delegatorValue && changeType === "TEMPORARY_DELEGATION") {
-        loadDelegatorRoles(delegatorValue);
-      } else {
-        $("#roles-to-delegate").addClass("hidden");
-        $("#delegator-roles-container").empty();
-      }
-
-      refreshRoleActionSections();
-    });
-
-    // Toggle role action sections based on checkboxes
+    const $changeTypeSelect = $("#change_type");
+    const $userProfileSelect = $("#user_profile");
+    const $delegatorSelect = $("#delegator");
+    const $delegateeSelect = $("#delegatee");
+    const $modUserSelector = $("#mod_user_selector");
+    const $modCurrentUserId = $("#mod_current_user_id");
+    const modExistingUserSection = $("#mod-existing-user-section");
+    const modEcSection = $("#mod-ec-section");
+    const modEcInput = $("#mod_ec_number");
     const $assignToggle = $("#mod_include_assign");
     const $removeToggle = $("#mod_include_remove");
     const $assignSection = $("#mod-assign-section");
     const $removeSection = $("#mod-remove-section");
     const $toggleContainer = $("#mod-role-action-toggle");
 
+    const userLookupCache = {};
+    const summaryMap = {
+      mod: {
+        container: $("#mod-user-summary"),
+        message: $("#mod-user-summary-message"),
+        fields: {
+          name: $("#mod-user-summary-name"),
+          ec: $("#mod-user-summary-ec"),
+          designation: $("#mod-user-summary-designation"),
+          costCenter: $("#mod-user-summary-cost-center"),
+          region: $("#mod-user-summary-region"),
+          location: $("#mod-user-summary-location"),
+        },
+      },
+    };
+
+    function toggleModificationUserFields(isTemporaryDelegation) {
+      if (isTemporaryDelegation) {
+        modExistingUserSection.addClass("hidden");
+        modEcSection.addClass("hidden");
+        modEcInput.prop("required", false);
+      } else {
+        modExistingUserSection.removeClass("hidden");
+        modEcSection.removeClass("hidden");
+        modEcInput.prop("required", true);
+      }
+    }
+
+    function setSelectorValue($select, value) {
+      if (!$select || !$select.length) return;
+      $select.data("suppressLookup", true);
+      $select.val(value).trigger("change.select2").trigger("change");
+      setTimeout(() => {
+        $select.data("suppressLookup", false);
+      }, 0);
+    }
+
+    function setFieldErrorState($field, hasError) {
+      if (!$field || !$field.length) return;
+      if (hasError) {
+        $field
+          .addClass("border-red-500 focus:border-red-500 focus:ring-red-500")
+          .removeClass("focus:border-blue-500 focus:ring-blue-500");
+      } else {
+        $field
+          .removeClass("border-red-500 focus:border-red-500 focus:ring-red-500")
+          .addClass("focus:border-blue-500 focus:ring-blue-500");
+      }
+    }
+
+    function setSummaryMessage(key, message, level = "info") {
+      const summary = summaryMap[key];
+      if (!summary) return;
+      const $message = summary.message;
+      if (!$message || !$message.length) return;
+
+      const levelClasses = {
+        info: "text-blue-700",
+        success: "text-green-700",
+        error: "text-red-600",
+      };
+
+      $message
+        .removeClass("hidden text-blue-700 text-green-700 text-red-600")
+        .addClass(levelClasses[level] || levelClasses.info)
+        .text(message || "");
+
+      if (!message) {
+        $message.addClass("hidden").text("");
+      }
+    }
+
+    function resetSummary(key, { hide = false } = {}) {
+      const summary = summaryMap[key];
+      if (!summary) return;
+      if (hide) {
+        summary.container.addClass("hidden");
+      }
+      setSummaryMessage(key, "");
+      Object.values(summary.fields).forEach(($field) => {
+        if ($field && $field.length) {
+          $field.text("Not provided");
+        }
+      });
+    }
+
+    function populateSummary(key, profile) {
+      const summary = summaryMap[key];
+      if (!summary || !profile) return;
+
+      const fullName =
+        profile.full_name ||
+        [profile.first_name, profile.last_name].filter(Boolean).join(" ").trim() ||
+        profile.username ||
+        profile.ec_number ||
+        "Not provided";
+
+      const locationParts = [];
+      if (profile.section) locationParts.push(profile.section);
+      if (profile.district) locationParts.push(profile.district);
+      const location =
+        locationParts.join(" / ") || profile.region || "Not provided";
+
+      summary.container.removeClass("hidden");
+      setSummaryMessage(key, "Details loaded from user directory.", "info");
+
+      summary.fields.name.text(fullName || "Not provided");
+      summary.fields.ec.text(profile.ec_number || profile.username || "Not provided");
+      summary.fields.designation.text(profile.designation || "Not provided");
+      summary.fields.costCenter.text(profile.cost_center || "Not provided");
+      summary.fields.region.text(profile.region || "Not provided");
+      summary.fields.location.text(location || "Not provided");
+    }
+
+    function showSummaryNotFound(key, username) {
+      const summary = summaryMap[key];
+      if (!summary) return;
+      summary.container.removeClass("hidden");
+      resetSummary(key);
+      setSummaryMessage(key, `No profile found for "${username}".`, "error");
+    }
+
+    function handleUserProfileLookup(rawValue, config = {}) {
+      const {
+        targets = [],
+        sourceField = null,
+        onSuccess = null,
+        onNotFound = null,
+      } = config;
+
+      const trimmed = (rawValue || "").trim();
+      if (!trimmed) {
+        targets.forEach((key) => resetSummary(key, { hide: true }));
+        if (sourceField) setFieldErrorState(sourceField, false);
+        if (typeof onNotFound === "function") onNotFound();
+        return;
+      }
+
+      const normalized = trimmed.toUpperCase();
+      if (sourceField) {
+        sourceField.val(normalized);
+      }
+
+      const applyResult = (profile) => {
+        if (profile) {
+          targets.forEach((key) => populateSummary(key, profile));
+          if (sourceField) setFieldErrorState(sourceField, false);
+          if (typeof onSuccess === "function") onSuccess(profile);
+        } else {
+          targets.forEach((key) => showSummaryNotFound(key, normalized));
+          if (sourceField) setFieldErrorState(sourceField, true);
+          if (typeof onNotFound === "function") onNotFound();
+        }
+      };
+
+      if (userLookupCache[normalized]) {
+        applyResult(userLookupCache[normalized]);
+        return;
+      }
+
+      targets.forEach((key) => {
+        const summary = summaryMap[key];
+        if (summary) {
+          summary.container.removeClass("hidden");
+          setSummaryMessage(key, "Looking up user details...", "info");
+        }
+      });
+
+      $.ajax({
+        url: `/change_requests/profile_modification/get_user_data/${encodeURIComponent(
+          normalized
+        )}`,
+        method: "GET",
+        success(response) {
+          if (response && response.profile) {
+            userLookupCache[normalized] = response.profile;
+            applyResult(response.profile);
+          } else {
+            applyResult(null);
+          }
+        },
+        error() {
+          applyResult(null);
+        },
+      });
+    }
+
     function refreshRoleActionSections() {
       if (!$toggleContainer.length) return;
-      const isDelegation = $("#change_type").val() === "TEMPORARY_DELEGATION";
- 
-      if ($toggleContainer.length) {
-        $toggleContainer.toggleClass("hidden", !$("#profile-modification-fields").is(":visible"));
-      }
 
       const assignEnabled = $assignToggle.is(":checked");
       const removeEnabled = $removeToggle.is(":checked");
 
+      $toggleContainer.toggleClass(
+        "hidden",
+        !$("#profile-modification-fields").is(":visible")
+      );
+
       $assignSection.toggleClass("hidden", !assignEnabled);
-      $assignSection.find("textarea, input[type='url'], select").prop("disabled", !assignEnabled);
+      $assignSection
+        .find("textarea, input[type='url'], select")
+        .prop("disabled", !assignEnabled);
       $("#mod_reason_assign").prop("required", assignEnabled);
       if (!assignEnabled) {
         $("#mod_roles_to_assign").val("");
@@ -506,7 +399,9 @@
       }
 
       $removeSection.toggleClass("hidden", !removeEnabled);
-      $removeSection.find("textarea, input[type='url'], select").prop("disabled", !removeEnabled);
+      $removeSection
+        .find("textarea, input[type='url'], select")
+        .prop("disabled", !removeEnabled);
       if (!removeEnabled) {
         $("#mod_roles_to_remove").val("");
         $("#mod_reason_remove").val("");
@@ -518,116 +413,324 @@
       }
     }
 
+    function hydrateTargetFields(profile) {
+      const usernameValue = profile.username || profile.ec_number || "";
+      const ecValue = profile.ec_number || profile.username || "";
+      $modCurrentUserId.val(usernameValue);
+      modEcInput.val(ecValue);
+    }
+
+    $changeTypeSelect.on("change", function () {
+      const changeType = $(this).val();
+      const delegatorValue = $delegatorSelect.val();
+      const userProfileValue = $userProfileSelect.val();
+
+      if (changeType === "TEMPORARY_DELEGATION") {
+        $("#delegation-user-fields").removeClass("hidden");
+        $("#permanent-user-field").addClass("hidden");
+        $("#delegation-fields").removeClass("hidden");
+
+        $delegatorSelect.prop("required", true);
+        $delegateeSelect.prop("required", true);
+        $userProfileSelect.prop("required", false);
+
+        toggleModificationUserFields(true);
+
+        if (delegatorValue) {
+          loadDelegatorRoles(delegatorValue);
+        }
+      } else if (changeType === "PERMANENT") {
+        $("#permanent-user-field").removeClass("hidden");
+        $("#delegation-user-fields").addClass("hidden");
+        $("#delegation-fields").addClass("hidden");
+        $("#roles-to-delegate").addClass("hidden");
+        $("#delegator-roles-container").empty();
+
+        $userProfileSelect.prop("required", true);
+        $delegatorSelect.prop("required", false);
+        $delegateeSelect.prop("required", false);
+
+        toggleModificationUserFields(false);
+
+        if (userProfileValue) {
+          loadDelegatorRoles(userProfileValue);
+        }
+      } else {
+        $("#delegation-user-fields").addClass("hidden");
+        $("#permanent-user-field").addClass("hidden");
+        $("#delegation-fields").addClass("hidden");
+        $("#roles-to-delegate").addClass("hidden");
+        $("#delegator-roles-container").empty();
+
+        $userProfileSelect.prop("required", false);
+        $delegatorSelect.prop("required", false);
+        $delegateeSelect.prop("required", false);
+      }
+
+      refreshRoleActionSections();
+    });
+
+    $userProfileSelect.on("change", function () {
+      const userProfileValue = $(this).val();
+      const changeType = $changeTypeSelect.val();
+
+      handleUserProfileLookup(userProfileValue, {
+        targets: ["mod"],
+        onSuccess(profile) {
+          hydrateTargetFields(profile);
+          setSelectorValue($modUserSelector, profile.username || "");
+        },
+        onNotFound() {
+          $modCurrentUserId.val("");
+          modEcInput.val("");
+          setSelectorValue($modUserSelector, "");
+        },
+      });
+
+      if (userProfileValue && changeType === "PERMANENT") {
+        loadDelegatorRoles(userProfileValue);
+      } else if (changeType === "PERMANENT") {
+        $("#roles-to-delegate").addClass("hidden");
+        $("#delegator-roles-container").empty();
+      }
+
+      refreshRoleActionSections();
+    });
+
+    modEcInput.on("change blur", function () {
+      const $field = $(this);
+      handleUserProfileLookup($field.val(), {
+        targets: ["mod"],
+        sourceField: $field,
+        onSuccess(profile) {
+          hydrateTargetFields(profile);
+          setSelectorValue($modUserSelector, profile.username || "");
+          if ($changeTypeSelect.val() === "PERMANENT") {
+            setSelectorValue($userProfileSelect, profile.username || "");
+          }
+        },
+        onNotFound() {
+          setSelectorValue($modUserSelector, "");
+          if ($changeTypeSelect.val() === "PERMANENT") {
+            setSelectorValue($userProfileSelect, "");
+          }
+          $modCurrentUserId.val("");
+        },
+      });
+    });
+
+    $modUserSelector.on("change", function () {
+      if ($(this).data("suppressLookup")) {
+        return;
+      }
+      const selectedUsername = $(this).val();
+      handleUserProfileLookup(selectedUsername, {
+        targets: ["mod"],
+        onSuccess(profile) {
+          hydrateTargetFields(profile);
+          const usernameValue = profile.username || profile.ec_number || "";
+          if ($changeTypeSelect.val() === "PERMANENT") {
+            setSelectorValue($userProfileSelect, usernameValue);
+          } else if ($changeTypeSelect.val() === "TEMPORARY_DELEGATION") {
+            setSelectorValue($delegateeSelect, usernameValue);
+          }
+        },
+        onNotFound() {
+          $modCurrentUserId.val("");
+          modEcInput.val("");
+        },
+      });
+    });
+
+    $delegateeSelect.on("change", function () {
+      const delegateeId = $(this).val();
+
+      if (delegateeId && $changeTypeSelect.val() === "TEMPORARY_DELEGATION") {
+        $("#delegation-fields").removeClass("hidden");
+        handleUserProfileLookup(delegateeId, {
+          targets: ["mod"],
+          onSuccess(profile) {
+            hydrateTargetFields(profile);
+            modEcInput.val(profile.ec_number || profile.username || "");
+          },
+          onNotFound() {
+            $modCurrentUserId.val("");
+            modEcInput.val("");
+          },
+        });
+      } else if (!delegateeId && $changeTypeSelect.val() === "TEMPORARY_DELEGATION") {
+        $modCurrentUserId.val("");
+        modEcInput.val("");
+      }
+    });
+
+    $delegatorSelect.on("change", function () {
+      const delegatorValue = $(this).val();
+      const changeType = $changeTypeSelect.val();
+
+      if (delegatorValue && changeType === "TEMPORARY_DELEGATION") {
+        loadDelegatorRoles(delegatorValue);
+      } else {
+        $("#roles-to-delegate").addClass("hidden");
+        $("#delegator-roles-container").empty();
+      }
+
+      refreshRoleActionSections();
+    });
+
     $assignToggle.on("change", refreshRoleActionSections);
     $removeToggle.on("change", refreshRoleActionSections);
 
-    refreshRoleActionSections();
-
-    // Function to load delegator roles by ID (direct call)
+    // Delegator role helpers (unchanged)
     function loadDelegatorRolesById(delegatorId) {
       if (!delegatorId) {
         console.error("No delegator ID provided");
         return;
       }
-      
-      $("#delegator-roles-container").html('<div class="text-center py-4"><i class="fas fa-spinner fa-spin mr-2"></i>Loading roles...</div>');
+
+      $("#delegator-roles-container").html(
+        '<div class="text-center py-4"><i class="fas fa-spinner fa-spin mr-2"></i>Loading roles...</div>'
+      );
       $("#roles-to-delegate").removeClass("hidden");
-      
+
       $.ajax({
         url: "/change_requests/get_delegator_roles_by_app",
         method: "GET",
         data: {
-          delegator_id: delegatorId
+          delegator_id: delegatorId,
         },
-        success: function(response) {
-          console.log("Role loading response:", response);
+        success(response) {
           if (response.success) {
             displayDelegatorRoles(response.roles_by_app, response.delegator);
           } else {
-            $("#delegator-roles-container").html('<div class="text-red-600">Error: ' + (response.error || response.message || 'Unknown error') + '</div>');
+            $("#delegator-roles-container").html(
+              '<div class="text-red-600">Error: ' +
+                (response.error || response.message || "Unknown error") +
+                "</div>"
+            );
           }
         },
-        error: function(xhr, status, error) {
+        error(xhr, status, error) {
           console.error("Error loading delegator roles:", error);
-          $("#delegator-roles-container").html('<div class="text-red-600">Error loading roles. Please try again.</div>');
-        }
+          $("#delegator-roles-container").html(
+            '<div class="text-red-600">Error loading roles. Please try again.</div>'
+          );
+        },
       });
     }
-    
-    // Function to load delegator roles grouped by application (from username)
+
     function loadDelegatorRoles(delegatorValue) {
       let delegatorId = null;
-      
+
       {% for usr in user_profiles %}
         if ("{{ usr.username }}" === delegatorValue) {
           delegatorId = "{{ usr.id }}";
         }
       {% endfor %}
-      
+
       if (delegatorValue === "{{ request.user.username }}") {
         delegatorId = "{{ request.user.id }}";
       }
-      
+
       if (!delegatorId) {
         console.error("Could not find delegator ID for:", delegatorValue);
         return;
       }
-      
+
       loadDelegatorRolesById(delegatorId);
     }
 
     function displayDelegatorRoles(rolesByApp, delegator) {
       const container = $("#delegator-roles-container");
       container.empty();
-      
+
       if (Object.keys(rolesByApp).length === 0) {
-        container.html('<div class="text-gray-600">No roles available for delegation from ' + delegator.name + '</div>');
+        container.html(
+          '<div class="text-gray-600">No roles available for delegation from ' +
+            delegator.name +
+            "</div>"
+        );
         return;
       }
-      
-      // Get currently assigned role IDs from the backend
+
       const assignedRoleIds = {{ cr.assigned_role_ids|safe }};
-      console.log("Pre-selecting roles:", assignedRoleIds);
-      
-      const header = $('<div class="mb-4"><h4 class="text-lg font-medium text-gray-900">Available Roles from ' + delegator.name + '</h4></div>');
+
+      const header = $(
+        '<div class="mb-4"><h4 class="text-lg font-medium text-gray-900">Available Roles from ' +
+          delegator.name +
+          "</h4></div>"
+      );
       container.append(header);
-      
-      Object.keys(rolesByApp).forEach(function(appKey) {
+
+      Object.keys(rolesByApp).forEach(function (appKey) {
         const appData = rolesByApp[appKey];
         const appSection = $('<div class="mb-6 border border-gray-200 rounded-lg p-4"></div>');
-        const appHeader = $('<div class="mb-3"><h5 class="text-md font-medium text-blue-800">' + appData.app_fullname + '</h5></div>');
+        const appHeader = $(
+          '<div class="mb-3"><h5 class="text-md font-medium text-blue-800">' +
+            appData.app_fullname +
+            "</h5></div>"
+        );
         appSection.append(appHeader);
-        
+
         const rolesContainer = $('<div class="space-y-2"></div>');
-        appData.roles.forEach(function(role) {
-          // Check if this role is already assigned
+        appData.roles.forEach(function (role) {
           const isChecked = assignedRoleIds.includes(role.id);
-          
-          const roleCheckbox = $('<div class="flex items-center">' +
-            '<input type="checkbox" name="roles" value="' + role.id + '" id="role_' + role.id + '" ' +
-            (isChecked ? 'checked' : '') +
+
+          const roleCheckbox =
+            '<div class="flex items-center">' +
+            '<input type="checkbox" name="roles" value="' +
+            role.id +
+            '" id="role_' +
+            role.id +
+            '" ' +
+            (isChecked ? "checked" : "") +
             ' class="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">' +
-            '<label for="role_' + role.id + '" class="text-sm text-gray-700">' + role.name + (role.description ? ' - ' + role.description : '') + '</label>' +
-            '</div>');
+            '<label for="role_' +
+            role.id +
+            '" class="text-sm text-gray-700">' +
+            role.name +
+            (role.description ? " - " + role.description : "") +
+            "</label>" +
+            "</div>";
           rolesContainer.append(roleCheckbox);
         });
-        
+
         appSection.append(rolesContainer);
         container.append(appSection);
       });
-      
-      const selectAllContainer = $('<div class="mt-4 flex justify-between items-center">' +
-        '<button type="button" id="select-all-roles" class="text-blue-600 hover:text-blue-800 text-sm">Select All</button>' +
-        '<button type="button" id="clear-all-roles" class="text-gray-600 hover:text-gray-800 text-sm">Clear All</button>' +
-        '</div>');
+
+      const selectAllContainer = $(
+        '<div class="mt-4 flex justify-between items-center">' +
+          '<button type="button" id="select-all-roles" class="text-blue-600 hover:text-blue-800 text-sm">Select All</button>' +
+          '<button type="button" id="clear-all-roles" class="text-gray-600 hover:text-gray-800 text-sm">Clear All</button>' +
+          "</div>"
+      );
       container.append(selectAllContainer);
-      
-      $("#select-all-roles").on("click", function() {
-        $('input[name="roles"]').prop('checked', true);
+
+      $("#select-all-roles").on("click", function () {
+        $('input[name="roles"]').prop("checked", true);
       });
-      
-      $("#clear-all-roles").on("click", function() {
-        $('input[name="roles"]').prop('checked', false);
+
+      $("#clear-all-roles").on("click", function () {
+        $('input[name="roles"]').prop("checked", false);
+      });
+    }
+
+    {% if cr.is_delegation and cr.delegator_id %}
+    loadDelegatorRolesById("{{ cr.delegator_id }}");
+    {% endif %}
+
+    $changeTypeSelect.trigger("change");
+    refreshRoleActionSections();
+
+    const initialUsername = "{{ cr.user.username|default_if_none:'' }}";
+    if (initialUsername) {
+      handleUserProfileLookup(initialUsername, {
+        targets: ["mod"],
+        onSuccess(profile) {
+          hydrateTargetFields(profile);
+          setSelectorValue($modUserSelector, profile.username || "");
+        },
       });
     }
   });
