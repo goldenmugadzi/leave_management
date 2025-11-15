@@ -1,4 +1,7 @@
 <!-- Profile Deactivation Details Section -->
-
-{% include 'change_requests/components/sections/dynamic_field_groups.html' %}
-
+{% if cr.roles_actions %}
+<div class="border border-gray-200 rounded-xl p-6 bg-gray-50">
+  <h4 class="text-base font-semibold text-gray-900 mb-4">Implementation Notes</h4>
+  {% include 'change_requests/components/forms/display_field.html' with label="Roles / Access Removed" value=cr.roles_actions %}
+</div>
+{% endif %}

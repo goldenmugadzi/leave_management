@@ -46,6 +46,7 @@ CR_TYPE_CONFIG = {
         ,
         'view_sections': [
             'section_a',
+            'section_b_change_type',
             'section_c_new_profile',
             'section_c_training',
             'section_roles_implementation',
@@ -86,6 +87,7 @@ CR_TYPE_CONFIG = {
         ,
         'view_sections': [
             'section_a',
+            'section_b_change_type',
             'section_d_change_details',
             'section_d_existing_user',
             'section_d_role_change',
@@ -122,6 +124,7 @@ CR_TYPE_CONFIG = {
         ,
         'view_sections': [
             'section_a',
+            'section_b_change_type',
             'section_deactivation_user',
             'section_deactivation_details',
             'section_f_creator',
@@ -164,6 +167,7 @@ CR_TYPE_CONFIG = {
         ,
         'view_sections': [
             'section_a',
+            'section_b_change_type',
             'section_d_change_details',
             'section_d_existing_user',
             'section_delegation_window',
@@ -181,8 +185,10 @@ CR_TYPE_NAME_MAP = {
 
 VIEW_SECTION_DEFINITIONS = {
     'section_a': {
-        'title': 'Section A – Change Request Originator',
+        'section_label': 'A',
+        'title': 'Change Request Originator',
         'source': 'cr',
+        'description': 'Details about the request originator and the change raised.',
         'fields': [
             {'key': 'change_type', 'label': 'Change Type'},
             {'key': 'cr_id', 'label': 'CR ID'},
@@ -194,9 +200,23 @@ VIEW_SECTION_DEFINITIONS = {
             {'key': 'application', 'label': 'Application'},
         ]
     },
+    'section_b_change_type': {
+        'section_label': 'B',
+        'title': 'Type of Change',
+        'source': 'cr',
+        'description': 'Reference of the requested action. Only the selected change type is highlighted.',
+        'options': [
+            {'label': 'Creation of New Profile', 'match': 'New Profile'},
+            {'label': 'Modification of Current Profile – Assignment/Removal of Role', 'match': 'Profile Modification'},
+            {'label': 'Temporary Role Delegation', 'match': 'Temporary Role Delegation'},
+            {'label': 'Deactivation of Profile', 'match': 'Profile Deactivation'},
+        ]
+    },
     'section_c_new_profile': {
-        'title': 'Section C – Creation of New Profile',
+        'section_label': 'C',
+        'title': 'Creation of New Profile',
         'source': 'user',
+        'description': 'Personal and work details for the new user profile.',
         'fields': [
             {'key': 'ec_number', 'label': 'EC Number'},
             {'key': 'firstname', 'label': 'First Name'},
@@ -215,8 +235,10 @@ VIEW_SECTION_DEFINITIONS = {
         ]
     },
     'section_c_training': {
+        'section_label': 'C',
         'title': 'Training Details',
         'source': 'user',
+        'description': 'Confirmation of training prior to provisioning access.',
         'fields': [
             {'key': 'training_date', 'label': 'Date of Training'},
             {'key': 'training_confirmation_link', 'label': 'Training Confirmation Link'},
@@ -224,24 +246,30 @@ VIEW_SECTION_DEFINITIONS = {
         ]
     },
     'section_roles_implementation': {
+        'section_label': 'G',
         'title': 'Roles & Implementation',
         'source': 'user',
+        'description': 'Implementation tracking for assigned roles.',
         'fields': [
             {'key': 'roles_to_action', 'label': 'Roles to Action'},
             {'key': 'roles_actions', 'label': 'Roles Implemented'},
         ]
     },
     'section_d_change_details': {
-        'title': 'Section D – Profile Modification Details',
+        'section_label': 'D',
+        'title': 'Profile Modification Details',
         'source': 'cr',
+        'description': 'High-level summary of the requested modification.',
         'fields': [
             {'key': 'change_type', 'label': 'Change Type'},
             {'key': 'application', 'label': 'Application'},
         ]
     },
     'section_d_existing_user': {
+        'section_label': 'D',
         'title': 'Existing User Profile',
         'source': 'user',
+        'description': 'Current profile information for the targeted user.',
         'fields': [
             {'key': 'firstname', 'label': 'First Name'},
             {'key': 'lastname', 'label': 'Last Name'},
@@ -257,8 +285,10 @@ VIEW_SECTION_DEFINITIONS = {
         ]
     },
     'section_d_role_change': {
+        'section_label': 'D',
         'title': 'Role Change Instructions',
         'source': 'user',
+        'description': 'Detailed instructions for assigning or removing roles.',
         'fields': [
             {'key': 'roles_to_action', 'label': 'Roles to Action'},
             {'key': 'roles_to_assign_notes', 'label': 'New Roles to Assign'},
@@ -269,8 +299,10 @@ VIEW_SECTION_DEFINITIONS = {
         ]
     },
     'section_delegation_window': {
+        'section_label': 'D',
         'title': 'Delegation Window',
         'source': 'delegation_info',
+        'description': 'Delegation timeline and participants.',
         'fields': [
             {'key': 'delegator_name', 'label': 'Delegator Name'},
             {'key': 'delegator_username', 'label': 'Delegator Username'},
@@ -283,8 +315,10 @@ VIEW_SECTION_DEFINITIONS = {
         ]
     },
     'section_deactivation_user': {
+        'section_label': 'E',
         'title': 'User Profile',
         'source': 'user',
+        'description': 'Profile targeted for deactivation.',
         'fields': [
             {'key': 'firstname', 'label': 'First Name'},
             {'key': 'lastname', 'label': 'Last Name'},
@@ -298,8 +332,10 @@ VIEW_SECTION_DEFINITIONS = {
         ]
     },
     'section_deactivation_details': {
-        'title': 'Section E – Deactivation Details',
+        'section_label': 'E',
+        'title': 'Deactivation Details',
         'source': 'user',
+        'description': 'Timeline and rationale for deactivation.',
         'fields': [
             {'key': 'effective_start_date', 'label': 'Effective Start Date'},
             {'key': 'reactivation_date', 'label': 'Reactivation Date'},
@@ -308,8 +344,10 @@ VIEW_SECTION_DEFINITIONS = {
         ]
     },
     'section_f_creator': {
-        'title': 'Section F – Change Authorisation',
+        'section_label': 'F',
+        'title': 'Change Authorisation',
         'source': 'cr',
+        'description': 'Authorisation trail for the change request.',
         'fields': [
             {'key': 'created_by', 'label': 'Created By'},
             {'key': 'creator_designation', 'label': 'Creator Designation'},
@@ -317,8 +355,10 @@ VIEW_SECTION_DEFINITIONS = {
         ]
     },
     'section_g_status': {
-        'title': 'Section G – Implementation Status',
+        'section_label': 'G',
+        'title': 'Implementation Status',
         'source': 'cr',
+        'description': 'Implementation feedback and current status.',
         'fields': [
             {'key': 'overall_status', 'label': 'Overall Status'},
             {'key': 'roles_actions', 'label': 'Implementation Notes'},

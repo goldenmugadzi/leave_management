@@ -2128,6 +2128,33 @@ def build_profile_change_context(user, profile_change):
         "roles_to_remove": list(profile_change.role_to_remove.all()),
     }
 
+def build_profile_deactivation_context(profile_deactivation):
+    """
+    Build standardized user context for profile deactivation requests
+    """
+    user = profile_deactivation.user
+    try:
+        cost_center = user.cost_center
+    except Exception:
+        cost_center = None
+    
+    return {
+        "id": user.pk,
+        "username": user.username,
+        "firstname": user.first_name,
+        "lastname": user.last_name,
+        "email": user.email,
+        "designation": user.designation,
+        "section": user.section,
+        "district": user.district,
+        "region": user.region,
+        "cost_center": cost_center,
+        "effective_start_date": profile_deactivation.effective_start_date,
+        "reactivation_date": profile_deactivation.reactivation_date,
+        "deactivation_reason": profile_deactivation.deactivation_reason,
+        "correspondence_link": profile_deactivation.correspondence_link,
+    }
+
 def parse_delegation_data(profile_change):
     """
     Parse delegation data from roles_actions JSON field and format for display
@@ -2333,18 +2360,9 @@ def view_new_profile_request(request, change_request, permissions, approval_stat
     # Build user context
     new_user = build_new_profile_context(new_profile)
     
-    # Build change request context
-    cr = {
-        "user": new_user,
-        "cr_id": change_request.cr_id,
-        "change_type": change_request.change_type,  # ADDED: Missing change_type field
-        "change_reason": change_request.change_reason,
-        "change_description": change_request.change_description,
-        "application": change_request.application,
-        "created_by": change_request.created_by.get_full_name(),
-        "creator_designation": change_request.creator_designation.description if change_request.creator_designation else "",
-        "created_at": change_request.created_at
-    }
+    # Build change request context using shared builder to ensure all fields are available
+    cr = ContextBuilder.build_cr_context(change_request, new_user)
+    cr["cr_context"] = get_change_request_context(change_request)
     
     # Get base template context
     context = get_base_template_context(request, change_request)
@@ -2404,23 +2422,15 @@ def view_profile_modification_request(request, change_request, permissions, appr
     elif delegation_info.get('delegator_name'):
         delegator_name = delegation_info['delegator_name']
     
-    # Build change request context
-    cr = {
-        "user": new_user,
-        "cr_id": change_request.cr_id,
-        "change_reason": change_request.change_reason,
-        "change_description": change_request.change_description,
-        "application": change_request.application,
-        "change_type": change_request.change_type,
-        "roles_to_action": roles_to_action_display,  # FIXED: Now shows actual roles for delegations
+    # Build change request context via shared builder for consistent data
+    cr = ContextBuilder.build_cr_context(change_request, new_user)
+    cr.update({
+        "roles_to_action": roles_to_action_display,
         "roles_actions": profile_change.roles_actions,
         "delegation_info": delegation_info,
         "cr_context": cr_context,
-        "created_by": change_request.created_by.get_full_name(),
-        "creator_designation": change_request.creator_designation.description if change_request.creator_designation else "",
-        "created_at": change_request.created_at,
-        "is_delegation": change_request.change_type == "Temporary Role Delegation",  # ADDED: Flag for template
-    }
+        "is_delegation": change_request.change_type == "Temporary Role Delegation",
+    })
     
     # Get base template context
     context = get_base_template_context(request, change_request)
@@ -2466,7 +2476,6 @@ def view_profile_modification_request(request, change_request, permissions, appr
 def view_profile_deactivation_request(request, change_request, permissions, approval_status):
     """Handle viewing of profile deactivation requests"""
     profile_deactivation = change_request.profile_deactivation
-    user = profile_deactivation.user
     
     # Get change request specific context
     cr_context = get_change_request_context(change_request)
@@ -2474,19 +2483,10 @@ def view_profile_deactivation_request(request, change_request, permissions, appr
     cr_context['requires_roles'] = False
     cr_context['implementation_label'] = 'Deactivation Status'
     
-    # Build change request context
-    cr = {
-        "cr_id": change_request.cr_id,
-        "change_type": change_request.change_type,  # ADDED: Missing change_type field
-        "change_reason": change_request.change_reason,
-        "change_description": change_request.change_description,
-        "application": change_request.application,  # ADDED: Missing application field
-        "created_by": change_request.created_by.get_full_name(),
-        "creator_designation": change_request.creator_designation.description if change_request.creator_designation else "",
-        "created_at": change_request.created_at,
-        "user": user,
-        "cr_context": cr_context
-    }
+    # Build change request context with shared builder
+    deactivation_user = build_profile_deactivation_context(profile_deactivation)
+    cr = ContextBuilder.build_cr_context(change_request, deactivation_user)
+    cr["cr_context"] = cr_context
     
     # Get base template context
     context = get_base_template_context(request, change_request)
@@ -2519,6 +2519,13 @@ def view_change_request_unified(request):
     This replaces view_new_profile_request, view_profile_modification_request, 
     and view_profile_deactivation_request with a single function.
     """
+    request_meta = {
+        "ip": request.META.get("REMOTE_ADDR"),
+        "ua": request.META.get("HTTP_USER_AGENT", "unknown"),
+        "referer": request.META.get("HTTP_REFERER"),
+        "path": request.get_full_path(),
+    }
+    
     if request.method != "GET":
         logger.warning(f"Invalid request method {request.method} for view_change_request_unified")
         messages.error(request, "Invalid request method")
@@ -2529,6 +2536,13 @@ def view_change_request_unified(request):
         logger.error("Missing change request ID parameter")
         messages.error(request, "Change request ID is required")
         return redirect("/change_requests/change_request_index")
+    
+    logger.info(
+        "[CR VIEW] Request received for CR %s by user=%s meta=%s",
+        cr_id,
+        getattr(request.user, "username", "anonymous"),
+        request_meta,
+    )
     
     try:
         # Get change request with optimized queries
@@ -2573,12 +2587,32 @@ def view_change_request_unified(request):
         
         # Add CR context
         context['cr'] = cr_context
+        context['page_title'] = f"View {cr.change_type} – {cr.cr_id}"
         info_items = [
             f"Originator Company: {cr_context.get('originator_company')}" if cr_context.get('originator_company') else None,
             f"Originator Site: {cr_context.get('originator_site')}" if cr_context.get('originator_site') else None,
             f"Resolution Required By: {cr_context.get('date_resolution_required')}" if cr_context.get('date_resolution_required') else None,
         ]
         context['info_items'] = [item for item in info_items if item]
+        context['cr_logging_payload'] = {
+            "cr_id": cr_context.get('cr_id'),
+            "change_type": cr_context.get('change_type'),
+            "user_role": permissions.get('user_role'),
+            "schema_key": cr_context.get('cr_type_schema', {}).get('key'),
+            "section_keys": [
+                section.get('key') for section in cr_context.get('cr_type_schema', {}).get('view_sections', [])
+            ],
+            "overall_status": cr_context.get('overall_status'),
+            "client_meta": request_meta,
+        }
+        
+        logger.info(
+            "[CR VIEW] Rendering CR %s (%s) for role=%s sections=%s",
+            cr_id,
+            cr.change_type,
+            permissions.get('user_role'),
+            context['cr_logging_payload']['section_keys'],
+        )
         
         logger.info(f"Rendering unified view for CR {cr_id} of type {cr.change_type}")
         return render(request, "change_requests/view_change_request.html", context)
@@ -2588,7 +2622,12 @@ def view_change_request_unified(request):
         messages.error(request, "Change request not found")
         return redirect("/change_requests/change_request_index")
     except Exception as e:
-        logger.error(f"Error viewing change request {cr_id}: {str(e)}", exc_info=True)
+        logger.exception(
+            "Error viewing change request %s for user=%s meta=%s",
+            cr_id,
+            getattr(request.user, "username", "anonymous"),
+            request_meta,
+        )
         messages.error(request, "An error occurred while viewing the change request")
         return redirect("/change_requests/change_request_index")
 
