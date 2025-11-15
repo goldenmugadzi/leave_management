@@ -159,15 +159,14 @@
             </div>
           </td>
         </tr>
-        {% empty %}
-        <tr>
-          <td colspan="6" class="text-center text-sm text-gray-500 py-4">
-            No files in this folder yet.
-          </td>
-        </tr>
         {% endfor %}
       </tbody>
     </table>
   </div>
+  {% if files|length == 0 %}
+  <div class="text-center text-sm text-gray-500 py-4 border border-dashed border-gray-300 rounded mt-2">
+    No files in this folder yet.
+  </div>
+  {% endif %}
 </section>
 
