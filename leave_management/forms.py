@@ -1,5 +1,7 @@
 from django import forms
 from .models import LeaveRequest,LeaveTypes
+from django.core.exceptions import ValidationError
+from django.utils import timezone
 
 class LeaveRequestForm(forms.ModelForm):
     class Meta:
@@ -39,6 +41,28 @@ class LeaveRequestForm(forms.ModelForm):
             if field_name in select2_fields:
                 classes += " select2"
             field.widget.attrs['class'] = f"{current_class} {classes}".strip()
+            
+            
+    def clean(self):
+        cleaned_data = super().clean()
+        start_date = cleaned_data.get('start_date')
+        end_date = cleaned_data.get('end_date')
+        today = timezone.localdate()
+
+        # If start_date is provided, it cannot be in the past
+        if start_date and start_date < today:
+            self.add_error('start_date', "Start date cannot be in the past.")
+
+        # If end_date is provided, it cannot be in the past
+        if end_date and end_date < today:
+            self.add_error('end_date', "End date cannot be in the past.")
+
+        # If both dates are provided, ensure end_date is not before start_date
+        if start_date and end_date and end_date < start_date:
+            self.add_error('end_date', "End date cannot be earlier than start date.")
+
+        return cleaned_data
+
 
 class LeaveTypesForm(forms.ModelForm):
     class Meta:

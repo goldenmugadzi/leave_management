@@ -10,5 +10,8 @@ urlpatterns = [
     path('accident/',views.create_accident, name='create_accident'),
     path('accident_datatable/',views.accident_reports_datatable, name='accident_reports_datatable'),
     path('table_accident/',views.table_accident, name='table_accident'),
-    path('accident_report_dashboard/', views.accident_report_dashboard, name=' accident_report_dashboard')
+    path('accident_report_dashboard/', views.accident_report_dashboard, name='accident_report_dashboard'),
+    path('property_loss_table/', views.property_loss_table, name='property_loss_table'),
+    path('human_accident_table/', views.human_accident_table, name='human_accident_table'),
+    path('vehicle_accident_table/', views.vehicle_accident_table, name='vehicle_accident_table'),
 ]

@@ -136,27 +136,32 @@ def safety_ytd(request):
     })
        
 def create_accident(request):
-    accident_form = AccidentReportForm()
+    staff_form = AccidentReportForm(prefix='staff')
+    public_form = AccidentReportForm(prefix='public')
     vehicle_form = VehicleAccidentReportForm()
     property_loss_form = PropertyLossIncidentForm()
 
     if request.method == 'POST':
-        # Check which form was submitted by submit button name
-        if 'submit_vehicle' in request.POST:
+        if 'submit_staff' in request.POST:
+            staff_form = AccidentReportForm(request.POST, request.FILES, prefix='staff')
+            if staff_form.is_valid():
+                staff_form.save()
+                messages.success(request, "Staff accident report submitted successfully.")
+                return redirect('accident_report_dashboard')
+        elif 'submit_public' in request.POST:
+            public_form = AccidentReportForm(request.POST, request.FILES, prefix='public')
+            if public_form.is_valid():
+                public_form.save()
+                messages.success(request, "Public accident report submitted successfully.")
+                return redirect('accident_report_dashboard')
+        elif 'submit_vehicle' in request.POST:
             vehicle_form = VehicleAccidentReportForm(request.POST, request.FILES)
+            print(vehicle_form.errors)  # Add this line
             if vehicle_form.is_valid():
                 vehicle_report = vehicle_form.save(commit=False)
                 # vehicle_report.user = request.user
                 vehicle_report.save()
                 messages.success(request, "Vehicle accident report submitted successfully.")
-                return redirect('accident_report_dashboard')
-        elif 'submit_accident' in request.POST:
-            accident_form = AccidentReportForm(request.POST)
-            if accident_form.is_valid():
-                accident = accident_form.save(commit=False)
-                # accident.user = request.user
-                accident.save()
-                messages.success(request, "Human accident report submitted successfully.")
                 return redirect('accident_report_dashboard')
         elif 'submit_property_loss' in request.POST:
             property_loss_form = PropertyLossIncidentForm(request.POST, request.FILES)
@@ -168,7 +173,8 @@ def create_accident(request):
                 return redirect('accident_report_dashboard') 
 
     return render(request, 'safety/accident_report.html', {
-        'form': accident_form,
+        'staff_form': staff_form,
+        'public_form': public_form,
         'vehicle_form': vehicle_form,
         'property_loss_form': property_loss_form,
     })
@@ -262,12 +268,17 @@ def accident_report_dashboard(request):
 
     # Vehicle Accident
     for vehicle in VehicleAccidentReport.objects.all():
+        # Ensure date is a date object
+        if hasattr(vehicle, 'datetime_for_accident') and vehicle.datetime_for_accident:
+            vehicle_date = vehicle.datetime_for_accident.date()
+        else:
+            vehicle_date = vehicle.date_submitted.date() if hasattr(vehicle, 'date_submitted') and vehicle.date_submitted else None
         accidents.append({
             'id': vehicle.id,
             'type': 'vehicle',
             'reported_by': vehicle.driver_name,
-            'date': getattr(vehicle, 'datetime_for_accident', vehicle.date_submitted),
-            'status': 'Pending',  # Add status logic if you have it
+            'date': vehicle_date,
+            'status': 'Pending',
         })
 
     # Optionally, sort by date descending
@@ -283,5 +294,17 @@ def accident_report_dashboard(request):
         'vehicle_form': VehicleAccidentReportForm(),
         'property_loss_form': PropertyLossIncidentForm(),
     })
+
+def property_loss_table(request):
+    property_damages = PropertyLossIncident.objects.all()
+    return render(request, 'safety/property_loss_table.html', {'property_damages': property_damages})
+
+def human_accident_table(request):
+    human_accidents = AccidentReport.objects.all()
+    return render(request, 'safety/human_accident_table.html', {'human_accidents': human_accidents})
+
+def vehicle_accident_table(request):
+    vehicle_accidents = VehicleAccidentReport.objects.all()
+    return render(request, 'safety/vehicle_accident_table.html', {'vehicle_accidents': vehicle_accidents})
 
 

@@ -52,6 +52,18 @@
 
   });
 </script>
+<script>
+  $(document).ready(function () {
+
+    // Get today's date in YYYY-MM-DD format
+    let today = new Date().toISOString().split("T")[0];
+
+    // Apply min attribute to all date inputs
+    $("input[type='date']").attr("min", today);
+
+  });
+</script>
+
 
 <div class="content-wrapper">
   <div class="bg-gulf-blue-100 shadow shadow-gulf-blue-300 text-gulf-blue-900 rounded px-2 py-2">

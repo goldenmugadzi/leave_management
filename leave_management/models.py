@@ -85,3 +85,24 @@ class LeaveTypes(models.Model):
             rate = 2.5
         self.vacation_leave = min(self.vacation_leave + rate * months, 240)
         self.save()
+
+
+class LeaveActivity(models.Model):
+    ACTIONS = [
+        ("applied", "Applied"),
+        ("approved", "Approved"),
+        ("rejected", "Rejected"),
+        ("edited", "Edited"),
+        ("encashed", "Encashed"),
+    ]
+
+    leave = models.ForeignKey(LeaveRequest, on_delete=models.CASCADE, related_name="activities")
+    user = models.ForeignKey(UserProfile, on_delete=models.SET_NULL, null=True, blank=True, related_name="leave_actions")
+    action = models.CharField(max_length=50, choices=ACTIONS)
+    action_by = models.ForeignKey(UserProfile, on_delete=models.SET_NULL, null=True, blank=True, related_name="leave_action_performed")
+    type_of_leave = models.CharField(max_length=200)
+    status = models.CharField(max_length=100, blank=True, null=True)
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.leave.id} - {self.action} by {self.action_by}"
