@@ -247,17 +247,6 @@
           placeholder="Explain why you're delegating your roles (e.g., leave, training, etc.)"
         >{{ cr.delegation_reason|default_if_none:'' }}</textarea>
       </div>
-      <div id="roles-to-delegate" class="{% if not cr.is_delegation %}hidden{% endif %}">
-        <label class="block text-sm font-medium text-gray-700 mb-2">
-          Select Roles to Delegate <span class="text-red-500">*</span>
-        </label>
-        <div id="delegator-roles-container" class="space-y-4">
-          <!-- Roles will be populated here via AJAX -->
-        </div>
-        <p class="mt-1 text-sm text-gray-500">
-          Choose which roles from the delegator to assign temporarily
-        </p>
-      </div>
     </div>
 
     <div class="border-t border-gray-200 pt-6 mt-6">

@@ -334,14 +334,27 @@ class ApprovalService:
             if has_roles_to_assign and not roles_actions:
                 return False, "Please enter the roles implemented"
             
-            if not roles_actions and not has_roles_to_assign:
+            if not roles_actions and not has_roles_to_assign and cr.change_type != "Temporary Role Delegation":
                 roles_actions = "No roles applied - no roles were specified for assignment"
             
             # Save roles_actions to appropriate model
             if cr.change_type == "New Profile" and cr.new_profile:
                 cr.new_profile.roles_actions = roles_actions
                 cr.new_profile.save()
-            elif cr.change_type in ["Profile Modification", "Temporary Role Delegation"] and cr.profile_change:
+            elif cr.change_type == "Temporary Role Delegation" and cr.profile_change:
+                # Preserve delegation metadata JSON; optionally append implementation notes
+                if roles_actions:
+                    existing_metadata_raw = cr.profile_change.roles_actions or "{}"
+                    try:
+                        metadata = json.loads(existing_metadata_raw) if existing_metadata_raw.strip() else {}
+                    except json.JSONDecodeError:
+                        metadata = {"legacy_metadata": existing_metadata_raw}
+                    if not isinstance(metadata, dict):
+                        metadata = {"legacy_metadata": metadata}
+                    metadata["implementation_notes"] = roles_actions
+                    cr.profile_change.roles_actions = json.dumps(metadata)
+                    cr.profile_change.save(update_fields=["roles_actions"])
+            elif cr.change_type == "Profile Modification" and cr.profile_change:
                 cr.profile_change.roles_actions = roles_actions
                 cr.profile_change.save()
             
@@ -375,6 +388,8 @@ class ApprovalApplicationService:
     @staticmethod
     def check_roles_required(cr: ChangeRequest) -> bool:
         """Check if CR requires roles to be assigned"""
+        if cr.change_type == "Temporary Role Delegation":
+            return False
         if cr.change_type == "New Profile" and cr.new_profile:
             return bool(
                 cr.new_profile.roles_to_action and 
@@ -530,6 +545,12 @@ class ApprovalApplicationService:
             except json.JSONDecodeError as e:
                 logger.error(f"Invalid delegation metadata JSON for CR {cr.cr_id}: {str(e)}")
                 return False, "Invalid delegation metadata format"
+            
+            if not isinstance(metadata, dict):
+                logger.error(
+                    f"Delegation metadata for CR {cr.cr_id} is not an object (type={type(metadata).__name__})"
+                )
+                return False, "Invalid delegation metadata structure"
             
             # Validate required fields
             required_fields = ['delegator_id', 'start_date', 'end_date', 'reason']

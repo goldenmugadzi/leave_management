@@ -436,15 +436,10 @@
 
         toggleModificationUserFields(true);
 
-        if (delegatorValue) {
-          loadDelegatorRoles(delegatorValue);
-        }
       } else if (changeType === "PERMANENT") {
         $("#permanent-user-field").removeClass("hidden");
         $("#delegation-user-fields").addClass("hidden");
         $("#delegation-fields").addClass("hidden");
-        $("#roles-to-delegate").addClass("hidden");
-        $("#delegator-roles-container").empty();
 
         $userProfileSelect.prop("required", true);
         $delegatorSelect.prop("required", false);
@@ -452,15 +447,10 @@
 
         toggleModificationUserFields(false);
 
-        if (userProfileValue) {
-          loadDelegatorRoles(userProfileValue);
-        }
       } else {
         $("#delegation-user-fields").addClass("hidden");
         $("#permanent-user-field").addClass("hidden");
         $("#delegation-fields").addClass("hidden");
-        $("#roles-to-delegate").addClass("hidden");
-        $("#delegator-roles-container").empty();
 
         $userProfileSelect.prop("required", false);
         $delegatorSelect.prop("required", false);
@@ -486,13 +476,6 @@
           setSelectorValue($modUserSelector, "");
         },
       });
-
-      if (userProfileValue && changeType === "PERMANENT") {
-        loadDelegatorRoles(userProfileValue);
-      } else if (changeType === "PERMANENT") {
-        $("#roles-to-delegate").addClass("hidden");
-        $("#delegator-roles-container").empty();
-      }
 
       refreshRoleActionSections();
     });
@@ -568,157 +551,11 @@
       const delegatorValue = $(this).val();
       const changeType = $changeTypeSelect.val();
 
-      if (delegatorValue && changeType === "TEMPORARY_DELEGATION") {
-        loadDelegatorRoles(delegatorValue);
-      } else {
-        $("#roles-to-delegate").addClass("hidden");
-        $("#delegator-roles-container").empty();
-      }
-
       refreshRoleActionSections();
     });
 
     $assignToggle.on("change", refreshRoleActionSections);
     $removeToggle.on("change", refreshRoleActionSections);
-
-    // Delegator role helpers (unchanged)
-    function loadDelegatorRolesById(delegatorId) {
-      if (!delegatorId) {
-        console.error("No delegator ID provided");
-        return;
-      }
-
-      $("#delegator-roles-container").html(
-        '<div class="text-center py-4"><i class="fas fa-spinner fa-spin mr-2"></i>Loading roles...</div>'
-      );
-      $("#roles-to-delegate").removeClass("hidden");
-
-      $.ajax({
-        url: "/change_requests/get_delegator_roles_by_app",
-        method: "GET",
-        data: {
-          delegator_id: delegatorId,
-        },
-        success(response) {
-          if (response.success) {
-            displayDelegatorRoles(response.roles_by_app, response.delegator);
-          } else {
-            $("#delegator-roles-container").html(
-              '<div class="text-red-600">Error: ' +
-                (response.error || response.message || "Unknown error") +
-                "</div>"
-            );
-          }
-        },
-        error(xhr, status, error) {
-          console.error("Error loading delegator roles:", error);
-          $("#delegator-roles-container").html(
-            '<div class="text-red-600">Error loading roles. Please try again.</div>'
-          );
-        },
-      });
-    }
-
-    function loadDelegatorRoles(delegatorValue) {
-      let delegatorId = null;
-
-      {% for usr in user_profiles %}
-        if ("{{ usr.username }}" === delegatorValue) {
-          delegatorId = "{{ usr.id }}";
-        }
-      {% endfor %}
-
-      if (delegatorValue === "{{ request.user.username }}") {
-        delegatorId = "{{ request.user.id }}";
-      }
-
-      if (!delegatorId) {
-        console.error("Could not find delegator ID for:", delegatorValue);
-        return;
-      }
-
-      loadDelegatorRolesById(delegatorId);
-    }
-
-    function displayDelegatorRoles(rolesByApp, delegator) {
-      const container = $("#delegator-roles-container");
-      container.empty();
-
-      if (Object.keys(rolesByApp).length === 0) {
-        container.html(
-          '<div class="text-gray-600">No roles available for delegation from ' +
-            delegator.name +
-            "</div>"
-        );
-        return;
-      }
-
-      const assignedRoleIds = {{ cr.assigned_role_ids|safe }};
-
-      const header = $(
-        '<div class="mb-4"><h4 class="text-lg font-medium text-gray-900">Available Roles from ' +
-          delegator.name +
-          "</h4></div>"
-      );
-      container.append(header);
-
-      Object.keys(rolesByApp).forEach(function (appKey) {
-        const appData = rolesByApp[appKey];
-        const appSection = $('<div class="mb-6 border border-gray-200 rounded-lg p-4"></div>');
-        const appHeader = $(
-          '<div class="mb-3"><h5 class="text-md font-medium text-blue-800">' +
-            appData.app_fullname +
-            "</h5></div>"
-        );
-        appSection.append(appHeader);
-
-        const rolesContainer = $('<div class="space-y-2"></div>');
-        appData.roles.forEach(function (role) {
-          const isChecked = assignedRoleIds.includes(role.id);
-
-          const roleCheckbox =
-            '<div class="flex items-center">' +
-            '<input type="checkbox" name="roles" value="' +
-            role.id +
-            '" id="role_' +
-            role.id +
-            '" ' +
-            (isChecked ? "checked" : "") +
-            ' class="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">' +
-            '<label for="role_' +
-            role.id +
-            '" class="text-sm text-gray-700">' +
-            role.name +
-            (role.description ? " - " + role.description : "") +
-            "</label>" +
-            "</div>";
-          rolesContainer.append(roleCheckbox);
-        });
-
-        appSection.append(rolesContainer);
-        container.append(appSection);
-      });
-
-      const selectAllContainer = $(
-        '<div class="mt-4 flex justify-between items-center">' +
-          '<button type="button" id="select-all-roles" class="text-blue-600 hover:text-blue-800 text-sm">Select All</button>' +
-          '<button type="button" id="clear-all-roles" class="text-gray-600 hover:text-gray-800 text-sm">Clear All</button>' +
-          "</div>"
-      );
-      container.append(selectAllContainer);
-
-      $("#select-all-roles").on("click", function () {
-        $('input[name="roles"]').prop("checked", true);
-      });
-
-      $("#clear-all-roles").on("click", function () {
-        $('input[name="roles"]').prop("checked", false);
-      });
-    }
-
-    {% if cr.is_delegation and cr.delegator_id %}
-    loadDelegatorRolesById("{{ cr.delegator_id }}");
-    {% endif %}
 
     $changeTypeSelect.trigger("change");
     refreshRoleActionSections();

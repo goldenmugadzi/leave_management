@@ -1121,7 +1121,14 @@ def send_delegation_notifications(change_request, notification_type, message):
     try:
         if change_request.change_type == "Temporary Role Delegation" and change_request.profile_change:
             import json
-            delegation_data = json.loads(change_request.profile_change.roles_actions) if change_request.profile_change.roles_actions else {}
+            delegation_data = {}
+            if change_request.profile_change.roles_actions:
+                try:
+                    delegation_data = json.loads(change_request.profile_change.roles_actions)
+                    if not isinstance(delegation_data, dict):
+                        delegation_data = {}
+                except json.JSONDecodeError:
+                    delegation_data = {}
             delegator_id = delegation_data.get('delegator_id')
             delegatee = change_request.profile_change.user
             
@@ -1168,7 +1175,18 @@ def apply_delegation_change_request(change_request):
         try:
             # Parse delegation metadata
             import json
-            metadata = json.loads(change_request.profile_change.roles_actions)
+            metadata = {}
+            if change_request.profile_change.roles_actions:
+                try:
+                    metadata = json.loads(change_request.profile_change.roles_actions)
+                except json.JSONDecodeError:
+                    metadata = {}
+            if not isinstance(metadata, dict):
+                logger.warning(
+                    "Delegation metadata missing or invalid during legacy apply",
+                    extra={"cr_id": change_request.cr_id, "profile_change_id": change_request.profile_change.id}
+                )
+                return
             
             # Create RoleDelegation record for tracking
             delegation = RoleDelegation.objects.create(
@@ -1255,73 +1273,6 @@ def get_delegation_roles(request):
             })
             
         except Exception as e:
-            return JsonResponse({'error': str(e)}, status=500)
-    
-    return JsonResponse({'error': 'Method not allowed'}, status=405)
-
-@login_required
-def get_delegator_roles_by_app(request):
-    """API endpoint to get all roles grouped by application from selected delegator"""
-    if request.method == "GET":
-        try:
-            delegator_id = request.GET.get('delegator_id')
-            
-            if not delegator_id:
-                return JsonResponse({'error': 'Delegator ID is required'}, status=400)
-            
-            # Get the delegator by ID (not username)
-            try:
-                delegator = UserProfile.objects.get(id=delegator_id)
-            except UserProfile.DoesNotExist:
-                return JsonResponse({'error': 'Delegator not found'}, status=404)
-            
-            # Get all roles that the delegator has
-            delegator_roles = delegator.roles.all()
-            
-            if not delegator_roles.exists():
-                return JsonResponse({
-                    'success': True,
-                    'roles_by_app': {},
-                    'delegator': {
-                        'id': delegator.id,
-                        'name': delegator.get_full_name(),
-                        'username': delegator.username
-                    },
-                    'message': f'{delegator.get_full_name()} has no roles available for delegation'
-                })
-            
-            # Group roles by application
-            roles_by_app = {}
-            for role in delegator_roles:
-                app = role.app_id
-                if app:
-                    app_key = app.name
-                    if app_key not in roles_by_app:
-                        roles_by_app[app_key] = {
-                            'app_id': app.id,
-                            'app_name': app.name,
-                            'app_fullname': app.fullname,
-                            'roles': []
-                        }
-                    
-                    roles_by_app[app_key]['roles'].append({
-                        'id': role.id,
-                        'name': role.role,
-                        'description': getattr(role, 'description', '') or role.role
-                    })
-            
-            return JsonResponse({
-                'success': True,
-                'roles_by_app': roles_by_app,
-                'delegator': {
-                    'id': delegator.id,
-                    'name': delegator.get_full_name(),
-                    'username': delegator.username
-                }
-            })
-            
-        except Exception as e:
-            logger.error(f"Error in get_delegator_roles_by_app: {str(e)}")
             return JsonResponse({'error': str(e)}, status=500)
     
     return JsonResponse({'error': 'Method not allowed'}, status=405)
@@ -1838,9 +1789,7 @@ def update_change_request(request):
                 "is_delegation": is_delegation,
                 "delegation_type": "TEMPORARY" if is_delegation else "PERMANENT",
                 "delegator_username": delegator_username,
-                "delegator_id": delegator_obj.id if delegator_obj else None,  # ADDED: Delegator ID for AJAX
                 "delegatee_username": delegatee_username,
-                "assigned_role_ids": assigned_role_ids,  # For pre-selecting roles in edit form
                 "role_to_remove_ids": list(profile_change.role_to_remove.values_list('id', flat=True)),
                 "include_assign": include_assign_existing,
                 "include_remove": include_remove_existing,
@@ -2199,8 +2148,15 @@ def parse_delegation_data(profile_change):
         
         # Parse roles_actions JSON data
         try:
-            if profile_change.roles_actions:
-                data = json.loads(profile_change.roles_actions)
+            roles_actions_value = (profile_change.roles_actions or "").strip()
+            if roles_actions_value:
+                data = json.loads(roles_actions_value)
+                if not isinstance(data, dict):
+                    logger.warning(
+                        "Delegation metadata is not JSON object",
+                        extra={"profile_change_id": profile_change.id, "type": type(data).__name__}
+                    )
+                    data = {}
                 
                 # Get delegator information
                 delegator_id = data.get('delegator_id')
@@ -3357,7 +3313,10 @@ def datatable_data(request, view):
                     if obj.change_type == "Temporary Role Delegation" and obj.profile_change:
                         try:
                             import json
-                            delegation_data = json.loads(obj.profile_change.roles_actions) if obj.profile_change.roles_actions else {}
+                            roles_actions_value = (obj.profile_change.roles_actions or "").strip()
+                            delegation_data = json.loads(roles_actions_value) if roles_actions_value else {}
+                            if not isinstance(delegation_data, dict):
+                                delegation_data = {}
                             change_requests["delegation_info"] = {
                                 "delegator": delegation_data.get('delegator_id'),
                                 "delegatee": obj.profile_change.user.get_full_name(),
