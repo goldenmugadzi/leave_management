@@ -459,19 +459,12 @@ def manage_folders(request):
             )
 
     folder_detail = _build_folder_detail(first_folder) if first_folder else None
-    recent_folders = KnowledgeCentreFolder.objects.order_by("-updated_at")[:6]
-    pinned_folders = (
-        KnowledgeCentreFolder.objects.filter(parent__isnull=True).order_by("name")[:4]
-    )
-
     context = {
         "url_path": url_path,
         "page_title": "Manage Folders",
         "tree": tree,
         "folder_detail": folder_detail,
         "selected_folder_id": first_folder.id if first_folder else None,
-        "recent_folders": recent_folders,
-        "pinned_folders": pinned_folders,
     }
     return render(request, "knowledge-center/view_folder_list.html", context)
 

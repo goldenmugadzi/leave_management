@@ -12,10 +12,7 @@
       class="kc-tree-summary {% if child.id == selected_folder_id %}kc-node-active{% endif %}"
       data-kc-node
       data-folder-id="{{ child.id }}"
-      hx-get="{% url 'kc_folder_content' child.id %}"
-      hx-target="#kc-content"
-      hx-swap="innerHTML"
-      hx-indicator="#kc-content-loader"
+      data-folder-url="{% url 'kc_folder_content' child.id %}"
     >
       <span>📁</span>
       <span>{{ child.name }}</span>

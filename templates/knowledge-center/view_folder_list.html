@@ -191,49 +191,6 @@
           <div id="kc-search-results" class="kc-search-results text-sm text-gray-600"></div>
         </div>
 
-        <div class="mt-5">
-          <p class="text-xs text-gulf-blue-500 font-semibold mb-2 uppercase">Pinned folders</p>
-          <div class="flex flex-col gap-1">
-            {% for folder in pinned_folders %}
-            <button
-              class="kc-quick-link text-sm {% if folder.id == selected_folder_id %}kc-node-active{% endif %}"
-              data-kc-node
-              data-folder-id="{{ folder.id }}"
-              hx-get="{% url 'kc_folder_content' folder.id %}"
-              hx-target="#kc-content"
-              hx-swap="innerHTML"
-              hx-indicator="#kc-content-loader"
-            >
-              {{ folder.name }}
-            </button>
-            {% empty %}
-            <p class="text-xs text-gray-500">No pinned folders yet.</p>
-            {% endfor %}
-          </div>
-        </div>
-
-        <div class="mt-5">
-          <p class="text-xs text-gulf-blue-500 font-semibold mb-2 uppercase">Recent folders</p>
-          <div class="flex flex-col gap-1">
-            {% for folder in recent_folders %}
-            <button
-              class="kc-quick-link text-sm"
-              data-kc-node
-              data-folder-id="{{ folder.id }}"
-              hx-get="{% url 'kc_folder_content' folder.id %}"
-              hx-target="#kc-content"
-              hx-swap="innerHTML"
-              hx-indicator="#kc-content-loader"
-            >
-              {{ folder.name }}
-              <span class="ml-auto text-xs text-gray-500">{{ folder.updated_at|date:"d M" }}</span>
-            </button>
-            {% empty %}
-            <p class="text-xs text-gray-500">No activity yet.</p>
-            {% endfor %}
-          </div>
-        </div>
-
         <div class="mt-6">
           <p class="text-xs text-gulf-blue-500 font-semibold mb-2 uppercase">All folders</p>
           <div class="kc-tree-wrapper">
@@ -250,10 +207,7 @@
                       class="kc-tree-summary {% if folder.id == selected_folder_id %}kc-node-active{% endif %}"
                       data-kc-node
                       data-folder-id="{{ folder.id }}"
-                      hx-get="{% url 'kc_folder_content' folder.id %}"
-                      hx-target="#kc-content"
-                      hx-swap="innerHTML"
-                      hx-indicator="#kc-content-loader"
+                      data-folder-url="{% url 'kc_folder_content' folder.id %}"
                     >
                       <span>📁</span>
                       <span>{{ folder.name }}</span>
@@ -294,14 +248,18 @@
 <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
 <script src="https://unpkg.com/htmx.org@1.9.10"></script>
 <script>
-  function setActiveTreeNode(node) {
+  function setActiveTreeNode(node, options) {
+    var ensureOpen = true;
+    if (options && options.ensureOpen === false) {
+      ensureOpen = false;
+    }
     if (!node) return;
     document.querySelectorAll("[data-kc-node]").forEach(function (el) {
       el.classList.remove("kc-node-active");
     });
     node.classList.add("kc-node-active");
     var parentDetails = node.closest("details");
-    if (parentDetails) {
+    if (parentDetails && ensureOpen) {
       parentDetails.open = true;
     }
   }
@@ -356,6 +314,19 @@
       setActiveTreeNode(triggerEl);
     } else if (triggerEl.dataset.folderTarget) {
       focusTreeNodeById(triggerEl.dataset.folderTarget);
+    }
+  });
+
+  document.body.addEventListener("click", function (event) {
+    var summary = event.target.closest(".kc-tree-summary");
+    if (summary && summary.dataset.folderUrl) {
+      var url = summary.dataset.folderUrl;
+      setActiveTreeNode(summary, { ensureOpen: false });
+      htmx.ajax("GET", url, {
+        target: "#kc-content",
+        swap: "innerHTML",
+        indicator: "#kc-content-loader",
+      });
     }
   });
 </script>
