@@ -45,72 +45,31 @@
           <form method="post" id="change-request-form" class="space-y-6" enctype="multipart/form-data">
             {% csrf_token %}
 
-            <!-- Operation Type Selection -->
-            <div>
-              <label
-                for="operation_type"
-                class="block text-sm font-medium text-gray-700 mb-2"
-              >
-                Operation Type <span class="text-red-500">*</span>
-              </label>
-              <select
-                id="operation_type"
-                name="operation_type"
-                class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              >
-                <option value="">Select Operation Type</option>
-                <option value="new_profile">New Profile</option>
-                <option value="profile_modification">
-                  Profile Modification
-                </option>
-                <option value="profile_deactivation">
-                  Profile Deactivation
-                </option>
-              </select>
-              <p class="mt-1 text-sm text-gray-500">
-                Choose the type of change request you want to submit
-              </p>
-            </div>
-
-            <!-- Common Fields -->
-            <div id="common-fields">
-              <!-- Originator Details -->
-              <div class="border-t border-gray-200 pt-6">
-                <h4 class="text-lg font-medium text-gray-900 mb-4">
-                  Originator Details
-                </h4>
+            <div id="common-fields" class="space-y-10">
+              <!-- Section A -->
+              <section class="border-t border-gray-200 pt-6">
+                <div class="flex items-center justify-between mb-4">
+                  <h4 class="text-lg font-semibold text-gray-900">
+                    Section A - Change Request Originator
+                  </h4>
+                  <p class="text-sm text-gray-500">
+                    Matches Section A on the IT Change Request form.
+                  </p>
+                </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div class="mb-6">
-                    <label
-                      for="np_ec_number"
-                      class="block text-sm font-medium text-gray-700 mb-2"
-                    >
-                      EC Number <span class="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      name="np_ec_number"
-                      id="np_ec_number"
-                      value="{{ originator_defaults.ec_number }}"
-                      class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    />
-                    <p class="mt-1 text-sm text-gray-500">
-                      Prefilled from your profile; update if you are requesting for someone else.
-                    </p>
-                  </div>
                   <div class="mb-6">
                     <label
                       for="originator_company"
                       class="block text-sm font-medium text-gray-700 mb-2"
                     >
-                      Originator Company <span class="text-red-500">*</span>
+                      Company <span class="text-red-500">*</span>
                     </label>
                     <input
                       type="text"
                       name="originator_company"
                       id="originator_company"
                       value="{{ originator_defaults.company }}"
-                      class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus-border-blue-500"
                       placeholder="Enter the company of the change request originator"
                     />
                     <p class="mt-1 text-sm text-gray-500">
@@ -122,18 +81,72 @@
                       for="originator_site"
                       class="block text-sm font-medium text-gray-700 mb-2"
                     >
-                      Originator Site <span class="text-red-500">*</span>
+                      Site / Location <span class="text-red-500">*</span>
                     </label>
                     <input
                       type="text"
                       name="originator_site"
                       id="originator_site"
                       value="{{ originator_defaults.site }}"
-                      class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus-border-blue-500"
                       placeholder="Enter the site or location for this request"
                     />
                     <p class="mt-1 text-sm text-gray-500">
                       Prefilled with your location; adjust when submitting on behalf of another site.
+                    </p>
+                  </div>
+                  <div class="mb-6">
+                    <label
+                      for="originator_name_display"
+                      class="block text-sm font-medium text-gray-700 mb-2"
+                    >
+                      Originator
+                    </label>
+                    <input
+                      type="text"
+                      id="originator_name_display"
+                      value="{{ originator_defaults.first_name }} {{ originator_defaults.last_name }}"
+                      readonly
+                      class="block w-full border border-gray-200 bg-gray-50 rounded-md px-3 py-2 text-gray-900"
+                    />
+                    <p class="mt-1 text-sm text-gray-500">
+                      Taken from your profile; override by including the correct name in the supporting correspondence.
+                    </p>
+                  </div>
+                  <div class="mb-6">
+                    <label
+                      for="originator_designation_display"
+                      class="block text-sm font-medium text-gray-700 mb-2"
+                    >
+                      Designation
+                    </label>
+                    <input
+                      type="text"
+                      id="originator_designation_display"
+                      value="{{ originator_defaults.designation }}"
+                      readonly
+                      class="block w-full border border-gray-200 bg-gray-50 rounded-md px-3 py-2 text-gray-900"
+                    />
+                    <p class="mt-1 text-sm text-gray-500">
+                      Shown for reference; approvals capture the official authorisation.
+                    </p>
+                  </div>
+                  <div class="mb-6">
+                    <label
+                      for="date_raised_display"
+                      class="block text-sm font-medium text-gray-700 mb-2"
+                    >
+                      Date Raised
+                    </label>
+                    <input
+                      type="text"
+                      id="date_raised_display"
+                      value="{% now 'Y-m-d' %}"
+                      readonly
+                      class="block w-full border border-gray-200 bg-gray-50 rounded-md px-3 py-2 text-gray-900"
+                    />
+                    <p class="mt-1 text-sm text-gray-500">
+                      Automatically captured when the request is submitted.
                     </p>
                   </div>
                   <div class="mb-6">
@@ -148,93 +161,128 @@
                       name="date_resolution_required"
                       id="date_resolution_required"
                       value="{{ default_resolution_date }}"
-                      class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus-border-blue-500"
                     />
                     <p class="mt-1 text-sm text-gray-500">
                       Provide the required completion date for this change
                     </p>
                   </div>
                 </div>
-              </div>
+              </section>
 
-              <!-- Reason for Change -->
-              <div class="mb-6" id="change-reason-group">
-                <label
-                  for="change_reason"
-                  class="block text-sm font-medium text-gray-700 mb-2"
-                >
-                  Reason for Change <span class="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  name="change_reason"
-                  id="change_reason"
-                  class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Enter reason for the change"
-                />
-                <p class="mt-1 text-sm text-gray-500">
-                  Brief description of why this change is needed
-                </p>
-              </div>
+              <!-- Section B -->
+              <section class="border-t border-gray-200 pt-6">
+                <div class="flex items-center justify-between mb-4">
+                  <h4 class="text-lg font-semibold text-gray-900">
+                    Section B - Type of Change
+                  </h4>
+                  <p class="text-sm text-gray-500">
+                    Choose the request path that matches Section B on the paper form.
+                  </p>
+                </div>
+                <div class="grid grid-cols-1 gap-6">
+                  <div>
+                    <label
+                      for="operation_type"
+                      class="block text-sm font-medium text-gray-700 mb-2"
+                    >
+                      Change Type <span class="text-red-500">*</span>
+                    </label>
+                    <select
+                      id="operation_type"
+                      name="operation_type"
+                      class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus-border-blue-500"
+                    >
+                      <option value="">Select Change Type</option>
+                      <option value="new_profile">Creation of New Profile (Section C)</option>
+                      <option value="profile_modification">
+                        Profile Modification – Assignment/Removal of Roles (Section D)
+                      </option>
+                      <option value="profile_deactivation">
+                        Profile Deactivation (Section E)
+                      </option>
+                    </select>
+                    <p class="mt-1 text-sm text-gray-500">
+                      This drives which sections below become available.
+                    </p>
+                  </div>
 
-              <!-- Change Description -->
-              <div class="mb-6" id="change-description-group">
-                <label
-                  for="change_description"
-                  class="block text-sm font-medium text-gray-700 mb-2"
-                >
-                  Change Description <span class="text-red-500">*</span>
-                </label>
-                <textarea
-                  name="change_description"
-                  id="change_description"
-                  rows="3"
-                  class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Detailed description of the requested change"
-                ></textarea>
-                <p class="mt-1 text-sm text-gray-500">
-                  Provide detailed information about the change
-                </p>
-              </div>
+                  <div id="change-reason-group">
+                    <label
+                      for="change_reason"
+                      class="block text-sm font-medium text-gray-700 mb-2"
+                    >
+                      Reason for Change <span class="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      name="change_reason"
+                      id="change_reason"
+                      class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus-border-blue-500"
+                      placeholder="Summarise why this change is required"
+                    />
+                    <p class="mt-1 text-sm text-gray-500">
+                      Provide the short justification that appears in Section A/B of the form.
+                    </p>
+                  </div>
 
-              <!-- Application -->
-              <div class="mb-6">
-                <label
-                  for="for_application"
-                  class="block text-sm font-medium text-gray-700 mb-2"
-                >
-                  Application <span class="text-red-500">*</span>
-                </label>
-                <select
-                  id="for_application"
-                  name="for_application"
-                  class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                >
-                  <option value="">Select Application</option>
-                  <option value="BUSINESS EXCELLENCE">
-                    BUSINESS EXCELLENCE
-                  </option>
-                  <option value="SAP">SAP</option>
-                  <option value="NDM">NDM</option>
-                  <option value="ICS">ICS</option>
-                  <option value="SMARTVEND">SMARTVEND</option>
-                  <option value="ZIMS">ZIMS</option>
-                  <option value="GIS">GIS</option>
-                  <option value="NET METERING">NET METERING</option>
-                  <option value="DOMAIN/EMAIL">DOMAIN/EMAIL</option>
-                  <option value="CITRIX">CITRIX</option>
-                  <option value="ITSM">ITSM</option>
-                  <option value="SMART METERING">SMART METERING</option>
-                  <option value="STATISTICAL METERING">
-                    STATISTICAL METERING
-                  </option>
-                </select>
-                <p class="mt-1 text-sm text-gray-500">
-                  Select the application this change relates to
-                </p>
-              </div>
+                  <div id="change-description-group">
+                    <label
+                      for="change_description"
+                      class="block text-sm font-medium text-gray-700 mb-2"
+                    >
+                      Change Description <span class="text-red-500">*</span>
+                    </label>
+                    <textarea
+                      name="change_description"
+                      id="change_description"
+                      rows="3"
+                      class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus-border-blue-500"
+                      placeholder="Detailed description of the requested change"
+                    ></textarea>
+                    <p class="mt-1 text-sm text-gray-500">
+                      Mirrors the narrative captured in the official document.
+                    </p>
+                  </div>
+
+                  <div>
+                    <label
+                      for="for_application"
+                      class="block text-sm font-medium text-gray-700 mb-2"
+                    >
+                      Application <span class="text-red-500">*</span>
+                    </label>
+                    <select
+                      id="for_application"
+                      name="for_application"
+                      class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus-border-blue-500"
+                    >
+                      <option value="">Select Application</option>
+                      <option value="BUSINESS EXCELLENCE">
+                        BUSINESS EXCELLENCE
+                      </option>
+                      <option value="SAP">SAP</option>
+                      <option value="NDM">NDM</option>
+                      <option value="ICS">ICS</option>
+                      <option value="SMARTVEND">SMARTVEND</option>
+                      <option value="ZIMS">ZIMS</option>
+                      <option value="GIS">GIS</option>
+                      <option value="NET METERING">NET METERING</option>
+                      <option value="DOMAIN/EMAIL">DOMAIN/EMAIL</option>
+                      <option value="CITRIX">CITRIX</option>
+                      <option value="ITSM">ITSM</option>
+                      <option value="SMART METERING">SMART METERING</option>
+                      <option value="STATISTICAL METERING">
+                        STATISTICAL METERING
+                      </option>
+                    </select>
+                    <p class="mt-1 text-sm text-gray-500">
+                      Select the application this change relates to.
+                    </p>
+                  </div>
+                </div>
+              </section>
             </div>
-
             {% for section in form_sections %}
               {% include section.form_partial %}
 
