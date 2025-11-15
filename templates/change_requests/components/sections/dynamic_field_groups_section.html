@@ -15,7 +15,7 @@
 
   {% if group.key == 'section_b_change_type' %}
     {% with current_type=cr.change_type|default_if_none:'' %}
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
       {% for option in group.options %}
       {% with match_label=option.match|default:option.label %}
       <div class="flex items-start gap-3 p-4 border rounded-lg {% if match_label == current_type %}border-blue-500 bg-blue-50{% else %}border-gray-200 bg-gray-50{% endif %}">

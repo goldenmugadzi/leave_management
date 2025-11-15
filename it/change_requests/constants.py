@@ -361,7 +361,6 @@ VIEW_SECTION_DEFINITIONS = {
         'description': 'Implementation feedback and current status.',
         'fields': [
             {'key': 'overall_status', 'label': 'Overall Status'},
-            {'key': 'roles_actions', 'label': 'Implementation Notes'},
         ]
     },
 }

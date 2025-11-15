@@ -248,10 +248,13 @@ class ChangeRequestService:
             parsed_date_resolution = datetime.strptime(data['date_resolution_required'], "%Y-%m-%d").date()
         
         # Create ProfileChange instance
+        change_type_value = (data.get('change_type') or '').upper()
+        is_delegation = change_type_value in ("TEMPORARY", "TEMPORARY_DELEGATION")
+
         profile_change = ProfileChange(
             user=delegatee,
             application=data.get('for_application'),
-            roles_to_action=data.get('roles_to_action'),
+            roles_to_action="TEMPORARY_DELEGATION" if is_delegation else data.get('roles_to_action'),
             change_date=timezone.now(),
             changed_by=user,
             current_user_id=data.get('mod_current_user_id') or data.get('mod_ec_number') or data.get('current_user_id'),
@@ -262,6 +265,45 @@ class ChangeRequestService:
             status='PENDING'
         )
         profile_change.save()
+
+        if is_delegation:
+            def _normalize_datetime_local(raw_value: Optional[str]) -> Optional[str]:
+                if not raw_value:
+                    return None
+                value = raw_value.strip()
+                if not value:
+                    return None
+                for fmt in ("%Y-%m-%dT%H:%M", "%Y-%m-%d %H:%M"):
+                    try:
+                        return datetime.strptime(value, fmt).strftime("%Y-%m-%dT%H:%M")
+                    except ValueError:
+                        continue
+                try:
+                    parsed = datetime.fromisoformat(value)
+                    return parsed.strftime("%Y-%m-%dT%H:%M")
+                except ValueError:
+                    logger.warning("Unable to normalize delegation datetime '%s'; storing raw value", value)
+                    return value
+
+            delegation_payload = {
+                "type": "DELEGATION",
+                "delegator_id": delegator.id,
+            }
+
+            start_value = _normalize_datetime_local(data.get('delegation_start_date'))
+            if start_value:
+                delegation_payload["start_date"] = start_value
+
+            end_value = _normalize_datetime_local(data.get('delegation_end_date'))
+            if end_value:
+                delegation_payload["end_date"] = end_value
+
+            reason_value = (data.get('delegation_reason') or "").strip()
+            if reason_value:
+                delegation_payload["reason"] = reason_value
+
+            profile_change.roles_actions = json.dumps(delegation_payload)
+            profile_change.save(update_fields=["roles_actions", "roles_to_action"])
         
         # Create ChangeRequest
         cr_id = "CR-" + timezone.now().strftime("%Y%m%d%I%M%S")

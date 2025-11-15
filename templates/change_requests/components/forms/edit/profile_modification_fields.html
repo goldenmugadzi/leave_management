@@ -206,7 +206,7 @@
             type="datetime-local"
             name="delegation_start_date"
             id="delegation_start_date"
-            value="{% if cr.delegation_start_date %}{{ cr.delegation_start_date|date:'Y-m-d\\TH:i' }}{% endif %}"
+            value="{{ cr.delegation_start_date|default_if_none:'' }}"
             class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           />
           <p class="mt-1 text-sm text-gray-500">
@@ -224,7 +224,7 @@
             type="datetime-local"
             name="delegation_end_date"
             id="delegation_end_date"
-            value="{% if cr.delegation_end_date %}{{ cr.delegation_end_date|date:'Y-m-d\\TH:i' }}{% endif %}"
+            value="{{ cr.delegation_end_date|default_if_none:'' }}"
             class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus-border-blue-500"
           />
           <p class="mt-1 text-sm text-gray-500">

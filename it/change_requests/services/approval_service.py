@@ -50,23 +50,65 @@ class ApprovalWorkflow:
             return False
         
         current_step = ApprovalWorkflow.get_current_step(cr)
+        logger.info(
+            f"Evaluating approval permission | CR={cr.cr_id} | user={user.username} | "
+            f"user_role={role} | workflow_step={current_step}"
+        )
         
         if current_step == 'section_head' and role == 'section_head':
             # Check if user is section head for this cost center
             user_role = user.get_user_role_for_application("change_requests")
-            if user_role and user_role.role == 'section_head':
-                user_responsibilities = Responsibilities.objects.filter(
-                    user=user, 
-                    role=user_role
-                ).first()
-                if user_responsibilities and cr.cost_center:
-                    return cr.cost_center in user_responsibilities.cost_centers.all()
+            if not user_role or user_role.role != 'section_head':
+                logger.warning(
+                    f"Approval denied | CR={cr.cr_id} | user={user.username} | "
+                    f"reason=missing_or_mismatched_section_head_role"
+                )
+                return False
+            
+            user_responsibilities = Responsibilities.objects.filter(
+                user=user, 
+                role=user_role
+            ).first()
+            
+            if not user_responsibilities:
+                logger.warning(
+                    f"Approval denied | CR={cr.cr_id} | user={user.username} | "
+                    f"reason=no_responsibilities_record"
+                )
+                return False
+            
+            if not cr.cost_center:
+                logger.warning(
+                    f"Approval denied | CR={cr.cr_id} | user={user.username} | "
+                    f"reason=cr_missing_cost_center"
+                )
+                return False
+            
+            if cr.cost_center in user_responsibilities.cost_centers.all():
+                return True
+            
+            logger.warning(
+                f"Approval denied | CR={cr.cr_id} | user={user.username} | "
+                f"reason=cost_center_mismatch | cr_cost_center={cr.cost_center_id}"
+            )
+            return False
         
         elif current_step == 'it_section_head' and role == 'it_section_head':
             # Check if user is IT section head
             user_role = user.get_user_role_for_application("change_requests")
-            return user_role and user_role.role == 'it_section_head'
+            if user_role and user_role.role == 'it_section_head':
+                return True
+            
+            logger.warning(
+                f"Approval denied | CR={cr.cr_id} | user={user.username} | "
+                f"reason=missing_or_mismatched_it_section_head_role"
+            )
+            return False
         
+        logger.warning(
+            f"Approval denied | CR={cr.cr_id} | user={user.username} | "
+            f"reason=workflow_step_role_mismatch | workflow_step={current_step} | user_role={role}"
+        )
         return False
     
     @staticmethod
@@ -185,6 +227,9 @@ class ApprovalService:
         try:
             user_role_obj = user.get_user_role_for_application("change_requests")
             if not user_role_obj:
+                logger.warning(
+                    f"Approval attempt without role | CR={cr.cr_id} | user={user.username}"
+                )
                 return False, "Error. Please check your Change Request role"
             
             user_role = user_role_obj.role

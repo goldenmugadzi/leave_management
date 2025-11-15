@@ -1697,6 +1697,8 @@ def update_change_request(request):
                         "sections": Sections.objects.all(),
                         "districts": Districts.objects.all(),
                         "regions": Regions.objects.all(),
+                        "company_cost_centers": CostCenter.objects.filter(id__in=COMPANY_ROOT_IDS).order_by('name'),
+                        "cost_centers": CostCenter.objects.all(),
                         "user_title": request.user.get_full_name(),
                         "user_groups": list(request.user.groups.values_list('name', flat=True)),
                         "cr": cr,
@@ -1779,21 +1781,36 @@ def update_change_request(request):
                 try:
                     import json
                     data = json.loads(profile_change.roles_actions)
-                    
-                    # Extract dates in format suitable for datetime-local input (YYYY-MM-DDTHH:MM)
+
+                    def normalize_datetime_local(value):
+                        if not value:
+                            return ""
+                        value = value.strip()
+                        if not value:
+                            return ""
+                        try:
+                            parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+                            return parsed.strftime("%Y-%m-%dT%H:%M")
+                        except ValueError:
+                            pass
+                        for fmt in ("%Y-%m-%dT%H:%M", "%Y-%m-%d %H:%M", "%Y-%m-%dT%H:%M:%S", "%Y-%m-%d %H:%M:%S"):
+                            try:
+                                return datetime.strptime(value, fmt).strftime("%Y-%m-%dT%H:%M")
+                            except ValueError:
+                                continue
+                        return value
+
                     start_date_raw = data.get('start_date', '')
                     end_date_raw = data.get('end_date', '')
-                    
+
                     if start_date_raw:
-                        # Convert to datetime-local format if needed
-                        # Expected format: "2025-11-06T13:24" (already in datetime-local format)
-                        delegation_start_date = start_date_raw
-                    
+                        delegation_start_date = normalize_datetime_local(start_date_raw)
+
                     if end_date_raw:
-                        delegation_end_date = end_date_raw
-                    
+                        delegation_end_date = normalize_datetime_local(end_date_raw)
+
                     delegation_reason = data.get('reason', '')
-                    
+
                     print(f"DEBUG: Extracted delegation dates - Start: {delegation_start_date}, End: {delegation_end_date}")
                 except (json.JSONDecodeError, Exception) as e:
                     print(f"DEBUG: Error parsing delegation dates: {e}")
