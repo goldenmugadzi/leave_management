@@ -28,149 +28,115 @@
               
               <div class="p-6 space-y-6">
                 <!-- Section A – Change Request Originator -->
-                <div class="border border-gray-200 rounded-md p-4">
+                <section class="border-t border-gray-200 pt-6">
                   <div class="flex items-center justify-between mb-4">
-                    <h4 class="text-base font-semibold text-gray-900">Section A – Change Request Originator</h4>
-                    <span class="text-xs text-gray-500">Legacy layout</span>
+                    <h4 class="text-lg font-semibold text-gray-900">
+                      Section A - Change Request Originator
+                    </h4>
+                    <p class="text-sm text-gray-500">
+                      Matches Section A on the IT Change Request form.
+                    </p>
                   </div>
-                  <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-                    <div>
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="mb-6">
                       <label for="originator_company" class="block text-sm font-medium text-gray-700 mb-2">
-                        Originator Company <span class="text-red-500">*</span>
+                        Company <span class="text-red-500">*</span>
                       </label>
                       <input
                         type="text"
-                        id="originator_company"
                         name="originator_company"
-                        value="{{cr.originator_company|default_if_none:''}}"
-                        required
+                        id="originator_company"
+                        value="{{ cr.originator_company|default_if_none:'' }}"
                         class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="Enter the company of the change request originator"
                       />
+                      <p class="mt-1 text-sm text-gray-500">
+                        Typically reflects your business unit; edit if the requester differs.
+                      </p>
                     </div>
-                    <div>
+                    <div class="mb-6">
                       <label for="originator_site" class="block text-sm font-medium text-gray-700 mb-2">
-                        Originator Site <span class="text-red-500">*</span>
+                        Site / Location <span class="text-red-500">*</span>
                       </label>
                       <input
                         type="text"
-                        id="originator_site"
                         name="originator_site"
-                        value="{{cr.originator_site|default_if_none:''}}"
-                        required
+                        id="originator_site"
+                        value="{{ cr.originator_site|default_if_none:'' }}"
                         class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus-border-blue-500"
+                        placeholder="Enter the site or location for this request"
                       />
+                      <p class="mt-1 text-sm text-gray-500">
+                        Prefilled with your location; adjust when submitting on behalf of another site.
+                      </p>
                     </div>
-                    <div>
+                    <div class="mb-6">
+                      <label for="originator_name_display" class="block text-sm font-medium text-gray-700 mb-2">
+                        Originator
+                      </label>
+                      <input
+                        type="text"
+                        id="originator_name_display"
+                        value="{{ cr.created_by|default:request.user.get_full_name }}"
+                        readonly
+                        class="block w-full border border-gray-200 bg-gray-50 rounded-md px-3 py-2 text-gray-900"
+                      />
+                      <p class="mt-1 text-sm text-gray-500">
+                        Taken from the original requester; override in correspondence if needed.
+                      </p>
+                    </div>
+                    <div class="mb-6">
+                      <label for="originator_designation_display" class="block text-sm font-medium text-gray-700 mb-2">
+                        Designation
+                      </label>
+                      <input
+                        type="text"
+                        id="originator_designation_display"
+                        value="{{ cr.creator_designation|default_if_none:'Not provided' }}"
+                        readonly
+                        class="block w-full border border-gray-200 bg-gray-50 rounded-md px-3 py-2 text-gray-900"
+                      />
+                      <p class="mt-1 text-sm text-gray-500">
+                        Shown for reference; approvals capture the official authorisation.
+                      </p>
+                    </div>
+                    <div class="mb-6">
+                      <label for="date_raised_display" class="block text-sm font-medium text-gray-700 mb-2">
+                        Date Raised
+                      </label>
+                      <input
+                        type="text"
+                        id="date_raised_display"
+                        value="{{ cr.created_at|date:'Y-m-d' }}"
+                        readonly
+                        class="block w-full border border-gray-200 bg-gray-50 rounded-md px-3 py-2 text-gray-900"
+                      />
+                      <p class="mt-1 text-sm text-gray-500">
+                        Original submission date (read-only).
+                      </p>
+                    </div>
+                    <div class="mb-6">
                       <label for="date_resolution_required" class="block text-sm font-medium text-gray-700 mb-2">
                         Date Resolution Required <span class="text-red-500">*</span>
                       </label>
                       <input
                         type="date"
-                        id="date_resolution_required"
                         name="date_resolution_required"
-                        value="{{cr.date_resolution_required|date:'Y-m-d'}}"
-                        required
+                        id="date_resolution_required"
+                        value="{{ cr.date_resolution_required|date:'Y-m-d' }}"
                         class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus-border-blue-500"
                       />
+                      <p class="mt-1 text-sm text-gray-500">
+                        Provide the required completion date for this change.
+                      </p>
                     </div>
                   </div>
+                </section>
 
-                  <div class="mb-6">
-                    <label for="change_reason" class="block text-sm font-medium text-gray-700 mb-2">
-                      Reason for Change <span class="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      id="change_reason"
-                      name="change_reason"
-                      value="{{cr.change_reason}}"
-                      required
-                      class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    />
-                    <p class="mt-1 text-sm text-gray-500">
-                      Brief description of why this change is needed
-                    </p>
-                  </div>
 
-                  <div class="mb-6">
-                    <label for="change_description" class="block text-sm font-medium text-gray-700 mb-2">
-                      Change Description <span class="text-red-500">*</span>
-                    </label>
-                    <textarea
-                      id="change_description"
-                      name="change_description"
-                      rows="3"
-                      required
-                      class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      placeholder="Detailed description of the requested change"
-                    >{{cr.change_description}}</textarea>
-                    <p class="mt-1 text-sm text-gray-500">
-                      Provide detailed information about the change
-                    </p>
-                  </div>
-
-                  <div class="mb-6">
-                    <label for="for_application" class="block text-sm font-medium text-gray-700 mb-2">
-                      Application <span class="text-red-500">*</span>
-                    </label>
-                    <select
-                      id="for_application"
-                      name="application"
-                      required
-                      class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    >
-                      <option value="">Select Application</option>
-                      <option value="BUSINESS EXCELLENCE" {% if cr.application == "BUSINESS EXCELLENCE" %}selected{% endif %}>BUSINESS EXCELLENCE</option>
-                      <option value="SAP" {% if cr.application == "SAP" %}selected{% endif %}>SAP</option>
-                      <option value="NDM" {% if cr.application == "NDM" %}selected{% endif %}>NDM</option>
-                      <option value="ICS" {% if cr.application == "ICS" %}selected{% endif %}>ICS</option>
-                      <option value="SMARTVEND" {% if cr.application == "SMARTVEND" %}selected{% endif %}>SMARTVEND</option>
-                      <option value="ZIMS" {% if cr.application == "ZIMS" %}selected{% endif %}>ZIMS</option>
-                      <option value="GIS" {% if cr.application == "GIS" %}selected{% endif %}>GIS</option>
-                      <option value="NET METERING" {% if cr.application == "NET METERING" %}selected{% endif %}>NET METERING</option>
-                      <option value="DOMAIN/EMAIL" {% if cr.application == "DOMAIN/EMAIL" %}selected{% endif %}>DOMAIN/EMAIL</option>
-                      <option value="CITRIX" {% if cr.application == "CITRIX" %}selected{% endif %}>CITRIX</option>
-                      <option value="ITSM" {% if cr.application == "ITSM" %}selected{% endif %}>ITSM</option>
-                      <option value="SMART METERING" {% if cr.application == "SMART METERING" %}selected{% endif %}>SMART METERING</option>
-                      <option value="STATISTICAL METERING" {% if cr.application == "STATISTICAL METERING" %}selected{% endif %}>STATISTICAL METERING</option>
-                    </select>
-                    <p class="mt-1 text-sm text-gray-500">
-                      Select the application this change relates to
-                    </p>
-                  </div>
-                </div>
-
-                <!-- Section E – Deactivation Details -->
-                <div class="border border-gray-200 rounded-md p-4">
-                  <div class="flex items-center justify-between mb-4">
-                    <h4 class="text-base font-semibold text-gray-900">Section E – Deactivation Details</h4>
-                    <span class="text-xs text-gray-500">Review user and deactivation data</span>
-                  </div>
-
-                  {% if cr_type_schema %}
-                    {% for group in cr_type_schema.view_sections %}
-                      {% if group.key != 'section_a' and group.key != 'section_f_creator' and group.key != 'section_g_status' %}
-                        {% if group.source == 'user' %}
-                          {% with data=cr.user %}
-                            {% include 'change_requests/components/sections/dynamic_field_groups_section.html' with group=group data=data %}
-                          {% endwith %}
-                        {% elif group.source == 'delegation_info' %}
-                          {% with data=cr.delegation_info %}
-                            {% include 'change_requests/components/sections/dynamic_field_groups_section.html' with group=group data=data %}
-                          {% endwith %}
-                        {% else %}
-                          {% with data=cr %}
-                            {% include 'change_requests/components/sections/dynamic_field_groups_section.html' with group=group data=data %}
-                          {% endwith %}
-                        {% endif %}
-                      {% endif %}
-                    {% endfor %}
-                  {% endif %}
-
-                  {% if cr_type_schema.edit_partial %}
-                    {% include cr_type_schema.edit_partial %}
-                  {% endif %}
-                </div>
+                {% if cr_type_schema and cr_type_schema.edit_partial %}
+                  {% include cr_type_schema.edit_partial %}
+                {% endif %}
 
 <!-- Action Buttons -->
               <div class="flex justify-between px-6 py-4 border-t border-gray-200 bg-gray-50">
