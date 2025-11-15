@@ -547,6 +547,10 @@ def uploaded_jobs_view(request):
     """
     Unified dashboard view for all competence documents.
     """
+    category_filter = request.GET.get("category", "").strip()
+    subcategory_filter = request.GET.get("subcategory", "").strip()
+    region_filter = request.GET.get("region", "").strip()
+
     documents = (
         Document.objects.select_related("category", "subcategory", "region", "created_by")
         .all()
@@ -562,6 +566,11 @@ def uploaded_jobs_view(request):
         "totals": dashboard_data["totals"],
         "page": "competence_index",
         "default_status": "all",
+        "default_filters": {
+            "category": category_filter,
+            "subcategory": subcategory_filter,
+            "region": region_filter,
+        },
     }
 
     return render(request, "competence_building/competence_index.html", context)
@@ -586,6 +595,11 @@ def archived_documents(request):
         "totals": dashboard_data["totals"],
         "page": "archived",
         "default_status": "archived",
+        "default_filters": {
+            "category": request.GET.get("category", "").strip(),
+            "subcategory": request.GET.get("subcategory", "").strip(),
+            "region": request.GET.get("region", "").strip(),
+        },
     }
 
     return render(request, "competence_building/competence_index.html", context)

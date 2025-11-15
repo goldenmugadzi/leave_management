@@ -150,9 +150,11 @@
 {% block scripts %}
 <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
 <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+{{ default_filters|json_script:"cb-default-filters" }}
 <script>
   const documentsData = JSON.parse("{{ documents_json|escapejs }}");
   const defaultStatusFilter = "{{ default_status|default:'all' }}";
+  const defaultFilters = JSON.parse(document.getElementById("cb-default-filters").textContent || "{}");
 
   $(document).ready(function () {
     const COLUMN_INDEXES = {
@@ -285,6 +287,21 @@
 
     // Initialize with default status
     setStatusFilter(defaultStatusFilter);
+
+    // Apply default filters if provided via query params
+    if (defaultFilters.category) {
+      $("#filter_category").val(defaultFilters.category);
+    }
+    if (defaultFilters.subcategory) {
+      $("#filter_subcategory").val(defaultFilters.subcategory);
+    }
+    if (defaultFilters.region) {
+      $("#filter_region").val(defaultFilters.region);
+    }
+
+    if (defaultFilters.category || defaultFilters.subcategory || defaultFilters.region) {
+      applyFilters();
+    }
   });
 </script>
 {% endblock scripts %}
