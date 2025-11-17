@@ -1,0 +1,59 @@
+{% load custom_filters %}
+{% if data %}
+<section class="border border-gray-200 rounded-xl p-6 bg-white shadow-sm space-y-4">
+  <div class="flex flex-col gap-1">
+    {% if group.section_label %}
+    <p class="text-sm font-semibold text-indigo-600 tracking-wide uppercase">
+      Section {{ group.section_label }}
+    </p>
+    {% endif %}
+    <h4 class="text-lg font-semibold text-gray-900">{{ group.title }}</h4>
+    {% if group.description %}
+    <p class="text-sm text-gray-600">{{ group.description }}</p>
+    {% endif %}
+  </div>
+
+  {% if group.key == 'section_b_change_type' %}
+    {% with current_type=cr.change_type|default_if_none:'' %}
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {% for option in group.options %}
+      {% with match_label=option.match|default:option.label %}
+      <div class="flex items-start gap-3 p-4 border rounded-lg {% if match_label == current_type %}border-blue-500 bg-blue-50{% else %}border-gray-200 bg-gray-50{% endif %}">
+        <div class="w-5 h-5 flex items-center justify-center rounded border {% if match_label == current_type %}bg-blue-600 border-blue-600 text-white{% else %}border-gray-300 text-gray-400{% endif %}">
+          {% if match_label == current_type %}
+          <i class="fas fa-check text-xs"></i>
+          {% endif %}
+        </div>
+        <div>
+          <p class="text-sm font-semibold text-gray-900">{{ option.label }}</p>
+          {% if option.description %}
+          <p class="text-xs text-gray-600 mt-1">{{ option.description }}</p>
+          {% endif %}
+        </div>
+      </div>
+      {% endwith %}
+      {% endfor %}
+    </div>
+    {% endwith %}
+  {% else %}
+    <div class="grid grid-cols-1 md:grid-cols-{{ group.columns|default:2 }} gap-6">
+      {% for field in group.fields %}
+        {% if field.key %}
+          {% with field_key=field.key field_label=field.label|default:field.key|humanize_key %}
+            {% with field_value=data|get_value:field_key %}
+              {% include 'change_requests/components/forms/display_field.html' with label=field_label value=field_value help_text=field.help_text %}
+            {% endwith %}
+          {% endwith %}
+        {% else %}
+          {% with field_key=field field_label=field|humanize_key %}
+            {% with field_value=data|get_value:field_key %}
+              {% include 'change_requests/components/forms/display_field.html' with label=field_label value=field_value %}
+            {% endwith %}
+          {% endwith %}
+        {% endif %}
+      {% endfor %}
+    </div>
+  {% endif %}
+</section>
+{% endif %}
+

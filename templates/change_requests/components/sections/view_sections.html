@@ -1,0 +1,20 @@
+{% if schema %}
+  {% if schema.view_sections %}
+    {% for group in schema.view_sections %}
+      {% if group.source == 'user' %}
+        {% with data=cr.user %}
+          {% include 'change_requests/components/sections/dynamic_field_groups_section.html' with group=group data=data %}
+        {% endwith %}
+      {% elif group.source == 'delegation_info' %}
+        {% with data=cr.delegation_info %}
+          {% include 'change_requests/components/sections/dynamic_field_groups_section.html' with group=group data=data %}
+        {% endwith %}
+      {% else %}
+        {% with data=cr %}
+          {% include 'change_requests/components/sections/dynamic_field_groups_section.html' with group=group data=data %}
+        {% endwith %}
+      {% endif %}
+    {% endfor %}
+  {% endif %}
+{% endif %}
+

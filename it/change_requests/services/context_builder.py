@@ -9,6 +9,11 @@ from typing import Dict, Any
 from django.db.models import Q
 
 from it.change_requests.models import ChangeRequest
+from it.change_requests.constants import (
+    CR_TYPE_CONFIG,
+    CR_TYPE_NAME_MAP,
+    VIEW_SECTION_DEFINITIONS,
+)
 from it.users.models import (
     UserProfile, Application, Designations, 
     Sections, Districts, Regions
@@ -54,6 +59,7 @@ class ContextBuilder:
         Build the standardized CR context dict.
         This is used in all templates to display CR information.
         """
+        schema = ContextBuilder.get_cr_type_schema(cr.change_type)
         context = {
             "user": profile_data,
             "cr_id": cr.cr_id,
@@ -64,6 +70,12 @@ class ContextBuilder:
             "creator_designation": cr.creator_designation.description if cr.creator_designation else "",
             "created_at": cr.created_at,
             "change_type": cr.change_type,
+            "originator_company": cr.originator_company,
+            "originator_site": cr.originator_site,
+            "date_resolution_required": cr.date_resolution_required,
+            "cr_type_schema": schema,
+            "overall_status": getattr(cr, "overall_status", ""),
+            "roles_actions": profile_data.get("roles_actions"),
         }
         
         return context
@@ -84,4 +96,33 @@ class ContextBuilder:
         })
         
         return context
+
+    @staticmethod
+    def get_cr_type_schema(change_type: str) -> Dict[str, Any]:
+        """
+        Resolve the CR type configuration based on the persisted change_type label.
+        Falls back to an empty dict when the change type is unknown.
+        """
+        if not change_type:
+            return {}
+        
+        config_key = CR_TYPE_NAME_MAP.get(change_type, change_type)
+        config = CR_TYPE_CONFIG.get(config_key)
+        if not config:
+            return {}
+        
+        # Return a shallow copy enriched with the resolved key for template logic
+        schema = dict(config)
+        schema['key'] = config_key
+        
+        view_sections = []
+        for section_key in config.get('view_sections', []):
+            definition = VIEW_SECTION_DEFINITIONS.get(section_key)
+            if definition:
+                section = dict(definition)
+                section['key'] = section_key
+                view_sections.append(section)
+        schema['view_sections'] = view_sections
+        
+        return schema
 

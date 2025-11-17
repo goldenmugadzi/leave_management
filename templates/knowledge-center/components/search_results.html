@@ -1,0 +1,29 @@
+{% if query %}
+  {% if results %}
+  <ul class="py-2 space-y-1">
+    {% for folder in results %}
+    <li>
+      <button
+        type="button"
+        class="w-full text-left px-2 py-1 rounded hover:bg-indigo-50 text-gray-700"
+        data-folder-target="{{ folder.id }}"
+        hx-get="{% url 'kc_folder_content' folder.id %}"
+        hx-target="#kc-content"
+        hx-swap="innerHTML"
+        hx-indicator="#kc-content-loader"
+      >
+        <span class="font-semibold text-sm">{{ folder.name }}</span>
+        <span class="text-xs text-gray-500 block">
+          {{ folder.parent.name|default:"Root" }}
+        </span>
+      </button>
+    </li>
+    {% endfor %}
+  </ul>
+  {% else %}
+  <p class="py-2 text-xs text-gray-400">No folders found for “{{ query }}”.</p>
+  {% endif %}
+{% else %}
+  <p class="py-2 text-xs text-gray-400">Type to search folders by name.</p>
+{% endif %}
+

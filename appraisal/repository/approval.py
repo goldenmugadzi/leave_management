@@ -40,3 +40,23 @@ class AppraisalApprovalWorkFlowQuarterRepository:
             )
         except Exception as e:
             raise Exception(f"[AppraisalApprovalWorkFlowQuarterRepository] create repo with appraisal_workflow pk: {appraisal_workflow_obj.id}, failed with error: {e}")
+
+    def get_by_approval_workflow_quarter_id(self, appraisal_workflow_id: int, quarter_id: int)->AppraisalApprovalWorkFlowQuarter:
+        try:
+            qr = AppraisalApprovalWorkFlowQuarter.objects.filter(appraisal_workflow__id=appraisal_workflow_id, year_quarter__id=quarter_id)
+            return qr.first()
+        except Exception as e:
+            raise Exception(f"[AppraisalApprovalWorkFlowQuarterRepository] get_by_approval_workflow_quarter_id repo with appraisal_workflow pk: {appraisal_workflow_id} and year quarter id: {quarter_id}, failed with error: {e}")
+
+    def approved_stage_completed(self, quarterly_appraisal_workflow_obj: AppraisalApprovalWorkFlowQuarter, is_complete: bool)->AppraisalApprovalWorkFlowQuarter:
+        try:
+            is_changed = False
+            if quarterly_appraisal_workflow_obj.is_complete != is_complete:
+                quarterly_appraisal_workflow_obj.is_complete = is_complete
+                is_changed = True
+            
+            if is_changed:
+                quarterly_appraisal_workflow_obj.save()
+            return quarterly_appraisal_workflow_obj
+        except Exception as e:
+            raise Exception(f"[AppraisalApprovalWorkFlowQuarterRepository] approved_stage_completed repo with appraisal_workflow_quarter pk: {quarterly_appraisal_workflow_obj.id}, failed with error: {e}")

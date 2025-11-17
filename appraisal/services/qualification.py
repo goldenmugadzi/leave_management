@@ -149,7 +149,6 @@ class UserQualificationService:
                 
                 if grade_col:
                     grade_value = row[grade_col]
-                    
                     if pd.notna(grade_value):
                         grade_type = None
                         if "A"  in grade_value or "B" in grade_value:

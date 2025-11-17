@@ -33,7 +33,6 @@ urlpatterns = [
     path('restore_change_request', views.restore_change_request, name='restore_change_request'),
     path('bulk_delete_change_requests', views.bulk_delete_change_requests, name='bulk_delete_change_requests'),
     path('get_delegation_roles', views.get_delegation_roles, name='get_delegation_roles'),
-    path('get_delegator_roles_by_app', views.get_delegator_roles_by_app, name='get_delegator_roles_by_app'),
     path('api/cost_centers/', views.api_cost_centers, name='api_cost_centers'),
     path('api/applications/', views.api_applications, name='api_applications'),
     

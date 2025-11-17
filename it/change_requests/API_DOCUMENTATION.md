@@ -84,6 +84,9 @@ The API uses Django's message framework for user feedback and standard HTTP stat
 {
     "change_reason": "string (required, max 500 chars)",
     "change_description": "string (required, max 1000 chars)",
+    "originator_company": "string (required)",
+    "originator_site": "string (required)",
+    "date_resolution_required": "string (required, YYYY-MM-DD)",
     "username": "string (required, max 15 chars)",
     "first_name": "string (required, max 100 chars)",
     "last_name": "string (required, max 100 chars)",
@@ -91,12 +94,23 @@ The API uses Django's message framework for user feedback and standard HTTP stat
     "designation": "integer (designation ID)",
     "cost_center": "integer (cost center ID)",
     "for_application": "integer (application ID)",
-    "roles_to_action": "string (max 300 chars)"
+    "roles_to_action": "string (max 300 chars)",
+    "np_ec_number": "string (required)",
+    "np_job_title": "string (optional — auto-filled from designation when omitted)",
+    "np_company": "string (required, top-level cost center ID)",
+    "np_sub_module": "string (optional)",
+    "np_depot_office": "string (optional)",
+    "np_training_date": "string (optional, YYYY-MM-DD)",
+    "np_training_confirmation_link": "string (optional, URL)",
+    "np_training_confirmation_notes": "string (optional, additional context)",
+    "np_training_confirmation_attachment": "file (optional, supporting document)"
 }
 ```
 
 **Validation**:
 - All required fields must be provided
+- Originator metadata must be supplied (company, site, date required)
+- EC number and company values must be specified for new profile
 - Username must be unique
 - Email must be valid format
 - Field lengths must not exceed limits
@@ -210,12 +224,29 @@ The API uses Django's message framework for user feedback and standard HTTP stat
 **Request Parameters**:
 ```json
 {
-    "change_reason": "string (required)",
-    "change_description": "string (required)",
-    "user_profile": "string (username, required)",
+    "change_reason": "string (optional — auto-derived from role notes when omitted)",
+    "change_description": "string (optional — auto-derived from role notes when omitted)",
+    "originator_company": "string (required)",
+    "originator_site": "string (required)",
+    "date_resolution_required": "string (required, YYYY-MM-DD)",
+    "change_type": "string (required, PERMANENT|TEMPORARY_DELEGATION)",
     "for_application": "string (required)",
-    "roles_to_action": "string (optional)",
-    "roles_actions": "string (optional)"
+    "user_profile": "string (required when change_type=PERMANENT)",
+    "delegator": "string (required when change_type=TEMPORARY_DELEGATION)",
+    "delegatee": "string (required when change_type=TEMPORARY_DELEGATION)",
+    "mod_current_user_id": "string (optional, auto-filled from EC number)",
+    "mod_ec_number": "string (required)",
+    "mod_include_assign": "boolean (optional, defaults true)",
+    "mod_roles_to_assign": "string (optional, describe roles/access to add)",
+    "mod_reason_assign": "string (required when mod_roles_to_assign is provided)",
+    "mod_include_remove": "boolean (optional, defaults true)",
+    "mod_roles_to_remove": "string (optional, describe roles/access to revoke)",
+    "mod_reason_remove": "string (required when mod_roles_to_remove is provided)",
+    "mod_correspondence_link": "string (optional, URL)",
+    "roles": "array[string] (optional, role IDs to assign — temporary delegation only)",
+    "delegation_start_date": "string (required when change_type=TEMPORARY_DELEGATION, YYYY-MM-DDTHH:MM)",
+    "delegation_end_date": "string (required when change_type=TEMPORARY_DELEGATION, YYYY-MM-DDTHH:MM)",
+    "delegation_reason": "string (required when change_type=TEMPORARY_DELEGATION)"
 }
 ```
 
@@ -233,8 +264,17 @@ The API uses Django's message framework for user feedback and standard HTTP stat
 {
     "change_reason": "string (required)",
     "change_description": "string (required)",
+    "originator_company": "string (required)",
+    "originator_site": "string (required)",
+    "date_resolution_required": "string (required, YYYY-MM-DD)",
     "user_profile": "string (username, required)",
-    "application": "string (required)"
+    "for_application": "string (required)",
+    "deactivation_effective_start": "string (required, YYYY-MM-DDTHH:MM)",
+    "deactivation_reactivation_date": "string (optional, YYYY-MM-DDTHH:MM)",
+    "deactivation_reason": "string (required)",
+    "deactivation_correspondence_link": "string (optional, URL)",
+    "deactivation_correspondence_notes": "string (optional, supporting narrative)",
+    "deactivation_correspondence_attachment": "file (optional, supporting document)"
 }
 ```
 
@@ -471,6 +511,9 @@ The API uses Django's message framework for user feedback and standard HTTP stat
 - `profile_deactivation`: ForeignKey to ProfileDeactivation (optional)
 - `change_description`: TextField (optional)
 - `change_reason`: TextField (optional)
+- `originator_company`: CharField (optional)
+- `originator_site`: CharField (optional)
+- `date_resolution_required`: DateField (optional)
 - `creator_designation`: ForeignKey to Designations
 - `created_by`: ForeignKey to UserProfile
 - `region`: ForeignKey to Regions
@@ -488,13 +531,20 @@ The API uses Django's message framework for user feedback and standard HTTP stat
 
 **Fields**:
 - `username`: CharField (max_length=15, optional)
+- `ec_number`: CharField (optional)
 - `first_name`: CharField (max_length=100, optional)
 - `last_name`: CharField (max_length=100, optional)
 - `email`: EmailField (max_length=100, optional)
+- `job_title`: CharField (optional)
+- `company`: CharField (optional)
 - `designation`: ForeignKey to Designations (optional)
 - `section`: ForeignKey to Sections (optional)
 - `cost_center`: ForeignKey to CostCenter (optional)
 - `district`: ForeignKey to Districts (optional)
+- `depot_office`: CharField (optional)
+- `sub_module`: CharField (optional)
+- `training_date`: DateField (optional)
+- `training_confirmation_link`: URLField (optional)
 - `roles_to_action`: CharField (max_length=300, optional)
 - `roles_actions`: CharField (max_length=300, optional)
 - `roles`: ManyToManyField to Roles
@@ -542,6 +592,9 @@ The API uses Django's message framework for user feedback and standard HTTP stat
 const formData = new FormData();
 formData.append('change_reason', 'New employee onboarding');
 formData.append('change_description', 'Creating account for new team member');
+formData.append('originator_company', 'ZETDC');
+formData.append('originator_site', 'Harare Region');
+formData.append('date_resolution_required', '2025-12-31');
 formData.append('username', 'newemployee');
 formData.append('first_name', 'John');
 formData.append('last_name', 'Doe');
@@ -550,6 +603,11 @@ formData.append('designation', '1');
 formData.append('cost_center', '1');
 formData.append('for_application', '1');
 formData.append('roles_to_action', 'Add basic user role');
+formData.append('np_ec_number', '1234567');
+formData.append('np_job_title', 'Analyst');
+formData.append('np_company', 'ZETDC');
+formData.append('np_training_date', '2025-11-01');
+formData.append('np_training_confirmation_link', 'https://example.com/training-proof');
 
 fetch('/change_requests/create_new_profile', {
     method: 'POST',

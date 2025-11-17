@@ -36,27 +36,15 @@
               <input type="hidden" name="actionButton" id="actionButton" />
               
               <div class="p-6 space-y-6">
-                <!-- Common Request Information -->
-                {% include 'change_requests/components/sections/request_info.html' %}
+                <!-- Unified View Sections -->
+                {% include 'change_requests/components/sections/view_sections.html' with schema=cr.cr_type_schema %}
                 
-                <!-- Type-specific Profile Data -->
-                {% if cr.change_type == 'New Profile' %}
-                  {% include 'change_requests/components/sections/new_profile_details.html' %}
-                {% elif cr.change_type == 'Profile Modification' or cr.change_type == 'Temporary Role Delegation' %}
-                  {% include 'change_requests/components/sections/profile_modification_details.html' %}
-                {% elif cr.change_type == 'Profile Deactivation' %}
-                  {% include 'change_requests/components/sections/profile_deactivation_details.html' %}
-                {% endif %}
-                
-                <!-- Creator Information (common for all) -->
-                <div class="border-t border-gray-200 pt-6">
-                  <h4 class="text-base font-semibold text-gray-900 mb-4">Creator Information</h4>
-                  <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    {% include 'change_requests/components/forms/display_field.html' with label="Creator" value=cr.created_by %}
-                    {% include 'change_requests/components/forms/display_field.html' with label="Creator Designation" value=cr.creator_designation %}
-                    {% include 'change_requests/components/forms/display_field.html' with label="Date Created" value=cr.created_at %}
-                  </div>
-                </div>
+                <!-- Type-specific Interactive Controls -->
+                {% with schema=cr.cr_type_schema %}
+                  {% if schema.view_template %}
+                    {% include schema.view_template %}
+                  {% endif %}
+                {% endwith %}
                 
                 <!-- Approval History -->
                 {% include 'change_requests/components/sections/approval_history.html' %}
@@ -159,30 +147,79 @@
 {% endblock content %}
 
 {% block scripts %}
+{% if cr_logging_payload %}
+  {{ cr_logging_payload|json_script:"cr-logging-data" }}
+{% else %}
+  <script type="application/json" id="cr-logging-data">{}</script>
+{% endif %}
+<script>
+  (function () {
+    const payloadEl = document.getElementById("cr-logging-data");
+    let payload = {};
+    if (payloadEl) {
+      try {
+        payload = JSON.parse(payloadEl.textContent);
+        window.__CR_VIEW_META__ = payload;
+        console.groupCollapsed("[CR View] Bootstrap");
+        console.table(payload);
+        console.groupEnd();
+      } catch (err) {
+        console.warn("[CR View] Unable to parse logging payload", err);
+      }
+    }
+    const clientMeta = {
+      userAgent: navigator.userAgent,
+      viewport: `${window.innerWidth}x${window.innerHeight}`,
+      timestamp: new Date().toISOString(),
+    };
+    console.info("[CR View] Client meta", clientMeta);
+
+    window.addEventListener("error", function (event) {
+      console.error("[CR View] Global error", {
+        message: event.message,
+        filename: event.filename,
+        lineno: event.lineno,
+        colno: event.colno,
+      });
+    });
+
+    window.addEventListener("unhandledrejection", function (event) {
+      console.error("[CR View] Unhandled rejection", event.reason);
+    });
+
+    function logAction(label, data) {
+      console.info(`[CR View] ${label}`, data || {});
+    }
+
+    window.CRViewLog = { logAction };
+    logAction("Page ready");
+  })();
+</script>
 <script>
   $(document).ready(function () {
     // === MODAL SHOW/HIDE HANDLERS ===
     
     // Show Approve Modal
     $("#btnApprove").on("click", function () {
-      console.log("Approve button clicked - showing modal");
+      if (window.CRViewLog) { window.CRViewLog.logAction("Approve button clicked"); }
       $("#modalApprove").fadeIn(200);
     });
     
     // Show Reject Modal (for both section head and IT)
     $("#btnReject, #btnRejectIT").on("click", function () {
-      console.log("Reject button clicked - showing modal");
+      if (window.CRViewLog) { window.CRViewLog.logAction("Reject button clicked"); }
       $("#modalReject").fadeIn(200);
     });
     
     // Show Apply Modal (for IT section head)
     $("#btnApply").on("click", function () {
-      console.log("Apply button clicked - showing modal");
+      if (window.CRViewLog) { window.CRViewLog.logAction("Apply button clicked"); }
       $("#modalApply").fadeIn(200);
     });
     
     // Show Archive Modal
     $("#btnArchive").on("click", function () {
+      if (window.CRViewLog) { window.CRViewLog.logAction("Archive button clicked"); }
       $("#modalArchive").fadeIn(200);
     });
     
@@ -218,7 +255,7 @@
     // Handle approve confirmation
     $("#confirmApprove").on("click", function (e) {
       e.preventDefault();
-      console.log("Approve confirmed - submitting form");
+      if (window.CRViewLog) { window.CRViewLog.logAction("Approve confirmed"); }
       
       // Disable button
       $(this).prop('disabled', true).text('Processing...');
@@ -237,10 +274,11 @@
       const reason = $("#modalRejectReason").val();
       if (!reason || reason.trim() === "") {
         alert("Please provide a reason for rejection");
+        if (window.CRViewLog) { window.CRViewLog.logAction("Reject blocked - missing reason"); }
         return;
       }
       
-      console.log("Reject confirmed with reason:", reason);
+      if (window.CRViewLog) { window.CRViewLog.logAction("Reject confirmed", { reasonLength: reason.length }); }
       
       // Disable button to prevent double submission
       $(this).prop('disabled', true).text('Processing...');
@@ -261,7 +299,7 @@
     $("#confirmApplyBtn").on("click", function (e) {
       e.preventDefault();
       const rolesActions = $("#roles_actions").val();
-      console.log("Apply confirmed with roles:", rolesActions);
+      if (window.CRViewLog) { window.CRViewLog.logAction("Apply confirmed", { chars: rolesActions ? rolesActions.length : 0 }); }
       
       // Disable button
       $(this).prop('disabled', true).text('Processing...');
@@ -276,6 +314,7 @@
 
     // Handle archive confirmation
     $("#confirmArchive").on("click", function () {
+      if (window.CRViewLog) { window.CRViewLog.logAction("Archive confirmation fired"); }
       if (confirm("Are you sure you want to archive this change request? This action cannot be undone.")) {
         window.location.href = "/change_requests/archive_change_request?cr_id={{cr.cr_id}}";
       }

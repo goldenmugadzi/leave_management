@@ -7,7 +7,8 @@ from django.db.models import Q, Count
 from django.utils import timezone
 from django.core.paginator import Paginator
 from django.http import JsonResponse
-import logging
+import traceback
+from datetime import datetime
 
 from .models import ClientApplication, ApplicationAssignment
 from .serializers import (
@@ -17,7 +18,86 @@ from .serializers import (
     ApplicationAttachmentCacheSerializer
 )
 
-logger = logging.getLogger(__name__)
+
+def log_request(request, view_name, extra_info=None):
+    """Log incoming API request with full details"""
+    try:
+        user_info = f"User: {request.user.username} (ID: {request.user.id})" if hasattr(request.user, 'username') else "Anonymous"
+        method = request.method
+        path = request.path
+        query_params = dict(request.GET.items())
+        ip_address = request.META.get('REMOTE_ADDR', 'Unknown')
+        user_agent = request.META.get('HTTP_USER_AGENT', 'Unknown')
+        
+        log_message = (
+            f"[API REQUEST] {method} {path} | "
+            f"{user_info} | "
+            f"IP: {ip_address} | "
+            f"Query: {query_params}"
+        )
+        
+        if extra_info:
+            log_message += f" | {extra_info}"
+        
+        print(log_message)
+        
+        # Log auth header presence (but not the actual token for security)
+        auth_header = request.META.get('HTTP_AUTHORIZATION', '')
+        if auth_header:
+            auth_type = auth_header.split(' ')[0] if ' ' in auth_header else 'Unknown'
+            print(f"[AUTH] Authorization header present: {auth_type} (token hidden)")
+        else:
+            print(f"[AUTH] No Authorization header in request")
+            
+    except Exception as e:
+        print(f"Error logging request: {str(e)}")
+
+
+def log_response(request, view_name, status_code, response_data_size=None, duration_ms=None):
+    """Log API response details"""
+    try:
+        method = request.method
+        path = request.path
+        user_info = f"User: {request.user.username}" if hasattr(request.user, 'username') else "Anonymous"
+        
+        log_message = (
+            f"[API RESPONSE] {method} {path} | "
+            f"{user_info} | "
+            f"Status: {status_code}"
+        )
+        
+        if response_data_size:
+            log_message += f" | Response size: {response_data_size} bytes"
+        
+        if duration_ms is not None:
+            log_message += f" | Duration: {duration_ms:.2f}ms"
+        
+        print(log_message)
+    except Exception as e:
+        print(f"Error logging response: {str(e)}")
+
+
+def log_error(request, view_name, error, include_traceback=True):
+    """Log error with full details and traceback"""
+    try:
+        method = request.method
+        path = request.path
+        user_info = f"User: {request.user.username} (ID: {request.user.id})" if hasattr(request.user, 'username') else "Anonymous"
+        
+        error_message = (
+            f"[API ERROR] {method} {path} | "
+            f"{user_info} | "
+            f"Error: {str(error)} | "
+            f"Type: {type(error).__name__}"
+        )
+        
+        print(error_message)
+        
+        if include_traceback:
+            print(f"[TRACEBACK]\n{traceback.format_exc()}")
+            
+    except Exception as e:
+        print(f"Error logging error: {str(e)}")
 
 
 def create_error_response(message, status_code, error_code=None, details=None):
@@ -55,7 +135,13 @@ def get_assigned_applications(request):
     GET /applications/assigned
     Retrieves all applications assigned to the authenticated field officer.
     """
+    start_time = datetime.now()
+    view_name = "get_assigned_applications"
+    
     try:
+        # Log incoming request
+        log_request(request, view_name, "Endpoint: /inspections/api/v1/applications/assigned/")
+        
         # Get query parameters
         officer_id = request.GET.get('officer_id')
         include_details = request.GET.get('include_details', 'true').lower() == 'true'
@@ -139,10 +225,23 @@ def get_assigned_applications(request):
             "has_previous": page_obj.has_previous()
         }
 
-        return create_success_response(response_data, meta=meta)
+        response = create_success_response(response_data, meta=meta)
+        
+        # Log successful response
+        duration_ms = (datetime.now() - start_time).total_seconds() * 1000
+        response_size = len(str(response_data).encode('utf-8'))
+        log_response(request, view_name, status.HTTP_200_OK, response_size, duration_ms)
+        
+        print(f"[SUCCESS] {view_name} returned {total_count} applications for user {request.user.username}")
+        
+        return response
 
     except Exception as e:
-        logger.error(f"Error in get_assigned_applications: {str(e)}")
+        # Log error with full details
+        log_error(request, view_name, e, include_traceback=True)
+        duration_ms = (datetime.now() - start_time).total_seconds() * 1000
+        print(f"[FAILURE] {view_name} failed after {duration_ms:.2f}ms")
+        
         return create_error_response(
             "Internal server error occurred",
             status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -157,7 +256,13 @@ def get_application_details(request, application_id):
     GET /applications/{id}
     Retrieves detailed information for a specific application.
     """
+    start_time = datetime.now()
+    view_name = "get_application_details"
+    
     try:
+        # Log incoming request
+        log_request(request, view_name, f"Application ID: {application_id}")
+        
         # Get the application
         application = get_object_or_404(ClientApplication, id=application_id)
         
@@ -174,16 +279,24 @@ def get_application_details(request, application_id):
         context = {'request': request, 'user': request.user}
         application_data = ApplicationDetailSerializer(application, context=context).data
 
-        return create_success_response(application_data)
+        response = create_success_response(application_data)
+        
+        # Log successful response
+        duration_ms = (datetime.now() - start_time).total_seconds() * 1000
+        log_response(request, view_name, status.HTTP_200_OK, duration_ms=duration_ms)
+        print(f"[SUCCESS] {view_name} retrieved application {application_id}")
+        
+        return response
 
     except ClientApplication.DoesNotExist:
+        log_error(request, view_name, f"Application {application_id} not found", include_traceback=False)
         return create_error_response(
             "Application not found",
             status.HTTP_404_NOT_FOUND,
             "NOT_FOUND"
         )
     except Exception as e:
-        logger.error(f"Error in get_application_details: {str(e)}")
+        log_error(request, view_name, e, include_traceback=True)
         return create_error_response(
             "Internal server error occurred",
             status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -198,7 +311,13 @@ def accept_assignment(request, application_id):
     POST /applications/{id}/accept
     Allows a field officer to accept an assigned application.
     """
+    start_time = datetime.now()
+    view_name = "accept_assignment"
+    
     try:
+        # Log incoming request
+        log_request(request, view_name, f"Application ID: {application_id}, Body: {request.data}")
+        
         # Get the application
         application = get_object_or_404(ClientApplication, id=application_id)
         
@@ -249,19 +368,27 @@ def accept_assignment(request, application_id):
             "updated_at": assignment.updated_at.isoformat()
         }
 
-        return create_success_response(
+        response = create_success_response(
             response_data, 
             "Assignment accepted successfully"
         )
+        
+        # Log successful response
+        duration_ms = (datetime.now() - start_time).total_seconds() * 1000
+        log_response(request, view_name, status.HTTP_200_OK, duration_ms=duration_ms)
+        print(f"[SUCCESS] {view_name} accepted assignment for application {application_id}")
+        
+        return response
 
     except ClientApplication.DoesNotExist:
+        log_error(request, view_name, f"Application {application_id} not found", include_traceback=False)
         return create_error_response(
             "Application not found",
             status.HTTP_404_NOT_FOUND,
             "NOT_FOUND"
         )
     except Exception as e:
-        logger.error(f"Error in accept_assignment: {str(e)}")
+        log_error(request, view_name, e, include_traceback=True)
         return create_error_response(
             "Internal server error occurred",
             status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -276,7 +403,13 @@ def update_assignment_status(request, application_id):
     PATCH /applications/{id}/status
     Updates the status of an application assignment.
     """
+    start_time = datetime.now()
+    view_name = "update_assignment_status"
+    
     try:
+        # Log incoming request
+        log_request(request, view_name, f"Application ID: {application_id}, Body: {request.data}")
+        
         # Get the application
         application = get_object_or_404(ClientApplication, id=application_id)
         
@@ -319,19 +452,27 @@ def update_assignment_status(request, application_id):
             "updated_at": assignment.updated_at.isoformat()
         }
 
-        return create_success_response(
+        response = create_success_response(
             response_data, 
             "Status updated successfully"
         )
+        
+        # Log successful response
+        duration_ms = (datetime.now() - start_time).total_seconds() * 1000
+        log_response(request, view_name, status.HTTP_200_OK, duration_ms=duration_ms)
+        print(f"[SUCCESS] {view_name} updated status for application {application_id}")
+        
+        return response
 
     except ClientApplication.DoesNotExist:
+        log_error(request, view_name, f"Application {application_id} not found", include_traceback=False)
         return create_error_response(
             "Application not found",
             status.HTTP_404_NOT_FOUND,
             "NOT_FOUND"
         )
     except Exception as e:
-        logger.error(f"Error in update_assignment_status: {str(e)}")
+        log_error(request, view_name, e, include_traceback=True)
         return create_error_response(
             "Internal server error occurred",
             status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -346,7 +487,13 @@ def complete_assignment(request, application_id):
     POST /applications/{id}/complete
     Marks an application assignment as completed.
     """
+    start_time = datetime.now()
+    view_name = "complete_assignment"
+    
     try:
+        # Log incoming request
+        log_request(request, view_name, f"Application ID: {application_id}, Body: {request.data}")
+        
         # Get the application
         application = get_object_or_404(ClientApplication, id=application_id)
         
@@ -391,19 +538,27 @@ def complete_assignment(request, application_id):
             "updated_at": assignment.updated_at.isoformat()
         }
 
-        return create_success_response(
+        response = create_success_response(
             response_data, 
             "Assignment completed successfully"
         )
+        
+        # Log successful response
+        duration_ms = (datetime.now() - start_time).total_seconds() * 1000
+        log_response(request, view_name, status.HTTP_200_OK, duration_ms=duration_ms)
+        print(f"[SUCCESS] {view_name} completed assignment for application {application_id}")
+        
+        return response
 
     except ClientApplication.DoesNotExist:
+        log_error(request, view_name, f"Application {application_id} not found", include_traceback=False)
         return create_error_response(
             "Application not found",
             status.HTTP_404_NOT_FOUND,
             "NOT_FOUND"
         )
     except Exception as e:
-        logger.error(f"Error in complete_assignment: {str(e)}")
+        log_error(request, view_name, e, include_traceback=True)
         return create_error_response(
             "Internal server error occurred",
             status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -418,7 +573,13 @@ def get_application_attachments(request, application_id):
     GET /applications/{id}/attachments
     Retrieves all attachments for a specific application.
     """
+    start_time = datetime.now()
+    view_name = "get_application_attachments"
+    
     try:
+        # Log incoming request
+        log_request(request, view_name, f"Application ID: {application_id}")
+        
         # Get the application
         application = get_object_or_404(ClientApplication, id=application_id)
         
@@ -444,16 +605,24 @@ def get_application_attachments(request, application_id):
             "attachments": attachments_data
         }
 
-        return create_success_response(response_data)
+        response = create_success_response(response_data)
+        
+        # Log successful response
+        duration_ms = (datetime.now() - start_time).total_seconds() * 1000
+        log_response(request, view_name, status.HTTP_200_OK, duration_ms=duration_ms)
+        print(f"[SUCCESS] {view_name} retrieved {len(attachments_data)} attachments for application {application_id}")
+        
+        return response
 
     except ClientApplication.DoesNotExist:
+        log_error(request, view_name, f"Application {application_id} not found", include_traceback=False)
         return create_error_response(
             "Application not found",
             status.HTTP_404_NOT_FOUND,
             "NOT_FOUND"
         )
     except Exception as e:
-        logger.error(f"Error in get_application_attachments: {str(e)}")
+        log_error(request, view_name, e, include_traceback=True)
         return create_error_response(
             "Internal server error occurred",
             status.HTTP_500_INTERNAL_SERVER_ERROR,
