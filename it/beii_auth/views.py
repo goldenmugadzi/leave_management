@@ -155,12 +155,12 @@ APPLICATIONS = [
     #     "iconUrl": "assets/images/tools&equipment.png",
     #     "url": "/tools-and-equipment-list/"
     # },
-    # {
-    #     "name": "inspections",
-    #     "title": "Inspections",
-    #     "iconUrl": "assets/images/customer.png",
-    #     "url": "/inspections/"
-    # },
+    {
+        "name": "inspections",
+        "title": "Inspections",
+        "iconUrl": "assets/images/customer.png",
+        "url": "/inspections/"
+    },
     # {
     #     "name": "substation_inspections",
     #     "title": "Substation Inspections",
