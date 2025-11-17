@@ -156,43 +156,6 @@ def assign_appraisee_role_post_save_handler(sender, instance, created, **kwargs)
         except Exception as e:
             logger.error(f"Assigning Appraisee role to {instance.user} signal handler failed with error: {e}")
  
-
-@receiver(post_save, sender=Appraisal, dispatch_uid="appraisal_approval_workflow")
-def set_appraisal_approval_workflow(sender, instance, created, **kwargs):
-    if created:
-        try:
-            logger.info(f"[Creating Appraisal Approval] appraisal: {instance} handler initialized ...")
-            
-            workflow_entries = [
-                AppraisalWorkflow(
-                    appraisal=instance,
-                    stage_name=stage.value,
-                    stage_num=index+1
-                )
-                for index, stage in enumerate(ApprovalStageData)
-            ]
-            
-            AppraisalWorkflow.objects.bulk_create(workflow_entries)
-            logger.success("[Creating Appraisal Approval] AppraisalWorkflow objs creates")
-            
-            appraisal_workflow_repo = AppraisalWorkflowRepository()
-            appraisal_workflow_qr = appraisal_workflow_repo.retrieve_by_appraisal(appraisal_id=instance.id)
-            
-            logger.info("[Creating Appraisal Approval] AppraisalWorkflowQuarter creation init ...")
-            for appraisal_workflow_obj in appraisal_workflow_qr:
-                year_q_repo = YearQuarterRepository()
-                
-                for year_q_obj in year_q_repo.fetch_by_year(year=instance.created_date.year):
-                    quarter_workflow_repo = AppraisalApprovalWorkFlowQuarterRepository()
-                    quarter_workflow_repo.create(
-                        appraisal_workflow_obj=appraisal_workflow_obj,
-                        year_quarter_obj=year_q_obj
-                    )
-
-            logger.success("[Creating Appraisal Approval] AppraisalWorkflowQuarter created successfully.")
-        except Exception as e:
-            logger.error(f"[Creating Appraisal Approval]-failed with error: {e}")
-            return
         
 @receiver(post_save, sender=Appraisal, dispatch_uid="appraisal_approval_workflow_acceptance_complete")
 def set_appraisal_acceptance_stage_completed(sender, instance, created, **kwargs):
