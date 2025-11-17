@@ -41,6 +41,7 @@ from fault_locator.central_roles import FaultLocatorRoleManager
 from it.users.models import UserProfile, Application, Roles
 from .views_enhanced import ace_report_detail_csv_enhanced as _ace_report_detail_csv_enhanced
 
+
 def get_parent_cost_center(cost_centers):
     """Get the parent cost center from a list of cost centers."""
     parent = None
@@ -48,6 +49,7 @@ def get_parent_cost_center(cost_centers):
         if cost_center.parent in cost_centers:
             parent = cost_center.parent
     return parent
+
 
 # Create your views here.
 @login_required
@@ -97,11 +99,11 @@ def Ace_detail(request, Ace_id2):
                 # Reverse the budget allocation by returning the amount
                 budget.to_be_withdrawn = budget.to_be_withdrawn - ace_item.amount
                 budget.save()
-                
+
                 # Mark transaction as rejected to prevent repeated reversal
                 transaction.approval_status = "Rejected"
                 transaction.save()
-                
+
                 # Notify the requester
                 user = ace_item.requested_by
                 if user:
@@ -109,7 +111,7 @@ def Ace_detail(request, Ace_id2):
                     msg = f"Your ACE {ace_item.Ace_id2} has been rejected. Allocated funds have been released."
                     url = f"/ace/ace_detail/{ace_item.Ace_id2}"
                     notify_user(userp, msg, "ACE", url, ace_item.Ace_id2, request)
-                    
+
                 # Show a message to the current user
                 sweetify.info(request, f"ACE {ace_item.Ace_id2} was rejected. Budget has been adjusted.")
 
@@ -131,29 +133,30 @@ def Ace_detail(request, Ace_id2):
         if form.is_valid():
             approved = form.cleaned_data['approved']
             remarks = form.cleaned_data['remarks']
-            
+
             if approved == 'Approved':
                 # Notify the requester about this approval step
                 user = ace_item.requested_by
                 if user:
                     userp = UserProfile.objects.filter(id=user.id).first()
-                    
+
                     # Get step information for the notification message
                     try:
                         latest_approval = ace_item.process.approval_set.last()
                         if latest_approval:
                             current_step = latest_approval.step.step
                             total_steps = ace_item.process.workflow.step_set.count()
-                            approver_role = request.user.designation.description if hasattr(request.user, 'designation') else "Approver"
-                            
+                            approver_role = request.user.designation.description if hasattr(request.user,
+                                                                                            'designation') else "Approver"
+
                             msg = f"Your ACE {ace_item.Ace_id2} has been approved by {approver_role} (Step {current_step}/{total_steps})"
                             url = f"/ace/ace_detail/{ace_item.Ace_id2}"
                             notify_user(userp, msg, "ACE", url, ace_item.Ace_id2, request)
-                            
+
                             sweetify.success(request, f"ACE {ace_item.Ace_id2} approved and requester notified")
                     except Exception as e:
                         print(f"Error sending notification: {e}")
-    
+
     approvalForm = None
     to = None
     user_roles = request.user.roles.all()  # Accessing the user's roles through the 'roles' attribute
@@ -287,6 +290,7 @@ def generate_unique_ace_id2():
         if not Ace2.objects.filter(Ace_id2=ace_id2).exists():
             return ace_id2
     raise Exception("Could not generate a unique Ace_id2 after multiple attempts.")
+
 
 @login_required
 def create_Ace(request):
@@ -538,7 +542,7 @@ def ace_awaiting_my_action(request):
         print("inside the loop")
         cost_center = get_parent_cost_center(cost_centers)
         aces_query = aces_query.filter(cost_center__in=cost_centers)
-        print("Filtered ACEs count after cost center filter: ", aces_query.count())
+        # print("Filtered ACEs count after cost center filter: ", aces_query.count())
 
     else:
         # Fallback to user's cost center and descendants
@@ -548,7 +552,8 @@ def ace_awaiting_my_action(request):
 
     # Additional role-based filters
     if not any(role in ['Finance Director/Transmission Manager', 'Managing Director'] for role in user_role_names):
-        if any(role in ['General Manager/Transmission Distribution Director', 'Engineering Manager', 'Finance Manager','Accounting Officer'] for role in user_role_names):
+        if any(role in ['General Manager/Transmission Distribution Director', 'Engineering Manager', 'Finance Manager',
+                        'Accounting Officer'] for role in user_role_names):
             aces_query = aces_query.filter(region=user_profile.region)
         else:
             aces_query = aces_query.filter(
@@ -576,8 +581,8 @@ def ace_awaiting_my_action(request):
             processed_ace_ids.add(ace.Ace_id2)
 
     #add aces being filtered by region and section
-    aces_in_region=Ace2.objects.filter(region=user_profile.region)
-    aces_in_section=aces_in_region.filter(section=user_profile.section)
+    aces_in_region = Ace2.objects.filter(region=user_profile.region)
+    aces_in_section = aces_in_region.filter(section=user_profile.section)
     for ace in aces_in_section:
         if ace not in aces_to_process:
             approvals = ace.process.approval_set.all() if ace.process else []
@@ -585,32 +590,50 @@ def ace_awaiting_my_action(request):
             ace.latest_approval_status = approvals.last().approved if approvals.exists() else None
             aces_to_process.append(ace)
             processed_ace_ids.add(ace.Ace_id2)
-    print("ACEs to process count after section: ", len(aces_to_process))
+    # print("ACEs to process count after section: ", len(aces_to_process))
 
     # for ace in aces_in_region:
     #     if ace not in aces_to_process:
     #         approvals = ace.process.approval_set.all() if ace.process else []
     #         ace.has_rejected_approval = False
-            
+
     #         aces_to_process.append(ace)
     #         processed_ace_ids.add(ace.Ace_id2)
     # print("ACEs to process count after region addition: ", len(aces_to_process))
 
     #remove  rejected
     aces_to_process = [
-        ace for ace in aces_to_process if not (ace.process and ace.process.approval_set.filter(approved='Rejected').exists())]
-    
-
-
-
-
+        ace for ace in aces_to_process if
+        not (ace.process and ace.process.approval_set.filter(approved='Rejected').exists())]
 
     # Get ACEs created by user with cost center filtering
-    created_aces = aces_query.filter(
+    created_aces = aces_in_region.filter(
         requested_by=request.user
     ).exclude(
         process__approval__approved="Rejected"
     )
+
+    # print("Created ACEs count: ", created_aces.count())
+
+    #if role == "create": remove aces to process
+
+    custom_user_roles = {
+            "ace": {},
+        }
+
+    roles_ = user_profile.roles.all()
+    for _role in roles_:
+            role = Roles.objects.filter(id=_role.id).first()
+            if role.application == "ace":
+                custom_user_roles["ace"] = role.role
+                ace_role = str(custom_user_roles["ace"])
+                print(ace_role)
+
+
+    # print("User roles: ", user_role_names)
+    if ace_role == "create":
+        print("User has 'create' role, clearing aces_to_process")
+        aces_to_process = []
 
     # Add helpful flags for created ACEs
     for ace in created_aces:
@@ -644,13 +667,13 @@ def view_all_aces(request):
     Orders by most recently created first.
     """
     user_profile = UserProfile.objects.get(id=request.user.id)
-    
+
     # Get user's ACE role
     ace_role = next(
         (role.role for role in user_profile.roles.all() if role.application == "ace"),
         None
     )
-    
+
     # Base query with select_related for efficiency
     aces = Ace2.objects.select_related(
         'region',
@@ -658,21 +681,21 @@ def view_all_aces(request):
         'budget_id',
         'requested_by'
     )
-    
+
     # Apply role-based filters
     system_wide_roles = {'Finance Director/Transmission Manager', 'Managing Director'}
     regional_roles = {'General Manager/Transmission Distribution Director', 'Engineering Manager', 'Finance Manager'}
-    
+
     user_role_names = {role.name for role in user_profile.roles.all()}
-    
+
     if not system_wide_roles.intersection(user_role_names):
         # Not a system-wide role, filter by region
         aces = aces.filter(region=user_profile.region)
-        
+
         if not regional_roles.intersection(user_role_names):
             # Not a regional role either, filter by section
             aces = aces.filter(section=user_profile.section)
-    
+
     # Order by most recent first
     aces = aces.order_by('-date_created')
 
@@ -749,7 +772,7 @@ def upload_budgets(request):
                 awaiting_sanctioning = 0
 
             if not region:
-                region='Transmission'
+                region = 'Transmission'
 
             try:
                 allocated = float(allocated)
@@ -1227,6 +1250,7 @@ def upload_aces_csv(request):
     else:
         return render(request, 'finance/ace2/upload_ace.html')
 
+
 @login_required
 def create_virament(request):
     # Creates new virament
@@ -1415,6 +1439,7 @@ def virament_detail(request, virament_id):
                                                                  'balance_before_from': balance_before_from,
                                                                  'balance_after_from': balance_after_from})
 
+
 @login_required
 def view_all_viraments(request):
     user_profile = UserProfile.objects.filter(id=request.user.id).first()
@@ -1471,7 +1496,7 @@ def viraments_awaiting_my_action(request):
 
     for virement in viraments_qs:
         process = virement.process
-        
+
         # Skip if process is None
         if not process:
             continue
@@ -1548,16 +1573,16 @@ def ace_reports(request):
 
             if budget:  # Specific budget selected
                 aces_query = aces_query.filter(budget_id=budget)
-                report = ace_report_form.save(commit=False) 
+                report = ace_report_form.save(commit=False)
                 report.start_date = start_date
                 report.end_date = end_date
                 report.region = request.user.region
                 report.budget_id = budget
                 report.save()
-            
+
             # Final ordering and execution
             aces = aces_query.order_by('-date_created')
-            
+
             # Aggregate statistics
             totals = aces.aggregate(
                 total_amount=models.Sum('amount'),
@@ -1668,7 +1693,7 @@ def ace_report_detail_excel(request, report_id2):
         ws.append(
             ['Ace_id', 'details_of_expenditure', 'requested_by', 'section', 'Date', 'Budget', 'Amount',
              'transaction_status', 'approval_status', 'actioned_by'
-            ])
+             ])
 
         for ace in aces:
             transaction = Transactions.objects.filter(Ace_id2=ace).first()
@@ -1703,6 +1728,7 @@ def ace_report_detail_excel(request, report_id2):
     else:
         messages.error(request, "error")
 
+
 # @login_required
 def find_ace_section_head(request, section):
     all_users = UserProfile.objects.filter(section=section).all()
@@ -1730,6 +1756,7 @@ def find_ace_section_head(request, section):
 
     # Return None if no section head is found
     return None
+
 
 # @login_required
 def find_general_manager(request, region):
@@ -1760,6 +1787,7 @@ def find_general_manager(request, region):
 
         else:
             print("no users found")
+
 
 # transactions on a budget
 @login_required
@@ -1819,7 +1847,7 @@ def my_actioned_items(request):
     user_id = request.user.id
     user_profile = UserProfile.objects.filter(id=user_id).first()
     region = Regions.objects.filter(id=user_profile.region.id).first()
-    
+
     # Get user role
     custom_user_roles = {"ace": {}}
     roles_ = user_profile.roles.all()
@@ -1830,7 +1858,7 @@ def my_actioned_items(request):
             ace_role = str(custom_user_roles["ace"])
             print("ace role", ace_role)
             break
-    
+
     # Get all ACEs where the current user has an approval in the process
     actioned_approvals = []
     all_aces = Ace2.objects.filter(region=region)
@@ -1840,13 +1868,13 @@ def my_actioned_items(request):
             approvals = process.approval_set.filter(user=request.user)
             for approval in approvals:
                 actioned_approvals.append((approval, ace))
-    
+
     # Sort by approval date (replace 'date' with your actual field, e.g., 'timestamp', 'date_approved')
     actioned_approvals.sort(key=lambda x: x[0].approved_at, reverse=True)
     actioned_aces = [ace for approval, ace in actioned_approvals]
 
     requester = "create"  # Used in template for role checks
-    
+
     return render(request, 'finance/ace2/my_actioned_items.html', {
         'aces': actioned_aces,
         'title': 'My Actioned Items',
@@ -1864,10 +1892,10 @@ def notify_pending_gm_approvals(request):
     user_id = request.user.id
     user_profile = UserProfile.objects.filter(id=user_id).first()
     notification_count = 0
-    
+
     # Get all regions
     regions = Regions.objects.all()
-    
+
     for region in regions:
         # Find general managers for this specific region (users with "approve" role for ACE)
         gm_users = UserProfile.objects.filter(
@@ -1875,51 +1903,52 @@ def notify_pending_gm_approvals(request):
             roles__application="ace",
             roles__role="approve"
         ).all()
-        
+
         if not gm_users:
             continue
-            
+
         # Find ACE items in THIS REGION ONLY that are at the final approval step
         pending_aces = []
         for ace in Ace2.objects.filter(region=region):
             process = ace.process
-            
+
             # Skip items without process or already rejected
             if not process or process.approval_set.filter(approved="Rejected").exists():
                 continue
-                
+
             if process.approval_set.exists():
                 latest_approval = process.approval_set.last()
                 current_step = latest_approval.step.step
                 total_steps = process.workflow.step_set.count()
-                
+
                 # If we're at the step before the last step, item is pending GM approval
                 if current_step == total_steps - 1:
                     pending_aces.append(ace)
-        
+
         # Notify each GM about pending items IN THEIR REGION ONLY
         if pending_aces:
             for gm in gm_users:
                 count = len(pending_aces)
                 notification_count += count
-                
+
                 # Send a summary notification
                 msg = f"You have {count} ACE items awaiting your approval in {region.region}"
                 url = "/ace/awaiting_my_action/"
                 notify_user(gm, msg, "ACE", url, f"gm_summary_{region.id}", request)
-                
+
                 # Optional: Send individual notifications for each item
                 for ace in pending_aces:
                     item_msg = f"ACE {ace.Ace_id2} requires your final approval"
                     item_url = f"/ace/ace_detail/{ace.Ace_id2}"
                     notify_user(gm, item_msg, "ACE", item_url, ace.Ace_id2, request)
-    
+
     if notification_count > 0:
         sweetify.success(request, f"Sent notifications for {notification_count} pending ACE items to general managers")
     else:
         sweetify.info(request, "No pending ACE items requiring general manager approval found")
-    
+
     return redirect('/ace/aces')
+
 
 @login_required
 def asset_budget_report(request, budget_id):
@@ -1973,7 +2002,6 @@ def asset_budget_report_excel(request, budget_id):
     return response
 
 
-
 @login_required
 def download_ace_quotation(request, quotation_id):
     try:
@@ -1985,9 +2013,9 @@ def download_ace_quotation(request, quotation_id):
     response['Content-Disposition'] = f'attachment; filename="{quotation.quotation_file.name}"'
     return response
 
+
 @login_required
 def monthly_usage_dashboard(request):
-    
     current_year = timezone.now().year
 
     ace_monthly = (
@@ -2053,7 +2081,8 @@ def transactions_excel_export(request):
     This is a minimal placeholder to unblock URL imports during migrations.
     """
     user_profile = UserProfile.objects.filter(id=request.user.id).first()
-    qs = Transactions.objects.filter(region=user_profile.region) if user_profile and user_profile.region else Transactions.objects.all()
+    qs = Transactions.objects.filter(
+        region=user_profile.region) if user_profile and user_profile.region else Transactions.objects.all()
 
     response = HttpResponse(content_type='text/csv')
     response['Content-Disposition'] = 'attachment; filename="transactions.csv"'
@@ -2162,49 +2191,48 @@ def test_migrate_assets(request):
     return JsonResponse({'status': 'ok'})
 
 
-
 def check_user_role_with_troubleshooting(request):
     """
     Check user role and provide troubleshooting messages if no role found.
     Returns (user_profile, user_role, has_issues)
     """
     user_profile = UserProfile.objects.filter(id=request.user.id).first()
-    
+
     if not user_profile:
-        messages.error(request, 
-            "❌ No user profile found. Please contact your system administrator to create your profile.")
+        messages.error(request,
+                       "❌ No user profile found. Please contact your system administrator to create your profile.")
         return None, None, True
-    
+
     # Check if fault locator application exists
     fault_app = Application.objects.filter(name='fault_locator').first()
     if not fault_app:
-        messages.error(request, 
-            "❌ Fault Locator application not configured. Contact system administrator.")
+        messages.error(request,
+                       "❌ Fault Locator application not configured. Contact system administrator.")
         return user_profile, None, True
-    
+
     # Check if user has any fault locator role
     try:
         user_role = FaultLocatorRoleManager.get_user_role(user_profile)
         has_any_role = FaultLocatorRoleManager.has_any_role(user_profile)
-        
+
         if not has_any_role:
             # User has no fault locator role - provide helpful troubleshooting
             _provide_role_troubleshooting_messages(request, user_profile)
             return user_profile, None, True
-        
-        return user_profile, user_role, False
-        
 
-        
+        return user_profile, user_role, False
+
+
+
     except Exception as e:
-        messages.error(request, 
-            f"❌ Error checking your roles: {str(e)}. Please contact system administrator.")
+        messages.error(request,
+                       f"❌ Error checking your roles: {str(e)}. Please contact system administrator.")
         return user_profile, None, True
 
 
 def _provide_role_troubleshooting_messages(request, user_profile):
     """Provide helpful troubleshooting messages for users without roles"""
-    
+
     # Check user profile completeness
     missing_info = []
     if not user_profile.depot:
@@ -2213,45 +2241,45 @@ def _provide_role_troubleshooting_messages(request, user_profile):
         missing_info.append('job designation')
     if not user_profile.section:
         missing_info.append('section assignment')
-    
+
     if missing_info:
-        messages.warning(request, 
-            f"⚠️ Your profile is missing: {', '.join(missing_info)}. "
-            "This may prevent proper role assignment.")
-    
+        messages.warning(request,
+                         f"⚠️ Your profile is missing: {', '.join(missing_info)}. "
+                         "This may prevent proper role assignment.")
+
     # Suggest role based on designation
     suggested_role = _suggest_role_from_designation(user_profile)
     if suggested_role:
-        messages.info(request, 
-            f"💡 Based on your designation '{user_profile.designation}', "
-            f"you should likely have the '{suggested_role}' role.")
-    
+        messages.info(request,
+                      f"💡 Based on your designation '{user_profile.designation}', "
+                      f"you should likely have the '{suggested_role}' role.")
+
     # Main error message with actionable steps
-    messages.error(request, 
-        "🚫 You don't have any Fault Locator roles assigned. "
-        "You cannot access fault reporting features until a role is assigned.")
-    
+    messages.error(request,
+                   "🚫 You don't have any Fault Locator roles assigned. "
+                   "You cannot access fault reporting features until a role is assigned.")
+
     # Provide specific steps to resolve
     if user_profile.depot:
-        messages.info(request, 
-            f"📋 Next steps:\n"
-            f"1. Contact your depot supervisor at {user_profile.depot}\n"
-            f"2. Request appropriate Fault Locator role assignment\n"
-            f"3. Alternatively, contact IT support for assistance")
+        messages.info(request,
+                      f"📋 Next steps:\n"
+                      f"1. Contact your depot supervisor at {user_profile.depot}\n"
+                      f"2. Request appropriate Fault Locator role assignment\n"
+                      f"3. Alternatively, contact IT support for assistance")
     else:
-        messages.info(request, 
-            "📋 Next steps:\n"
-            "1. Contact your line manager to complete your profile\n"
-            "2. Request depot and role assignment\n"
-            "3. Contact IT support if issues persist")
-    
+        messages.info(request,
+                      "📋 Next steps:\n"
+                      "1. Contact your line manager to complete your profile\n"
+                      "2. Request depot and role assignment\n"
+                      "3. Contact IT support if issues persist")
+
     # Show available roles for reference
     try:
         available_roles = FaultLocatorRoleManager.get_available_roles()
         if available_roles:
             role_names = ', '.join([role.name for role in available_roles])
-            messages.info(request, 
-                f"ℹ️ Available roles: {role_names}")
+            messages.info(request,
+                          f"ℹ️ Available roles: {role_names}")
     except:
         pass
 
@@ -2260,9 +2288,9 @@ def _suggest_role_from_designation(user_profile):
     """Suggest appropriate role based on user's designation"""
     if not user_profile.designation:
         return 'Team Member'  # Default suggestion
-    
+
     designation = str(user_profile.designation).lower()
-    
+
     if 'senior' in designation and 'foreman' in designation:
         return 'Senior Foreman'
     elif 'foreperson' in designation or 'depot' in designation:
@@ -2279,10 +2307,10 @@ def _suggest_role_from_designation(user_profile):
 @login_required
 def dashboard(request):
     """Enhanced dashboard with comprehensive role troubleshooting"""
-    
+
     # Check user role with troubleshooting
     user_profile, user_role, has_issues = check_user_role_with_troubleshooting(request)
-    
+
     if has_issues:
         # If there are role issues, show a basic dashboard with troubleshooting info
         context = {
@@ -2292,11 +2320,11 @@ def dashboard(request):
             'show_troubleshooting': True
         }
         return render(request, 'fault_locator/dashboard.html', context)
-    
+
     # User has valid role - continue with normal dashboard
     try:
         user_role_display = FaultLocatorRoleManager.get_user_role_display(user_profile)
-        
+
         context = {
             'user': request.user,
             'user_profile': user_profile,
@@ -2305,7 +2333,7 @@ def dashboard(request):
             'has_role_issues': False,
             'show_troubleshooting': False
         }
-        
+
         # Add role-specific dashboard content
         if user_role == FaultLocatorRoleManager.SENIOR_FOREMAN:
             context.update(_get_senior_foreman_dashboard_data(user_profile))
@@ -2315,9 +2343,9 @@ def dashboard(request):
             context.update(_get_team_leader_dashboard_data(user_profile))
         else:
             context.update(_get_team_member_dashboard_data(user_profile))
-        
+
         return render(request, 'fault_locator/dashboard.html', context)
-        
+
     except Exception as e:
         messages.error(request, f"❌ Error loading dashboard: {str(e)}")
         return render(request, 'fault_locator/dashboard.html', {
@@ -2332,28 +2360,28 @@ def dashboard(request):
 @login_required
 def report_fault(request):
     """Report fault with role troubleshooting"""
-    
+
     # Check user role with troubleshooting
     user_profile, user_role, has_issues = check_user_role_with_troubleshooting(request)
-    
+
     if has_issues:
-        messages.error(request, 
-            "🚫 You cannot report faults without an assigned role. "
-            "Please resolve the role issues first.")
+        messages.error(request,
+                       "🚫 You cannot report faults without an assigned role. "
+                       "Please resolve the role issues first.")
         return redirect('fault_locator_dashboard')
-    
+
     # Additional permission check for fault reporting
     if not _can_report_faults(user_profile, user_role):
-        messages.error(request, 
-            f"🚫 Your role '{FaultLocatorRoleManager.get_user_role_display(user_profile)}' "
-            "does not have permission to report faults. Contact your supervisor.")
+        messages.error(request,
+                       f"🚫 Your role '{FaultLocatorRoleManager.get_user_role_display(user_profile)}' "
+                       "does not have permission to report faults. Contact your supervisor.")
         return redirect('fault_locator_dashboard')
-    
+
     # Continue with normal fault reporting logic
     if request.method == 'POST':
         # ... existing fault reporting logic
         pass
-    
+
     return render(request, 'fault_locator/report_fault.html', {
         'user_profile': user_profile,
         'user_role': user_role
@@ -2364,20 +2392,20 @@ def report_fault(request):
 @login_required
 def assign_fault_to_team(request):
     """Assign fault to team with role troubleshooting"""
-    
+
     # Check user role with troubleshooting
     user_profile, user_role, has_issues = check_user_role_with_troubleshooting(request)
-    
+
     if has_issues:
         return redirect('fault_locator_dashboard')
-    
+
     # Check specific permission for fault assignment
     if not _can_assign_faults(user_profile, user_role):
-        messages.error(request, 
-            f"🚫 Your role '{FaultLocatorRoleManager.get_user_role_display(user_profile)}' "
-            "cannot assign faults to teams. Only Depot Forepersons and Senior Foremen can assign faults.")
+        messages.error(request,
+                       f"🚫 Your role '{FaultLocatorRoleManager.get_user_role_display(user_profile)}' "
+                       "cannot assign faults to teams. Only Depot Forepersons and Senior Foremen can assign faults.")
         return redirect('fault_locator_dashboard')
-    
+
     # Continue with normal assignment logic
     # ... existing assignment logic
 
@@ -2386,51 +2414,51 @@ def assign_fault_to_team(request):
 @login_required
 def role_troubleshooting(request):
     """Dedicated troubleshooting view with detailed role information"""
-    
+
     user_profile = UserProfile.objects.filter(id=request.user.id).first()
-    
+
     if not user_profile:
-        messages.error(request, 
-            "❌ No user profile found. Please contact system administrator.")
+        messages.error(request,
+                       "❌ No user profile found. Please contact system administrator.")
         return redirect('home')
-    
+
     # Get detailed role information
     try:
         user_role = FaultLocatorRoleManager.get_user_role(user_profile)
         has_any_role = FaultLocatorRoleManager.has_any_role(user_profile)
         available_roles = FaultLocatorRoleManager.get_available_roles()
-        
+
         # Get fault locator application info
         fault_app = Application.objects.filter(name='fault_locator').first()
         user_fault_roles = []
-        
+
         if fault_app:
             user_fault_roles = user_profile.roles.filter(app_id=fault_app)
-        
+
         # Provide comprehensive troubleshooting messages
         if not has_any_role:
-            messages.warning(request, 
-                "⚠️ DIAGNOSIS: You have no Fault Locator roles assigned.")
-            
+            messages.warning(request,
+                             "⚠️ DIAGNOSIS: You have no Fault Locator roles assigned.")
+
             # Check if user has roles in other applications
             other_roles = user_profile.roles.exclude(application='fault_locator')
             if other_roles.exists():
                 other_apps = ', '.join(set([r.application for r in other_roles]))
-                messages.info(request, 
-                    f"ℹ️ You have roles in other applications: {other_apps}")
-            
+                messages.info(request,
+                              f"ℹ️ You have roles in other applications: {other_apps}")
+
             _provide_role_troubleshooting_messages(request, user_profile)
         else:
-            messages.success(request, 
-                f"✅ You have the role: {FaultLocatorRoleManager.get_user_role_display(user_profile)}")
-        
+            messages.success(request,
+                             f"✅ You have the role: {FaultLocatorRoleManager.get_user_role_display(user_profile)}")
+
         # Show system status
-        messages.info(request, 
-            f"🔧 System Status:\n"
-            f"• Fault Locator App: {'✅ Configured' if fault_app else '❌ Missing'}\n"
-            f"• Available Roles: {available_roles.count()}\n"
-            f"• Your Profile Complete: {'✅ Yes' if _is_profile_complete(user_profile) else '⚠️ Incomplete'}")
-        
+        messages.info(request,
+                      f"🔧 System Status:\n"
+                      f"• Fault Locator App: {'✅ Configured' if fault_app else '❌ Missing'}\n"
+                      f"• Available Roles: {available_roles.count()}\n"
+                      f"• Your Profile Complete: {'✅ Yes' if _is_profile_complete(user_profile) else '⚠️ Incomplete'}")
+
         context = {
             'user_profile': user_profile,
             'user_role': user_role,
@@ -2439,12 +2467,12 @@ def role_troubleshooting(request):
             'user_fault_roles': user_fault_roles,
             'profile_complete': _is_profile_complete(user_profile)
         }
-        
+
         return render(request, 'fault_locator/troubleshooting.html', context)
-        
+
     except Exception as e:
-        messages.error(request, 
-            f"❌ Error during troubleshooting: {str(e)}")
+        messages.error(request,
+                       f"❌ Error during troubleshooting: {str(e)}")
         return redirect('fault_locator_dashboard')
 
 
