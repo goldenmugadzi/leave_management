@@ -86,8 +86,9 @@
   </div>
 {% endblock %}
 
-{% block scripts %} 
+{% block scripts %}
 <script>
+
     // Tom Select for appraiser
     document.addEventListener("DOMContentLoaded", function () {
         
@@ -106,7 +107,6 @@
         new TomSelect("#id_cost_center", getConfObject("Search and Select Cost Center"));
         new TomSelect("#id_year", getConfObject("Search and Select Year"));
     });
-
 </script>
-{% endblock scripts %}
+{% endblock %}
 
