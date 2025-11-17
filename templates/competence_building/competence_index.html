@@ -19,6 +19,60 @@
   .doc-filter-btn.active {
     @apply bg-blue-600 hover:bg-blue-700;
   }
+
+  /* Table container with horizontal scroll */
+  .table-container {
+    overflow-x: auto;
+    overflow-y: visible;
+    -webkit-overflow-scrolling: touch;
+    position: relative;
+  }
+
+  /* Ensure table maintains minimum width */
+  #cb_documents_table {
+    min-width: 100%;
+    width: max-content !important;
+  }
+
+  /* Prevent DataTables from forcing fixed width */
+  .dataTables_wrapper {
+    overflow-x: auto;
+  }
+
+  /* Sticky action column */
+  .table-container table thead th:last-child,
+  .table-container table tbody td:last-child {
+    position: sticky;
+    right: 0;
+    background-color: white;
+    z-index: 10;
+    box-shadow: -2px 0 5px rgba(0, 0, 0, 0.1);
+    min-width: 120px;
+    white-space: nowrap;
+  }
+
+  .table-container table thead th:last-child {
+    background-color: #f9fafb;
+    z-index: 11;
+  }
+
+  /* Ensure action buttons remain visible on hover and alternate rows */
+  .table-container table tbody tr:hover td:last-child {
+    background-color: #f9fafb !important;
+  }
+
+  .table-container table tbody tr:nth-child(even) td:last-child {
+    background-color: white !important;
+  }
+
+  .table-container table tbody tr:nth-child(odd) td:last-child {
+    background-color: white !important;
+  }
+
+  /* Ensure action column cells maintain background */
+  .table-container table tbody td:last-child {
+    background-color: white !important;
+  }
 </style>
 {% endblock styles %}
 
@@ -113,7 +167,8 @@
     <!-- Table -->
     <div class="bg-white border border-gray-200 rounded-lg p-6 shadow-sm">
       <h3 class="text-lg font-semibold text-gray-900 mb-4 pb-2 border-b border-gray-200">All Documents</h3>
-      <table id="cb_documents_table" class="display w-full" style="width: 100%">
+      <div class="table-container">
+        <table id="cb_documents_table" class="display w-full" style="width: 100%">
         <thead class="bg-gray-50">
           <tr>
             <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
@@ -142,6 +197,7 @@
           </tr>
         </tfoot>
       </table>
+      </div>
     </div>
   </div>
 </div>
@@ -171,6 +227,7 @@
     const table = $("#cb_documents_table").DataTable({
       data: documentsData,
       order: [[COLUMN_INDEXES.createdAt, "desc"]],
+      autoWidth: false,
       columns: [
         { data: "category" },
         { data: "name" },
@@ -206,6 +263,7 @@
           data: null,
           orderable: false,
           searchable: false,
+          width: "120px",
           render: function (data, type, row) {
             const archiveAction = row.archive
               ? {
