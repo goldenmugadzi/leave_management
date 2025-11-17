@@ -15,7 +15,7 @@
                 <tr class="hover:bg-gray-100">
                     <td class="px-6 py-4 whitespace-nowrap">{{ quarter_rating.name }} ( {{quarter_rating.start_date}} - {{quarter_rating.end_date}} )</td>
                     <td class="px-6 py-4 whitespace-nowrap">
-                        {% if quarter_rating.total_score >= 1 %}
+                        {% if quarter_rating.total_score > 1 %}
                             <span class="px-6 py-4 text-blue-900 font-semibold">
                                 {{ quarter_rating.total_score }}
                             </span>
