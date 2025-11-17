@@ -2,6 +2,11 @@
 {% load static %}
 {% load crispy_forms_tags %}
 
+{% block styles %}
+<link href="https://cdn.jsdelivr.net/npm/tom-select/dist/css/tom-select.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/tom-select/dist/js/tom-select.complete.min.js"></script>
+{% endblock styles %}
+
 {% block content %}
 
   <div class="content-wrapper">
@@ -82,5 +87,29 @@
       </div>
     </div>
   </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+
+    // Tom Select for appraiser
+    document.addEventListener("DOMContentLoaded", function () {
+        
+        function getConfObject(placeholder){
+            const confObject = {
+                create: false, // Prevent custom options
+                sortField: { field: "text", direction: "asc" }, // Sort options alphabetically
+                maxOptions: 100, // Limit the number of options shown in the dropdown
+                placeholder: "", // Add a placeholder
+    
+            }
+            confObject.placeholder = placeholder
+            return confObject
+        }
+
+        new TomSelect("#id_cost_center", getConfObject("Search and Select Cost Center"));
+        new TomSelect("#id_year", getConfObject("Search and Select Year"));
+    });
+</script>
 {% endblock %}
 
