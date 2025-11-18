@@ -554,12 +554,14 @@ def ace_awaiting_my_action(request):
     if not any(role in ['Finance Director/Transmission Manager', 'Managing Director'] for role in user_role_names):
         if any(role in ['General Manager/Transmission Distribution Director', 'Engineering Manager', 'Finance Manager',
                         'Accounting Officer'] for role in user_role_names):
-            aces_query = aces_query.filter(region=user_profile.region)
+            aces_query1 = aces_query.filter(region=user_profile.region)
+            aces_query= aces_query1|aces_query
         else:
             aces_query = aces_query.filter(
                 region=user_profile.region,
                 section=user_profile.section
             )
+            aces_query= aces_query|aces_query1
 
     # Get ACEs awaiting user's action
     aces_to_process = []
@@ -583,13 +585,21 @@ def ace_awaiting_my_action(request):
     #add aces being filtered by region and section
     aces_in_region = Ace2.objects.filter(region=user_profile.region)
     aces_in_section = aces_in_region.filter(section=user_profile.section)
-    for ace in aces_in_section:
-        if ace not in aces_to_process:
-            approvals = ace.process.approval_set.all() if ace.process else []
-            ace.has_rejected_approval = False
-            ace.latest_approval_status = approvals.last().approved if approvals.exists() else None
-            aces_to_process.append(ace)
-            processed_ace_ids.add(ace.Ace_id2)
+    # for ace in aces_in_section:
+
+
+    #     if not ace.process or ace.Ace_id2 in processed_ace_ids:
+    #         continue
+
+    #     approvals = ace.process.approval_set.all()
+    #     if approvals.filter(approved='Rejected').exists():
+    #         continue
+    #     if ace not in aces_to_process:
+    #         approvals = ace.process.approval_set.all() if ace.process else []
+    #         ace.has_rejected_approval = False
+    #         ace.latest_approval_status = approvals.last().approved if approvals.exists() else None
+    #         aces_to_process.append(ace)
+    #         processed_ace_ids.add(ace.Ace_id2)
     # print("ACEs to process count after section: ", len(aces_to_process))
 
     # for ace in aces_in_region:
