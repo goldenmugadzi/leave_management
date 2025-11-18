@@ -5,7 +5,7 @@ from it.users.models import UserProfile
 class Document(models.Model):
     title = models.CharField(max_length=255)
     file = models.FileField(upload_to='docusign/documents/')
-    uploaded_by = models.ForeignKey(UserProfile, on_delete=models.SET_NULL, null=True, related_name='docs')
+    uploaded_by = models.ForeignKey(UserProfile, on_delete=models.SET_NULL, null=True, blank=True, related_name='docs')
     uploaded_at = models.DateTimeField(auto_now_add=True)
 
 # Signature Template
@@ -16,10 +16,10 @@ class Signature(models.Model):
 
 # Signing Request
 class Request(models.Model):
-    document = models.ForeignKey(Document, on_delete=models.CASCADE, related_name='reqs')
-    requester = models.ForeignKey(UserProfile, on_delete=models.SET_NULL, null=True, related_name='made_reqs') 
+    document = models.ForeignKey(Document, on_delete=models.CASCADE, related_name='reqs', null=True, blank=True)
+    requester = models.ForeignKey(UserProfile, on_delete=models.SET_NULL, null=True, blank=True ,related_name='made_reqs') 
     requested_at = models.DateTimeField(auto_now_add=True)
-    status = models.CharField(max_length=50, default='pending')
+    status = models.CharField(max_length=50, null=True, blank=True, default='pending')
 
 # Possible Signer
 class PossibleSigner(models.Model):

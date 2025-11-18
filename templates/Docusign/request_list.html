@@ -1,0 +1,61 @@
+{% extends "admin_layout.html" %}
+{% load static %}
+{% load tailwind_filters %}
+{% block content %}
+<h1 class="text-2xl font-bold mb-4">Signature Requests</h1>
+
+<form method="get" class="mb-4">
+  <label for="status">Filter by status:</label>
+  <select name="status" id="status" onchange="this.form.submit()">
+    <option value="">All</option>
+    {% for s in status_choices %}
+      <option value="{{ s }}" {% if request.GET.status == s %}selected{% endif %}>{{ s|capfirst }}</option>
+    {% endfor %}
+  </select>
+</form>
+
+        {% comment %} <table id="tokens" class="table table-striped stripe mt-3 table-bordered"> {% endcomment %}
+<table class="min-w-full divide-y divide-gray-200 table-bordered table table-striped stripe ">
+  <thead class="bg-gray-50">
+    <tr >
+      <th class="px-6 py-4">ID</th>
+      <th >Title</th>
+      <th>Document</th>
+      <th>Requester</th>
+      <th>Requested At</th>
+      <th>Status</th>
+    </tr>
+  </thead>
+  <tbody class="bg-white divide-y divide-gray-200">
+    {% for req in requests %}
+    <tr>
+      <td class="px-6 py-4 whitespace-nowrap  text-center  text-gray-500">{{ req.pk }}</td>
+      <td class="px-6 py-4 whitespace-nowrap  text-center  text-gray-900">{{ req.message|default:req.document.title }}</td>
+  <td class="px-6 py-4 whitespace-nowrap  text-center  text-indigo-600">{% if req.document %}<a href="{% url 'docusign:request_detail' req.pk %}">{{ req.document.title }}</a>{% else %}—{% endif %}</td>
+      <td class="px-6 py-4 whitespace-nowrap  text-center  text-gray-500">{% if req.requester %}{{ req.requester.get_full_name }}{% else %}—{% endif %}</td>
+      <td class="px-6 py-4 whitespace-nowrap  text-center  text-gray-500">{{ req.requested_at }}</td>
+      <td class="px-6 py-4 whitespace-nowrap  text-center ">{{ req.status }}</td>
+    </tr>
+    {% empty %}
+    <tr>
+      <td colspan="6" class="px-6 py-4 text-center text-gray-500">No requests found.</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+{% if is_paginated %}
+  <nav class="mt-4">
+    <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+    <div class="space-x-2 inline-block ml-4">
+      {% if page_obj.has_previous %}
+        <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}" class="px-3 py-1 bg-gray-200 rounded">Previous</a>
+      {% endif %}
+      {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}" class="px-3 py-1 bg-gray-200 rounded">Next</a>
+      {% endif %}
+    </div>
+  </nav>
+{% endif %}
+
+{% endblock %}

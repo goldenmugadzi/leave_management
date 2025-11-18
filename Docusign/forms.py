@@ -1,5 +1,5 @@
 from django import forms
-from .models import Signature
+from .models import *
 from it.users.models import UserProfile
 import json
 
@@ -37,6 +37,67 @@ class SignatureRequestForm(forms.Form):
                 field.widget.attrs['class'] = (field.widget.attrs['class'] + ' ' + 'py-2 rounded').strip()
             else:
                 field.widget.attrs.update({'class': classes})
+            if isinstance(field.widget, forms.Textarea):
+                field.widget.attrs.update({'rows': '3'})
+class DocumentUploadForm(forms.ModelForm):
+    class Meta:
+        model = Document
+        fields = "__all__"
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field_name, field in self.fields.items():
+            # apply base classes for consistent styling
+            classes = FIELD_CSS_CLASSES
+            field.widget.attrs.update({'class': classes})
+            if isinstance(field.widget, forms.Textarea):
+                field.widget.attrs.update({'rows': '3'})
+class SignerForm(forms.ModelForm):
+    class Meta:
+        model = Sign
+        fields = "__all__"
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field_name, field in self.fields.items():
+            classes = FIELD_CSS_CLASSES
+            field.widget.attrs.update({'class': classes})
+            if isinstance(field.widget, forms.Textarea):
+                field.widget.attrs.update({'rows': '3'})
+class RequestForm(forms.ModelForm):
+    class Meta:
+        model = Request
+        fields = "__all__"
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field_name, field in self.fields.items():
+            classes = FIELD_CSS_CLASSES
+            field.widget.attrs.update({'class': classes})
+            if isinstance(field.widget, forms.Textarea):
+                field.widget.attrs.update({'rows': '3'})
+class SignatureForm(forms.ModelForm):
+    class Meta:
+        model = Signature
+        fields = "__all__"
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field_name, field in self.fields.items():
+            classes = FIELD_CSS_CLASSES
+            field.widget.attrs.update({'class': classes})
+            if isinstance(field.widget, forms.Textarea):
+                field.widget.attrs.update({'rows': '3'})
+class PossibleSignerForm(forms.ModelForm):
+    class Meta:
+        model = PossibleSigner
+        fields = "__all__"
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for field_name, field in self.fields.items():
+            classes = FIELD_CSS_CLASSES
+            field.widget.attrs.update({'class': classes})
             if isinstance(field.widget, forms.Textarea):
                 field.widget.attrs.update({'rows': '3'})
 

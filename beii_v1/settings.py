@@ -414,6 +414,15 @@ LOGIN_URL = '/accounts/login'
 os.environ['TIKA_SERVER_JAR'] = os.path.join(BASE_DIR,'static','tika','tika-server-standard-2.9.2.jar')
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+# Path to Poppler binaries (pdfinfo, pdftoppm, etc.)
+# If you installed Poppler via Chocolatey, the executables are in:
+#   C:\ProgramData\chocolatey\bin
+# You can override via an environment variable or .env: POPPLER_PATH
+POPPLER_PATH = config('POPPLER_PATH', default=r"C:\ProgramData\chocolatey\lib\poppler\tools\Library\bin")
+
+# Add Poppler bin to PATH so pdf2image can find pdfinfo.exe
+if POPPLER_PATH:
+    os.environ['PATH'] = POPPLER_PATH + os.pathsep + os.environ.get('PATH', '')
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / "static", BASE_DIR / "uploads", BASE_DIR / "media"]
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')

@@ -2,14 +2,40 @@
 {% load static %}
 {% load tailwind_filters %}
 {% block content %}
-<div class="max-w-lg mx-auto p-6 bg-white rounded-lg shadow-md">
+<div class="row rounded py-4 border bg-gulf-blue-100 p-3 m-auto container">
     <h2 class="text-2xl font-bold mb-6">New Signature Request</h2>
-    <form method="post" enctype="multipart/form-data" class="space-y-4">
+  <form method="post"
+      action="{% url 'docusign:new_docusign_request' %}"
+      enctype="multipart/form-data">
+    
+      {% comment %} <form method="post" enctype="multipart/form-data" class="space-y-4"> {% endcomment %}
         {% csrf_token %}
-        
+        {% if form1 %}
+           {{ form |crispy }}
+           {{ form1 |crispy }}
+
+        {% else %}
         <div class="mb-4">
-            <label for="id_title" class="block text-sm font-medium text-gray-700">Title</label>
-            {{ form | crispy }}
+            <!-- Render form fields individually to avoid rendering the 'signers' field twice -->
+            <div class="mb-3">
+                <label for="id_title" class="block text-sm font-medium text-gray-700">Title</label>
+                {{ form.title }}
+                {% for err in form.title.errors %}
+                    <p class="text-sm text-red-600">{{ err }}</p>
+                {% endfor %}
+            </div>
+            <div class="mb-3">
+                <label for="id_file" class="block text-sm font-medium text-gray-700">File</label>
+                {{ form.file }}
+                {% for err in form.file.errors %}
+                    <p class="text-sm text-red-600">{{ err }}</p>
+                {% endfor %}
+            </div>
+            {% if form.non_field_errors %}
+                {% for err in form.non_field_errors %}
+                    <p class="text-sm text-red-600">{{ err }}</p>
+                {% endfor %}
+            {% endif %}
         </div>
 
         
@@ -31,8 +57,15 @@
                 </select>
             </div>
 
-        <button type="submit" class="w-full bg-indigo-600 text-white py-2 rounded hover:bg-indigo-700 transition duration-150">Submit Request</button>
-    </form>
+       <div class="flex justify-center">
+        <button type="submit"
+                class="bg-blue-500 text-white p-3 rounded-full font-bold hover:bg-blue-600">
+            Submit
+        </button>
+    </div>
+            {% endif %}
+
+</form>
 
 </div>
 
