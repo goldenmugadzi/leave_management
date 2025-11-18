@@ -584,7 +584,7 @@ def ace_awaiting_my_action(request):
 
     #add aces being filtered by region and section
     aces_in_region = Ace2.objects.filter(region=user_profile.region)
-    aces_in_section = aces_in_region.filter(section=user_profile.section)
+    # aces_in_section = aces_in_region.filter(section=user_profile.section)
     # for ace in aces_in_section:
 
 
