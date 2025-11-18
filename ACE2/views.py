@@ -550,6 +550,8 @@ def ace_awaiting_my_action(request):
         if fallback_cost_centers:
             aces_query = aces_query.filter(cost_center__in=fallback_cost_centers)
 
+    #exceptio handling
+    aces_query1 = Ace2.objects.none()
     # Additional role-based filters
     if not any(role in ['Finance Director/Transmission Manager', 'Managing Director'] for role in user_role_names):
         if any(role in ['General Manager/Transmission Distribution Director', 'Engineering Manager', 'Finance Manager',
