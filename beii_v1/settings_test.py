@@ -20,7 +20,9 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework.authtoken',
     'it.users',
+    'it.change_requests',
     'fault_locator',
+    'approve',
 ]
 
 AUTH_USER_MODEL = 'users.UserProfile'
@@ -93,6 +95,8 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 MIGRATION_MODULES = {
     'fault_locator': None,
     'users': None,
+    'change_requests': None,
+    'approve': None,
 }
 
 LOGGING = {

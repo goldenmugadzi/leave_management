@@ -1,0 +1,184 @@
+            <!-- Profile Deactivation Fields -->
+            <div id="profile-deactivation-fields" class="hidden">
+              <div class="border-t border-gray-200 pt-6">
+                <h4 class="text-lg font-medium text-gray-900 mb-4">
+                  Section E - Profile Deactivation Details
+                </h4>
+
+                <!-- User Profile Selection -->
+                <div class="mb-6">
+                  <label
+                    for="user_profile_deac"
+                    class="block text-sm font-medium text-gray-700 mb-2"
+                  >
+                    User Profile <span class="text-red-500">*</span>
+                  </label>
+                  <select
+                    id="user_profile_deac"
+                    name="user_profile"
+                    class="select2 block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="">Select User</option>
+                    {% for usr in user_profiles %}
+                    <option value="{{usr.username}}">
+                      {{usr.first_name}} {{usr.last_name}}
+                    </option>
+                    {% endfor %}
+                  </select>
+                  <p class="mt-1 text-sm text-gray-500">
+                    Select the user whose profile needs to be deactivated
+                  </p>
+                </div>
+                <div
+                  id="deactivation-user-summary"
+                  class="hidden mb-6 bg-gray-50 border border-gray-200 rounded-md p-4"
+                >
+                  <h5 class="text-sm font-semibold text-gray-800 mb-3">
+                    Selected User Overview
+                  </h5>
+                  <p
+                    id="deac-user-summary-message"
+                    class="hidden text-sm mb-3"
+                  ></p>
+                  <dl class="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-gray-700">
+                    <div>
+                      <dt class="font-medium text-gray-600">Name</dt>
+                      <dd id="deac-user-summary-name" class="text-gray-900">Not provided</dd>
+                    </div>
+                    <div>
+                      <dt class="font-medium text-gray-600">EC Number</dt>
+                      <dd id="deac-user-summary-ec" class="text-gray-900">Not provided</dd>
+                    </div>
+                    <div>
+                      <dt class="font-medium text-gray-600">Designation</dt>
+                      <dd id="deac-user-summary-designation" class="text-gray-900">Not provided</dd>
+                    </div>
+                    <div>
+                      <dt class="font-medium text-gray-600">Cost Centre</dt>
+                      <dd id="deac-user-summary-cost-center" class="text-gray-900">Not provided</dd>
+                    </div>
+                    <div>
+                      <dt class="font-medium text-gray-600">Region</dt>
+                      <dd id="deac-user-summary-region" class="text-gray-900">Not provided</dd>
+                    </div>
+                    <div>
+                      <dt class="font-medium text-gray-600">Section / District</dt>
+                      <dd id="deac-user-summary-location" class="text-gray-900">Not provided</dd>
+                    </div>
+                  </dl>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div class="mb-6">
+                    <label
+                      for="deactivation_effective_start"
+                      class="block text-sm font-medium text-gray-700 mb-2"
+                    >
+                      Effective Start Date <span class="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="datetime-local"
+                      id="deactivation_effective_start"
+                      name="deactivation_effective_start"
+                      class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+                  <div class="mb-6">
+                    <label
+                      for="deactivation_reactivation_date"
+                      class="block text-sm font-medium text-gray-700 mb-2"
+                    >
+                      Reactivation Date (if known)
+                    </label>
+                    <input
+                      type="datetime-local"
+                      id="deactivation_reactivation_date"
+                      name="deactivation_reactivation_date"
+                      class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+                </div>
+                <div class="mb-6">
+                  <label
+                    for="deactivation_reason"
+                    class="block text-sm font-medium text-gray-700 mb-2"
+                  >
+                    Reason for Deactivation <span class="text-red-500">*</span>
+                  </label>
+                  <textarea
+                    id="deactivation_reason"
+                    name="deactivation_reason"
+                    rows="3"
+                    class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Provide details for why the profile should be deactivated"
+                  ></textarea>
+                </div>
+                <div class="mb-6">
+                  <label
+                    for="deactivation_correspondence_link"
+                    class="block text-sm font-medium text-gray-700 mb-2"
+                  >
+                    Correspondence / Instruction Link
+                  </label>
+                  <input
+                    type="url"
+                    id="deactivation_correspondence_link"
+                    name="deactivation_correspondence_link"
+                    class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="Provide a link to supporting correspondence"
+                  />
+                </div>
+                <div class="mb-6">
+                  <label
+                    for="deactivation_correspondence_notes"
+                    class="block text-sm font-medium text-gray-700 mb-2"
+                  >
+                    Correspondence Notes
+                  </label>
+                  <textarea
+                    id="deactivation_correspondence_notes"
+                    name="deactivation_correspondence_notes"
+                    rows="3"
+                    class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus-border-blue-500"
+                    placeholder="Summarise the official instruction or reference details"
+                  ></textarea>
+                </div>
+                <div class="mb-6">
+                  <label
+                    for="deactivation_correspondence_attachment"
+                    class="block text-sm font-medium text-gray-700 mb-2"
+                  >
+                    Correspondence Attachment
+                  </label>
+                  <input
+                    type="file"
+                    id="deactivation_correspondence_attachment"
+                    name="deactivation_correspondence_attachment"
+                    class="block w-full text-sm text-gray-700"
+                  />
+                  <p class="mt-1 text-sm text-gray-500">
+                    Optional upload (PDF, image, etc.) if no link is available.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Form Errors -->
+            <div id="form-errors" class="hidden">
+              <div class="bg-red-50 border border-red-200 rounded-md p-4">
+                <div class="flex">
+                  <div class="flex-shrink-0">
+                    <i class="fas fa-exclamation-circle text-red-400"></i>
+                  </div>
+                  <div class="ml-3">
+                    <h3 class="text-sm font-medium text-red-800">
+                      Please correct the following errors:
+                    </h3>
+                    <div
+                      class="mt-2 text-sm text-red-700"
+                      id="error-list"
+                    ></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+

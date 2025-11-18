@@ -115,6 +115,9 @@ A comprehensive Django-based system for managing user profile changes, approvals
     "change_type": "NEW_PROFILE|PROFILE_MODIFICATION|PROFILE_DEACTIVATION",
     "change_reason": "string (max 500 chars)",
     "change_description": "string (max 1000 chars)",
+    "originator_company": "string",
+    "originator_site": "string",
+    "date_resolution_required": "date",
     "created_by": "UserProfile (foreign key)",
     "created_at": "datetime",
     "is_deleted": "boolean",
@@ -127,12 +130,19 @@ A comprehensive Django-based system for managing user profile changes, approvals
 ```python
 {
     "username": "string (max 15 chars, unique)",
+    "ec_number": "string",
     "first_name": "string (max 100 chars)",
     "last_name": "string (max 100 chars)",
     "email": "string (max 100 chars)",
+    "job_title": "string",
+    "company": "string",
     "designation": "Designation (foreign key)",
     "region": "Region (foreign key)",
-    "cost_center": "CostCenter (foreign key)"
+    "cost_center": "CostCenter (foreign key)",
+    "depot_office": "string (optional)",
+    "sub_module": "string (optional)",
+    "training_date": "date (optional)",
+    "training_confirmation_link": "string (optional)"
 }
 ```
 
@@ -145,6 +155,9 @@ POST /change_requests/create_new_profile
 {
     "change_reason": "New employee onboarding",
     "change_description": "Creating account for new team member",
+    "originator_company": "ZETDC",
+    "originator_site": "Harare Region",
+    "date_resolution_required": "2025-12-31",
     "username": "newemployee",
     "first_name": "John",
     "last_name": "Doe",
@@ -152,7 +165,10 @@ POST /change_requests/create_new_profile
     "designation": 1,
     "cost_center": 1,
     "for_application": 1,
-    "roles_to_action": "Add basic user role"
+    "roles_to_action": "Add basic user role",
+    "np_ec_number": "1234567",
+    "np_job_title": "Analyst",
+    "np_company": "ZETDC"
 }
 
 // Response: 302 Redirect with success message

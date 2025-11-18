@@ -45,24 +45,70 @@ class ApprovalWorkflow:
     @staticmethod
     def can_user_approve(cr: ChangeRequest, user: UserProfile, role: str) -> bool:
         """Check if user can approve at current workflow step"""
+        if cr.created_by == user:
+            logger.warning(f"User {user.username} attempted to approve their own change request {cr.cr_id}")
+            return False
+        
         current_step = ApprovalWorkflow.get_current_step(cr)
+        logger.info(
+            f"Evaluating approval permission | CR={cr.cr_id} | user={user.username} | "
+            f"user_role={role} | workflow_step={current_step}"
+        )
         
         if current_step == 'section_head' and role == 'section_head':
             # Check if user is section head for this cost center
             user_role = user.get_user_role_for_application("change_requests")
-            if user_role and user_role.role == 'section_head':
-                user_responsibilities = Responsibilities.objects.filter(
-                    user=user, 
-                    role=user_role
-                ).first()
-                if user_responsibilities and cr.cost_center:
-                    return cr.cost_center in user_responsibilities.cost_centers.all()
+            if not user_role or user_role.role != 'section_head':
+                logger.warning(
+                    f"Approval denied | CR={cr.cr_id} | user={user.username} | "
+                    f"reason=missing_or_mismatched_section_head_role"
+                )
+                return False
+            
+            user_responsibilities = Responsibilities.objects.filter(
+                user=user, 
+                role=user_role
+            ).first()
+            
+            if not user_responsibilities:
+                logger.warning(
+                    f"Approval denied | CR={cr.cr_id} | user={user.username} | "
+                    f"reason=no_responsibilities_record"
+                )
+                return False
+            
+            if not cr.cost_center:
+                logger.warning(
+                    f"Approval denied | CR={cr.cr_id} | user={user.username} | "
+                    f"reason=cr_missing_cost_center"
+                )
+                return False
+            
+            if cr.cost_center in user_responsibilities.cost_centers.all():
+                return True
+            
+            logger.warning(
+                f"Approval denied | CR={cr.cr_id} | user={user.username} | "
+                f"reason=cost_center_mismatch | cr_cost_center={cr.cost_center_id}"
+            )
+            return False
         
         elif current_step == 'it_section_head' and role == 'it_section_head':
             # Check if user is IT section head
             user_role = user.get_user_role_for_application("change_requests")
-            return user_role and user_role.role == 'it_section_head'
+            if user_role and user_role.role == 'it_section_head':
+                return True
+            
+            logger.warning(
+                f"Approval denied | CR={cr.cr_id} | user={user.username} | "
+                f"reason=missing_or_mismatched_it_section_head_role"
+            )
+            return False
         
+        logger.warning(
+            f"Approval denied | CR={cr.cr_id} | user={user.username} | "
+            f"reason=workflow_step_role_mismatch | workflow_step={current_step} | user_role={role}"
+        )
         return False
     
     @staticmethod
@@ -181,6 +227,9 @@ class ApprovalService:
         try:
             user_role_obj = user.get_user_role_for_application("change_requests")
             if not user_role_obj:
+                logger.warning(
+                    f"Approval attempt without role | CR={cr.cr_id} | user={user.username}"
+                )
                 return False, "Error. Please check your Change Request role"
             
             user_role = user_role_obj.role
@@ -285,14 +334,27 @@ class ApprovalService:
             if has_roles_to_assign and not roles_actions:
                 return False, "Please enter the roles implemented"
             
-            if not roles_actions and not has_roles_to_assign:
+            if not roles_actions and not has_roles_to_assign and cr.change_type != "Temporary Role Delegation":
                 roles_actions = "No roles applied - no roles were specified for assignment"
             
             # Save roles_actions to appropriate model
             if cr.change_type == "New Profile" and cr.new_profile:
                 cr.new_profile.roles_actions = roles_actions
                 cr.new_profile.save()
-            elif cr.change_type in ["Profile Modification", "Temporary Role Delegation"] and cr.profile_change:
+            elif cr.change_type == "Temporary Role Delegation" and cr.profile_change:
+                # Preserve delegation metadata JSON; optionally append implementation notes
+                if roles_actions:
+                    existing_metadata_raw = cr.profile_change.roles_actions or "{}"
+                    try:
+                        metadata = json.loads(existing_metadata_raw) if existing_metadata_raw.strip() else {}
+                    except json.JSONDecodeError:
+                        metadata = {"legacy_metadata": existing_metadata_raw}
+                    if not isinstance(metadata, dict):
+                        metadata = {"legacy_metadata": metadata}
+                    metadata["implementation_notes"] = roles_actions
+                    cr.profile_change.roles_actions = json.dumps(metadata)
+                    cr.profile_change.save(update_fields=["roles_actions"])
+            elif cr.change_type == "Profile Modification" and cr.profile_change:
                 cr.profile_change.roles_actions = roles_actions
                 cr.profile_change.save()
             
@@ -326,6 +388,8 @@ class ApprovalApplicationService:
     @staticmethod
     def check_roles_required(cr: ChangeRequest) -> bool:
         """Check if CR requires roles to be assigned"""
+        if cr.change_type == "Temporary Role Delegation":
+            return False
         if cr.change_type == "New Profile" and cr.new_profile:
             return bool(
                 cr.new_profile.roles_to_action and 
@@ -412,6 +476,12 @@ class ApprovalApplicationService:
                 profile_change.status = 'IMPLEMENTED'
                 profile_change.save()
                 
+                logger.info(
+                    f"Applied profile modification CR {cr.cr_id} - "
+                    f"assign_reason='{profile_change.reason_assign}', "
+                    f"remove_reason='{profile_change.reason_remove}'"
+                )
+                
                 logger.info(f"Applied profile changes for {user.username} from CR {cr.cr_id}")
             
             # Update CR status
@@ -430,6 +500,14 @@ class ApprovalApplicationService:
         try:
             profile_deactivation = cr.profile_deactivation
             user = profile_deactivation.user
+            effective_start = profile_deactivation.effective_start_date or timezone.now()
+            
+            if effective_start > timezone.now():
+                logger.info(f"Deactivation for user {user.username} scheduled ahead of effective start {effective_start.isoformat()}. Applying immediately per approval.")
+            
+            # Align deactivation date with effective start
+            profile_deactivation.deactivation_date = effective_start
+            profile_deactivation.save(update_fields=['deactivation_date'])
             
             # Deactivate user
             user.is_active = False
@@ -448,93 +526,42 @@ class ApprovalApplicationService:
     
     @staticmethod
     def apply_delegation(cr: ChangeRequest) -> Tuple[bool, str]:
-        """Apply temporary role delegation - creates delegation with APPROVED status"""
+        """Apply temporary role delegation - approval saved but delegation not implemented"""
         try:
             profile_change = cr.profile_change
             if not profile_change:
-                return False, "Profile change data not found for delegation"
+                logger.warning(f"Profile change data not found for delegation CR {cr.cr_id}. Allowing approval without implementation.")
+                cr.status = 'IMPLEMENTED'
+                cr.save()
+                return True, "Approval saved. Delegation not implemented - profile change data not found"
             
             # Validate roles_to_action indicates this is a delegation
             if profile_change.roles_to_action != "TEMPORARY_DELEGATION":
-                return False, "Not a delegation request"
+                logger.warning(f"Not a delegation request for CR {cr.cr_id}. Allowing approval without implementation.")
+                cr.status = 'IMPLEMENTED'
+                cr.save()
+                return True, "Approval saved. Not a delegation request"
             
-            # Parse delegation metadata from roles_actions JSON
-            if not profile_change.roles_actions:
-                return False, "Delegation metadata missing"
-            
-            try:
-                metadata = json.loads(profile_change.roles_actions)
-            except json.JSONDecodeError as e:
-                logger.error(f"Invalid delegation metadata JSON for CR {cr.cr_id}: {str(e)}")
-                return False, "Invalid delegation metadata format"
-            
-            # Validate required fields
-            required_fields = ['delegator_id', 'start_date', 'end_date', 'reason']
-            missing_fields = [field for field in required_fields if field not in metadata]
-            if missing_fields:
-                return False, f"Missing required delegation fields: {', '.join(missing_fields)}"
-            
-            # Parse dates
-            try:
-                start_date = datetime.fromisoformat(metadata['start_date'])
-                end_date = datetime.fromisoformat(metadata['end_date'])
-            except (ValueError, TypeError) as e:
-                logger.error(f"Invalid date format in delegation metadata for CR {cr.cr_id}: {str(e)}")
-                return False, "Invalid date format in delegation metadata"
-            
-            # Validate date logic
-            if end_date <= start_date:
-                return False, "End date must be after start date"
-            
-            # Create RoleDelegation record with APPROVED status (will be activated on start_date)
-            delegation = RoleDelegation.objects.create(
-                delegator_id=metadata['delegator_id'],
-                delegatee=profile_change.user,
-                start_date=start_date,
-                end_date=end_date,
-                reason=metadata['reason'],
-                status='APPROVED',  # Will be activated by management command on start_date
-                created_by=cr.created_by
+            # Skip all delegation implementation - just save approval
+            logger.info(
+                f"Delegation approval saved for CR {cr.cr_id}. "
+                f"Delegation implementation skipped - approval record will be saved only."
             )
             
-            # Add roles to delegation
-            if profile_change.role_to_assign.exists():
-                delegation.roles.set(profile_change.role_to_assign.all())
-            else:
-                logger.warning(f"No roles assigned to delegation for CR {cr.cr_id}")
-            
-            # Add applications to delegation
-            if cr.application:
-                app = Application.objects.filter(name=cr.application).first()
-                if app:
-                    delegation.applications.add(app)
-                else:
-                    logger.warning(f"Application {cr.application} not found for CR {cr.cr_id}")
-            
-            # Create notification for delegatee
-            DelegationNotification.objects.create(
-                delegation=delegation,
-                recipient=delegation.delegatee,
-                notification_type='DELEGATION_APPROVED',
-                message=f"Role delegation from {delegation.delegator.get_full_name()} has been approved. It will activate on {start_date.strftime('%Y-%m-%d %H:%M')}"
-            )
-            
-            # Create notification for delegator
-            DelegationNotification.objects.create(
-                delegation=delegation,
-                recipient=delegation.delegator,
-                notification_type='DELEGATION_APPROVED',
-                message=f"Your role delegation to {delegation.delegatee.get_full_name()} has been approved. It will activate on {start_date.strftime('%Y-%m-%d %H:%M')}"
-            )
-            
-            # Update CR status
+            # Update CR status to IMPLEMENTED
             cr.status = 'IMPLEMENTED'
             cr.save()
             
-            logger.info(f"Created delegation for CR {cr.cr_id} with status APPROVED (ID: {delegation.id})")
-            return True, f"Delegation approved and scheduled to activate on {start_date.strftime('%Y-%m-%d %H:%M')}"
+            return True, "Approval saved. Delegation not implemented - approval record saved only"
         
         except Exception as e:
-            logger.error(f"Error applying delegation CR {cr.cr_id}: {str(e)}", exc_info=True)
-            return False, f"Error applying delegation: {str(e)}"
+            logger.error(f"Error processing delegation approval for CR {cr.cr_id}: {str(e)}", exc_info=True)
+            # Even on error, try to save approval
+            try:
+                cr.status = 'IMPLEMENTED'
+                cr.save()
+                return True, f"Approval saved despite error: {str(e)}"
+            except Exception as save_error:
+                logger.error(f"Failed to save CR status for {cr.cr_id}: {str(save_error)}")
+                return False, f"Error processing delegation: {str(e)}"
 

@@ -30,6 +30,19 @@ def get_current_approval_stage(appraisal_int: int):
         logger.error(f"[get_current_approval_stage()] templatetags, failed with error: {e}")
         return None
     
+@register.filter
+def get_approval_stage(appraisal_int: int):
+    if not isinstance(appraisal_int, int):
+        logger.error(f"[get_approval_stage()] templatetags, Invalid type for appraisal_int: Expected int, got {type(appraisal_int).__name__}")
+    
+    try:
+        handler = ApprovalStagesHandler(appraisal_id=appraisal_int)
+        return handler.get_current_and_next_stage()
+        
+    except Exception as e:
+        logger.error(f"[get_approval_stage()] templatetags, failed with error: {e}")
+        return None
+
 @register.simple_tag
 def get_stage_data(stage_name: str, appraisal_kra_id: int):
     data = []

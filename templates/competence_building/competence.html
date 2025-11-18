@@ -68,7 +68,7 @@
     <div class="min-w-0 flex-1">
       <div class="">
         <div class="mx-auto">
-          <a href="trainings" class="group relative block">
+          <a href="{% url 'competence_index' %}?category={{ 'Training and Development'|urlencode }}" class="group relative block">
             <div
               class="aspect-h-1 aspect-w-1 w-full overflow-hidden rounded-md bg-gray-200 lg:aspect-none group-hover:opacity-75 lg:h-40"
             >
@@ -99,7 +99,7 @@
     <div class="min-w-0 flex-1">
       <div class="">
         <div class="mx-auto">
-          <a href="upcoming_events" class="group relative block">
+          <a href="{% url 'competence_index' %}?category={{ 'Upcoming Events'|urlencode }}" class="group relative block">
             <div
               class="aspect-h-1 aspect-w-1 w-full overflow-hidden rounded-md bg-gray-200 lg:aspect-none group-hover:opacity-75 lg:h-40"
             >
@@ -130,7 +130,7 @@
     <div class="min-w-0 flex-1">
       <div class="">
         <div class="mx-auto">
-          <a href="jobdescription" class="group relative block">
+          <a href="{% url 'competence_index' %}?category={{ 'Job Description'|urlencode }}" class="group relative block">
             <div
               class="aspect-h-1 aspect-w-1 w-full overflow-hidden rounded-md bg-gray-200 lg:aspect-none group-hover:opacity-75 lg:h-40"
             >
@@ -161,7 +161,7 @@
     <div class="min-w-0 flex-1">
       <div class="">
         <div class="mx-auto">
-          <a href="vacancies" class="group relative block">
+          <a href="{% url 'competence_index' %}?category={{ 'Vacancies'|urlencode }}" class="group relative block">
             <div
               class="aspect-h-1 aspect-w-1 w-full overflow-hidden rounded-md bg-gray-200 lg:aspect-none group-hover:opacity-75 lg:h-40"
             >
@@ -192,7 +192,7 @@
     <div class="min-w-0 flex-1">
       <div class="">
         <div class="mx-auto">
-          <a href="safety" class="group relative block">
+          <a href="{% url 'competence_index' %}?category={{ 'Safety and Healthy'|urlencode }}" class="group relative block">
             <div
               class="aspect-h-1 aspect-w-1 w-full overflow-hidden rounded-md bg-gray-200 lg:aspect-none group-hover:opacity-75 lg:h-40"
             >

@@ -1,216 +1,95 @@
-{% extends 'admin_layout.html' %} {% load static %} {% block content %}
-<div style="display: flex; justify-content: flex-start" class="">
-  <div style="display: flex; justify-content: center">
-    <a
-      href="/reports/all_reports"
-      class="hover:bg-blue-200 outline-none focus:outline-none px-3 py-1 rounded flex items-center"
-    >
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke-width="1.5"
-        stroke="currentColor"
-        class="w-6 h-6 text-gulf-blue-700"
-      >
-        <path
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          d="M3.375 19.5h17.25m-17.25 0a1.125 1.125 0 0 1-1.125-1.125M3.375 19.5h7.5c.621 0 1.125-.504 1.125-1.125m-9.75 0V5.625m0 12.75v-1.5c0-.621.504-1.125 1.125-1.125m18.375 2.625V5.625m0 12.75c0 .621-.504 1.125-1.125 1.125m1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125m0 3.75h-7.5A1.125 1.125 0 0 1 12 18.375m9.75-12.75c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125m19.5 0v1.5c0 .621-.504 1.125-1.125 1.125M2.25 5.625v1.5c0 .621.504 1.125 1.125 1.125m0 0h17.25m-17.25 0h7.5c.621 0 1.125.504 1.125 1.125M3.375 8.25c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125m17.25-3.75h-7.5c-.621 0-1.125.504-1.125 1.125m8.625-1.125c.621 0 1.125.504 1.125 1.125v1.5c0 .621-.504 1.125-1.125 1.125m-17.25 0h7.5m-7.5 0c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125M12 10.875v-1.5m0 1.5c0 .621-.504 1.125-1.125 1.125M12 10.875c0 .621.504 1.125 1.125 1.125m-2.25 0c.621 0 1.125.504 1.125 1.125M13.125 12h7.5m-7.5 0c-.621 0-1.125.504-1.125 1.125M20.625 12c.621 0 1.125.504 1.125 1.125v1.5c0 .621-.504 1.125-1.125 1.125m-17.25 0h7.5M12 14.625v-1.5m0 1.5c0 .621-.504 1.125-1.125 1.125M12 14.625c0 .621.504 1.125 1.125 1.125m-2.25 0c.621 0 1.125.504 1.125 1.125m0 1.5v-1.5m0 0c0-.621.504-1.125 1.125-1.125m0 0h7.5"
-        />
-      </svg>
-      <span class="px-2 font-semibold flex-1 text-gulf-blue-700">VIEW All</span>
-    </a>
-  </div>
-  <div style="display: flex; justify-content: center">
-    <a
-      href="/reports/create_report/"
-      class="hover:bg-blue-200 outline-none focus:outline-none px-3 py-1 rounded flex items-center"
-    >
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke-width="1.5"
-        stroke="currentColor"
-        class="w-6 h-6 text-gulf-blue-700"
-      >
-        <path
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          d="M12 4.5v15m7.5-7.5h-15"
-        />
-      </svg>
-      <span class="px-2 font-semibold flex-1 text-gulf-blue-700">CREATE</span>
-    </a>
-  </div>
-  <div style="display: flex; justify-content: center">
-    <a
-      href="/reports/archived_reports"
-      class="hover:bg-gray-200 outline-none focus:outline-none px-3 py-1 rounded flex items-center"
-    >
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke-width="1.5"
-        stroke="currentColor"
-        class="w-6 h-6"
-      >
-        <path
-          stroke-linecap="round"
-          stroke-linejoin="round"
-          d="m20.25 7.5-.625 10.632a2.25 2.25 0 0 1-2.247 2.118H6.622a2.25 2.25 0 0 1-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125Z"
-        />
-      </svg>
-      <span class="px-2 font-semibold flex-1 text-gray-700">ARCHIVE</span>
-    </a>
-  </div>
-</div>
-<div class="mt-5"></div>
-<div class="content-wrapper flex flex-wrap p-2">
-  <div class="grid grid-cols-3 gap-4">
+{% extends 'admin_layout.html' %}
+{% load static %}
 
-    <div
-      class="w-auto bg-gray-200 shadow shadow-nepal-300 text-gray-700 rounded px-2 py-2"
-    >
-      <div class="sm:flex lg:items-center lg:justify-between">
-        <div class="min-w-0 flex-1">
-          <div class="">
-            <div class="mx-auto">
-              <div class="group relative">
-                <div
-                  class="aspect-h-1 aspect-w-1 w-full overflow-hidden rounded-md bg-gray-200 lg:aspect-none group-hover:opacity-75 lg:h-40"
-                >
-                  <a href="/reports/reports_index">
-                    <img
-                      src="{% static 'assets/images/report writing.jpg' %}"
-                      alt=""
-                      class="h-full w-full object-cover object-center lg:h-full lg:w-full"
-                    />
-                  </a>
-                </div>
-                <div class="mt-4 flex justify-center">
-                  <div class="w-full">
-                    <div
-                      class="dropdown-group inline-block w-full text-blue-50"
-                    >
-                      <a href="/reports/reports_index">
-                        <button
-                          class="w-full bg-gulf-blue-600 hover:bg-blue-800 outline-none focus:outline-none border px-3 py-1 rounded flex items-center"
-                        >
-                          <span class="pr-1 font-semibold flex-1 text-blue-50"
-                            >REPORTS</span
-                          >
-                          <span class="text-blue-50"> </span>
-                        </button>
-                      </a>
-                    </div>
-                  </div>
-                </div>
+{% block styles %}
+<style>
+  .be-card {
+    transition: all 0.2s ease;
+  }
+  .be-card:hover {
+    border-color: #2563eb;
+    box-shadow: 0 10px 25px rgba(37, 99, 235, 0.15);
+  }
+</style>
+{% endblock styles %}
 
-                <!-- More products... -->
-              </div>
-            </div>
-          </div>
-        </div>
+{% block content %}
+<div class="content-wrapper">
+  <div class="bg-gray-50 border border-gray-200 rounded-2xl px-6 py-6 max-w-7xl mx-auto">
+    <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+      <div>
+        <p class="text-sm uppercase tracking-wide text-indigo-600 font-semibold">Business Excellence</p>
+        <h1 class="text-3xl font-bold text-gray-900 mt-1">Plans & Reports Hub</h1>
+        <p class="text-gray-600 mt-2">Choose a category to open the unified table with filters applied automatically.</p>
+      </div>
+      <div class="flex flex-wrap gap-3">
+        <a href="/reports/all_reports/" class="bg-white border border-gray-300 text-gray-800 font-medium py-2 px-4 rounded-lg hover:bg-gray-100 transition-colors flex items-center gap-2">
+          <i class="fas fa-table"></i>
+          View All
+        </a>
+        <a href="/reports/create_report/" class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg flex items-center gap-2 transition-colors">
+          <i class="fas fa-plus"></i>
+          Create Entry
+        </a>
+        <a href="/reports/archived_reports/" class="border border-gray-300 text-gray-800 font-medium py-2 px-4 rounded-lg hover:bg-gray-100 transition-colors flex items-center gap-2">
+          <i class="fas fa-archive"></i>
+          Archived View
+        </a>
       </div>
     </div>
+  </div>
 
-    <div
-      class="w-auto bg-gray-200 shadow shadow-nepal-300 text-gray-700 rounded px-2 py-2"
-    >
-      <div class="sm:flex lg:items-center lg:justify-between">
-        <div class="min-w-0 flex-1">
-          <div class="">
-            <div class="mx-auto">
-              <div class="group relative">
-                <div
-                  style="background-color: #a16207"
-                  class="aspect-h-1 aspect-w-1 w-full overflow-hidden rounded-md bg-gray-200 lg:aspect-none group-hover:opacity-75 lg:h-40"
-                >
-                  <a href="/reports/plans_index">
-                    <img
-                      src="{% static 'assets/images/plans.jpg' %}"
-                      alt=""
-                      class="h-full w-full object-cover object-center lg:h-full lg:w-full"
-                    />
-                  </a>
-                </div>
-                <div class="mt-4 flex justify-center">
-                  <div class="w-full">
-                    <div
-                      class="dropdown-group inline-block w-full text-blue-50"
-                    >
-                      <a href="/reports/plans_index">
-                        <button
-                          class="w-full bg-gulf-blue-600 hover:bg-blue-800 outline-none focus:outline-none border px-3 py-1 rounded flex items-center"
-                        >
-                          <span class="pr-1 font-semibold flex-1 text-blue-50"
-                            >PLANS</span
-                          >
-                          <span class="text-blue-50"> </span>
-                        </button>
-                      </a>
-                    </div>
-                  </div>
-                </div>
+  <div class="max-w-7xl mx-auto mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div class="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
+      <p class="text-sm text-gray-500">All Active Records</p>
+      <div class="text-3xl font-bold text-gray-900 mt-2">{{ totals.all|default:0 }}</div>
+    </div>
+    <div class="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
+      <p class="text-sm text-gray-500">Reports</p>
+      <div class="text-3xl font-bold text-blue-600 mt-2">{{ totals.reports|default:0 }}</div>
+    </div>
+    <div class="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
+      <p class="text-sm text-gray-500">Plans</p>
+      <div class="text-3xl font-bold text-indigo-600 mt-2">{{ totals.plans|default:0 }}</div>
+    </div>
+    <div class="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
+      <p class="text-sm text-gray-500">IMS Objectives</p>
+      <div class="text-3xl font-bold text-purple-600 mt-2">{{ totals.objectives|default:0 }}</div>
+    </div>
+  </div>
 
-                <!-- More products... -->
-              </div>
-            </div>
-          </div>
-        </div>
+  <div class="max-w-7xl mx-auto mt-6 bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
+    <div class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between mb-6">
+      <div>
+        <h2 class="text-2xl font-semibold text-gray-900">Open a filtered view</h2>
+        <p class="text-gray-600 text-sm mt-1">Each option opens the same table, filtered using query parameters.</p>
       </div>
+      <a href="/reports/all_reports/" class="text-blue-600 font-semibold flex items-center gap-2">
+        <span>Open unified table</span>
+        <i class="fas fa-arrow-right"></i>
+      </a>
     </div>
 
-    <div
-      class="w-auto bg-gray-200 shadow shadow-nepal-300 text-gray-700 rounded px-2 py-2"
-    >
-      <div class="sm:flex lg:items-center lg:justify-between">
-        <div class="min-w-0 flex-1">
-          <div class="">
-            <div class="mx-auto">
-              <div class="group relative">
-                <div
-                  style="background-color: #7c3aed"
-                  class="aspect-h-1 aspect-w-1 w-full overflow-hidden rounded-md bg-gray-200 lg:aspect-none group-hover:opacity-75 lg:h-40"
-                >
-                  <a href="/reports/objectives_index">
-                    <img
-                      src="{% static 'assets/images/management.png' %}"
-                      alt=""
-                      class="h-full w-full object-cover object-center lg:h-full lg:w-full"
-                    />
-                  </a>
-                </div>
-                <div class="mt-4 flex justify-center">
-                  <div class="w-full">
-                    <div
-                      class="dropdown-group inline-block w-full text-blue-50"
-                    >
-                      <a href="/reports/objectives_index">
-                        <button
-                          class="w-full bg-gulf-blue-600 hover:bg-blue-800 outline-none focus:outline-none border px-3 py-1 rounded flex items-center"
-                        >
-                          <span class="pr-1 font-semibold flex-1 text-blue-50"
-                            >IMS OBJECTIVES & TARGETS</span
-                          >
-                          <span class="text-blue-50"> </span>
-                        </button>
-                      </a>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- More products... -->
-              </div>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+      {% for card in cards %}
+        <a href="{{ card.href }}" class="block border border-gray-200 rounded-2xl p-5 be-card bg-gradient-to-br from-white to-gray-50">
+          <div class="flex items-start justify-between gap-3">
+            <div>
+              <p class="text-xs font-semibold tracking-wide uppercase text-gray-500">{{ card.subtitle }}</p>
+              <h3 class="text-xl font-bold text-gray-900 mt-1">{{ card.title }}</h3>
             </div>
+            <span class="text-3xl font-extrabold text-gray-900">{{ card.count|default:0 }}</span>
           </div>
-        </div>
-      </div>
+          <p class="text-gray-600 text-sm mt-4">{{ card.description }}</p>
+          <div class="mt-6 text-blue-600 font-semibold flex items-center gap-2">
+            <span>Go to {{ card.title }}</span>
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M17 8l4 4m0 0-4 4m4-4H3" />
+            </svg>
+          </div>
+        </a>
+      {% endfor %}
     </div>
   </div>
 </div>
-
 {% endblock %}

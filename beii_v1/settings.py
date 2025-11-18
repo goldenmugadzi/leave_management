@@ -30,7 +30,7 @@ CORS_ALLOW_ALL_ORIGINS = True
 CSRF_TRUSTED_ORIGINS = [
     config('BASE_URL'),
     config('BASE_URL') + ":" + config('PORT'),
-    "https://65600443401e.ngrok-free.app",
+    "https://6a436b963963.ngrok-free.app",
     # Add your production domain here
     # "https://your-production-domain.com"
 ]
@@ -184,6 +184,7 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'inspections.middleware.APIRequestLoggingMiddleware',  # API request logging
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'it.beii_auth.inactive_user_middleware.InactiveUserMiddleware',

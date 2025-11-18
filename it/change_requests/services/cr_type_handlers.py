@@ -32,11 +32,14 @@ class NewProfileHandler:
         return {
             "id": new_profile.pk,
             "username": new_profile.username,
+            "ec_number": new_profile.ec_number,
             "first_name": new_profile.first_name,
             "last_name": new_profile.last_name,
             "firstname": new_profile.first_name,  # For template compatibility
             "lastname": new_profile.last_name,    # For template compatibility
             "email": new_profile.email,
+            "job_title": new_profile.job_title,
+            "company": new_profile.company,
             "roles_to_action": new_profile.roles_to_action,
             "roles_actions": new_profile.roles_actions,
             "section": new_profile.section,
@@ -44,6 +47,10 @@ class NewProfileHandler:
             "region": new_profile.region,
             "cost_center": new_profile.cost_center,
             "designation": new_profile.designation,
+            "depot_office": new_profile.depot_office,
+            "sub_module": new_profile.sub_module,
+            "training_date": new_profile.training_date,
+            "training_confirmation_link": new_profile.training_confirmation_link,
         }
     
     @staticmethod
@@ -90,6 +97,8 @@ class ProfileModificationHandler:
         profile_data = {
             "id": user.pk,
             "username": user.username,
+            "current_user_id": profile_change.current_user_id,
+            "ec_number": profile_change.ec_number,
             "first_name": user.first_name,
             "last_name": user.last_name,
             "firstname": user.first_name,  # For template compatibility
@@ -102,6 +111,12 @@ class ProfileModificationHandler:
             "designation": user.designation,
             "roles_to_action": roles_to_action_display,  # FIXED: Shows actual roles for delegations
             "roles_actions": profile_change.roles_actions,
+            "reason_assign": profile_change.reason_assign,
+            "reason_remove": profile_change.reason_remove,
+            "correspondence_link": profile_change.correspondence_link,
+            "roles_to_remove": list(profile_change.role_to_remove.all()),
+            "roles_to_assign_notes": profile_change.roles_to_assign_notes,
+            "roles_to_remove_notes": profile_change.roles_to_remove_notes,
         }
         
         return profile_data
@@ -201,6 +216,7 @@ class ProfileModificationHandler:
             'start_date': start_date,  # ADDED: Delegation start date
             'end_date': end_date,  # ADDED: Delegation end date
             'reason': reason,  # ADDED: Delegation reason
+            'delegation_reason': reason,
         }
     
     @staticmethod
@@ -280,6 +296,10 @@ class ProfileDeactivationHandler:
             "region": user.region,
             "cost_center": user.cost_center,
             "designation": user.designation,
+            "effective_start_date": profile_deactivation.effective_start_date,
+            "reactivation_date": profile_deactivation.reactivation_date,
+            "deactivation_reason": profile_deactivation.deactivation_reason,
+            "correspondence_link": profile_deactivation.correspondence_link,
         }
     
     @staticmethod
