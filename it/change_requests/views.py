@@ -1188,26 +1188,9 @@ def apply_delegation_change_request(change_request):
                 )
                 return
             
-            # Get delegator user object
-            delegator_id = metadata.get('delegator_id')
-            delegator = None
-            if delegator_id:
-                try:
-                    delegator = UserProfile.objects.get(id=delegator_id)
-                except UserProfile.DoesNotExist:
-                    # Fallback to changed_by field
-                    delegator = change_request.profile_change.changed_by
-            else:
-                # Fallback to changed_by field
-                delegator = change_request.profile_change.changed_by
-            
-            if not delegator:
-                logger.error(f"Cannot determine delegator for CR {change_request.cr_id}")
-                return
-            
             # Create RoleDelegation record for tracking
             delegation = RoleDelegation.objects.create(
-                delegator=delegator,
+                delegator_id=metadata['delegator_id'],
                 delegatee=change_request.profile_change.user,
                 start_date=datetime.fromisoformat(metadata['start_date']),
                 end_date=datetime.fromisoformat(metadata['end_date']),

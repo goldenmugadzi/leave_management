@@ -7,7 +7,7 @@ Handles approval workflow logic, permissions, and change request application.
 import json
 import logging
 from typing import Dict, Optional, Tuple, Any
-from datetime import datetime, timedelta
+from datetime import datetime
 from django.db import transaction
 from django.utils import timezone
 
@@ -537,106 +537,60 @@ class ApprovalApplicationService:
                 return False, "Not a delegation request"
             
             # Parse delegation metadata from roles_actions JSON
-            if not profile_change.roles_actions:
-                return False, "Delegation metadata missing"
-            
-            try:
-                metadata = json.loads(profile_change.roles_actions)
-            except json.JSONDecodeError as e:
-                logger.error(f"Invalid delegation metadata JSON for CR {cr.cr_id}: {str(e)}")
-                return False, "Invalid delegation metadata format"
+            metadata = {}
+            if profile_change.roles_actions:
+                try:
+                    metadata = json.loads(profile_change.roles_actions)
+                except json.JSONDecodeError as e:
+                    logger.warning(f"Invalid delegation metadata JSON for CR {cr.cr_id}: {str(e)}. Allowing approval without implementation.")
+                    metadata = {}
             
             if not isinstance(metadata, dict):
-                logger.error(
-                    f"Delegation metadata for CR {cr.cr_id} is not an object (type={type(metadata).__name__})"
+                logger.warning(
+                    f"Delegation metadata for CR {cr.cr_id} is not an object (type={type(metadata).__name__}). Allowing approval without implementation."
                 )
-                return False, "Invalid delegation metadata structure"
+                metadata = {}
             
-            # Validate required fields - be lenient with existing records
-            # For existing records, provide defaults if fields are missing
-            delegator_id = metadata.get('delegator_id')
-            delegator = None
+            # Validate required fields - if missing, allow approval but skip implementation
+            required_fields = ['delegator_id', 'start_date', 'end_date', 'reason']
+            missing_fields = [field for field in required_fields if field not in metadata or not metadata.get(field)]
+            if missing_fields:
+                logger.warning(
+                    f"Missing required delegation fields for CR {cr.cr_id}: {', '.join(missing_fields)}. "
+                    f"Approval will be saved but delegation will not be implemented."
+                )
+                # Update CR status and return success without creating delegation
+                cr.status = 'IMPLEMENTED'
+                cr.save()
+                return True, f"Approval saved. Delegation not implemented due to missing fields: {', '.join(missing_fields)}"
             
-            if delegator_id:
-                # Get delegator by ID
-                try:
-                    delegator = UserProfile.objects.get(id=delegator_id)
-                except UserProfile.DoesNotExist:
-                    logger.warning(f"Delegator with ID {delegator_id} not found for CR {cr.cr_id}, trying fallback")
-                    delegator = None
-            
-            if not delegator:
-                # Fallback: use changed_by field as delegator
-                if profile_change.changed_by:
-                    delegator = profile_change.changed_by
-                    logger.warning(f"Missing delegator_id in metadata for CR {cr.cr_id}, using changed_by: {delegator.id}")
-                else:
-                    return False, "Cannot determine delegator: missing delegator_id in metadata and changed_by field"
-            
-            # Handle dates - provide defaults for existing records
-            start_date_str = metadata.get('start_date')
-            end_date_str = metadata.get('end_date')
-            
-            if not start_date_str or not end_date_str:
-                # For existing records without dates, use reasonable defaults
-                logger.warning(f"Missing delegation dates in metadata for CR {cr.cr_id}, using defaults")
-                now = timezone.now()
-                if not start_date_str:
-                    start_date = now
-                else:
-                    try:
-                        start_date = datetime.fromisoformat(start_date_str.replace('Z', '+00:00'))
-                        if not timezone.is_aware(start_date):
-                            start_date = timezone.make_aware(start_date)
-                    except (ValueError, TypeError):
-                        start_date = now
-                
-                if not end_date_str:
-                    # Default to 90 days from start date
-                    end_date = start_date + timedelta(days=90)
-                else:
-                    try:
-                        end_date = datetime.fromisoformat(end_date_str.replace('Z', '+00:00'))
-                        if not timezone.is_aware(end_date):
-                            end_date = timezone.make_aware(end_date)
-                    except (ValueError, TypeError):
-                        end_date = start_date + timedelta(days=90)
-            else:
-                # Parse provided dates
-                try:
-                    start_date = datetime.fromisoformat(start_date_str.replace('Z', '+00:00'))
-                    end_date = datetime.fromisoformat(end_date_str.replace('Z', '+00:00'))
-                    if not timezone.is_aware(start_date):
-                        start_date = timezone.make_aware(start_date)
-                    if not timezone.is_aware(end_date):
-                        end_date = timezone.make_aware(end_date)
-                except (ValueError, TypeError) as e:
-                    logger.error(f"Invalid date format in delegation metadata for CR {cr.cr_id}: {str(e)}")
-                    return False, "Invalid date format in delegation metadata"
+            # Parse dates
+            try:
+                start_date = datetime.fromisoformat(metadata['start_date'])
+                end_date = datetime.fromisoformat(metadata['end_date'])
+            except (ValueError, TypeError) as e:
+                logger.warning(f"Invalid date format in delegation metadata for CR {cr.cr_id}: {str(e)}. Allowing approval without implementation.")
+                cr.status = 'IMPLEMENTED'
+                cr.save()
+                return True, "Approval saved. Delegation not implemented due to invalid date format"
             
             # Validate date logic
             if end_date <= start_date:
-                logger.warning(f"End date must be after start date for CR {cr.cr_id}, adjusting end_date")
-                end_date = start_date + timedelta(days=1)
-            
-            # Handle reason - provide fallback for existing records
-            reason = metadata.get('reason')
-            if not reason or reason.strip() == '' or reason.strip().upper() == 'N/A':
-                # Fallback to change_reason or reason_assign
-                reason = cr.change_reason or profile_change.reason_assign or "Delegation approved"
-                logger.warning(f"Missing or invalid reason in metadata for CR {cr.cr_id}, using fallback: {reason}")
+                logger.warning(f"Invalid date range for CR {cr.cr_id}: end date must be after start date. Allowing approval without implementation.")
+                cr.status = 'IMPLEMENTED'
+                cr.save()
+                return True, "Approval saved. Delegation not implemented due to invalid date range"
             
             # Create RoleDelegation record with APPROVED status (will be activated on start_date)
-            # Use save() approach similar to users/views.py create_delegation
-            delegation = RoleDelegation()
-            delegation.delegator = delegator
-            delegation.delegatee = profile_change.user
-            delegation.start_date = start_date
-            delegation.end_date = end_date
-            delegation.reason = reason
-            delegation.status = 'APPROVED'  # Will be activated by management command on start_date
-            delegation.created_by = cr.created_by
-            delegation.save()
+            delegation = RoleDelegation.objects.create(
+                delegator_id=metadata['delegator_id'],
+                delegatee=profile_change.user,
+                start_date=start_date,
+                end_date=end_date,
+                reason=metadata['reason'],
+                status='APPROVED',  # Will be activated by management command on start_date
+                created_by=cr.created_by
+            )
             
             # Add roles to delegation
             if profile_change.role_to_assign.exists():
