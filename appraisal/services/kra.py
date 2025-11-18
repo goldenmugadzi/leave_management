@@ -169,7 +169,7 @@ class AppraisalDependanciesInitialisationService:
 
             logger.success("[Creating Appraisal Approval] AppraisalWorkflowQuarter created successfully.")
         except Exception as e:
-            raise Exception(f"[AppraisalDependanciesInitialisationService] create_quarterly_approval_workflow with appraisal_id: {appraisal_id}, failed with error: {e}")
+            raise Exception(f"[AppraisalDependanciesInitialisationService] create_quarterly_approval_workflow with appraisal_id: {appraisal_object.id}, failed with error: {e}")
 
     
     def create_all_dependencies(self, appraisal_id: int, year: int)->bool|None:
@@ -187,6 +187,8 @@ class AppraisalDependanciesInitialisationService:
                         raise Exception(f"create_all_dependencies, with pk: {appraisal_id}, has {year_quarter_objects} - 4 instances required.")
                                        
                     department_output_qr = self.department_output_repo.fetch_by_designation_id(designation_id=designation_obj.id)
+                    if not department_output_qr.exists():
+                        raise Exception(f"Departmental outputs for appraisal pk: {appraisal_id}, with designation pk: {designation_obj.id} has no departmental outputs set")
                     
                     for department_output_obj in department_output_qr:
                         
