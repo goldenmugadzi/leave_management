@@ -7,7 +7,7 @@ Handles approval workflow logic, permissions, and change request application.
 import json
 import logging
 from typing import Dict, Optional, Tuple, Any
-from datetime import datetime
+from datetime import datetime, timedelta
 from django.db import transaction
 from django.utils import timezone
 
@@ -552,31 +552,77 @@ class ApprovalApplicationService:
                 )
                 return False, "Invalid delegation metadata structure"
             
-            # Validate required fields
-            required_fields = ['delegator_id', 'start_date', 'end_date', 'reason']
-            missing_fields = [field for field in required_fields if field not in metadata]
-            if missing_fields:
-                return False, f"Missing required delegation fields: {', '.join(missing_fields)}"
+            # Validate required fields - be lenient with existing records
+            # For existing records, provide defaults if fields are missing
+            delegator_id = metadata.get('delegator_id')
+            if not delegator_id:
+                # Fallback: use changed_by field as delegator
+                if profile_change.changed_by:
+                    delegator_id = profile_change.changed_by.id
+                    logger.warning(f"Missing delegator_id in metadata for CR {cr.cr_id}, using changed_by.id: {delegator_id}")
+                else:
+                    return False, "Cannot determine delegator: missing delegator_id in metadata and changed_by field"
             
-            # Parse dates
-            try:
-                start_date = datetime.fromisoformat(metadata['start_date'])
-                end_date = datetime.fromisoformat(metadata['end_date'])
-            except (ValueError, TypeError) as e:
-                logger.error(f"Invalid date format in delegation metadata for CR {cr.cr_id}: {str(e)}")
-                return False, "Invalid date format in delegation metadata"
+            # Handle dates - provide defaults for existing records
+            start_date_str = metadata.get('start_date')
+            end_date_str = metadata.get('end_date')
+            
+            if not start_date_str or not end_date_str:
+                # For existing records without dates, use reasonable defaults
+                logger.warning(f"Missing delegation dates in metadata for CR {cr.cr_id}, using defaults")
+                now = timezone.now()
+                if not start_date_str:
+                    start_date = now
+                else:
+                    try:
+                        start_date = datetime.fromisoformat(start_date_str.replace('Z', '+00:00'))
+                        if not timezone.is_aware(start_date):
+                            start_date = timezone.make_aware(start_date)
+                    except (ValueError, TypeError):
+                        start_date = now
+                
+                if not end_date_str:
+                    # Default to 90 days from start date
+                    end_date = start_date + timedelta(days=90)
+                else:
+                    try:
+                        end_date = datetime.fromisoformat(end_date_str.replace('Z', '+00:00'))
+                        if not timezone.is_aware(end_date):
+                            end_date = timezone.make_aware(end_date)
+                    except (ValueError, TypeError):
+                        end_date = start_date + timedelta(days=90)
+            else:
+                # Parse provided dates
+                try:
+                    start_date = datetime.fromisoformat(start_date_str.replace('Z', '+00:00'))
+                    end_date = datetime.fromisoformat(end_date_str.replace('Z', '+00:00'))
+                    if not timezone.is_aware(start_date):
+                        start_date = timezone.make_aware(start_date)
+                    if not timezone.is_aware(end_date):
+                        end_date = timezone.make_aware(end_date)
+                except (ValueError, TypeError) as e:
+                    logger.error(f"Invalid date format in delegation metadata for CR {cr.cr_id}: {str(e)}")
+                    return False, "Invalid date format in delegation metadata"
             
             # Validate date logic
             if end_date <= start_date:
-                return False, "End date must be after start date"
+                logger.warning(f"End date must be after start date for CR {cr.cr_id}, adjusting end_date")
+                end_date = start_date + timedelta(days=1)
+            
+            # Handle reason - provide fallback for existing records
+            reason = metadata.get('reason')
+            if not reason or reason.strip() == '' or reason.strip().upper() == 'N/A':
+                # Fallback to change_reason or reason_assign
+                reason = cr.change_reason or profile_change.reason_assign or "Delegation approved"
+                logger.warning(f"Missing or invalid reason in metadata for CR {cr.cr_id}, using fallback: {reason}")
             
             # Create RoleDelegation record with APPROVED status (will be activated on start_date)
             delegation = RoleDelegation.objects.create(
-                delegator_id=metadata['delegator_id'],
+                delegator_id=delegator_id,
                 delegatee=profile_change.user,
                 start_date=start_date,
                 end_date=end_date,
-                reason=metadata['reason'],
+                reason=reason,
                 status='APPROVED',  # Will be activated by management command on start_date
                 created_by=cr.created_by
             )
