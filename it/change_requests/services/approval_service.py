@@ -555,11 +555,21 @@ class ApprovalApplicationService:
             # Validate required fields - be lenient with existing records
             # For existing records, provide defaults if fields are missing
             delegator_id = metadata.get('delegator_id')
-            if not delegator_id:
+            delegator = None
+            
+            if delegator_id:
+                # Get delegator by ID
+                try:
+                    delegator = UserProfile.objects.get(id=delegator_id)
+                except UserProfile.DoesNotExist:
+                    logger.warning(f"Delegator with ID {delegator_id} not found for CR {cr.cr_id}, trying fallback")
+                    delegator = None
+            
+            if not delegator:
                 # Fallback: use changed_by field as delegator
                 if profile_change.changed_by:
-                    delegator_id = profile_change.changed_by.id
-                    logger.warning(f"Missing delegator_id in metadata for CR {cr.cr_id}, using changed_by.id: {delegator_id}")
+                    delegator = profile_change.changed_by
+                    logger.warning(f"Missing delegator_id in metadata for CR {cr.cr_id}, using changed_by: {delegator.id}")
                 else:
                     return False, "Cannot determine delegator: missing delegator_id in metadata and changed_by field"
             
@@ -618,7 +628,7 @@ class ApprovalApplicationService:
             
             # Create RoleDelegation record with APPROVED status (will be activated on start_date)
             delegation = RoleDelegation.objects.create(
-                delegator_id=delegator_id,
+                delegator=delegator,
                 delegatee=profile_change.user,
                 start_date=start_date,
                 end_date=end_date,
