@@ -155,12 +155,12 @@ APPLICATIONS = [
     #     "iconUrl": "assets/images/tools&equipment.png",
     #     "url": "/tools-and-equipment-list/"
     # },
-    {
-        "name": "inspections",
-        "title": "Inspections",
-        "iconUrl": "assets/images/customer.png",
-        "url": "/inspections/"
-    },
+    # {
+    #     "name": "inspections",
+    #     "title": "Inspections",
+    #     "iconUrl": "assets/images/customer.png",
+    #     "url": "/inspections/"
+    # },
     # {
     #     "name": "substation_inspections",
     #     "title": "Substation Inspections",
@@ -173,12 +173,12 @@ APPLICATIONS = [
     #     "iconUrl": "assets/images/circuit_breaker.png",
     #     "url": "/circuit-breakers/circuit-breakers/"
     # },
-    {
-        "name": "Meetings",
-        "title": "Meetings",
-        "iconUrl": "assets/images/meeting.png",
-        "url": "/meetings_dashboard/"
-    }, 
+    # {
+    #     "name": "Meetings",
+    #     "title": "Meetings",
+    #     "iconUrl": "assets/images/meeting.png",
+    #     "url": "/meetings_dashboard/"
+    # }, 
       
     # {
     #     "name":"fault_locator",
