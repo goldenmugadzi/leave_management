@@ -509,155 +509,113 @@ def ace_awaiting_my_action(request):
     2. Role-based permissions
     3. Workflow step approver match
     """
-    from datetime import datetime
+    start_date = ''
+    end_date = ''
     user_profile = UserProfile.objects.get(id=request.user.id)
     user_roles = set(user_profile.roles.all())
-    user_role_names = [role.name for role in user_roles]
+    user_role_names = {role.name for role in user_profile.roles.all()}
 
-    # Get cost centers for ACE application
     application_names = ["ace"]
     cost_centers_set = request.user.cost_centers_for(application_names)
-    print("cost centers set: ", cost_centers_set)
-    cost_center = request.user.cost_center
-    end_date = datetime.now()
-    start_date = end_date.replace(day=1)
+    cost_center = user_profile.cost_center
+    
+    # Initialize lists to prevent UnboundLocalError
+    aces_to_process = []
+    created_aces = Ace2.objects.none() 
+    processed_ace_ids = set()
 
-    # Base query with optimized joins
-    aces_query = Ace2.objects.select_related(
-        'budget_id',
-        'requested_by',
-        'section',
-        'region',
-        'cost_center'
+    # Base query for all ACEs (unfiltered)
+    base_query = Ace2.objects.select_related(
+        'budget_id', 'requested_by', 'section', 'region', 'cost_center'
     ).prefetch_related(
-        "process__approval_set",
-        "process__workflow__step_set"
+        "process__approval_set", "process__workflow__step_set"
     )
-    print("ACES query prepared")
-    print("Initial ACEs count: ", aces_query.count())
 
-    # Cost center based filtering
+    # --- PRIMARY FILTERING: COST CENTER ---
+    aces_query_primary = base_query # Start with the base query
+
     if cost_centers_set:
         cost_centers = list(cost_centers_set)
-        print("inside the loop")
-        cost_center = get_parent_cost_center(cost_centers)
-        aces_query = aces_query.filter(cost_center__in=cost_centers)
-        # print("Filtered ACEs count after cost center filter: ", aces_query.count())
-
+        # Apply strict cost center filtering
+        aces_query_primary = aces_query_primary.filter(cost_center__in=cost_centers)
     else:
         # Fallback to user's cost center and descendants
         fallback_cost_centers = user_profile.cost_center_and_decendace()
         if fallback_cost_centers:
-            aces_query = aces_query.filter(cost_center__in=fallback_cost_centers)
+            aces_query_primary = aces_query_primary.filter(cost_center__in=fallback_cost_centers)
 
-    #exceptio handling
+    #exception handling
     aces_query1 = Ace2.objects.none()
     # Additional role-based filters
-    if not any(role in ['Finance Director/Transmission Manager', 'Managing Director'] for role in user_role_names):
-        if any(role in ['General Manager/Transmission Distribution Director', 'Engineering Manager', 'Finance Manager',
-                        'Accounting Officer'] for role in user_role_names):
-            aces_query1 = aces_query.filter(region=user_profile.region)
-            aces_query= aces_query1|aces_query
-        else:
-            aces_query = aces_query.filter(
-                region=user_profile.region,
-                section=user_profile.section
-            )
-            aces_query= aces_query|aces_query1
+    # --- SECONDARY FILTERING: REGION/SECTION (The Bypass Logic) ---
+    aces_query_secondary = base_query.none() # Initialize as empty
 
-    # Get ACEs awaiting user's action
-    aces_to_process = []
-    processed_ace_ids = set()
+    system_wide_roles = {'Finance Director/Transmission Manager', 'Managing Director'}
+    regional_roles = {'General Manager/Transmission Distribution Director', 'Engineering Manager', 
+                      'Finance Manager', 'Accounting Officer'}
 
-    for ace in aces_query:
+    # If the user has a regional or sectional role (and is NOT system-wide)
+    if not system_wide_roles.intersection(user_role_names):
+        # Start the secondary query with a regional filter
+        aces_query_secondary = base_query.filter(region=user_profile.region)
+
+        # Apply sectional filter if it's a sectional role
+        if not regional_roles.intersection(user_role_names):
+            aces_query_secondary = aces_query_secondary.filter(section=user_profile.section)
+    # --- COMBINE QUERIES ---
+    # Use distinct() to ensure no duplicates if an ACE matches both criteria
+    aces_combined_query = (aces_query_primary | aces_query_secondary).distinct()
+
+    # --- PROCESS AWAITING ACTION ---
+    for ace in aces_combined_query:
         if not ace.process or ace.Ace_id2 in processed_ace_ids:
             continue
 
         approvals = ace.process.approval_set.all()
+        
+        # 1. Skip if already rejected
         if approvals.filter(approved='Rejected').exists():
             continue
 
-        next_step = (approvals.last().step.step if approvals.exists() else 0) + 1
+        # 2. Check for eligibility
+        last_approved_step = approvals.last().step.step if approvals.exists() else 0
+        next_step = last_approved_step + 1
+        
+        # Check if the user is the approver for the next step based on their roles
         if ace.process.workflow.step_set.filter(step=next_step, approver__in=user_roles).exists():
             ace.has_rejected_approval = False
+            ace.latest_approval_status = approvals.last().approved if approvals.exists() else None
             
-            ace.latest_approval_status = approvals.last().approved if approvals.exists() else None
             aces_to_process.append(ace)
-            processed_ace_ids.add(ace.Ace_id2)
+            processed_ace_ids.add(ace.Ace_id2) # Mark as processed
 
-    #add aces being filtered by region and section
-    aces_in_region = Ace2.objects.filter(region=user_profile.region)
-    # aces_in_section = aces_in_region.filter(section=user_profile.section)
-    # for ace in aces_in_section:
+    # --- Handle 'create' role access (Your existing logic for created_aces) ---
+    # ... (Keep the rest of your logic for 'create' role and final return statement) ...
+    user_ace_roles = {role.role for role in user_profile.roles.all() if role.application == "ace"}
 
+    if "create" in user_ace_roles:
+        # ... (Populate created_aces QuerySet and add flags) ...
+        created_aces = base_query.filter(
+            requested_by=request.user,
+            region=user_profile.region
+        ).exclude(
+            process__approval__approved="Rejected"
+        ).order_by('-date_created')
 
-    #     if not ace.process or ace.Ace_id2 in processed_ace_ids:
-    #         continue
-
-    #     approvals = ace.process.approval_set.all()
-    #     if approvals.filter(approved='Rejected').exists():
-    #         continue
-    #     if ace not in aces_to_process:
-    #         approvals = ace.process.approval_set.all() if ace.process else []
-    #         ace.has_rejected_approval = False
-    #         ace.latest_approval_status = approvals.last().approved if approvals.exists() else None
-    #         aces_to_process.append(ace)
-    #         processed_ace_ids.add(ace.Ace_id2)
-    # print("ACEs to process count after section: ", len(aces_to_process))
-
-    # for ace in aces_in_region:
-    #     if ace not in aces_to_process:
-    #         approvals = ace.process.approval_set.all() if ace.process else []
-    #         ace.has_rejected_approval = False
-
-    #         aces_to_process.append(ace)
-    #         processed_ace_ids.add(ace.Ace_id2)
-    # print("ACEs to process count after region addition: ", len(aces_to_process))
-
-    #remove  rejected
-    aces_to_process = [
-        ace for ace in aces_to_process if
-        not (ace.process and ace.process.approval_set.filter(approved='Rejected').exists())]
-
-    # Get ACEs created by user with cost center filtering
-    created_aces = aces_in_region.filter(
-        requested_by=request.user
-    ).exclude(
-        process__approval__approved="Rejected"
-    )
-
-    # print("Created ACEs count: ", created_aces.count())
-
-    #if role == "create": remove aces to process
-
-    custom_user_roles = {
-            "ace": {},
-        }
-
-    roles_ = user_profile.roles.all()
-    for _role in roles_:
-            role = Roles.objects.filter(id=_role.id).first()
-            if role.application == "ace":
-                custom_user_roles["ace"] = role.role
-                ace_role = str(custom_user_roles["ace"])
-                print(ace_role)
-
-
-    # print("User roles: ", user_role_names)
-    if ace_role == "create":
-        print("User has 'create' role, clearing aces_to_process")
+        # Add helpful flags for created ACEs
+        for ace in created_aces:
+            if ace.process:
+                approvals = ace.process.approval_set.all()
+                ace.has_rejected_approval = False
+                ace.latest_approval_status = approvals.last().approved if approvals.exists() else None
+            else:
+                ace.has_rejected_approval = False
+                ace.latest_approval_status = None
+    
+    # If the user is ONLY a creator, they shouldn't see items awaiting approval (by others)
+    if user_ace_roles == {"create"}:
         aces_to_process = []
-
-    # Add helpful flags for created ACEs
-    for ace in created_aces:
-        if ace.process:
-            approvals = ace.process.approval_set.all()
-            ace.has_rejected_approval = False
-            ace.latest_approval_status = approvals.last().approved if approvals.exists() else None
-        else:
-            ace.has_rejected_approval = False
-            ace.latest_approval_status = None
-
+    
     return render(request, 'finance/ace2/view_all_aces.html', {
         "aces": aces_to_process,
         "created_aces": created_aces,
