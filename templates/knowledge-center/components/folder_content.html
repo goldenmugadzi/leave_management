@@ -150,7 +150,7 @@
               <a href="{% url 'user_manual_edit_file' file.id %}" class="text-gulf-blue-600" title="Edit">
                 ✏️
               </a>
-              <a href="{% url 'download_file' %}?file_id={{ file.id }}" class="text-gray-600" title="Download">
+              <a href="/ims/download_file?file_id={{ file.id }}" class="text-gray-600" title="Download">
                 ⬇️
               </a>
               <a href="{% url 'archive_file' file.id %}" class="text-red-500" title="Archive">
