@@ -578,6 +578,7 @@ def ace_awaiting_my_action(request):
         next_step = (approvals.last().step.step if approvals.exists() else 0) + 1
         if ace.process.workflow.step_set.filter(step=next_step, approver__in=user_roles).exists():
             ace.has_rejected_approval = False
+            
             ace.latest_approval_status = approvals.last().approved if approvals.exists() else None
             aces_to_process.append(ace)
             processed_ace_ids.add(ace.Ace_id2)
