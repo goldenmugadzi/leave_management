@@ -161,13 +161,20 @@ class OutPutPerformanceDimensionRepository:
             output_perf_dimension_instances = []
             
             for perf_dimension_type in PERFORMANCE_INDICATOR:
+                perf_indicator = perf_dimension_type[1]
+                agreed_target = 0.0
+                
+                # Quality has 100 % agreed target
+                if perf_indicator == PERFORMANCE_INDICATOR[1][0]:
+                    agreed_target = 100
+                    
                 perf_dimension_obj = OutPutPerformanceDimension(
                         created_by=department_output_obj.created_by,
                         department_output=department_output_obj,
                         description="",
-                        performance_indicator=perf_dimension_type[1],
+                        performance_indicator=perf_indicator,
                         allowable_variance=0.0,
-                        agreed_target=0.0,
+                        agreed_target=agreed_target,
                         weight=0.0
                     )
                 output_perf_dimension_instances.append(perf_dimension_obj)
