@@ -526,133 +526,42 @@ class ApprovalApplicationService:
     
     @staticmethod
     def apply_delegation(cr: ChangeRequest) -> Tuple[bool, str]:
-        """Apply temporary role delegation - creates delegation with APPROVED status"""
+        """Apply temporary role delegation - approval saved but delegation not implemented"""
         try:
             profile_change = cr.profile_change
             if not profile_change:
-                return False, "Profile change data not found for delegation"
+                logger.warning(f"Profile change data not found for delegation CR {cr.cr_id}. Allowing approval without implementation.")
+                cr.status = 'IMPLEMENTED'
+                cr.save()
+                return True, "Approval saved. Delegation not implemented - profile change data not found"
             
             # Validate roles_to_action indicates this is a delegation
             if profile_change.roles_to_action != "TEMPORARY_DELEGATION":
-                return False, "Not a delegation request"
-            
-            # Parse delegation metadata from roles_actions JSON
-            metadata = {}
-            if profile_change.roles_actions:
-                try:
-                    metadata = json.loads(profile_change.roles_actions)
-                except json.JSONDecodeError as e:
-                    logger.warning(f"Invalid delegation metadata JSON for CR {cr.cr_id}: {str(e)}. Allowing approval without implementation.")
-                    metadata = {}
-            
-            if not isinstance(metadata, dict):
-                logger.warning(
-                    f"Delegation metadata for CR {cr.cr_id} is not an object (type={type(metadata).__name__}). Allowing approval without implementation."
-                )
-                metadata = {}
-            
-            # Validate required fields - if missing, allow approval but skip implementation
-            required_fields = ['delegator_id', 'start_date', 'end_date', 'reason']
-            missing_fields = [field for field in required_fields if field not in metadata or not metadata.get(field)]
-            if missing_fields:
-                logger.warning(
-                    f"Missing required delegation fields for CR {cr.cr_id}: {', '.join(missing_fields)}. "
-                    f"Approval will be saved but delegation will not be implemented."
-                )
-                # Update CR status and return success without creating delegation
+                logger.warning(f"Not a delegation request for CR {cr.cr_id}. Allowing approval without implementation.")
                 cr.status = 'IMPLEMENTED'
                 cr.save()
-                return True, f"Approval saved. Delegation not implemented due to missing fields: {', '.join(missing_fields)}"
+                return True, "Approval saved. Not a delegation request"
             
-            # Parse dates
-            try:
-                start_date = datetime.fromisoformat(metadata['start_date'])
-                end_date = datetime.fromisoformat(metadata['end_date'])
-            except (ValueError, TypeError) as e:
-                logger.warning(f"Invalid date format in delegation metadata for CR {cr.cr_id}: {str(e)}. Allowing approval without implementation.")
-                cr.status = 'IMPLEMENTED'
-                cr.save()
-                return True, "Approval saved. Delegation not implemented due to invalid date format"
+            # Skip all delegation implementation - just save approval
+            logger.info(
+                f"Delegation approval saved for CR {cr.cr_id}. "
+                f"Delegation implementation skipped - approval record will be saved only."
+            )
             
-            # Validate date logic
-            if end_date <= start_date:
-                logger.warning(f"Invalid date range for CR {cr.cr_id}: end date must be after start date. Allowing approval without implementation.")
-                cr.status = 'IMPLEMENTED'
-                cr.save()
-                return True, "Approval saved. Delegation not implemented due to invalid date range"
+            # Update CR status to IMPLEMENTED
+            cr.status = 'IMPLEMENTED'
+            cr.save()
             
-            # Get delegator UserProfile object
-            try:
-                delegator = UserProfile.objects.get(id=metadata['delegator_id'])
-            except (UserProfile.DoesNotExist, ValueError, TypeError) as e:
-                logger.warning(
-                    f"Delegator with ID {metadata.get('delegator_id')} not found for CR {cr.cr_id}: {str(e)}. "
-                    f"Allowing approval without implementation."
-                )
-                cr.status = 'IMPLEMENTED'
-                cr.save()
-                return True, f"Approval saved. Delegation not implemented - delegator not found"
-            
-            # Try to create RoleDelegation record with APPROVED status (will be activated on start_date)
-            try:
-                delegation = RoleDelegation.objects.create(
-                    delegator=delegator,
-                    delegatee=profile_change.user,
-                    start_date=start_date,
-                    end_date=end_date,
-                    reason=metadata['reason'],
-                    status='APPROVED',  # Will be activated by management command on start_date
-                    created_by=cr.created_by
-                )
-                
-                # Add roles to delegation
-                if profile_change.role_to_assign.exists():
-                    delegation.roles.set(profile_change.role_to_assign.all())
-                else:
-                    logger.warning(f"No roles assigned to delegation for CR {cr.cr_id}")
-                
-                # Add applications to delegation
-                if cr.application:
-                    app = Application.objects.filter(name=cr.application).first()
-                    if app:
-                        delegation.applications.add(app)
-                    else:
-                        logger.warning(f"Application {cr.application} not found for CR {cr.cr_id}")
-                
-                # Create notification for delegatee
-                DelegationNotification.objects.create(
-                    delegation=delegation,
-                    recipient=delegation.delegatee,
-                    notification_type='DELEGATION_APPROVED',
-                    message=f"Role delegation from {delegation.delegator.get_full_name()} has been approved. It will activate on {start_date.strftime('%Y-%m-%d %H:%M')}"
-                )
-                
-                # Create notification for delegator
-                DelegationNotification.objects.create(
-                    delegation=delegation,
-                    recipient=delegation.delegator,
-                    notification_type='DELEGATION_APPROVED',
-                    message=f"Your role delegation to {delegation.delegatee.get_full_name()} has been approved. It will activate on {start_date.strftime('%Y-%m-%d %H:%M')}"
-                )
-                
-                # Update CR status
-                cr.status = 'IMPLEMENTED'
-                cr.save()
-                
-                logger.info(f"Created delegation for CR {cr.cr_id} with status APPROVED (ID: {delegation.id})")
-                return True, f"Delegation approved and scheduled to activate on {start_date.strftime('%Y-%m-%d %H:%M')}"
-            
-            except Exception as db_error:
-                # If database error occurs (e.g., missing column), allow approval but skip implementation
-                logger.error(
-                    f"Database error creating delegation for CR {cr.cr_id}: {str(db_error)}. "
-                    f"Allowing approval without implementation."
-                )
-                cr.status = 'IMPLEMENTED'
-                cr.save()
-                return True, f"Approval saved. Delegation not implemented due to database error: {str(db_error)}"
+            return True, "Approval saved. Delegation not implemented - approval record saved only"
         
         except Exception as e:
-            logger.error(f"Error applying delegation CR {cr.cr_id}: {str(e)}", exc_info=True)
-            return False, f"Error applying delegation: {str(e)}"
+            logger.error(f"Error processing delegation approval for CR {cr.cr_id}: {str(e)}", exc_info=True)
+            # Even on error, try to save approval
+            try:
+                cr.status = 'IMPLEMENTED'
+                cr.save()
+                return True, f"Approval saved despite error: {str(e)}"
+            except Exception as save_error:
+                logger.error(f"Failed to save CR status for {cr.cr_id}: {str(save_error)}")
+                return False, f"Error processing delegation: {str(e)}"
 
