@@ -627,15 +627,16 @@ class ApprovalApplicationService:
                 logger.warning(f"Missing or invalid reason in metadata for CR {cr.cr_id}, using fallback: {reason}")
             
             # Create RoleDelegation record with APPROVED status (will be activated on start_date)
-            delegation = RoleDelegation.objects.create(
-                delegator=delegator,
-                delegatee=profile_change.user,
-                start_date=start_date,
-                end_date=end_date,
-                reason=reason,
-                status='APPROVED',  # Will be activated by management command on start_date
-                created_by=cr.created_by
-            )
+            # Use save() approach similar to users/views.py create_delegation
+            delegation = RoleDelegation()
+            delegation.delegator = delegator
+            delegation.delegatee = profile_change.user
+            delegation.start_date = start_date
+            delegation.end_date = end_date
+            delegation.reason = reason
+            delegation.status = 'APPROVED'  # Will be activated by management command on start_date
+            delegation.created_by = cr.created_by
+            delegation.save()
             
             # Add roles to delegation
             if profile_change.role_to_assign.exists():
