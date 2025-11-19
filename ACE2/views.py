@@ -621,7 +621,7 @@ def ace_awaiting_my_action(request):
         print("ACES after system-wide filter: ", aces_query_secondary.count())
     
     
-    print("primary aces", aces_query_primary.values_list('Ace_id2', flat=True))
+    # print("primary aces", aces_query_primary.values_list('Ace_id2', flat=True))
     aces_combined_query = (aces_query_primary | aces_query_secondary)
     print("Total ACEs after combining filters: ", aces_combined_query.count())
     a=0
