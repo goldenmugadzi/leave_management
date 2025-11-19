@@ -610,20 +610,20 @@ def ace_awaiting_my_action(request):
         aces_query_secondary = Ace2.objects.filter(section=section).exclude(
             process__approval__approved="Rejected"
         ).order_by('-date_created')
-        print("user section: ", section)
-        print('base query len', base_query.count())
-        print("ACES after section filter: ", aces_query_secondary.count())
+        # print("user section: ", section)
+        # print('base query len', base_query.count())
+        # print("ACES after section filter: ", aces_query_secondary.count())
 
     if system_wide_roles.intersection(set(user_ace_roles)):
         aces_query_secondary = base_query.filter(ace_type='high_value').exclude(
             process__approval__approved="Rejected"
         ).order_by('-date_created')
-        print("ACES after system-wide filter: ", aces_query_secondary.count())
+        # print("ACES after system-wide filter: ", aces_query_secondary.count())
     
     
     # print("primary aces", aces_query_primary.values_list('Ace_id2', flat=True))
     aces_combined_query = (aces_query_primary | aces_query_secondary)
-    print("Total ACEs after combining filters: ", aces_combined_query.count())
+    # print("Total ACEs after combining filters: ", aces_combined_query.count())
     a=0
 
     # --- PROCESS AWAITING ACTION ---
@@ -651,8 +651,8 @@ def ace_awaiting_my_action(request):
     # --- Handle 'create' role access (Your existing logic for created_aces) ---
     # ... (Keep the rest of your logic for 'create' role and final return statement) ...
     user_ace_roles = {role.role for role in user_profile.roles.all() if role.application == "ace"}
-    print('aces to process: ', aces_to_process)
-    print('processed ace ids: ', processed_ace_ids)
+    # print('aces to process: ', aces_to_process)
+    # print('processed ace ids: ', processed_ace_ids)
 
     if "create" in user_ace_roles:
         # ... (Populate created_aces QuerySet and add flags) ...
