@@ -11,7 +11,7 @@ from django.contrib import messages
 
 from ...repository.departmental_workplan import DepartmentalOutRepository, OutPutPerformanceDimensionRepository
 from ...services.department_workplan import OutPutPerformanceDimensionService
-from ...models.departmental_workplan import DepartmentOutput, OutPutPerformanceDimension
+from ...models.departmental_workplan import DepartmentOutput, OutPutPerformanceDimension, PERFORMANCE_INDICATOR
 from ...forms.departmental_plan import OutPutPerformanceDimensionUpdateForm
 from ..helper import PayloadDeserializationStrategyContext, OutputPerformanceDimensionDeserializationStrategy
 
@@ -78,6 +78,13 @@ class OutPutPerformanceDimensionDetailUpdateView(SuccessMessageMixin, UpdateView
         repo = OutPutPerformanceDimensionRepository()
         return repo.get_by_id(output_perf_dimension_id=self.kwargs.get("output_performance_dimension_id"))
 
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs["is_quality_indicator"] = False
+        if self.get_object().performance_indicator == PERFORMANCE_INDICATOR[1][0]:
+            kwargs["is_quality_indicator"] = True
+        return kwargs
+    
     def get_weight_progress(self):
         return get_perf_dimension_weight_progress(department_output_obj=self.get_object().department_output)
 

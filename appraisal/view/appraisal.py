@@ -19,8 +19,9 @@ from ..forms.qualification_experiences import UserQualificationsUploadForm
 from ..helpers.types.kra import RoleFilterChoices
 from ..repository import UserQualificationRepository, AppraisalExperienceRepository, ExperienceRepository, AppraisalRepository
 from ..repository.appraisal import AppraiseePersonalAttributeRepository, AppraisalOverallCommentsRepository
-from ..repository.kra import AppraisalOutPutPerformanceDimensionScoreRepository, YearQuarterRepository, AppraisalConfirmationStatusRepository
+from ..repository.kra import AppraisalOutPutPerformanceDimensionScoreRepository, YearQuarterRepository, AppraisalConfirmationStatusRepository, AppraisalDepartmentOutputRepository
 from ..repository.qualification_experience import UserExperienceRepository
+from ..repository.departmental_workplan import DepartmentalOutRepository
 from ..repository.users import UserProfileRepository
 from ..services import AppraisalService, AppraisalExperienceService
 from ..services.qualification import UserQualificationService
@@ -53,7 +54,7 @@ class AppraisalCreateView(SuccessMessageMixin, CreateView):
     template_name = 'appraisal/create_update.html'
     context_object_name = "appraisal_form"
     
-    def get_user_object(self):
+    def get_user_object(self)->UserProfile:
         return self.request.user
     
     def get_form_kwargs(self):
@@ -110,6 +111,17 @@ class AppraisalCreateView(SuccessMessageMixin, CreateView):
         context["is_update"] = False
         context["appraisee_grade"] = self.appraisee_grade()
         return context
+    
+    def is_designation_outputs_set(self)->bool:
+        repo = DepartmentalOutRepository()
+        user_obj = self.get_user_object()
+        
+        designation_outputs_qr = repo.fetch_by_cost_center_id_designation_id(
+            designation_id=user_obj.designation.id,
+            cost_center_id=user_obj.cost_center.id
+        )
+        return designation_outputs_qr.exists()
+        
 
     def form_valid(self, form: BaseModelForm) -> HttpResponse:
         appraisee_object = self.get_user_object()
@@ -124,6 +136,10 @@ class AppraisalCreateView(SuccessMessageMixin, CreateView):
         
         if not appraisee_object.cost_center:
             messages.error(self.request, "Oops! Your profile has no cost center set. Kindly contact admin.")
+            return self.form_invalid(form)
+        
+        if not self.is_designation_outputs_set():
+            messages.error(self.request, "Oops! It appears that your department's outputs and activities have not been set yet. Please check with your supervisor to address this")
             return self.form_invalid(form)
         
         appraiser_object = form.cleaned_data.get("appraiser")

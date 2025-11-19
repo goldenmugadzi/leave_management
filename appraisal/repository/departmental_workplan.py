@@ -138,6 +138,13 @@ class DepartmentalOutRepository:
 
         except Exception as e:
             raise Exception(f"DepartmentalOutRepository fetch_by_fetch_by_designation_id with designation pk: {designation_id}, failed with error: {e}")
+    
+    def fetch_by_cost_center_id_designation_id(self, designation_id: int, cost_center_id: int)->QuerySet[DepartmentOutput]:
+        try:
+            return DepartmentOutput.objects.filter(designation__id=designation_id, department_objective__cost_center__id=cost_center_id).select_related("department_objective", "designation")
+
+        except Exception as e:
+            raise Exception(f"DepartmentalOutRepository fetch_by_cost_center_id_designation_id with designation pk: {designation_id} and cost_center pk: {cost_center_id}, failed with error: {e}")
 
     def get_by_id(self, dept_output_id: int)->DepartmentOutput|None:
         try:
@@ -154,13 +161,20 @@ class OutPutPerformanceDimensionRepository:
             output_perf_dimension_instances = []
             
             for perf_dimension_type in PERFORMANCE_INDICATOR:
+                perf_indicator = perf_dimension_type[1]
+                agreed_target = 0.0
+                
+                # Quality has 100 % agreed target
+                if perf_indicator == PERFORMANCE_INDICATOR[1][0]:
+                    agreed_target = 100
+                    
                 perf_dimension_obj = OutPutPerformanceDimension(
                         created_by=department_output_obj.created_by,
                         department_output=department_output_obj,
                         description="",
-                        performance_indicator=perf_dimension_type[1],
+                        performance_indicator=perf_indicator,
                         allowable_variance=0.0,
-                        agreed_target=0.0,
+                        agreed_target=agreed_target,
                         weight=0.0
                     )
                 output_perf_dimension_instances.append(perf_dimension_obj)
