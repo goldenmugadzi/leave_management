@@ -568,180 +568,115 @@ def pettycash_awaiting_my_action(request):
     """
     user = request.user
     user_profile = UserProfile.objects.filter(id=user.id).first()
-    
-    if not user_profile:
-        return render(request, 'finance/pettycash/view_all_pettycashs.html', {
-            "pettycashs": [],
-            "error": "User profile not found.",
-        })
-    
+    start_date=''
+    end_date=''
+    section=user_profile.section
+    user_roles = set(user_profile.roles.all())
+    user_pettycash_roles = {role.role for role in user_profile.roles.all() if role.application == "pettycash"}
+    role_names_to_find = user_pettycash_roles
+    role_ids = Roles.objects.filter(name__in=role_names_to_find).values_list('id', flat=True)
     application_names = ["pettycash"]
-    cost_centers_set = user.cost_centers_for(application_names)
-    cost_center = user.cost_center
-    end_date = datetime.now()
-    start_date = end_date.replace(day=1)
-    
-    # Prepare cost centers list
-    cost_centers = []
-    if cost_centers_set:
-        cost_centers = list(cost_centers_set)
-        cost_center = get_parent_cost_center(cost_centers)
-    else:
-        # Fallback to user's cost center and descendants
-        print("Using fallback cost centers")
-        fallback_cost_centers = user.cost_center_and_decendace()
-        if fallback_cost_centers:
-            cost_centers = list(fallback_cost_centers)
-    
-    user_roles = set(user.roles.all())
+    cost_centers_set = request.user.cost_centers_for(application_names)
+    parent_cost_center = get_parent_cost_center(cost_centers_set)
     pettycashs_to_process = []
-    processed_pettycash_ids = set()  # Track processed PettyCash to avoid duplicates
-    
-    # Determine role level for access control
-    # Note: PettyCash doesn't have FD/MD roles typically, but keep for consistency
-    system_wide_roles = ['Finance Director', 'Managing Director']
-    has_system_wide_access = user_roles and any(role.name in system_wide_roles for role in user_roles)
-    
-    # Query 1: Records WITH cost centers
-    if has_system_wide_access:
-        # System-wide roles see ALL records with cost centers
-        pettycashs_with_cost_center = Pettycash.objects.filter(
-            cost_center__isnull=False
-        ).exclude(
-            process__approval__approved="Rejected"
-        ).prefetch_related(
-            "process__approval_set", "process__workflow__step_set"
-        )
-    elif cost_centers:
-        # All other roles limited to their designated cost centers
-        pettycashs_with_cost_center = Pettycash.objects.filter(
-            cost_center__in=cost_centers
-        ).exclude(
-            process__approval__approved="Rejected"
-        ).prefetch_related(
-            "process__approval_set", "process__workflow__step_set"
-        )
-    else:
-        pettycashs_with_cost_center = Pettycash.objects.none()
-    
-    for pettycash in pettycashs_with_cost_center:
-        if pettycash.process and pettycash.petty_id not in processed_pettycash_ids:
-            approvals = pettycash.process.approval_set.all()
-            next_step = (approvals.last().step.step if approvals.exists() else 0) + 1
-            if (
-                pettycash.process.workflow.step_set.filter(
-                    step=next_step, approver__in=user_roles
-                ).exists()
-            ):
-                pettycashs_to_process.append(pettycash)
-                processed_pettycash_ids.add(pettycash.petty_id)
-    
-    # Query 2: Records WITHOUT cost centers (use section/region fallback)
-    section = user_profile.section
-    region = user_profile.region
-    current_year = datetime.now().year
-    
-    # Determine access level for records without cost centers
-    # System-wide roles: See everything
-    # Accounting Officer/Finance Manager: See entire region
-    # Petty Cash Authoriser: See entire region
-    # Others: See only their section
-    region_wide_roles = ['Petty Cash Authoriser', 'Accounting Officer', 'Finance Manager']
-    has_region_wide_access = user_roles and any(role.name in region_wide_roles for role in user_roles)
+    created_pettycashs = Pettycash.objects.none()
+    cost_center=user_profile.cost_center
 
-    if has_system_wide_access:
-        # System-wide roles see ALL records without cost centers
-        fallback_filter = {
-            'cost_center__isnull': True,
-            'date_created__year__gte': current_year
-        }
-    elif has_region_wide_access and region:
-        # Region-wide roles (including Accounting Officer/Finance Manager) see entire region
-        fallback_filter = {
-            'cost_center__isnull': True,
-            'region': region,
-            'date_created__year__gte': current_year
-        }
-    elif region:
-        # Junior roles see only their section
-        fallback_filter = {
-            'cost_center__isnull': True,
-            'region': region,
-            'date_created__year__gte': current_year
-        }
-        if section:
-            fallback_filter['section'] = section
-    else:
-        fallback_filter = None
-    
-    if fallback_filter:
-        pettycashs_without_cost_center = Pettycash.objects.filter(
-            **fallback_filter
+    regional_roles={'disburse','authorize'}
+    sectional_roles={'approve','create'}
+
+    # Filter based on cost centers for newer records
+    if cost_centers_set:
+        pettycashs_to_process1 = Pettycash.objects.filter(
+            cost_center__in=cost_centers_set,region=user_profile.region
         ).exclude(
             process__approval__approved="Rejected"
-        ).prefetch_related("process__approval_set", "process__workflow__step_set")
+        ).order_by('-date_created', 'petty_id')
+    #add parent cost center
+    if parent_cost_center:
+        pettycashs_to_process2 = Pettycash.objects.filter(
+            cost_center=parent_cost_center,region=user_profile.region
+        ).exclude(
+            process__approval__approved="Rejected"
+        ).order_by('-date_created', 'petty_id')
+        pettycashs_to_process = list(pettycashs_to_process1) + list(pettycashs_to_process2)
+
+    if section and sectional_roles.intersection(user_pettycash_roles):
+        # Additionally filter based on section for older records
+        pettycashs_section = Pettycash.objects.filter(
+            section=section,region=user_profile.region
+        ).exclude(
+            process__approval__approved="Rejected"
+        ).order_by('-date_created', 'petty_id')
+        pettycashs_to_process = (list(pettycashs_to_process) + list(pettycashs_section))
+
+    
+    print("Total PettyCash to process: ", len(pettycashs_to_process))
+    processed_petty_ids = set()
+    pettycashs_final = []
+    if sectional_roles.intersection(user_pettycash_roles) and section:
+       a=0
+       for petty in pettycashs_to_process:
+            a=a+1
+            if not petty.process or petty.petty_id in processed_petty_ids:
+                continue
+            # print("Processing ACE number: ", a, " ACE ID: ", ace.Ace_id2)
+
+            approvals = petty.process.approval_set.all()
+
+            # 2. Check for eligibility
+            last_approved_step = approvals.last().step.step if approvals.exists() else 0
+            next_step = last_approved_step + 1
         
-        for pettycash in pettycashs_without_cost_center:
-            if pettycash.process and pettycash.petty_id not in processed_pettycash_ids:
-                approvals = pettycash.process.approval_set.all()
-                next_step = (approvals.last().step.step if approvals.exists() else 0) + 1
-                if (
-                    pettycash.process.workflow.step_set.filter(
-                        step=next_step, approver__in=user_roles
-                    ).exists()
-                ):
-                    pettycashs_to_process.append(pettycash)
-                    processed_pettycash_ids.add(pettycash.petty_id)
-    else:
-        pettycashs_without_cost_center = Pettycash.objects.none()
+            # Check if the user is the approver for the next step based on their roles
+            if petty.process.workflow.step_set.filter(step=next_step, approver__in=user_roles).exists():
+                petty.has_rejected_approval = False
+                petty.latest_approval_status = approvals.last().approved if approvals.exists() else None
+                
+                pettycashs_final.append(petty)
+                # print("Added ACE to process: ", ace.Ace_id2)
+                processed_petty_ids.add(petty.petty_id) # Mark as processed
+                # print("Added PettyCash to process: ", petty.petty_id, " Total now: ", len(processed_petty_ids))
 
-    # PettyCash created by the user (both with and without cost centers)
-    created_pettycashs_filter = {"requested_by": request.user}
-    if has_system_wide_access:
-        created_pettycashs_with_cc = Pettycash.objects.filter(cost_center__isnull=False, **created_pettycashs_filter).exclude(process__approval__approved="Rejected")
-    elif cost_centers:
-        created_pettycashs_with_cc = Pettycash.objects.filter(cost_center__in=cost_centers, **created_pettycashs_filter).exclude(process__approval__approved="Rejected")
-    else:
-        created_pettycashs_with_cc = Pettycash.objects.none()
-    
-    # For created PettyCash without cost centers, respect access levels
-    if has_system_wide_access:
-        created_fallback_filter = {
-            'cost_center__isnull': True,
-            **created_pettycashs_filter
-        }
-    elif has_region_wide_access and region:
-        created_fallback_filter = {
-            'cost_center__isnull': True,
-            'region': region,
-            **created_pettycashs_filter
-        }
-    elif region:
-        created_fallback_filter = {
-            'cost_center__isnull': True,
-            'region': region,
-            **created_pettycashs_filter
-        }
-        if section:
-            created_fallback_filter['section'] = section
-    else:
-        created_fallback_filter = None
-    
-    if created_fallback_filter:
-        created_pettycashs_without_cc = Pettycash.objects.filter(
-            **created_fallback_filter
-        ).exclude(process__approval__approved="Rejected")
-    else:
-        created_pettycashs_without_cc = Pettycash.objects.none()
+    if regional_roles.intersection(user_pettycash_roles) and user_profile.region:
+        b=0
+        for petty in pettycashs_to_process:
+            b=b+1
+            if not petty.process or petty.petty_id in processed_petty_ids:
+                continue
+            # print("Processing ACE number: ", b, " ACE ID: ", ace.Ace_id2)
+
+            approvals = petty.process.approval_set.all()
+
+            # 2. Check for eligibility
+            last_approved_step = approvals.last().step.step if approvals.exists() else 0
+            next_step = last_approved_step + 1
+        
+            # Check if the user is the approver for the next step based on their roles
+            if petty.process.workflow.step_set.filter(step=next_step, approver__in=user_roles).exists():
+                petty.has_rejected_approval = False
+                petty.latest_approval_status = approvals.last().approved if approvals.exists() else None
+                
+                pettycashs_final.append(petty)
+                # print("Added ACE to process: ", ace.Ace_id2)
+                processed_petty_ids.add(petty.petty_id) # Mark as processed
+                # print("Added PettyCash to process: ", petty.petty_id, " Total now: ", len(processed_petty_ids))
+
+    create_pettycashs = Pettycash.objects.filter(
+        requested_by=user
+    ).exclude(
+        process__approval__approved="Rejected"
+    ).order_by('-date_created', 'petty_id')
+    created_pettycashs = create_pettycashs
     
     # Combine created PettyCash
-    created_pettycashs = list(created_pettycashs_with_cc) + list(created_pettycashs_without_cc)
+    
 
     return render(
         request,
         'finance/pettycash/view_all_pettycashs.html',
         {
-            "pettycashs": pettycashs_to_process,
+            "pettycashs": pettycashs_final,
             "created_pettycashs": created_pettycashs,
             "all": False,
             "start_date": start_date,
