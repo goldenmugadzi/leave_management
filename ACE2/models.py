@@ -207,7 +207,7 @@ class Ace2(models.Model):
     quantity = models.IntegerField(null=True)
 
     process = models.ForeignKey(Process, on_delete=models.SET_NULL, blank=True, null=True)
-    section = models.ForeignKey(Sections, on_delete=models.DO_NOTHING, blank=True, null=True)
+    section = models.ForeignKey(Sections, on_delete=models.SET_NULL, blank=True, null=True)
     # New: align with Tokens by linking directly to CostCenter
     cost_center = models.ForeignKey(CostCenter, on_delete=models.DO_NOTHING, blank=True, null=True)
 
