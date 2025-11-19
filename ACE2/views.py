@@ -546,13 +546,13 @@ def ace_awaiting_my_action(request):
     end_date = ''
     user_profile = UserProfile.objects.get(id=request.user.id)
     section = user_profile.section
-    print("user section: ", section)
+    # print("user section: ", section)
     user_roles = set(user_profile.roles.all())
     user_role_names = {role.name for role in user_profile.roles.all()}
 
     application_names = ["ace"]
     cost_centers_set = request.user.cost_centers_for(application_names)
-    print ("cost centers set: ", cost_centers_set)
+    # print ("cost centers set: ", cost_centers_set)
     cost_center = user_profile.cost_center
     
     # Initialize lists to prevent UnboundLocalError
@@ -577,7 +577,7 @@ def ace_awaiting_my_action(request):
         aces_query_primary = aces_query_primary.filter(cost_center__in=cost_centers).exclude(
             process__approval__approved="Rejected"
         ).order_by('-date_created')
-        print("ACES after cost center filter: ", aces_query_primary.count())
+        # print("ACES after cost center filter: ", aces_query_primary.count())
     else:
         # Fallback to user's cost center and descendants
         fallback_cost_centers = user_profile.cost_center_and_decendace()
@@ -604,7 +604,7 @@ def ace_awaiting_my_action(request):
         aces_query_secondary = base_query.filter(region=user_profile.region).exclude(
             process__approval__approved="Rejected"
         ).order_by('-date_created')
-        print("ACES after region filter: ", aces_query_secondary.count())
+        # print("ACES after region filter: ", aces_query_secondary.count())
 
     if sectional_roles.intersection(set(user_ace_roles)) and section:
         aces_query_secondary = Ace2.objects.filter(section=section).exclude(
