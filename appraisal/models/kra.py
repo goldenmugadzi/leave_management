@@ -70,13 +70,6 @@ class AppraisalWorkflow(TimeStamp):
     def __str__(self):
         return f"Approval {self.stage_name} - {self.stage_num} for {self.appraisal}"
 
-    class Meta:
-        constraints = [
-            models.UniqueConstraint(
-                fields=['appraisal', 'stage_num'],
-                name='unique_stage_per_appraisal'
-            )
-        ]
 
 REVIEWERS_CONFIRMATION_STATUS = [
     ("appraiser", "appraiser"),
@@ -111,3 +104,4 @@ class AppraisalApprovalWorkFlowQuarter(TimeStamp):
 
     def __str__(self):
         return f"{self.appraisal_workflow.stage_name} - {self.year_quarter}"
+    
