@@ -98,7 +98,7 @@ urlpatterns = [
     path('commercial/', include('comm_files.urls')),
     path('', include('Transport.urls')),
     # path('', include('safety.urls')),
-    # path('meetings/', include('meetings.urls')),
+    path('meetings/', include('meetings.urls')),
     path('search/', include('esearch.urls')),
     path('temp_tokens/', include('commecial.tempertockens.urls')),
     path('', include('EquipTracker.urls')),
