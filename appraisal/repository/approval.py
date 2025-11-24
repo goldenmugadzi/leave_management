@@ -6,11 +6,39 @@ from ..models.helpers import YearQuarter
 from loguru import logger
 
 class AppraisalWorkflowRepository:
+    def bulk_create(self, appraisal_workflow_list: List[AppraisalWorkflow])->bool:
+        try:
+            AppraisalWorkflow.objects.bulk_create(
+                objs=appraisal_workflow_list,
+            )
+            return True
+        except Exception as e:
+            raise Exception(f"AppraisalWorkflowRepository bulk create failed with error: {e}")
+
     def retrieve_by_appraisal(self, appraisal_id: int)->QuerySet[AppraisalWorkflow]:
         try:
             return AppraisalWorkflow.objects.filter(appraisal__id=appraisal_id).order_by('stage_num')
         except Exception as e:
             raise Exception(f"AppraisalWorkflowRepository retrieve_by_appraisal failed with error: {e}")
+    
+    def get_by_id(self, appraisal_workflow_id: int)->AppraisalWorkflow:
+        try:
+            objs = AppraisalWorkflow.objects.filter(id=appraisal_workflow_id)
+            return objs.first()
+        except Exception as e:
+            raise Exception(f"AppraisalWorkflowRepository get_by_id by pk: {appraisal_workflow_id}, failed with error: {e}")
+    
+    def fetch_by_appraisal_id(self, appraisal_id: int)->List[AppraisalWorkflow]:
+        try:
+            return AppraisalWorkflow.objects.filter(appraisal__id=appraisal_id)
+        except Exception as e:
+            raise Exception(f"AppraisalWorkflowRepository fetch_by_appraisal_id by pk: {appraisal_id}, failed with error: {e}")
+        
+    def fetch_by_appraisal_id_quarter_id(self, appraisal_id: int, year_quarter_id: int)->List[AppraisalWorkflow]:
+        try:
+            return AppraisalWorkflow.objects.filter(appraisal__id=appraisal_id, year_quarter__id=year_quarter_id)
+        except Exception as e:
+            raise Exception(f"AppraisalWorkflowRepository fetch_by_appraisal_id_quarter_id by appraisal pk: {appraisal_id} and year quarter pk: {year_quarter_id}, failed with error: {e}")
         
     def update(self, workflow_object: AppraisalWorkflow, is_completed: bool, updated_by: UserProfile)->AppraisalWorkflow:
         is_update = False
@@ -32,6 +60,7 @@ class AppraisalWorkflowRepository:
 
 
 class AppraisalApprovalWorkFlowQuarterRepository:
+    
     def create(self, appraisal_workflow_obj: AppraisalWorkflow, year_quarter_obj: YearQuarter)->AppraisalApprovalWorkFlowQuarter:
         try:
             return AppraisalApprovalWorkFlowQuarter.objects.create(

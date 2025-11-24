@@ -120,11 +120,12 @@ class ReviewersStatusHandler:
 @dataclass
 class ApprovalStagesHandler:
     appraisal_id: int
+    year_quarter_id: int
     
     def get_approval_queryset(self):
         """Retrieve all approval workflow stages for the given appraisal."""
         approval_workflow_repo = AppraisalWorkflowRepository()
-        return approval_workflow_repo.retrieve_by_appraisal(appraisal_id=self.appraisal_id)
+        return approval_workflow_repo.fetch_by_appraisal_id_quarter_id(appraisal_id=self.appraisal_id, year_quarter_id=self.year_quarter_id)
 
     def get_completed_approval_queryset(self):
         """Retrieve completed approval stages."""
@@ -164,7 +165,9 @@ class ApprovalStagesHandler:
     
     def get_stages_info(self):
         """Retrieve all stages along with current and next stage information."""
+        
         qr = self.get_approval_queryset()
+        print("================>>>> qr: ", qr)
         last_stage_number = qr.last().stage_num if qr and qr.exists() else None
         current_nxt_stage_data = self.get_current_and_next_stage()
         return {

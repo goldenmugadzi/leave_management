@@ -1,117 +1,17 @@
 from django.db.models.signals import post_save, pre_save
 from django.urls import reverse
 from django.dispatch import receiver
-from django.db import transaction
-from ..models import Appraisal, AppraisalWorkflow
-from ..services import PerformanceReviewService, TrainingAndDevelopmentService
+from ..models import Appraisal
 from ..services.kra import AppraisalDependanciesInitialisationService
-from ..repository import PerformanceReviewRepository, TrainingAndDevelopmentRepository, AppraisalWorkflowRepository, AppraisalRepository
+from ..repository import AppraisalRepository
 from ..repository.kra import AppraisalDepartmentOutputRepository, AppraisalOutPutPerformanceDimensionScoreRepository, YearQuarterRepository
 from ..repository.departmental_workplan import OutPutPerformanceDimensionRepository, DepartmentalOutRepository
-from ..repository.approval import AppraisalApprovalWorkFlowQuarterRepository, AppraisalWorkflowRepository
 from ..helpers.types.kra import KraRolesType
 from ..helpers.notifications import send_appraisal_notifications
-from ..helpers.setters import set_approval_process
-from ..models.helpers import YearQuarter
-from ..helpers.data.approval_stage import ApprovalStageData
+
 from loguru import logger
-from decouple import config
-from datetime import datetime
+
 from it.users.models import Roles
-
-
-@receiver(post_save, sender=Appraisal, dispatch_uid="appraisal-uid")
-def create_performance_review_post_save_handler(sender, instance, created, **kwargs):
-    """
-        Signal handler that triggers after an `Appraisal` instance is created.
-
-        This function listens to the `post_save` signal of the `Appraisal` model. When a new `Appraisal`
-        instance is created, it automatically generates performance review entries for all four quarters
-        (Q1, Q2, Q3, Q4) of the year associated with the created appraisal.
-
-        Implementation Details:
-        1. **Atomic Transaction**:
-        - All performance review creation operations are wrapped in a `transaction.atomic()` block.
-        - Ensures that either all the performance reviews are created successfully, or none are created
-            if an error occurs (maintains database integrity).
-
-        2. **Payload Preparation**:
-        - A list of `PerformanceReviewType` objects is prepared, representing each quarter (1 through 4).
-
-        3. **Service Layer Usage**:
-        - For each quarter's payload, the `PerformanceReviewService` is instantiated with a
-            `PerformanceReviewRepository` dependency.
-        - The service's `create_use_case` method is called to create the performance review
-            for the specified `Appraisal` instance.
-
-        4. **Logging**:
-        - Log messages are added at different stages of the process for observability:
-            - Before creating a performance review for a specific quarter.
-            - After successfully creating the review.
-            - If an error occurs during the process.
-
-        Args:
-            sender (class): The model class sending the signal (`Appraisal` in this case).
-            instance (Appraisal): The specific instance of `Appraisal` that triggered the signal.
-            created (bool): A flag indicating whether a new `Appraisal` instance was created.
-            **kwargs: Additional arguments provided by the signal (not used here).
-
-        Raises:
-            Any exception raised during the process is logged and handled without affecting
-            the `Appraisal` creation.
-
-        Dependencies:
-            - `PerformanceReviewType`: A payload type for performance review data.
-            - `PerformanceReviewService`: A service responsible for creating performance reviews.
-            - `PerformanceReviewRepository`: Repository dependency for the service.
-            - `loguru.logger`: For logging messages.
-    """
-    if created:
-        try:
-            with transaction.atomic():
-                year_quarter_qr = YearQuarter.objects.filter(year=datetime.now().year)
-
-                for year_quarter_obj in year_quarter_qr:
-                    performance_review_service = PerformanceReviewService(
-                        performance_repo=PerformanceReviewRepository()
-                    )
-                    logger.info(f"[ PerformanceReview ]: create instance {year_quarter_obj} quart signal for {instance.user} appraisal ....")
-
-                    performance_review_service.create_use_case(
-                        appraisal_object=instance,
-                        year_quarter_object=year_quarter_obj
-                    )
-
-                    logger.success(f"[ PerformanceReview ]: instance {year_quarter_obj} quart for {instance.user} appraisal created :) ")
-
-        except Exception as e:
-            logger.error(f"[PerformanceReview]: creating performance review instances failed for {instance.user} appraisal, with error: {e} ")
-
-
-@receiver(post_save, sender=Appraisal, dispatch_uid="training-dev-uid")
-def create_training_development_post_save_handler(sender, instance, created, **kwargs):
-    if created:
-        try:
-            logger.info(f"[Signal]: create_training_development_post_save_handler for appraisal pk: {instance.id} init ..... ")
-            
-            training_development_repo_handler = TrainingAndDevelopmentRepository()
-            training_development_service_handler = TrainingAndDevelopmentService(training_dev_repo=training_development_repo_handler)
-
-            year_quarter_qr = YearQuarter.objects.filter(year=instance.created_date.year)
-            
-            year_quarters_count = year_quarter_qr.count()
-            total_year_quarters_count = 4
-            
-            if year_quarters_count != total_year_quarters_count:
-                raise ValueError(f"year quarters: {year_quarters_count} is not {total_year_quarters_count}")
-            
-            training_development_service_handler.create_for_all_quarters(
-                        appraisal_object=instance,
-                        year_quarter_qr=year_quarter_qr
-                    )
-            logger.success(f"[Signal]: create_training_development_post_save_handler for appraisal pk: {instance.id}, created successfully")
-        except Exception as e:
-            logger.error(f"[Signal]: create_training_development_post_save_handler for appraisal pk: {instance.id} , with error: {e} ")
 
 @receiver(post_save, sender=Appraisal, dispatch_uid="send-appraiser-email")
 def send_appraiser_email_post_save_handler(sender, instance, created, **kwargs):
@@ -156,32 +56,6 @@ def assign_appraisee_role_post_save_handler(sender, instance, created, **kwargs)
         except Exception as e:
             logger.error(f"Assigning Appraisee role to {instance.user} signal handler failed with error: {e}")
  
-        
-@receiver(post_save, sender=Appraisal, dispatch_uid="appraisal_approval_workflow_acceptance_complete")
-def set_appraisal_acceptance_stage_completed(sender, instance, created, **kwargs):
-    if not created and (instance.reviewer is not None and instance.hr is not None):
-        try:
-            logger.info(f"[Approval Workflow stage] Accept Appraisal: {instance} handler initialized ...")
-            repo = AppraisalWorkflowRepository()
-            
-            workflow_qr = repo.retrieve_by_appraisal(appraisal_id=instance.id)
-            
-            if not workflow_qr.exists():
-                logger.error(f"[Approval Workflow stage] Appraisal: {instance}, All stages not found")
-                return None            
-            
-            accept_appraisal_qr = workflow_qr.filter(stage_name=ApprovalStageData.accept_appraisal.value)
-            if not accept_appraisal_qr.exists():
-                logger.error(f"[Approval Workflow stage] Appraisal: {instance}, {ApprovalStageData.accept_appraisal.value} stage  not found")
-                return None
-              
-            repo.update(workflow_object=accept_appraisal_qr.first(), is_completed=True, updated_by=instance.appraiser)
-            
-            logger.success("[Approval Workflow stage] Accept Appraisal completed")
-        except Exception as e:
-            return None
-
-
 @receiver(post_save, sender=Appraisal, dispatch_uid="appraisal_dependencies")
 def set_appraisal_dependencies(sender, instance, created, **kwargs):
     if created:

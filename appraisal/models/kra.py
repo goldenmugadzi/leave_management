@@ -63,13 +63,17 @@ class ScoreDocument(TimeStamp):
 class AppraisalWorkflow(TimeStamp):
     appraisal = models.ForeignKey(Appraisal, on_delete=models.RESTRICT, related_name="approval_appraisal", null=True, blank=True)
     stage_name = models.CharField(max_length=255)
+    stage_description = models.CharField(max_length=255)
     stage_num = models.PositiveIntegerField()
     is_completed = models.BooleanField(default=False)
+    year_quarter = models.ForeignKey(YearQuarter, on_delete=models.RESTRICT, related_name="yr_quarter_workflow", null=True, blank=True)
     updated_by = models.ForeignKey(User, on_delete=models.RESTRICT, related_name="approve_user", null=True, blank=True)
-
+    
     def __str__(self):
         return f"Approval {self.stage_name} - {self.stage_num} for {self.appraisal}"
 
+    class Meta:
+        constraints = []
 
 REVIEWERS_CONFIRMATION_STATUS = [
     ("appraiser", "appraiser"),

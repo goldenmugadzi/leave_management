@@ -70,8 +70,7 @@ class AppraisalConfig(AppConfig):
         post_migrate.connect(set_quarter_year, sender=self)
         
         from .signals.kra import create_kra_roles_handler
-        from .signals.appraisal import set_appraisal_dependencies, create_training_development_post_save_handler, set_appraisal_acceptance_stage_completed
-        from .signals.departmental_output import create_output_performance_dimensions
+        from .signals.appraisal import set_appraisal_dependencies
         post_migrate.connect(create_kra_roles_handler, sender=self)        
 
         from .tasks import run_back_ground_tasks

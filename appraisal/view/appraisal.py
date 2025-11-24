@@ -36,9 +36,12 @@ from approve.models import Step, Approval
 from datetime import datetime
 from ..forms.formsets import AppraiseePersonalAttributeFormSet
 from ..forms.kra import AppraisalConfirmationStatusForm
-from ..forms.appraisal import AppraisalOverallCommentForm, AppraiseePersonalAttributeForm
+from ..forms.appraisal import AppraisalOverallCommentForm, AppraiseePersonalAttributeForm, ApprovalStageChoices
 from ..helpers.getters.dates import get_assessment_period, CurrentQuarterDate
 from ..helpers.getters.quarter import get_all_quarter_ratings_per_appraiser
+from ..helpers.types.approval import ApprovalStageChoices
+from ..templatetags.quarter import get_current_quarter
+
 from loguru import logger
 
 def get_user_by_id(user_id: int)->UserProfile:
@@ -245,16 +248,53 @@ class AppraisalUpdateView(SuccessMessageMixin, UpdateView):
         
         if not appraisee_object.designation or not appraisee_object.cost_center or not appraisee_object.grade:
             return True
-        return False   
+        return False  
+     
+    def get_approval_stage_filter(self)->str:
+        approval_stage_filter = self.request.GET.get('approval_stage_filter')
+        return approval_stage_filter
+    
+    
+    def recursive_approval_stage(self, quarter_name, appraisal_object):
+        
+        year_quarter_qr = YearQuarterRepository().fetch_by_year(year=appraisal_object.created_date.year)
+        
+        match quarter_name:
+            case ApprovalStageChoices.First_Quarter.value:
+                year_quarter_obj = year_quarter_qr.filter(quarter=1).first()
+                handler = ApprovalStagesHandler(appraisal_id=appraisal_object.id, year_quarter_id=year_quarter_obj.id)
+                approval_stages = handler.get_stages_info()
+            case ApprovalStageChoices.Second_Quarter.value:
+                year_quarter_obj = year_quarter_qr.filter(quarter=2).first()
+                handler = ApprovalStagesHandler(appraisal_id=appraisal_object.id, year_quarter_id=year_quarter_obj.id)
+                approval_stages = handler.get_stages_info()
+            case ApprovalStageChoices.Third_Quarter.value:
+                year_quarter_obj = year_quarter_qr.filter(quarter=3).first()
+                handler = ApprovalStagesHandler(appraisal_id=appraisal_object.id, year_quarter_id=year_quarter_obj.id)
+                approval_stages = handler.get_stages_info()
+            case ApprovalStageChoices.Fourth_Quarter.value:
+                year_quarter_obj = year_quarter_qr.filter(quarter=4).first()
+                handler = ApprovalStagesHandler(appraisal_id=appraisal_object.id, year_quarter_id=year_quarter_obj.id)
+                approval_stages = handler.get_stages_info()
+        return approval_stages
+
     
     def get_approval_stages(self):
+        appraisal_object = self.get_object()
         try:
-            appraisal_object = self.get_object()
-            handler = ApprovalStagesHandler(appraisal_id=appraisal_object.id)
-            return handler.get_stages_info()
+            year_quarter_filter = self.get_approval_stage_filter()
+            if year_quarter_filter is not None:
+                return self.recursive_approval_stage(quarter_name=year_quarter_filter, appraisal_object=appraisal_object)
+            else:
+                current_quarter_name = get_current_quarter(value=None)
+                quarters = [q.value for q in ApprovalStageChoices]
+                if current_quarter_name not in quarters:
+                    current_quarter_name = quarters[3]
+                return self.recursive_approval_stage(quarter_name=current_quarter_name, appraisal_object=appraisal_object)
         except Exception as e:
             logger.error(f"[AppraisalUpdateView] get_approval_stages for Appraisal pk: {appraisal_object.id} failed with error: {e}")
-            return None    
+            return None  
+        
 
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context =  super().get_context_data(**kwargs)
@@ -263,7 +303,7 @@ class AppraisalUpdateView(SuccessMessageMixin, UpdateView):
         
         context[self.context_object_name] = context.get("form")
         context.update(self.get_approval_stages())
-        
+        print("=============>>>>>>>>> ", context)
         context["appraiser_object"] = appraisal_object.appraiser
         context["reviewer_object"] = appraisal_object.reviewer
         context["user_object"] = appraisee_object
@@ -301,16 +341,27 @@ class AppraisalUpdateView(SuccessMessageMixin, UpdateView):
             return self.form_invalid(form)
         
         appraiser_object = form.cleaned_data.get("appraiser")
-        reviewer_object = form.cleaned_data.get("reviewer")
-        hr_obj = form.cleaned_data.get("hr")
+        reviewer_object = form.cleaned_data.get("reviewer", None)
+        hr_obj = form.cleaned_data.get("hr", None)
         
         repo = AppraisalRepository()
-        appraisal_object = repo.update(
-            appraisal_object=appraisal_object,
-            appraiser_object=appraiser_object,
-            reviewer_obj=reviewer_object,
-            hr_object=hr_obj
-        )
+        
+        if self.is_appraiser_requesting() is not None:
+            
+            appraisal_object = repo.update(
+                appraisal_object=appraisal_object,
+                appraiser_object=appraiser_object,
+                reviewer_obj=reviewer_object,
+                hr_object=hr_obj,
+                is_accepted_by_appraiser_reviewer=True
+            )
+        else:
+            appraisal_object = repo.update(
+                appraisal_object=appraisal_object,
+                appraiser_object=appraiser_object,
+                reviewer_obj=reviewer_object,
+                hr_object=hr_obj,
+            )
         form.instance = appraisal_object
         
         return super().form_valid(form)
