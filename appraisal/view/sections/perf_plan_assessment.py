@@ -343,10 +343,7 @@ class AppraisalDepartmentPerformanceDimensionScoreUpdateView(SuccessMessageMixin
         context["appraisee_grade"] = self.appraisee_grade()
 
         return context
-    
-    
-    
-        
+
     def appraisee_form_handler(self, form):
         payload = build_payload_score(request=self.request, form=form, is_appraisee=True)
         repo = AppraisalOutPutPerformanceDimensionScoreRepository()
