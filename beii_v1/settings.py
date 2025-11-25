@@ -1,8 +1,10 @@
-from pathlib import Path
-import sys, os
+import os
+import sys
 from datetime import timedelta
-from django.contrib.messages import constants as messages
+from pathlib import Path
+
 from decouple import config
+from django.contrib.messages import constants as messages
 
 # Example usage in settings.py
 BASE_URL = config('BASE_URL')

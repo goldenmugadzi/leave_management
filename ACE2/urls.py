@@ -56,4 +56,6 @@ urlpatterns = [
     path('asset_management_dashboard/', views.asset_management_dashboard, name='asset_management_dashboard'),
     path('bulk_migrate_assets/', views.bulk_migrate_assets, name='bulk_migrate_assets'),
     path('test_migrate_assets/', views.test_migrate_assets, name='test_migrate_assets'),
+    # path('tempfix', views.update_ace_creator, name='update_ace_creator')
+    path('upload', views.upload_document, name='upload')
 ]

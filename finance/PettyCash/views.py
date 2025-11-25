@@ -11,6 +11,7 @@ from django.http import HttpResponseNotFound, FileResponse, HttpResponse
 from django.http import JsonResponse
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse
+
 try:
     from openpyxl.workbook import Workbook
 except Exception:  # pragma: no cover - not needed during isolated tests
@@ -22,6 +23,7 @@ from django.db.models.functions import TruncMonth
 from ACE2.utils import find_ace_section_head, find_pettycash_section_head
 from django.utils import timezone as dj_timezone
 from approve.forms import ApprovalForm
+
 try:
     from approve.views import intiate, get_my_roles_for_apps
 except Exception:  # Fallback to a minimal initiator to avoid importing heavy subsystems during tests
@@ -37,7 +39,8 @@ except Exception:  # Fallback to a minimal initiator to avoid importing heavy su
             from approve.models import Workflow, Process
             wf = Workflow.objects.create(name=f"{app_name}-wf-dummy", application_id=1)
             return Process.objects.create(workflow=wf)
-    
+
+
     def get_my_roles_for_apps(user, app_names):
         """Fallback for get_my_roles_for_apps during tests"""
         return []
@@ -103,7 +106,7 @@ def pettyCash_detail(request, petty_id):
                 continue
     except Exception:
         roles_ = []
-        
+
     pettycash_role = str(custom_user_roles["pettycash"])
     # print(pettycash_role)
 
@@ -116,7 +119,7 @@ def pettyCash_detail(request, petty_id):
     except Exception as e:
         messages.error(request, f"Error accessing PettyCash: {str(e)}")
         return redirect('/pettycash/pettycashs')
-        
+
     # Default form holders
     form = None  # cashier form
     requester_form = None
@@ -136,7 +139,8 @@ def pettyCash_detail(request, petty_id):
     if pettycash_role == "disburse":
         # Disallow any actions if the process has already been rejected
         if process_rejected:
-            messages.warning(request, f"PettyCash {pettycash_item.petty_id} was rejected. No further actions are allowed.")
+            messages.warning(request,
+                             f"PettyCash {pettycash_item.petty_id} was rejected. No further actions are allowed.")
             # Don't redirect - just disable form functionality by setting form to None
             form = None
         # Prevent editing if already captured
@@ -189,10 +193,11 @@ def pettyCash_detail(request, petty_id):
             if request.method == "POST" and request.POST.get("action") == "requester_clear":
                 # Disallow clearing and auto-approval if process was rejected
                 if process_rejected:
-                    messages.warning(request, f"PettyCash {pettycash_item.petty_id} was rejected. You cannot clear or proceed further.")
+                    messages.warning(request,
+                                     f"PettyCash {pettycash_item.petty_id} was rejected. You cannot clear or proceed further.")
                     # Don't redirect - just disable form by not processing it further
                     pass
-                
+
                 requester_form = RequesterClearForm(request.POST, request.FILES, pettycash=pettycash_item)
                 if requester_form.is_valid():
                     pettycash_item.receipt_file = requester_form.cleaned_data["receipt_file"]
@@ -204,12 +209,13 @@ def pettyCash_detail(request, petty_id):
                         # Double-check rejection state before auto-approval
                         if is_process_rejected(pettycash_item.process):
                             raise Exception("Process rejected; skipping auto-approval")
-                        
+
                         process = pettycash_item.process
                         latest_approval = process.approval_set.last()
                         next_step_num = (latest_approval.step.step + 1) if latest_approval else 1
                         user_roles = user_profile.roles.all()
-                        step_for_user = Step.objects.get(step=next_step_num, workflow=process.workflow, approver__in=user_roles)
+                        step_for_user = Step.objects.get(step=next_step_num, workflow=process.workflow,
+                                                         approver__in=user_roles)
                         Approval.objects.create(
                             step=step_for_user,
                             user=request.user,
@@ -231,7 +237,7 @@ def pettyCash_detail(request, petty_id):
 
     approvalForm = None
     to = None
-    
+
     # Safely get user roles
     try:
         user_roles = user_profile.roles.all() if user_profile else []
@@ -268,7 +274,7 @@ def pettyCash_detail(request, petty_id):
 
             # check if section head
             if pettycash_role == "approve":
-                if newStep :
+                if newStep:
                     approvalForm = ApprovalForm
                     print("newstep", newStep.step)
                     print(len(pettycash_item.process.workflow.step_set.all()))
@@ -298,7 +304,8 @@ def pettyCash_detail(request, petty_id):
         cashier = None
 
     # Ensure cashier form is available on final render when needed
-    if pettycash_role == "disburse" and not getattr(pettycash_item, "payment_mode", None) and form is None and not process_rejected:
+    if pettycash_role == "disburse" and not getattr(pettycash_item, "payment_mode",
+                                                    None) and form is None and not process_rejected:
         try:
             form = CashierDisbursementForm(pettycash=pettycash_item)
         except Exception:
@@ -332,7 +339,7 @@ def create_pettycash(request):
     try:
         user_id = request.user.id
         user_profile = UserProfile.objects.filter(id=user_id).first()
-        
+
         # Validate user profile exists
         if not user_profile:
             messages.error(request, "User profile not found. Please contact your administrator to set up your profile.")
@@ -342,10 +349,11 @@ def create_pettycash(request):
         # Check if user has required roles for PettyCash creation
         user_roles = user_profile.roles.all()
         if not user_roles.exists():
-            messages.error(request, "You don't have any assigned roles. Please contact your administrator to assign appropriate roles.")
+            messages.error(request,
+                           "You don't have any assigned roles. Please contact your administrator to assign appropriate roles.")
             sweetify.error(request, "No roles assigned to your profile.")
             return redirect('/pettycash/pettycashs')
-            
+
         if request.method == 'POST':
             try:
                 form = PettycashForm(request.POST, request.FILES)
@@ -381,7 +389,7 @@ def create_pettycash(request):
                         break
 
                 print(f"PettyCash role: {pettycash_role}")
-                
+
                 if pettycash_role == "create":
                     # Validate forms
                     if not form.is_valid():
@@ -390,16 +398,17 @@ def create_pettycash(request):
                         for field, errors in form.errors.items():
                             for error in errors:
                                 form_errors.append(f"{field.replace('_', ' ').title()}: {error}")
-                        
+
                         if form_errors:
                             error_message = "Please correct the following errors: " + "; ".join(form_errors)
                             messages.error(request, error_message)
                             sweetify.error(request, "Please correct the form errors and try again.")
-                        
+
                         form = PettycashForm(user=user_profile)
                         formset = QuotationFormSet()
-                        return render(request, 'finance/pettycash/create_pettycash.html', {'form': form, 'formset': formset})
-                    
+                        return render(request, 'finance/pettycash/create_pettycash.html',
+                                      {'form': form, 'formset': formset})
+
                     if not formset.is_valid():
                         # Enhanced formset validation error messages
                         formset_errors = []
@@ -407,30 +416,34 @@ def create_pettycash(request):
                             if form_error:
                                 for field, errors in form_error.items():
                                     for error in errors:
-                                        formset_errors.append(f"Quotation {i+1} - {field.replace('_', ' ').title()}: {error}")
-                        
+                                        formset_errors.append(
+                                            f"Quotation {i + 1} - {field.replace('_', ' ').title()}: {error}")
+
                         if formset_errors:
                             formset_error_message = "Quotation errors: " + "; ".join(formset_errors)
                             messages.error(request, formset_error_message)
                             sweetify.error(request, "Please correct the quotation errors.")
-                        
+
                         form = PettycashForm(user=user_profile)
                         formset = QuotationFormSet()
-                        return render(request, 'finance/pettycash/create_pettycash.html', {'form': form, 'formset': formset})
+                        return render(request, 'finance/pettycash/create_pettycash.html',
+                                      {'form': form, 'formset': formset})
 
                     # Process the valid form
                     pettycash = form.save(commit=False)
-                    
+
                     # Validate required fields
                     if not pettycash.details_of_expenditure:
                         messages.error(request, "Details of expenditure is required.")
                         sweetify.error(request, "Details of expenditure is required.")
-                        return render(request, 'finance/pettycash/create_pettycash.html', {'form': form, 'formset': formset})
-                    
+                        return render(request, 'finance/pettycash/create_pettycash.html',
+                                      {'form': form, 'formset': formset})
+
                     if not pettycash.amount or pettycash.amount <= 0:
                         messages.error(request, "Valid amount is required.")
                         sweetify.error(request, "Valid amount is required.")
-                        return render(request, 'finance/pettycash/create_pettycash.html', {'form': form, 'formset': formset})
+                        return render(request, 'finance/pettycash/create_pettycash.html',
+                                      {'form': form, 'formset': formset})
 
                     # Initialize process workflow
                     try:
@@ -438,8 +451,9 @@ def create_pettycash(request):
                     except Exception as e:
                         messages.error(request, f"Error initializing approval workflow: {str(e)}")
                         sweetify.error(request, "Error setting up approval process.")
-                        return render(request, 'finance/pettycash/create_pettycash.html', {'form': form, 'formset': formset})
-                    
+                        return render(request, 'finance/pettycash/create_pettycash.html',
+                                      {'form': form, 'formset': formset})
+
                     pettycash.requested_by = request.user
 
                     # Generate unique PettyCash ID
@@ -450,7 +464,7 @@ def create_pettycash(request):
                         date = date.strftime("%Y%m%d")
                         petty_id = "PC" + date + rand2
                         pettycash.petty_id = petty_id
-                        
+
                         # Validate uniqueness
                         if Pettycash.objects.filter(petty_id=petty_id).exists():
                             # If ID exists, try a few more times
@@ -463,12 +477,13 @@ def create_pettycash(request):
                                     break
                             else:
                                 raise ValueError("Could not generate unique PettyCash ID after multiple attempts")
-                                
+
                     except Exception as e:
                         messages.error(request, f"Error generating PettyCash ID: {str(e)}")
                         sweetify.error(request, "Could not generate unique PettyCash ID. Please try again.")
-                        return render(request, 'finance/pettycash/create_pettycash.html', {'form': form, 'formset': formset})
-                    
+                        return render(request, 'finance/pettycash/create_pettycash.html',
+                                      {'form': form, 'formset': formset})
+
                     # Save the PettyCash
                     try:
                         pettycash.save()
@@ -477,7 +492,8 @@ def create_pettycash(request):
                     except Exception as e:
                         messages.error(request, f"Error saving PettyCash: {str(e)}")
                         sweetify.error(request, "Error saving PettyCash. Please try again.")
-                        return render(request, 'finance/pettycash/create_pettycash.html', {'form': form, 'formset': formset})
+                        return render(request, 'finance/pettycash/create_pettycash.html',
+                                      {'form': form, 'formset': formset})
 
                     # Save quotations
                     try:
@@ -505,7 +521,8 @@ def create_pettycash(request):
                                 url = f"/pettycash/pettycash_detail/{pettycash.petty_id}"
                                 section_heads_profile = UserProfile.objects.filter(username=section_heads).first()
                                 if section_heads_profile:
-                                    notify_user(section_heads_profile, msg, "PettyCash", url, pettycash.petty_id, request)
+                                    notify_user(section_heads_profile, msg, "PettyCash", url, pettycash.petty_id,
+                                                request)
                                     print("notified", section_heads)
 
                             pettycash_section = pettycash.section
@@ -517,7 +534,8 @@ def create_pettycash(request):
                                 url = f"/pettycash/pettycash_detail/{pettycash.petty_id}"
                                 pettycash_sh_profile = UserProfile.objects.filter(username=pettycash_sh).first()
                                 if pettycash_sh_profile:
-                                    notify_user(pettycash_sh_profile, msg, "PettyCash", url, pettycash.petty_id, request)
+                                    notify_user(pettycash_sh_profile, msg, "PettyCash", url, pettycash.petty_id,
+                                                request)
                                     print("notified", pettycash_sh)
                     except Exception as e:
                         print(f"Notification error: {str(e)}")
@@ -525,12 +543,13 @@ def create_pettycash(request):
 
                     url = reverse('pettycash:pettycash_detail', args=[pettycash.petty_id])
                     return redirect(url)
-                    
+
                 else:
-                    sweetify.error(request, "You are not authorized to create a new PettyCash. Please contact your administrator for proper role assignment.")
+                    sweetify.error(request,
+                                   "You are not authorized to create a new PettyCash. Please contact your administrator for proper role assignment.")
                     messages.error(request, "You are not authorized to create a new PettyCash.")
                     return redirect('/pettycash/pettycashs')
-                    
+
             except Exception as e:
                 messages.error(request, f"Error processing PettyCash creation: {str(e)}. Please try again.")
                 sweetify.error(request, "Error processing form. Please try again.")
@@ -544,7 +563,7 @@ def create_pettycash(request):
             formset = QuotationFormSet()
 
         return render(request, 'finance/pettycash/create_pettycash.html', {'form': form, 'formset': formset})
-        
+
     except UserProfile.DoesNotExist:
         messages.error(request, "User profile not found. Please contact your administrator to create your profile.")
         sweetify.error(request, "User profile not found.")
@@ -566,58 +585,60 @@ def pettycash_awaiting_my_action(request):
     Process PettyCash based on user roles and cost centers - with fallback for older records.
     Combines cost center filtering (for newer records) with section/region filtering (for older records).
     """
+    global pettycashs_to_process1
     user = request.user
     user_profile = UserProfile.objects.filter(id=user.id).first()
-    start_date=''
-    end_date=''
-    section=user_profile.section
+    start_date = ''
+    end_date = ''
+    section = user_profile.section
     user_roles = set(user_profile.roles.all())
     user_pettycash_roles = {role.role for role in user_profile.roles.all() if role.application == "pettycash"}
     role_names_to_find = user_pettycash_roles
     role_ids = Roles.objects.filter(name__in=role_names_to_find).values_list('id', flat=True)
     application_names = ["pettycash"]
     cost_centers_set = request.user.cost_centers_for(application_names)
-    parent_cost_center = get_parent_cost_center(cost_centers_set)
+    
     pettycashs_to_process = []
     created_pettycashs = Pettycash.objects.none()
-    cost_center=user_profile.cost_center
+    cost_center = user_profile.cost_center
 
-    regional_roles={'disburse','authorize'}
-    sectional_roles={'approve','create'}
+    regional_roles = {'disburse', 'authorize'}
+    sectional_roles = {'approve', 'create'}
 
     # Filter based on cost centers for newer records
     if cost_centers_set:
         pettycashs_to_process1 = Pettycash.objects.filter(
-            cost_center__in=cost_centers_set,region=user_profile.region
+            cost_center__in=cost_centers_set, region=user_profile.region
         ).exclude(
             process__approval__approved="Rejected"
         ).order_by('-date_created', 'petty_id')
-    #add parent cost center
-    if parent_cost_center:
-        pettycashs_to_process2 = Pettycash.objects.filter(
-            cost_center=parent_cost_center,region=user_profile.region
-        ).exclude(
-            process__approval__approved="Rejected"
-        ).order_by('-date_created', 'petty_id')
-        pettycashs_to_process = list(pettycashs_to_process1) + list(pettycashs_to_process2)
+    # add parent cost center 
+    if cost_centers_set:
+        parent_cost_center = get_parent_cost_center(cost_centers_set)
+        if parent_cost_center:
+            pettycashs_to_process2 = Pettycash.objects.filter(
+                cost_center=parent_cost_center, region=user_profile.region
+            ).exclude(
+                process__approval__approved="Rejected"
+            ).order_by('-date_created', 'petty_id')
+            pettycashs_to_process = list(pettycashs_to_process1) + list(pettycashs_to_process2)
 
     if section and sectional_roles.intersection(user_pettycash_roles):
         # Additionally filter based on section for older records
         pettycashs_section = Pettycash.objects.filter(
-            section=section,region=user_profile.region
+            section=section, region=user_profile.region
         ).exclude(
             process__approval__approved="Rejected"
         ).order_by('-date_created', 'petty_id')
         pettycashs_to_process = (list(pettycashs_to_process) + list(pettycashs_section))
 
-    
     print("Total PettyCash to process: ", len(pettycashs_to_process))
     processed_petty_ids = set()
     pettycashs_final = []
     if sectional_roles.intersection(user_pettycash_roles) and section:
-       a=0
-       for petty in pettycashs_to_process:
-            a=a+1
+        a = 0
+        for petty in pettycashs_to_process:
+            a = a + 1
             if not petty.process or petty.petty_id in processed_petty_ids:
                 continue
             # print("Processing ACE number: ", a, " ACE ID: ", ace.Ace_id2)
@@ -627,21 +648,21 @@ def pettycash_awaiting_my_action(request):
             # 2. Check for eligibility
             last_approved_step = approvals.last().step.step if approvals.exists() else 0
             next_step = last_approved_step + 1
-        
+
             # Check if the user is the approver for the next step based on their roles
             if petty.process.workflow.step_set.filter(step=next_step, approver__in=user_roles).exists():
                 petty.has_rejected_approval = False
                 petty.latest_approval_status = approvals.last().approved if approvals.exists() else None
-                
+
                 pettycashs_final.append(petty)
                 # print("Added ACE to process: ", ace.Ace_id2)
-                processed_petty_ids.add(petty.petty_id) # Mark as processed
+                processed_petty_ids.add(petty.petty_id)  # Mark as processed
                 # print("Added PettyCash to process: ", petty.petty_id, " Total now: ", len(processed_petty_ids))
 
     if regional_roles.intersection(user_pettycash_roles) and user_profile.region:
-        b=0
+        b = 0
         for petty in pettycashs_to_process:
-            b=b+1
+            b = b + 1
             if not petty.process or petty.petty_id in processed_petty_ids:
                 continue
             # print("Processing ACE number: ", b, " ACE ID: ", ace.Ace_id2)
@@ -651,15 +672,15 @@ def pettycash_awaiting_my_action(request):
             # 2. Check for eligibility
             last_approved_step = approvals.last().step.step if approvals.exists() else 0
             next_step = last_approved_step + 1
-        
+
             # Check if the user is the approver for the next step based on their roles
             if petty.process.workflow.step_set.filter(step=next_step, approver__in=user_roles).exists():
                 petty.has_rejected_approval = False
                 petty.latest_approval_status = approvals.last().approved if approvals.exists() else None
-                
+
                 pettycashs_final.append(petty)
                 # print("Added ACE to process: ", ace.Ace_id2)
-                processed_petty_ids.add(petty.petty_id) # Mark as processed
+                processed_petty_ids.add(petty.petty_id)  # Mark as processed
                 # print("Added PettyCash to process: ", petty.petty_id, " Total now: ", len(processed_petty_ids))
 
     create_pettycashs = Pettycash.objects.filter(
@@ -668,9 +689,9 @@ def pettycash_awaiting_my_action(request):
         process__approval__approved="Rejected"
     ).order_by('-date_created', 'petty_id')
     created_pettycashs = create_pettycashs
-    
+    print('Created PettyCash count: ', created_pettycashs.count())
+    print('created pettycashs', created_pettycashs)
     # Combine created PettyCash
-    
 
     return render(
         request,
@@ -691,93 +712,96 @@ def pettycash_awaiting_my_action(request):
 @login_required
 def view_all_pettycashs(request):
     try:
-            user_id = request.user.id
-            user_profile = UserProfile.objects.prefetch_related('roles').filter(id=user_id).first()
-        
-            if not user_profile:
-                messages.error(request, "User profile not found. Please contact administrator.")
+        user_id = request.user.id
+        user_profile = UserProfile.objects.prefetch_related('roles').filter(id=user_id).first()
+
+        if not user_profile:
+            messages.error(request, "User profile not found. Please contact administrator.")
+            return render(request, 'finance/pettycash/view_all_pettycashs.html', {
+                'pettycashs': [],
+                'pettycash_role': 'none',
+                'requester': 'create',
+                'error_message': 'User profile not found'
+            })
+
+        try:
+            region = Regions.objects.filter(id=user_profile.region.id).first()
+            if not region:
+                messages.error(request, "User region not found. Please contact administrator.")
                 return render(request, 'finance/pettycash/view_all_pettycashs.html', {
                     'pettycashs': [],
                     'pettycash_role': 'none',
                     'requester': 'create',
-                    'error_message': 'User profile not found'
+                    'error_message': 'User region not found'
                 })
-        
-            try:
-                region = Regions.objects.filter(id=user_profile.region.id).first()
-                if not region:
-                    messages.error(request, "User region not found. Please contact administrator.")
-                    return render(request, 'finance/pettycash/view_all_pettycashs.html', {
-                        'pettycashs': [],
-                        'pettycash_role': 'none',
-                        'requester': 'create',
-                        'error_message': 'User region not found'
-                    })
-            except AttributeError:
-                messages.error(request, "User profile is incomplete. Missing region information.")
+        except AttributeError:
+            messages.error(request, "User profile is incomplete. Missing region information.")
+            return render(request, 'finance/pettycash/view_all_pettycashs.html', {
+                'pettycashs': [],
+                'pettycash_role': 'none',
+                'requester': 'create',
+                'error_message': 'Incomplete user profile'
+            })
+
+        try:
+            user_groups = user_profile.groups.values_list('name', flat=True)
+        except AttributeError:
+            user_groups = []
+
+        custom_user_roles = {
+            "pettycash": {},
+        }
+
+        roles_ = user_profile.roles.all()
+        pettycash_role = None
+
+        try:
+            for _role in roles_:
+                role = Roles.objects.filter(id=_role.id).first()
+                if role and role.application == "pettycash":
+                    custom_user_roles["pettycash"] = role.role
+                    pettycash_role = str(custom_user_roles["pettycash"])
+                    print("tr ", role.role)
+                    break
+
+            if pettycash_role is None:
+                messages.warning(request,
+                                 "You don't have a PettyCash role assigned. Please contact administrator for access.")
                 return render(request, 'finance/pettycash/view_all_pettycashs.html', {
                     'pettycashs': [],
                     'pettycash_role': 'none',
                     'requester': 'create',
-                    'error_message': 'Incomplete user profile'
+                    'error_message': 'No PettyCash role assigned'
                 })
 
-            try:
-                user_groups = user_profile.groups.values_list('name', flat=True)
-            except AttributeError:
-                user_groups = []
+        except Exception as e:
+            messages.error(request, f"Error determining user role: {str(e)}")
+            return render(request, 'finance/pettycash/view_all_pettycashs.html', {
+                'pettycashs': [],
+                'pettycash_role': 'none',
+                'requester': 'create',
+                'error_message': 'Role determination error'
+            })
 
-            custom_user_roles = {
-                "pettycash": {},
-            }
+        print("gh ", pettycash_role)
+        requester = "create"
+        current_year = datetime.now(timezone.utc).year
 
-            roles_ = user_profile.roles.all()
-            pettycash_role = None
-        
-            try:
-                for _role in roles_:
-                    role = Roles.objects.filter(id=_role.id).first()
-                    if role and role.application == "pettycash":
-                        custom_user_roles["pettycash"] = role.role
-                        pettycash_role = str(custom_user_roles["pettycash"])
-                        print("tr ", role.role)
-                        break
-                
-                if pettycash_role is None:
-                    messages.warning(request, "You don't have a PettyCash role assigned. Please contact administrator for access.")
-                    return render(request, 'finance/pettycash/view_all_pettycashs.html', {
-                        'pettycashs': [],
-                        'pettycash_role': 'none',
-                        'requester': 'create',
-                        'error_message': 'No PettyCash role assigned'
-                    })
-                    
-            except Exception as e:
-                messages.error(request, f"Error determining user role: {str(e)}")
-                return render(request, 'finance/pettycash/view_all_pettycashs.html', {
-                    'pettycashs': [],
-                    'pettycash_role': 'none',
-                    'requester': 'create',
-                    'error_message': 'Role determination error'
-                })
-            
-            print("gh ", pettycash_role)
-            requester = "create"
-            current_year = datetime.now(timezone.utc).year
+        # Calculate the starting year
+        starting_year = current_year - 2
 
-            # Calculate the starting year
-            starting_year = current_year - 2
+        if pettycash_role == "create":
+            pettycashs = Pettycash.objects.filter(region=region, requested_by=request.user)
+        elif pettycash_role == "approve":
+            pettycashs = Pettycash.objects.filter(region=region, section=request.user.section).order_by('-date_created',
+                                                                                                        'petty_id')[
+                         :800]
+        else:
+            pettycashs = Pettycash.objects.filter(region=region).only('petty_id', 'date_created').order_by(
+                '-date_created',
+                'petty_id')[
+                         :1200]
 
-            if pettycash_role == "create":
-                pettycashs = Pettycash.objects.filter(region=region, requested_by=request.user)
-            elif pettycash_role == "approve":
-                pettycashs = Pettycash.objects.filter(region=region, section=request.user.section).order_by('-date_created',
-                                                                                                            'petty_id')[:800]
-            else:
-                pettycashs = Pettycash.objects.filter(region=region).only('petty_id', 'date_created').order_by('-date_created',
-                                                                                                               'petty_id')[
-                             :1200]
-        
     except Exception as e:
         messages.error(request, f"System error: {str(e)}")
         return render(request, 'finance/pettycash/view_all_pettycashs.html', {
@@ -786,7 +810,7 @@ def view_all_pettycashs(request):
             'requester': 'create',
             'error_message': f'System error: {str(e)}'
         })
-        
+
     return render(request, 'finance/pettycash/view_all_pettycashs.html', {'pettycashs': pettycashs,
                                                                           'requester': requester})
 
@@ -1041,7 +1065,7 @@ def import_pettycash(request):
 
                         date_str = pettycash.petty_id[2:8]
                         print(date_str, 'date_str')
-                        #check length of date string
+                        # check length of date string
                         if len(date_str) == 6:
                             # Convert the date string to a datetime object
                             # If the year is less than 20, we assume it's 2000s, otherwise it's 1900s
@@ -1076,12 +1100,12 @@ def import_pettycash(request):
 def approve_step(process_id, user_id, date_approved):
     process = Process.objects.get(id=process_id)
     user = UserProfile.objects.get(username=user_id)
-    
+
     # Do not append approvals if the process has already been rejected
     if is_process_rejected(process):
         print('process already rejected; skipping approval append')
         return False
-    
+
     # parse the date into year, month and day
     if date_approved != '0000-00-00 00:00:00':
         print('setting date approved to', date_approved)
@@ -1128,22 +1152,22 @@ def receipt_form(request, petty_id):
     except Pettycash.DoesNotExist:
         messages.error(request, 'Petty cash not found.')
         return redirect('/pettycash/pettycashs')
-    
+
     # Check authorization - only requester can upload receipt
     if request.user != pettycash.requested_by:
         messages.error(request, 'You are not authorized to upload receipt for this petty cash.')
         return redirect(f'/pettycash/pettycash_detail/{petty_id}')
-    
+
     # Check if receipt already uploaded
     if pettycash.receipt_file:
         messages.warning(request, 'Receipt has already been uploaded for this petty cash.')
         return redirect(f'/pettycash/pettycash_detail/{petty_id}')
-    
+
     # Check if cashier has disbursed
     if pettycash.amount_disbursed is None:
         messages.error(request, 'Cashier must disburse the amount before you can upload receipt.')
         return redirect(f'/pettycash/pettycash_detail/{petty_id}')
-    
+
     # Block actions if process is rejected
     try:
         if is_process_rejected(pettycash.process):
@@ -1151,12 +1175,12 @@ def receipt_form(request, petty_id):
             return redirect(f'/pettycash/pettycash_detail/{petty_id}')
     except Exception:
         pass
-    
+
     context = {
         'pettycash': pettycash,
         'max_amount': pettycash.amount_disbursed if pettycash.amount_disbursed else pettycash.amount
     }
-    
+
     return render(request, 'finance/pettycash/receipt_form.html', context)
 
 
@@ -1177,13 +1201,16 @@ def receipt(request):
     # Block any actions if process is already rejected
     try:
         if is_process_rejected(pettycash.process):
-            return JsonResponse({'success': False, 'error': 'This petty cash was rejected. No further actions are allowed.'}, status=400)
+            return JsonResponse(
+                {'success': False, 'error': 'This petty cash was rejected. No further actions are allowed.'},
+                status=400)
     except Exception:
         pass
 
     # Require cashier disbursement first
     if pettycash.amount_disbursed is None or pettycash.payment_mode is None:
-        return JsonResponse({'success': False, 'error': 'Cashier must capture disbursement before you can clear.'}, status=400)
+        return JsonResponse({'success': False, 'error': 'Cashier must capture disbursement before you can clear.'},
+                            status=400)
 
     # Ensure not already receipted
     if pettycash.receipt_file:
@@ -1215,7 +1242,7 @@ def receipt(request):
 
     # Handle optional remarks
     remarks = request.POST.get('remarks', '').strip()
-    
+
     # Save receipt, amount used, and remarks
     pettycash.receipt_file = receipt_file
     pettycash.amount_used = float(used_amt)
@@ -1376,7 +1403,8 @@ def print_report_csv(request, report_id):
         requested_by = pettycash.requested_by.get_full_name() if pettycash.requested_by else ''
         section = pettycash.section.section if pettycash.section else ''
         date_created = pettycash.date_created.strftime('%Y-%m-%d') if pettycash.date_created else ''
-        approval_status = str(pettycash.process.approval_set.last()) if pettycash.process and pettycash.process.approval_set.last() else ''
+        approval_status = str(
+            pettycash.process.approval_set.last()) if pettycash.process and pettycash.process.approval_set.last() else ''
 
         writer.writerow([
             pettycash.petty_id,
@@ -1510,7 +1538,7 @@ def my_actioned_items(request):
     try:
         user_id = request.user.id
         user_profile = UserProfile.objects.filter(id=user_id).first()
-        
+
         if not user_profile:
             messages.error(request, "User profile not found. Please contact administrator.")
             return render(request, 'finance/pettycash/my_actioned_items.html', {

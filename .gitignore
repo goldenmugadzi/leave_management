@@ -193,3 +193,4 @@ static/*/
 !static/scripts/
 !static/tika/
 !static/assets/
+beii_v1/__init__.py
