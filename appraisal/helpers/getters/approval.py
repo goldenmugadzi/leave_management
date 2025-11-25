@@ -10,6 +10,7 @@ from ...repository.appraisal import AppraiseePersonalAttributeRepository, Apprai
 from ...models.helpers import YearQuarter
 from ...models.kra import AppraisalOutPutPerformanceDimensionScore, APPRAISAL_KRA_REVIEWER_STATUS_CHOICES, AppraisalDepartmentOutput, REVIEWERS_CONFIRMATION_STATUS
 from ..types.quarters import ApprovedQuartersType
+from ..data.approval_stage import ApprovalStageData
 from loguru import logger
 
 
@@ -165,14 +166,17 @@ class ApprovalStagesHandler:
     
     def get_stages_info(self):
         """Retrieve all stages along with current and next stage information."""
-        
         qr = self.get_approval_queryset()
-        print("================>>>> qr: ", qr)
         last_stage_number = qr.last().stage_num if qr and qr.exists() else None
         current_nxt_stage_data = self.get_current_and_next_stage()
+        completed_stages_qr = self.get_completed_approval_queryset()
+        completed_stages_count = 0
+        if completed_stages_qr is not None:
+            completed_stages_count = completed_stages_qr.count()
         return {
             "stages": qr,
             "last_stage_number": last_stage_number,
+            "completed_stages_count": completed_stages_count,
             **current_nxt_stage_data
         }
 
@@ -443,3 +447,13 @@ class ApprovalWorkflowQuarterStagesStrategyContext:
         except Exception as e:
             logger.warning(f"[ApprovalWorkflowQuarterStagesStrategyInterface] for {self.strategy.__class__()}, failed with error: {e}")
             return None
+        
+
+class ApprovalStageGetterHandler:
+    def get_stage_num_by_name(self, stage_name: str):
+        stage_num = 0
+        for index, stage in enumerate(ApprovalStageData):
+            if stage.value["stage_name"].lower() == stage_name.lower():
+                stage_num = index + 1
+        return stage_num
+                

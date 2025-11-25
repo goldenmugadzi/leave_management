@@ -36,22 +36,18 @@ class AppraisalWorkflowRepository:
         
     def fetch_by_appraisal_id_quarter_id(self, appraisal_id: int, year_quarter_id: int)->List[AppraisalWorkflow]:
         try:
-            return AppraisalWorkflow.objects.filter(appraisal__id=appraisal_id, year_quarter__id=year_quarter_id)
+            return AppraisalWorkflow.objects.filter(appraisal__id=appraisal_id, year_quarter__id=year_quarter_id).order_by('stage_num')
         except Exception as e:
             raise Exception(f"AppraisalWorkflowRepository fetch_by_appraisal_id_quarter_id by appraisal pk: {appraisal_id} and year quarter pk: {year_quarter_id}, failed with error: {e}")
         
-    def update(self, workflow_object: AppraisalWorkflow, is_completed: bool, updated_by: UserProfile)->AppraisalWorkflow:
+    def update(self, workflow_object: AppraisalWorkflow, is_completed: bool)->AppraisalWorkflow:
         is_update = False
         
         try:
             if workflow_object.is_completed != is_completed:
                 workflow_object.is_completed = is_completed
                 is_update = True
-            
-            if workflow_object.updated_by != updated_by:
-                workflow_object.updated_by = updated_by
-                is_update = True
-            
+
             if is_update:
                 workflow_object.save()
             return workflow_object

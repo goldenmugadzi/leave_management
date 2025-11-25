@@ -71,6 +71,7 @@ class AppraisalConfig(AppConfig):
         
         from .signals.kra import create_kra_roles_handler
         from .signals.appraisal import set_appraisal_dependencies
+        from .signals.perf_plan_assmnt import appraisal_dimension_score_completed_scoring_stage_handler, appraisal_confirmation_completed_scoring_stage_handler
         post_migrate.connect(create_kra_roles_handler, sender=self)        
 
         from .tasks import run_back_ground_tasks

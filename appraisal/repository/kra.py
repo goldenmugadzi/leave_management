@@ -408,6 +408,13 @@ class ApprasialKraReviewerStatusRepository:
         except Exception as e:
             raise Exception(f"ApprasialKraReviewerStatusRepository get_by_appraisee_performance_dimension_score_id repo with appraisee_performance_dimension_score_id: {appraisee_performance_dimension_score_id}, failed with error: {e}")
     
+    def get_by_id(self, id: int)->AppraisalDepartmentOutputReviewerStatus:
+        try:
+            qr = AppraisalDepartmentOutputReviewerStatus.objects.filter(id=id)
+            return qr.first()
+        except Exception as e:
+            raise Exception(f"ApprasialKraReviewerStatusRepository get_by_id repo with pk: {pk}, failed with error: {e}")
+    
     def get_by_appraisal_department_output_id(self, appraisal_department_output_id: int)->AppraisalDepartmentOutputReviewerStatus:
         try:
             qr = AppraisalDepartmentOutputReviewerStatus.objects.filter(appraisal_department_output__id=appraisal_department_output_id)

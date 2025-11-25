@@ -91,18 +91,18 @@
                 {% csrf_token %}
                 <div class="bg-white shadow-xl rounded-lg border-2 border-indigo-400 p-6">
                     {% include "./roles/set_appraisal_users.html" %}
+                
+                    {% if can_mutate %}
+                        <div class="flex justify-center mt-6">
+                            <button type="submit" class="w-96 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-6 rounded-full transition duration-200">Save</button>
+                        </div>
+                    {% endif %}
                 </div>
 
-                {% if can_mutate %}
-                    <div class="flex justify-center mt-6">
-                        <button type="submit" class="w-96 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-6 rounded-full transition duration-200">Save</button>
-                    </div>
-                {% endif %}
             </form>
         </div>
     </div>
-
-    {% if is_update %}
+    {% if is_update and apprais_object.is_accepted %}
         <div class="mt-6">
             {% include "appraisal/approval/detail.html" with stages=stages last_stage_num=last_stage_number %}
         </div>

@@ -180,7 +180,7 @@ class AppraiseePersonalAttributeForm(forms.ModelForm):
 
 class ApprovalStageFilterForm(forms.Form):
     
-    approval_stage_quarter = forms.ChoiceField(
+    approval_stage_filter = forms.ChoiceField(
         choices=ApprovalStageChoices.choices(),
         widget=forms.Select(attrs={'class': 'form-control'}),
     )
