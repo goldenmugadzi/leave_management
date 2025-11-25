@@ -76,7 +76,7 @@ def Ace_detail(request, Ace_id2):
     # print(ace_role)
 
     ace_item = Ace2.objects.get(Ace_id2=Ace_id2)
-    #clear notification
+    # clear notification
     notification_obj = Notification.objects.filter(notification_id=ace_item.Ace_id2).first()
     if notification_obj:
         notification_obj.is_read = True
@@ -333,7 +333,7 @@ def create_Ace(request):
                 print(budget, 'budget')
                 print(ace.amount, 'amount', budget.balance, 'balance', budget.to_be_withdrawn, 'to be withdrawn')
                 balance_after_ace = budget.balance - ace.amount
-                #money in tray check
+                # money in tray check
                 if budget.to_be_withdrawn:
 
                     m_in_tray = budget.to_be_withdrawn + ace.amount
@@ -444,8 +444,7 @@ def create_Ace(request):
 
                     section_heads = find_ace_section_head(request, section_created)
 
-                    #NOTIFY THE SH FROM THE COST CENTRE
-
+                    # NOTIFY THE SH FROM THE COST CENTRE
 
                     if section_heads:
                         print(section_heads, " section_heads")
@@ -480,7 +479,7 @@ def create_Ace(request):
 
                     ace_cost_center = ace.cost_center
                     parent_cost_center = get_parent_cost_center([ace_cost_center])
-                    cost_center_manager = find_cost_center_manager(request, parent_cost_center) 
+                    cost_center_manager = find_cost_center_manager(request, parent_cost_center)
                     if cost_center_manager:
                         print(cost_center_manager, "cost_center_manager")
                         # bdg = AssetBudget.objects.filter(budget_id=ace.budget_id).first()
@@ -554,10 +553,10 @@ def ace_awaiting_my_action(request):
     cost_centers_set = request.user.cost_centers_for(application_names)
     # print ("cost centers set: ", cost_centers_set)
     cost_center = user_profile.cost_center
-    
+
     # Initialize lists to prevent UnboundLocalError
     aces_to_process = []
-    created_aces = Ace2.objects.none() 
+    created_aces = Ace2.objects.none()
     processed_ace_ids = set()
 
     # Base query for all ACEs (unfiltered)
@@ -568,7 +567,7 @@ def ace_awaiting_my_action(request):
     )
 
     # --- PRIMARY FILTERING: COST CENTER ---
-    aces_query_primary = base_query # Start with the base query
+    aces_query_primary = base_query  # Start with the base query
 
     if cost_centers_set:
         cost_centers = list(cost_centers_set)
@@ -583,14 +582,14 @@ def ace_awaiting_my_action(request):
         fallback_cost_centers = user_profile.cost_center_and_decendace()
         if fallback_cost_centers:
             aces_query_primary = aces_query_primary.filter(cost_center__in=fallback_cost_centers).exclude(
-            process__approval__approved="Rejected"
-        ).order_by('-date_created')
+                process__approval__approved="Rejected"
+            ).order_by('-date_created')
 
-    #exception handling
+    # exception handling
     aces_query1 = Ace2.objects.none()
     # Additional role-based filters
     # --- SECONDARY FILTERING: REGION/SECTION (The Bypass Logic) ---
-    aces_query_secondary = base_query.none() # Initialize as empty
+    aces_query_secondary = base_query.none()  # Initialize as empty
 
     user_ace_roles = {role.role for role in user_profile.roles.all() if role.application == "ace"}
 
@@ -598,12 +597,12 @@ def ace_awaiting_my_action(request):
     regional_roles = {'sanction', 'process', 'approve', 'EM'}
     sectional_roles = {'pass'}
 
-
     # If the user has a regional or sectional role (and is NOT system-wide)
     if regional_roles.intersection(set(user_ace_roles)):
         aces_query_secondary = base_query.filter(region=user_profile.region).exclude(
             process__approval__approved="Rejected"
         ).order_by('-date_created')
+        print('fm roles now')
         # print("ACES after region filter: ", aces_query_secondary.count())
 
     if sectional_roles.intersection(set(user_ace_roles)) and section:
@@ -619,18 +618,17 @@ def ace_awaiting_my_action(request):
             process__approval__approved="Rejected"
         ).order_by('-date_created')
         # print("ACES after system-wide filter: ", aces_query_secondary.count())
-    
-    
+
     # print("primary aces", aces_query_primary.values_list('Ace_id2', flat=True))
     aces_combined_query = (aces_query_primary | aces_query_secondary)
     # print("Total ACEs after combining filters: ", aces_combined_query.count())
-    a=0
+    a = 0
 
     # --- PROCESS AWAITING ACTION ---
     for ace in aces_combined_query:
         if not ace.process or ace.Ace_id2 in processed_ace_ids:
             continue
-        a=a+1
+        a = a + 1
         # print("Processing ACE number: ", a, " ACE ID: ", ace.Ace_id2)
 
         approvals = ace.process.approval_set.all()
@@ -638,19 +636,21 @@ def ace_awaiting_my_action(request):
         # 2. Check for eligibility
         last_approved_step = approvals.last().step.step if approvals.exists() else 0
         next_step = last_approved_step + 1
-        
+
         # Check if the user is the approver for the next step based on their roles
         if ace.process.workflow.step_set.filter(step=next_step, approver__in=user_roles).exists():
             ace.has_rejected_approval = False
             ace.latest_approval_status = approvals.last().approved if approvals.exists() else None
-            
+
             aces_to_process.append(ace)
             # print("Added ACE to process: ", ace.Ace_id2)
-            processed_ace_ids.add(ace.Ace_id2) # Mark as processed
+            processed_ace_ids.add(ace.Ace_id2)  # Mark as processed
+
 
     # --- Handle 'create' role access (Your existing logic for created_aces) ---
     # ... (Keep the rest of your logic for 'create' role and final return statement) ...
     user_ace_roles = {role.role for role in user_profile.roles.all() if role.application == "ace"}
+    print('user_ace_roles', user_ace_roles)
     # print('aces to process: ', aces_to_process)
     # print('processed ace ids: ', processed_ace_ids)
 
@@ -672,11 +672,11 @@ def ace_awaiting_my_action(request):
             else:
                 ace.has_rejected_approval = False
                 ace.latest_approval_status = None
-    
+
     # If the user is ONLY a creator, they shouldn't see items awaiting approval (by others)
     if user_ace_roles == {"create"}:
         aces_to_process = []
-    
+
     return render(request, 'finance/ace2/view_all_aces.html', {
         "aces": aces_to_process,
         "created_aces": created_aces,
@@ -1303,14 +1303,14 @@ def create_virament(request):
             virament.requested_by = request.user
             virament.region = request.user.region
             virament.save()
-            #add attachments
+            # add attachments
             attachments = request.FILES.getlist('attachments')
             for attachment in attachments:
                 attachment = Quotation(quotation_file=attachment,
                                        virament=virament)
                 attachment.save()
 
-            #create transaction
+            # create transaction
             transaction = Transactions.objects.create(
                 virament=virament,
                 details_of_expenditure="virement of " + str(virament.from_budget) + " to " + str(virament.to_budget),
@@ -1789,6 +1789,7 @@ def find_ace_section_head(request, section):
     # Return None if no section head is found
     return None
 
+
 def find_cost_center_manager(request, ace_cost_center):
     all_users = UserProfile.objects.filter(cost_center=ace_cost_center).all()
     if all_users:
@@ -1805,12 +1806,13 @@ def find_cost_center_manager(request, ace_cost_center):
                 if role.application == "ace":
                     custom_user_roles["ace"] = role.role
             ace_role = str(custom_user_roles["ace"])
-            if ace_role == "pass" :
+            if ace_role == "pass":
                 ccm = user_profile.username
                 if ccm:
                     return ccm
     # Return None if no cost center manager is found
     return None
+
 
 # @login_required
 def find_general_manager(request, region):
@@ -1847,7 +1849,7 @@ def find_general_manager(request, region):
 @login_required
 def transactions_view(request, budget):
     transactions = Transactions.objects.filter(budget_id=budget)
-    #return an view with an html table of transactions
+    # return an view with an html table of transactions
     return render(request, 'finance/ace2/view_all_transactions.html', {'transactions': transactions})
 
 
