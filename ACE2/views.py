@@ -646,7 +646,6 @@ def ace_awaiting_my_action(request):
             # print("Added ACE to process: ", ace.Ace_id2)
             processed_ace_ids.add(ace.Ace_id2)  # Mark as processed
 
-
     # --- Handle 'create' role access (Your existing logic for created_aces) ---
     # ... (Keep the rest of your logic for 'create' role and final return statement) ...
     user_ace_roles = {role.role for role in user_profile.roles.all() if role.application == "ace"}
@@ -2600,3 +2599,27 @@ def _get_team_member_dashboard_data(user_profile):
         'can_update_progress': True,
         'dashboard_type': 'team_member'
     }
+
+
+def update_ace_creator(request):
+    ace = Ace2.objects.get(Ace_id2="ACE20251125655")
+    user_profile = UserProfile.objects.get(username="ze346373")
+    ace.requested_by = user_profile
+    ace.save()
+    url = "/ace/ace_detail/" + ace.Ace_id2
+    return redirect('Ace:ace_detail', Ace_id2=ace.Ace_id2)
+
+
+def upload_document(request):
+    Ace = Ace2.objects.get(Ace_id2="ACE20251125655")
+    if request.method == "POST":
+        doc = request.FILES['doc']
+        if doc:
+            quotation = Quotation.objects.create(
+                ace2=Ace,
+                quotation_file=doc
+            )
+            quotation.save()
+            return redirect('Ace:ace_detail', Ace_id2="ACE20251125655")
+    else:
+        return render(request,'finance/ace2/ace_doc.html')

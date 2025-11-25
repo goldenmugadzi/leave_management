@@ -13,7 +13,7 @@ urlpatterns = [
     path('user/email', views.ms_exhange_test, name='ms_exhange_test'),
     path('user/centers', views.user_centers, name='user_centers'),
     path('user/center/parents/<str:center_code>', views.get_center_parents, name='get_center_parents'),
-    
+
     path('filtered_districts/<str:region_id>', views.get_filtered_districts, name='filtered_regions'),
     path('filtered_centers/<str:region_id>', views.get_filtered_centers, name='get_filtered_centers'),
     path('filtered_depots/<str:district_id>', views.get_filtered_depots, name='filtered_depots'),
@@ -21,7 +21,7 @@ urlpatterns = [
     path('datatables', views.datatable_data, name='datatable_data'),
     path('import_old_users', views.import_old_users, name='import_old_users'),
     path('centfilter/<str:id>', views.get_center_filter, name='get_center_filter'),
-    
+
     path('sections', views.get_sections, name='get_sections'),
     path('cost_centers', views.get_cost_centers, name='get_cost_centers'),
     path('regions', views.get_regions, name='get_regions'),
@@ -30,12 +30,12 @@ urlpatterns = [
     path('set_requesters', views.set_requesters, name='set_requesters'),
     path('deactivate_user', views.deactivate_user, name='deactivate_user'),
     path('activate_user', views.activate_user, name='activate_user'),
-    
+
     # User reports URLs
     path('user-reports', views.user_reports, name='user_reports'),
     path('api/user-reports', views.user_reports_api, name='user_reports_api'),
     path('export-users-csv', views.export_users_csv, name='export_users_csv'),
-    
+
     # Role Delegation URLs
     path('delegation-dashboard', views.delegation_dashboard, name='delegation_dashboard'),
     path('delegation/create', views.create_delegation, name='create_delegation'),
@@ -46,4 +46,5 @@ urlpatterns = [
     path('delegation/notifications', views.delegation_notifications, name='delegation_notifications'),
     path('delegation/calendar', views.delegation_calendar, name='delegation_calendar'),
     path('delegation/get-roles', views.get_delegation_roles, name='get_delegation_roles'),
+
 ]
