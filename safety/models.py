@@ -135,7 +135,7 @@ class AccidentReport(models.Model):
     
     employee_involved = models.ForeignKey(UserProfile, on_delete=models.CASCADE, blank=True, null=True,related_name="accident_reports")
     department = models.ForeignKey(Sections, on_delete=models.DO_NOTHING, blank=True, null=True)
-    sex = models.CharField(max_length=300 ,choices=Sex)
+    gender = models.CharField(max_length=300 ,choices=Sex)
     address_of_person_involved = models.CharField(max_length=500)
     region = models.ForeignKey(Regions, on_delete=models.DO_NOTHING, blank=True, null=True)
     age = models.PositiveIntegerField(default=0)
@@ -160,39 +160,45 @@ class AccidentReport(models.Model):
     attach_written_statements = models.ImageField(upload_to='accident_photos/', blank=True, null=True)
     other_information_considered_neccesary = models.TextField(max_length=600)
     for_electrical_state_voltage = models.TextField(max_length=600,choices=Voltage)
- 
-       
-    
-    
+   
 class VehicleAccidentReport(models.Model):
-    
-    Hired = [
-        ('Yes','Yes'),
-        ('No' ,'No'),
+
+    HIRED_CHOICES = [
+        ('Yes', 'Yes'),
+        ('No', 'No'),
     ]
+
     # 1. Driver's Details
-    driver_name = models.CharField(max_length=100)
+    driver_name = models.ForeignKey(
+        UserProfile,
+        on_delete=models.CASCADE,
+        blank=True,
+        null=True
+    )
     home_address = models.TextField()
     age = models.PositiveIntegerField()
     drivers_license = models.CharField(max_length=50)
-    designation = models.CharField(max_length=100)
+    designation = models.ForeignKey(Designations, on_delete=models.DO_NOTHING, blank=True, null=True)
     place_of_issue = models.CharField(max_length=100)
     date_of_issue = models.DateField()
     ec_number = models.CharField(max_length=50)
     work_station = models.CharField(max_length=100)
 
     # 2. Vehicle Details
-    make = models.CharField(max_length=100)
-    registration_number = models.CharField(max_length=50)
-    fleet_number = models.CharField(max_length=50)
+    vehicle_details = models.ForeignKey(
+        'Transport.Vehicle',
+        on_delete=models.CASCADE,
+        related_name='accident_reports',
+        verbose_name="fleet_Number/Make/Reg_Number"
+    )
     allocation_to_section = models.CharField(max_length=100)
-    state_if_hired = models.TextField(max_length=600,choices=Hired)
+    state_if_hired = models.CharField(max_length=3, choices=HIRED_CHOICES)
 
     # 3. Particulars of Accident
-    datetime_for_accident = models.DateTimeField( verbose_name="Date and Time of Accident")
+    datetime_for_accident = models.DateTimeField(verbose_name="Date and Time of Accident")
     place_of_accident = models.CharField(max_length=150)
     brief_description = models.TextField()
-    datetime_to_police = models.DateTimeField( verbose_name="Date and Time Accident was reported to police")
+    datetime_to_police = models.DateTimeField(verbose_name="Date and Time Accident was reported to police")
     speed_at_time_of_accident = models.PositiveIntegerField(default=0)
     gear_used = models.PositiveIntegerField(default=0)
     type_and_state_of_road = models.CharField(max_length=150)
@@ -201,12 +207,11 @@ class VehicleAccidentReport(models.Model):
     name_and_address_of_passenger = models.TextField()
 
     # 4. Damaged Property Details
-    #name_and_address_of_driver= models.CharField(max_length=100)
     other_vehicle_owner_name = models.CharField(max_length=100)
     other_vehicle_owner_address = models.TextField()
     other_vehicle_make_and_type = models.CharField(max_length=100)
     other_vehicle_registration_number = models.CharField(max_length=50)
-    approximate_speed_of_other_vehicle = models.CharField(max_length=50, blank=True, help_text="e.g., '60 km/h'")
+    approximate_speed_of_other_vehicle = models.CharField(max_length=50, blank=True)
 
     # 5. Damage to Property Details
     zesa_vehicle_damage = models.TextField(blank=True)
@@ -220,7 +225,8 @@ class VehicleAccidentReport(models.Model):
     date_submitted = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"Vehicle Accident Report - {self.driver_name} - {self.date_of_accident}"
+        return f"Vehicle Accident Report - {self.driver_name} - {self.datetime_for_accident.date()}"
+
 
 class PropertyLossIncident(models.Model):
     # Property/Asset details

@@ -14,4 +14,6 @@ urlpatterns = [
     path('property_loss_table/', views.property_loss_table, name='property_loss_table'),
     path('human_accident_table/', views.human_accident_table, name='human_accident_table'),
     path('vehicle_accident_table/', views.vehicle_accident_table, name='vehicle_accident_table'),
+    path('property_loss/edit/<int:incident_id>/', views.edit_property_loss, name='edit_property_loss'),
+    path('human_accident/edit/<int:accident_id>/', views.edit_human_accident, name='edit_human_accident'),
 ]

@@ -1,10 +1,14 @@
 {% extends 'admin_layout.html' %}
 {% block content %}
-<div class="bg-white rounded-2xl shadow-lg p-8 mb-8">
+
+<script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+
+<div x-data="{ open: false, selected: null }" class="bg-white rounded-2xl shadow-lg p-8 mb-8">
   <div class="flex items-center gap-3 mb-6">
     <span class="text-green-600 text-3xl">&#127968;</span>
     <h2 class="text-2xl font-bold text-green-700">Property Loss Incidents Details</h2>
   </div>
+
   <div class="overflow-x-auto">
     <table class="min-w-full border border-gray-200 rounded-lg">
       <thead class="bg-green-100 sticky top-0 z-10">
@@ -13,59 +17,109 @@
           <th class="px-4 py-2 text-left text-sm font-semibold text-green-700">Description</th>
           <th class="px-4 py-2 text-left text-sm font-semibold text-green-700">Address</th>
           <th class="px-4 py-2 text-left text-sm font-semibold text-green-700">Date/Time of Loss</th>
-          <th class="px-4 py-2 text-left text-sm font-semibold text-green-700">ZETDC Report Date/Time</th>
-          <th class="px-4 py-2 text-left text-sm font-semibold text-green-700">ZETDC Reporter</th>
-          <th class="px-4 py-2 text-left text-sm font-semibold text-green-700">ZRP Report Date/Time</th>
-          <th class="px-4 py-2 text-left text-sm font-semibold text-green-700">ZRP Reporter</th>
-          <th class="px-4 py-2 text-left text-sm font-semibold text-green-700">Person Injured</th>
-          <th class="px-4 py-2 text-left text-sm font-semibold text-green-700">Injuries</th>
-          <th class="px-4 py-2 text-left text-sm font-semibold text-green-700">Condition</th>
-          <th class="px-4 py-2 text-left text-sm font-semibold text-green-700">Medical Practitioner</th>
-          <th class="px-4 py-2 text-left text-sm font-semibold text-green-700">Medical Opinion</th>
-          <th class="px-4 py-2 text-left text-sm font-semibold text-green-700">Circumstances</th>
-          <th class="px-4 py-2 text-left text-sm font-semibold text-green-700">Network Circuit</th>
-          <th class="px-4 py-2 text-left text-sm font-semibold text-green-700">Protective Devices</th>
-          <th class="px-4 py-2 text-left text-sm font-semibold text-green-700">Site Details</th>
-          <th class="px-4 py-2 text-left text-sm font-semibold text-green-700">Written Statements</th>
-          <th class="px-4 py-2 text-left text-sm font-semibold text-green-700">Photographs</th>
-          <th class="px-4 py-2 text-left text-sm font-semibold text-green-700">Opinion</th>
-          <th class="px-4 py-2 text-left text-sm font-semibold text-green-700">Other Info</th>
-          <th class="px-4 py-2 text-left text-sm font-semibold text-green-700">Reported By</th>
-          <th class="px-4 py-2 text-left text-sm font-semibold text-green-700">Date of Report</th>
+          <th class="px-4 py-2 text-center text-sm font-semibold text-green-700">Action</th>
         </tr>
       </thead>
+
       <tbody>
+
         {% for incident in property_damages %}
-        <tr class="border-t {% cycle 'bg-white' 'bg-green-50' %} hover:bg-green-200/40">
+
+        <tr class="border-t {% cycle 'bg-white' 'bg-green-50' %}">
           <td class="px-4 py-2 text-sm text-gray-700">{{ incident.id }}</td>
-          <td class="px-4 py-2 text-sm text-gray-700">{{ incident.full_description_of_property }}</td>
+          <td class="px-4 py-2 text-sm text-gray-700">
+            {{ incident.full_description_of_property|truncatewords:7 }}
+          </td>
           <td class="px-4 py-2 text-sm text-gray-700">{{ incident.address_of_loss }}</td>
           <td class="px-4 py-2 text-sm text-gray-700">{{ incident.date_time_of_loss }}</td>
-          <td class="px-4 py-2 text-sm text-gray-700">{{ incident.zetdc_report_received_datetime }}</td>
-          <td class="px-4 py-2 text-sm text-gray-700">{{ incident.zetdc_report_received_from }}</td>
-          <td class="px-4 py-2 text-sm text-gray-700">{{ incident.zrp_report_received_datetime }}</td>
-          <td class="px-4 py-2 text-sm text-gray-700">{{ incident.zrp_report_received_from }}</td>
-          <td class="px-4 py-2 text-sm text-gray-700">{{ incident.person_injured_name }}</td>
-          <td class="px-4 py-2 text-sm text-gray-700">{{ incident.injuries_sustained }}</td>
-          <td class="px-4 py-2 text-sm text-gray-700">{{ incident.condition_of_victim }}</td>
-          <td class="px-4 py-2 text-sm text-gray-700">{{ incident.location_of_medical_practitioner }}</td>
-          <td class="px-4 py-2 text-sm text-gray-700">{{ incident.medical_opinion_recovery_period }}</td>
-          <td class="px-4 py-2 text-sm text-gray-700">{{ incident.circumstances_leading_to_incident }}</td>
-          <td class="px-4 py-2 text-sm text-gray-700">{{ incident.network_circuit_details }}</td>
-          <td class="px-4 py-2 text-sm text-gray-700">{{ incident.operation_of_protective_devices }}</td>
-          <td class="px-4 py-2 text-sm text-gray-700">{{ incident.site_details }}</td>
-          <td class="px-4 py-2 text-sm">{% if incident.written_statements %}<a href="{{ incident.written_statements.url }}" class="text-green-600 hover:underline">Download</a>{% endif %}</td>
-          <td class="px-4 py-2 text-sm">{% if incident.photographs %}<img src="{{ incident.photographs.url }}" width="50" class="rounded shadow" />{% endif %}</td>
-          <td class="px-4 py-2 text-sm text-gray-700">{{ incident.opinion_on_cause_and_liability }}</td>
-          <td class="px-4 py-2 text-sm text-gray-700">{{ incident.other_information }}</td>
-          <td class="px-4 py-2 text-sm text-gray-700">{{ incident.reported_by }}</td>
-          <td class="px-4 py-2 text-sm text-gray-700">{{ incident.date_of_report }}</td>
+
+          <td class="px-4 py-2 text-center">
+            <button 
+              @click="open = true; selected = {{ incident.id }}"
+              class="bg-green-600 text-white px-3 py-1 rounded shadow hover:bg-green-700 transition"
+            >
+              View More
+            </button>
+          </td>
         </tr>
+
         {% empty %}
-        <tr><td colspan="23" class="text-center text-gray-500 py-4">No property loss incidents found.</td></tr>
+        <tr>
+          <td colspan="5" class="text-center text-gray-500 py-4">No property loss incidents found.</td>
+        </tr>
         {% endfor %}
+
       </tbody>
     </table>
   </div>
+
+  <!-- Modal -->
+  <div x-show="open" x-transition class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+    <div class="bg-white rounded-2xl shadow-lg p-8 max-w-2xl w-full relative">
+      <button @click="open = false" class="absolute top-2 right-2 text-gray-500 hover:text-green-700 text-2xl">&times;</button>
+
+      {% for incident in property_damages %}
+      <div x-show="selected === {{ incident.id }}">
+        <h3 class="text-xl font-bold text-green-700 mb-4">Incident Full Details</h3>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+          <p><strong>Description:</strong> {{ incident.full_description_of_property }}</p>
+          <p><strong>Address:</strong> {{ incident.address_of_loss }}</p>
+          <p><strong>Date/Time of Loss:</strong> {{ incident.date_time_of_loss }}</p>
+
+          <p><strong>ZETDC Report Date:</strong> {{ incident.zetdc_report_received_datetime }}</p>
+          <p><strong>ZETDC Reporter:</strong> {{ incident.zetdc_report_received_from }}</p>
+
+          <p><strong>ZRP Report Date:</strong> {{ incident.zrp_report_received_datetime }}</p>
+          <p><strong>ZRP Reporter:</strong> {{ incident.zrp_report_received_from }}</p>
+
+          <p><strong>Person Injured:</strong> {{ incident.person_injured_name }}</p>
+          <p><strong>Injuries:</strong> {{ incident.injuries_sustained }}</p>
+          <p><strong>Condition:</strong> {{ incident.condition_of_victim }}</p>
+
+          <p><strong>Medical Practitioner:</strong> {{ incident.location_of_medical_practitioner }}</p>
+          <p><strong>Medical Opinion:</strong> {{ incident.medical_opinion_recovery_period }}</p>
+
+          <p><strong>Circumstances:</strong> {{ incident.circumstances_leading_to_incident }}</p>
+          <p><strong>Network Circuit:</strong> {{ incident.network_circuit_details }}</p>
+
+          <p><strong>Protective Devices:</strong> {{ incident.operation_of_protective_devices }}</p>
+          <p><strong>Site Details:</strong> {{ incident.site_details }}</p>
+
+          <p>
+            <strong>Written Statements:</strong>
+            {% if incident.written_statements %}
+              <a href="{{ incident.written_statements.url }}" class="text-green-600 underline">Download</a>
+            {% endif %}
+          </p>
+
+          <p>
+            <strong>Photographs:</strong><br>
+            {% if incident.photographs %}
+              <img src="{{ incident.photographs.url }}" width="120" class="rounded shadow">
+            {% endif %}
+          </p>
+
+          <p><strong>Opinion:</strong> {{ incident.opinion_on_cause_and_liability }}</p>
+          <p><strong>Other Info:</strong> {{ incident.other_information }}</p>
+
+          <p><strong>Reported By:</strong> {{ incident.reported_by }}</p>
+          <p><strong>Date of Report:</strong> {{ incident.date_of_report }}</p>
+
+        </div>
+
+        <div class="mt-4 text-right">
+          <a href="/property_loss/edit/{{ incident.id }}" 
+            class="bg-green-600 text-white px-4 py-2 rounded shadow hover:bg-green-700">
+            Edit
+          </a>
+        </div>
+      </div>
+      {% endfor %}
+
+    </div>
+  </div>
 </div>
+
 {% endblock %}

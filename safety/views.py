@@ -1,10 +1,9 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from .models import SafetyMonthlyReport,AccidentReport,VehicleAccidentReport, PropertyLossIncident
 from .forms import SafetyMonthlyReportForm,AccidentReportForm, VehicleAccidentReportForm, PropertyLossIncidentForm
 from django.contrib import messages
 from django.http import JsonResponse
 from django.db.models import Q
-from .models import AccidentReport
 from django.shortcuts import get_object_or_404, render, redirect 
 from django.db import transaction,IntegrityError
 
@@ -290,7 +289,8 @@ def accident_report_dashboard(request):
         'staff_count': staff_count,
         'vehicle_count': vehicle_count,
         'accidents': accidents,
-        'form': AccidentReportForm(),
+        'staff_form': AccidentReportForm(prefix='staff'),
+        'public_form': AccidentReportForm(prefix='public'),
         'vehicle_form': VehicleAccidentReportForm(),
         'property_loss_form': PropertyLossIncidentForm(),
     })
@@ -306,5 +306,27 @@ def human_accident_table(request):
 def vehicle_accident_table(request):
     vehicle_accidents = VehicleAccidentReport.objects.all()
     return render(request, 'safety/vehicle_accident_table.html', {'vehicle_accidents': vehicle_accidents})
+
+def edit_property_loss(request, incident_id):
+    incident = get_object_or_404(PropertyLossIncident, pk=incident_id)
+    if request.method == 'POST':
+        form = PropertyLossIncidentForm(request.POST, request.FILES, instance=incident)
+        if form.is_valid():
+            form.save()
+            return redirect('property_loss_table')
+    else:
+        form = PropertyLossIncidentForm(instance=incident)
+    return render(request, 'safety/edit_property_loss.html', {'form': form, 'incident': incident})
+
+def edit_human_accident(request, accident_id):
+    accident = get_object_or_404( AccidentReport, pk=accident_id)
+    if request.method == 'POST':
+        form =  AccidentReportForm(request.POST, request.FILES, instance=accident)
+        if form.is_valid():
+            form.save()
+            return redirect('human_accident_table')
+    else:
+        form =  AccidentReportForm(instance=accident)
+    return render(request, 'safety/edit_human_accident.html', {'form': form, 'accident': accident})
 
 
