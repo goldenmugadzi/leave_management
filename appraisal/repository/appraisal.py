@@ -138,7 +138,7 @@ class AppraiseePersonalAttributeRepository:
 class AppraisalOverallCommentsRepository:
     def bulk_create(self, appraisal_overall_comm_list: List[AppraisalOverallComments])->bool:
         try:
-            AppraisalOverallComments.objects.bulk_create(objs=appraisal_overall_comm_list, ignore_conflicts=True)
+            AppraisalOverallComments.objects.bulk_create(objs=appraisal_overall_comm_list)
             return True
         except Exception as e:
             raise Exception(f"[AppraisalOverallCommentsRepository] bulk_create Repo failed with error: {e}")

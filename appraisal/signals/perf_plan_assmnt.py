@@ -1,12 +1,12 @@
-from django.db.models.signals import m2m_changed, post_save
+from django.db.models.signals import post_save
 from django.dispatch import receiver
 from loguru import logger
-from ..models import AppraisalOutPutPerformanceDimensionScore, AppraisalDepartmentOutputReviewerStatus
+from ..models import AppraisalOutPutPerformanceDimensionScore, AppraisalDepartmentOutputReviewerStatus, TrainingAndDevelopment, PerformanceProgressReview
 from ..models.kra import APPRAISAL_KRA_REVIEWER_STATUS_CHOICES
-from ..repository.kra import AppraisalOutPutPerformanceDimensionScoreRepository, ApprasialKraReviewerStatusRepository
-from ..repository.approval import AppraisalWorkflowRepository
-from ..helpers.getters.approval import ApprovalStageGetterHandler
+from ..repository.kra import AppraisalOutPutPerformanceDimensionScoreRepository
 from ..helpers.data.approval_stage import ApprovalStageData
+from ..helpers.setters import handle_stage_completion
+
 
 @receiver(post_save, sender=AppraisalOutPutPerformanceDimensionScore, dispatch_uid="appraisal_dimension_score")
 def appraisal_dimension_score_completed_scoring_stage_handler(sender, instance, created, **kwargs):
@@ -24,25 +24,8 @@ def appraisal_dimension_score_completed_scoring_stage_handler(sender, instance, 
                 
                 appraisal_id = appraisal_department_output_obj.appraisal.id
                 year_quarter_id = appraisal_department_output_obj.year_quarter.id
-                
-                workflow_repo = AppraisalWorkflowRepository()
-                quarter_workflow_qr = workflow_repo.fetch_by_appraisal_id_quarter_id(
-                    appraisal_id=appraisal_id,
-                    year_quarter_id=year_quarter_id
-                )
-                
-                approval_stage_handler = ApprovalStageGetterHandler()
-                stage_num = approval_stage_handler.get_stage_num_by_name(
-                    stage_name=ApprovalStageData.scoring.value["stage_name"]
-                    )
-                
-                if stage_num != 0:
-                    quarter_workflow_obj = quarter_workflow_qr.filter(stage_num=stage_num).first()
-                    workflow_repo.update(
-                        workflow_object=quarter_workflow_obj,
-                        is_completed=True
-                    )
-                    logger.success(f"[ScoringStageSignalHandler] appraisal_dimension_score_completed_scoring_stage_handler with AppraisalWorkflowRepository pk: {quarter_workflow_obj.id}, is completed")
+
+                handle_stage_completion(appraisal_id=appraisal_id, year_quarter_id=year_quarter_id, stage_name=ApprovalStageData.scoring.value["stage_name"])
             else:
                 logger.info(f"[ScoringStageSignalHandler] appraisal_dimension_score_completed_scoring_stage_handler with AppraisalOutPutPerformanceDimensionScore pk: {instance.id}, all objects scored")
 
@@ -61,23 +44,22 @@ def appraisal_confirmation_completed_scoring_stage_handler(sender, instance, cre
                 appraisal_id = instance.appraisal_department_output.appraisal.id
                 year_quarter_id = instance.appraisal_department_output.year_quarter.id
                 
-                workflow_repo = AppraisalWorkflowRepository()
-                quarter_workflow_qr = workflow_repo.fetch_by_appraisal_id_quarter_id(
-                    appraisal_id=appraisal_id,
-                    year_quarter_id=year_quarter_id
-                )
-                
-                approval_stage_handler = ApprovalStageGetterHandler()
-                stage_num = approval_stage_handler.get_stage_num_by_name(
-                    stage_name=ApprovalStageData.appraiser_review.value["stage_name"]
-                    )
-                
-                if stage_num != 0:
-                    quarter_workflow_obj = quarter_workflow_qr.filter(stage_num=stage_num).first()
-                    workflow_repo.update(
-                        workflow_object=quarter_workflow_obj,
-                        is_completed=True
-                    )
-                    logger.success(f"[AppraiserConfirmationStageSignalHandler] appraisal_confirmation_completed_scoring_stage_handler with AppraisalWorkflowRepository pk: {quarter_workflow_obj.id}, is completed")
+                handle_stage_completion(appraisal_id=appraisal_id, year_quarter_id=year_quarter_id, stage_name=ApprovalStageData.appraiser_review.value["stage_name"])
+
         except Exception as e:
-            logger.error(f"[AppraiserConfirmationStageSignalHandler] appraisal_confirmation_completed_scoring_stage_handler with AppraisalWorkflowRepository pk: {quarter_workflow_obj.id}, error: {e}")
+            logger.error(f"[AppraiserConfirmationStageSignalHandler] appraisal_confirmation_completed_scoring_stage_handler with AppraisalDepartmentOutputReviewerStatus pk: {instance.id}, error: {e}")
+
+@receiver(post_save, sender=TrainingAndDevelopment, dispatch_uid="training_dev_stage")
+def appraisal_training_dev_completed_scoring_stage_handler(sender, instance, created, **kwargs):
+    if not created:
+        try:
+            logger.info(f"[TrainingDevStageSignalHandler] appraisal_training_dev_completed_scoring_stage_handler with Appraisal pk: {instance.id}, started")
+            
+            if instance.is_completed:               
+                appraisal_id = instance.appraisal.id
+                year_quarter_id = instance.quarter.id
+                
+                handle_stage_completion(appraisal_id=appraisal_id, year_quarter_id=year_quarter_id, stage_name=ApprovalStageData.set_training_and_development_needs.value["stage_name"])
+        except Exception as e:
+            logger.error(f"[TrainingDevStageSignalHandler] appraisal_training_dev_completed_scoring_stage_handler with Appraisal pk: {instance.id}, error: {e}")
+

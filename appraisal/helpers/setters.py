@@ -3,6 +3,9 @@ from .types.performance import StrengthAndWeaknessTypes
 from approve.models import Approval, Step
 from it.users.models import UserProfile
 from ..models.performance_review import PerformanceProgressStrength, PerformanceProgressWeakness
+from ..repository.approval import AppraisalWorkflowRepository
+from .getters.approval import ApprovalStageGetterHandler
+from loguru import logger
 
 def map_performance_strengths(strengths: List[StrengthAndWeaknessTypes])->List[PerformanceProgressStrength]:
     """
@@ -93,3 +96,27 @@ def set_approval_process(process_object: Approval, user_object: UserProfile, app
         "approved": approved_str
         }
     )
+
+def handle_stage_completion(appraisal_id: int, year_quarter_id: int, stage_name: str):
+    workflow_repo = AppraisalWorkflowRepository()
+    quarter_workflow_qr = workflow_repo.fetch_by_appraisal_id_quarter_id(
+        appraisal_id=appraisal_id,
+        year_quarter_id=year_quarter_id
+    )
+    
+    approval_stage_handler = ApprovalStageGetterHandler()
+    stage_num = approval_stage_handler.get_stage_num_by_name(
+        stage_name=stage_name
+        )
+    
+    if stage_num != 0:
+        quarter_workflow_obj = quarter_workflow_qr.filter(stage_num=stage_num).first()
+        obj = workflow_repo.update(
+            workflow_object=quarter_workflow_obj,
+            is_completed=True
+        )
+        if quarter_workflow_obj.is_completed == False and obj.is_completed:
+            logger.success(f"ApprovalStage handler for appraisal pk: {appraisal_id}, year quarter pk: {year_quarter_id} for stage name: {stage_name} completed")
+            return True
+        logger.info(f"ApprovalStage handler for appraisal pk: {appraisal_id}, year quarter pk: {year_quarter_id} for stage name: {stage_name}, not completed, is_completed status: {obj.is_completed}")
+    return False

@@ -42,6 +42,8 @@ from ..helpers.getters.quarter import get_all_quarter_ratings_per_appraiser
 from ..helpers.types.approval import ApprovalStageChoices
 from ..templatetags.quarter import get_current_quarter
 from .helper import ApprovalStagesTemplateHandler
+from ..helpers.setters import handle_stage_completion
+from ..helpers.data.approval_stage import ApprovalStageData
 from loguru import logger
 
 def get_user_by_id(user_id: int)->UserProfile:
@@ -657,8 +659,8 @@ class AppraiseePersonalAttributesDetailView(TemplateView):
         return quarter_number
     
     def post(self, request, *args, **kwargs):
+        appraisal_object = self.get_appraisal_object()
         try:
-            appraisal_object = self.get_appraisal_object()
             
             quarter_number = self.get_quarter_in_post_request()
             if quarter_number is None:
@@ -690,6 +692,12 @@ class AppraiseePersonalAttributesDetailView(TemplateView):
                     repo.update(
                         appraisal_overall_comm_obj=obj,
                         comment=form.cleaned_data.get("appraiser_comment", None)
+                    )
+                    
+                    handle_stage_completion(
+                        appraisal_id=appraisal_object.id,
+                        year_quarter_id=obj.quarter.id,
+                        stage_name=ApprovalStageData.overall_comments.value["stage_name"]
                     )
                     messages.success(request, f"Overall comments added successfully")
             else:
@@ -871,6 +879,11 @@ class AppraiseePersonalAttributesUpdateView(TemplateView):
             try:
                 repo = AppraiseePersonalAttributeRepository()
                 if repo.bulk_update(updated_objects_list=updated_objects):
+                    handle_stage_completion(
+                        appraisal_id=appraisal_object.id,
+                        year_quarter_id=self.get_year_quarter_obj().id,
+                        stage_name=ApprovalStageData.set_personal_attributes.value["stage_name"]
+                    )
                     messages.success(request, "Appraisee personal attributes updated successfully.")
 
             except Exception as e:
@@ -1179,7 +1192,7 @@ class AppraisalDetailView(TemplateView):
                 if (confirmation_status == APPRAISAL_KRA_REVIEWER_STATUS_CHOICES[2][0]) and not comment:
                     messages.error(self.request, "Please provide a rejection reason in the comment field.")
                     return redirect(reverse("appraisal_detail", kwargs={"appraisal_id": self.kwargs.get("appraisal_id")}))
-                
+
                 obj = form.instance
                 obj.save()
                 

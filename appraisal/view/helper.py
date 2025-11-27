@@ -272,6 +272,7 @@ class ApprovalStagesTemplateHandler:
                 year_quarter_obj = year_quarter_qr.filter(quarter=4).first()
                 handler = ApprovalStagesHandler(appraisal_id=appraisal_object.id, year_quarter_id=year_quarter_obj.id)
                 approval_stages = handler.get_stages_info()
+                
         return approval_stages
 
     

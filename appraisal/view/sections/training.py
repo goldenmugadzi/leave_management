@@ -18,7 +18,8 @@ from ...repository import TrainingAndDevelopmentRepository
 from ...repository.kra import AppraisalOutPutPerformanceDimensionScoreRepository
 from ...services import TrainingAndDevelopmentService, AppraisalService, UserQualificationService, AppraisalExperienceService
 from ...helpers.getters.dates import get_assessment_period
-from ..helper import is_within_current_quarter
+from ..helper import is_within_current_quarter, ApprovalStagesTemplateHandler
+
 from loguru import logger
 
 class TrainingAndDevelopmentUpdateView(SuccessMessageMixin, CreateView):
@@ -197,9 +198,8 @@ class TrainingAndDevelopmentTemplateView(TemplateView):
     
     def get_approval_stages(self):
         try:
-            appraisal_object = self.get_appraisal_object()
-            handler = ApprovalStagesHandler(appraisal_id=appraisal_object.id)
-            return handler.get_stages_info()
+            handler = ApprovalStagesTemplateHandler(appraisal_object=self.get_appraisal_object(), request_obj=self.request)
+            return handler.get_context_data()
         except Exception as e:
             logger.error(f"[AppraisalUpdateView] get_approval_stages for Appraisal pk: {appraisal_object.id} failed with error: {e}")
             return None    

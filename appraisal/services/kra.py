@@ -4,12 +4,14 @@ from django.db import transaction
 from django.db.models.query import QuerySet
 from decimal import Decimal
 
-from ..models import AppraisalWorkflow, Appraisal
+from ..models import AppraisalWorkflow, Appraisal, TrainingAndDevelopment, PerformanceProgressReview
 from ..models.helpers import YearQuarter
 from ..repository.kra import KRARepository, AppraisalDepartmentOutputRepository, AppraisalOutPutPerformanceDimensionScoreRepository, YearQuarterRepository, ApprasialKraReviewerStatusRepository, AppraisalConfirmationStatusRepository
 from ..repository.departmental_workplan import OutPutPerformanceDimensionRepository, DepartmentalOutRepository
 from ..repository.appraisal import AppraisalRepository, PersonalAttributeRepository, AppraiseePersonalAttributeRepository, AppraisalOverallCommentsRepository
 from ..repository.approval import AppraisalWorkflowRepository, AppraisalApprovalWorkFlowQuarterRepository
+from ..repository.training import TrainingAndDevelopmentRepository
+from ..repository.performance import PerformanceReviewRepository
 from it.users.models import Designations
 from ..models import KeyResultArea, AppraisalOutPutPerformanceDimensionScore, AppraisalDepartmentOutput, AppraiseePersonalAttribute, AppraisalOverallComments, AppraisalConfirmationStatus
 from ..models.kra import REVIEWERS_CONFIRMATION_STATUS
@@ -193,7 +195,31 @@ class AppraisalDependanciesInitialisationService:
         except Exception as e:
             raise Exception(f"[AppraisalDependanciesInitialisationService] create_departmental_output_dep with appraisal_id: {appraisal_object.id} and year quarter pk: {year_quarter_object.id}, failed with error: {e}")
 
+    def create_training_dev(self, appraisal_obj: Appraisal, year_quarter_qr: YearQuarter):
+        repo = TrainingAndDevelopmentRepository()
+        objs_list = []
+        
+        for yr_obj in year_quarter_qr:
+            obj = TrainingAndDevelopment(
+                appraisal=appraisal_obj,
+                quarter=yr_obj
+            )
+            objs_list.append(obj)
+        return repo.bulk_create(train_dev_list=objs_list)
     
+    
+    def create_perf_progress_rev(self, appraisal_obj: Appraisal, year_quarter_qr: YearQuarter):
+        objs_list = []
+        
+        for yr_obj in year_quarter_qr:
+            obj = PerformanceProgressReview(
+                appraisal=appraisal_obj,
+                quarter=yr_obj
+            )
+            objs_list.append(obj)
+        repo = PerformanceReviewRepository()
+        return repo.bulk_create(perf_rev_objs_list=objs_list)
+        
     def create_all_dependencies(self, appraisal_id: int, year: int)->bool|None:
         try:
             with transaction.atomic():
@@ -215,7 +241,13 @@ class AppraisalDependanciesInitialisationService:
                     for year_quarter_obj in year_quarter_qr:
                         # ============ DepartmentOut Deps =====================
                         self.create_departmental_output_dep(department_output_qr=department_output_qr, appraisal_object=appraisal_obj, year_quarter_object=year_quarter_obj)
-                        
+                    
+                    # ====================== Training Dev ==============
+                    self.create_training_dev(appraisal_obj=appraisal_obj, year_quarter_qr=year_quarter_qr)
+                    
+                    # ====================== Performance Progress Rev ==============
+                    self.create_perf_progress_rev(appraisal_obj=appraisal_obj, year_quarter_qr=year_quarter_qr)
+                    
                     # ====================== Appraisal Approval Workflow ===========================
                     self.create_appraisal_approval_workflow(appraisal_object=appraisal_obj, year_quarter_qr=year_quarter_qr)
                         
