@@ -1,7 +1,9 @@
 from django import template
 from ..helpers.getters.approval import ApprovalStagesHandler
 from ..helpers.data.approval_stage import ApprovalStageData
-from ..helpers.getters.approval import ApprovalWorkflowQuarterStagesStrategyContext, ScoringStageStrategy, PerformanceReviewStageStrategy, TrainingAndDevelopmentStageStrategy, ReviewStageStrategy, AppraiserReviewStageStrategy, ReviewerReviewStageStrategy, HrReviewStageStrategy, AppraisalPersonalAttributesStrategy, AppraisalOverallCommentStrategy
+from ..helpers.getters.approval import ApprovalWorkflowQuarterStagesStrategyContext, ScoringStageStrategy, PerformanceReviewStageStrategy, TrainingAndDevelopmentStageStrategy, AppraiserReviewStageStrategy, ReviewerReviewStageStrategy, HrReviewStageStrategy, AppraisalPersonalAttributesStrategy, AppraisalOverallCommentStrategy, ApprovalStageGetterHandler
+from ..view.helper import ApprovalStagesTemplateHandler
+from ..repository.appraisal import AppraisalRepository
 from loguru import logger
 
 register = template.Library()
@@ -69,3 +71,28 @@ def get_stage_data(stage_name: str, appraisal_kra_id: int):
         case ApprovalStageData.section_head_review.value:
             data = ApprovalWorkflowQuarterStagesStrategyContext(strategy=ReviewerReviewStageStrategy()).get_stage_quarters_approval(appraisal_kra_id=appraisal_kra_id)
     return data
+
+@register.filter
+def get_user_responsible(approval_stage_id: int):
+    try:
+        handler = ApprovalStageGetterHandler()
+        return handler.get_user_responsible(approval_stage_id=approval_stage_id)
+        
+    except Exception as e:
+        logger.error(f"[get_user_responsible()] templatetags, failed with error: {e}")
+        return None
+    
+@register.filter
+def get_approval_stage_data(appraisal_id):
+    try:
+        repo = AppraisalRepository()
+        appraisal_object = repo.get_appraisal_by_pk(appraisal_id=appraisal_id)
+        if appraisal_object is None:
+            raise Exception("appraisal object not found")
+        
+        handler = ApprovalStagesTemplateHandler(appraisal_object=appraisal_object)
+        return handler.get_context_data
+        
+    except Exception as e:
+        logger.error(f"[get_approval_stage_date()] templatetags, failed with error: {e}")
+        return None

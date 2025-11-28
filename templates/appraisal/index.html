@@ -79,6 +79,7 @@
               <th>Appraiser</th>
               <th>Reviewer</th>
               <th>Create at</th>
+              <th>Approval stage</th>
               <th>Current Quarter</th>
               <th></th>
             </tr>
@@ -90,6 +91,14 @@
                 <td>{{ appraisal.appraiser }}</td>
                 <td>{{ appraisal.reviewer }}</td>
                 <td>{{ appraisal.created_date }}</td>
+                <td>
+                  
+                  <div onclick="openApprovalStageModal('{{ appraisal.id }}')"
+                    class="mt-7 bg-blue-500 hover:bg-blue-700 inline-block rounded-full text-white py-2 px-4 rounded">
+                    View Approval workflow
+                  </div>
+                {% include "appraisal/approval/modal.html" with appraisal_id=appraisal.id modal_heading="Approval Workflow" modal_description="Detailed progress of the workflow." %}
+                </td>
                 <td>{{ appraisal.id|get_current_quarter }}</td>
                 <td>
                   <div class="flex justify-center gap-2">

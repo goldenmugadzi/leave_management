@@ -239,10 +239,13 @@ def is_within_current_quarter(year: int, quarter: int)->bool:
 @dataclass
 class ApprovalStagesTemplateHandler:
     appraisal_object: Appraisal
-    request_obj: object
+    request_obj: object=None
     
     def get_approval_stage_filter(self)->str:
-        approval_stage_filter = self.request_obj.GET.get('approval_stage_filter')
+        approval_stage_filter = None
+        if not self.request_obj is None:
+            approval_stage_filter = self.request_obj.GET.get('approval_stage_filter', None)
+        
         if approval_stage_filter is None:
             current_quarter_name = get_current_quarter(value=None)
             quarters = [q.value for q in ApprovalStageChoices]

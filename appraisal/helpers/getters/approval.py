@@ -10,7 +10,7 @@ from ...repository.appraisal import AppraiseePersonalAttributeRepository, Apprai
 from ...models.helpers import YearQuarter
 from ...models.kra import AppraisalOutPutPerformanceDimensionScore, APPRAISAL_KRA_REVIEWER_STATUS_CHOICES, AppraisalDepartmentOutput, REVIEWERS_CONFIRMATION_STATUS
 from ..types.quarters import ApprovedQuartersType
-from ..data.approval_stage import ApprovalStageData
+from ..data.approval_stage import ApprovalStageData, APPRAISEE, APPRAISER, REVIEWER, HR
 from loguru import logger
 
 
@@ -456,4 +456,33 @@ class ApprovalStageGetterHandler:
             if stage.value["stage_name"].lower() == stage_name.lower():
                 stage_num = index + 1
         return stage_num
-                
+    
+    def get_user_responsible(self, approval_stage_id: int):
+        try:
+            approval_stage_repo = AppraisalWorkflowRepository()
+            obj = approval_stage_repo.get_by_id(appraisal_workflow_id=approval_stage_id)
+            
+            if obj is None:
+                raise Exception(f"AppraisalWorkflow not found")
+            
+            appraisal_object = obj.appraisal
+            user_responsible = None
+            
+            for _, stage in enumerate(ApprovalStageData):
+                if stage.value["stage_name"].lower() == obj.stage_name.lower():
+                    role = stage.value["set_by"].lower()
+                    
+                    if role == APPRAISEE.lower():
+                        user_responsible = appraisal_object.user
+                    elif role == APPRAISER.lower():
+                        user_responsible = appraisal_object.appraiser
+                    elif role == REVIEWER.lower():
+                        user_responsible = appraisal_object.reviewer
+                    elif role == HR.lower():
+                        user_responsible = appraisal_object.hr
+                        
+            if user_responsible is None:
+                raise Exception("user responsible not found")
+            return user_responsible
+        except Exception as e:
+            raise Exception(f"[ApprovalStageGetterHandler] get_user_responsible with approval_stage_id: {approval_stage_id}, failed with error: {e}")
