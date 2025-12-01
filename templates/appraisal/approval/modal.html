@@ -1,15 +1,14 @@
 {% load approval_stages %}
 
 <!-- Modal (Hidden by Default) -->
-<div id="ApprovalStageModal{{appraisal_id}}" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 hidden z-50">
-    <div class="bg-white p-6 rounded-lg shadow-lg w-1/3">
+<div id="ApprovalStageModal{{appraisal_id}}" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 hidden z-50 h-fit">
+    <div class="bg-white p-6 rounded-lg shadow-lg w-1/2">
         <h2 class="text-xl font-bold mb-4">{{modal_heading}}</h2>
         <p class="text-gray-600 mb-4">{{modal_description}}</p>
         
-        <div class="bg-white shadow-md rounded-lg">
+        <div class="p-4 bg-white shadow-md rounded-lg">
             {% with stage_data=appraisal_id|get_approval_stage_data %}
-                {{stage_data}}
-                {% include 'appraisal/approval/stage_info_progress.html' %}
+                {% include 'appraisal/approval/stage_info_progress.html' with last_stage_number=stage_data.last_stage_number completed_stages_count=stage_data.completed_stages_count current_stage=stage_data.current_stage next_stage=stage_data.next_stage %}
             {% endwith %}
         </div>
 

@@ -41,6 +41,8 @@ from ..helpers.getters.dates import get_assessment_period, CurrentQuarterDate
 from ..helpers.getters.quarter import get_all_quarter_ratings_per_appraiser
 from ..helpers.types.approval import ApprovalStageChoices
 from ..templatetags.quarter import get_current_quarter
+from ..helpers.data.approval_stage import SectionStages
+from ..helpers.getters.sections import SectionsStagesHandler
 from .helper import ApprovalStagesTemplateHandler
 from ..helpers.setters import handle_stage_completion
 from ..helpers.data.approval_stage import ApprovalStageData
@@ -409,6 +411,8 @@ class AppraisalTemplateView(TemplateView):
                 return HttpResponseRedirect(reverse('appraisal_index'))
         return self.get(request, *args, **kwargs)
     
+    
+    
     def get_appraisals(self)->List[Appraisal]:
         appraisal_service_handler = AppraisalService(
             appraisal_experience_repository=AppraisalExperienceRepository(),
@@ -427,6 +431,12 @@ class AppraisalTemplateView(TemplateView):
             case RoleFilterChoices.ALL_APPRAISALS.value:
                 return {"appraisals": appraisal_service_handler.get_all_use_case(hr_id=self.request.user.id)}
     
+    def get_sections(self):
+        handler = SectionsStagesHandler()
+        data =  handler.get_sections_with_urls()
+        data.pop() # removes the last section 6 which is not applicable
+        return data
+    
     def get_context_data(self, **kwargs: Any) -> Dict[str, Any]:
         context =  super().get_context_data(**kwargs)
         
@@ -434,7 +444,7 @@ class AppraisalTemplateView(TemplateView):
         context.update({"heading_name": self.get_heading_name()})
         context.update(self.get_appraisals())
         context.update({"qualification_upload_form": self.get_user_qualification_upload_form()})
-
+        context["sections"] = self.get_sections()
         return context
     
     
@@ -921,13 +931,11 @@ class AppraisalDetailView(TemplateView):
         return repo.get_appraisal_by_pk(appraisal_id=self.kwargs.get('appraisal_id'))
 
     def get_steps(self):
-        steps = [
-                (1, "Personal Details"),
-                (2, "Performance Plan and Assessment"),
-                (3, "Training and Development Needs"),
-                (4, "Performance Progress Review"),
-                (5, "Final Performance Assessment and Rating"),
-            ]
+        steps = []
+        for index, section in enumerate(SectionStages):
+            if SectionStages.section_6.value != section.value:
+                step = (index+1, section.value)
+                steps.append(step)
         return steps
     
     def get_personal_details(self):

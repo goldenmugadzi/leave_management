@@ -92,12 +92,17 @@
                 <td>{{ appraisal.reviewer }}</td>
                 <td>{{ appraisal.created_date }}</td>
                 <td>
-                  
-                  <div onclick="openApprovalStageModal('{{ appraisal.id }}')"
-                    class="mt-7 bg-blue-500 hover:bg-blue-700 inline-block rounded-full text-white py-2 px-4 rounded">
-                    View Approval workflow
-                  </div>
-                {% include "appraisal/approval/modal.html" with appraisal_id=appraisal.id modal_heading="Approval Workflow" modal_description="Detailed progress of the workflow." %}
+                  {% if appraisal.is_accepted %}
+                    <div onclick="openApprovalStageModal('{{ appraisal.id }}')"
+                      class="bg-blue-500 hover:bg-blue-700 inline-block rounded-full text-white py-2 px-4 rounded">
+                      View Approval workflow
+                    </div>
+                    {% include "appraisal/approval/modal.html" with appraisal_id=appraisal.id modal_heading="Approval Workflow" modal_description="Detailed progress of the workflow." %}
+                  {% else %}
+                    <div class="flex items-center">
+                      <p class="p-2 bg-yellow-400 font-bold rounded-2xl">Waiting for appraiser's acceptance</p>
+                    </div>
+                  {% endif %}
                 </td>
                 <td>{{ appraisal.id|get_current_quarter }}</td>
                 <td>
@@ -116,13 +121,13 @@
                       <!-- Dropdown menu -->
                       <div class="dropdown-section-menu absolute z-10 mt-2 w-72 origin-top-right rounded-2xl bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none hidden">
                         <div class="py-1" role="none">
-                          <a href="{% url 'update_appraisal' appraisal.id %}" class="text-gray-700 block px-4 py-2 text-sm hover:bg-indigo-100 hover:text-indigo-700 rounded-md" role="menuitem">Section 1 - Personal Details</a>
-                          {% if appraisal.reviewer %}
-                            <a href="{% url 'appraisal_dept_output_index' appraisal.id %}" class="text-gray-700 block px-4 py-2 text-sm hover:bg-indigo-100 hover:text-indigo-700 rounded-md" role="menuitem">Section 2 - Performance Plan and Assessment</a>
-                            <a href="{% url 'training_development_index' appraisal.id %}" class="text-gray-700 block px-4 py-2 text-sm hover:bg-indigo-100 hover:text-indigo-700 rounded-md" role="menuitem">Section 3 - Training and Development Needs</a>
-                            <a href="{% url 'performance_review_detail' appraisal.id %}" class="text-gray-700 block px-4 py-2 text-sm hover:bg-indigo-100 hover:text-indigo-700 rounded-md" role="menuitem">Section 4 - Performance Progress Reviews</a>
-                            <a href="{% url 'appraisal_final_result_index' appraisal.id %}" class="text-gray-700 block px-4 py-2 text-sm hover:bg-indigo-100 hover:text-indigo-700 rounded-md" role="menuitem">Section 5 - Final Performance Assessment and Rating</a>
-                          {% endif %}
+                            {% for section in sections %}
+                                <a href="{% url section.url appraisal.id %}"
+                                  class="text-gray-700 block px-4 py-2 text-sm hover:bg-indigo-100 hover:text-indigo-700 rounded-md"
+                                  role="menuitem">
+                                  Section {{ forloop.counter }} - {{ section.section_name }}
+                                </a>
+                            {% endfor %}
                         </div>
                       </div>
                     </div>
