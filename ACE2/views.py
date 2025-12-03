@@ -566,6 +566,10 @@ def ace_awaiting_my_action(request):
         "process__approval_set", "process__workflow__step_set"
     )
 
+    system_wide_roles = {'fd', 'md'}
+    regional_roles = {'sanction', 'approve', 'EM'}
+    sectional_roles = {'pass','process'}
+
     # --- PRIMARY FILTERING: COST CENTER ---
     aces_query_primary = base_query  # Start with the base query
 
@@ -593,16 +597,18 @@ def ace_awaiting_my_action(request):
 
     user_ace_roles = {role.role for role in user_profile.roles.all() if role.application == "ace"}
 
-    system_wide_roles = {'fd', 'md'}
-    regional_roles = {'sanction', 'process', 'approve', 'EM'}
-    sectional_roles = {'pass'}
+    
 
     # If the user has a regional or sectional role (and is NOT system-wide)
     if regional_roles.intersection(set(user_ace_roles)):
         aces_query_secondary = base_query.filter(region=user_profile.region).exclude(
             process__approval__approved="Rejected"
         ).order_by('-date_created')
-        print('fm roles now')
+        
+        print("user region: ", user_profile.region)
+        print('query len', aces_query_secondary.count())
+        print('roles', user_ace_roles)
+        print('gm roles now')
         # print("ACES after region filter: ", aces_query_secondary.count())
 
     if sectional_roles.intersection(set(user_ace_roles)) and section:
@@ -620,7 +626,11 @@ def ace_awaiting_my_action(request):
         # print("ACES after system-wide filter: ", aces_query_secondary.count())
 
     # print("primary aces", aces_query_primary.values_list('Ace_id2', flat=True))
-    aces_combined_query = (aces_query_primary | aces_query_secondary)
+    if sectional_roles.intersection(set(user_ace_roles)) and section:
+        print("secondary aces", aces_query_secondary.values_list('Ace_id2', flat=True))
+        aces_combined_query = (aces_query_primary | aces_query_secondary)
+    else:
+        aces_combined_query = aces_query_primary
     # print("Total ACEs after combining filters: ", aces_combined_query.count())
     a = 0
 
@@ -652,15 +662,14 @@ def ace_awaiting_my_action(request):
     print('user_ace_roles', user_ace_roles)
     # print('aces to process: ', aces_to_process)
     # print('processed ace ids: ', processed_ace_ids)
+    print('roles')
+    print(user_ace_roles)
+    print('userprofile', user_profile.pk)
 
     if "create" in user_ace_roles:
         # ... (Populate created_aces QuerySet and add flags) ...
-        created_aces = base_query.filter(
-            requested_by=request.user,
-            region=user_profile.region
-        ).exclude(
-            process__approval__approved="Rejected"
-        ).order_by('-date_created')
+        created_aces = Ace2.objects.filter(requested_by=user_profile.pk).order_by('-date_created')
+        print('created aces count', created_aces.count())
 
         # Add helpful flags for created ACEs
         for ace in created_aces:
@@ -724,8 +733,14 @@ def view_all_aces(request):
         aces = aces.filter(region=user_profile.region)
 
         if not regional_roles.intersection(user_role_names):
-            # Not a regional role either, filter by section
-            aces = aces.filter(section=user_profile.section)
+            aces = aces.filter(region=user_profile.region)
+
+            if system_wide_roles.intersection(user_role_names):
+                # System-wide role, no further filtering needed
+                aces=aces
+            else:
+                # Section-level role, filter by section
+                aces = aces.filter(section=user_profile.section)
 
     # Order by most recent first
     aces = aces.order_by('-date_created')
