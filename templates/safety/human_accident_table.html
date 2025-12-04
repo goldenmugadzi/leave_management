@@ -43,67 +43,20 @@
           <td class="px-4 py-2 text-sm text-gray-700">{{ accident.department }}</td>
           <td class="px-4 py-2 text-sm text-gray-700">{{ accident.date_of_accident }}</td>
           <td class="px-4 py-2 text-center">
-            <button @click="scrollToRow({{ accident.id }})" class="bg-red-600 text-white px-3 py-1 rounded shadow hover:bg-red-700 transition">View More</button>
+            <a 
+              href="{% url 'human_accident_detail' accident.id %}" 
+              class="bg-red-600 text-white px-3 py-1 rounded shadow hover:bg-red-700 transition"
+            >
+              View More
+            </a>
           </td>
+
         </tr>
         {% empty %}
         <tr><td colspan="5" class="text-center text-gray-500 py-4">No human accident reports found.</td></tr>
         {% endfor %}
       </tbody>
     </table>
-  </div>
-  <!-- Modal -->
-  <div x-show="open" x-transition class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
-    <div class="bg-white rounded-2xl shadow-lg p-8 max-w-2xl w-full relative">
-      <button @click="closeModal()" class="absolute top-2 right-2 text-gray-500 hover:text-red-700 text-2xl">&times;</button>
-      {% for accident in human_accidents %}
-      <div x-show="selected === {{ accident.id }}">
-        <h3 class="text-xl font-bold text-red-700 mb-4">Human Accident Full Details</h3>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <p><strong>Employee:</strong> {{ accident.employee_involved }}</p>
-          <p><strong>Department:</strong> {{ accident.department }}</p>
-          <p><strong>Sex:</strong> {{ accident.sex }}</p>
-          <p><strong>Address:</strong> {{ accident.address_of_person_involved }}</p>
-          <p><strong>Region:</strong> {{ accident.region }}</p>
-          <p><strong>Age:</strong> {{ accident.age }}</p>
-          <p><strong>Date of Accident:</strong> {{ accident.date_of_accident }}</p>
-          <p><strong>Time of Accident:</strong> {{ accident.time_of_accident }}</p>
-          <p><strong>Authority Report Date/Time:</strong> {{ accident.authority_received_datetime }}</p>
-          <p><strong>Authority Reporter:</strong> {{ accident.authority_received_from }}</p>
-          <p><strong>Police Report Date/Time:</strong> {{ accident.police_received_datetime }}</p>
-          <p><strong>Police Reporter:</strong> {{ accident.police_received_from }}</p>
-          <p><strong>Cost Center:</strong> {{ accident.cost_center }}</p>
-          <p><strong>EC Number:</strong> {{ accident.ec_number }}</p>
-          <p><strong>Severity:</strong> {{ accident.severity_Of_Accident }}</p>
-          <p><strong>Nature of Accident:</strong> {{ accident.nature_of_accident }}</p>
-          <p><strong>Nature of Injury:</strong> {{ accident.nature_of_injury }}</p>
-          <p><strong>Circumstances:</strong> {{ accident.circumstance_leading_to_accident }}</p>
-          <p><strong>Location:</strong> {{ accident.location_of_accident_giving_line_and_section_number }}</p>
-          <p><strong>Risk Assessment:</strong> {{ accident.risk_assessment_carried_out }}</p>
-          <p><strong>Protective Devices:</strong> {{ accident.operation_of_protective_devices }}</p>
-          <p>
-            <strong>Photographs:</strong>
-            {% if accident.attach_photographs %}
-              <img src="{{ accident.attach_photographs.url }}" width="120" class="rounded shadow" />
-            {% endif %}
-          </p>
-          <p><strong>Short Term Steps:</strong> {{ accident.steps_taken_on_the_short_term }}</p>
-          <p><strong>Safety Preparation:</strong> {{ accident.safety_preparation_carried_out }}</p>
-          <p>
-            <strong>Written Statements:</strong>
-            {% if accident.attach_written_statements %}
-              <img src="{{ accident.attach_written_statements.url }}" width="120" class="rounded shadow" />
-            {% endif %}
-          </p>
-          <p><strong>Other Info:</strong> {{ accident.other_information_considered_neccesary }}</p>
-          <p><strong>Voltage:</strong> {{ accident.for_electrical_state_voltage }}</p>
-        </div>
-        <div class="mt-4 text-right">
-          <a href="/human_accident/edit/{{ accident.id }}" class="bg-red-600 text-white px-4 py-2 rounded shadow hover:bg-red-700">Edit</a>
-        </div>
-      </div>
-      {% endfor %}
-    </div>
   </div>
 </div>
 {% endblock %}

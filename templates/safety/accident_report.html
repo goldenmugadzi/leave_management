@@ -1,7 +1,22 @@
 {% extends 'admin_layout.html' %}
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const selectedType = "{{ selected_type }}";
+
+    if (selectedType) {
+        selectReport(selectedType);
+    }
+});
+</script>
+
 
 {% block styles %}
 <style>
+  .required-highlight {
+    border: 2px solid #dc2626 !important;   /* red border */
+    background-color: #fee2e2 !important;   /* light red background */
+}
+
   body {
     font-family: 'Inter', Arial, sans-serif;
     margin: 0;
@@ -154,7 +169,7 @@
   <p class="text-center text-gray-700 text-lg mb-8 font-medium">What are you reporting on?</p>
 
   <!-- Accident Reporting Forms Section -->
-  <h2 class="text-2xl font-bold text-blue-800 mb-6 text-center">Choose The Accident Reporting Form That You Are Reporting On</h2>
+  <h2 class="text-2xl font-bold text-blue-800 mb-6 text-center">Select the appropriate reporting accident form</h2>
   <!-- Card Section -->
   <div class="cards-grid mb-12">
     <div class="card-option" onclick="selectReport('property')">
@@ -167,11 +182,7 @@
       <h3>Member of Staff</h3>
       <p class="text-gray-500 text-xs mt-2">Report injury or accident involving staff.</p>
     </div>
-    <div class="card-option" onclick="selectReport('public')">
-      <div class="text-5xl mb-2">&#128101;</div>
-      <h3>Member of Public</h3>
-      <p class="text-gray-500 text-xs mt-2">Report incident involving the public.</p>
-    </div>
+    
     <div class="card-option" onclick="selectReport('vehicle')">
       <div class="text-5xl mb-2">&#128663;</div>
       <h3>Vehicle Accident</h3>
@@ -182,156 +193,34 @@
   <div class="border-b border-gray-200 mb-8"></div>
 
   <!-- Property Report Form -->
- <!-- Property Loss Incident Report Form -->
 <form id="propertyForm" class="form-section" method="post" enctype="multipart/form-data">
   {% csrf_token %}
   <div class="bg-gulf-blue-100 shadow text-gulf-blue-900 rounded px-4 py-4">
     <h1 class="text-base font-semibold leading-7 text-gulf-blue-900 mb-4">Property Loss Incident Report</h1>
-    <!-- <p class="text-sm font-bold text-black text-right">Form P/001</p> -->
 
-    <!-- 1. Property/Asset Details -->
-    <h2 class="font-semibold text-gray-800 mt-4 mb-2">Property/Asset Details</h2>
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Full Description of Property or Asset Damaged</label>
-        {{ property_loss_form.full_description_of_property }}
-      </div>
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Address Where Loss Occurred</label>
-        {{ property_loss_form.address_of_loss }}
-      </div>
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Date and Time of Loss</label>
-        {{ property_loss_form.date_time_of_loss }}
-      </div>
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Attach File for Full Description</label>
-        {{ property_loss_form.description_file }}
-      </div>
-    </div>
+    {% for field in property_loss_form %}
+      {% if field.is_hidden %}
+        {{ field }}
+      {% else %}
+        <div class="mb-4">
+          <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-gray-700">{{ field.label }}</label>
+          {{ field }}
+          {% if field.help_text %}
+            <p class="text-xs text-blue-500">{{ field.help_text }}</p>
+          {% endif %}
+          {% for error in field.errors %}
+            <p class="text-xs text-red-500">{{ error }}</p>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endfor %}
 
-    <!-- 2. Reporting Details -->
-    <h2 class="font-semibold text-gray-800 mt-6 mb-2">Reporting Details</h2>
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Date and Time Report Was Received by ZETDC</label>
-        {{ property_loss_form.zetdc_report_received_datetime }}
-      </div>
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Name of Person Who Reported to ZETDC</label>
-        {{ property_loss_form.zetdc_report_received_from }}
-      </div>
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Date and Time Report Was Received by ZRP</label>
-        {{ property_loss_form.zrp_report_received_datetime }}
-      </div>
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Name of Person Who Reported to ZRP</label>
-        {{ property_loss_form.zrp_report_received_from }}
-      </div>
-    </div>
-
-    <!-- 3. Person Injured (if applicable) -->
-    <h2 class="font-semibold text-gray-800 mt-6 mb-2">Person Injured (if applicable)</h2>
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Name</label>
-        {{ property_loss_form.person_injured_name }}
-      </div>
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Address</label>
-        {{ property_loss_form.person_injured_address }}
-      </div>
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Age</label>
-        {{ property_loss_form.person_injured_age }}
-      </div>
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Injuries Sustained</label>
-        {{ property_loss_form.injuries_sustained }}
-      </div>
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Condition of Victim</label>
-        {{ property_loss_form.condition_of_victim }}
-      </div>
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Location of Medical Practitioner</label>
-        {{ property_loss_form.location_of_medical_practitioner }}
-      </div>
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Medical Practitioner Opinion for Recovery Period</label>
-        {{ property_loss_form.medical_opinion_recovery_period }}
-      </div>
-    </div>
-
-    <!-- 4. Incident Details -->
-    <h2 class="font-semibold text-gray-800 mt-6 mb-2">Incident Details</h2>
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Circumstances Leading to the Incident</label>
-        {{ property_loss_form.circumstances_leading_to_incident }}
-      </div>
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Network Circuit Details</label>
-        {{ property_loss_form.network_circuit_details }}
-      </div>
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Operation of Any Protective Devices</label>
-        {{ property_loss_form.operation_of_protective_devices }}
-      </div>
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Site Details</label>
-        {{ property_loss_form.site_details }}
-      </div>
-    </div>
-
-    <!-- 5. Attachments -->
-    <h2 class="font-semibold text-gray-800 mt-6 mb-2">Attachments</h2>
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Attach Written Statements</label>
-        {{ property_loss_form.written_statements }}
-      </div>
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Attach Photographs</label>
-        {{ property_loss_form.photographs }}
-      </div>
-    </div>
-
-    <!-- 6. Opinions and Other Info -->
-    <h2 class="font-semibold text-gray-800 mt-6 mb-2">Opinions and Other Information</h2>
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Opinion on the Cause of the Loss and Liability</label>
-        {{ property_loss_form.opinion_on_cause_and_liability }}
-      </div>
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Any Other Information Considered Necessary</label>
-        {{ property_loss_form.other_information }}
-      </div>
-    </div>
-
-    <!-- 7. Reporting -->
-    <h2 class="font-semibold text-gray-800 mt-6 mb-2">Reporting</h2>
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Reported By</label>
-        {{ property_loss_form.reported_by }}
-      </div>
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Date of the Report</label>
-        {{ property_loss_form.date_of_report }}
-      </div>
-    </div>
-
-    <!-- Errors -->
     {% if property_loss_form.non_field_errors %}
-      <div class="text-red-500 mt-2 text-sm">
+      <div class="text-red-500 mb-2">
         {{ property_loss_form.non_field_errors }}
       </div>
     {% endif %}
 
-    <!-- Buttons -->
     <div class="flex gap-4 mt-6">
       <button type="button" onclick="showForm()" class="w-1/2 text-sm font-semibold border border-gray-300 text-gray-700 py-2 rounded-md">
         CANCEL
@@ -350,6 +239,7 @@
     <h1 class="text-base font-semibold leading-7 text-gulf-blue-900">Staff Accident Report</h1>
     <p class="text-sm font-bold text-black text-right">Form E 1/5</p>
     <p class="mt-1 text-sm leading-6 text-gulf-blue-900">Fill all required fields.</p>
+    <input type="hidden" name="update_status" value="1">
     <div class="rounded row text-center py-2 grid grid-cols-2 gap-4 my-3">
       {% for field in staff_form %}
         {% if field.is_hidden %}
@@ -383,6 +273,7 @@
     <h1 class="text-base font-semibold leading-7 text-gulf-blue-900">Public Accident Report</h1>
     <p class="text-sm font-bold text-black text-right">Form E 1/5</p>
     <p class="mt-1 text-sm leading-6 text-gulf-blue-900">Fill all required fields.</p>
+    <input type="hidden" name="property-update_status" value="1">
     <div class="rounded row text-center py-2 grid grid-cols-2 gap-4 my-3">
       {% for field in public_form %}
         {% if field.is_hidden %}
@@ -415,190 +306,30 @@
   {% csrf_token %}
   <div class="bg-gulf-blue-100 shadow text-gulf-blue-900 rounded px-4 py-4">
     <h1 class="text-base font-semibold leading-7 text-gulf-blue-900 mb-4">Vehicle Accident Report</h1>
-     <p class="text-sm font-bold text-black text-right">
-    Form S/113
-  </p>
 
-    <!-- 1. Driver's Details -->
-    <h2 class="font-semibold text-gray-800 mt-4 mb-2">Driver's Details</h2>
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Driver's Name</label>
-        {{ vehicle_form.driver_name }}
-      </div>
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Home Address</label>
-        {{ vehicle_form.home_address }}
-      </div>
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Age</label>
-        {{ vehicle_form.age }}
-      </div>
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Driver's License</label>
-        {{ vehicle_form.drivers_license }}
-      </div>
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Designation</label>
-        {{ vehicle_form.designation }}
-      </div>
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Place of Issue</label>
-        {{ vehicle_form.place_of_issue }}
-      </div>
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Date of Issue</label>
-        {{ vehicle_form.date_of_issue }}
-      </div>
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">EC Number</label>
-        {{ vehicle_form.ec_number }}
-      </div>
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Work Station</label>
-        {{ vehicle_form.work_station }}
-      </div>
-      <!-- 1. Driver's Details (add Hired field) -->
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Is Vehicle Hired?</label>
-        {{ vehicle_form.state_if_hired }}
-      </div>
-    </div>
+    {% for field in vehicle_form %}
+      {% if field.is_hidden %}
+        {{ field }}
+      {% else %}
+        <div class="mb-4">
+          <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-gray-700">{{ field.label }}</label>
+          {{ field }}
+          {% if field.help_text %}
+            <p class="text-xs text-blue-500">{{ field.help_text }}</p>
+          {% endif %}
+          {% for error in field.errors %}
+            <p class="text-xs text-red-500">{{ error }}</p>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endfor %}
 
-    <!-- 2. Vehicle Details -->
-    <h2 class="font-semibold text-gray-800 mt-6 mb-2">Vehicle Details</h2>
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Make</label>
-        {{ vehicle_form.make }}
-      </div>
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Registration Number</label>
-        {{ vehicle_form.registration_number }}
-      </div>
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Fleet Number</label>
-        {{ vehicle_form.fleet_number }}
-      </div>
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Allocation to Section</label>
-        {{ vehicle_form.allocation_to_section }}
-      </div>
-    </div>
-
-    <!-- 3. Particulars of Accident (Additional) -->
-    <h2 class="font-semibold text-gray-800 mt-6 mb-2">Particulars of Accident (Additional)</h2>
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Date and Time of Accident</label>
-        {{ vehicle_form.datetime_for_accident }}
-      </div>
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Place of Accident</label>
-        {{ vehicle_form.place_of_accident }}
-      </div>
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Brief Description</label>
-        {{ vehicle_form.brief_description }}
-      </div>
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Date and Time Accident was reported to police</label>
-        {{ vehicle_form.datetime_to_police }}
-      </div>
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Speed at Time of Accident</label>
-        {{ vehicle_form.speed_at_time_of_accident }}
-      </div>
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Gear Used</label>
-        {{ vehicle_form.gear_used }}
-      </div>
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Type and State of Road</label>
-        {{ vehicle_form.type_and_state_of_road }}
-      </div>
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">State of Weather</label>
-        {{ vehicle_form.state_of_weather }}
-      </div>
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Nature and Weight of Load</label>
-        {{ vehicle_form.nature_and_weight_of_load }}
-      </div>
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Name and Address of Passenger</label>
-        {{ vehicle_form.name_and_address_of_passenger }}
-      </div>
-    </div>
-
-    <!-- 4. Other Vehicle Owner Details -->
-    <h2 class="font-semibold text-gray-800 mt-6 mb-2">Particulars of Other Vehicles Involved </h2>
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Owner's Name</label>
-        {{ vehicle_form.other_vehicle_owner_name }}
-      </div>
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Owner's Address</label>
-        {{ vehicle_form.other_vehicle_owner_address }}
-      </div>
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Vehicle Make & Type</label>
-        {{ vehicle_form.other_vehicle_make_and_type }}
-      </div>
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Registration Number</label>
-        {{ vehicle_form.other_vehicle_registration_number }}
-      </div>
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Approximate Speed</label>
-        {{ vehicle_form.approximate_speed_of_other_vehicle }}
-      </div>
-    </div>
-
-    <!-- 5. Property Damage -->
-    <h2 class="font-semibold text-gray-800 mt-6 mb-2">Damage to Property</h2>
-    <div class="grid grid-cols-1 gap-4">
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">ZESA Vehicle Damage</label>
-        {{ vehicle_form.zesa_vehicle_damage }}
-      </div>
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Other Vehicle Damage</label>
-        {{ vehicle_form.other_vehicle_damage }}
-      </div>
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Other Property Damage</label>
-        {{ vehicle_form.other_property_damage }}
-      </div>
-    </div>
-
-    <!-- 6. Reports -->
-    <h2 class="font-semibold text-gray-800 mt-6 mb-2">Reports</h2>
-    <div class="grid grid-cols-1 gap-4">
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Driver's Report</label>
-        {{ vehicle_form.drivers_report }}
-      </div>
-      <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Section Head Comments</label>
-        {{ vehicle_form.section_head_comments }}
-      </div>
-    </div>
-
-    <!-- Errors -->
     {% if vehicle_form.non_field_errors %}
-      <div class="text-red-500 mt-2 text-sm">
+      <div class="text-red-500 mb-2">
         {{ vehicle_form.non_field_errors }}
       </div>
     {% endif %}
-    {% if vehicle_form.errors %}
-  <div class="text-red-500 text-sm mb-2">
-    {{ vehicle_form.errors }}
-  </div>
-{% endif %}
 
-    <!-- Buttons -->
     <div class="flex gap-4 mt-6">
       <button type="button" onclick="showForm()" class="w-1/2 text-sm font-semibold border border-gray-300 text-gray-700 py-2 rounded-md">
         CANCEL
@@ -609,23 +340,24 @@
     </div>
   </div>
 </form>
+
  <!-- Accident Details Tables Section -->
-  <h2 class="text-2xl font-bold text-blue-800 mb-6 text-center">For More Details Of The Accident Click Any Of The Table Below</h2>
+  <h2 class="text-2xl font-bold text-blue-800 mb-6 text-center">For more details on the accident click any of the tables below</h2>
   <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
     <a href="{% url 'property_loss_table' %}" class="block bg-green-100 border border-green-300 rounded-2xl shadow-lg p-6 text-center hover:bg-green-200 transition">
       <div class="text-4xl mb-2 text-green-600">&#127968;</div>
-      <h3 class="text-xl font-bold text-green-700 mb-2">Property Loss Table</h3>
-      <p class="text-gray-600 text-sm">View all property loss incidents and details.</p>
+      <h3 class="text-xl font-bold text-green-700 mb-2">Property Damages</h3>
+      <p class="text-gray-600 text-sm">View all property damages details.</p>
     </a>
     <a href="{% url 'human_accident_table' %}" class="block bg-red-100 border border-red-300 rounded-2xl shadow-lg p-6 text-center hover:bg-red-200 transition">
       <div class="text-4xl mb-2 text-red-600">&#128100;</div>
-      <h3 class="text-xl font-bold text-red-700 mb-2">Human Accident Table</h3>
-      <p class="text-gray-600 text-sm">View all human accident reports and details.</p>
+      <h3 class="text-xl font-bold text-red-700 mb-2">Staff Injuries</h3>
+      <p class="text-gray-600 text-sm">View all human staff injuries details.</p>
     </a>
     <a href="{% url 'vehicle_accident_table' %}" class="block bg-yellow-100 border border-yellow-300 rounded-2xl shadow-lg p-6 text-center hover:bg-yellow-200 transition">
       <div class="text-4xl mb-2 text-yellow-600">&#128663;</div>
-      <h3 class="text-xl font-bold text-yellow-700 mb-2">Vehicle Accident Table</h3>
-      <p class="text-gray-600 text-sm">View all vehicle accident reports and details.</p>
+      <h3 class="text-xl font-bold text-yellow-700 mb-2">Vehicle Accidents</h3>
+      <p class="text-gray-600 text-sm">View all vehicle accidents details.</p>
     </a>
   </div>
 <!-- Accident Management Table Section -->
@@ -663,7 +395,10 @@
             </span>
           </td>
           <td class="px-4 py-2 text-center text-sm">
-            <a href="#" class="text-blue-600 hover:underline font-semibold">View</a>
+           <a href="{% url 'accident_report_dashboard' %}?type={{ accident.type }}&id={{ accident.id }}"
+              class="text-blue-600 hover:underline font-semibold">
+                View
+            </a>
           </td>
         </tr>
         {% empty %}
@@ -676,6 +411,7 @@
 
 
 </div>
+
 <script>
   // Example: Populate filter values dynamically (replace with AJAX in production)
  
@@ -704,19 +440,73 @@
   }
   function selectReport(type) {
     const forms = ['propertyForm', 'staffForm', 'publicForm', 'vehicleForm'];
+
     forms.forEach(form => {
-      document.getElementById(form).style.display = 'none';
+        document.getElementById(form).style.display = 'none';
     });
+
     if (type === 'property') {
-      document.getElementById('propertyForm').style.display = 'block';
+        document.getElementById('propertyForm').style.display = 'block';
     } else if (type === 'staff') {
-      document.getElementById('staffForm').style.display = 'block';
+        document.getElementById('staffForm').style.display = 'block';
     } else if (type === 'public') {
-      document.getElementById('publicForm').style.display = 'block';
+        document.getElementById('publicForm').style.display = 'block';
     } else if (type === 'vehicle') {
-      document.getElementById('vehicleForm').style.display = 'block';
+        document.getElementById('vehicleForm').style.display = 'block';
     }
-    window.scrollTo({ top: 200, behavior: 'smooth' });
-  }
+
+    // Scroll to form smoothly
+    window.scrollTo({
+        top: document.getElementById(type + 'Form').offsetTop - 50,
+        behavior: 'smooth'
+    });
+}
+
+function showForm() {
+    const forms = ['propertyForm', 'staffForm', 'publicForm', 'vehicleForm'];
+    forms.forEach(form => {
+        document.getElementById(form).style.display = 'none';
+    });
+
+    // scroll back up to the card selection
+    window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+    });
+}
+
 </script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    const type = "{{ selected_type|default:'' }}";
+    const id = "{{ request.GET.id|default:'' }}";
+
+    // Only run this when user clicked VIEW (not when clicking cards)
+    if (type && id) {
+
+        // Open correct form
+        selectReport(type);
+
+        // After the modal opens, highlight required fields
+        setTimeout(() => {
+            let formId = type + "-form";   // Example: staff-form, vehicle-form
+
+            const form = document.getElementById(formId);
+            if (!form) return;
+
+            // Find all required input fields
+            const requiredFields = form.querySelectorAll("[required]");
+
+            requiredFields.forEach(field => {
+                field.classList.add("required-highlight");
+            });
+
+        }, 200);
+    }
+});
+</script>
+
+
+
 {% endblock %}

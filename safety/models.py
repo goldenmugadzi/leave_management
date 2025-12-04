@@ -2,6 +2,7 @@ from django.db import models
 from it.users.models import *
 from django.conf import settings
 
+
 class SafetyMonthlyReport(models.Model):
     user = models.ForeignKey(UserProfile, on_delete=models.CASCADE, blank=True, null=True)
     department = models.ForeignKey(Sections, on_delete=models.DO_NOTHING, blank=True, null=True)
@@ -99,6 +100,23 @@ class SafetyMonthlyReport(models.Model):
         return f"{self.year}-{self.month:02d} Safety Report"
 
 class AccidentReport(models.Model):
+    type = models.CharField(max_length=20, choices=[
+        ('property', 'Property'),
+        ('staff', 'Staff'),
+        ('vehicle', 'Vehicle')
+    ])
+
+    # Link to specific forms
+    property_incident = models.ForeignKey(
+        'PropertyLossIncident', on_delete=models.SET_NULL, null=True, blank=True
+    )
+    staff_report = models.ForeignKey(
+        'AccidentReport', on_delete=models.SET_NULL, null=True, blank=True
+    )
+    vehicle_report = models.ForeignKey(
+        'VehicleAccidentReport', on_delete=models.SET_NULL, null=True, blank=True
+    )
+    
     Severity_Of_Accident = [
         ('First aid case', 'First aid case'),
         ('Medical treatment', 'Medical treatment'),
@@ -160,7 +178,12 @@ class AccidentReport(models.Model):
     attach_written_statements = models.ImageField(upload_to='accident_photos/', blank=True, null=True)
     other_information_considered_neccesary = models.TextField(max_length=600)
     for_electrical_state_voltage = models.TextField(max_length=600,choices=Voltage)
-   
+    status = models.CharField(
+    max_length=20,
+    choices=[('Pending', 'Pending'), ('Actioned', 'Actioned')],
+    default='Pending'
+)
+
 class VehicleAccidentReport(models.Model):
 
     HIRED_CHOICES = [
@@ -223,6 +246,12 @@ class VehicleAccidentReport(models.Model):
     section_head_comments = models.TextField()
 
     date_submitted = models.DateTimeField(auto_now_add=True)
+    status = models.CharField(
+    max_length=20,
+    choices=[('Pending', 'Pending'), ('Actioned', 'Actioned')],
+    default='Pending'
+)
+
 
     def __str__(self):
         return f"Vehicle Accident Report - {self.driver_name} - {self.datetime_for_accident.date()}"
@@ -272,6 +301,12 @@ class PropertyLossIncident(models.Model):
     # Reporting
     reported_by = models.CharField("Reported By", max_length=255)
     date_of_report = models.DateField("Date of the Report", auto_now_add=True)
+    status = models.CharField(
+    max_length=20,
+    choices=[('Pending', 'Pending'), ('Actioned', 'Actioned')],
+    default='Pending'
+)
+
 
     def __str__(self):
         return f"Property Loss Incident at {self.address_of_loss} on {self.date_time_of_loss:%Y-%m-%d %H:%M}"

@@ -1,9 +1,18 @@
 from django import forms
-from it.users.models import UserProfile, Sections, Regions,Designations
+
+# Import models properly here
+from .models import (
+    SafetyMonthlyReport,
+    AccidentReport,
+    VehicleAccidentReport,
+    PropertyLossIncident,
+)
+
+from it.users.models import UserProfile, Sections, Regions, Designations
+
 
 class SafetyMonthlyReportForm(forms.ModelForm):
     class Meta:
-        from .models import SafetyMonthlyReport
         model = SafetyMonthlyReport
         fields = [
             'user', 'department', 'regions', 'date', 'month', 'year',
@@ -20,9 +29,9 @@ class SafetyMonthlyReportForm(forms.ModelForm):
 
 class AccidentReportForm(forms.ModelForm):
     class Meta:
-        from .models import AccidentReport
         model = AccidentReport
         fields = '__all__'
+        exclude = ['type', 'property_incident', 'staff_report', 'vehicle_report'] 
         widgets = {
             'date_of_accident': forms.DateInput(attrs={'type': 'date'}),
             'time_of_accident': forms.TimeInput(attrs={'type': 'time'}),
@@ -30,26 +39,40 @@ class AccidentReportForm(forms.ModelForm):
             'police_received_datetime': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
         }
 
-        
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
         for field_name, field in self.fields.items():
             field.widget.attrs.update({
-                'class': "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset "
-                            "ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 "
-                            "sm:text-sm sm:leading-6",
+                'class': (
+                    "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset "
+                    "ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset "
+                    "focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                )
             })
 
-            if (field_name == 'employee_involved') or (field_name == 'gender') or ( field_name == 'cost_center') or ( field_name == 'department') or ( field_name == 'severity_Of_Accident ') or  (field_name == 'nature_of_injury') or (field_name == 'region') or (field_name == 'nature_of_accident') or (field_name == 'risk_assessment_carried_out') or (field_name == 'safety_preparation_carried_out') or (field_name == 'for_electrical_state_voltage'):
-                field.widget.attrs.update({'class': "select2 block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6",})
+            # Select2 for dropdowns
+            select_fields = [
+                'employee_involved', 'gender', 'cost_center', 'department',
+                'severity_Of_Accident', 'nature_of_injury', 'region',
+                'nature_of_accident', 'risk_assessment_carried_out',
+                'safety_preparation_carried_out', 'for_electrical_state_voltage'
+            ]
+            if field_name in select_fields:
+                field.widget.attrs.update({
+                    'class': (
+                        "select2 block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 "
+                        "ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset "
+                        "focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                    )
+                })
+
             if isinstance(field.widget, forms.Textarea):
                 field.widget.attrs.update({'rows': '3'})
 
 
 class VehicleAccidentReportForm(forms.ModelForm):
     class Meta:
-        from .models import VehicleAccidentReport
         model = VehicleAccidentReport
         fields = '__all__'
         widgets = {
@@ -63,21 +86,32 @@ class VehicleAccidentReportForm(forms.ModelForm):
 
         for field_name, field in self.fields.items():
             field.widget.attrs.update({
-                'class': "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset "
-                         "ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 "
-                         "sm:text-sm sm:leading-6",
+                'class': (
+                    "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset "
+                    "ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset "
+                    "focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                )
             })
 
-            if (field_name == 'designation') or (field_name == 'driver_name') or ( field_name == 'state_if_hired') or ( field_name == 'department') or ( field_name == 'vehicle_details'):
-                    field.widget.attrs.update({'class': "select2 block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6",})
+            select_fields = [
+                'designation', 'driver_name', 'state_if_hired',
+                'department', 'vehicle_details'
+            ]
+            if field_name in select_fields:
+                field.widget.attrs.update({
+                    'class': (
+                        "select2 block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 "
+                        "ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset "
+                        "focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                    )
+                })
+
             if isinstance(field.widget, forms.Textarea):
                 field.widget.attrs.update({'rows': '3'})
 
 
-
 class PropertyLossIncidentForm(forms.ModelForm):
     class Meta:
-        from .models import PropertyLossIncident
         model = PropertyLossIncident
         fields = '__all__'
         widgets = {
@@ -87,14 +121,15 @@ class PropertyLossIncidentForm(forms.ModelForm):
             'date_of_report': forms.DateInput(attrs={'type': 'date'}),
         }
 
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         for field_name, field in self.fields.items():
             field.widget.attrs.update({
-                'class': "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset "
-                         "ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 "
-                         "sm:text-sm sm:leading-6",
+                'class': (
+                    "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset "
+                    "ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset "
+                    "focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                )
             })
             if isinstance(field.widget, forms.Textarea):
                 field.widget.attrs.update({'rows': '3'})
