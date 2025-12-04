@@ -102,7 +102,7 @@
             </form>
         </div>
     </div>
-    {% if is_update and apprais_object.is_accepted %}
+    {% if is_update and appraisal_object.is_accepted %}
         <div class="mt-6">
             {% include "appraisal/approval/detail.html" with stages=stages last_stage_num=last_stage_number %}
         </div>
