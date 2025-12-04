@@ -37,5 +37,5 @@ class ApprovalStageData(Enum):
     set_performance_progress_review = {"stage_name": "Performance Progress Review", "description": "Appraiser to set Performance Progress Review in Section 4 - Performance Progress Reviews", "set_by": APPRAISER, "section_step": SectionStages.section_4.value}
     set_personal_attributes = {"stage_name": "Personal Attributes", "description": "Appraiser to set Personal Attributes in Section 5 - Final Performance Assessment and Rating", "set_by": APPRAISER, "section_step": SectionStages.section_5.value}
     overall_comments = {"stage_name": "Overall Comments", "description": "Appraiser to set Overall Comments in Section 5 - Final Performance Assessment and Rating", "set_by": APPRAISER, "section_step": SectionStages.section_5.value}
-    hr_review = {"stage_name": "HR Confirmation", "description": "HR to confirm the appraisal process within the Appraisal Details", "set_by": HR, "section_step": SectionStages.section_6}
+    hr_review = {"stage_name": "HR Confirmation", "description": "HR to confirm the appraisal process within the Appraisal Details", "set_by": HR, "section_step": SectionStages.section_6.value}
     section_head_review = {"stage_name": "Reviewer Confirmation", "description": "Reviewer to confirm the appraisal process within the Appraisal Details", "set_by": REVIEWER, "section_step": SectionStages.section_6.value}

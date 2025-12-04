@@ -1,9 +1,10 @@
 from django import template
 from ..helpers.getters.approval import ApprovalStagesHandler
-from ..helpers.data.approval_stage import ApprovalStageData
+from ..helpers.data.approval_stage import ApprovalStageData, SectionStages
 from ..helpers.getters.approval import ApprovalWorkflowQuarterStagesStrategyContext, ScoringStageStrategy, PerformanceReviewStageStrategy, TrainingAndDevelopmentStageStrategy, AppraiserReviewStageStrategy, ReviewerReviewStageStrategy, HrReviewStageStrategy, AppraisalPersonalAttributesStrategy, AppraisalOverallCommentStrategy, ApprovalStageGetterHandler
 from ..view.helper import ApprovalStagesTemplateHandler
 from ..repository.appraisal import AppraisalRepository
+from ..helpers.getters.sections import SectionsStagesHandler
 from loguru import logger
 
 register = template.Library()
@@ -96,3 +97,27 @@ def get_approval_stage_data(appraisal_id):
     except Exception as e:
         logger.error(f"[get_approval_stage_date()] templatetags, failed with error: {e}")
         return None
+    
+@register.filter
+def get_approval_stage_url(stage_name: str):
+    try:
+        for approval_stage in ApprovalStageData:
+            stage_dict = approval_stage.value
+            
+            if stage_dict["stage_name"].lower() == stage_name.lower():
+                section_stages_handler = SectionsStagesHandler()
+                section_step = stage_dict["section_step"]
+                
+                if isinstance(section_step, SectionStages):
+                    section_step = section_step.value
+                
+                return section_stages_handler.get_section_url_section_value(
+                    section_value=section_step
+                )
+                
+        return None
+        
+    except Exception as e:
+        logger.error(f"[get_approval_stage_url()] templatetags stage_name: {stage_name}, failed with error: {e}")
+        return None
+    
