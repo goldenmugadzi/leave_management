@@ -33,7 +33,6 @@ class TrainingAndDevelopmentUpdateView(SuccessMessageMixin, CreateView):
             {"description": strategy.description, "category": strategy.category}
             for strategy in training_object.intervention_strategies.all()
         ]
-        
         form = InterventionStrategyFormSet(
             self.request.POST or None,
             queryset=training_object.intervention_strategies.all(),
