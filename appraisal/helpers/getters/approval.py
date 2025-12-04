@@ -150,17 +150,15 @@ class ApprovalStagesHandler:
         uncompleted_qr = self.get_uncompleted_approval_queryset()
 
         data = {"current_stage": None, "next_stage": None}
-
-        if completed_qr and completed_qr.exists():
-            current_stage_obj = completed_qr.last()
-            data["current_stage"] = current_stage_obj
-            data["next_stage"] = self.__get_next_stage_obj__(current_stage_obj.stage_num)
-            return data
-        if uncompleted_qr and uncompleted_qr.exists():
+        if uncompleted_qr.exists():
             current_stage_obj = uncompleted_qr.first()
             data["current_stage"] = current_stage_obj
             data["next_stage"] = self.__get_next_stage_obj__(current_stage_obj.stage_num)
-            return data
+        else:
+            current_stage_obj = completed_qr.last()
+            data["current_stage"] = current_stage_obj
+            data["next_stage"] = self.__get_next_stage_obj__(current_stage_obj.stage_num)
+
         return data
 
     
