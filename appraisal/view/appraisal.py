@@ -96,7 +96,20 @@ class AppraisalCreateView(SuccessMessageMixin, CreateView):
         
         if not appraisee_object.designation or not appraisee_object.cost_center or not appraisee_object.grade:
             return True
+        
+        has_no_qualification_and_experience = self.has_no_qualification_and_experience()
+        if has_no_qualification_and_experience:
+            return True
         return False  
+    
+    def has_no_qualification_and_experience(self):
+        user_object = self.get_user_object()
+        user_experiences_qr = self.get_user_experiences(user_id=user_object.id)
+        user_qualification_qr = self.get_user_qualification(user_id=user_object.id)
+        has_no_qualification_and_experience = False
+        if not user_experiences_qr.exists() or not user_qualification_qr.exists():
+            has_no_qualification_and_experience = True
+        return has_no_qualification_and_experience
     
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context =  super().get_context_data(**kwargs)
@@ -107,11 +120,12 @@ class AppraisalCreateView(SuccessMessageMixin, CreateView):
         context["has_no_designation"] = self.get_user_object().designation == None or self.get_user_object().designation == ""
         context["assessment_period"] = self.get_current_date_assessment()
         
-        context["user_experiences_qr"] = self.get_user_experiences(user_id=user_object.id)
-        context["user_qualification_qr"] = self.get_user_qualification(user_id=user_object.id)
+        user_experiences_qr = self.get_user_experiences(user_id=user_object.id)
+        user_qualification_qr = self.get_user_qualification(user_id=user_object.id)
+        context["user_experiences_qr"] = user_experiences_qr
+        context["user_qualification_qr"] = user_qualification_qr
         
         can_make_changes = False
-        
         if not self.has_no_required_profile_information():
             can_make_changes = True
         context["can_mutate"] = can_make_changes
@@ -149,6 +163,10 @@ class AppraisalCreateView(SuccessMessageMixin, CreateView):
             messages.error(self.request, "Oops! It appears that your department's outputs and activities have not been set yet. Please check with your supervisor to address this")
             return self.form_invalid(form)
         
+        if self.has_no_qualification_and_experience():
+            messages.error(self.request, "Oops! Your profile has no qualifications or experiences. Kindly contact admin.")
+            return self.form_invalid(form)
+        
         appraiser_object = form.cleaned_data.get("appraiser")
         repo = AppraisalRepository()
         appraisal_object = repo.create(appraisee_object=appraisee_object, appraiser_object=appraiser_object)
@@ -167,7 +185,7 @@ class AppraisalCreateView(SuccessMessageMixin, CreateView):
             if self.has_no_required_profile_information():
                 messages.error(
                         request,
-                        "<strong>Incomplete Appraisee Profile</strong>: The profile is missing required details such as designation, cost center, or grade. Please contact the IT department to complete the profile setup."
+                        "<strong>Incomplete Appraisee Profile</strong>: The profile is missing required details such as designation, cost center, qualifications, experiences or grade. Please contact the IT department to complete the profile setup."
                     )
                 
             messages.info(
