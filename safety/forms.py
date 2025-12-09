@@ -6,6 +6,7 @@ from .models import (
     AccidentReport,
     VehicleAccidentReport,
     PropertyLossIncident,
+    MemberOfPublicAccidentReport,
 )
 
 from it.users.models import UserProfile, Sections, Regions, Designations
@@ -31,7 +32,7 @@ class AccidentReportForm(forms.ModelForm):
     class Meta:
         model = AccidentReport
         fields = '__all__'
-        exclude = ['type', 'property_incident', 'staff_report', 'vehicle_report'] 
+        exclude = ['type', 'property_incident', 'staff_report', 'public_report','vehicle_report'] 
         widgets = {
             'date_of_accident': forms.DateInput(attrs={'type': 'date'}),
             'time_of_accident': forms.TimeInput(attrs={'type': 'time'}),
@@ -84,30 +85,33 @@ class VehicleAccidentReportForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+        # Base styling for all inputs
+        base_classes = (
+            "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset "
+            "ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset "
+            "focus:ring-indigo-600 sm:text-sm sm:leading-6"
+        )
+
+        # Dropdown fields that need Select2
+        select_fields = [
+            'designation', 'driver_name', 'state_if_hired',
+            'department', 'vehicle_details'
+        ]
+
+        # Loop through all fields (THIS MUST BE INSIDE __init__)
         for field_name, field in self.fields.items():
-            field.widget.attrs.update({
-                'class': (
-                    "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset "
-                    "ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset "
-                    "focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                )
-            })
 
-            select_fields = [
-                'designation', 'driver_name', 'state_if_hired',
-                'department', 'vehicle_details'
-            ]
+            # Apply base styles
+            field.widget.attrs.update({'class': base_classes})
+
+            # If dropdown → append select2 class
             if field_name in select_fields:
-                field.widget.attrs.update({
-                    'class': (
-                        "select2 block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 "
-                        "ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset "
-                        "focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                    )
-                })
+                field.widget.attrs['class'] += " select2"
 
+            # Textarea rows
             if isinstance(field.widget, forms.Textarea):
                 field.widget.attrs.update({'rows': '3'})
+
 
 
 class PropertyLossIncidentForm(forms.ModelForm):
@@ -131,5 +135,47 @@ class PropertyLossIncidentForm(forms.ModelForm):
                     "focus:ring-indigo-600 sm:text-sm sm:leading-6"
                 )
             })
+            if isinstance(field.widget, forms.Textarea):
+                field.widget.attrs.update({'rows': '3'})
+
+class MemberOfPublicAccidentReportForm(forms.ModelForm):
+    class Meta:
+        model = MemberOfPublicAccidentReport
+        fields = '__all__'
+        widgets = {
+            'date_of_accident': forms.DateInput(attrs={'type': 'date'}),
+            'time_of_accident': forms.TimeInput(attrs={'type': 'time'}),
+            'authority_received_datetime': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
+            'police_received_datetime': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        for field_name, field in self.fields.items():
+            field.widget.attrs.update({
+                'class': (
+                    "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset "
+                    "ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset "
+                    "focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                )
+            })
+
+            # Select2 for dropdowns
+            select_fields = [
+                'member_of_public_involved', 'gender', 'cost_center',
+                'severity_Of_Accident', 'nature_of_injury',
+                'nature_of_accident', 'risk_assessment_carried_out',
+                'safety_preparation_carried_out', 'for_electrical_state_voltage'
+            ]
+            if field_name in select_fields:
+                field.widget.attrs.update({
+                    'class': (
+                        "select2 block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 "
+                        "ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset "
+                        "focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                    )
+                })
+
             if isinstance(field.widget, forms.Textarea):
                 field.widget.attrs.update({'rows': '3'})

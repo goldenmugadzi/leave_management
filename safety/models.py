@@ -103,7 +103,8 @@ class AccidentReport(models.Model):
     type = models.CharField(max_length=20, choices=[
         ('property', 'Property'),
         ('staff', 'Staff'),
-        ('vehicle', 'Vehicle')
+        ('vehicle', 'Vehicle'),
+        ('public', 'Public')
     ])
 
     # Link to specific forms
@@ -112,6 +113,9 @@ class AccidentReport(models.Model):
     )
     staff_report = models.ForeignKey(
         'AccidentReport', on_delete=models.SET_NULL, null=True, blank=True
+    )
+    public_report = models.ForeignKey(
+        'MemberOfPublicAccidentReport', on_delete=models.SET_NULL, null=True, blank=True
     )
     vehicle_report = models.ForeignKey(
         'VehicleAccidentReport', on_delete=models.SET_NULL, null=True, blank=True
@@ -312,5 +316,102 @@ class PropertyLossIncident(models.Model):
         return f"Property Loss Incident at {self.address_of_loss} on {self.date_time_of_loss:%Y-%m-%d %H:%M}"
 
 
+class MemberOfPublicAccidentReport(models.Model):
+
+    # Choices reused from AccidentReport
+    Severity_Of_Accident = [
+        ('First aid case', 'First aid case'),
+        ('Medical treatment', 'Medical treatment'),
+        ('Non lost time injury', 'Non lost time injury'),
+        ('Lost time injury', 'Lost time injury'),
+        ('Fatal', 'Fatal'),
+    ]
+    Nature_of_Accidents = [
+        ('Electrical', 'Electrical'),
+        ('Non_electrical', 'Non_electrical'),
+    ]
+    Nature_of_injury = [
+        ('Major', 'Major'),
+        ('Minor','Minor'),
+    ]
+    Voltage = [
+        ('11kv', '11kv'),
+        ('33kv','33kv'),
+    ]
+    Risk_Assessment = [
+        ('Yes','Yes'),
+        ('No' ,'No'),
+    ]
+    Safety_Preparation = [
+        ('Yes','Yes'),
+        ('No','No'),
+    ]
+    Sex = [
+        ('Male','Male'),
+        ('Female','Female'),
+    ]
+
+    # RENAMED FIELD
+    member_of_public_involved = models.CharField(max_length=255)
+
+    gender = models.CharField(max_length=300, choices=Sex)
+    address_of_person_involved = models.CharField(max_length=500)
+    age = models.PositiveIntegerField(default=0)
+
+    date_of_accident = models.DateField()
+    time_of_accident = models.TimeField()
+
+    authority_received_datetime = models.DateTimeField(
+        verbose_name="Date and Time Report Was Received by Authority"
+    )
+    authority_received_from = models.CharField(
+        max_length=255,
+        verbose_name="Name of Person Who Reported to Authority"
+    )
+
+    police_received_datetime = models.DateTimeField(
+        verbose_name="Date and Time Report Was Received by Police"
+    )
+    police_received_from = models.CharField(
+        max_length=255,
+        verbose_name="Name of Person Who Reported to Police"
+    )
+
+    cost_center = models.ForeignKey(
+        CostCenter, on_delete=models.CASCADE, blank=True, null=True
+    )
+
+    severity_Of_Accident = models.CharField(max_length=500, choices=Severity_Of_Accident)
+    nature_of_accident = models.CharField(max_length=600, choices=Nature_of_Accidents)
+    nature_of_injury = models.CharField(max_length=400, choices=Nature_of_injury)
+
+    circumstance_leading_to_accident = models.TextField(max_length=700)
+    location_of_accident_giving_line_and_section_number = models.TextField(max_length=800)
+
+    risk_assessment_carried_out = models.CharField(max_length=800, choices=Risk_Assessment)
+    operation_of_protective_devices = models.TextField(max_length=600)
+
+    attach_photographs = models.ImageField(
+        upload_to='accident_photos/', blank=True, null=True
+    )
+
+    steps_taken_on_the_short_term = models.CharField(max_length=700)
+    safety_preparation_carried_out = models.CharField(max_length=900, choices=Safety_Preparation)
+
+    attach_written_statements = models.ImageField(
+        upload_to='accident_photos/', blank=True, null=True
+    )
+
+    other_information_considered_neccesary = models.TextField(max_length=600)
+    for_electrical_state_voltage = models.CharField(max_length=600, choices=Voltage)
+
+    status = models.CharField(
+        max_length=20,
+        choices=[('Pending', 'Pending'), ('Actioned', 'Actioned')],
+        default='Pending'
+    )
+
+    def __str__(self):
+        return f"Member of Public Accident Report - {self.member_of_public_involved}"
 
 

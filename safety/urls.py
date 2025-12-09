@@ -19,5 +19,8 @@ urlpatterns = [
     path('property_loss/<int:pk>/', views.property_loss_detail, name='property_loss_detail'),
     path('human_accident/<int:pk>/', views.human_accident_detail, name='human_accident_detail'),
     path('vehicle_accident/<int:pk>/', views.vehicle_accident_detail, name='vehicle_accident_detail'),
+    path('public-accident-report/', views.submit_public_report, name='public_accident_report'),
+    path('public-accidents/', views.public_accident_list, name='public_accident_list'),
+    path('public-accidents/<int:pk>/', views.public_accident_detail, name='public_accident_detail'),
 
 ]
