@@ -306,6 +306,15 @@ def accident_report_dashboard(request):
             "date": vdate,
             "status": "Pending",
         })
+        
+    for public in MemberOfPublicAccidentReport.objects.all():
+        accidents.append({
+            "id": public.id,
+            "type": "public",
+            "reported_by": public.member_of_public_involved,
+            "date": public.date_of_accident,
+            "status": "Pending",
+        })
 
     accidents = sorted(accidents, key=lambda x: x["date"], reverse=True)
 
@@ -326,7 +335,7 @@ def accident_report_dashboard(request):
                 return redirect("accident_report_dashboard")
 
         elif "submit_public" in request.POST:
-            public_form = AccidentReportForm(request.POST, request.FILES, prefix="public")
+            public_form = MemberOfPublicAccidentReportForm(request.POST, request.FILES, prefix="public")
             if public_form.is_valid():
                 public_form.save()
                 messages.success(request, "Public accident report submitted.")
@@ -354,8 +363,8 @@ def accident_report_dashboard(request):
             staff_form = AccidentReportForm(instance=instance, prefix="staff")
 
         elif selected_type == "public":
-            instance = AccidentReport.objects.get(id=accident_id)
-            public_form = AccidentReportForm(instance=instance, prefix="public")
+            instance = MemberOfPublicAccidentReport.objects.get(id=accident_id)
+            public_form = MemberOfPublicAccidentReportForm(instance=instance, prefix="public")
 
         elif selected_type == "vehicle":
             instance = VehicleAccidentReport.objects.get(id=accident_id)
