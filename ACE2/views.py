@@ -625,12 +625,9 @@ def ace_awaiting_my_action(request):
         ).order_by('-date_created')
         # print("ACES after system-wide filter: ", aces_query_secondary.count())
 
-    # print("primary aces", aces_query_primary.values_list('Ace_id2', flat=True))
-    if sectional_roles.intersection(set(user_ace_roles)) and section:
-        print("secondary aces", aces_query_secondary.values_list('Ace_id2', flat=True))
-        aces_combined_query = (aces_query_primary | aces_query_secondary)
-    else:
-        aces_combined_query = aces_query_primary
+    # Combine queries so regional/system approvers aren't blocked by cost-center filters
+    # (e.g., ACEs without a cost center should still show for region-level roles).
+    aces_combined_query = (aces_query_primary | aces_query_secondary).distinct()
     # print("Total ACEs after combining filters: ", aces_combined_query.count())
     a = 0
 
