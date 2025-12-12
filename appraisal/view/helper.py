@@ -257,6 +257,7 @@ class ApprovalStagesTemplateHandler:
     def recursive_approval_stage(self, quarter_name, appraisal_object):
         
         year_quarter_qr = YearQuarterRepository().fetch_by_year(year=appraisal_object.created_date.year)
+        approval_stages = []
         
         match quarter_name:
             case ApprovalStageChoices.First_Quarter.value:

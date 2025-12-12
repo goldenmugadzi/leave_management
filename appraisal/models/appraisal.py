@@ -17,7 +17,7 @@ class Appraisal(TimeStamp):
     hr = models.ForeignKey(User, on_delete=models.PROTECT, related_name="hr", null=True)
         
     def __str__(self) -> str:
-        return f"{self.user}"
+        return f"{self.user} - {self.created_date}"
 
 class Experience(TimeStamp):
     """Base model for experiences used in Appraisal"""

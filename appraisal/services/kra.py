@@ -219,7 +219,16 @@ class AppraisalDependanciesInitialisationService:
             objs_list.append(obj)
         repo = PerformanceReviewRepository()
         return repo.bulk_create(perf_rev_objs_list=objs_list)
-        
+    
+    def dependancies_created(self, appraisal_id: int):
+        """Handler that check appraisal dep are created. It assumes by checking only AppraisalDepartmentalOuts, other deps ain't checked cz create_all_dependencies() is Atomic().
+
+        Args:
+            appraisal_id (int): pk
+        """
+        appraisal_dept_out_qr = self.appraisal_department_output_repo.fetch_by_appraisal_id(appraisal_id=appraisal_id)
+        return appraisal_dept_out_qr.exists()
+    
     def create_all_dependencies(self, appraisal_id: int, year: int)->bool|None:
         try:
             with transaction.atomic():

@@ -58,7 +58,7 @@ def assign_appraisee_role_post_save_handler(sender, instance, created, **kwargs)
  
 @receiver(post_save, sender=Appraisal, dispatch_uid="appraisal_dependencies")
 def set_appraisal_dependencies(sender, instance, created, **kwargs):
-    if created:
+    if not created and instance.is_accepted:
         try:
             logger.info(f"[AppraisalSignal] set_appraisal_dependencies - Setting Appraisal Dependencies for appraisal pk:{instance.id} initialized ...")
             service_handler = AppraisalDependanciesInitialisationService(
@@ -72,10 +72,13 @@ def set_appraisal_dependencies(sender, instance, created, **kwargs):
             
             appraisal_created_year = instance.created_date.year
             
-            if service_handler.create_all_dependencies(appraisal_id=instance.id, year=appraisal_created_year): 
-                logger.success(f"[AppraisalSignal] set_appraisal_dependencies - Setting Appraisal Dependencies for appraisal pk:{instance.id} successfully completed")
+            if service_handler.dependancies_created(appraisal_id=instance.id):
+                logger.info(f"[AppraisalSignal] set_appraisal_dependencies - Setting Appraisal Dependencies for appraisal pk:{instance.id}, are set already and available")
             else:
-                logger.warning(f"[AppraisalSignal] set_appraisal_dependencies - Setting Appraisal Dependencies for appraisal pk:{instance.id} not set")
+                if service_handler.create_all_dependencies(appraisal_id=instance.id, year=appraisal_created_year): 
+                    logger.success(f"[AppraisalSignal] set_appraisal_dependencies - Setting Appraisal Dependencies for appraisal pk:{instance.id} successfully completed")
+                else:
+                    logger.warning(f"[AppraisalSignal] set_appraisal_dependencies - Setting Appraisal Dependencies for appraisal pk:{instance.id} not set")
         except Exception as e:
             logger.error(f"[AppraisalSignal] set_appraisal_dependencies - Setting Appraisal Dependencies for appraisal pk:{instance.id}, failed with error: {e}")
             return None

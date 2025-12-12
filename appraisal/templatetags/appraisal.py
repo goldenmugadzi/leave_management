@@ -16,7 +16,7 @@ def get_appraisal_sections(appraisal_id: int):
         data.pop() # removes the last section 6 which is not applicable
     
         appraisal_obj = AppraisalRepository().get_appraisal_by_pk(appraisal_id=appraisal_id)
-        if appraisal_obj.reviewer:
+        if appraisal_obj.is_accepted:
             return data
         return data[:1]
     except Exception as e:
