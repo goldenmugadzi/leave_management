@@ -160,7 +160,11 @@ class ApprovalStagesHandler:
             data["next_stage"] = self.__get_next_stage_obj__(current_stage_obj.stage_num)
 
         return data
-
+    
+    def is_current_stage(self, stage_id: int)->bool:
+        current_stage_nxt_handler = self.get_current_and_next_stage()
+        current_stage_obj = current_stage_nxt_handler["current_stage"]
+        return stage_id == current_stage_obj.id
     
     def get_stages_info(self):
         """Retrieve all stages along with current and next stage information."""

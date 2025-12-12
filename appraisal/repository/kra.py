@@ -400,7 +400,7 @@ class ApprasialKraReviewerStatusRepository:
             return qr
         except Exception as e:
             raise Exception(f"ApprasialKraReviewerStatusRepository fetch_by_appraisal_id with pk: {appraisal_id}, failed with error: {e}")
-    
+
     def get_by_appraisee_performance_dimension_score_id(self, appraisee_performance_dimension_score_id: int)->AppraisalDepartmentOutputReviewerStatus:
         try:
             qr = AppraisalDepartmentOutputReviewerStatus.objects.filter(performance_dimension_score__id=appraisee_performance_dimension_score_id)

@@ -14,11 +14,12 @@ from ...services import (AppraisalService, PerformanceReviewService,
 from ...repository import (AppraisalRepository, UserQualificationRepository, AppraisalExperienceRepository, 
                           ExperienceRepository, PerformanceReviewRepository,
                           TrainingAndDevelopmentRepository)
-from ...repository.kra import AppraisalOutPutPerformanceDimensionScoreRepository
+from ...repository.kra import AppraisalOutPutPerformanceDimensionScoreRepository, ApprasialKraReviewerStatusRepository
 from ...helpers.getters import ApprovalStagesHandler
 
 
 from ...models import PerformanceProgressReview, AppraisalExperience, TrainingAndDevelopment
+from ...models.kra import APPRAISAL_KRA_REVIEWER_STATUS_CHOICES
 from it.users.models import UserQualification, UserProfile, GRADE_CHOICES
 from ...forms import PerformanceReviewApprovalForm
 from approve.forms import ApprovalForm
@@ -176,6 +177,15 @@ class PerformanceReviewsApprovalView(SuccessMessageMixin, TemplateView):
             return False
         return True
     
+    def is_quarter_confirmed(self)-> bool:
+        repo = ApprasialKraReviewerStatusRepository()
+        qr = repo.fetch_by_appraisal_id_quarter_year(
+            year_q_id=self.kwargs.get("quarter_id"),
+            appraisal_id=self.kwargs.get("appraisal_id")
+        )
+        confirmed_qr = qr.filter(confirmation_status=APPRAISAL_KRA_REVIEWER_STATUS_CHOICES[1][1])
+        return confirmed_qr.exists()
+    
     
     def is_current_date_in_current_quarter(self, quarter_obj)->bool:
         return is_within_current_quarter(year=quarter_obj.year, quarter=quarter_obj.quarter)
@@ -187,8 +197,7 @@ class PerformanceReviewsApprovalView(SuccessMessageMixin, TemplateView):
         context.update(self.get_performance_review_forms_objects())
         context.update(self.approval_user_roles())
         quarter_obj = self.get_performance_review_object().quarter
-        
-        context["is_quarter_scored"] = self.is_quarter_scored()
+        context["is_prev_stage_completed"] = self.is_quarter_scored() and self.is_quarter_confirmed()
         context["quarter_obj"] = quarter_obj
         context["is_within_current_quarter"] = self.is_current_date_in_current_quarter(quarter_obj=quarter_obj)
         return context
