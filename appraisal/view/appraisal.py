@@ -627,8 +627,8 @@ class AppraiseePersonalAttributesDetailView(TemplateView):
         handler = CurrentQuarterDate(year=appraisal_object.created_date.year)
         return handler.get_current_quarter()
     
-    def is_all_scored(self):
-        repo = AppraisalOutPutPerformanceDimensionScoreRepository()
+    def is_prev_stage_completed(self):
+        repo = AppraiseePersonalAttributeRepository()
         current_quarter = self.get_current_quarter_type()
         data = {
             "first_quarter": False,
@@ -637,23 +637,23 @@ class AppraiseePersonalAttributesDetailView(TemplateView):
             "fourth_quarter": False,
         }
         if current_quarter.is_within_first_quarter:
-            scores_qr = repo.fetch_by_appraisal_id_quarter_num(appraisal_id=self.kwargs.get("appraisal_id"), quarter_num=1)
-            not_scored_qr = scores_qr.filter(is_scored=False)
+            qr = repo.fetch_appraisal_id_quarter_num(appraisal_id=self.kwargs.get("appraisal_id"), quarter_num=1)
+            not_scored_qr = qr.filter(is_completed=False)
             if not not_scored_qr.exists():
                 data["first_quarter"] = True
         if current_quarter.is_within_second_quarter:
-            scores_qr = repo.fetch_by_appraisal_id_quarter_num(appraisal_id=self.kwargs.get("appraisal_id"), quarter_num=2)
-            not_scored_qr = scores_qr.filter(is_scored=False)
+            qr = repo.fetch_appraisal_id_quarter_num(appraisal_id=self.kwargs.get("appraisal_id"), quarter_num=2)
+            not_scored_qr = qr.filter(is_completed=False)
             if not not_scored_qr.exists():
                 data["second_quarter"] = True
         if current_quarter.is_within_third_quarter:
-            scores_qr = repo.fetch_by_appraisal_id_quarter_num(appraisal_id=self.kwargs.get("appraisal_id"), quarter_num=3)
-            not_scored_qr = scores_qr.filter(is_scored=False)
+            qr = repo.fetch_appraisal_id_quarter_num(appraisal_id=self.kwargs.get("appraisal_id"), quarter_num=3)
+            not_scored_qr = qr.filter(is_completed=False)
             if not not_scored_qr.exists():
                 data["third_quarter"] = True
         if current_quarter.is_within_fourth_quarter:
-            scores_qr = repo.fetch_by_appraisal_id_quarter_num(appraisal_id=self.kwargs.get("appraisal_id"), quarter_num=4)
-            not_scored_qr = scores_qr.filter(is_scored=False)
+            qr = repo.fetch_appraisal_id_quarter_num(appraisal_id=self.kwargs.get("appraisal_id"), quarter_num=4)
+            not_scored_qr = qr.filter(is_completed=False)
             if not not_scored_qr.exists():
                 data["fourth_quarter"] = True
         return data
@@ -673,7 +673,7 @@ class AppraiseePersonalAttributesDetailView(TemplateView):
         context["is_detail_view"] = False
         context["appraisal_confirmation_forms"] = self.get_appraisal_confirmation_form(None)
         context["current_quarter"] = self.get_current_quarter_type()
-        context["is_all_scored"] = self.is_all_scored()
+        context["is_prev_stage_completed"] = self.is_prev_stage_completed()
 
         return context
     
@@ -908,6 +908,7 @@ class AppraiseePersonalAttributesUpdateView(TemplateView):
                     obj.satisfactory=satisfactory
                     obj.requires_improvement=requires_improvement
                     obj.unsatisfactory=unsatisfactory
+                    obj.is_completed=True
                     updated_objects.append(obj)
             if len(err_msg_list) != 0:
                 # =============== validation errors ============
@@ -1136,8 +1137,39 @@ class AppraisalDetailView(TemplateView):
         elif current_quarter.is_within_fourth_quarter:
             return 4
     
-    def is_all_scored(self):
-        repo = AppraisalOutPutPerformanceDimensionScoreRepository()
+    def is_prev_stage_completed_hr(self):
+        repo = AppraisalOverallCommentsRepository()
+        current_quarter = self.get_current_quarter_type()
+        data = {
+            "first_quarter": False,
+            "second_quarter": False,
+            "third_quarter": False,
+            "fourth_quarter": False,
+        }
+        if current_quarter.is_within_first_quarter:
+            scores_qr = repo.get_by_appraisal_id_quarter_num(appraisal_id=self.kwargs.get("appraisal_id"), quarter_number=1)
+            not_scored_qr = scores_qr.filter(is_completed=False)
+            if not not_scored_qr.exists():
+                data["first_quarter"] = True
+        if current_quarter.is_within_second_quarter:
+            scores_qr = repo.get_by_appraisal_id_quarter_num(appraisal_id=self.kwargs.get("appraisal_id"), quarter_number=2)
+            not_scored_qr = scores_qr.filter(is_completed=False)
+            if not not_scored_qr.exists():
+                data["second_quarter"] = True
+        if current_quarter.is_within_third_quarter:
+            scores_qr = repo.get_by_appraisal_id_quarter_num(appraisal_id=self.kwargs.get("appraisal_id"), quarter_number=3)
+            not_scored_qr = scores_qr.filter(is_completed=False)
+            if not not_scored_qr.exists():
+                data["third_quarter"] = True
+        if current_quarter.is_within_fourth_quarter:
+            scores_qr = repo.get_by_appraisal_id_quarter_num(appraisal_id=self.kwargs.get("appraisal_id"), quarter_number=4)
+            not_scored_qr = scores_qr.filter(is_completed=False)
+            if not not_scored_qr.exists():
+                data["fourth_quarter"] = True
+        return data
+    
+    def is_prev_stage_completed_reviewer(self):
+        repo = AppraisalConfirmationStatusRepository()
         current_quarter = self.get_current_quarter_type()
         data = {
             "first_quarter": False,
@@ -1147,23 +1179,23 @@ class AppraisalDetailView(TemplateView):
         }
         if current_quarter.is_within_first_quarter:
             scores_qr = repo.fetch_by_appraisal_id_quarter_num(appraisal_id=self.kwargs.get("appraisal_id"), quarter_num=1)
-            not_scored_qr = scores_qr.filter(is_scored=False)
-            if not not_scored_qr.exists():
+            confirmed_qr = scores_qr.filter(confirmation_status=APPRAISAL_KRA_REVIEWER_STATUS_CHOICES[2][0])
+            if confirmed_qr.exists():
                 data["first_quarter"] = True
         if current_quarter.is_within_second_quarter:
             scores_qr = repo.fetch_by_appraisal_id_quarter_num(appraisal_id=self.kwargs.get("appraisal_id"), quarter_num=2)
-            not_scored_qr = scores_qr.filter(is_scored=False)
-            if not not_scored_qr.exists():
+            confirmed_qr = scores_qr.filter(confirmation_status=APPRAISAL_KRA_REVIEWER_STATUS_CHOICES[2][0])
+            if confirmed_qr.exists():
                 data["second_quarter"] = True
         if current_quarter.is_within_third_quarter:
             scores_qr = repo.fetch_by_appraisal_id_quarter_num(appraisal_id=self.kwargs.get("appraisal_id"), quarter_num=3)
-            not_scored_qr = scores_qr.filter(is_scored=False)
-            if not not_scored_qr.exists():
+            confirmed_qr = scores_qr.filter(confirmation_status=APPRAISAL_KRA_REVIEWER_STATUS_CHOICES[2][0])
+            if not confirmed_qr.exists():
                 data["third_quarter"] = True
         if current_quarter.is_within_fourth_quarter:
             scores_qr = repo.fetch_by_appraisal_id_quarter_num(appraisal_id=self.kwargs.get("appraisal_id"), quarter_num=4)
-            not_scored_qr = scores_qr.filter(is_scored=False)
-            if not not_scored_qr.exists():
+            confirmed_qr = scores_qr.filter(confirmation_status=APPRAISAL_KRA_REVIEWER_STATUS_CHOICES[2][0])
+            if confirmed_qr.exists():
                 data["fourth_quarter"] = True
         return data
     
@@ -1184,7 +1216,8 @@ class AppraisalDetailView(TemplateView):
         context["appraisee_personal_attr_qr"] = self.get_all_quarters_apraisee_personal_attrs()
         context["final_comment_form"] = self.get_final_comment_form(None)
         context["is_within_current_quarter"] = self.is_current_date_in_current_quarter()
-        context["is_all_scored"] = self.is_all_scored()
+        context["is_prev_stage_completed_hr"] = self.is_prev_stage_completed_hr()
+        context["is_prev_stage_completed_reviewer"] = self.is_prev_stage_completed_reviewer()
         context["is_detail_view"] = True
         context["current_quarter"] = self.get_current_quarter_type()
         return context

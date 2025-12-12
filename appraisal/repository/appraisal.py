@@ -134,6 +134,12 @@ class AppraiseePersonalAttributeRepository:
             return AppraiseePersonalAttribute.objects.filter(appraisal__id=appraisal_id, quarter__id=quarter_id).select_related("personal_attribute")
         except Exception as e:
             raise Exception(f"AppraiseePersonalAttributeRepository fetch by appraisal and quarter pk: appraisa - {appraisal_id} and quarter id - {quarter_id} Repo failed with error: {e}")
+    
+    def fetch_appraisal_id_quarter_num(self, appraisal_id: int, quarter_num: int)->List[AppraiseePersonalAttribute]:
+        try:
+            return AppraiseePersonalAttribute.objects.filter(appraisal__id=appraisal_id, quarter__quarter=quarter_num).select_related("personal_attribute")
+        except Exception as e:
+            raise Exception(f"AppraiseePersonalAttributeRepository fetch_appraisal_id_quarter_num pk: appraisal - {appraisal_id} and quarter num - {quarter_num} Repo failed with error: {e}")
 
 class AppraisalOverallCommentsRepository:
     def bulk_create(self, appraisal_overall_comm_list: List[AppraisalOverallComments])->bool:
@@ -157,6 +163,13 @@ class AppraisalOverallCommentsRepository:
             raise Exception(f"[AppraisalOverallCommentsRepository] update Repo for appraisal_overall_comm_id: {appraisal_overall_comm_obj.id} failed with error: {e}")
 
     def get_by_appraisal_id_quarter_id(self, appraisal_id: int, quarter_number: int)->AppraisalOverallComments:
+        try:
+            qr = AppraisalOverallComments.objects.filter(appraisal__id=appraisal_id, quarter__quarter=quarter_number)
+            return qr.first()
+        except Exception as e:
+            raise Exception(f"[AppraisalOverallCommentsRepository] get_by_appraisal_id_quarter_id Repo for appraisal_id: {appraisal_id}, quarter num: {quarter_number}, failed with error: {e}")
+
+    def get_by_appraisal_id_quarter_num(self, appraisal_id: int, quarter_number: int)->AppraisalOverallComments:
         try:
             qr = AppraisalOverallComments.objects.filter(appraisal__id=appraisal_id, quarter__quarter=quarter_number)
             return qr.first()

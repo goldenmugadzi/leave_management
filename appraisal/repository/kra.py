@@ -500,6 +500,14 @@ class AppraisalConfirmationStatusRepository:
         except Exception as e:
             raise Exception(f"AppraisalConfirmationStatusRepository fetch_by_appraisal_id_quarter_id with pk: {appraisal_id}, failed with error: {e}")
     
+    
+    def fetch_by_appraisal_id_quarter_num(self, appraisal_id: int, quarter_num: int)->QuerySet[AppraisalConfirmationStatus]:
+        try:
+            qr = AppraisalConfirmationStatus.objects.filter(appraisal__id=appraisal_id, year_quarter__quarter=quarter_num)
+            return qr
+        except Exception as e:
+            raise Exception(f"AppraisalConfirmationStatusRepository fetch_by_appraisal_id_quarter_num with pk: {appraisal_id} quarter num: {quarter_num}, failed with error: {e}")
+    
     def update(self, appraisal_confirmation_status_obj: AppraisalConfirmationStatus, confirmation_status: str, comment: str)->AppraisalConfirmationStatus:
         try:
             is_changed = False

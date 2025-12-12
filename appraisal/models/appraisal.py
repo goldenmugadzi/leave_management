@@ -54,6 +54,7 @@ class AppraiseePersonalAttribute(TimeStamp):
     satisfactory = models.BooleanField(default=False)
     requires_improvement = models.BooleanField(default=False)
     unsatisfactory = models.BooleanField(default=False)
+    is_completed = models.BooleanField(default=False)
 
     def __str__(self):
         return f"{self.appraisal} - {self.personal_attribute} - {self.quarter}"
@@ -62,6 +63,7 @@ class AppraisalOverallComments(TimeStamp):
     appraisal = models.ForeignKey(Appraisal, on_delete=models.RESTRICT, related_name="appraisal_overall_comment")
     quarter = models.ForeignKey(YearQuarter, on_delete=models.RESTRICT, null=True, blank=True, related_name="overall_comment_quarter")
     appraiser_comment = models.TextField(null=True, blank=True)
+    is_completed = models.BooleanField(default=False)
     
     def __str__(self):
         return f"{self.appraisal}"

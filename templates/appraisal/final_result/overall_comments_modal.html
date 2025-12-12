@@ -14,7 +14,7 @@
                 </div>
                 <div class="flex justify-end mt-2 mr-8 gap-2">
 
-                    {% if is_appraiser and is_all_scored.first_quarter %}
+                    {% if is_appraiser and is_prev_stage_completed.first_quarter %}
                         {% if current_quarter.is_within_first_quarter %}
                             <button 
                                 type="submit" 
@@ -42,7 +42,7 @@
                 </div>
                 <div class="flex justify-end mt-2 mr-8 gap-2">
 
-                    {% if is_appraiser and is_all_scored.second_quarter %}
+                    {% if is_appraiser and is_prev_stage_completed.second_quarter %}
                         {% if current_quarter.is_within_second_quarter %}
                             <button 
                                 type="submit" 
@@ -70,7 +70,7 @@
                 </div>
                 <div class="flex justify-end mt-2 mr-8 gap-2">
 
-                    {% if is_appraiser and is_all_scored.third_quarter %}
+                    {% if is_appraiser and is_prev_stage_completed.third_quarter %}
                         {% if current_quarter.is_within_third_quarter %}
                             <button 
                                 type="submit" 
@@ -99,7 +99,7 @@
 
                 <div class="flex justify-end mt-2 mr-8 gap-2">
 
-                    {% if is_appraiser and is_all_scored.fourth_quarter %}
+                    {% if is_appraiser and is_prev_stage_completed.fourth_quarter %}
                         {% if current_quarter.is_within_fourth_quarter %}
                             <button 
                                 type="submit" 
