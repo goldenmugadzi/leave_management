@@ -43,6 +43,7 @@ from ..helpers.types.approval import ApprovalStageChoices
 from ..templatetags.quarter import get_current_quarter
 from ..helpers.data.approval_stage import SectionStages
 from ..helpers.getters.sections import SectionsStagesHandler
+from ..repository.training import TrainingAndDevelopmentRepository
 from .helper import ApprovalStagesTemplateHandler
 from ..helpers.setters import handle_stage_completion
 from ..helpers.data.approval_stage import ApprovalStageData
@@ -657,6 +658,7 @@ class AppraiseePersonalAttributesDetailView(TemplateView):
                 data["fourth_quarter"] = True
         return data
     
+    
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         final_rating_type = self.get_quarterly_total_score()
@@ -848,6 +850,15 @@ class AppraiseePersonalAttributesUpdateView(TemplateView):
             return False
         return True
     
+    def is_prev_stage_completed(self):
+        training_repo_handler = TrainingAndDevelopmentRepository()
+        obj = training_repo_handler.get_by_appraisal_id_quarter(
+            appraisal_id=self.kwargs.get("appraisal_id"),
+            quarter_id=self.kwargs.get("quarter_id")
+        )
+        return obj.is_completed
+        
+    
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context.update(self.approval_user_roles())
@@ -856,7 +867,7 @@ class AppraiseePersonalAttributesUpdateView(TemplateView):
         context["appraisee_grade"] = self.appraisee_grade()
         context["is_within_current_quarter"] = self.is_current_date_in_current_quarter()
         context["current_quarter_obj"] = self.get_year_quarter_obj()       
-        context["is_all_scored"] = self.is_all_scored()
+        context["is_prev_stage_completed"] = self.is_prev_stage_completed()
         context["is_detail_view"] = False
         return context
     
