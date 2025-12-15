@@ -559,12 +559,13 @@ def ace_awaiting_my_action(request):
     created_aces = Ace2.objects.none()
     processed_ace_ids = set()
 
-    # Base query for all ACEs (unfiltered)
+    # Base query for all ACEs (unfiltered) limited to current year
+    current_year = timezone.now().year
     base_query = Ace2.objects.select_related(
         'budget_id', 'requested_by', 'section', 'region', 'cost_center'
     ).prefetch_related(
         "process__approval_set", "process__workflow__step_set"
-    )
+    ).filter(date_created__year=current_year)
 
     system_wide_roles = {'fd', 'md'}
     regional_roles = {'sanction', 'approve', 'EM'}
