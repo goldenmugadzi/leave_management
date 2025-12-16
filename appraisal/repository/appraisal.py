@@ -109,7 +109,7 @@ class AppraiseePersonalAttributeRepository:
         try:
             AppraiseePersonalAttribute.objects.bulk_update(
                 updated_objects_list,
-                fields=["excellent", "very_good", "satisfactory", "requires_improvement", "unsatisfactory"]
+                fields=["excellent", "very_good", "satisfactory", "requires_improvement", "unsatisfactory", "is_completed"]
             )            
             return True
         except Exception as e:
@@ -149,13 +149,17 @@ class AppraisalOverallCommentsRepository:
         except Exception as e:
             raise Exception(f"[AppraisalOverallCommentsRepository] bulk_create Repo failed with error: {e}")
 
-    def update(self, appraisal_overall_comm_obj: AppraisalOverallComments, comment: str)->AppraisalOverallComments:
+    def update(self, appraisal_overall_comm_obj: AppraisalOverallComments, comment: str, is_completed: bool=True)->AppraisalOverallComments:
         try:
             is_changed = False
             
             if appraisal_overall_comm_obj.appraiser_comment != comment:
                 appraisal_overall_comm_obj.appraiser_comment = comment
                 is_changed = True
+            if appraisal_overall_comm_obj.is_completed != is_completed:
+                appraisal_overall_comm_obj.is_completed = is_completed
+                is_changed = True
+                
             if is_changed:
                 appraisal_overall_comm_obj.save()
             return appraisal_overall_comm_obj
