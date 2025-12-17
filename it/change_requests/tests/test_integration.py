@@ -63,6 +63,17 @@ class ChangeRequestWorkflowTestCase(TestCase):
             description='IT Section Head Role'
         )
         
+        # Assign organizational data to user profiles
+        self.user_profile.region = self.region
+        self.user_profile.cost_center = self.cost_center
+        self.user_profile.designation = self.designation
+        self.user_profile.save()
+        
+        self.approver_profile.region = self.region
+        self.approver_profile.cost_center = self.cost_center
+        self.approver_profile.designation = self.designation
+        self.approver_profile.save()
+        
         # Set up client
         self.client = Client()
     
@@ -75,6 +86,9 @@ class ChangeRequestWorkflowTestCase(TestCase):
         response = self.client.post('/change_requests/create_new_profile', {
             'change_reason': 'Need new user account',
             'change_description': 'Creating account for new employee',
+            'originator_company': 'ZETDC',
+            'originator_site': 'Harare Region',
+            'date_resolution_required': '2025-12-31',
             'username': 'newemployee',
             'first_name': 'New',
             'last_name': 'Employee',
@@ -82,7 +96,14 @@ class ChangeRequestWorkflowTestCase(TestCase):
             'designation': self.designation.id,
             'cost_center': self.cost_center.id,
             'for_application': self.application.id,
-            'roles_to_action': 'Add basic role'
+            'roles_to_action': 'Add basic role',
+            'np_ec_number': '1234567',
+            'np_job_title': 'Business Analyst',
+            'np_company': 'ZETDC',
+            'np_sub_module': 'Core',
+            'np_depot_office': 'Head Office',
+            'np_training_date': '2025-11-01',
+            'np_training_confirmation_link': 'https://example.com/training-proof'
         })
         
         # Should redirect after successful creation
@@ -90,7 +111,7 @@ class ChangeRequestWorkflowTestCase(TestCase):
         
         # Verify change request was created
         change_request = ChangeRequest.objects.filter(
-            change_type='NEW_PROFILE',
+            change_type='New Profile',
             created_by=self.user_profile
         ).first()
         
@@ -98,6 +119,8 @@ class ChangeRequestWorkflowTestCase(TestCase):
         self.assertEqual(change_request.change_reason, 'Need new user account')
         self.assertIsNotNone(change_request.new_profile)
         self.assertEqual(change_request.new_profile.username, 'newemployee')
+        self.assertEqual(change_request.originator_company, 'ZETDC')
+        self.assertEqual(change_request.new_profile.ec_number, '1234567')
     
     def test_approval_workflow(self):
         """Test complete approval workflow"""
@@ -353,6 +376,43 @@ class ChangeRequestWorkflowTestCase(TestCase):
         self.assertIsNotNone(it_approval)
         self.assertTrue(section_head_approval.approval_status)
         self.assertTrue(it_approval.approval_status)
+
+    def test_new_profile_job_title_defaults_from_designation(self):
+        """Job title should auto-populate from designation when not provided"""
+        self.client.login(username='testuser', password='testpass123')
+
+        response = self.client.post('/change_requests/create_new_profile', {
+            'change_reason': 'Need new user account',
+            'change_description': 'Creating account for new employee',
+            'originator_company': 'ZETDC',
+            'originator_site': 'Harare Region',
+            'date_resolution_required': '2025-12-31',
+            'username': 'autojobtitle',
+            'first_name': 'Auto',
+            'last_name': 'JobTitle',
+            'email': 'autojobtitle@example.com',
+            'designation': self.designation.id,
+            'cost_center': self.cost_center.id,
+            'for_application': self.application.id,
+            'roles_to_action': '',
+            'np_ec_number': '7654321',
+            'np_company': 'ZETDC',
+            'np_sub_module': '',
+            'np_depot_office': '',
+            'np_training_date': '',
+            'np_training_confirmation_link': ''
+        })
+
+        self.assertEqual(response.status_code, 302)
+
+        change_request = ChangeRequest.objects.filter(
+            change_type='New Profile',
+            created_by=self.user_profile,
+            new_profile__username='autojobtitle'
+        ).first()
+
+        self.assertIsNotNone(change_request)
+        self.assertEqual(change_request.new_profile.job_title, self.designation.description)
 
 
 class SecurityIntegrationTestCase(TestCase):

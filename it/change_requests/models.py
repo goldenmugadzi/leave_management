@@ -6,17 +6,30 @@ from it.users.models import CostCenter, Depots, Designations, Districts, Regions
 # Create your models here.
 class NewProfile(models.Model):
     username = models.CharField(max_length=15, blank=True, null=True)
+    ec_number = models.CharField(max_length=20, blank=True, null=True)
     first_name = models.CharField(max_length=100, blank=True, null=True)
     last_name = models.CharField(max_length=100, blank=True, null=True)
+    job_title = models.CharField(max_length=150, blank=True, null=True)
+    company = models.CharField(max_length=150, blank=True, null=True)
     email = models.EmailField(max_length=100, blank=True, null=True)
     designation = models.ForeignKey(Designations, on_delete=models.DO_NOTHING, blank=True, null=True)
     section = models.ForeignKey(Sections, on_delete=models.DO_NOTHING, blank=True, null=True)
     cost_center = models.ForeignKey(CostCenter, on_delete=models.DO_NOTHING, blank=True, null=True)
     district = models.ForeignKey(Districts, on_delete=models.DO_NOTHING, blank=True, null=True)
+    depot_office = models.CharField(max_length=150, blank=True, null=True)
+    sub_module = models.CharField(max_length=150, blank=True, null=True)
     roles_to_action = models.CharField(max_length=300, null=True, blank=True, default=None)
     roles_actions = models.CharField(max_length=300, null=True, blank=True, default=None)
     roles = models.ManyToManyField(Roles, blank=True)
     region = models.ForeignKey(Regions, on_delete=models.DO_NOTHING, blank=True, null=True)
+    training_date = models.DateField(blank=True, null=True)
+    training_confirmation_link = models.URLField(max_length=500, blank=True, null=True)
+    training_confirmation_notes = models.TextField(blank=True, null=True)
+    training_confirmation_attachment = models.FileField(
+        upload_to="uploads/change_requests/training_confirmations",
+        blank=True,
+        null=True
+    )
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -34,11 +47,18 @@ class ProfileChange(models.Model):
     ]
     
     user = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
+    current_user_id = models.CharField(max_length=30, blank=True, null=True)
+    ec_number = models.CharField(max_length=20, blank=True, null=True)
     application = models.CharField(max_length=100, null=True, blank=True, default=None)
     roles_to_action = models.CharField(max_length=300, null=True, blank=True, default=None)
     roles_actions = models.CharField(max_length=300, null=True, blank=True, default=None)
     role_to_assign = models.ManyToManyField(Roles, related_name='role_to_assign', blank=True, default=None)
     role_to_remove = models.ManyToManyField(Roles, related_name='role_to_remove', blank=True, default=None)
+    roles_to_assign_notes = models.TextField(blank=True, null=True)
+    roles_to_remove_notes = models.TextField(blank=True, null=True)
+    reason_assign = models.TextField(blank=True, null=True)
+    reason_remove = models.TextField(blank=True, null=True)
+    correspondence_link = models.URLField(max_length=500, blank=True, null=True)
     change_date = models.DateTimeField()
     changed_by = models.ForeignKey(UserProfile, on_delete=models.CASCADE, related_name='changed_by')
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='PENDING')
@@ -53,6 +73,16 @@ class ProfileDeactivation(models.Model):
     user = models.ForeignKey(UserProfile, on_delete=models.CASCADE)
     application = models.CharField(max_length=100, null=True, blank=True, default=None)
     deactivation_date = models.DateTimeField()
+    effective_start_date = models.DateTimeField(blank=True, null=True)
+    reactivation_date = models.DateTimeField(blank=True, null=True)
+    deactivation_reason = models.TextField(blank=True, null=True)
+    correspondence_link = models.URLField(max_length=500, blank=True, null=True)
+    correspondence_notes = models.TextField(blank=True, null=True)
+    correspondence_attachment = models.FileField(
+        upload_to="uploads/change_requests/correspondence",
+        blank=True,
+        null=True
+    )
     deactivated_by = models.ForeignKey(UserProfile, on_delete=models.CASCADE, related_name='deactivated_by')
 
     def __str__(self):
@@ -77,6 +107,9 @@ class ChangeRequest(models.Model):
     profile_deactivation = models.ForeignKey(ProfileDeactivation, on_delete=models.CASCADE, null=True, blank=True)
     change_description = models.TextField(null=True, blank=True)
     change_reason = models.TextField(null=True, blank=True)
+    originator_company = models.CharField(max_length=150, null=True, blank=True)
+    originator_site = models.CharField(max_length=150, null=True, blank=True)
+    date_resolution_required = models.DateField(null=True, blank=True)
     creator_designation = models.ForeignKey(Designations, on_delete=models.CASCADE, related_name='cr_creator_designation')
     created_by = models.ForeignKey(UserProfile, on_delete=models.CASCADE, related_name='cr_created_by')
     region = models.ForeignKey(Regions, on_delete=models.CASCADE)

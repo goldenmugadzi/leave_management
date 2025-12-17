@@ -7,6 +7,7 @@ from django.http import FileResponse, HttpResponseForbidden, HttpResponseNotFoun
 from django.views import View
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.utils import timezone
 
 from beii_v1 import settings
 from .models import *
@@ -420,69 +421,188 @@ def view_files(request, category):
     files = category_obj.document_set.all()
     return render(request, 'competence_building/files.html', {'files': files})
 
+def _get_profile_display_name(profile):
+    """
+    Returns a best-effort string representation for the uploaded_by/created_by field.
+    """
+    if not profile:
+        return "Unknown"
+
+    # Try explicit helper first (covers AbstractUser descendants)
+    try:
+        full_name = profile.get_full_name()
+        if full_name:
+            return full_name
+    except AttributeError:
+        pass
+
+    # Fallback to manually composed name fields
+    first_name = getattr(profile, "first_name", "")
+    last_name = getattr(profile, "last_name", "")
+    if first_name or last_name:
+        return f"{first_name} {last_name}".strip()
+
+    username = getattr(profile, "username", None)
+    if username:
+        return username
+
+    full_name_attr = getattr(profile, "full_name", None)
+    if full_name_attr:
+        return full_name_attr
+
+    return str(profile)
+
+
+def _build_document_dashboard(documents_queryset):
+    """
+    Serializes Document queryset data for the dashboard and prepares filter metadata.
+    """
+    documents_payload = []
+    categories = set(
+        Category.objects.order_by("name").values_list("name", flat=True)
+    )
+    subcategories = set(
+        Subcategory.objects.order_by("name").values_list("name", flat=True)
+    )
+    regions = set()
+    totals = {"all": 0, "active": 0, "archived": 0}
+
+    for document in documents_queryset:
+        category_name = "Uncategorised"
+        try:
+            if document.category:
+                category_name = document.category.name
+        except Category.DoesNotExist:
+            pass
+
+        subcategory_name = "None"
+        try:
+            if document.subcategory:
+                subcategory_name = document.subcategory.name
+        except Subcategory.DoesNotExist:
+            pass
+
+        region_name = "Unassigned"
+        try:
+            if document.region:
+                region_name = getattr(document.region, "name", str(document.region))
+        except Exception:
+            pass
+
+        file_name = "—"
+        file_url = ""
+        if getattr(document, "file", None):
+            try:
+                file_name = os.path.basename(document.file.name)
+                file_url = document.file.url
+            except ValueError:
+                # File might not exist on disk yet but keep blank url
+                file_name = document.file.name or file_name
+
+        status_label = "Archived" if document.archive else "Active"
+        created_at_local = timezone.localtime(document.created_at) if document.created_at else None
+        created_at_display = created_at_local.strftime("%Y-%m-%d %H:%M") if created_at_local else ""
+
+        documents_payload.append(
+            {
+                "id": document.id,
+                "category": category_name,
+                "name": document.name or file_name,
+                "region": region_name,
+                "sub_category": subcategory_name,
+                "file_name": file_name,
+                "file_url": file_url,
+                "archive": document.archive,
+                "status_label": status_label,
+                "created_by": _get_profile_display_name(document.created_by),
+                "created_at": created_at_display,
+            }
+        )
+
+        categories.add(category_name)
+        subcategories.add(subcategory_name)
+        regions.add(region_name)
+
+        totals["all"] += 1
+        if document.archive:
+            totals["archived"] += 1
+        else:
+            totals["active"] += 1
+
+    category_list = sorted(filter(None, categories))
+    subcategory_list = sorted(filter(None, subcategories))
+    region_list = sorted(filter(None, regions))
+
+    return {
+        "documents": documents_payload,
+        "categories": category_list,
+        "subcategories": subcategory_list,
+        "regions": region_list,
+        "totals": totals,
+    }
+
+
 @login_required
 def uploaded_jobs_view(request):
-    # Fetches job descriptions and renders them in a table.
-    documents = Document.objects.filter(archive=False).all()  # Fetch all documents
-    files_list = []
-    try:
-        for file in documents:
-            subcategory = None
-            try:
-                subcategory = file.subcategory
-            except:
-                subcategory = "None"
-                
-            new_file = {
-            "id":file.id,
-            "category": file.category,
-            "sub_category":subcategory,
-            "region": file.region,
-            "archive": file.archive,
-            "name": file.name,
-            "file": file.file,
-            "created by": file.created_by,
-            "created at": file.created_at,
-            }
-            files_list.append(new_file)
-    except Exception as e:
-        print(e)
-    
-    context = json.dumps(files_list, default=str)
+    """
+    Unified dashboard view for all competence documents.
+    """
+    category_filter = request.GET.get("category", "").strip()
+    subcategory_filter = request.GET.get("subcategory", "").strip()
+    region_filter = request.GET.get("region", "").strip()
 
-    return render(request, 'competence_building/competence_index.html', {"context": context, 'page':'competence_index'})
+    documents = (
+        Document.objects.select_related("category", "subcategory", "region", "created_by")
+        .all()
+        .order_by("-created_at")
+    )
+    dashboard_data = _build_document_dashboard(documents)
+
+    context = {
+        "documents_json": json.dumps(dashboard_data["documents"], default=str),
+        "categories": dashboard_data["categories"],
+        "subcategories": dashboard_data["subcategories"],
+        "regions": dashboard_data["regions"],
+        "totals": dashboard_data["totals"],
+        "page": "competence_index",
+        "default_status": "all",
+        "default_filters": {
+            "category": category_filter,
+            "subcategory": subcategory_filter,
+            "region": region_filter,
+        },
+    }
+
+    return render(request, "competence_building/competence_index.html", context)
 
 @login_required
 def archived_documents(request):
-    # Fetches job descriptions and renders them in a table.
-    documents = Document.objects.filter(archive=True).all()  # Fetch all documents
-    files_list = []
-    try:
-        for file in documents:
-            subcategory = None
-            try:
-                subcategory = file.subcategory
-            except:
-                subcategory = "None"
-                
-            new_file = {
-            "id":file.id,
-            "region": file.region,
-            "category": file.category,
-            "sub_category":subcategory,
-            "archive": file.archive,
-            "file": file.file,
-            "name": file.name,
-            "created by": file.created_by,
-            "created at": file.created_at,
-            }
-            files_list.append(new_file)
-    except Exception as e:
-        print(e)
-    
-    context = json.dumps(files_list, default=str)
-#     context = {'documents': documents}
-    return render(request, 'competence_building/competence_index.html', {"context": context})
+    """
+    Archived view reuses the unified dashboard but defaults the status filter to archived.
+    """
+    documents = (
+        Document.objects.select_related("category", "subcategory", "region", "created_by")
+        .all()
+        .order_by("-created_at")
+    )
+    dashboard_data = _build_document_dashboard(documents)
+
+    context = {
+        "documents_json": json.dumps(dashboard_data["documents"], default=str),
+        "categories": dashboard_data["categories"],
+        "subcategories": dashboard_data["subcategories"],
+        "regions": dashboard_data["regions"],
+        "totals": dashboard_data["totals"],
+        "page": "archived",
+        "default_status": "archived",
+        "default_filters": {
+            "category": request.GET.get("category", "").strip(),
+            "subcategory": request.GET.get("subcategory", "").strip(),
+            "region": request.GET.get("region", "").strip(),
+        },
+    }
+
+    return render(request, "competence_building/competence_index.html", context)
 
 @login_required
 def archive_file(request, file_id):

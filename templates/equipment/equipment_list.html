@@ -19,7 +19,7 @@
             <tr>
               <th>ID</th>
               <th>Type</th>
-              <th>substation</th>
+              <th>Description</th>
               <th>Date</th>
               <th>Cost Center</th>
               <th>Customer</th>
@@ -63,7 +63,7 @@
   $(document).ready(function () {
     $("#equipments").DataTable({
       "pageLength": 10,
-      "columnDefs": [{ "orderable": true, "targets": [0, 1, 2] }],
+      "columnDefs": [{ "orderable": true, "targets": [0, 1, 2,3,4] }],
       "responsive": true,
       "searching": true,
       language: {

@@ -1,435 +1,295 @@
-<!--users/templates/users/add_cr.cr.user.html-->
+{% extends 'admin_layout.html' %}
+{% load custom_filters %}
+{% load static %}
 
-{% extends 'admin_layout.html' %} 
-{% load custom_filters %} 
 {% block styles %}
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+{% endblock styles %}
 
-<link
-  rel="stylesheet"
-  href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css"
-/>
-<style>
-  .dataTables_wrapper .dataTables_length select {
-    width: 4rem;
-  }
-  table {
-    border-collapse: collapse;
-    width: 100%;
-  }
-  th,
-  td {
-    border: 1px solid gray; /* Change border color to gray */
-    padding: 8px;
-    text-align: left;
-  }
-  tr:nth-child(even) {
-    background-color: #f2f2f2;
-  }
-  .upload-button {
-    background-color: #333;
-    color: white;
-    padding: 10px 20px;
-    border: none;
-    border-radius: 4px;
-    font-size: 16px;
-    cursor: pointer;
-    margin-bottom: 10px;
-  }
-</style>
-
-{% endblock styles %} 
 {% block content %}
-
 <div class="content-wrapper">
-  <div
-    class="bg-gulf-blue-100 shadow shadow-gulf-blue-200 text-gray-900 rounded px-2 py-2"
-  >
-    <!-- component -->
-    <div x-data="{ openTab: 1 }" class="p-8">
-      <div class="">
+  <div class="container-fluid">
+    <!-- Page Header -->
+    {% include 'change_requests/components/layout/page_header.html' with title="Edit New Profile Request" subtitle="Update new profile change request details" back_url="/change_requests/change_request_index" back_text="Back to Dashboard" %}
 
-        <div
-          x-show="openTab === 1"
-          class="transition-all duration-300 bg-white p-4 rounded-lg shadow-md border-l-4 border-blue-600"
-        >
-          <form method="post" action="/change_requests/update_new_profile_request">
-            {% csrf_token %}
-            <div class="space-y-12 px-5 py-5">
-              <div class="mt-10 border-b border-gray-900/10 pb-12">
-                <h2 class="text-base font-semibold leading-7 text-gray-900">
-                  New Profile Change Request
-                </h2>
-                <p class="mt-1 text-sm leading-6 text-gray-600">
-                  New profile request details.
-                </p>
-                <input
-                  type="hidden"
-                  name="cr_id"
-                  value="{{cr.cr_id}}"
-                />
-                <div class="mt-10 grid grid-cols-1 gap-4">
-                  <div>
-                    <label
-                      for="change_reason"
-                      class="block text-sm font-medium leading-6 text-gray-900"
-                      >Reason for Change</label
-                    >
-                    <div class="mt-2">
+    <!-- Main Layout -->
+    <div class="max-w-6xl mx-auto">
+      <div class="flex flex-col lg:flex-row gap-6">
+        <!-- Main Content -->
+        <div class="flex-1">
+          <div class="bg-white border border-gray-200 rounded-lg shadow-sm">
+            <div class="px-6 py-4 border-b border-gray-200">
+              <h3 class="text-lg font-medium text-gray-900">Change Request Details</h3>
+            </div>
+            
+            <form method="post" action="/change_requests/update_new_profile_request" enctype="multipart/form-data">
+              {% csrf_token %}
+              <input type="hidden" name="cr_id" value="{{cr.cr_id}}" />
+              
+              <div class="p-6 space-y-6">
+                <!-- Section A -->
+                <section class="border-t border-gray-200 pt-6">
+                  <div class="flex items-center justify-between mb-4">
+                    <h4 class="text-lg font-semibold text-gray-900">
+                      Section A - Change Request Originator
+                    </h4>
+                    <p class="text-sm text-gray-500">
+                      Matches Section A on the IT Change Request form.
+                    </p>
+                  </div>
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="mb-6">
+                      <label for="originator_company" class="block text-sm font-medium text-gray-700 mb-2">
+                        Company <span class="text-red-500">*</span>
+                      </label>
                       <input
                         type="text"
-                        value="{{cr.change_reason}}"
-                        name="change_reason"
-                        id="change_reason"
-                        autocomplete="change_reason"
-                        required
-                        class="block w-full bg-gulf-blue-50 rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                        name="originator_company"
+                        id="originator_company"
+                        value="{{ cr.originator_company|default_if_none:'' }}"
+                        class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus-border-blue-500"
+                        placeholder="Enter the company of the change request originator"
                       />
+                      <p class="mt-1 text-sm text-gray-500">
+                        Typically reflects your business unit; edit if the requester differs.
+                      </p>
                     </div>
-                  </div>
-
-                  <div class="w-50">
-                    <label
-                      for="change_description"
-                      class="block text-sm font-medium leading-6 text-gray-900"
-                      >Change Description</label
-                    >
-                    <div class="mt-2">
-                      <textarea
-                        type="text"
-                        name="change_description"
-                        id="change_description"
-                        autocomplete="change_description"
-                        class="block w-full bg-gulf-blue-50 rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                      >{{cr.change_description}}</textarea>
-                    </div>
-                  </div>
-
-                  {% comment %} roles to action {% endcomment %}
-                  <div class="mt-3 grid grid-cols-1 gap-4">
-                    <div>
-                      <label
-                        for="roles_to_action"
-                        class="block text-sm font-medium leading-6 text-gray-900"
-                        >Roles to Action</label
-                      >
-                      <div class="mt-2">
-                        <textarea
-                          type="text"
-                          name="roles_to_action"
-                          id="roles_to_action"
-                          autocomplete="roles_to_action"
-                          class="block w-full bg-gulf-blue-50 rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                        >{{cr.user.roles_to_action}}</textarea>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div class="w-50">
-                    <label
-                      for="created_by"
-                      class="block text-sm font-medium leading-6 text-gray-900"
-                      >Creator</label
-                    >
-                    <div class="mt-2">
+                    <div class="mb-6">
+                      <label for="originator_site" class="block text-sm font-medium text-gray-700 mb-2">
+                        Site / Location <span class="text-red-500">*</span>
+                      </label>
                       <input
-                        disabled
                         type="text"
-                        value="{{cr.created_by}}"
-                        name="created_by"
-                        id="created_by"
-                        autocomplete="created_by"
-                        class="block w-full bg-gulf-blue-50 rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                        name="originator_site"
+                        id="originator_site"
+                        value="{{ cr.originator_site|default_if_none:'' }}"
+                        class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus-border-blue-500"
+                        placeholder="Enter the site or location for this request"
                       />
+                      <p class="mt-1 text-sm text-gray-500">
+                        Prefilled with your location; adjust when submitting on behalf of another site.
+                      </p>
                     </div>
-                  </div>
-
-                  <div class="w-50">
-                    <label
-                      for="creator_designation"
-                      class="block text-sm font-medium leading-6 text-gray-900"
-                      >Creator Designation</label
-                    >
-                    <div class="mt-2">
+                    <div class="mb-6">
+                      <label for="originator_name_display" class="block text-sm font-medium text-gray-700 mb-2">
+                        Originator
+                      </label>
                       <input
-                        disabled
                         type="text"
-                        value="{{cr.creator_designation}}"
-                        name="creator_designation"
-                        id="creator_designation"
-                        autocomplete="creator_designation"
-                        class="block w-full bg-gulf-blue-50 rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                        id="originator_name_display"
+                        value="{{ cr.created_by|default:request.user.get_full_name }}"
+                        readonly
+                        class="block w-full border border-gray-200 bg-gray-50 rounded-md px-3 py-2 text-gray-900"
                       />
+                      <p class="mt-1 text-sm text-gray-500">
+                        Taken from the original requester; override in correspondence if needed.
+                      </p>
                     </div>
-                  </div>
-
-                  <div class="w-50">
-                    <label
-                      for="created_at"
-                      class="block text-sm font-medium leading-6 text-gray-900"
-                      >Date Created</label
-                    >
-                    <div class="mt-2">
+                    <div class="mb-6">
+                      <label for="originator_designation_display" class="block text-sm font-medium text-gray-700 mb-2">
+                        Designation
+                      </label>
                       <input
-                        disabled
                         type="text"
-                        value="{{cr.created_at}}"
-                        name="created_at"
-                        id="created_at"
-                        autocomplete="created_at"
-                        class="block w-full bg-gulf-blue-50 rounded-md border-0 py-1.5 px-2 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                        id="originator_designation_display"
+                        value="{{ cr.creator_designation|default_if_none:'Not provided' }}"
+                        readonly
+                        class="block w-full border border-gray-200 bg-gray-50 rounded-md px-3 py-2 text-gray-900"
                       />
+                      <p class="mt-1 text-sm text-gray-500">
+                        Shown for reference; approvals capture the official authorisation.
+                      </p>
+                    </div>
+                    <div class="mb-6">
+                      <label for="date_raised_display" class="block text-sm font-medium text-gray-700 mb-2">
+                        Date Raised
+                      </label>
+                      <input
+                        type="text"
+                        id="date_raised_display"
+                        value="{{ cr.created_at|date:'Y-m-d' }}"
+                        readonly
+                        class="block w-full border border-gray-200 bg-gray-50 rounded-md px-3 py-2 text-gray-900"
+                      />
+                      <p class="mt-1 text-sm text-gray-500">
+                        Original submission date (read-only).
+                      </p>
+                    </div>
+                    <div class="mb-6">
+                      <label for="date_resolution_required" class="block text-sm font-medium text-gray-700 mb-2">
+                        Date Resolution Required <span class="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="date"
+                        name="date_resolution_required"
+                        id="date_resolution_required"
+                        value="{{ cr.date_resolution_required|date:'Y-m-d' }}"
+                        class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus-border-blue-500"
+                      />
+                      <p class="mt-1 text-sm text-gray-500">
+                        Provide the required completion date for this change.
+                      </p>
                     </div>
                   </div>
+                </section>
 
-                    <div class="space-y-12 px-5 py-5">
-                      <div class="mt-10 border-b border-gulf-blue-900/10 pb-12">
-                        <h2
-                          class="text-base font-semibold leading-7 text-gulf-blue-900"
-                        >
-                          User Information
-                        </h2>
-                        <p class="mt-1 text-sm leading-6 text-gulf-blue-900">
-                          Update relevant fields.
-                        </p>
 
-                        <div class="mt-10 grid grid-cols-3 gap-4">
-                          <div>
-                            <label
-                              for="firstname"
-                              class="block text-sm font-medium leading-6 text-gray-900"
-                              >First name</label
-                            >
-                            <div class="mt-2">
-                              <input
-                                type="text"
-                                name="firstname"
-                                id="firstname"
-                                value="{{cr.user.firstname}}"
-                                autocomplete="firstname"
-                                required
-                                class="block w-full bg-gulf-blue-50 rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                              />
-                            </div>
-                          </div>
+                <!-- Section C -->
+                <div class="border border-gray-200 rounded-md p-4">
+                  <div class="flex items-center justify-between mb-4">
+                    <h4 class="text-base font-semibold text-gray-900">Section C – Creation of New Profile</h4>
+                    <span class="text-xs text-gray-500">Complete the new profile information</span>
+                  </div>
 
-                          <div>
-                            <label
-                              for="lastname"
-                              class="block text-sm font-medium leading-6 text-gray-900"
-                              >Last name</label
-                            >
-                            <div class="mt-2">
-                              <input
-                                type="text"
-                                name="lastname"
-                                id="lastname"
-                                value="{{cr.user.lastname}}"
-                                autocomplete="family-name"
-                                required
-                                class="block w-full bg-gulf-blue-50 rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                              />
-                            </div>
-                          </div>
-
-                          <div>
-                            <label
-                              for="username"
-                              class="block text-sm font-medium leading-6 text-gray-900"
-                              >Username</label
-                            >
-                            <div class="mt-2">
-                              <input
-                                type="text"
-                                name="username"
-                                id="username"
-                                value="{{cr.user.username}}"
-                                autocomplete="family-name"
-                                required
-                                class="block w-full bg-gulf-blue-50 rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                              />
-                            </div>
-                          </div>
-
-                          <div>
-                            <label
-                              for="designation"
-                              class="block text-sm font-medium leading-6 text-gray-900"
-                              >Designations</label
-                            >
-                            <div class="mt-2">
-                              <select
-                                id="designation"
-                                name="designation"
-                                autocomplete="designation"
-                                required
-                                class="block w-full bg-gulf-blue-50 rounded-md border-0 px-2 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
-                              >
-                                {% if cr.user.designation %}
-                                <option value="{{cr.user.designation.id}}">
-                                  {{cr.user.designation.description}}
-                                </option>
-                                {% endif %}
-                                <option>Select Designation</option>
-                                {% for design in user_designations %}
-                                <option value="{{design.id}}">
-                                  {{design.description}}
-                                </option>
-                                {% endfor %}
-                              </select>
-                            </div>
-                          </div>
-
-                          <div>
-                            <label
-                              for="email"
-                              class="block text-sm font-medium leading-6 text-gray-900"
-                              >Email address</label
-                            >
-                            <div class="mt-2">
-                              <input
-                                id="email"
-                                name="email"
-                                type="email"
-                                value="{{cr.user.email}}"
-                                autocomplete="email"
-                                class="block w-full bg-gulf-blue-50 rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
-                              />
-                            </div>
-                          </div>
-
-                          <div>
-                            <label
-                              for="region"
-                              class="block text-sm font-medium leading-6 text-gray-900"
-                              >Region</label
-                            >
-                            <div class="mt-2">
-                              <select
-                                id="region"
-                                name="region"
-                                autocomplete="region"
-                                required
-                                class="block w-full bg-gulf-blue-50 rounded-md border-0 px-2 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
-                              >
-                                {% if cr.user.region %}
-                                <option value="{{ cr.user.region.id }}" selected>
-                                  {{ cr.user.region.region }}
-                                </option>
-                                {% endif %}
-                                <option>Select Region</option>
-                                {% for region in regions %}
-                                <option value="{{region.id}}">
-                                  {{region.region}}
-                                </option>
-                                {% endfor %}
-                              </select>
-                            </div>
-                          </div>
-
-                          <div>
-                            <label
-                              for="cost_center"
-                              class="block text-sm font-medium leading-6 text-gray-900"
-                              >Cost Centre</label
-                            >
-                            <div class="mt-2">
-                              <select
-                                id="cost_center"
-                                name="cost_center"
-                                autocomplete="cost_center"
-                                required
-                                class="block w-full bg-gulf-blue-50 rounded-md border-0 px-2 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:max-w-xs sm:text-sm sm:leading-6"
-                              >
-                                {% if cr.user.cost_center %}
-                                <option value="{{cr.user.cost_center.id}}">
-                                  {{cr.user.cost_center.name}}
-                                </option>
-                                {% endif %}
-                                <option>Select Cost Centre</option>
-                                {% for cost_center in cost_centers %}
-                                <option value="{{cost_center.id}}">
-                                  {{cost_center.name}}
-                                </option>
-                                {% endfor %}
-                              </select>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
+                  {% if cr_type_schema.edit_partial %}
+                    {% include cr_type_schema.edit_partial %}
+                  {% endif %}
                 </div>
-              </div>
-            </div>
 
-            <div class="flex mt-10 px-3 py-3">
-              <div style="width: 50%">
-                <button
-                  style="width: 100%"
-                  class="text-sm font-semibold leading-6 text-gray-900"
+              <!-- Action Buttons -->
+              <div class="flex justify-between px-6 py-4 border-t border-gray-200 bg-gray-50">
+                <a
+                  href="/change_requests/change_request_index"
+                  class="inline-flex items-center px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors"
                 >
-                  CANCEL
-                </button>
-              </div>
-              <div style="width: 50%">
+                  <i class="fas fa-arrow-left mr-2"></i> Back to Dashboard
+                </a>
+                
                 <button
-                  style="width: 100%"
                   type="submit"
-                  class="rounded-md bg-blue-925 hover:bg-blue-550 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                  class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
                 >
-                  UPDATE CHANGE REQUEST
+                  <i class="fas fa-save mr-2"></i> Save Changes
                 </button>
               </div>
-            </div>
-          </form>
+            </form>
+          </div>
         </div>
+
+        <!-- Info Panel -->
+        {% include 'change_requests/components/ui/info_panel.html' with title="Edit Information" cr_id=cr.cr_id cr_type=change_request.change_type status=change_request.overall_status created_date=cr.created_at items=info_items %}
       </div>
     </div>
   </div>
 </div>
-{% endblock %} {% block scripts %}
+
+{% endblock content %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 <script>
-  $(document).ready(() => {
-    const region = document.getElementById("region");
-    const cost_center = document.getElementById("cost_center");
-
-    region.addEventListener("change", (e) => {
-      const regionId = e.target.value;
-      fetch(`{{BASE_URL}}/users/filtered_centers/${regionId}`)
-        .then((res) => res.json())
-        .then((data) => {
-          console.log("var: ", data);
-          cost_center.innerHTML = "<option>Select Cost Centre</option>";
-          data.forEach((_cost_center) => {
-            cost_center.innerHTML += `<option value="${_cost_center.id}">${_cost_center.name}</option>`;
-          });
-        });
+  $(document).ready(function() {
+    // Initialize Select2
+    $(".select2").select2({
+      placeholder: "Select an option",
+      allowClear: true,
+      width: "100%"
     });
 
-    region.addEventListener("change", (e) => {
-      const regionId = e.target.value;
-      fetch(`{{BASE_URL}}/users/filtered_districts/${regionId}`)
-        .then((res) => res.json())
-        .then((data) => {
-          console.log("var: ", data);
-          district.innerHTML = "<option>Select District</option>";
-          data.forEach((_district) => {
-            district.innerHTML += `<option value="${_district.id}">${_district.district}</option>`;
-          });
-        });
-    });
+    const $designationSelect = $("#designation");
+    const $jobTitleField = $("#np_job_title");
+    const $costCenterSelect = $("#cost_center");
+    const $depotField = $("#np_depot_office");
+    const JOB_TITLE_SENTINEL = "Select Designation";
+    const DEPOT_SENTINEL = "Select Cost Centre";
 
-    district.addEventListener("change", (e) => {
-      const districtId = e.target.value;
-      fetch(`{{BASE_URL}}/users/filtered_depots/${districtId}`)
-        .then((res) => res.json())
-        .then((data) => {
-          console.log("depots: ", data);
-          depot.innerHTML = "<option>Select Depot</option>";
-          data.forEach((_depot) => {
-            depot.innerHTML += `<option value="${_depot.id}">${_depot.depot}</option>`;
-          });
-        });
+    if (($jobTitleField.val() || "").trim() === JOB_TITLE_SENTINEL) {
+      $jobTitleField.val("").data("manualEntry", false).data("autofilled", false);
+    }
+    if (($depotField.val() || "").trim() === DEPOT_SENTINEL) {
+      $depotField.val("");
+    }
+ 
+     function autoFillJobTitle() {
+       if (!$designationSelect.length || !$jobTitleField.length) return;
+       const selectedText = ($designationSelect.find("option:selected").text() || "").trim();
+       let currentValue = ($jobTitleField.val() || "").trim();
+       if (currentValue === JOB_TITLE_SENTINEL) {
+         currentValue = "";
+         $jobTitleField.val("");
+         $jobTitleField.data("manualEntry", false).data("autofilled", false);
+       }
+       const shouldAutofill = !$jobTitleField.data("manualEntry") && selectedText;
+
+       console.debug("[Edit NP] autoFillJobTitle", { selectedText, currentValue, manualEntry: $jobTitleField.data("manualEntry"), shouldAutofill });
+ 
+       if (shouldAutofill && (!currentValue || $jobTitleField.data("autofilled"))) {
+         $jobTitleField.val(selectedText);
+         $jobTitleField.data("autofilled", true);
+         console.debug("[Edit NP] autoFillJobTitle", "set to designation", selectedText, { finalValue: $jobTitleField.val() });
+       } else if (!selectedText && !$jobTitleField.data("manualEntry")) {
+         $jobTitleField.val("");
+         $jobTitleField.data("autofilled", false);
+         console.debug("[Edit NP] autoFillJobTitle", "cleared due to empty designation");
+       }
+     }
+ 
+     $designationSelect.on("change", function () {
+       if (!$jobTitleField.data("manualEntry")) {
+         $jobTitleField.data("autofilled", !$jobTitleField.val());
+       }
+       autoFillJobTitle();
+     });
+
+    $(document).on("select2:select select2:clear", "#designation", function () {
+      if (!$jobTitleField.data("manualEntry")) {
+        $jobTitleField.data("autofilled", !$jobTitleField.val());
+      }
+      autoFillJobTitle();
     });
-  });
-</script>
-{% endblock %}
+ 
+     $jobTitleField.on("input", function () {
+       const hasValue = !!$(this).val().trim();
+       $(this).data("manualEntry", hasValue);
+       if (!hasValue) {
+         $(this).data("autofilled", false);
+         autoFillJobTitle();
+       }
+     });
+ 
+     function autoFillDepot() {
+       if (!$costCenterSelect.length || !$depotField.length) return;
+       let depotValue = ($depotField.val() || "").trim();
+       if (depotValue === DEPOT_SENTINEL) {
+         depotValue = "";
+         $depotField.val("");
+       }
+       if (depotValue) {
+         console.debug("[Edit NP] autoFillDepot", "existing value retained", depotValue);
+         return;
+       }
+       const selectedCostCenter = ($costCenterSelect.find("option:selected").text() || "").trim();
+       console.debug("[Edit NP] autoFillDepot", { selectedCostCenter });
+       if (!selectedCostCenter || selectedCostCenter === DEPOT_SENTINEL) {
+         console.debug("[Edit NP] autoFillDepot", "skipping due to placeholder");
+         return;
+       }
+       if (selectedCostCenter) {
+         $depotField.val(selectedCostCenter);
+         console.debug("[Edit NP] autoFillDepot", "set from cost centre", selectedCostCenter);
+       } else {
+         console.debug("[Edit NP] autoFillDepot", "no cost centre selected");
+       }
+     }
+ 
+     $costCenterSelect.on("change", function () {
+       console.debug("[Edit NP] cost_center change", { value: $(this).val(), text: $(this).find("option:selected").text() });
+       if (!($depotField.val() || "").trim()) {
+         autoFillDepot();
+       }
+     });
+
+    $(document).on("select2:select select2:clear", "#cost_center", function () {
+      const selectedOption = $(this).find("option:selected");
+      console.debug("[Edit NP] cost_center select2 event", { value: selectedOption.val(), text: selectedOption.text() });
+      if (!($depotField.val() || "").trim()) {
+        autoFillDepot();
+      }
+    });
+ 
+     autoFillJobTitle();
+     autoFillDepot();
+    console.debug("[Edit NP] init complete");
+   });
+ </script>
+{% endblock scripts %}

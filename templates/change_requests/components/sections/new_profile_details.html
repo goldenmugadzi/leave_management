@@ -1,0 +1,17 @@
+<!-- New Profile Details Section -->
+
+<!-- Roles to Action (if IT can edit) -->
+{% if requestor_role == "it_section_head" and it_section_head_awaiting_action and section_head_awaiting_action == False and it_section_head_allowed == True %}
+<div class="bg-green-50 border border-green-200 rounded-md p-4">
+  <label for="roles_actions" class="block text-sm font-medium text-gray-900 mb-2">
+    Roles Implemented <span class="text-red-500">*</span>
+  </label>
+  <textarea 
+    name="roles_actions" 
+    id="roles_actions" 
+    rows="3"
+    class="block w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+  >{% if cr.user.roles_actions %}{{cr.user.roles_actions}}{% endif %}</textarea>
+  <p class="mt-1 text-sm text-gray-500">Enter the roles that were actually implemented for this user</p>
+</div>
+{% endif %}

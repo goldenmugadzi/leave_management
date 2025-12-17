@@ -44,7 +44,13 @@ class OutPutPerformanceDimensionUpdateForm(forms.ModelForm):
         fields = ["performance_indicator", "description", "weight", "allowable_variance", "agreed_target"]
 
     def __init__(self, *args, **kwargs):
+        is_quality_indicator = kwargs.pop("is_quality_indicator", False)
         super().__init__(*args, **kwargs)
+        
+        if is_quality_indicator:
+            self.fields["allowable_variance"].widget = forms.HiddenInput()
+            self.fields["agreed_target"].widget = forms.HiddenInput()
+        
         self.fields['performance_indicator'].disabled = True
         
 

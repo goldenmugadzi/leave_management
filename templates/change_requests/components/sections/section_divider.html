@@ -1,0 +1,8 @@
+<!-- Section Divider Component -->
+<div class="border-t border-gray-200 pt-6 {% if extra_class %}{{ extra_class }}{% endif %}">
+  {% if title %}
+  <h4 class="text-lg font-medium text-gray-900 mb-4">{{ title }}</h4>
+  {% endif %}
+  {% block section_content %}{% endblock %}
+</div>
+

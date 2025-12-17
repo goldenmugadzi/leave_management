@@ -1,4 +1,5 @@
 from datetime import datetime, date
+from os import remove
 from os.path import basename
 from random import randrange
 
@@ -40,6 +41,7 @@ from fault_locator.central_roles import FaultLocatorRoleManager
 from it.users.models import UserProfile, Application, Roles
 from .views_enhanced import ace_report_detail_csv_enhanced as _ace_report_detail_csv_enhanced
 
+
 def get_parent_cost_center(cost_centers):
     """Get the parent cost center from a list of cost centers."""
     parent = None
@@ -47,6 +49,7 @@ def get_parent_cost_center(cost_centers):
         if cost_center.parent in cost_centers:
             parent = cost_center.parent
     return parent
+
 
 # Create your views here.
 @login_required
@@ -96,11 +99,11 @@ def Ace_detail(request, Ace_id2):
                 # Reverse the budget allocation by returning the amount
                 budget.to_be_withdrawn = budget.to_be_withdrawn - ace_item.amount
                 budget.save()
-                
+
                 # Mark transaction as rejected to prevent repeated reversal
                 transaction.approval_status = "Rejected"
                 transaction.save()
-                
+
                 # Notify the requester
                 user = ace_item.requested_by
                 if user:
@@ -108,7 +111,7 @@ def Ace_detail(request, Ace_id2):
                     msg = f"Your ACE {ace_item.Ace_id2} has been rejected. Allocated funds have been released."
                     url = f"/ace/ace_detail/{ace_item.Ace_id2}"
                     notify_user(userp, msg, "ACE", url, ace_item.Ace_id2, request)
-                    
+
                 # Show a message to the current user
                 sweetify.info(request, f"ACE {ace_item.Ace_id2} was rejected. Budget has been adjusted.")
 
@@ -130,29 +133,30 @@ def Ace_detail(request, Ace_id2):
         if form.is_valid():
             approved = form.cleaned_data['approved']
             remarks = form.cleaned_data['remarks']
-            
+
             if approved == 'Approved':
                 # Notify the requester about this approval step
                 user = ace_item.requested_by
                 if user:
                     userp = UserProfile.objects.filter(id=user.id).first()
-                    
+
                     # Get step information for the notification message
                     try:
                         latest_approval = ace_item.process.approval_set.last()
                         if latest_approval:
                             current_step = latest_approval.step.step
                             total_steps = ace_item.process.workflow.step_set.count()
-                            approver_role = request.user.designation.description if hasattr(request.user, 'designation') else "Approver"
-                            
+                            approver_role = request.user.designation.description if hasattr(request.user,
+                                                                                            'designation') else "Approver"
+
                             msg = f"Your ACE {ace_item.Ace_id2} has been approved by {approver_role} (Step {current_step}/{total_steps})"
                             url = f"/ace/ace_detail/{ace_item.Ace_id2}"
                             notify_user(userp, msg, "ACE", url, ace_item.Ace_id2, request)
-                            
+
                             sweetify.success(request, f"ACE {ace_item.Ace_id2} approved and requester notified")
                     except Exception as e:
                         print(f"Error sending notification: {e}")
-    
+
     approvalForm = None
     to = None
     user_roles = request.user.roles.all()  # Accessing the user's roles through the 'roles' attribute
@@ -286,6 +290,7 @@ def generate_unique_ace_id2():
         if not Ace2.objects.filter(Ace_id2=ace_id2).exists():
             return ace_id2
     raise Exception("Could not generate a unique Ace_id2 after multiple attempts.")
+
 
 @login_required
 def create_Ace(request):
@@ -498,239 +503,178 @@ def create_Ace(request):
 @login_required
 def ace_awaiting_my_action(request):
     """
-    Process ACEs based on user roles and cost centers - with fallback for older records.
-    Combines cost center filtering (for newer records) with section/region filtering (for older records).
+    Show ACEs awaiting action by the current user based on their role and cost center access.
+    Filters by:
+    1. User's assigned cost centers
+    2. Role-based permissions
+    3. Workflow step approver match
     """
-    from datetime import datetime
-    
-    user = request.user
-    user_profile = UserProfile.objects.filter(id=user.id).first()
-    
-    if not user_profile:
-        return render(request, 'finance/ace2/view_all_aces.html', {
-            "aces": [],
-            "error": "User profile not found.",
-        })
-    
+    start_date = ''
+    end_date = ''
+    user_profile = UserProfile.objects.get(id=request.user.id)
+    user_roles = set(user_profile.roles.all())
+    user_role_names = {role.name for role in user_profile.roles.all()}
+
     application_names = ["ace"]
-    cost_centers_set = user.cost_centers_for(application_names)
-    cost_center = user.cost_center
-    end_date = datetime.now()
-    start_date = end_date.replace(day=1)
+    cost_centers_set = request.user.cost_centers_for(application_names)
+    cost_center = user_profile.cost_center
     
-    # Prepare cost centers list
-    cost_centers = []
+    # Initialize lists to prevent UnboundLocalError
+    aces_to_process = []
+    created_aces = Ace2.objects.none() 
+    processed_ace_ids = set()
+
+    # Base query for all ACEs (unfiltered)
+    base_query = Ace2.objects.select_related(
+        'budget_id', 'requested_by', 'section', 'region', 'cost_center'
+    ).prefetch_related(
+        "process__approval_set", "process__workflow__step_set"
+    )
+
+    # --- PRIMARY FILTERING: COST CENTER ---
+    aces_query_primary = base_query # Start with the base query
+
     if cost_centers_set:
         cost_centers = list(cost_centers_set)
-        cost_center = get_parent_cost_center(cost_centers)
+        # Apply strict cost center filtering
+        aces_query_primary = aces_query_primary.filter(cost_center__in=cost_centers)
     else:
         # Fallback to user's cost center and descendants
-        print("Using fallback cost centers")
-        fallback_cost_centers = user.cost_center_and_decendace()
+        fallback_cost_centers = user_profile.cost_center_and_decendace()
         if fallback_cost_centers:
-            cost_centers = list(fallback_cost_centers)
-    
-    user_roles = set(user.roles.all())
-    aces_to_process = []
-    processed_ace_ids = set()  # Track processed ACEs to avoid duplicates
+            aces_query_primary = aces_query_primary.filter(cost_center__in=fallback_cost_centers)
 
-    # Extract region and section from user_profile
-    region = getattr(user_profile, 'region', None)
-    section = getattr(user_profile, 'section', None)
+    #exception handling
+    aces_query1 = Ace2.objects.none()
+    # Additional role-based filters
+    # --- SECONDARY FILTERING: REGION/SECTION (The Bypass Logic) ---
+    aces_query_secondary = base_query.none() # Initialize as empty
 
-    # Role access logic
-    system_wide_roles = ['Finance Director/Transmission Manager', 'Managing Director']
-    em_gm_roles = ['General Manager/Transmission Distribution Director', 'Engineering Manager']
-    region_wide_roles = ['Accounting Officer', 'Finance Manager']
-    user_role_names = [role.name for role in user_roles]
-    has_system_wide_access = any(role in system_wide_roles for role in user_role_names)
-    has_em_gm_access = any(role in em_gm_roles for role in user_role_names)
-    has_region_wide_access = any(role in region_wide_roles for role in user_role_names)
+    system_wide_roles = {'Finance Director/Transmission Manager', 'Managing Director'}
+    regional_roles = {'General Manager/Transmission Distribution Director', 'Engineering Manager', 
+                      'Finance Manager', 'Accounting Officer'}
 
-    # Query 1: Records WITH cost centers
-    if has_system_wide_access:
-        aces_with_cost_center = Ace2.objects.filter(cost_center__isnull=False).exclude(process__approval__approved="Rejected").prefetch_related("process__approval_set", "process__workflow__step_set")
-    elif cost_centers:
-        aces_with_cost_center = Ace2.objects.filter(cost_center__in=cost_centers).exclude(process__approval__approved="Rejected").prefetch_related("process__approval_set", "process__workflow__step_set")
-    else:
-        aces_with_cost_center = Ace2.objects.none()
-    
-    for ace in aces_with_cost_center:
-        if ace.process and ace.Ace_id2 not in processed_ace_ids:
-            approvals = ace.process.approval_set.all()
-            next_step = (approvals.last().step.step if approvals.exists() else 0) + 1
-            if (
-                ace.process.workflow.step_set.filter(
-                    step=next_step, approver__in=user_roles
-                ).exists()
-            ):
-                # Annotate for template
-                ace.has_rejected_approval = approvals.filter(approved='Rejected').exists()
-                if ace.has_rejected_approval:
-                    ace.latest_approval_status = 'Rejected'
-                else:
-                    ace.latest_approval_status = approvals.last().approved if approvals.exists() else None
-                aces_to_process.append(ace)
-                processed_ace_ids.add(ace.Ace_id2)
-    
-    # Query 2: Records WITHOUT cost centers (use section/region fallback)
-    # FD/MD: See everything in system
-    # EM/GM, AO/FM: See entire region
-    # Others: See only their section
-    if has_system_wide_access:
-        fallback_filter = {
-            'cost_center__isnull': True,
-            'date_created__year__gte': 2025
-        }
-    elif (has_em_gm_access or has_region_wide_access) and region:
-        fallback_filter = {
-            'cost_center__isnull': True,
-            'region': region,
-            'date_created__year__gte': 2025
-        }
-    elif region:
-        fallback_filter = {
-            'cost_center__isnull': True,
-            'region': region,
-            'date_created__year__gte': 2025
-        }
-        if section:
-            fallback_filter['section'] = section
-    else:
-        fallback_filter = None
-    
-    if fallback_filter:
-        aces_without_cost_center = Ace2.objects.filter(
-            **fallback_filter
+    # If the user has a regional or sectional role (and is NOT system-wide)
+    if not system_wide_roles.intersection(user_role_names):
+        # Start the secondary query with a regional filter
+        aces_query_secondary = base_query.filter(region=user_profile.region)
+
+        # Apply sectional filter if it's a sectional role
+        if not regional_roles.intersection(user_role_names):
+            aces_query_secondary = aces_query_secondary.filter(section=user_profile.section)
+    # --- COMBINE QUERIES ---
+    # Use distinct() to ensure no duplicates if an ACE matches both criteria
+    aces_combined_query = (aces_query_primary | aces_query_secondary).distinct()
+
+    # --- PROCESS AWAITING ACTION ---
+    for ace in aces_combined_query:
+        if not ace.process or ace.Ace_id2 in processed_ace_ids:
+            continue
+
+        approvals = ace.process.approval_set.all()
+        
+        # 1. Skip if already rejected
+        if approvals.filter(approved='Rejected').exists():
+            continue
+
+        # 2. Check for eligibility
+        last_approved_step = approvals.last().step.step if approvals.exists() else 0
+        next_step = last_approved_step + 1
+        
+        # Check if the user is the approver for the next step based on their roles
+        if ace.process.workflow.step_set.filter(step=next_step, approver__in=user_roles).exists():
+            ace.has_rejected_approval = False
+            ace.latest_approval_status = approvals.last().approved if approvals.exists() else None
+            
+            aces_to_process.append(ace)
+            processed_ace_ids.add(ace.Ace_id2) # Mark as processed
+
+    # --- Handle 'create' role access (Your existing logic for created_aces) ---
+    # ... (Keep the rest of your logic for 'create' role and final return statement) ...
+    user_ace_roles = {role.role for role in user_profile.roles.all() if role.application == "ace"}
+
+    if "create" in user_ace_roles:
+        # ... (Populate created_aces QuerySet and add flags) ...
+        created_aces = base_query.filter(
+            requested_by=request.user,
+            region=user_profile.region
         ).exclude(
             process__approval__approved="Rejected"
-        ).prefetch_related("process__approval_set", "process__workflow__step_set")
-        
-        for ace in aces_without_cost_center:
-            if ace.process and ace.Ace_id2 not in processed_ace_ids:
+        ).order_by('-date_created')
+
+        # Add helpful flags for created ACEs
+        for ace in created_aces:
+            if ace.process:
                 approvals = ace.process.approval_set.all()
-                next_step = (approvals.last().step.step if approvals.exists() else 0) + 1
-                if (
-                    ace.process.workflow.step_set.filter(
-                        step=next_step, approver__in=user_roles
-                    ).exists()
-                ):
-                    ace.has_rejected_approval = approvals.filter(approved='Rejected').exists()
-                    if ace.has_rejected_approval:
-                        ace.latest_approval_status = 'Rejected'
-                    else:
-                        ace.latest_approval_status = approvals.last().approved if approvals.exists() else None
-                    aces_to_process.append(ace)
-                    processed_ace_ids.add(ace.Ace_id2)
-    else:
-        aces_without_cost_center = Ace2.objects.none()
-
-    # ACEs created by the user (both with and without cost centers)
-    created_aces_filter = {"requested_by": request.user}
-    if has_system_wide_access:
-        created_aces_with_cc = Ace2.objects.filter(cost_center__isnull=False, **created_aces_filter).exclude(process__approval__approved="Rejected")
-    elif cost_centers:
-        created_aces_with_cc = Ace2.objects.filter(cost_center__in=cost_centers, **created_aces_filter).exclude(process__approval__approved="Rejected")
-    else:
-        created_aces_with_cc = Ace2.objects.none()
-
-    # For created ACEs without cost centers, respect access levels
-    if has_system_wide_access:
-        created_fallback_filter = {
-            'cost_center__isnull': True,
-            **created_aces_filter
-        }
-    elif (has_em_gm_access or has_region_wide_access) and region:
-        created_fallback_filter = {
-            'cost_center__isnull': True,
-            'region': region,
-            **created_aces_filter
-        }
-    elif region:
-        created_fallback_filter = {
-            'cost_center__isnull': True,
-            'region': region,
-            **created_aces_filter
-        }
-        if section:
-            created_fallback_filter['section'] = section
-    else:
-        created_fallback_filter = None
-    
-    if created_fallback_filter:
-        created_aces_without_cc = Ace2.objects.filter(
-            **created_fallback_filter
-        ).exclude(process__approval__approved="Rejected")
-    else:
-        created_aces_without_cc = Ace2.objects.none()
-    
-    # Combine created ACEs
-    # Annotate created_aces for template
-    created_aces = list(created_aces_with_cc) + list(created_aces_without_cc)
-    for ace in created_aces:
-        if ace.process:
-            approvals = ace.process.approval_set.all()
-            ace.has_rejected_approval = approvals.filter(approved='Rejected').exists()
-            if ace.has_rejected_approval:
-                ace.latest_approval_status = 'Rejected'
-            else:
+                ace.has_rejected_approval = False
                 ace.latest_approval_status = approvals.last().approved if approvals.exists() else None
-        else:
-            ace.has_rejected_approval = False
-            ace.latest_approval_status = None
-
-    return render(
-        request,
-        'finance/ace2/view_all_aces.html',
-        {
-            "aces": aces_to_process,
-            "created_aces": created_aces,
-            "all": False,
-            "start_date": start_date,
-            "end_date": end_date,
-            "cost_center": cost_center,
-            "types": application_names,
-            "roles": get_my_roles_for_apps(user, application_names),
-        },
-    )
+            else:
+                ace.has_rejected_approval = False
+                ace.latest_approval_status = None
+    
+    # If the user is ONLY a creator, they shouldn't see items awaiting approval (by others)
+    if user_ace_roles == {"create"}:
+        aces_to_process = []
+    
+    return render(request, 'finance/ace2/view_all_aces.html', {
+        "aces": aces_to_process,
+        "created_aces": created_aces,
+        "all": False,
+        "start_date": start_date,
+        "end_date": end_date,
+        "cost_center": cost_center,
+        "types": application_names,
+        "roles": get_my_roles_for_apps(request.user, application_names),
+    })
 
 
 @login_required
 def view_all_aces(request):
-    user_roles = request.user.roles.all()
+    """
+    Show all ACEs accessible to the current user based on role:
+    - System-wide roles see all ACEs
+    - Regional roles see ACEs in their region
+    - Section roles see ACEs in their section
+    Orders by most recently created first.
+    """
+    user_profile = UserProfile.objects.get(id=request.user.id)
 
-    user_id = request.user.id
-    user_profile = UserProfile.objects.filter(id=user_id).first()
-    region = Regions.objects.filter(id=user_profile.region.id).first()
-    section = Sections.objects.filter(section=user_profile.section).first()
-    print(section, " section")
+    # Get user's ACE role
+    ace_role = next(
+        (role.role for role in user_profile.roles.all() if role.application == "ace"),
+        None
+    )
 
-    user_groups = user_profile.groups.values_list('name', flat=True)
+    # Base query with select_related for efficiency
+    aces = Ace2.objects.select_related(
+        'region',
+        'section',
+        'budget_id',
+        'requested_by'
+    )
 
-    custom_user_roles = {
-        "ace": {},
-    }
+    # Apply role-based filters
+    system_wide_roles = {'Finance Director/Transmission Manager', 'Managing Director'}
+    regional_roles = {'General Manager/Transmission Distribution Director', 'Engineering Manager', 'Finance Manager'}
 
-    roles_ = user_profile.roles.all()
-    for _role in roles_:
-        role = Roles.objects.filter(id=_role.id).first()
+    user_role_names = {role.name for role in user_profile.roles.all()}
 
-        if role.application == "ace":
-            custom_user_roles["ace"] = role.role
-    ace_role = str(custom_user_roles["ace"])
-    requester = "create"
+    if not system_wide_roles.intersection(user_role_names):
+        # Not a system-wide role, filter by region
+        aces = aces.filter(region=user_profile.region)
 
-    if ace_role == "create":
-        aces = Ace2.objects.filter(region=region).order_by('-date_created')
-    elif ace_role == "pass":
-        aces = Ace2.objects.filter(region=region).order_by('-date_created')
-    else:
-        print('kings')
-        aces = Ace2.objects.filter(region=region).order_by('-date_created')
-        print(aces)
+        if not regional_roles.intersection(user_role_names):
+            # Not a regional role either, filter by section
+            aces = aces.filter(section=user_profile.section)
 
-    return render(request, 'finance/ace2/view_all_aces.html', {'aces': aces,
-                                                               'requester': requester, 'ace_role': ace_role})
+    # Order by most recent first
+    aces = aces.order_by('-date_created')
+
+    return render(request, 'finance/ace2/view_all_aces.html', {
+        'aces': aces,
+        'requester': "create",  # Used in template for role checks
+        'ace_role': ace_role
+    })
 
 
 def add_project_details(request, Ace_id2):
@@ -799,7 +743,7 @@ def upload_budgets(request):
                 awaiting_sanctioning = 0
 
             if not region:
-                region='Transmission'
+                region = 'Transmission'
 
             try:
                 allocated = float(allocated)
@@ -1277,6 +1221,7 @@ def upload_aces_csv(request):
     else:
         return render(request, 'finance/ace2/upload_ace.html')
 
+
 @login_required
 def create_virament(request):
     # Creates new virament
@@ -1465,6 +1410,7 @@ def virament_detail(request, virament_id):
                                                                  'balance_before_from': balance_before_from,
                                                                  'balance_after_from': balance_after_from})
 
+
 @login_required
 def view_all_viraments(request):
     user_profile = UserProfile.objects.filter(id=request.user.id).first()
@@ -1521,7 +1467,7 @@ def viraments_awaiting_my_action(request):
 
     for virement in viraments_qs:
         process = virement.process
-        
+
         # Skip if process is None
         if not process:
             continue
@@ -1569,41 +1515,63 @@ def transactions_for_budget(request, budget_id):
 
 @login_required
 def ace_reports(request):
-    user_id = request.user.id
-    user_profile = UserProfile.objects.filter(id=user_id).first()
+    """
+    Generate ACE reports based on date range, region and budget filters.
+    Uses optimized select_related queries and aggregation.
+    """
+    user_profile = UserProfile.objects.get(id=request.user.id)
     ace_report_form = AceReportForm(user=user_profile)
 
     if request.method == 'POST':
-        ace_report_form = AceReportForm(request.POST)
+        ace_report_form = AceReportForm(request.POST, user=user_profile)
         if ace_report_form.is_valid():
             start_date = ace_report_form.cleaned_data['start_date']
             end_date = ace_report_form.cleaned_data['end_date']
-            region = ace_report_form.cleaned_data['region']
             budget = ace_report_form.cleaned_data['budget_id']
 
+            # Base query with essential joins
+            aces_query = Ace2.objects.select_related(
+                'budget_id',
+                'requested_by',
+                'section',
+                'region'
+            ).filter(region=request.user.region)
+
+            if start_date:
+                aces_query = aces_query.filter(date_created__gte=start_date)
+            if end_date:
+                aces_query = aces_query.filter(date_created__lte=end_date)
+
             if budget:  # Specific budget selected
+                aces_query = aces_query.filter(budget_id=budget)
                 report = ace_report_form.save(commit=False)
                 report.start_date = start_date
                 report.end_date = end_date
-                report.region = region
+                report.region = request.user.region
                 report.budget_id = budget
                 report.save()
-                # Filter ACEs for this budget
-                aces = Ace2.objects.filter(
-                    date_created__range=[start_date, end_date],
-                    region=region,
-                    budget_id=budget
-                )
-                return render(request, 'finance/ace2/ace_reports.html', {'aces': aces, 'report': report})
-            else:  # All Budgets selected
-                # Do NOT save the report, just filter ACEs for all budgets
-                aces = Ace2.objects.filter(
-                    date_created__range=[start_date, end_date],
-                    region=region
-                )
-                return render(request, 'finance/ace2/ace_reports.html', {'aces': aces, 'report': None})
 
-    return render(request, 'finance/ace2/ace_create_reports.html', {'ace_report_form': ace_report_form})
+            # Final ordering and execution
+            aces = aces_query.order_by('-date_created')
+
+            # Aggregate statistics
+            totals = aces.aggregate(
+                total_amount=models.Sum('amount'),
+                ace_count=models.Count('id')
+            )
+
+            return render(request, 'finance/ace2/ace_reports.html', {
+                'aces': aces,
+                'report': report if budget else None,
+                'total_amount': totals['total_amount'] or 0,
+                'ace_count': totals['ace_count'],
+                'start_date': start_date,
+                'end_date': end_date
+            })
+
+    return render(request, 'finance/ace2/ace_create_reports.html', {
+        'ace_report_form': ace_report_form
+    })
 
 
 @login_required
@@ -1696,7 +1664,7 @@ def ace_report_detail_excel(request, report_id2):
         ws.append(
             ['Ace_id', 'details_of_expenditure', 'requested_by', 'section', 'Date', 'Budget', 'Amount',
              'transaction_status', 'approval_status', 'actioned_by'
-            ])
+             ])
 
         for ace in aces:
             transaction = Transactions.objects.filter(Ace_id2=ace).first()
@@ -1731,6 +1699,7 @@ def ace_report_detail_excel(request, report_id2):
     else:
         messages.error(request, "error")
 
+
 # @login_required
 def find_ace_section_head(request, section):
     all_users = UserProfile.objects.filter(section=section).all()
@@ -1758,6 +1727,7 @@ def find_ace_section_head(request, section):
 
     # Return None if no section head is found
     return None
+
 
 # @login_required
 def find_general_manager(request, region):
@@ -1788,6 +1758,7 @@ def find_general_manager(request, region):
 
         else:
             print("no users found")
+
 
 # transactions on a budget
 @login_required
@@ -1847,7 +1818,7 @@ def my_actioned_items(request):
     user_id = request.user.id
     user_profile = UserProfile.objects.filter(id=user_id).first()
     region = Regions.objects.filter(id=user_profile.region.id).first()
-    
+
     # Get user role
     custom_user_roles = {"ace": {}}
     roles_ = user_profile.roles.all()
@@ -1858,7 +1829,7 @@ def my_actioned_items(request):
             ace_role = str(custom_user_roles["ace"])
             print("ace role", ace_role)
             break
-    
+
     # Get all ACEs where the current user has an approval in the process
     actioned_approvals = []
     all_aces = Ace2.objects.filter(region=region)
@@ -1868,13 +1839,13 @@ def my_actioned_items(request):
             approvals = process.approval_set.filter(user=request.user)
             for approval in approvals:
                 actioned_approvals.append((approval, ace))
-    
+
     # Sort by approval date (replace 'date' with your actual field, e.g., 'timestamp', 'date_approved')
     actioned_approvals.sort(key=lambda x: x[0].approved_at, reverse=True)
     actioned_aces = [ace for approval, ace in actioned_approvals]
 
     requester = "create"  # Used in template for role checks
-    
+
     return render(request, 'finance/ace2/my_actioned_items.html', {
         'aces': actioned_aces,
         'title': 'My Actioned Items',
@@ -1892,10 +1863,10 @@ def notify_pending_gm_approvals(request):
     user_id = request.user.id
     user_profile = UserProfile.objects.filter(id=user_id).first()
     notification_count = 0
-    
+
     # Get all regions
     regions = Regions.objects.all()
-    
+
     for region in regions:
         # Find general managers for this specific region (users with "approve" role for ACE)
         gm_users = UserProfile.objects.filter(
@@ -1903,51 +1874,52 @@ def notify_pending_gm_approvals(request):
             roles__application="ace",
             roles__role="approve"
         ).all()
-        
+
         if not gm_users:
             continue
-            
+
         # Find ACE items in THIS REGION ONLY that are at the final approval step
         pending_aces = []
         for ace in Ace2.objects.filter(region=region):
             process = ace.process
-            
+
             # Skip items without process or already rejected
             if not process or process.approval_set.filter(approved="Rejected").exists():
                 continue
-                
+
             if process.approval_set.exists():
                 latest_approval = process.approval_set.last()
                 current_step = latest_approval.step.step
                 total_steps = process.workflow.step_set.count()
-                
+
                 # If we're at the step before the last step, item is pending GM approval
                 if current_step == total_steps - 1:
                     pending_aces.append(ace)
-        
+
         # Notify each GM about pending items IN THEIR REGION ONLY
         if pending_aces:
             for gm in gm_users:
                 count = len(pending_aces)
                 notification_count += count
-                
+
                 # Send a summary notification
                 msg = f"You have {count} ACE items awaiting your approval in {region.region}"
                 url = "/ace/awaiting_my_action/"
                 notify_user(gm, msg, "ACE", url, f"gm_summary_{region.id}", request)
-                
+
                 # Optional: Send individual notifications for each item
                 for ace in pending_aces:
                     item_msg = f"ACE {ace.Ace_id2} requires your final approval"
                     item_url = f"/ace/ace_detail/{ace.Ace_id2}"
                     notify_user(gm, item_msg, "ACE", item_url, ace.Ace_id2, request)
-    
+
     if notification_count > 0:
         sweetify.success(request, f"Sent notifications for {notification_count} pending ACE items to general managers")
     else:
         sweetify.info(request, "No pending ACE items requiring general manager approval found")
-    
+
     return redirect('/ace/aces')
+
 
 @login_required
 def asset_budget_report(request, budget_id):
@@ -2001,7 +1973,6 @@ def asset_budget_report_excel(request, budget_id):
     return response
 
 
-
 @login_required
 def download_ace_quotation(request, quotation_id):
     try:
@@ -2013,9 +1984,9 @@ def download_ace_quotation(request, quotation_id):
     response['Content-Disposition'] = f'attachment; filename="{quotation.quotation_file.name}"'
     return response
 
+
 @login_required
 def monthly_usage_dashboard(request):
-    
     current_year = timezone.now().year
 
     ace_monthly = (
@@ -2081,7 +2052,8 @@ def transactions_excel_export(request):
     This is a minimal placeholder to unblock URL imports during migrations.
     """
     user_profile = UserProfile.objects.filter(id=request.user.id).first()
-    qs = Transactions.objects.filter(region=user_profile.region) if user_profile and user_profile.region else Transactions.objects.all()
+    qs = Transactions.objects.filter(
+        region=user_profile.region) if user_profile and user_profile.region else Transactions.objects.all()
 
     response = HttpResponse(content_type='text/csv')
     response['Content-Disposition'] = 'attachment; filename="transactions.csv"'
@@ -2190,49 +2162,48 @@ def test_migrate_assets(request):
     return JsonResponse({'status': 'ok'})
 
 
-
 def check_user_role_with_troubleshooting(request):
     """
     Check user role and provide troubleshooting messages if no role found.
     Returns (user_profile, user_role, has_issues)
     """
     user_profile = UserProfile.objects.filter(id=request.user.id).first()
-    
+
     if not user_profile:
-        messages.error(request, 
-            "❌ No user profile found. Please contact your system administrator to create your profile.")
+        messages.error(request,
+                       "❌ No user profile found. Please contact your system administrator to create your profile.")
         return None, None, True
-    
+
     # Check if fault locator application exists
     fault_app = Application.objects.filter(name='fault_locator').first()
     if not fault_app:
-        messages.error(request, 
-            "❌ Fault Locator application not configured. Contact system administrator.")
+        messages.error(request,
+                       "❌ Fault Locator application not configured. Contact system administrator.")
         return user_profile, None, True
-    
+
     # Check if user has any fault locator role
     try:
         user_role = FaultLocatorRoleManager.get_user_role(user_profile)
         has_any_role = FaultLocatorRoleManager.has_any_role(user_profile)
-        
+
         if not has_any_role:
             # User has no fault locator role - provide helpful troubleshooting
             _provide_role_troubleshooting_messages(request, user_profile)
             return user_profile, None, True
-        
-        return user_profile, user_role, False
-        
 
-        
+        return user_profile, user_role, False
+
+
+
     except Exception as e:
-        messages.error(request, 
-            f"❌ Error checking your roles: {str(e)}. Please contact system administrator.")
+        messages.error(request,
+                       f"❌ Error checking your roles: {str(e)}. Please contact system administrator.")
         return user_profile, None, True
 
 
 def _provide_role_troubleshooting_messages(request, user_profile):
     """Provide helpful troubleshooting messages for users without roles"""
-    
+
     # Check user profile completeness
     missing_info = []
     if not user_profile.depot:
@@ -2241,45 +2212,45 @@ def _provide_role_troubleshooting_messages(request, user_profile):
         missing_info.append('job designation')
     if not user_profile.section:
         missing_info.append('section assignment')
-    
+
     if missing_info:
-        messages.warning(request, 
-            f"⚠️ Your profile is missing: {', '.join(missing_info)}. "
-            "This may prevent proper role assignment.")
-    
+        messages.warning(request,
+                         f"⚠️ Your profile is missing: {', '.join(missing_info)}. "
+                         "This may prevent proper role assignment.")
+
     # Suggest role based on designation
     suggested_role = _suggest_role_from_designation(user_profile)
     if suggested_role:
-        messages.info(request, 
-            f"💡 Based on your designation '{user_profile.designation}', "
-            f"you should likely have the '{suggested_role}' role.")
-    
+        messages.info(request,
+                      f"💡 Based on your designation '{user_profile.designation}', "
+                      f"you should likely have the '{suggested_role}' role.")
+
     # Main error message with actionable steps
-    messages.error(request, 
-        "🚫 You don't have any Fault Locator roles assigned. "
-        "You cannot access fault reporting features until a role is assigned.")
-    
+    messages.error(request,
+                   "🚫 You don't have any Fault Locator roles assigned. "
+                   "You cannot access fault reporting features until a role is assigned.")
+
     # Provide specific steps to resolve
     if user_profile.depot:
-        messages.info(request, 
-            f"📋 Next steps:\n"
-            f"1. Contact your depot supervisor at {user_profile.depot}\n"
-            f"2. Request appropriate Fault Locator role assignment\n"
-            f"3. Alternatively, contact IT support for assistance")
+        messages.info(request,
+                      f"📋 Next steps:\n"
+                      f"1. Contact your depot supervisor at {user_profile.depot}\n"
+                      f"2. Request appropriate Fault Locator role assignment\n"
+                      f"3. Alternatively, contact IT support for assistance")
     else:
-        messages.info(request, 
-            "📋 Next steps:\n"
-            "1. Contact your line manager to complete your profile\n"
-            "2. Request depot and role assignment\n"
-            "3. Contact IT support if issues persist")
-    
+        messages.info(request,
+                      "📋 Next steps:\n"
+                      "1. Contact your line manager to complete your profile\n"
+                      "2. Request depot and role assignment\n"
+                      "3. Contact IT support if issues persist")
+
     # Show available roles for reference
     try:
         available_roles = FaultLocatorRoleManager.get_available_roles()
         if available_roles:
             role_names = ', '.join([role.name for role in available_roles])
-            messages.info(request, 
-                f"ℹ️ Available roles: {role_names}")
+            messages.info(request,
+                          f"ℹ️ Available roles: {role_names}")
     except:
         pass
 
@@ -2288,9 +2259,9 @@ def _suggest_role_from_designation(user_profile):
     """Suggest appropriate role based on user's designation"""
     if not user_profile.designation:
         return 'Team Member'  # Default suggestion
-    
+
     designation = str(user_profile.designation).lower()
-    
+
     if 'senior' in designation and 'foreman' in designation:
         return 'Senior Foreman'
     elif 'foreperson' in designation or 'depot' in designation:
@@ -2307,10 +2278,10 @@ def _suggest_role_from_designation(user_profile):
 @login_required
 def dashboard(request):
     """Enhanced dashboard with comprehensive role troubleshooting"""
-    
+
     # Check user role with troubleshooting
     user_profile, user_role, has_issues = check_user_role_with_troubleshooting(request)
-    
+
     if has_issues:
         # If there are role issues, show a basic dashboard with troubleshooting info
         context = {
@@ -2320,11 +2291,11 @@ def dashboard(request):
             'show_troubleshooting': True
         }
         return render(request, 'fault_locator/dashboard.html', context)
-    
+
     # User has valid role - continue with normal dashboard
     try:
         user_role_display = FaultLocatorRoleManager.get_user_role_display(user_profile)
-        
+
         context = {
             'user': request.user,
             'user_profile': user_profile,
@@ -2333,7 +2304,7 @@ def dashboard(request):
             'has_role_issues': False,
             'show_troubleshooting': False
         }
-        
+
         # Add role-specific dashboard content
         if user_role == FaultLocatorRoleManager.SENIOR_FOREMAN:
             context.update(_get_senior_foreman_dashboard_data(user_profile))
@@ -2343,9 +2314,9 @@ def dashboard(request):
             context.update(_get_team_leader_dashboard_data(user_profile))
         else:
             context.update(_get_team_member_dashboard_data(user_profile))
-        
+
         return render(request, 'fault_locator/dashboard.html', context)
-        
+
     except Exception as e:
         messages.error(request, f"❌ Error loading dashboard: {str(e)}")
         return render(request, 'fault_locator/dashboard.html', {
@@ -2360,28 +2331,28 @@ def dashboard(request):
 @login_required
 def report_fault(request):
     """Report fault with role troubleshooting"""
-    
+
     # Check user role with troubleshooting
     user_profile, user_role, has_issues = check_user_role_with_troubleshooting(request)
-    
+
     if has_issues:
-        messages.error(request, 
-            "🚫 You cannot report faults without an assigned role. "
-            "Please resolve the role issues first.")
+        messages.error(request,
+                       "🚫 You cannot report faults without an assigned role. "
+                       "Please resolve the role issues first.")
         return redirect('fault_locator_dashboard')
-    
+
     # Additional permission check for fault reporting
     if not _can_report_faults(user_profile, user_role):
-        messages.error(request, 
-            f"🚫 Your role '{FaultLocatorRoleManager.get_user_role_display(user_profile)}' "
-            "does not have permission to report faults. Contact your supervisor.")
+        messages.error(request,
+                       f"🚫 Your role '{FaultLocatorRoleManager.get_user_role_display(user_profile)}' "
+                       "does not have permission to report faults. Contact your supervisor.")
         return redirect('fault_locator_dashboard')
-    
+
     # Continue with normal fault reporting logic
     if request.method == 'POST':
         # ... existing fault reporting logic
         pass
-    
+
     return render(request, 'fault_locator/report_fault.html', {
         'user_profile': user_profile,
         'user_role': user_role
@@ -2392,20 +2363,20 @@ def report_fault(request):
 @login_required
 def assign_fault_to_team(request):
     """Assign fault to team with role troubleshooting"""
-    
+
     # Check user role with troubleshooting
     user_profile, user_role, has_issues = check_user_role_with_troubleshooting(request)
-    
+
     if has_issues:
         return redirect('fault_locator_dashboard')
-    
+
     # Check specific permission for fault assignment
     if not _can_assign_faults(user_profile, user_role):
-        messages.error(request, 
-            f"🚫 Your role '{FaultLocatorRoleManager.get_user_role_display(user_profile)}' "
-            "cannot assign faults to teams. Only Depot Forepersons and Senior Foremen can assign faults.")
+        messages.error(request,
+                       f"🚫 Your role '{FaultLocatorRoleManager.get_user_role_display(user_profile)}' "
+                       "cannot assign faults to teams. Only Depot Forepersons and Senior Foremen can assign faults.")
         return redirect('fault_locator_dashboard')
-    
+
     # Continue with normal assignment logic
     # ... existing assignment logic
 
@@ -2414,51 +2385,51 @@ def assign_fault_to_team(request):
 @login_required
 def role_troubleshooting(request):
     """Dedicated troubleshooting view with detailed role information"""
-    
+
     user_profile = UserProfile.objects.filter(id=request.user.id).first()
-    
+
     if not user_profile:
-        messages.error(request, 
-            "❌ No user profile found. Please contact system administrator.")
+        messages.error(request,
+                       "❌ No user profile found. Please contact system administrator.")
         return redirect('home')
-    
+
     # Get detailed role information
     try:
         user_role = FaultLocatorRoleManager.get_user_role(user_profile)
         has_any_role = FaultLocatorRoleManager.has_any_role(user_profile)
         available_roles = FaultLocatorRoleManager.get_available_roles()
-        
+
         # Get fault locator application info
         fault_app = Application.objects.filter(name='fault_locator').first()
         user_fault_roles = []
-        
+
         if fault_app:
             user_fault_roles = user_profile.roles.filter(app_id=fault_app)
-        
+
         # Provide comprehensive troubleshooting messages
         if not has_any_role:
-            messages.warning(request, 
-                "⚠️ DIAGNOSIS: You have no Fault Locator roles assigned.")
-            
+            messages.warning(request,
+                             "⚠️ DIAGNOSIS: You have no Fault Locator roles assigned.")
+
             # Check if user has roles in other applications
             other_roles = user_profile.roles.exclude(application='fault_locator')
             if other_roles.exists():
                 other_apps = ', '.join(set([r.application for r in other_roles]))
-                messages.info(request, 
-                    f"ℹ️ You have roles in other applications: {other_apps}")
-            
+                messages.info(request,
+                              f"ℹ️ You have roles in other applications: {other_apps}")
+
             _provide_role_troubleshooting_messages(request, user_profile)
         else:
-            messages.success(request, 
-                f"✅ You have the role: {FaultLocatorRoleManager.get_user_role_display(user_profile)}")
-        
+            messages.success(request,
+                             f"✅ You have the role: {FaultLocatorRoleManager.get_user_role_display(user_profile)}")
+
         # Show system status
-        messages.info(request, 
-            f"🔧 System Status:\n"
-            f"• Fault Locator App: {'✅ Configured' if fault_app else '❌ Missing'}\n"
-            f"• Available Roles: {available_roles.count()}\n"
-            f"• Your Profile Complete: {'✅ Yes' if _is_profile_complete(user_profile) else '⚠️ Incomplete'}")
-        
+        messages.info(request,
+                      f"🔧 System Status:\n"
+                      f"• Fault Locator App: {'✅ Configured' if fault_app else '❌ Missing'}\n"
+                      f"• Available Roles: {available_roles.count()}\n"
+                      f"• Your Profile Complete: {'✅ Yes' if _is_profile_complete(user_profile) else '⚠️ Incomplete'}")
+
         context = {
             'user_profile': user_profile,
             'user_role': user_role,
@@ -2467,12 +2438,12 @@ def role_troubleshooting(request):
             'user_fault_roles': user_fault_roles,
             'profile_complete': _is_profile_complete(user_profile)
         }
-        
+
         return render(request, 'fault_locator/troubleshooting.html', context)
-        
+
     except Exception as e:
-        messages.error(request, 
-            f"❌ Error during troubleshooting: {str(e)}")
+        messages.error(request,
+                       f"❌ Error during troubleshooting: {str(e)}")
         return redirect('fault_locator_dashboard')
 
 

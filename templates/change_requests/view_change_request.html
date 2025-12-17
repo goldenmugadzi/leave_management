@@ -1,0 +1,332 @@
+{% extends 'admin_layout.html' %}
+{% load custom_filters %}
+
+{% block styles %}
+<style>
+  /* Modal styles - hidden by default */
+  .modal-overlay {
+    display: none;
+  }
+  .modal-overlay.active {
+    display: block;
+  }
+</style>
+{% endblock styles %}
+
+{% block content %}
+<div class="content-wrapper">
+  <div class="container-fluid">
+    <!-- Page Header -->
+    {% include 'change_requests/components/layout/page_header.html' with title="View Change Request" subtitle=cr.change_type back_url="/change_requests/change_request_index" back_text="Back to Dashboard" %}
+
+    <!-- Main Layout -->
+    <div class="max-w-6xl mx-auto">
+      <div class="flex flex-col lg:flex-row gap-6">
+        <!-- Main Content -->
+        <div class="flex-1">
+          <div class="bg-white border border-gray-200 rounded-lg shadow-sm">
+            <div class="px-6 py-4 border-b border-gray-200">
+              <h3 class="text-lg font-medium text-gray-900">Change Request Details</h3>
+            </div>
+            
+            <form id="profile_form" method="post" action="/change_requests/approve_cr">
+              {% csrf_token %}
+              <input type="hidden" name="cr_id" value="{{cr.cr_id}}" />
+              <input type="hidden" name="rejectReason" id="rejectReason" />
+              <input type="hidden" name="actionButton" id="actionButton" />
+              
+              <div class="p-6 space-y-6">
+                <!-- Unified View Sections -->
+                {% include 'change_requests/components/sections/view_sections.html' with schema=cr.cr_type_schema %}
+                
+                <!-- Type-specific Interactive Controls -->
+                {% with schema=cr.cr_type_schema %}
+                  {% if schema.view_template %}
+                    {% include schema.view_template %}
+                  {% endif %}
+                {% endwith %}
+                
+                <!-- Approval History -->
+                {% include 'change_requests/components/sections/approval_history.html' %}
+              </div>
+
+              <!-- Action Buttons -->
+              <div class="flex justify-between px-6 py-4 border-t border-gray-200 bg-gray-50">
+                <div>
+                  <a
+                    href="/change_requests/change_request_index"
+                    class="inline-flex items-center px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors"
+                  >
+                    <i class="fas fa-arrow-left mr-2"></i> Back to Dashboard
+                  </a>
+                </div>
+                
+                <div class="flex gap-3">
+                  <!-- DEBUG INFO (Remove in production) -->
+                  {% comment %}
+                  DEBUG VALUES:
+                  - requestor_role: {{ requestor_role }}
+                  - section_head_awaiting_action: {{ section_head_awaiting_action }}
+                  - it_section_head_awaiting_action: {{ it_section_head_awaiting_action }}
+                  - section_head_allowed: {{ section_head_allowed }}
+                  - it_section_head_allowed: {{ it_section_head_allowed }}
+                  {% endcomment %}
+                  
+                  {% if section_head_awaiting_action %}
+                  <button
+                    type="button"
+                    id="btnArchive"
+                    class="inline-flex items-center px-4 py-2 border border-red-600 text-red-600 rounded-md hover:bg-red-50 transition-colors"
+                  >
+                    <i class="fas fa-archive mr-2"></i> Archive
+                  </button>
+                  {% endif %}
+                  
+                  <!-- Section Head Approve/Reject Buttons -->
+                  {% if requestor_role == "section_head" and section_head_awaiting_action and section_head_allowed == True %}
+                  <button
+                    type="button"
+                    id="btnApprove"
+                    class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                  >
+                    <i class="fas fa-check mr-2"></i> Approve
+                  </button>
+                  <button
+                    type="button"
+                    id="btnReject"
+                    class="inline-flex items-center px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
+                  >
+                    <i class="fas fa-times mr-2"></i> Reject
+                  </button>
+                  {% endif %}
+                  
+                  <!-- IT Section Head Apply/Reject Buttons -->
+                  {% if requestor_role == "it_section_head" and it_section_head_awaiting_action and section_head_awaiting_action == False and it_section_head_allowed == True %}
+                  <button
+                    type="button"
+                    id="btnApply"
+                    class="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors"
+                  >
+                    <i class="fas fa-play mr-2"></i> Apply Changes
+                  </button>
+                  <button
+                    type="button"
+                    id="btnRejectIT"
+                    class="inline-flex items-center px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
+                  >
+                    <i class="fas fa-times mr-2"></i> Reject
+                  </button>
+                  {% else %}
+                  <!-- DEBUG: Why Apply button is hidden -->
+                  {% if requestor_role != "it_section_head" %}
+                    <div class="hidden" data-debug="User role is '{{ requestor_role }}', need 'it_section_head'"></div>
+                  {% elif it_section_head_awaiting_action == False %}
+                    <div class="hidden" data-debug="IT Section Head already acted"></div>
+                  {% elif section_head_awaiting_action == True %}
+                    <div class="hidden" data-debug="Section Head has not approved yet"></div>
+                  {% elif it_section_head_allowed == False %}
+                    <div class="hidden" data-debug="IT Section Head not allowed for this cost center"></div>
+                  {% endif %}
+                  {% endif %}
+                </div>
+              </div>
+
+              <!-- Modals -->
+              {% include 'change_requests/components/ui/modals.html' %}
+            </form>
+          </div>
+        </div>
+
+        <!-- Info Panel -->
+        {% include 'change_requests/components/ui/info_panel.html' with title="Important Information" cr_id=cr.cr_id cr_type=change_request.change_type status=change_request.overall_status created_date=cr.created_at items=info_items %}
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock content %}
+
+{% block scripts %}
+{% if cr_logging_payload %}
+  {{ cr_logging_payload|json_script:"cr-logging-data" }}
+{% else %}
+  <script type="application/json" id="cr-logging-data">{}</script>
+{% endif %}
+<script>
+  (function () {
+    const payloadEl = document.getElementById("cr-logging-data");
+    let payload = {};
+    if (payloadEl) {
+      try {
+        payload = JSON.parse(payloadEl.textContent);
+        window.__CR_VIEW_META__ = payload;
+        console.groupCollapsed("[CR View] Bootstrap");
+        console.table(payload);
+        console.groupEnd();
+      } catch (err) {
+        console.warn("[CR View] Unable to parse logging payload", err);
+      }
+    }
+    const clientMeta = {
+      userAgent: navigator.userAgent,
+      viewport: `${window.innerWidth}x${window.innerHeight}`,
+      timestamp: new Date().toISOString(),
+    };
+    console.info("[CR View] Client meta", clientMeta);
+
+    window.addEventListener("error", function (event) {
+      console.error("[CR View] Global error", {
+        message: event.message,
+        filename: event.filename,
+        lineno: event.lineno,
+        colno: event.colno,
+      });
+    });
+
+    window.addEventListener("unhandledrejection", function (event) {
+      console.error("[CR View] Unhandled rejection", event.reason);
+    });
+
+    function logAction(label, data) {
+      console.info(`[CR View] ${label}`, data || {});
+    }
+
+    window.CRViewLog = { logAction };
+    logAction("Page ready");
+  })();
+</script>
+<script>
+  $(document).ready(function () {
+    // === MODAL SHOW/HIDE HANDLERS ===
+    
+    // Show Approve Modal
+    $("#btnApprove").on("click", function () {
+      if (window.CRViewLog) { window.CRViewLog.logAction("Approve button clicked"); }
+      $("#modalApprove").fadeIn(200);
+    });
+    
+    // Show Reject Modal (for both section head and IT)
+    $("#btnReject, #btnRejectIT").on("click", function () {
+      if (window.CRViewLog) { window.CRViewLog.logAction("Reject button clicked"); }
+      $("#modalReject").fadeIn(200);
+    });
+    
+    // Show Apply Modal (for IT section head)
+    $("#btnApply").on("click", function () {
+      if (window.CRViewLog) { window.CRViewLog.logAction("Apply button clicked"); }
+      $("#modalApply").fadeIn(200);
+    });
+    
+    // Show Archive Modal
+    $("#btnArchive").on("click", function () {
+      if (window.CRViewLog) { window.CRViewLog.logAction("Archive button clicked"); }
+      $("#modalArchive").fadeIn(200);
+    });
+    
+    // Close Approve Modal
+    $(".closeModalApprove").on("click", function () {
+      $("#modalApprove").fadeOut(200);
+    });
+    
+    // Close Reject Modal
+    $(".closeModalReject").on("click", function () {
+      $("#modalReject").fadeOut(200);
+    });
+    
+    // Close Apply Modal
+    $(".closeModalApply").on("click", function () {
+      $("#modalApply").fadeOut(200);
+    });
+    
+    // Close Archive Modal
+    $(".closeModalArchive").on("click", function () {
+      $("#modalArchive").fadeOut(200);
+    });
+    
+    // Close modals on backdrop click (using event delegation)
+    $(document).on("click", ".modal-backdrop", function (e) {
+      if ($(e.target).hasClass('modal-backdrop')) {
+        $(".modal-overlay").fadeOut(200);
+      }
+    });
+    
+    // === CONFIRMATION HANDLERS ===
+    
+    // Handle approve confirmation
+    $("#confirmApprove").on("click", function (e) {
+      e.preventDefault();
+      if (window.CRViewLog) { window.CRViewLog.logAction("Approve confirmed"); }
+      
+      // Disable button
+      $(this).prop('disabled', true).text('Processing...');
+      
+      $("#actionButton").val("APPROVE");
+      $("#modalApprove").fadeOut(200);
+      
+      // Submit form using native submit
+      document.getElementById('profile_form').submit();
+    });
+
+    // Handle reject confirmation
+    $("#confirmReject").on("click", function (e) {
+      e.preventDefault(); // Prevent any default behavior
+      
+      const reason = $("#modalRejectReason").val();
+      if (!reason || reason.trim() === "") {
+        alert("Please provide a reason for rejection");
+        if (window.CRViewLog) { window.CRViewLog.logAction("Reject blocked - missing reason"); }
+        return;
+      }
+      
+      if (window.CRViewLog) { window.CRViewLog.logAction("Reject confirmed", { reasonLength: reason.length }); }
+      
+      // Disable button to prevent double submission
+      $(this).prop('disabled', true).text('Processing...');
+      
+      // Set form values
+      $("#rejectReason").val(reason);
+      $("#actionButton").val("REJECT");
+      
+      // Close modal
+      $("#modalReject").fadeOut(200);
+      
+      // Submit form using native submit (not jQuery)
+      console.log("Submitting form...");
+      document.getElementById('profile_form').submit();
+    });
+
+    // Handle apply confirmation
+    $("#confirmApplyBtn").on("click", function (e) {
+      e.preventDefault();
+      const rolesActions = $("#roles_actions").val();
+      if (window.CRViewLog) { window.CRViewLog.logAction("Apply confirmed", { chars: rolesActions ? rolesActions.length : 0 }); }
+      
+      // Disable button
+      $(this).prop('disabled', true).text('Processing...');
+      
+      // Allow submission even if empty - backend will handle validation
+      $("#actionButton").val("APPLY");
+      $("#modalApply").fadeOut(200);
+      
+      // Submit form using native submit
+      document.getElementById('profile_form').submit();
+    });
+
+    // Handle archive confirmation
+    $("#confirmArchive").on("click", function () {
+      if (window.CRViewLog) { window.CRViewLog.logAction("Archive confirmation fired"); }
+      if (confirm("Are you sure you want to archive this change request? This action cannot be undone.")) {
+        window.location.href = "/change_requests/archive_change_request?cr_id={{cr.cr_id}}";
+      }
+    });
+    
+    // Close modal on Escape key
+    $(document).on("keydown", function (e) {
+      if (e.key === "Escape") {
+        $(".modal-overlay").fadeOut(200);
+      }
+    });
+  });
+</script>
+{% endblock scripts %}
+

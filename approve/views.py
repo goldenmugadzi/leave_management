@@ -208,12 +208,24 @@ def approve_step(request, process_id):
                     send_notification(request, 'tokens:token', token.type, token, token.id)
                     return redirect('tokens:token', token.id)
                 
-                elif process.leaverequest_set.exists():
-                    leaverequest = process.leaverequest_set.last()
-
-                    # send_notification(request, 'tokens:token', token.type, token, token.id)
-                    print('------------------------------got here-----------------------------------', str(leaverequest.id))
-                    return redirect('leave_management:approve_leave', leaverequest.id)
+                elif process.workflow.name == "leave":
+                    from django.db import DatabaseError
+                    try:
+                        # Try to access leave request only if table exists
+                        from django.db import connection
+                        with connection.cursor() as cursor:
+                            cursor.execute("""SELECT COUNT(*) FROM information_schema.tables 
+                                          WHERE table_schema = DATABASE() AND 
+                                          table_name = 'leave_management_leaverequest'""")
+                            if cursor.fetchone()[0] == 1:  # Table exists
+                                if process.leaverequest_set.exists():
+                                    leaverequest = process.leaverequest_set.last()
+                                    return redirect('leave_management:approve_leave', leaverequest.id)
+                            else:
+                                raise DatabaseError("Leave management tables not found")
+                    except (DatabaseError, Exception) as e:
+                        messages.error(request, "Leave management system is not properly set up. Please contact the system administrator.")
+                        return redirect("approve:workflow_detail", process.workflow.id)
                 
                 elif process.workflow.name == "pettycash":
                     # Get the approval status to customize the message

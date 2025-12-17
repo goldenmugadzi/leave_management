@@ -18,28 +18,25 @@ SECRET_KEY = config('SECRET_KEY', default='django-insecure-change-in-production'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG', default=False, cast=bool)
 
-ALLOWED_HOSTS = [config('HOST'), "127.0.0.1", 'localhost', '14c66eadfaf8.ngrok-free.app']
+ALLOWED_HOSTS = ["*"]
+CORS_ALLOW_ALL_ORIGINS = True
 
 # CORS_ALLOWED_ORIGINS = [
 #     config('BASE_URL') + ":" + config('PORT'),
 #     config('BASE_URL') + ":3000",
 # ]
 
-CORS_ALLOW_ALL_ORIGINS = True
+# CORS_ALLOW_ALL_ORIGINS = True
 CSRF_TRUSTED_ORIGINS = [
     config('BASE_URL'),
     config('BASE_URL') + ":" + config('PORT'),
-    "http://localhost:8082",
-    "http://127.0.0.1:8082",
-    "https://14c66eadfaf8.ngrok-free.app",
+    "https://6a436b963963.ngrok-free.app",
     # Add your production domain here
     # "https://your-production-domain.com"
 ]
 
 CORS_ALLOW_HEADERS = ('content-disposition', 'accept-encoding',
-                      'content-type', 'accept', 'origin', 'authorization',
-                      
-                      )
+                      'content-type', 'accept', 'origin', 'authorization')
 
 CORS_ALLOW_METHODS = [
     'DELETE',
@@ -143,6 +140,7 @@ INSTALLED_APPS = [
     'appraisal.apps.AppraisalConfig',
 
     'toolsandequipment',
+    'fault_locator',
     'Transport',
     'Hardware_Faults',
     'Asset_Register',
@@ -157,6 +155,8 @@ INSTALLED_APPS = [
     'tokens',
     'commecial.tempertockens',
     'competence_building.apps.CompetenceBuildingConfig',
+    'crispy_forms',
+    'crispy_tailwind',
     'graphene_django',
     'graphene_file_upload',
     'safety',
@@ -164,9 +164,6 @@ INSTALLED_APPS = [
     'comm_files',
     # 'django_prometheus',  # Temporarily disabled due to import error
     'api.ops_maintenance.safety_operations',
-    # 'line_inspection.apps.LineInspectionConfig',
-    'crispy_forms',
-    'crispy_tailwind',
     'utils',
     'substation_inspections',
     'e60_inspections',
@@ -176,7 +173,6 @@ INSTALLED_APPS = [
     'EquipTracker',
     'equipment_management',
     'pretask_risk_assessment',
-    'fault_locator',
 ]
 
 AUTH_USER_MODEL = 'users.UserProfile'
@@ -188,6 +184,7 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'inspections.middleware.APIRequestLoggingMiddleware',  # API request logging
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'it.beii_auth.inactive_user_middleware.InactiveUserMiddleware',
@@ -218,10 +215,6 @@ TEMPLATES = [
         },
     },
 ]
-
-CRISPY_ALLOWED_TEMPLATE_PACKS = "tailwind"
-
-CRISPY_TEMPLATE_PACK = "tailwind"
 
 WSGI_APPLICATION = 'beii_v1.wsgi.application'
 ASGI_APPLICATION = 'beii_v1.wsgi.application'

@@ -1,10 +1,5 @@
 {% extends "admin_layout.html" %}
-{% load static %}{% block styles %}
-  <link rel="stylesheet"
-        href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css" />
-  <style>.dataTables_wrapper .dataTables_length select { width: 4rem; }</style>
-{% endblock %}
-
+{% load static %}
 {% block content %}
 
 <title>Jobs</title>
@@ -43,7 +38,7 @@
           <tbody>
             {% for job in jobs %}
               <tr class="h-1">
-                <td><a class="text-blue-500" href="{% url 'pretask_risk_assessment:job' job.id %}">{{ job.id|default_if_none:'' }}</a></td>
+                <td><a class="text-blue-500" href="">{{ job.id|default_if_none:'' }}</a></td>
                 <td>{{ job.task|default_if_none:'' }}</td>
                 <td>{{ job.created_at|date }}</td>
                 <td>{{ job.substation.name }} {{ job.substation.code }}</td>
@@ -74,7 +69,7 @@
   $(document).ready(function () {
     $("#jobs").DataTable({
       "pageLength": 10,
-      "columnDefs": [{ "orderable": true, "targets": [0, 1, 2] }],
+      "columnDefs": [{ "orderable": true, "targets": [0, 1, 2,3,4] }],
       "responsive": true,
       "searching": true,
       language: {

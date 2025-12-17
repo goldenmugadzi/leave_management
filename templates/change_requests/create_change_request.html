@@ -42,486 +42,251 @@
           </h3>
         </div>
         <div class="p-6">
-          <form method="post" id="change-request-form" class="space-y-6">
+          <form method="post" id="change-request-form" class="space-y-6" enctype="multipart/form-data">
             {% csrf_token %}
 
-            <!-- Operation Type Selection -->
-            <div>
-              <label
-                for="operation_type"
-                class="block text-sm font-medium text-gray-700 mb-2"
-              >
-                Operation Type <span class="text-red-500">*</span>
-              </label>
-              <select
-                id="operation_type"
-                name="operation_type"
-                class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              >
-                <option value="">Select Operation Type</option>
-                <option value="new_profile">New Profile</option>
-                <option value="profile_modification">
-                  Profile Modification
-                </option>
-                <option value="profile_deactivation">
-                  Profile Deactivation
-                </option>
-              </select>
-              <p class="mt-1 text-sm text-gray-500">
-                Choose the type of change request you want to submit
-              </p>
-            </div>
-
-            <!-- Common Fields -->
-            <div id="common-fields">
-              <!-- Reason for Change -->
-              <div class="mb-6">
-                <label
-                  for="change_reason"
-                  class="block text-sm font-medium text-gray-700 mb-2"
-                >
-                  Reason for Change <span class="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  name="change_reason"
-                  id="change_reason"
-                  class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Enter reason for the change"
-                />
-                <p class="mt-1 text-sm text-gray-500">
-                  Brief description of why this change is needed
-                </p>
-              </div>
-
-              <!-- Change Description -->
-              <div class="mb-6">
-                <label
-                  for="change_description"
-                  class="block text-sm font-medium text-gray-700 mb-2"
-                >
-                  Change Description <span class="text-red-500">*</span>
-                </label>
-                <textarea
-                  name="change_description"
-                  id="change_description"
-                  rows="3"
-                  class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  placeholder="Detailed description of the requested change"
-                ></textarea>
-                <p class="mt-1 text-sm text-gray-500">
-                  Provide detailed information about the change
-                </p>
-              </div>
-
-              <!-- Application -->
-              <div class="mb-6">
-                <label
-                  for="for_application"
-                  class="block text-sm font-medium text-gray-700 mb-2"
-                >
-                  Application <span class="text-red-500">*</span>
-                </label>
-                <select
-                  id="for_application"
-                  name="for_application"
-                  class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                >
-                  <option value="">Select Application</option>
-                  <option value="BUSINESS EXCELLENCE">
-                    BUSINESS EXCELLENCE
-                  </option>
-                  <option value="SAP">SAP</option>
-                  <option value="NDM">NDM</option>
-                  <option value="ICS">ICS</option>
-                  <option value="SMARTVEND">SMARTVEND</option>
-                  <option value="ZIMS">ZIMS</option>
-                  <option value="GIS">GIS</option>
-                  <option value="NET METERING">NET METERING</option>
-                  <option value="DOMAIN/EMAIL">DOMAIN/EMAIL</option>
-                  <option value="CITRIX">CITRIX</option>
-                  <option value="ITSM">ITSM</option>
-                  <option value="SMART METERING">SMART METERING</option>
-                  <option value="STATISTICAL METERING">
-                    STATISTICAL METERING
-                  </option>
-                </select>
-                <p class="mt-1 text-sm text-gray-500">
-                  Select the application this change relates to
-                </p>
-              </div>
-
-              <!-- Roles to Action (Dynamic based on Application) -->
-              <div class="mb-6">
-                <label
-                  for="roles_to_action"
-                  class="block text-sm font-medium text-gray-700 mb-2"
-                  id="roles-label"
-                >
-                  Roles to Action
-                </label>
-                
-                <!-- Business Excellence - Show role selection -->
-                <div id="business-excellence-roles" class="hidden">
-                  <div class="space-y-2">
-                    <p class="text-sm text-gray-600 mb-3">Select specific system roles to assign:</p>
-                    {% for role in user_roles %}
-                    <div class="flex items-center">
-                      <input
-                        type="checkbox"
-                        id="role_{{ role.id }}"
-                        name="selected_roles"
-                        value="{{ role.id }}"
-                        class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                      />
-                      <label for="role_{{ role.id }}" class="ml-2 block text-sm text-gray-900">
-                        {{ role.name }} - {{ role.description|default:"System Role" }}
-                      </label>
-                    </div>
-                    {% endfor %}
-                  </div>
-                </div>
-                
-                <!-- Other Applications - Show text area for role designation -->
-                <div id="other-app-roles">
-                  <textarea
-                    name="roles_to_action"
-                    id="roles_to_action"
-                    rows="3"
-                    class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    placeholder="Specify roles, responsibilities or designations that need to be assigned"
-                  ></textarea>
-                  <p class="mt-1 text-sm text-gray-500" id="roles-help-text">
-                    List any specific roles, responsibilities or designations that need attention
+            <div id="common-fields" class="space-y-10">
+              <!-- Section A -->
+              <section class="border-t border-gray-200 pt-6">
+                <div class="flex items-center justify-between mb-4">
+                  <h4 class="text-lg font-semibold text-gray-900">
+                    Section A - Change Request Originator
+                  </h4>
+                  <p class="text-sm text-gray-500">
+                    Matches Section A on the IT Change Request form.
                   </p>
                 </div>
-              </div>
-            </div>
-
-            <!-- New Profile Fields -->
-            <div id="new-profile-fields" class="hidden">
-              <div class="border-t border-gray-200 pt-6">
-                <h4 class="text-lg font-medium text-gray-900 mb-4">
-                  New User Profile Information
-                </h4>
-
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div class="mb-6">
                     <label
-                      for="first_name"
+                      for="originator_company"
                       class="block text-sm font-medium text-gray-700 mb-2"
                     >
-                      First Name <span class="text-red-500">*</span>
+                      Company <span class="text-red-500">*</span>
                     </label>
                     <input
                       type="text"
-                      name="first_name"
-                      id="first_name"
-                      class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      name="originator_company"
+                      id="originator_company"
+                      value="{{ originator_defaults.company }}"
+                      class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus-border-blue-500"
+                      placeholder="Enter the company of the change request originator"
                     />
-                  </div>
-
-                  <div class="mb-6">
-                    <label
-                      for="last_name"
-                      class="block text-sm font-medium text-gray-700 mb-2"
-                    >
-                      Last Name <span class="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      name="last_name"
-                      id="last_name"
-                      class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    />
-                  </div>
-
-                  <div class="mb-6">
-                    <label
-                      for="username"
-                      class="block text-sm font-medium text-gray-700 mb-2"
-                    >
-                      Username <span class="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      name="username"
-                      id="username"
-                      class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    />
-                  </div>
-
-                  <div class="mb-6">
-                    <label
-                      for="email"
-                      class="block text-sm font-medium text-gray-700 mb-2"
-                    >
-                      Email Address <span class="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="email"
-                      name="email"
-                      id="email"
-                      class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    />
-                  </div>
-
-                  <div class="mb-6">
-                    <label
-                      for="designation"
-                      class="block text-sm font-medium text-gray-700 mb-2"
-                    >
-                      Designation <span class="text-red-500">*</span>
-                    </label>
-                    <select
-                      id="designation"
-                      name="designation"
-                      class="select2 block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    >
-                      <option value="">Select Designation</option>
-                      {% for design in user_designations %}
-                      <option value="{{design.id}}">
-                        {{design.description}}
-                      </option>
-                      {% endfor %}
-                    </select>
-                  </div>
-
-                  <div class="mb-6">
-                    <label
-                      for="cost_center"
-                      class="block text-sm font-medium text-gray-700 mb-2"
-                    >
-                      Cost Centre <span class="text-red-500">*</span>
-                    </label>
-                    <select
-                      id="cost_center"
-                      name="cost_center"
-                      class="select2 block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    >
-                      <option value="">Select Cost Centre</option>
-                      {% for cost_center in cost_centers %}
-                      <option value="{{cost_center.id}}">
-                        {{cost_center.name}}
-                      </option>
-                      {% endfor %}
-                    </select>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Profile Modification Fields -->
-            <div id="profile-modification-fields" class="hidden">
-              <div class="border-t border-gray-200 pt-6">
-                <h4 class="text-lg font-medium text-gray-900 mb-4">
-                  Profile Modification Details
-                </h4>
-
-                <!-- Change Type Selection -->
-                <div class="mb-6">
-                  <label
-                    for="change_type"
-                    class="block text-sm font-medium text-gray-700 mb-2"
-                  >
-                    Change Type <span class="text-red-500">*</span>
-                  </label>
-                  <select
-                    id="change_type"
-                    name="change_type"
-                    class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  >
-                    <option value="">Select Change Type</option>
-                    <option value="PERMANENT">Permanent Role Assignment</option>
-                    <option value="TEMPORARY_DELEGATION">
-                      Temporary Role Delegation
-                    </option>
-                  </select>
-                  <p class="mt-1 text-sm text-gray-500">
-                    Choose the type of modification
-                  </p>
-                </div>
-
-                <!-- Delegator Selection -->
-                <div class="mb-6">
-                  <label
-                    for="delegator"
-                    class="block text-sm font-medium text-gray-700 mb-2"
-                  >
-                    Delegator <span class="text-red-500">*</span>
-                  </label>
-                  <select
-                    id="delegator"
-                    name="delegator"
-                    class="select2 block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  >
-                    <option value="">Select Delegator</option>
-                    <option value="{{request.user.username}}">
-                      {{request.user.get_full_name}} (Logged in user)
-                    </option>
-                    {% for usr in user_profiles %}
-                    <option value="{{usr.username}}">
-                      {{usr.first_name}} {{usr.last_name}}
-                    </option>
-                    {% endfor %}
-                  </select>
-                  <p class="mt-1 text-sm text-gray-500">
-                    Select who is delegating their roles
-                  </p>
-                </div>
-
-                <!-- Delegatee Selection -->
-                <div class="mb-6">
-                  <label
-                    for="delegatee"
-                    class="block text-sm font-medium text-gray-700 mb-2"
-                  >
-                    Delegatee <span class="text-red-500">*</span>
-                  </label>
-                  <select
-                    id="delegatee"
-                    name="delegatee"
-                    class="select2 block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  >
-                    <option value="">Select Delegatee</option>
-                    <option value="{{request.user.username}}">
-                      {{request.user.get_full_name}} (Logged in user)
-                    </option>
-                    {% for usr in user_profiles %}
-                    <option value="{{usr.username}}">
-                      {{usr.first_name}} {{usr.last_name}}
-                    </option>
-                    {% endfor %}
-                  </select>
-                  <p class="mt-1 text-sm text-gray-500">
-                    Select who will receive the delegated roles
-                  </p>
-                </div>
-
-                <!-- Delegation-specific fields -->
-                <div id="delegation-fields" class="hidden">
-                  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="mb-6">
-                      <label
-                        for="delegation_start_date"
-                        class="block text-sm font-medium text-gray-700 mb-2"
-                      >
-                        Delegation Start Date
-                        <span class="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="datetime-local"
-                        name="delegation_start_date"
-                        id="delegation_start_date"
-                        class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      />
-                      <p class="mt-1 text-sm text-gray-500">
-                        When the delegation becomes active
-                      </p>
-                    </div>
-                    <div class="mb-6">
-                      <label
-                        for="delegation_end_date"
-                        class="block text-sm font-medium text-gray-700 mb-2"
-                      >
-                        Delegation End Date <span class="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="datetime-local"
-                        name="delegation_end_date"
-                        id="delegation_end_date"
-                        class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      />
-                      <p class="mt-1 text-sm text-gray-500">
-                        When the delegation expires (max 90 days)
-                      </p>
-                    </div>
-                  </div>
-                  <div class="mb-6">
-                    <label
-                      for="delegation_reason"
-                      class="block text-sm font-medium text-gray-700 mb-2"
-                    >
-                      Delegation Reason <span class="text-red-500">*</span>
-                    </label>
-                    <textarea
-                      name="delegation_reason"
-                      id="delegation_reason"
-                      rows="3"
-                      class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      placeholder="Explain why you're delegating your roles (e.g., leave, training, etc.)"
-                    ></textarea>
-                  </div>
-
-                  <!-- Roles to Delegate -->
-                  <div id="roles-to-delegate" class="mb-6 hidden">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">
-                      Select Roles to Delegate <span class="text-red-500">*</span>
-                    </label>
-                    <div id="delegator-roles-container" class="space-y-4">
-                      <!-- Roles will be populated here via AJAX -->
-                    </div>
                     <p class="mt-1 text-sm text-gray-500">
-                      Choose which roles from the delegator to assign temporarily
+                      Typically reflects your business unit; edit if the requester differs.
+                    </p>
+                  </div>
+                  <div class="mb-6">
+                    <label
+                      for="originator_site"
+                      class="block text-sm font-medium text-gray-700 mb-2"
+                    >
+                      Site / Location <span class="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      name="originator_site"
+                      id="originator_site"
+                      value="{{ originator_defaults.site }}"
+                      class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus-border-blue-500"
+                      placeholder="Enter the site or location for this request"
+                    />
+                    <p class="mt-1 text-sm text-gray-500">
+                      Prefilled with your location; adjust when submitting on behalf of another site.
+                    </p>
+                  </div>
+                  <div class="mb-6">
+                    <label
+                      for="originator_name_display"
+                      class="block text-sm font-medium text-gray-700 mb-2"
+                    >
+                      Originator
+                    </label>
+                    <input
+                      type="text"
+                      id="originator_name_display"
+                      value="{{ originator_defaults.first_name }} {{ originator_defaults.last_name }}"
+                      readonly
+                      class="block w-full border border-gray-200 bg-gray-50 rounded-md px-3 py-2 text-gray-900"
+                    />
+                    <p class="mt-1 text-sm text-gray-500">
+                      Taken from your profile; override by including the correct name in the supporting correspondence.
+                    </p>
+                  </div>
+                  <div class="mb-6">
+                    <label
+                      for="originator_designation_display"
+                      class="block text-sm font-medium text-gray-700 mb-2"
+                    >
+                      Designation
+                    </label>
+                    <input
+                      type="text"
+                      id="originator_designation_display"
+                      value="{{ originator_defaults.designation }}"
+                      readonly
+                      class="block w-full border border-gray-200 bg-gray-50 rounded-md px-3 py-2 text-gray-900"
+                    />
+                    <p class="mt-1 text-sm text-gray-500">
+                      Shown for reference; approvals capture the official authorisation.
+                    </p>
+                  </div>
+                  <div class="mb-6">
+                    <label
+                      for="date_raised_display"
+                      class="block text-sm font-medium text-gray-700 mb-2"
+                    >
+                      Date Raised
+                    </label>
+                    <input
+                      type="text"
+                      id="date_raised_display"
+                      value="{% now 'Y-m-d' %}"
+                      readonly
+                      class="block w-full border border-gray-200 bg-gray-50 rounded-md px-3 py-2 text-gray-900"
+                    />
+                    <p class="mt-1 text-sm text-gray-500">
+                      Automatically captured when the request is submitted.
+                    </p>
+                  </div>
+                  <div class="mb-6">
+                    <label
+                      for="date_resolution_required"
+                      class="block text-sm font-medium text-gray-700 mb-2"
+                    >
+                      Date Resolution Required <span class="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="date"
+                      name="date_resolution_required"
+                      id="date_resolution_required"
+                      value="{{ default_resolution_date }}"
+                      class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus-border-blue-500"
+                    />
+                    <p class="mt-1 text-sm text-gray-500">
+                      Provide the required completion date for this change
                     </p>
                   </div>
                 </div>
-              </div>
-            </div>
+              </section>
 
-            <!-- Profile Deactivation Fields -->
-            <div id="profile-deactivation-fields" class="hidden">
-              <div class="border-t border-gray-200 pt-6">
-                <h4 class="text-lg font-medium text-gray-900 mb-4">
-                  Profile Deactivation Details
-                </h4>
-
-                <!-- User Profile Selection -->
-                <div class="mb-6">
-                  <label
-                    for="user_profile_deac"
-                    class="block text-sm font-medium text-gray-700 mb-2"
-                  >
-                    User Profile <span class="text-red-500">*</span>
-                  </label>
-                  <select
-                    id="user_profile_deac"
-                    name="user_profile"
-                    class="select2 block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  >
-                    <option value="">Select User</option>
-                    {% for usr in user_profiles %}
-                    <option value="{{usr.username}}">
-                      {{usr.first_name}} {{usr.last_name}}
-                    </option>
-                    {% endfor %}
-                  </select>
-                  <p class="mt-1 text-sm text-gray-500">
-                    Select the user whose profile needs to be deactivated
+              <!-- Section B -->
+              <section class="border-t border-gray-200 pt-6">
+                <div class="flex items-center justify-between mb-4">
+                  <h4 class="text-lg font-semibold text-gray-900">
+                    Section B - Type of Change
+                  </h4>
+                  <p class="text-sm text-gray-500">
+                    Choose the request path that matches Section B on the paper form.
                   </p>
                 </div>
-              </div>
-            </div>
-
-            <!-- Form Errors -->
-            <div id="form-errors" class="hidden">
-              <div class="bg-red-50 border border-red-200 rounded-md p-4">
-                <div class="flex">
-                  <div class="flex-shrink-0">
-                    <i class="fas fa-exclamation-circle text-red-400"></i>
+                <div class="grid grid-cols-1 gap-6">
+                  <div>
+                    <label
+                      for="operation_type"
+                      class="block text-sm font-medium text-gray-700 mb-2"
+                    >
+                      Change Type <span class="text-red-500">*</span>
+                    </label>
+                    <select
+                      id="operation_type"
+                      name="operation_type"
+                      class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus-border-blue-500"
+                    >
+                      <option value="">Select Change Type</option>
+                      <option value="new_profile">Creation of New Profile (Section C)</option>
+                      <option value="profile_modification">
+                        Profile Modification – Assignment/Removal of Roles (Section D)
+                      </option>
+                      <option value="profile_deactivation">
+                        Profile Deactivation (Section E)
+                      </option>
+                    </select>
+                    <p class="mt-1 text-sm text-gray-500">
+                      This drives which sections below become available.
+                    </p>
                   </div>
-                  <div class="ml-3">
-                    <h3 class="text-sm font-medium text-red-800">
-                      Please correct the following errors:
-                    </h3>
-                    <div
-                      class="mt-2 text-sm text-red-700"
-                      id="error-list"
-                    ></div>
+
+                  <div id="change-reason-group">
+                    <label
+                      for="change_reason"
+                      class="block text-sm font-medium text-gray-700 mb-2"
+                    >
+                      Reason for Change <span class="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      name="change_reason"
+                      id="change_reason"
+                      class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus-border-blue-500"
+                      placeholder="Summarise why this change is required"
+                    />
+                    <p class="mt-1 text-sm text-gray-500">
+                      Provide the short justification that appears in Section A/B of the form.
+                    </p>
+                  </div>
+
+                  <div id="change-description-group">
+                    <label
+                      for="change_description"
+                      class="block text-sm font-medium text-gray-700 mb-2"
+                    >
+                      Change Description <span class="text-red-500">*</span>
+                    </label>
+                    <textarea
+                      name="change_description"
+                      id="change_description"
+                      rows="3"
+                      class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus-border-blue-500"
+                      placeholder="Detailed description of the requested change"
+                    ></textarea>
+                    <p class="mt-1 text-sm text-gray-500">
+                      Mirrors the narrative captured in the official document.
+                    </p>
+                  </div>
+
+                  <div>
+                    <label
+                      for="for_application"
+                      class="block text-sm font-medium text-gray-700 mb-2"
+                    >
+                      Application <span class="text-red-500">*</span>
+                    </label>
+                    <select
+                      id="for_application"
+                      name="for_application"
+                      class="block w-full border border-gray-300 rounded-md px-3 py-2 text-gray-900 focus:ring-2 focus:ring-blue-500 focus-border-blue-500"
+                    >
+                      <option value="">Select Application</option>
+                      <option value="BUSINESS EXCELLENCE">
+                        BUSINESS EXCELLENCE
+                      </option>
+                      <option value="SAP">SAP</option>
+                      <option value="NDM">NDM</option>
+                      <option value="ICS">ICS</option>
+                      <option value="SMARTVEND">SMARTVEND</option>
+                      <option value="ZIMS">ZIMS</option>
+                      <option value="GIS">GIS</option>
+                      <option value="NET METERING">NET METERING</option>
+                      <option value="DOMAIN/EMAIL">DOMAIN/EMAIL</option>
+                      <option value="CITRIX">CITRIX</option>
+                      <option value="ITSM">ITSM</option>
+                      <option value="SMART METERING">SMART METERING</option>
+                      <option value="STATISTICAL METERING">
+                        STATISTICAL METERING
+                      </option>
+                    </select>
+                    <p class="mt-1 text-sm text-gray-500">
+                      Select the application this change relates to.
+                    </p>
                   </div>
                 </div>
-              </div>
+              </section>
             </div>
+            {% for section in form_sections %}
+              {% include section.form_partial %}
+
+            {% endfor %}
 
             <!-- Submit Buttons -->
             <div
@@ -579,39 +344,123 @@
   </div>
 </div>
 
-{% endblock content %} {% block scripts %}
+{% endblock content %}
+
+{% block scripts %}
+{{ cr_type_definitions|json_script:"cr-type-definitions" }}
 <script>
   $(document).ready(function () {
     // Initialize Select2 for select fields
-    $(".select2").select2({
-      placeholder: "Select an option",
-      allowClear: true,
-      width: "100%",
+    $(".select2").each(function () {
+      const placeholder = $(this).data("placeholder") || "Select an option";
+      $(this).select2({
+        placeholder,
+        allowClear: true,
+        width: "100%",
+      });
     });
+
+    const crTypeDefinitions = JSON.parse(
+      document.getElementById("cr-type-definitions").textContent
+    );
+    const operationSectionMap = {};
+    const sectionRegistry = {};
+
+    crTypeDefinitions.forEach((def) => {
+      if (def.form_section_id) {
+        const sectionEl = document.getElementById(def.form_section_id);
+        if (sectionEl) {
+          sectionRegistry[def.form_section_id] = $(sectionEl);
+        }
+      }
+      if (def.operation_value && def.form_section_id) {
+        if (!operationSectionMap[def.operation_value]) {
+          operationSectionMap[def.operation_value] = [];
+        }
+        if (!operationSectionMap[def.operation_value].includes(def.form_section_id)) {
+          operationSectionMap[def.operation_value].push(def.form_section_id);
+        }
+      }
+    });
+
+    function toggleOperationSections(operationType) {
+      Object.values(sectionRegistry).forEach(($section) => $section.addClass("hidden"));
+      const sectionsToShow = operationSectionMap[operationType] || [];
+      sectionsToShow.forEach((sectionId) => {
+        const $section = sectionRegistry[sectionId];
+        if ($section) {
+          $section.removeClass("hidden");
+        }
+      });
+    }
+
+    const modExistingUserSection = $("#mod-existing-user-section");
+    const modEcSection = $("#mod-ec-section");
+    const modEcInput = $("#mod_ec_number");
+    const reasonGroup = $("#change-reason-group");
+    const descriptionGroup = $("#change-description-group");
+    const $changeReasonInput = $("#change_reason");
+    const $changeDescriptionInput = $("#change_description");
+    const $deactivationReasonInput = $("#deactivation_reason");
+    let reasonFieldsSyncedFromDeactivation = false;
+
+    function syncDeactivationReasonToGeneralFields() {
+      const value = ($deactivationReasonInput.val() || "").trim();
+      $changeReasonInput.val(value);
+      $changeDescriptionInput.val(value);
+      reasonFieldsSyncedFromDeactivation = true;
+    }
+
+    function clearSyncedReasonFields() {
+      if (reasonFieldsSyncedFromDeactivation) {
+        $changeReasonInput.val("");
+        $changeDescriptionInput.val("");
+        reasonFieldsSyncedFromDeactivation = false;
+      }
+    }
+
+    function toggleModificationUserFields(isTemporaryDelegation) {
+      if (isTemporaryDelegation) {
+        modExistingUserSection.addClass("hidden");
+        modEcSection.addClass("hidden");
+        modEcInput.prop("required", false);
+      } else {
+        modExistingUserSection.removeClass("hidden");
+        modEcSection.removeClass("hidden");
+        modEcInput.prop("required", true);
+      }
+    }
+
+    function updateProfileFieldNames(operationType) {
+      if (operationType === "profile_modification") {
+        $("#user_profile").attr("name", "user_profile");
+        $("#user_profile_deac").removeAttr("name");
+      } else if (operationType === "profile_deactivation") {
+        $("#user_profile_deac").attr("name", "user_profile");
+        $("#user_profile").removeAttr("name");
+      } else {
+        $("#user_profile").attr("name", "user_profile");
+        $("#user_profile_deac").removeAttr("name");
+      }
+    }
 
     // Handle operation type change
     $("#operation_type").on("change", function () {
       const operationType = $(this).val();
       const application = $("#for_application").val();
 
-      // Hide all operation-specific fields
-      $(
-        "#new-profile-fields, #profile-modification-fields, #profile-deactivation-fields"
-      ).addClass("hidden");
+      // Toggle name attributes to prevent duplicate form keys
+      updateProfileFieldNames(operationType);
 
-      // Show relevant fields based on operation type
-      switch (operationType) {
-        case "new_profile":
-          $("#new-profile-fields").removeClass("hidden");
-          break;
-        case "profile_modification":
-          $("#profile-modification-fields").removeClass("hidden");
-          break;
-        case "profile_deactivation":
-          $("#profile-deactivation-fields").removeClass("hidden");
-          break;
+      toggleOperationSections(operationType);
+
+      if (operationType !== "profile_modification") {
+        modEcInput.prop("required", false);
+      } else {
+        const changeType = $("#change_type").val();
+        modEcInput.prop("required", changeType !== "TEMPORARY_DELEGATION");
       }
-      
+
       // Update roles section based on operation type
       updateRolesSection(application, operationType);
     });
@@ -620,19 +469,46 @@
     $("#change_type").on("change", function () {
       const changeType = $(this).val();
       const application = $("#for_application").val();
+      const delegatorValue = $("#delegator").val();
+      const userProfileValue = $("#user_profile").val();
       
       if (changeType === "TEMPORARY_DELEGATION") {
-        // Only show delegation fields if Business Excellence is selected
-        if (application === "BUSINESS EXCELLENCE") {
-          $("#delegation-fields").removeClass("hidden");
-        } else {
-          $("#delegation-fields").addClass("hidden");
-          alert("Temporary delegation is only available for Business Excellence application.");
-        }
-      } else {
+        toggleModificationUserFields(true);
+        // Show delegation-specific fields and hide permanent user field
+        $("#delegation-user-fields").removeClass("hidden");
+        $("#permanent-user-field").addClass("hidden");
+        
+        // Set required attributes for delegation fields
+        $("#delegator").prop("required", true);
+        $("#delegatee").prop("required", true);
+        $("#user_profile").prop("required", false);
+        
+        $("#delegation-fields").removeClass("hidden");
+      } else if (changeType === "PERMANENT") {
+        toggleModificationUserFields(false);
+        // Show permanent user field and hide delegation-specific fields
+        $("#permanent-user-field").removeClass("hidden");
+        $("#delegation-user-fields").addClass("hidden");
         $("#delegation-fields").addClass("hidden");
-        $("#roles-to-delegate").addClass("hidden");
+        
+        // Set required attributes for permanent fields
+        $("#user_profile").prop("required", true);
+        $("#delegator").prop("required", false);
+        $("#delegatee").prop("required", false);
+      } else {
+        toggleModificationUserFields(false);
+        // No change type selected - hide all
+        $("#delegation-user-fields").addClass("hidden");
+        $("#permanent-user-field").addClass("hidden");
+        $("#delegation-fields").addClass("hidden");
+        
+        // Remove all required attributes
+        $("#user_profile").prop("required", false);
+        $("#delegator").prop("required", false);
+        $("#delegatee").prop("required", false);
       }
+
+      refreshRoleActionSections();
     });
 
     // Handle application change
@@ -640,89 +516,320 @@
       const application = $(this).val();
       const changeType = $("#change_type").val();
       const operationType = $("#operation_type").val();
+      const delegatorValue = $("#delegator").val();
+      const userProfileValue = $("#user_profile").val();
       
       // Update roles section based on application
       updateRolesSection(application, operationType);
       
       // If delegation is selected and application is changed
       if (changeType === "TEMPORARY_DELEGATION") {
-        if (application === "BUSINESS EXCELLENCE") {
-          $("#delegation-fields").removeClass("hidden");
-        } else {
-          $("#delegation-fields").addClass("hidden");
-          $("#roles-to-delegate").addClass("hidden");
-          if (application !== "") {
-            alert("Temporary delegation is only available for Business Excellence application.");
-            $("#change_type").val("");
-          }
-        }
+        $("#delegation-fields").removeClass("hidden");
+      } else if (changeType === "PERMANENT" && userProfileValue) {
+        // No special handling needed
       }
+
+      refreshRoleActionSections();
     });
     
     // Function to update roles section based on application and operation type
     function updateRolesSection(application, operationType) {
-      const rolesLabel = $("#roles-label");
-      const businessExcellenceRoles = $("#business-excellence-roles");
-      const otherAppRoles = $("#other-app-roles");
-      const rolesHelpText = $("#roles-help-text");
-      
+      console.debug("[CR] updateRolesSection", { application, operationType });
+      const hideReasonAndDescription = ["profile_modification", "profile_deactivation"].includes(
+        operationType
+      );
+
+      reasonGroup.toggleClass("hidden", hideReasonAndDescription);
+      descriptionGroup.toggleClass("hidden", hideReasonAndDescription);
+
       if (operationType === "profile_deactivation") {
-        // Hide roles section for deactivations
-        rolesLabel.parent().hide();
-        return;
+        syncDeactivationReasonToGeneralFields();
       } else {
-        // Show roles section for other operations
-        rolesLabel.parent().show();
-      }
-      
-      if (application === "BUSINESS EXCELLENCE") {
-        // Show role checkboxes for Business Excellence
-        businessExcellenceRoles.removeClass("hidden");
-        otherAppRoles.addClass("hidden");
-        
-        if (operationType === "profile_modification") {
-          rolesLabel.text("Roles to Assign");
-        } else {
-          rolesLabel.text("Roles to Assign");
-        }
-      } else {
-        // Show text area for other applications
-        businessExcellenceRoles.addClass("hidden");
-        otherAppRoles.removeClass("hidden");
-        
-        if (operationType === "profile_modification") {
-          rolesLabel.text("Roles to Designate");
-          $("#roles_to_action").attr("placeholder", "Specify roles, responsibilities or designations that need to be assigned");
-          rolesHelpText.text("List specific roles, responsibilities or designations that need attention");
-        } else {
-          rolesLabel.text("Roles to Designate");
-          $("#roles_to_action").attr("placeholder", "Specify roles, responsibilities or designations for the new user");
-          rolesHelpText.text("List specific roles, responsibilities or designations for the new user profile");
-        }
+        clearSyncedReasonFields();
       }
     }
-    
-    // Handle operation type change
-    $("#operation_type").on("change", function () {
-      const application = $("#for_application").val();
-      const operationType = $(this).val();
-      
-      // Update roles section
-      updateRolesSection(application, operationType);
+
+    $deactivationReasonInput.on("input change", function () {
+      if ($("#operation_type").val() === "profile_deactivation") {
+        syncDeactivationReasonToGeneralFields();
+      }
     });
 
-    // Handle delegator selection change
-    $("#delegator").on("change", function () {
-      const delegatorValue = $(this).val();
+    // === Target user lookup helpers ===
+    const userLookupCache = {};
+    const summaryMap = {
+      mod: {
+        container: $("#mod-user-summary"),
+        message: $("#mod-user-summary-message"),
+        fields: {
+          name: $("#mod-user-summary-name"),
+          ec: $("#mod-user-summary-ec"),
+          designation: $("#mod-user-summary-designation"),
+          costCenter: $("#mod-user-summary-cost-center"),
+          region: $("#mod-user-summary-region"),
+          location: $("#mod-user-summary-location"),
+        },
+      },
+      deac: {
+        container: $("#deactivation-user-summary"),
+        message: $("#deac-user-summary-message"),
+        fields: {
+          name: $("#deac-user-summary-name"),
+          ec: $("#deac-user-summary-ec"),
+          designation: $("#deac-user-summary-designation"),
+          costCenter: $("#deac-user-summary-cost-center"),
+          region: $("#deac-user-summary-region"),
+          location: $("#deac-user-summary-location"),
+        },
+      },
+    };
+
+    function setSelectorValue($select, value) {
+      if (!$select || !$select.length) return;
+      $select.data("suppressLookup", true);
+      $select.val(value).trigger("change.select2").trigger("change");
+      setTimeout(() => {
+        $select.data("suppressLookup", false);
+      }, 0);
+    }
+
+    function setFieldErrorState($field, hasError) {
+      if (!$field || !$field.length) return;
+      if (hasError) {
+        $field
+          .addClass("border-red-500 focus:border-red-500 focus:ring-red-500")
+          .removeClass("focus:border-blue-500 focus:ring-blue-500");
+      } else {
+        $field
+          .removeClass("border-red-500 focus:border-red-500 focus:ring-red-500")
+          .addClass("focus:border-blue-500 focus:ring-blue-500");
+      }
+    }
+
+    function setSummaryMessage(key, message, level = "info") {
+      const summary = summaryMap[key];
+      if (!summary) return;
+      const $message = summary.message;
+      if (!$message || !$message.length) return;
+
+      const levelClasses = {
+        info: "text-blue-700",
+        success: "text-green-700",
+        error: "text-red-600",
+      };
+
+      $message
+        .removeClass("hidden text-blue-700 text-green-700 text-red-600")
+        .addClass(levelClasses[level] || levelClasses.info)
+        .text(message || "");
+
+      if (!message) {
+        $message.addClass("hidden").text("");
+      }
+    }
+
+    function resetSummary(key, { hide = false } = {}) {
+      const summary = summaryMap[key];
+      if (!summary) return;
+      if (hide) {
+        summary.container.addClass("hidden");
+      }
+      setSummaryMessage(key, "");
+      Object.values(summary.fields).forEach(($field) => {
+        if ($field && $field.length) {
+          $field.text("Not provided");
+        }
+      });
+    }
+
+    function populateSummary(key, profile) {
+      const summary = summaryMap[key];
+      if (!summary || !profile) return;
+
+      const fullName =
+        profile.full_name ||
+        [profile.first_name, profile.last_name].filter(Boolean).join(" ").trim() ||
+        profile.username ||
+        profile.ec_number ||
+        "Not provided";
+      const locationParts = [];
+      if (profile.section) locationParts.push(profile.section);
+      if (profile.district) locationParts.push(profile.district);
+      const location =
+        locationParts.join(" / ") || profile.region || "Not provided";
+
+      summary.container.removeClass("hidden");
+      setSummaryMessage(key, "Details loaded from user directory.", "info");
+
+      summary.fields.name.text(fullName || "Not provided");
+      summary.fields.ec.text(profile.ec_number || profile.username || "Not provided");
+      summary.fields.designation.text(profile.designation || "Not provided");
+      summary.fields.costCenter.text(profile.cost_center || "Not provided");
+      summary.fields.region.text(profile.region || "Not provided");
+      summary.fields.location.text(location || "Not provided");
+    }
+
+    function showSummaryNotFound(key, username) {
+      const summary = summaryMap[key];
+      if (!summary) return;
+      summary.container.removeClass("hidden");
+      resetSummary(key);
+      setSummaryMessage(key, `No profile found for "${username}".`, "error");
+    }
+
+    function handleUserProfileLookup(rawValue, config = {}) {
+      const {
+        targets = [],
+        sourceField = null,
+        onSuccess = null,
+        onNotFound = null,
+      } = config;
+
+      const trimmed = (rawValue || "").trim();
+      if (!trimmed) {
+        targets.forEach((key) => resetSummary(key, { hide: true }));
+        if (sourceField) setFieldErrorState(sourceField, false);
+        if (typeof onNotFound === "function") onNotFound();
+        return;
+      }
+
+      const normalized = trimmed.toUpperCase();
+      if (sourceField) {
+        sourceField.val(normalized);
+      }
+
+      const applyResult = (profile) => {
+        if (profile) {
+          targets.forEach((key) => populateSummary(key, profile));
+          if (sourceField) setFieldErrorState(sourceField, false);
+          if (typeof onSuccess === "function") onSuccess(profile);
+        } else {
+          targets.forEach((key) => showSummaryNotFound(key, normalized));
+          if (sourceField) setFieldErrorState(sourceField, true);
+          if (typeof onNotFound === "function") onNotFound();
+        }
+      };
+
+      if (userLookupCache[normalized]) {
+        applyResult(userLookupCache[normalized]);
+        return;
+      }
+
+      targets.forEach((key) => {
+        const summary = summaryMap[key];
+        if (summary) {
+          summary.container.removeClass("hidden");
+          setSummaryMessage(key, "Looking up user details...", "info");
+        }
+      });
+
+      $.ajax({
+        url: `/change_requests/profile_modification/get_user_data/${encodeURIComponent(
+          normalized
+        )}`,
+        method: "GET",
+        success: function (response) {
+          if (response && response.profile) {
+            userLookupCache[normalized] = response.profile;
+            applyResult(response.profile);
+          } else {
+            applyResult(null);
+          }
+        },
+        error: function () {
+          applyResult(null);
+        },
+      });
+    }
+
+    // Initialize state on load
+    updateProfileFieldNames($("#operation_type").val());
+    $("#operation_type").trigger("change");
+
+    // Handle user profile selection change (for permanent assignments)
+    $("#user_profile").on("change", function () {
+      const userProfileValue = $(this).val();
       const changeType = $("#change_type").val();
       const application = $("#for_application").val();
+
+      handleUserProfileLookup(userProfileValue, {
+        targets: ["mod"],
+        onSuccess: function (profile) {
+          const usernameValue = profile.username || profile.ec_number || "";
+          const ecValue = profile.ec_number || profile.username || "";
+          $("#mod_current_user_id").val(usernameValue);
+          $("#mod_ec_number").val(ecValue);
+          setSelectorValue($("#mod_user_selector"), profile.username || "");
+        },
+        onNotFound: function () {
+          $("#mod_current_user_id").val("");
+          $("#mod_ec_number").val("");
+          setSelectorValue($("#mod_user_selector"), "");
+        },
+      });
       
-      if (changeType === "TEMPORARY_DELEGATION" && application === "BUSINESS EXCELLENCE" && delegatorValue) {
-        loadDelegatorRoles(delegatorValue);
-      } else {
-        $("#roles-to-delegate").addClass("hidden");
-        $("#delegator-roles-container").empty();
+      // Load user roles for permanent assignment in Business Excellence
+      if (application === "BUSINESS EXCELLENCE" && userProfileValue && changeType === "PERMANENT") {
+        // No additional UI adjustments required
       }
+    });
+
+    $("#mod_ec_number").on("change blur", function () {
+      const $field = $(this);
+      handleUserProfileLookup($field.val(), {
+        targets: ["mod"],
+        sourceField: $field,
+        onSuccess: function (profile) {
+          const usernameValue = profile.username || profile.ec_number || "";
+          const ecValue = profile.ec_number || profile.username || "";
+          $("#mod_current_user_id").val(usernameValue);
+          $("#mod_ec_number").val(ecValue);
+          setSelectorValue($("#mod_user_selector"), profile.username || "");
+        },
+        onNotFound: function () {
+          $("#mod_current_user_id").val("");
+          setSelectorValue($("#mod_user_selector"), "");
+        },
+      });
+    });
+
+    $("#mod_user_selector").on("change", function () {
+      if ($(this).data("suppressLookup")) {
+        return;
+      }
+      const selectedUsername = $(this).val();
+      handleUserProfileLookup(selectedUsername, {
+        targets: ["mod"],
+        onSuccess: function (profile) {
+          const usernameValue = profile.username || profile.ec_number || "";
+          const ecValue = profile.ec_number || profile.username || "";
+          $("#mod_ec_number").val(ecValue);
+          $("#mod_current_user_id").val(usernameValue);
+
+          const changeType = $("#change_type").val();
+          if (changeType === "PERMANENT") {
+            $("#user_profile").val(usernameValue).trigger("change");
+          } else if (changeType === "TEMPORARY_DELEGATION") {
+            $("#delegatee").val(usernameValue).trigger("change");
+          }
+        },
+        onNotFound: function () {
+          $("#mod_ec_number").val("");
+          $("#mod_current_user_id").val("");
+        },
+      });
+    });
+
+    $("#user_profile_deac").on("change", function () {
+      handleUserProfileLookup($(this).val(), {
+        targets: ["deac"],
+      });
+    });
+
+    // Handle delegator selection change (for temporary delegations)
+    $("#delegator").on("change", function () {
+      // No additional UI adjustments needed now that roles are captured as text.
+      // This handler remains in case future logic is required.
     });
 
     // Handle delegatee selection change for delegation
@@ -733,6 +840,22 @@
       if (delegateeId && changeType === "TEMPORARY_DELEGATION") {
         // Show delegation fields if not already visible
         $("#delegation-fields").removeClass("hidden");
+        handleUserProfileLookup(delegateeId, {
+          targets: ["mod"],
+          onSuccess: function (profile) {
+            const usernameValue = profile.username || profile.ec_number || "";
+            const ecValue = profile.ec_number || profile.username || "";
+            $("#mod_current_user_id").val(usernameValue);
+            $("#mod_ec_number").val(ecValue);
+          },
+          onNotFound: function () {
+            $("#mod_current_user_id").val("");
+            $("#mod_ec_number").val("");
+          },
+        });
+      } else if (!delegateeId && changeType === "TEMPORARY_DELEGATION") {
+        $("#mod_current_user_id").val("");
+        $("#mod_ec_number").val("");
       }
     });
 
@@ -740,7 +863,11 @@
     $("#change-request-form").on("submit", function (e) {
       const operationType = $("#operation_type").val();
       let isValid = true;
-      let errors = [];
+      const errors = [];
+
+      if (operationType === "profile_deactivation") {
+        syncDeactivationReasonToGeneralFields();
+      }
 
       // Check if operation type is selected
       if (!operationType) {
@@ -748,19 +875,46 @@
         isValid = false;
       }
 
+      const changeType = $("#change_type").val();
+
       // Validate common required fields
-      if (!$("#change_reason").val()) {
-        errors.push("Reason for Change is required");
-        isValid = false;
-      }
-      if (!$("#change_description").val()) {
-        errors.push("Change Description is required");
-        isValid = false;
+      if (operationType !== "profile_modification") {
+        if (!$("#change_reason").val()) {
+          errors.push("Reason for Change is required");
+          isValid = false;
+        }
+        if (!$("#change_description").val()) {
+          errors.push("Change Description is required");
+          isValid = false;
+        }
       }
       if (!$("#for_application").val()) {
         errors.push("Application is required");
         isValid = false;
       }
+
+      if (operationType === "profile_modification") {
+        if (!changeType) {
+          errors.push("Change Type is required for profile modifications");
+          isValid = false;
+        }
+        if (!($("#mod_ec_number").val() || "").trim()) {
+          errors.push("EC Number is required for profile modification");
+          isValid = false;
+        }
+      }
+
+      ["originator_company", "originator_site", "date_resolution_required"].forEach(
+        (field) => {
+          if (!($(`#${field}`).val() || "").trim()) {
+            const label = field
+              .replace(/_/g, " ")
+              .replace(/\b\w/g, (l) => l.toUpperCase());
+            errors.push(`${label} is required`);
+            isValid = false;
+          }
+        }
+      );
 
       // Prevent default form submission to handle validation
       e.preventDefault();
@@ -770,12 +924,15 @@
         // Only validate new profile fields if they are visible
         if (!$("#new-profile-fields").hasClass("hidden")) {
           const requiredFields = [
+            "np_ec_number",
             "first_name",
             "last_name",
             "username",
             "email",
             "designation",
             "cost_center",
+            "np_job_title",
+            "np_company",
           ];
           requiredFields.forEach((field) => {
             if (!$(`#${field}`).val()) {
@@ -790,24 +947,61 @@
         }
       } else if (operationType === "profile_modification") {
         // Validate profile modification fields
-        if (!$("#delegator").val()) {
-          errors.push("Delegator is required");
-          isValid = false;
-        }
-
-        if (!$("#delegatee").val()) {
-          errors.push("Delegatee is required");
-          isValid = false;
-        }
-
         const changeType = $("#change_type").val();
         if (!changeType) {
           errors.push("Change Type is required");
           isValid = false;
         }
 
-        // Validate delegation fields if applicable
+        const modEcNumber = ($("#mod_ec_number").val() || "").trim();
+        if (!modEcNumber) {
+          errors.push("EC Number is required for profile modification");
+          isValid = false;
+        }
+
+        const includeAssign = $("#mod_include_assign").is(":checked");
+        const includeRemove = $("#mod_include_remove").is(":checked");
+
+        if (includeAssign) {
+          const reasonAssign = ($("#mod_reason_assign").val() || "").trim();
+          const rolesToAssign = ($("#mod_roles_to_assign").val() || "").trim();
+          if (!rolesToAssign) {
+            errors.push("Please describe the new roles to assign");
+            isValid = false;
+          }
+          if (!reasonAssign) {
+            errors.push("Reason for assigning new roles is required");
+            isValid = false;
+          }
+        }
+
+        if (includeRemove) {
+          const rolesToRemoveText = ($("#mod_roles_to_remove").val() || "").trim();
+          const reasonRemove = ($("#mod_reason_remove").val() || "").trim();
+          if (!rolesToRemoveText) {
+            errors.push("Please list the roles or access that must be revoked.");
+            isValid = false;
+          }
+          if (!reasonRemove) {
+            errors.push("Reason for removing current roles is required");
+            isValid = false;
+          }
+        }
+
+        // Validate based on change type
         if (changeType === "TEMPORARY_DELEGATION") {
+          // Validate delegator and delegatee for temporary delegation
+          if (!$("#delegator").val()) {
+            errors.push("Delegator is required");
+            isValid = false;
+          }
+
+          if (!$("#delegatee").val()) {
+            errors.push("Delegatee is required");
+            isValid = false;
+          }
+
+          // Validate delegation date fields
           if (!$("#delegation_start_date").val()) {
             errors.push("Delegation Start Date is required");
             isValid = false;
@@ -820,12 +1014,19 @@
             errors.push("Delegation Reason is required");
             isValid = false;
           }
-
-          // Validate that at least one role is selected
-          const selectedRoles = $('input[name="roles"]:checked').length;
-          if (selectedRoles === 0) {
-            errors.push("Please select at least one role to delegate");
+        } else if (changeType === "PERMANENT") {
+          // Validate user profile for permanent assignment
+          if (!$("#user_profile").val()) {
+            errors.push("User Profile to Modify is required");
             isValid = false;
+          }
+
+          if (includeAssign) {
+            const rolesDescription = ($("#mod_roles_to_assign").val() || "").trim();
+            if (!rolesDescription) {
+              errors.push("Please describe the new roles to assign");
+              isValid = false;
+            }
           }
 
           // Validate dates
@@ -856,6 +1057,14 @@
         if (!$("#profile-deactivation-fields").hasClass("hidden")) {
           if (!$("#user_profile_deac").val()) {
             errors.push("User Profile is required");
+            isValid = false;
+          }
+          if (!$("#deactivation_effective_start").val()) {
+            errors.push("Effective Start Date is required");
+            isValid = false;
+          }
+          if (!($("#deactivation_reason").val() || "").trim()) {
+            errors.push("Reason for Deactivation is required");
             isValid = false;
           }
         }
@@ -902,107 +1111,183 @@
       $("#form-errors").addClass("hidden");
     });
 
-    // Function to load delegator roles grouped by application
-    function loadDelegatorRoles(delegatorValue) {
-      // Extract delegator ID from the value (it might be a username)
-      let delegatorId = null;
-      
-      // First, try to find the delegator by matching the select option value
-      {% for usr in user_profiles %}
-        if ("{{ usr.username }}" === delegatorValue) {
-          delegatorId = "{{ usr.id }}";
-        }
-      {% endfor %}
-      
-      // Also check if it's the logged-in user
-      if (delegatorValue === "{{ request.user.username }}") {
-        delegatorId = "{{ request.user.id }}";
-      }
-      
-      if (!delegatorId) {
-        console.error("Could not find delegator ID for:", delegatorValue);
+    // Toggle role action sections based on checkboxes
+    const $assignToggle = $("#mod_include_assign");
+    const $removeToggle = $("#mod_include_remove");
+    const $assignSection = $("#mod-assign-section");
+    const $removeSection = $("#mod-remove-section");
+    const $toggleContainer = $("#mod-role-action-toggle");
+
+    function isProfileModificationActive() {
+      return $("#profile-modification-fields").is(":visible");
+    }
+
+    function refreshRoleActionSections() {
+      console.debug("[CR] refreshRoleActionSections:start", {
+        profileModificationVisible: isProfileModificationActive(),
+        includeAssignChecked: $assignToggle.is(":checked"),
+        includeRemoveChecked: $removeToggle.is(":checked"),
+        changeType: $("#change_type").val()
+      });
+      if (!isProfileModificationActive()) {
+        $toggleContainer.addClass("hidden");
+        $assignSection.addClass("hidden");
+        $removeSection.addClass("hidden");
+        $assignSection.find("textarea, input[type='url'], select").prop("disabled", true);
+        $removeSection.find("textarea, input[type='url'], select").prop("disabled", true);
+        $("#mod_reason_assign").prop("required", false);
+        console.debug("[CR] refreshRoleActionSections:end", { state: "inactive" });
         return;
       }
-      
-      // Show loading state
-      $("#delegator-roles-container").html('<div class="text-center py-4"><i class="fas fa-spinner fa-spin mr-2"></i>Loading roles...</div>');
-      $("#roles-to-delegate").removeClass("hidden");
-      
-      // Make AJAX request to get delegator roles
-      $.ajax({
-        url: "/change_requests/get_delegator_roles_by_app",
-        method: "GET",
-        data: {
-          delegator_id: delegatorId
-        },
-        success: function(response) {
-          if (response.success) {
-            displayDelegatorRoles(response.roles_by_app, response.delegator);
-          } else {
-            $("#delegator-roles-container").html('<div class="text-red-600">Error: ' + (response.error || response.message || 'Unknown error') + '</div>');
-          }
-        },
-        error: function(xhr, status, error) {
-          console.error("Error loading delegator roles:", error);
-          $("#delegator-roles-container").html('<div class="text-red-600">Error loading roles. Please try again.</div>');
-        }
+
+      $toggleContainer.removeClass("hidden");
+      const assignEnabled = $assignToggle.is(":checked");
+      const removeEnabled = $removeToggle.is(":checked");
+
+      $assignSection.toggleClass("hidden", !assignEnabled);
+      $assignSection.find("textarea, input[type='url'], select").prop("disabled", !assignEnabled);
+      $("#mod_reason_assign").prop("required", assignEnabled);
+      if (!assignEnabled) {
+        $("#mod_roles_to_assign").val("");
+        $("#mod_reason_assign").val("");
+      }
+
+      $removeSection.toggleClass("hidden", !removeEnabled);
+      $removeSection.find("textarea, input[type='url'], select").prop("disabled", !removeEnabled);
+      if (!removeEnabled) {
+        $("#mod_roles_to_remove").val("");
+        $("#mod_reason_remove").val("");
+      }
+
+      if (!assignEnabled && !removeEnabled) {
+        // Ensure at least one option is selected; default back to assign
+        $assignToggle.prop("checked", true);
+        console.warn("[CR] refreshRoleActionSections", "No toggles selected; defaulting to assign");
+        refreshRoleActionSections();
+      }
+
+      console.debug("[CR] refreshRoleActionSections:end", {
+        assignEnabled,
+        removeEnabled,
+        reasonAssignRequired: $("#mod_reason_assign").prop("required")
       });
     }
 
-    // Function to display delegator roles grouped by application
-    function displayDelegatorRoles(rolesByApp, delegator) {
-      const container = $("#delegator-roles-container");
-      container.empty();
-      
-      if (Object.keys(rolesByApp).length === 0) {
-        container.html('<div class="text-gray-600">No roles available for delegation from ' + delegator.name + '</div>');
-        return;
-      }
-      
-      // Create header
-      const header = $('<div class="mb-4"><h4 class="text-lg font-medium text-gray-900">Available Roles from ' + delegator.name + '</h4></div>');
-      container.append(header);
-      
-      // Group roles by application
-      Object.keys(rolesByApp).forEach(function(appKey) {
-        const appData = rolesByApp[appKey];
-        
-        // Create application section
-        const appSection = $('<div class="mb-6 border border-gray-200 rounded-lg p-4"></div>');
-        const appHeader = $('<div class="mb-3"><h5 class="text-md font-medium text-blue-800">' + appData.app_fullname + '</h5></div>');
-        appSection.append(appHeader);
-        
-        // Create roles list for this application
-        const rolesContainer = $('<div class="space-y-2"></div>');
-        
-        appData.roles.forEach(function(role) {
-          const roleCheckbox = $('<div class="flex items-center">' +
-            '<input type="checkbox" name="roles" value="' + role.id + '" id="role_' + role.id + '" class="mr-2 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">' +
-            '<label for="role_' + role.id + '" class="text-sm text-gray-700">' + role.name + (role.description ? ' - ' + role.description : '') + '</label>' +
-            '</div>');
-          rolesContainer.append(roleCheckbox);
-        });
-        
-        appSection.append(rolesContainer);
-        container.append(appSection);
-      });
-      
-      // Add select all functionality
-      const selectAllContainer = $('<div class="mt-4 flex justify-between items-center">' +
-        '<button type="button" id="select-all-roles" class="text-blue-600 hover:text-blue-800 text-sm">Select All</button>' +
-        '<button type="button" id="clear-all-roles" class="text-gray-600 hover:text-gray-800 text-sm">Clear All</button>' +
-        '</div>');
-      container.append(selectAllContainer);
-      
-      // Bind select all / clear all events
-      $("#select-all-roles").on("click", function() {
-        $('input[name="roles"]').prop('checked', true);
-      });
-      
-      $("#clear-all-roles").on("click", function() {
-        $('input[name="roles"]').prop('checked', false);
-      });
+    $assignToggle.on("change", refreshRoleActionSections);
+    $removeToggle.on("change", refreshRoleActionSections);
+
+    // Auto-fill job title from designation when available
+    const $designationSelect = $("#new-profile-fields select[name='designation']").first();
+    const $jobTitleField = $("#new-profile-fields input[name='np_job_title']").first();
+    const $costCenterSelect = $("#new-profile-fields select[name='cost_center']").first();
+    const $depotField = $("#new-profile-fields input[name='np_depot_office']").first();
+    const JOB_TITLE_SENTINEL = "Select Designation";
+    const DEPOT_SENTINEL = "Select Cost Centre";
+
+    if (($jobTitleField.val() || "").trim() === JOB_TITLE_SENTINEL) {
+      $jobTitleField.val("").data("manualEntry", false).data("autofilled", false);
     }
+    if (($depotField.val() || "").trim() === DEPOT_SENTINEL) {
+      $depotField.val("");
+    }
+
+    function autoFillJobTitle() {
+      if (!$designationSelect.length || !$jobTitleField.length) return;
+      const selectedText = ($designationSelect.find("option:selected").text() || "").trim();
+      let currentValue = ($jobTitleField.val() || "").trim();
+      if (currentValue === JOB_TITLE_SENTINEL) {
+        currentValue = "";
+        $jobTitleField.val("");
+        $jobTitleField.data("manualEntry", false).data("autofilled", false);
+      }
+      const shouldAutofill = !$jobTitleField.data("manualEntry") && selectedText;
+
+      console.debug("[CR] autoFillJobTitle", { selectedText, currentValue, manualEntry: $jobTitleField.data("manualEntry"), shouldAutofill });
+
+      if (shouldAutofill && (!currentValue || $jobTitleField.data("autofilled"))) {
+        $jobTitleField.val(selectedText);
+        $jobTitleField.data("autofilled", true);
+        console.debug("[CR] autoFillJobTitle", "set to designation", selectedText, { finalValue: $jobTitleField.val() });
+      } else if (!selectedText && !$jobTitleField.data("manualEntry")) {
+        $jobTitleField.val("");
+        $jobTitleField.data("autofilled", false);
+        console.debug("[CR] autoFillJobTitle", "cleared due to empty designation");
+      }
+    }
+
+    $designationSelect.on("change", function () {
+      if (!$jobTitleField.data("manualEntry")) {
+        $jobTitleField.data("autofilled", !$jobTitleField.val());
+      }
+      autoFillJobTitle();
+    });
+
+    $(document).on("select2:select select2:clear", "#new-profile-fields select[name='designation']", function () {
+      if (!$jobTitleField.data("manualEntry")) {
+        $jobTitleField.data("autofilled", !$jobTitleField.val());
+      }
+      autoFillJobTitle();
+    });
+
+    $jobTitleField.on("input", function () {
+      const hasValue = !!$(this).val().trim();
+      $(this).data("manualEntry", hasValue);
+      if (!hasValue) {
+        $(this).data("autofilled", false);
+        autoFillJobTitle();
+      }
+    });
+
+    function autoFillDepot() {
+       if (!$costCenterSelect.length || !$depotField.length) return;
+       let depotValue = ($depotField.val() || "").trim();
+       if (depotValue === DEPOT_SENTINEL) {
+         depotValue = "";
+         $depotField.val("");
+       }
+       if (depotValue) {
+         console.debug("[CR] autoFillDepot", "existing value retained", depotValue);
+         return;
+       }
+       const selectedCostCenter = ($costCenterSelect.find("option:selected").text() || "").trim();
+       console.debug("[CR] autoFillDepot", { selectedCostCenter });
+       if (!selectedCostCenter || selectedCostCenter === DEPOT_SENTINEL) {
+         console.debug("[CR] autoFillDepot", "skipping due to placeholder");
+         return;
+       }
+       if (selectedCostCenter) {
+         $depotField.val(selectedCostCenter);
+         console.debug("[CR] autoFillDepot", "set from cost centre", selectedCostCenter);
+       } else {
+         console.debug("[CR] autoFillDepot", "no cost centre selected");
+       }
+     }
+
+     $costCenterSelect.on("change", function () {
+       console.debug("[CR] cost_center change", { value: $(this).val(), text: $(this).find("option:selected").text() });
+       if (!($depotField.val() || "").trim()) {
+         autoFillDepot();
+       }
+     });
+
+     $(document).on("select2:select select2:clear", "#new-profile-fields select[name='cost_center']", function () {
+       const selectedOption = $(this).find("option:selected");
+       console.debug("[CR] cost_center select2 event", { value: selectedOption.val(), text: selectedOption.text() });
+       if (!($depotField.val() || "").trim()) {
+         autoFillDepot();
+       }
+     });
+
+     // Initial state setup
+     refreshRoleActionSections();
+     autoFillJobTitle();
+     autoFillDepot();
+     console.debug("[CR] init complete", {
+       application: $("#for_application").val(),
+       operationType: $("#operation_type").val()
+     });
+     updateRolesSection($("#for_application").val(), $("#operation_type").val());
   });
 </script>
 {% endblock scripts %}
+

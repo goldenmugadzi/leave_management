@@ -4,14 +4,17 @@ from django.db import transaction
 from django.db.models.query import QuerySet
 from decimal import Decimal
 
+from ..models import AppraisalWorkflow, Appraisal
 from ..repository.kra import KRARepository, AppraisalDepartmentOutputRepository, AppraisalOutPutPerformanceDimensionScoreRepository, YearQuarterRepository, ApprasialKraReviewerStatusRepository, AppraisalConfirmationStatusRepository
 from ..repository.departmental_workplan import OutPutPerformanceDimensionRepository, DepartmentalOutRepository
 from ..repository.appraisal import AppraisalRepository, PersonalAttributeRepository, AppraiseePersonalAttributeRepository, AppraisalOverallCommentsRepository
+from ..repository.approval import AppraisalWorkflowRepository, AppraisalApprovalWorkFlowQuarterRepository
 from it.users.models import Designations
 from ..models import KeyResultArea, AppraisalOutPutPerformanceDimensionScore, AppraisalDepartmentOutput, AppraiseePersonalAttribute, AppraisalOverallComments, AppraisalConfirmationStatus
 from ..models.kra import REVIEWERS_CONFIRMATION_STATUS
 from ..helpers.types.kra import KRAType
 from ..helpers.getters import RatingCalculation
+from ..helpers.data.approval_stage import ApprovalStageData
 
 from loguru import logger
 
@@ -136,6 +139,39 @@ class AppraisalDependanciesInitialisationService:
         return repo.bulk_create(appraisal_overall_comm_list=comments_list)
         
     
+    def create_appraisal_approval_workflow(self, appraisal_object: Appraisal):
+        try:
+            logger.info(f"[Creating Appraisal Approval] appraisal: {appraisal_object.id} handler initialized ...")
+
+            workflow_entries = [
+                AppraisalWorkflow(
+                    appraisal=appraisal_object,
+                    stage_name=stage.value,
+                    stage_num=index+1
+                )
+                for index, stage in enumerate(ApprovalStageData)
+            ]                
+            AppraisalWorkflow.objects.bulk_create(workflow_entries)
+            logger.success("[Creating Appraisal Approval] AppraisalWorkflow objs creates")
+
+            appraisal_workflow_repo = AppraisalWorkflowRepository()
+            appraisal_workflow_qr = appraisal_workflow_repo.retrieve_by_appraisal(appraisal_id=appraisal_object.id)
+
+            for appraisal_workflow_obj in appraisal_workflow_qr:
+                year_q_repo = YearQuarterRepository()
+                
+                for year_q_obj in year_q_repo.fetch_by_year(year=appraisal_object.created_date.year):
+                    quarter_workflow_repo = AppraisalApprovalWorkFlowQuarterRepository()
+                    quarter_workflow_repo.create(
+                        appraisal_workflow_obj=appraisal_workflow_obj,
+                        year_quarter_obj=year_q_obj
+                    )
+
+            logger.success("[Creating Appraisal Approval] AppraisalWorkflowQuarter created successfully.")
+        except Exception as e:
+            raise Exception(f"[AppraisalDependanciesInitialisationService] create_quarterly_approval_workflow with appraisal_id: {appraisal_object.id}, failed with error: {e}")
+
+    
     def create_all_dependencies(self, appraisal_id: int, year: int)->bool|None:
         try:
             with transaction.atomic():
@@ -151,6 +187,8 @@ class AppraisalDependanciesInitialisationService:
                         raise Exception(f"create_all_dependencies, with pk: {appraisal_id}, has {year_quarter_objects} - 4 instances required.")
                                        
                     department_output_qr = self.department_output_repo.fetch_by_designation_id(designation_id=designation_obj.id)
+                    if not department_output_qr.exists():
+                        raise Exception(f"Departmental outputs for appraisal pk: {appraisal_id}, with designation pk: {designation_obj.id} has no departmental outputs set")
                     
                     for department_output_obj in department_output_qr:
                         
@@ -190,6 +228,10 @@ class AppraisalDependanciesInitialisationService:
                     # ====================== create appraisal confirmation status ======================
                     self.create_appraisal_confirmation_status(appraisal_object=appraisal_obj, year_quarter_qr=year_quarter_qr)
                     logger.success(f"appraisal confirmation status created successfully")
+                
+                    # ====================== Appraisal Approval Workflow ===========================
+                    self.create_appraisal_approval_workflow(appraisal_object=appraisal_obj)
+                
                 else:
                     raise Exception(f"appraisee with appraisal id: {appraisal_id}. has no designation")
             

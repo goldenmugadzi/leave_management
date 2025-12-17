@@ -4,63 +4,195 @@ import os
 from django.http import FileResponse
 from django.shortcuts import redirect, render
 from django.contrib import messages
+from django.db.models import Count
 from beii_v1 import settings
 from .models import *
 from django.contrib.auth.decorators import login_required
+
+
+def _format_user(profile):
+    if not profile:
+        return ""
+    first_name = getattr(profile, "first_name", "") or ""
+    last_name = getattr(profile, "last_name", "") or ""
+    full_name = f"{first_name} {last_name}".strip()
+    if full_name:
+        return full_name
+    username = getattr(profile, "username", "") or ""
+    if username:
+        return username
+    email = getattr(profile, "email", "") or ""
+    if email:
+        return email
+    return str(profile)
+
+
+def _normalize_report_type(raw_value):
+    if not raw_value:
+        return None
+    mapping = {
+        "report": "Report",
+        "reports": "Report",
+        "plan": "Plan",
+        "plans": "Plan",
+        "objective": "Objective",
+        "objectives": "Objective",
+        "ims": "Objective",
+        "ims-objectives": "Objective",
+    }
+    return mapping.get(raw_value.lower(), raw_value.title())
+
+
+def _serialize_report(report):
+    return {
+        "id": report.id,
+        "uploaded_by": _format_user(report.uploaded_by),
+        "created_by": _format_user(report.created_by),
+        "region": report.region.region if report.region else "",
+        "report_period": report.report_period or "",
+        "report_type": (report.report_type or "").title(),
+        "section": report.section.section if report.section else "",
+        "file_name": report.file_name or "",
+        "date_created": report.date_created.strftime("%Y-%m-%d %H:%M") if report.date_created else "",
+        "date_updated": report.date_updated.strftime("%Y-%m-%d %H:%M") if report.date_updated else "",
+        "status": "Archived" if report.archived else "Active",
+    }
+
+
+def _extract_filter_options(rows):
+    def unique_sorted(key):
+        return sorted({row[key] for row in rows if row.get(key)})
+
+    return {
+        "regions": unique_sorted("region"),
+        "sections": unique_sorted("section"),
+        "periods": unique_sorted("report_period"),
+        "report_types": unique_sorted("report_type"),
+    }
+
+
+def _calculate_type_totals(rows):
+    totals = {
+        "all": len(rows),
+        "reports": 0,
+        "plans": 0,
+        "objectives": 0,
+    }
+    for row in rows:
+        value = (row.get("report_type") or "").lower()
+        if value == "report":
+            totals["reports"] += 1
+        elif value == "plan":
+            totals["plans"] += 1
+        elif value == "objective":
+            totals["objectives"] += 1
+    return totals
+
+
+def _build_reports_context(queryset, *, default_filters=None, view_mode="active", page_title="Business Excellence Records"):
+    records = list(queryset.select_related("region", "section", "uploaded_by", "created_by"))
+    rows = [_serialize_report(report) for report in records]
+    filter_options = _extract_filter_options(rows)
+    totals = _calculate_type_totals(rows)
+    return {
+        "context": json.dumps(rows, default=str),
+        "filter_options": filter_options,
+        "totals": totals,
+        "default_filters": default_filters or {},
+        "view_mode": view_mode,
+        "page_title": page_title,
+    }
+
+
+def _build_default_filters(request):
+    default_filters = {}
+    normalized_type = _normalize_report_type(request.GET.get("type"))
+    if normalized_type:
+        default_filters["report_type"] = normalized_type
+    period = request.GET.get("period")
+    if period and period.lower() != "all":
+        default_filters["report_period"] = period
+    region = request.GET.get("region")
+    if region:
+        default_filters["region"] = region
+    section = request.GET.get("section")
+    if section:
+        default_filters["section"] = section
+    return default_filters
 
 # Create your views here.
 @login_required
 def all_reports(request):
         
-        plans_and_reports_fields = Report.objects.filter(archived=False).all()
+        queryset = Report.objects.filter(archived=False)
+        context = _build_reports_context(
+            queryset,
+            default_filters=_build_default_filters(request),
+            view_mode="active",
+            page_title="Business Excellence Records"
+        )
         
-        files_list = []
-        for file in plans_and_reports_fields:
-            new_file = {
-                "id": file.id,
-                "uploaded_by": file.uploaded_by,
-                "region": file.region,
-                "report_period": file.report_period,
-                "date_created": file.date_created,
-                "date_updated": file.date_updated,
-                "section": file.section,
-                "file_name": file.file_name,
-                "file_path": file.file_path,
-            }
-            files_list.append(new_file)
-            
-        context = json.dumps(files_list, default=str)
-        
-        return render(request, 'plans_reports/view_reports.html', {'context':context})
+        return render(request, 'plans_reports/view_reports.html', context)
     
 @login_required
 def archived_reports(request):
         
-        plans_and_reports_fields = Report.objects.filter(archived=True).all()
+        queryset = Report.objects.filter(archived=True)
+        context = _build_reports_context(
+            queryset,
+            default_filters=_build_default_filters(request),
+            view_mode="archived",
+            page_title="Archived Business Excellence Records"
+        )
         
-        files_list = []
-        for file in plans_and_reports_fields:
-            new_file = {
-                "id": file.id,
-                "uploaded_by": file.uploaded_by,
-                "region": file.region,
-                "report_period": file.report_period,
-                "date_created": file.date_created,
-                "date_updated": file.date_updated,
-                "section": file.section,
-                "file_name": file.file_name,
-                "file_path": file.file_path,
-            }
-            files_list.append(new_file)
-            
-        context = json.dumps(files_list, default=str)
-        
-        return render(request, 'plans_reports/view_reports.html', {'context':context})
+        return render(request, 'plans_reports/view_reports.html', context)
 
 @login_required
 def plans_reports_index(request):
     
-    return render(request, 'plans_reports/plans_reports.html', {})
+    type_counts = {
+        "Report": 0,
+        "Plan": 0,
+        "Objective": 0,
+    }
+    for row in Report.objects.filter(archived=False).values("report_type").annotate(total=Count("id")):
+        key = (row.get("report_type") or "").title()
+        if key in type_counts:
+            type_counts[key] = row["total"]
+    totals = {
+        "all": sum(type_counts.values()),
+        "reports": type_counts["Report"],
+        "plans": type_counts["Plan"],
+        "objectives": type_counts["Objective"],
+    }
+    cards = [
+        {
+            "title": "Reports",
+            "subtitle": "Operational updates",
+            "description": "Opens the unified table filtered to project and operational reports.",
+            "href": "/reports/all_reports/?type=reports",
+            "count": totals["reports"],
+        },
+        {
+            "title": "Plans",
+            "subtitle": "Strategic planning",
+            "description": "Jump straight into the table showing only departmental plans.",
+            "href": "/reports/all_reports/?type=plans",
+            "count": totals["plans"],
+        },
+        {
+            "title": "IMS Objectives & Targets",
+            "subtitle": "Objectives tracking",
+            "description": "Review IMS objectives in the same table with filters pre-applied.",
+            "href": "/reports/all_reports/?type=objectives",
+            "count": totals["objectives"],
+        },
+    ]
+    
+    return render(request, 'plans_reports/plans_reports.html', {
+        "totals": totals,
+        "cards": cards,
+    })
 
 @login_required
 def reports_index(request):
@@ -76,38 +208,22 @@ def plans_index(request):
 def get_reports(request, period):
     period = period.capitalize()
     
-    if period == "All":
-        plans_and_reports_fields = Report.objects.filter(report_type="Report", archived=False).all()
-    else:
-        plans_and_reports_fields = Report.objects.filter(report_type="Report", report_period=period, archived=False).all()
-        
-    regions = Regions.objects.all()
-    sections = Sections.objects.all()
+    queryset = Report.objects.filter(report_type="Report", archived=False)
+    default_filters = {"report_type": "Report"}
+    page_title = "All Reports"
+    if period != "All":
+        queryset = queryset.filter(report_period=period)
+        default_filters["report_period"] = period
+        page_title = f"{period} Reports"
     
-    files_list = []
-    for file in plans_and_reports_fields:
-        fullname = file.created_by.first_name + " " + file.created_by.last_name if file.created_by else None
-        new_file = {
-            "id": file.id,
-            "uploaded_by": file.uploaded_by,
-            "region": file.region.region,
-            "report_period": file.report_period,
-            "date_created": file.date_created.strftime("%Y-%m-%d %H:%M") if file.date_created else "",
-            "date_updated": file.date_updated.strftime("%Y-%m-%d %H:%M") if file.date_updated else "",
-            "section": file.section.section,
-            "file_name": file.file_name,
-            "file_path": file.file_path,
-            "created_by": fullname
-        }
-        files_list.append(new_file)
-        
-    context = json.dumps(files_list, default=str)
+    context = _build_reports_context(
+        queryset,
+        default_filters=default_filters,
+        view_mode="active",
+        page_title=page_title
+    )
     
-    return render(request, 'plans_reports/view_reports.html', {
-        'context':context,
-        'regions': regions,
-        'sections': sections
-        })
+    return render(request, 'plans_reports/view_reports.html', context)
 
 @login_required
 def create_report(request):
@@ -132,16 +248,15 @@ def create_report(request):
         
         try:
             region = Regions.objects.filter(id=request.POST.get('region')).first()
+            selected_section = Sections.objects.filter(id=request.POST.get('section')).first()
             
             # Handle section based on report type
             if report_type == "Objective":
-                # For objectives, use logged in user's section and store section name in report_period
-                section = user.section if user.section else None
-                # Store the section name in report_period field for objectives
-                report_period = request.POST.get('section') if request.POST.get('section') else None
+                # For objectives, use logged in user's section and store selected section name in report_period
+                section = user.section if getattr(user, "section", None) else selected_section
+                report_period = selected_section.section if selected_section else None
             else:
-                # For reports and plans, use the existing logic
-                section = Sections.objects.filter(id=request.POST.get('section')).first()
+                section = selected_section
                 
             created_by = UserProfile.objects.filter(id=user.id).first()
             new_plans_and_reports_fields = Report(
@@ -226,16 +341,14 @@ def edit_report(request):
             print("Error:", ex)
         
         region = Regions.objects.filter(id=request.POST.get('region')).first()
+        selected_section = Sections.objects.filter(id=request.POST.get('section')).first()
         
         # Handle section based on report type
         if report_type == "Objective":
-            # For objectives, use logged in user's section and store section name in report_period
-            section = request.user.section if request.user.section else None
-            # Store the section name in report_period field for objectives
-            report_period = request.POST.get('section') if request.POST.get('section') else None
+            section = request.user.section if getattr(request.user, "section", None) else selected_section
+            report_period = selected_section.section if selected_section else None
         else:
-            # For reports and plans, use the existing logic
-            section = Sections.objects.filter(id=request.POST.get('section')).first()
+            section = selected_section
             
         report_ = Report.objects.filter(id=report_id).first()
 
@@ -287,30 +400,22 @@ def edit_report(request):
 def get_plans(request, period):
     period = period.capitalize()
     
-    if period == "All":
-        plans_and_reports_fields = Report.objects.filter(report_type="Plan", archived=False).all()
-    else:
-        plans_and_reports_fields = Report.objects.filter(report_type="Plan", report_period=period, archived=False).all()
+    queryset = Report.objects.filter(report_type="Plan", archived=False)
+    default_filters = {"report_type": "Plan"}
+    page_title = "All Plans"
+    if period != "All":
+        queryset = queryset.filter(report_period=period)
+        default_filters["report_period"] = period
+        page_title = f"{period} Plans"
     
-    files_list = []
-    for file in plans_and_reports_fields:
-        new_file = {
-            "id": file.id,
-            "uploaded_by": file.uploaded_by,
-            "region": file.region,
-            "report_period": file.report_period,
-            "report_type": file.report_type,
-            "date_created": file.date_created,
-            "date_updated": file.date_updated,
-            "section": file.section,
-            "file_name": file.file_name,
-            "file_path": file.file_path,
-        }
-        files_list.append(new_file)
-        
-    context = json.dumps(files_list, default=str)
+    context = _build_reports_context(
+        queryset,
+        default_filters=default_filters,
+        view_mode="active",
+        page_title=page_title
+    )
     
-    return render(request, 'plans_reports/view_reports.html', {'context':context})
+    return render(request, 'plans_reports/view_reports.html', context)
 
 @login_required
 def get_objectives(request, section_name):
@@ -337,29 +442,19 @@ def get_objectives(request, section_name):
         archived=False
     ).all()
     
-    files_list = []
-    for file in objectives:
-        fullname = file.created_by.first_name + " " + file.created_by.last_name if file.created_by else None
-        new_file = {
-            "id": file.id,
-            "uploaded_by": file.uploaded_by,
-            "region": file.region.region if file.region else "",
-            "report_period": file.report_period,  # This contains the section name for objectives
-            "date_created": file.date_created.strftime("%Y-%m-%d %H:%M") if file.date_created else "",
-            "date_updated": file.date_updated.strftime("%Y-%m-%d %H:%M") if file.date_updated else "",
-            "section": file.section.section if file.section else "",
-            "file_name": file.file_name,
-            "file_path": file.file_path,
-            "created_by": fullname
-        }
-        files_list.append(new_file)
-        
-    context = json.dumps(files_list, default=str)
+    default_filters = {
+        "report_type": "Objective",
+        "report_period": display_name
+    }
     
-    return render(request, 'plans_reports/view_reports.html', {
-        'context': context,
-        'section_name': display_name
-    })
+    context = _build_reports_context(
+        objectives,
+        default_filters=default_filters,
+        view_mode="active",
+        page_title=f"{display_name} Objectives"
+    )
+    
+    return render(request, 'plans_reports/view_reports.html', context)
 
 @login_required
 def objectives_index(request):
@@ -367,13 +462,16 @@ def objectives_index(request):
     return render(request, 'plans_reports/objectives_index.html', {})
 
 def save_file(f,file_path):
-    if f:
-        with open(file_path, 'wb+') as destination:
-            for chunk in f.chunks():
-                destination.write(chunk)
-            return True
-    else:
+    if not f:
         return False
+
+    absolute_path = os.path.join(settings.BASE_DIR, file_path)
+    os.makedirs(os.path.dirname(absolute_path), exist_ok=True)
+
+    with open(absolute_path, 'wb+') as destination:
+        for chunk in f.chunks():
+            destination.write(chunk)
+    return True
             
             
             
