@@ -559,12 +559,13 @@ def ace_awaiting_my_action(request):
     created_aces = Ace2.objects.none()
     processed_ace_ids = set()
 
-    # Base query for all ACEs (unfiltered)
+    # Base query for all ACEs (unfiltered) limited to last 2 years
+    cutoff_date = timezone.now().date().replace(year=timezone.now().year - 2)
     base_query = Ace2.objects.select_related(
         'budget_id', 'requested_by', 'section', 'region', 'cost_center'
     ).prefetch_related(
         "process__approval_set", "process__workflow__step_set"
-    )
+    ).filter(date_created__gte=cutoff_date)
 
     system_wide_roles = {'fd', 'md'}
     regional_roles = {'sanction', 'approve', 'EM'}
@@ -577,17 +578,18 @@ def ace_awaiting_my_action(request):
         cost_centers = list(cost_centers_set)
         print("applicable cost centers: ", cost_centers)
         # Apply strict cost center filtering
-        aces_query_primary = aces_query_primary.filter(cost_center__in=cost_centers).exclude(
+        aces_query_primary = aces_query_primary.filter(cost_center__in=cost_centers,date_created__gte=cutoff_date).exclude(
             process__approval__approved="Rejected"
         ).order_by('-date_created')
-        # print("ACES after cost center filter: ", aces_query_primary.count())
+        print("ACES after cost center filter: ", aces_query_primary.count())
     else:
         # Fallback to user's cost center and descendants
         fallback_cost_centers = user_profile.cost_center_and_decendace()
         if fallback_cost_centers:
-            aces_query_primary = aces_query_primary.filter(cost_center__in=fallback_cost_centers).exclude(
+            aces_query_primary = aces_query_primary.filter(cost_center__in=fallback_cost_centers,date_created__gte=cutoff_date).exclude(
                 process__approval__approved="Rejected"
             ).order_by('-date_created')
+            print("ACES after fallback cost center filter: ", aces_query_primary.count())
 
     # exception handling
     aces_query1 = Ace2.objects.none()
@@ -601,9 +603,11 @@ def ace_awaiting_my_action(request):
 
     # If the user has a regional or sectional role (and is NOT system-wide)
     if regional_roles.intersection(set(user_ace_roles)):
-        aces_query_secondary = base_query.filter(region=user_profile.region).exclude(
+        aces_query_secondary = base_query.filter(region=user_profile.region,date_created__gte=cutoff_date).exclude(
             process__approval__approved="Rejected"
         ).order_by('-date_created')
+        print("Applying regional filter")
+        print("base query len", aces_query_secondary.count())
         
         print("user region: ", user_profile.region)
         print('query len', aces_query_secondary.count())
@@ -612,12 +616,13 @@ def ace_awaiting_my_action(request):
         # print("ACES after region filter: ", aces_query_secondary.count())
 
     if sectional_roles.intersection(set(user_ace_roles)) and section:
-        aces_query_secondary = Ace2.objects.filter(section=section).exclude(
+        aces_query_secondary = Ace2.objects.filter(section=section, date_created__gte=cutoff_date).exclude(
             process__approval__approved="Rejected"
         ).order_by('-date_created')
+
         # print("user section: ", section)
         # print('base query len', base_query.count())
-        # print("ACES after section filter: ", aces_query_secondary.count())
+        print("ACES after section filter: ", aces_query_secondary.count())
 
     if system_wide_roles.intersection(set(user_ace_roles)):
         aces_query_secondary = base_query.filter(ace_type='high_value').exclude(
@@ -625,12 +630,9 @@ def ace_awaiting_my_action(request):
         ).order_by('-date_created')
         # print("ACES after system-wide filter: ", aces_query_secondary.count())
 
-    # print("primary aces", aces_query_primary.values_list('Ace_id2', flat=True))
-    if sectional_roles.intersection(set(user_ace_roles)) and section:
-        print("secondary aces", aces_query_secondary.values_list('Ace_id2', flat=True))
-        aces_combined_query = (aces_query_primary | aces_query_secondary)
-    else:
-        aces_combined_query = aces_query_primary
+    # Combine queries so regional/system approvers aren't blocked by cost-center filters
+    # (e.g., ACEs without a cost center should still show for region-level roles).
+    aces_combined_query = (aces_query_primary | aces_query_secondary).distinct()
     # print("Total ACEs after combining filters: ", aces_combined_query.count())
     a = 0
 
@@ -668,7 +670,10 @@ def ace_awaiting_my_action(request):
 
     if "create" in user_ace_roles:
         # ... (Populate created_aces QuerySet and add flags) ...
-        created_aces = Ace2.objects.filter(requested_by=user_profile.pk).order_by('-date_created')
+        created_aces = Ace2.objects.filter(
+            requested_by=user_profile.pk,
+            date_created__gte=cutoff_date
+        ).order_by('-date_created')
         print('created aces count', created_aces.count())
 
         # Add helpful flags for created ACEs
