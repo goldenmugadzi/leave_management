@@ -1,11 +1,17 @@
 from typing import Protocol
+from dataclasses import dataclass
 from django.forms import BaseModelForm
 from django.contrib import messages
 from django.http import HttpRequest
 from ..helpers.types.kra import KRAType, TargetScoreType, ActivityType, PerformanceDimensionType, KRAOutComeType, AppraiserConfirmationType
 from ..helpers.types.dept_workplan import DepartmentalOutTypes, OutputPerformanceDimensionType
 from ..helpers.getters.dates import CurrentQuarterDate
-
+from ..models import Appraisal
+from ..templatetags.quarter import get_current_quarter
+from ..helpers.types.approval import ApprovalStageChoices
+from ..repository.kra import YearQuarterRepository
+from ..helpers.getters.approval import ApprovalStagesHandler
+from ..forms.appraisal import ApprovalStageFilterForm
 from pydantic import ValidationError, BaseModel
 from loguru import logger
 
@@ -55,8 +61,6 @@ class ScoreDeserializationStrategy:
         }
         return TargetScoreType(**data)
 
-
-    
 class PerformanceDimensionDeserializationStrategy:
     def deserialize(self, form_object: BaseModelForm)->BaseModel:
         data = {
@@ -231,3 +235,77 @@ def is_within_current_quarter(year: int, quarter: int)->bool:
                 return True
         case default:
             return False
+
+@dataclass
+class ApprovalStagesTemplateHandler:
+    appraisal_object: Appraisal
+    request_obj: object=None
+    
+    def get_approval_stage_filter(self)->str:
+        approval_stage_filter = None
+        if not self.request_obj is None:
+            approval_stage_filter = self.request_obj.GET.get('approval_stage_filter', None)
+        
+        if approval_stage_filter is None:
+            current_quarter_name = get_current_quarter(value=None)
+            quarters = [q.value for q in ApprovalStageChoices]
+            if current_quarter_name not in quarters:
+                current_quarter_name = quarters[3]
+            approval_stage_filter = current_quarter_name
+        return approval_stage_filter
+    
+    def recursive_approval_stage(self, quarter_name, appraisal_object):
+        
+        year_quarter_qr = YearQuarterRepository().fetch_by_year(year=appraisal_object.created_date.year)
+        approval_stages = []
+        
+        match quarter_name:
+            case ApprovalStageChoices.First_Quarter.value:
+                year_quarter_obj = year_quarter_qr.filter(quarter=1).first()
+                handler = ApprovalStagesHandler(appraisal_id=appraisal_object.id, year_quarter_id=year_quarter_obj.id)
+                approval_stages = handler.get_stages_info()
+            case ApprovalStageChoices.Second_Quarter.value:
+                year_quarter_obj = year_quarter_qr.filter(quarter=2).first()
+                handler = ApprovalStagesHandler(appraisal_id=appraisal_object.id, year_quarter_id=year_quarter_obj.id)
+                approval_stages = handler.get_stages_info()
+            case ApprovalStageChoices.Third_Quarter.value:
+                year_quarter_obj = year_quarter_qr.filter(quarter=3).first()
+                handler = ApprovalStagesHandler(appraisal_id=appraisal_object.id, year_quarter_id=year_quarter_obj.id)
+                approval_stages = handler.get_stages_info()
+            case ApprovalStageChoices.Fourth_Quarter.value:
+                year_quarter_obj = year_quarter_qr.filter(quarter=4).first()
+                handler = ApprovalStagesHandler(appraisal_id=appraisal_object.id, year_quarter_id=year_quarter_obj.id)
+                approval_stages = handler.get_stages_info()
+                
+        return approval_stages
+
+    
+    def get_approval_stages(self):
+        try:
+            year_quarter_filter = self.get_approval_stage_filter()
+            return self.recursive_approval_stage(quarter_name=year_quarter_filter, appraisal_object=self.appraisal_object)
+        except Exception as e:
+            logger.error(f"[ApprovalStagesTemplateHandler] get_approval_stages for Appraisal pk: {self.appraisal_object.id} failed with error: {e}")
+            return None  
+        
+    def get_approval_stage_filter_form(self):
+        """Return the filter form with current selection"""
+        current_filter = self.get_approval_stage_filter()
+        
+        form = ApprovalStageFilterForm(
+            initial={"approval_stage_filter": current_filter}
+        )
+        
+        return {
+            "approval_stage_filter_form": form,
+            "current_approval_filter": current_filter
+        }
+    
+    def get_context_data(self):
+        approval_stages_data = self.get_approval_stages()
+        approval_stages_form_data = self.get_approval_stage_filter_form()
+        return {
+            **approval_stages_data,
+            **approval_stages_form_data
+        }
+    

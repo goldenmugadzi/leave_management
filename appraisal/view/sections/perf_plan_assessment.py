@@ -20,6 +20,7 @@ from ...forms.kra import AppraisalOutPutPerformanceDimensionScoreForm, ScoreDocu
 from ..helper import build_payload_score
 from ..helper import is_within_current_quarter
 from ...helpers.getters.approval import ApprovalStagesHandler
+from ..helper import ApprovalStagesTemplateHandler
 from django.core.exceptions import ValidationError
 from it.users.models import GRADE_CHOICES
 from loguru import logger
@@ -50,11 +51,11 @@ class AppraisalDepartmentOutputTemplateView(TemplateView):
     
     def get_approval_stages(self):
         try:
-            appraisal_object = self.get_appraisal_object()
-            handler = ApprovalStagesHandler(appraisal_id=appraisal_object.id)
-            return handler.get_stages_info()
+            appraisal_obj = self.get_appraisal_object()
+            handler = ApprovalStagesTemplateHandler(appraisal_object=appraisal_obj, request_obj=self.request)
+            return handler.get_context_data()
         except Exception as e:
-            logger.error(f"[AppraisalUpdateView] get_approval_stages for Appraisal pk: {appraisal_object.id} failed with error: {e}")
+            logger.error(f"[AppraisalUpdateView] get_approval_stages for Appraisal pk: {appraisal_obj.id} failed with error: {e}")
             return None    
         
     def get_context_data(self, **kwargs):
@@ -96,9 +97,12 @@ class AppraisalDepartmentPerformanceDimensionTemplateView(SuccessMessageMixin, U
     def get_object(self, queryset = None):
         return self.get_appraisal_department_output_obj()
     
-    def get_appraisee_object(self):
+    def get_appraisal_object(self):
         dept_appraisal_output_obj = self.get_appraisal_department_output_obj()
-        return dept_appraisal_output_obj.appraisal.user
+        return dept_appraisal_output_obj.appraisal
+    
+    def get_appraisee_object(self):
+        return self.get_appraisal_object().user
     
     def get_all_perf_dimensions(self):
         repo = AppraisalOutPutPerformanceDimensionScoreRepository()
@@ -189,13 +193,8 @@ class AppraisalDepartmentPerformanceDimensionTemplateView(SuccessMessageMixin, U
         return is_within_current_quarter(year=appraisal_year_quarter_obj.year, quarter=appraisal_year_quarter_obj.quarter)
     
     def get_approval_stages(self):
-        try:
-            appraisal_object = self.get_appraisal_department_output_obj().appraisal
-            handler = ApprovalStagesHandler(appraisal_id=appraisal_object.id)
-            return handler.get_stages_info()
-        except Exception as e:
-            logger.error(f"[AppraisalUpdateView] get_approval_stages for Appraisal pk: {appraisal_object.id} failed with error: {e}")
-            return None   
+        handler = ApprovalStagesTemplateHandler(appraisal_object=self.get_appraisal_object(), request_obj=self.request)
+        return handler.get_context_data()
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -344,10 +343,7 @@ class AppraisalDepartmentPerformanceDimensionScoreUpdateView(SuccessMessageMixin
         context["appraisee_grade"] = self.appraisee_grade()
 
         return context
-    
-    
-    
-        
+
     def appraisee_form_handler(self, form):
         payload = build_payload_score(request=self.request, form=form, is_appraisee=True)
         repo = AppraisalOutPutPerformanceDimensionScoreRepository()

@@ -36,9 +36,17 @@ from approve.models import Step, Approval
 from datetime import datetime
 from ..forms.formsets import AppraiseePersonalAttributeFormSet
 from ..forms.kra import AppraisalConfirmationStatusForm
-from ..forms.appraisal import AppraisalOverallCommentForm, AppraiseePersonalAttributeForm
+from ..forms.appraisal import AppraisalOverallCommentForm, AppraiseePersonalAttributeForm, ApprovalStageFilterForm
 from ..helpers.getters.dates import get_assessment_period, CurrentQuarterDate
 from ..helpers.getters.quarter import get_all_quarter_ratings_per_appraiser
+from ..helpers.types.approval import ApprovalStageChoices
+from ..templatetags.quarter import get_current_quarter
+from ..helpers.data.approval_stage import SectionStages
+from ..helpers.getters.sections import SectionsStagesHandler
+from ..repository.training import TrainingAndDevelopmentRepository
+from .helper import ApprovalStagesTemplateHandler
+from ..helpers.setters import handle_stage_completion
+from ..helpers.data.approval_stage import ApprovalStageData
 from loguru import logger
 
 def get_user_by_id(user_id: int)->UserProfile:
@@ -89,7 +97,20 @@ class AppraisalCreateView(SuccessMessageMixin, CreateView):
         
         if not appraisee_object.designation or not appraisee_object.cost_center or not appraisee_object.grade:
             return True
+        
+        has_no_qualification_and_experience = self.has_no_qualification_and_experience()
+        if has_no_qualification_and_experience:
+            return True
         return False  
+    
+    def has_no_qualification_and_experience(self):
+        user_object = self.get_user_object()
+        user_experiences_qr = self.get_user_experiences(user_id=user_object.id)
+        user_qualification_qr = self.get_user_qualification(user_id=user_object.id)
+        has_no_qualification_and_experience = False
+        if not user_experiences_qr.exists() or not user_qualification_qr.exists():
+            has_no_qualification_and_experience = True
+        return has_no_qualification_and_experience
     
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context =  super().get_context_data(**kwargs)
@@ -100,11 +121,12 @@ class AppraisalCreateView(SuccessMessageMixin, CreateView):
         context["has_no_designation"] = self.get_user_object().designation == None or self.get_user_object().designation == ""
         context["assessment_period"] = self.get_current_date_assessment()
         
-        context["user_experiences_qr"] = self.get_user_experiences(user_id=user_object.id)
-        context["user_qualification_qr"] = self.get_user_qualification(user_id=user_object.id)
+        user_experiences_qr = self.get_user_experiences(user_id=user_object.id)
+        user_qualification_qr = self.get_user_qualification(user_id=user_object.id)
+        context["user_experiences_qr"] = user_experiences_qr
+        context["user_qualification_qr"] = user_qualification_qr
         
         can_make_changes = False
-        
         if not self.has_no_required_profile_information():
             can_make_changes = True
         context["can_mutate"] = can_make_changes
@@ -142,6 +164,10 @@ class AppraisalCreateView(SuccessMessageMixin, CreateView):
             messages.error(self.request, "Oops! It appears that your department's outputs and activities have not been set yet. Please check with your supervisor to address this")
             return self.form_invalid(form)
         
+        if self.has_no_qualification_and_experience():
+            messages.error(self.request, "Oops! Your profile has no qualifications or experiences. Kindly contact admin.")
+            return self.form_invalid(form)
+        
         appraiser_object = form.cleaned_data.get("appraiser")
         repo = AppraisalRepository()
         appraisal_object = repo.create(appraisee_object=appraisee_object, appraiser_object=appraiser_object)
@@ -160,7 +186,7 @@ class AppraisalCreateView(SuccessMessageMixin, CreateView):
             if self.has_no_required_profile_information():
                 messages.error(
                         request,
-                        "<strong>Incomplete Appraisee Profile</strong>: The profile is missing required details such as designation, cost center, or grade. Please contact the IT department to complete the profile setup."
+                        "<strong>Incomplete Appraisee Profile</strong>: The profile is missing required details such as designation, cost center, qualifications, experiences or grade. Please contact the IT department to complete the profile setup."
                     )
                 
             messages.info(
@@ -245,25 +271,22 @@ class AppraisalUpdateView(SuccessMessageMixin, UpdateView):
         
         if not appraisee_object.designation or not appraisee_object.cost_center or not appraisee_object.grade:
             return True
-        return False   
+        return False  
+     
+    def approval_stage_data(self):
+        handler = ApprovalStagesTemplateHandler(appraisal_object=self.get_object(), request_obj=self.request)
+        return handler.get_context_data()
     
-    def get_approval_stages(self):
-        try:
-            appraisal_object = self.get_object()
-            handler = ApprovalStagesHandler(appraisal_id=appraisal_object.id)
-            return handler.get_stages_info()
-        except Exception as e:
-            logger.error(f"[AppraisalUpdateView] get_approval_stages for Appraisal pk: {appraisal_object.id} failed with error: {e}")
-            return None    
-
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context =  super().get_context_data(**kwargs)
         appraisal_object = self.get_object()
         appraisee_object = appraisal_object.user
         
         context[self.context_object_name] = context.get("form")
-        context.update(self.get_approval_stages())
         
+        if appraisal_object.is_accepted:
+            context.update(self.approval_stage_data())
+        context["appraisal_object"] = appraisal_object
         context["appraiser_object"] = appraisal_object.appraiser
         context["reviewer_object"] = appraisal_object.reviewer
         context["user_object"] = appraisee_object
@@ -299,18 +322,29 @@ class AppraisalUpdateView(SuccessMessageMixin, UpdateView):
         if not appraisee_object.cost_center:
             messages.error(self.request, "Oops! Your profile has no cost center set. Kindly contact admin.")
             return self.form_invalid(form)
-        
+                
         appraiser_object = form.cleaned_data.get("appraiser")
-        reviewer_object = form.cleaned_data.get("reviewer")
-        hr_obj = form.cleaned_data.get("hr")
+        reviewer_object = form.cleaned_data.get("reviewer", None)
+        hr_obj = form.cleaned_data.get("hr", None)
         
         repo = AppraisalRepository()
-        appraisal_object = repo.update(
-            appraisal_object=appraisal_object,
-            appraiser_object=appraiser_object,
-            reviewer_obj=reviewer_object,
-            hr_object=hr_obj
-        )
+        
+        if self.is_appraiser_requesting() is not None:
+            
+            appraisal_object = repo.update(
+                appraisal_object=appraisal_object,
+                appraiser_object=appraiser_object,
+                reviewer_obj=reviewer_object,
+                hr_object=hr_obj,
+                is_accepted_by_appraiser_reviewer=True
+            )
+        else:
+            appraisal_object = repo.update(
+                appraisal_object=appraisal_object,
+                appraiser_object=appraiser_object,
+                reviewer_obj=reviewer_object,
+                hr_object=hr_obj,
+            )
         form.instance = appraisal_object
         
         return super().form_valid(form)
@@ -328,6 +362,13 @@ class AppraisalUpdateView(SuccessMessageMixin, UpdateView):
                         request,
                         "<strong>Incomplete Appraisee Profile</strong>: The profile is missing required details such as designation, cost center, or grade. Please contact the IT department to complete the profile setup."
                     )
+                
+            if not appraisal_object.is_accepted:
+                messages.error(
+                        request,
+                        "<strong>Appraisal Acceptance</strong>: The appraisal cannot proceed because the appraiser has not assigned the Reviewer and HR personnel."
+                    )
+                
             messages.info(
                 request,
                 "<strong>Take Note:</strong> Please ensure appraisee's profile is complete — including designation, department, qualifications, and experience — before making updates."
@@ -391,6 +432,8 @@ class AppraisalTemplateView(TemplateView):
                 return HttpResponseRedirect(reverse('appraisal_index'))
         return self.get(request, *args, **kwargs)
     
+    
+    
     def get_appraisals(self)->List[Appraisal]:
         appraisal_service_handler = AppraisalService(
             appraisal_experience_repository=AppraisalExperienceRepository(),
@@ -409,6 +452,12 @@ class AppraisalTemplateView(TemplateView):
             case RoleFilterChoices.ALL_APPRAISALS.value:
                 return {"appraisals": appraisal_service_handler.get_all_use_case(hr_id=self.request.user.id)}
     
+    def get_sections(self):
+        handler = SectionsStagesHandler()
+        data =  handler.get_sections_with_urls()
+        data.pop() # removes the last section 6 which is not applicable
+        return data
+    
     def get_context_data(self, **kwargs: Any) -> Dict[str, Any]:
         context =  super().get_context_data(**kwargs)
         
@@ -416,7 +465,7 @@ class AppraisalTemplateView(TemplateView):
         context.update({"heading_name": self.get_heading_name()})
         context.update(self.get_appraisals())
         context.update({"qualification_upload_form": self.get_user_qualification_upload_form()})
-
+        context["sections"] = self.get_sections()
         return context
     
     
@@ -578,8 +627,8 @@ class AppraiseePersonalAttributesDetailView(TemplateView):
         handler = CurrentQuarterDate(year=appraisal_object.created_date.year)
         return handler.get_current_quarter()
     
-    def is_all_scored(self):
-        repo = AppraisalOutPutPerformanceDimensionScoreRepository()
+    def is_prev_stage_completed(self):
+        repo = AppraiseePersonalAttributeRepository()
         current_quarter = self.get_current_quarter_type()
         data = {
             "first_quarter": False,
@@ -588,26 +637,27 @@ class AppraiseePersonalAttributesDetailView(TemplateView):
             "fourth_quarter": False,
         }
         if current_quarter.is_within_first_quarter:
-            scores_qr = repo.fetch_by_appraisal_id_quarter_num(appraisal_id=self.kwargs.get("appraisal_id"), quarter_num=1)
-            not_scored_qr = scores_qr.filter(is_scored=False)
-            if not not_scored_qr.exists():
+            qr = repo.fetch_appraisal_id_quarter_num(appraisal_id=self.kwargs.get("appraisal_id"), quarter_num=1)
+            not_completed_qr = qr.filter(is_completed=False)
+            if not not_completed_qr.exists():
                 data["first_quarter"] = True
         if current_quarter.is_within_second_quarter:
-            scores_qr = repo.fetch_by_appraisal_id_quarter_num(appraisal_id=self.kwargs.get("appraisal_id"), quarter_num=2)
-            not_scored_qr = scores_qr.filter(is_scored=False)
-            if not not_scored_qr.exists():
+            qr = repo.fetch_appraisal_id_quarter_num(appraisal_id=self.kwargs.get("appraisal_id"), quarter_num=2)
+            not_completed_qr = qr.filter(is_completed=False)
+            if not not_completed_qr.exists():
                 data["second_quarter"] = True
         if current_quarter.is_within_third_quarter:
-            scores_qr = repo.fetch_by_appraisal_id_quarter_num(appraisal_id=self.kwargs.get("appraisal_id"), quarter_num=3)
-            not_scored_qr = scores_qr.filter(is_scored=False)
-            if not not_scored_qr.exists():
+            qr = repo.fetch_appraisal_id_quarter_num(appraisal_id=self.kwargs.get("appraisal_id"), quarter_num=3)
+            not_completed_qr = qr.filter(is_completed=False)
+            if not not_completed_qr.exists():
                 data["third_quarter"] = True
         if current_quarter.is_within_fourth_quarter:
-            scores_qr = repo.fetch_by_appraisal_id_quarter_num(appraisal_id=self.kwargs.get("appraisal_id"), quarter_num=4)
-            not_scored_qr = scores_qr.filter(is_scored=False)
-            if not not_scored_qr.exists():
+            qr = repo.fetch_appraisal_id_quarter_num(appraisal_id=self.kwargs.get("appraisal_id"), quarter_num=4)
+            not_completed_qr = qr.filter(is_completed=False)
+            if not not_completed_qr.exists():
                 data["fourth_quarter"] = True
         return data
+    
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -623,7 +673,7 @@ class AppraiseePersonalAttributesDetailView(TemplateView):
         context["is_detail_view"] = False
         context["appraisal_confirmation_forms"] = self.get_appraisal_confirmation_form(None)
         context["current_quarter"] = self.get_current_quarter_type()
-        context["is_all_scored"] = self.is_all_scored()
+        context["is_prev_stage_completed"] = self.is_prev_stage_completed()
 
         return context
     
@@ -641,8 +691,8 @@ class AppraiseePersonalAttributesDetailView(TemplateView):
         return quarter_number
     
     def post(self, request, *args, **kwargs):
+        appraisal_object = self.get_appraisal_object()
         try:
-            appraisal_object = self.get_appraisal_object()
             
             quarter_number = self.get_quarter_in_post_request()
             if quarter_number is None:
@@ -674,6 +724,12 @@ class AppraiseePersonalAttributesDetailView(TemplateView):
                     repo.update(
                         appraisal_overall_comm_obj=obj,
                         comment=form.cleaned_data.get("appraiser_comment", None)
+                    )
+                    
+                    handle_stage_completion(
+                        appraisal_id=appraisal_object.id,
+                        year_quarter_id=obj.quarter.id,
+                        stage_name=ApprovalStageData.overall_comments.value["stage_name"]
                     )
                     messages.success(request, f"Overall comments added successfully")
             else:
@@ -794,6 +850,15 @@ class AppraiseePersonalAttributesUpdateView(TemplateView):
             return False
         return True
     
+    def is_prev_stage_completed(self):
+        training_repo_handler = TrainingAndDevelopmentRepository()
+        obj = training_repo_handler.get_by_appraisal_id_quarter(
+            appraisal_id=self.kwargs.get("appraisal_id"),
+            quarter_id=self.kwargs.get("quarter_id")
+        )
+        return obj.is_completed
+        
+    
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context.update(self.approval_user_roles())
@@ -802,7 +867,7 @@ class AppraiseePersonalAttributesUpdateView(TemplateView):
         context["appraisee_grade"] = self.appraisee_grade()
         context["is_within_current_quarter"] = self.is_current_date_in_current_quarter()
         context["current_quarter_obj"] = self.get_year_quarter_obj()       
-        context["is_all_scored"] = self.is_all_scored()
+        context["is_prev_stage_completed"] = self.is_prev_stage_completed()
         context["is_detail_view"] = False
         return context
     
@@ -843,6 +908,7 @@ class AppraiseePersonalAttributesUpdateView(TemplateView):
                     obj.satisfactory=satisfactory
                     obj.requires_improvement=requires_improvement
                     obj.unsatisfactory=unsatisfactory
+                    obj.is_completed=True
                     updated_objects.append(obj)
             if len(err_msg_list) != 0:
                 # =============== validation errors ============
@@ -855,6 +921,11 @@ class AppraiseePersonalAttributesUpdateView(TemplateView):
             try:
                 repo = AppraiseePersonalAttributeRepository()
                 if repo.bulk_update(updated_objects_list=updated_objects):
+                    handle_stage_completion(
+                        appraisal_id=appraisal_object.id,
+                        year_quarter_id=self.get_year_quarter_obj().id,
+                        stage_name=ApprovalStageData.set_personal_attributes.value["stage_name"]
+                    )
                     messages.success(request, "Appraisee personal attributes updated successfully.")
 
             except Exception as e:
@@ -892,13 +963,11 @@ class AppraisalDetailView(TemplateView):
         return repo.get_appraisal_by_pk(appraisal_id=self.kwargs.get('appraisal_id'))
 
     def get_steps(self):
-        steps = [
-                (1, "Personal Details"),
-                (2, "Performance Plan and Assessment"),
-                (3, "Training and Development Needs"),
-                (4, "Performance Progress Review"),
-                (5, "Final Performance Assessment and Rating"),
-            ]
+        steps = []
+        for index, section in enumerate(SectionStages):
+            if SectionStages.section_6.value != section.value:
+                step = (index+1, section.value)
+                steps.append(step)
         return steps
     
     def get_personal_details(self):
@@ -1068,8 +1137,8 @@ class AppraisalDetailView(TemplateView):
         elif current_quarter.is_within_fourth_quarter:
             return 4
     
-    def is_all_scored(self):
-        repo = AppraisalOutPutPerformanceDimensionScoreRepository()
+    def is_prev_stage_completed_comments(self):
+        repo = AppraisalOverallCommentsRepository()
         current_quarter = self.get_current_quarter_type()
         data = {
             "first_quarter": False,
@@ -1078,24 +1147,55 @@ class AppraisalDetailView(TemplateView):
             "fourth_quarter": False,
         }
         if current_quarter.is_within_first_quarter:
-            scores_qr = repo.fetch_by_appraisal_id_quarter_num(appraisal_id=self.kwargs.get("appraisal_id"), quarter_num=1)
-            not_scored_qr = scores_qr.filter(is_scored=False)
-            if not not_scored_qr.exists():
+            overall_comment_obj = repo.get_by_appraisal_id_quarter_num(appraisal_id=self.kwargs.get("appraisal_id"), quarter_number=1)
+            is_completed = overall_comment_obj.is_completed
+            if is_completed:
                 data["first_quarter"] = True
         if current_quarter.is_within_second_quarter:
-            scores_qr = repo.fetch_by_appraisal_id_quarter_num(appraisal_id=self.kwargs.get("appraisal_id"), quarter_num=2)
-            not_scored_qr = scores_qr.filter(is_scored=False)
-            if not not_scored_qr.exists():
+            overall_comment_obj = repo.get_by_appraisal_id_quarter_num(appraisal_id=self.kwargs.get("appraisal_id"), quarter_number=2)
+            is_completed = overall_comment_obj.is_completed
+            if is_completed:
                 data["second_quarter"] = True
         if current_quarter.is_within_third_quarter:
-            scores_qr = repo.fetch_by_appraisal_id_quarter_num(appraisal_id=self.kwargs.get("appraisal_id"), quarter_num=3)
-            not_scored_qr = scores_qr.filter(is_scored=False)
-            if not not_scored_qr.exists():
+            overall_comment_obj = repo.get_by_appraisal_id_quarter_num(appraisal_id=self.kwargs.get("appraisal_id"), quarter_number=3)
+            is_completed = overall_comment_obj.is_completed
+            if is_completed:
                 data["third_quarter"] = True
         if current_quarter.is_within_fourth_quarter:
-            scores_qr = repo.fetch_by_appraisal_id_quarter_num(appraisal_id=self.kwargs.get("appraisal_id"), quarter_num=4)
-            not_scored_qr = scores_qr.filter(is_scored=False)
-            if not not_scored_qr.exists():
+            overall_comment_obj = repo.get_by_appraisal_id_quarter_num(appraisal_id=self.kwargs.get("appraisal_id"), quarter_number=4)
+            is_completed = overall_comment_obj.is_completed
+            if is_completed:
+                data["fourth_quarter"] = True
+        return data
+    
+    def is_prev_stage_completed_hr(self):
+        repo = AppraisalConfirmationStatusRepository()
+        current_quarter = self.get_current_quarter_type()
+        data = {
+            "first_quarter": False,
+            "second_quarter": False,
+            "third_quarter": False,
+            "fourth_quarter": False,
+        }
+        if current_quarter.is_within_first_quarter:
+            confirmation_status_qr = repo.fetch_by_appraisal_id_quarter_num(appraisal_id=self.kwargs.get("appraisal_id"), quarter_num=1).filter(confirmed_by=REVIEWERS_CONFIRMATION_STATUS[2][0])
+            confirmed_qr = confirmation_status_qr.filter(confirmation_status=APPRAISAL_KRA_REVIEWER_STATUS_CHOICES[1][0])
+            if confirmed_qr.exists():
+                data["first_quarter"] = True
+        if current_quarter.is_within_second_quarter:
+            confirmation_status_qr = repo.fetch_by_appraisal_id_quarter_num(appraisal_id=self.kwargs.get("appraisal_id"), quarter_num=2).filter(confirmed_by=REVIEWERS_CONFIRMATION_STATUS[2][0])
+            confirmed_qr = confirmation_status_qr.filter(confirmation_status=APPRAISAL_KRA_REVIEWER_STATUS_CHOICES[1][0])
+            if confirmed_qr.exists():
+                data["second_quarter"] = True
+        if current_quarter.is_within_third_quarter:
+            confirmation_status_qr = repo.fetch_by_appraisal_id_quarter_num(appraisal_id=self.kwargs.get("appraisal_id"), quarter_num=3).filter(confirmed_by=REVIEWERS_CONFIRMATION_STATUS[2][0])
+            confirmed_qr = confirmation_status_qr.filter(confirmation_status=APPRAISAL_KRA_REVIEWER_STATUS_CHOICES[1][0])
+            if confirmed_qr.exists():
+                data["third_quarter"] = True
+        if current_quarter.is_within_fourth_quarter:
+            confirmation_status_qr = repo.fetch_by_appraisal_id_quarter_num(appraisal_id=self.kwargs.get("appraisal_id"), quarter_num=4).filter(confirmed_by=REVIEWERS_CONFIRMATION_STATUS[2][0])
+            confirmed_qr = confirmation_status_qr.filter(confirmation_status=APPRAISAL_KRA_REVIEWER_STATUS_CHOICES[1][0])
+            if confirmed_qr.exists():
                 data["fourth_quarter"] = True
         return data
     
@@ -1116,7 +1216,8 @@ class AppraisalDetailView(TemplateView):
         context["appraisee_personal_attr_qr"] = self.get_all_quarters_apraisee_personal_attrs()
         context["final_comment_form"] = self.get_final_comment_form(None)
         context["is_within_current_quarter"] = self.is_current_date_in_current_quarter()
-        context["is_all_scored"] = self.is_all_scored()
+        context["is_prev_stage_completed_comments"] = self.is_prev_stage_completed_comments()
+        context["is_prev_stage_completed_hr"] = self.is_prev_stage_completed_hr()
         context["is_detail_view"] = True
         context["current_quarter"] = self.get_current_quarter_type()
         return context
@@ -1163,7 +1264,7 @@ class AppraisalDetailView(TemplateView):
                 if (confirmation_status == APPRAISAL_KRA_REVIEWER_STATUS_CHOICES[2][0]) and not comment:
                     messages.error(self.request, "Please provide a rejection reason in the comment field.")
                     return redirect(reverse("appraisal_detail", kwargs={"appraisal_id": self.kwargs.get("appraisal_id")}))
-                
+
                 obj = form.instance
                 obj.save()
                 

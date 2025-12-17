@@ -14,11 +14,13 @@ from it.users.models import UserProfile, GRADE_CHOICES
 
 from ...forms import InterventionStrategyFormSet, ActionsForm
 from ...models import TrainingAndDevelopment, InterventionStrategy, AppraisalExperience
+from ...models.kra import APPRAISAL_KRA_REVIEWER_STATUS_CHOICES
 from ...repository import TrainingAndDevelopmentRepository
-from ...repository.kra import AppraisalOutPutPerformanceDimensionScoreRepository
+from ...repository.kra import AppraisalOutPutPerformanceDimensionScoreRepository, ApprasialKraReviewerStatusRepository
 from ...services import TrainingAndDevelopmentService, AppraisalService, UserQualificationService, AppraisalExperienceService
 from ...helpers.getters.dates import get_assessment_period
-from ..helper import is_within_current_quarter
+from ..helper import is_within_current_quarter, ApprovalStagesTemplateHandler
+
 from loguru import logger
 
 class TrainingAndDevelopmentUpdateView(SuccessMessageMixin, CreateView):
@@ -32,7 +34,6 @@ class TrainingAndDevelopmentUpdateView(SuccessMessageMixin, CreateView):
             {"description": strategy.description, "category": strategy.category}
             for strategy in training_object.intervention_strategies.all()
         ]
-        
         form = InterventionStrategyFormSet(
             self.request.POST or None,
             queryset=training_object.intervention_strategies.all(),
@@ -96,6 +97,16 @@ class TrainingAndDevelopmentUpdateView(SuccessMessageMixin, CreateView):
         if unscored_qr.exists():
             return False
         return True
+    
+    def is_quarter_confirmed(self)-> bool:
+        repo = ApprasialKraReviewerStatusRepository()
+        qr = repo.fetch_by_appraisal_id_quarter_year(
+            year_q_id=self.kwargs.get("quarter_id"),
+            appraisal_id=self.kwargs.get("appraisal_id")
+        )
+        confirmed_qr = qr.filter(confirmation_status=APPRAISAL_KRA_REVIEWER_STATUS_CHOICES[1][1])
+        return confirmed_qr.exists()
+    
         
     def is_current_date_in_current_quarter(self, quarter_obj)->bool:
         return is_within_current_quarter(year=quarter_obj.year, quarter=quarter_obj.quarter)
@@ -107,7 +118,8 @@ class TrainingAndDevelopmentUpdateView(SuccessMessageMixin, CreateView):
         context.update(self.approval_user_roles())
         
         quarter_obj = self.get_training_object().quarter
-        context["is_quarter_scored"] = self.is_quarter_scored()
+        context["is_prev_stage_completed"] = self.is_quarter_scored() and self.is_quarter_confirmed()
+
         context["quarter_obj"] = quarter_obj
         context["is_within_current_quarter"] = self.is_current_date_in_current_quarter(quarter_obj=quarter_obj)
         context["competency_gaps"] = self.get_competency_gaps()
@@ -197,9 +209,8 @@ class TrainingAndDevelopmentTemplateView(TemplateView):
     
     def get_approval_stages(self):
         try:
-            appraisal_object = self.get_appraisal_object()
-            handler = ApprovalStagesHandler(appraisal_id=appraisal_object.id)
-            return handler.get_stages_info()
+            handler = ApprovalStagesTemplateHandler(appraisal_object=self.get_appraisal_object(), request_obj=self.request)
+            return handler.get_context_data()
         except Exception as e:
             logger.error(f"[AppraisalUpdateView] get_approval_stages for Appraisal pk: {appraisal_object.id} failed with error: {e}")
             return None    

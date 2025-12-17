@@ -5,6 +5,9 @@
 {% load quarter %}
 {% load approval_stages %}
 {% load crispy_forms_tags %}
+{% load appraisal %}
+
+
 {% block styles %}
   <link rel="stylesheet"
         href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css" />
@@ -39,6 +42,8 @@
                       </div>
                   </form>
               </div>
+              
+              {% comment %}
               <div>
                 <div onclick="openAddUserQualifications()"
                     class="mt-7 bg-blue-500 hover:bg-blue-700 inline-block rounded-full text-white py-2 px-4 rounded"
@@ -47,7 +52,7 @@
                 </div>
                 {% include "appraisal/qualification_upload_modal.html"%}
               </div>
-
+              {% endcomment %}
               <div class="relative inline-block text-left mt-7">
                 <div>
                   <button type="button" class="inline-flex justify-between w-48 rounded-2xl border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2" id="conf-menu-button" aria-expanded="true" aria-haspopup="true">
@@ -79,6 +84,7 @@
               <th>Appraiser</th>
               <th>Reviewer</th>
               <th>Create at</th>
+              <th>Approval stage</th>
               <th>Current Quarter</th>
               <th></th>
             </tr>
@@ -90,6 +96,19 @@
                 <td>{{ appraisal.appraiser }}</td>
                 <td>{{ appraisal.reviewer }}</td>
                 <td>{{ appraisal.created_date }}</td>
+                <td>
+                  {% if appraisal.is_accepted %}
+                    <div onclick="openApprovalStageModal('{{ appraisal.id }}')"
+                      class="bg-blue-500 hover:bg-blue-700 inline-block rounded-full text-white py-2 px-4 rounded">
+                      View Approval workflow
+                    </div>
+                    {% include "appraisal/approval/modal.html" with appraisal_id=appraisal.id modal_heading="Approval Workflow" modal_description="Detailed progress of the workflow." %}
+                  {% else %}
+                    <div class="flex items-center">
+                      <p class="p-2 bg-yellow-400 font-bold rounded-2xl">Waiting for appraiser's acceptance</p>
+                    </div>
+                  {% endif %}
+                </td>
                 <td>{{ appraisal.id|get_current_quarter }}</td>
                 <td>
                   <div class="flex justify-center gap-2">
@@ -107,13 +126,15 @@
                       <!-- Dropdown menu -->
                       <div class="dropdown-section-menu absolute z-10 mt-2 w-72 origin-top-right rounded-2xl bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none hidden">
                         <div class="py-1" role="none">
-                          <a href="{% url 'update_appraisal' appraisal.id %}" class="text-gray-700 block px-4 py-2 text-sm hover:bg-indigo-100 hover:text-indigo-700 rounded-md" role="menuitem">Section 1 - Personal Details</a>
-                          {% if appraisal.reviewer %}
-                            <a href="{% url 'appraisal_dept_output_index' appraisal.id %}" class="text-gray-700 block px-4 py-2 text-sm hover:bg-indigo-100 hover:text-indigo-700 rounded-md" role="menuitem">Section 2 - Performance Plan and Assessment</a>
-                            <a href="{% url 'training_development_index' appraisal.id %}" class="text-gray-700 block px-4 py-2 text-sm hover:bg-indigo-100 hover:text-indigo-700 rounded-md" role="menuitem">Section 3 - Training and Development Needs</a>
-                            <a href="{% url 'performance_review_detail' appraisal.id %}" class="text-gray-700 block px-4 py-2 text-sm hover:bg-indigo-100 hover:text-indigo-700 rounded-md" role="menuitem">Section 4 - Performance Progress Reviews</a>
-                            <a href="{% url 'appraisal_final_result_index' appraisal.id %}" class="text-gray-700 block px-4 py-2 text-sm hover:bg-indigo-100 hover:text-indigo-700 rounded-md" role="menuitem">Section 5 - Final Performance Assessment and Rating</a>
-                          {% endif %}
+                            {% with appraisal.id|get_appraisal_sections as sections %}
+                              {% for section in sections %}
+                                  <a href="{% url section.url appraisal.id %}"
+                                    class="text-gray-700 block px-4 py-2 text-sm hover:bg-indigo-100 hover:text-indigo-700 rounded-md"
+                                    role="menuitem">
+                                    Section {{ forloop.counter }} - {{ section.section_name }}
+                                  </a>
+                              {% endfor %}
+                            {% endwith %}
                         </div>
                       </div>
                     </div>
@@ -121,14 +142,18 @@
                     {% if appraisal.reviewer %}
                       <div class="flex items-center">
                         <a href="{% url 'appraisal_detail' appraisal.id %}" class="group relative">
-                          <svg class="w-6 h-6 text-gray-800 hover:text-indigo-600 transition duration-200" 
-                              aria-hidden="true" 
-                              xmlns="http://www.w3.org/2000/svg" 
-                              fill="none" 
-                              viewBox="0 0 24 24">
-                            <path stroke="currentColor" stroke-width="2" d="M21 12c0 1.2-4.03 6-9 6s-9-4.8-9-6c0-1.2 4.03-6 9-6s9 4.8 9 6Z"/>
-                            <path stroke="currentColor" stroke-width="2" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/>
-                          </svg>
+                          <div class="flex justify-center gap-1 bg-blue-200 rounded-xl p-2">
+                            <svg class="w-6 h-6 text-gray-800 hover:text-indigo-600 transition duration-200" 
+                                aria-hidden="true" 
+                                xmlns="http://www.w3.org/2000/svg" 
+                                fill="none" 
+                                viewBox="0 0 24 24">
+                              <path stroke="currentColor" stroke-width="2" d="M21 12c0 1.2-4.03 6-9 6s-9-4.8-9-6c0-1.2 4.03-6 9-6s9 4.8 9 6Z"/>
+                              <path stroke="currentColor" stroke-width="2" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/>
+                            </svg>
+                            <p>View Appraisal</p>
+
+                          </div>
                           
                           <!-- Tooltip -->
                           <span class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 hidden group-hover:block

@@ -19,7 +19,7 @@
                     {{ appraisal_confirmation_forms.first_quarter.hr_form.comment|as_crispy_field }}
                 </div>
                 <div class="flex justify-end mt-2 mr-8 gap-2">
-                    {% if is_hr and is_all_scored.first_quarter %}
+                    {% if is_hr and is_prev_stage_completed_comments.first_quarter %}
                         {% if current_quarter.is_within_first_quarter %}
                             <button type="submit" class="w-96 bg-blue-500 hover:bg-blue-700 inline-block rounded-full text-white py-2 px-4" name="hr_request">Save</button>
                         {% endif %}
@@ -39,7 +39,7 @@
                     {{ appraisal_confirmation_forms.second_quarter.hr_form.comment|as_crispy_field }}
                 </div>
                 <div class="flex justify-end mt-2 mr-8 gap-2">
-                    {% if is_hr and is_all_scored.second_quarter %}
+                    {% if is_hr and is_prev_stage_completed_comments.second_quarter %}
                         {% if current_quarter.is_within_second_quarter %}
                             <button type="submit" class="w-96 bg-blue-500 hover:bg-blue-700 inline-block rounded-full text-white py-2 px-4" name="hr_request">Save</button>
                         {% endif %}                    
@@ -59,7 +59,7 @@
                     {{ appraisal_confirmation_forms.third_quarter.hr_form.comment|as_crispy_field }}
                 </div>
                 <div class="flex justify-end mt-2 mr-8 gap-2">
-                    {% if is_hr and is_all_scored.third_quarter %}
+                    {% if is_hr and is_prev_stage_completed_comments.third_quarter %}
                         {% if current_quarter.is_within_third_quarter %}
                             <button type="submit" class="w-96 bg-blue-500 hover:bg-blue-700 inline-block rounded-full text-white py-2 px-4" name="hr_request">Save</button>
                         {% endif %} 
@@ -79,7 +79,7 @@
                     {{ appraisal_confirmation_forms.fourth_quarter.hr_form.comment|as_crispy_field }}
                 </div>
                 <div class="flex justify-end mt-2 mr-8 gap-2">
-                    {% if is_hr and is_all_scored.fourth_quarter %}
+                    {% if is_hr and is_prev_stage_completed_comments.fourth_quarter %}
                         {% if current_quarter.is_within_fourth_quarter %}
                             <button type="submit" class="w-96 bg-blue-500 hover:bg-blue-700 inline-block rounded-full text-white py-2 px-4" name="hr_request">Save</button>
                         {% endif %} 

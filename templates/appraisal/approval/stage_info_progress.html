@@ -1,0 +1,131 @@
+{% load approval_stages %}
+{% load quarter %}
+
+<!-- Progress Bar -->
+
+{% if last_stage_number %}
+    <div class="mb-6">
+        <div class="flex justify-between text-sm text-gray-600 mb-2">
+            <span class="font-bold">Progress</span>
+            <span class="font-semibold">{{ completed_stages_count }} of {{ last_stage_number }} stages completed</span>
+        </div>
+        <div class="w-full bg-gray-200 rounded-full h-6 overflow-hidden">
+            <div class="bg-green-500 h-6 rounded-full flex items-center justify-center text-white text-xs font-medium transition-all duration-500" 
+                style="width: {% widthratio completed_stages_count last_stage_number 100 %}">
+                {% widthratio completed_stages_count last_stage_number 100 %}%
+            </div>
+        </div>
+    </div>
+{% endif %}
+
+<!-- Current Stage Alert -->
+{% if current_stage %}
+    <div class="{% if current_stage.is_completed %}bg-green-50 border-green-200{% else %}bg-blue-50 border-blue-200{% endif %} border-l-4 p-4 mb-6 rounded-r-lg">
+        {% with current_stage.stage_name|get_approval_stage_url as stage_url %}
+            <a 
+            href="{% url stage_url current_stage.appraisal.id %}"
+            class="flex items-start">
+                <div class="flex-shrink-0">
+                    {% if current_stage.is_completed %}
+                        <svg class="w-6 h-6 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"></path>
+                        </svg>
+                    {% else %}
+                        <svg class="w-6 h-6 text-blue-500" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"></path>
+                        </svg>
+                    {% endif %}
+                </div>
+                <div class="ml-3 flex-1">
+                    <h6 class="text-sm font-semibold {% if current_stage.is_completed %}text-green-800{% else %}text-blue-800{% endif %} mb-1">
+                        {% if current_stage.is_completed %}
+                            Last Completed Stage
+                        {% else %}
+                            Current Stage
+                        {% endif %}
+                    </h6>
+                    <p class="text-sm {% if current_stage.is_completed %}text-green-700{% else %}text-blue-700{% endif %} mb-1">
+                        <span class="font-semibold">Stage {{ current_stage.stage_num }}:</span> {{ current_stage.stage_name }}
+                    </p>
+                    <p class="text-xs {% if current_stage.is_completed %}text-green-600{% else %}text-blue-600{% endif %}">
+                        {{ current_stage.stage_description }}
+                    </p>
+                    
+                    {% with current_stage.id|get_user_responsible as user_responsible %}
+                        <div class="mt-3 pt-2 border-t 
+                                    {% if current_stage.is_completed %}border-green-200{% else %}border-blue-200{% endif %} 
+                                    flex flex-wrap gap-y-1 justify-between text-xs 
+                                    {% if current_stage.is_completed %}text-green-700{% else %}text-blue-700{% endif %}">
+                            
+                            <div class="flex items-center">
+                                <svg class="w-4 h-4 mr-1 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path>
+                                </svg>
+                                <dl class="flex">
+                                    <dt class="font-bold mr-1">Responsible:</dt>
+                                    <dd>{{ user_responsible.get_full_name|default:"N/A" }}</dd>
+                                </dl>
+                            </div>
+                            
+                            {% if current_stage.is_completed %}
+                                <div class="flex items-center">
+                                    <svg class="w-4 h-4 mr-1 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"></path>
+                                    </svg>
+                                    <dl class="flex">
+                                        <dt class="font-bold mr-1">Completed:</dt>
+                                        <dd>{{ current_stage.updated|date:"M d, Y H:i" }}</dd>
+                                    </dl>
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% endwith %}
+                </div>
+            </a>
+        {% endwith %}
+    </div>
+{% endif %}
+
+<!-- Next Stage Alert -->
+{% if next_stage %}
+    <div class="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6 rounded-r-lg">
+        {% with next_stage.stage_name|get_approval_stage_url as stage_url %}
+            <a 
+            href="{% url stage_url next_stage.appraisal.id %}"
+            class="flex items-start">
+                <div class="flex-shrink-0">
+                    <svg class="w-6 h-6 text-yellow-500" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd"></path>
+                    </svg>
+                </div>
+                <div class="ml-3 flex-1">
+                    <h6 class="text-sm font-semibold text-yellow-800 mb-1">
+                        Next Stage
+                    </h6>
+                    <p class="text-sm text-yellow-700 mb-1">
+                        <span class="font-semibold">Stage {{ next_stage.stage_num }}:</span> {{ next_stage.stage_name }}
+                    </p>
+                    <p class="text-xs text-yellow-600">
+                        {{ next_stage.stage_description }}
+                    </p>
+
+                    {% with next_stage.id|get_user_responsible as user_responsible %}
+                        <div class="mt-3 pt-2 border-t border-yellow-200 flex flex-wrap gap-y-1 justify-start text-xs text-yellow-700">
+                            
+                            <div class="flex items-center">
+                                <svg class="w-4 h-4 mr-1 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path>
+                                </svg>
+                                <dl class="flex">
+                                    <dt class="font-bold mr-1">Action By:</dt>
+                                    <dd>{{ user_responsible.get_full_name|default:"Awaiting Assignment" }}</dd>
+                                </dl>
+                            </div>
+                            
+                        </div>
+                    {% endwith %}
+                    </div>
+            </a>
+        {% endwith %}
+    </div>
+{% endif %}
