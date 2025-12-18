@@ -419,8 +419,13 @@ class AppraisalDepartmentOutputService:
                 service_handler = AppraisalScoreDimensionService(score_object=perform_dimension_obj)
                 score_weighted_score = service_handler.calculate_performance_dimension_weighted_score()
                 total_weight += score_weighted_score
-                
-            return total_weight
+            
+            departmental_objectives_qr = qr.values("appraisal_department_output__department_output__department_objective").distinct()
+            num_departmental_objectives = departmental_objectives_qr.count()
+            result = total_weight/num_departmental_objectives
+            
+            return round(result, 2)
+        
         except Exception as e:
             raise Exception(f"[AppraisalDepartmentOutputService] get_department_objectives_total_year_quarter_weighted_score(), with year_quarter_id: {year_quarter_id}, failed with error: {e}")
      
