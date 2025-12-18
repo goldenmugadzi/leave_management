@@ -24,7 +24,7 @@ UserQualificationFormset = modelformset_factory(
 InterventionStrategyFormSet = modelformset_factory(
     model=InterventionStrategy,
     form=InterventionStrategyForm,
-    extra=1
+    extra=0
 )
 
 ScoreDocumentFormset = modelformset_factory(

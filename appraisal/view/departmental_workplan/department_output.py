@@ -9,12 +9,13 @@ from django.utils.text import slugify
 from django.shortcuts import redirect
 from django.contrib.messages.views import SuccessMessageMixin
 from django.contrib import messages
-from ...repository.departmental_workplan import DepartmentalOutRepository, DepartmentalObjectiveRepository
+from ...repository.departmental_workplan import DepartmentalOutRepository, DepartmentalObjectiveRepository, OutPutPerformanceDimensionRepository
 from ...models import DepartmentOutput
 from ...forms.departmental_plan import DepartmentOutputCreateForm, DesignationFilterForm
 from ...services.department_workplan import DepartmentOutputService
 from ..helper import PayloadDeserializationStrategyContext, DepartmentOutputDeserializationStrategy
 from it.users.models import Designations
+from django.db import transaction
 from loguru import logger
 
 def get_dept_output_weight_progress(dept_objective_id: int, designation_id: int):
@@ -139,13 +140,22 @@ class DepartmentOutputCreateView(SuccessMessageMixin, CreateView):
                 messages.error(self.request, "The department output weight cannot be greater than its departmental objective weight. Please adjust the department output weight to ensure it does not exceed the departmental objective weight.")
                 return self.form_invalid(form)
 
-            repo = DepartmentalOutRepository()
-            dept_output_obj = repo.create(
-                                            creator=self.request.user,
-                                            designation_obj=self.get_designation_obj(),
-                                            departmental_objective_obj=self.get_department_objective_obj(),
-                                            data=payload
-                                        )
+            is_output_dimensions_set = False
+            with transaction.atomic():
+                repo = DepartmentalOutRepository()
+                dept_output_obj = repo.create(
+                                                creator=self.request.user,
+                                                designation_obj=self.get_designation_obj(),
+                                                departmental_objective_obj=self.get_department_objective_obj(),
+                                                data=payload
+                                            )
+                output_dimensions_repo = OutPutPerformanceDimensionRepository()
+                output_dimensions_created = output_dimensions_repo.create_in_bulk(department_output_obj=dept_output_obj)
+                if output_dimensions_created:
+                    is_output_dimensions_set = True
+            
+            if not is_output_dimensions_set:
+                raise Exception(f"failed to create performance dimensions with error: {e}")
             form.instance = dept_output_obj
         except Exception as e:
             logger.error(f"[DepartmentOutputCreateView] with objective id: {self.kwargs.get('departmental_objective_id')}, failed with error: {e}")

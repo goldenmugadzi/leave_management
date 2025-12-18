@@ -61,9 +61,9 @@ class KraModulesType(Enum):
     
 class RoleFilterChoices(Enum):
     MY_APPRAISAL = "my_appraisal"
-    ASSIGNED_APPRAISALS = "assigned_appraisals"
-    APPRAISALS_FOR_REVIEW = "appraisals_for_review"
-    ALL_APPRAISALS = "all_appraisals"
+    ASSIGNED_APPRAISALS = "appraisals_for_appraiser"
+    APPRAISALS_FOR_REVIEW = "appraisals_for_reviewer"
+    ALL_APPRAISALS = "appraisals_for_hr"
 
     @classmethod
     def choices(cls):

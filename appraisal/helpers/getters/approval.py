@@ -10,6 +10,7 @@ from ...repository.appraisal import AppraiseePersonalAttributeRepository, Apprai
 from ...models.helpers import YearQuarter
 from ...models.kra import AppraisalOutPutPerformanceDimensionScore, APPRAISAL_KRA_REVIEWER_STATUS_CHOICES, AppraisalDepartmentOutput, REVIEWERS_CONFIRMATION_STATUS
 from ..types.quarters import ApprovedQuartersType
+from ..data.approval_stage import ApprovalStageData, APPRAISEE, APPRAISER, REVIEWER, HR
 from loguru import logger
 
 
@@ -120,11 +121,12 @@ class ReviewersStatusHandler:
 @dataclass
 class ApprovalStagesHandler:
     appraisal_id: int
+    year_quarter_id: int
     
     def get_approval_queryset(self):
         """Retrieve all approval workflow stages for the given appraisal."""
         approval_workflow_repo = AppraisalWorkflowRepository()
-        return approval_workflow_repo.retrieve_by_appraisal(appraisal_id=self.appraisal_id)
+        return approval_workflow_repo.fetch_by_appraisal_id_quarter_id(appraisal_id=self.appraisal_id, year_quarter_id=self.year_quarter_id)
 
     def get_completed_approval_queryset(self):
         """Retrieve completed approval stages."""
@@ -148,28 +150,35 @@ class ApprovalStagesHandler:
         uncompleted_qr = self.get_uncompleted_approval_queryset()
 
         data = {"current_stage": None, "next_stage": None}
-
-        if completed_qr and completed_qr.exists():
-            current_stage_obj = completed_qr.last()
-            data["current_stage"] = current_stage_obj
-            data["next_stage"] = self.__get_next_stage_obj__(current_stage_obj.stage_num)
-            return data
-        if uncompleted_qr and uncompleted_qr.exists():
+        if uncompleted_qr.exists():
             current_stage_obj = uncompleted_qr.first()
             data["current_stage"] = current_stage_obj
             data["next_stage"] = self.__get_next_stage_obj__(current_stage_obj.stage_num)
-            return data
-        return data
+        else:
+            current_stage_obj = completed_qr.last()
+            data["current_stage"] = current_stage_obj
+            data["next_stage"] = self.__get_next_stage_obj__(current_stage_obj.stage_num)
 
+        return data
+    
+    def is_current_stage(self, stage_id: int)->bool:
+        current_stage_nxt_handler = self.get_current_and_next_stage()
+        current_stage_obj = current_stage_nxt_handler["current_stage"]
+        return stage_id == current_stage_obj.id
     
     def get_stages_info(self):
         """Retrieve all stages along with current and next stage information."""
         qr = self.get_approval_queryset()
         last_stage_number = qr.last().stage_num if qr and qr.exists() else None
         current_nxt_stage_data = self.get_current_and_next_stage()
+        completed_stages_qr = self.get_completed_approval_queryset()
+        completed_stages_count = 0
+        if completed_stages_qr is not None:
+            completed_stages_count = completed_stages_qr.count()
         return {
             "stages": qr,
             "last_stage_number": last_stage_number,
+            "completed_stages_count": completed_stages_count,
             **current_nxt_stage_data
         }
 
@@ -440,3 +449,42 @@ class ApprovalWorkflowQuarterStagesStrategyContext:
         except Exception as e:
             logger.warning(f"[ApprovalWorkflowQuarterStagesStrategyInterface] for {self.strategy.__class__()}, failed with error: {e}")
             return None
+        
+
+class ApprovalStageGetterHandler:
+    def get_stage_num_by_name(self, stage_name: str):
+        stage_num = 0
+        for index, stage in enumerate(ApprovalStageData):
+            if stage.value["stage_name"].lower() == stage_name.lower():
+                stage_num = index + 1
+        return stage_num
+    
+    def get_user_responsible(self, approval_stage_id: int):
+        try:
+            approval_stage_repo = AppraisalWorkflowRepository()
+            obj = approval_stage_repo.get_by_id(appraisal_workflow_id=approval_stage_id)
+            
+            if obj is None:
+                raise Exception(f"AppraisalWorkflow not found")
+            
+            appraisal_object = obj.appraisal
+            user_responsible = None
+            
+            for _, stage in enumerate(ApprovalStageData):
+                if stage.value["stage_name"].lower() == obj.stage_name.lower():
+                    role = stage.value["set_by"].lower()
+                    
+                    if role == APPRAISEE.lower():
+                        user_responsible = appraisal_object.user
+                    elif role == APPRAISER.lower():
+                        user_responsible = appraisal_object.appraiser
+                    elif role == REVIEWER.lower():
+                        user_responsible = appraisal_object.reviewer
+                    elif role == HR.lower():
+                        user_responsible = appraisal_object.hr
+                        
+            if user_responsible is None:
+                raise Exception("user responsible not found")
+            return user_responsible
+        except Exception as e:
+            raise Exception(f"[ApprovalStageGetterHandler] get_user_responsible with approval_stage_id: {approval_stage_id}, failed with error: {e}")

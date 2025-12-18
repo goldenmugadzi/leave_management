@@ -8,6 +8,7 @@ from ..services.user import UserProfileService
 from ..repository.users import UserProfileRepository
 from ..models import Appraisal, AppraisalExperience, Experience, AppraiseePersonalAttribute, AppraisalOverallComments
 from ..helpers.types.kra import KraRolesType
+from ..helpers.types.approval import ApprovalStageChoices
 
 
 class UserQualificationForm(forms.ModelForm):
@@ -166,7 +167,7 @@ class ExperienceForm(forms.ModelForm):
 class AppraiseePersonalAttributeForm(forms.ModelForm):
     class Meta:
         model = AppraiseePersonalAttribute
-        exclude = ["created", "updated", "appraisal", "quarter"]
+        exclude = ["created", "updated", "appraisal", "quarter", "is_completed"]
         
         
     def __init__(self, *args, **kwargs):
@@ -176,3 +177,10 @@ class AppraiseePersonalAttributeForm(forms.ModelForm):
             self.fields[field_name].widget.attrs.update({
                 'class': 'rating-checkbox'
             })
+
+class ApprovalStageFilterForm(forms.Form):
+    
+    approval_stage_filter = forms.ChoiceField(
+        choices=ApprovalStageChoices.choices(),
+        widget=forms.Select(attrs={'class': 'form-control'}),
+    )

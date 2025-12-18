@@ -14,6 +14,14 @@ class TrainingAndDevelopmentRepository:
         except Exception as e:
             raise Exception(f"create TrainingAndDevelopment Repo failed with error: {e}")
 
+    def bulk_create(self, train_dev_list: List[TrainingAndDevelopment])->bool:
+        try:
+            TrainingAndDevelopment.objects.bulk_create(train_dev_list)
+            return True
+        except Exception as e:
+            raise Exception(f"TrainingAndDevelopment bulk_create, failed with error: {e}")
+
+
     def get_by_appraisal_id_quarter(self, appraisal_id: int, quarter_id: int)->TrainingAndDevelopment:
         try:
             qr = TrainingAndDevelopment.objects.filter(appraisal__id=appraisal_id, quarter__id=quarter_id)

@@ -62,7 +62,7 @@
 
             <!-- Submit Button -->
             {% if is_within_current_quarter %}
-                {% if is_all_scored %}
+                {% if is_prev_stage_completed %}
                     {% if is_appraiser %}
                         <div class="flex justify-center">
                             <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 w-full md:w-80 rounded-full text-white py-3 px-6 font-medium transition duration-300">

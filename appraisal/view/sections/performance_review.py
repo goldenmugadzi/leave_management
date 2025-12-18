@@ -14,17 +14,20 @@ from ...services import (AppraisalService, PerformanceReviewService,
 from ...repository import (AppraisalRepository, UserQualificationRepository, AppraisalExperienceRepository, 
                           ExperienceRepository, PerformanceReviewRepository,
                           TrainingAndDevelopmentRepository)
-from ...repository.kra import AppraisalOutPutPerformanceDimensionScoreRepository
+from ...repository.kra import AppraisalOutPutPerformanceDimensionScoreRepository, ApprasialKraReviewerStatusRepository
 from ...helpers.getters import ApprovalStagesHandler
 
 
 from ...models import PerformanceProgressReview, AppraisalExperience, TrainingAndDevelopment
+from ...models.kra import APPRAISAL_KRA_REVIEWER_STATUS_CHOICES
 from it.users.models import UserQualification, UserProfile, GRADE_CHOICES
 from ...forms import PerformanceReviewApprovalForm
 from approve.forms import ApprovalForm
 from approve.models import Step, Approval
 from ...helpers.getters.dates import get_assessment_period
-from ..helper import is_within_current_quarter
+from ..helper import is_within_current_quarter, ApprovalStagesTemplateHandler
+from ...helpers.setters import handle_stage_completion
+from ...helpers.data.approval_stage import ApprovalStageData
 from loguru import logger
 
 class PerformancePlanAndAssessmentAppraisalTemplateView(TemplateView):
@@ -76,8 +79,8 @@ class PerformancePlanAndAssessmentTemplateView(TemplateView):
     def get_approval_stages(self):
         try:
             appraisal_object = self.get_appraisal_object()
-            handler = ApprovalStagesHandler(appraisal_id=appraisal_object.id)
-            return handler.get_stages_info()
+            handler = ApprovalStagesTemplateHandler(appraisal_object=appraisal_object, request_obj=self.request)
+            return handler.get_context_data()
         except Exception as e:
             logger.error(f"[AppraisalUpdateView] get_approval_stages for Appraisal pk: {appraisal_object.id} failed with error: {e}")
             return None  
@@ -174,6 +177,15 @@ class PerformanceReviewsApprovalView(SuccessMessageMixin, TemplateView):
             return False
         return True
     
+    def is_quarter_confirmed(self)-> bool:
+        repo = ApprasialKraReviewerStatusRepository()
+        qr = repo.fetch_by_appraisal_id_quarter_year(
+            year_q_id=self.kwargs.get("quarter_id"),
+            appraisal_id=self.kwargs.get("appraisal_id")
+        )
+        confirmed_qr = qr.filter(confirmation_status=APPRAISAL_KRA_REVIEWER_STATUS_CHOICES[1][1])
+        return confirmed_qr.exists()
+    
     
     def is_current_date_in_current_quarter(self, quarter_obj)->bool:
         return is_within_current_quarter(year=quarter_obj.year, quarter=quarter_obj.quarter)
@@ -185,8 +197,7 @@ class PerformanceReviewsApprovalView(SuccessMessageMixin, TemplateView):
         context.update(self.get_performance_review_forms_objects())
         context.update(self.approval_user_roles())
         quarter_obj = self.get_performance_review_object().quarter
-        
-        context["is_quarter_scored"] = self.is_quarter_scored()
+        context["is_prev_stage_completed"] = self.is_quarter_scored() and self.is_quarter_confirmed()
         context["quarter_obj"] = quarter_obj
         context["is_within_current_quarter"] = self.is_current_date_in_current_quarter(quarter_obj=quarter_obj)
         return context
@@ -233,7 +244,11 @@ class PerformanceReviewsApprovalView(SuccessMessageMixin, TemplateView):
             if not performance_review_object.is_completed:
                 performance_review_object.is_completed = True
                 performance_review_object.save()
-                
+                handle_stage_completion(
+                    appraisal_id=self.kwargs.get("appraisal_id"),
+                    year_quarter_id=self.kwargs.get("quarter_id"),
+                    stage_name=ApprovalStageData.set_performance_progress_review.value["stage_name"]
+                )
             messages.success(request, "Performance Review updated successfully")
             return HttpResponseRedirect(reverse('performance_review_detail', args=(appraisal_id,)))
 

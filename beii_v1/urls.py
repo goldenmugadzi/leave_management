@@ -85,9 +85,9 @@ urlpatterns = [
     path('direct_purchase/', include('finance.direct_purchase.urls')),
     path('reports/', include('reports.urls')),
     path('api-auth/', include('rest_framework.urls')),
-    path('api/auth/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
-    path('api/auth/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
-    path('api/auth/token/verify/', TokenVerifyView.as_view(), name='token_verify'),
+    # path('api/auth/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    # path('api/auth/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+    # path('api/auth/token/verify/', TokenVerifyView.as_view(), name='token_verify'),
     # OPS & MAINTENANCE
     path('api/safety/operations/', include('api.ops_maintenance.safety_operations.urls')),
      # path('', include('hardware_faults.urls')),

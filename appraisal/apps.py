@@ -70,8 +70,9 @@ class AppraisalConfig(AppConfig):
         post_migrate.connect(set_quarter_year, sender=self)
         
         from .signals.kra import create_kra_roles_handler
-        from .signals.appraisal import set_appraisal_dependencies, create_training_development_post_save_handler, set_appraisal_acceptance_stage_completed
-        from .signals.departmental_output import create_output_performance_dimensions
+        from .signals.appraisal import set_appraisal_dependencies
+        from .signals.perf_plan_assmnt import appraisal_dimension_score_completed_scoring_stage_handler, appraisal_confirmation_completed_scoring_stage_handler, appraisal_training_dev_completed_scoring_stage_handler
+        from .signals.reviewer_confirmations import appraisal_reviewers_confirmation_stages_handler
         post_migrate.connect(create_kra_roles_handler, sender=self)        
 
         from .tasks import run_back_ground_tasks

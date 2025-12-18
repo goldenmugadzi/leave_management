@@ -9,6 +9,13 @@ class PerformanceReviewRepository:
         except Exception as e:
             raise Exception(f"PerformanceReview create repo failed with error: {e}")
         
+    def bulk_create(self, perf_rev_objs_list: List[PerformanceProgressReview])->bool:
+        try:
+            PerformanceProgressReview.objects.bulk_create(objs=perf_rev_objs_list)
+            return True
+        except Exception as e:
+            raise Exception(f"PerformanceReview bulk_create repo failed with error: {e}")
+        
     def add_strengths(self, performance_review_object: PerformanceProgressReview, strengths: List[PerformanceProgressStrength]):
         try:
             performance_review_object.strengths.add(*strengths)
