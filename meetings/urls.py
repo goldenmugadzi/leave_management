@@ -3,6 +3,7 @@ from . import views
 
 urlpatterns = [
     path('meetings/create/', views.create_meeting, name='create_meeting_with_booking'),
+    path('meetings/scheduled/', views.scheduled_meetings, name='scheduled_meetings'),
     path('meetings_datatable/', views.meetings_datatable, name='meetings_datatable'),
     path('table_meeting/', views.table_meetings, name="table_meeting"),
     path('update_meeting/<int:id>/', views.update_meeting, name='update_meeting'),

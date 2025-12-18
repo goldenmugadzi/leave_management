@@ -13,6 +13,7 @@ from django.contrib.auth.decorators import login_required
 
 @login_required
 def create_meeting(request, booking_id=None):
+    
     booking = None
     initial_data = {}
 
@@ -21,7 +22,8 @@ def create_meeting(request, booking_id=None):
         initial_data = {
             'venue': booking.venue,
             'department': booking.department,
-            'date_of_meeting': booking.date_of_meeting,
+            'start_date': booking.start_date,
+            'end_date':booking.end_date,
             'start_time': booking.start_time,
             'end_time': booking.end_time,
             'type_of_meeting': booking.type_of_meeting,
@@ -46,7 +48,7 @@ def create_meeting(request, booking_id=None):
                 <h3>You have been invited to a meeting</h3>
                 <p><strong>Meeting Type:</strong> {meeting.type_of_meeting}</p>
                 <p><strong>Venue:</strong> {meeting.venue}</p>
-                <p><strong>Date:</strong> {meeting.date_of_meeting}</p>
+                <p><strong>Date:</strong> {meeting.start_date}</p>
                 <p><strong>Time:</strong> {meeting.start_time} - {meeting.end_time}</p>
                 <p><strong>Requested By:</strong> {request.user.get_full_name()}</p>
                 """
@@ -100,7 +102,7 @@ def meetings_datatable(request):
         ).distinct()
 
     records_filtered = qs.count()
-    qs = qs.order_by('-date_of_meeting')[start:start+length]
+    qs = qs.order_by('-start_date')[start:start+length]
 
 
     data = []
@@ -118,7 +120,8 @@ def meetings_datatable(request):
                 "department": str(meeting.department) if meeting.department else "",
                 "regions": str(meeting.regions) if meeting.regions else "",
                 "type_of_meeting": meeting.type_of_meeting,
-                "date_of_meeting": meeting.date_of_meeting.strftime('%Y-%m-%d') if meeting.date_of_meeting else "",
+                "start_date": meeting.start_date.strftime("%Y-%m-%d") if meeting.start_date else "",
+                "end_date": meeting.end_date.strftime("%Y-%m-%d") if meeting.end_date else "",
                 "start_time": meeting.start_time.strftime('%H:%M') if meeting.start_time else "",
                 "end_time": meeting.end_time.strftime('%H:%M') if meeting.end_time else "",
                 "venue": str(meeting.venue) if meeting.venue else "",  
@@ -192,26 +195,35 @@ def meetings_dashboard(request):
         'is_requester': is_requester,
     })
 
+from datetime import timedelta
+
 def create_venue_booking(request):
     if request.method == 'POST':
         form = VenueBookingForm(request.POST)
         if form.is_valid():
             booking = form.save(commit=False)
-            booking.status = 'Pending' 
-            
-            # Mark the venue as booked
-            venue = booking.venue
-            venue.is_available = False
-            venue.status = 'Booked'
-            venue.save()
-            
+
+            # Check for overlapping bookings
+            if VenueBooking.objects.filter(
+                venue=booking.venue,
+                start_date__lte=booking.end_date,
+                end_date__gte=booking.start_date
+            ).exists():
+                messages.error(request, "This venue is already booked for one or more of the selected days.")
+                return render(request, 'Meetings/book_venue.html', {'form': form})
+
+            booking.status = "Pending"
             booking.save()
-            return redirect('meetings_dashboard')
-        else:
-            print('Form errors:', form.errors)
-    else:
-        form = VenueBookingForm()
+            messages.success(request, "Venue booked successfully.")
+            return redirect("meetings_dashboard")
+
+        # Form invalid → re-render page with errors
+        return render(request, 'Meetings/book_venue.html', {'form': form})
+
+    # GET request → show blank form
+    form = VenueBookingForm()
     return render(request, 'Meetings/book_venue.html', {'form': form})
+
 
 def venues_datatable(request):
     current_time = now()
@@ -222,11 +234,11 @@ def venues_datatable(request):
     data = []
 
     for v in venues:
-        # Check if this venue has any ACTIVE or UPCOMING booking today
         active_booking = VenueBooking.objects.filter(
             venue=v,
-            date_of_meeting=current_date,
-            end_time__gte=current_time_only  # exclude past bookings
+            start_date__lte=current_date,
+            end_date__gte=current_date,
+            end_time__gte=current_time_only
         ).exists()
 
         if not active_booking:
@@ -239,25 +251,9 @@ def venues_datatable(request):
 
     return JsonResponse({"data": data})
 
-def booked_venues_datatable(request):
-     
-    try:
-        user_roles = request.user.get_user_role_for_application("meeting")
-        role_name = getattr(user_roles, "name", None)
-        print(f"User role for Meetings: {role_name}")
-    except AttributeError as e:
-        print(f"Role error: {e}")
-        role_name = None
-    
-    current_time = now()
-    current_date = current_time.date()
-    current_time_only = current_time.time()
 
-    # Show all bookings for today, including ones that have not started yet
-    bookings = VenueBooking.objects.filter(
-        date_of_meeting=current_date,
-        end_time__gte=current_time_only  # exclude bookings already finished
-    )
+def booked_venues_datatable(request):
+    bookings = VenueBooking.objects.all().order_by('-start_date', 'start_time')  # optional ordering
 
     data = []
     for b in bookings:
@@ -267,13 +263,15 @@ def booked_venues_datatable(request):
             "department": str(b.department),
             "start_time": b.start_time.strftime("%H:%M"),
             "end_time": b.end_time.strftime("%H:%M"),
-            "date_of_meeting": b.date_of_meeting.strftime("%Y-%m-%d"),
+            "start_date": b.start_date.strftime("%Y-%m-%d"),
+            "end_date": b.end_date.strftime("%Y-%m-%d"),
             "capacity": b.capacity,
             "type_of_meeting": b.type_of_meeting,
             "status": b.status,
         })
 
     return JsonResponse({"data": data})
+
    
 def get_exchange_account():
 
@@ -361,3 +359,11 @@ def update_venue_booking(request, pk):
         form = VenueBookingForm(instance=booking)
 
     return render(request, "Meetings/venue_booking_update.html", {"form": form, "booking": booking})
+
+@login_required
+def scheduled_meetings(request):
+    """Render the scheduled meetings page with DataTable."""
+    return render(request, 'Meetings/scheduled_meetings.html', {
+        'is_requester': hasattr(request.user, 'is_requester') and request.user.is_requester,
+        'user': request.user,
+    })
