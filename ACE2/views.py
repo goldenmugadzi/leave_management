@@ -514,6 +514,18 @@ def create_Ace(request):
                         depot_manager = UserProfile.objects.filter(username=depot_manager).first()
                         notify_user(depot_manager, msg, "ACE", url, ace.Ace_id2, request)
 
+                    # notify section heads with jurisdiction over the ACE's cost center
+                    if ace.cost_center:
+                        section_heads_with_jurisdiction = find_section_heads_with_jurisdiction(ace.cost_center, application_names=["ace"])
+                        if section_heads_with_jurisdiction:
+                            msg = "User " + str(use) + " created " + ace.Ace_id2 + " under cost center " + str(ace.cost_center) + " which is in your jurisdiction"
+                            url = "/ace/ace_detail/" + ace.Ace_id2
+                            for section_head in section_heads_with_jurisdiction:
+                                # Avoid duplicate notifications to the creator
+                                if section_head.id != request.user.id:
+                                    notify_user(section_head, msg, "ACE", url, ace.Ace_id2, request)
+                                    print(f"Notified section head {section_head.username} - ACE {ace.Ace_id2} is under their jurisdiction (cost center: {ace.cost_center})")
+
                     if str(ace.classification) == "Project":
                         # the idea is that if its ace of type project there need to be added other project details
                         url = reverse('Ace:ace_detail_project', args=[ace.Ace_id2])
@@ -1859,6 +1871,38 @@ def find_general_manager(request, region):
 
         else:
             print("no users found")
+
+
+def find_section_heads_with_jurisdiction(ace_cost_center, application_names=["ace"]):
+    """
+    Find all section heads who have jurisdiction over the given cost center.
+    Section heads are identified by having 'pass' role in ACE application.
+    Returns a list of UserProfile objects.
+    """
+    section_heads_with_jurisdiction = []
+    
+    if not ace_cost_center:
+        return section_heads_with_jurisdiction
+    
+    try:
+        # Get all users with 'pass' role (section heads) in ACE application
+        section_heads = UserProfile.objects.filter(
+            roles__application="ace",
+            roles__role="pass"
+        ).distinct().prefetch_related('roles')
+        
+        for section_head in section_heads:
+            # Get cost centers under this section head's jurisdiction
+            user_cost_centers = section_head.cost_centers_for(application_names)
+            
+            # Check if the ACE's cost center is in their jurisdiction
+            if user_cost_centers and ace_cost_center in user_cost_centers:
+                section_heads_with_jurisdiction.append(section_head)
+                
+    except Exception as e:
+        print(f"Error finding section heads with cost center jurisdiction: {e}")
+    
+    return section_heads_with_jurisdiction
 
 
 # transactions on a budget
