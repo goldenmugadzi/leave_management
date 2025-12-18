@@ -179,9 +179,15 @@ def Ace_detail(request, Ace_id2):
         if len(ace_item.process.approval_set.all()) == len(ace_item.process.workflow.step_set.all()):
             approve_now = True
 
+        # Debug logging for approval button visibility
+        print(f"DEBUG ACE {ace_item.Ace_id2}: User={request.user.username}, ace_role={ace_role}, next_step={next_step}")
+        print(f"  User roles: {[r.name for r in user_roles]}")
+        print(f"  Approval status: {approval_status}, approve_now: {approve_now}")
+        
         try:
             newStep = Step.objects.get(step=next_step, workflow=ace_item.process.workflow,
                                        approver__in=user_roles)
+            print(f"  ✓ Found matching step: {newStep.to} (requires role: {newStep.approver.name})")
 
             if ace_role == "pass":
                 # print(ace_item.section, " section")
@@ -210,6 +216,8 @@ def Ace_detail(request, Ace_id2):
                         clear_minus = True
                 print(clear)
         except Step.DoesNotExist:
+            print(f"  ✗ No matching step found for user roles at step {next_step}")
+            print(f"  Available steps: {[f'Step {s.step}: {s.to} (needs {s.approver.name})' for s in ace_item.process.workflow.step_set.all()]}")
             pass
 
     print(approve_now)
@@ -272,6 +280,9 @@ def Ace_detail(request, Ace_id2):
             general_manager = UserProfile.objects.filter(username=general_manager).first()
             notify_user(general_manager, msg, "ACE", url, ace_item.Ace_id2, request)
 
+    # Final debug output before rendering
+    print(f"RENDERING ACE {ace_item.Ace_id2}: approvalForm={approvalForm}, to={to}, ace_role={ace_role}")
+    
     return render(request, 'finance/ace2/ace_detail.html',
                   {'ace': ace_item, 'approved_steps': approved_steps, 'approvalForm': approvalForm,
                    'to': to, 'ace_role': ace_role, 'user_groups': user_groups, 'qoutations': quotations,
@@ -544,10 +555,47 @@ def ace_awaiting_my_action(request):
     start_date = ''
     end_date = ''
     user_profile = UserProfile.objects.get(id=request.user.id)
+    
+    # Debug: Check if we're looking for specific ACE
+    debug_ace = request.GET.get('debug_ace')  # Can pass ?debug_ace=ACE2510315644 in URL
+    
+    print(f"\n{'='*80}")
+    print(f"AWAITING MY ACTION DEBUG - User: {user_profile.username}")
+    if debug_ace:
+        print(f"DEBUG MODE: Looking for ACE {debug_ace}")
+    print(f"{'='*80}")
+    
     section = user_profile.section
     # print("user section: ", section)
     user_roles = set(user_profile.roles.all())
     user_role_names = {role.name for role in user_profile.roles.all()}
+    
+    print(f"User's ACE roles: {[r.role for r in user_profile.roles.all() if r.application == 'ace']}")
+    print(f"User's region: {user_profile.region}")
+    print(f"User's section: {section}")
+    print(f"User's cost center: {user_profile.cost_center}")
+    
+    # If debugging specific ACE, fetch and show its details
+    if debug_ace:
+        try:
+            target_ace = Ace2.objects.get(Ace_id2=debug_ace)
+            print(f"\nTarget ACE {debug_ace} details:")
+            print(f"  Region: {target_ace.region}")
+            print(f"  Section: {target_ace.section}")
+            print(f"  Cost Center: {target_ace.cost_center}")
+            print(f"  Date created: {target_ace.date_created}")
+            print(f"  Has process: {bool(target_ace.process)}")
+            if target_ace.process:
+                print(f"  Workflow: {target_ace.process.workflow.name}")
+                approvals = target_ace.process.approval_set.all()
+                if approvals.exists():
+                    last_step = approvals.last().step.step
+                    print(f"  Last approved step: {last_step}/{target_ace.process.workflow.step_set.count()}")
+                else:
+                    print(f"  No approvals yet (needs step 1)")
+        except Ace2.DoesNotExist:
+            print(f"\n✗ Target ACE {debug_ace} not found in database!")
+    print()
 
     application_names = ["ace"]
     cost_centers_set = request.user.cost_centers_for(application_names)
@@ -569,7 +617,7 @@ def ace_awaiting_my_action(request):
 
     system_wide_roles = {'fd', 'md'}
     regional_roles = {'sanction', 'approve', 'EM'}
-    sectional_roles = {'pass','process'}
+    sectional_roles = {'pass', 'process', 'order'}  # Added 'order' for procurement role
 
     # --- PRIMARY FILTERING: COST CENTER ---
     aces_query_primary = base_query  # Start with the base query
@@ -637,8 +685,19 @@ def ace_awaiting_my_action(request):
     a = 0
 
     # --- PROCESS AWAITING ACTION ---
+    print(f"\nProcessing {aces_combined_query.count()} ACEs for workflow eligibility...")
+    
     for ace in aces_combined_query:
+        # Debug specific ACE if requested
+        if debug_ace and ace.Ace_id2 == debug_ace:
+            print(f"\n>>> FOUND DEBUG ACE: {ace.Ace_id2}")
+            print(f"    Region: {ace.region}, Section: {ace.section}, Cost Center: {ace.cost_center}")
+            print(f"    Date created: {ace.date_created}")
+            print(f"    Has process: {bool(ace.process)}")
+            
         if not ace.process or ace.Ace_id2 in processed_ace_ids:
+            if debug_ace and ace.Ace_id2 == debug_ace:
+                print(f"    ✗ SKIPPED: process={bool(ace.process)}, already_processed={ace.Ace_id2 in processed_ace_ids}")
             continue
         a = a + 1
         # print("Processing ACE number: ", a, " ACE ID: ", ace.Ace_id2)
@@ -648,6 +707,21 @@ def ace_awaiting_my_action(request):
         # 2. Check for eligibility
         last_approved_step = approvals.last().step.step if approvals.exists() else 0
         next_step = last_approved_step + 1
+        
+        # Debug workflow state for specific ACE
+        if debug_ace and ace.Ace_id2 == debug_ace:
+            print(f"    Workflow: {ace.process.workflow.name}")
+            print(f"    Last approved step: {last_approved_step}")
+            print(f"    Next step needed: {next_step}")
+            print(f"    Total workflow steps: {ace.process.workflow.step_set.count()}")
+            
+            # Check what step is needed
+            try:
+                needed_step = ace.process.workflow.step_set.get(step=next_step)
+                print(f"    Next step details: {needed_step.to} (needs role: {needed_step.approver.name})")
+                print(f"    User has this role: {needed_step.approver in user_roles}")
+            except:
+                print(f"    ✗ Next step {next_step} not found in workflow!")
 
         # Check if the user is the approver for the next step based on their roles
         if ace.process.workflow.step_set.filter(step=next_step, approver__in=user_roles).exists():
@@ -655,8 +729,18 @@ def ace_awaiting_my_action(request):
             ace.latest_approval_status = approvals.last().approved if approvals.exists() else None
 
             aces_to_process.append(ace)
+            if debug_ace and ace.Ace_id2 == debug_ace:
+                print(f"    ✓ ADDED TO LIST - User is approver for next step")
             # print("Added ACE to process: ", ace.Ace_id2)
             processed_ace_ids.add(ace.Ace_id2)  # Mark as processed
+        else:
+            if debug_ace and ace.Ace_id2 == debug_ace:
+                print(f"    ✗ NOT ADDED - User is not approver for step {next_step}")
+    
+    print(f"\nTotal ACEs awaiting action: {len(aces_to_process)}")
+    if debug_ace:
+        print(f"Debug ACE {debug_ace} in list: {debug_ace in [ace.Ace_id2 for ace in aces_to_process]}")
+        print(f"{'='*80}\n")
 
     # --- Handle 'create' role access (Your existing logic for created_aces) ---
     # ... (Keep the rest of your logic for 'create' role and final return statement) ...
