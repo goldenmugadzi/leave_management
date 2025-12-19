@@ -23,7 +23,7 @@ from django.utils import timezone
 from ACE2.forms import *
 from ACE2.utils import find_pettycash_section_head
 from approve.forms import ApprovalForm
-from approve.models import Step
+from approve.models import Step, Approval
 from approve.views import intiate, get_my_roles_for_apps
 from it.users.models import UserProfile, Roles, Designations, Districts, Depots, Notification
 from finance.PettyCash.views import approve_step
