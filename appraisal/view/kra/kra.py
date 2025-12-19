@@ -11,10 +11,14 @@ from ...forms import KraCreateForm, KraOutComeCreateForm
 from ...repository.kra import KRARepository, KRAOutComeRepository
 from ...services.kra import KRAService
 from ..helper import PayloadDeserializationStrategyContext, KraDeserializationStrategy, KraOutComeDeserializationStrategy
+from ...repository.roles import AppraisalRoleRepository
 from pydantic import ValidationError
 
 from loguru import logger
 
+def is_kra_creator(user_id):
+    repo = AppraisalRoleRepository()
+    return repo.is_kra_creator(user_id=user_id)
 
 class KRACreateView(CreateView):
     """View for creating new Kra"""
@@ -29,6 +33,8 @@ class KRACreateView(CreateView):
         context = super().get_context_data(**kwargs)
         context[self.context_object_name] = context.get("form")
         context["is_create"] = True
+        context["is_kra_creator"] = is_kra_creator(user_id=self.request.user.id)    
+
         return context
 
     def form_valid(self, form):
@@ -66,7 +72,8 @@ class KRATemplateView(TemplateView):
 
     def get_context_data(self, **kwargs: Any) -> Dict[str, Any]:
         context =  super().get_context_data(**kwargs)
-        context.update(self.get_all_kra())        
+        context.update(self.get_all_kra())   
+        context["is_kra_creator"] = is_kra_creator(user_id=self.request.user.id)    
         return context
 
 class KRAUpdateDetailView(SuccessMessageMixin, UpdateView):
@@ -95,6 +102,8 @@ class KRAUpdateDetailView(SuccessMessageMixin, UpdateView):
         context["kra_outcome_form"] = self.get_kra_outcome_form()
         context["kra_outcomes_qr"] = self.get_all_kra_outcomes()
         context["is_create"] = False
+        context["is_kra_creator"] = is_kra_creator(user_id=self.request.user.id)    
+
         return context
     
     def handle_kra_form_update(self, form):
@@ -212,7 +221,9 @@ class KRAOutComeTemplateView(TemplateView):
 
     def get_context_data(self, **kwargs: Any) -> Dict[str, Any]:
         context =  super().get_context_data(**kwargs)
-        context.update(self.get_all_kra_outcomes())        
+        context.update(self.get_all_kra_outcomes())     
+        context["is_kra_creator"] = is_kra_creator(user_id=self.request.user.id)    
+
         return context
     
 class KRAOutComeUpdateView(CreateView):
@@ -227,6 +238,8 @@ class KRAOutComeUpdateView(CreateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context[self.context_object_name] = context.get("form")
+        context["is_kra_creator"] = is_kra_creator(user_id=self.request.user.id)    
+
         return context
 
     def form_valid(self, form):

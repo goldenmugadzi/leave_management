@@ -20,13 +20,14 @@
     </div>
 
     <div class="bg-gulf-blue-100 shadow-lg rounded-lg p-6 my-6">
-            <div class="flex justify-end">
-                <div
-                    onclick="openJobCompetency()"
-                    class="my-2 bg-blue-500 hover:bg-blue-700 inline-block rounded-full text-white py-2 px-4">Create New</div>
-                {% include 'appraisal/departmental_workplan/job_competency/create_update_modal.html' %}
-
-            </div>
+            {% if is_section_head %}
+                <div class="flex justify-end">
+                    <div
+                        onclick="openJobCompetency()"
+                        class="my-2 bg-blue-500 hover:bg-blue-700 inline-block rounded-full text-white py-2 px-4">Create New</div>
+                    {% include 'appraisal/departmental_workplan/job_competency/create_update_modal.html' %}
+                </div>
+            {% endif %}
       <div style="max-height: 280px; overflow-y: auto;">
         <table 
         class="w-full border border-blue-800 rounded-lg shadow-lg">

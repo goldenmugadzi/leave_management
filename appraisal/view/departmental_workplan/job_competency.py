@@ -10,6 +10,7 @@ from django.shortcuts import redirect
 from django.contrib.messages.views import SuccessMessageMixin
 from django.contrib import messages
 from ...repository.departmental_workplan import JobCompetencyRepository
+from ...repository.roles import AppraisalRoleRepository
 from ...models import JobCompetency
 from ...forms.departmental_plan import JobCompetencyForm
 from ...services.department_workplan import DepartmentOutputService
@@ -23,6 +24,10 @@ def get_designation_object(designation_id):
     except Exception as e:
         raise Exception(f"[get_designation_object] by pk: {designation_id}, failed with error: {e}")
 
+def is_section_head(user_id):
+    repo = AppraisalRoleRepository()
+    return repo.is_section_head(user_id=user_id)
+    
 
 class JobCompetencyTemplateView(TemplateView):
     template_name = 'appraisal/departmental_workplan/job_competency/index.html'
@@ -46,6 +51,7 @@ class JobCompetencyTemplateView(TemplateView):
         context["designation_object"] = self.get_designation_object()
         context["year"] = self.kwargs.get("year")
         context["job_competency_form"] = self.get_job_competency_form(None)
+        context["is_section_head"] = is_section_head(user_id=self.request.user.id)
         return context
     
     def post(self, request, *args, **kwargs):
@@ -104,6 +110,8 @@ class JobCompetencyUpdateDetailView(SuccessMessageMixin, UpdateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs) 
         context[self.context_object_name] = context.get("form")
+        context["is_section_head"] = is_section_head(user_id=self.request.user.id)
+
         return context
     
     def form_valid(self, form):

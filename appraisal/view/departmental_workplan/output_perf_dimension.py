@@ -14,7 +14,7 @@ from ...services.department_workplan import OutPutPerformanceDimensionService
 from ...models.departmental_workplan import DepartmentOutput, OutPutPerformanceDimension, PERFORMANCE_INDICATOR
 from ...forms.departmental_plan import OutPutPerformanceDimensionUpdateForm
 from ..helper import PayloadDeserializationStrategyContext, OutputPerformanceDimensionDeserializationStrategy
-
+from ...repository.roles import AppraisalRoleRepository
 from loguru import logger
 
 def get_perf_dimension_weight_progress(department_output_obj: DepartmentOutput):
@@ -88,6 +88,11 @@ class OutPutPerformanceDimensionDetailUpdateView(SuccessMessageMixin, UpdateView
     def get_weight_progress(self):
         return get_perf_dimension_weight_progress(department_output_obj=self.get_object().department_output)
 
+    def is_section_head(self):
+        repo = AppraisalRoleRepository()
+        return repo.is_section_head(user_id=self.request.user.id)
+    
+    
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context[self.context_object_name] = context.get("form")
@@ -98,6 +103,7 @@ class OutPutPerformanceDimensionDetailUpdateView(SuccessMessageMixin, UpdateView
         }
         context.update(**dept_output_progress_data)
         context["perf_dimension_obj"] = self.get_object()
+        context["is_section_head"] = self.is_section_head()
         return context
     
     def payload_validation(self, form):

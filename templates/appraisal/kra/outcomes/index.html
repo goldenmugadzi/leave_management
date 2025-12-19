@@ -8,11 +8,13 @@
         <h1 class="font-bold">Key Result Area Outcomes</h1>
         {% if is_create == False %}
           <div>
-            <div onclick="openKraOutcomeModal()"
-              class="my-2 bg-blue-500 hover:bg-blue-700 inline-block rounded-full text-white py-2 px-4 rounded"
-              >
-                Add New Outcome
-            </div>
+            {% if is_kra_creator %}
+              <div onclick="openKraOutcomeModal()"
+                class="my-2 bg-blue-500 hover:bg-blue-700 inline-block rounded-full text-white py-2 px-4 rounded"
+                >
+                  Add New Outcome
+              </div>
+            {% endif %}
             <!-- Modal for create/update outcomes -->
             {% include 'appraisal/kra/outcomes/create_update_modal.html' %}
           </div>  

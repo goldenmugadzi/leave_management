@@ -14,6 +14,7 @@ from ...models import DepartmentOutput
 from ...forms.departmental_plan import DepartmentOutputCreateForm, DesignationFilterForm
 from ...services.department_workplan import DepartmentOutputService
 from ..helper import PayloadDeserializationStrategyContext, DepartmentOutputDeserializationStrategy
+from ...repository.roles import AppraisalRoleRepository
 from it.users.models import Designations
 from django.db import transaction
 from loguru import logger
@@ -35,6 +36,11 @@ def get_designation_by_id(designation_id: int)->Designations:
     if not qr.exists():
         return None
     return qr.first()
+
+def is_section_head(user_id):
+    repo = AppraisalRoleRepository()
+    return repo.is_section_head(user_id=user_id)
+    
 
 class DepartmentOutputTemplateView(TemplateView):
     template_name = 'appraisal/departmental_workplan/outputs/index.html'
@@ -76,6 +82,7 @@ class DepartmentOutputTemplateView(TemplateView):
         context["designation_obj"] = self.get_designation_obj()
         context["departmental_outs_qr"] = self.get_all_outputs()
         context["department_objective"] = self.get_department_objective_obj()
+        context["is_section_head"] = is_section_head(user_id=self.request.user.id)
         return context
 
     def get(self, request, *args, **kwargs):
@@ -125,6 +132,7 @@ class DepartmentOutputCreateView(SuccessMessageMixin, CreateView):
         
         context["department_objective"] = self.get_department_objective_obj()
         context["designation_obj"] = self.get_designation_obj()
+        context["is_section_head"] = is_section_head(user_id=self.request.user.id)
         return context
     
     def payload_validation(self, form):
@@ -211,6 +219,7 @@ class DepartmentOutputDetailUpdateView(SuccessMessageMixin, UpdateView):
         
         context["department_objective"] = self.get_object().department_objective
         context["designation_obj"] = self.get_object().designation
+        context["is_section_head"] = is_section_head(user_id=self.request.user.id)
         return context
     
     def payload_validation(self, form):

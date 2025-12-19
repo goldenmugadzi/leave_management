@@ -24,9 +24,11 @@
         <form method="post">
             {%csrf_token%}
             {{performance_dimension_form|crispy}}
-            <div class="flex justify-center my-2">
-                <button type="submit" class="w-96 bg-blue-500 hover:bg-blue-700 inline-block rounded-full text-white py-2 px-4" name="kra_request">Save</button>
-            </div>
+            {% if is_section_head %}
+                <div class="flex justify-center my-2">
+                    <button type="submit" class="w-96 bg-blue-500 hover:bg-blue-700 inline-block rounded-full text-white py-2 px-4" name="kra_request">Save</button>
+                </div>
+            {% endif %}
         </form>
     </div>
 

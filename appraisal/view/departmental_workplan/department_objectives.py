@@ -12,6 +12,7 @@ from it.users.models import CostCenter
 from ...forms.departmental_plan import CostCenterFilterForm, DepartmentObjectiveCreateForm, DepartmentObjectiveUpdateForm
 from ...models import DepartmentObjective
 from ...repository.departmental_workplan import DepartmentalObjectiveRepository
+from ...repository.roles import AppraisalRoleRepository
 from loguru import logger
 from datetime import datetime
 
@@ -63,6 +64,10 @@ class DepartmentObjectiveTemplateView(TemplateView):
         repo = DepartmentalObjectiveRepository()
         return repo.fetch_by_cost_center_year(cost_center_id=cost_center.id, year=year)
     
+    def is_section_head(self):
+        repo = AppraisalRoleRepository()
+        return repo.is_section_head(user_id=self.request.user.id)
+    
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         cost_center, year = self.get_cost_center_and_year()
@@ -70,6 +75,8 @@ class DepartmentObjectiveTemplateView(TemplateView):
         context["year"] = year
         context["cost_center_form"] = self.get_cost_center_form()
         context["departmental_objectives_qr"] = self.get_all_departmental_objectives()
+        context["is_section_head"] = self.is_section_head()
+        
         return context
     
 
@@ -81,9 +88,15 @@ class DepartmentObjectiveCreateView(SuccessMessageMixin, CreateView):
     context_object_name = "departmental_objective_form"
     success_url = reverse_lazy('departmental_workplan_index')
     
+    def is_section_head(self):
+        repo = AppraisalRoleRepository()
+        return repo.is_section_head(user_id=self.request.user.id)
+    
+    
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context[self.context_object_name] = context.get("form")
+        context["is_section_head"] = self.is_section_head()
         return context
     
     def form_valid(self, form):
@@ -112,9 +125,15 @@ class DepartmentObjectiveDetailUpdateView(SuccessMessageMixin, CreateView):
         repo = DepartmentalObjectiveRepository()
         return repo.get_by_id(dept_objective_id=self.kwargs.get("departmental_objective_id"))
     
+    def is_section_head(self):
+        repo = AppraisalRoleRepository()
+        return repo.is_section_head(user_id=self.request.user.id)
+    
+    
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context[self.context_object_name] = context.get("form")
+        context["is_section_head"] = self.is_section_head()
         return context
     
     
