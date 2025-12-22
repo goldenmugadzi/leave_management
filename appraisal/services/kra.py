@@ -236,16 +236,20 @@ class AppraisalDependanciesInitialisationService:
                 
                 appraisal_obj = self.appraisal_repo.get_appraisal_by_pk(appraisal_id=appraisal_id)
                 designation_obj = appraisal_obj.user.designation
+                appraisee_cost_center = appraisal_obj.user.cost_center
                 
+                if appraisee_cost_center is None:
+                    raise Exception(f"Departmental outputs for appraisal pk: {appraisal_id} for appraisee pk: {appraisal_obj.user.id}, has no cost center")
+ 
                 if designation_obj:
                     year_quarter_qr = self.year_quarter_repo.fetch_by_year(year=year)
                     year_quarter_objects = year_quarter_qr.count()
                     if year_quarter_objects != 4:
                         raise Exception(f"create_all_dependencies, with pk: {appraisal_id}, has {year_quarter_objects} - 4 instances required.")
 
-                    department_output_qr = self.department_output_repo.fetch_by_designation_id(designation_id=designation_obj.id)
+                    department_output_qr = self.department_output_repo.fetch_by_cost_center_id_designation_id(designation_id=designation_obj.id, cost_center_id=appraisee_cost_center.id)
                     if not department_output_qr.exists():
-                        raise Exception(f"Departmental outputs for appraisal pk: {appraisal_id}, with designation pk: {designation_obj.id} has no departmental outputs set")
+                        raise Exception(f"Departmental outputs for appraisal pk: {appraisal_id}, with designation pk: {designation_obj.id} cost center pk: {appraisee_cost_center.id} has no departmental outputs set")
                     
                     for year_quarter_obj in year_quarter_qr:
                         # ============ DepartmentOut Deps =====================
