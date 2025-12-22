@@ -24,9 +24,9 @@ def get_designation_object(designation_id):
     except Exception as e:
         raise Exception(f"[get_designation_object] by pk: {designation_id}, failed with error: {e}")
 
-def is_section_head(user_id):
+def is_section_head(user_id, cost_center_id):
     repo = AppraisalRoleRepository()
-    return repo.is_section_head(user_id=user_id)
+    return repo.is_section_head(user_id=user_id, cost_center_id=cost_center_id)
     
 
 class JobCompetencyTemplateView(TemplateView):
@@ -51,7 +51,7 @@ class JobCompetencyTemplateView(TemplateView):
         context["designation_object"] = self.get_designation_object()
         context["year"] = self.kwargs.get("year")
         context["job_competency_form"] = self.get_job_competency_form(None)
-        context["is_section_head"] = is_section_head(user_id=self.request.user.id)
+        context["is_section_head"] = is_section_head(user_id=self.request.user.id, cost_center_id=self.request.user.cost_center.id)
         return context
     
     def post(self, request, *args, **kwargs):
@@ -110,7 +110,7 @@ class JobCompetencyUpdateDetailView(SuccessMessageMixin, UpdateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs) 
         context[self.context_object_name] = context.get("form")
-        context["is_section_head"] = is_section_head(user_id=self.request.user.id)
+        context["is_section_head"] = is_section_head(user_id=self.request.user.id, cost_center_id=self.request.user.cost_center.id)
 
         return context
     

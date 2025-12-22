@@ -66,7 +66,13 @@ class DepartmentObjectiveTemplateView(TemplateView):
     
     def is_section_head(self):
         repo = AppraisalRoleRepository()
-        return repo.is_section_head(user_id=self.request.user.id)
+        dept_objectives_qr = self.get_all_departmental_objectives()
+        if not dept_objectives_qr.exists():
+            return repo.is_section_head(user_id=self.request.user.id, cost_center_id=self.request.user.cost_center.id)
+        else:
+            obj = dept_objectives_qr.first()
+            return repo.is_section_head(user_id=self.request.user.id, cost_center_id=obj.cost_center.id)
+            
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -90,9 +96,8 @@ class DepartmentObjectiveCreateView(SuccessMessageMixin, CreateView):
     
     def is_section_head(self):
         repo = AppraisalRoleRepository()
-        return repo.is_section_head(user_id=self.request.user.id)
-    
-    
+        return repo.is_section_head(user_id=self.request.user.id, cost_center_id=self.request.user.cost_center.id)
+        
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context[self.context_object_name] = context.get("form")
@@ -114,6 +119,7 @@ class DepartmentObjectiveCreateView(SuccessMessageMixin, CreateView):
             messages.error(self.request, f"An unexpected error occurred, please try again")
             return super().form_invalid(form)
         return super().form_valid(form)
+    
 class DepartmentObjectiveDetailUpdateView(SuccessMessageMixin, CreateView):
     model = DepartmentObjective
     form_class = DepartmentObjectiveUpdateForm
@@ -126,8 +132,8 @@ class DepartmentObjectiveDetailUpdateView(SuccessMessageMixin, CreateView):
         return repo.get_by_id(dept_objective_id=self.kwargs.get("departmental_objective_id"))
     
     def is_section_head(self):
-        repo = AppraisalRoleRepository()
-        return repo.is_section_head(user_id=self.request.user.id)
+        repo = AppraisalRoleRepository()        
+        return repo.is_section_head(user_id=self.request.user.id, cost_center_id=self.get_object().cost_center.id)
     
     
     def get_context_data(self, **kwargs):
@@ -158,6 +164,7 @@ class DepartmentObjectiveDetailUpdateView(SuccessMessageMixin, CreateView):
             if self.object is None:
                 logger.warning(f"DepartmentObjectiveDetailUpdateView for departmental objective pk: {self.kwargs.get('departmental_objective_id')}, doesn`t exists")
                 return redirect("server_error_view")
+            
         except Exception as e:
             logger.error(f"DepartmentObjectiveDetailUpdateView for departmental objective pk: {self.kwargs.get('departmental_objective_id')}, failed with error: {e}")
             return redirect("server_error_view")
