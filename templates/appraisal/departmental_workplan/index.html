@@ -39,10 +39,13 @@
     </div>
 
     <div class="bg-gulf-blue-100 shadow-lg rounded-lg p-6 my-6">
+            
+            {% if is_section_head %}
             <div class="flex justify-end">
               <a href="{% url 'departmental_objective_create' %}"
-                  class="my-2 bg-blue-500 hover:bg-blue-700 inline-block rounded-full text-white py-2 px-4">Create New</a>
+                  class="my-2 bg-blue-500 hover:bg-blue-700 inline-block rounded-full text-white py-2 px-4">Create New Objective</a>
             </div>
+            {% endif %}
       <div style="max-height: 280px; overflow-y: auto;">
         <table 
         class="w-full border border-blue-800 rounded-lg shadow-lg">

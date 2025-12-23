@@ -236,16 +236,20 @@ class AppraisalDependanciesInitialisationService:
                 
                 appraisal_obj = self.appraisal_repo.get_appraisal_by_pk(appraisal_id=appraisal_id)
                 designation_obj = appraisal_obj.user.designation
+                appraisee_cost_center = appraisal_obj.user.cost_center
                 
+                if appraisee_cost_center is None:
+                    raise Exception(f"Departmental outputs for appraisal pk: {appraisal_id} for appraisee pk: {appraisal_obj.user.id}, has no cost center")
+ 
                 if designation_obj:
                     year_quarter_qr = self.year_quarter_repo.fetch_by_year(year=year)
                     year_quarter_objects = year_quarter_qr.count()
                     if year_quarter_objects != 4:
                         raise Exception(f"create_all_dependencies, with pk: {appraisal_id}, has {year_quarter_objects} - 4 instances required.")
 
-                    department_output_qr = self.department_output_repo.fetch_by_designation_id(designation_id=designation_obj.id)
+                    department_output_qr = self.department_output_repo.fetch_by_cost_center_id_designation_id(designation_id=designation_obj.id, cost_center_id=appraisee_cost_center.id)
                     if not department_output_qr.exists():
-                        raise Exception(f"Departmental outputs for appraisal pk: {appraisal_id}, with designation pk: {designation_obj.id} has no departmental outputs set")
+                        raise Exception(f"Departmental outputs for appraisal pk: {appraisal_id}, with designation pk: {designation_obj.id} cost center pk: {appraisee_cost_center.id} has no departmental outputs set")
                     
                     for year_quarter_obj in year_quarter_qr:
                         # ============ DepartmentOut Deps =====================
@@ -419,8 +423,13 @@ class AppraisalDepartmentOutputService:
                 service_handler = AppraisalScoreDimensionService(score_object=perform_dimension_obj)
                 score_weighted_score = service_handler.calculate_performance_dimension_weighted_score()
                 total_weight += score_weighted_score
-                
-            return total_weight
+            
+            departmental_objectives_qr = qr.values("appraisal_department_output__department_output__department_objective").distinct()
+            num_departmental_objectives = departmental_objectives_qr.count()
+            result = total_weight/num_departmental_objectives
+            
+            return round(result, 2)
+        
         except Exception as e:
             raise Exception(f"[AppraisalDepartmentOutputService] get_department_objectives_total_year_quarter_weighted_score(), with year_quarter_id: {year_quarter_id}, failed with error: {e}")
      

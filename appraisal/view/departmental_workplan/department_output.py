@@ -14,6 +14,7 @@ from ...models import DepartmentOutput
 from ...forms.departmental_plan import DepartmentOutputCreateForm, DesignationFilterForm
 from ...services.department_workplan import DepartmentOutputService
 from ..helper import PayloadDeserializationStrategyContext, DepartmentOutputDeserializationStrategy
+from ...repository.roles import AppraisalRoleRepository
 from it.users.models import Designations
 from django.db import transaction
 from loguru import logger
@@ -35,6 +36,11 @@ def get_designation_by_id(designation_id: int)->Designations:
     if not qr.exists():
         return None
     return qr.first()
+
+def is_section_head(user_id, output_cost_center_id):
+    repo = AppraisalRoleRepository()
+    return repo.is_section_head(user_id=user_id, cost_center_id=output_cost_center_id)
+    
 
 class DepartmentOutputTemplateView(TemplateView):
     template_name = 'appraisal/departmental_workplan/outputs/index.html'
@@ -76,6 +82,7 @@ class DepartmentOutputTemplateView(TemplateView):
         context["designation_obj"] = self.get_designation_obj()
         context["departmental_outs_qr"] = self.get_all_outputs()
         context["department_objective"] = self.get_department_objective_obj()
+        context["is_section_head"] = is_section_head(user_id=self.request.user.id, output_cost_center_id=self.get_department_objective_obj().cost_center.id)
         return context
 
     def get(self, request, *args, **kwargs):
@@ -125,12 +132,29 @@ class DepartmentOutputCreateView(SuccessMessageMixin, CreateView):
         
         context["department_objective"] = self.get_department_objective_obj()
         context["designation_obj"] = self.get_designation_obj()
+        context["is_section_head"] = is_section_head(user_id=self.request.user.id, output_cost_center_id=self.get_department_objective_obj().cost_center.id)
         return context
     
     def payload_validation(self, form):
         payload_strategy = PayloadDeserializationStrategyContext(strategy=DepartmentOutputDeserializationStrategy())
         return payload_strategy.deserialize_payload(request_object=self.request, form_object=form)
         
+    def is_same_creator(self)->bool:
+        """Validate to enforce only one creator of outputs for the same designation"""
+        designation = self.get_designation_obj()
+        departmental_obj = self.get_department_objective_obj()
+        department_cost_center = departmental_obj.cost_center
+        repo = DepartmentalOutRepository()
+        qr = repo.fetch_by_cost_center_id_designation_id(designation_id=designation.id, cost_center_id=department_cost_center.id)
+        
+        is_same_creator = True
+        if qr.exists():
+            obj = qr.first()
+            creator = obj.created_by
+            if creator != self.request.user:
+                is_same_creator = False
+        return is_same_creator
+
     def form_valid(self, form):
         try:
             payload = self.payload_validation(form=form)
@@ -138,6 +162,10 @@ class DepartmentOutputCreateView(SuccessMessageMixin, CreateView):
             dept_output_weight_progress = self.get_output_weight_progress()
             if dept_output_weight_progress.remaining_weight < payload.weight:
                 messages.error(self.request, "The department output weight cannot be greater than its departmental objective weight. Please adjust the department output weight to ensure it does not exceed the departmental objective weight.")
+                return self.form_invalid(form)
+            
+            if not self.is_same_creator():
+                messages.error(self.request, "Output creation for this designation within the selected cost center is restricted to a single individual. Please conduct a section-level meeting to designate the responsible person for output creation.")
                 return self.form_invalid(form)
 
             is_output_dimensions_set = False
@@ -211,6 +239,7 @@ class DepartmentOutputDetailUpdateView(SuccessMessageMixin, UpdateView):
         
         context["department_objective"] = self.get_object().department_objective
         context["designation_obj"] = self.get_object().designation
+        context["is_section_head"] = is_section_head(user_id=self.request.user.id)
         return context
     
     def payload_validation(self, form):

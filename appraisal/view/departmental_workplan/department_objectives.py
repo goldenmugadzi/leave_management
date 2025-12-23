@@ -12,6 +12,7 @@ from it.users.models import CostCenter
 from ...forms.departmental_plan import CostCenterFilterForm, DepartmentObjectiveCreateForm, DepartmentObjectiveUpdateForm
 from ...models import DepartmentObjective
 from ...repository.departmental_workplan import DepartmentalObjectiveRepository
+from ...repository.roles import AppraisalRoleRepository
 from loguru import logger
 from datetime import datetime
 
@@ -63,6 +64,16 @@ class DepartmentObjectiveTemplateView(TemplateView):
         repo = DepartmentalObjectiveRepository()
         return repo.fetch_by_cost_center_year(cost_center_id=cost_center.id, year=year)
     
+    def is_section_head(self):
+        repo = AppraisalRoleRepository()
+        dept_objectives_qr = self.get_all_departmental_objectives()
+        if not dept_objectives_qr.exists():
+            return repo.is_section_head(user_id=self.request.user.id, cost_center_id=self.request.user.cost_center.id)
+        else:
+            obj = dept_objectives_qr.first()
+            return repo.is_section_head(user_id=self.request.user.id, cost_center_id=obj.cost_center.id)
+            
+    
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         cost_center, year = self.get_cost_center_and_year()
@@ -70,6 +81,8 @@ class DepartmentObjectiveTemplateView(TemplateView):
         context["year"] = year
         context["cost_center_form"] = self.get_cost_center_form()
         context["departmental_objectives_qr"] = self.get_all_departmental_objectives()
+        context["is_section_head"] = self.is_section_head()
+        
         return context
     
 
@@ -81,9 +94,14 @@ class DepartmentObjectiveCreateView(SuccessMessageMixin, CreateView):
     context_object_name = "departmental_objective_form"
     success_url = reverse_lazy('departmental_workplan_index')
     
+    def is_section_head(self):
+        repo = AppraisalRoleRepository()
+        return repo.is_section_head(user_id=self.request.user.id, cost_center_id=self.request.user.cost_center.id)
+        
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context[self.context_object_name] = context.get("form")
+        context["is_section_head"] = self.is_section_head()
         return context
     
     def form_valid(self, form):
@@ -101,6 +119,7 @@ class DepartmentObjectiveCreateView(SuccessMessageMixin, CreateView):
             messages.error(self.request, f"An unexpected error occurred, please try again")
             return super().form_invalid(form)
         return super().form_valid(form)
+    
 class DepartmentObjectiveDetailUpdateView(SuccessMessageMixin, CreateView):
     model = DepartmentObjective
     form_class = DepartmentObjectiveUpdateForm
@@ -112,9 +131,15 @@ class DepartmentObjectiveDetailUpdateView(SuccessMessageMixin, CreateView):
         repo = DepartmentalObjectiveRepository()
         return repo.get_by_id(dept_objective_id=self.kwargs.get("departmental_objective_id"))
     
+    def is_section_head(self):
+        repo = AppraisalRoleRepository()        
+        return repo.is_section_head(user_id=self.request.user.id, cost_center_id=self.get_object().cost_center.id)
+    
+    
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context[self.context_object_name] = context.get("form")
+        context["is_section_head"] = self.is_section_head()
         return context
     
     
@@ -139,6 +164,7 @@ class DepartmentObjectiveDetailUpdateView(SuccessMessageMixin, CreateView):
             if self.object is None:
                 logger.warning(f"DepartmentObjectiveDetailUpdateView for departmental objective pk: {self.kwargs.get('departmental_objective_id')}, doesn`t exists")
                 return redirect("server_error_view")
+            
         except Exception as e:
             logger.error(f"DepartmentObjectiveDetailUpdateView for departmental objective pk: {self.kwargs.get('departmental_objective_id')}, failed with error: {e}")
             return redirect("server_error_view")

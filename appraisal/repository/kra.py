@@ -289,7 +289,7 @@ class AppraisalOutPutPerformanceDimensionScoreRepository:
     
     def fetch_by_year_quarter_id(self, year_quarter_id: int)->QuerySet[AppraisalOutPutPerformanceDimensionScore]:
         try:
-            return AppraisalOutPutPerformanceDimensionScore.objects.filter(appraisal_department_output__year_quarter__id=year_quarter_id).select_related('appraisal_department_output', 'performance_dimension', 'appraisal_department_output__department_output')
+            return AppraisalOutPutPerformanceDimensionScore.objects.filter(appraisal_department_output__year_quarter__id=year_quarter_id).select_related('appraisal_department_output', 'performance_dimension', 'appraisal_department_output__department_output', 'appraisal_department_output__department_output__department_objective')
         except Exception as e:
             raise Exception(f"[AppraisalOutPutPerformanceDimensionScoreRepository] fetch_by_year_quarter_id Repo with pk: {year_quarter_id}, failed with error: {e}")
     

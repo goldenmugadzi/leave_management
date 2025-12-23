@@ -22,8 +22,8 @@ class UserProfileService:
             if user_obj is None or not user_obj.cost_center:
                 return None
             
-            return self.user_profile_repo.fetch_by_cost_center_pk(cost_center_id=user_obj.cost_center.id)
+            return self.user_profile_repo.fetch_by_region_id(region_id=user_obj.region.id)
         except Exception as e:
-            raise Exception(f"[UserProfileService] fetch_cost_center_users_from_user_id with user_id: {user_id}, failed with error: {e}")
+            raise Exception(f"[UserProfileService] fetch_by_region_id with user_id: {user_id}, failed with error: {e}")
         
     

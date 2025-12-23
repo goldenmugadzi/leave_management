@@ -458,6 +458,18 @@ class AppraisalTemplateView(TemplateView):
         data.pop() # removes the last section 6 which is not applicable
         return data
     
+    def is_hr(self):
+        repo = UserProfileRepository()
+        user_obj = self.request.user
+        if user_obj.region is None:
+            return False
+        
+        hr_qr = repo.fetch_by_region_id_hr_section(region_id=user_obj.region.id)
+        for hr_obj in hr_qr:
+            if hr_obj.id == user_obj.id:
+                return True
+        return False
+    
     def get_context_data(self, **kwargs: Any) -> Dict[str, Any]:
         context =  super().get_context_data(**kwargs)
         
@@ -466,6 +478,7 @@ class AppraisalTemplateView(TemplateView):
         context.update(self.get_appraisals())
         context.update({"qualification_upload_form": self.get_user_qualification_upload_form()})
         context["sections"] = self.get_sections()
+        context["is_hr"] = self.is_hr()
         return context
     
     
