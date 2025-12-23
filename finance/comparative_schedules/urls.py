@@ -28,6 +28,7 @@ urlpatterns = [
     path('delete_committee_member', delete_cs_committee_member, name='delete_cs_committee_member'),
     path('committee_approve', approve_cs_committee, name='approve_cs_committee'),
     path('save_decision', save_cs_decision, name='save_cs_decision'),
+    path('bulk_update_committee/', bulk_update_committee, name='bulk_update_committee'),
     
     path('approval_approve', approve_cs, name='approve_cs'),
     

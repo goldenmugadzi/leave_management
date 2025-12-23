@@ -197,3 +197,4 @@ beii_v1/__init__.py
 manage.py
 beii_v1/asgi.py
 beii_v1/wsgi.py
+beii_v1/__init__.py
