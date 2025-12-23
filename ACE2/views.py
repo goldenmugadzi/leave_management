@@ -458,15 +458,19 @@ def create_Ace(request):
                     # NOTIFY THE SH FROM THE COST CENTRE
 
                     if section_heads:
-                        print(section_heads, " section_heads")
-                        # budget name
-                        # bdg = AssetBudget.objects.filter(budget_id=ace.budget_id).first()
-                        # budget_name = bdg.budget_name
-                        msg = "Your subordinate " + str(use) + "created " + ace.Ace_id2 + " using budget " + str(
-                            ace.budget_id)
-                        url = "/ace/ace_detail/" + ace.Ace_id2
-                        section_heads = UserProfile.objects.filter(username=section_heads).first()
-                        notify_user(section_heads, msg, "ACE", url, ace.Ace_id2, request)
+                        try:
+                            print(section_heads, " section_heads")
+                            # budget name
+                            # bdg = AssetBudget.objects.filter(budget_id=ace.budget_id).first()
+                            # budget_name = bdg.budget_name
+                            msg = "Your subordinate " + str(use) + "created " + ace.Ace_id2 + " using budget " + str(
+                                ace.budget_id)
+                            url = "/ace/ace_detail/" + ace.Ace_id2
+                            section_heads = UserProfile.objects.filter(username=section_heads).first()
+                            notify_user(section_heads, msg, "ACE", url, ace.Ace_id2, request)
+                        except Exception as e:
+                            print(f"Failed to notify section head: {str(e)}")
+                            # Don't fail the ACE creation if notification fails
 
                     # for quotation_form in formset:
                     #     quotation = quotation_form.save(commit=False)
@@ -477,14 +481,18 @@ def create_Ace(request):
                     ace_sh = find_ace_section_head(request, ace_section)
 
                     if ace_sh:
-                        print(ace_sh, "ace_sh")
-                        # bdg = AssetBudget.objects.filter(budget_id=ace.budget_id).first()
-                        # budget_name = bdg.budget_name
-                        msg = "user  " + str(use) + "created " + ace.Ace_id2 + " using budget " + str(ace.budget_id)
-                        url = "/ace/ace_detail/" + ace.Ace_id2
+                        try:
+                            print(ace_sh, "ace_sh")
+                            # bdg = AssetBudget.objects.filter(budget_id=ace.budget_id).first()
+                            # budget_name = bdg.budget_name
+                            msg = "user  " + str(use) + "created " + ace.Ace_id2 + " using budget " + str(ace.budget_id)
+                            url = "/ace/ace_detail/" + ace.Ace_id2
 
-                        ace_sh = UserProfile.objects.filter(username=ace_sh).first()
-                        notify_user(ace_sh, msg, "ACE", url, ace.Ace_id2, request)
+                            ace_sh = UserProfile.objects.filter(username=ace_sh).first()
+                            notify_user(ace_sh, msg, "ACE", url, ace.Ace_id2, request)
+                        except Exception as e:
+                            print(f"Failed to notify ACE section head: {str(e)}")
+                            # Don't fail the ACE creation if notification fails
 
                     # notify cost center manager
 
@@ -492,39 +500,51 @@ def create_Ace(request):
                     parent_cost_center = get_parent_cost_center([ace_cost_center])
                     cost_center_manager = find_cost_center_manager(request, parent_cost_center)
                     if cost_center_manager:
-                        print(cost_center_manager, "cost_center_manager")
-                        # bdg = AssetBudget.objects.filter(budget_id=ace.budget_id).first()
-                        # budget_name = bdg.budget_name
-                        msg = "user  " + str(use) + "created " + ace.Ace_id2 + " using budget " + str(ace.budget_id)
-                        url = "/ace/ace_detail/" + ace.Ace_id2
+                        try:
+                            print(cost_center_manager, "cost_center_manager")
+                            # bdg = AssetBudget.objects.filter(budget_id=ace.budget_id).first()
+                            # budget_name = bdg.budget_name
+                            msg = "user  " + str(use) + "created " + ace.Ace_id2 + " using budget " + str(ace.budget_id)
+                            url = "/ace/ace_detail/" + ace.Ace_id2
 
-                        cost_center_manager = UserProfile.objects.filter(username=cost_center_manager).first()
-                        notify_user(cost_center_manager, msg, "ACE", url, ace.Ace_id2, request)
+                            cost_center_manager = UserProfile.objects.filter(username=cost_center_manager).first()
+                            notify_user(cost_center_manager, msg, "ACE", url, ace.Ace_id2, request)
+                        except Exception as e:
+                            print(f"Failed to notify cost center manager: {str(e)}")
+                            # Don't fail the ACE creation if notification fails
 
                     # notify depot manager
                     ace_cost_center1 = ace.cost_center
                     depot_manager = find_cost_center_manager(request, ace_cost_center1)
                     if depot_manager:
-                        print(depot_manager, "depot_manager")
-                        # bdg = AssetBudget.objects.filter(budget_id=ace.budget_id).first()
-                        # budget_name = bdg.budget_name
-                        msg = "user  " + str(use) + "created " + ace.Ace_id2 + " using budget " + str(ace.budget_id)
-                        url = "/ace/ace_detail/" + ace.Ace_id2
+                        try:
+                            print(depot_manager, "depot_manager")
+                            # bdg = AssetBudget.objects.filter(budget_id=ace.budget_id).first()
+                            # budget_name = bdg.budget_name
+                            msg = "user  " + str(use) + "created " + ace.Ace_id2 + " using budget " + str(ace.budget_id)
+                            url = "/ace/ace_detail/" + ace.Ace_id2
 
-                        depot_manager = UserProfile.objects.filter(username=depot_manager).first()
-                        notify_user(depot_manager, msg, "ACE", url, ace.Ace_id2, request)
+                            depot_manager = UserProfile.objects.filter(username=depot_manager).first()
+                            notify_user(depot_manager, msg, "ACE", url, ace.Ace_id2, request)
+                        except Exception as e:
+                            print(f"Failed to notify depot manager: {str(e)}")
+                            # Don't fail the ACE creation if notification fails
 
                     # notify section heads with jurisdiction over the ACE's cost center
                     if ace.cost_center:
-                        section_heads_with_jurisdiction = find_section_heads_with_jurisdiction(ace.cost_center, application_names=["ace"])
-                        if section_heads_with_jurisdiction:
-                            msg = "User " + str(use) + " created " + ace.Ace_id2 + " under cost center " + str(ace.cost_center) + " which is in your jurisdiction"
-                            url = "/ace/ace_detail/" + ace.Ace_id2
-                            for section_head in section_heads_with_jurisdiction:
-                                # Avoid duplicate notifications to the creator
-                                if section_head.id != request.user.id:
-                                    notify_user(section_head, msg, "ACE", url, ace.Ace_id2, request)
-                                    print(f"Notified section head {section_head.username} - ACE {ace.Ace_id2} is under their jurisdiction (cost center: {ace.cost_center})")
+                        try:
+                            section_heads_with_jurisdiction = find_section_heads_with_jurisdiction(ace.cost_center, application_names=["ace"])
+                            if section_heads_with_jurisdiction:
+                                msg = "User " + str(use) + " created " + ace.Ace_id2 + " under cost center " + str(ace.cost_center) + " which is in your jurisdiction"
+                                url = "/ace/ace_detail/" + ace.Ace_id2
+                                for section_head in section_heads_with_jurisdiction:
+                                    # Avoid duplicate notifications to the creator
+                                    if section_head.id != request.user.id:
+                                        notify_user(section_head, msg, "ACE", url, ace.Ace_id2, request)
+                                        print(f"Notified section head {section_head.username} - ACE {ace.Ace_id2} is under their jurisdiction (cost center: {ace.cost_center})")
+                        except Exception as e:
+                            print(f"Failed to notify section heads with jurisdiction: {str(e)}")
+                            # Don't fail the ACE creation if notification fails
 
                     if str(ace.classification) == "Project":
                         # the idea is that if its ace of type project there need to be added other project details
