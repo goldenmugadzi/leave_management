@@ -90,7 +90,7 @@ class OutPutPerformanceDimensionDetailUpdateView(SuccessMessageMixin, UpdateView
 
     def is_section_head(self):
         repo = AppraisalRoleRepository()
-        return repo.is_section_head(user_id=self.request.user.id)
+        return repo.is_section_head(user_id=self.request.user.id, cost_center_id=self.get_object().department_output.department_objective.cost_center.id)
     
     
     def get_context_data(self, **kwargs):
