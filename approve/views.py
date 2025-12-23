@@ -14,6 +14,7 @@ from django.core.exceptions import ValidationError
 from decouple import config
 from datetime import datetime
 from appraisal.helpers.notifications import send_appraisal_notifications
+from finance.comparative_schedules.views import notify_user
 
 
 
@@ -180,6 +181,32 @@ def approve_step(request, process_id):
                 approval.process = process
                 approval.step = step
                 approval.save()
+
+                # Notify requester for ACE approvals (both standard and high-value)
+                if process.workflow.name in ["ace", "ace_value"]:
+                    try:
+                        ace_item = process.ace2_set.last()
+                        if ace_item and ace_item.requested_by:
+                            requester = ace_item.requested_by
+                            approval_status = approval.approved
+                            
+                            # Get step information
+                            current_step = approval.step.step
+                            total_steps = process.workflow.step_set.count()
+                            approver_name = request.user.get_full_name() or request.user.username
+                            
+                            if approval_status == "Approved":
+                                msg = f"Your ACE {ace_item.Ace_id2} has been approved by {approver_name} (Step {current_step}/{total_steps})"
+                            elif approval_status == "Rejected":
+                                msg = f"Your ACE {ace_item.Ace_id2} has been rejected by {approver_name}"
+                            else:
+                                msg = f"Your ACE {ace_item.Ace_id2} has been actioned by {approver_name} (Step {current_step}/{total_steps})"
+                            
+                            url = f"/ace/ace_detail/{ace_item.Ace_id2}"
+                            notify_user(requester, msg, "ACE", url, ace_item.Ace_id2, request)
+                            print(f"Notified requester {requester.username} about ACE {ace_item.Ace_id2} approval")
+                    except Exception as e:
+                        print(f"Error notifying ACE requester: {e}")
 
                 # Handle different workflow types - check specific workflows first
                 if process.workflow.name == "purchase request":

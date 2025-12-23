@@ -582,122 +582,156 @@ def create_pettycash(request):
 @login_required
 def pettycash_awaiting_my_action(request):
     """
-    Process PettyCash based on user roles and cost centers - with fallback for older records.
-    Combines cost center filtering (for newer records) with section/region filtering (for older records).
+    Process PettyCash based on user roles and cost centers.
+    Optimized for speed with efficient querysets and minimal database hits.
+    Filters by:
+    1. For section heads (sectional roles): section + cost center set
+    2. For other roles: cost center set combined with user's cost center
+    3. Workflow step approver match
+    4. Last 2 years of records only
     """
-    global pettycashs_to_process1
     user = request.user
-    user_profile = UserProfile.objects.filter(id=user.id).first()
+    user_profile = UserProfile.objects.get(id=user.id)
     start_date = ''
     end_date = ''
     section = user_profile.section
+    application_names = ["pettycash"]
+    cost_center = user_profile.cost_center
+    
+    # Pre-compute user roles once (use prefetch_related to avoid N+1)
     user_roles = set(user_profile.roles.all())
     user_pettycash_roles = {role.role for role in user_profile.roles.all() if role.application == "pettycash"}
-    role_names_to_find = user_pettycash_roles
-    role_ids = Roles.objects.filter(name__in=role_names_to_find).values_list('id', flat=True)
-    application_names = ["pettycash"]
-    cost_centers_set = request.user.cost_centers_for(application_names)
     
+    # Define role categories
+    sectional_roles = {'approve', 'create'}
+    other_roles = {'disburse', 'authorize'}
+    
+    # Initialize lists
     pettycashs_to_process = []
     created_pettycashs = Pettycash.objects.none()
-    cost_center = user_profile.cost_center
-
-    regional_roles = {'disburse', 'authorize'}
-    sectional_roles = {'approve', 'create'}
-
-    # Filter based on cost centers for newer records
-    if cost_centers_set:
-        pettycashs_to_process1 = Pettycash.objects.filter(
-            cost_center__in=cost_centers_set, region=user_profile.region
-        ).exclude(
-            process__approval__approved="Rejected"
-        ).order_by('-date_created', 'petty_id')
-    # add parent cost center 
-    if cost_centers_set:
-        parent_cost_center = get_parent_cost_center(cost_centers_set)
-        if parent_cost_center:
-            pettycashs_to_process2 = Pettycash.objects.filter(
-                cost_center=parent_cost_center, region=user_profile.region
-            ).exclude(
-                process__approval__approved="Rejected"
-            ).order_by('-date_created', 'petty_id')
-            pettycashs_to_process = list(pettycashs_to_process1) + list(pettycashs_to_process2)
-
-    if section and sectional_roles.intersection(user_pettycash_roles):
-        # Additionally filter based on section for older records
-        pettycashs_section = Pettycash.objects.filter(
-            section=section, region=user_profile.region
-        ).exclude(
-            process__approval__approved="Rejected"
-        ).order_by('-date_created', 'petty_id')
-        pettycashs_to_process = (list(pettycashs_to_process) + list(pettycashs_section))
-
-    print("Total PettyCash to process: ", len(pettycashs_to_process))
-    processed_petty_ids = set()
-    pettycashs_final = []
-    if sectional_roles.intersection(user_pettycash_roles) and section:
-        a = 0
-        for petty in pettycashs_to_process:
-            a = a + 1
-            if not petty.process or petty.petty_id in processed_petty_ids:
-                continue
-            # print("Processing ACE number: ", a, " ACE ID: ", ace.Ace_id2)
-
-            approvals = petty.process.approval_set.all()
-
-            # 2. Check for eligibility
-            last_approved_step = approvals.last().step.step if approvals.exists() else 0
-            next_step = last_approved_step + 1
-
-            # Check if the user is the approver for the next step based on their roles
-            if petty.process.workflow.step_set.filter(step=next_step, approver__in=user_roles).exists():
-                petty.has_rejected_approval = False
-                petty.latest_approval_status = approvals.last().approved if approvals.exists() else None
-
-                pettycashs_final.append(petty)
-                # print("Added ACE to process: ", ace.Ace_id2)
-                processed_petty_ids.add(petty.petty_id)  # Mark as processed
-                # print("Added PettyCash to process: ", petty.petty_id, " Total now: ", len(processed_petty_ids))
-
-    if regional_roles.intersection(user_pettycash_roles) and user_profile.region:
-        b = 0
-        for petty in pettycashs_to_process:
-            b = b + 1
-            if not petty.process or petty.petty_id in processed_petty_ids:
-                continue
-            # print("Processing ACE number: ", b, " ACE ID: ", ace.Ace_id2)
-
-            approvals = petty.process.approval_set.all()
-
-            # 2. Check for eligibility
-            last_approved_step = approvals.last().step.step if approvals.exists() else 0
-            next_step = last_approved_step + 1
-
-            # Check if the user is the approver for the next step based on their roles
-            if petty.process.workflow.step_set.filter(step=next_step, approver__in=user_roles).exists():
-                petty.has_rejected_approval = False
-                petty.latest_approval_status = approvals.last().approved if approvals.exists() else None
-
-                pettycashs_final.append(petty)
-                # print("Added ACE to process: ", ace.Ace_id2)
-                processed_petty_ids.add(petty.petty_id)  # Mark as processed
-                # print("Added PettyCash to process: ", petty.petty_id, " Total now: ", len(processed_petty_ids))
-
-    create_pettycashs = Pettycash.objects.filter(
-        requested_by=user
+    
+    # Compute cutoff date once (last 2 years)
+    from django.utils import timezone
+    cutoff_date = timezone.now().date().replace(year=timezone.now().year - 2)
+    
+    # Build efficient base query with all necessary prefetch_related to avoid N+1 queries
+    from django.db.models import Prefetch
+    from approve.models import Approval
+    
+    approval_prefetch = Prefetch(
+        'process__approval_set',
+        queryset=Approval.objects.select_related('step').order_by('step__step')
+    )
+    
+    base_query = Pettycash.objects.select_related(
+        'requested_by', 'section', 'region', 'cost_center', 'process__workflow'
+    ).prefetch_related(
+        approval_prefetch,
+        'process__workflow__step_set__approver'
+    ).filter(
+        date_created__gte=cutoff_date,
+        process__isnull=False
     ).exclude(
         process__approval__approved="Rejected"
-    ).order_by('-date_created', 'petty_id')
-    created_pettycashs = create_pettycashs
-    print('Created PettyCash count: ', created_pettycashs.count())
-    print('created pettycashs', created_pettycashs)
-    # Combine created PettyCash
+    ).distinct().order_by('-date_created')
+    
+    # --- FILTERING BASED ON ROLE TYPE ---
+    cost_centers_set = request.user.cost_centers_for(application_names)
+    
+    # For section heads: filter by section AND cost_center_set
+    if sectional_roles.intersection(user_pettycash_roles) and section:
+        if cost_centers_set:
+            pettycashs_combined_query = base_query.filter(
+                section=section,
+                cost_center__in=cost_centers_set
+            )
+        else:
+            pettycashs_combined_query = base_query.filter(section=section)
+    
+    # For other roles: filter by cost_center_set combined with user's cost_center
+    elif other_roles.intersection(user_pettycash_roles):
+        if cost_centers_set:
+            # Combine cost center set with user's direct cost center
+            all_cost_centers = list(cost_centers_set)
+            if cost_center and cost_center not in all_cost_centers:
+                all_cost_centers.append(cost_center)
+            pettycashs_combined_query = base_query.filter(cost_center__in=all_cost_centers)
+        else:
+            # Fallback to user's cost center and descendants
+            fallback_cost_centers = user_profile.cost_center_and_decendace()
+            if fallback_cost_centers:
+                pettycashs_combined_query = base_query.filter(cost_center__in=fallback_cost_centers)
+            else:
+                pettycashs_combined_query = base_query.none()
+    
+    else:
+        # For 'create' role or no specific role: only their own created items
+        pettycashs_combined_query = base_query.none()
+    
+    # --- WORKFLOW STEP MATCHING (Optimized Loop) ---
+    # Since we have prefetch_related, each pettycash.process.approval_set and step_set access is cached
+    processed_petty_ids = set()
+    
+    for petty in pettycashs_combined_query:
+        # Skip if already processed
+        if petty.petty_id in processed_petty_ids:
+            continue
+        
+        processed_petty_ids.add(petty.petty_id)
+        
+        # Skip if no process (already filtered out in query, but safety check)
+        if not petty.process:
+            continue
+        
+        # Get approvals from prefetched data (no extra query)
+        approvals = list(petty.process.approval_set.all())
+        
+        # Calculate next step needed
+        last_approved_step = approvals[-1].step.step if approvals else 0
+        next_step = last_approved_step + 1
+        
+        # Check if user is approver for next step - iterate through prefetched steps
+        is_approver = False
+        for step in petty.process.workflow.step_set.all():
+            if step.step == next_step and step.approver in user_roles:
+                is_approver = True
+                break
+        
+        if is_approver:
+            petty.has_rejected_approval = False
+            petty.latest_approval_status = approvals[-1].approved if approvals else None
+            pettycashs_to_process.append(petty)
+    
+    # --- Handle 'create' role ---
+    if "create" in user_pettycash_roles:
+        created_pettycashs = Pettycash.objects.select_related(
+            'requested_by', 'section', 'region', 'cost_center'
+        ).prefetch_related(
+            'process__approval_set'
+        ).filter(
+            requested_by=user_profile.pk,
+            date_created__gte=cutoff_date
+        ).order_by('-date_created')
+        
+        # Add flags for created pettycashs
+        for petty in created_pettycashs:
+            if petty.process:
+                approvals = petty.process.approval_set.all()
+                petty.has_rejected_approval = False
+                petty.latest_approval_status = approvals.last().approved if approvals.exists() else None
+            else:
+                petty.has_rejected_approval = False
+                petty.latest_approval_status = None
+    
+    # If user is ONLY a creator, they shouldn't see items awaiting approval (by others)
+    if user_pettycash_roles == {"create"}:
+        pettycashs_to_process = []
 
     return render(
         request,
         'finance/pettycash/view_all_pettycashs.html',
         {
-            "pettycashs": pettycashs_final,
+            "pettycashs": pettycashs_to_process,
             "created_pettycashs": created_pettycashs,
             "all": False,
             "start_date": start_date,

@@ -387,6 +387,7 @@
 {#                {% endif %}#}
 
 {#            {% if ace.payment_mode != None %}#}
+                        <!-- DEBUG: approvalForm={{ approvalForm }}, to={{ to }}, ace_role={{ ace_role }} -->
                         {% if approvalForm %}
                     <form class="row rounded py-4 border bg-gulf-blue-400 rounded-lg p-3 m-auto container" method="POST" action="{% url 'approve:approve' ace.process.id %}" enctype="multipart/form-data">
                          {% csrf_token %}

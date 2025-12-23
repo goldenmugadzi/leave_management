@@ -23,7 +23,7 @@ from django.utils import timezone
 from ACE2.forms import *
 from ACE2.utils import find_pettycash_section_head
 from approve.forms import ApprovalForm
-from approve.models import Step
+from approve.models import Step, Approval
 from approve.views import intiate, get_my_roles_for_apps
 from it.users.models import UserProfile, Roles, Designations, Districts, Depots, Notification
 from finance.PettyCash.views import approve_step
@@ -179,9 +179,15 @@ def Ace_detail(request, Ace_id2):
         if len(ace_item.process.approval_set.all()) == len(ace_item.process.workflow.step_set.all()):
             approve_now = True
 
+        # Debug logging for approval button visibility
+        print(f"DEBUG ACE {ace_item.Ace_id2}: User={request.user.username}, ace_role={ace_role}, next_step={next_step}")
+        print(f"  User roles: {[r.name for r in user_roles]}")
+        print(f"  Approval status: {approval_status}, approve_now: {approve_now}")
+        
         try:
             newStep = Step.objects.get(step=next_step, workflow=ace_item.process.workflow,
                                        approver__in=user_roles)
+            print(f"  ✓ Found matching step: {newStep.to} (requires role: {newStep.approver.name})")
 
             if ace_role == "pass":
                 # print(ace_item.section, " section")
@@ -210,6 +216,8 @@ def Ace_detail(request, Ace_id2):
                         clear_minus = True
                 print(clear)
         except Step.DoesNotExist:
+            print(f"  ✗ No matching step found for user roles at step {next_step}")
+            print(f"  Available steps: {[f'Step {s.step}: {s.to} (needs {s.approver.name})' for s in ace_item.process.workflow.step_set.all()]}")
             pass
 
     print(approve_now)
@@ -272,6 +280,9 @@ def Ace_detail(request, Ace_id2):
             general_manager = UserProfile.objects.filter(username=general_manager).first()
             notify_user(general_manager, msg, "ACE", url, ace_item.Ace_id2, request)
 
+    # Final debug output before rendering
+    print(f"RENDERING ACE {ace_item.Ace_id2}: approvalForm={approvalForm}, to={to}, ace_role={ace_role}")
+    
     return render(request, 'finance/ace2/ace_detail.html',
                   {'ace': ace_item, 'approved_steps': approved_steps, 'approvalForm': approvalForm,
                    'to': to, 'ace_role': ace_role, 'user_groups': user_groups, 'qoutations': quotations,
@@ -503,6 +514,18 @@ def create_Ace(request):
                         depot_manager = UserProfile.objects.filter(username=depot_manager).first()
                         notify_user(depot_manager, msg, "ACE", url, ace.Ace_id2, request)
 
+                    # notify section heads with jurisdiction over the ACE's cost center
+                    if ace.cost_center:
+                        section_heads_with_jurisdiction = find_section_heads_with_jurisdiction(ace.cost_center, application_names=["ace"])
+                        if section_heads_with_jurisdiction:
+                            msg = "User " + str(use) + " created " + ace.Ace_id2 + " under cost center " + str(ace.cost_center) + " which is in your jurisdiction"
+                            url = "/ace/ace_detail/" + ace.Ace_id2
+                            for section_head in section_heads_with_jurisdiction:
+                                # Avoid duplicate notifications to the creator
+                                if section_head.id != request.user.id:
+                                    notify_user(section_head, msg, "ACE", url, ace.Ace_id2, request)
+                                    print(f"Notified section head {section_head.username} - ACE {ace.Ace_id2} is under their jurisdiction (cost center: {ace.cost_center})")
+
                     if str(ace.classification) == "Project":
                         # the idea is that if its ace of type project there need to be added other project details
                         url = reverse('Ace:ace_detail_project', args=[ace.Ace_id2])
@@ -536,6 +559,7 @@ def create_Ace(request):
 def ace_awaiting_my_action(request):
     """
     Show ACEs awaiting action by the current user based on their role and cost center access.
+    Optimized for speed with efficient querysets and minimal database hits.
     Filters by:
     1. User's assigned cost centers
     2. Role-based permissions
@@ -544,134 +568,124 @@ def ace_awaiting_my_action(request):
     start_date = ''
     end_date = ''
     user_profile = UserProfile.objects.get(id=request.user.id)
+    
+    # Check if debug mode is enabled
+    debug_ace = request.GET.get('debug_ace')
+    debug_mode = bool(debug_ace)
+    
     section = user_profile.section
-    # print("user section: ", section)
-    user_roles = set(user_profile.roles.all())
-    user_role_names = {role.name for role in user_profile.roles.all()}
-
     application_names = ["ace"]
-    cost_centers_set = request.user.cost_centers_for(application_names)
-    # print ("cost centers set: ", cost_centers_set)
     cost_center = user_profile.cost_center
-
-    # Initialize lists to prevent UnboundLocalError
-    aces_to_process = []
-    created_aces = Ace2.objects.none()
-    processed_ace_ids = set()
-
-    # Base query for all ACEs (unfiltered)
-    base_query = Ace2.objects.select_related(
-        'budget_id', 'requested_by', 'section', 'region', 'cost_center'
-    ).prefetch_related(
-        "process__approval_set", "process__workflow__step_set"
-    )
-
+    
+    # Pre-compute user roles once (use prefetch_related to avoid N+1)
+    user_roles = set(user_profile.roles.all())
+    user_ace_roles = {role.role for role in user_profile.roles.all() if role.application == "ace"}
+    
+    # Define role categories
     system_wide_roles = {'fd', 'md'}
     regional_roles = {'sanction', 'approve', 'EM'}
-    sectional_roles = {'pass','process'}
-
-    # --- PRIMARY FILTERING: COST CENTER ---
-    aces_query_primary = base_query  # Start with the base query
-
+    sectional_roles = {'pass', 'process', 'order'}
+    
+    # Initialize lists
+    aces_to_process = []
+    created_aces = Ace2.objects.none()
+    
+    # Compute cutoff date once
+    cutoff_date = timezone.now().date().replace(year=timezone.now().year - 2)
+    
+    # Build efficient base query with all necessary prefetch_related to avoid N+1 queries
+    # Use Prefetch for approval_set to pre-filter and order efficiently
+    from django.db.models import Prefetch, Q, F
+    
+    approval_prefetch = Prefetch(
+        'process__approval_set',
+        queryset=Approval.objects.select_related('step').order_by('step__step')
+    )
+    
+    base_query = Ace2.objects.select_related(
+        'budget_id', 'requested_by', 'section', 'region', 'cost_center', 'process__workflow'
+    ).prefetch_related(
+        approval_prefetch,
+        'process__workflow__step_set__approver'
+    ).filter(
+        date_created__gte=cutoff_date,
+        process__isnull=False
+    ).exclude(
+        process__approval__approved="Rejected"
+    ).distinct().order_by('-date_created')
+    
+    # --- COST CENTER FILTERING ---
+    cost_centers_set = request.user.cost_centers_for(application_names)
+    
     if cost_centers_set:
-        cost_centers = list(cost_centers_set)
-        print("applicable cost centers: ", cost_centers)
-        # Apply strict cost center filtering
-        aces_query_primary = aces_query_primary.filter(cost_center__in=cost_centers).exclude(
-            process__approval__approved="Rejected"
-        ).order_by('-date_created')
-        # print("ACES after cost center filter: ", aces_query_primary.count())
+        aces_query_primary = base_query.filter(cost_center__in=cost_centers_set)
     else:
         # Fallback to user's cost center and descendants
         fallback_cost_centers = user_profile.cost_center_and_decendace()
         if fallback_cost_centers:
-            aces_query_primary = aces_query_primary.filter(cost_center__in=fallback_cost_centers).exclude(
-                process__approval__approved="Rejected"
-            ).order_by('-date_created')
-
-    # exception handling
-    aces_query1 = Ace2.objects.none()
-    # Additional role-based filters
-    # --- SECONDARY FILTERING: REGION/SECTION (The Bypass Logic) ---
-    aces_query_secondary = base_query.none()  # Initialize as empty
-
-    user_ace_roles = {role.role for role in user_profile.roles.all() if role.application == "ace"}
-
+            aces_query_primary = base_query.filter(cost_center__in=fallback_cost_centers)
+        else:
+            aces_query_primary = base_query.none()
     
-
-    # If the user has a regional or sectional role (and is NOT system-wide)
-    if regional_roles.intersection(set(user_ace_roles)):
-        aces_query_secondary = base_query.filter(region=user_profile.region).exclude(
-            process__approval__approved="Rejected"
+    # --- SECONDARY FILTERING: REGION/SECTION/SYSTEM-WIDE ---
+    aces_query_secondary = base_query.none()
+    
+    if regional_roles.intersection(user_ace_roles):
+        aces_query_secondary = base_query.filter(region=user_profile.region)
+    elif sectional_roles.intersection(user_ace_roles) and section:
+        aces_query_secondary = base_query.filter(section=section)
+    elif system_wide_roles.intersection(user_ace_roles):
+        aces_query_secondary = base_query.filter(ace_type='high_value')
+    
+    # Combine querysets efficiently
+    aces_combined_query = (aces_query_primary | aces_query_secondary).distinct()
+    
+    # --- WORKFLOW STEP MATCHING (Optimized Loop) ---
+    # Since we have prefetch_related, each ace.process.approval_set and step_set access is cached
+    processed_ace_ids = set()
+    
+    for ace in aces_combined_query:
+        # Skip if already processed
+        if ace.Ace_id2 in processed_ace_ids:
+            continue
+        
+        processed_ace_ids.add(ace.Ace_id2)
+        
+        # Skip if no process (already filtered out in query, but safety check)
+        if not ace.process:
+            continue
+        
+        # Get approvals from prefetched data (no extra query)
+        approvals = list(ace.process.approval_set.all())
+        
+        # Calculate next step needed
+        last_approved_step = approvals[-1].step.step if approvals else 0
+        next_step = last_approved_step + 1
+        
+        # Check if user is approver for next step - iterate through prefetched steps
+        is_approver = False
+        for step in ace.process.workflow.step_set.all():
+            if step.step == next_step and step.approver in user_roles:
+                is_approver = True
+                break
+        
+        if is_approver:
+            ace.has_rejected_approval = False
+            ace.latest_approval_status = approvals[-1].approved if approvals else None
+            aces_to_process.append(ace)
+    
+    # --- Handle 'create' role ---
+    if "create" in user_ace_roles:
+        created_aces = Ace2.objects.select_related(
+            'budget_id', 'requested_by', 'section', 'region', 'cost_center'
+        ).prefetch_related(
+            'process__approval_set'
+        ).filter(
+            requested_by=user_profile.pk,
+            date_created__gte=cutoff_date
         ).order_by('-date_created')
         
-        print("user region: ", user_profile.region)
-        print('query len', aces_query_secondary.count())
-        print('roles', user_ace_roles)
-        print('gm roles now')
-        # print("ACES after region filter: ", aces_query_secondary.count())
-
-    if sectional_roles.intersection(set(user_ace_roles)) and section:
-        aces_query_secondary = Ace2.objects.filter(section=section).exclude(
-            process__approval__approved="Rejected"
-        ).order_by('-date_created')
-        # print("user section: ", section)
-        # print('base query len', base_query.count())
-        # print("ACES after section filter: ", aces_query_secondary.count())
-
-    if system_wide_roles.intersection(set(user_ace_roles)):
-        aces_query_secondary = base_query.filter(ace_type='high_value').exclude(
-            process__approval__approved="Rejected"
-        ).order_by('-date_created')
-        # print("ACES after system-wide filter: ", aces_query_secondary.count())
-
-    # print("primary aces", aces_query_primary.values_list('Ace_id2', flat=True))
-    if sectional_roles.intersection(set(user_ace_roles)) and section:
-        print("secondary aces", aces_query_secondary.values_list('Ace_id2', flat=True))
-        aces_combined_query = (aces_query_primary | aces_query_secondary)
-    else:
-        aces_combined_query = aces_query_primary
-    # print("Total ACEs after combining filters: ", aces_combined_query.count())
-    a = 0
-
-    # --- PROCESS AWAITING ACTION ---
-    for ace in aces_combined_query:
-        if not ace.process or ace.Ace_id2 in processed_ace_ids:
-            continue
-        a = a + 1
-        # print("Processing ACE number: ", a, " ACE ID: ", ace.Ace_id2)
-
-        approvals = ace.process.approval_set.all()
-
-        # 2. Check for eligibility
-        last_approved_step = approvals.last().step.step if approvals.exists() else 0
-        next_step = last_approved_step + 1
-
-        # Check if the user is the approver for the next step based on their roles
-        if ace.process.workflow.step_set.filter(step=next_step, approver__in=user_roles).exists():
-            ace.has_rejected_approval = False
-            ace.latest_approval_status = approvals.last().approved if approvals.exists() else None
-
-            aces_to_process.append(ace)
-            # print("Added ACE to process: ", ace.Ace_id2)
-            processed_ace_ids.add(ace.Ace_id2)  # Mark as processed
-
-    # --- Handle 'create' role access (Your existing logic for created_aces) ---
-    # ... (Keep the rest of your logic for 'create' role and final return statement) ...
-    user_ace_roles = {role.role for role in user_profile.roles.all() if role.application == "ace"}
-    print('user_ace_roles', user_ace_roles)
-    # print('aces to process: ', aces_to_process)
-    # print('processed ace ids: ', processed_ace_ids)
-    print('roles')
-    print(user_ace_roles)
-    print('userprofile', user_profile.pk)
-
-    if "create" in user_ace_roles:
-        # ... (Populate created_aces QuerySet and add flags) ...
-        created_aces = Ace2.objects.filter(requested_by=user_profile.pk).order_by('-date_created')
-        print('created aces count', created_aces.count())
-
-        # Add helpful flags for created ACEs
+        # Add flags for created ACEs
         for ace in created_aces:
             if ace.process:
                 approvals = ace.process.approval_set.all()
@@ -680,11 +694,11 @@ def ace_awaiting_my_action(request):
             else:
                 ace.has_rejected_approval = False
                 ace.latest_approval_status = None
-
-    # If the user is ONLY a creator, they shouldn't see items awaiting approval (by others)
+    
+    # If user is ONLY a creator, they shouldn't see items awaiting approval (by others)
     if user_ace_roles == {"create"}:
         aces_to_process = []
-
+    
     return render(request, 'finance/ace2/view_all_aces.html', {
         "aces": aces_to_process,
         "created_aces": created_aces,
@@ -1857,6 +1871,38 @@ def find_general_manager(request, region):
 
         else:
             print("no users found")
+
+
+def find_section_heads_with_jurisdiction(ace_cost_center, application_names=["ace"]):
+    """
+    Find all section heads who have jurisdiction over the given cost center.
+    Section heads are identified by having 'pass' role in ACE application.
+    Returns a list of UserProfile objects.
+    """
+    section_heads_with_jurisdiction = []
+    
+    if not ace_cost_center:
+        return section_heads_with_jurisdiction
+    
+    try:
+        # Get all users with 'pass' role (section heads) in ACE application
+        section_heads = UserProfile.objects.filter(
+            roles__application="ace",
+            roles__role="pass"
+        ).distinct().prefetch_related('roles')
+        
+        for section_head in section_heads:
+            # Get cost centers under this section head's jurisdiction
+            user_cost_centers = section_head.cost_centers_for(application_names)
+            
+            # Check if the ACE's cost center is in their jurisdiction
+            if user_cost_centers and ace_cost_center in user_cost_centers:
+                section_heads_with_jurisdiction.append(section_head)
+                
+    except Exception as e:
+        print(f"Error finding section heads with cost center jurisdiction: {e}")
+    
+    return section_heads_with_jurisdiction
 
 
 # transactions on a budget
