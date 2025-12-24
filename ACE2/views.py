@@ -1,4 +1,5 @@
 from datetime import datetime, date
+import logging
 from os import remove
 from os.path import basename
 from random import randrange
@@ -40,6 +41,17 @@ from django.contrib import messages
 from fault_locator.central_roles import FaultLocatorRoleManager
 from it.users.models import UserProfile, Application, Roles
 from .views_enhanced import ace_report_detail_csv_enhanced as _ace_report_detail_csv_enhanced
+
+# Module-level logger
+logger = logging.getLogger(__name__)
+
+
+def _to_float(value):
+    """Safely convert a value to float, defaulting to 0.0 on errors."""
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return 0.0
 
 
 def get_parent_cost_center(cost_centers):
@@ -787,30 +799,73 @@ def view_all_aces(request):
 
 
 def add_project_details(request, Ace_id2):
-    if request.method == 'POST':
-        form = ProjectDetailForm(request.POST, request.FILES)
-        if form.is_valid():
-            project_details = form.save(commit=False)
-            # add items from form to already existing ace object and convert to float before saving
-            total_connection_fee = (float(project_details.present_tariff) + float(project_details.present_fmc) +
-                                    float(project_details.capital_contribution) + float(project_details.materials) +
-                                    float(project_details.labour) + float(project_details.transport))
+    """
+    Handle adding/updating ACE project details.
+    Hardened with safe conversions, existence checks, and logging.
+    """
+    # Always work against the existing ACE instance
+    ace = Ace2.objects.filter(Ace_id2=Ace_id2).first()
+    if not ace:
+        messages.error(request, "ACE record not found for provided ID.")
+        logger.error("ACE project details view: ACE not found", extra={
+            'Ace_id2': Ace_id2,
+            'user_id': getattr(request.user, 'id', None)
+        })
+        return render(request, 'finance/ace2/add_project_details.html', {'form': ProjectDetailForm()})
 
-            ace = Ace2.objects.filter(Ace_id2=Ace_id2).first()
-            ace.present_tariff = project_details.present_tariff
-            ace.present_fmc = project_details.present_fmc
-            ace.capital_contribution = project_details.capital_contribution
-            ace.materials = project_details.materials
-            ace.labour = project_details.labour
-            ace.transport = project_details.transport
-            ace.total_connection_fee = total_connection_fee
-            ace.save()
-            url = reverse('Ace:ace_detail', args=[ace.Ace_id2])
-            return redirect(url)
+    if request.method == 'POST':
+        form = ProjectDetailForm(request.POST, request.FILES, instance=ace)
+        if form.is_valid():
+            try:
+                project_details = form.save(commit=False)  # bound to ace instance
+
+                # Safely convert numeric fields for total calculation
+                total_connection_fee = (
+                    _to_float(project_details.present_tariff)
+                    + _to_float(project_details.present_fmc)
+                    + _to_float(project_details.capital_contribution)
+                    + _to_float(project_details.materials)
+                    + _to_float(project_details.labour)
+                    + _to_float(project_details.transport)
+                )
+                # Assign values from form to ACE
+                ace.present_tariff = project_details.present_tariff
+                ace.present_fmc = project_details.present_fmc
+                ace.capital_contribution = project_details.capital_contribution
+                ace.materials = project_details.materials
+                ace.labour = project_details.labour
+                ace.transport = project_details.transport
+                ace.total_connection_fee = total_connection_fee
+                ace.save()
+
+                logger.info("ACE project details updated", extra={
+                    'Ace_id2': ace.Ace_id2,
+                    'user_id': getattr(request.user, 'id', None),
+                    'total_connection_fee': total_connection_fee
+                })
+
+                url = reverse('Ace:ace_detail', args=[ace.Ace_id2])
+                return redirect(url)
+            except Exception as e:
+                logger.exception("Error while saving project details", extra={
+                    'Ace_id2': Ace_id2,
+                    'user_id': getattr(request.user, 'id', None)
+                })
+                messages.error(request, f"Failed to save project details: {str(e)}")
+                return render(request, 'finance/ace2/add_project_details.html', {'form': form})
     else:
-        form = ProjectDetailForm()
+        form = ProjectDetailForm(instance=ace)
 
     return render(request, 'finance/ace2/add_project_details.html', {'form': form})
+
+
+@login_required
+def ace_detail_project(request, Ace_id2):
+    """
+    Project-specific ACE detail entry point.
+    Delegates to `add_project_details` to capture required project fields.
+    """
+    return add_project_details(request, Ace_id2)
 
 
 def upload_budgets(request):

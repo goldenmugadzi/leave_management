@@ -3377,18 +3377,73 @@ def bulk_update_committee(request):
                                 messages.error(request, f'User ID {user_id} not found.')
                                 return redirect('comparative_schedules:bulk_update_committee')
                             
-                            # Update all committee records for this CS and position
-                            updated = Committee.objects.filter(
+                            # Get all committee records for this CS and position
+                            existing_records = Committee.objects.filter(
                                 cs_id=cs_record,
                                 committee_position=position
-                            ).update(
-                                user=user,
-                                committee_name=committee_name
-                            )
+                            ).order_by('id')  # Oldest first
                             
-                            total_updated += updated
-                            if updated > 0:
-                                print(f"Updated {updated} committee member(s) - Position: {position}, CS: {cs_id}")
+                            count = existing_records.count()
+                            
+                            # Prepare update fields
+                            update_fields = {
+                                'user': user,
+                                'committee_name': committee_name
+                            }
+                            
+                            # For Chairman position: set approval to "Approved" and use latest committee_date
+                            if position == 'Chairman':
+                                update_fields['committee_approval'] = 'Approved'
+                                
+                                # Get the latest committee_date from existing records
+                                latest_date = None
+                                for record in existing_records:
+                                    if record.committee_date:
+                                        if latest_date is None or record.committee_date > latest_date:
+                                            latest_date = record.committee_date
+                                
+                                if latest_date:
+                                    update_fields['committee_date'] = latest_date
+                            
+                            if count == 0:
+                                # Create new record if none exists
+                                Committee.objects.create(
+                                    cs_id=cs_record,
+                                    committee_position=position,
+                                    **update_fields
+                                )
+                                total_updated += 1
+                                print(f"Created committee member - Position: {position}, CS: {cs_id}")
+                            elif count == 1:
+                                # Update the single existing record
+                                existing_records.update(**update_fields)
+                                total_updated += 1
+                                print(f"Updated 1 committee member - Position: {position}, CS: {cs_id}")
+                            else:
+                                # Multiple duplicates exist - consolidate by keeping the most complete/oldest record
+                                # Score records by completeness (more filled fields = higher score)
+                                scored_records = []
+                                for record in existing_records:
+                                    score = 0
+                                    if record.committee_status: score += 1
+                                    if record.committee_approval: score += 1
+                                    if record.justification: score += 1
+                                    if record.committee_date: score += 1
+                                    scored_records.append((score, record))
+                                
+                                # Sort by score (descending), then by id (ascending for oldest)
+                                scored_records.sort(key=lambda x: (-x[0], x[1].id))
+                                best_record = scored_records[0][1]
+                                
+                                # Delete all records except the best one
+                                duplicates = existing_records.exclude(id=best_record.id)
+                                duplicate_count = duplicates.count()
+                                duplicates.delete()
+                                
+                                # Update the remaining record
+                                Committee.objects.filter(id=best_record.id).update(**update_fields)
+                                total_updated += 1
+                                print(f"Consolidated {duplicate_count + 1} duplicates into 1 record (kept record #{best_record.id}) - Position: {position}, CS: {cs_id}")
                         
                     except ComparativeSchedules.DoesNotExist:
                         failed_cs_ids.append(cs_id)
