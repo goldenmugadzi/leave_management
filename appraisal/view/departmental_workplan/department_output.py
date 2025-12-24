@@ -239,7 +239,9 @@ class DepartmentOutputDetailUpdateView(SuccessMessageMixin, UpdateView):
         
         context["department_objective"] = self.get_object().department_objective
         context["designation_obj"] = self.get_object().designation
-        context["is_section_head"] = is_section_head(user_id=self.request.user.id)
+        context["is_section_head"] = is_section_head(user_id=self.request.user.id,
+                                                     output_cost_center_id=self.get_object().department_objective.cost_center.id
+                                                     )
         return context
     
     def payload_validation(self, form):
