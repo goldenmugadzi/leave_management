@@ -5,6 +5,7 @@ app_name = 'Ace'
 
 urlpatterns = [
     path('ace_detail/<str:Ace_id2>/', views.Ace_detail, name='ace_detail'),
+    path('ace_detail_project/<str:Ace_id2>/', views.ace_detail_project, name='ace_detail_project'),
     path('create_ace/', views.create_Ace, name='create_ace'),
     path('aces_awaiting_my_action/', views.ace_awaiting_my_action, name='ace_awaiting_my_action'),
     path('aces/', views.view_all_aces, name='view_all_aces'),

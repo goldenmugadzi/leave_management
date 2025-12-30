@@ -14,6 +14,7 @@ from django.template.loader import render_to_string
 
 from it.users.views import ms_exhange_reset_password_html, ms_exhange_send, ms_exhange_send_html
 from .models import *
+from .forms import BulkUpdateCommitteeForm
 from it.users.models import *
 from finance.purchase_request.models import ProcurementPlanReference, PurchaseRequest, PrItem, Attachment, \
     UnitOfMeasurement
@@ -3321,3 +3322,154 @@ def cs_compliance_table(request, cs_id):
         return redirect('tender_compliance', tender_id=document_id)
 
     return render(request, 'finance/comparative_schedules/cs_compliance_table.html', {"bids_items": bids_dict})
+
+
+@login_required
+def bulk_update_committee(request):
+    """
+    Bulk update committee members by position for multiple CS records.
+    Updates all existing committee records (not creating new ones).
+    """
+    if request.method == 'POST':
+        form = BulkUpdateCommitteeForm(request.POST)
+        if form.is_valid():
+            cs_ids = form.cleaned_data['cs_ids']
+            
+            committee_updates = [
+                {
+                    'position': 'Procurement',
+                    'user_id': form.cleaned_data['procurement_user_id'],
+                    'committee_name': form.cleaned_data['procurement_committee_name']
+                },
+                {
+                    'position': 'User',
+                    'user_id': form.cleaned_data['user_user_id'],
+                    'committee_name': form.cleaned_data['user_committee_name']
+                },
+                {
+                    'position': 'Finance',
+                    'user_id': form.cleaned_data['finance_user_id'],
+                    'committee_name': form.cleaned_data['finance_committee_name']
+                },
+                {
+                    'position': 'Chairman',
+                    'user_id': form.cleaned_data['chairman_user_id'],
+                    'committee_name': form.cleaned_data['chairman_committee_name']
+                }
+            ]
+            
+            try:
+                total_updated = 0
+                failed_cs_ids = []
+                
+                for cs_id in cs_ids:
+                    try:
+                        cs_record = ComparativeSchedules.objects.get(cs_id=cs_id)
+                        
+                        for update_info in committee_updates:
+                            position = update_info['position']
+                            user_id = update_info['user_id']
+                            committee_name = update_info['committee_name']
+                            
+                            try:
+                                user = UserProfile.objects.get(id=user_id)
+                            except UserProfile.DoesNotExist:
+                                messages.error(request, f'User ID {user_id} not found.')
+                                return redirect('comparative_schedules:bulk_update_committee')
+                            
+                            # Get all committee records for this CS and position
+                            existing_records = Committee.objects.filter(
+                                cs_id=cs_record,
+                                committee_position=position
+                            ).order_by('id')  # Oldest first
+                            
+                            count = existing_records.count()
+                            
+                            # Prepare update fields
+                            update_fields = {
+                                'user': user,
+                                'committee_name': committee_name
+                            }
+                            
+                            # For Chairman position: set approval to "Approved" and use latest committee_date
+                            if position == 'Chairman':
+                                update_fields['committee_approval'] = 'Approved'
+                                
+                                # Get the latest committee_date from existing records
+                                latest_date = None
+                                for record in existing_records:
+                                    if record.committee_date:
+                                        if latest_date is None or record.committee_date > latest_date:
+                                            latest_date = record.committee_date
+                                
+                                if latest_date:
+                                    update_fields['committee_date'] = latest_date
+                            
+                            if count == 0:
+                                # Create new record if none exists
+                                Committee.objects.create(
+                                    cs_id=cs_record,
+                                    committee_position=position,
+                                    **update_fields
+                                )
+                                total_updated += 1
+                                print(f"Created committee member - Position: {position}, CS: {cs_id}")
+                            elif count == 1:
+                                # Update the single existing record
+                                existing_records.update(**update_fields)
+                                total_updated += 1
+                                print(f"Updated 1 committee member - Position: {position}, CS: {cs_id}")
+                            else:
+                                # Multiple duplicates exist - consolidate by keeping the most complete/oldest record
+                                # Score records by completeness (more filled fields = higher score)
+                                scored_records = []
+                                for record in existing_records:
+                                    score = 0
+                                    if record.committee_status: score += 1
+                                    if record.committee_approval: score += 1
+                                    if record.justification: score += 1
+                                    if record.committee_date: score += 1
+                                    scored_records.append((score, record))
+                                
+                                # Sort by score (descending), then by id (ascending for oldest)
+                                scored_records.sort(key=lambda x: (-x[0], x[1].id))
+                                best_record = scored_records[0][1]
+                                
+                                # Delete all records except the best one
+                                duplicates = existing_records.exclude(id=best_record.id)
+                                duplicate_count = duplicates.count()
+                                duplicates.delete()
+                                
+                                # Update the remaining record
+                                Committee.objects.filter(id=best_record.id).update(**update_fields)
+                                total_updated += 1
+                                print(f"Consolidated {duplicate_count + 1} duplicates into 1 record (kept record #{best_record.id}) - Position: {position}, CS: {cs_id}")
+                        
+                    except ComparativeSchedules.DoesNotExist:
+                        failed_cs_ids.append(cs_id)
+                
+                if total_updated > 0:
+                    messages.success(
+                        request,
+                        f'Successfully updated {total_updated} committee member(s) across {len(cs_ids) - len(failed_cs_ids)} CS record(s).'
+                    )
+                else:
+                    messages.warning(request, 'No committee members found to update.')
+                
+                if failed_cs_ids:
+                    messages.warning(
+                        request,
+                        f'Could not find CS records for: {", ".join(failed_cs_ids)}'
+                    )
+                
+                return redirect('comparative_schedules:bulk_update_committee')
+                
+            except Exception as e:
+                messages.error(request, f'An error occurred: {str(e)}')
+                import traceback
+                traceback.print_exc()
+                return redirect('comparative_schedules:bulk_update_committee')
+    else:
+        form = BulkUpdateCommitteeForm()
+    
+    return render(request, 'finance/comparative_schedules/bulk_update_committee.html', {'form': form})
