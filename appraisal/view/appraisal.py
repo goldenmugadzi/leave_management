@@ -138,9 +138,10 @@ class AppraisalCreateView(SuccessMessageMixin, CreateView):
         repo = DepartmentalOutRepository()
         user_obj = self.get_user_object()
         
-        designation_outputs_qr = repo.fetch_by_cost_center_id_designation_id(
+        designation_outputs_qr = repo.fetch_by_cost_center_id_designation_id_year(
             designation_id=user_obj.designation.id,
-            cost_center_id=user_obj.cost_center.id
+            cost_center_id=user_obj.cost_center.id,
+            year=datetime.now().year
         )
         return designation_outputs_qr.exists()
         
