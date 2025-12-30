@@ -247,7 +247,7 @@ class AppraisalDependanciesInitialisationService:
                     if year_quarter_objects != 4:
                         raise Exception(f"create_all_dependencies, with pk: {appraisal_id}, has {year_quarter_objects} - 4 instances required.")
 
-                    department_output_qr = self.department_output_repo.fetch_by_cost_center_id_designation_id(designation_id=designation_obj.id, cost_center_id=appraisee_cost_center.id)
+                    department_output_qr = self.department_output_repo.fetch_by_cost_center_id_designation_id_year(designation_id=designation_obj.id, cost_center_id=appraisee_cost_center.id, year=year)
                     if not department_output_qr.exists():
                         raise Exception(f"Departmental outputs for appraisal pk: {appraisal_id}, with designation pk: {designation_obj.id} cost center pk: {appraisee_cost_center.id} has no departmental outputs set")
                     

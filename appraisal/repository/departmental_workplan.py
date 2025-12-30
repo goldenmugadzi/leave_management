@@ -145,6 +145,13 @@ class DepartmentalOutRepository:
 
         except Exception as e:
             raise Exception(f"DepartmentalOutRepository fetch_by_cost_center_id_designation_id with designation pk: {designation_id} and cost_center pk: {cost_center_id}, failed with error: {e}")
+    
+    def fetch_by_cost_center_id_designation_id_year(self, designation_id: int, cost_center_id: int, year: int)->QuerySet[DepartmentOutput]:
+        try:
+            return DepartmentOutput.objects.filter(designation__id=designation_id, department_objective__cost_center__id=cost_center_id, created_date__year=year).select_related("department_objective", "designation")
+
+        except Exception as e:
+            raise Exception(f"DepartmentalOutRepository fetch_by_cost_center_id_designation_id_year with designation pk: {designation_id} and cost_center pk: {cost_center_id} year: {year}, failed with error: {e}")
 
     def get_by_id(self, dept_output_id: int)->DepartmentOutput|None:
         try:
