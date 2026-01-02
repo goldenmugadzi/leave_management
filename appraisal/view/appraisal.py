@@ -867,9 +867,17 @@ class AppraiseePersonalAttributesUpdateView(TemplateView):
             return "C, D, E and F"
         return ""
     
+    def date_rules(self):
+        date_rule_handler = AppraisalDatesRulesHandler()
+        is_within = date_rule_handler.is_within_extended_year()
+        prev_yr_date = date_rule_handler.get_prev_year_end_date()
+        return is_within, prev_yr_date
     
     def get_year_quarter_obj(self):
         repo = YearQuarterRepository()
+        is_within, prev_year_date = self.date_rules()
+        if is_within:
+            return repo.get_by_year_quarter_values(year=prev_year_date.year, quarter=4)
         return repo.get_by_year_quarter_id(quarter_id=self.kwargs.get("quarter_id"))
     
     def is_current_date_in_current_quarter(self)->bool:
@@ -877,7 +885,7 @@ class AppraiseePersonalAttributesUpdateView(TemplateView):
         handler = CurrentQuarterDate(year=appraisal_object.created_date.year)
         current_q_type = handler.get_current_quarter()
         current_quarter_obj = self.get_year_quarter_obj()
-
+        
         match current_quarter_obj.quarter:
             case 1:
                 return current_q_type.is_within_first_quarter
@@ -886,7 +894,6 @@ class AppraiseePersonalAttributesUpdateView(TemplateView):
             case 3:
                 return current_q_type.is_within_third_quarter
             case _:
-                
                 return current_q_type.is_within_fourth_quarter
     
     def is_all_scored(self):

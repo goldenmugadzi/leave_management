@@ -167,7 +167,7 @@ class ExperienceForm(forms.ModelForm):
 class AppraiseePersonalAttributeForm(forms.ModelForm):
     class Meta:
         model = AppraiseePersonalAttribute
-        exclude = ["created", "updated", "appraisal", "quarter", "is_completed"]
+        exclude = ["created_date", "updated", "appraisal", "quarter", "is_completed"]
         
         
     def __init__(self, *args, **kwargs):

@@ -221,6 +221,7 @@ def is_within_current_quarter(year: int, quarter: int)->bool:
     current_quarter_date_handler = CurrentQuarterDate(year=year)
     current_quarter_date = current_quarter_date_handler.get_current_quarter()
     
+    
     match quarter:
         case 1:
             if current_quarter_date.is_within_first_quarter:
@@ -232,6 +233,10 @@ def is_within_current_quarter(year: int, quarter: int)->bool:
             if current_quarter_date.is_within_third_quarter:
                 return True
         case 4:
+            date_rule_handler = AppraisalDatesRulesHandler()
+            if date_rule_handler.is_within_extended_year():
+                return True
+            
             if current_quarter_date.is_within_fourth_quarter:
                 return True
         case default:

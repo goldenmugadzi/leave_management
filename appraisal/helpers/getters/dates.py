@@ -3,6 +3,7 @@ from typing import Tuple
 from datetime import date
 from dateutil.relativedelta import relativedelta
 from ..types.quarters import CurrentQuartersType
+from ..rules import AppraisalDatesRulesHandler
 
 def get_assessment_period(date_object):
     year = date_object.year    
@@ -54,6 +55,15 @@ class CurrentQuarterDate:
         second_q_start_date, second_q_end_date = self.second_q_start_end_dates()
         third_q_start_date, third_q_end_date = self.third_q_start_end_dates()
         fourth_q_start_date, fourth_q_end_date = self.fourth_q_start_end_dates()
+        
+        date_rules_handler = AppraisalDatesRulesHandler()
+        if date_rules_handler.is_within_extended_year():
+            return CurrentQuartersType(
+                is_within_first_quarter=False,
+                is_within_second_quarter=False,
+                is_within_third_quarter=False,
+                is_within_fourth_quarter=True
+            )
         
         return CurrentQuartersType(
             is_within_first_quarter=self.is_within_range(first_date=first_q_start_date, end_date=first_q_end_date),
