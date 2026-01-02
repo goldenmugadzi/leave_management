@@ -2,6 +2,7 @@ from django import template
 from datetime import date
 from dateutil.relativedelta import relativedelta
 from ..helpers.types.approval import ApprovalStageChoices
+from ..helpers.rules import AppraisalDatesRulesHandler
 
 register = template.Library()
 
@@ -21,6 +22,10 @@ def get_current_quarter(value):
     current_yr = today.year
 
     start_date = date(current_yr, 1, 1)
+    
+    date_handler = AppraisalDatesRulesHandler()
+    if date_handler.is_within_extended_year():
+        return ApprovalStageChoices.Fourth_Quarter.value
 
     for index, quarter in enumerate(ApprovalStageChoices):
         quarter_start_date = start_date + relativedelta(months=3 * index)

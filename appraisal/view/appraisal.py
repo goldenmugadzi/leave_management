@@ -162,34 +162,49 @@ class AppraisalCreateView(SuccessMessageMixin, CreateView):
         
 
     def form_valid(self, form: BaseModelForm) -> HttpResponse:
-        appraisee_object = self.get_user_object()
-        
-        if not appraisee_object.grade:
-            messages.error(self.request, "Oops! Your profile has no grade set. Kindly contact admin.")
-            return self.form_invalid(form)
+        try:
+            
+            appraisee_object = self.get_user_object()
+            
+            if not appraisee_object.grade:
+                messages.error(self.request, "Oops! Your profile has no grade set. Kindly contact admin.")
+                return self.form_invalid(form)
 
-        if not appraisee_object.designation:
-            messages.error(self.request, "Oops! Your profile has no designation set. Kindly contact admin.")
-            return self.form_invalid(form)
-        
-        if not appraisee_object.cost_center:
-            messages.error(self.request, "Oops! Your profile has no cost center set. Kindly contact admin.")
-            return self.form_invalid(form)
-        
-        if not self.is_designation_outputs_set():
-            messages.error(self.request, "Oops! It appears that your department's outputs and activities have not been set yet. Please check with your supervisor to address this")
-            return self.form_invalid(form)
-        
-        if self.has_no_qualification_and_experience():
-            messages.error(self.request, "Oops! Your profile has no qualifications or experiences. Kindly contact admin.")
-            return self.form_invalid(form)
-        
-        appraiser_object = form.cleaned_data.get("appraiser")
-        repo = AppraisalRepository()
-        appraisal_object = repo.create(appraisee_object=appraisee_object, appraiser_object=appraiser_object)
-        form.instance = appraisal_object
-        
-        return super().form_valid(form)
+            if not appraisee_object.designation:
+                messages.error(self.request, "Oops! Your profile has no designation set. Kindly contact admin.")
+                return self.form_invalid(form)
+            
+            if not appraisee_object.cost_center:
+                messages.error(self.request, "Oops! Your profile has no cost center set. Kindly contact admin.")
+                return self.form_invalid(form)
+            
+            if not self.is_designation_outputs_set():
+                messages.error(self.request, "Oops! It appears that your department's outputs and activities have not been set yet. Please check with your supervisor to address this")
+                return self.form_invalid(form)
+            
+            if self.has_no_qualification_and_experience():
+                messages.error(self.request, "Oops! Your profile has no qualifications or experiences. Kindly contact admin.")
+                return self.form_invalid(form)
+            
+            appraiser_object = form.cleaned_data.get("appraiser")
+            
+            appraisal_object = None
+            repo = AppraisalRepository()
+            is_within, prev_year_date = self.date_rules()
+            if is_within:
+                appraisal_object = repo.create(appraisee_object=appraisee_object, appraiser_object=appraiser_object, creation_date=prev_year_date)
+            else:
+                appraisal_object = repo.create(appraisee_object=appraisee_object, appraiser_object=appraiser_object)
+            
+            if appraisal_object is None:
+                raise Exception("appraisal object not created")
+            form.instance = appraisal_object
+            
+            return super().form_valid(form)
+        except Exception as e:
+            logger.error(f"AppraisalCreateView create failed with error: {e}")
+            messages.error(self.request, "An unexpected error occurred, please try again")
+            return super().form_invalid(form)
 
     def get(self, request, *args, **kwargs):
         self.object = None
