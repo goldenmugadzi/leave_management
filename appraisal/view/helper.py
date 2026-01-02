@@ -12,6 +12,7 @@ from ..helpers.types.approval import ApprovalStageChoices
 from ..repository.kra import YearQuarterRepository
 from ..helpers.getters.approval import ApprovalStagesHandler
 from ..forms.appraisal import ApprovalStageFilterForm
+from ..helpers.rules import AppraisalDatesRulesHandler
 from pydantic import ValidationError, BaseModel
 from loguru import logger
 
@@ -308,4 +309,11 @@ class ApprovalStagesTemplateHandler:
             **approval_stages_data,
             **approval_stages_form_data
         }
+    
+
+def extended_date_rules():
+    date_rule_handler = AppraisalDatesRulesHandler()
+    is_within = date_rule_handler.is_within_extended_year()
+    prev_yr_date = date_rule_handler.get_prev_year_end_date()
+    return is_within, prev_yr_date
     

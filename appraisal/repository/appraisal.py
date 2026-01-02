@@ -5,9 +5,12 @@ from it.users.models import UserProfile
 
 
 class AppraisalRepository:
-    def create(self, appraisee_object: UserProfile, appraiser_object: UserProfile) -> Appraisal:
+    def create(self, appraisee_object: UserProfile, appraiser_object: UserProfile, creation_date=None) -> Appraisal:
         try:
-            return Appraisal.objects.create(user=appraisee_object, appraiser=appraiser_object, reviewer=None)
+            obj = Appraisal.objects.create(user=appraisee_object, appraiser=appraiser_object, reviewer=None)
+            if creation_date:
+                obj.created_date = creation_date
+                obj.save(update_fields=["created_date"])
         except Exception as e:
             raise Exception(f"Appraisal Create Repo failed with error: {e}")
 

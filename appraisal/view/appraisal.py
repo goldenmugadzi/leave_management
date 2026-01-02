@@ -47,6 +47,7 @@ from ..repository.training import TrainingAndDevelopmentRepository
 from .helper import ApprovalStagesTemplateHandler
 from ..helpers.setters import handle_stage_completion
 from ..helpers.data.approval_stage import ApprovalStageData
+from ..helpers.rules import AppraisalDatesRulesHandler
 from loguru import logger
 
 def get_user_by_id(user_id: int)->UserProfile:
@@ -69,10 +70,19 @@ class AppraisalCreateView(SuccessMessageMixin, CreateView):
         kwargs = super().get_form_kwargs()
         kwargs["appraisee_id"] = self.get_user_object().id
         return kwargs
+    
+    def date_rules(self):
+        date_rule_handler = AppraisalDatesRulesHandler()
+        is_within = date_rule_handler.is_within_extended_year()
+        prev_yr_date = date_rule_handler.get_prev_year_end_date()
+        return is_within, prev_yr_date
 
     def get_current_date_assessment(self):
-        current_date = datetime.now()
-        return get_assessment_period(date_object=current_date)
+        date_obj = datetime.now()
+        is_within_extended_yr, prev_yr = self.date_rules()
+        if is_within_extended_yr:
+            date_obj = prev_yr
+        return get_assessment_period(date_object=date_obj)
     
     def get_user_experiences(self, user_id: int):
         repo = UserExperienceRepository()
@@ -135,13 +145,18 @@ class AppraisalCreateView(SuccessMessageMixin, CreateView):
         return context
     
     def is_designation_outputs_set(self)->bool:
+        year = datetime.now().year
+        is_within_extended_yr, prev_yr_date = self.date_rules()
+        
+        if is_within_extended_yr:
+            year = prev_yr_date.year
         repo = DepartmentalOutRepository()
         user_obj = self.get_user_object()
         
         designation_outputs_qr = repo.fetch_by_cost_center_id_designation_id_year(
             designation_id=user_obj.designation.id,
             cost_center_id=user_obj.cost_center.id,
-            year=datetime.now().year
+            year=year
         )
         return designation_outputs_qr.exists()
         
@@ -189,7 +204,14 @@ class AppraisalCreateView(SuccessMessageMixin, CreateView):
                         request,
                         "<strong>Incomplete Appraisee Profile</strong>: The profile is missing required details such as designation, cost center, qualifications, experiences or grade. Please contact the IT department to complete the profile setup."
                     )
-                
+            
+            is_within_extended_yr, _ = self.date_rules()
+            if is_within_extended_yr:
+                messages.info(
+                    request,
+                    "<strong>Take Note:</strong> The appraisal you are creating applies to last year, not the current year."
+                )
+            
             messages.info(
                 request,
                 "<strong>Take Note:</strong> Please ensure your profile is complete — including designation, department, qualifications, and experience — before creating an appraisal. You may add missing details and must set your appraiser as the final step."
