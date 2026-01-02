@@ -321,7 +321,6 @@ class AppraisalUpdateView(SuccessMessageMixin, UpdateView):
         appraisee_object = appraisal_object.user
         
         context[self.context_object_name] = context.get("form")
-        
         if appraisal_object.is_accepted:
             context.update(self.approval_stage_data())
         context["appraisal_object"] = appraisal_object
