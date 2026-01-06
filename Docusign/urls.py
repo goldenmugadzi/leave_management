@@ -7,6 +7,7 @@ urlpatterns = [
     path('user-search/', UserSearchView.as_view(), name='user_search'),
     path('requests/', RequestListView.as_view(), name='request_list'),
     path('request/<int:pk>/', RequestDetailView.as_view(), name='request_detail'),
+    path('download-with-qr/<int:request_id>/', download_with_qr, name='download_with_qr'),
     
     path("preview/<int:req_id>/", PDFPreviewView.as_view(), name="pdf_preview"),
 

@@ -66,4 +66,5 @@ class Mutation(graphene.ObjectType):
     create_pretask_risk_assessment = CreatePretaskRiskAssessment.Field()
     update_teammember_agreed = UpdateTeammemberAgreed.Field()
 
-schema = graphene.Schema(query=Query, mutation=Mutation)
+# Schema is created in beii_v1/schema.py - do not create duplicate here
+# schema = graphene.Schema(query=Query, mutation=Mutation)

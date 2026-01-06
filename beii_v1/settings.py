@@ -24,15 +24,18 @@ CORS_ALLOWED_ORIGINS = [
     config('BASE_URL') + ":" + config('PORT'),
     config('BASE_URL') + ":3000",
     "https://ca173bdd6d5b.ngrok-free.app",
+  'http://localhost:3000',
+    'http://127.0.0.1:3000',
 ]
+CORS_ALLOW_CREDENTIALS = True
 
 # CORS_ALLOW_ALL_ORIGINS = True
 CSRF_TRUSTED_ORIGINS = [
     config('BASE_URL'),
     config('BASE_URL') + ":" + config('PORT'),
     "https://ca173bdd6d5b.ngrok-free.app",
-    # Add your production domain here
-    # "https://your-production-domain.com"
+      'http://localhost:3000',
+    'http://127.0.0.1:3000',
 ]
 
 CORS_ALLOW_HEADERS = ('content-disposition', 'accept-encoding',
@@ -169,6 +172,7 @@ INSTALLED_APPS = [
 AUTH_USER_MODEL = 'users.UserProfile'
 
 MIDDLEWARE = [
+    'beii_v1.graphql_middleware.GraphQLLoggingMiddleware',  # Add at the top to catch everything
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',

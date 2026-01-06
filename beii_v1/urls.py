@@ -17,7 +17,7 @@ Including another URLconf
 from django.conf.urls.static import static
 from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
-from graphene_file_upload.django import FileUploadGraphQLView
+from .graphql_view import CustomGraphQLView
 from django.contrib import admin
 from django.urls import path, include
 
@@ -89,7 +89,8 @@ urlpatterns = [
     path('equipment/', include('equipment_management.urls')),
     
     path('api-auth/', include('rest_framework.urls')),
-    path("gql/", csrf_exempt(FileUploadGraphQLView.as_view(graphiql=True))),  
+    path("gql/", csrf_exempt(CustomGraphQLView.as_view(graphiql=True))),
+    path("graphql/", csrf_exempt(CustomGraphQLView.as_view(graphiql=True))),  # Alias for frontend compatibility
     path('api/auth/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('api/auth/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('api/auth/token/verify/', TokenVerifyView.as_view(), name='token_verify'),

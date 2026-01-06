@@ -27,7 +27,6 @@ class Query(ObjectType):
     all_recoveredmeters = List(RecoveredMeterType)
     all_faultmaintanances = List(FaultMaintananceType)
     all_reconnections = List(ReconnectionType)
-    token_types = List(TokenType)
 
     @login_required
     def resolve_all_tokens(self, info, limit=None):
@@ -43,10 +42,7 @@ class Query(ObjectType):
     @login_required
     def resolve_token(self, info, id):
         return Token.objects.get(pk=id)
-    # @login_required
-    def resolve_token_types(self, info):
-        return Token.objects.values_list('token_type', flat=True).distinct()
-    
+   
     @login_required
     def resolve_meter_tokens(self, info, meter_number, limit=None):
         qs = Token.objects.filter(meter__number=meter_number)
