@@ -404,6 +404,7 @@ def approve_step(request, process_id):
     elif process.workflow.name == "tokens":
         return redirect("tokens:token", process.token_set.last().id)
     else:
+        print("redirecting to workflow detail")
         return redirect("approve:workflow_detail", process.workflow.id)
 
 
