@@ -367,3 +367,9 @@ def scheduled_meetings(request):
         'is_requester': hasattr(request.user, 'is_requester') and request.user.is_requester,
         'user': request.user,
     })
+
+def available_venues(request):
+    """Render the available venues page with DataTable."""
+    return render(request, 'Meetings/available_venues.html', {
+        'user': request.user,
+    })
