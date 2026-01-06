@@ -232,7 +232,7 @@ class OutPutPerformanceDimensionRepository:
                 output_perf_dimension_obj.description = data.description
                 is_changed = True
             
-                
+            
             if output_perf_dimension_obj.weight != data.weight:
                 output_perf_dimension_obj.weight = data.weight
                 is_changed = True

@@ -108,7 +108,10 @@ class PayloadDeserializationStrategyContext:
                 None: indicates an error
         """
         try:
-            return self.strategy.deserialize(form_object=form_object)
+            form = form_object
+            if not form.is_valid():
+                raise ValidationError
+            return self.strategy.deserialize(form_object=form)
         except ValidationError as e:
             error_messages = ""
             for error_message in e.errors():
