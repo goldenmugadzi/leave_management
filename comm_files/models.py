@@ -142,7 +142,7 @@ class OnboardingProcess(models.Model):
 class ActivityLog(models.Model):
     customer = models.ForeignKey(Customer, on_delete=models.CASCADE, related_name='activity_logs')
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
-    action = models.CharField(max_length=255)
+    action = models.TextField(blank=True, null=True)
     timestamp = models.DateTimeField(auto_now_add=True)
     details = models.TextField(blank=True, null=True)
     
