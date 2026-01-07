@@ -1,0 +1,1575 @@
+{% extends "frontend_api/base.html" %}
+
+{% block title %}View Signing Request - Secure PKI Signing{% endblock %}
+
+{% block extra_css %}
+<style>
+    .main-layout {
+        display: flex;
+        gap: 1rem;
+        align-items: flex-start;
+    }
+    
+    .sidebar {
+        width: 350px;
+        flex-shrink: 0;
+        position: sticky;
+        top: 1rem;
+        max-height: calc(100vh - 2rem);
+        overflow-y: auto;
+    }
+    
+    .pdf-container {
+        flex: 1;
+        min-width: 0;
+    }
+    
+    .pdf-viewer {
+        width: 100%;
+        height: 600px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        margin-bottom: 2rem;
+    }
+    
+    .signature-selector {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 1rem;
+        margin: 1rem 0;
+    }
+    
+    .signature-option {
+        border: 2px solid #ddd;
+        border-radius: 4px;
+        padding: 1rem;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+    
+    .signature-option:hover,
+    .signature-option.selected {
+        border-color: #667eea;
+        background: #f0f0ff;
+    }
+    
+    .signature-option img {
+        width: 100%;
+        max-height: 100px;
+        object-fit: contain;
+    }
+    
+    .signature-mode-btn {
+        flex: 1;
+        padding: 0.75rem;
+    }
+    
+    .signature-mode-btn.active {
+        background: #667eea;
+        color: white;
+    }
+    
+    .signature-preview {
+        box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);
+        transition: all 0.2s;
+    }
+    
+    .pdf-page-container {
+        position: relative;
+        margin-bottom: 1rem;
+    }
+    
+    .draggable-element {
+        position: absolute;
+        cursor: move;
+        border: 2px solid #2196f3;
+        background: transparent;
+        padding: 0;
+        border-radius: 0;
+        z-index: 10;
+        user-select: none;
+        line-height: 0;
+        overflow: hidden;
+    }
+    
+    .draggable-element:hover {
+        box-shadow: 0 4px 12px rgba(33, 150, 243, 0.5);
+        border-color: #1976d2;
+    }
+    
+    .draggable-element.dragging {
+        opacity: 0.7;
+        cursor: grabbing;
+    }
+    
+    .draggable-element .delete-btn {
+        position: absolute;
+        top: -10px;
+        right: -10px;
+        width: 24px;
+        height: 24px;
+        background: #f44336;
+        color: white;
+        border: none;
+        border-radius: 50%;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+        line-height: 1;
+    }
+    
+    .draggable-element .delete-btn:hover {
+        background: #d32f2f;
+    }
+    
+    #signature-canvas {
+        background: white;
+    }
+    
+    .timeline {
+        position: relative;
+        padding-left: 2rem;
+    }
+    
+    .timeline-item {
+        position: relative;
+        padding-bottom: 1.5rem;
+    }
+    
+    .timeline-item::before {
+        content: '';
+        position: absolute;
+        left: -1.5rem;
+        top: 0.5rem;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: #667eea;
+    }
+    
+    .timeline-item::after {
+        content: '';
+        position: absolute;
+        left: -1.05rem;
+        top: 1.2rem;
+        width: 2px;
+        height: calc(100% - 0.5rem);
+        background: #ddd;
+    }
+    
+    .timeline-item:last-child::after {
+        display: none;
+    }
+    
+    .action-card {
+        padding: 1.5rem;
+        text-align: center;
+        background: white;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    
+    .action-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+        background: #fafafa;
+    }
+    
+    @media (max-width: 968px) {
+        .main-layout {
+            flex-direction: column;
+        }
+        .sidebar {
+            width: 100%;
+        }
+    }
+    
+    .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,0.5);
+        z-index: 1000;
+        justify-content: center;
+        align-items: center;
+    }
+    
+    .modal.active {
+        display: flex;
+    }
+    
+    .modal-content {
+        background: white;
+        padding: 2rem;
+        border-radius: 8px;
+        max-width: 1200px;
+        width: 90%;
+        max-height: 90vh;
+        overflow-y: auto;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="main-layout">
+    <!-- Sidebar with Document Details -->
+    <div class="sidebar">
+        <!-- Document Header -->
+        <div class="card" style="margin-bottom: 1rem;">
+            <div class="card-header">
+                <span class="material-icons" style="vertical-align: middle;">description</span>
+                Document Info
+            </div>
+            
+            <div>
+                <h4 style="margin-bottom: 0.5rem;">{{ signing_request.document.title }}</h4>
+                {% if signing_request.status == 'completed' %}
+                <span class="badge badge-success">Completed</span>
+                {% elif signing_request.status == 'pending' %}
+                <span class="badge badge-warning">Pending</span>
+                {% else %}
+                <span class="badge badge-danger">{{ signing_request.status|title }}</span>
+                {% endif %}
+            </div>
+            
+            <!-- Progress -->
+            <div style="margin-top: 1.5rem;">
+                <h5>Signing Progress</h5>
+                <div class="progress" style="height: 20px; margin-top: 0.5rem;">
+                    <div class="progress-bar" style="width: {{ progress_percentage }}%;">
+                        {{ progress_percentage }}%
+                    </div>
+                </div>
+                <p style="margin-top: 0.5rem; font-size: 0.875rem;">
+                    {{ signed_count }} of {{ total_signers }} signatures collected
+                    {% if not signing_request.require_all_signatures %}
+                    <span style="color: #667eea;"> • At least one signature required</span>
+                    {% endif %}
+                </p>
+            </div>
+            
+            <!-- Actions -->
+            <div style="margin-top: 1.5rem;">
+                <h5 style="margin-bottom: 1rem;">Actions</h5>
+                
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.75rem; margin-bottom: 1rem;">
+                    <!-- Download -->
+                    {% if signing_request.status == 'completed' %}
+                    <a href="{% url 'frontend_api:download_document' signing_request.id %}" 
+                       style="text-decoration: none; color: inherit;">
+                        <div class="action-card">
+                            <span class="material-icons" style="font-size: 40px; color: #667eea;">download</span>
+                            <div style="font-size: 0.75rem; margin-top: 0.5rem;">Download</div>
+                        </div>
+                    </a>
+                    {% else %}
+                    <div style="padding: 1.5rem; text-align: center; background: #f5f5f5; border: 1px solid #ddd; border-radius: 8px; opacity: 0.5; cursor: not-allowed;">
+                        <span class="material-icons" style="font-size: 40px; color: #999;">download</span>
+                        <div style="font-size: 0.75rem; margin-top: 0.5rem;">Download</div>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Add Signer (only for latest signatory) -->
+                    {% if is_last_signer %}
+                    <a href="{% url 'frontend_api:create_signing_request' document_id=signing_request.document.id %}" 
+                       style="text-decoration: none; color: inherit;">
+                        <div class="action-card">
+                            <span class="material-icons" style="font-size: 40px; color: #764ba2;">person_add</span>
+                            <div style="font-size: 0.75rem; margin-top: 0.5rem;">Add Signer</div>
+                        </div>
+                    </a>
+                    {% endif %}
+                </div>
+                
+                {% if can_sign %}
+                <button class="btn btn-success" onclick="openSignModal()" style="width: 100%; margin-bottom: 0.5rem;">
+                    <span class="material-icons">draw</span>
+                    Sign Document
+                </button>
+                {% endif %}
+                
+                {% if user.is_authenticated %}
+                <a href="{% url 'frontend_api:dashboard' %}" class="btn btn-secondary" style="width: 100%;">
+                    <span class="material-icons">arrow_back</span>
+                    Back to Dashboard
+                </a>
+                {% else %}
+                <a href="{% url 'frontend_api:login' %}" class="btn btn-primary" style="width: 100%;">
+                    <span class="material-icons">login</span>
+                    Login to Sign
+                </a>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Signers List -->
+        <div class="card" style="margin-bottom: 1rem;">
+            <div class="card-header">
+                <span class="material-icons" style="vertical-align: middle;">people</span>
+                Signers
+            </div>
+            
+            <div style="max-height: 300px; overflow-y: auto;">
+                {% for signer_info in signers_with_status %}
+                <div style="padding: 0.75rem; border-bottom: 1px solid #f0f0f0;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.25rem;">
+                        <strong>{{ signer_info.possible_signer.signer.username }}</strong>
+                        {% if signer_info.has_signed %}
+                        <span class="badge badge-success">Signed</span>
+                        {% else %}
+                        <span class="badge badge-warning">Pending</span>
+                        {% endif %}
+                    </div>
+                    <small style="color: #777;">{{ signer_info.possible_signer.role }}</small>
+                    {% if signer_info.signed_at %}
+                    <br><small style="color: #777;">{{ signer_info.signed_at|date:"M d, Y h:i A" }}</small>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <!-- Document History -->
+        <div class="card">
+            <div class="card-header">
+                <span class="material-icons" style="vertical-align: middle;">history</span>
+                History
+            </div>
+            
+            <div class="timeline" style="max-height: 300px; overflow-y: auto;">
+                {% for event in history %}
+                <div class="timeline-item">
+                    <strong>{{ event.user }}</strong> - {{ event.description }}
+                    <br>
+                    <small style="color: #777;">{{ event.timestamp|date:"M d, Y h:i A" }}</small>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- PDF Container -->
+    <div class="pdf-container">
+        <div style="border: 1px solid #ddd; border-radius: 4px; background: #fff; overflow-y: auto;">
+            {% for page_img in pdf_page_images %}
+                <div class="pdf-page-container">
+                    <div style="background: white;">
+                        <img src="{{ page_img.url }}" 
+                             class="pdf-page-image"
+                             alt="Page {{ page_img.page_num }}" 
+                             data-page-num="{{ page_img.page_num }}"
+                             style="width: 100%; height: auto; display: block; box-shadow: 0 2px 8px rgba(0,0,0,0.1);"
+                             loading="lazy">
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_content %}
+<!-- Sign Modal -->
+<div id="signModal" class="modal">
+    <div class="modal-content">
+        <h2>Sign Document</h2>
+        
+        <form id="signForm" method="post" action="{% url 'frontend_api:sign_document' signing_request.id %}">
+            {% csrf_token %}
+            
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                <h4 style="margin: 0;">Select Your Signature</h4>
+                <button type="button" class="btn btn-secondary" onclick="showCreateSignature()" style="padding: 0.5rem 1rem;">
+                    <span class="material-icons" style="font-size: 1rem;">add</span>
+                    Create New
+                </button>
+            </div>
+            
+            <!-- Signature Selection View -->
+            <div id="signature-selection-view">
+                <div class="signature-selector">
+                    {% for sig in my_signatures %}
+                    <div class="signature-option" data-signature-id="{{ sig.id }}" data-requires-pki="{{ sig.requires_pki|yesno:'true,false' }}" onclick="selectSignature(this)">
+                        {% if sig.image %}
+                        <img src="{{ sig.image.url }}" alt="Signature">
+                        {% else %}
+                        <div style="padding: 2rem; background: #f0f0f0; border-radius: 4px; text-align: center;">
+                            <span class="material-icons" style="font-size: 48px; color: #999;">draw</span>
+                        </div>
+                        {% endif %}
+                        <p style="margin-top: 0.5rem; font-size: 0.875rem;">
+                            {{ sig.description|default:"Signature" }}
+                            {% if sig.requires_pki %}
+                            <span class="badge badge-success">🔒 PKI</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                    {% empty %}
+                    <div style="padding: 2rem; text-align: center; color: #777;">
+                        <span class="material-icons" style="font-size: 48px; color: #ddd;">draw</span>
+                        <p>No signatures found. Create one to continue.</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            
+            <!-- Create Signature View -->
+            <div id="create-signature-view" style="display: none;">
+                <div class="form-group">
+                    <label>Signature Mode</label>
+                    <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem;">
+                        <button type="button" class="btn btn-secondary signature-mode-btn active" data-mode="upload" onclick="switchSignatureMode('upload')">
+                            <span class="material-icons">upload_file</span> Upload
+                        </button>
+                        <button type="button" class="btn btn-secondary signature-mode-btn" data-mode="draw" onclick="switchSignatureMode('draw')">
+                            <span class="material-icons">draw</span> Draw
+                        </button>
+                        <button type="button" class="btn btn-secondary signature-mode-btn" data-mode="text" onclick="switchSignatureMode('text')">
+                            <span class="material-icons">text_fields</span> Type
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Upload Mode -->
+                <div id="upload-mode" class="signature-mode-content">
+                    <div class="form-group">
+                        <label for="signature_image">Upload Signature Image</label>
+                        <input type="file" id="signature_image" accept="image/*" onchange="previewSignatureImage(this)">
+                    </div>
+                    <div id="image-preview" style="margin-top: 1rem; display: none;">
+                        <img id="preview-img" style="max-width: 100%; max-height: 200px; border: 1px solid #ddd; border-radius: 4px;">
+                    </div>
+                </div>
+                
+                <!-- Draw Mode -->
+                <div id="draw-mode" class="signature-mode-content" style="display: none;">
+                    <canvas id="signature-canvas" width="400" height="200" style="border: 1px solid #ddd; border-radius: 4px; cursor: crosshair; touch-action: none; width: 100%;"></canvas>
+                    <button type="button" class="btn btn-secondary" onclick="clearCanvas()" style="margin-top: 0.5rem;">
+                        <span class="material-icons">clear</span> Clear
+                    </button>
+                </div>
+                
+                <!-- Text Mode -->
+                <div id="text-mode" class="signature-mode-content" style="display: none;">
+                    <div class="form-group">
+                        <label for="signature_text">Type Your Signature</label>
+                        <input type="text" id="signature_text" placeholder="Your Name" oninput="updateTextPreview()">
+                    </div>
+                    <div class="form-group">
+                        <label>Select Font Style (Click to Select)</label>
+                        <div id="font-grid" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; max-height: 500px; overflow-y: auto; padding-right: 0.5rem; margin-top: 0.5rem;">
+                            <!-- Font options will be generated here -->
+                        </div>
+                    </div>
+                    <div id="text-preview" style="margin-top: 1rem; padding: 2rem; background: #f9f9f9; border: 2px solid #ddd; border-radius: 4px; text-align: center; min-height: 120px; display: flex; align-items: center; justify-content: center;">
+                        <span style="font-size: 48px; font-family: 'Kapakana', cursive; color: #000;" id="preview-text">Your Name</span>
+                    </div>
+                </div>
+                
+                <div class="form-group" style="margin-top: 1rem;">
+                    <label for="signature_description">Description (Optional)</label>
+                    <input type="text" id="signature_description" placeholder="e.g., Quick Approval, Legal Documents">
+                </div>
+                
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" id="requires_pki_checkbox" onchange="togglePkiPasswordFields()">
+                        Require PKI Protection
+                    </label>
+                    <small style="display: block; margin-top: 0.5rem; color: #777;">
+                        PKI protection requires you to set a password that will be needed when using this signature
+                    </small>
+                </div>
+                
+                <div id="pki_setup_fields" style="display: none; border: 1px solid #667eea; border-radius: 4px; padding: 1rem; margin-top: 1rem; background: #f0f0ff;">
+                    <h5 style="margin-bottom: 1rem; color: #667eea;">
+                        <span class="material-icons" style="vertical-align: middle; font-size: 1.2rem;">lock</span>
+                        PKI Setup
+                    </h5>
+                    <div class="form-group">
+                        <label for="pki_password_new">PKI Password</label>
+                        <input type="password" id="pki_password_new" placeholder="Enter a strong password">
+                        <small>This password will be required when signing with this signature</small>
+                    </div>
+                    <div class="form-group">
+                        <label for="pki_password_confirm">Confirm Password</label>
+                        <input type="password" id="pki_password_confirm" placeholder="Re-enter password">
+                    </div>
+                </div>
+                
+                <button type="button" class="btn btn-primary" onclick="createNewSignature()">
+                    <span class="material-icons">save</span>
+                    Save Signature
+                </button>
+                
+                <button type="button" class="btn btn-secondary" onclick="hideCreateSignature()">
+                    <span class="material-icons">arrow_back</span>
+                    Back to Selection
+                </button>
+            </div>
+            
+            <div id="signing-controls">
+                <input type="hidden" name="signature_id" id="selected_signature_id" required>
+                
+                <div class="form-group" id="pki_password_group" style="display: none;">
+                    <label for="private_key_password">Private Key Password</label>
+                    <input type="password" id="private_key_password" name="private_key_password">
+                    <small>Required for PKI signatures</small>
+                </div>
+                
+                <!-- Signature Placement Instructions -->
+                <div id="placement-instructions" style="display: none; margin-top: 1rem; padding: 1rem; background: #f0f8ff; border-left: 4px solid #2196f3; border-radius: 4px;">
+                    <h4 style="margin: 0 0 0.5rem 0; color: #2196f3;">Place Your Signature</h4>
+                    <p style="margin: 0.5rem 0;">Click on the document where you want to place your signature.</p>
+                    <div style="margin-top: 1rem;">
+                        <label style="display: flex; align-items: center; margin-bottom: 0.5rem;">
+                            <input type="checkbox" id="include_name" checked style="margin-right: 0.5rem;">
+                            Include my name
+                        </label>
+                        <label style="display: flex; align-items: center; margin-bottom: 0.5rem;">
+                            <input type="checkbox" id="include_date" checked style="margin-right: 0.5rem;">
+                            Include date
+                        </label>
+                        <label style="display: flex; align-items: center;">
+                            <input type="checkbox" id="include_initials" style="margin-right: 0.5rem;">
+                            Add initials to all pages
+                        </label>
+                    </div>
+                </div>
+                
+                <!-- Position fields (will be filled by JavaScript) -->
+                <input type="hidden" name="page_number" id="sig_page_number" value="1">
+                <input type="hidden" name="x_pct" id="sig_x_pct" value="0.1">
+                <input type="hidden" name="y_pct" id="sig_y_pct" value="0.7">
+                <input type="hidden" name="width_pct" id="sig_width_pct" value="0.2">
+                <input type="hidden" name="height_pct" id="sig_height_pct" value="0.1">
+                <input type="hidden" name="include_name" id="include_name_input" value="true">
+                <input type="hidden" name="include_date" id="include_date_input" value="true">
+                <input type="hidden" name="include_initials" id="include_initials_input" value="false">
+                
+                <button type="button" class="btn btn-primary" id="complete-signing-btn" onclick="completeSigning()" style="display: none;">
+                    <span class="material-icons">done</span>
+                    Complete Signing
+                </button>
+                
+                <button type="button" class="btn btn-secondary" onclick="closeSignModal()">
+                    Cancel
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Signature Options Modal -->
+<div id="signatureOptionsModal" class="modal">
+    <div class="modal-content" style="max-width: 500px;">
+        <h2>Signature Options</h2>
+        <p>Choose what to include with your signature:</p>
+        
+        <div style="display: flex; flex-direction: column; gap: 1rem; margin: 1.5rem 0;">
+            <button type="button" class="btn btn-primary" onclick="selectSignatureOption('all')" style="padding: 1rem; text-align: left;">
+                <strong>Full Signature Package</strong><br>
+                <small>Signature + Name + Date + Initials on all pages</small>
+            </button>
+            <button type="button" class="btn btn-secondary" onclick="selectSignatureOption('no-initials')" style="padding: 1rem; text-align: left;">
+                <strong>Signature with Name & Date</strong><br>
+                <small>Signature + Name + Date (no initials)</small>
+            </button>
+            <button type="button" class="btn btn-secondary" onclick="selectSignatureOption('name-only')" style="padding: 1rem; text-align: left;">
+                <strong>Signature with Name</strong><br>
+                <small>Signature + Name only</small>
+            </button>
+            <button type="button" class="btn btn-secondary" onclick="selectSignatureOption('date-only')" style="padding: 1rem; text-align: left;">
+                <strong>Signature with Date</strong><br>
+                <small>Signature + Date only</small>
+            </button>
+            <button type="button" class="btn btn-secondary" onclick="selectSignatureOption('signature-only')" style="padding: 1rem; text-align: left;">
+                <strong>Signature Only</strong><br>
+                <small>Just the signature image</small>
+            </button>
+        </div>
+        
+        <button type="button" class="btn btn-secondary" onclick="closeSignatureOptionsModal()">
+            Cancel
+        </button>
+    </div>
+</div>
+
+<script>
+let selectedSignature = null;
+
+function openSignModal() {
+    document.getElementById('signModal').classList.add('active');
+}
+
+function closeSignModal() {
+    document.getElementById('signModal').classList.remove('active');
+}
+
+let placingSignature = false;
+let signatureData = null;
+let signaturePlaced = false;
+let placedElements = [];
+let draggedElement = null;
+let dragOffset = { x: 0, y: 0 };
+
+function selectSignature(element) {
+    // Remove previous selection
+    document.querySelectorAll('.signature-option').forEach(opt => {
+        opt.classList.remove('selected');
+    });
+    
+    // Select this one
+    element.classList.add('selected');
+    const signatureId = element.dataset.signatureId;
+    selectedSignature = {
+        id: signatureId,
+        requiresPki: element.dataset.requiresPki === 'true',
+        imageUrl: element.querySelector('img') ? element.querySelector('img').src : null
+    };
+    document.getElementById('selected_signature_id').value = signatureId;
+    
+    // Check if PKI signature using data attribute
+    if (selectedSignature.requiresPki) {
+        document.getElementById('pki_password_group').style.display = 'block';
+    } else {
+        document.getElementById('pki_password_group').style.display = 'none';
+    }
+    
+    // Show signature options modal
+    document.getElementById('signatureOptionsModal').classList.add('active');
+}
+
+function closeSignatureOptionsModal() {
+    document.getElementById('signatureOptionsModal').classList.remove('active');
+}
+
+function selectSignatureOption(option) {
+    // Set options based on selection
+    const options = {
+        'all': { name: true, date: true, initials: true },
+        'no-initials': { name: true, date: true, initials: false },
+        'name-only': { name: true, date: false, initials: false },
+        'date-only': { name: false, date: true, initials: false },
+        'signature-only': { name: false, date: false, initials: false }
+    };
+    
+    const selected = options[option] || options['signature-only'];
+    
+    document.getElementById('include_name').checked = selected.name;
+    document.getElementById('include_date').checked = selected.date;
+    document.getElementById('include_initials').checked = selected.initials;
+    
+    // Update hidden fields
+    document.getElementById('include_name_input').value = selected.name;
+    document.getElementById('include_date_input').value = selected.date;
+    document.getElementById('include_initials_input').value = selected.initials;
+    
+    // Close both modals to show document
+    closeSignatureOptionsModal();
+    closeSignModal();
+    
+    // Show placement instructions in a floating panel
+    showPlacementInstructions();
+    
+    // Enable signature placement mode
+    placingSignature = true;
+    signatureData = selectedSignature;
+    
+    // Add click handler to PDF pages
+    enableSignaturePlacement();
+}
+
+function showPlacementInstructions() {
+    // Create or update floating instructions panel
+    let panel = document.getElementById('floating-placement-panel');
+    if (!panel) {
+        panel = document.createElement('div');
+        panel.id = 'floating-placement-panel';
+        panel.style.cssText = `
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            max-width: 350px;
+            padding: 1.5rem;
+            background: white;
+            border: 2px solid #2196f3;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 1000;
+        `;
+        document.body.appendChild(panel);
+    }
+    
+    panel.innerHTML = `
+        <h4 style="margin: 0 0 0.5rem 0; color: #2196f3;">
+            <span class="material-icons" style="vertical-align: middle;">touch_app</span>
+            Place Your Signature
+        </h4>
+        <p style="margin: 0.5rem 0; color: #666;">Click on the document where you want to place your signature.</p>
+        <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #eee;">
+            <strong>Selected Options:</strong>
+            <ul style="margin: 0.5rem 0; padding-left: 1.5rem;">
+                ${document.getElementById('include_name').checked ? '<li>✓ Name</li>' : ''}
+                ${document.getElementById('include_date').checked ? '<li>✓ Date</li>' : ''}
+                ${document.getElementById('include_initials').checked ? '<li>✓ Initials on all pages</li>' : ''}
+            </ul>
+        </div>
+        <button type="button" class="btn btn-secondary" onclick="cancelPlacement()" style="width: 100%; margin-top: 1rem;">
+            Cancel Placement
+        </button>
+    `;
+    panel.style.display = 'block';
+}
+
+function cancelPlacement() {
+    placingSignature = false;
+    signatureData = null;
+    signaturePlaced = false;
+    
+    // Remove floating panel
+    const panel = document.getElementById('floating-placement-panel');
+    if (panel) {
+        panel.remove();
+    }
+    
+    // Remove all draggable elements
+    placedElements.forEach(el => el.remove());
+    placedElements = [];
+    
+    // Reset cursor
+    document.querySelectorAll('.pdf-page-image').forEach(page => {
+        page.style.cursor = 'default';
+        page.onclick = null;
+    });
+    
+    // Reopen sign modal
+    openSignModal();
+}
+
+function enableSignaturePlacement() {
+    const pdfPages = document.querySelectorAll('.pdf-page-image');
+    pdfPages.forEach((page, index) => {
+        page.style.cursor = 'crosshair';
+        page.onclick = function(e) {
+            if (!placingSignature) return;
+            
+            const rect = page.getBoundingClientRect();
+            const x = (e.clientX - rect.left) / rect.width;
+            const y = (e.clientY - rect.top) / rect.height;
+            
+            // Create separate draggable elements
+            createDraggableElements(page, x, y, index + 1);
+            signaturePlaced = true;
+            
+            // Disable placement mode
+            placingSignature = false;
+            pdfPages.forEach(p => p.style.cursor = 'default');
+        };
+    });
+}
+
+function createDraggableElements(pageElement, clickXPct, clickYPct, pageNum) {
+    const container = pageElement.parentElement;
+    container.style.position = 'relative';
+    
+    const rect = pageElement.getBoundingClientRect();
+    const elementIds = [];
+    
+    // Load signature image to get actual dimensions (matching React behavior)
+    if (signatureData.imageUrl) {
+        const img = new Image();
+        img.src = signatureData.imageUrl;
+        
+        img.onload = () => {
+            const sigAspect = img.naturalWidth / img.naturalHeight;
+            
+            // Increased fixed height for better readability (was 60px)
+            const fixedHeightPx = 100;
+            const sigWidthPx = fixedHeightPx * sigAspect;
+            
+            // Calculate dimensions as percentages
+            const sigWidthPct = sigWidthPx / rect.width;
+            const sigHeightPct = (fixedHeightPx / rect.height);
+            
+            // Center signature at click point (matching React)
+            const sigXPct = Math.max(0, Math.min(1 - sigWidthPct, clickXPct - sigWidthPct / 2));
+            const sigYPct = Math.max(0, Math.min(1 - sigHeightPct, clickYPct - sigHeightPct / 2));
+            
+            // Create signature element
+            const sigElement = createDraggableElement({
+                type: 'signature',
+                pageNum: pageNum,
+                xPct: sigXPct,
+                yPct: sigYPct,
+                widthPct: sigWidthPct,
+                heightPct: sigHeightPct,
+                content: signatureData.imageUrl
+            }, container);
+            elementIds.push(sigElement.id);
+            
+            // Create name element (positioned to the right of signature) - same height
+            if (document.getElementById('include_name').checked) {
+                const userName = '{{ user.get_full_name|default:user.username }}';
+                const nameWidthPct = 0.034 * userName.length;
+                const nameHeightPct = sigHeightPct; // Same height as signature
+                const nameXPct = Math.min(1 - nameWidthPct, sigXPct + sigWidthPct + 0.02);
+                const nameYPct = sigYPct;
+                
+                const nameElement = createDraggableElement({
+                    type: 'name',
+                    pageNum: pageNum,
+                    xPct: nameXPct,
+                    yPct: nameYPct,
+                    widthPct: nameWidthPct,
+                    heightPct: nameHeightPct,
+                    content: userName
+                }, container);
+                elementIds.push(nameElement.id);
+            }
+            
+            // Create date element (positioned to the right of name) - same height
+            if (document.getElementById('include_date').checked) {
+                const userName = '{{ user.get_full_name|default:user.username }}';
+                const nameWidthPct = 0.034 * userName.length;
+                const nameXPct = Math.min(1 - nameWidthPct, sigXPct + sigWidthPct + 0.02);
+                
+                const dateWidthPct = 0.3;
+                const dateHeightPct = sigHeightPct; // Same height as signature
+                const dateXPct = Math.min(1 - dateWidthPct, nameXPct + nameWidthPct + 0.02);
+                const dateYPct = sigYPct;
+                
+                const dateElement = createDraggableElement({
+                    type: 'date',
+                    pageNum: pageNum,
+                    xPct: dateXPct,
+                    yPct: dateYPct,
+                    widthPct: dateWidthPct,
+                    heightPct: dateHeightPct,
+                    content: new Date().toLocaleDateString()
+                }, container);
+                elementIds.push(dateElement.id);
+            }
+            
+            // Update floating panel after elements are created
+            updateFloatingPanel(pageNum, elementIds.length);
+        };
+        
+        // Fallback: if image fails to load, use default aspect ratio
+        img.onerror = () => {
+            const defaultAspect = 2.5;
+            const fixedHeightPx = 100;
+            const sigWidthPx = fixedHeightPx * defaultAspect;
+            
+            const sigWidthPct = sigWidthPx / rect.width;
+            const sigHeightPct = fixedHeightPx / rect.height;
+            const sigXPct = Math.max(0, Math.min(1 - sigWidthPct, clickXPct - sigWidthPct / 2));
+            const sigYPct = Math.max(0, Math.min(1 - sigHeightPct, clickYPct - sigHeightPct / 2));
+            
+            const sigElement = createDraggableElement({
+                type: 'signature',
+                pageNum: pageNum,
+                xPct: sigXPct,
+                yPct: sigYPct,
+                widthPct: sigWidthPct,
+                heightPct: sigHeightPct,
+                content: signatureData.imageUrl
+            }, container);
+            elementIds.push(sigElement.id);
+            
+            updateFloatingPanel(pageNum, elementIds.length);
+        };
+    } else {
+        // No signature image, just create name/date if checked
+        let currentX = clickXPct;
+        
+        if (document.getElementById('include_name').checked) {
+            const userName = '{{ user.get_full_name|default:user.username }}';
+            const nameWidthPct = 0.034 * userName.length;
+            const nameHeightPct = 0.03;
+            const nameXPct = Math.max(0, Math.min(1 - nameWidthPct, clickXPct - nameWidthPct / 2));
+            const nameYPct = Math.max(0, Math.min(1 - nameHeightPct, clickYPct - nameHeightPct / 2));
+            
+            const nameElement = createDraggableElement({
+                type: 'name',
+                pageNum: pageNum,
+                xPct: nameXPct,
+                yPct: nameYPct,
+                widthPct: nameWidthPct,
+                heightPct: nameHeightPct,
+                content: userName
+            }, container);
+            elementIds.push(nameElement.id);
+            currentX = nameXPct + nameWidthPct + 0.02;
+        }
+        
+        if (document.getElementById('include_date').checked) {
+            const dateWidthPct = 0.3;
+            const dateHeightPct = 0.03;
+            const dateXPct = Math.max(0, Math.min(1 - dateWidthPct, currentX));
+            const dateYPct = Math.max(0, Math.min(1 - dateHeightPct, clickYPct - dateHeightPct / 2));
+            
+            const dateElement = createDraggableElement({
+                type: 'date',
+                pageNum: pageNum,
+                xPct: dateXPct,
+                yPct: dateYPct,
+                widthPct: dateWidthPct,
+                heightPct: dateHeightPct,
+                content: new Date().toLocaleDateString()
+            }, container);
+            elementIds.push(dateElement.id);
+        }
+        
+        updateFloatingPanel(pageNum, elementIds.length);
+    }
+}
+
+function createDraggableElement(data, container) {
+    const element = document.createElement('div');
+    element.className = 'draggable-element';
+    element.id = `element-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+    element.dataset.type = data.type;
+    element.dataset.pageNum = data.pageNum;
+    element.dataset.xPct = data.xPct;
+    element.dataset.yPct = data.yPct;
+    element.dataset.widthPct = data.widthPct;
+    element.dataset.heightPct = data.heightPct;
+
+    // Match React's PlacedSignature styling exactly
+    element.style.position = 'absolute';
+    element.style.left = `${data.xPct * 100}%`;
+    element.style.top = `${data.yPct * 100}%`;
+    element.style.width = `${data.widthPct * 100}%`;
+    element.style.height = `${data.heightPct * 100}%`;
+    element.style.pointerEvents = 'auto';
+    element.style.cursor = 'move';
+    element.style.border = '1px dashed rgba(0,0,0,0.4)';
+    element.style.display = 'block';
+    element.style.boxSizing = 'border-box';
+    element.style.padding = '0';
+    element.style.margin = '0';
+    element.style.overflow = 'visible';
+    
+    // Add delete button
+    const deleteBtn = document.createElement('button');
+    deleteBtn.className = 'delete-btn';
+    deleteBtn.innerHTML = '×';
+    deleteBtn.onclick = (e) => {
+        e.stopPropagation();
+        removeDraggableElement(element.id);
+    };
+    element.appendChild(deleteBtn);
+    
+    // Add content based on type (matching React's PlacedSignature component)
+    if (data.type === 'signature') {
+        const img = document.createElement('img');
+        img.src = data.content;
+        img.style.width = '100%';
+        img.style.height = '100%';
+        img.style.objectFit = 'contain';
+        img.style.pointerEvents = 'none';
+        img.style.display = 'block';
+        element.appendChild(img);
+    } else if (data.type === 'name') {
+        const text = document.createElement('div');
+        text.textContent = data.content;
+        // Match React: calculate fontSize as calc(heightPct * 100vw * 0.25)
+        text.style.fontSize = `calc(${data.heightPct * 100}vw * 0.25)`;
+        text.style.fontWeight = '500';
+        text.style.fontFamily = 'Arial, sans-serif';
+        text.style.color = '#000';
+        text.style.textAlign = 'center';
+        text.style.width = '100%';
+        text.style.height = '100%';
+        text.style.display = 'flex';
+        text.style.alignItems = 'center';
+        text.style.justifyContent = 'center';
+        text.style.overflow = 'hidden';
+        text.style.whiteSpace = 'normal';
+        text.style.wordBreak = 'break-word';
+        text.style.pointerEvents = 'none';
+        text.style.padding = '0';
+        text.style.margin = '0';
+        text.style.lineHeight = '1';
+        element.appendChild(text);
+    } else if (data.type === 'date') {
+        const text = document.createElement('div');
+        text.textContent = data.content;
+        // Match React: calculate fontSize as calc(heightPct * 100vw * 0.25)
+        text.style.fontSize = `calc(${data.heightPct * 100}vw * 0.25)`;
+        text.style.fontWeight = '500';
+        text.style.fontFamily = 'Arial, sans-serif';
+        text.style.color = '#000';
+        text.style.textAlign = 'center';
+        text.style.width = '100%';
+        text.style.height = '100%';
+        text.style.display = 'flex';
+        text.style.alignItems = 'center';
+        text.style.justifyContent = 'center';
+        text.style.overflow = 'hidden';
+        text.style.whiteSpace = 'normal';
+        text.style.wordBreak = 'break-word';
+        text.style.pointerEvents = 'none';
+        text.style.padding = '0';
+        text.style.margin = '0';
+        text.style.lineHeight = '1';
+        element.appendChild(text);
+    }
+    
+    // Make draggable
+    element.addEventListener('mousedown', startDrag);
+    
+    container.appendChild(element);
+    placedElements.push(element);
+    
+    return element;
+}
+
+function startDrag(e) {
+    if (e.target.classList.contains('delete-btn')) return;
+    
+    draggedElement = this;
+    draggedElement.classList.add('dragging');
+    
+    const rect = draggedElement.getBoundingClientRect();
+    const parentRect = draggedElement.parentElement.getBoundingClientRect();
+    
+    dragOffset.x = e.clientX - rect.left;
+    dragOffset.y = e.clientY - rect.top;
+    
+    document.addEventListener('mousemove', drag);
+    document.addEventListener('mouseup', stopDrag);
+    
+    e.preventDefault();
+}
+
+function drag(e) {
+    if (!draggedElement) return;
+    
+    const parentRect = draggedElement.parentElement.getBoundingClientRect();
+    
+    let newX = (e.clientX - parentRect.left - dragOffset.x) / parentRect.width;
+    let newY = (e.clientY - parentRect.top - dragOffset.y) / parentRect.height;
+    
+    // Get element dimensions
+    const widthPct = parseFloat(draggedElement.dataset.widthPct);
+    const heightPct = parseFloat(draggedElement.dataset.heightPct);
+    
+    // Constrain within bounds (matching React: prevent element from going outside container)
+    newX = Math.max(0, Math.min(1 - widthPct, newX));
+    newY = Math.max(0, Math.min(1 - heightPct, newY));
+    
+    draggedElement.style.left = `${newX * 100}%`;
+    draggedElement.style.top = `${newY * 100}%`;
+    
+    // Update stored position
+    draggedElement.dataset.xPct = newX;
+    draggedElement.dataset.yPct = newY;
+}
+
+function stopDrag() {
+    if (draggedElement) {
+        draggedElement.classList.remove('dragging');
+        draggedElement = null;
+    }
+    
+    document.removeEventListener('mousemove', drag);
+    document.removeEventListener('mouseup', stopDrag);
+}
+
+function removeDraggableElement(elementId) {
+    const element = document.getElementById(elementId);
+    if (element) {
+        element.remove();
+        placedElements = placedElements.filter(el => el.id !== elementId);
+        
+        // Check if any elements remain
+        if (placedElements.length === 0) {
+            signaturePlaced = false;
+            const panel = document.getElementById('floating-placement-panel');
+            if (panel) {
+                showPlacementInstructions();
+            }
+        } else {
+            // Update count in panel
+            const panel = document.getElementById('floating-placement-panel');
+            if (panel) {
+                const countText = panel.querySelector('p');
+                if (countText) {
+                    countText.textContent = `${placedElements.length} element(s) placed. Drag to reposition or click × to remove.`;
+                }
+            }
+        }
+    }
+}
+
+function updateFloatingPanel(pageNum, elementCount) {
+    const panel = document.getElementById('floating-placement-panel');
+    if (panel) {
+        panel.innerHTML = `
+            <h4 style="margin: 0 0 0.5rem 0; color: #4caf50;">
+                <span class="material-icons" style="vertical-align: middle;">check_circle</span>
+                Elements Placed on Page ${pageNum}
+            </h4>
+            <p style="margin: 0.5rem 0; color: #666;">${elementCount} element(s) placed. Drag to reposition or click × to remove.</p>
+            ${selectedSignature.requiresPki ? `
+                <div style="margin: 1rem 0; padding: 1rem; background: #f0f8ff; border-radius: 4px;">
+                    <label style="display: block; margin-bottom: 0.5rem; font-weight: 500;">
+                        <span class="material-icons" style="vertical-align: middle; font-size: 1rem;">lock</span>
+                        PKI Password:
+                    </label>
+                    <input type="password" id="floating_pki_password" placeholder="Enter your PKI password" style="width: 100%; padding: 0.5rem; border: 1px solid #ddd; border-radius: 4px;">
+                </div>
+            ` : ''}
+            <button type="button" class="btn btn-primary" onclick="completeSigningFromPanel()" style="width: 100%; margin-bottom: 0.5rem;">
+                <span class="material-icons">done</span>
+                Complete Signing
+            </button>
+            <button type="button" class="btn btn-secondary" onclick="cancelPlacement()" style="width: 100%;">
+                Cancel
+            </button>
+        `;
+    }
+}
+
+function completeSigningFromPanel() {
+    if (!signaturePlaced || placedElements.length === 0) {
+        alert('Please click on the document to place your signature first.');
+        return;
+    }
+    
+    // If PKI, get password from floating panel
+    if (selectedSignature.requiresPki) {
+        const password = document.getElementById('floating_pki_password').value;
+        if (!password) {
+            alert('Please enter your PKI password.');
+            document.getElementById('floating_pki_password').focus();
+            return;
+        }
+        // Copy to hidden form field
+        document.getElementById('private_key_password').value = password;
+    }
+    
+    // Collect all element positions
+    const elementsData = placedElements.map(el => ({
+        type: el.dataset.type,
+        pageNum: parseInt(el.dataset.pageNum),
+        xPct: parseFloat(el.dataset.xPct),
+        yPct: parseFloat(el.dataset.yPct),
+        widthPct: parseFloat(el.dataset.widthPct),
+        heightPct: parseFloat(el.dataset.heightPct)
+    }));
+    
+    // Store elements data in hidden field
+    const elementsInput = document.getElementById('signature_elements') || document.createElement('input');
+    elementsInput.type = 'hidden';
+    elementsInput.name = 'signature_elements';
+    elementsInput.id = 'signature_elements';
+    elementsInput.value = JSON.stringify(elementsData);
+    document.getElementById('signForm').appendChild(elementsInput);
+    
+    // Store primary signature position (first element)
+    if (elementsData.length > 0) {
+        const primary = elementsData[0];
+        document.getElementById('sig_page_number').value = primary.pageNum;
+        document.getElementById('sig_x_pct').value = primary.xPct;
+        document.getElementById('sig_y_pct').value = primary.yPct;
+        document.getElementById('sig_width_pct').value = primary.widthPct;
+        document.getElementById('sig_height_pct').value = primary.heightPct;
+    }
+    
+    // Remove floating panel
+    const panel = document.getElementById('floating-placement-panel');
+    if (panel) {
+        panel.remove();
+    }
+    
+    // Submit the form
+    document.getElementById('signForm').dispatchEvent(new Event('submit'));
+}
+
+function completeSigning() {
+    if (!signaturePlaced) {
+        alert('Please click on the document to place your signature first.');
+        return;
+    }
+    
+    if (selectedSignature.requiresPki) {
+        const password = document.getElementById('private_key_password').value;
+        if (!password) {
+            alert('Please enter your PKI password.');
+            document.getElementById('private_key_password').focus();
+            return;
+        }
+    }
+    
+    // Submit the form
+    document.getElementById('signForm').dispatchEvent(new Event('submit'));
+}
+
+// Handle form submission
+document.getElementById('signForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    
+    fetch(this.action, {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            alert('Document signed successfully!');
+            window.location.reload();
+        } else {
+            alert('Error: ' + data.message);
+        }
+    })
+    .catch(err => {
+        alert('Error signing document: ' + err);
+    });
+});
+
+// Create Signature Functions
+let canvas, ctx, isDrawing = false;
+let currentSignatureMode = 'upload';
+
+function showCreateSignature() {
+    document.getElementById('signature-selection-view').style.display = 'none';
+    document.getElementById('create-signature-view').style.display = 'block';
+    document.getElementById('signing-controls').style.display = 'none';
+    
+    // Initialize canvas if in draw mode
+    if (currentSignatureMode === 'draw') {
+        initCanvas();
+    }
+}
+
+function hideCreateSignature() {
+    document.getElementById('signature-selection-view').style.display = 'block';
+    document.getElementById('create-signature-view').style.display = 'none';
+    document.getElementById('signing-controls').style.display = 'block';
+}
+
+function switchSignatureMode(mode) {
+    currentSignatureMode = mode;
+    
+    // Update button states
+    document.querySelectorAll('.signature-mode-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    document.querySelector(`[data-mode="${mode}"]`).classList.add('active');
+    
+    // Show/hide mode content
+    document.querySelectorAll('.signature-mode-content').forEach(content => {
+        content.style.display = 'none';
+    });
+    document.getElementById(`${mode}-mode`).style.display = 'block';
+    
+    // Initialize canvas if draw mode
+    if (mode === 'draw') {
+        initCanvas();
+    }
+    
+    // Initialize font grid if text mode
+    if (mode === 'text') {
+        initFontGrid();
+    }
+}
+
+function initCanvas() {
+    canvas = document.getElementById('signature-canvas');
+    ctx = canvas.getContext('2d');
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 2;
+    ctx.lineCap = 'round';
+    
+    // Mouse events
+    canvas.addEventListener('mousedown', startDrawing);
+    canvas.addEventListener('mousemove', draw);
+    canvas.addEventListener('mouseup', stopDrawing);
+    canvas.addEventListener('mouseout', stopDrawing);
+    
+    // Touch events
+    canvas.addEventListener('touchstart', handleTouch);
+    canvas.addEventListener('touchmove', handleTouch);
+    canvas.addEventListener('touchend', stopDrawing);
+}
+
+function startDrawing(e) {
+    isDrawing = true;
+    const rect = canvas.getBoundingClientRect();
+    ctx.beginPath();
+    ctx.moveTo(e.clientX - rect.left, e.clientY - rect.top);
+}
+
+function draw(e) {
+    if (!isDrawing) return;
+    const rect = canvas.getBoundingClientRect();
+    ctx.lineTo(e.clientX - rect.left, e.clientY - rect.top);
+    ctx.stroke();
+}
+
+function stopDrawing() {
+    isDrawing = false;
+}
+
+function handleTouch(e) {
+    e.preventDefault();
+    const touch = e.touches[0];
+    const mouseEvent = new MouseEvent(e.type === 'touchstart' ? 'mousedown' : 'mousemove', {
+        clientX: touch.clientX,
+        clientY: touch.clientY
+    });
+    canvas.dispatchEvent(mouseEvent);
+}
+
+function clearCanvas() {
+    if (ctx) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+}
+
+function previewSignatureImage(input) {
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            document.getElementById('image-preview').style.display = 'block';
+            document.getElementById('preview-img').src = e.target.result;
+        };
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
+let selectedFont = 'Kapakana';
+
+const availableFonts = [
+    "Kapakana", "Bilbo Swash Caps", "Montez", "Square Peg", "League Script",
+    "Grape Nuts", "Fuggles", "Qwitcher Grypen", "Qwigley", "Birthstone",
+    "Mr De Haviland", "Meddon", "Kristi", "Monsieur La Doulaise", "Arizonia",
+    "Oooh Baby", "Rochester", "Ms Madi", "La Belle Aurore", "Mrs Saint Delafield",
+    "Cedarville Cursive", "Allison", "Pinyon Script", "Alex Brush", "Homemade Apple",
+    "Italianno", "Whisper", "Zeyada", "Allura", "Yellowtail",
+    "Great Vibes", "Satisfy", "Playwrite Cuba", "Caveat", "Pacifico", "Dancing Script"
+];
+
+function initFontGrid() {
+    const fontGrid = document.getElementById('font-grid');
+    
+    // Only initialize once
+    if (fontGrid.children.length > 0) {
+        return;
+    }
+    
+    availableFonts.forEach(font => {
+        const fontCard = document.createElement('div');
+        fontCard.style.cssText = `
+            padding: 1rem;
+            text-align: center;
+            cursor: pointer;
+            border: 2px solid transparent;
+            background: white;
+            min-height: 80px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            transition: all 0.2s;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        `;
+        
+        const fontText = document.createElement('span');
+        fontText.style.cssText = `
+            font-family: '${font}', cursive;
+            font-size: 1.5rem;
+            color: #000;
+            word-break: break-word;
+        `;
+        fontText.textContent = document.getElementById('signature_text').value || 'Sample';
+        
+        fontCard.appendChild(fontText);
+        
+        // Click handler
+        fontCard.addEventListener('click', () => {
+            selectedFont = font;
+            updateFontSelection();
+            updateTextPreview();
+        });
+        
+        // Hover effect
+        fontCard.addEventListener('mouseenter', () => {
+            if (selectedFont !== font) {
+                fontCard.style.border = '2px solid #2196f3';
+                fontCard.style.transform = 'scale(1.02)';
+                fontCard.style.boxShadow = '0 4px 8px rgba(0,0,0,0.2)';
+            }
+        });
+        
+        fontCard.addEventListener('mouseleave', () => {
+            if (selectedFont !== font) {
+                fontCard.style.border = '2px solid transparent';
+                fontCard.style.transform = 'scale(1)';
+                fontCard.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
+            }
+        });
+        
+        fontGrid.appendChild(fontCard);
+    });
+    
+    // Set initial selection
+    updateFontSelection();
+}
+
+function updateFontSelection() {
+    const fontGrid = document.getElementById('font-grid');
+    Array.from(fontGrid.children).forEach((card, index) => {
+        const font = availableFonts[index];
+        if (font === selectedFont) {
+            card.style.border = '3px solid #2196f3';
+            card.style.boxShadow = '0 4px 12px rgba(33,150,243,0.3)';
+            card.style.background = '#f0f8ff';
+        } else {
+            card.style.border = '2px solid transparent';
+            card.style.boxShadow = '0 1px 3px rgba(0,0,0,0.1)';
+            card.style.background = 'white';
+        }
+    });
+}
+
+function updateTextPreview() {
+    const text = document.getElementById('signature_text').value || 'Your Name';
+    const previewEl = document.getElementById('preview-text');
+    previewEl.textContent = text;
+    previewEl.style.fontFamily = `'${selectedFont}', cursive`;
+    
+    // Update all font cards with new text
+    const fontGrid = document.getElementById('font-grid');
+    if (fontGrid && fontGrid.children.length > 0) {
+        Array.from(fontGrid.children).forEach((card) => {
+            const span = card.querySelector('span');
+            if (span) {
+                span.textContent = text || 'Sample';
+            }
+        });
+    }
+}
+
+function togglePkiPasswordFields() {
+    const requiresPki = document.getElementById('requires_pki_checkbox').checked;
+    const pkiFields = document.getElementById('pki_setup_fields');
+    pkiFields.style.display = requiresPki ? 'block' : 'none';
+}
+
+async function createNewSignature() {
+    const description = document.getElementById('signature_description').value;
+    const requiresPki = document.getElementById('requires_pki_checkbox').checked;
+    
+    // Validate PKI password if required
+    if (requiresPki) {
+        const password = document.getElementById('pki_password_new').value;
+        const confirmPassword = document.getElementById('pki_password_confirm').value;
+        
+        if (!password) {
+            alert('Please enter a PKI password');
+            return;
+        }
+        
+        if (password.length < 8) {
+            alert('PKI password must be at least 8 characters long');
+            return;
+        }
+        
+        if (password !== confirmPassword) {
+            alert('Passwords do not match');
+            return;
+        }
+    }
+    
+    const formData = new FormData();
+    
+    formData.append('description', description);
+    formData.append('requires_pki', requiresPki);
+    
+    if (requiresPki) {
+        formData.append('pki_password', document.getElementById('pki_password_new').value);
+    }
+    
+    if (currentSignatureMode === 'upload') {
+        const fileInput = document.getElementById('signature_image');
+        if (!fileInput.files || !fileInput.files[0]) {
+            alert('Please select an image to upload');
+            return;
+        }
+        formData.append('image', fileInput.files[0]);
+    } else if (currentSignatureMode === 'draw') {
+        if (!canvas) {
+            alert('Canvas not initialized');
+            return;
+        }
+        const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+        formData.append('image', blob, 'signature.png');
+    } else if (currentSignatureMode === 'text') {
+        const text = document.getElementById('signature_text').value;
+        
+        if (!text) {
+            alert('Please enter text for your signature');
+            return;
+        }
+        
+        // Create canvas to render text
+        const textCanvas = document.createElement('canvas');
+        textCanvas.width = 600;
+        textCanvas.height = 200;
+        const textCtx = textCanvas.getContext('2d');
+        
+        textCtx.fillStyle = 'white';
+        textCtx.fillRect(0, 0, textCanvas.width, textCanvas.height);
+        
+        textCtx.font = `72px '${selectedFont}', cursive`;
+        textCtx.fillStyle = 'black';
+        textCtx.textAlign = 'center';
+        textCtx.textBaseline = 'middle';
+        textCtx.fillText(text, textCanvas.width / 2, textCanvas.height / 2);
+        
+        const blob = await new Promise(resolve => textCanvas.toBlob(resolve, 'image/png'));
+        formData.append('image', blob, 'signature.png');
+    }
+    
+    // Send to server
+    try {
+        const response = await fetch('{% url "frontend_api:signatures" %}', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        });
+        
+        const data = await response.json();
+        if (data.success) {
+            alert('Signature created successfully!');
+            window.location.reload();
+        } else {
+            alert('Error: ' + (data.message || 'Failed to create signature'));
+        }
+    } catch (err) {
+        alert('Error creating signature: ' + err);
+    }
+}
+</script>
+{% endblock %}

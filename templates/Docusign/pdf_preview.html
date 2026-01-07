@@ -1,0 +1,489 @@
+{% extends 'admin_layout.html' %}
+{% load static %}
+{% block content %}
+
+<h2>Select Signature Position</h2>
+
+<style>
+.page-container { position: relative; display: inline-block; margin-bottom: 40px; }
+.pdf-page { width: 100%; border: 1px solid #888; cursor: crosshair; }
+.marker {
+    position: absolute;
+    width: 20px; height: 20px;
+    background: red;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+}
+</style>
+
+<form method="POST">
+    {% csrf_token %}
+    <input type="hidden" name="page" id="pageField">
+    <input type="hidden" name="x" id="xField">
+    <input type="hidden" name="y" id="yField">
+    <input type="hidden" name="signature_id" id="signatureId">
+  <input type="hidden" id="placementPayload" name="placement_payload">
+
+    {% for img in images %}
+        <div class="page-container" data-page="{{ img.page_num }}">
+            <img src="{{ img.url }}" class="pdf-page">
+        <div class="marker" style="display: none;"></div>
+        <!-- signature overlay will be injected here -->
+        </div>
+    {% endfor %}
+
+    <div style="margin-top:12px;">
+      <button type="button" id="applyPlacement" class="mt-6 px-4 py-2 bg-green-600 text-white rounded">Apply Signature Placement</button>
+        <button type="submit" class="mt-6 px-4 py-2 bg-indigo-600 text-white rounded">Sign at Selected Position</button>
+        <button type="button" id="openSigModal" class="mt-6 px-4 py-2 bg-indigo-500 text-white rounded">Create / Draw Signature</button>
+        <span id="saveStatus" style="margin-left:8px;color:#666;"></span>
+        <img id="sigPreview" src="" alt="Saved signature preview" style="max-height:80px; display:none; border:1px solid #eee; margin-left:12px; vertical-align:middle;" />
+    </div>
+
+    <!-- Saved signatures gallery -->
+    <div style="margin-top:14px;">
+      <div style="font-weight:600; margin-bottom:6px;">Choose a saved signature</div>
+      <div id="savedSignatures" style="display:flex; gap:8px; flex-wrap:wrap;">
+        {% for sig in user_sigs %}
+          <div class="saved-sig" data-id="{{ sig.pk }}" style="width:96px; height:48px; border:1px solid #eee; display:inline-flex; align-items:center; justify-content:center; cursor:pointer; background:#fff;">
+            <img src="{{ sig.image.url }}" alt="sig-{{ sig.pk }}" style="max-width:92px; max-height:44px; object-fit:contain; display:block;"/>
+          </div>
+        {% empty %}
+          <div style="color:#666;">No saved signatures yet.</div>
+        {% endfor %}
+      </div>
+    </div>
+</form>
+
+<script>
+document.querySelectorAll(".page-container").forEach(container => {
+    const img = container.querySelector(".pdf-page");
+    const marker = container.querySelector(".marker");
+
+    img.addEventListener("click", function (e) {
+        const rect = img.getBoundingClientRect();
+
+        // Coordinates inside image
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+
+        // Flip Y coordinate because PDF origin is bottom-left
+      const pdfY = rect.height - y;
+
+        // Show marker
+        marker.style.left = x + "px";
+        marker.style.top = y + "px";
+        marker.style.display = "block";
+
+        // Save form values
+        document.getElementById("pageField").value = container.dataset.page;
+        document.getElementById("xField").value = Math.round(x);
+        document.getElementById("yField").value = Math.round(pdfY);
+    });
+});
+</script>
+
+<!-- Modal markup -->
+<div id="sigModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); align-items:center; justify-content:center; z-index:1200;">
+    <div style="background:#fff; max-width:760px; width:94%; padding:18px; border-radius:8px; box-shadow:0 6px 24px rgba(0,0,0,0.3);">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <h3 style="margin:0;">Draw Your Signature</h3>
+            <button type="button" id="closeSigModal" style="background:transparent;border:none;font-size:18px;">✕</button>
+        </div>
+
+        <div style="margin-top:12px;">
+          <canvas id="sigCanvas" width="600" height="150" style="border:1px solid #ccc; width:100%; max-width:680px; height:150px; touch-action:none; background:transparent"></canvas>
+          <div style="margin-top:8px; display:flex; gap:8px; align-items:center;">
+            <label for="sigFileInput" style="font-size:13px; color:#444;">Or upload an image:</label>
+            <input id="sigFileInput" type="file" accept="image/*" style="display:inline-block;" />
+            <button type="button" id="uploadSigBtn" class="px-3 py-1" style="background:#2563eb;color:#fff;border-radius:6px;">Upload</button>
+            <span id="uploadStatus" style="color:#666; margin-left:8px;"></span>
+          </div>
+        </div>
+
+        <div style="margin-top:10px; display:flex; gap:8px; align-items:center;">
+            <button type="button" id="clearSig" class="px-3 py-1" style="background:#eee;border-radius:6px;">Clear</button>
+            <button type="button" id="saveSig" class="px-3 py-1" style="background:#0ea5a8;color:#fff;border-radius:6px;">Save Signature</button>
+            <div style="margin-left:12px;color:#666;">When saved, the signature is available for signing.</div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Modal open/close logic
+document.getElementById('openSigModal').addEventListener('click', function(){
+    const modal = document.getElementById('sigModal');
+    modal.style.display = 'flex';
+    setTimeout(()=>{ try{ document.getElementById('sigCanvas').dispatchEvent(new Event('modalopen')); }catch(e){} }, 30);
+    document.body.style.overflow = 'hidden';
+});
+document.getElementById('closeSigModal').addEventListener('click', function(){
+    document.getElementById('sigModal').style.display = 'none';
+    document.body.style.overflow = '';
+});
+
+// Canvas drawing + upload
+(function(){
+  const canvas = document.getElementById('sigCanvas');
+  if(!canvas) return;
+  const ctx = canvas.getContext('2d');
+
+  function fixDPI() {
+    const dpi = window.devicePixelRatio || 1;
+    const style = getComputedStyle(canvas);
+    const styleW = parseFloat(style.width);
+    const styleH = parseFloat(style.height);
+    if (!styleW || !styleH) return;
+    canvas.width = Math.round(styleW * dpi);
+    canvas.height = Math.round(styleH * dpi);
+    canvas.style.width = styleW + 'px';
+    canvas.style.height = styleH + 'px';
+    ctx.setTransform(dpi, 0, 0, dpi, 0, 0);
+  }
+
+  function clearCanvas(){
+    // keep transparent background so exported PNG has alpha channel
+    ctx.save();
+    ctx.setTransform(1,0,0,1,0,0);
+    ctx.clearRect(0,0,canvas.width, canvas.height);
+    ctx.restore();
+    ctx.lineWidth = 2.3;
+    ctx.lineJoin = 'round';
+    ctx.lineCap = 'round';
+    ctx.strokeStyle = '#000';
+  }
+
+  function pointerPos(e){
+    const rect = canvas.getBoundingClientRect();
+    const clientX = (e.touches ? e.touches[0].clientX : e.clientX);
+    const clientY = (e.touches ? e.touches[0].clientY : e.clientY);
+    return { x: clientX - rect.left, y: clientY - rect.top };
+  }
+
+  let drawing=false, lastX=0, lastY=0;
+  function startDraw(e){ drawing = true; const p = pointerPos(e); lastX = p.x; lastY = p.y; }
+  function stopDraw(){ drawing = false; }
+  function draw(e){ if(!drawing) return; e.preventDefault(); const p = pointerPos(e); ctx.beginPath(); ctx.moveTo(lastX, lastY); ctx.lineTo(p.x, p.y); ctx.stroke(); lastX = p.x; lastY = p.y; }
+
+  canvas.addEventListener('modalopen', function(){ try{ fixDPI(); }catch(e){}; clearCanvas(); });
+
+  canvas.addEventListener('mousedown', startDraw);
+  canvas.addEventListener('mousemove', draw);
+  canvas.addEventListener('mouseup', stopDraw);
+  canvas.addEventListener('mouseout', stopDraw);
+  canvas.addEventListener('touchstart', startDraw, {passive:false});
+  canvas.addEventListener('touchmove', draw, {passive:false});
+  canvas.addEventListener('touchend', stopDraw);
+
+  document.getElementById('clearSig').addEventListener('click', function(){ clearCanvas(); document.getElementById('sigPreview').style.display='none'; document.getElementById('signatureId').value = ''; document.getElementById('saveStatus').textContent = ''; });
+
+  function getCSRF(){ const c = document.cookie.split(';').map(s=>s.trim()).find(s=>s.startsWith('csrftoken=')); return c ? c.split('=')[1] : ''; }
+
+  document.getElementById('saveSig').addEventListener('click', async function(){
+    const dataURL = canvas.toDataURL('image/png');
+    document.getElementById('saveStatus').textContent = 'Saving...';
+    try{
+      const resp = await fetch("{% url 'docusign:signature_upload_canvas' %}", {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'X-CSRFToken': getCSRF(), 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({ image: dataURL })
+      });
+      const text = await resp.text();
+      let data = {};
+      try{ data = JSON.parse(text); }catch(e){ console.warn('Non-JSON response saving canvas:', text); }
+      if(!resp.ok){
+        const msg = data.error || data.errors || text || ('HTTP ' + resp.status);
+        throw new Error(msg);
+      }
+      if(data && data.url){
+        const img = document.getElementById('sigPreview');
+        img.src = data.url;
+        img.style.display = 'inline-block';
+        document.getElementById('signatureId').value = data.id || '';
+        document.getElementById('saveStatus').textContent = 'Saved';
+        document.getElementById('sigModal').style.display = 'none';
+        document.body.style.overflow = '';
+        // If an overlay exists, update its background to use the newly saved signature
+        try{
+          if(window.activeSigOverlay && window.activeSigOverlay.overlay){
+            const ov = window.activeSigOverlay.overlay;
+            ov.style.backgroundImage = `url(${data.url})`;
+            ov.style.backgroundSize = 'contain';
+            ov.style.backgroundRepeat = 'no-repeat';
+            ov.style.backgroundPosition = 'center';
+            const ph = ov.querySelector('.sig-placeholder'); if(ph) ph.remove();
+          }
+        }catch(e){ console.warn('Could not update overlay background', e); }
+      }else{ throw new Error('Invalid response'); }
+    }catch(err){ console.error('Save canvas error:', err); document.getElementById('saveStatus').textContent = 'Save failed: '+(err.message||err); }
+  });
+})();
+</script>
+
+<script>
+// Upload signature file handler (separate from canvas)
+(function(){
+  function getCSRF(){ const c = document.cookie.split(';').map(s=>s.trim()).find(s=>s.startsWith('csrftoken=')); return c ? c.split('=')[1] : ''; }
+  const input = document.getElementById('sigFileInput');
+  const btn = document.getElementById('uploadSigBtn');
+  const status = document.getElementById('uploadStatus');
+  if(!input || !btn) return;
+  btn.addEventListener('click', async function(){
+    const file = input.files && input.files[0];
+    if(!file){ alert('Please choose an image file to upload'); return; }
+    status.textContent = 'Uploading...';
+    try{
+      const fd = new FormData();
+      fd.append('image', file);
+      const resp = await fetch("{% url 'docusign:signature_upload' %}", {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'X-CSRFToken': getCSRF() },
+        body: fd
+      });
+      const text = await resp.text();
+      let data = {};
+      try{ data = JSON.parse(text); }catch(e){ console.warn('Non-JSON response from signature_upload:', text); }
+      if(!resp.ok){ status.textContent = data.error || data.errors || text || ('HTTP ' + resp.status); return; }
+      // update preview and signature id
+      const prev = document.getElementById('sigPreview');
+      prev.src = data.url;
+      prev.style.display = 'inline-block';
+      document.getElementById('signatureId').value = data.id || '';
+      status.textContent = 'Uploaded';
+      // update overlay if present
+      try{
+        if(window.activeSigOverlay && window.activeSigOverlay.overlay){
+          const ov = window.activeSigOverlay.overlay;
+          ov.style.backgroundImage = `url(${data.url})`;
+          ov.style.backgroundSize = 'contain';
+          ov.style.backgroundRepeat = 'no-repeat';
+          ov.style.backgroundPosition = 'center';
+          const ph = ov.querySelector('.sig-placeholder'); if(ph) ph.remove();
+        }
+      }catch(e){ console.warn('Could not update overlay', e); }
+      // close modal
+      document.getElementById('sigModal').style.display = 'none';
+      document.body.style.overflow = '';
+    }catch(err){ console.error(err); status.textContent = 'Upload failed'; }
+  });
+})();
+</script>
+
+<script>
+// Drag/resize overlay and placement handling
+(function(){
+  const sigPreview = document.getElementById('sigPreview');
+  let activeOverlay = null;
+
+  function createOverlay(container, imgEl){
+    // removes existing overlay on this container
+    const existing = container.querySelector('.sig-overlay');
+    if(existing) existing.remove();
+
+    const overlay = document.createElement('div');
+    overlay.className = 'sig-overlay';
+    overlay.style.position = 'absolute';
+    overlay.style.border = '2px dashed #0ea5a8';
+    overlay.style.cursor = 'move';
+    overlay.style.zIndex = 50;
+
+    // default size: 25% width of image
+    const rect = imgEl.getBoundingClientRect();
+    const w = rect.width * 0.25;
+    const h = w * 0.4;
+    overlay.style.width = w + 'px';
+    overlay.style.height = h + 'px';
+    overlay.style.left = (rect.width/2 - w/2) + 'px';
+    overlay.style.top = (rect.height/2 - h/2) + 'px';
+
+    // background signature image or placeholder
+    if(sigPreview && sigPreview.src){
+      overlay.style.backgroundImage = `url(${sigPreview.src})`;
+      overlay.style.backgroundSize = 'contain';
+      overlay.style.backgroundRepeat = 'no-repeat';
+      overlay.style.backgroundPosition = 'center';
+    } else {
+      const ph = document.createElement('div');
+      ph.className = 'sig-placeholder';
+      ph.textContent = 'No signature selected';
+      ph.style.position = 'absolute';
+      ph.style.left = '50%';
+      ph.style.top = '50%';
+      ph.style.transform = 'translate(-50%, -50%)';
+      ph.style.color = '#0ea5a8';
+      ph.style.fontSize = '13px';
+      ph.style.pointerEvents = 'none';
+      overlay.appendChild(ph);
+    }
+
+    // resize handle
+    const handle = document.createElement('div');
+    handle.className = 'sig-resize-handle';
+    handle.style.position = 'absolute';
+    handle.style.width = '14px';
+    handle.style.height = '14px';
+    handle.style.right = '-8px';
+    handle.style.bottom = '-8px';
+    handle.style.background = '#0ea5a8';
+    handle.style.borderRadius = '2px';
+    handle.style.cursor = 'nwse-resize';
+    overlay.appendChild(handle);
+
+    // prevent clicks on the overlay from bubbling to the page container (which would create another overlay)
+    // use Pointer Events for unified mouse/touch support
+    overlay.addEventListener('pointerdown', function(e){ e.stopPropagation(); overlay.setPointerCapture(e.pointerId); startDrag(e); });
+    handle.addEventListener('pointerdown', function(e){ e.stopPropagation(); handle.setPointerCapture(e.pointerId); startResize(e); });
+    overlay.addEventListener('click', function(e){ e.stopPropagation(); });
+    overlay.style.userSelect = 'none';
+    overlay.style.touchAction = 'none';
+    overlay.draggable = false;
+
+    container.appendChild(overlay);
+    activeOverlay = {overlay, imgEl, container};
+    // expose to global so other handlers can update overlay when signature saved
+    try{ window.activeSigOverlay = activeOverlay; }catch(e){}
+  }
+
+  let dragState = null;
+  function startDrag(e){
+    e.preventDefault();
+    e.stopPropagation();
+    if(e.target && e.target.classList && e.target.classList.contains('sig-resize-handle')) return;
+    const overlay = (e.currentTarget && e.currentTarget.classList && e.currentTarget.classList.contains('sig-overlay')) ? e.currentTarget : (window.activeSigOverlay ? window.activeSigOverlay.overlay : null);
+    if(!overlay) return;
+    const rect = overlay.getBoundingClientRect();
+    const startX = e.clientX;
+    const startY = e.clientY;
+    dragState = { type: 'drag', overlay, startX, startY, origLeft: rect.left, origTop: rect.top, pointerId: e.pointerId };
+    document.addEventListener('pointermove', doDrag);
+    document.addEventListener('pointerup', endDrag);
+  }
+  function doDrag(e){
+    if(!dragState || dragState.type !== 'drag') return;
+    if(e.pointerId && dragState.pointerId && e.pointerId !== dragState.pointerId) return; // ignore other pointers
+    const {overlay, startX, startY, origLeft, origTop} = dragState;
+    const dx = e.clientX - startX; const dy = e.clientY - startY;
+    const parentRect = overlay.parentElement.getBoundingClientRect();
+    const newLeft = (origLeft + dx) - parentRect.left;
+    const newTop = (origTop + dy) - parentRect.top;
+    overlay.style.left = Math.max(0, newLeft) + 'px';
+    overlay.style.top = Math.max(0, newTop) + 'px';
+  }
+  function endDrag(e){ document.removeEventListener('pointermove', doDrag); document.removeEventListener('pointerup', endDrag); try{ if(dragState && dragState.overlay) dragState.overlay.releasePointerCapture && dragState.overlay.releasePointerCapture(dragState.pointerId); }catch(_e){} dragState = null; }
+
+  let resizeState = null;
+  function startResize(e){
+    e.preventDefault();
+    e.stopPropagation();
+    const handle = e.currentTarget; const overlay = handle.parentElement;
+    const startX = e.clientX;
+    const startY = e.clientY;
+    const rect = overlay.getBoundingClientRect();
+    resizeState = { overlay, startX, startY, origW: rect.width, origH: rect.height, pointerId: e.pointerId };
+    document.addEventListener('pointermove', doResize);
+    document.addEventListener('pointerup', endResize);
+  }
+  function doResize(e){
+    if(!resizeState) return;
+    if(e.pointerId && resizeState.pointerId && e.pointerId !== resizeState.pointerId) return;
+    const { overlay, startX, startY, origW, origH } = resizeState;
+    const dx = e.clientX - startX; const dy = e.clientY - startY;
+    const newW = Math.max(24, origW + dx);
+    const newH = Math.max(12, origH + dy);
+    overlay.style.width = newW + 'px';
+    overlay.style.height = newH + 'px';
+  }
+  function endResize(e){ document.removeEventListener('pointermove', doResize); document.removeEventListener('pointerup', endResize); try{ if(resizeState && resizeState.overlay) resizeState.overlay.releasePointerCapture && resizeState.overlay.releasePointerCapture(resizeState.pointerId); }catch(_e){} resizeState = null; }
+
+  // create overlay when clicking a page (create placeholder overlay if no signature yet)
+  document.querySelectorAll('.page-container').forEach(container => {
+    container.addEventListener('click', function(ev){
+      const img = container.querySelector('.pdf-page');
+      createOverlay(container, img);
+    });
+  });
+
+  // Auto-place a placeholder overlay on the first page so user sees an overlay immediately
+  try{
+    const first = document.querySelector('.page-container');
+    if(first){
+      const img = first.querySelector('.pdf-page');
+      // create after a short timeout to ensure image dimensions are available
+      setTimeout(()=>{ createOverlay(first, img); }, 80);
+    }
+  }catch(e){ console.warn('Auto-overlay placement failed', e); }
+
+  // saved signatures selection handling
+  (function(){
+    const gallery = document.getElementById('savedSignatures');
+    if(!gallery) return;
+    gallery.querySelectorAll('.saved-sig').forEach(box=>{
+      box.addEventListener('click', function(e){
+        const id = this.dataset.id;
+        const img = this.querySelector('img');
+        if(!img) return;
+        // set preview and hidden signature id
+        const preview = document.getElementById('sigPreview');
+        preview.src = img.src;
+        preview.style.display = 'inline-block';
+        document.getElementById('signatureId').value = id;
+        document.getElementById('saveStatus').textContent = 'Selected saved signature';
+        // update active overlay if present
+        try{
+          if(window.activeSigOverlay && window.activeSigOverlay.overlay){
+            const ov = window.activeSigOverlay.overlay;
+            ov.style.backgroundImage = `url(${img.src})`;
+            ov.style.backgroundSize = 'contain';
+            ov.style.backgroundRepeat = 'no-repeat';
+            ov.style.backgroundPosition = 'center';
+            const ph = ov.querySelector('.sig-placeholder'); if(ph) ph.remove();
+          }
+        }catch(e){ console.warn('Could not update overlay background', e); }
+      });
+    });
+  })();
+
+  function getCSRF(){ const c = document.cookie.split(';').map(s=>s.trim()).find(s=>s.startsWith('csrftoken=')); return c ? c.split('=')[1] : ''; }
+
+  document.getElementById('applyPlacement').addEventListener('click', async function(){
+    if(!activeOverlay || !activeOverlay.overlay) { alert('Place a signature overlay first'); return; }
+    const {overlay, imgEl, container} = activeOverlay;
+    const imgRect = imgEl.getBoundingClientRect();
+    const ovRect = overlay.getBoundingClientRect();
+    // compute percentages relative to image
+    const x_pct = (ovRect.left - imgRect.left) / imgRect.width;
+    const y_pct = (ovRect.top - imgRect.top) / imgRect.height;
+    const w_pct = ovRect.width / imgRect.width;
+    const h_pct = ovRect.height / imgRect.height;
+    const pageIndex = parseInt(container.dataset.page, 10);
+    const sigId = document.getElementById('signatureId').value;
+    if(!sigId){ alert('Select or create a signature first'); return; }
+
+    const payload = { req_id: {{ req.id }}, page: pageIndex, signature_id: sigId, x_pct, y_pct, w_pct, h_pct };
+
+    try{
+      const resp = await fetch("{% url 'docusign:apply_signature' %}", {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCSRF() },
+        body: JSON.stringify(payload)
+      });
+      const data = await resp.json();
+      if(resp.ok){
+        document.getElementById('saveStatus').textContent = 'Signature applied. Saved document available.';
+        if(data.signed_url){ window.open(data.signed_url, '_blank'); }
+      }else{
+        alert(data.error || 'Failed to apply signature');
+      }
+    }catch(err){ console.error(err); alert('Error applying signature'); }
+  });
+})();
+</script>
+
+<style>
+.sig-overlay{ box-sizing: border-box; }
+.sig-resize-handle{ box-shadow: 0 1px 2px rgba(0,0,0,0.2); }
+</style>
+
+{% endblock %}

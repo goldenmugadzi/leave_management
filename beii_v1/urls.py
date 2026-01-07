@@ -16,16 +16,13 @@ Including another URLconf
 
 from django.conf.urls.static import static
 from django.conf import settings
-
+from django.views.decorators.csrf import csrf_exempt
+from .graphql_view import CustomGraphQLView
 from django.contrib import admin
 from django.urls import path, include
 from django.views.decorators.csrf import csrf_exempt
 from django.http import HttpResponse
-from rest_framework_simplejwt.views import (
-    TokenObtainPairView,
-    TokenRefreshView,
-    TokenVerifyView,
-)
+
 from it.users.serializers import MyTokenObtainPairView
 from graphene_file_upload.django import FileUploadGraphQLView
 from it.users.serializers import MyTokenObtainPairView
@@ -105,6 +102,7 @@ urlpatterns = [
     path('competence_building/', include('competence_building.urls')),
     # path('api/', include('api.urls')),  # Commented out until api.urls exists
     path('', include('meetings.urls')),
+    path('', include('Docusign.urls')),
     path('', include('leave_management.urls')),
     path('', include('asset_transfer.urls')),
     path('', include('register.urls')),
@@ -116,10 +114,8 @@ urlpatterns = [
     path('equipment/', include('equipment_management.urls')),
     
     path('api-auth/', include('rest_framework.urls')),
-    path("gql/", csrf_exempt(FileUploadGraphQLView.as_view(graphiql=True))),  
-    path('api/auth/token/', MyTokenObtainPairView.as_view(), name='token_obtain_pair'),
-    path('api/auth/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
-    path('api/auth/token/verify/', TokenVerifyView.as_view(), name='token_verify'),
-
+    path("gql/", csrf_exempt(CustomGraphQLView.as_view(graphiql=True))),
+    path("graphql/", csrf_exempt(CustomGraphQLView.as_view(graphiql=True))),  # Alias for frontend compatibility
+   
 ] 
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

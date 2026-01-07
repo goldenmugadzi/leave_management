@@ -1,0 +1,296 @@
+{% extends 'admin_layout.html' %}
+{% load static %}
+{% block content %}
+  <div class="max-w-full mx-auto py-6 px-4 sm:px-6 lg:px-8 space-y-6">
+    <div class="flex items-center justify-between">
+      <h1 class="text-2xl font-semibold text-gray-900">Request #{{ request_obj.pk }}</h1>
+      <a href="{% url 'docusign:request_list' %}" class="text-sm text-indigo-600 hover:underline">&larr; Back to list</a>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <!-- Main column: details and signers -->
+      <div class=" space-y-4">
+        <div class="bg-white shadow-sm border rounded-lg p-6">
+          <h2 class="text-lg font-medium text-gray-800 mb-3">Document</h2>
+          <p class="text-sm text-gray-600">
+            <strong class="text-gray-700">Title:</strong>
+            {% if request_obj.document %}
+              <span class="ml-2">{{ request_obj.document.title }}</span>
+            {% else %}
+              <span class="ml-2 text-gray-400">(no document)</span>
+            {% endif %}
+          </p>
+
+          <div class="mt-4">
+            <strong class="text-gray-700">Message:</strong>
+            <div class="mt-2 p-4 bg-gray-50 rounded text-gray-700">{{ request_obj.message|default:request_obj.document.title }}</div>
+          </div>
+          <div class="mt-4 flex flex-wrap gap-4 text-sm text-gray-600">
+            <div>
+              <strong>Requested by:</strong> <span class="ml-1 text-gray-800">{{ request_obj.requester.get_full_name }}</span>
+            </div>
+            <div>
+              <strong>Requested at:</strong> <span class="ml-1">{{ request_obj.requested_at }}</span>
+            </div>
+            <div>
+              <strong>Status:</strong> <span class="ml-1">{{ request_obj.status }}</span>
+            </div>
+          </div>
+        </div>
+
+     
+      </div>
+
+      <!-- Sidebar: requester & action -->
+      <aside class="space-y-4">
+   <div class="bg-white shadow-sm border rounded-lg p-6">
+          <h3 class="text-md font-medium text-gray-800 mb-3">Possible Signers</h3>
+          <ul class="space-y-2">
+            {% for ps in request_obj.poss_signers.all %}
+              <li class="flex items-center justify-between p-3 border rounded">
+                <div class="text-sm text-gray-800">{{ ps.signer.get_full_name }}</div>
+                <div class="text-sm">
+                  {% if ps.signer.id in signed_signer_ids %}
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">Signed</span>
+                  {% else %}
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700">Pending</span>
+                  {% endif %}
+                </div>
+              </li>
+            {% empty %}
+              <li class="text-gray-500">No signers listed.</li>
+            {% endfor %}
+          </ul>
+        </div>
+      </aside>  
+      
+      <!-- Sidebar: requester & action -->
+      <aside class="space-y-4">
+        <div class="bg-white shadow-sm border rounded-lg p-6 text-center">
+          <div class="text-sm text-gray-500">Requester</div>
+          <div class="mt-2 text-lg font-medium text-gray-900">{{ request_obj.requester.get_full_name }}</div>
+        </div>
+
+        <div class="bg-white shadow-sm border rounded-lg p-6 text-center">
+                   {% if can_sign %}
+            <form method="post" action="{% url 'docusign:request_sign' request_obj.pk %}">
+              {% csrf_token %}
+              <button type="submit" class="w-full inline-flex justify-center items-center px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded">Sign this request</button>
+            </form>
+          {% elif has_signed %}
+            <div class="inline-block px-4 py-2 bg-green-50 text-green-700 rounded">You have already signed</div>
+          {% else %}
+            <div class="text-sm text-gray-500">You cannot sign this request.</div>
+          {% endif %}
+          <div class="mt-4">
+            <button id="open-signature-modal" class="w-full inline-flex justify-center items-center px-3 py-2 border rounded bg-white text-sm">Upload / Draw signature</button>
+          </div>
+        </div>
+      </aside>
+    </div>
+    
+  <!-- Document preview moved to its own full-width section -->
+  {% if pages %}
+    <div class="bg-white shadow-sm border rounded-lg p-6">
+      <h3 class="text-lg font-medium text-gray-800 mb-3">Document Preview</h3>
+      <div class="space-y-4">
+        {% for p in pages %}
+          <div class="border rounded overflow-hidden ">
+            <img src="{% url 'docusign:document_page_image' request_obj.document.pk p %}" alt="Page {{ p }}" class="w-full border-bg-green" />
+          </div>
+        {% endfor %}
+      </div>
+      <div class="mt-2 text-sm">
+        <a href="{% url 'docusign:document_view' request_obj.document.pk %}" class="text-indigo-600 hover:underline" target="_blank" rel="noopener">Open document as PDF</a>
+      </div>
+    </div>
+  {% elif request_obj.document and request_obj.document.file %}
+    <div class="bg-white shadow-sm border rounded-lg p-6">
+      <h3 class="text-lg font-medium text-gray-800 mb-3">Document Preview</h3>
+      <div class="w-full h-96 border rounded overflow-hidden">
+        <iframe src="{% url 'docusign:document_view' request_obj.document.pk %}" class="w-full h-full" frameborder="0"></iframe>
+      </div>
+      <div class="mt-2 text-sm">
+        <a href="{% url 'docusign:document_view' request_obj.document.pk %}" class="text-indigo-600 hover:underline" target="_blank" rel="noopener">Open document in new tab / download</a>
+      </div>
+    </div>
+  {% endif %}
+
+  </div>
+{% endblock %}
+
+{% block extra_js %}
+  <script>
+    // Signature modal with three tabs: Draw, Text, Upload
+    document.addEventListener('DOMContentLoaded', function () {
+      const openBtn = document.getElementById('open-signature-modal')
+      if (!openBtn) return
+
+      // insert modal markup at end of body
+      const modalHtml = `
+      <div id="signature-modal" class="fixed inset-0 z-50 hidden" aria-hidden="true">
+        <div class="absolute inset-0 bg-black opacity-40"></div>
+        <div class="relative max-w-2xl mx-auto mt-20 bg-white rounded shadow-lg overflow-hidden">
+          <div class="flex items-center justify-between px-4 py-3 border-b">
+            <h3 class="text-lg font-medium">Create Signature</h3>
+            <button id="sig-modal-close" class="text-gray-500 hover:text-gray-700">✕</button>
+          </div>
+          <div class="px-4 py-4">
+            <div class="border-b mb-4">
+              <nav class="-mb-px flex space-x-4" aria-label="Tabs">
+                <button class="tab-btn px-3 py-2 text-sm font-medium text-indigo-600 border-b-2 border-indigo-600" data-tab="draw">Draw</button>
+                <button class="tab-btn px-3 py-2 text-sm font-medium text-gray-600" data-tab="text">Text</button>
+                <button class="tab-btn px-3 py-2 text-sm font-medium text-gray-600" data-tab="upload">Upload</button>
+              </nav>
+            </div>
+
+            <div id="tab-draw" class="tab-panel">
+              <div class="mb-2 text-sm text-gray-600">Draw your signature using mouse or touch.</div>
+              <canvas id="sig-draw-canvas" width="800" height="200" class="w-full border rounded"></canvas>
+              <div class="flex gap-2 mt-3">
+                <button id="sig-draw-clear" class="px-3 py-2 bg-gray-100 rounded">Clear</button>
+                <button id="sig-draw-save" class="px-3 py-2 bg-indigo-600 text-white rounded">Save</button>
+              </div>
+            </div>
+
+            <div id="tab-text" class="tab-panel hidden">
+              <div class="mb-2 text-sm text-gray-600">Create a text signature. Choose font and size.</div>
+              <div class="flex gap-2 items-center mb-2">
+                <input id="sig-text-input" type="text" placeholder="Type your name" class="flex-1 px-2 py-2 border rounded" />
+                <select id="sig-text-font" class="px-2 py-2 border rounded">
+                  <option value="Brush Script MT, cursive">Brush Script MT</option>
+                  <option value="Dancing Script, cursive">Dancing Script</option>
+                  <option value="Segoe Script, cursive">Segoe Script</option>
+                  <option value="cursive">Cursive</option>
+                  <option value="serif">Serif</option>
+                </select>
+                <select id="sig-text-size" class="px-2 py-2 border rounded">
+                  <option value="36">36</option>
+                  <option value="42">42</option>
+                  <option value="48" selected>48</option>
+                  <option value="56">56</option>
+                </select>
+              </div>
+              <canvas id="sig-text-canvas" width="800" height="200" class="w-full border rounded"></canvas>
+              <div class="flex gap-2 mt-3">
+                <button id="sig-text-render" class="px-3 py-2 bg-gray-100 rounded">Render</button>
+                <button id="sig-text-save" class="px-3 py-2 bg-indigo-600 text-white rounded">Save</button>
+              </div>
+            </div>
+
+            <div id="tab-upload" class="tab-panel hidden">
+              <div class="mb-2 text-sm text-gray-600">Upload a signature image (PNG/JPG).</div>
+              <input id="sig-upload-file" type="file" accept="image/*" class="w-full mb-3" />
+              <div class="flex gap-2">
+                <button id="sig-upload-button" class="px-3 py-2 bg-gray-100 rounded">Upload</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>`
+
+      const wrapper = document.createElement('div')
+      wrapper.innerHTML = modalHtml
+      document.body.appendChild(wrapper)
+
+      const modal = document.getElementById('signature-modal')
+      const closeBtn = document.getElementById('sig-modal-close')
+      const tabs = document.querySelectorAll('.tab-btn')
+      const panels = document.querySelectorAll('.tab-panel')
+
+      function showModal() { modal.classList.remove('hidden') }
+      function hideModal() { modal.classList.add('hidden') }
+
+      openBtn.addEventListener('click', showModal)
+      closeBtn.addEventListener('click', hideModal)
+
+      tabs.forEach((t) => {
+        t.addEventListener('click', function () {
+          tabs.forEach(x => x.classList.remove('text-indigo-600', 'border-indigo-600'))
+          tabs.forEach(x => x.classList.add('text-gray-600'))
+          this.classList.add('text-indigo-600', 'border-indigo-600')
+          panels.forEach(p => p.classList.add('hidden'))
+          const sel = document.getElementById('tab-' + this.dataset.tab)
+          if (sel) sel.classList.remove('hidden')
+        })
+      })
+
+      // CSRF helper
+      function getCookie(name) {
+        let cookieValue = null
+        if (document.cookie && document.cookie !== '') {
+          const cookies = document.cookie.split(';')
+          for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim()
+            if (cookie.substring(0, name.length + 1) === (name + '=')) {
+              cookieValue = decodeURIComponent(cookie.substring(name.length + 1))
+              break
+            }
+          }
+        }
+        return cookieValue
+      }
+      const csrftoken = getCookie('csrftoken')
+
+      // DRAW tab
+      const drawCanvas = document.getElementById('sig-draw-canvas')
+      const drawCtx = drawCanvas.getContext('2d')
+      drawCtx.lineWidth = 2
+      drawCtx.strokeStyle = '#111827'
+      let drawing = false
+      function pos(e) { const r = drawCanvas.getBoundingClientRect(); if (e.touches) e = e.touches[0]; return {x: e.clientX - r.left, y: e.clientY - r.top} }
+      drawCanvas.addEventListener('pointerdown', (e) => { drawing = true; const p = pos(e); drawCtx.beginPath(); drawCtx.moveTo(p.x, p.y) })
+      drawCanvas.addEventListener('pointermove', (e) => { if (!drawing) return; const p = pos(e); drawCtx.lineTo(p.x, p.y); drawCtx.stroke() })
+      drawCanvas.addEventListener('pointerup', () => drawing = false)
+      document.getElementById('sig-draw-clear').addEventListener('click', () => drawCtx.clearRect(0,0,drawCanvas.width, drawCanvas.height))
+      document.getElementById('sig-draw-save').addEventListener('click', () => {
+        const dataUrl = drawCanvas.toDataURL('image/png')
+        const fd = new FormData()
+        fd.append('image', dataUrl)
+        fetch('{% url "docusign:signature_upload_canvas" %}', { method: 'POST', body: fd, headers: { 'X-CSRFToken': csrftoken } })
+          .then(r => r.json()).then(data => { if (data.url) { updateSignaturePreview(data.url); hideModal() } else alert('Save failed') }).catch(e => { console.error(e); alert('Save failed') })
+      })
+
+      // TEXT tab (render text to canvas then save)
+      const textCanvas = document.getElementById('sig-text-canvas')
+      const textCtx = textCanvas.getContext('2d')
+      document.getElementById('sig-text-render').addEventListener('click', () => {
+        const text = document.getElementById('sig-text-input').value || ''
+        const font = document.getElementById('sig-text-font').value
+        const size = parseInt(document.getElementById('sig-text-size').value || 48, 10)
+        textCtx.clearRect(0,0,textCanvas.width, textCanvas.height)
+        textCtx.fillStyle = '#111827'
+        textCtx.textBaseline = 'middle'
+        textCtx.font = `${size}px ${font}`
+        // center text
+        const w = textCtx.measureText(text).width
+        textCtx.fillText(text, (textCanvas.width - w)/2, textCanvas.height/2)
+      })
+      document.getElementById('sig-text-save').addEventListener('click', () => {
+        const dataUrl = textCanvas.toDataURL('image/png')
+        const fd = new FormData(); fd.append('image', dataUrl)
+        fetch('{% url "docusign:signature_upload_canvas" %}', { method: 'POST', body: fd, headers: { 'X-CSRFToken': csrftoken } })
+          .then(r => r.json()).then(data => { if (data.url) { updateSignaturePreview(data.url); hideModal() } else alert('Save failed') }).catch(e => { console.error(e); alert('Save failed') })
+      })
+
+      // UPLOAD tab
+      document.getElementById('sig-upload-button').addEventListener('click', () => {
+        const f = document.getElementById('sig-upload-file').files[0]
+        if (!f) return alert('Choose a file first')
+        const fd = new FormData(); fd.append('image', f)
+        fetch('{% url "docusign:signature_upload" %}', { method: 'POST', body: fd, headers: { 'X-CSRFToken': csrftoken } })
+          .then(r => r.json()).then(data => { if (data.url) { updateSignaturePreview(data.url); hideModal() } else alert('Upload failed') }).catch(e => { console.error(e); alert('Upload failed') })
+      })
+
+      function updateSignaturePreview(url) {
+        const img = document.getElementById('user-signature-img')
+        if (img) img.src = url
+        else {
+          const ph = document.getElementById('user-signature-placeholder'); if (ph) ph.remove()
+          const container = document.querySelector('#open-signature-modal').parentNode
+          const newImg = document.createElement('img'); newImg.id = 'user-signature-img'; newImg.src = url; newImg.className = 'mx-auto h-20 object-contain'; container.insertBefore(newImg, container.firstChild)
+        }
+      }
+    })
+  </script>
+{% endblock %}

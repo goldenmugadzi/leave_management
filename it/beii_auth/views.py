@@ -143,7 +143,30 @@ APPLICATIONS = [
         "title": "Commercial Files",
         "iconUrl": "assets/images/customer.png",
         "url": "/commercial/customers"
-    },  
+    },  {
+        "name": "Battery Maintenance",
+        "title": "Battery Maintenance",
+        "iconUrl": "assets/images/customer.png",
+        "url": "/installations/"
+    },
+    {
+        "name": "inspections",
+        "title": "Inspections",
+        "iconUrl": "assets/images/customer.png",
+        "url": "/inspections/"
+    },
+    {
+        "name": "Meetings",
+        "title": "Meetings",
+        "iconUrl": "assets/images/meeting.png",
+        "url": "/meetings_dashboard/"
+    },
+    {
+        "name":"fault_locator",
+        "title": "Fault Locator",
+        "iconUrl": "assets/images/fault_locator.png",
+        "url": "/fault_locator/"
+    },
     # {
     #     "name": "Battery Maintenance",
     #     "title": "Battery Maintenance",

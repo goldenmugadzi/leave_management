@@ -11,7 +11,8 @@ from .models import (
 
 class Query(graphene.ObjectType):
     me = graphene.Field(UserProfileType)
-    users = graphene.List(UserProfileType)
+    users = graphene.List(UserProfileType, username_icontains=graphene.String())
+    all_users = graphene.List(UserProfileType, search=graphene.String())
     user = graphene.Field(UserProfileType, id=graphene.ID(required=True))
     application = graphene.Field(ApplicationType, id=graphene.ID(required=True))
     role = graphene.Field(RolesType, id=graphene.ID(required=True))
@@ -33,8 +34,18 @@ class Query(graphene.ObjectType):
     all_suppliers = graphene.List(SupplierType)
     all_responsibilities = graphene.List(ResponsibilitiesType)
 
-    def resolve_users(self, info):
-        return UserProfile.objects.all()
+    def resolve_users(self, info, username_icontains=None):
+        queryset = UserProfile.objects.all()
+        if username_icontains:
+            queryset = queryset.filter(username__icontains=username_icontains)
+        return queryset
+
+    def resolve_all_users(self, info, search=None):
+        """Alias for resolve_users with 'search' parameter for frontend compatibility"""
+        queryset = UserProfile.objects.all()
+        if search:
+            queryset = queryset.filter(username__icontains=search)
+        return queryset
 
     def resolve_user(self, info, id):
         return UserProfile.objects.get(pk=id)
