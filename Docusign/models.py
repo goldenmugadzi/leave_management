@@ -20,7 +20,7 @@ class AuditLog(models.Model):
     ]
     
     user = models.ForeignKey(UserProfile, on_delete=models.CASCADE, related_name='audit_logs')
-    action = models.CharField(max_length=20, choices=ACTION_CHOICES)
+    action = models.CharField(max_length=255, choices=ACTION_CHOICES)
     ip_address = models.GenericIPAddressField(null=True, blank=True)
     user_agent = models.TextField(blank=True, null=True)
     details = models.JSONField(default=dict, blank=True)
