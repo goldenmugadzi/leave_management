@@ -1,5 +1,7 @@
 from django.urls import path
 from .views import *
+from .views_error import LatestGraphQLErrorView
+
 app_name = 'docusign' # Recommended: Namespace for better URL management
 
 urlpatterns = [
@@ -18,6 +20,9 @@ urlpatterns = [
     path('signature/upload/', SignatureUploadView.as_view(), name='signature_upload'),
     path('signature/upload_canvas/', SignatureCanvasUploadView.as_view(), name='signature_upload_canvas'),
     path('apply_signature/', ApplySignatureView.as_view(), name='apply_signature'),
+    
+    # GraphQL error viewer
+    path('errors/graphql/', LatestGraphQLErrorView.as_view(), name='graphql_errors'),
     # serve individual PDF pages rendered to images
     path('document/<int:pk>/page/<int:page>/image/', DocumentPageImageView.as_view(), name='document_page_image'),
 ]
