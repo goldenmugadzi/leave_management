@@ -157,7 +157,7 @@ class CustomGraphQLView(FileUploadGraphQLView):
     """
     
     def execute_graphql_request(self, request, data, query, variables, operation_name, show_graphiql=False):
-        """Override to add error logging and HTML error responses"""
+        """Override to add error logging - save HTML errors to file only"""
         try:
             logger.info(f"GraphQL Request - Operation: {operation_name}")
             logger.info(f"Query: {query}")
@@ -167,19 +167,17 @@ class CustomGraphQLView(FileUploadGraphQLView):
                 request, data, query, variables, operation_name, show_graphiql
             )
             
-            # Check for GraphQL errors
+            # Check for GraphQL errors and save to HTML file
             if result and hasattr(result, 'errors') and result.errors:
                 logger.error(f"GraphQL Errors: {result.errors}")
                 
-                # If request accepts HTML, return HTML error page
-                accept_header = request.META.get('HTTP_ACCEPT', '')
-                if 'text/html' in accept_header or show_graphiql:
-                    return self._render_error_html(
-                        query=query,
-                        variables=variables,
-                        operation_name=operation_name,
-                        errors=result.errors
-                    )
+                # Save HTML error page to file (don't return it)
+                self._save_error_html(
+                    query=query,
+                    variables=variables,
+                    operation_name=operation_name,
+                    errors=result.errors
+                )
                 
                 # Log details
                 for error in result.errors:
@@ -192,6 +190,7 @@ class CustomGraphQLView(FileUploadGraphQLView):
                             error.original_error.__traceback__
                         ))
             
+            # Always return the GraphQL result object, never HttpResponse
             return result
             
         except Exception as e:
@@ -212,17 +211,20 @@ class CustomGraphQLView(FileUploadGraphQLView):
             print(tb)
             print(f"{'='*60}\n")
             
-            # Return HTML error page
-            return self._render_error_html(
+            # Save HTML error page to file
+            self._save_error_html(
                 query=query,
                 variables=variables,
                 operation_name=operation_name,
                 errors=[{'message': str(e), 'path': None}],
                 traceback_text=tb
             )
+            
+            # Re-raise so GraphQL can handle it properly
+            raise
     
-    def _render_error_html(self, query, variables, operation_name, errors, traceback_text=None):
-        """Render errors as HTML page and save to file"""
+    def _save_error_html(self, query, variables, operation_name, errors, traceback_text=None):
+        """Save GraphQL errors as HTML page to file (for viewing via /eseal/errors/graphql/)"""
         from datetime import datetime
         import os
         
@@ -244,7 +246,7 @@ class CustomGraphQLView(FileUploadGraphQLView):
         
         template = Template(ERROR_HTML_TEMPLATE)
         context = Context({
-            'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S.%f'),
             'errors': formatted_errors,
             'query': query,
             'variables': variables or {},
@@ -260,6 +262,12 @@ class CustomGraphQLView(FileUploadGraphQLView):
             error_dir = os.path.join(settings.BASE_DIR, 'graphql_errors')
             os.makedirs(error_dir, exist_ok=True)
             
+            # Save as latest_error.html (overwrites previous)
+            latest_filepath = os.path.join(error_dir, 'latest_error.html')
+            with open(latest_filepath, 'w', encoding='utf-8') as f:
+                f.write(html)
+            
+            # Also save with timestamp for history
             timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
             filename = f'error_{timestamp}.html'
             filepath = os.path.join(error_dir, filename)
@@ -269,9 +277,9 @@ class CustomGraphQLView(FileUploadGraphQLView):
             
             print(f"\n{'='*60}")
             print(f"GraphQL Error saved to: {filepath}")
+            print(f"View at: /eseal/errors/graphql/")
             print(f"{'='*60}\n")
             
         except Exception as e:
             print(f"Could not save error HTML: {e}")
-        
-        return HttpResponse(html, status=500, content_type='text/html')
+

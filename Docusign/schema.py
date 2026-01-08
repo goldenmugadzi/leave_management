@@ -252,11 +252,15 @@ class UploadDocument(graphene.Mutation):
                     document=None
                 )
             
-            # Create document
-            uploaded_file.seek(0)  # Reset file pointer
+            # Decrypt PDF if encrypted (store unencrypted, encrypt only on download)
+            crypto_service = CryptographyService()
+            decrypted_content = crypto_service.decrypt_pdf_if_needed(file_content)
+            
+            # Create document with decrypted content
+            from django.core.files.base import ContentFile
             document = Document.objects.create(
                 title=title,
-                file=uploaded_file,
+                file=ContentFile(decrypted_content, name=file_name),
                 uploaded_by=user
             )
             

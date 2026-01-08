@@ -15,6 +15,7 @@ from PyPDF2 import PdfReader, PdfWriter
 from reportlab.pdfgen import canvas
 from reportlab.lib.utils import ImageReader
 import json
+import os
 
 
 
@@ -181,8 +182,10 @@ def download_with_qr(request, request_id):
         writer.add_page(verification_pdf.pages[0])
         
         # Apply read-only protection - prevent editing but allow printing and copying
+        # Get encryption password from environment variable (empty string = no password)
+        encryption_password = os.environ.get('PDF_ENCRYPTION_PASSWORD', '')
         writer.encrypt(
-            user_password="",  # Empty password for easy opening
+            user_password=encryption_password,
             owner_password=None,  # No owner password needed
             permissions_flag=0b0000010100110100  # Allow printing and copying, but prevent editing
         )

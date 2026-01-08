@@ -45,6 +45,46 @@ class CryptographyService:
         }
         return algorithms.get(name, hashes.SHA256())
     
+    def decrypt_pdf_if_needed(self, pdf_content: bytes) -> bytes:
+        """
+        Decrypt PDF if it's encrypted. Returns unencrypted PDF content.
+        Use this when uploading/storing documents to ensure they're never encrypted in storage.
+        """
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        try:
+            from PyPDF2 import PdfReader as PyPDF2Reader, PdfWriter as PyPDF2Writer
+            
+            reader = PyPDF2Reader(BytesIO(pdf_content))
+            
+            if reader.is_encrypted:
+                logger.info("PDF is encrypted, decrypting...")
+                success = reader.decrypt('')
+                
+                if success == 0:
+                    logger.warning("Could not decrypt PDF with empty password, returning as-is")
+                    return pdf_content
+                
+                # Re-write without encryption
+                writer = PyPDF2Writer()
+                for page in reader.pages:
+                    writer.add_page(page)
+                
+                buffer = BytesIO()
+                writer.write(buffer)
+                buffer.seek(0)
+                decrypted_content = buffer.read()
+                logger.info("PDF successfully decrypted")
+                return decrypted_content
+            else:
+                logger.debug("PDF is not encrypted")
+                return pdf_content
+                
+        except Exception as e:
+            logger.error(f"Error checking/decrypting PDF: {e}")
+            return pdf_content
+    
     def generate_key_pair(self) -> Tuple[bytes, bytes]:
         """
         Generate RSA key pair
@@ -192,42 +232,46 @@ class CryptographyService:
         logger = logging.getLogger(__name__)
         
         # Check if PDF is encrypted and decrypt it if necessary
-        pdf_buffer = BytesIO(pdf_content)
         try:
-            pdf_reader = PdfFileReader(pdf_buffer)
+            from PyPDF2 import PdfReader as PyPDF2Reader, PdfWriter as PyPDF2Writer
             
-            # Check if PDF is encrypted
-            if pdf_reader.is_encrypted:
-                logger.warning("PDF is encrypted. Attempting to decrypt with empty password...")
-                # Try to decrypt with empty password (owner password bypass)
-                if pdf_reader.decrypt(''):
-                    logger.info("Successfully decrypted PDF with empty password")
-                    # Re-create the PDF without encryption
-                    from PyPDF2 import PdfReader, PdfWriter
-                    pypdf_reader = PdfReader(BytesIO(pdf_content))
-                    pypdf_reader.decrypt('')
-                    
-                    # Write to new buffer without encryption
-                    pypdf_writer = PdfWriter()
-                    for page in pypdf_reader.pages:
-                        pypdf_writer.add_page(page)
-                    
-                    decrypted_buffer = BytesIO()
-                    pypdf_writer.write(decrypted_buffer)
-                    decrypted_buffer.seek(0)
-                    pdf_content = decrypted_buffer.read()
-                    
-                    # Re-create reader with decrypted content
-                    pdf_buffer = BytesIO(pdf_content)
-                    pdf_reader = PdfFileReader(pdf_buffer)
-                    logger.info("PDF decrypted successfully")
-                else:
-                    raise ValueError("PDF is password-protected and cannot be decrypted")
+            # Try to read with PyPDF2 first to check encryption
+            temp_reader = PyPDF2Reader(BytesIO(pdf_content))
+            
+            if temp_reader.is_encrypted:
+                logger.warning("PDF is encrypted. Attempting to decrypt...")
+                
+                # Try empty password first (common for owner-password-only PDFs)
+                success = temp_reader.decrypt('')
+                
+                if success == 0:
+                    logger.error("Failed to decrypt PDF with empty password")
+                    raise ValueError("PDF is password-protected. Please provide an unencrypted PDF for signing.")
+                
+                logger.info(f"Successfully decrypted PDF (result code: {success})")
+                
+                # Re-write PDF without encryption
+                writer = PyPDF2Writer()
+                for page_num in range(len(temp_reader.pages)):
+                    writer.add_page(temp_reader.pages[page_num])
+                
+                # Write to buffer
+                decrypted_buffer = BytesIO()
+                writer.write(decrypted_buffer)
+                decrypted_buffer.seek(0)
+                pdf_content = decrypted_buffer.read()
+                logger.info("PDF successfully decrypted and re-written without encryption")
+            else:
+                logger.info("PDF is not encrypted, proceeding with signing")
+                
         except Exception as decrypt_err:
-            logger.error(f"Error checking/decrypting PDF: {decrypt_err}")
-            # Continue with original content if decryption fails
-            pdf_buffer = BytesIO(pdf_content)
-            pdf_reader = PdfFileReader(pdf_buffer)
+            logger.error(f"Error during PDF decryption check: {decrypt_err}", exc_info=True)
+            # If decryption fails, we'll try to proceed anyway
+            # The IncrementalPdfFileWriter might handle it
+        
+        # Now create the pyhanko reader with decrypted content
+        pdf_buffer = BytesIO(pdf_content)
+        pdf_reader = PdfFileReader(pdf_buffer)
         
         # Load private key and certificate using cryptography
         from cryptography.hazmat.primitives.serialization import load_pem_private_key
