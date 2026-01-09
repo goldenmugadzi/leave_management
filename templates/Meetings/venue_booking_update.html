@@ -3,6 +3,7 @@
 
 {% block content %}
 <div class="content-wrapper p-6">
+
   <!-- Page Header -->
   <div class="mb-6">
     <h1 class="text-2xl font-bold text-gray-800">Update Venue Booking</h1>
@@ -10,30 +11,40 @@
   </div>
 
   <!-- Form -->
-  <form method="post" class="space-y-4">
+  <form method="post" class="space-y-6">
     {% csrf_token %}
 
-    {% for field in form %}
-      <div class="mb-4">
-        <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-gray-700">
-          {{ field.label }}
-        </label>
-        {{ field }}
-        {% if field.errors %}
-          <p class="text-red-600 text-sm mt-1">{{ field.errors|striptags }}</p>
-        {% endif %}
-      </div>
-    {% endfor %}
+    <!-- 2-COLUMN GRID -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {% for field in form %}
+        <div>
+          <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+            {{ field.label }}
+          </label>
 
-    <div class="flex gap-4">
-      <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700">
+          {{ field }}
+
+          {% if field.errors %}
+            <p class="text-red-600 text-sm mt-1">{{ field.errors|striptags }}</p>
+          {% endif %}
+        </div>
+      {% endfor %}
+    </div>
+
+    <!-- ACTION BUTTONS -->
+    <div class="flex gap-4 pt-4">
+      <button type="submit" 
+              class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700">
         Save Changes
       </button>
+
       <a href="{% url 'booked_venue' %}" 
          class="bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600">
         Cancel
       </a>
     </div>
+
   </form>
 </div>
+
 {% endblock %}

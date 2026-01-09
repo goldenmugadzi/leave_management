@@ -2,6 +2,7 @@ from django.db import models
 from it.users.models import *
 from django.conf import settings
 
+
 class SafetyMonthlyReport(models.Model):
     user = models.ForeignKey(UserProfile, on_delete=models.CASCADE, blank=True, null=True)
     department = models.ForeignKey(Sections, on_delete=models.DO_NOTHING, blank=True, null=True)
@@ -99,6 +100,27 @@ class SafetyMonthlyReport(models.Model):
         return f"{self.year}-{self.month:02d} Safety Report"
 
 class AccidentReport(models.Model):
+    type = models.CharField(max_length=20, choices=[
+        ('property', 'Property'),
+        ('staff', 'Staff'),
+        ('vehicle', 'Vehicle'),
+        ('public', 'Public')
+    ])
+
+    # Link to specific forms
+    property_incident = models.ForeignKey(
+        'PropertyLossIncident', on_delete=models.SET_NULL, null=True, blank=True
+    )
+    staff_report = models.ForeignKey(
+        'AccidentReport', on_delete=models.SET_NULL, null=True, blank=True
+    )
+    public_report = models.ForeignKey(
+        'MemberOfPublicAccidentReport', on_delete=models.SET_NULL, null=True, blank=True
+    )
+    vehicle_report = models.ForeignKey(
+        'VehicleAccidentReport', on_delete=models.SET_NULL, null=True, blank=True
+    )
+    
     Severity_Of_Accident = [
         ('First aid case', 'First aid case'),
         ('Medical treatment', 'Medical treatment'),
@@ -135,7 +157,7 @@ class AccidentReport(models.Model):
     
     employee_involved = models.ForeignKey(UserProfile, on_delete=models.CASCADE, blank=True, null=True,related_name="accident_reports")
     department = models.ForeignKey(Sections, on_delete=models.DO_NOTHING, blank=True, null=True)
-    sex = models.CharField(max_length=300 ,choices=Sex)
+    gender = models.CharField(max_length=300 ,choices=Sex)
     address_of_person_involved = models.CharField(max_length=500)
     region = models.ForeignKey(Regions, on_delete=models.DO_NOTHING, blank=True, null=True)
     age = models.PositiveIntegerField(default=0)
@@ -160,39 +182,50 @@ class AccidentReport(models.Model):
     attach_written_statements = models.ImageField(upload_to='accident_photos/', blank=True, null=True)
     other_information_considered_neccesary = models.TextField(max_length=600)
     for_electrical_state_voltage = models.TextField(max_length=600,choices=Voltage)
- 
-       
-    
-    
+    status = models.CharField(
+    max_length=20,
+    choices=[('Pending', 'Pending'), ('Actioned', 'Actioned')],
+    default='Pending'
+)
+
 class VehicleAccidentReport(models.Model):
-    
-    Hired = [
-        ('Yes','Yes'),
-        ('No' ,'No'),
+
+    HIRED_CHOICES = [
+        ('Yes', 'Yes'),
+        ('No', 'No'),
     ]
+
     # 1. Driver's Details
-    driver_name = models.CharField(max_length=100)
+    driver_name = models.ForeignKey(
+        UserProfile,
+        on_delete=models.CASCADE,
+        blank=True,
+        null=True
+    )
     home_address = models.TextField()
     age = models.PositiveIntegerField()
     drivers_license = models.CharField(max_length=50)
-    designation = models.CharField(max_length=100)
+    designation = models.ForeignKey(Designations, on_delete=models.DO_NOTHING, blank=True, null=True)
     place_of_issue = models.CharField(max_length=100)
     date_of_issue = models.DateField()
     ec_number = models.CharField(max_length=50)
     work_station = models.CharField(max_length=100)
 
     # 2. Vehicle Details
-    make = models.CharField(max_length=100)
-    registration_number = models.CharField(max_length=50)
-    fleet_number = models.CharField(max_length=50)
+    vehicle_details = models.ForeignKey(
+        'Transport.Vehicle',
+        on_delete=models.CASCADE,
+        related_name='accident_reports',
+        verbose_name="fleet_Number/Make/Reg_Number"
+    )
     allocation_to_section = models.CharField(max_length=100)
-    state_if_hired = models.TextField(max_length=600,choices=Hired)
+    state_if_hired = models.CharField(max_length=3, choices=HIRED_CHOICES)
 
     # 3. Particulars of Accident
-    datetime_for_accident = models.DateTimeField( verbose_name="Date and Time of Accident")
+    datetime_for_accident = models.DateTimeField(verbose_name="Date and Time of Accident")
     place_of_accident = models.CharField(max_length=150)
     brief_description = models.TextField()
-    datetime_to_police = models.DateTimeField( verbose_name="Date and Time Accident was reported to police")
+    datetime_to_police = models.DateTimeField(verbose_name="Date and Time Accident was reported to police")
     speed_at_time_of_accident = models.PositiveIntegerField(default=0)
     gear_used = models.PositiveIntegerField(default=0)
     type_and_state_of_road = models.CharField(max_length=150)
@@ -201,12 +234,11 @@ class VehicleAccidentReport(models.Model):
     name_and_address_of_passenger = models.TextField()
 
     # 4. Damaged Property Details
-    #name_and_address_of_driver= models.CharField(max_length=100)
     other_vehicle_owner_name = models.CharField(max_length=100)
     other_vehicle_owner_address = models.TextField()
     other_vehicle_make_and_type = models.CharField(max_length=100)
     other_vehicle_registration_number = models.CharField(max_length=50)
-    approximate_speed_of_other_vehicle = models.CharField(max_length=50, blank=True, help_text="e.g., '60 km/h'")
+    approximate_speed_of_other_vehicle = models.CharField(max_length=50, blank=True)
 
     # 5. Damage to Property Details
     zesa_vehicle_damage = models.TextField(blank=True)
@@ -218,9 +250,16 @@ class VehicleAccidentReport(models.Model):
     section_head_comments = models.TextField()
 
     date_submitted = models.DateTimeField(auto_now_add=True)
+    status = models.CharField(
+    max_length=20,
+    choices=[('Pending', 'Pending'), ('Actioned', 'Actioned')],
+    default='Pending'
+)
+
 
     def __str__(self):
-        return f"Vehicle Accident Report - {self.driver_name} - {self.date_of_accident}"
+        return f"Vehicle Accident Report - {self.driver_name} - {self.datetime_for_accident.date()}"
+
 
 class PropertyLossIncident(models.Model):
     # Property/Asset details
@@ -266,10 +305,113 @@ class PropertyLossIncident(models.Model):
     # Reporting
     reported_by = models.CharField("Reported By", max_length=255)
     date_of_report = models.DateField("Date of the Report", auto_now_add=True)
+    status = models.CharField(
+    max_length=20,
+    choices=[('Pending', 'Pending'), ('Actioned', 'Actioned')],
+    default='Pending'
+)
+
 
     def __str__(self):
         return f"Property Loss Incident at {self.address_of_loss} on {self.date_time_of_loss:%Y-%m-%d %H:%M}"
 
 
+class MemberOfPublicAccidentReport(models.Model):
+
+    # Choices reused from AccidentReport
+    Severity_Of_Accident = [
+        ('First aid case', 'First aid case'),
+        ('Medical treatment', 'Medical treatment'),
+        ('Non lost time injury', 'Non lost time injury'),
+        ('Lost time injury', 'Lost time injury'),
+        ('Fatal', 'Fatal'),
+    ]
+    Nature_of_Accidents = [
+        ('Electrical', 'Electrical'),
+        ('Non_electrical', 'Non_electrical'),
+    ]
+    Nature_of_injury = [
+        ('Major', 'Major'),
+        ('Minor','Minor'),
+    ]
+    Voltage = [
+        ('11kv', '11kv'),
+        ('33kv','33kv'),
+    ]
+    Risk_Assessment = [
+        ('Yes','Yes'),
+        ('No' ,'No'),
+    ]
+    Safety_Preparation = [
+        ('Yes','Yes'),
+        ('No','No'),
+    ]
+    Sex = [
+        ('Male','Male'),
+        ('Female','Female'),
+    ]
+
+    # RENAMED FIELD
+    member_of_public_involved = models.CharField(max_length=255)
+
+    gender = models.CharField(max_length=300, choices=Sex)
+    address_of_person_involved = models.CharField(max_length=500)
+    age = models.PositiveIntegerField(default=0)
+
+    date_of_accident = models.DateField()
+    time_of_accident = models.TimeField()
+
+    authority_received_datetime = models.DateTimeField(
+        verbose_name="Date and Time Report Was Received by Authority"
+    )
+    authority_received_from = models.CharField(
+        max_length=255,
+        verbose_name="Name of Person Who Reported to Authority"
+    )
+
+    police_received_datetime = models.DateTimeField(
+        verbose_name="Date and Time Report Was Received by Police"
+    )
+    police_received_from = models.CharField(
+        max_length=255,
+        verbose_name="Name of Person Who Reported to Police"
+    )
+
+    cost_center = models.ForeignKey(
+        CostCenter, on_delete=models.CASCADE, blank=True, null=True
+    )
+
+    severity_Of_Accident = models.CharField(max_length=500, choices=Severity_Of_Accident)
+    nature_of_accident = models.CharField(max_length=600, choices=Nature_of_Accidents)
+    nature_of_injury = models.CharField(max_length=400, choices=Nature_of_injury)
+
+    circumstance_leading_to_accident = models.TextField(max_length=700)
+    location_of_accident_giving_line_and_section_number = models.TextField(max_length=800)
+
+    risk_assessment_carried_out = models.CharField(max_length=800, choices=Risk_Assessment)
+    operation_of_protective_devices = models.TextField(max_length=600)
+
+    attach_photographs = models.ImageField(
+        upload_to='accident_photos/', blank=True, null=True
+    )
+
+    steps_taken_on_the_short_term = models.CharField(max_length=700)
+    safety_preparation_carried_out = models.CharField(max_length=900, choices=Safety_Preparation)
+
+    attach_written_statements = models.ImageField(
+        upload_to='accident_photos/', blank=True, null=True
+    )
+
+    other_information_considered_neccesary = models.TextField(max_length=600)
+    for_electrical_state_voltage = models.CharField(max_length=600, choices=Voltage)
+
+    status = models.CharField(
+        max_length=20,
+        choices=[('Pending', 'Pending'), ('Actioned', 'Actioned')],
+        default='Pending'
+    )
+
+    def __str__(self):
+        return f"Member of Public Accident Report - {self.member_of_public_involved}"
 
 
