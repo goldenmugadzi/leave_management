@@ -16,7 +16,7 @@ from django.urls import reverse
 from django.template.loader import render_to_string
 from.models import*
 from it.users.models import Regions, Sections, UserProfile,Designations,CostCenter
-from.forms import  TripRecordForm, TripDetailsForm,TyresForm, BatteryForm, AllocationForm
+from.forms import  TripRecordForm, TripDetailsForm,TyresForm, BatteryForm, AllocationForm, VehicleForm
 from django.shortcuts import render, redirect
 
 @login_required
@@ -191,6 +191,7 @@ def vehicle_datatable(request):
         driver_str = str(triprecord.drivers_name) if triprecord.drivers_name else ""
         data.append({
             "id": triprecord.id,
+            "trip_reference": triprecord.trip_reference,
             "date": triprecord.date.strftime("%Y-%m-%d %H:%M") if triprecord.date else "",
             "depot": str(triprecord.depot) if triprecord.depot else "",
             "vehicle_details": vehicle_str,
@@ -218,7 +219,6 @@ def vehicle_datatable(request):
         "recordsFiltered": filtered,
         "data": data
     })
-
 
 def vehicle_dashboard (request):
   return render(request,'transport/vehicle_dashboard.html')
@@ -282,7 +282,7 @@ def vehicle_datatables(request):
     length = int(request.GET.get('length', 10))
     search_value = request.GET.get('search[value]', '')
 
-    qs = TransportAssets.objects.all()
+    qs = Vehicle.objects.all()
 
     # Search filter
     if search_value:
@@ -299,16 +299,17 @@ def vehicle_datatables(request):
     qs = qs.order_by('-id')[start:start+length]
 
     data = []
-    for asset in qs:
+    
+    for vehicle in qs:
         data.append({
-            "reg_number": asset.reg_number,
-            "fleet_number": asset.fleet_number,
-            "make": asset.make,
-            "model": asset.model,
-            "year": asset.year,
-            "fuel_drawn": asset.fuel_drawn,
-            "oil_drawn": asset.oil_drawn,
-            "fuel_type": asset.fuel_type,
+            "reg_number": vehicle.reg_number,
+            "fleet_number": vehicle.fleet_number,
+            "make": vehicle.make,
+            "model": vehicle.model,
+            "year": vehicle.year,
+            "fuel_drawn": vehicle.fuel_drawn,
+            "oil_drawn": vehicle.oil_drawn,
+            "fuel_type": vehicle.fuel_type,
         })
 
     return JsonResponse({
@@ -362,3 +363,22 @@ def add_allocation(request):
     else:
         form = AllocationForm()
     return render(request, "transport/add_allocations.html", {"form": form})
+
+def get_last_reading(request, vehicle_id):
+    last_trip = TripRecord.objects.filter(vehicle_details_id=vehicle_id).order_by('-date').first()
+    if last_trip:
+        reading = last_trip.closing_speedo_reading
+    else:
+        ta = TransportAssets.objects.filter(reg_number__in=Vehicle.objects.filter(id=vehicle_id).values('reg_number')).order_by('-id').first()
+        reading = ta.closing_speedo_reading if ta else 0
+    return JsonResponse({'opening_reading': reading})
+
+def create_vehicle(request):
+    if request.method == 'POST':
+        form = VehicleForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('vehicle_list')
+    else:
+        form = VehicleForm()
+    return render(request, 'transport/create_vehicle.html', {'form': form})

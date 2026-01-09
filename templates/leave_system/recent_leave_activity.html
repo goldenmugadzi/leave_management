@@ -4,62 +4,88 @@
 <!-- Recent Activity Modal -->
 <div id="activityModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
   <div class="bg-white rounded-xl shadow-lg w-11/12 md:w-3/4 lg:w-1/2 max-h-[80vh] overflow-y-auto p-6 relative">
-    <!-- Modal Header -->
+    
+    <!-- Header -->
     <div class="flex justify-between items-center mb-4">
-      <h2 class="text-2xl font-bold text-gulf-blue-900">Recent Leave Activity</h2>
+      <h2 class="text-2xl font-bold text-gulf-blue-900">Leave Activity History</h2>
       <button onclick="closeActivityModal()" class="text-gray-500 hover:text-gray-700 text-xl">✕</button>
     </div>
-    <!-- Activity Table -->
+
+    <!-- Table -->
     <div class="overflow-x-auto">
-      <table id="activityTable" class="display min-w-full divide-y divide-gray-200 bg-white rounded shadow my-6">
+      <table id="activityTable" class="display min-w-full divide-y divide-gray-200 rounded shadow my-6">
         <thead class="bg-gulf-blue-200">
           <tr>
-            <th class="px-4 py-2 text-center text-xs font-medium text-gray-700">Employee</th>
-            <th class="px-4 py-2 text-center text-xs font-medium text-gray-700">Leave Type</th>
-            <th class="px-4 py-2 text-center text-xs font-medium text-gray-700">Status</th>
-            <th class="px-4 py-2 text-center text-xs font-medium text-gray-700">Action By</th>
-            <th class="px-4 py-2 text-center text-xs font-medium text-gray-700">Date</th>
+            <th class="px-4 py-2 text-center text-xs font-semibold text-gray-700">Employee</th>
+            <th class="px-4 py-2 text-center text-xs font-semibold text-gray-700">Action</th>
+            <th class="px-4 py-2 text-center text-xs font-semibold text-gray-700">Leave Type</th>
+            <th class="px-4 py-2 text-center text-xs font-semibold text-gray-700">By</th>
+            <th class="px-4 py-2 text-center text-xs font-semibold text-gray-700">Date / Time</th>
           </tr>
         </thead>
+
         <tbody class="divide-y divide-gray-100">
           {% for activity in recent_activities %}
-          <tr class="hover:bg-gulf-blue-50">
-            <td class="px-4 py-2 text-center">
-              {% if activity.user and activity.user.user %}
-                {{ activity.user.user.get_full_name }}
-              {% elif activity.user %}
+          <tr class="hover:bg-gulf-blue-50 transition">
+
+            <!-- Employee -->
+            <td class="px-4 py-2 text-center font-medium">
+              {% if activity.user %}
                 {{ activity.user }}
               {% else %}
                 -
               {% endif %}
             </td>
-            <td class="px-4 py-2 text-center">{{ activity.type_of_leave }}</td>
+
+            <!-- Activity (Applied / Approved / Rejected / etc.) -->
             <td class="px-4 py-2 text-center">
-              {% if activity.status == "approved" or activity.status == "Approved" %}
+              {% if activity.action == "applied" %}
+                <span class="text-blue-600 font-semibold">📝 Applied</span>
+              {% elif activity.action == "approved" %}
                 <span class="text-green-600 font-semibold">✅ Approved</span>
-              {% elif activity.status == "rejected" or activity.status == "Rejected" %}
+              {% elif activity.action == "rejected" %}
                 <span class="text-red-600 font-semibold">❌ Rejected</span>
+              {% elif activity.action == "edited" %}
+                <span class="text-yellow-600 font-semibold">✏️ Edited</span>
               {% else %}
-                <span class="text-yellow-600 font-semibold">⏳ Pending</span>
+                <span class="text-gray-500">-</span>
               {% endif %}
             </td>
-            <td class="px-4 py-2 text-center">-</td>
-            <td class="px-4 py-2 text-center">{{ activity.end_date|date:"M d, Y" }}</td>
+
+            <!-- Leave Type -->
+            <td class="px-4 py-2 text-center">{{ activity.type_of_leave }}</td>
+
+            <!-- Action Performed By -->
+            <td class="px-4 py-2 text-center">
+              {% if activity.action_by %}
+                {{ activity.action_by.get_full_name }}
+              {% else %}
+                <span class="text-gray-400 italic">System</span>
+              {% endif %}
+            </td>
+
+            <!-- Date / Time -->
+            <td class="px-4 py-2 text-center text-sm">
+              {{ activity.timestamp|date:"M d, Y" }}<br>
+              <span class="text-gray-500">{{ activity.timestamp|date:"h:i A" }}</span>
+            </td>
+
           </tr>
+
           {% empty %}
           <tr>
-            <td colspan="5" class="text-center text-gray-500 py-4">No recent activity available.</td>
+            <td colspan="5" class="text-center text-gray-500 py-4">
+              No activity recorded.
+            </td>
           </tr>
           {% endfor %}
         </tbody>
+
       </table>
     </div>
+
   </div>
 </div>
-
-<!-- Button to open modal (optional, place where needed) -->
-<!-- <button onclick="openActivityModal()" class="btn btn-info">Show Recent Activity</button> -->
-
 {% endblock %}
 
 {% block scripts %}

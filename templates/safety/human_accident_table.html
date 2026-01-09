@@ -1,0 +1,81 @@
+{% extends 'admin_layout.html' %}
+{% block content %}
+<div class="bg-white rounded-2xl shadow-lg p-8 mb-8">
+  <div class="flex items-center gap-3 mb-6">
+    <span class="text-red-600 text-3xl">&#128100;</span>
+    <h2 class="text-2xl font-bold text-red-700">Human Accident Details</h2>
+  </div>
+  <div class="overflow-x-auto">
+    <table class="min-w-full border border-gray-200 rounded-lg">
+      <thead class="bg-red-100 sticky top-0 z-10">
+        <tr>
+          <th class="px-4 py-2 text-left text-sm font-semibold text-red-700">ID</th>
+          <th class="px-4 py-2 text-left text-sm font-semibold text-red-700">Employee</th>
+          <th class="px-4 py-2 text-left text-sm font-semibold text-red-700">Department</th>
+          <th class="px-4 py-2 text-left text-sm font-semibold text-red-700">Sex</th>
+          <th class="px-4 py-2 text-left text-sm font-semibold text-red-700">Address</th>
+          <th class="px-4 py-2 text-left text-sm font-semibold text-red-700">Region</th>
+          <th class="px-4 py-2 text-left text-sm font-semibold text-red-700">Age</th>
+          <th class="px-4 py-2 text-left text-sm font-semibold text-red-700">Date of Accident</th>
+          <th class="px-4 py-2 text-left text-sm font-semibold text-red-700">Time of Accident</th>
+          <th class="px-4 py-2 text-left text-sm font-semibold text-red-700">Authority Report Date/Time</th>
+          <th class="px-4 py-2 text-left text-sm font-semibold text-red-700">Authority Reporter</th>
+          <th class="px-4 py-2 text-left text-sm font-semibold text-red-700">Police Report Date/Time</th>
+          <th class="px-4 py-2 text-left text-sm font-semibold text-red-700">Police Reporter</th>
+          <th class="px-4 py-2 text-left text-sm font-semibold text-red-700">Cost Center</th>
+          <th class="px-4 py-2 text-left text-sm font-semibold text-red-700">EC Number</th>
+          <th class="px-4 py-2 text-left text-sm font-semibold text-red-700">Severity</th>
+          <th class="px-4 py-2 text-left text-sm font-semibold text-red-700">Nature of Accident</th>
+          <th class="px-4 py-2 text-left text-sm font-semibold text-red-700">Nature of Injury</th>
+          <th class="px-4 py-2 text-left text-sm font-semibold text-red-700">Circumstances</th>
+          <th class="px-4 py-2 text-left text-sm font-semibold text-red-700">Location</th>
+          <th class="px-4 py-2 text-left text-sm font-semibold text-red-700">Risk Assessment</th>
+          <th class="px-4 py-2 text-left text-sm font-semibold text-red-700">Protective Devices</th>
+          <th class="px-4 py-2 text-left text-sm font-semibold text-red-700">Photographs</th>
+          <th class="px-4 py-2 text-left text-sm font-semibold text-red-700">Short Term Steps</th>
+          <th class="px-4 py-2 text-left text-sm font-semibold text-red-700">Safety Preparation</th>
+          <th class="px-4 py-2 text-left text-sm font-semibold text-red-700">Written Statements</th>
+          <th class="px-4 py-2 text-left text-sm font-semibold text-red-700">Other Info</th>
+          <th class="px-4 py-2 text-left text-sm font-semibold text-red-700">Voltage</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for accident in human_accidents %}
+        <tr class="border-t {% cycle 'bg-white' 'bg-red-50' %} hover:bg-red-200/40">
+          <td class="px-4 py-2 text-sm text-gray-700">{{ accident.id }}</td>
+          <td class="px-4 py-2 text-sm text-gray-700">{{ accident.employee_involved }}</td>
+          <td class="px-4 py-2 text-sm text-gray-700">{{ accident.department }}</td>
+          <td class="px-4 py-2 text-sm text-gray-700">{{ accident.sex }}</td>
+          <td class="px-4 py-2 text-sm text-gray-700">{{ accident.address_of_person_involved }}</td>
+          <td class="px-4 py-2 text-sm text-gray-700">{{ accident.region }}</td>
+          <td class="px-4 py-2 text-sm text-gray-700">{{ accident.age }}</td>
+          <td class="px-4 py-2 text-sm text-gray-700">{{ accident.date_of_accident }}</td>
+          <td class="px-4 py-2 text-sm text-gray-700">{{ accident.time_of_accident }}</td>
+          <td class="px-4 py-2 text-sm text-gray-700">{{ accident.authority_received_datetime }}</td>
+          <td class="px-4 py-2 text-sm text-gray-700">{{ accident.authority_received_from }}</td>
+          <td class="px-4 py-2 text-sm text-gray-700">{{ accident.police_received_datetime }}</td>
+          <td class="px-4 py-2 text-sm text-gray-700">{{ accident.police_received_from }}</td>
+          <td class="px-4 py-2 text-sm text-gray-700">{{ accident.cost_center }}</td>
+          <td class="px-4 py-2 text-sm text-gray-700">{{ accident.ec_number }}</td>
+          <td class="px-4 py-2 text-sm text-gray-700">{{ accident.severity_Of_Accident }}</td>
+          <td class="px-4 py-2 text-sm text-gray-700">{{ accident.nature_of_accident }}</td>
+          <td class="px-4 py-2 text-sm text-gray-700">{{ accident.nature_of_injury }}</td>
+          <td class="px-4 py-2 text-sm text-gray-700">{{ accident.circumstance_leading_to_accident }}</td>
+          <td class="px-4 py-2 text-sm text-gray-700">{{ accident.location_of_accident_giving_line_and_section_number }}</td>
+          <td class="px-4 py-2 text-sm text-gray-700">{{ accident.risk_assessment_carried_out }}</td>
+          <td class="px-4 py-2 text-sm text-gray-700">{{ accident.operation_of_protective_devices }}</td>
+          <td class="px-4 py-2 text-sm">{% if accident.attach_photographs %}<img src="{{ accident.attach_photographs.url }}" width="50" class="rounded shadow" />{% endif %}</td>
+          <td class="px-4 py-2 text-sm text-gray-700">{{ accident.steps_taken_on_the_short_term }}</td>
+          <td class="px-4 py-2 text-sm text-gray-700">{{ accident.safety_preparation_carried_out }}</td>
+          <td class="px-4 py-2 text-sm">{% if accident.attach_written_statements %}<img src="{{ accident.attach_written_statements.url }}" width="50" class="rounded shadow" />{% endif %}</td>
+          <td class="px-4 py-2 text-sm text-gray-700">{{ accident.other_information_considered_neccesary }}</td>
+          <td class="px-4 py-2 text-sm text-gray-700">{{ accident.for_electrical_state_voltage }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="28" class="text-center text-gray-500 py-4">No human accident reports found.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
