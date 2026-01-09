@@ -89,6 +89,7 @@ class TripRecord(models.Model):
     stf_number= models.CharField(max_length=500)
     allocation_code= models.CharField(max_length=500)
     trip_distance = models.PositiveIntegerField(default=0)
+    trip_reference = models.CharField(max_length=50, unique=True, blank=True, null=True)
 
     # ✅ rename for display
     region = models.ForeignKey(
@@ -104,7 +105,7 @@ class TripRecord(models.Model):
         on_delete=models.DO_NOTHING,
         blank=True,
         null=True,
-        verbose_name="Dept/Area"
+        verbose_name="District/Section"
     )
 
     # ✅ rename for display
@@ -144,6 +145,11 @@ class TripRecord(models.Model):
         else:
             self.average_consumption = 0
         super().save(*args, **kwargs)
+        # Auto-generate trip_reference if not set
+        if not self.trip_reference:
+            date_part = self.date.strftime('%Y%m%d') if self.date else datetime.now().strftime('%Y%m%d')
+            self.trip_reference = f"TRIP-{date_part}-{self.pk}"
+            super().save(update_fields=['trip_reference'])
 
     def __str__(self):
         return f"Trip on {self.date} for {self.vehicle_details}"

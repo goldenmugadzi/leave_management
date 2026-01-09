@@ -35,10 +35,10 @@ class LeaveRequest(models.Model):
     user = models.ForeignKey(UserProfile, on_delete=models.CASCADE, blank=True, null=True,related_name="leave")
     type_of_leave = models.CharField(max_length=200, choices=LEAVE_TYPES)
     position = models.ForeignKey(Designations, on_delete=models.DO_NOTHING , blank=True, null=True)
-    start_date = models.DateField()
-    end_date = models.DateField()
+    start_date = models.DateField(blank=True, null=True)
+    end_date = models.DateField(blank=True, null=True)
     department = models.ForeignKey(Sections, on_delete=models.DO_NOTHING, blank=True, null=True)
-    number_of_days = models.PositiveIntegerField()
+    number_of_days = models.PositiveIntegerField(blank=True, null=True)
     region = models.ForeignKey(Regions, on_delete=models.DO_NOTHING, blank=True, null=True)
     employee_types = models.CharField(max_length=200, choices=EMPLOYEE_TYPES)
     status = models.CharField(max_length=100, choices=STATUS_CHOICES, default='pending')
@@ -85,3 +85,24 @@ class LeaveTypes(models.Model):
             rate = 2.5
         self.vacation_leave = min(self.vacation_leave + rate * months, 240)
         self.save()
+
+
+class LeaveActivity(models.Model):
+    ACTIONS = [
+        ("applied", "Applied"),
+        ("approved", "Approved"),
+        ("rejected", "Rejected"),
+        ("edited", "Edited"),
+        ("encashed", "Encashed"),
+    ]
+
+    leave = models.ForeignKey(LeaveRequest, on_delete=models.CASCADE, related_name="activities")
+    user = models.ForeignKey(UserProfile, on_delete=models.SET_NULL, null=True, blank=True, related_name="leave_actions")
+    action = models.CharField(max_length=50, choices=ACTIONS)
+    action_by = models.ForeignKey(UserProfile, on_delete=models.SET_NULL, null=True, blank=True, related_name="leave_action_performed")
+    type_of_leave = models.CharField(max_length=200)
+    status = models.CharField(max_length=100, blank=True, null=True)
+    timestamp = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.leave.id} - {self.action} by {self.action_by}"

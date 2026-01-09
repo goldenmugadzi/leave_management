@@ -36,19 +36,24 @@
 <div class="content-wrapper">
   <div class="bg-gulf-blue-100 shadow shadow-gulf-blue-300 text-gulf-blue-900 rounded px-2 py-2">
     <div class="p-8">
-      <div class="mb-4 flex space-x-4 p-2 shadow-md">
+      <div class="mb-4 flex justify-between items-center p-2 shadow-md rounded-md bg-gulf-blue-50">
+      <h2 class="text-lg font-bold text-gulf-blue-900">
+        Vehicle Management Table
+      </h2>
       <a href="/register_vehicle"
-          class="ml-auto py-2 px-4 rounded-md bg-blue-600 text-white text-center 
-                  focus:outline-none focus:shadow-outline-blue transition-all duration-300">
-         + Register Vehicle
-        </a>
-      </div>
+          class="py-2 px-4 rounded-md bg-blue-600 text-white text-center 
+                  focus:outline-none focus:shadow-outline-blue transition-all duration-300 hover:bg-blue-700">
+        + Register Trip
+      </a>
+    </div>
+
     </div>
     <div class="table-responsive">
       <table id="vehicleTable" class="display" style="width: 100%">
   <thead>
     <tr>
       <th>ID</th>
+      <th>Trip Reference</th>
       <th>Date</th>
       <th>Drivers Name</th>
       <th>Vehicle Details</th>
@@ -96,6 +101,7 @@
       },
       columns: [
         { data: "id" },
+        { data: "trip_reference" },
         { data: "date" },
         { data: "drivers_name" },
         { data: "vehicle_details" },

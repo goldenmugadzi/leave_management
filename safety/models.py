@@ -201,7 +201,7 @@ class VehicleAccidentReport(models.Model):
     name_and_address_of_passenger = models.TextField()
 
     # 4. Damaged Property Details
-    name_and_address_of_driver= models.CharField(max_length=100)
+    #name_and_address_of_driver= models.CharField(max_length=100)
     other_vehicle_owner_name = models.CharField(max_length=100)
     other_vehicle_owner_address = models.TextField()
     other_vehicle_make_and_type = models.CharField(max_length=100)

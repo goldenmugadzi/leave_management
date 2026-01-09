@@ -4,7 +4,7 @@ from .forms import LeaveRequestForm, LeaveTypesForm,  LeaveRequestFullForm
 from django.http import JsonResponse
 from approve.views import intiate
 from django.db.models import Q
-from .models import LeaveRequest, LeaveTypes
+from .models import LeaveRequest, LeaveTypes,LeaveActivity
 from it.users.models import *
 from datetime import timedelta
 from django.http import JsonResponse, Http404
@@ -100,6 +100,14 @@ def leave_create(request):
                 leave_types.save()
 
             leave.save()
+            LeaveActivity.objects.create(
+                leave=leave,
+                user=leave.user,
+                action="applied",
+                action_by=leave.user,
+                type_of_leave=leave.type_of_leave,
+                status=leave.status
+            )
             messages.success(request, "Leave request submitted successfully.")
             return redirect('leave_management:leave_dashboard')
     else:
@@ -444,7 +452,11 @@ def leave_dashboard(request):
     })
 
 def recent_leave_activity(request):
-    recent_activities = LeaveRequest.objects.all().order_by('-end_date') 
+    # Fetch the most recent 50 actions
+    recent_activities = LeaveActivity.objects.select_related(
+        "leave", "user", "action_by"
+    ).order_by("-timestamp")[:50]
+
     return render(request, 'leave_system/recent_leave_activity.html', {
         'recent_activities': recent_activities,
     })
