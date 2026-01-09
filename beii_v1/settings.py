@@ -373,6 +373,11 @@ LOGGING = {
             'level': 'DEBUG',
             'propagate': True,
         },
+        'it.users.schema': {
+            'handlers': ['console', 'file'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
         'dashboard_enhancement': {
             'handlers': ['dashboard_file', 'console'],
             'level': 'INFO',
