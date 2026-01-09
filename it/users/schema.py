@@ -208,13 +208,16 @@ class Query(graphene.ObjectType):
                 logger.info(f"✓ JWT token generated successfully (length: {len(token)})")
                 
                 # Try to get refresh token if available
+                refresh_token = None
                 try:
                     from graphql_jwt.shortcuts import create_refresh_token
                     refresh_token = create_refresh_token(user)
                     logger.info("✓ Refresh token generated")
-                except ImportError:
+                except (ImportError, LookupError) as e:
+                    # LookupError: refresh_token app not configured
+                    # ImportError: graphql_jwt not available
+                    logger.debug(f"Refresh token not available: {e}")
                     refresh_token = None
-                    logger.debug("Refresh token generation not available")
                 
                 logger.info("=" * 60)
                 return TokenFromSessionType(
