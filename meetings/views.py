@@ -274,7 +274,7 @@ def booked_venues_datatable(request):
 
    
 def get_exchange_account():
-
+  ## changed mail password
     from decouple import config as cnf
     print(cnf)
     credentials = Credentials(
