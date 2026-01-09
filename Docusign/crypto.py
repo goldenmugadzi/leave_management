@@ -226,50 +226,13 @@ class CryptographyService:
     ) -> bytes:
         """
         Apply digital signature to PDF document with DocMDP protection
-        Returns: Signed PDF content
+        Returns: Signed PDF content (unencrypted - encryption only happens during download)
         """
         import logging
         logger = logging.getLogger(__name__)
         
-        # Check if PDF is encrypted and decrypt it if necessary
-        try:
-            from PyPDF2 import PdfReader as PyPDF2Reader, PdfWriter as PyPDF2Writer
-            
-            # Try to read with PyPDF2 first to check encryption
-            temp_reader = PyPDF2Reader(BytesIO(pdf_content))
-            
-            if temp_reader.is_encrypted:
-                logger.warning("PDF is encrypted. Attempting to decrypt...")
-                
-                # Try empty password first (common for owner-password-only PDFs)
-                success = temp_reader.decrypt('')
-                
-                if success == 0:
-                    logger.error("Failed to decrypt PDF with empty password")
-                    raise ValueError("PDF is password-protected. Please provide an unencrypted PDF for signing.")
-                
-                logger.info(f"Successfully decrypted PDF (result code: {success})")
-                
-                # Re-write PDF without encryption
-                writer = PyPDF2Writer()
-                for page_num in range(len(temp_reader.pages)):
-                    writer.add_page(temp_reader.pages[page_num])
-                
-                # Write to buffer
-                decrypted_buffer = BytesIO()
-                writer.write(decrypted_buffer)
-                decrypted_buffer.seek(0)
-                pdf_content = decrypted_buffer.read()
-                logger.info("PDF successfully decrypted and re-written without encryption")
-            else:
-                logger.info("PDF is not encrypted, proceeding with signing")
-                
-        except Exception as decrypt_err:
-            logger.error(f"Error during PDF decryption check: {decrypt_err}", exc_info=True)
-            # If decryption fails, we'll try to proceed anyway
-            # The IncrementalPdfFileWriter might handle it
-        
-        # Now create the pyhanko reader with decrypted content
+        # No decryption needed - files are stored as-is
+        # Create pyhanko reader directly with the content
         pdf_buffer = BytesIO(pdf_content)
         pdf_reader = PdfFileReader(pdf_buffer)
         
