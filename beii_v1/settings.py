@@ -147,6 +147,7 @@ INSTALLED_APPS = [
     'Hardware_Faults',
     'Asset_Register',
     'register',
+    'overtime',
     'asset_transfer',
     'widget_tweaks',
     'meetings',

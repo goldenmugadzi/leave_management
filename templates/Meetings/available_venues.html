@@ -1,0 +1,103 @@
+{% extends "admin_layout.html" %}
+
+{% block styles %}
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css"/>
+  <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.2.2/css/buttons.dataTables.min.css"/>
+  <style>
+    .function-card .icon-container {
+      background: linear-gradient(135deg, #e0ecfa 0%, #b6d0f7 100%);
+      border-radius: 50%;
+      width: 64px;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 8px 0 rgba(30,64,175,0.10);
+      color: #1e40af;
+    }
+    .function-card {
+      background: gulf-blue-100;
+      box-shadow: 0 6px 32px 0 rgba(30,64,175,0.10), 0 1.5px 4px 0 rgba(30,64,175,0.08);
+      border-radius: 1.25rem;
+      border: 1.5px solid #e3eaf7;
+      padding: 2rem;
+    }
+    body, .dashboard-container {
+      background: linear-gradient(135deg, #e0ecfa 0%, #b6d0f7 100%) !important;
+    }
+    .header h1 {
+      color: #1e40af;
+      font-weight: 800;
+    }
+    .header p {
+      color: #334155;
+    }
+  </style>
+{% endblock styles %}
+
+{% block content %}
+<div class="dashboard-container p-8 min-h-screen">
+  <div class="header mb-8">
+    <h1 class="text-3xl font-bold flex items-center"><span class="icon-container text-4xl mr-3">🏢</span>Available Venues</h1>
+    <p class="text-nepal-600">All available internal venues in the system.</p>
+  </div>
+  <div class="function-card flex flex-col items-start border border-gulf-blue-100 overflow-x-auto">
+    <div class="w-full">
+      <table id="venues_table" class="display" style="width:100%;">
+        <thead>
+          <tr>
+            <th>Venue</th>
+            <th>Capacity</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://code.jquery.com/jquery-3.7.0.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.2.2/js/dataTables.buttons.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.2.2/js/buttons.html5.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.2.2/js/buttons.print.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.36/pdfmake.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.36/vfs_fonts.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
+<script>
+$(document).ready(function () {
+  $('#venues_table').DataTable({
+    ajax: {
+      url: "{% url 'venues_datatable' %}",
+      dataSrc: 'data'
+    },
+    responsive: true,
+    paging: true,
+    searching: true,
+    info: false,
+    lengthChange: false,
+    pageLength: 10,
+    language: {
+      search: "_INPUT_",
+      searchPlaceholder: "Search venues..."
+    },
+    columns: [
+      { data: "name" },
+      { data: "capacity" },
+      { 
+         data: "status",
+         render: function(data) {
+           let badgeClass = data === "Available"
+             ? "status-badge bg-green-200 text-green-800" 
+             : "status-badge bg-red-200 text-red-800";
+           return `<span class="${badgeClass}">${data}</span>`;
+         }
+      }
+    ]
+  });
+});
+</script>
+{% endblock %}

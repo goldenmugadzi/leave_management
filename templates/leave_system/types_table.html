@@ -111,28 +111,28 @@
 {% endblock %}
 
 {% block content %}
-<div class="content-wrapper">
-  <div class="bg-gulf-blue-100 shadow shadow-gulf-blue-300 text-gulf-blue-900 rounded px-2 py-2">
-    <div class="main-heading">Leave Types And Balances </div>
-    
-    <div class="overflow-x-auto">
-      <table id="leaveTypesTable" class="display" style="width:100%">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Sick Leave</th>
-            <th>Maternity Leave</th>
-            <th>Special Leave</th>
-            <th>Unpaid Leave</th>
-            <th>Vacation Leave</th>
-            <th>Study Leave</th>
-            <th>Occasional Leave</th>
-            <th>Action</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-    </div>
+<div class="bg-blue-100  rounded-2xl shadow-lg p-8 mb-8">
+  <div class="flex items-center gap-3 mb-6">
+    <span class="text-blue-600 text-3xl">&#128221;</span>
+    <h2 class="text-2xl font-bold text-blue-700">Leave Types And Balances</h2>
+  </div>
+  <div class="overflow-x-auto">
+    <table id="leaveTypesTable" class="min-w-full border border-gray-200 rounded-lg bg-gulf-blue-100">
+      <thead class="bg-blue-100 sticky top-0 z-10">
+        <tr>
+          <th class="px-4 py-2 text-left text-sm font-semibold text-blue-700">ID</th>
+          <th class="px-4 py-2 text-left text-sm font-semibold text-blue-700">Sick Leave</th>
+          <th class="px-4 py-2 text-left text-sm font-semibold text-blue-700">Maternity Leave</th>
+          <th class="px-4 py-2 text-left text-sm font-semibold text-blue-700">Special Leave</th>
+          <th class="px-4 py-2 text-left text-sm font-semibold text-blue-700">Unpaid Leave</th>
+          <th class="px-4 py-2 text-left text-sm font-semibold text-blue-700">Vacation Leave</th>
+          <th class="px-4 py-2 text-left text-sm font-semibold text-blue-700">Study Leave</th>
+          <th class="px-4 py-2 text-left text-sm font-semibold text-blue-700">Occasional Leave</th>
+          <th class="px-4 py-2 text-center text-sm font-semibold text-blue-700">Action</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
   </div>
 </div>
 {% endblock %}
@@ -187,7 +187,6 @@ $(document).ready(function () {
         }
       }
     }
-
     ],
     order: [[0, 'desc']]
   });

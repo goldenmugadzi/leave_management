@@ -1,11 +1,9 @@
-from django.views.generic import View, CreateView, ListView
-from django.shortcuts import render, redirect
-from .models import SafetyMonthlyReport,AccidentReport,VehicleAccidentReport, PropertyLossIncident, ControllersInstructionForm
-from .forms import SafetyMonthlyReportForm,AccidentReportForm, VehicleAccidentReportForm, PropertyLossIncidentForm
+from django.shortcuts import render, redirect, get_object_or_404
+from .models import SafetyMonthlyReport,AccidentReport,VehicleAccidentReport, PropertyLossIncident, MemberOfPublicAccidentReport
+from .forms import SafetyMonthlyReportForm,AccidentReportForm, VehicleAccidentReportForm, PropertyLossIncidentForm,MemberOfPublicAccidentReportForm
 from django.contrib import messages
 from django.http import JsonResponse
 from django.db.models import Q
-from .models import AccidentReport
 from django.shortcuts import get_object_or_404, render, redirect 
 from django.db import transaction,IntegrityError
 
@@ -135,44 +133,75 @@ def safety_ytd(request):
         'report': report,
         'prev_report': prev_report
     })
-       
+  
+  
+def submit_public_report(request):
+    if request.method == "POST":
+        form = MemberOfPublicAccidentReportForm(request.POST, request.FILES)
+        if form.is_valid():
+            form.save()
+            return redirect('accident_report_dashboard')
+    else:
+        form = MemberOfPublicAccidentReportForm()
+
+    return render(request, "safety/public_report_form.html", {"public_form": form})
+
+     
 def create_accident(request):
-    accident_form = AccidentReportForm()
+
+    # Default empty forms
+    staff_form = AccidentReportForm()
+    public_form = MemberOfPublicAccidentReportForm()
     vehicle_form = VehicleAccidentReportForm()
     property_loss_form = PropertyLossIncidentForm()
 
     if request.method == 'POST':
-        # Check which form was submitted by submit button name
-        if 'submit_vehicle' in request.POST:
-            vehicle_form = VehicleAccidentReportForm(request.POST, request.FILES)
-            if vehicle_form.is_valid():
-                vehicle_report = vehicle_form.save(commit=False)
-                # vehicle_report.user = request.user
-                vehicle_report.save()
-                messages.success(request, "Vehicle accident report submitted successfully.")
-                return redirect('accident_report_dashboard')
-        elif 'submit_accident' in request.POST:
-            accident_form = AccidentReportForm(request.POST)
-            if accident_form.is_valid():
-                accident = accident_form.save(commit=False)
-                # accident.user = request.user
-                accident.save()
-                messages.success(request, "Human accident report submitted successfully.")
-                return redirect('accident_report_dashboard')
-        elif 'submit_property_loss' in request.POST:
-            property_loss_form = PropertyLossIncidentForm(request.POST, request.FILES)
-            if property_loss_form.is_valid():
-                incident = property_loss_form.save(commit=False)
-                incident.user = request.user
-                incident.save()
-                messages.success(request, "Property loss incident report submitted successfully.")
-                return redirect('accident_report_dashboard') 
 
+        if 'submit_staff' in request.POST:
+            form = AccidentReportForm(request.POST, request.FILES)
+            if form.is_valid():
+                form.save()
+                messages.success(request, "Staff accident report submitted successfully.")
+                return redirect('accident_report_dashboard')
+            else:
+                staff_form = form  # return with errors only for staff
+
+        elif 'submit_vehicle' in request.POST:
+            form = VehicleAccidentReportForm(request.POST, request.FILES)
+            if form.is_valid():
+                form.save()
+                return redirect('accident_report_dashboard')
+            else:
+                vehicle_form = form
+
+        elif 'submit_property_loss' in request.POST:
+            form = PropertyLossIncidentForm(request.POST, request.FILES)
+            if form.is_valid():
+                form.save()
+                return redirect('accident_report_dashboard')
+            else:
+                property_loss_form = form
+
+    # Always return *clean* forms except the one that has errors
     return render(request, 'safety/accident_report.html', {
-        'form': accident_form,
+        'staff_form': staff_form,
         'vehicle_form': vehicle_form,
         'property_loss_form': property_loss_form,
     })
+
+
+
+def property_loss_detail(request, pk):
+    incident = get_object_or_404(PropertyLossIncident, pk=pk)
+    return render(request, 'safety/property_loss_detail.html', {'incident': incident})
+
+def human_accident_detail(request, pk):
+    accident = get_object_or_404(AccidentReport, pk=pk)
+    return render(request, 'safety/human_accident_detail.html', {'accident': accident})
+
+def vehicle_accident_detail(request, pk):
+    vehicle = get_object_or_404(VehicleAccidentReport, pk=pk)
+    return render(request, 'safety/vehicle_accident_detail.html', {'vehicle': vehicle})
 
 
 def accident_reports_datatable(request):
@@ -232,78 +261,174 @@ def table_accident(request):
 from .models import AccidentReport, VehicleAccidentReport, PropertyLossIncident
 
 def accident_report_dashboard(request):
-    # Statistics
-    total_accidents = AccidentReport.objects.count() + VehicleAccidentReport.objects.count() + PropertyLossIncident.objects.count()
+    selected_type = request.GET.get("type")
+    accident_id = request.GET.get("id")
+
+    # ---------- STATISTICS ----------
+    total_accidents = (
+        AccidentReport.objects.count()
+        + VehicleAccidentReport.objects.count()
+        + PropertyLossIncident.objects.count()
+        + MemberOfPublicAccidentReport.objects.count()
+    )
     property_count = PropertyLossIncident.objects.count()
     staff_count = AccidentReport.objects.count()
     vehicle_count = VehicleAccidentReport.objects.count()
+    public_count = MemberOfPublicAccidentReport.objects.count()
 
-    # Table data: combine all accident types
+    # ---------- TABLE ----------
     accidents = []
 
-    # Property Loss
     for incident in PropertyLossIncident.objects.all():
         accidents.append({
-            'id': incident.id,
-            'type': 'property',
-            'reported_by': incident.reported_by,
-            'date': incident.date_of_report,
-            'status': 'Pending',  # You can add a status field to your model if needed
+            "id": incident.id,
+            "type": "property",
+            "reported_by": incident.reported_by,
+            "date": incident.date_of_report,
+            "status": "Pending",
         })
 
-    # Human Accident
-    for accident in AccidentReport.objects.all():
+    for staff in AccidentReport.objects.all():
         accidents.append({
-            'id': accident.id,
-            'type': 'human',
-            #'reported_by': getattr(accident.employee_involved, 'user', accident.employee_involved),
-            'date': accident.date_of_accident,
-            'status': 'Pending',  # Add status logic if you have it
+            "id": staff.id,
+            "type": "staff",
+            "reported_by": staff.employee_involved,
+            "date": staff.date_of_accident,
+            "status": "Pending",
         })
 
-    # Vehicle Accident
     for vehicle in VehicleAccidentReport.objects.all():
+        vdate = vehicle.datetime_for_accident.date() if vehicle.datetime_for_accident else None
         accidents.append({
-            'id': vehicle.id,
-            'type': 'vehicle',
-            'reported_by': vehicle.driver_name,
-            'date': getattr(vehicle, 'datetime_for_accident', vehicle.date_submitted),
-            'status': 'Pending',  # Add status logic if you have it
+            "id": vehicle.id,
+            "type": "vehicle",
+            "reported_by": vehicle.driver_name,
+            "date": vdate,
+            "status": "Pending",
+        })
+        
+    for public in MemberOfPublicAccidentReport.objects.all():
+        accidents.append({
+            "id": public.id,
+            "type": "public",
+            "reported_by": public.member_of_public_involved,
+            "date": public.date_of_accident,
+            "status": "Pending",
         })
 
-    # Optionally, sort by date descending
-    accidents = sorted(accidents, key=lambda x: x['date'], reverse=True)
+    accidents = sorted(accidents, key=lambda x: x["date"], reverse=True)
 
-    return render(request, 'safety/accident_report.html', {
-        'total_accidents': total_accidents,
-        'property_count': property_count,
-        'staff_count': staff_count,
-        'vehicle_count': vehicle_count,
-        'accidents': accidents,
-        'form': AccidentReportForm(),
-        'vehicle_form': VehicleAccidentReportForm(),
-        'property_loss_form': PropertyLossIncidentForm(),
+    # ---------- EMPTY FORMS ----------
+    staff_form = AccidentReportForm(prefix="staff")
+    public_form = MemberOfPublicAccidentReportForm(prefix="public")
+    vehicle_form = VehicleAccidentReportForm(prefix="vehicle")
+    property_loss_form = PropertyLossIncidentForm(prefix="property")
+
+    # ---------- POST HANDLING ----------
+    if request.method == "POST":
+
+        if "submit_staff" in request.POST:
+            staff_form = AccidentReportForm(request.POST, request.FILES, prefix="staff")
+            if staff_form.is_valid():
+                staff_form.save()
+                messages.success(request, "Staff accident report submitted.")
+                return redirect("accident_report_dashboard")
+
+        elif "submit_public" in request.POST:
+            public_form = MemberOfPublicAccidentReportForm(request.POST, request.FILES, prefix="public")
+            if public_form.is_valid():
+                public_form.save()
+                messages.success(request, "Public accident report submitted.")
+                return redirect("accident_report_dashboard")
+
+        elif "submit_vehicle" in request.POST:
+            vehicle_form = VehicleAccidentReportForm(request.POST, request.FILES, prefix="vehicle")
+            if vehicle_form.is_valid():
+                vehicle_form.save()
+                messages.success(request, "Vehicle accident report submitted.")
+                return redirect("accident_report_dashboard")
+
+        elif "submit_property_loss" in request.POST:
+            property_loss_form = PropertyLossIncidentForm(request.POST, request.FILES, prefix="property")
+            if property_loss_form.is_valid():
+                property_loss_form.save()
+                messages.success(request, "Property loss incident report submitted.")
+                return redirect("accident_report_dashboard")
+
+    # ---------- VIEW BUTTON PREFILL ----------
+    if accident_id and selected_type:
+
+        if selected_type == "staff":
+            instance = AccidentReport.objects.get(id=accident_id)
+            staff_form = AccidentReportForm(instance=instance, prefix="staff")
+
+        elif selected_type == "public":
+            instance = MemberOfPublicAccidentReport.objects.get(id=accident_id)
+            public_form = MemberOfPublicAccidentReportForm(instance=instance, prefix="public")
+
+        elif selected_type == "vehicle":
+            instance = VehicleAccidentReport.objects.get(id=accident_id)
+            vehicle_form = VehicleAccidentReportForm(instance=instance, prefix="vehicle")
+
+        elif selected_type == "property":
+            instance = PropertyLossIncident.objects.get(id=accident_id)
+            property_loss_form = PropertyLossIncidentForm(instance=instance, prefix="property")
+
+    return render(request, "safety/accident_report.html", {
+        "total_accidents": total_accidents,
+        "property_count": property_count,
+        "staff_count": staff_count,
+        "vehicle_count": vehicle_count,
+        "public_count":public_count,
+        "accidents": accidents,
+        "selected_type": selected_type,
+        "staff_form": staff_form,
+        "public_form": public_form,
+        "vehicle_form": vehicle_form,
+        "property_loss_form": property_loss_form,
     })
 
 
-class ControllersInstructionFormCreateView(CreateView):
-    """Create view for Controller's Instruction Form"""
-    model = ControllersInstructionForm
-    fields = ['district_station', 'received_by']
-    template_name = 'safety/instruction_form.html'
-    success_url = '/safety/instruction_forms/'
-    
-    def form_valid(self, form):
-        form.instance.issued_by = self.request.user
-        return super().form_valid(form)
+def property_loss_table(request):
+    property_damages = PropertyLossIncident.objects.all()
+    return render(request, 'safety/property_loss_table.html', {'property_damages': property_damages})
 
+def human_accident_table(request):
+    human_accidents = AccidentReport.objects.all()
+    return render(request, 'safety/human_accident_table.html', {'human_accidents': human_accidents})
 
-class ControllersInstructionFormListView(ListView):
-    """List view for Controller's Instruction Forms"""
-    model = ControllersInstructionForm
-    template_name = 'safety/instruction_form_list.html'
-    context_object_name = 'instruction_forms'
-    paginate_by = 20
-    ordering = ['-issued_at']
+def vehicle_accident_table(request):
+    vehicle_accidents = VehicleAccidentReport.objects.all()
+    return render(request, 'safety/vehicle_accident_table.html', {'vehicle_accidents': vehicle_accidents})
 
+def edit_property_loss(request, incident_id):
+    incident = get_object_or_404(PropertyLossIncident, pk=incident_id)
+    if request.method == 'POST':
+        form = PropertyLossIncidentForm(request.POST, request.FILES, instance=incident)
+        if form.is_valid():
+            form.save()
+            return redirect('property_loss_table')
+    else:
+        form = PropertyLossIncidentForm(instance=incident)
+    return render(request, 'safety/edit_property_loss.html', {'form': form, 'incident': incident})
 
+def edit_human_accident(request, accident_id):
+    accident = get_object_or_404( AccidentReport, pk=accident_id)
+    if request.method == 'POST':
+        form =  AccidentReportForm(request.POST, request.FILES, instance=accident)
+        if form.is_valid():
+            form.save()
+            return redirect('human_accident_table')
+    else:
+        form =  AccidentReportForm(instance=accident)
+    return render(request, 'safety/edit_human_accident.html', {'form': form, 'accident': accident})
+
+def public_accident_list(request):
+    public_accidents = MemberOfPublicAccidentReport.objects.all()
+    return render(request, 'safety/public_accident_table.html', {
+        'public_accidents': public_accidents
+    })
+
+def public_accident_detail(request, pk):
+    accident = get_object_or_404(MemberOfPublicAccidentReport, pk=pk)
+    return render(request, "safety/public_accident_detail.html", {"accident": accident})

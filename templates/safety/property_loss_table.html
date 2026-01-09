@@ -1,0 +1,61 @@
+{% extends 'admin_layout.html' %}
+{% block content %}
+
+<script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+
+<div x-data="{ open: false, selected: null }" class="bg-white rounded-2xl shadow-lg p-8 mb-8">
+  <div class="flex items-center gap-3 mb-6">
+    <span class="text-green-600 text-3xl">&#127968;</span>
+    <h2 class="text-2xl font-bold text-green-700">Property Loss Incidents Details</h2>
+  </div>
+
+  <div class="overflow-x-auto">
+    <table class="min-w-full border border-gray-200 rounded-lg">
+      <thead class="bg-green-100 sticky top-0 z-10">
+        <tr>
+          <th class="px-4 py-2 text-left text-sm font-semibold text-green-700">ID</th>
+          <th class="px-4 py-2 text-left text-sm font-semibold text-green-700">Description</th>
+          <th class="px-4 py-2 text-left text-sm font-semibold text-green-700">Address</th>
+          <th class="px-4 py-2 text-left text-sm font-semibold text-green-700">Date/Time of Loss</th>
+          <th class="px-4 py-2 text-center text-sm font-semibold text-green-700">Action</th>
+        </tr>
+      </thead>
+
+      <tbody>
+
+        {% for incident in property_damages %}
+
+        <tr class="border-t {% cycle 'bg-white' 'bg-green-50' %}">
+          <td class="px-4 py-2 text-sm text-gray-700">{{ incident.id }}</td>
+          <td class="px-4 py-2 text-sm text-gray-700">
+            {{ incident.full_description_of_property|truncatewords:7 }}
+          </td>
+          <td class="px-4 py-2 text-sm text-gray-700">{{ incident.address_of_loss }}</td>
+          <td class="px-4 py-2 text-sm text-gray-700">{{ incident.date_time_of_loss }}</td>
+
+          <td class="px-4 py-2 text-center">
+            <a 
+              href="{% url 'property_loss_detail' incident.id %}" 
+              class="bg-green-600 text-white px-3 py-1 rounded shadow hover:bg-green-700 transition"
+            >
+              View More
+            </a>
+          </td>
+
+        </tr>
+
+        {% empty %}
+        <tr>
+          <td colspan="5" class="text-center text-gray-500 py-4">No property loss incidents found.</td>
+        </tr>
+        {% endfor %}
+
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Modal -->
+ 
+</div>
+
+{% endblock %}

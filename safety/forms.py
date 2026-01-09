@@ -1,6 +1,16 @@
 from django import forms
-from .models import SafetyMonthlyReport, AccidentReport, VehicleAccidentReport, PropertyLossIncident
-from it.users.models import UserProfile, Sections, Regions
+
+# Import models properly here
+from .models import (
+    SafetyMonthlyReport,
+    AccidentReport,
+    VehicleAccidentReport,
+    PropertyLossIncident,
+    MemberOfPublicAccidentReport,
+)
+
+from it.users.models import UserProfile, Sections, Regions, Designations
+
 
 class SafetyMonthlyReportForm(forms.ModelForm):
     class Meta:
@@ -13,52 +23,51 @@ class SafetyMonthlyReportForm(forms.ModelForm):
             'wellness_programmes', 'clear_up_campaigns', 'she_inspections_conducted',
             'mock_drills_conducted', 'number_of_workers', 'number_of_days'
         ]
-        
         widgets = {
             'date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
         }
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        for field_name, field in self.fields.items():
-            if isinstance(field, forms.ModelChoiceField):
-                field.widget.attrs.update({'class': 'select2 form-control'})
 
-class  AccidentReportForm(forms.ModelForm):
+class AccidentReportForm(forms.ModelForm):
     class Meta:
-        model =  AccidentReport
+        model = AccidentReport
         fields = '__all__'
-        
-        
+        exclude = ['type', 'property_incident', 'staff_report', 'public_report','vehicle_report'] 
         widgets = {
-            'date_of_accident': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
-            'time_of_accident': forms.TimeInput(attrs={'type': 'time', 'class': 'form-control'}),
-             'authority_received_datetime': forms.DateTimeInput(
-                attrs={'type': 'datetime-local', 'class': 'form-control'}
-            ),
-            'authority_received_from': forms.TextInput(
-                attrs={'class': 'form-control'}
-            ),
-            'police_received_datetime': forms.DateTimeInput(
-                attrs={'type': 'datetime-local', 'class': 'form-control'}
-            ),
-            'police_received_from': forms.TextInput(
-                attrs={'class': 'form-control'}
-            ),
+            'date_of_accident': forms.DateInput(attrs={'type': 'date'}),
+            'time_of_accident': forms.TimeInput(attrs={'type': 'time'}),
+            'authority_received_datetime': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
+            'police_received_datetime': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
         }
-        
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
         for field_name, field in self.fields.items():
             field.widget.attrs.update({
-                'class': "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset "
-                            "ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 "
-                            "sm:text-sm sm:leading-6",
+                'class': (
+                    "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset "
+                    "ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset "
+                    "focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                )
             })
 
-            if (field_name == 'employee_involved') or (field_name == 'sex') or ( field_name == 'cost_center') or ( field_name == 'department') or ( field_name == 'severity_Of_Accident ') or  (field_name == 'nature_of_injury') or (field_name == 'region') or (field_name == 'nature_of_accident') or (field_name == 'risk_assessment_carried_out') or (field_name == 'safety_preparation_carried_out') or (field_name == 'for_electrical_state_voltage'):
-                field.widget.attrs.update({'class': "select2 block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6",})
+            # Select2 for dropdowns
+            select_fields = [
+                'employee_involved', 'gender', 'cost_center', 'department',
+                'severity_Of_Accident', 'nature_of_injury', 'region',
+                'nature_of_accident', 'risk_assessment_carried_out',
+                'safety_preparation_carried_out', 'for_electrical_state_voltage'
+            ]
+            if field_name in select_fields:
+                field.widget.attrs.update({
+                    'class': (
+                        "select2 block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 "
+                        "ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset "
+                        "focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                    )
+                })
+
             if isinstance(field.widget, forms.Textarea):
                 field.widget.attrs.update({'rows': '3'})
 
@@ -67,36 +76,42 @@ class VehicleAccidentReportForm(forms.ModelForm):
     class Meta:
         model = VehicleAccidentReport
         fields = '__all__'
-
         widgets = {
-            'date_of_issue': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
-            'datetime_for_accident': forms.DateTimeInput(attrs={'type': 'datetime-local', 'class': 'form-control'}),
-            'datetime_to_police': forms.DateTimeInput(attrs={'type': 'datetime-local', 'class': 'form-control'}),
-            'datetime_for_accident':forms.DateTimeInput(attrs={'type': 'datetime-local', 'class': 'form-control'}),
+            'date_of_issue': forms.DateInput(attrs={'type': 'date'}),
+            'datetime_for_accident': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
+            'datetime_to_police': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+        # Base styling for all inputs
+        base_classes = (
+            "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset "
+            "ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset "
+            "focus:ring-indigo-600 sm:text-sm sm:leading-6"
+        )
+
+        # Dropdown fields that need Select2
+        select_fields = [
+            'designation', 'driver_name', 'state_if_hired',
+            'department', 'vehicle_details'
+        ]
+
+        # Loop through all fields (THIS MUST BE INSIDE __init__)
         for field_name, field in self.fields.items():
-            field.widget.attrs.update({
-                'class': "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset "
-                         "ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 "
-                         "sm:text-sm sm:leading-6",
-            })
 
-            # Apply Select2 class to relevant dropdown-like fields (if applicable)
-            if field_name in [
-                'designation', 'allocation_to_section', 'work_station',
-            ]:
-                field.widget.attrs.update({
-                    'class': "select2 block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 "
-                             "ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset "
-                             "focus:ring-indigo-600 sm:text-sm sm:leading-6",
-                })
+            # Apply base styles
+            field.widget.attrs.update({'class': base_classes})
 
+            # If dropdown → append select2 class
+            if field_name in select_fields:
+                field.widget.attrs['class'] += " select2"
+
+            # Textarea rows
             if isinstance(field.widget, forms.Textarea):
                 field.widget.attrs.update({'rows': '3'})
+
 
 
 class PropertyLossIncidentForm(forms.ModelForm):
@@ -104,19 +119,63 @@ class PropertyLossIncidentForm(forms.ModelForm):
         model = PropertyLossIncident
         fields = '__all__'
         widgets = {
-            'date_time_of_loss': forms.DateTimeInput(attrs={'type': 'datetime-local', 'class': 'form-control'}),
-            'zetdc_report_received_datetime': forms.DateTimeInput(attrs={'type': 'datetime-local', 'class': 'form-control'}),
-            'zrp_report_received_datetime': forms.DateTimeInput(attrs={'type': 'datetime-local', 'class': 'form-control'}),
-            'date_of_report': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'date_time_of_loss': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
+            'zetdc_report_received_datetime': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
+            'zrp_report_received_datetime': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
+            'date_of_report': forms.DateInput(attrs={'type': 'date'}),
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         for field_name, field in self.fields.items():
             field.widget.attrs.update({
-                'class': "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset "
-                         "ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 "
-                         "sm:text-sm sm:leading-6",
+                'class': (
+                    "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset "
+                    "ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset "
+                    "focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                )
             })
+            if isinstance(field.widget, forms.Textarea):
+                field.widget.attrs.update({'rows': '3'})
+
+class MemberOfPublicAccidentReportForm(forms.ModelForm):
+    class Meta:
+        model = MemberOfPublicAccidentReport
+        fields = '__all__'
+        widgets = {
+            'date_of_accident': forms.DateInput(attrs={'type': 'date'}),
+            'time_of_accident': forms.TimeInput(attrs={'type': 'time'}),
+            'authority_received_datetime': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
+            'police_received_datetime': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        for field_name, field in self.fields.items():
+            field.widget.attrs.update({
+                'class': (
+                    "block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 ring-inset "
+                    "ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset "
+                    "focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                )
+            })
+
+            # Select2 for dropdowns
+            select_fields = [
+                'member_of_public_involved', 'gender', 'cost_center',
+                'severity_Of_Accident', 'nature_of_injury',
+                'nature_of_accident', 'risk_assessment_carried_out',
+                'safety_preparation_carried_out', 'for_electrical_state_voltage'
+            ]
+            if field_name in select_fields:
+                field.widget.attrs.update({
+                    'class': (
+                        "select2 block w-full rounded-md border-0 py-1.5 text-gray-900 shadow-sm ring-1 "
+                        "ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset "
+                        "focus:ring-indigo-600 sm:text-sm sm:leading-6"
+                    )
+                })
+
             if isinstance(field.widget, forms.Textarea):
                 field.widget.attrs.update({'rows': '3'})

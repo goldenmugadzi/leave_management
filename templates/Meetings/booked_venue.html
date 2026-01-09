@@ -28,7 +28,8 @@
             <th>Department</th>
             <th>Start Time</th>
             <th>End Time</th>
-            <th>Date of Meeting</th>
+            <th>Start Date</th>
+            <th>End Date</th>
             <th>Capacity</th>
             <th>Type of Meeting</th>
             <th>Status</th>
@@ -43,7 +44,8 @@
             <th>Department</th>
             <th>Start Time</th>
             <th>End Time</th>
-            <th>Date of Meeting</th>
+            <th>Start Date</th>
+            <th>End Date</th>
             <th>Capacity</th>
             <th>Type of Meeting</th>
             <th>Status</th>
@@ -68,6 +70,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
 <script>
   var is_requester = "{{ is_requester|yesno:'true,false' }}";
+
   $(document).ready(function () {
     $('#booked_venues').DataTable({
       ajax: {
@@ -80,10 +83,22 @@
         { data: "department" },
         { data: "start_time" },
         { data: "end_time" },
-        { data: "date_of_meeting" },
+        { data: "start_date" },
+        { data: "end_date" },
         { data: "capacity" },
         { data: "type_of_meeting" },
-        { data: "status" },
+        {
+          data: "status",
+          render: function(data, type, row) {
+            let colorClass = '';
+            if (data === 'Pending') colorClass = 'bg-yellow-100 text-yellow-800';
+            else if (data === 'Confirmed') colorClass = 'bg-green-100 text-green-800';
+            else if (data === 'Cancelled') colorClass = 'bg-red-100 text-red-800';
+            else if (data === 'Transferred to Another Venue') colorClass = 'bg-blue-100 text-blue-800';
+
+            return `<span class="status-badge ${colorClass}">${data}</span>`;
+          }
+        },
         {
           data: "id",
           render: function(data, type, row) {
@@ -102,9 +117,11 @@
             }
           }
         }
-      ]
+      ],
+      
     });
   });
 </script>
+
 
 {% endblock %}
