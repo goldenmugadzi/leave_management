@@ -209,7 +209,13 @@ def approve_step(request, process_id):
                         print(f"Error notifying ACE requester: {e}")
 
                 # Handle different workflow types - check specific workflows first
-                if process.workflow.name == "purchase request":
+                if process.workflow.name == "ace" or process.workflow.name == "ace_value":
+                    ace_item = process.ace2_set.last()
+                    if ace_item:
+                        messages.success(request, f"ACE {ace_item.Ace_id2} has been approved successfully")
+                        return redirect("Ace:ace_detail", ace_item.Ace_id2)
+                
+                elif process.workflow.name == "purchase request":
                     return redirect(
                         "purchase_request:purchase_request_detail",
                         process.purchaserequest_set.last().id,
