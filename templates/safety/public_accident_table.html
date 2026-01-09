@@ -1,0 +1,72 @@
+{% extends 'admin_layout.html' %}
+{% block content %}
+<script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+
+<div x-data="{
+  open: false,
+  selected: null,
+  lastRow: null,
+  scrollToRow(id) {
+    this.lastRow = document.getElementById('row-' + id);
+    this.open = true;
+    this.selected = id;
+    this.$nextTick(() => { window.scrollTo({ top: 0, behavior: 'smooth' }); });
+  },
+  closeModal() {
+    this.open = false;
+    this.$nextTick(() => {
+      if (this.lastRow) {
+        this.lastRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    });
+  }
+}" class="bg-white rounded-2xl shadow-lg p-8 mb-8">
+
+  <div class="flex items-center gap-3 mb-6">
+    <span class="text-blue-700 text-3xl">&#128100;</span>
+    <h2 class="text-2xl font-bold text-blue-800">Member of Public Accident Reports</h2>
+  </div>
+
+  <div class="overflow-x-auto">
+    <table class="min-w-full border border-gray-200 rounded-lg">
+      <thead class="bg-blue-100 sticky top-0 z-10">
+        <tr>
+          <th class="px-4 py-2 text-left text-sm font-semibold text-blue-700">ID</th>
+          <th class="px-4 py-2 text-left text-sm font-semibold text-blue-700">Person Involved</th>
+          <th class="px-4 py-2 text-left text-sm font-semibold text-blue-700">Gender</th>
+          <th class="px-4 py-2 text-left text-sm font-semibold text-blue-700">Date of Accident</th>
+          <th class="px-4 py-2 text-center text-sm font-semibold text-blue-700">Action</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        {% for accident in public_accidents %}
+        <tr id="row-{{ accident.id }}" class="border-t {% cycle 'bg-white' 'bg-blue-50' %}">
+          <td class="px-4 py-2 text-sm text-gray-700">{{ accident.id }}</td>
+          <td class="px-4 py-2 text-sm text-gray-700">{{ accident.member_of_public_involved }}</td>
+          <td class="px-4 py-2 text-sm text-gray-700">{{ accident.gender }}</td>
+          <td class="px-4 py-2 text-sm text-gray-700">{{ accident.date_of_accident }}</td>
+
+          <td class="px-4 py-2 text-center">
+            <a 
+              href="{% url 'public_accident_detail' accident.id %}" 
+              class="bg-blue-600 text-white px-3 py-1 rounded shadow hover:bg-blue-700 transition"
+            >
+              View More
+            </a>
+          </td>
+        </tr>
+
+        {% empty %}
+        <tr>
+          <td colspan="5" class="text-center text-gray-500 py-4">
+            No public accident reports found.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% endblock %}

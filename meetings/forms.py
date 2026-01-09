@@ -5,9 +5,10 @@ class MeetingsForm(forms.ModelForm):
     class Meta:
         model = Meetings
         fields = '__all__'
-        exclude = ['comments', 'confirm_status', 'list_of_invited_attendees', 'regions', 'depot','actual_cost_of_meeting']  # excluded on create
+        exclude = ['comments', 'confirm_status', 'list_of_invited_attendees', 'regions', 'depot','actual_cost_of_meeting','booking']  # excluded on create
         widgets = {
-            'date_of_meeting': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'start_date':forms.DateInput(attrs={'type':'date', 'class': 'form-control'}),
+            'end_date':forms.DateInput(attrs={'type':'date', 'class': 'form-control'}),
             'start_time': forms.TimeInput(attrs={'type': 'time', 'class': 'form-control'}),
             'end_time': forms.TimeInput(attrs={'type': 'time', 'class': 'form-control'}),
         }
@@ -49,7 +50,8 @@ class VenueBookingForm(forms.ModelForm):
         model = VenueBooking
         fields = '__all__'
         widgets = {
-            'date_of_meeting': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'start_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'end_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
             'start_time': forms.TimeInput(attrs={'type': 'time', 'class': 'form-control'}),
             'end_time': forms.TimeInput(attrs={'type': 'time', 'class': 'form-control'}),
             'type_of_meeting': forms.Select(attrs={'class': 'select2 form-control'}),

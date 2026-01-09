@@ -1,6 +1,25 @@
 {% extends 'admin_layout.html' %}
 {% block content %}
-<div class="bg-white rounded-2xl shadow-lg p-8 mb-8">
+<script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+<div x-data="{
+  open: false,
+  selected: null,
+  lastRow: null,
+  scrollToRow(id) {
+    this.lastRow = document.getElementById('row-' + id);
+    this.open = true;
+    this.selected = id;
+    this.$nextTick(() => { window.scrollTo({ top: 0, behavior: 'smooth' }); });
+  },
+  closeModal() {
+    this.open = false;
+    this.$nextTick(() => {
+      if (this.lastRow) {
+        this.lastRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    });
+  }
+}" class="bg-white rounded-2xl shadow-lg p-8 mb-8">
   <div class="flex items-center gap-3 mb-6">
     <span class="text-yellow-600 text-3xl">&#128663;</span>
     <h2 class="text-2xl font-bold text-yellow-700">Vehicle Accident Details</h2>
@@ -12,84 +31,28 @@
           <th class="px-4 py-2 text-left text-sm font-semibold text-yellow-700">ID</th>
           <th class="px-4 py-2 text-left text-sm font-semibold text-yellow-700">Driver Name</th>
           <th class="px-4 py-2 text-left text-sm font-semibold text-yellow-700">Home Address</th>
-          <th class="px-4 py-2 text-left text-sm font-semibold text-yellow-700">Age</th>
-          <th class="px-4 py-2 text-left text-sm font-semibold text-yellow-700">License</th>
-          <th class="px-4 py-2 text-left text-sm font-semibold text-yellow-700">Designation</th>
-          <th class="px-4 py-2 text-left text-sm font-semibold text-yellow-700">Place of Issue</th>
-          <th class="px-4 py-2 text-left text-sm font-semibold text-yellow-700">Date of Issue</th>
-          <th class="px-4 py-2 text-left text-sm font-semibold text-yellow-700">EC Number</th>
-          <th class="px-4 py-2 text-left text-sm font-semibold text-yellow-700">Work Station</th>
-          <th class="px-4 py-2 text-left text-sm font-semibold text-yellow-700">Make</th>
-          <th class="px-4 py-2 text-left text-sm font-semibold text-yellow-700">Registration</th>
-          <th class="px-4 py-2 text-left text-sm font-semibold text-yellow-700">Fleet Number</th>
-          <th class="px-4 py-2 text-left text-sm font-semibold text-yellow-700">Section</th>
-          <th class="px-4 py-2 text-left text-sm font-semibold text-yellow-700">Hired?</th>
           <th class="px-4 py-2 text-left text-sm font-semibold text-yellow-700">Date/Time of Accident</th>
-          <th class="px-4 py-2 text-left text-sm font-semibold text-yellow-700">Place of Accident</th>
-          <th class="px-4 py-2 text-left text-sm font-semibold text-yellow-700">Description</th>
-          <th class="px-4 py-2 text-left text-sm font-semibold text-yellow-700">Date/Time to Police</th>
-          <th class="px-4 py-2 text-left text-sm font-semibold text-yellow-700">Speed</th>
-          <th class="px-4 py-2 text-left text-sm font-semibold text-yellow-700">Gear Used</th>
-          <th class="px-4 py-2 text-left text-sm font-semibold text-yellow-700">Road Type/State</th>
-          <th class="px-4 py-2 text-left text-sm font-semibold text-yellow-700">Weather</th>
-          <th class="px-4 py-2 text-left text-sm font-semibold text-yellow-700">Load</th>
-          <th class="px-4 py-2 text-left text-sm font-semibold text-yellow-700">Passenger</th>
-          <th class="px-4 py-2 text-left text-sm font-semibold text-yellow-700">Other Owner Name</th>
-          <th class="px-4 py-2 text-left text-sm font-semibold text-yellow-700">Other Owner Address</th>
-          <th class="px-4 py-2 text-left text-sm font-semibold text-yellow-700">Other Vehicle Make/Type</th>
-          <th class="px-4 py-2 text-left text-sm font-semibold text-yellow-700">Other Vehicle Reg</th>
-          <th class="px-4 py-2 text-left text-sm font-semibold text-yellow-700">Other Vehicle Speed</th>
-          <th class="px-4 py-2 text-left text-sm font-semibold text-yellow-700">ZESA Damage</th>
-          <th class="px-4 py-2 text-left text-sm font-semibold text-yellow-700">Other Vehicle Damage</th>
-          <th class="px-4 py-2 text-left text-sm font-semibold text-yellow-700">Other Property Damage</th>
-          <th class="px-4 py-2 text-left text-sm font-semibold text-yellow-700">Driver's Report</th>
-          <th class="px-4 py-2 text-left text-sm font-semibold text-yellow-700">Section Head Comments</th>
-          <th class="px-4 py-2 text-left text-sm font-semibold text-yellow-700">Date Submitted</th>
+          <th class="px-4 py-2 text-center text-sm font-semibold text-yellow-700">Action</th>
         </tr>
       </thead>
       <tbody>
         {% for vehicle in vehicle_accidents %}
-        <tr class="border-t {% cycle 'bg-white' 'bg-yellow-50' %} hover:bg-yellow-200/40">
+        <tr id="row-{{ vehicle.id }}" class="border-t {% cycle 'bg-white' 'bg-yellow-50' %}">
           <td class="px-4 py-2 text-sm text-gray-700">{{ vehicle.id }}</td>
           <td class="px-4 py-2 text-sm text-gray-700">{{ vehicle.driver_name }}</td>
           <td class="px-4 py-2 text-sm text-gray-700">{{ vehicle.home_address }}</td>
-          <td class="px-4 py-2 text-sm text-gray-700">{{ vehicle.age }}</td>
-          <td class="px-4 py-2 text-sm text-gray-700">{{ vehicle.drivers_license }}</td>
-          <td class="px-4 py-2 text-sm text-gray-700">{{ vehicle.designation }}</td>
-          <td class="px-4 py-2 text-sm text-gray-700">{{ vehicle.place_of_issue }}</td>
-          <td class="px-4 py-2 text-sm text-gray-700">{{ vehicle.date_of_issue }}</td>
-          <td class="px-4 py-2 text-sm text-gray-700">{{ vehicle.ec_number }}</td>
-          <td class="px-4 py-2 text-sm text-gray-700">{{ vehicle.work_station }}</td>
-          <td class="px-4 py-2 text-sm text-gray-700">{{ vehicle.make }}</td>
-          <td class="px-4 py-2 text-sm text-gray-700">{{ vehicle.registration_number }}</td>
-          <td class="px-4 py-2 text-sm text-gray-700">{{ vehicle.fleet_number }}</td>
-          <td class="px-4 py-2 text-sm text-gray-700">{{ vehicle.allocation_to_section }}</td>
-          <td class="px-4 py-2 text-sm text-gray-700">{{ vehicle.state_if_hired }}</td>
           <td class="px-4 py-2 text-sm text-gray-700">{{ vehicle.datetime_for_accident }}</td>
-          <td class="px-4 py-2 text-sm text-gray-700">{{ vehicle.place_of_accident }}</td>
-          <td class="px-4 py-2 text-sm text-gray-700">{{ vehicle.brief_description }}</td>
-          <td class="px-4 py-2 text-sm text-gray-700">{{ vehicle.datetime_to_police }}</td>
-          <td class="px-4 py-2 text-sm text-gray-700">{{ vehicle.speed_at_time_of_accident }}</td>
-          <td class="px-4 py-2 text-sm text-gray-700">{{ vehicle.gear_used }}</td>
-          <td class="px-4 py-2 text-sm text-gray-700">{{ vehicle.type_and_state_of_road }}</td>
-          <td class="px-4 py-2 text-sm text-gray-700">{{ vehicle.state_of_weather }}</td>
-          <td class="px-4 py-2 text-sm text-gray-700">{{ vehicle.nature_and_weight_of_load }}</td>
-          <td class="px-4 py-2 text-sm text-gray-700">{{ vehicle.name_and_address_of_passenger }}</td>
-          <td class="px-4 py-2 text-sm text-gray-700">{{ vehicle.name_and_address_of_driver }}</td>
-          <td class="px-4 py-2 text-sm text-gray-700">{{ vehicle.other_vehicle_owner_name }}</td>
-          <td class="px-4 py-2 text-sm text-gray-700">{{ vehicle.other_vehicle_owner_address }}</td>
-          <td class="px-4 py-2 text-sm text-gray-700">{{ vehicle.other_vehicle_make_and_type }}</td>
-          <td class="px-4 py-2 text-sm text-gray-700">{{ vehicle.other_vehicle_registration_number }}</td>
-          <td class="px-4 py-2 text-sm text-gray-700">{{ vehicle.approximate_speed_of_other_vehicle }}</td>
-          <td class="px-4 py-2 text-sm text-gray-700">{{ vehicle.zesa_vehicle_damage }}</td>
-          <td class="px-4 py-2 text-sm text-gray-700">{{ vehicle.other_vehicle_damage }}</td>
-          <td class="px-4 py-2 text-sm text-gray-700">{{ vehicle.other_property_damage }}</td>
-          <td class="px-4 py-2 text-sm text-gray-700">{{ vehicle.drivers_report }}</td>
-          <td class="px-4 py-2 text-sm text-gray-700">{{ vehicle.section_head_comments }}</td>
-          <td class="px-4 py-2 text-sm text-gray-700">{{ vehicle.date_submitted }}</td>
-        </tr>
+          <td class="px-4 py-2 text-center">
+          <a 
+            href="{% url 'vehicle_accident_detail' vehicle.id %}" 
+            class="bg-yellow-600 text-white px-3 py-1 rounded shadow hover:bg-yellow-700 transition"
+          >
+            View More
+          </a>
+        </td>
+
         {% empty %}
-        <tr><td colspan="36" class="text-center text-gray-500 py-4">No vehicle accident reports found.</td></tr>
+        <tr><td colspan="5" class="text-center text-gray-500 py-4">No vehicle accident reports found.</td></tr>
         {% endfor %}
       </tbody>
     </table>

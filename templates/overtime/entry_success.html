@@ -1,0 +1,5 @@
+{% extends 'base.html' %}
+{% block content %}
+  <h2>Overtime entry submitted successfully!</h2>
+  <a href="{% url 'overtime:create_entry' %}">Add another entry</a>
+{% endblock %}

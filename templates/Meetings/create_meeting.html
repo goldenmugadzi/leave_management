@@ -61,7 +61,7 @@
         </h2>
         <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
           {% for field in form %}
-            {% if field.name == "date_of_meeting" or field.name == "start_time" or field.name == "end_time" %}
+            {% if field.name == "start_date" or field.name == "end_date" or field.name == "start_time" or field.name == "end_time" %}
               <div class="mb-4">
                 <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-gulf-blue-900 mb-2">
                   {{ field.label }}{% if field.field.required %}<span class="text-red-500">*</span>{% endif %}
@@ -177,7 +177,7 @@
         
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
           {% for field in form %}
-            {% if field.name != "title" and field.name != "description" and field.name != "meeting_type" and field.name != "agenda" and field.name != "meeting_date" and field.name != "date_of_meeting" and field.name != "start_time" and field.name != "end_time" and field.name != "duration" and field.name != "timezone" and field.name != "location" and field.name != "room" and field.name != "is_virtual" and field.name != "meeting_link" and field.name != "employees_invited" and field.name != "host" and field.name != "department" and field.name != "expected_attendees" and field.name != "regions" and field.name != "cost_center" and field.name != "depot" and field.name != "venue" and not field.is_hidden %}
+            {% if field.name != "title" and field.name != "description" and field.name != "start_date" and field.name != "end_date" and field.name != "start_time" and field.name != "end_time" and field.name != "duration" and field.name != "timezone" and field.name != "location" and field.name != "room" and field.name != "is_virtual" and field.name != "meeting_link" and field.name != "employees_invited" and field.name != "host" and field.name != "department" and field.name != "expected_attendees" and field.name != "regions" and field.name != "cost_center" and field.name != "depot" and field.name != "venue" and not field.is_hidden %}
               <div class="mb-4">
                 <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-gulf-blue-900 mb-2">
                   {{ field.label }}{% if field.field.required %}<span class="text-red-500">*</span>{% endif %}
@@ -217,9 +217,9 @@
 
 <script>
 $(document).ready(function() {
-  $('.select2').select2({
-    width: '100%',
-    //placeholder: "Select employees"
+  // Apply select2 to all select fields
+  $('select').addClass('select2').select2({
+    width: '100%'
   });
   
   // Fix Select2 z-index issue with fixed elements
