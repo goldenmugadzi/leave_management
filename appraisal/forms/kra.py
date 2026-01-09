@@ -23,7 +23,7 @@ class KraOutComeCreateForm(forms.ModelForm):
 class ScoreDocumentForm(forms.ModelForm):
     class Meta:
         model = ScoreDocument
-        exclude = ["id", "target_score", "performance_dimension_score"]
+        exclude = ["id", "target_score", "performance_dimension_score", "created_date"]
 
 
 class AppraisalRoleFilterForm(forms.Form):

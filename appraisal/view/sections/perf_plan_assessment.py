@@ -202,7 +202,7 @@ class AppraisalDepartmentPerformanceDimensionTemplateView(SuccessMessageMixin, U
             perf_dim_obj.id: AppraisalOutPutPerformanceDimensionScoreForm(instance=perf_dim_obj)
             for perf_dim_obj in perf_dimension_qr
         }
-    
+        
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         appraisee_object = self.get_appraisee_object()
@@ -530,7 +530,7 @@ class ScoreDocumentCreateView(SuccessMessageMixin, CreateView):
         """
         Redirects to the index page after successful update.
         """
-        return reverse('score_view', kwargs={"performance_dimension_id": self.kwargs.get('performance_dimension_id')})
+        return reverse('appraisal_dept_perf_index', kwargs={"appraisal_department_output_id": self.get_score_object().appraisal_department_output.id})
 
 class ScoreDocumentUpdateView(SuccessMessageMixin, UpdateView):
     model = ScoreDocument
@@ -613,5 +613,5 @@ class ScoreDocumentUpdateView(SuccessMessageMixin, UpdateView):
         """
         Redirects to the index page after successful update.
         """
-        return reverse('score_doc_update', kwargs={"score_doc_id": self.kwargs.get('score_doc_id')})
+        return reverse('appraisal_dept_perf_index', kwargs={"appraisal_department_output_id": self.get_object().performance_dimension_score.appraisal_department_output.id})
 
