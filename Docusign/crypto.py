@@ -231,8 +231,7 @@ class CryptographyService:
         import logging
         logger = logging.getLogger(__name__)
         
-        # No decryption needed - files are stored as-is
-        # Create pyhanko reader directly with the content
+        # Create pyhanko reader directly - no encryption/decryption handling
         pdf_buffer = BytesIO(pdf_content)
         pdf_reader = PdfFileReader(pdf_buffer)
         

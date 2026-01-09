@@ -252,7 +252,26 @@ class UploadDocument(graphene.Mutation):
                     document=None
                 )
             
-            # Store PDF as-is (no encryption/decryption during upload)
+            # Check if PDF is encrypted and reject it
+            try:
+                from PyPDF2 import PdfReader
+                pdf_reader = PdfReader(BytesIO(file_content))
+                
+                if pdf_reader.is_encrypted:
+                    return UploadDocument(
+                        success=False,
+                        message="Encrypted PDFs are not allowed. Please upload an unencrypted PDF file.",
+                        document=None
+                    )
+            except Exception as e:
+                logger.error(f"Error checking PDF encryption: {e}")
+                return UploadDocument(
+                    success=False,
+                    message=f"Invalid PDF file: {str(e)}",
+                    document=None
+                )
+            
+            # Store PDF as-is (no encryption during upload)
             # Encryption only happens during download
             uploaded_file.seek(0)  # Reset file pointer
             document = Document.objects.create(
