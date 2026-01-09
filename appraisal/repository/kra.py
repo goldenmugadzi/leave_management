@@ -306,14 +306,10 @@ class AppraisalOutPutPerformanceDimensionScoreRepository:
         except Exception as e:
             raise Exception(f"[AppraisalOutPutPerformanceDimensionScoreRepository] fetch_by_year_quarter_id Repo with pk: {year_quarter_id}, failed with error: {e}")
     
-    def get_by_id(self, pk: int)->AppraisalOutPutPerformanceDimensionScore:
+    def get_by_id(self, pk: int)->AppraisalOutPutPerformanceDimensionScore|None:
         try:
             qr = AppraisalOutPutPerformanceDimensionScore.objects.filter(id=pk).select_related('appraisal_department_output', 'performance_dimension', 'appraisal_department_output__department_output')
-            
-            
-            if not qr.exists():
-                return None
-            
+
             return qr.first()
         except Exception as e:
             raise Exception(f"[AppraisalOutPutPerformanceDimensionScoreRepository] get_by_id Repo with pk: {pk}, failed with error: {e}")

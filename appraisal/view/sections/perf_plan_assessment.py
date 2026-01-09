@@ -196,6 +196,13 @@ class AppraisalDepartmentPerformanceDimensionTemplateView(SuccessMessageMixin, U
         handler = ApprovalStagesTemplateHandler(appraisal_object=self.get_appraisal_object(), request_obj=self.request)
         return handler.get_context_data()
     
+    def get_score_forms(self):
+        perf_dimension_qr = self.get_all_perf_dimensions()
+        return {
+            perf_dim_obj.id: AppraisalOutPutPerformanceDimensionScoreForm(instance=perf_dim_obj)
+            for perf_dim_obj in perf_dimension_qr
+        }
+    
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         appraisee_object = self.get_appraisee_object()
@@ -220,31 +227,100 @@ class AppraisalDepartmentPerformanceDimensionTemplateView(SuccessMessageMixin, U
         context["reviewer_form"] = self.get_reviewer_form()
         context["hr_form"] = self.get_hr_form()
         context["all_scored"] = is_all_scored
+        context["score_forms"] = self.get_score_forms()
+
         return context
     
     
+    def appraiser_confirmation_form_handler(self, form):
+        appraiser_review_status_obj = self.get_appraiser_review_status_obj()
+        confirmation_status = form.cleaned_data.get("confirmation_status")
+        comment = form.cleaned_data.get("comment")
+    
+        if (confirmation_status == APPRAISAL_KRA_REVIEWER_STATUS_CHOICES[0][0]):
+            messages.error(self.request, "Please pick either ACCEPT or REJECT status.")
+            return self.form_invalid(form)
+        
+        if (confirmation_status == APPRAISAL_KRA_REVIEWER_STATUS_CHOICES[2][0]) and not comment:
+            messages.error(self.request, "Please provide a rejection reason in the comment field.")
+            return self.form_invalid(form)
+        
+        repo = ApprasialKraReviewerStatusRepository()
+
+        updated_object = repo.update(
+            reviewer_status_obj=appraiser_review_status_obj,
+            confirmation_status=confirmation_status,
+            comment=comment
+        )
+        
+        return updated_object
+    
+    def score_form_handler(self, form, score_obj_pk):
+        if score_obj_pk is None:
+            raise Exception("score object pk is none")
+        
+        payload = build_payload_score(request=self.request, form=form, is_appraisee=True)
+        repo = AppraisalOutPutPerformanceDimensionScoreRepository()
+        score_obj = repo.get_by_id(score_obj_pk)
+        if score_obj is None:
+            raise Exception(f"score object with pk: {score_obj_pk} not found")
+        
+        current_score_object = score_obj
+        
+        is_scored = False
+        obj = score_obj.performance_dimension
+
+        if obj.performance_indicator == PERFORMANCE_INDICATOR[1][1] and payload.score not in [0, 100]:
+            messages.error(request=self.request, message="Quality is absolute — it’s either 100% or nothing.")
+            return current_score_object
+        else:
+            is_scored = True
+        
+        if payload.score > 0 or obj.weight == 0:
+            is_scored = True
+            
+        updated_score_object = repo.update(
+                                    appraisal_perf_dimension=score_obj, 
+                                    score=payload.score, 
+                                    is_scored=is_scored, 
+                                    appraiser_confirmation=current_score_object.appraiser_confirmation,
+                                    comments=current_score_object.comments
+                                    )
+        return updated_score_object
+    
+    @property
+    def is_appraiser_confirmation_request(self):
+        if self.request.POST.get("appraiser_confirmation_request") is not None:
+            return True
+        return False
+    
+    def is_scores_request(self):
+        score_obj_pk = self.request.POST.get("scoring_request") or None
+        if score_obj_pk is not None:
+            return True, score_obj_pk
+        return False, None
+    
+    def get_form_class(self):
+        
+        is_score_req, _ = self.is_scores_request()
+        if is_score_req:
+            return AppraisalOutPutPerformanceDimensionScoreForm
+        return super().get_form_class()
+    
     def form_valid(self, form):
         try:
-            appraiser_review_status_obj = self.get_appraiser_review_status_obj()
-            confirmation_status = form.cleaned_data.get("confirmation_status")
-            comment = form.cleaned_data.get("comment")
-        
-            if (confirmation_status == APPRAISAL_KRA_REVIEWER_STATUS_CHOICES[0][0]):
-                messages.error(self.request, "Please pick either ACCEPT or REJECT status.")
-                return self.form_invalid(form)
+            obj = None
             
-            if (confirmation_status == APPRAISAL_KRA_REVIEWER_STATUS_CHOICES[2][0]) and not comment:
-                messages.error(self.request, "Please provide a rejection reason in the comment field.")
-                return self.form_invalid(form)
+            if self.is_appraiser_confirmation_request:
+                obj = self.appraiser_confirmation_form_handler(form=form)
             
-            repo = ApprasialKraReviewerStatusRepository()
-
-            updated_object = repo.update(
-                reviewer_status_obj=appraiser_review_status_obj,
-                confirmation_status=confirmation_status,
-                comment=comment
-            )
-            form.instance = updated_object
+            is_score_req, score_obj_pk = self.is_scores_request()
+            if is_score_req:
+                obj = self.score_form_handler(form=form, score_obj_pk=score_obj_pk)
+            if obj is None:
+                raise Exception(f"request served with no object")
+            
+            form.instance = obj
         except ValidationError as e:
             messages.error(self.request, "\n".join(e.messages))
             return super().form_invalid(form)

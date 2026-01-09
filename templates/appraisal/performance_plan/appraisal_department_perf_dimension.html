@@ -2,6 +2,7 @@
 {% load static %}
 {% load crispy_forms_tags %}
 {% load kra_calculations %}
+{% load dict_extras %}
 
 {% block content %}
 {% include 'appraisal/sections_header.html' with section_header="Section 2 - Performance Plan and Assessment" %}
@@ -83,10 +84,15 @@
                             <td class="px-4 py-3 text-sm text-blue-900">{{ performance_dimensions_obj.id|get_performance_dimension_rating }}</td>
                             <td class="px-4 py-3 text-sm text-blue-900">{{ performance_dimensions_obj.id|get_performance_dimension_weighted_score }}</td>
                             <td class="px-4 py-3">
-                              <a href="{% url 'score_view' performance_dimensions_obj.id %}"
-                                 class="bg-blue-500 hover:bg-blue-700 text-white text-sm font-medium py-1 px-3 rounded-full transition">
-                                Score
-                              </a>
+                              <div class="flex justify-between gap-2">
+                                <div>
+                                  <button type="button" onclick="openScoreModal('{{ performance_dimensions_obj.id }}')"
+                                      class="bg-blue-500 hover:bg-blue-700 inline-block rounded-full text-white py-2 px-4 rounded">
+                                        Score
+                                  </button>
+                                  {% include "appraisal/performance_plan/appraisee_score_modal.html" with performance_dimension=performance_dimensions_obj.performance_dimension score_object_id=performance_dimensions_obj.id score_form=score_forms|dict_get:performance_dimensions_obj.id %}
+                                </div>
+                              </div>
                             </td>
                           </tr>
                         {% endfor %}
