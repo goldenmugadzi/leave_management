@@ -9,6 +9,23 @@ from .models import (
     Designations, CostCenter, Notification, Supplier, Responsibilities
 )
 
+# Import JWT token generation for hybrid authentication
+try:
+    from graphql_jwt.shortcuts import get_token
+    JWT_AVAILABLE = True
+except ImportError:
+    JWT_AVAILABLE = False
+    import logging
+    logging.warning("graphql_jwt not available - token_from_session query will not work")
+
+
+class TokenFromSessionType(graphene.ObjectType):
+    """Type for JWT token generated from Django session"""
+    token = graphene.String()
+    refresh_token = graphene.String()
+    user = graphene.Field(UserProfileType)
+
+
 class Query(graphene.ObjectType):
     me = graphene.Field(UserProfileType)
     users = graphene.List(UserProfileType, username_icontains=graphene.String())
@@ -33,6 +50,7 @@ class Query(graphene.ObjectType):
     all_notifications = graphene.List(NotificationType)
     all_suppliers = graphene.List(SupplierType)
     all_responsibilities = graphene.List(ResponsibilitiesType)
+    token_from_session = graphene.Field(TokenFromSessionType)
 
     def resolve_users(self, info, username_icontains=None):
         queryset = UserProfile.objects.all()
@@ -133,4 +151,50 @@ class Query(graphene.ObjectType):
 
     def resolve_all_responsibilities(self, info):
         return Responsibilities.objects.all()
+    
+    def resolve_token_from_session(self, info):
+        """
+        Check if user has active Django session and return JWT token
+        This enables hybrid authentication between Django admin and React frontend
+        """
+        import logging
+        logger = logging.getLogger(__name__)
+        
+        user = info.context.user
+        
+        # Check if JWT is available
+        if not JWT_AVAILABLE:
+            logger.error("JWT not available - install django-graphql-jwt or djangorestframework-simplejwt")
+            return None
+        
+        # Check if user is authenticated via Django session
+        if user and user.is_authenticated:
+            try:
+                logger.info(f"Generating JWT token for session user: {user.username}")
+                
+                # Generate JWT token for the authenticated user
+                token = get_token(user)
+                
+                # Try to get refresh token if available
+                try:
+                    from graphql_jwt.shortcuts import create_refresh_token
+                    refresh_token = create_refresh_token(user)
+                except ImportError:
+                    refresh_token = None
+                    logger.debug("Refresh token generation not available")
+                
+                return TokenFromSessionType(
+                    token=token,
+                    refresh_token=refresh_token,
+                    user=user
+                )
+            except Exception as e:
+                logger.error(f"Error generating JWT token from session: {e}")
+                import traceback
+                traceback.print_exc()
+                return None
+        
+        # No valid session - user not logged in
+        logger.debug("No authenticated user in session")
+        return None
 

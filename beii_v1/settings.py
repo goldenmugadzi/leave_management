@@ -237,6 +237,10 @@ SESSION_COOKIE_HTTPONLY = True
 # Reference: https://docs.djangoproject.com/en/4.2/ref/settings/#csrf-cookie-httponly
 CSRF_COOKIE_HTTPONLY = False
 
+# Cookie SameSite settings for cross-origin session sharing
+SESSION_COOKIE_SAMESITE = 'Lax'  # Allow session cookies for same-site and top-level navigation
+CSRF_COOKIE_SAMESITE = 'Lax'  # Allow CSRF cookies for same-site and top-level navigation
+
 # Additional Security Headers
 SECURE_CONTENT_TYPE_NOSNIFF = True  # Prevent MIME-type sniffing
 X_FRAME_OPTIONS = 'DENY'  # Prevent clickjacking attacks
