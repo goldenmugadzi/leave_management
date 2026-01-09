@@ -160,7 +160,38 @@ class Query(graphene.ObjectType):
         import logging
         logger = logging.getLogger(__name__)
         
+        # Enhanced debugging
+        logger.info("=" * 60)
+        logger.info("TOKEN_FROM_SESSION QUERY CALLED")
+        logger.info("=" * 60)
+        
+        # Get user from context
         user = info.context.user
+        
+        # Detailed session debugging
+        request = info.context
+        logger.info(f"Request type: {type(request)}")
+        logger.info(f"User object: {user}")
+        logger.info(f"User type: {type(user)}")
+        logger.info(f"User authenticated: {user.is_authenticated if hasattr(user, 'is_authenticated') else 'N/A'}")
+        logger.info(f"User ID: {getattr(user, 'id', 'N/A')}")
+        logger.info(f"Username: {getattr(user, 'username', 'N/A')}")
+        
+        # Check session
+        if hasattr(request, 'session'):
+            logger.info(f"Session exists: {bool(request.session)}")
+            logger.info(f"Session key: {request.session.session_key}")
+            logger.info(f"Session data: {dict(request.session)}")
+        else:
+            logger.warning("No session attribute on request")
+        
+        # Check cookies
+        if hasattr(request, 'COOKIES'):
+            logger.info(f"Cookies: {list(request.COOKIES.keys())}")
+            if 'sessionid' in request.COOKIES:
+                logger.info(f"Session cookie found: {request.COOKIES['sessionid'][:10]}...")
+            else:
+                logger.warning("No sessionid cookie found")
         
         # Check if JWT is available
         if not JWT_AVAILABLE:
@@ -170,31 +201,38 @@ class Query(graphene.ObjectType):
         # Check if user is authenticated via Django session
         if user and user.is_authenticated:
             try:
-                logger.info(f"Generating JWT token for session user: {user.username}")
+                logger.info(f"✓ User authenticated! Generating JWT token for: {user.username}")
                 
                 # Generate JWT token for the authenticated user
                 token = get_token(user)
+                logger.info(f"✓ JWT token generated successfully (length: {len(token)})")
                 
                 # Try to get refresh token if available
                 try:
                     from graphql_jwt.shortcuts import create_refresh_token
                     refresh_token = create_refresh_token(user)
+                    logger.info("✓ Refresh token generated")
                 except ImportError:
                     refresh_token = None
                     logger.debug("Refresh token generation not available")
                 
+                logger.info("=" * 60)
                 return TokenFromSessionType(
                     token=token,
                     refresh_token=refresh_token,
                     user=user
                 )
             except Exception as e:
-                logger.error(f"Error generating JWT token from session: {e}")
+                logger.error(f"✗ Error generating JWT token from session: {e}")
                 import traceback
                 traceback.print_exc()
+                logger.info("=" * 60)
                 return None
-        
-        # No valid session - user not logged in
-        logger.debug("No authenticated user in session")
-        return None
+        else:
+            # No valid session - user not logged in
+            logger.warning("✗ User not authenticated in session")
+            logger.warning(f"User object type: {type(user)}")
+            logger.warning(f"User is_authenticated: {getattr(user, 'is_authenticated', 'attribute missing')}")
+            logger.info("=" * 60)
+            return None
 
