@@ -422,11 +422,14 @@ class AppraisalUpdateView(SuccessMessageMixin, UpdateView):
 class AppraisalTemplateView(TemplateView):
     template_name = 'appraisal/index.html'
     
-    def get_role_filter(self)->str:
-        role_filter = self.request.GET.get('role_filter')
-        if role_filter is None:
-            return RoleFilterChoices.MY_APPRAISAL.value
-        return role_filter
+    def get_role_filter(self) -> str:
+        role_filter = self.request.GET.get("role_filter")
+        valid_values = [choice.value for choice in RoleFilterChoices]
+
+        if role_filter in valid_values:
+            return role_filter
+
+        return RoleFilterChoices.MY_APPRAISAL.value
     
     def get_heading_name(self)->str:
         role_filter = self.get_role_filter()
@@ -479,15 +482,29 @@ class AppraisalTemplateView(TemplateView):
             appraisal_repository=AppraisalRepository()
         )
         
-        match self.get_role_filter():
+        role_filter = self.get_role_filter()
+        match role_filter:
             case RoleFilterChoices.MY_APPRAISAL.value:
-                return {"appraisals": appraisal_service_handler.get_appraisal_by_user_use_case(user_id=self.request.user.id)}
+                appraisals = appraisal_service_handler.get_appraisal_by_user_use_case(
+                    user_id=self.request.user.id
+                )
             case RoleFilterChoices.ASSIGNED_APPRAISALS.value:
-                return {"appraisals": appraisal_service_handler.get_appraisal_by_appraiser_use_case(appraiser_id=self.request.user.id)}
+                appraisals = appraisal_service_handler.get_appraisal_by_appraiser_use_case(
+                    appraiser_id=self.request.user.id
+                )
             case RoleFilterChoices.APPRAISALS_FOR_REVIEW.value:
-                return {"appraisals": appraisal_service_handler.get_appraisal_by_reviewer_use_case(reviewer_id=self.request.user.id)}
+                appraisals = appraisal_service_handler.get_appraisal_by_reviewer_use_case(
+                    reviewer_id=self.request.user.id
+                )
             case RoleFilterChoices.ALL_APPRAISALS.value:
-                return {"appraisals": appraisal_service_handler.get_all_use_case(hr_id=self.request.user.id)}
+                appraisals = appraisal_service_handler.get_all_use_case(
+                    hr_id=self.request.user.id
+                )
+            case _:
+                appraisals = []
+
+        return {"appraisals": appraisals}
+    
     
     def get_sections(self):
         handler = SectionsStagesHandler()
