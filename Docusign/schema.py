@@ -14,6 +14,13 @@ from .models import Document, Signature, Request, PossibleSigner, Sign, Initial,
 from .crypto import crypto_service
 import logging
 
+try:
+    from graphql_jwt.shortcuts import get_token
+    JWT_AVAILABLE = True
+except ImportError:
+    JWT_AVAILABLE = False
+    logging.warning("graphql_jwt not available - token_from_session query will not work")
+
 User = get_user_model()
 
 
@@ -62,6 +69,20 @@ class InitialType(DjangoObjectType):
     class Meta:
         model = Initial
         fields = '__all__'
+
+
+class UserType(DjangoObjectType):
+    """GraphQL Type for User"""
+    class Meta:
+        model = User
+        fields = ('id', 'username', 'email', 'first_name', 'last_name', 'is_staff', 'is_active')
+
+
+class TokenFromSessionType(graphene.ObjectType):
+    """Type for JWT token generated from Django session"""
+    token = graphene.String()
+    refresh_token = graphene.String()
+    user = graphene.Field(UserType)
 
 
 # Note: `UploadDocument` is implemented further down; the earlier incomplete
@@ -1040,6 +1061,8 @@ class DocumentQuery(graphene.ObjectType):
     signed_documents = graphene.List(RequestType)
     signing_request = graphene.Field(RequestType, id=graphene.ID(required=True))
     requests_awaiting_my_signature = graphene.List(RequestType)
+    token_from_session = graphene.Field(TokenFromSessionType)
+    
     def resolve_document(self, info, id):
         try:
             return Document.objects.get(pk=id)
@@ -1104,6 +1127,41 @@ class DocumentQuery(graphene.ObjectType):
         if user.is_authenticated:
             return Request.objects.filter(poss_signers__signer=user, status='pending').distinct()
         return []
+    
+    def resolve_token_from_session(self, info):
+        """Generate JWT token from Django session authentication"""
+        user = info.context.user
+        
+        # Check if JWT is available
+        if not JWT_AVAILABLE:
+            logging.error("JWT not available - install djangorestframework-simplejwt or django-graphql-jwt")
+            return None
+        
+        # Check if user is authenticated via Django session
+        if user and user.is_authenticated:
+            try:
+                # Generate JWT token for the authenticated user
+                token = get_token(user)
+                
+                # Try to get refresh token if available
+                try:
+                    from graphql_jwt.shortcuts import create_refresh_token
+                    refresh_token = create_refresh_token(user)
+                except ImportError:
+                    refresh_token = None
+                
+                return TokenFromSessionType(
+                    token=token,
+                    refresh_token=refresh_token,
+                    user=user
+                )
+            except Exception as e:
+                logging.error(f"Error generating JWT token: {e}")
+                return None
+        
+        # No valid session
+        return None
+
 class DocumentMutation(graphene.ObjectType):
     """All Document Mutations"""
     upload_document = UploadDocument.Field()

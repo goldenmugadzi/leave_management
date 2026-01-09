@@ -42,9 +42,16 @@ class Query(graphene.ObjectType):
 
     def resolve_all_users(self, info, search=None):
         """Alias for resolve_users with 'search' parameter for frontend compatibility"""
+        from django.db.models import Q
+        
         queryset = UserProfile.objects.all()
         if search:
-            queryset = queryset.filter(username__icontains=search)
+            queryset = queryset.filter(
+                Q(username__icontains=search) |
+                Q(email__icontains=search) |
+                Q(first_name__icontains=search) |
+                Q(last_name__icontains=search) 
+            )
         return queryset
 
     def resolve_user(self, info, id):
