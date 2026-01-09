@@ -279,7 +279,7 @@ def get_exchange_account():
     print(cnf)
     credentials = Credentials(
         username='bexcel@zedc.co.zw',
-        password='Business@2025'
+        password='Iphone@123456789'
     )
     print("Credentials: ", credentials)
     config = Configuration(
