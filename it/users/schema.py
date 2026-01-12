@@ -239,3 +239,177 @@ class Query(graphene.ObjectType):
             logger.info("=" * 60)
             return None
 
+
+class HybridLoginType(graphene.ObjectType):
+    """Response type for hybrid login"""
+    success = graphene.Boolean()
+    message = graphene.String()
+    token = graphene.String()
+    refresh_token = graphene.String()
+    user = graphene.Field(UserProfileType)
+
+
+class HybridLogoutType(graphene.ObjectType):
+    """Response type for hybrid logout"""
+    success = graphene.Boolean()
+    message = graphene.String()
+
+
+class HybridLogin(graphene.Mutation):
+    """
+    Hybrid login mutation that creates both Django session and JWT token
+    Login from React → Get JWT token + Django session created
+    """
+    class Arguments:
+        username = graphene.String(required=True)
+        password = graphene.String(required=True)
+    
+    Output = HybridLoginType
+    
+    @staticmethod
+    def mutate(root, info, username, password):
+        import logging
+        from django.contrib.auth import authenticate, login
+        
+        logger = logging.getLogger(__name__)
+        logger.info("=" * 60)
+        logger.info("HYBRID LOGIN ATTEMPT")
+        logger.info(f"Username: {username}")
+        logger.info("=" * 60)
+        
+        # Authenticate user
+        user = authenticate(username=username, password=password)
+        
+        if user is None:
+            logger.warning(f"✗ Authentication failed for user: {username}")
+            logger.info("=" * 60)
+            return HybridLoginType(
+                success=False,
+                message="Invalid username or password",
+                token=None,
+                refresh_token=None,
+                user=None
+            )
+        
+        if not user.is_active:
+            logger.warning(f"✗ User account is disabled: {username}")
+            logger.info("=" * 60)
+            return HybridLoginType(
+                success=False,
+                message="User account is disabled",
+                token=None,
+                refresh_token=None,
+                user=None
+            )
+        
+        try:
+            # 1. Create Django session
+            login(info.context, user)
+            logger.info(f"✓ Django session created for: {username}")
+            logger.info(f"Session key: {info.context.session.session_key}")
+            
+            # 2. Generate JWT token
+            if JWT_AVAILABLE:
+                token = get_token(user)
+                logger.info(f"✓ JWT token generated (length: {len(token)})")
+                
+                # Try to get refresh token
+                refresh_token = None
+                try:
+                    from graphql_jwt.shortcuts import create_refresh_token
+                    refresh_token = create_refresh_token(user)
+                    logger.info("✓ Refresh token generated")
+                except (ImportError, LookupError) as e:
+                    logger.debug(f"Refresh token not available: {e}")
+            else:
+                token = None
+                refresh_token = None
+                logger.warning("JWT not available")
+            
+            logger.info(f"✓ Hybrid login successful for: {username}")
+            logger.info("=" * 60)
+            
+            return HybridLoginType(
+                success=True,
+                message="Login successful",
+                token=token,
+                refresh_token=refresh_token,
+                user=user
+            )
+            
+        except Exception as e:
+            logger.error(f"✗ Error during hybrid login: {e}")
+            import traceback
+            traceback.print_exc()
+            logger.info("=" * 60)
+            return HybridLoginType(
+                success=False,
+                message=f"Login error: {str(e)}",
+                token=None,
+                refresh_token=None,
+                user=None
+            )
+
+
+class HybridLogout(graphene.Mutation):
+    """
+    Hybrid logout mutation that destroys both Django session and invalidates JWT
+    Logout from React → Django session destroyed + JWT invalidated
+    """
+    Output = HybridLogoutType
+    
+    @staticmethod
+    def mutate(root, info):
+        import logging
+        from django.contrib.auth import logout
+        
+        logger = logging.getLogger(__name__)
+        logger.info("=" * 60)
+        logger.info("HYBRID LOGOUT")
+        
+        user = info.context.user
+        
+        if user and user.is_authenticated:
+            username = user.username
+            logger.info(f"User: {username}")
+            
+            try:
+                # 1. Destroy Django session
+                logout(info.context)
+                logger.info(f"✓ Django session destroyed for: {username}")
+                
+                # 2. Note: JWT tokens are stateless, so we can't "destroy" them server-side
+                # The frontend must remove the token from localStorage
+                # Optional: Implement token blacklist for true server-side revocation
+                
+                logger.info(f"✓ Hybrid logout successful for: {username}")
+                logger.info("=" * 60)
+                
+                return HybridLogoutType(
+                    success=True,
+                    message="Logout successful. Please remove JWT token from client."
+                )
+                
+            except Exception as e:
+                logger.error(f"✗ Error during hybrid logout: {e}")
+                import traceback
+                traceback.print_exc()
+                logger.info("=" * 60)
+                return HybridLogoutType(
+                    success=False,
+                    message=f"Logout error: {str(e)}"
+                )
+        else:
+            logger.warning("✗ No authenticated user to logout")
+            logger.info("=" * 60)
+            return HybridLogoutType(
+                success=False,
+                message="No authenticated user"
+            )
+
+
+class Mutation(graphene.ObjectType):
+    """User Mutations"""
+    hybrid_login = HybridLogin.Field()
+    hybrid_logout = HybridLogout.Field()
+
