@@ -150,7 +150,7 @@ class AppraisalUpdateForm(forms.ModelForm):
             user_obj = cost_center_user_qr.first()
             regional_user_qr = get_regional_users(region_id=user_obj.region.id)
             
-            self.fields["hr"].queryset = get_regional_hrs(region_id=user_obj.region.id)
+            self.fields["hr"].queryset = get_regional_hrs(region_id=user_obj.region.id).exclude(id=appraisal_appraisee_id) #exclude appraisee
             self.fields["reviewer"].queryset = regional_user_qr.exclude(id=appraisal_appraisee_id) #exclude appraisee
             self.fields['appraiser'].disabled = True
         else:
@@ -167,7 +167,7 @@ class ExperienceForm(forms.ModelForm):
 class AppraiseePersonalAttributeForm(forms.ModelForm):
     class Meta:
         model = AppraiseePersonalAttribute
-        exclude = ["created", "updated", "appraisal", "quarter", "is_completed"]
+        exclude = ["created_date", "updated", "appraisal", "quarter", "is_completed"]
         
         
     def __init__(self, *args, **kwargs):

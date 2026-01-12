@@ -1,0 +1,51 @@
+{% load crispy_forms_tags %}
+
+
+<!-- Modal (Hidden by Default) -->
+<div id="PerformanceIndicatorModal-{{perf_indicator}}" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 hidden z-50 h-fit">
+    <div class="bg-white p-6 rounded-lg shadow-lg w-1/2">
+        <div class="flex justify-between">
+            <div>
+                <h1 class="font-bold">Performance Dimension</h1>
+                <p class="text-sm text-muted">Performance Dimension for departmental output, <strong>{{department_out_obj}}</strong> with weight <strong>{{department_out_obj.weight}} %</strong></p>
+            </div>
+            <button type="button" onclick="closePerformanceIndicatorModal('{{perf_indicator}}')" class="px-4 py-2 text-white bg-red-500 rounded-lg">Close</button>
+        </div>
+        
+        <div class="p-4 bg-white shadow-md rounded-lg">
+            <form method="post">
+                {%csrf_token%}
+                
+                {% if perf_indicator == 'Quantity' and quantity_form %}
+                    {{ quantity_form|crispy }}
+
+                {% elif perf_indicator == 'Quality' and quality_form %}
+                    {{ quality_form|crispy }}
+
+                {% elif perf_indicator == 'Timeliness' and timeliness_form %}
+                    {{ timeliness_form|crispy }}
+
+                {% elif perf_indicator == 'Cost' and cost_form %}
+                    {{ cost_form|crispy }}
+                {% endif %}
+
+                {% if is_section_head %}
+                    <div class="flex justify-center mt-2 mr-8 gap-2">
+                        <button type="submit" class="w-96 bg-blue-500 hover:bg-blue-700 inline-block rounded-full text-white py-2 px-4" name="perf_indicator_request" value="{{ perf_dimension_id }}">Save</button>
+                    </div> 
+                {% endif %}
+            </form>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    function openPerformanceIndicatorModal(perf_indicator) {
+        document.getElementById(`PerformanceIndicatorModal-${perf_indicator}`).classList.remove("hidden");
+    }
+
+    function closePerformanceIndicatorModal(perf_indicator) {
+        document.getElementById(`PerformanceIndicatorModal-${perf_indicator}`).classList.add("hidden");
+    }
+</script>

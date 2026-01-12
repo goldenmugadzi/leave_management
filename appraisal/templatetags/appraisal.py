@@ -1,6 +1,7 @@
 from django import template
 from ..helpers.getters.sections import SectionsStagesHandler
 from ..repository.appraisal import AppraisalRepository
+from ..repository.kra import ScoreDocumentRepository
 from loguru import logger
 
 register = template.Library()
@@ -22,4 +23,16 @@ def get_appraisal_sections(appraisal_id: int):
     except Exception as e:
         logger.error(f"[get_appraisal_sections()] templatetags with appraisal_id; {appraisal_id}, failed with error: {e}")
         return []
-    
+
+@register.filter
+def get_perf_dimension_supporting_docs(perf_dimension_id: int):
+    if not isinstance(perf_dimension_id, int):
+        logger.error(f"[get_perf_dimension_supporting_docs()] templatetags, Invalid type for perf_dimension_id: Expected int, got {type(perf_dimension_id).__name__}")
+
+    try:
+        repo = ScoreDocumentRepository()
+        return repo.fetch_by_score_id(score_obj_id=perf_dimension_id)
+    except Exception as e:
+        logger.error(f"[get_perf_dimension_supporting_docs()] templatetags with perf_dimension_id; {perf_dimension_id}, failed with error: {e}")
+        return []
+

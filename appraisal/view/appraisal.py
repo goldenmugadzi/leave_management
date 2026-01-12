@@ -47,6 +47,7 @@ from ..repository.training import TrainingAndDevelopmentRepository
 from .helper import ApprovalStagesTemplateHandler
 from ..helpers.setters import handle_stage_completion
 from ..helpers.data.approval_stage import ApprovalStageData
+from ..helpers.rules import AppraisalDatesRulesHandler
 from loguru import logger
 
 def get_user_by_id(user_id: int)->UserProfile:
@@ -69,10 +70,19 @@ class AppraisalCreateView(SuccessMessageMixin, CreateView):
         kwargs = super().get_form_kwargs()
         kwargs["appraisee_id"] = self.get_user_object().id
         return kwargs
+    
+    def date_rules(self):
+        date_rule_handler = AppraisalDatesRulesHandler()
+        is_within = date_rule_handler.is_within_extended_year()
+        prev_yr_date = date_rule_handler.get_prev_year_end_date()
+        return is_within, prev_yr_date
 
     def get_current_date_assessment(self):
-        current_date = datetime.now()
-        return get_assessment_period(date_object=current_date)
+        date_obj = datetime.now()
+        is_within_extended_yr, prev_yr = self.date_rules()
+        if is_within_extended_yr:
+            date_obj = prev_yr
+        return get_assessment_period(date_object=date_obj)
     
     def get_user_experiences(self, user_id: int):
         repo = UserExperienceRepository()
@@ -135,45 +145,66 @@ class AppraisalCreateView(SuccessMessageMixin, CreateView):
         return context
     
     def is_designation_outputs_set(self)->bool:
+        year = datetime.now().year
+        is_within_extended_yr, prev_yr_date = self.date_rules()
+        
+        if is_within_extended_yr:
+            year = prev_yr_date.year
         repo = DepartmentalOutRepository()
         user_obj = self.get_user_object()
         
-        designation_outputs_qr = repo.fetch_by_cost_center_id_designation_id(
+        designation_outputs_qr = repo.fetch_by_cost_center_id_designation_id_year(
             designation_id=user_obj.designation.id,
-            cost_center_id=user_obj.cost_center.id
+            cost_center_id=user_obj.cost_center.id,
+            year=year
         )
         return designation_outputs_qr.exists()
         
 
     def form_valid(self, form: BaseModelForm) -> HttpResponse:
-        appraisee_object = self.get_user_object()
-        
-        if not appraisee_object.grade:
-            messages.error(self.request, "Oops! Your profile has no grade set. Kindly contact admin.")
-            return self.form_invalid(form)
+        try:
+            
+            appraisee_object = self.get_user_object()
+            
+            if not appraisee_object.grade:
+                messages.error(self.request, "Oops! Your profile has no grade set. Kindly contact admin.")
+                return self.form_invalid(form)
 
-        if not appraisee_object.designation:
-            messages.error(self.request, "Oops! Your profile has no designation set. Kindly contact admin.")
-            return self.form_invalid(form)
-        
-        if not appraisee_object.cost_center:
-            messages.error(self.request, "Oops! Your profile has no cost center set. Kindly contact admin.")
-            return self.form_invalid(form)
-        
-        if not self.is_designation_outputs_set():
-            messages.error(self.request, "Oops! It appears that your department's outputs and activities have not been set yet. Please check with your supervisor to address this")
-            return self.form_invalid(form)
-        
-        if self.has_no_qualification_and_experience():
-            messages.error(self.request, "Oops! Your profile has no qualifications or experiences. Kindly contact admin.")
-            return self.form_invalid(form)
-        
-        appraiser_object = form.cleaned_data.get("appraiser")
-        repo = AppraisalRepository()
-        appraisal_object = repo.create(appraisee_object=appraisee_object, appraiser_object=appraiser_object)
-        form.instance = appraisal_object
-        
-        return super().form_valid(form)
+            if not appraisee_object.designation:
+                messages.error(self.request, "Oops! Your profile has no designation set. Kindly contact admin.")
+                return self.form_invalid(form)
+            
+            if not appraisee_object.cost_center:
+                messages.error(self.request, "Oops! Your profile has no cost center set. Kindly contact admin.")
+                return self.form_invalid(form)
+            
+            if not self.is_designation_outputs_set():
+                messages.error(self.request, "Oops! It appears that your department's outputs and activities have not been set yet. Please check with your supervisor to address this")
+                return self.form_invalid(form)
+            
+            if self.has_no_qualification_and_experience():
+                messages.error(self.request, "Oops! Your profile has no qualifications or experiences. Kindly contact admin.")
+                return self.form_invalid(form)
+            
+            appraiser_object = form.cleaned_data.get("appraiser")
+            
+            appraisal_object = None
+            repo = AppraisalRepository()
+            is_within, prev_year_date = self.date_rules()
+            if is_within:
+                appraisal_object = repo.create(appraisee_object=appraisee_object, appraiser_object=appraiser_object, creation_date=prev_year_date)
+            else:
+                appraisal_object = repo.create(appraisee_object=appraisee_object, appraiser_object=appraiser_object)
+            
+            if appraisal_object is None:
+                raise Exception("appraisal object not created")
+            form.instance = appraisal_object
+            
+            return super().form_valid(form)
+        except Exception as e:
+            logger.error(f"AppraisalCreateView create failed with error: {e}")
+            messages.error(self.request, "An unexpected error occurred, please try again")
+            return super().form_invalid(form)
 
     def get(self, request, *args, **kwargs):
         self.object = None
@@ -188,7 +219,14 @@ class AppraisalCreateView(SuccessMessageMixin, CreateView):
                         request,
                         "<strong>Incomplete Appraisee Profile</strong>: The profile is missing required details such as designation, cost center, qualifications, experiences or grade. Please contact the IT department to complete the profile setup."
                     )
-                
+            
+            is_within_extended_yr, _ = self.date_rules()
+            if is_within_extended_yr:
+                messages.info(
+                    request,
+                    "<strong>Take Note:</strong> The appraisal you are creating applies to last year, not the current year."
+                )
+            
             messages.info(
                 request,
                 "<strong>Take Note:</strong> Please ensure your profile is complete — including designation, department, qualifications, and experience — before creating an appraisal. You may add missing details and must set your appraiser as the final step."
@@ -283,7 +321,6 @@ class AppraisalUpdateView(SuccessMessageMixin, UpdateView):
         appraisee_object = appraisal_object.user
         
         context[self.context_object_name] = context.get("form")
-        
         if appraisal_object.is_accepted:
             context.update(self.approval_stage_data())
         context["appraisal_object"] = appraisal_object
@@ -385,11 +422,14 @@ class AppraisalUpdateView(SuccessMessageMixin, UpdateView):
 class AppraisalTemplateView(TemplateView):
     template_name = 'appraisal/index.html'
     
-    def get_role_filter(self)->str:
-        role_filter = self.request.GET.get('role_filter')
-        if role_filter is None:
-            return RoleFilterChoices.MY_APPRAISAL.value
-        return role_filter
+    def get_role_filter(self) -> str:
+        role_filter = self.request.GET.get("role_filter")
+        valid_values = [choice.value for choice in RoleFilterChoices]
+
+        if role_filter in valid_values:
+            return role_filter
+
+        return RoleFilterChoices.MY_APPRAISAL.value
     
     def get_heading_name(self)->str:
         role_filter = self.get_role_filter()
@@ -442,15 +482,29 @@ class AppraisalTemplateView(TemplateView):
             appraisal_repository=AppraisalRepository()
         )
         
-        match self.get_role_filter():
+        role_filter = self.get_role_filter()
+        match role_filter:
             case RoleFilterChoices.MY_APPRAISAL.value:
-                return {"appraisals": appraisal_service_handler.get_appraisal_by_user_use_case(user_id=self.request.user.id)}
+                appraisals = appraisal_service_handler.get_appraisal_by_user_use_case(
+                    user_id=self.request.user.id
+                )
             case RoleFilterChoices.ASSIGNED_APPRAISALS.value:
-                return {"appraisals": appraisal_service_handler.get_appraisal_by_appraiser_use_case(appraiser_id=self.request.user.id)}
+                appraisals = appraisal_service_handler.get_appraisal_by_appraiser_use_case(
+                    appraiser_id=self.request.user.id
+                )
             case RoleFilterChoices.APPRAISALS_FOR_REVIEW.value:
-                return {"appraisals": appraisal_service_handler.get_appraisal_by_reviewer_use_case(reviewer_id=self.request.user.id)}
+                appraisals = appraisal_service_handler.get_appraisal_by_reviewer_use_case(
+                    reviewer_id=self.request.user.id
+                )
             case RoleFilterChoices.ALL_APPRAISALS.value:
-                return {"appraisals": appraisal_service_handler.get_all_use_case(hr_id=self.request.user.id)}
+                appraisals = appraisal_service_handler.get_all_use_case(
+                    hr_id=self.request.user.id
+                )
+            case _:
+                appraisals = []
+
+        return {"appraisals": appraisals}
+    
     
     def get_sections(self):
         handler = SectionsStagesHandler()
@@ -830,9 +884,17 @@ class AppraiseePersonalAttributesUpdateView(TemplateView):
             return "C, D, E and F"
         return ""
     
+    def date_rules(self):
+        date_rule_handler = AppraisalDatesRulesHandler()
+        is_within = date_rule_handler.is_within_extended_year()
+        prev_yr_date = date_rule_handler.get_prev_year_end_date()
+        return is_within, prev_yr_date
     
     def get_year_quarter_obj(self):
         repo = YearQuarterRepository()
+        is_within, prev_year_date = self.date_rules()
+        if is_within:
+            return repo.get_by_year_quarter_values(year=prev_year_date.year, quarter=4)
         return repo.get_by_year_quarter_id(quarter_id=self.kwargs.get("quarter_id"))
     
     def is_current_date_in_current_quarter(self)->bool:
@@ -840,7 +902,7 @@ class AppraiseePersonalAttributesUpdateView(TemplateView):
         handler = CurrentQuarterDate(year=appraisal_object.created_date.year)
         current_q_type = handler.get_current_quarter()
         current_quarter_obj = self.get_year_quarter_obj()
-
+        
         match current_quarter_obj.quarter:
             case 1:
                 return current_q_type.is_within_first_quarter
@@ -849,7 +911,6 @@ class AppraiseePersonalAttributesUpdateView(TemplateView):
             case 3:
                 return current_q_type.is_within_third_quarter
             case _:
-                
                 return current_q_type.is_within_fourth_quarter
     
     def is_all_scored(self):

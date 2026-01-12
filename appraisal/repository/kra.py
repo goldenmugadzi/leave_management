@@ -175,11 +175,18 @@ class YearQuarterRepository:
             return qr.first()
         except Exception as e:
             raise Exception(f"[YearQuarterRepository] get_by_year_quarter_id Repo with quarter pk: {quarter_id}, failed with error: {e}")
+    
+    def get_by_year_quarter_values(self, year: int, quarter: int)->YearQuarter:
+        try:
+            qr = YearQuarter.objects.filter(year=year, quarter=quarter)
+            return qr.first()
+        except Exception as e:
+            raise Exception(f"[YearQuarterRepository] get_by_year_quarter_values Repo with year: {year} quarter: {quarter}, failed with error: {e}")
 
 class AppraisalDepartmentOutputRepository:
     def create(self, appraisal_object: Appraisal, department_output_obj: DepartmentOutput, year_quarter_obj: YearQuarter)->AppraisalDepartmentOutput:
         try:
-            return AppraisalDepartmentOutput.objects.create(appraisal=appraisal_object, department_output=department_output_obj, year_quarter=year_quarter_obj)
+            return AppraisalDepartmentOutput.objects.create(appraisal=appraisal_object, department_output=department_output_obj, year_quarter=year_quarter_obj, created_date=appraisal_object.created_date)
         except Exception as e:
             raise Exception(f"[AppraisalDepartmentOutputRepository] Create Repo failed with error: {e}")
 
@@ -299,14 +306,10 @@ class AppraisalOutPutPerformanceDimensionScoreRepository:
         except Exception as e:
             raise Exception(f"[AppraisalOutPutPerformanceDimensionScoreRepository] fetch_by_year_quarter_id Repo with pk: {year_quarter_id}, failed with error: {e}")
     
-    def get_by_id(self, pk: int)->AppraisalOutPutPerformanceDimensionScore:
+    def get_by_id(self, pk: int)->AppraisalOutPutPerformanceDimensionScore|None:
         try:
             qr = AppraisalOutPutPerformanceDimensionScore.objects.filter(id=pk).select_related('appraisal_department_output', 'performance_dimension', 'appraisal_department_output__department_output')
-            
-            
-            if not qr.exists():
-                return None
-            
+
             return qr.first()
         except Exception as e:
             raise Exception(f"[AppraisalOutPutPerformanceDimensionScoreRepository] get_by_id Repo with pk: {pk}, failed with error: {e}")
@@ -386,7 +389,8 @@ class ApprasialKraReviewerStatusRepository:
             for reviewer in REVIEWERS_CONFIRMATION_STATUS:
                 obj = AppraisalDepartmentOutputReviewerStatus(
                     appraisal_department_output=appraisal_department_output_obj,
-                    reviewer=reviewer[0]
+                    reviewer=reviewer[0],
+                    created_date=appraisal_department_output_obj.created_date
                 )
                 objs.append(obj)
             AppraisalDepartmentOutputReviewerStatus.objects.bulk_create(objs)

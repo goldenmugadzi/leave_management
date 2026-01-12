@@ -4,16 +4,24 @@ from it.users.models import UserProfile, CostCenter, Designations
 from ..models import KeyResultArea, DepartmentObjective, DepartmentOutput, OutPutPerformanceDimension, JobCompetency
 from ..models.departmental_workplan import PERFORMANCE_INDICATOR, DepartmentOutputCompetency
 from ..helpers.types.dept_workplan import DepartmentalOutTypes, OutputPerformanceDimensionType
-
+from datetime import date
 class DepartmentalObjectiveRepository:
-    def create(self, creator: UserProfile, key_result_area: KeyResultArea, cost_center: CostCenter, department_objective_desc: str)->DepartmentObjective:
+    def create(self, creator: UserProfile, key_result_area: KeyResultArea, cost_center: CostCenter, department_objective_desc: str, creation_date: date=None)->DepartmentObjective:
         try:
+            if creation_date:
+                return DepartmentObjective.objects.create(
+                    created_by=creator,
+                    key_result_area=key_result_area,
+                    cost_center=cost_center,
+                    objective_description=department_objective_desc,
+                    created_date=creation_date
+                )
             return DepartmentObjective.objects.create(
-                created_by=creator,
-                key_result_area=key_result_area,
-                cost_center=cost_center,
-                objective_description=department_objective_desc
-            )
+                    created_by=creator,
+                    key_result_area=key_result_area,
+                    cost_center=cost_center,
+                    objective_description=department_objective_desc
+                )
         except Exception as e:
             raise Exception(f"DepartmentalObjectiveRepository Create Repo failed with error: {e}")
         
@@ -77,15 +85,24 @@ class DepartmentalObjectiveRepository:
 
 class DepartmentalOutRepository:
     
-    def create(self, creator: UserProfile, designation_obj: Designations, departmental_objective_obj: DepartmentObjective, data: DepartmentalOutTypes)->DepartmentOutput:
+    def create(self, creator: UserProfile, designation_obj: Designations, departmental_objective_obj: DepartmentObjective, data: DepartmentalOutTypes, creation_date=None)->DepartmentOutput:
         try:
+            if creation_date:
+                return DepartmentOutput.objects.create(
+                    created_by=creator,
+                    designation=designation_obj,
+                    department_objective=departmental_objective_obj,
+                    output_description=data.output_description,
+                    weight=data.weight,
+                    created_date=creation_date
+                )
             return DepartmentOutput.objects.create(
-                created_by=creator,
-                designation=designation_obj,
-                department_objective=departmental_objective_obj,
-                output_description=data.output_description,
-                weight=data.weight
-            )
+                    created_by=creator,
+                    designation=designation_obj,
+                    department_objective=departmental_objective_obj,
+                    output_description=data.output_description,
+                    weight=data.weight
+                )
         except Exception as e:
             raise Exception(f"DepartmentalOutRepository Create Repo failed with error: {e}")
         
@@ -145,6 +162,13 @@ class DepartmentalOutRepository:
 
         except Exception as e:
             raise Exception(f"DepartmentalOutRepository fetch_by_cost_center_id_designation_id with designation pk: {designation_id} and cost_center pk: {cost_center_id}, failed with error: {e}")
+    
+    def fetch_by_cost_center_id_designation_id_year(self, designation_id: int, cost_center_id: int, year: int)->QuerySet[DepartmentOutput]:
+        try:
+            return DepartmentOutput.objects.filter(designation__id=designation_id, department_objective__cost_center__id=cost_center_id, created_date__year=year).select_related("department_objective", "designation")
+
+        except Exception as e:
+            raise Exception(f"DepartmentalOutRepository fetch_by_cost_center_id_designation_id_year with designation pk: {designation_id} and cost_center pk: {cost_center_id} year: {year}, failed with error: {e}")
 
     def get_by_id(self, dept_output_id: int)->DepartmentOutput|None:
         try:
@@ -156,7 +180,7 @@ class DepartmentalOutRepository:
             raise Exception(f"DepartmentalOutRepository get_by_id with department out pk: {dept_output_id}, failed with error: {e}")
 
 class OutPutPerformanceDimensionRepository:
-    def create_in_bulk(self, department_output_obj: DepartmentOutput)->bool:
+    def create_in_bulk(self, department_output_obj: DepartmentOutput, creation_date=None)->bool:
         try:
             output_perf_dimension_instances = []
             
@@ -167,16 +191,28 @@ class OutPutPerformanceDimensionRepository:
                 # Quality has 100 % agreed target
                 if perf_indicator == PERFORMANCE_INDICATOR[1][0]:
                     agreed_target = 100
-                    
-                perf_dimension_obj = OutPutPerformanceDimension(
-                        created_by=department_output_obj.created_by,
-                        department_output=department_output_obj,
-                        description="",
-                        performance_indicator=perf_indicator,
-                        allowable_variance=0.0,
-                        agreed_target=agreed_target,
-                        weight=0.0
-                    )
+                
+                if creation_date:
+                    perf_dimension_obj = OutPutPerformanceDimension(
+                            created_by=department_output_obj.created_by,
+                            department_output=department_output_obj,
+                            description="",
+                            performance_indicator=perf_indicator,
+                            allowable_variance=0.0,
+                            agreed_target=agreed_target,
+                            weight=0.0,
+                            created_date=creation_date
+                        )
+                else:
+                    perf_dimension_obj = OutPutPerformanceDimension(
+                            created_by=department_output_obj.created_by,
+                            department_output=department_output_obj,
+                            description="",
+                            performance_indicator=perf_indicator,
+                            allowable_variance=0.0,
+                            agreed_target=agreed_target,
+                            weight=0.0
+                        )
                 output_perf_dimension_instances.append(perf_dimension_obj)
             OutPutPerformanceDimension.objects.bulk_create(output_perf_dimension_instances)
             
@@ -196,7 +232,7 @@ class OutPutPerformanceDimensionRepository:
                 output_perf_dimension_obj.description = data.description
                 is_changed = True
             
-                
+            
             if output_perf_dimension_obj.weight != data.weight:
                 output_perf_dimension_obj.weight = data.weight
                 is_changed = True

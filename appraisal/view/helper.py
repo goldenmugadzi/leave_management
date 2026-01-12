@@ -12,6 +12,7 @@ from ..helpers.types.approval import ApprovalStageChoices
 from ..repository.kra import YearQuarterRepository
 from ..helpers.getters.approval import ApprovalStagesHandler
 from ..forms.appraisal import ApprovalStageFilterForm
+from ..helpers.rules import AppraisalDatesRulesHandler
 from pydantic import ValidationError, BaseModel
 from loguru import logger
 
@@ -107,7 +108,10 @@ class PayloadDeserializationStrategyContext:
                 None: indicates an error
         """
         try:
-            return self.strategy.deserialize(form_object=form_object)
+            form = form_object
+            if not form.is_valid():
+                raise ValidationError
+            return self.strategy.deserialize(form_object=form)
         except ValidationError as e:
             error_messages = ""
             for error_message in e.errors():
@@ -220,6 +224,7 @@ def is_within_current_quarter(year: int, quarter: int)->bool:
     current_quarter_date_handler = CurrentQuarterDate(year=year)
     current_quarter_date = current_quarter_date_handler.get_current_quarter()
     
+    
     match quarter:
         case 1:
             if current_quarter_date.is_within_first_quarter:
@@ -231,6 +236,10 @@ def is_within_current_quarter(year: int, quarter: int)->bool:
             if current_quarter_date.is_within_third_quarter:
                 return True
         case 4:
+            date_rule_handler = AppraisalDatesRulesHandler()
+            if date_rule_handler.is_within_extended_year():
+                return True
+            
             if current_quarter_date.is_within_fourth_quarter:
                 return True
         case default:
@@ -308,4 +317,11 @@ class ApprovalStagesTemplateHandler:
             **approval_stages_data,
             **approval_stages_form_data
         }
+    
+
+def extended_date_rules():
+    date_rule_handler = AppraisalDatesRulesHandler()
+    is_within = date_rule_handler.is_within_extended_year()
+    prev_yr_date = date_rule_handler.get_prev_year_end_date()
+    return is_within, prev_yr_date
     

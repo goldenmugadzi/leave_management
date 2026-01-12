@@ -44,12 +44,12 @@
                     <td class="px-6 py-4 text-md text-blue-900">(+-) {{performance_dimensions_obj.allowable_variance}} %</td>
                     
                     <td>
-                        <div class="flex justify-center ml-2">
-                            <a href="{% url 'output_perf_dimension_detail_update' performance_dimensions_obj.id %}"
-                            class="bg-blue-500 hover:bg-blue-700 inline-block rounded-full text-white py-2 px-4"
-                                >View</a>
-                        </div>
-                        
+                        <button type="button" onclick="openPerformanceIndicatorModal('{{ performance_dimensions_obj.performance_indicator }}')"
+                            class="bg-blue-500 hover:bg-blue-700 inline-block rounded-full text-white py-2 px-4 rounded">
+                                View
+                        </button>
+                        {% include "appraisal/departmental_workplan/outputs/performance_dimension/modal.html" with perf_indicator=performance_dimensions_obj.performance_indicator perf_dimension_id=performance_dimensions_obj.id %}
+
                     </td>
                 </tr>
             {% endfor %}

@@ -1,0 +1,47 @@
+{% load crispy_forms_tags %}
+
+
+<!-- Modal (Hidden by Default) -->
+<div id="ScoreModal-{{score_object_id}}" class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 hidden z-50 h-fit">
+    <div class="bg-white p-6 rounded-lg shadow-lg w-1/2">
+        <div class="flex justify-between">
+            <div>
+                <h1 class="font-bold">Form for Scoring {{ performance_dimension.performance_indicator }} Dimension</h1>
+            </div>
+            <button type="button" onclick="closeScoreModal('{{score_object_id}}')" class="px-4 py-2 text-white bg-red-500 rounded-lg">Close</button>
+        </div>
+        <p class="text-sm text-muted mb-4">
+            Department Output: <strong>{{ performance_dimension.department_output }}</strong>.
+            with target of <strong>{{ performance_dimension.agreed_target }} %</strong> and allowable variance of <strong>{{ performance_dimension.allowable_variance }} %</strong>
+        </p>              
+        
+        <div class="p-4 bg-white shadow-md rounded-lg">
+            <form method="post">
+                {%csrf_token%}
+                
+                <div class="flex-1 px-2 shadow-xl rounded-lg border-2">
+                    {{ score_form.score|as_crispy_field }}                
+                </div>
+
+                {% if is_within_current_quarter %}
+                    {% if is_appraisee == True %}
+                        <div class="flex justify-center my-2">
+                            <button type="submit" class="w-96 bg-blue-500 hover:bg-blue-700 inline-block rounded-full text-white py-2 px-4" name="scoring_request" value="{{score_object_id}}">Save</button>
+                        </div>
+                    {% endif %}
+                {% endif %}
+            </form>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    function openScoreModal(score_object_id) {
+        document.getElementById(`ScoreModal-${score_object_id}`).classList.remove("hidden");
+    }
+
+    function closeScoreModal(score_object_id) {
+        document.getElementById(`ScoreModal-${score_object_id}`).classList.add("hidden");
+    }
+</script>
