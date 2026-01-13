@@ -25,7 +25,7 @@ from django.http import HttpResponse
 
 from it.users.serializers import MyTokenObtainPairView
 from graphene_file_upload.django import FileUploadGraphQLView
-from it.users.serializers import MyTokenObtainPairView
+from rest_framework_simplejwt.views import TokenRefreshView, TokenVerifyView
 
 # Serve robots.txt to prevent search engine indexing
 def robots_txt(request):
