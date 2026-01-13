@@ -5,6 +5,7 @@ uploads/
 uploads/*
 media/temp/*
 
+dr_setup/
 debug.log
 loguru.py
 
